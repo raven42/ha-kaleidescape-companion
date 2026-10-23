@@ -1,0 +1,18 @@
+# Minimal local instance: intentionally excludes discovery and default_config.
+homeassistant:
+  name: Kaleidescape Development
+  latitude: 0
+  longitude: 0
+  elevation: 0
+  time_zone: America/Chicago
+  unit_system: imperial
+http:
+  server_host: 127.0.0.1
+  server_port: 8123
+frontend:
+config:
+api:
+logger:
+  default: info
+  logs:
+    custom_components.kaleidescape_companion: debug

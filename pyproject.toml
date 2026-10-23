@@ -1,16 +1,30 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "kaleidescape"
 version = "0.0.0"
 description = "Home Assistant framework for the Kaleidescape journal, now-playing view, and library."
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.14.2"
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["ruff>=0.14,<1"]
+dev = ["homeassistant==2026.10.2", "ruff>=0.14,<1"]
+
+[tool.setuptools]
+# Use a filesystem path for editables: HA scans custom_components.__path__.
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+include = ["custom_components", "custom_components.kaleidescape_companion*"]
+
+[tool.setuptools.package-data]
+"custom_components.kaleidescape_companion" = ["*.json", "translations/*.json", "frontend/*.js"]
 
 [tool.ruff]
-target-version = "py313"
+target-version = "py314"
 line-length = 88
 
 [tool.ruff.lint]

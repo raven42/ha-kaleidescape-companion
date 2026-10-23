@@ -1,6 +1,10 @@
 __pycache__/
 *.py[cod]
 .venv/
+.ha-dev/
+*.egg-info/
+build/
+dist/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/

@@ -27,21 +27,60 @@ docs/                                   Plan, design, and framework documentatio
 .github/workflows/                       CI checks
 ```
 
-## Local checks
+## Development setup
 
-Use Python 3.13+ and Node 22.12+ (Node 24 is suitable). These are development-tool targets, not a declared minimum Home Assistant release.
+Requires Python **3.14.2+**, Node.js **22.12+**, and npm. From the repository root:
 
 ```sh
-python3 scripts/check_scaffold.py
-python3 -m pip install 'ruff>=0.14,<1'
-ruff check .
-ruff format --check .
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e '.[dev]'
 cd frontend
 npm ci
 npm run build
+cd ..
 ```
 
-`npm run build` checks TypeScript and copies a standalone module to `custom_components/kaleidescape_companion/frontend/panel.js`. Preview locally with `npm run dev`; no Home Assistant account or server is needed. Follow the [development guide](docs/development.md) for isolated integration testing later.
+`pyproject.toml` defines the editable Python package and its `dev` extra,
+including Home Assistant **2026.10.2** and Ruff. This HA version is the local
+development baseline, not a declared minimum supported HA release. Re-run
+`python -m pip install -e '.[dev]'` after changing Python dependencies.
+Frontend dependencies are installed separately from `frontend/package-lock.json`.
+
+Run checks and build the bundled panel:
+
+```sh
+python scripts/check_scaffold.py
+ruff check .
+ruff format --check .
+npm --prefix frontend run build
+```
+
+Run the servers in separate terminals from the repository root:
+
+```sh
+bash scripts/dev.sh preview  # http://127.0.0.1:5173
+bash scripts/dev.sh ha       # http://127.0.0.1:8123
+```
+
+The HA launcher links this checkout's integration into `.ha-dev/custom_components/`
+and keeps HA configuration, credentials, and storage in the ignored `.ha-dev/`
+directory. Complete local HA onboarding, then add **Kaleidescape** under
+**Settings → Devices & services → Add integration**. Restart HA after backend
+changes. The framework currently creates no entities or HA sidebar panel.
+
+An editable pip install prepares Python imports and tools; HA discovers custom
+integrations under its configuration directory's `custom_components/`. For
+installation into another HA instance, copy
+`custom_components/kaleidescape_companion/` into that instance's
+`custom_components/` directory and restart HA. Node is only needed by developers:
+`npm run build` packages the standalone module into the integration's
+`frontend/panel.js`.
+
+See the [development guide](docs/development.md#development-setup) for
+configuration details. The optional `bash scripts/dev.sh setup` performs the
+venv/editable-install/npm steps above; `bash scripts/dev.sh check` runs all checks
+and the frontend build.
 
 ## Delivery order
 
