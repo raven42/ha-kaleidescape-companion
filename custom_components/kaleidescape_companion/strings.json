@@ -1,0 +1,14 @@
+{
+  "title": "Kaleidescape",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Kaleidescape",
+        "description": "Create the development framework entry. Device setup, recording, the journal panel, and playback controls are not implemented yet."
+      }
+    },
+    "abort": {
+      "already_configured": "Kaleidescape is already configured."
+    }
+  }
+}
