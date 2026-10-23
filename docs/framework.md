@@ -5,17 +5,27 @@ The product name is **Kaleidescape**. `kaleidescape_companion` is an internal HA
 ## Present
 
 - Repository layout, editor settings, ignore rules, and version metadata.
-- Custom integration manifest, shared constants, English setup strings, minimal config flow, setup/unload functions, and empty runtime container.
-- Empty component boundaries for observation, journal, repository, migrations, API, panel, sensors, diagnostics, backups, library, artwork, and controls.
+- Config flow and runtime lifecycle for one household journal, retaining data on unload/removal.
+- SQLite schema/migrations and a dedicated worker for transactional manual journal records.
+- Administrator-only WebSocket create/get/list/update/delete API, optimistic revisions, and durable request deduplication.
+- Authenticated JSON/SQLite exports, HA backup write barriers, and content-free diagnostics.
+- Tests for storage recovery, migration rollback, API validation/permissions, exports, backups, reload, and shutdown.
+- Remaining boundaries for observation, panel, sensors, library, artwork, and controls.
 - TypeScript/Lit panel shell, local preview, TypeScript checks, reproducible dependency lockfile, and packaged ES module.
 - Scaffold validation script and continuous-integration workflow.
 - [Product plan](plan.md), [technical design](design.md), and [development guide](development.md).
 
 ## Deferred
 
-No entity mapping, event listener, journal rule, SQLite schema, migration, library parser/client, network request, authentication policy, API route, sensor, HA panel registration, backup hook, or playback command is implemented. No movie data or credentials are embedded in the scaffold. Tests/fixtures have reserved locations rather than invented implementations or mock household results.
+Automatic entity mapping/observation, playback/session rules, journal UI, live
+subscriptions, catalog synchronization, artwork, sensors, sharing permissions,
+and playback controls remain deferred. The bundled panel is not registered in HA.
+JSON import and permanent purge are also deferred; SQLite restore is documented.
 
-The design document remains a target specification. Code and names shown there describe future behavior unless listed above as present. Project scaffold creation does not mean Phase 1 foundations are complete.
+See the [backend API](backend.md) for the implemented manual journal behavior.
+The rest of the design document remains a target specification. Phase 1 is not
+complete: player setup, panel access, and broader HA release/backup validation
+still need work. No household device or playback test has been performed.
 
 ## Publication prerequisites
 

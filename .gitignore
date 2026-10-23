@@ -20,3 +20,8 @@ frontend/dist/
 *.db-*
 *.log
 .DS_Store
+
+# Share project tasks even when editor directories are ignored globally.
+!.vscode/
+.vscode/*
+!.vscode/tasks.json

@@ -1,6 +1,6 @@
 # Kaleidescape
 
-Status: Project scaffold created; feature implementation remains planned.
+Status: Initial manual journal database and authenticated API implemented; automatic tracking remains next.
 Updated: 2026-10-22
 
 ## Goal
@@ -292,4 +292,4 @@ The research-backed [technical design document](design.md), dated 2026-10-22, sp
 
 The project is named **Kaleidescape** and lives in `/share/kaleidescape/`. This document is `docs/plan.md`; the technical design is `docs/design.md`. The internal integration domain is `kaleidescape_companion` because the built-in `kaleidescape` integration must remain available as our playback source. The name is an internal namespace, not a second product name.
 
-The repository now contains framework files only. See [framework status](framework.md) and the [development guide](development.md). Journal, database, library, panel registration, and playback functionality remain to be implemented in the agreed order.
+The initial manual journal backend now provides SQLite storage, authenticated queries/mutations, and exports. See the [backend guide](backend.md), [framework status](framework.md), and [development guide](development.md). Automatic observation/session rules, library, panel registration, and playback functionality remain planned in the agreed order.

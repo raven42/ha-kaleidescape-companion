@@ -1,4 +1,4 @@
-"""Development-only setup flow for the Kaleidescape framework."""
+"""Setup flow for the household Kaleidescape journal backend."""
 
 from typing import Any
 
@@ -9,14 +9,14 @@ from .const import DOMAIN, NAME
 
 
 class KaleidescapeConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Create one inert configuration entry until source setup is implemented."""
+    """Create one household journal; player mapping will follow later."""
 
     VERSION = 1
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Present the scaffold's setup confirmation."""
+        """Confirm database creation without enabling device connections."""
         await self.async_set_unique_id(DOMAIN)
         self._abort_if_unique_id_configured()
 

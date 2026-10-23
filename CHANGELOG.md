@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — Journal backend
+
+- Added durable SQLite manual journal records, ordered migrations, and worker-owned IO.
+- Added administrator-only journal queries/mutations, revisions, and retry deduplication.
+- Added JSON/SQLite exports, backup write barriers, retained-data lifecycle, and diagnostics.
+- Added repository, migration, API, export, and lifecycle tests; automatic playback tracking remains next.
+
 ## 0.0.0 — Framework scaffold
 
 - Named the project Kaleidescape and consolidated the plan and design under `docs/`.

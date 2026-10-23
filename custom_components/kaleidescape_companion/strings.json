@@ -4,7 +4,7 @@
     "step": {
       "user": {
         "title": "Kaleidescape",
-        "description": "Create the development framework entry. Device setup, recording, the journal panel, and playback controls are not implemented yet."
+        "description": "Create or reopen the household journal database and enable the administrator-only journal API. Automatic playback tracking and the journal panel will be added next."
       }
     },
     "abort": {

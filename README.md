@@ -2,13 +2,14 @@
 
 A Home Assistant project for a household watch journal, Now Playing, a local movie library browser, and playback controls.
 
-**Status:** framework scaffold only. The setup flow creates an inert development entry; it does not connect to devices, record playback, create a database, register a panel, or send commands. The bundled panel is a standalone placeholder ready for later registration.
+**Status:** initial journal backend. Setup opens a persistent SQLite database and an administrator-only API for manual journal records, queries, corrections, deletion, and export. Automatic playback tracking and the HA panel are not implemented yet; the bundled panel remains a standalone placeholder.
 
 ## Documentation
 
 - [Product plan](docs/plan.md)
 - [Technical design and research](docs/design.md)
 - [Development guide](docs/development.md)
+- [Journal backend and API](docs/backend.md)
 - [Framework status](docs/framework.md)
 - [Changelog](CHANGELOG.md)
 
@@ -22,7 +23,7 @@ The project and display name are **Kaleidescape**. The internal Home Assistant d
 custom_components/kaleidescape_companion/  Integration framework and bundled panel
 frontend/                                TypeScript/Lit panel source and preview
 scripts/                                 Scaffold validation and asset packaging
-tests/                                  Future behavior tests and sanitized fixtures
+tests/                                   Storage, API, lifecycle, and packaging tests
 docs/                                   Plan, design, and framework documentation
 .github/workflows/                       CI checks
 ```
@@ -50,6 +51,7 @@ Frontend dependencies are installed separately from `frontend/package-lock.json`
 Run checks and build the bundled panel:
 
 ```sh
+python -m unittest discover -s tests -v
 python scripts/check_scaffold.py
 ruff check .
 ruff format --check .
@@ -67,7 +69,9 @@ The HA launcher links this checkout's integration into `.ha-dev/custom_component
 and keeps HA configuration, credentials, and storage in the ignored `.ha-dev/`
 directory. Complete local HA onboarding, then add **Kaleidescape** under
 **Settings → Devices & services → Add integration**. Restart HA after backend
-changes. The framework currently creates no entities or HA sidebar panel.
+changes. No entities or HA sidebar panel are created yet. Use the
+[backend API examples](docs/backend.md#try-a-round-trip) to write and retrieve
+manual journal records.
 
 An editable pip install prepares Python imports and tools; HA discovers custom
 integrations under its configuration directory's `custom_components/`. For
@@ -90,4 +94,4 @@ and the frontend build.
 4. Playback and controls
 5. Polish
 
-The framework reserves module boundaries for these phases without implementing their behavior. Project documentation URLs, repository ownership, supported HA releases, and a distribution license must be settled before publication; HACS metadata is preparatory. This repository has not been installed into the household HA instance.
+The initial database/API slice starts the foundations phase; the remaining phases are planned. Project documentation URLs, repository ownership, supported HA releases, and a distribution license must be settled before publication; HACS metadata is preparatory. This repository has not been installed into the household HA instance.

@@ -2,7 +2,7 @@
 
 ## Scope
 
-This repository currently contains project scaffolding. Keep feature behavior aligned with the [plan](plan.md), [design](design.md), and [framework status](framework.md). Journal implementation comes before the library browser and controls.
+This repository contains the initial manual journal backend and frontend scaffolding. Keep feature behavior aligned with the [plan](plan.md), [design](design.md), and [framework status](framework.md). Journal implementation comes before the library browser and controls.
 
 ## Tooling
 
@@ -43,8 +43,9 @@ bash scripts/dev.sh ha
 Open <http://127.0.0.1:5173/> for the panel shell or
 <http://127.0.0.1:8123/> for HA. Complete HA onboarding with a local development
 account, then choose **Settings → Devices & services → Add integration →
-Kaleidescape**. Confirm the framework setup form. No entities or sidebar panel
-are expected yet. Keep analytics off if you do not want development telemetry.
+Kaleidescape**. Confirm database setup, then use the
+[backend API examples](backend.md#try-a-round-trip) to log and retrieve manual
+records. No entities or sidebar panel are expected yet. Keep analytics off if you do not want development telemetry.
 
 HA uses `.ha-dev/`, including credentials, logs, and storage. That directory,
 `.venv/`, npm dependencies, and build intermediates are ignored by Git. The
@@ -64,11 +65,31 @@ If port 8123 is occupied, change `server_port` in the local YAML.
 HA's upstream development container is another option:
 [official environment guide](https://contributors.home-assistant.io/core/development/environment/).
 
+### VS Code tasks
+
+Open the repository folder in VS Code and use **Tasks: Run Task** from the
+Command Palette. Run **Setup dependencies** for a new checkout. **Tasks: Run
+Build Task** builds and packages the frontend; **Tasks: Run Test Task** runs
+**Check all**, including the build, Python tests, scaffold validation, lint,
+and formatting checks. Each check is also available as an individual task.
+Python tasks use `.venv` directly, so shell activation is unnecessary.
+
+**Run frontend preview** and **Run Home Assistant** each use a dedicated
+terminal. Stop them with **Tasks: Terminate Task** or Ctrl+C. Servers are
+started only when you explicitly run their tasks.
+
+With the servers running, use **Open frontend webview**, **Open Home Assistant
+webview**, or **Open server webviews** to open their URLs inside VS Code.
+These use the built-in browser command and do not start servers. Current VS Code
+opens each URL in an integrated browser tab; older versions may reuse the Simple
+Browser view. The tasks use the default ports 5173 and 8123.
+
 ### Checks and packaging
 
 With the virtual environment activated:
 
 ```sh
+python -m unittest discover -s tests -v
 python scripts/check_scaffold.py
 ruff check .
 ruff format --check .
@@ -90,15 +111,34 @@ The Vite development server binds to loopback. The preview renders only the plac
 
 ## Integration framework
 
-`manifest.json`, `const.py`, and project versions use `0.0.0` for the initial scaffold. The `kaleidescape_companion` domain avoids shadowing HA's built-in `kaleidescape` integration. Its minimal config flow creates one inert entry; `runtime.py` is an empty resource container, and setup/unload do not subscribe to events or access disk/network resources.
+Integration release versions remain `0.0.0`; API and database schema versions
+are `1`. The `kaleidescape_companion` domain coexists with HA's built-in
+`kaleidescape` integration. Existing framework entries open the database on
+reload/restart without a configuration migration.
 
-The remaining Python files are documented placeholders. In particular, `backup.py` declares no hooks, `sensor.py` declares no platform, and `websocket.py`/`http.py` register no routes. A placeholder's existence does not mean its capability is implemented. The panel bundle is built but deliberately not registered in HA yet.
+The [backend guide](backend.md) documents storage, the administrator-only API,
+manual testing, backup/export, restore, and retention. Automatic observation,
+session timing, entity setup, and panel registration remain deferred.
 
-## Future HA validation
+## Validation
 
-Use a separate development HA instance. Copy only `custom_components/kaleidescape_companion/` into that instance's `custom_components` directory, then restart and add the Kaleidescape framework entry. Do not overwrite `custom_components/kaleidescape` or modify the built-in integration. The framework adds no entities or functional screens yet.
+`python -m unittest discover -s tests -v` exercises real temporary SQLite
+repositories and HA objects/registered command handlers. It covers persistence,
+retry deduplication, optimistic edits, literal search/pagination, migration
+rollback, backup barriers, exported-database restore, permissions, unload,
+shutdown, and HTTP export cleanup. HTTP request/response objects are mocked;
+this is not a full HA OS/Supervisor end-to-end test. Temporary fixtures contain
+only fictional records.
 
-Integration lifecycle/config-flow tests using HA's test harness belong in Phase 1 when the supported HA releases are selected. The local runtime baseline above enables manual validation now. The current automated checks validate syntax, metadata, identity, translations, documentation links, and packaged frontend consistency; they do not claim an end-to-end HA test.
+An isolated HA 2026.10.2 smoke run also verified the real config flow,
+authenticated WebSocket create/retry/list, JSON/SQLite downloads, denial of
+anonymous/non-admin requests, and data retention after integration reload.
+Its temporary instance was stopped after verification.
+
+Use an isolated development HA instance for manual UI/config-flow and API
+checks. Do not overwrite the built-in integration or configure household
+players until the observation phase. Scaffold validation and frontend checks
+remain part of the default VS Code **Check all** task and CI.
 
 ## Working practices
 
