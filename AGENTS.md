@@ -16,3 +16,9 @@ require explicit user authorization; normal checks must not contact devices.
 Run `bash scripts/dev.sh check` for relevant code changes. Keep documentation
 generic about installing Python and Node; state required versions without
 platform-specific package-manager instructions.
+
+For UI testing that requires a real browser, ask the user to review the concrete
+UI and report results. Provide the URL or navigation steps and a short list of
+behaviors/layouts to check. Run automated component and API tests independently;
+do not launch or automate a real browser for UI review. Clearly distinguish
+automated test results from user browser review that is still pending.

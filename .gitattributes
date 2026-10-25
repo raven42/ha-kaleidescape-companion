@@ -2,3 +2,5 @@
 *.jpg binary
 *.png binary
 *.webp binary
+# Preserve compiler-emitted whitespace inside JavaScript string literals.
+custom_components/kaleidescape_companion/frontend/panel.js linguist-generated=true whitespace=-blank-at-eol

@@ -1,7 +1,7 @@
 # Kaleidescape
 
-Status: Journal database, authenticated API, and one-player automatic tracking implemented; journal UI remains next.
-Updated: 2026-10-22
+Status: Journal database, authenticated API, automatic tracking, and basic administrator management UI implemented; broader journal/Now Playing UI remains planned.
+Updated: 2026-10-25
 
 ## Goal
 
@@ -292,4 +292,4 @@ The research-backed [technical design document](design.md), dated 2026-10-22, sp
 
 The project is named **Kaleidescape** and lives in `/share/kaleidescape/`. This document is `docs/plan.md`; the technical design is `docs/design.md`. The internal integration domain is `kaleidescape_companion` because the built-in `kaleidescape` integration must remain available as our playback source. The name is an internal namespace, not a second product name.
 
-The initial manual journal backend now provides SQLite storage, authenticated queries/mutations, and exports. See the [backend guide](backend.md), [framework status](framework.md), and [development guide](development.md). One-player observation/session rules and read-only Now Playing are now implemented. Journal UI, library, panel registration, and playback controls remain planned in the agreed order.
+The initial manual journal backend now provides SQLite storage, authenticated queries/mutations, and exports. See the [backend guide](backend.md), [framework status](framework.md), and [development guide](development.md). One-player observation/session rules and read-only Now Playing are now implemented. The administrator [management UI](ui.md) is registered in HA and shared with the local Vite preview. Broader product UI, library, and playback controls remain planned in the agreed order.

@@ -12,19 +12,26 @@ import config from "./vite.config.mjs";
 
 function get(port, path, headers = {}) {
   return new Promise((resolve, reject) => {
-    const req = request({ host: "127.0.0.1", port, path, headers }, (response) => {
-      let body = "";
-      response.setEncoding("utf8");
-      response.on("data", (chunk) => {
-        body += chunk;
-      });
-      response.on("end", () => resolve({
-        status: response.statusCode,
-        headers: response.headers,
-        body,
-      }));
-    });
-    req.setTimeout(2000, () => req.destroy(new Error("Local test request timed out")));
+    const req = request(
+      { host: "127.0.0.1", port, path, headers },
+      (response) => {
+        let body = "";
+        response.setEncoding("utf8");
+        response.on("data", (chunk) => {
+          body += chunk;
+        });
+        response.on("end", () =>
+          resolve({
+            status: response.statusCode,
+            headers: response.headers,
+            body,
+          }),
+        );
+      },
+    );
+    req.setTimeout(2000, () =>
+      req.destroy(new Error("Local test request timed out")),
+    );
     req.on("error", reject);
     req.end();
   });
@@ -44,7 +51,9 @@ test("custom environment values are excluded from browser configuration", async 
 });
 
 test("Vite rejects foreign hosts and files outside the frontend, without CORS", async () => {
-  const envFile = fileURLToPath(new URL(`.env.security-${randomUUID()}`, import.meta.url));
+  const envFile = fileURLToPath(
+    new URL(`.env.security-${randomUUID()}`, import.meta.url),
+  );
   await writeFile(envFile, "fictional-secret", { flag: "wx" });
   let server;
   try {
@@ -64,10 +73,14 @@ test("Vite rejects foreign hosts and files outside the frontend, without CORS", 
     assert.equal(address.address, "127.0.0.1");
     const foreign = await get(address.port, "/", { Host: "untrusted.example" });
     assert.equal(foreign.status, 403);
-    const local = await get(address.port, "/", { Origin: "https://untrusted.example" });
+    const local = await get(address.port, "/", {
+      Origin: "https://untrusted.example",
+    });
     assert.equal(local.status, 200);
     assert.equal(local.headers["access-control-allow-origin"], undefined);
-    const outside = fileURLToPath(new URL("../pyproject.toml", import.meta.url));
+    const outside = fileURLToPath(
+      new URL("../pyproject.toml", import.meta.url),
+    );
     assert.equal((await get(address.port, `/@fs/${outside}`)).status, 403);
     const denied = await get(address.port, `/@fs/${envFile}`);
     assert.equal(denied.status, 403);
@@ -75,5 +88,90 @@ test("Vite rejects foreign hosts and files outside the frontend, without CORS", 
   } finally {
     await server?.close();
     await rm(envFile, { force: true });
+  }
+});
+
+test("export proxy accepts only local-origin export requests and never supplies credentials", async () => {
+  const { createServer: createHttpServer } = await import("node:http");
+  const received = [];
+  const backend = createHttpServer((request, response) => {
+    received.push(request.headers);
+    response.writeHead(request.headers.authorization ? 200 : 401, {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store",
+    });
+    response.end("{}");
+  });
+  let server;
+  try {
+    await new Promise((resolve) => backend.listen(0, "127.0.0.1", resolve));
+    server = await createServer({
+      ...config,
+      configFile: false,
+      root: fileURLToPath(new URL(".", import.meta.url)),
+      logLevel: "silent",
+      server: {
+        ...config.server,
+        watch: null,
+        proxy: {
+          "^/api/kaleidescape_companion/": {
+            target: `http://127.0.0.1:${backend.address().port}`,
+            ws: false,
+          },
+        },
+      },
+    });
+    await new Promise((resolve, reject) => {
+      server.httpServer.once("error", reject);
+      server.httpServer.listen(0, "127.0.0.1", resolve);
+    });
+    const port = server.httpServer.address().port;
+    const path =
+      "/api/kaleidescape_companion/test-entry/a323bd20-1b55-4562-87b0-9999944759f3/export?format=json";
+    assert.equal(
+      (
+        await get(port, path, {
+          Origin: "https://untrusted.example",
+          Authorization: "Bearer fictional",
+        })
+      ).status,
+      403,
+    );
+    assert.equal(
+      (await get(port, path, { Authorization: "Bearer fictional" })).status,
+      403,
+    );
+    assert.equal(
+      (
+        await get(port, path + "&url=http://untrusted.example", {
+          Origin: "http://127.0.0.1:5173",
+        })
+      ).status,
+      404,
+    );
+    assert.equal(
+      (
+        await get(port, "/api/kaleidescape_companion/arbitrary", {
+          Origin: "http://127.0.0.1:5173",
+        })
+      ).status,
+      404,
+    );
+    assert.equal(received.length, 0);
+    const accepted = await get(port, path, {
+      Origin: "http://127.0.0.1:5173",
+      Authorization: "Bearer fictional",
+    });
+    assert.equal(accepted.status, 200);
+    assert.equal(received[0].authorization, "Bearer fictional");
+    assert.equal(received[0].origin, "http://127.0.0.1:5173");
+    assert.equal(
+      (await get(port, path, { "Sec-Fetch-Site": "same-origin" })).status,
+      401,
+    );
+    assert.equal(received[1].authorization, undefined);
+  } finally {
+    await server?.close();
+    await new Promise((resolve) => backend.close(resolve));
   }
 });

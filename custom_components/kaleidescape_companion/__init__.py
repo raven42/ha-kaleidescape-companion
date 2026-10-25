@@ -13,6 +13,7 @@ from .http import JournalExportView
 from .journal import JournalError
 from .migrations import UnsupportedSchemaError
 from .observation import PlaybackObserver
+from .panel import async_remove_panel, async_setup_panel
 from .repository import JournalRepository
 from .runtime import KaleidescapeRuntime
 from .websocket import async_register_commands
@@ -58,6 +59,7 @@ async def async_setup_entry(
         await repository.async_close()
         raise
     runtime = entry.runtime_data = KaleidescapeRuntime(repository, info["dataset_id"])
+    panel_registered = False
     try:
         if not hass.data.get(f"{DOMAIN}.api_registered"):
             async_register_commands(hass)
@@ -68,6 +70,8 @@ async def async_setup_entry(
         if config.get("tracking_enabled"):
             runtime.observer = PlaybackObserver(hass, repository, config)
             await runtime.observer.async_start()
+        await async_setup_panel(hass)
+        panel_registered = True
 
         async def async_stop(_event) -> None:
             await _async_close_runtime(runtime)
@@ -76,6 +80,8 @@ async def async_setup_entry(
             hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, async_stop)
         )
     except BaseException:
+        if panel_registered:
+            async_remove_panel(hass)
         runtimes.pop(entry.entry_id, None)
         await _async_close_runtime(runtime)
         raise
@@ -95,5 +101,6 @@ async def async_unload_entry(
         elif config.get("player_id") != runtime.observer.config["player_id"]:
             reason = "player_changed"
     await _async_close_runtime(runtime, reason)
+    async_remove_panel(hass)
     hass.data.get(DOMAIN, {}).pop(entry.entry_id, None)
     return True

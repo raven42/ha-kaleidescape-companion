@@ -14,6 +14,14 @@ rewatches, recovery gaps, protected corrections, buffered edges, and overflow. H
 responses are mocked. No household devices or running HA server are required.
 These are not end-to-end HA OS/Supervisor backup tests.
 
+`test_panel.py` verifies admin sidebar registration, static asset scope, reload,
+foreign-panel collisions, and failed-setup cleanup. Vitest component tests under
+`frontend/tests/` cover the shared management UI, field-preserving corrections,
+conflicts, retry UUIDs, token cleanup, and stale private responses. The optional
+`/tests/review.html` Vite page uses fictional in-memory data for layout review.
+These tests use a simulated DOM; real-browser visual/accessibility testing and
+release compatibility validation remain separate. See the [UI guide](../docs/ui.md).
+
 `test_security.py` covers storage permissions and unsafe links, audit attribution
 and rollback, bounded database growth/exports, access changes, and repeated
 cancellation. `npm --prefix frontend test` tests Vite's host/CORS/file boundaries

@@ -2,7 +2,7 @@
 
 A Home Assistant project for a household watch journal, Now Playing, a local movie library browser, and playback controls.
 
-**Status:** journal backend with optional automatic playback tracking. Select an existing HA player and its status/location sensors to record timed sessions and credits-based completion in SQLite. An administrator-only API provides journal queries/corrections, session evidence, read-only Now Playing, and exports. The bundled panel remains a standalone placeholder; HA panel registration is still planned.
+**Status:** journal backend with optional automatic playback tracking and an administrator management panel. Browse, add, correct, and delete viewings; inspect session evidence and export the journal. The same UI works in HA's sidebar and the isolated Vite development preview. Library browsing, live Now Playing UI, and playback controls remain planned.
 
 ## Documentation
 
@@ -11,6 +11,7 @@ A Home Assistant project for a household watch journal, Now Playing, a local mov
 - [Development guide](docs/development.md)
 - [Security policy, trust boundaries, and hardening](docs/security.md)
 - [Journal backend and API](docs/backend.md)
+- [Journal management UI](docs/ui.md)
 - [Framework status](docs/framework.md)
 - [Changelog](CHANGELOG.md)
 
@@ -60,6 +61,7 @@ python -m unittest discover -s tests -v
 python scripts/check_scaffold.py
 ruff check .
 ruff format --check .
+npm --prefix frontend run format:check
 npm --prefix frontend test
 npm --prefix frontend run build
 ```
@@ -75,9 +77,9 @@ The HA launcher links this checkout's integration into `.ha-dev/custom_component
 and keeps HA configuration, credentials, and storage in the ignored `.ha-dev/`
 directory. Complete local HA onboarding, then add **Kaleidescape** under
 **Settings → Devices & services → Add integration**. Restart HA after backend
-changes. No entities or HA sidebar panel are created yet. Use the
-[backend API examples](docs/backend.md#try-a-round-trip) to write and retrieve
-manual journal records. Enable automatic tracking in the integration’s
+changes. Open **Kaleidescape** in HA's sidebar as an administrator. The standalone
+Vite preview uses a memory-only token from the local development instance; see
+the [UI guide](docs/ui.md). No entities are created. Enable automatic tracking in the integration’s
 **Configure** options; see the [tracking guide](docs/backend.md#automatic-tracking).
 
 An editable pip install prepares Python imports and tools; HA discovers custom

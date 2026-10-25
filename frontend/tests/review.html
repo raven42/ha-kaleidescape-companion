@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  />
+  <title>Fictional journal UI review</title>
+  <style>
+    body {
+      margin: 0;
+    }
+    aside {
+      background: #183a30;
+      color: white;
+      padding: 12px 24px;
+      font: 13px system-ui;
+    }
+  </style>
+  <aside>
+    UI test fixture · Fictional records · Changes stay in this page's memory
+  </aside>
+  <kaleidescape-panel></kaleidescape-panel>
+  <script type="module">
+    import "../src/panel.ts";
+    import { FixtureTransport } from "./fixture.ts";
+    document.querySelector("kaleidescape-panel").client =
+      new FixtureTransport().client();
+  </script>
+</html>

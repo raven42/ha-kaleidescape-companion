@@ -72,6 +72,7 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
         self.addCleanup(self.directory.cleanup)
         self.hass = HomeAssistant(self.directory.name)
         self.hass.http = Mock()
+        self.hass.http.async_register_static_paths = AsyncMock()
         self.entry = entry()
         self.admin = SimpleNamespace(id=uuid4().hex, is_active=True, is_admin=True)
         await async_setup_entry(self.hass, self.entry)

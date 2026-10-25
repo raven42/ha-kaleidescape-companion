@@ -40,13 +40,15 @@ bash scripts/dev.sh preview
 bash scripts/dev.sh ha
 ```
 
-Open <http://127.0.0.1:5173/> for the panel shell or
+Open <http://127.0.0.1:5173/> for the development connection screen or
 <http://127.0.0.1:8123/> for HA. Complete HA onboarding with a local development
 account, then choose **Settings → Devices & services → Add integration →
-Kaleidescape**. Confirm database setup, then use the
-[backend API examples](backend.md#try-a-round-trip) to log and retrieve manual
-records. Existing entries can enable automatic tracking through **Configure**.
-Select one player and its two sensors as described in the [tracking guide](backend.md#automatic-tracking). No entities or sidebar panel are expected yet. Keep analytics off if you do not want development telemetry.
+Kaleidescape**. Open **Kaleidescape** in HA's sidebar to manage the journal using
+your signed-in administrator account. For Vite, use a memory-only token from that
+local development account as described in the [UI guide](ui.md). Existing entries
+can enable automatic tracking through **Configure**. Select one player and its
+two sensors as described in the [tracking guide](backend.md#automatic-tracking).
+No entities are created. Keep analytics off if you do not want development telemetry.
 
 HA uses `.ha-dev/`, including credentials, logs, and storage. That directory,
 `.venv/`, npm dependencies, and build intermediates are ignored by Git. The
@@ -94,6 +96,7 @@ python -m unittest discover -s tests -v
 python scripts/check_scaffold.py
 ruff check .
 ruff format --check .
+npm --prefix frontend run format:check
 npm --prefix frontend test
 npm --prefix frontend run build
 ```
@@ -107,7 +110,15 @@ Runtime third-party requirements for the distributed integration belong in its
 `manifest.json`; Home Assistant itself and development tools belong in the
 project's `dev` extra. No additional runtime library is currently required.
 
-The Vite development server binds to loopback. The preview renders only the placeholder shell, without mock movie history or live connections. The production build is a self-contained ES module with no external runtime imports. It is packaged into the integration directory and is intended to be committed with source changes so a future HACS installation does not need Node.
+The Vite development server binds to loopback. Its development adapter connects
+only to local HA and clears its token on disconnect; the adapter is excluded from
+the production bundle. The explicit `/tests/review.html` page uses fictional
+in-memory records for layout review. The production build is a self-contained ES
+module with no external runtime imports, packaged into the integration directory
+and committed with source changes so a future HACS installation does not need Node.
+Run `npm --prefix frontend run format` to format frontend source/tests and
+`npm --prefix frontend run format:check` to check them. CI and `dev.sh check`
+include formatting, proxy security tests, component tests, and the production build.
 
 `frontend/package-lock.json` fixes the frontend dependency resolution. Commit lockfile updates with the corresponding source change. CI repeats the build and checks the packaged module matches its source. Minimum supported HA and frontend APIs remain an implementation/release validation task.
 
@@ -121,7 +132,8 @@ reload/restart without a configuration migration.
 
 The [backend guide](backend.md) documents storage, the administrator-only API,
 manual testing, backup/export, restore, and retention. Automatic observation,
-session timing, and entity setup are implemented; panel registration remains deferred.
+session timing, entity setup, and the administrator [management panel](ui.md) are
+implemented. Live Now Playing UI and broader catalog/control features remain deferred.
 
 ## Validation
 

@@ -82,7 +82,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Test frontend security",
+      "label": "Test frontend",
       "type": "process",
       "command": "npm",
       "args": ["--prefix", "frontend", "test"],
@@ -97,11 +97,19 @@
       "problemMatcher": []
     },
     {
+      "label": "Check frontend formatting",
+      "type": "process",
+      "command": "npm",
+      "args": ["--prefix", "frontend", "run", "format:check"],
+      "problemMatcher": []
+    },
+    {
       "label": "Check all",
       "dependsOn": [
         "Build frontend",
         "Test Python",
-        "Test frontend security",
+        "Test frontend",
+        "Check frontend formatting",
         "Check scaffold",
         "Lint Python",
         "Check Python formatting"

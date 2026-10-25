@@ -8,15 +8,21 @@
   },
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "test": "node --test security.test.mjs",
+    "test": "node --test security.test.mjs && vitest run",
+    "format": "prettier --write src tests *.mjs *.mts index.html",
+    "format:check": "prettier --check src tests *.mjs *.mts index.html",
     "typecheck": "tsc --noEmit",
     "build": "npm run typecheck && vite build && node ../scripts/package-frontend.mjs"
   },
   "dependencies": {
+    "home-assistant-js-websocket": "^9.7.1",
     "lit": "^3.3.1"
   },
   "devDependencies": {
+    "happy-dom": "^21.0.4",
+    "prettier": "^3.9.10",
     "typescript": "~5.9.3",
-    "vite": "^7.1.0"
+    "vite": "^7.1.0",
+    "vitest": "^5.0.5"
   }
 }

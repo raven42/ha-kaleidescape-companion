@@ -18,7 +18,7 @@ case "${1:-help}" in
     .venv/bin/python scripts/check_scaffold.py
     .venv/bin/ruff check .
     .venv/bin/ruff format --check .
-    (cd frontend && npm test && npm run build)
+    (cd frontend && npm run format:check && npm test && npm run build)
     ;;
   preview)
     cd frontend

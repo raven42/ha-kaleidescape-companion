@@ -73,19 +73,36 @@ HA process against a journal directory.
 2. Keep `.ha-dev/`, `.env*`, databases, exports, tokens, device snapshots, and
    private logs out of Git. Ignoring a file does not protect it on disk. The HA
    launcher uses restrictive creation permissions and a private `.ha-dev/`.
-3. Production panels use HA's signed-in connection. A development API adapter
-   must authenticate explicitly with development credentials. A proxy is routing,
+3. The HA management panel uses HA's signed-in connection. The Vite adapter
+   authenticates explicitly to the fixed local HA instance with a development
+   token, held only in memory. Disconnect, page exit, or connection loss closes
+   the socket and drops credentials; it does not revoke the token in HA. The
+   adapter's entry point is excluded from the packaged HA module. A proxy is routing,
    not authentication. Never inject a privileged bearer token into arbitrary
    proxied requests or embed it in source, URLs, bundles, or browser environment
    variables. HA user tokens are not journal-scoped credentials.
 4. Vite custom environment-variable exposure is disabled. Keep explicit host
    restrictions, CORS disabled for the standalone shell, strict filesystem
-   serving, and fixed ports. Any future API/WebSocket proxy needs a fixed target
-   and origin checks; do not bypass them by rewriting WebSocket origins.
+   serving, and fixed ports. The development HTTP proxy accepts only GETs to the
+   explicit journal export route and a fixed `127.0.0.1:8123` target. It checks
+   the origin or same-origin Fetch Metadata, passes the browser's bearer header,
+   and injects no credentials. WebSockets go directly to local HA; there is no
+   WebSocket proxy or origin rewriting. Any extension requires a boundary review.
 5. Render imported strings through Lit text bindings. Avoid `unsafeHTML`, script
    URLs, remote executable assets, and broad HTML sanitization exceptions.
    Validate image/link protocols and destinations when those features arrive.
    Serve the compiled bundle through HA in production; Vite is a development tool.
+
+The management UI renders metadata through text bindings, sends only changed
+fields for corrections, and keeps expected revisions and request UUIDs on writes.
+An unconfirmed write locks its exact payload for explicit retry, including an
+unload/error after a possible commit. Explicitly discarding that retry, navigation,
+or reload can lose it, so inspect history before recreating an entry.
+Connection/user changes clear private forms/lists, invalidate outstanding
+responses, and abort exports. Downloads have a browser byte limit and temporary
+object URLs are revoked; already downloaded files remain the operator's responsibility.
+The [UI guide](ui.md) documents behavior and test limitations. The explicit layout
+review fixture uses fictional data and is excluded from the packaged panel.
 
 ## Future connectors, controls, and sharing
 

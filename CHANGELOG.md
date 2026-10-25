@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased — Journal management UI
+
+- Added an administrator HA sidebar panel and shared local Vite management UI.
+- Added journal search/filter/pagination, manual entries, corrections, confirmed
+  tombstone deletion, session details, database health, and private exports.
+- Preserved untouched observed fields and added conflict recovery and explicit
+  retries with the original request UUID and payload.
+- Added memory-only development credentials and a fixed local export proxy.
+- Added component, credential, proxy, and panel-lifecycle tests; updated security
+  boundaries, editor tasks, and the UI/development guides.
+
 ## Unreleased — Security hardening
 
 - Documented trust boundaries, hardening/retention procedures, and security review requirements.

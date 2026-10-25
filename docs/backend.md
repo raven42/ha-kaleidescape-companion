@@ -2,7 +2,8 @@
 
 The backend records manual journal entries and observed playback from one selected
 HA player. API version is `1`; SQLite schema is `3` and JSON export format is
-`2`. The journal panel, live subscriptions, library, and controls remain planned.
+`2`. An administrator [journal management panel](ui.md) uses this API. Live
+subscriptions, library, and controls remain planned.
 The [security policy](security.md) governs access, privacy, and resource limits.
 
 ## Setup and storage
@@ -115,8 +116,8 @@ await hass.callWS({
 
 Now Playing returns source title, raw content ID, duration, exact status/location,
 availability, recording error, and buffer health. The endpoint is read-only and
-admin-only. No HA sidebar panel, artwork/progress, or transport controls are added
-in this slice.
+admin-only. The management panel displays journal/session details; a dedicated
+Now Playing UI, artwork/progress, and transport controls remain planned.
 
 ## Authenticated API
 

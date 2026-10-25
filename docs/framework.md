@@ -17,21 +17,25 @@ The product name is **Kaleidescape**. `kaleidescape_companion` is an internal HA
 - Optional entity mapping and options flow for one player, preserving registered identities across renames.
 - Ordered observation, monotonic session timing, checkpoint/restart recovery, credits completion, partial resumes, and rewatch separation.
 - Field corrections/tombstones protected from automatic writes, bounded backup buffering with explicit gaps, and read-only Now Playing/session APIs.
-- Remaining boundaries for panel, sensors, library, artwork, and controls.
-- TypeScript/Lit panel shell, local preview, TypeScript checks, reproducible dependency lockfile, and packaged ES module.
+- Administrator HA sidebar panel and shared Vite UI for journal CRUD, filters,
+  pagination, session evidence, database health, and JSON/SQLite downloads.
+- Memory-only development connection, restricted local export proxy, component
+  and proxy security tests, TypeScript checks, formatting, and packaged ES module.
+- Remaining boundaries for sensors, library, artwork, live Now Playing UI, and controls.
 - Scaffold validation script and continuous-integration workflow.
 - [Product plan](plan.md), [technical design](design.md), and [development guide](development.md).
 
 ## Deferred
 
-Journal UI, multi-player configuration, live subscriptions, catalog synchronization,
+Multi-player configuration, live subscriptions, catalog synchronization,
 artwork, sensors, sharing permissions,
-and playback controls remain deferred. The bundled panel is not registered in HA.
+and playback controls remain deferred. The basic management panel is registered in HA;
+broader product UI and real-browser compatibility/accessibility checks remain.
 JSON import and permanent purge are also deferred; SQLite restore is documented.
 
 See the [backend API](backend.md) for the implemented manual and observed journal behavior.
 The rest of the design document remains a target specification. Phase 1 is not
-complete: panel access and broader HA release/backup validation
+complete: broader HA release/backup and real-browser validation
 still need work. No household device or playback test has been performed.
 
 ## Publication prerequisites
