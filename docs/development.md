@@ -2,7 +2,7 @@
 
 ## Scope
 
-This repository contains the initial manual journal backend and frontend scaffolding. Keep feature behavior aligned with the [plan](plan.md), [design](design.md), and [framework status](framework.md). Journal implementation comes before the library browser and controls.
+This repository contains the journal backend and automatic observation and frontend scaffolding. Keep feature behavior aligned with the [plan](plan.md), [design](design.md), and [framework status](framework.md). Journal implementation comes before the library browser and controls.
 
 ## Tooling
 
@@ -45,7 +45,8 @@ Open <http://127.0.0.1:5173/> for the panel shell or
 account, then choose **Settings → Devices & services → Add integration →
 Kaleidescape**. Confirm database setup, then use the
 [backend API examples](backend.md#try-a-round-trip) to log and retrieve manual
-records. No entities or sidebar panel are expected yet. Keep analytics off if you do not want development telemetry.
+records. Existing entries can enable automatic tracking through **Configure**.
+Select one player and its two sensors as described in the [tracking guide](backend.md#automatic-tracking). No entities or sidebar panel are expected yet. Keep analytics off if you do not want development telemetry.
 
 HA uses `.ha-dev/`, including credentials, logs, and storage. That directory,
 `.venv/`, npm dependencies, and build intermediates are ignored by Git. The
@@ -112,13 +113,13 @@ The Vite development server binds to loopback. The preview renders only the plac
 ## Integration framework
 
 Integration release versions remain `0.0.0`; API and database schema versions
-are `1`. The `kaleidescape_companion` domain coexists with HA's built-in
+are `1` and `2`, respectively. The `kaleidescape_companion` domain coexists with HA's built-in
 `kaleidescape` integration. Existing framework entries open the database on
 reload/restart without a configuration migration.
 
 The [backend guide](backend.md) documents storage, the administrator-only API,
 manual testing, backup/export, restore, and retention. Automatic observation,
-session timing, entity setup, and panel registration remain deferred.
+session timing, and entity setup are implemented; panel registration remains deferred.
 
 ## Validation
 
@@ -126,19 +127,22 @@ session timing, entity setup, and panel registration remain deferred.
 repositories and HA objects/registered command handlers. It covers persistence,
 retry deduplication, optimistic edits, literal search/pagination, migration
 rollback, backup barriers, exported-database restore, permissions, unload,
-shutdown, and HTTP export cleanup. HTTP request/response objects are mocked;
+shutdown, HTTP export cleanup, automatic timing, partial resumes, credits
+ordering, protected corrections, recovery, and observation overflow. HTTP request/response objects are mocked;
 this is not a full HA OS/Supervisor end-to-end test. Temporary fixtures contain
 only fictional records.
 
 An isolated HA 2026.10.2 smoke run also verified the real config flow,
 authenticated WebSocket create/retry/list, JSON/SQLite downloads, denial of
 anonymous/non-admin requests, and data retention after integration reload.
-Its temporary instance was stopped after verification.
+A second isolated run verified options enabling/disabling, synthetic playback
+recording and credits completion, authenticated Now Playing/session APIs, and
+observer cleanup/recovery on reload. Temporary instances were stopped afterward.
 
 Use an isolated development HA instance for manual UI/config-flow and API
-checks. Do not overwrite the built-in integration or configure household
-players until the observation phase. Scaffold validation and frontend checks
-remain part of the default VS Code **Check all** task and CI.
+checks. Do not overwrite the built-in integration. Configure only sources intended
+for recording; tests use fictional states and send no controls. Scaffold validation
+and frontend checks remain part of the default VS Code **Check all** task and CI.
 
 ## Working practices
 

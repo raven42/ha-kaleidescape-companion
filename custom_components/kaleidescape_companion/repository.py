@@ -24,6 +24,7 @@ from .journal import (
     validate_times,
 )
 from .migrations import SCHEMA_VERSION, UnsupportedSchemaError, migrate
+from .recording import save_session
 
 MAX_PENDING = 128
 
@@ -225,6 +226,13 @@ class JournalRepository:
                     "updated_at": now,
                     "revision": 1,
                     "deleted_at": None,
+                    "completed_at": (data["ended_at"] or now)
+                    if data["status"] == "completed"
+                    else None,
+                    "completion_reason": "manual"
+                    if data["status"] == "completed"
+                    else None,
+                    "rule_version": None,
                 }
                 stored = {**record, "title_search": record["title"].casefold()}
                 columns = ", ".join(stored)
@@ -241,12 +249,30 @@ class JournalRepository:
                     )
                 patch = data.get("patch", {})
                 record.update(patch)
+                if "status" in patch:
+                    record["completion_reason"] = (
+                        "manual" if patch["status"] == "completed" else None
+                    )
+                    record["completed_at"] = (
+                        (record["ended_at"] or now)
+                        if patch["status"] == "completed"
+                        else None
+                    )
                 validate_times(record)
                 record["revision"] += 1
                 record["updated_at"] = now
                 if operation == "delete":
                     record["deleted_at"] = now
                 stored = {**record, "title_search": record["title"].casefold()}
+                corrections = json.loads(
+                    db.execute(
+                        "SELECT manual_fields FROM viewings WHERE id = ?",
+                        (record["id"],),
+                    ).fetchone()[0]
+                )
+                stored["manual_fields"] = json.dumps(
+                    sorted(set(corrections) | patch.keys())
+                )
                 updates = ", ".join(f"{key} = ?" for key in stored if key != "id")
                 db.execute(
                     f"UPDATE viewings SET {updates} WHERE id = ?",
@@ -289,7 +315,55 @@ class JournalRepository:
     def _record(row: sqlite3.Row) -> dict:
         result = dict(row)
         result.pop("title_search")
+        result.pop("manual_fields", None)
         return result
+
+    async def async_save_session(
+        self, snapshot: dict, minimum_seconds: float, resume_hours: float
+    ) -> str:
+        """Persist a detached tracker checkpoint on the SQLite worker."""
+        return await self._call(
+            self._save_session, snapshot, minimum_seconds, resume_hours
+        )
+
+    def _save_session(
+        self, snapshot: dict, minimum_seconds: float, resume_hours: float
+    ) -> str:
+        if self._paused:
+            raise JournalError("backup_in_progress", "Journal writes paused for backup")
+        return save_session(self._db(), snapshot, minimum_seconds, resume_hours)
+
+    async def async_open_session(self, player_id: str) -> dict | None:
+        """Recover an existing session, including one whose viewing was tombstoned."""
+        return await self._call(self._open_session, player_id)
+
+    def _open_session(self, player_id: str) -> dict | None:
+        row = (
+            self._db()
+            .execute(
+                "SELECT * FROM sessions WHERE player_id = ? AND closed_at IS NULL",
+                (player_id,),
+            )
+            .fetchone()
+        )
+        return dict(row) if row else None
+
+    async def async_sessions(self, viewing_id: str) -> dict:
+        """Return bounded timing/evidence details without changing the get contract."""
+        return await self._call(self._sessions, identifier(viewing_id))
+
+    def _sessions(self, viewing_id: str) -> dict:
+        self._get(viewing_id)
+        rows = (
+            self._db()
+            .execute(
+                "SELECT * FROM sessions WHERE viewing_id = ? "
+                "ORDER BY started_at DESC, id DESC LIMIT 101",
+                (viewing_id,),
+            )
+            .fetchall()
+        )
+        return {"items": [dict(row) for row in rows[:100]], "has_more": len(rows) > 100}
 
     async def async_list(
         self,
@@ -389,7 +463,7 @@ class JournalRepository:
                 finally:
                     destination.close()
             else:
-                metadata = {"format_version": 1, **self._info()}
+                metadata = {"format_version": 2, **self._info()}
                 with path.open("w", encoding="utf-8") as output:
                     output.write(
                         '{"metadata": ' + json.dumps(metadata) + ', "viewings": ['
@@ -400,7 +474,23 @@ class JournalRepository:
                     ):
                         if not first:
                             output.write(",")
-                        json.dump(self._record(row), output, allow_nan=False)
+                        json.dump(
+                            {
+                                **self._record(row),
+                                "manual_fields": json.loads(row["manual_fields"]),
+                            },
+                            output,
+                            allow_nan=False,
+                        )
+                        first = False
+                    output.write('], "sessions": [')
+                    first = True
+                    for row in db.execute(
+                        "SELECT * FROM sessions ORDER BY started_at, id"
+                    ):
+                        if not first:
+                            output.write(",")
+                        json.dump(dict(row), output, allow_nan=False)
                         first = False
                     output.write("]}")
             return path

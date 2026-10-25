@@ -1,5 +1,6 @@
 """Home Assistant journal backend for Kaleidescape."""
 
+import logging
 from pathlib import Path
 
 from homeassistant.config_entries import ConfigEntry
@@ -11,11 +12,29 @@ from .const import DOMAIN
 from .http import JournalExportView
 from .journal import JournalError
 from .migrations import UnsupportedSchemaError
+from .observation import PlaybackObserver
 from .repository import JournalRepository
 from .runtime import KaleidescapeRuntime
 from .websocket import async_register_commands
 
 type KaleidescapeConfigEntry = ConfigEntry[KaleidescapeRuntime]
+
+_LOGGER = logging.getLogger(__name__)
+
+
+async def _async_close_runtime(
+    runtime: KaleidescapeRuntime, close_reason: str | None = None
+) -> None:
+    runtime.ready = False
+    try:
+        if runtime.observer:
+            await runtime.observer.async_stop(close_reason)
+    except JournalError as error:
+        _LOGGER.error(
+            "Playback shutdown could not persist all observations: %s", error.code
+        )
+    finally:
+        await runtime.repository.async_close()
 
 
 async def async_setup_entry(
@@ -45,17 +64,20 @@ async def async_setup_entry(
             hass.http.register_view(JournalExportView())
             hass.data[f"{DOMAIN}.api_registered"] = True
         runtimes[entry.entry_id] = runtime
+        config = dict(entry.options or entry.data)
+        if config.get("tracking_enabled"):
+            runtime.observer = PlaybackObserver(hass, repository, config)
+            await runtime.observer.async_start()
 
         async def async_stop(_event) -> None:
-            runtime.ready = False
-            await repository.async_close()
+            await _async_close_runtime(runtime)
 
         entry.async_on_unload(
             hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, async_stop)
         )
     except BaseException:
         runtimes.pop(entry.entry_id, None)
-        await repository.async_close()
+        await _async_close_runtime(runtime)
         raise
     return True
 
@@ -65,7 +87,13 @@ async def async_unload_entry(
 ) -> bool:
     """Drain accepted writes and retain the database for reload or reinstallation."""
     runtime = entry.runtime_data
-    runtime.ready = False
-    await runtime.repository.async_close()
+    config = dict(entry.options or entry.data)
+    reason = None
+    if runtime.observer:
+        if not config.get("tracking_enabled"):
+            reason = "tracking_disabled"
+        elif config.get("player_id") != runtime.observer.config["player_id"]:
+            reason = "player_changed"
+    await _async_close_runtime(runtime, reason)
     hass.data.get(DOMAIN, {}).pop(entry.entry_id, None)
     return True

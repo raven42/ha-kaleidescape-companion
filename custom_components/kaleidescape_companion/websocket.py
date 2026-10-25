@@ -20,6 +20,8 @@ def async_register_commands(hass: HomeAssistant) -> None:
         "info": {},
         "journal/create": {**mutations, p.Required("data"): dict},
         "journal/get": {**scoped, p.Required("viewing_id"): str},
+        "journal/sessions": {**scoped, p.Required("viewing_id"): str},
+        "now_playing": scoped,
         "journal/list": {
             **scoped,
             p.Optional("query"): str,
@@ -72,17 +74,18 @@ async def async_handle(
                             "entry_id": entry_id,
                             **await runtime.repository.async_info(),
                             "api_version": 1,
+                            "tracking_enabled": runtime.observer is not None,
                             "features": {
                                 "manual_journal": True,
-                                "automatic_tracking": False,
+                                "automatic_tracking": True,
+                                "now_playing": True,
                             },
                         }
                     )
             result = {"entries": entries}
         else:
-            repository = get_runtime(
-                hass, msg["entry_id"], msg["dataset_id"]
-            ).repository
+            runtime = get_runtime(hass, msg["entry_id"], msg["dataset_id"])
+            repository = runtime.repository
             match operation:
                 case "journal/create":
                     result = await repository.async_create(
@@ -90,6 +93,14 @@ async def async_handle(
                     )
                 case "journal/get":
                     result = await repository.async_get(msg["viewing_id"])
+                case "journal/sessions":
+                    result = await repository.async_sessions(msg["viewing_id"])
+                case "now_playing":
+                    result = {
+                        "players": [runtime.observer.live_state()]
+                        if runtime.observer
+                        else []
+                    }
                 case "journal/list":
                     result = await repository.async_list(
                         query=msg.get("query", ""),

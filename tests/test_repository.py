@@ -227,7 +227,7 @@ class RepositoryTest(unittest.IsolatedAsyncioTestCase):
         json_path = await self.repository.async_export("json")
         self.addCleanup(json_path.unlink, missing_ok=True)
         exported = json.loads(json_path.read_text())
-        self.assertEqual(exported["metadata"]["format_version"], 1)
+        self.assertEqual(exported["metadata"]["format_version"], 2)
         self.assertIsNotNone(exported["viewings"][0]["deleted_at"])
         snapshot = await self.repository.async_export("sqlite")
         self.addCleanup(snapshot.unlink, missing_ok=True)
@@ -309,16 +309,22 @@ class MigrationTest(unittest.TestCase):
                 ).fetchone()[0]
                 future = {
                     **migrations.MIGRATIONS,
-                    2: ("CREATE TABLE future (id INTEGER)", "INVALID SQL"),
+                    migrations.SCHEMA_VERSION + 1: (
+                        "CREATE TABLE future (id INTEGER)",
+                        "INVALID SQL",
+                    ),
                 }
                 with (
-                    patch.object(migrations, "SCHEMA_VERSION", 2),
+                    patch.object(
+                        migrations, "SCHEMA_VERSION", migrations.SCHEMA_VERSION + 1
+                    ),
                     patch.object(migrations, "MIGRATIONS", future),
                 ):
                     with self.assertRaises(sqlite3.Error):
                         migrations.migrate(connection, path)
                 self.assertEqual(
-                    connection.execute("PRAGMA user_version").fetchone()[0], 1
+                    connection.execute("PRAGMA user_version").fetchone()[0],
+                    migrations.SCHEMA_VERSION,
                 )
                 self.assertEqual(
                     connection.execute(

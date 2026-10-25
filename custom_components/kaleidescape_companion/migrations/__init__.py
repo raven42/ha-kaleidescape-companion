@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 MIGRATIONS = {
     1: (
@@ -46,6 +46,48 @@ MIGRATIONS = {
         )""",
     ),
 }
+
+# Rebuild the original table to broaden its origin CHECK without losing v1 data.
+MIGRATIONS[2] = (
+    MIGRATIONS[1][1]
+    .replace("CREATE TABLE viewings", "CREATE TABLE viewings_v2")
+    .replace("origin = 'manual'", "origin IN ('manual', 'observed')"),
+    "INSERT INTO viewings_v2 SELECT * FROM viewings",
+    "DROP TABLE viewings",
+    "ALTER TABLE viewings_v2 RENAME TO viewings",
+    MIGRATIONS[1][2],
+    MIGRATIONS[1][3],
+    "ALTER TABLE viewings ADD COLUMN manual_fields TEXT NOT NULL DEFAULT '[]'",
+    "ALTER TABLE viewings ADD COLUMN completed_at TEXT",
+    "ALTER TABLE viewings ADD COLUMN completion_reason TEXT",
+    "ALTER TABLE viewings ADD COLUMN rule_version INTEGER",
+    """UPDATE viewings SET completed_at = coalesce(ended_at, updated_at),
+        completion_reason = 'manual' WHERE status = 'completed'""",
+    """CREATE TABLE sessions (
+        id TEXT PRIMARY KEY,
+        viewing_id TEXT NOT NULL REFERENCES viewings(id),
+        player_id TEXT NOT NULL,
+        raw_content_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        duration_seconds REAL,
+        started_at TEXT NOT NULL,
+        last_observed_at TEXT NOT NULL,
+        boot_id TEXT NOT NULL,
+        watched_seconds REAL NOT NULL CHECK (watched_seconds >= 0),
+        credits_seen INTEGER NOT NULL,
+        credits_confirmed INTEGER NOT NULL,
+        credits_at TEXT,
+        credits_watched_seconds REAL NOT NULL,
+        closed_at TEXT,
+        end_reason TEXT,
+        revision INTEGER NOT NULL CHECK (revision > 0),
+        gap_count INTEGER NOT NULL CHECK (gap_count >= 0)
+    )""",
+    "CREATE INDEX sessions_viewing ON sessions(viewing_id)",
+    "CREATE INDEX sessions_identity ON sessions"
+    "(player_id, raw_content_id, last_observed_at)",
+    "CREATE UNIQUE INDEX sessions_open ON sessions(player_id) WHERE closed_at IS NULL",
+)
 
 
 class UnsupportedSchemaError(Exception):

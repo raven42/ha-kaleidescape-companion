@@ -107,7 +107,8 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             info["result"]["entries"][0]["dataset_id"], self.scope["dataset_id"]
         )
-        self.assertFalse(info["result"]["entries"][0]["features"]["automatic_tracking"])
+        self.assertTrue(info["result"]["entries"][0]["features"]["automatic_tracking"])
+        self.assertFalse(info["result"]["entries"][0]["tracking_enabled"])
         created = await self.create()
         self.assertTrue(created["success"])
         record = created["result"]["viewing"]

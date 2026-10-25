@@ -8,7 +8,9 @@ python -m unittest discover -s tests -v
 
 Tests cover editable namespace discovery, real temporary SQLite repositories,
 migrations and rollback, persistence/retry behavior, revisions, pagination,
-backup barriers, export/restore, and HA runtime/API handlers. HTTP streaming
+backup barriers, export/restore, HA runtime/API handlers, and automatic tracking.
+Tracking tests cover pauses/scans, metadata/credits ordering, partial resumes,
+rewatches, recovery gaps, protected corrections, buffered edges, and overflow. HTTP streaming
 responses are mocked. No household devices or running HA server are required.
 These are not end-to-end HA OS/Supervisor backup tests.
 

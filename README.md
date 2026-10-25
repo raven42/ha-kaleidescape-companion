@@ -2,7 +2,7 @@
 
 A Home Assistant project for a household watch journal, Now Playing, a local movie library browser, and playback controls.
 
-**Status:** initial journal backend. Setup opens a persistent SQLite database and an administrator-only API for manual journal records, queries, corrections, deletion, and export. Automatic playback tracking and the HA panel are not implemented yet; the bundled panel remains a standalone placeholder.
+**Status:** journal backend with optional automatic playback tracking. Select an existing HA player and its status/location sensors to record timed sessions and credits-based completion in SQLite. An administrator-only API provides journal queries/corrections, session evidence, read-only Now Playing, and exports. The bundled panel remains a standalone placeholder; HA panel registration is still planned.
 
 ## Documentation
 
@@ -71,7 +71,8 @@ directory. Complete local HA onboarding, then add **Kaleidescape** under
 **Settings → Devices & services → Add integration**. Restart HA after backend
 changes. No entities or HA sidebar panel are created yet. Use the
 [backend API examples](docs/backend.md#try-a-round-trip) to write and retrieve
-manual journal records.
+manual journal records. Enable automatic tracking in the integration’s
+**Configure** options; see the [tracking guide](docs/backend.md#automatic-tracking).
 
 An editable pip install prepares Python imports and tools; HA discovers custom
 integrations under its configuration directory's `custom_components/`. For

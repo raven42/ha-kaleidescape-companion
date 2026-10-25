@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — Automatic playback journal
+
+- Added optional player/status/location mapping and a reloadable options flow.
+- Added monotonic timing, credits completion, partial resumes, rewatches, and recovery gaps.
+- Migrated schema 1 to 2 with durable sessions and protected manual corrections.
+- Added read-only Now Playing/session evidence APIs and bounded backup observation buffering.
+- Added deterministic state-machine, migration, repository, and HA event-adapter tests.
+
 ## Unreleased — Journal backend
 
 - Added durable SQLite manual journal records, ordered migrations, and worker-owned IO.

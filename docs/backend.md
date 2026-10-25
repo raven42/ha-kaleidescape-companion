@@ -1,9 +1,8 @@
 # Journal backend
 
-This first backend slice supports explicit manual journal records. Automatic
-entity observation, playback timing, session merging, and the journal panel
-are the next development steps. API version and SQLite schema version are both
-`1`; integration release metadata remains `0.0.0` during development.
+The backend records manual journal entries and observed playback from one selected
+HA player. API version is `1`; SQLite schema and JSON export format versions are
+`2`. The journal panel, live subscriptions, library, and controls remain planned.
 
 ## Setup and storage
 
@@ -23,11 +22,83 @@ operations bounds pending work; overload returns `busy` for retry. Accepted
 writes finish even if a client disconnects. Shutdown drains accepted work and
 closes the connection on its owning worker.
 
-The initial schema contains dataset metadata, manual viewing snapshots, and
-request deduplication. Player/source/content identifiers are optional opaque
-values. No title matching, content-ID normalization, catalog identity merge,
-or invented playback session is performed. Later phases will add session,
-observation, and catalog tables through ordered migrations.
+The schema contains dataset metadata, viewing snapshots, durable playback
+sessions, field-correction markers, and request deduplication. Raw source IDs
+are preserved exactly. No title matching, content-ID normalization, or catalog
+identity merging is performed. Schema 1 databases migrate automatically, keeping
+manual records and retry responses and creating a pre-migration SQLite backup.
+
+## Automatic tracking
+
+For an existing entry, open **Settings → Devices & services → Kaleidescape →
+Configure**, enable automatic tracking, and select:
+
+- The existing Kaleidescape media player.
+- Its exact play-status sensor.
+- Its media-location sensor.
+
+All three must be different entities of the appropriate domains. Registered
+sources may be offline during setup. Registry identities follow renames and
+removals; an unregistered source falls back to its entity ID. Replacing a player
+creates a new internal player identity. One player is configurable in this slice;
+storage keeps independent player identities for later expansion.
+
+Tracking is optional and defaults off. Existing entries retain the manual API.
+Options reload automatically. Disabling tracking or replacing the player closes
+its active source session; ordinary reload/restart retains a recovery checkpoint.
+No extra device connection is opened and no playback action is sent.
+
+The tracker counts elapsed monotonic time only during exact `playing` plus
+`content` for a known raw ID. A new/resumed identity must remain usable for at
+least 0.5 seconds; timing starts after that settling interval. Pauses, scans,
+intermission, menus, missing identity, and unavailable sources do not count.
+Movie content marked `stream` is supported. Position and progress are not inferred
+from accumulated viewing time. Titles/durations are source snapshots; journal
+corrections remain available when metadata is incomplete or stale.
+
+A credits transition must belong to an established identity with the same title
+snapshot. Ambiguous title/ID rollover cannot complete another movie. Paused
+credits are retained as evidence; normal playback in credits confirms them.
+Completion requires confirmed credits and at least **300 seconds** of main-content
+playback by default, configurable from 1 to 3,600 seconds. The threshold is evaluated
+at the credits edge; later playback alone cannot turn earlier short credits into
+completion. Repeated credits and post-credit content remain the same viewing.
+
+A known stop/`none` freezes timing immediately and closes the session after a
+two-second grace period. Brief stop transitions can resume the same session.
+Later sessions attach to a single unambiguous incomplete viewing with the exact
+player/content identity within **24 hours** by default (configurable 0–168 hours;
+0 disables merging). Completed viewings followed by a new session create a
+rewatch. Different players or content IDs never merge by title.
+
+Semantic edges and 30-second checkpoints persist absolute totals. Recovery reuses
+an open session with a new boot ID and a gap marker, never adding unobserved
+downtime. A crash can lose time since the last durable checkpoint. Playback during
+a recording outage or while HA is stopped cannot be reconstructed.
+
+Up to 256 source observations are buffered during backups or storage delays.
+Edges are processed in receipt order. Overflow discards the uncertain interval
+and records a timing gap rather than inventing watched seconds. Storage errors
+retain the pending checkpoint for retry; Now Playing and diagnostics show the
+recording error. Shutdown unsubscribes first and drains/checkpoints accepted work.
+If storage remains unavailable, shutdown logs the failure and recovery retains
+only durable facts. If HA shuts down during a backup, writes remain paused and
+buffered events may be lost; the next recovery records a gap.
+
+From the authenticated browser console (using `hass` and `scope` below):
+
+```js
+await hass.callWS({ type: "kaleidescape_companion/now_playing", ...scope });
+await hass.callWS({
+  type: "kaleidescape_companion/journal/sessions", ...scope,
+  viewing_id: "VIEWING_UUID"
+});
+```
+
+Now Playing returns source title, raw content ID, duration, exact status/location,
+availability, recording error, and buffer health. The endpoint is read-only and
+admin-only. No HA sidebar panel, artwork/progress, or transport controls are added
+in this slice.
 
 ## Authenticated API
 
@@ -45,6 +116,8 @@ the loaded entry and dataset. All journal commands require both `entry_id` and
 | `info` | None | `entries` with scope, API/schema versions, counts, revision, and feature flags |
 | `journal/create` | `request_id`, `data` | Committed `viewing` and dataset `revision` |
 | `journal/get` | `viewing_id` | One visible viewing |
+| `journal/sessions` | `viewing_id` | Latest 100 sessions and `has_more` |
+| `now_playing` | None beyond scope | Read-only `players` snapshot and recording health |
 | `journal/list` | Optional `query`, `status`, `limit`, `cursor` | `items`, `next_cursor`, dataset ID and revision |
 | `journal/update` | `request_id`, `viewing_id`, `expected_revision`, `patch` | Committed `viewing` and dataset `revision` |
 | `journal/delete` | `request_id`, `viewing_id`, `expected_revision` | Tombstoned `viewing` and dataset `revision` |
@@ -84,7 +157,11 @@ revision, and filters. Any intervening mutation or filter change returns
 Seconds must be finite and at most 1,000,000,000. Booleans are not numbers.
 Unknown fields and empty patches are rejected. All fields above can be corrected
 with `journal/update`. The backend also returns immutable IDs, `origin: manual`,
-creation/update times, viewing revision, and `deleted_at`.
+creation/update times, viewing revision, `deleted_at`, `completed_at`,
+`completion_reason`, and `rule_version`. Observed records use `origin: observed`.
+Corrections to observed fields remain authoritative: later checkpoints update
+session evidence but preserve the fields you edited. Deleting an active viewing
+keeps that session attached to its tombstone, so updates cannot resurrect it.
 
 ### Try a round trip
 
@@ -146,14 +223,15 @@ Use `hass.fetchWithAuth(url)` from the panel/browser console or a bearer token
 through an API client. An ordinary unauthenticated link will not download it.
 Exports are streamed from consistent worker-created snapshots; temporary files
 are deleted after transfer, including disconnect/error paths. JSON contains
-format metadata and all viewing records, including tombstones. SQLite includes
+format metadata, viewing records and field-correction markers, and sessions,
+including tombstones. SQLite includes
 the full database, including request deduplication. JSON import is not implemented.
 
 HA's backup hooks drain accepted writes and pause new writes while its backup
 runs. Clients receive `backup_in_progress` and can retry with the same request ID
 afterward. Reads and exports remain available. The post-backup hook resumes
-writes after success or failure. Automatic observation buffering is not needed
-until observation is implemented. End-to-end HA OS/Supervisor backup behavior
+writes after success or failure. Observation is buffered during backups;
+see [automatic tracking](#automatic-tracking) for its bounded-gap policy. End-to-end HA OS/Supervisor backup behavior
 still needs release validation; local tests verify the hooks and restored copies.
 
 To restore a SQLite export, stop the target HA instance, retain a copy of its

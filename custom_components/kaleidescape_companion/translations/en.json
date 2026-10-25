@@ -4,11 +4,47 @@
     "step": {
       "user": {
         "title": "Kaleidescape",
-        "description": "Create or reopen the household journal database and enable the administrator-only journal API. Automatic playback tracking and the journal panel will be added next."
+        "description": "Create or reopen the journal. Optionally observe existing Home Assistant entities to record playback; no player connections or controls are used.",
+        "data": {
+          "tracking_enabled": "Enable automatic tracking",
+          "media_player": "Kaleidescape media player",
+          "play_status": "Exact play-status sensor",
+          "media_location": "Media-location sensor",
+          "minimum_seconds": "Minimum main-content playback before credits completion (seconds)",
+          "resume_hours": "Merge partial viewings within (hours; 0 disables)"
+        }
       }
     },
     "abort": {
       "already_configured": "Kaleidescape is already configured."
+    },
+    "error": {
+      "missing_entities": "Select all three source entities to enable tracking.",
+      "invalid_entities": "Choose an existing media player and two sensor entities.",
+      "duplicate_entities": "Choose different sensors for play status and media location.",
+      "invalid_rules": "Choose valid completion and partial-resume values."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Playback tracking",
+        "description": "Select one player and its exact status/location sensors. Offline sources suspend timing. Disable tracking to keep only the journal API.",
+        "data": {
+          "tracking_enabled": "Enable automatic tracking",
+          "media_player": "Kaleidescape media player",
+          "play_status": "Exact play-status sensor",
+          "media_location": "Media-location sensor",
+          "minimum_seconds": "Minimum main-content playback before credits completion (seconds)",
+          "resume_hours": "Merge partial viewings within (hours; 0 disables)"
+        }
+      }
+    },
+    "error": {
+      "missing_entities": "Select all three source entities to enable tracking.",
+      "invalid_entities": "Choose an existing media player and two sensor entities.",
+      "duplicate_entities": "Choose different sensors for play status and media location.",
+      "invalid_rules": "Choose valid completion and partial-resume values."
     }
   }
 }

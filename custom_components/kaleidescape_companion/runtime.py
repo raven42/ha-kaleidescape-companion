@@ -6,6 +6,7 @@ from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
 from .journal import JournalError
+from .observation import PlaybackObserver
 from .repository import JournalRepository
 
 
@@ -16,6 +17,7 @@ class KaleidescapeRuntime:
     repository: JournalRepository
     dataset_id: str
     ready: bool = True
+    observer: PlaybackObserver | None = None
 
 
 def get_runtime(
