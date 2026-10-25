@@ -6,8 +6,10 @@ import hashlib
 import json
 import sqlite3
 import tempfile
-from collections.abc import Callable
+import time
+from collections.abc import AsyncIterator, Callable
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from functools import partial
 from pathlib import Path
@@ -25,8 +27,12 @@ from .journal import (
 )
 from .migrations import SCHEMA_VERSION, UnsupportedSchemaError, migrate
 from .recording import save_session
+from .security import async_finish_cleanup, private_directory, private_file
 
 MAX_PENDING = 128
+MAX_DATABASE_BYTES = 256 * 1024 * 1024
+MAX_EXPORT_BYTES = 256 * 1024 * 1024
+EXPORT_BUILD_SECONDS = 30
 
 
 class JournalRepository:
@@ -42,6 +48,8 @@ class JournalRepository:
         self._paused = False
         self._pending = 0
         self._close_task: asyncio.Task | None = None
+        self._export_active = False
+        self._export_directory = path.with_name(f".{path.name}.exports")
 
     @property
     def pending(self) -> int:
@@ -83,7 +91,18 @@ class JournalRepository:
         await self._call(self._open)
 
     def _open(self) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
+        private_directory(self.path.parent)
+        private_file(self.path, create=True)
+        for suffix in ("-journal", "-wal", "-shm"):
+            private_file(self.path.with_name(self.path.name + suffix))
+        for backup in self.path.parent.glob(f"{self.path.name}.v*.bak"):
+            private_file(backup)
+        private_directory(self._export_directory)
+        # Only integration-owned snapshot names are eligible for crash cleanup.
+        for pattern in ("kaleidescape-*.json", "kaleidescape-*.sqlite"):
+            for leftover in self._export_directory.glob(pattern):
+                private_file(leftover)
+                leftover.unlink()
         connection = sqlite3.connect(self.path, timeout=5)
         connection.row_factory = sqlite3.Row
         try:
@@ -92,6 +111,11 @@ class JournalRepository:
             connection.execute("PRAGMA journal_mode = DELETE")
             connection.execute("PRAGMA synchronous = FULL")
             connection.execute("PRAGMA busy_timeout = 5000")
+            page_size = connection.execute("PRAGMA page_size").fetchone()[0]
+            pages = connection.execute("PRAGMA page_count").fetchone()[0]
+            # Existing oversized journals remain readable but cannot grow.
+            page_limit = max(pages, MAX_DATABASE_BYTES // page_size)
+            connection.execute(f"PRAGMA max_page_count = {page_limit}")
             # Detect invalid current-version databases during setup, not first write.
             metadata = connection.execute(
                 "SELECT dataset_id, revision FROM schema_metadata"
@@ -155,16 +179,32 @@ class JournalRepository:
                 "SELECT count(*) FROM viewings WHERE deleted_at IS NULL"
             ).fetchone()[0],
             "backup_in_progress": self._paused,
+            "database_bytes": self.path.stat().st_size,
+            "database_limit_bytes": MAX_DATABASE_BYTES,
         }
 
-    async def async_create(self, request_id: str, data: dict) -> dict:
+    async def async_create(
+        self, request_id: str, data: dict, *, actor_id: str | None = None
+    ) -> dict:
         """Create an explicitly supplied viewing without guessing movie identity."""
         record = fields(data)
         validate_times(record)
-        return await self._call(self._mutate, "create", identifier(request_id), record)
+        return await self._call(
+            self._mutate,
+            "create",
+            identifier(request_id),
+            record,
+            self._actor(actor_id),
+        )
 
     async def async_update(
-        self, request_id: str, viewing_id: str, expected_revision: int, patch: dict
+        self,
+        request_id: str,
+        viewing_id: str,
+        expected_revision: int,
+        patch: dict,
+        *,
+        actor_id: str | None = None,
     ) -> dict:
         """Apply a correction once, with optimistic concurrency."""
         self._validate_revision(expected_revision)
@@ -177,10 +217,16 @@ class JournalRepository:
                 "expected_revision": expected_revision,
                 "patch": fields(patch, partial=True),
             },
+            self._actor(actor_id),
         )
 
     async def async_delete(
-        self, request_id: str, viewing_id: str, expected_revision: int
+        self,
+        request_id: str,
+        viewing_id: str,
+        expected_revision: int,
+        *,
+        actor_id: str | None = None,
     ) -> dict:
         """Tombstone a record without losing retry/deletion history."""
         self._validate_revision(expected_revision)
@@ -192,6 +238,7 @@ class JournalRepository:
                 "viewing_id": identifier(viewing_id),
                 "expected_revision": expected_revision,
             },
+            self._actor(actor_id),
         )
 
     @staticmethod
@@ -199,18 +246,29 @@ class JournalRepository:
         if type(revision) is not int or revision < 1:
             raise invalid("expected_revision must be a positive integer")
 
-    def _mutate(self, operation: str, request_id: str, data: dict) -> dict:
+    @staticmethod
+    def _actor(actor_id: str | None) -> str | None:
+        # None is reserved for trusted internal callers, never browser input.
+        return None if actor_id is None else text(actor_id, 128)
+
+    def _mutate(
+        self, operation: str, request_id: str, data: dict, actor_id: str | None
+    ) -> dict:
         db = self._db()
         fingerprint = hashlib.sha256(
             json.dumps([operation, data], sort_keys=True, allow_nan=False).encode()
         ).hexdigest()
         if cached := db.execute(
-            "SELECT fingerprint, response FROM requests WHERE request_id = ?",
+            "SELECT requests.fingerprint, requests.response, manual_audit.request_id "
+            "AS audited_request, manual_audit.actor_id FROM requests "
+            "LEFT JOIN manual_audit USING (request_id) WHERE requests.request_id = ?",
             (request_id,),
         ).fetchone():
-            if cached["fingerprint"] != fingerprint:
+            if cached["fingerprint"] != fingerprint or (
+                cached["audited_request"] is not None and cached["actor_id"] != actor_id
+            ):
                 raise JournalError(
-                    "conflict", "Request UUID was used for different data"
+                    "conflict", "Request UUID was used for different data or actor"
                 )
             return json.loads(cached["response"])
         if self._paused:
@@ -291,6 +349,18 @@ class JournalRepository:
             db.execute(
                 "INSERT INTO requests VALUES (?, ?, ?)",
                 (request_id, fingerprint, json.dumps(result, allow_nan=False)),
+            )
+            db.execute(
+                "INSERT INTO manual_audit VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (
+                    request_id,
+                    actor_id,
+                    operation,
+                    record["id"],
+                    record["revision"],
+                    result["revision"],
+                    now,
+                ),
             )
         return result
 
@@ -444,22 +514,55 @@ class JournalRepository:
         }
 
     async def async_export(self, export_format: str) -> Path:
-        """Create a consistent temporary snapshot, streamed by the HTTP layer."""
+        """Create a snapshot; API callers must use async_export_snapshot instead."""
         if export_format not in ("json", "sqlite"):
             raise invalid("format must be json or sqlite")
         return await self._call(self._export, export_format)
 
+    @asynccontextmanager
+    async def async_export_snapshot(self, export_format: str) -> AsyncIterator[Path]:
+        """Reserve one export through creation, streaming, and private cleanup."""
+        if self._export_active:
+            raise JournalError("busy", "Another journal export is in progress")
+        self._export_active = True
+        task = asyncio.create_task(self.async_export(export_format))
+        try:
+            yield await asyncio.shield(task)
+        finally:
+            try:
+                await async_finish_cleanup(self._cleanup_export(task))
+            finally:
+                self._export_active = False
+
+    @staticmethod
+    async def _cleanup_export(task: asyncio.Task[Path]) -> None:
+        try:
+            path = await task
+        except Exception, asyncio.CancelledError:
+            # _export cleans up creation failures itself.
+            return
+        await asyncio.to_thread(path.unlink, missing_ok=True)
+
     def _export(self, export_format: str) -> Path:
         db = self._db()
+        started = time.monotonic()
         with tempfile.NamedTemporaryFile(
-            prefix="kaleidescape-", suffix=f".{export_format}", delete=False
+            prefix="kaleidescape-",
+            suffix=f".{export_format}",
+            dir=self._export_directory,
+            delete=False,
         ) as file:
             path = Path(file.name)
         try:
             if export_format == "sqlite":
+                page_size = db.execute("PRAGMA page_size").fetchone()[0]
+
+                def progress(_status: int, _remaining: int, total: int) -> None:
+                    self._check_export(started, total * page_size)
+
                 destination = sqlite3.connect(path)
                 try:
-                    db.backup(destination)
+                    db.backup(destination, pages=256, progress=progress)
                 finally:
                     destination.close()
             else:
@@ -483,6 +586,7 @@ class JournalRepository:
                             allow_nan=False,
                         )
                         first = False
+                        self._check_export(started, output.tell())
                     output.write('], "sessions": [')
                     first = True
                     for row in db.execute(
@@ -492,8 +596,17 @@ class JournalRepository:
                             output.write(",")
                         json.dump(dict(row), output, allow_nan=False)
                         first = False
+                        self._check_export(started, output.tell())
                     output.write("]}")
+            self._check_export(started, path.stat().st_size)
             return path
         except BaseException:
             path.unlink(missing_ok=True)
             raise
+
+    @staticmethod
+    def _check_export(started: float, size: int) -> None:
+        if size > MAX_EXPORT_BYTES:
+            raise JournalError("export_too_large", "Journal export exceeds size limit")
+        if time.monotonic() - started > EXPORT_BUILD_SECONDS:
+            raise JournalError("export_timeout", "Journal export exceeded time limit")

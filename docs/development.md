@@ -9,7 +9,7 @@ This repository contains the journal backend and automatic observation and front
 ### Development setup
 
 Requires Python **3.14.2+**, Node.js **22.12+**, and npm. Python's minimum
-matches the Home Assistant **2026.10.2** development dependency; it is not
+matches the Home Assistant **2026.10.4** development dependency; it is not
 a declared minimum supported HA release. HA's base media components also
 use FFmpeg and jpeg-turbo.
 
@@ -94,6 +94,7 @@ python -m unittest discover -s tests -v
 python scripts/check_scaffold.py
 ruff check .
 ruff format --check .
+npm --prefix frontend test
 npm --prefix frontend run build
 ```
 
@@ -113,7 +114,8 @@ The Vite development server binds to loopback. The preview renders only the plac
 ## Integration framework
 
 Integration release versions remain `0.0.0`; API and database schema versions
-are `1` and `2`, respectively. The `kaleidescape_companion` domain coexists with HA's built-in
+are `1` and `3`, respectively; JSON export format remains `2`.
+The `kaleidescape_companion` domain coexists with HA's built-in
 `kaleidescape` integration. Existing framework entries open the database on
 reload/restart without a configuration migration.
 
@@ -132,6 +134,14 @@ ordering, protected corrections, recovery, and observation overflow. HTTP reques
 this is not a full HA OS/Supervisor end-to-end test. Temporary fixtures contain
 only fictional records.
 
+Security regressions cover private storage permissions, linked-path rejection,
+audit attribution/rollback, database growth, export size/time/concurrency limits,
+repeated cancellation, and access revocation. `npm --prefix frontend test` uses
+an ephemeral loopback server to verify host, CORS, environment, and file-serving
+boundaries; it closes the listener afterward. These checks run in CI, the default
+VS Code **Check all** task, and `scripts/dev.sh check`. Network advisory scans
+are separate from these offline checks; see the [security procedures](security.md).
+
 An isolated HA 2026.10.2 smoke run also verified the real config flow,
 authenticated WebSocket create/retry/list, JSON/SQLite downloads, denial of
 anonymous/non-admin requests, and data retention after integration reload.
@@ -145,6 +155,12 @@ for recording; tests use fictional states and send no controls. Scaffold validat
 and frontend checks remain part of the default VS Code **Check all** task and CI.
 
 ## Working practices
+
+The [security policy](security.md) applies to every development phase. Review its
+trust boundaries before API, storage, network, or UI changes, and add regression
+tests for affected protections. `AGENTS.md` and the pull request template carry
+the same requirement into future work. Development must use fictional data and
+isolated services; a successful build is not a security assessment.
 
 - Preserve the existing Kaleidescape integration and theater automation.
 - Keep local server credentials, movie-library snapshots, databases, and private diagnostics out of Git.

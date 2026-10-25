@@ -83,7 +83,10 @@ def validate() -> None:
     if lock["packages"][""]["devDependencies"] != frontend["devDependencies"]:
         raise ValueError("Frontend lockfile development dependencies are stale")
 
-    markdown_files = [ROOT / "README.md", ROOT / "CHANGELOG.md"]
+    markdown_files = [ROOT / "README.md", ROOT / "CHANGELOG.md", ROOT / "SECURITY.md"]
+    markdown_files.extend(
+        [ROOT / "AGENTS.md", ROOT / ".github/pull_request_template.md"]
+    )
     markdown_files.extend((ROOT / "docs").glob("*.md"))
     markdown_files.append(ROOT / "tests" / "README.md")
     for path in markdown_files:

@@ -1,8 +1,9 @@
 # Journal backend
 
 The backend records manual journal entries and observed playback from one selected
-HA player. API version is `1`; SQLite schema and JSON export format versions are
+HA player. API version is `1`; SQLite schema is `3` and JSON export format is
 `2`. The journal panel, live subscriptions, library, and controls remain planned.
+The [security policy](security.md) governs access, privacy, and resource limits.
 
 ## Setup and storage
 
@@ -27,6 +28,23 @@ sessions, field-correction markers, and request deduplication. Raw source IDs
 are preserved exactly. No title matching, content-ID normalization, or catalog
 identity merging is performed. Schema 1 databases migrate automatically, keeping
 manual records and retry responses and creating a pre-migration SQLite backup.
+
+The dedicated storage directory is private (`0700`), with database, migration
+backups, and snapshots restricted to the HA user (`0600`). Permissions are
+tightened when opening existing storage; unsafe linked paths fail setup. SQLite
+page growth is capped at 256 MiB. Larger existing databases remain readable but
+cannot grow further. Storage-full writes fail atomically with `storage_error`;
+diagnostics expose database size and the nominal limit. This cap does not include
+backups or temporary snapshots. There is no automatic history purge.
+
+Schema 3 adds a transactionally committed `manual_audit` record for each new
+manual mutation: authenticated HA user ID, operation, request/viewing IDs,
+viewing/dataset revisions, and timestamp. It adds no duplicate journal content.
+Retries are bound to the original actor and create no extra audit event. Legacy
+requests without audit attribution retain their retry behavior; no actor is
+invented during migration. Trusted internal repository calls may have a null
+actor. Browser clients cannot supply an actor ID. Audit metadata is included in
+SQLite snapshots and remains outside ordinary journal responses and diagnostics.
 
 ## Automatic tracking
 
@@ -105,6 +123,9 @@ in this slice.
 Use HA's existing authenticated WebSocket connection. All commands and exports
 currently require an active administrator. Household sharing is not implemented
 yet. No token or unauthenticated data endpoint is added by this integration.
+Authorization is repeated before returning private results after awaited work;
+accepted writes remain committed if access changes during processing. These
+endpoint checks do not sandbox the integration from the rest of HA.
 
 Every command type starts with `kaleidescape_companion/`. Use `info` to discover
 the loaded entry and dataset. All journal commands require both `entry_id` and
@@ -205,8 +226,9 @@ These calls write one explicit development entry and then tombstone it. They do
 not contact a player or send controls. Use a development instance for examples.
 
 Public error codes include `invalid_request`, `unauthorized`, `not_found`,
-`not_ready`, `conflict`, `refresh_required`, `backup_in_progress`, `busy`, and
-`storage_error`. Malformed WebSocket envelopes are rejected by HA's schema
+`not_ready`, `conflict`, `refresh_required`, `backup_in_progress`, `busy`,
+`export_too_large`, `export_timeout`, and `storage_error`.
+Malformed WebSocket envelopes are rejected by HA's schema
 validation before the handler. A failed storage operation is not reported as a
 successful write.
 
@@ -221,11 +243,27 @@ GET /api/kaleidescape_companion/{entry_id}/{dataset_id}/export?format=sqlite
 
 Use `hass.fetchWithAuth(url)` from the panel/browser console or a bearer token
 through an API client. An ordinary unauthenticated link will not download it.
-Exports are streamed from consistent worker-created snapshots; temporary files
-are deleted after transfer, including disconnect/error paths. JSON contains
+Exports are streamed from consistent worker-created snapshots in a private
+directory under storage. One HTTP export per loaded repository may be prepared
+or streamed at a time; concurrent requests return `busy` (HTTP 503 with
+`Retry-After`). Each snapshot is limited to 256 MiB and 30 seconds of preparation;
+the full download has a 60-second time budget. Cleanup waits for accepted file
+work to finish, so a stalled filesystem can delay cancellation beyond that budget.
+Oversized exports return `export_too_large` (413); preparation timeouts return
+`export_timeout` (503). A timed-out or access-revoked stream is disconnected once
+headers have been sent. Downloads send `Cache-Control: no-store` and
+`X-Content-Type-Options: nosniff`.
+
+Temporary files are deleted after transfer, including cancellation and
+disconnect/error paths. Owned snapshots left by a crash are removed on the next
+storage open. JSON contains
 format metadata, viewing records and field-correction markers, and sessions,
 including tombstones. SQLite includes
-the full database, including request deduplication. JSON import is not implemented.
+the full database, including request deduplication and manual audit metadata.
+JSON format 2 does not include the audit table. JSON import is not implemented.
+All exports and migration backups are private, including retained tombstones;
+visible deletion does not erase data. See the
+[retention procedures](security.md#backup-restore-retention-and-capacity).
 
 HA's backup hooks drain accepted writes and pause new writes while its backup
 runs. Clients receive `backup_in_progress` and can retry with the same request ID

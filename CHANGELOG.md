@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased — Security hardening
+
+- Documented trust boundaries, hardening/retention procedures, and security review requirements.
+- Restricted managed storage permissions and rejected unsafe linked paths.
+- Bounded database growth and export preparation, size, concurrency, and transfer time.
+- Added private snapshot cleanup across cancellation, failures, and crash recovery.
+- Added transactional authenticated actor attribution for manual changes (schema 3).
+- Rechecked access before private responses and during exports; hardened Vite defaults.
+- Added security regressions to CI/editor tasks, a review template, and dependency-update configuration.
+- Updated the development HA baseline to 2026.10.4 for its patched uv dependency;
+  documented the remaining upstream Pillow finding and added an optional audit task.
+
 ## Unreleased — Automatic playback journal
 
 - Added optional player/status/location mapping and a reloadable options flow.

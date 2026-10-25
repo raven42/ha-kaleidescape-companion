@@ -14,6 +14,13 @@ rewatches, recovery gaps, protected corrections, buffered edges, and overflow. H
 responses are mocked. No household devices or running HA server are required.
 These are not end-to-end HA OS/Supervisor backup tests.
 
+`test_security.py` covers storage permissions and unsafe links, audit attribution
+and rollback, bounded database growth/exports, access changes, and repeated
+cancellation. `npm --prefix frontend test` tests Vite's host/CORS/file boundaries
+with an ephemeral loopback listener and checks that custom environment values are
+not exposed. Both suites are part of the default checks. Follow the
+[security policy](../docs/security.md) when adding tests or changing boundaries.
+
 Run `python scripts/check_scaffold.py` for syntax, metadata, namespace,
 translation, local Markdown-link, and bundle checks. The default VS Code
 **Check all** task and `bash scripts/dev.sh check` run both suites plus Ruff

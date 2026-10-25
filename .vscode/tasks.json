@@ -82,10 +82,26 @@
       "problemMatcher": []
     },
     {
+      "label": "Test frontend security",
+      "type": "process",
+      "command": "npm",
+      "args": ["--prefix", "frontend", "test"],
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Audit dependencies (network)",
+      "type": "process",
+      "command": "bash",
+      "args": ["scripts/dev.sh", "audit"],
+      "problemMatcher": []
+    },
+    {
       "label": "Check all",
       "dependsOn": [
         "Build frontend",
         "Test Python",
+        "Test frontend security",
         "Check scaffold",
         "Lint Python",
         "Check Python formatting"

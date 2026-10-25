@@ -9,6 +9,7 @@ A Home Assistant project for a household watch journal, Now Playing, a local mov
 - [Product plan](docs/plan.md)
 - [Technical design and research](docs/design.md)
 - [Development guide](docs/development.md)
+- [Security policy, trust boundaries, and hardening](docs/security.md)
 - [Journal backend and API](docs/backend.md)
 - [Framework status](docs/framework.md)
 - [Changelog](CHANGELOG.md)
@@ -43,10 +44,14 @@ cd ..
 ```
 
 `pyproject.toml` defines the editable Python package and its `dev` extra,
-including Home Assistant **2026.10.2** and Ruff. This HA version is the local
+including Home Assistant **2026.10.4** and Ruff. This HA version is the local
 development baseline, not a declared minimum supported HA release. Re-run
 `python -m pip install -e '.[dev]'` after changing Python dependencies.
 Frontend dependencies are installed separately from `frontend/package-lock.json`.
+
+Read the [security policy](docs/security.md) before development or installation.
+Custom integrations run with HA's privileges; this project does not sandbox
+itself from HA. Use an isolated development instance and development credentials.
 
 Run checks and build the bundled panel:
 
@@ -55,6 +60,7 @@ python -m unittest discover -s tests -v
 python scripts/check_scaffold.py
 ruff check .
 ruff format --check .
+npm --prefix frontend test
 npm --prefix frontend run build
 ```
 

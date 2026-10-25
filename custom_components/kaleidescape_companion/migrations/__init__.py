@@ -6,7 +6,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
-SCHEMA_VERSION = 2
+from ..security import private_file
+
+SCHEMA_VERSION = 3
 
 MIGRATIONS = {
     1: (
@@ -89,6 +91,19 @@ MIGRATIONS[2] = (
     "CREATE UNIQUE INDEX sessions_open ON sessions(player_id) WHERE closed_at IS NULL",
 )
 
+# Historical request actors are unknown; do not fabricate attribution.
+MIGRATIONS[3] = (
+    """CREATE TABLE manual_audit (
+        request_id TEXT PRIMARY KEY REFERENCES requests(request_id),
+        actor_id TEXT,
+        operation TEXT NOT NULL CHECK (operation IN ('create', 'update', 'delete')),
+        viewing_id TEXT NOT NULL REFERENCES viewings(id),
+        viewing_revision INTEGER NOT NULL CHECK (viewing_revision > 0),
+        dataset_revision INTEGER NOT NULL CHECK (dataset_revision > 0),
+        occurred_at TEXT NOT NULL
+    )""",
+)
+
 
 class UnsupportedSchemaError(Exception):
     """The database cannot safely be opened by this release."""
@@ -108,6 +123,7 @@ def migrate(connection: sqlite3.Connection, path: Path) -> None:
         raise UnsupportedSchemaError("Unrecognized journal database; left unchanged")
     if version:
         backup = path.with_name(f"{path.name}.v{version}.{uuid4().hex}.bak")
+        private_file(backup, create=True)
         with closing(sqlite3.connect(backup)) as destination:
             connection.backup(destination)
     connection.execute("BEGIN IMMEDIATE")

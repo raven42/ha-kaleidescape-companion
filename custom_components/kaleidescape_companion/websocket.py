@@ -9,6 +9,7 @@ from homeassistant.core import HomeAssistant, callback
 from .const import DOMAIN
 from .journal import JournalError
 from .runtime import get_runtime
+from .security import is_active_admin
 
 
 @callback
@@ -58,7 +59,7 @@ async def async_handle(
 ) -> None:
     """Reject unauthorized calls before reading private metadata or storage."""
     user = connection.user
-    if user is None or not user.is_active or not user.is_admin:
+    if not is_active_admin(user):
         connection.send_error(
             msg["id"], "unauthorized", "Administrator access required"
         )
@@ -69,10 +70,13 @@ async def async_handle(
             entries = []
             for entry_id, runtime in list(hass.data.get(DOMAIN, {}).items()):
                 if runtime.ready:
+                    metadata = await runtime.repository.async_info()
+                    if not runtime.ready:
+                        continue
                     entries.append(
                         {
                             "entry_id": entry_id,
-                            **await runtime.repository.async_info(),
+                            **metadata,
                             "api_version": 1,
                             "tracking_enabled": runtime.observer is not None,
                             "features": {
@@ -89,7 +93,7 @@ async def async_handle(
             match operation:
                 case "journal/create":
                     result = await repository.async_create(
-                        msg["request_id"], msg["data"]
+                        msg["request_id"], msg["data"], actor_id=user.id
                     )
                 case "journal/get":
                     result = await repository.async_get(msg["viewing_id"])
@@ -114,15 +118,26 @@ async def async_handle(
                         msg["viewing_id"],
                         msg["expected_revision"],
                         msg["patch"],
+                        actor_id=user.id,
                     )
                 case "journal/delete":
                     result = await repository.async_delete(
                         msg["request_id"],
                         msg["viewing_id"],
                         msg["expected_revision"],
+                        actor_id=user.id,
                     )
                 case _:
                     raise JournalError("invalid_request", "Unknown journal command")
+        # Accepted writes still commit; do not disclose private results if access
+        # changed while the worker was running.
+        if not is_active_admin(user):
+            connection.send_error(
+                msg["id"], "unauthorized", "Administrator access required"
+            )
+            return
+        if operation != "info" and not runtime.ready:
+            raise JournalError("not_ready", "Journal integration unloaded")
         connection.send_result(msg["id"], result)
     except JournalError as error:
         connection.send_error(msg["id"], error.code, str(error))

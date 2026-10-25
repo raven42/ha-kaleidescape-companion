@@ -73,7 +73,7 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
         self.hass = HomeAssistant(self.directory.name)
         self.hass.http = Mock()
         self.entry = entry()
-        self.admin = SimpleNamespace(is_active=True, is_admin=True)
+        self.admin = SimpleNamespace(id=uuid4().hex, is_active=True, is_admin=True)
         await async_setup_entry(self.hass, self.entry)
         self.addAsyncCleanup(self.hass.async_stop, force=True)
         self.addAsyncCleanup(self.entry.runtime_data.repository.async_close)

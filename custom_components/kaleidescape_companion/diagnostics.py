@@ -22,6 +22,8 @@ async def async_get_config_entry_diagnostics(
         "viewing_count": info["viewing_count"],
         "backup_in_progress": info["backup_in_progress"],
         "pending_operations": runtime.repository.pending,
+        "database_bytes": info["database_bytes"],
+        "database_limit_bytes": info["database_limit_bytes"],
         "tracking_enabled": runtime.observer is not None,
         "recording_error": runtime.observer.last_error if runtime.observer else None,
         "observation_overflows": runtime.observer.overflow_count

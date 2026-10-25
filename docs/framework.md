@@ -9,6 +9,10 @@ The product name is **Kaleidescape**. `kaleidescape_companion` is an internal HA
 - SQLite schema/migrations and a dedicated worker for transactional manual journal records.
 - Administrator-only WebSocket create/get/list/update/delete API, optimistic revisions, and durable request deduplication.
 - Authenticated JSON/SQLite exports, HA backup write barriers, and content-free diagnostics.
+- Private storage permissions, linked-path rejection, bounded exports/database growth,
+  and transactional attribution of manual changes (schema 3).
+- A [security policy](security.md), security regression tests in the normal check tasks,
+  and contributor/agent guidance for future changes.
 - Tests for storage recovery, migration rollback, API validation/permissions, exports, backups, reload, and shutdown.
 - Optional entity mapping and options flow for one player, preserving registered identities across renames.
 - Ordered observation, monotonic session timing, checkpoint/restart recovery, credits completion, partial resumes, and rewatch separation.
@@ -33,3 +37,6 @@ still need work. No household device or playback test has been performed.
 ## Publication prerequisites
 
 Set the real project documentation/repository URLs and codeowners, choose a license, select and validate supported HA releases, run the real HA lifecycle/config-flow tests, and review the intended release contents. Preparatory HACS metadata is not a claim of catalog acceptance or a production-ready release.
+
+Resolve the [known dependency release blocker](security.md#known-dependency-findings-2026-10-25)
+and rerun dependency audits before publication.

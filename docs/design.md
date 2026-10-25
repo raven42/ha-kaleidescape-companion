@@ -4,6 +4,12 @@ Date: 2026-10-22
 Status: Research-backed design draft; framework scaffold created, feature implementation pending; no device controls performed.  
 Companion: [Product plan](plan.md)
 
+The [security policy](security.md) governs all implementation phases. Current
+access remains administrator-only; sharing below describes future functionality.
+Custom integrations run with HA's privileges, and HA roles do not provide strong
+isolation between mutually untrusted users. Schema 3 adds transactional manual
+audit attribution and storage/export hardening to the implemented journal.
+
 ## 1. Scope and decisions
 
 Build one custom Home Assistant integration, named **Kaleidescape** (internal domain `kaleidescape_companion`), with a bundled responsive panel. Run locally inside HA, without a required NAS, separate web server, cloud account, automation blueprint, or HA app/add-on.

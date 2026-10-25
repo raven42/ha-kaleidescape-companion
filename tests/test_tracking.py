@@ -302,7 +302,10 @@ class UpgradeTest(unittest.TestCase):
                         "('request', 'fingerprint', 'original-response')"
                     )
                 migrations.migrate(db, path)
-                self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 2)
+                self.assertEqual(
+                    db.execute("PRAGMA user_version").fetchone()[0],
+                    migrations.SCHEMA_VERSION,
+                )
                 self.assertEqual(
                     db.execute("SELECT dataset_id FROM schema_metadata").fetchone()[0],
                     dataset,
