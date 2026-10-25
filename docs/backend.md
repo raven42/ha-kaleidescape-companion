@@ -8,7 +8,7 @@ The [security policy](security.md) governs access, privacy, and resource limits.
 
 ## Setup and storage
 
-Start the development HA instance and add **Kaleidescape** under **Settings →
+Start the development HA instance and add **Kaleidescape Companion** under **Settings →
 Devices & services → Add integration**. Existing framework entries open the
 database after an HA restart or integration reload; no reinstallation is needed.
 
@@ -49,7 +49,7 @@ SQLite snapshots and remains outside ordinary journal responses and diagnostics.
 
 ## Automatic tracking
 
-For an existing entry, open **Settings → Devices & services → Kaleidescape →
+For an existing entry, open **Settings → Devices & services → Kaleidescape Companion →
 Configure**, enable automatic tracking, and select:
 
 - The existing Kaleidescape media player.

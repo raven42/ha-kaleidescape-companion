@@ -10,6 +10,7 @@ from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 DOMAIN = "kaleidescape_companion"
+NAME = "Kaleidescape Companion"
 INTEGRATION = ROOT / "custom_components" / DOMAIN
 
 
@@ -46,8 +47,13 @@ def validate() -> None:
         or (ROOT / "custom_components/kaleidescape").exists()
     ):
         raise ValueError("The custom integration must not shadow built-in kaleidescape")
-    if manifest["name"] != "Kaleidescape" or hacs["name"] != "Kaleidescape":
-        raise ValueError("Display/project names must be Kaleidescape")
+    if (
+        manifest["name"] != NAME
+        or hacs["name"] != NAME
+        or strings["title"] != NAME
+        or strings["config"]["step"]["user"]["title"] != NAME
+    ):
+        raise ValueError(f"Display/project names must be {NAME}")
     if project["name"] != "kaleidescape" or frontend["name"] != "kaleidescape":
         raise ValueError("Package names must be kaleidescape")
 
@@ -58,7 +64,7 @@ def validate() -> None:
             for target in node.targets:
                 if isinstance(target, ast.Name):
                     constants[target.id] = node.value.value
-    if constants.get("DOMAIN") != DOMAIN or constants.get("NAME") != "Kaleidescape":
+    if constants.get("DOMAIN") != DOMAIN or constants.get("NAME") != NAME:
         raise ValueError("Framework constants must match the manifest")
     if (
         len(

@@ -1,4 +1,4 @@
-# Kaleidescape development
+# Kaleidescape Companion development
 
 ## Scope
 
@@ -43,7 +43,7 @@ bash scripts/dev.sh ha
 Open <http://127.0.0.1:5173/> for the development connection screen or
 <http://127.0.0.1:8123/> for HA. Complete HA onboarding with a local development
 account, then choose **Settings → Devices & services → Add integration →
-Kaleidescape**. Open **Kaleidescape** in HA's sidebar to manage the journal using
+Kaleidescape Companion**. Open **Kaleidescape Companion** in HA's sidebar to manage the journal using
 your signed-in administrator account. For Vite, use a memory-only token from that
 local development account as described in the [UI guide](ui.md). Existing entries
 can enable automatic tracking through **Configure**. Select one player and its

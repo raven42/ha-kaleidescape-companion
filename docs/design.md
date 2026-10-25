@@ -1,4 +1,4 @@
-# Kaleidescape — Technical Design
+# Kaleidescape Companion — Technical Design
 
 Date: 2026-10-22  
 Status: Research-backed design draft; framework scaffold created, feature implementation pending; no device controls performed.  
@@ -12,7 +12,7 @@ audit attribution and storage/export hardening to the implemented journal.
 
 ## 1. Scope and decisions
 
-Build one custom Home Assistant integration, named **Kaleidescape** (internal domain `kaleidescape_companion`), with a bundled responsive panel. Run locally inside HA, without a required NAS, separate web server, cloud account, automation blueprint, or HA app/add-on.
+Build one custom Home Assistant integration, named **Kaleidescape Companion** (internal domain `kaleidescape_companion`), with a bundled responsive panel. Run locally inside HA, without a required NAS, separate web server, cloud account, automation blueprint, or HA app/add-on.
 
 Delivery order is foundations, watch journal with read-only Now Playing, library browser, playback and controls, then polish. Journal is the default destination; navigation is Journal, Now Playing, Library. Library synchronization and control development must not block recording or browsing viewings.
 
@@ -443,6 +443,6 @@ Temporary downloaded research snapshots reside in `/tmp/kaleidescape-design-rese
 
 ## 16. Project identity and framework baseline
 
-The project and display name are **Kaleidescape**, with code and documentation under `/share/kaleidescape/`. The internal HA integration domain is `kaleidescape_companion` to avoid replacing the built-in `kaleidescape` integration. All proposed custom command/API names in this document use that internal domain; the implemented panel route is `/kaleidescape-companion`.
+The project and display name are **Kaleidescape Companion**. The internal HA integration domain is `kaleidescape_companion` to avoid replacing the built-in **Kaleidescape** integration (`kaleidescape`). All proposed custom command/API names in this document use that internal domain; the implemented panel route is `/kaleidescape-companion`.
 
 The initial manual journal backend now exists: SQLite storage and migrations, administrator-only queries and mutations, JSON/SQLite exports, backup barriers, and lifecycle cleanup. Schema 2 adds automatic source sessions, checkpoint recovery, credits evidence, and protected correction markers to explicit viewing snapshots and retry history. One-player mapping, read-only Now Playing API, and the basic administrator [management UI](ui.md) are implemented; catalog tables, multi-player configuration, live Now Playing UI, and broader product navigation remain planned. See the [backend guide](backend.md) for the implemented API and the [framework status](framework.md) for remaining work. The management panel is packaged and registered in HA, with a shared Vite preview. This design remains the broader implementation target; Phase 1 is not complete and no minimum installed HA release is claimed.

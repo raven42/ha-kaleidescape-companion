@@ -1367,7 +1367,7 @@ const It = ft`
       <header>
         ${this.hass && this.narrow ? d`<button class="menu" aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: !0, composed: !0 }))}>☰</button>` : l}
         <div class="grow">
-          <span class="eyebrow">Kaleidescape · Administrator</span>
+          <span class="eyebrow">Kaleidescape Companion · Administrator</span>
           <h1>Journal management</h1>
           <p>Review recordings and make corrections.</p>
         </div>
@@ -1576,8 +1576,8 @@ const It = ft`
               </div>` : d`<div class="empty">
               <strong>Connect through Home Assistant</strong>
               <p>
-                Open Kaleidescape in HA with an administrator account, or
-                connect the local development preview.
+                Open Kaleidescape Companion in HA with an administrator account,
+                or connect the local development preview.
               </p>
             </div>`}
     </main>`;

@@ -5,11 +5,13 @@ from unittest.mock import patch
 
 import test_backend as backend_tests
 from homeassistant.components import frontend
+from homeassistant.config_entries import ConfigEntries
 
 from custom_components.kaleidescape_companion import (
     async_setup_entry,
     async_unload_entry,
 )
+from custom_components.kaleidescape_companion.const import NAME
 from custom_components.kaleidescape_companion.panel import ASSET, ASSET_URL, PANEL_PATH
 
 
@@ -19,6 +21,7 @@ class PanelTest(unittest.IsolatedAsyncioTestCase):
     async def test_admin_sidebar_and_static_module_are_scoped_to_code(self):
         panel = self.hass.data[frontend.DATA_PANELS][PANEL_PATH]
         self.assertTrue(panel.require_admin)
+        self.assertEqual(panel.sidebar_title, NAME)
         config = panel.config["_panel_custom"]
         self.assertEqual(config["name"], "kaleidescape-panel")
         self.assertTrue(config["module_url"].startswith(ASSET_URL + "?v="))
@@ -33,6 +36,27 @@ class PanelTest(unittest.IsolatedAsyncioTestCase):
         self.addAsyncCleanup(self.entry.runtime_data.repository.async_close)
         self.assertTrue(frontend.async_panel_exists(self.hass, PANEL_PATH))
         self.assertEqual(self.hass.http.async_register_static_paths.call_count, 1)
+
+    async def test_legacy_default_title_updates_and_custom_title_is_preserved(self):
+        await async_unload_entry(self.hass, self.entry)
+        self.hass.config_entries = ConfigEntries(self.hass, {})
+        # Register the existing entry without invoking HA's integration loader.
+        self.hass.config_entries._entries[self.entry.entry_id] = self.entry
+        # HA config-entry persistence is outside this isolated lifecycle fixture.
+        with patch.object(self.hass.config_entries, "_async_schedule_save"):
+            for title, expected in (
+                ("Kaleidescape", NAME),
+                ("My theater journal", "My theater journal"),
+            ):
+                with self.subTest(title=title):
+                    self.hass.config_entries.async_update_entry(self.entry, title=title)
+                    await async_setup_entry(self.hass, self.entry)
+                    self.addAsyncCleanup(self.entry.runtime_data.repository.async_close)
+                    self.assertEqual(self.entry.title, expected)
+                    self.assertEqual(
+                        self.entry.runtime_data.dataset_id, self.scope["dataset_id"]
+                    )
+                    await async_unload_entry(self.hass, self.entry)
 
     async def test_foreign_panel_collision_does_not_overwrite_or_remove_it(self):
         await async_unload_entry(self.hass, self.entry)

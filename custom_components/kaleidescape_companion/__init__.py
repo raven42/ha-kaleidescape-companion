@@ -1,4 +1,4 @@
-"""Home Assistant journal backend for Kaleidescape."""
+"""Home Assistant journal backend for Kaleidescape Companion."""
 
 import logging
 from pathlib import Path
@@ -8,7 +8,7 @@ from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
 
-from .const import DOMAIN
+from .const import DOMAIN, NAME
 from .http import JournalExportView
 from .journal import JournalError
 from .migrations import UnsupportedSchemaError
@@ -45,6 +45,8 @@ async def async_setup_entry(
     runtimes = hass.data.setdefault(DOMAIN, {})
     if runtimes:
         raise ConfigEntryError("Only one household journal entry is supported")
+    if entry.title == "Kaleidescape":
+        hass.config_entries.async_update_entry(entry, title=NAME)
     repository = JournalRepository(Path(hass.config.path(DOMAIN, "journal.sqlite3")))
     try:
         await repository.async_open()

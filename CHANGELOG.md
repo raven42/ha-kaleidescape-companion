@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — Integration display name
+
+- Renamed the integration, setup flow, HA sidebar, HACS listing, and management UI
+  to Kaleidescape Companion to distinguish them from HA's built-in Kaleidescape integration.
+- Existing entries with the old default title update on startup or reload;
+  custom entry titles and the `kaleidescape_companion` domain are preserved.
+
 ## Unreleased — Journal management UI
 
 - Added an administrator HA sidebar panel and shared local Vite management UI.

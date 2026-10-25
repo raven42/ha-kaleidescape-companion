@@ -1,6 +1,6 @@
 {
   "domain": "kaleidescape_companion",
-  "name": "Kaleidescape",
+  "name": "Kaleidescape Companion",
   "codeowners": [],
   "config_flow": true,
   "single_config_entry": true,

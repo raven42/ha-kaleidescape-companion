@@ -1,6 +1,6 @@
 # Minimal local instance: intentionally excludes discovery and default_config.
 homeassistant:
-  name: Kaleidescape Development
+  name: Kaleidescape Companion Development
   latitude: 0
   longitude: 0
   elevation: 0

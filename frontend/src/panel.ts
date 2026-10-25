@@ -594,7 +594,7 @@ export class KaleidescapePanel extends LitElement {
       <header>
         ${this.hass && this.narrow ? html`<button class="menu" aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: true, composed: true }))}>☰</button>` : nothing}
         <div class="grow">
-          <span class="eyebrow">Kaleidescape · Administrator</span>
+          <span class="eyebrow">Kaleidescape Companion · Administrator</span>
           <h1>Journal management</h1>
           <p>Review recordings and make corrections.</p>
         </div>
@@ -627,8 +627,8 @@ export class KaleidescapePanel extends LitElement {
           ? html`<div class="empty">
               <strong>Connect through Home Assistant</strong>
               <p>
-                Open Kaleidescape in HA with an administrator account, or
-                connect the local development preview.
+                Open Kaleidescape Companion in HA with an administrator account,
+                or connect the local development preview.
               </p>
             </div>`
           : !this.info

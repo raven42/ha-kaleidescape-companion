@@ -1,4 +1,4 @@
-# Kaleidescape
+# Kaleidescape Companion
 
 A Home Assistant project for a household watch journal, Now Playing, a local movie library browser, and playback controls.
 
@@ -17,7 +17,7 @@ A Home Assistant project for a household watch journal, Now Playing, a local mov
 
 ## Project identity
 
-The project and display name are **Kaleidescape**. The internal Home Assistant domain is `kaleidescape_companion`: the built-in `kaleidescape` domain must remain available to supply player entities. Never install this project over the built-in integration. The Python client `pykaleidescape` is also an existing, separate project.
+The project and display name are **Kaleidescape Companion**. The internal Home Assistant domain is `kaleidescape_companion`: the built-in **Kaleidescape** integration (`kaleidescape`) must remain available to supply player entities. Never install this project over the built-in integration. The Python client `pykaleidescape` is also an existing, separate project.
 
 ## Layout
 
@@ -75,9 +75,9 @@ bash scripts/dev.sh ha       # http://127.0.0.1:8123
 
 The HA launcher links this checkout's integration into `.ha-dev/custom_components/`
 and keeps HA configuration, credentials, and storage in the ignored `.ha-dev/`
-directory. Complete local HA onboarding, then add **Kaleidescape** under
+directory. Complete local HA onboarding, then add **Kaleidescape Companion** under
 **Settings → Devices & services → Add integration**. Restart HA after backend
-changes. Open **Kaleidescape** in HA's sidebar as an administrator. The standalone
+changes. Open **Kaleidescape Companion** in HA's sidebar as an administrator. The standalone
 Vite preview uses a memory-only token from the local development instance; see
 the [UI guide](docs/ui.md). No entities are created. Enable automatic tracking in the integration’s
 **Configure** options; see the [tracking guide](docs/backend.md#automatic-tracking).

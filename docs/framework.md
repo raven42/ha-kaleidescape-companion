@@ -1,6 +1,6 @@
-# Kaleidescape framework status
+# Kaleidescape Companion framework status
 
-The product name is **Kaleidescape**. `kaleidescape_companion` is an internal HA namespace needed to coexist with the built-in `kaleidescape` integration.
+The product name is **Kaleidescape Companion**. The HA domain `kaleidescape_companion` coexists with the built-in **Kaleidescape** integration (`kaleidescape`).
 
 ## Present
 

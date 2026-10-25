@@ -1,9 +1,9 @@
 {
-  "title": "Kaleidescape",
+  "title": "Kaleidescape Companion",
   "config": {
     "step": {
       "user": {
-        "title": "Kaleidescape",
+        "title": "Kaleidescape Companion",
         "description": "Create or reopen the journal. Optionally observe existing Home Assistant entities to record playback; no player connections or controls are used.",
         "data": {
           "tracking_enabled": "Enable automatic tracking",
@@ -16,7 +16,7 @@
       }
     },
     "abort": {
-      "already_configured": "Kaleidescape is already configured."
+      "already_configured": "Kaleidescape Companion is already configured."
     },
     "error": {
       "missing_entities": "Select all three source entities to enable tracking.",

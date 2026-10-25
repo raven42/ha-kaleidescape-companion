@@ -1,4 +1,4 @@
-# Kaleidescape
+# Kaleidescape Companion
 
 Status: Journal database, authenticated API, automatic tracking, and basic administrator management UI implemented; broader journal/Now Playing UI remains planned.
 Updated: 2026-10-25
@@ -13,7 +13,7 @@ Build a custom Home Assistant integration with a responsive library, now-playing
 
 - Monitor the existing Kaleidescape integration's entities rather than opening a second player connection initially.
 - Own the viewing-session logic and durable journal records.
-- Provide a Kaleidescape sidebar panel for library browsing, playback, current player information, and journal history.
+- Provide a Kaleidescape Companion sidebar panel for library browsing, playback, current player information, and journal history.
 - Expose summary sensors and actions for dashboards and automations.
 - Distribute as a custom integration, potentially through HACS. HACS packaging and eligibility remain to be confirmed.
 
@@ -21,14 +21,14 @@ Build a custom Home Assistant integration with a responsive library, now-playing
 Existing Kaleidescape integration
              |
              v
-Kaleidescape custom integration
+Kaleidescape Companion custom integration
   - playback/session tracker
   - persistent viewing database
   - authenticated journal interface
   - summary sensors and correction actions
              |
              v
-Home Assistant Kaleidescape panel
+Home Assistant Kaleidescape Companion panel
 ```
 
 A custom integration runs within Home Assistant Core. The `/data` convention belongs to separately hosted Home Assistant apps/add-ons, not custom integrations. If SQLite is selected, use an integration-owned database under Home Assistant's configuration directory, resolved through HA's configuration-path APIs. Do not add tables to Recorder or depend on its internal schema.
@@ -290,6 +290,6 @@ The research-backed [technical design document](design.md), dated 2026-10-22, sp
 
 ## Project identity and scaffold
 
-The project is named **Kaleidescape** and lives in `/share/kaleidescape/`. This document is `docs/plan.md`; the technical design is `docs/design.md`. The internal integration domain is `kaleidescape_companion` because the built-in `kaleidescape` integration must remain available as our playback source. The name is an internal namespace, not a second product name.
+The project is named **Kaleidescape Companion**. This document is `docs/plan.md`; the technical design is `docs/design.md`. The internal integration domain is `kaleidescape_companion` because the built-in **Kaleidescape** integration (`kaleidescape`) must remain available as our playback source.
 
 The initial manual journal backend now provides SQLite storage, authenticated queries/mutations, and exports. See the [backend guide](backend.md), [framework status](framework.md), and [development guide](development.md). One-player observation/session rules and read-only Now Playing are now implemented. The administrator [management UI](ui.md) is registered in HA and shared with the local Vite preview. Broader product UI, library, and playback controls remain planned in the agreed order.

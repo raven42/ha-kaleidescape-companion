@@ -157,11 +157,12 @@ export class KaleidescapeDevelopment extends LitElement {
           .client=${this.session.client}
         ></kaleidescape-panel>`;
     return html`<section class="connection">
-      <small>KALEIDESCAPE · LOCAL DEVELOPMENT</small>
+      <small>KALEIDESCAPE COMPANION · LOCAL DEVELOPMENT</small>
       <h1>Connect to your test journal</h1>
       <p>
-        Start the local HA server and add the Kaleidescape integration. Use a
-        token from an administrator account on that development instance.
+        Start the local HA server and add the Kaleidescape Companion
+        integration. Use a token from an administrator account on that
+        development instance.
       </p>
       <p><strong>${DEVELOPMENT_HA}</strong></p>
       <form @submit=${this.connect}>

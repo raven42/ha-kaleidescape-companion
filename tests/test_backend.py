@@ -27,7 +27,7 @@ from custom_components.kaleidescape_companion.backup import (
     async_post_backup,
     async_pre_backup,
 )
-from custom_components.kaleidescape_companion.const import DOMAIN
+from custom_components.kaleidescape_companion.const import DOMAIN, NAME
 from custom_components.kaleidescape_companion.diagnostics import (
     async_get_config_entry_diagnostics,
 )
@@ -42,7 +42,7 @@ def entry():
         version=1,
         minor_version=1,
         domain=DOMAIN,
-        title="Kaleidescape",
+        title=NAME,
         data={},
         options={},
         source="user",

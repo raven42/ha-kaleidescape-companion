@@ -9,11 +9,14 @@ exposed. Library browsing, live Now Playing, and playback controls remain later 
 ## Open in Home Assistant
 
 Build the frontend with `npm --prefix frontend run build`, restart HA, and add
-the Kaleidescape integration if it is not already configured. Open **Kaleidescape**
+the Kaleidescape Companion integration if it is not already configured. Open **Kaleidescape Companion**
 in the sidebar, or visit `/kaleidescape-companion` on that HA instance. The panel
 requires an administrator and uses the existing signed-in HA connection. No
 extra token is needed. Rebuild after frontend edits, reload the integration to
 refresh the asset URL, and reload the browser page to load the new component.
+
+Existing entries with the old default title **Kaleidescape** are renamed to
+**Kaleidescape Companion** on startup or reload. Custom entry titles are preserved.
 
 Only the compiled JavaScript file is registered as a static resource. The storage
 directory is never served statically. Unloading the integration removes its panel;
@@ -29,7 +32,7 @@ bash scripts/dev.sh preview
 ```
 
 1. Complete onboarding at `http://127.0.0.1:8123` using an isolated development
-   account and add Kaleidescape.
+   account and add Kaleidescape Companion.
 2. Create a long-lived access token in that development administrator's HA profile.
 3. Open `http://127.0.0.1:5173` and enter the token in **Development access token**.
 4. Choose **Connect**. On completion, the input is cleared and the management UI opens.
