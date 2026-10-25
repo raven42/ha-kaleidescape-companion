@@ -72,10 +72,16 @@ HA's upstream development container is another option:
 
 Open the repository folder in VS Code and use **Tasks: Run Task** from the
 Command Palette. Run **Setup dependencies** for a new checkout. **Tasks: Run
-Build Task** builds and packages the frontend; **Tasks: Run Test Task** runs
+Build Task** runs the checks/build and creates an integration archive; **Tasks: Run Test Task** runs
 **Check all**, including the build, Python tests, scaffold validation, lint,
 and formatting checks. Each check is also available as an individual task.
 Python tasks use `.venv` directly, so shell activation is unnecessary.
+
+**Build frontend** remains available for a quicker frontend-only build.
+For a remote test instance, initialize the ignored deployment settings, review
+**Preview test HA deployment**, then run **Deploy to test HA**. Restart is a separate
+task, or use **Build, deploy and restart test HA** for the explicit combined action.
+Both HA OS and Container targets are configurable; see the [deployment guide](deployment.md).
 
 **Run frontend preview** and **Run Home Assistant** each use a dedicated
 terminal. Stop them with **Tasks: Terminate Task** or Ctrl+C. Servers are

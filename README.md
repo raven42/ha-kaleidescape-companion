@@ -9,6 +9,7 @@ A Home Assistant project for a household watch journal, Now Playing, a local mov
 - [Product plan](docs/plan.md)
 - [Technical design and research](docs/design.md)
 - [Development guide](docs/development.md)
+- [Build and deploy to test HA](docs/deployment.md)
 - [Security policy, trust boundaries, and hardening](docs/security.md)
 - [Journal backend and API](docs/backend.md)
 - [Journal management UI](docs/ui.md)
@@ -94,6 +95,11 @@ See the [development guide](docs/development.md#development-setup) for
 configuration details. The optional `bash scripts/dev.sh setup` performs the
 venv/editable-install/npm steps above; `bash scripts/dev.sh check` runs all checks
 and the frontend build.
+
+VS Code's default build task also creates `dist/kaleidescape-companion.tar.gz`.
+Configurable SSH tasks deploy to a test HA OS or Container instance, with an
+offline target preview and a separate configuration-check/restart task. See the
+[deployment guide](docs/deployment.md); build and test tasks never deploy automatically.
 
 ## Delivery order
 

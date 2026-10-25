@@ -25,3 +25,4 @@ frontend/dist/
 !.vscode/
 .vscode/*
 !.vscode/tasks.json
+!.vscode/ha-deploy.example.json

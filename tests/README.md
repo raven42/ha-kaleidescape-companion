@@ -29,6 +29,14 @@ with an ephemeral loopback listener and checks that custom environment values ar
 not exposed. Both suites are part of the default checks. Follow the
 [security policy](../docs/security.md) when adding tests or changing boundaries.
 
+`test_deploy.py` verifies runtime archive contents, linked-source rejection,
+settings validation, SSH argument/host-key protections, offline previews, and task
+dependency boundaries. It exercises staging, linked-path rejection, deployment
+locking, and failure recovery through a local shell with fictional temporary
+files. It never opens an SSH connection or restarts HA/Docker. Real target access,
+permissions, CLI availability, and startup remain operator validation tasks; see
+the [deployment guide](../docs/deployment.md).
+
 Run `python scripts/check_scaffold.py` for syntax, metadata, namespace,
 translation, local Markdown-link, and bundle checks. The default VS Code
 **Check all** task and `bash scripts/dev.sh check` run both suites plus Ruff

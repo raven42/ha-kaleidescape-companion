@@ -1,0 +1,7 @@
+{
+  "ssh_host": "ha-test",
+  "config_path": "/config",
+  "restart": {
+    "type": "haos"
+  }
+}

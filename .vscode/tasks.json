@@ -27,10 +27,58 @@
       "problemMatcher": [
         "$tsc"
       ],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      }
+      "group": "build"
+    },
+    {
+      "label": "Build integration package",
+      "type": "process",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": ["scripts/deploy.py", "package"],
+      "dependsOn": ["Check all"],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "Initialize deployment settings",
+      "type": "process",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": ["scripts/deploy.py", "init"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Preview test HA deployment",
+      "type": "process",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": ["scripts/deploy.py", "plan"],
+      "dependsOn": ["Build integration package"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Deploy to test HA",
+      "type": "process",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": ["scripts/deploy.py", "deploy"],
+      "dependsOn": ["Build integration package"],
+      "problemMatcher": [],
+      "presentation": { "panel": "dedicated", "reveal": "always" },
+      "runOptions": { "instanceLimit": 1 }
+    },
+    {
+      "label": "Check configuration and restart test HA",
+      "type": "process",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": ["scripts/deploy.py", "restart"],
+      "problemMatcher": [],
+      "presentation": { "panel": "dedicated", "reveal": "always" },
+      "runOptions": { "instanceLimit": 1 }
+    },
+    {
+      "label": "Build, deploy and restart test HA",
+      "dependsOn": ["Deploy to test HA", "Check configuration and restart test HA"],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "runOptions": { "instanceLimit": 1 }
     },
     {
       "label": "Test Python",

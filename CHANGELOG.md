@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased — Test deployment tasks
+
+- Added a default integration-package build and configurable SSH deployment tasks
+  for HA OS and Container, including offline target preview and separate check/restart.
+- Limited packages to runtime files and preserved journal storage during staged
+  deployment; retained previous component files for manual recovery.
+- Added ignored local target settings, deployment/security guidance, and isolated
+  packaging, path, command, locking, and failure-recovery tests.
+
 ## Unreleased — Integration display name
 
 - Renamed the integration, setup flow, HA sidebar, HACS listing, and management UI

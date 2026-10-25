@@ -15,6 +15,7 @@ not a claim of independent security certification.
 | HA → devices and services | Current observation reads selected HA entity states and sends no device requests or controls. Future connectors may contact only configured destinations using explicitly supported operations. |
 | Device/imported data → storage and UI | Treat metadata, notes, HTML, image references, and imported files as untrusted, including data from local devices. Validate before storing or using it, and render text without executing markup. |
 | Storage → filesystem and exports | Journal contents, source identifiers, audit actors, backups, and retry responses are private household data. Keep them outside static web roots and access them through the authenticated API. |
+| Development machine → test HA deployment | Deployment is an explicit privileged SSH operation. Verify the host key and target, send only the runtime package, and configure restart through fixed HA OS/Container commands. Normal checks must never connect to or modify the target. |
 
 The integration does not add its own web server, database listener, identity
 system, or general-purpose HA action/SQL/file proxy. Compiled panel assets may be
@@ -146,6 +147,38 @@ Dependabot configuration requests weekly Python, npm, and CI-action updates when
 enabled on the hosting repository. Audit results require assessment and fixes;
 a successful build is not a vulnerability scan. Runtime HA dependencies remain
 HA-managed; this integration currently declares no additional Python libraries.
+
+### Test deployment
+
+The [deployment tasks](deployment.md) run on the development machine. Only explicit
+deployment/restart tasks may contact the configured SSH target. Build, preview,
+and normal checks remain local; shell regression tests use temporary fictional
+directories. Keep target settings in ignored `.vscode/ha-deploy.json` and SSH
+authentication in the operator's SSH configuration. Require known host keys,
+key/agent authentication, and disabled agent forwarding. HA receives no GitHub
+credentials. The SSH account and any Docker/HA CLI permissions are privileged;
+this deployment tool does not restrict an otherwise privileged SSH account.
+
+Validate the SSH alias, absolute config path, and restart settings before connecting.
+Use process argument arrays locally, quote remote positional paths, and permit only
+fixed HA OS or named-container configuration-check/restart commands. Never accept
+an arbitrary remote shell command from settings. Runtime archives are constructed
+locally from approved Python/JSON/bundle files, capped at 32 MiB of file contents,
+and reject linked sources. They contain no journal, logs, environment files, or
+development credentials. Package hashes identify bytes; they do not authenticate
+an untrusted build or establish target-version compatibility.
+
+Remote deployment rejects linked configuration paths and destinations, uses a
+per-config deployment lock, stages outside static resources, retains old code in
+a private directory, and replaces only the companion component. Keep configuration
+ancestors operator-controlled; these checks are not a sandbox against another
+process with the same filesystem privileges. Deployment leaves HA running and
+restart is explicit. Concurrent restarts/updates through other tools are unsupported.
+Retained code copies are not database backups, interrupted replacement is not a
+crash-safe transaction, and code rollback cannot reverse a schema migration.
+Inspect interrupted operations and take compatible HA/data backups before updates.
+Configuration checking and a successful restart command do not verify that the
+integration loaded; the operator reviews startup and the browser afterward.
 
 ### Known dependency findings (2026-10-25)
 

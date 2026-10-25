@@ -23,6 +23,8 @@ The product name is **Kaleidescape Companion**. The HA domain `kaleidescape_comp
   and proxy security tests, TypeScript checks, formatting, and packaged ES module.
 - Remaining boundaries for sensors, library, artwork, live Now Playing UI, and controls.
 - Scaffold validation script and continuous-integration workflow.
+- Runtime-only archives and explicit VS Code SSH deployment tasks for HA OS/Container,
+  with a local target preview, retained previous code, and separate check/restart.
 - [Product plan](plan.md), [technical design](design.md), and [development guide](development.md).
 
 ## Deferred
