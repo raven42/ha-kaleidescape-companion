@@ -19,6 +19,7 @@ export const info: JournalInfo = {
   database_limit_bytes: 268435456,
   backup_in_progress: false,
   tracking_enabled: true,
+  permissions: { read: true, edit: true, export: true },
 };
 export function record(overrides: Partial<Viewing> = {}): Viewing {
   return {

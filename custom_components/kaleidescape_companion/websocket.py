@@ -1,4 +1,4 @@
-"""Admin-only journal API over HA's authenticated WebSocket connection."""
+"""Household journal reads and administrator management through HA authentication."""
 
 from typing import Any
 
@@ -9,7 +9,26 @@ from homeassistant.core import HomeAssistant, callback
 from .const import DOMAIN
 from .journal import JournalError
 from .runtime import get_runtime
-from .security import is_active_admin
+from .security import is_active_admin, is_active_user
+
+READ_OPERATIONS = frozenset({"info", "journal/list", "journal/get"})
+PUBLIC_FIELDS = frozenset(
+    {
+        "id",
+        "title",
+        "started_at",
+        "ended_at",
+        "duration_seconds",
+        "watched_seconds",
+        "status",
+        "origin",
+    }
+)
+
+
+def public_viewing(record: dict) -> dict:
+    """Use a positive allowlist so future private fields cannot leak into reads."""
+    return {key: value for key, value in record.items() if key in PUBLIC_FIELDS}
 
 
 @callback
@@ -59,13 +78,14 @@ async def async_handle(
 ) -> None:
     """Reject unauthorized calls before reading private metadata or storage."""
     user = connection.user
-    if not is_active_admin(user):
+    operation = msg["type"].removeprefix(f"{DOMAIN}/")
+    admin = is_active_admin(user)
+    if not is_active_user(user) or (operation not in READ_OPERATIONS and not admin):
         connection.send_error(
-            msg["id"], "unauthorized", "Administrator access required"
+            msg["id"], "unauthorized", "Access to this journal operation is denied"
         )
         return
     try:
-        operation = msg["type"].removeprefix(f"{DOMAIN}/")
         if operation == "info":
             entries = []
             for entry_id, runtime in list(hass.data.get(DOMAIN, {}).items()):
@@ -73,17 +93,33 @@ async def async_handle(
                     metadata = await runtime.repository.async_info()
                     if not runtime.ready:
                         continue
+                    if not admin:
+                        metadata = {
+                            key: metadata[key]
+                            for key in ("dataset_id", "revision", "viewing_count")
+                        }
                     entries.append(
                         {
                             "entry_id": entry_id,
                             **metadata,
                             "api_version": 1,
-                            "tracking_enabled": runtime.observer is not None,
-                            "features": {
-                                "manual_journal": True,
-                                "automatic_tracking": True,
-                                "now_playing": True,
+                            "permissions": {
+                                "read": True,
+                                "edit": admin,
+                                "export": admin,
                             },
+                            **(
+                                {
+                                    "tracking_enabled": runtime.observer is not None,
+                                    "features": {
+                                        "manual_journal": True,
+                                        "automatic_tracking": True,
+                                        "now_playing": True,
+                                    },
+                                }
+                                if admin
+                                else {}
+                            ),
                         }
                     )
             result = {"entries": entries}
@@ -97,6 +133,8 @@ async def async_handle(
                     )
                 case "journal/get":
                     result = await repository.async_get(msg["viewing_id"])
+                    if not admin:
+                        result = public_viewing(result)
                 case "journal/sessions":
                     result = await repository.async_sessions(msg["viewing_id"])
                 case "now_playing":
@@ -112,6 +150,10 @@ async def async_handle(
                         limit=msg.get("limit", 50),
                         cursor=msg.get("cursor"),
                     )
+                    if not admin:
+                        result["items"] = [
+                            public_viewing(row) for row in result["items"]
+                        ]
                 case "journal/update":
                     result = await repository.async_update(
                         msg["request_id"],
@@ -131,7 +173,7 @@ async def async_handle(
                     raise JournalError("invalid_request", "Unknown journal command")
         # Accepted writes still commit; do not disclose private results if access
         # changed while the worker was running.
-        if not is_active_admin(user):
+        if not is_active_user(user) or is_active_admin(user) != admin:
             connection.send_error(
                 msg["id"], "unauthorized", "Administrator access required"
             )

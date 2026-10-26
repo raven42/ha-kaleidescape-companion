@@ -9,9 +9,10 @@ not a claim of independent security certification.
 
 | Boundary | Policy and limitation |
 | --- | --- |
-| Browser → integration API | Use HA authentication and server-side authorization for every operation. Current journal access, Now Playing, and exports require an active administrator. Dataset IDs select data; they are not credentials. |
+| Browser → integration API | Active authenticated HA users may read the shared household viewing summary. Mutations, notes/source/session details, Now Playing, and exports require an active administrator. Dataset IDs select data; they are not credentials. |
 | Integration → HA | Custom integrations execute in Core's process with Core's filesystem, entity, credential, and network access. Entity selection is application behavior, not a sandbox. Other code running as HA can read this database. |
-| HA users → one another | HA treats authenticated users as trusted. Our administrator checks reduce exposure of our endpoints, but HA roles are not strong isolation between hostile users. Sharing requires an explicit read/edit/export policy and server-side tests before implementation. |
+| HA users → one another | All active users share one household journal; there is no personal watch history or per-user journal ownership. A positive field allowlist limits regular-user API responses. HA roles are not strong isolation between hostile authenticated users. |
+| Journal → HA entity states | Watch-history sensor states/attributes deliberately expose movie titles, times, and counts through HA entity access. Recorder, dashboards, automations, and backups can retain these values outside the private database. Notes, source identities, sessions, and audit actors must never enter sensors. |
 | HA → devices and services | Current observation reads selected HA entity states and sends no device requests or controls. Future connectors may contact only configured destinations using explicitly supported operations. |
 | Device/imported data → storage and UI | Treat metadata, notes, HTML, image references, and imported files as untrusted, including data from local devices. Validate before storing or using it, and render text without executing markup. |
 | Storage → filesystem and exports | Journal contents, source identifiers, audit actors, backups, and retry responses are private household data. Keep them outside static web roots and access them through the authenticated API. |
@@ -29,8 +30,10 @@ framework alone does not establish isolation.
 
 ## Implemented backend protections
 
-- WebSocket commands and HTTP downloads share an active-administrator check,
-  applied before storage access and again before returning private data.
+- WebSocket reads require an active authenticated user; management operations
+  and HTTP downloads require an active administrator. Check before storage access
+  and after awaited work. A change in active/admin status during a request withholds
+  its result, including an administrator response after a downgrade.
 - Entry/dataset scoping is validated on every request. Schemas reject unexpected
   fields, and record validation bounds lengths, numbers, dates, and result pages.
 - SQLite values use parameters. Database paths and SQL identifiers are internal;
@@ -104,6 +107,35 @@ responses, and abort exports. Downloads have a browser byte limit and temporary
 object URLs are revoked; already downloaded files remain the operator's responsibility.
 The [UI guide](ui.md) documents behavior and test limitations. The explicit layout
 review fixture uses fictional data and is excluded from the packaged panel.
+
+## Household read access and sensors
+
+| Capability | Active regular/read-only HA user | Active administrator |
+| --- | --- | --- |
+| Shared sidebar journal, search/filter/pagination | Allowed | Allowed |
+| Viewing title, start/end times, runtime, watched time, status, origin | Allowed | Allowed |
+| Notes, raw source/player/content identifiers, session evidence, storage health | Denied by the integration API | Allowed |
+| Create/correct/delete, Now Playing, JSON/SQLite export | Denied | Allowed |
+
+Anonymous and inactive users are denied all journal operations. Regular-user
+`info` returns only API version, scope, revision, visible-record count, and
+permissions. `journal/list` and `journal/get` use a positive record-field allowlist;
+adding a database column must not implicitly expose it. Deletion tombstones are
+excluded from these reads. Mutation authorization is enforced on the server;
+hiding editor/export controls is not authorization. Known user/connection/role
+changes clear the browser's old data and ignore late responses. Browser downloads
+and data already observed cannot be recalled when access changes.
+
+The household [history sensors](sensors.md) publish completed-viewing history and
+unfinished partial titles as explicitly requested. Lists are bounded to the newest
+50 titles and 8 KiB of UTF-8 JSON, with a truncation flag; counts stay exact. The
+full last title is an attribute, while its state respects HA's 255-character limit.
+They contain no notes, audit metadata, raw identifiers, or private filesystem paths.
+Their visibility follows HA's entity permissions and wider trust model; they are
+not protected by the journal API's administrator checks. Account for Recorder and
+external automations when deciding history retention and who can access HA.
+These summaries refresh from one local worker query every 30 seconds while entities
+are enabled, with no device/network polling. Failed refreshes mark sensors unavailable.
 
 ## Future connectors, controls, and sharing
 

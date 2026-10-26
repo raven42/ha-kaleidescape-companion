@@ -11,7 +11,9 @@ exposed. Library browsing, live Now Playing, and playback controls remain later 
 Build the frontend with `npm --prefix frontend run build`, restart HA, and add
 the Kaleidescape Companion integration if it is not already configured. Open **Kaleidescape Companion**
 in the sidebar, or visit `/kaleidescape-companion` on that HA instance. The panel
-requires an administrator and uses the existing signed-in HA connection. No
+uses the existing signed-in HA connection. Active regular users see a read-only
+household journal with title search, status filters, pagination, and viewing times.
+Administrators retain the management UI, notes/session details, health, and exports. No
 extra token is needed. Rebuild after frontend edits, reload the integration to
 refresh the asset URL, and reload the browser page to load the new component.
 
@@ -33,11 +35,17 @@ bash scripts/dev.sh preview
 
 1. Complete onboarding at `http://127.0.0.1:8123` using an isolated development
    account and add Kaleidescape Companion.
-2. Create a long-lived access token in that development administrator's HA profile.
+2. Create a long-lived access token in that development user's HA profile.
 3. Open `http://127.0.0.1:5173` and enter the token in **Development access token**.
 4. Choose **Connect**. On completion, the input is cleared and the management UI opens.
 5. Choose **Disconnect** when finished. Revoke the development token in HA when
    it is no longer needed; disconnecting the UI does not revoke it at the server.
+
+Use a regular development account to review the household reader and an
+administrator account to review editing and exports. Regular-user API responses
+contain only titles, times, runtime, watched time, status, origin, and record IDs;
+notes, source IDs, and session evidence remain administrator-only. All accounts
+see the same household journal, rather than separate personal watch histories.
 
 The preview connects only to `http://127.0.0.1:8123`. The token is held in memory,
 never saved to browser storage, environment variables, source, or URLs. Reloading

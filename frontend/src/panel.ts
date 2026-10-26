@@ -12,6 +12,8 @@ import type {
 import { draftData, draftFrom } from "./editor";
 import type { Draft } from "./editor";
 import { styles } from "./styles";
+import "./reader";
+import type { ViewingSummary } from "./api";
 
 export class KaleidescapePanel extends LitElement {
   static properties = {
@@ -31,7 +33,7 @@ export class KaleidescapePanel extends LitElement {
   private listRequest = 0;
   private detailRequest = 0;
   private info: JournalInfo | null = null;
-  private rows: Viewing[] = [];
+  private rows: ViewingSummary[] = [];
   private selected: Viewing | null = null;
   private draft: Draft | null = null;
   private initial: Draft | null = null;
@@ -155,6 +157,7 @@ export class KaleidescapePanel extends LitElement {
       if (!entries.length) throw new ApiError("not_ready");
       if (entries[0].api_version !== 1) throw new ApiError("not_ready");
       this.info = entries[0];
+      if (!this.info.permissions.edit) return;
       this.history = [];
       this.cursor = undefined;
       this.page = 1;
@@ -589,6 +592,16 @@ export class KaleidescapePanel extends LitElement {
     </form>`;
   }
   protected render() {
+    if (
+      (this.hass?.user && !this.hass.user.is_admin) ||
+      (this.info && !this.info.permissions.edit)
+    ) {
+      return html`<kaleidescape-reader
+        .hass=${this.hass}
+        .client=${this.hass ? undefined : this.client}
+        .narrow=${this.narrow}
+      ></kaleidescape-reader>`;
+    }
     const blocked = this.loading || this.saving || !!this.pending;
     return html`<main>
       <header>
@@ -598,13 +611,17 @@ export class KaleidescapePanel extends LitElement {
           <h1>Journal management</h1>
           <p>Review recordings and make corrections.</p>
         </div>
-        <button
-          class="primary"
-          ?disabled=${!this.info || blocked}
-          @click=${this.newRecord}
-        >
-          ＋ Add viewing
-        </button>
+        ${
+          this.info?.permissions.edit
+            ? html`<button
+                class="primary"
+                ?disabled=${!this.info || blocked}
+                @click=${this.newRecord}
+              >
+                ＋ Add viewing
+              </button>`
+            : nothing
+        }
       </header>
       ${this.error ? html`<div class="error" role="alert">${this.error}${this.lastError === "conflict" && this.selected ? html` <button ?disabled=${blocked} @click=${() => this.selectRecord(this.selected!.id)}>Reload entry</button>` : nothing}</div>` : nothing}
       ${this.notice ? html`<div class="notice" role="status">${this.notice}</div>` : nothing}
@@ -645,9 +662,11 @@ export class KaleidescapePanel extends LitElement {
                   </div>
                   <div class="metric">
                     <small>Database size</small
-                    ><strong>${this.bytes(this.info.database_bytes)}</strong
+                    ><strong
+                      >${this.bytes(this.info.database_bytes ?? 0)}</strong
                     ><small
-                      >of ${this.bytes(this.info.database_limit_bytes)}</small
+                      >of
+                      ${this.bytes(this.info.database_limit_bytes ?? 0)}</small
                     >
                   </div>
                   <div class="metric">

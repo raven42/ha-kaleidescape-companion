@@ -16,6 +16,11 @@ def is_active_admin(user: User | None) -> bool:
     return user is not None and user.is_active and user.is_admin
 
 
+def is_active_user(user: User | None) -> bool:
+    """Permit household viewing only for an authenticated, active HA user."""
+    return user is not None and user.is_active
+
+
 def _owned(info: os.stat_result) -> None:
     if info.st_uid != os.getuid():
         raise PermissionError("Journal storage must be owned by the HA user")

@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import EVENT_HOMEASSISTANT_STOP
+from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
 
@@ -21,6 +21,7 @@ from .websocket import async_register_commands
 type KaleidescapeConfigEntry = ConfigEntry[KaleidescapeRuntime]
 
 _LOGGER = logging.getLogger(__name__)
+PLATFORMS = [Platform.SENSOR]
 
 
 async def _async_close_runtime(
@@ -62,6 +63,7 @@ async def async_setup_entry(
         raise
     runtime = entry.runtime_data = KaleidescapeRuntime(repository, info["dataset_id"])
     panel_registered = False
+    platforms_started = False
     try:
         if not hass.data.get(f"{DOMAIN}.api_registered"):
             async_register_commands(hass)
@@ -74,6 +76,8 @@ async def async_setup_entry(
             await runtime.observer.async_start()
         await async_setup_panel(hass)
         panel_registered = True
+        platforms_started = True
+        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
         async def async_stop(_event) -> None:
             await _async_close_runtime(runtime)
@@ -82,10 +86,14 @@ async def async_setup_entry(
             hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, async_stop)
         )
     except BaseException:
-        if panel_registered:
-            async_remove_panel(hass)
-        runtimes.pop(entry.entry_id, None)
-        await _async_close_runtime(runtime)
+        try:
+            if platforms_started:
+                await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+        finally:
+            if panel_registered:
+                async_remove_panel(hass)
+            runtimes.pop(entry.entry_id, None)
+            await _async_close_runtime(runtime)
         raise
     return True
 
@@ -95,6 +103,8 @@ async def async_unload_entry(
 ) -> bool:
     """Drain accepted writes and retain the database for reload or reinstallation."""
     runtime = entry.runtime_data
+    if not await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
+        return False
     config = dict(entry.options or entry.data)
     reason = None
     if runtime.observer:

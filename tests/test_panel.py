@@ -1,7 +1,7 @@
 """Verify sidebar lifecycle and the static asset trust boundary."""
 
 import unittest
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import test_backend as backend_tests
 from homeassistant.components import frontend
@@ -20,7 +20,7 @@ class PanelTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_admin_sidebar_and_static_module_are_scoped_to_code(self):
         panel = self.hass.data[frontend.DATA_PANELS][PANEL_PATH]
-        self.assertTrue(panel.require_admin)
+        self.assertFalse(panel.require_admin)
         self.assertEqual(panel.sidebar_title, NAME)
         config = panel.config["_panel_custom"]
         self.assertEqual(config["name"], "kaleidescape-panel")
@@ -43,7 +43,20 @@ class PanelTest(unittest.IsolatedAsyncioTestCase):
         # Register the existing entry without invoking HA's integration loader.
         self.hass.config_entries._entries[self.entry.entry_id] = self.entry
         # HA config-entry persistence is outside this isolated lifecycle fixture.
-        with patch.object(self.hass.config_entries, "_async_schedule_save"):
+        with (
+            patch.object(self.hass.config_entries, "_async_schedule_save"),
+            patch.object(
+                self.hass.config_entries,
+                "async_forward_entry_setups",
+                new_callable=AsyncMock,
+            ),
+            patch.object(
+                self.hass.config_entries,
+                "async_unload_platforms",
+                new_callable=AsyncMock,
+                return_value=True,
+            ),
+        ):
             for title, expected in (
                 ("Kaleidescape", NAME),
                 ("My theater journal", "My theater journal"),

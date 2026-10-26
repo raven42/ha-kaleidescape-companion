@@ -13,6 +13,7 @@ A Home Assistant project for a household watch journal, Now Playing, a local mov
 - [Security policy, trust boundaries, and hardening](docs/security.md)
 - [Journal backend and API](docs/backend.md)
 - [Journal management UI](docs/ui.md)
+- [Watch-history sensors](docs/sensors.md)
 - [Framework status](docs/framework.md)
 - [Changelog](CHANGELOG.md)
 
@@ -80,7 +81,9 @@ directory. Complete local HA onboarding, then add **Kaleidescape Companion** und
 **Settings → Devices & services → Add integration**. Restart HA after backend
 changes. Open **Kaleidescape Companion** in HA's sidebar as an administrator. The standalone
 Vite preview uses a memory-only token from the local development instance; see
-the [UI guide](docs/ui.md). No entities are created. Enable automatic tracking in the integration’s
+the [UI guide](docs/ui.md). Seven [history sensors](docs/sensors.md) are created.
+Regular HA users can browse the household journal; administration remains restricted.
+Enable automatic tracking in the integration’s
 **Configure** options; see the [tracking guide](docs/backend.md#automatic-tracking).
 
 An editable pip install prepares Python imports and tools; HA discovers custom

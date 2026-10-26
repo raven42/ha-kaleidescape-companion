@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased — Household readers and history sensors
+
+- Added active-user household journal browsing with bounded read responses;
+  notes, source/session details, mutations, and exports remain administrator-only.
+- Added a dedicated read-only sidebar view, including search, status filters,
+  pagination, and cache cleanup when connections/accounts change.
+- Added completed-history title/list/count sensors and a separate unfinished
+  partial-viewings sensor, refreshed together every 30 seconds.
+- Documented shared-history visibility, Recorder implications, rolling windows,
+  bounded lists, and operator browser review.
+
 ## Unreleased — Test deployment tasks
 
 - Fixed deployment through linked configuration aliases such as `/config` by

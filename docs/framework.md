@@ -7,7 +7,8 @@ The product name is **Kaleidescape Companion**. The HA domain `kaleidescape_comp
 - Repository layout, editor settings, ignore rules, and version metadata.
 - Config flow and runtime lifecycle for one household journal, retaining data on unload/removal.
 - SQLite schema/migrations and a dedicated worker for transactional manual journal records.
-- Administrator-only WebSocket create/get/list/update/delete API, optimistic revisions, and durable request deduplication.
+- Active-user journal reads and administrator-only create/update/delete API,
+  optimistic revisions, and durable request deduplication.
 - Authenticated JSON/SQLite exports, HA backup write barriers, and content-free diagnostics.
 - Private storage permissions, linked-path rejection, bounded exports/database growth,
   and transactional attribution of manual changes (schema 3).
@@ -21,7 +22,11 @@ The product name is **Kaleidescape Companion**. The HA domain `kaleidescape_comp
   pagination, session evidence, database health, and JSON/SQLite downloads.
 - Memory-only development connection, restricted local export proxy, component
   and proxy security tests, TypeScript checks, formatting, and packaged ES module.
-- Remaining boundaries for sensors, library, artwork, live Now Playing UI, and controls.
+- A read-only household sidebar view for regular users, with server-side field
+  allowlists and administrator-only notes, source/session details, and exports.
+- Seven [watch-history sensors](sensors.md) for completed history and unfinished
+  partial viewings, with shared polling, bounded title lists, and exact counts.
+- Remaining boundaries for library, artwork, live Now Playing UI, and controls.
 - Scaffold validation script and continuous-integration workflow.
 - Runtime-only archives and explicit VS Code SSH deployment tasks for HA OS/Container,
   with a local target preview, retained previous code, and separate check/restart.
@@ -30,7 +35,7 @@ The product name is **Kaleidescape Companion**. The HA domain `kaleidescape_comp
 ## Deferred
 
 Multi-player configuration, live subscriptions, catalog synchronization,
-artwork, sensors, sharing permissions,
+artwork, per-user ownership/selective sharing,
 and playback controls remain deferred. The basic management panel is registered in HA;
 broader product UI and real-browser compatibility/accessibility checks remain.
 JSON import and permanent purge are also deferred; SQLite restore is documented.

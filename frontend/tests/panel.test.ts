@@ -155,7 +155,7 @@ describe("journal management", () => {
     input("notes", "private draft");
     transport.failure = "unauthorized";
     await save();
-    await waitFor("Administrator access is required");
+    await waitFor("Access to this operation is denied");
     expect(panel.shadowRoot!.textContent).not.toContain("The Lantern Voyage");
     expect(panel.shadowRoot!.querySelector("textarea")).toBeNull();
   });
@@ -229,7 +229,10 @@ describe("journal management", () => {
     panel.hass = { ...hass, user: { id: "test-admin", is_admin: false } };
     await settle();
     expect(panel.shadowRoot!.textContent).not.toContain("The Lantern Voyage");
-    expect(transport.calls).toHaveLength(calls);
+    expect(transport.calls.length).toBeGreaterThan(calls);
+    expect(
+      panel.shadowRoot!.querySelector("kaleidescape-reader"),
+    ).not.toBeNull();
   });
 });
 

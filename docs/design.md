@@ -4,8 +4,11 @@ Date: 2026-10-22
 Status: Research-backed design draft; framework scaffold created, feature implementation pending; no device controls performed.  
 Companion: [Product plan](plan.md)
 
-The [security policy](security.md) governs all implementation phases. Current
-access remains administrator-only; sharing below describes future functionality.
+The [security policy](security.md) governs all implementation phases. Active users
+can now browse the shared household journal through a field-limited read API;
+management, notes/source/session details, and exports remain administrator-only.
+The [history sensors](sensors.md) expose bounded household summaries through HA.
+More selective sharing below describes future functionality.
 Custom integrations run with HA's privileges, and HA roles do not provide strong
 isolation between mutually untrusted users. Schema 3 adds transactional manual
 audit attribution and storage/export hardening to the implemented journal.
@@ -445,4 +448,4 @@ Temporary downloaded research snapshots reside in `/tmp/kaleidescape-design-rese
 
 The project and display name are **Kaleidescape Companion**. The internal HA integration domain is `kaleidescape_companion` to avoid replacing the built-in **Kaleidescape** integration (`kaleidescape`). All proposed custom command/API names in this document use that internal domain; the implemented panel route is `/kaleidescape-companion`.
 
-The initial manual journal backend now exists: SQLite storage and migrations, administrator-only queries and mutations, JSON/SQLite exports, backup barriers, and lifecycle cleanup. Schema 2 adds automatic source sessions, checkpoint recovery, credits evidence, and protected correction markers to explicit viewing snapshots and retry history. One-player mapping, read-only Now Playing API, and the basic administrator [management UI](ui.md) are implemented; catalog tables, multi-player configuration, live Now Playing UI, and broader product navigation remain planned. See the [backend guide](backend.md) for the implemented API and the [framework status](framework.md) for remaining work. The management panel is packaged and registered in HA, with a shared Vite preview. This design remains the broader implementation target; Phase 1 is not complete and no minimum installed HA release is claimed.
+The initial manual journal backend now exists: SQLite storage and migrations, active-user summary reads, administrator-only mutations and JSON/SQLite exports, backup barriers, and lifecycle cleanup. Schema 2 adds automatic source sessions, checkpoint recovery, credits evidence, and protected correction markers to explicit viewing snapshots and retry history. One-player mapping, read-only Now Playing API, and the basic administrator [management UI](ui.md) are implemented; catalog tables, multi-player configuration, live Now Playing UI, and broader product navigation remain planned. See the [backend guide](backend.md) for the implemented API and the [framework status](framework.md) for remaining work. The management panel is packaged and registered in HA, with a shared Vite preview. This design remains the broader implementation target; Phase 1 is not complete and no minimum installed HA release is claimed.

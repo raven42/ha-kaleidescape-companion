@@ -77,5 +77,7 @@ it("does not render error details or credentials supplied by the server", () => 
       message: "private-token <script>attack</script>",
     }),
   ).not.toContain("private-token");
-  expect(errorMessage(new ApiError("unauthorized"))).toContain("Administrator");
+  expect(errorMessage(new ApiError("unauthorized"))).toContain(
+    "Access to this operation is denied",
+  );
 });

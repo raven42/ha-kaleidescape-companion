@@ -46,5 +46,30 @@
       "duplicate_entities": "Choose different sensors for play status and media location.",
       "invalid_rules": "Choose valid completion and partial-resume values."
     }
+  },
+  "entity": {
+    "sensor": {
+      "last_watched_movie": {
+        "name": "Last watched movie"
+      },
+      "movies_7_days": {
+        "name": "Movies watched last 7 days"
+      },
+      "movies_30_days": {
+        "name": "Movies watched last 30 days"
+      },
+      "completed_7_days": {
+        "name": "Movies watched last 7 days count"
+      },
+      "completed_30_days": {
+        "name": "Movies watched last 30 days count"
+      },
+      "completed_365_days": {
+        "name": "Movies watched last 365 days count"
+      },
+      "partial_movies": {
+        "name": "Partially watched movies"
+      }
+    }
   }
 }

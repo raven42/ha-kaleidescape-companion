@@ -137,7 +137,7 @@ export class KaleidescapeDevelopment extends LitElement {
       if (generation === this.generation)
         this.error =
           errorCode(error) === "unauthorized"
-            ? "An active development administrator account is required."
+            ? "An active development HA account is required."
             : "Could not connect. Check that local HA is running and the development token is valid.";
     } finally {
       if (generation === this.generation) {
@@ -161,8 +161,8 @@ export class KaleidescapeDevelopment extends LitElement {
       <h1>Connect to your test journal</h1>
       <p>
         Start the local HA server and add the Kaleidescape Companion
-        integration. Use a token from an administrator account on that
-        development instance.
+        integration. Use a token from an HA account on that development
+        instance.
       </p>
       <p><strong>${DEVELOPMENT_HA}</strong></p>
       <form @submit=${this.connect}>

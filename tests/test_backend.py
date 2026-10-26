@@ -73,6 +73,9 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
         self.hass = HomeAssistant(self.directory.name)
         self.hass.http = Mock()
         self.hass.http.async_register_static_paths = AsyncMock()
+        self.hass.config_entries = Mock()
+        self.hass.config_entries.async_forward_entry_setups = AsyncMock()
+        self.hass.config_entries.async_unload_platforms = AsyncMock(return_value=True)
         self.entry = entry()
         self.admin = SimpleNamespace(id=uuid4().hex, is_active=True, is_admin=True)
         await async_setup_entry(self.hass, self.entry)
@@ -140,7 +143,6 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
     async def test_permissions_checked_before_database(self):
         for user in (
             None,
-            SimpleNamespace(is_active=True, is_admin=False),
             SimpleNamespace(is_active=False, is_admin=True),
         ):
             with self.subTest(user=user):

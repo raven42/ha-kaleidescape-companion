@@ -36,7 +36,6 @@ export async function connectDevelopment(
         is_admin: boolean;
       }>({ type: "auth/current_user" }),
     );
-    if (!user.is_admin) throw new ApiError("unauthorized");
     connection.addEventListener("disconnected", () => {
       close();
       disconnected();

@@ -121,12 +121,26 @@ Now Playing UI, artwork/progress, and transport controls remain planned.
 
 ## Authenticated API
 
-Use HA's existing authenticated WebSocket connection. All commands and exports
-currently require an active administrator. Household sharing is not implemented
-yet. No token or unauthenticated data endpoint is added by this integration.
+Use HA's existing authenticated WebSocket connection. Active users may call `info`,
+`journal/list`, and `journal/get` to browse the shared household journal. Other
+commands and all exports require an active administrator. No token or
+unauthenticated data endpoint is added by this integration.
 Authorization is repeated before returning private results after awaited work;
 accepted writes remain committed if access changes during processing. These
 endpoint checks do not sandbox the integration from the rest of HA.
+
+`info` includes `permissions: {read, edit, export}`. For regular users it returns
+only scope, API version, revision, visible viewing count, and these permissions;
+administrator responses retain schema/storage/tracking health. Regular-user viewing
+responses allow only `id`, `title`, `started_at`, `ended_at`, `duration_seconds`,
+`watched_seconds`, `status`, and `origin`. Notes, source/player/content IDs, session
+evidence, mutation history, and deletion tombstones remain outside this surface.
+Any change in active/admin status during an awaited operation withholds its result.
+Accounts share the same household history; there is no per-user dataset.
+
+The [history sensors](sensors.md) derive completed and unfinished-partial summaries
+from this database without adding a schema migration. Their title/count states
+follow HA entity visibility and may be retained by Recorder and automations.
 
 Every command type starts with `kaleidescape_companion/`. Use `info` to discover
 the loaded entry and dataset. All journal commands require both `entry_id` and

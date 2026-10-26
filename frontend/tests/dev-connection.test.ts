@@ -57,11 +57,10 @@ it("uses the fixed development instance, stores no token, and clears it on disco
     code: "connection_lost",
   });
 });
-it("closes non-admin sessions, and never reuses their credentials", async () => {
+it("allows regular-user development sessions for household reading", async () => {
   connection.sendMessagePromise.mockResolvedValueOnce({ is_admin: false });
-  await expect(
-    connectDevelopment("fictional-dev-token", vi.fn()),
-  ).rejects.toMatchObject({ code: "unauthorized" });
+  const session = await connectDevelopment("fictional-dev-token", vi.fn());
+  session.close();
   expect(auth.data.access_token).toBe("");
   expect(connection.close).toHaveBeenCalled();
 });

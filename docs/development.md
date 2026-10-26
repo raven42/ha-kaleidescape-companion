@@ -48,7 +48,8 @@ your signed-in administrator account. For Vite, use a memory-only token from tha
 local development account as described in the [UI guide](ui.md). Existing entries
 can enable automatic tracking through **Configure**. Select one player and its
 two sensors as described in the [tracking guide](backend.md#automatic-tracking).
-No entities are created. Keep analytics off if you do not want development telemetry.
+Seven [history sensors](sensors.md) are created. Regular HA users see the read-only
+household journal. Keep analytics off if you do not want development telemetry.
 
 HA uses `.ha-dev/`, including credentials, logs, and storage. That directory,
 `.venv/`, npm dependencies, and build intermediates are ignored by Git. The
@@ -136,7 +137,7 @@ The `kaleidescape_companion` domain coexists with HA's built-in
 `kaleidescape` integration. Existing framework entries open the database on
 reload/restart without a configuration migration.
 
-The [backend guide](backend.md) documents storage, the administrator-only API,
+The [backend guide](backend.md) documents storage, role-scoped API access,
 manual testing, backup/export, restore, and retention. Automatic observation,
 session timing, entity setup, and the administrator [management panel](ui.md) are
 implemented. Live Now Playing UI and broader catalog/control features remain deferred.

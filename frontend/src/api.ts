@@ -6,13 +6,14 @@ export interface Scope {
 }
 export interface JournalInfo extends Scope {
   api_version: number;
-  schema_version: number;
+  schema_version?: number;
   revision: number;
   viewing_count: number;
-  database_bytes: number;
-  database_limit_bytes: number;
-  backup_in_progress: boolean;
-  tracking_enabled: boolean;
+  database_bytes?: number;
+  database_limit_bytes?: number;
+  backup_in_progress?: boolean;
+  tracking_enabled?: boolean;
+  permissions: { read: boolean; edit: boolean; export: boolean };
 }
 export interface ViewingData {
   title: string;
@@ -35,6 +36,17 @@ export interface Viewing extends ViewingData {
   deleted_at: string | null;
   completion_reason: string | null;
 }
+export type ViewingSummary = Pick<
+  Viewing,
+  | "id"
+  | "title"
+  | "started_at"
+  | "ended_at"
+  | "duration_seconds"
+  | "watched_seconds"
+  | "status"
+  | "origin"
+>;
 export interface Session {
   id: string;
   started_at: string;
@@ -49,7 +61,7 @@ export interface SessionPage {
   has_more: boolean;
 }
 export interface JournalPage {
-  items: Viewing[];
+  items: ViewingSummary[];
   revision: number;
   next_cursor: string | null;
 }
@@ -94,7 +106,7 @@ export function errorCode(error: unknown): string {
 export function errorMessage(error: unknown): string {
   const messages: Record<string, string> = {
     unauthorized:
-      "Administrator access is required. Your journal has been cleared from this view.",
+      "Access to this operation is denied. Your journal has been cleared from this view.",
     not_ready:
       "The integration is not loaded. Reload the connection after it starts.",
     not_found:

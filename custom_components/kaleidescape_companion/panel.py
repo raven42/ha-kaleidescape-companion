@@ -1,4 +1,4 @@
-"""Register a bundled administrator panel; never serve journal storage statically."""
+"""Register the authenticated household panel; never serve storage statically."""
 
 import hashlib
 from pathlib import Path
@@ -29,7 +29,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
         sidebar_title=NAME,
         sidebar_icon="mdi:movie-open",
         module_url=f"{ASSET_URL}?v={digest}",
-        require_admin=True,
+        require_admin=False,
     )
 
 

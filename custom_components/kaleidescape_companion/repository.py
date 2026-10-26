@@ -10,7 +10,7 @@ import time
 from collections.abc import AsyncIterator, Callable
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from functools import partial
 from pathlib import Path
 from typing import Any
@@ -23,6 +23,7 @@ from .journal import (
     invalid,
     status,
     text,
+    timestamp,
     validate_times,
 )
 from .migrations import SCHEMA_VERSION, UnsupportedSchemaError, migrate
@@ -33,6 +34,8 @@ MAX_PENDING = 128
 MAX_DATABASE_BYTES = 256 * 1024 * 1024
 MAX_EXPORT_BYTES = 256 * 1024 * 1024
 EXPORT_BUILD_SECONDS = 30
+MAX_SENSOR_MOVIES = 50
+MAX_SENSOR_LIST_BYTES = 8192
 
 
 class JournalRepository:
@@ -182,6 +185,77 @@ class JournalRepository:
             "database_bytes": self.path.stat().st_size,
             "database_limit_bytes": MAX_DATABASE_BYTES,
         }
+
+    async def async_history_summary(self, *, now: datetime | None = None) -> dict:
+        """Return bounded title-only sensor data from a single worker snapshot."""
+        current = now or datetime.now(UTC)
+        upper = timestamp(current.isoformat())
+        cutoffs = [
+            timestamp((current - timedelta(days=days)).isoformat())
+            for days in (7, 30, 365)
+        ]
+        return await self._call(self._history_summary, upper, cutoffs)
+
+    @staticmethod
+    def _sensor_titles(rows: list) -> list[str]:
+        titles = []
+        for row in rows:
+            candidate = [*titles, row["title"]]
+            if (
+                len(json.dumps(candidate, ensure_ascii=False).encode())
+                > MAX_SENSOR_LIST_BYTES
+            ):
+                break
+            titles = candidate
+        return titles
+
+    def _history_summary(self, upper: str, cutoffs: list[str]) -> dict:
+        db = self._db()
+        completed = (
+            "WITH watched AS (SELECT id, title, "
+            "coalesce(ended_at, completed_at, started_at) AS watched_at FROM viewings "
+            "WHERE status = 'completed' AND deleted_at IS NULL) "
+        )
+        last = db.execute(
+            completed + "SELECT title, watched_at FROM watched WHERE watched_at <= ? "
+            "ORDER BY watched_at DESC, id DESC LIMIT 1",
+            (upper,),
+        ).fetchone()
+        counts = db.execute(
+            completed + "SELECT count(CASE WHEN watched_at > ? THEN 1 END), "
+            "count(CASE WHEN watched_at > ? THEN 1 END), count(*) FROM watched "
+            "WHERE watched_at > ? AND watched_at <= ?",
+            (cutoffs[0], cutoffs[1], cutoffs[2], upper),
+        ).fetchone()
+        result = {
+            "last_watched_movie": last["title"] if last else None,
+            "last_watched_at": last["watched_at"] if last else None,
+            **{
+                f"completed_{days}_days": counts[index]
+                for index, days in enumerate((7, 30, 365))
+            },
+        }
+        for index, days in enumerate((7, 30)):
+            rows = db.execute(
+                completed + "SELECT title FROM watched WHERE watched_at > ? "
+                "AND watched_at <= ? ORDER BY watched_at DESC, id DESC LIMIT ?",
+                (cutoffs[index], upper, MAX_SENSOR_MOVIES),
+            ).fetchall()
+            titles = self._sensor_titles(rows)
+            result[f"movies_{days}_days"] = titles
+            result[f"movies_{days}_days_truncated"] = counts[index] > len(titles)
+        partial = "status = 'partial' AND deleted_at IS NULL AND started_at <= ?"
+        count = db.execute(
+            f"SELECT count(*) FROM viewings WHERE {partial}", (upper,)
+        ).fetchone()[0]
+        rows = db.execute(
+            f"SELECT title FROM viewings WHERE {partial} "
+            "ORDER BY coalesce(ended_at, started_at) DESC, id DESC LIMIT ?",
+            (upper, MAX_SENSOR_MOVIES),
+        ).fetchall()
+        result.update(partial_count=count, partial_movies=self._sensor_titles(rows))
+        result["partial_movies_truncated"] = count > len(result["partial_movies"])
+        return result
 
     async def async_create(
         self, request_id: str, data: dict, *, actor_id: str | None = None
