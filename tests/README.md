@@ -33,7 +33,9 @@ not exposed. Both suites are part of the default checks. Follow the
 settings validation, SSH argument/host-key protections, offline previews, and task
 dependency boundaries. It exercises staging, linked-path rejection, deployment
 locking, and failure recovery through a local shell with fictional temporary
-files. It never opens an SSH connection or restarts HA/Docker. Real target access,
+files. Tests cover linked configuration aliases resolving to physical HA storage,
+continued rejection of linked managed destinations, and concise SSH errors.
+It never opens an SSH connection or restarts HA/Docker. Real target access,
 permissions, CLI availability, and startup remain operator validation tasks; see
 the [deployment guide](../docs/deployment.md).
 

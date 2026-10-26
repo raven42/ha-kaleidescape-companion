@@ -34,21 +34,19 @@ REQUIRED = {
 # All remote paths originate from the quoted positional config argument.
 REMOTE_DEPLOY = r"""set -eu
 umask 077
-config=$1
+requested_config=$1
+fail() { echo "$1" >&2; exit 1; }
+[ -d "$requested_config" ] || fail "HA configuration directory does not exist"
+config=$(CDPATH= cd -P "$requested_config" && pwd -P) ||
+    fail "Could not resolve HA configuration directory"
+[ "$config" != / ] || fail "Resolved HA configuration directory must not be /"
+[ -f "$config/configuration.yaml" ] ||
+    fail "HA configuration.yaml is missing; check config_path"
+printf '%s\n' "Resolved HA config: $config"
 domain=kaleidescape_companion
 components="$config/custom_components"
 state="$config/.kaleidescape-companion-deploy"
 target="$components/$domain"
-fail() { echo "$1" >&2; exit 1; }
-probe=$config
-while [ "$probe" != / ]; do
-    [ ! -L "$probe" ] || fail "Refusing a linked configuration path"
-    probe=${probe%/*}
-    [ -n "$probe" ] || probe=/
-done
-[ -d "$config" ] || fail "HA configuration directory does not exist"
-[ -f "$config/configuration.yaml" ] ||
-    fail "HA configuration.yaml is missing; check config_path"
 [ ! -L "$components" ] || fail "Refusing linked custom_components"
 [ ! -L "$state" ] || fail "Refusing linked deployment storage"
 [ ! -L "$target" ] || fail "Refusing a linked component destination"
@@ -112,6 +110,7 @@ class DeployConfig:
     config_path: str
     restart_type: str
     container: str | None = None
+    ssh_user: str | None = None
 
     def restart_command(self) -> str:
         """Use fixed commands; settings cannot supply arbitrary shell code."""
@@ -140,17 +139,28 @@ def load_config(path: Path) -> DeployConfig:
             "Run 'Initialize deployment settings' and edit .vscode/ha-deploy.json"
         )
     data = json.loads(path.read_text(), object_pairs_hook=unique_object)
-    if not isinstance(data, dict) or set(data) != {
-        "ssh_host",
-        "config_path",
-        "restart",
-    }:
-        raise ValueError("Settings require exactly ssh_host, config_path, and restart")
+    required = {"ssh_host", "config_path", "restart"}
+    if (
+        not isinstance(data, dict)
+        or not required <= data.keys()
+        or not data.keys() <= required | {"ssh_user"}
+    ):
+        raise ValueError(
+            "Settings require ssh_host, config_path, and restart; ssh_user is optional"
+        )
     host, config_path, restart = data["ssh_host"], data["config_path"], data["restart"]
+    user = data.get("ssh_user")
     if not isinstance(host, str) or not re.fullmatch(
         r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}", host
     ):
         raise ValueError("ssh_host must be an SSH configuration host alias")
+    if user is not None and (
+        not isinstance(user, str)
+        or not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}", user)
+    ):
+        raise ValueError(
+            "ssh_user must be a username using letters, numbers, _, ., or -"
+        )
     if (
         not isinstance(config_path, str)
         or not config_path.startswith("/")
@@ -167,14 +177,16 @@ def load_config(path: Path) -> DeployConfig:
     if not isinstance(restart, dict):
         raise ValueError("restart must specify type haos or container")
     if restart == {"type": "haos"}:
-        return DeployConfig(host, config_path, "haos")
+        return DeployConfig(host, config_path, "haos", ssh_user=user)
     if (
         set(restart) == {"type", "container"}
         and restart["type"] == "container"
         and isinstance(restart["container"], str)
         and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}", restart["container"])
     ):
-        return DeployConfig(host, config_path, "container", restart["container"])
+        return DeployConfig(
+            host, config_path, "container", restart["container"], ssh_user=user
+        )
     raise ValueError("Use restart {type: haos} or {type: container, container: NAME}")
 
 
@@ -255,7 +267,7 @@ def write_package(root: Path = ROOT) -> tuple[bytes, str, Path]:
 
 
 def ssh_command(config: DeployConfig, command: str) -> list[str]:
-    return [
+    arguments = [
         "ssh",
         "-T",
         "-o",
@@ -272,10 +284,10 @@ def ssh_command(config: DeployConfig, command: str) -> list[str]:
         "ServerAliveInterval=15",
         "-o",
         "ServerAliveCountMax=3",
-        "--",
-        config.ssh_host,
-        command,
     ]
+    if config.ssh_user is not None:
+        arguments.extend(["-l", config.ssh_user])
+    return [*arguments, "--", config.ssh_host, command]
 
 
 def deploy(config: DeployConfig, data: bytes) -> None:
@@ -306,7 +318,10 @@ def main() -> None:
         write_package()
         return
     config = load_config(args.config)
-    print(f"SSH target: {config.ssh_host}\nHA config: {config.config_path}", flush=True)
+    target = (
+        f"{config.ssh_user}@{config.ssh_host}" if config.ssh_user else config.ssh_host
+    )
+    print(f"SSH target: {target}\nHA config: {config.config_path}", flush=True)
     print(f"Restart command (separate task): {config.restart_command()}", flush=True)
     if args.action == "restart":
         restart(config)
@@ -322,9 +337,23 @@ def main() -> None:
     deploy(config, data)
 
 
-if __name__ == "__main__":
+def cli() -> int:
+    """Report SSH failures without dumping the embedded remote shell program."""
     try:
         main()
-    except (OSError, ValueError, subprocess.SubprocessError) as error:
-        print(f"Deployment tooling failed: {error}", file=sys.stderr)
-        sys.exit(1)
+        return 0
+    except subprocess.CalledProcessError as error:
+        message = (
+            f"Remote SSH command failed (exit status {error.returncode}). "
+            "See the remote output above."
+        )
+    except subprocess.TimeoutExpired:
+        message = "Remote SSH command timed out. Inspect the target before retrying."
+    except (OSError, ValueError) as error:
+        message = str(error)
+    print(f"Deployment tooling failed: {message}", file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(cli())

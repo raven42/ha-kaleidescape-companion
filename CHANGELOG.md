@@ -2,6 +2,10 @@
 
 ## Unreleased — Test deployment tasks
 
+- Fixed deployment through linked configuration aliases such as `/config` by
+  resolving the physical HA directory while retaining managed-path protections.
+- Shortened SSH failure summaries to avoid dumping the embedded remote script.
+- Added optional `ssh_user` settings for an explicit deployment/restart login username.
 - Added a default integration-package build and configurable SSH deployment tasks
   for HA OS and Container, including offline target preview and separate check/restart.
 - Limited packages to runtime files and preserved journal storage during staged

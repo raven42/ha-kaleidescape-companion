@@ -159,7 +159,10 @@ key/agent authentication, and disabled agent forwarding. HA receives no GitHub
 credentials. The SSH account and any Docker/HA CLI permissions are privileged;
 this deployment tool does not restrict an otherwise privileged SSH account.
 
-Validate the SSH alias, absolute config path, and restart settings before connecting.
+Validate the SSH alias, optional login username, absolute config path, and restart
+settings before connecting. An explicit username is passed as a separate SSH `-l`
+argument for deployment and restart; it cannot supply options or shell commands.
+Omitting it or setting it to `null` retains SSH's configured/default username.
 Use process argument arrays locally, quote remote positional paths, and permit only
 fixed HA OS or named-container configuration-check/restart commands. Never accept
 an arbitrary remote shell command from settings. Runtime archives are constructed
@@ -168,11 +171,16 @@ and reject linked sources. They contain no journal, logs, environment files, or
 development credentials. Package hashes identify bytes; they do not authenticate
 an untrusted build or establish target-version compatibility.
 
-Remote deployment rejects linked configuration paths and destinations, uses a
-per-config deployment lock, stages outside static resources, retains old code in
-a private directory, and replaces only the companion component. Keep configuration
-ancestors operator-controlled; these checks are not a sandbox against another
-process with the same filesystem privileges. Deployment leaves HA running and
+Remote deployment resolves the operator-selected configuration path, including
+symlinked aliases/ancestors, to an existing physical directory before deriving
+managed paths. It rejects a resolved filesystem root or missing `configuration.yaml`
+and prints the physical directory for operator review. Symlinks at managed
+`custom_components`, deployment-storage, and companion destinations remain rejected.
+It uses a per-config deployment lock, stages outside static resources, retains old
+code in a private directory, and replaces only the companion component. Keep the
+configuration directory and its ancestors operator-controlled; these checks are
+not a sandbox against concurrent changes by another privileged process.
+Deployment leaves HA running and
 restart is explicit. Concurrent restarts/updates through other tools are unsupported.
 Retained code copies are not database backups, interrupted replacement is not a
 crash-safe transaction, and code rollback cannot reverse a schema migration.

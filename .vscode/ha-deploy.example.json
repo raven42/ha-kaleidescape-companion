@@ -1,5 +1,6 @@
 {
   "ssh_host": "ha-test",
+  "ssh_user": "root",
   "config_path": "/config",
   "restart": {
     "type": "haos"

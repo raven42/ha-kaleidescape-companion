@@ -9,8 +9,11 @@ before a household rollout. Take a full HA backup before the first installation.
 ## Configure the target
 
 1. Set up an SSH host alias named `ha-test` in your SSH client configuration. It
-   supplies the address, username, port, and key. A different alias is also supported.
-2. Connect manually once, verify the server's host key, and confirm key/agent
+   supplies the address, port, and key. A different alias is also supported.
+   Set `ssh_user` in deployment settings to select the login username; if omitted
+   or `null`, SSH uses the username from your SSH configuration/defaults.
+2. Connect manually once with that username (for example, `ssh -l root ha-test`),
+   verify the server's host key, and confirm key/agent
    authentication works. Tasks require a known host key and do not prompt for a
    password or forward your SSH agent.
 3. Run **Tasks: Run Task → Initialize deployment settings** in VS Code. Edit the
@@ -24,6 +27,7 @@ verify the path in your app rather than assuming it is the OS host path:
 ```json
 {
   "ssh_host": "ha-test",
+  "ssh_user": "root",
   "config_path": "/config",
   "restart": { "type": "haos" }
 }
@@ -36,13 +40,27 @@ access there and permission to run Docker without an interactive privilege promp
 ```json
 {
   "ssh_host": "ha-test",
+  "ssh_user": "deploy",
   "config_path": "/srv/homeassistant/config",
   "restart": { "type": "container", "container": "homeassistant" }
 }
 ```
 
+Replace the example usernames with the account configured on your SSH endpoint.
+The same username is used for file deployment and configuration-check/restart.
+An explicit `ssh_user` overrides the alias's `User` setting while retaining its
+address, port, and authentication configuration. Existing settings without this
+field continue to work. The deployment preview displays `username@alias` when set.
+
 Use an existing, absolute configuration directory containing `configuration.yaml`,
-with no symlink in its path.
+including an operator-configured alias such as `/config`. At deployment time the
+script resolves that path and any linked ancestors to the existing physical
+directory and prints **Resolved HA config** before writing files. The resolved
+directory must not be `/` and must contain `configuration.yaml`. The managed
+`custom_components`, deployment storage, and companion destination still must
+not be symlinks. This supports linked configuration aliases without changing
+the links themselves. Keep the configuration directory and its ancestors under
+operator control.
 The remote session needs a POSIX shell and standard `tar` with gzip support,
 `mktemp`, `find`, `chmod`, `mv`, `mkdir`, `rm`, and `rmdir` tools. Installed code
 uses `0755` directories and `0644` files; ensure the HA process can traverse the
@@ -94,6 +112,9 @@ after checking database-schema compatibility. Downgrading code does not downgrad
 the database. Use a compatible full backup when necessary. Do not restart or
 deploy concurrently through another tool, HACS, or a second task. Remote command
 completion does not establish that HA and this integration started successfully.
+Remote error messages remain visible; the local failure summary reports the SSH
+exit status or timeout without printing the entire remote script. After a timeout,
+inspect the target state before retrying.
 
 ## Review the installed integration
 

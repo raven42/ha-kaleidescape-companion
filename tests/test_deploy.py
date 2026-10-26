@@ -113,6 +113,11 @@ class DeployTest(unittest.TestCase):
         for field, value in (
             ("ssh_host", "-oProxyCommand=anything"),
             ("ssh_host", "host; echo nope"),
+            ("ssh_user", "-oProxyCommand=anything"),
+            ("ssh_user", "deploy; echo nope"),
+            ("ssh_user", "deploy\nother"),
+            ("ssh_user", ""),
+            ("ssh_user", 123),
             ("config_path", "/"),
             ("config_path", "/config/../other"),
             ("config_path", "/config\nother"),
@@ -144,6 +149,7 @@ class DeployTest(unittest.TestCase):
             self.assertIn("StrictHostKeyChecking=yes", command)
             self.assertIn("BatchMode=yes", command)
             self.assertIn("ForwardAgent=no", command)
+            self.assertNotIn("-l", command)
             self.assertEqual(command[-2], "ha-test")
             self.assertEqual(shlex.split(command[-1])[-1], str(self.config))
             self.assertEqual(run.call_args.kwargs["input"], b"fictional archive")
@@ -162,6 +168,28 @@ class DeployTest(unittest.TestCase):
             self.assertTrue(
                 command.endswith("&& docker restart --timeout 60 homeassistant-test")
             )
+
+    def test_explicit_username_is_used_for_both_deploy_and_restart(self):
+        data = self.settings_data()
+        data["ssh_user"] = "deploy-test"
+        for restart in (
+            {"type": "haos"},
+            {"type": "container", "container": "homeassistant-test"},
+        ):
+            with self.subTest(restart=restart):
+                data["restart"] = restart
+                config = self.load_settings(data)
+                with patch.object(deploy.subprocess, "run") as run:
+                    deploy.deploy(config, b"fictional archive")
+                    deploy.restart(config)
+                    for call in run.call_args_list:
+                        command = call.args[0]
+                        self.assertEqual(
+                            command[command.index("-l") + 1], "deploy-test"
+                        )
+                        self.assertEqual(command[-2], "ha-test")
+        data["ssh_user"] = None
+        self.assertNotIn("-l", deploy.ssh_command(self.load_settings(data), "true"))
 
     def test_local_settings_initialization_preserves_existing_file(self):
         deploy.initialize_config(self.settings)
@@ -196,21 +224,51 @@ class DeployTest(unittest.TestCase):
         self.assertFalse((self.root / "SHOULD_NOT_EXIST").exists())
         self.assertFalse((state / "lock").exists())
 
-    def test_linked_destination_or_config_parent_is_refused(self):
+    def test_linked_component_destination_is_refused(self):
         components = self.config / "custom_components"
         components.mkdir()
         target = components / deploy.DOMAIN
         target.symlink_to(self.source, target_is_directory=True)
         self.assertNotEqual(self.remote().returncode, 0)
         self.assertTrue(target.is_symlink())
-        target.unlink()
-        linked = self.root / "linked"
-        linked.symlink_to(self.config, target_is_directory=True)
-        actual = linked / "nested"
-        actual.mkdir()
-        self.config = actual
-        self.assertNotEqual(self.remote().returncode, 0)
-        self.assertFalse((actual / "custom_components").exists())
+
+    def test_linked_config_root_and_ancestors_resolve_to_physical_ha_directory(self):
+        physical = self.config
+        journal = physical / deploy.DOMAIN / "journal.sqlite3"
+        journal.parent.mkdir()
+        journal.write_bytes(b"fictional journal")
+        config_alias = self.root / "config"
+        config_alias.symlink_to(physical, target_is_directory=True)
+        parent_alias = self.root / "parent"
+        parent_alias.symlink_to(self.root, target_is_directory=True)
+        for configured in (config_alias, parent_alias / physical.name):
+            with self.subTest(configured=configured):
+                self.config = configured
+                result = self.remote()
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn(f"Resolved HA config: {physical}", result.stdout.decode())
+                self.assertTrue(
+                    (
+                        physical / "custom_components" / deploy.DOMAIN / "manifest.json"
+                    ).is_file()
+                )
+                self.assertEqual(journal.read_bytes(), b"fictional journal")
+                self.assertTrue(config_alias.is_symlink())
+                self.assertTrue(parent_alias.is_symlink())
+
+    def test_missing_linked_config_and_alias_to_filesystem_root_are_refused(self):
+        for name, destination, message in (
+            ("missing-config", self.root / "absent", "does not exist"),
+            ("root-config", Path("/"), "must not be /"),
+        ):
+            with self.subTest(name=name):
+                alias = self.root / name
+                alias.symlink_to(destination, target_is_directory=True)
+                self.config = alias
+                result = self.remote()
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(message, result.stderr.decode())
+                self.assertTrue(alias.is_symlink())
 
     def test_active_deployment_lock_blocks_writes(self):
         lock = self.config / ".kaleidescape-companion-deploy" / "lock"
@@ -267,7 +325,9 @@ class DeployTest(unittest.TestCase):
         )
 
     def test_preview_never_connects_and_default_checks_never_deploy(self):
-        self.load_settings()
+        data = self.settings_data()
+        data["ssh_user"] = "deploy-test"
+        self.load_settings(data)
         with (
             patch.object(
                 deploy.sys,
@@ -280,9 +340,11 @@ class DeployTest(unittest.TestCase):
                 return_value=(b"archive", "digest", self.root / "package"),
             ),
             patch.object(deploy.subprocess, "run") as run,
+            patch.object(deploy.sys, "stdout", new_callable=io.StringIO) as output,
         ):
             deploy.main()
             run.assert_not_called()
+            self.assertIn("SSH target: deploy-test@ha-test", output.getvalue())
         tasks = json.loads((deploy.ROOT / ".vscode/tasks.json").read_text())["tasks"]
         tasks = {task["label"]: task for task in tasks}
 
@@ -304,3 +366,22 @@ class DeployTest(unittest.TestCase):
         self.assertEqual(
             tasks["Build, deploy and restart test HA"]["dependsOrder"], "sequence"
         )
+
+    def test_cli_reports_remote_failures_without_dumping_remote_script(self):
+        command = ["ssh", "ha-test", deploy.REMOTE_DEPLOY]
+        for error, expected in (
+            (subprocess.CalledProcessError(1, command), "exit status 1"),
+            (subprocess.TimeoutExpired(command, 300), "timed out"),
+        ):
+            with self.subTest(error=type(error).__name__):
+                with (
+                    patch.object(deploy, "main", side_effect=error),
+                    patch.object(
+                        deploy.sys, "stderr", new_callable=io.StringIO
+                    ) as output,
+                ):
+                    self.assertEqual(deploy.cli(), 1)
+                    message = output.getvalue()
+                self.assertIn(expected, message)
+                self.assertNotIn(deploy.REMOTE_DEPLOY, message)
+                self.assertEqual(len(message.splitlines()), 1)
