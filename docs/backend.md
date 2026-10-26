@@ -2,7 +2,7 @@
 
 The backend records manual journal entries and observed playback from one selected
 HA player. API version is `1`; SQLite schema is `3` and JSON export format is
-`2`. An administrator [journal management panel](ui.md) uses this API. Live
+`2`. The household reader and administrator [management panel](ui.md) use this API. Live
 subscriptions, library, and controls remain planned.
 The [security policy](security.md) governs access, privacy, and resource limits.
 
@@ -25,7 +25,7 @@ writes finish even if a client disconnects. Shutdown drains accepted work and
 closes the connection on its owning worker.
 
 The schema contains dataset metadata, viewing snapshots, durable playback
-sessions, field-correction markers, and request deduplication. Raw source IDs
+sessions, field-correction markers, request deduplication, and manual audit metadata. Raw source IDs
 are preserved exactly. No title matching, content-ID normalization, or catalog
 identity merging is performed. Schema 1 databases migrate automatically, keeping
 manual records and retry responses and creating a pre-migration SQLite backup.

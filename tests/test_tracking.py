@@ -107,6 +107,24 @@ class TrackerTest(unittest.TestCase):
         tracker.apply(observation(30.5))
         self.assertNotEqual(tracker.session.id, original)
 
+    def test_each_session_has_its_own_stop_grace(self):
+        tracker = PlaybackTracker("player")
+        for time in (0, 0.5):
+            tracker.apply(observation(time))
+        for time in (10, 12):
+            tracker.apply(observation(time, location="none"))
+        self.assertIsNone(tracker.session)
+        for time in (20, 20.5):
+            tracker.apply(observation(time))
+        session_id = tracker.session.id
+        tracker.apply(observation(21, location="none"))
+        tracker.apply(observation(22, location="none"))
+        self.assertEqual(tracker.session.id, session_id)
+        ended = tracker.apply(observation(23, location="none"))[-1]
+        self.assertEqual(ended["closed_at"], observation(21).at)
+        self.assertAlmostEqual(ended["watched_seconds"], 0.5)
+        self.assertIsNone(tracker.session)
+
     def test_paused_credits_are_evidence_until_normal_playback_confirms(self):
         tracker = PlaybackTracker("player")
         tracker.apply(observation(0))

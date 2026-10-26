@@ -2,28 +2,26 @@
 
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN
+from .runtime import loaded_runtimes
 
 
 async def async_pre_backup(hass: HomeAssistant) -> None:
     """Drain accepted operations; later writes return backup_in_progress."""
-    for runtime in list(hass.data.get(DOMAIN, {}).values()):
-        if runtime.ready:
-            try:
-                if runtime.observer:
-                    await runtime.observer.async_pause()
-                await runtime.repository.async_pause()
-            except BaseException:
-                await runtime.repository.async_resume()
-                if runtime.observer:
-                    await runtime.observer.async_resume()
-                raise
+    for _, runtime in loaded_runtimes(hass):
+        try:
+            if runtime.observer:
+                await runtime.observer.async_pause()
+            await runtime.repository.async_pause()
+        except BaseException:
+            await runtime.repository.async_resume()
+            if runtime.observer:
+                await runtime.observer.async_resume()
+            raise
 
 
 async def async_post_backup(hass: HomeAssistant) -> None:
     """Resume after HA completes or fails its backup."""
-    for runtime in list(hass.data.get(DOMAIN, {}).values()):
-        if runtime.ready:
-            await runtime.repository.async_resume()
-            if runtime.observer:
-                await runtime.observer.async_resume()
+    for _, runtime in loaded_runtimes(hass):
+        await runtime.repository.async_resume()
+        if runtime.observer:
+            await runtime.observer.async_resume()

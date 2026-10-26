@@ -33,4 +33,4 @@ select = ["E", "F", "I", "UP"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["custom_components.kaleidescape_companion"]
-known-third-party = ["homeassistant", "voluptuous"]
+known-third-party = ["homeassistant", "probatio"]

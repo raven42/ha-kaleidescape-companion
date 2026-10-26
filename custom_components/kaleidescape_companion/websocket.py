@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant, callback
 
 from .const import DOMAIN
 from .journal import JournalError
-from .runtime import get_runtime
+from .runtime import get_runtime, loaded_runtimes
 from .security import is_active_admin, is_active_user
 
 READ_OPERATIONS = frozenset({"info", "journal/list", "journal/get"})
@@ -88,40 +88,39 @@ async def async_handle(
     try:
         if operation == "info":
             entries = []
-            for entry_id, runtime in list(hass.data.get(DOMAIN, {}).items()):
-                if runtime.ready:
-                    metadata = await runtime.repository.async_info()
-                    if not runtime.ready:
-                        continue
-                    if not admin:
-                        metadata = {
-                            key: metadata[key]
-                            for key in ("dataset_id", "revision", "viewing_count")
-                        }
-                    entries.append(
-                        {
-                            "entry_id": entry_id,
-                            **metadata,
-                            "api_version": 1,
-                            "permissions": {
-                                "read": True,
-                                "edit": admin,
-                                "export": admin,
-                            },
-                            **(
-                                {
-                                    "tracking_enabled": runtime.observer is not None,
-                                    "features": {
-                                        "manual_journal": True,
-                                        "automatic_tracking": True,
-                                        "now_playing": True,
-                                    },
-                                }
-                                if admin
-                                else {}
-                            ),
-                        }
-                    )
+            for entry_id, runtime in loaded_runtimes(hass):
+                metadata = await runtime.repository.async_info()
+                if not runtime.ready:
+                    continue
+                if not admin:
+                    metadata = {
+                        key: metadata[key]
+                        for key in ("dataset_id", "revision", "viewing_count")
+                    }
+                entries.append(
+                    {
+                        "entry_id": entry_id,
+                        **metadata,
+                        "api_version": 1,
+                        "permissions": {
+                            "read": True,
+                            "edit": admin,
+                            "export": admin,
+                        },
+                        **(
+                            {
+                                "tracking_enabled": runtime.observer is not None,
+                                "features": {
+                                    "manual_journal": True,
+                                    "automatic_tracking": True,
+                                    "now_playing": True,
+                                },
+                            }
+                            if admin
+                            else {}
+                        ),
+                    }
+                )
             result = {"entries": entries}
         else:
             runtime = get_runtime(hass, msg["entry_id"], msg["dataset_id"])
@@ -175,7 +174,7 @@ async def async_handle(
         # changed while the worker was running.
         if not is_active_user(user) or is_active_admin(user) != admin:
             connection.send_error(
-                msg["id"], "unauthorized", "Administrator access required"
+                msg["id"], "unauthorized", "Journal access changed during the request"
             )
             return
         if operation != "info" and not runtime.ready:

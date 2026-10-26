@@ -2,7 +2,7 @@
 
 ## Scope
 
-This repository contains the journal backend and automatic observation and frontend scaffolding. Keep feature behavior aligned with the [plan](plan.md), [design](design.md), and [framework status](framework.md). Journal implementation comes before the library browser and controls.
+This repository contains the journal backend, automatic observation, shared reader/administrator UI, and history sensors. Keep feature behavior aligned with the [plan](plan.md), [design](design.md), and [framework status](framework.md). Journal implementation comes before the library browser and controls.
 
 ## Tooling
 
@@ -10,8 +10,8 @@ This repository contains the journal backend and automatic observation and front
 
 Requires Python **3.14.2+**, Node.js **22.12+**, and npm. Python's minimum
 matches the Home Assistant **2026.10.4** development dependency; it is not
-a declared minimum supported HA release. HA's base media components also
-use FFmpeg and jpeg-turbo.
+a declared minimum supported HA release. The isolated HA runtime may also need FFmpeg and jpeg-turbo for its base media
+components; the journal itself does not process media.
 
 From the repository root:
 
@@ -64,7 +64,9 @@ experiments. It binds to `127.0.0.1:8123` and excludes `default_config` and
 automatic discovery. HA still loads its mandatory core/base integrations.
 No household devices or existing HA configuration are configured by this
 setup. Stop either server with **Ctrl+C**; restart HA after Python changes.
-If port 8123 is occupied, change `server_port` in the local YAML.
+If port 8123 is occupied, stop the conflicting development process. The Vite
+adapter intentionally uses fixed ports; changing the HA port requires a reviewed
+matching frontend/proxy configuration change.
 
 HA's upstream development container is another option:
 [official environment guide](https://contributors.home-assistant.io/core/development/environment/).
@@ -127,7 +129,9 @@ Run `npm --prefix frontend run format` to format frontend source/tests and
 `npm --prefix frontend run format:check` to check them. CI and `dev.sh check`
 include formatting, proxy security tests, component tests, and the production build.
 
-`frontend/package-lock.json` fixes the frontend dependency resolution. Commit lockfile updates with the corresponding source change. CI repeats the build and checks the packaged module matches its source. Minimum supported HA and frontend APIs remain an implementation/release validation task.
+`frontend/package-lock.json` fixes the frontend dependency resolution. Commit lockfile updates with the corresponding source change. CI repeats the build and checks the packaged module matches its source. Minimum supported HA and frontend APIs remain a release validation task. The
+default VS Code **Check all** calls the same `scripts/dev.sh check` entry point
+as terminal development so the local check sequence stays consistent.
 
 ## Integration framework
 
@@ -137,10 +141,15 @@ The `kaleidescape_companion` domain coexists with HA's built-in
 `kaleidescape` integration. Existing framework entries open the database on
 reload/restart without a configuration migration.
 
+The [technical design](design.md#source-boundaries) maps source files to their
+responsibilities and documents future extension points. Runtime resources belong
+to typed config entries; sensors use a shared HA update coordinator, and database
+work stays on its dedicated worker.
+
 The [backend guide](backend.md) documents storage, role-scoped API access,
 manual testing, backup/export, restore, and retention. Automatic observation,
-session timing, entity setup, and the administrator [management panel](ui.md) are
-implemented. Live Now Playing UI and broader catalog/control features remain deferred.
+session timing, entity setup, household reading, administrator [management](ui.md),
+and [history sensors](sensors.md) are implemented. Live Now Playing UI and broader catalog/control features remain deferred.
 
 ## Validation
 
@@ -161,12 +170,16 @@ boundaries; it closes the listener afterward. These checks run in CI, the defaul
 VS Code **Check all** task, and `scripts/dev.sh check`. Network advisory scans
 are separate from these offline checks; see the [security procedures](security.md).
 
-An isolated HA 2026.10.2 smoke run also verified the real config flow,
+Earlier isolated HA 2026.10.2 smoke runs verified the real config flow,
 authenticated WebSocket create/retry/list, JSON/SQLite downloads, denial of
 anonymous/non-admin requests, and data retention after integration reload.
 A second isolated run verified options enabling/disabling, synthetic playback
 recording and credits completion, authenticated Now Playing/session APIs, and
 observer cleanup/recovery on reload. Temporary instances were stopped afterward.
+
+Those smoke runs predate the shared reader and sensors; they do not validate
+these features on the current 2026.10.4 baseline or establish a supported matrix.
+Automated tests do not replace operator browser review.
 
 Use an isolated development HA instance for manual UI/config-flow and API
 checks. Do not overwrite the built-in integration. Configure only sources intended
@@ -186,4 +199,4 @@ isolated services; a successful build is not a security assessment.
 - Use reduced, sanitized parser fixtures only when parser implementation begins.
 - Do not build database schemas, state machines, API handlers, or device clients into placeholder modules ahead of their phase.
 - Choose a real project URL, repository owner/codeowners, and license before publishing. No fabricated ownership or repository links are included.
-- No deployment, network listener in HA, or device-control test is part of scaffold verification.
+- No deployment, SSH connection, or device-control test is part of normal verification.

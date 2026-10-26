@@ -18,7 +18,7 @@ The product name is **Kaleidescape Companion**. The HA domain `kaleidescape_comp
 - Optional entity mapping and options flow for one player, preserving registered identities across renames.
 - Ordered observation, monotonic session timing, checkpoint/restart recovery, credits completion, partial resumes, and rewatch separation.
 - Field corrections/tombstones protected from automatic writes, bounded backup buffering with explicit gaps, and read-only Now Playing/session APIs.
-- Administrator HA sidebar panel and shared Vite UI for journal CRUD, filters,
+- Household HA sidebar panel with administrator management and shared Vite UI for journal CRUD, filters,
   pagination, session evidence, database health, and JSON/SQLite downloads.
 - Memory-only development connection, restricted local export proxy, component
   and proxy security tests, TypeScript checks, formatting, and packaged ES module.
@@ -26,7 +26,6 @@ The product name is **Kaleidescape Companion**. The HA domain `kaleidescape_comp
   allowlists and administrator-only notes, source/session details, and exports.
 - Seven [watch-history sensors](sensors.md) for completed history and unfinished
   partial viewings, with shared polling, bounded title lists, and exact counts.
-- Remaining boundaries for library, artwork, live Now Playing UI, and controls.
 - Scaffold validation script and continuous-integration workflow.
 - Runtime-only archives and explicit VS Code SSH deployment tasks for HA OS/Container,
   with a local target preview, retained previous code, and separate check/restart.
@@ -41,9 +40,10 @@ broader product UI and real-browser compatibility/accessibility checks remain.
 JSON import and permanent purge are also deferred; SQLite restore is documented.
 
 See the [backend API](backend.md) for the implemented manual and observed journal behavior.
-The rest of the design document remains a target specification. Phase 1 is not
+The [design](design.md) distinguishes current source boundaries from future extensions. Phase 1 is not
 complete: broader HA release/backup and real-browser validation
-still need work. No household device or playback test has been performed.
+still need work. Real-source transitions and target deployment results require
+operator validation; local checks make no device connection.
 
 ## Publication prerequisites
 

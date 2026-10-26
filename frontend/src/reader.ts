@@ -91,6 +91,8 @@ export class KaleidescapeReader extends LitElement {
     const generation = ++this.generation;
     this.scope = null;
     this.rows = [];
+    this.next = null;
+    this.cursor = undefined;
     this.history = [];
     this.page = 1;
     this.loading = true;
@@ -102,7 +104,7 @@ export class KaleidescapeReader extends LitElement {
       if (!entries[0]?.permissions.read || entries[0].api_version !== 1)
         throw new ApiError("not_ready");
       this.scope = entries[0];
-      await this.load();
+      await this.load(undefined, generation);
     } catch (error) {
       if (generation === this.generation) this.fail(error);
     } finally {
@@ -112,9 +114,8 @@ export class KaleidescapeReader extends LitElement {
       }
     }
   }
-  private async load(cursor?: string) {
+  private async load(cursor?: string, generation = ++this.generation) {
     if (!this.api || !this.scope) return;
-    const generation = ++this.generation;
     this.loading = true;
     this.error = "";
     this.rows = [];

@@ -10,7 +10,8 @@ Tests cover editable namespace discovery, real temporary SQLite repositories,
 migrations and rollback, persistence/retry behavior, revisions, pagination,
 backup barriers, export/restore, HA runtime/API handlers, and automatic tracking.
 Tracking tests cover pauses/scans, metadata/credits ordering, partial resumes,
-rewatches, recovery gaps, protected corrections, buffered edges, and overflow. HTTP streaming
+rewatches, independent stop-grace windows, recovery gaps, protected corrections,
+buffered edges, and overflow. HTTP streaming
 responses are mocked. No household devices or running HA server are required.
 These are not end-to-end HA OS/Supervisor backup tests.
 
@@ -24,7 +25,8 @@ release compatibility validation remain separate. See the [UI guide](../docs/ui.
 
 `test_history.py` exercises regular-user field allowlists, denied management,
 in-flight role changes, rolling UTC windows, rewatches, corrected dates, deleted
-and future-dated records, bounded title lists, and sensor availability/lifecycle.
+and future-dated records, bounded title lists (including exact UTF-8/JSON byte limits), and sensor
+availability/lifecycle.
 `frontend/tests/reader.test.ts` covers read-only rendering, filters, safe text,
 account/connection cleanup, and late-response rejection using a simulated DOM.
 

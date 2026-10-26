@@ -1,7 +1,7 @@
-# Journal management UI
+# Household journal and management UI
 
-The initial administrator UI manages journal records through the existing HA
-API. It provides title search, status filters, 25-record pages, manual entries,
+The household reader lets active users browse viewing summaries. The administrator
+UI manages journal records through the existing HA API. It provides title search, status filters, 25-record pages, manual entries,
 corrections, confirmed deletion, session evidence, database health, and private
 JSON/SQLite downloads. Database tables, SQL, imports, and permanent purge are not
 exposed. Library browsing, live Now Playing, and playback controls remain later work.
@@ -37,7 +37,8 @@ bash scripts/dev.sh preview
    account and add Kaleidescape Companion.
 2. Create a long-lived access token in that development user's HA profile.
 3. Open `http://127.0.0.1:5173` and enter the token in **Development access token**.
-4. Choose **Connect**. On completion, the input is cleared and the management UI opens.
+4. Choose **Connect**. The input clears and the journal opens with the account’s
+   reader or administrator permissions.
 5. Choose **Disconnect** when finished. Revoke the development token in HA when
    it is no longer needed; disconnecting the UI does not revoke it at the server.
 
@@ -105,7 +106,7 @@ handling, retry UUIDs, unchanged-field preservation, escaped metadata, stale
 responses, role changes, token cleanup, export limits, and proxy restrictions.
 Vitest uses a simulated DOM; these checks do not replace visual, mobile,
 accessibility, or real-browser/HA release testing. Python tests verify panel
-registration, admin visibility, asset scope, reload, and failure cleanup.
+registration, household visibility, asset scope, reload, and failure cleanup.
 
 The UI refreshes explicitly; there are no live subscriptions or automatic journal
 polling yet. The initial panel has not been validated across a supported HA release

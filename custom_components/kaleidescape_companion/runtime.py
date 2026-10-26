@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
@@ -20,12 +21,33 @@ class KaleidescapeRuntime:
     observer: PlaybackObserver | None = None
 
 
+type KaleidescapeConfigEntry = ConfigEntry[KaleidescapeRuntime]
+
+
+def loaded_runtimes(hass: HomeAssistant) -> list[tuple[str, KaleidescapeRuntime]]:
+    """Resolve entry-owned resources without maintaining a second runtime registry."""
+    return [
+        (entry.entry_id, runtime)
+        for entry in hass.config_entries.async_entries(DOMAIN)
+        if isinstance(
+            runtime := getattr(entry, "runtime_data", None), KaleidescapeRuntime
+        )
+        and runtime.ready
+    ]
+
+
 def get_runtime(
     hass: HomeAssistant, entry_id: str, dataset_id: str
 ) -> KaleidescapeRuntime:
     """Resolve a loaded config entry and protect against stale dataset references."""
-    runtime = hass.data.get(DOMAIN, {}).get(entry_id)
-    if runtime is None or not runtime.ready:
+    entry = hass.config_entries.async_get_entry(entry_id)
+    runtime = getattr(entry, "runtime_data", None)
+    if (
+        entry is None
+        or entry.domain != DOMAIN
+        or not isinstance(runtime, KaleidescapeRuntime)
+        or not runtime.ready
+    ):
         raise JournalError("not_ready", "Journal integration is not loaded")
     if runtime.dataset_id != dataset_id:
         raise JournalError("not_found", "Dataset does not belong to this entry")

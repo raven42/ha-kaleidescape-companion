@@ -222,6 +222,11 @@ integration loaded; the operator reviews startup and the browser afterward.
 
 ### Known dependency findings (2026-10-25)
 
+Rechecked with `bash scripts/dev.sh audit` on 2026-10-25: npm reported zero
+vulnerabilities; the resolved Python environment reported 37 advisories in
+Pillow 12.3.0, all listing 13.0.0 as the fix. The audit command therefore exits
+nonzero. Counts are a dated advisory snapshot, not a guarantee about future scans.
+
 The installed HA 2026.10.2 environment audit identified affected `uv` 0.12.23
 and Pillow 12.3.0. The development baseline is updated to HA 2026.10.4, which
 pins `uv` 0.13.5, covering the advisory's minimum fix of 0.13.4. This does not

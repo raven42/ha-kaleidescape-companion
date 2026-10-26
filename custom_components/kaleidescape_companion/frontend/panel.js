@@ -17,7 +17,7 @@ let ht = class {
     return this.cssText;
   }
 };
-const bt = (r) => new ht(typeof r == "string" ? r : r + "", void 0, F), vt = (r, ...t) => {
+const vt = (r) => new ht(typeof r == "string" ? r : r + "", void 0, F), bt = (r, ...t) => {
   const e = r.length === 1 ? r[0] : t.reduce((i, s, n) => i + ((a) => {
     if (a._$cssResult$ === !0) return a.cssText;
     if (typeof a == "number") return a;
@@ -33,7 +33,7 @@ const bt = (r) => new ht(typeof r == "string" ? r : r + "", void 0, F), vt = (r,
 }, X = J ? (r) => r : (r) => r instanceof CSSStyleSheet ? ((t) => {
   let e = "";
   for (const i of t.cssRules) e += i.cssText;
-  return bt(e);
+  return vt(e);
 })(r) : r;
 const { is: _t, defineProperty: xt, getOwnPropertyDescriptor: wt, getOwnPropertyNames: At, getOwnPropertySymbols: St, getPrototypeOf: Et } = Object, L = globalThis, G = L.trustedTypes, Ct = G ? G.emptyScript : "", kt = L.reactiveElementPolyfillSupport, U = (r, t) => r, W = { toAttribute(r, t) {
   switch (t) {
@@ -249,7 +249,7 @@ let x = class extends HTMLElement {
 x.elementStyles = [], x.shadowRootOptions = { mode: "open" }, x[U("elementProperties")] = /* @__PURE__ */ new Map(), x[U("finalized")] = /* @__PURE__ */ new Map(), kt?.({ ReactiveElement: x }), (L.reactiveElementVersions ??= []).push("2.1.2");
 const K = globalThis, et = (r) => r, N = K.trustedTypes, it = N ? N.createPolicy("lit-html", { createHTML: (r) => r }) : void 0, ct = "$lit$", m = `lit$${Math.random().toFixed(9).slice(2)}$`, pt = "?" + m, Ut = `<${pt}>`, y = document, R = () => y.createComment(""), T = (r) => r === null || typeof r != "object" && typeof r != "function", Y = Array.isArray, Rt = (r) => Y(r) || typeof r?.[Symbol.iterator] == "function", H = `[ 	
 \f\r]`, C = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, st = /-->/g, rt = />/g, $ = RegExp(`>|${H}(?:([^\\s"'>=/]+)(${H}*=${H}*(?:[^ 	
-\f\r"'\`<>=]|("|')|))|$)`, "g"), nt = /'/g, at = /"/g, ut = /^(?:script|style|textarea|title)$/i, Tt = (r) => (t, ...e) => ({ _$litType$: r, strings: t, values: e }), l = Tt(1), S = /* @__PURE__ */ Symbol.for("lit-noChange"), h = /* @__PURE__ */ Symbol.for("lit-nothing"), ot = /* @__PURE__ */ new WeakMap(), b = y.createTreeWalker(y, 129);
+\f\r"'\`<>=]|("|')|))|$)`, "g"), nt = /'/g, at = /"/g, ut = /^(?:script|style|textarea|title)$/i, Tt = (r) => (t, ...e) => ({ _$litType$: r, strings: t, values: e }), l = Tt(1), S = /* @__PURE__ */ Symbol.for("lit-noChange"), h = /* @__PURE__ */ Symbol.for("lit-nothing"), ot = /* @__PURE__ */ new WeakMap(), v = y.createTreeWalker(y, 129);
 function ft(r, t) {
   if (!Y(r) || !r.hasOwnProperty("raw")) throw Error("invalid template strings array");
   return it !== void 0 ? it.createHTML(t) : t;
@@ -272,11 +272,11 @@ class q {
     this.parts = [];
     let n = 0, a = 0;
     const d = t.length - 1, o = this.parts, [c, u] = qt(t, e);
-    if (this.el = q.createElement(c, i), b.currentNode = this.el.content, e === 2 || e === 3) {
+    if (this.el = q.createElement(c, i), v.currentNode = this.el.content, e === 2 || e === 3) {
       const p = this.el.content.firstChild;
       p.replaceWith(...p.childNodes);
     }
-    for (; (s = b.nextNode()) !== null && o.length < d; ) {
+    for (; (s = v.nextNode()) !== null && o.length < d; ) {
       if (s.nodeType === 1) {
         if (s.hasAttributes()) for (const p of s.getAttributeNames()) if (p.endsWith(ct)) {
           const f = u[a++], g = s.getAttribute(p).split(m), O = /([.?@])?(.*)/.exec(f);
@@ -286,7 +286,7 @@ class q {
           const p = s.textContent.split(m), f = p.length - 1;
           if (f > 0) {
             s.textContent = N ? N.emptyScript : "";
-            for (let g = 0; g < f; g++) s.append(p[g], R()), b.nextNode(), o.push({ type: 2, index: ++n });
+            for (let g = 0; g < f; g++) s.append(p[g], R()), v.nextNode(), o.push({ type: 2, index: ++n });
             s.append(p[f], R());
           }
         }
@@ -321,16 +321,16 @@ class Pt {
   }
   u(t) {
     const { el: { content: e }, parts: i } = this._$AD, s = (t?.creationScope ?? y).importNode(e, !0);
-    b.currentNode = s;
-    let n = b.nextNode(), a = 0, d = 0, o = i[0];
+    v.currentNode = s;
+    let n = v.nextNode(), a = 0, d = 0, o = i[0];
     for (; o !== void 0; ) {
       if (a === o.index) {
         let c;
         o.type === 2 ? c = new P(n, n.nextSibling, this, t) : o.type === 1 ? c = new o.ctor(n, o.name, o.strings, this, t) : o.type === 6 && (c = new zt(n, this, t)), this._$AV.push(c), o = i[++d];
       }
-      a !== o?.index && (n = b.nextNode(), a++);
+      a !== o?.index && (n = v.nextNode(), a++);
     }
-    return b.currentNode = y, s;
+    return v.currentNode = y, s;
   }
   p(t) {
     let e = 0;
@@ -499,7 +499,7 @@ A._$litElement$ = !0, A.finalized = !0, Z.litElementHydrateSupport?.({ LitElemen
 const Mt = Z.litElementPolyfillSupport;
 Mt?.({ LitElement: A });
 (Z.litElementVersions ??= []).push("4.2.2");
-class v extends Error {
+class b extends Error {
   constructor(t) {
     super(t), this.code = t;
   }
@@ -533,7 +533,7 @@ async function Wt(r) {
       r,
       new Promise((e, i) => {
         t = setTimeout(
-          () => i(new v("connection_lost")),
+          () => i(new b("connection_lost")),
           Ht
         );
       })
@@ -602,17 +602,17 @@ class mt {
         413: "export_too_large",
         503: "busy"
       };
-      throw new v(c[n.status] ?? "storage_error");
+      throw new b(c[n.status] ?? "storage_error");
     }
     const a = n.body?.getReader();
-    if (!a) throw new v("storage_error");
+    if (!a) throw new b("storage_error");
     const d = [];
     let o = 0;
     try {
       for (; ; ) {
         const { value: c, done: u } = await a.read();
         if (u) break;
-        if (o += c.byteLength, o > It) throw new v("export_too_large");
+        if (o += c.byteLength, o > It) throw new b("export_too_large");
         d.push(new Uint8Array(c));
       }
       return new Blob(d, {
@@ -648,7 +648,7 @@ function Bt(r, t) {
     t && s === t[i] || (i === "started_at" || i === "ended_at" ? e[i] = s ? new Date(s).toISOString() : null : i === "duration_seconds" || i === "watched_seconds" ? e[i] = s === "" ? null : Number(s) * 60 : ["source_id", "player_id", "raw_content_id"].includes(i) ? e[i] = s === "" ? null : s : e[i] = s);
   return e;
 }
-const $t = vt`
+const $t = bt`
   :host {
     display: block;
     min-height: 100dvh;
@@ -1070,36 +1070,36 @@ const $t = vt`
   async refresh() {
     if (!this.api) return;
     const t = ++this.generation;
-    this.scope = null, this.rows = [], this.history = [], this.page = 1, this.loading = !0, this.error = "", this.requestUpdate();
+    this.scope = null, this.rows = [], this.next = null, this.cursor = void 0, this.history = [], this.page = 1, this.loading = !0, this.error = "", this.requestUpdate();
     try {
       const { entries: e } = await this.api.info();
       if (t !== this.generation) return;
       if (!e[0]?.permissions.read || e[0].api_version !== 1)
-        throw new v("not_ready");
-      this.scope = e[0], await this.load();
+        throw new b("not_ready");
+      this.scope = e[0], await this.load(void 0, t);
     } catch (e) {
       t === this.generation && this.fail(e);
     } finally {
       t === this.generation && (this.loading = !1, this.requestUpdate());
     }
   }
-  async load(t) {
-    if (!this.api || !this.scope) return;
-    const e = ++this.generation;
-    this.loading = !0, this.error = "", this.rows = [], this.requestUpdate();
-    try {
-      const i = await this.api.list(
-        this.scope,
-        this.query,
-        this.status,
-        t
-      );
-      if (e !== this.generation) return;
-      this.rows = i.items, this.next = i.next_cursor, this.cursor = t;
-    } catch (i) {
-      e === this.generation && (this.next = null, this.fail(i));
-    } finally {
-      e === this.generation && (this.loading = !1, this.requestUpdate());
+  async load(t, e = ++this.generation) {
+    if (!(!this.api || !this.scope)) {
+      this.loading = !0, this.error = "", this.rows = [], this.requestUpdate();
+      try {
+        const i = await this.api.list(
+          this.scope,
+          this.query,
+          this.status,
+          t
+        );
+        if (e !== this.generation) return;
+        this.rows = i.items, this.next = i.next_cursor, this.cursor = t;
+      } catch (i) {
+        e === this.generation && (this.next = null, this.fail(i));
+      } finally {
+        e === this.generation && (this.loading = !1, this.requestUpdate());
+      }
     }
   }
   date(t) {
@@ -1280,8 +1280,8 @@ const j = class j extends A {
     try {
       const { entries: i } = await t.info();
       if (e !== this.generation) return;
-      if (!i.length) throw new v("not_ready");
-      if (i[0].api_version !== 1) throw new v("not_ready");
+      if (!i.length) throw new b("not_ready");
+      if (i[0].api_version !== 1) throw new b("not_ready");
       if (this.info = i[0], !this.info.permissions.edit) return;
       this.history = [], this.cursor = void 0, this.page = 1, await this.loadList();
     } catch (i) {

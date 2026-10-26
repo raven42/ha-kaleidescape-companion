@@ -4,7 +4,6 @@ import logging
 from datetime import timedelta
 
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import MAX_LENGTH_STATE_STATE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
@@ -18,6 +17,7 @@ from homeassistant.helpers.update_coordinator import (
 from .const import DOMAIN, NAME
 from .journal import JournalError
 from .repository import JournalRepository
+from .runtime import KaleidescapeConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 DESCRIPTIONS = tuple(
@@ -38,7 +38,10 @@ class HistoryCoordinator(DataUpdateCoordinator[dict]):
     """Refresh rolling windows even when no new playback event occurs."""
 
     def __init__(
-        self, hass: HomeAssistant, entry: ConfigEntry, repository: JournalRepository
+        self,
+        hass: HomeAssistant,
+        entry: KaleidescapeConfigEntry,
+        repository: JournalRepository,
     ):
         super().__init__(
             hass,
@@ -58,7 +61,9 @@ class HistoryCoordinator(DataUpdateCoordinator[dict]):
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: KaleidescapeConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     runtime = entry.runtime_data
     coordinator = HistoryCoordinator(hass, entry, runtime.repository)

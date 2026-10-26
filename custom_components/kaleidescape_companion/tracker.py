@@ -178,6 +178,8 @@ class PlaybackTracker:
                         self.session = None
                         self._candidate = None
                         self._counting = False
+                        self._stop = None
+                        self._established = False
                         return emitted
                 else:
                     if self._stop:

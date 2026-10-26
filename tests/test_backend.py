@@ -77,6 +77,10 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
         self.hass.config_entries.async_forward_entry_setups = AsyncMock()
         self.hass.config_entries.async_unload_platforms = AsyncMock(return_value=True)
         self.entry = entry()
+        self.hass.config_entries.async_entries.return_value = [self.entry]
+        self.hass.config_entries.async_get_entry.side_effect = lambda entry_id: (
+            self.entry if entry_id == self.entry.entry_id else None
+        )
         self.admin = SimpleNamespace(id=uuid4().hex, is_active=True, is_admin=True)
         await async_setup_entry(self.hass, self.entry)
         self.addAsyncCleanup(self.hass.async_stop, force=True)
@@ -164,6 +168,19 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_invalid_scope_and_payload(self):
         result = await self.call(
+            "journal/list", **{**self.scope, "entry_id": "missing-entry"}
+        )
+        self.assertEqual(result["code"], "not_ready")
+        with patch.object(
+            self.hass.config_entries,
+            "async_get_entry",
+            return_value=SimpleNamespace(
+                domain="unrelated", runtime_data=self.entry.runtime_data
+            ),
+        ):
+            result = await self.call("journal/list", **self.scope)
+        self.assertEqual(result["code"], "not_ready")
+        result = await self.call(
             "journal/list", **{**self.scope, "dataset_id": str(uuid4())}
         )
         self.assertEqual(result["code"], "not_found")
@@ -188,6 +205,7 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
     async def test_reload_reuses_dataset_and_registered_routes(self):
         created = await self.create()
         await async_unload_entry(self.hass, self.entry)
+        self.assertEqual((await self.call("info"))["result"], {"entries": []})
         result = await self.call("journal/list", **self.scope)
         self.assertEqual(result["code"], "not_ready")
         await async_setup_entry(self.hass, self.entry)
@@ -343,4 +361,4 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
                 with self.assertRaises(expected):
                     await async_setup_entry(self.hass, self.entry)
                 close.assert_awaited_once()
-            self.assertEqual(self.hass.data[DOMAIN], {})
+            self.assertFalse(self.entry.runtime_data.ready)

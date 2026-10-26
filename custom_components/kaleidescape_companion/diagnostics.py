@@ -1,13 +1,13 @@
 """Storage health without titles, source identities, notes, or database paths."""
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import VERSION
+from .runtime import KaleidescapeConfigEntry
 
 
 async def async_get_config_entry_diagnostics(
-    hass: HomeAssistant, entry: ConfigEntry
+    hass: HomeAssistant, entry: KaleidescapeConfigEntry
 ) -> dict:
     """Return bounded metadata rather than private journal records."""
     runtime = entry.runtime_data

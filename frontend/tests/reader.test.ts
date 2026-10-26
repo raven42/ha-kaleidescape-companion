@@ -76,6 +76,23 @@ it("clears records on denied access", async () => {
   await waitFor("Access to this operation is denied");
   expect(content()).not.toContain("The Lantern Voyage");
 });
+it("clears old pagination when a refresh cannot resolve the journal", async () => {
+  vi.spyOn(reader.client!, "list").mockResolvedValueOnce({
+    items: transport.records,
+    revision: 5,
+    next_cursor: "fictional-cursor",
+  });
+  button("Refresh").click();
+  await vi.waitFor(() => expect(button("Next").disabled).toBe(false));
+  transport.failure = "not_ready";
+  button("Refresh").click();
+  await waitFor("The integration is not loaded");
+  expect(button("Next").disabled).toBe(true);
+  expect(content()).not.toContain("The Lantern Voyage");
+  transport.failure = null;
+  button("Refresh").click();
+  await waitFor("The Lantern Voyage");
+});
 it("ignores delayed records after the native HA connection is lost", async () => {
   let resolve!: (value: unknown) => void;
   const hass: Hass = {

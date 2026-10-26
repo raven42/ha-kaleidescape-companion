@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased — Architecture and documentation cleanup
+
+- Reconciled current features, validation limits, and future phases across the docs;
+  separated interface research from the current technical design and roadmap.
+- Removed unused future-feature placeholder modules and the duplicate runtime map;
+  API/backup resolution now uses typed HA config-entry resources.
+- Separated worker-only history queries from repository lifecycle/CRUD, removed
+  redundant pagination metadata work, and bounded title encoding without repeated copies.
+- Fixed stop-grace state leaking between playback sessions and stale reader pagination
+  after a failed refresh; added regression coverage.
+- Unified VS Code and terminal checks and rechecked dependency advisories.
+
 ## Unreleased — Household readers and history sensors
 
 - Added active-user household journal browsing with bounded read responses;

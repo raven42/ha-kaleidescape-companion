@@ -16,6 +16,7 @@ from custom_components.kaleidescape_companion import (
     async_setup_entry,
     async_unload_entry,
 )
+from custom_components.kaleidescape_companion.history import _sensor_titles
 from custom_components.kaleidescape_companion.journal import JournalError
 from custom_components.kaleidescape_companion.sensor import (
     async_setup_entry as setup_sensors,
@@ -153,6 +154,21 @@ class HouseholdReadTest(unittest.IsolatedAsyncioTestCase):
 
 class HistorySummaryTest(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = repository_tests.RepositoryTest.asyncSetUp
+
+    def test_title_budget_accounts_for_utf8_and_json_escaping(self):
+        titles = ["🎬" * 500] * 4 + ["x" * 172]
+        self.assertEqual(len(json.dumps(titles, ensure_ascii=False).encode()), 8192)
+        self.assertEqual(
+            _sensor_titles([{"title": title} for title in [*titles, "Overflow"]]),
+            titles,
+        )
+        escaped = ['"\\\n' * 166] * 10
+        result = _sensor_titles([{"title": title} for title in escaped])
+        self.assertLess(len(result), len(escaped))
+        self.assertLessEqual(len(json.dumps(result, ensure_ascii=False).encode()), 8192)
+        self.assertGreater(
+            len(json.dumps([*result, escaped[0]], ensure_ascii=False).encode()), 8192
+        )
 
     async def add(self, title, end, status="completed"):
         return (

@@ -38,8 +38,9 @@ def form(hass: HomeAssistant, config: dict) -> p.Schema:
             "tracking_enabled", default=config.get("tracking_enabled", False)
         ): selector.BooleanSelector()
     }
+    resolved_ids = entity_ids(hass, config)
     for role, domain in ROLES.items():
-        resolved = entity_ids(hass, config).get(role)
+        resolved = resolved_ids.get(role)
         marker = p.Optional(role, default=resolved) if resolved else p.Optional(role)
         properties[marker] = selector.EntitySelector(
             selector.EntitySelectorConfig(domain=domain)

@@ -2,12 +2,13 @@
 
 A Home Assistant project for a household watch journal, Now Playing, a local movie library browser, and playback controls.
 
-**Status:** journal backend with optional automatic playback tracking and an administrator management panel. Browse, add, correct, and delete viewings; inspect session evidence and export the journal. The same UI works in HA's sidebar and the isolated Vite development preview. Library browsing, live Now Playing UI, and playback controls remain planned.
+**Status:** shared household journal with optional one-player automatic tracking, a read-only view for regular HA users, administrator management/exports, and seven history sensors. The UI runs in HA’s sidebar and the isolated Vite preview. Dedicated live Now Playing UI, library browsing, and playback controls remain planned. See [framework status](docs/framework.md) for validation and release limits.
 
 ## Documentation
 
 - [Product plan](docs/plan.md)
-- [Technical design and research](docs/design.md)
+- [Technical design](docs/design.md)
+- [Interface research and capability limits](docs/research.md)
 - [Development guide](docs/development.md)
 - [Build and deploy to test HA](docs/deployment.md)
 - [Security policy, trust boundaries, and hardening](docs/security.md)
@@ -24,11 +25,11 @@ The project and display name are **Kaleidescape Companion**. The internal Home A
 ## Layout
 
 ```text
-custom_components/kaleidescape_companion/  Integration framework and bundled panel
+custom_components/kaleidescape_companion/  Integration backend, sensors, and bundled panel
 frontend/                                TypeScript/Lit panel source and preview
-scripts/                                 Scaffold validation and asset packaging
+scripts/                                 Local development, validation, packaging, and SSH deployment
 tests/                                   Storage, API, lifecycle, and packaging tests
-docs/                                   Plan, design, and framework documentation
+docs/                                   Product, architecture, API, security, and operator guides
 .github/workflows/                       CI checks
 ```
 
@@ -56,17 +57,13 @@ Read the [security policy](docs/security.md) before development or installation.
 Custom integrations run with HA's privileges; this project does not sandbox
 itself from HA. Use an isolated development instance and development credentials.
 
-Run checks and build the bundled panel:
+Run the complete local checks and build the bundled panel:
 
 ```sh
-python -m unittest discover -s tests -v
-python scripts/check_scaffold.py
-ruff check .
-ruff format --check .
-npm --prefix frontend run format:check
-npm --prefix frontend test
-npm --prefix frontend run build
+bash scripts/dev.sh check
 ```
+
+Individual checks are listed in the [development guide](docs/development.md#checks-and-packaging).
 
 Run the servers in separate terminals from the repository root:
 
@@ -79,7 +76,7 @@ The HA launcher links this checkout's integration into `.ha-dev/custom_component
 and keeps HA configuration, credentials, and storage in the ignored `.ha-dev/`
 directory. Complete local HA onboarding, then add **Kaleidescape Companion** under
 **Settings → Devices & services → Add integration**. Restart HA after backend
-changes. Open **Kaleidescape Companion** in HA's sidebar as an administrator. The standalone
+changes. Open **Kaleidescape Companion** in HA’s sidebar using your development account. The standalone
 Vite preview uses a memory-only token from the local development instance; see
 the [UI guide](docs/ui.md). Seven [history sensors](docs/sensors.md) are created.
 Regular HA users can browse the household journal; administration remains restricted.
@@ -112,4 +109,4 @@ offline target preview and a separate configuration-check/restart task. See the
 4. Playback and controls
 5. Polish
 
-The initial database/API slice starts the foundations phase; the remaining phases are planned. Project documentation URLs, repository ownership, supported HA releases, and a distribution license must be settled before publication; HACS metadata is preparatory. This repository has not been installed into the household HA instance.
+Foundations and journal features are implemented, with validation and live UI work remaining before the first release. Follow the [roadmap](docs/plan.md) for acceptance gates and expansion. Project URLs, ownership, supported HA releases, a license, and the [dependency release blocker](docs/security.md#known-dependency-findings-2026-10-25) must be settled before publication; HACS metadata is preparatory.

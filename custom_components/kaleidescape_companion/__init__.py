@@ -3,7 +3,6 @@
 import logging
 from pathlib import Path
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
@@ -15,10 +14,8 @@ from .migrations import UnsupportedSchemaError
 from .observation import PlaybackObserver
 from .panel import async_remove_panel, async_setup_panel
 from .repository import JournalRepository
-from .runtime import KaleidescapeRuntime
+from .runtime import KaleidescapeConfigEntry, KaleidescapeRuntime, loaded_runtimes
 from .websocket import async_register_commands
-
-type KaleidescapeConfigEntry = ConfigEntry[KaleidescapeRuntime]
 
 _LOGGER = logging.getLogger(__name__)
 PLATFORMS = [Platform.SENSOR]
@@ -43,8 +40,7 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: KaleidescapeConfigEntry
 ) -> bool:
     """Open durable storage and expose the API without connecting to devices."""
-    runtimes = hass.data.setdefault(DOMAIN, {})
-    if runtimes:
+    if loaded_runtimes(hass):
         raise ConfigEntryError("Only one household journal entry is supported")
     if entry.title == "Kaleidescape":
         hass.config_entries.async_update_entry(entry, title=NAME)
@@ -69,7 +65,6 @@ async def async_setup_entry(
             async_register_commands(hass)
             hass.http.register_view(JournalExportView())
             hass.data[f"{DOMAIN}.api_registered"] = True
-        runtimes[entry.entry_id] = runtime
         config = dict(entry.options or entry.data)
         if config.get("tracking_enabled"):
             runtime.observer = PlaybackObserver(hass, repository, config)
@@ -92,7 +87,6 @@ async def async_setup_entry(
         finally:
             if panel_registered:
                 async_remove_panel(hass)
-            runtimes.pop(entry.entry_id, None)
             await _async_close_runtime(runtime)
         raise
     return True
@@ -114,5 +108,4 @@ async def async_unload_entry(
             reason = "player_changed"
     await _async_close_runtime(runtime, reason)
     async_remove_panel(hass)
-    hass.data.get(DOMAIN, {}).pop(entry.entry_id, None)
     return True

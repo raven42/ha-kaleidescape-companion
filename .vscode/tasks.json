@@ -153,16 +153,9 @@
     },
     {
       "label": "Check all",
-      "dependsOn": [
-        "Build frontend",
-        "Test Python",
-        "Test frontend",
-        "Check frontend formatting",
-        "Check scaffold",
-        "Lint Python",
-        "Check Python formatting"
-      ],
-      "dependsOrder": "sequence",
+      "type": "process",
+      "command": "bash",
+      "args": ["scripts/dev.sh", "check"],
       "group": {
         "kind": "test",
         "isDefault": true

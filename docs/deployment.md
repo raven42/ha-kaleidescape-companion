@@ -125,6 +125,8 @@ sidebar panel at `/kaleidescape-companion` and review:
 - The integration/sidebar name and the desktop/narrow-screen layout.
 - A fictional manual viewing: create, edit, filter, and confirm deletion.
 - JSON/SQLite downloads and record persistence after another restart.
+- A regular account’s read-only history, without notes, source/session details, or exports.
+- All seven history sensors, their title-list attributes, and counts after the next refresh.
 - HA logs for setup or storage failures, without posting private logs or records.
 
 Browser review is performed by the operator; automated checks use fictional
