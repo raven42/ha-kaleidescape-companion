@@ -238,10 +238,10 @@ export class KaleidescapeReader extends LitElement {
                                 ${row.status === "completed" ? "Completed" : "Partial"}
                               </td>
                               <td>
-                                ${(row.watched_seconds / 60).toFixed(1)} min
+                                ${(row.watched_seconds / 60).toFixed(2)} min
                               </td>
                               <td>
-                                ${row.duration_seconds == null ? "—" : `${(row.duration_seconds / 60).toFixed(1)} min`}
+                                ${row.duration_seconds == null ? "—" : `${(row.duration_seconds / 60).toFixed(2)} min`}
                               </td>
                             </tr>`,
                         )}

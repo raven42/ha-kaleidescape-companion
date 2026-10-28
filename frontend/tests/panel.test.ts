@@ -22,6 +22,9 @@ function button(text: string): HTMLButtonElement {
   expect(element, `button ${text}`).toBeTruthy();
   return element!;
 }
+function page(id: "now-playing" | "journal" | "database" | "settings") {
+  panel.shadowRoot!.querySelector<HTMLButtonElement>(`#page-${id}`)!.click();
+}
 function input(name: string, value: string) {
   const element = panel.shadowRoot!.querySelector<HTMLInputElement>(
     `[name="${name}"]`,
@@ -36,6 +39,9 @@ async function save() {
   await settle();
 }
 beforeEach(async () => {
+  // happy-dom uses exact floating-point modulo for number steps (110 % .01),
+  // unlike browser constraint validation. Native widget validation is operator QA.
+  vi.spyOn(HTMLFormElement.prototype, "reportValidity").mockReturnValue(true);
   transport = new FixtureTransport();
   panel = document.createElement("kaleidescape-panel") as KaleidescapePanel;
   panel.client = transport.client();
@@ -82,6 +88,102 @@ describe("journal management", () => {
     button("Confirm deletion").click();
     await waitFor("Entry removed");
     expect(transport.records).toHaveLength(3);
+  });
+  it("confirms deletion without randomUUID and ignores a duplicate confirmation click", async () => {
+    const getRandomValues = crypto.getRandomValues.bind(crypto);
+    vi.stubGlobal("crypto", { getRandomValues });
+    try {
+      button("The Lantern Voyage").click();
+      await waitFor("Edit viewing");
+      button("Delete entry").click();
+      await settle();
+      const confirm = button("Confirm deletion");
+      confirm.click();
+      confirm.click();
+      await waitFor("Entry removed");
+      expect(transport.records).toHaveLength(2);
+      const calls = transport.calls.filter((call) =>
+        call.type.endsWith("/journal/delete"),
+      );
+      expect(calls).toHaveLength(1);
+      expect(calls[0].request_id).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+      );
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+  it("shows a deletion preparation failure without sending or locking the entry", async () => {
+    button("The Lantern Voyage").click();
+    await waitFor("Edit viewing");
+    button("Delete entry").click();
+    await settle();
+    vi.stubGlobal("crypto", undefined);
+    try {
+      button("Confirm deletion").click();
+      await waitFor("No change was sent");
+      expect(
+        transport.calls.some((call) => call.type.endsWith("/journal/delete")),
+      ).toBe(false);
+      expect(transport.records).toHaveLength(3);
+      expect(panel.shadowRoot!.querySelector("fieldset")!.disabled).toBe(false);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+    button("Confirm deletion").click();
+    await waitFor("Entry removed");
+    expect(transport.records).toHaveLength(2);
+  });
+  it("reports missing secure randomness when saving without mislabeling the form values", async () => {
+    button("＋ Add viewing").click();
+    await settle();
+    input("title", "Valid fictional entry");
+    vi.stubGlobal("crypto", undefined);
+    try {
+      await save();
+      await waitFor("No change was sent");
+      expect(
+        transport.calls.some((call) => call.type.endsWith("/journal/create")),
+      ).toBe(false);
+      expect(panel.shadowRoot!.textContent).not.toContain("Check the dates");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+  it("retries an uncertain deletion with its original request UUID and payload", async () => {
+    const getRandomValues = crypto.getRandomValues.bind(crypto);
+    vi.stubGlobal("crypto", { getRandomValues });
+    try {
+      const original = transport.callWS.bind(transport);
+      let interrupt = true;
+      vi.spyOn(transport, "callWS").mockImplementation(
+        async <T>(message: ApiMessage) => {
+          const result = await original<T>(message);
+          if (interrupt && message.type.endsWith("/journal/delete")) {
+            interrupt = false;
+            throw new ApiError("connection_lost");
+          }
+          return result;
+        },
+      );
+      button("The Lantern Voyage").click();
+      await waitFor("Edit viewing");
+      button("Delete entry").click();
+      await settle();
+      button("Confirm deletion").click();
+      await waitFor("Retry same change");
+      expect(transport.records).toHaveLength(2);
+      button("Retry same change").click();
+      await waitFor("Entry removed");
+      const calls = transport.calls.filter((call) =>
+        call.type.endsWith("/journal/delete"),
+      );
+      expect(calls).toHaveLength(2);
+      expect(calls[0]).toEqual(calls[1]);
+      expect(transport.records).toHaveLength(2);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
   it("preserves a conflict draft and never silently overwrites a newer record", async () => {
     button("The Lantern Voyage").click();
@@ -251,6 +353,214 @@ it("does not normalize source identifiers or rewrite untouched timestamp precisi
   ).toEqual({ raw_content_id: "new-exact-ID" });
 });
 
+it("displays whole-second dates and two-decimal minutes without rewriting untouched source precision", async () => {
+  const source = record({
+    started_at: "2026-10-24T19:15:00.123456Z",
+    ended_at: "2026-10-24T21:05:00.654321Z",
+    watched_seconds: 115.37234567,
+    duration_seconds: 601.234567,
+  });
+  transport.records[0] = source;
+  button("Refresh").click();
+  await settle();
+  button(source.title).click();
+  await waitFor("Edit viewing");
+  const start = panel.shadowRoot!.querySelector<HTMLInputElement>(
+    '[name="started_at"]',
+  )!;
+  expect(start.value).not.toContain(".");
+  expect(start.step).toBe("1");
+  expect(
+    panel.shadowRoot!.querySelector<HTMLInputElement>(
+      '[name="watched_seconds"]',
+    )!.value,
+  ).toBe("1.92");
+  expect(
+    panel.shadowRoot!.querySelector<HTMLInputElement>(
+      '[name="duration_seconds"]',
+    )!.value,
+  ).toBe("10.02");
+  input("notes", "Changed only notes");
+  await save();
+  await waitFor("Entry saved.");
+  expect(
+    transport.calls.find((call) => call.type.endsWith("/journal/update"))!
+      .patch,
+  ).toEqual({ notes: "Changed only notes" });
+  expect(transport.records[0].started_at).toBe(source.started_at);
+  expect(transport.records[0].watched_seconds).toBe(115.37234567);
+});
+
+it("has four separate top-level tabs and limits creation controls to their pages", async () => {
+  const tabs = [...panel.shadowRoot!.querySelectorAll('[role="tab"]')];
+  expect(tabs.map((tab) => tab.textContent!.trim())).toEqual([
+    "Now Playing",
+    "Journal",
+    "Database",
+    "Settings",
+  ]);
+  expect(panel.shadowRoot!.querySelector('input[type="radio"]')).toBeNull();
+  expect(
+    panel.shadowRoot!.querySelector("kaleidescape-now-playing"),
+  ).toBeNull();
+  page("now-playing");
+  await settle();
+  expect(
+    panel.shadowRoot!.querySelector("kaleidescape-now-playing"),
+  ).not.toBeNull();
+  expect(panel.shadowRoot!.textContent).not.toContain("＋ Add viewing");
+  page("settings");
+  await settle();
+  const settings = panel.shadowRoot!.querySelector("kaleidescape-settings")!;
+  expect(settings).not.toBeNull();
+  expect(settings.shadowRoot!.querySelector("dialog")).toBeNull();
+  expect(panel.shadowRoot!.textContent).not.toContain("＋ Add viewing");
+  page("database");
+  await settle();
+  const database = panel.shadowRoot!.querySelector("kaleidescape-advanced")!;
+  expect(database).not.toBeNull();
+  expect(database.shadowRoot!.textContent).toContain("New Entry");
+  expect(
+    panel.shadowRoot!.querySelector(
+      "kaleidescape-settings,kaleidescape-now-playing",
+    ),
+  ).toBeNull();
+  page("journal");
+  await waitFor("The Lantern Voyage");
+  expect(button("＋ Add viewing")).toBeTruthy();
+  panel.client = undefined;
+  panel.hass = {
+    user: { id: "fictional-reader", is_admin: false },
+    connection: { connected: true },
+    callWS: transport.callWS.bind(transport),
+    fetchWithAuth: transport.fetchWithAuth.bind(transport),
+  };
+  await settle();
+  expect(
+    panel.shadowRoot!.querySelector(
+      '[role="tablist"],kaleidescape-settings,kaleidescape-advanced,kaleidescape-now-playing',
+    ),
+  ).toBeNull();
+});
+
+it("keeps unsaved journal and settings changes when a tab switch is cancelled", async () => {
+  button("The Lantern Voyage").click();
+  await waitFor("Edit viewing");
+  input("notes", "Keep this draft");
+  vi.mocked(window.confirm).mockReturnValue(false);
+  page("database");
+  await settle();
+  expect(
+    panel
+      .shadowRoot!.querySelector("#page-journal")!
+      .getAttribute("aria-selected"),
+  ).toBe("true");
+  expect(
+    panel.shadowRoot!.querySelector<HTMLTextAreaElement>(
+      'textarea[name="notes"]',
+    )!.value,
+  ).toBe("Keep this draft");
+  vi.mocked(window.confirm).mockReturnValue(true);
+  page("settings");
+  await settle();
+  const settings = panel.shadowRoot!.querySelector("kaleidescape-settings")!;
+  await vi.waitFor(() =>
+    expect(
+      settings.shadowRoot!.querySelector('[name="minimum_runtime_minutes"]'),
+    ).not.toBeNull(),
+  );
+  const field = settings.shadowRoot!.querySelector<HTMLInputElement>(
+    '[name="minimum_runtime_minutes"]',
+  )!;
+  field.value = "20";
+  field.dispatchEvent(new Event("input", { bubbles: true }));
+  vi.mocked(window.confirm).mockReturnValue(false);
+  page("journal");
+  await settle();
+  expect(panel.shadowRoot!.querySelector("kaleidescape-settings")).toBe(
+    settings,
+  );
+  expect(field.value).toBe("20");
+});
+
+it("navigates the page tabs with arrow keys, Home, and End", async () => {
+  const keys = [
+    ["End", "settings"],
+    ["Home", "now-playing"],
+    ["ArrowRight", "journal"],
+    ["ArrowLeft", "now-playing"],
+  ];
+  for (const [key, id] of keys) {
+    panel
+      .shadowRoot!.querySelector('[role="tablist"]')!
+      .dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
+    await vi.waitFor(() =>
+      expect(
+        panel
+          .shadowRoot!.querySelector(`#page-${id}`)!
+          .getAttribute("aria-selected"),
+      ).toBe("true"),
+    );
+    await settle();
+  }
+});
+
+it("saves inline settings and returns to the Settings form with persisted values", async () => {
+  page("settings");
+  await settle();
+  const settings = panel.shadowRoot!.querySelector("kaleidescape-settings")!;
+  await vi.waitFor(() =>
+    expect(
+      settings.shadowRoot!.querySelector(
+        'input[name="minimum_runtime_minutes"]',
+      ),
+    ).not.toBeNull(),
+  );
+  const field = settings.shadowRoot!.querySelector<HTMLInputElement>(
+    '[name="minimum_runtime_minutes"]',
+  )!;
+  field.value = "20";
+  field.dispatchEvent(new Event("input", { bubbles: true }));
+  settings
+    .shadowRoot!.querySelector("form")!
+    .dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  await waitFor("Settings saved.");
+  await vi.waitFor(() =>
+    expect(
+      panel
+        .shadowRoot!.querySelector("kaleidescape-settings")!
+        .shadowRoot!.querySelector<HTMLInputElement>(
+          '[name="minimum_runtime_minutes"]',
+        )?.value,
+    ).toBe("20"),
+  );
+  expect(
+    panel
+      .shadowRoot!.querySelector("#page-settings")!
+      .getAttribute("aria-selected"),
+  ).toBe("true");
+});
+
+it("stops Now Playing polling when leaving its tab", async () => {
+  page("now-playing");
+  await settle();
+  await vi.waitFor(() =>
+    expect(
+      transport.calls.some((call) => call.type.endsWith("/now_playing")),
+    ).toBe(true),
+  );
+  page("journal");
+  await waitFor("The Lantern Voyage");
+  const snapshots = transport.calls.filter((call) =>
+    call.type.endsWith("/now_playing"),
+  ).length;
+  vi.useFakeTimers();
+  await vi.advanceTimersByTimeAsync(10000);
+  expect(
+    transport.calls.filter((call) => call.type.endsWith("/now_playing")),
+  ).toHaveLength(snapshots);
+});
+
 it("does not release a completed export after switching connections", async () => {
   let resolve!: (value: Blob) => void;
   vi.spyOn(panel.client!, "download").mockReturnValue(
@@ -262,7 +572,21 @@ it("does not release a completed export after switching connections", async () =
   const original = URL.createObjectURL;
   URL.createObjectURL = create;
   try {
-    button("Export JSON").click();
+    page("database");
+    await settle();
+    const advanced = panel.shadowRoot!.querySelector("kaleidescape-advanced")!;
+    await (advanced as KaleidescapePanel).updateComplete;
+    const transfers = advanced.shadowRoot!.querySelector(
+      "kaleidescape-transfers",
+    )!;
+    await (transfers as KaleidescapePanel).updateComplete;
+    [...transfers.shadowRoot!.querySelectorAll("button")]
+      .find((button) => button.textContent?.trim() === "Export")!
+      .click();
+    await (transfers as KaleidescapePanel).updateComplete;
+    [...transfers.shadowRoot!.querySelectorAll("button")]
+      .find((button) => button.textContent?.trim() === "Export JSON")!
+      .click();
     await settle();
     panel.client = new FixtureTransport().client();
     await settle();

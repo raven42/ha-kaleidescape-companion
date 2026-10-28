@@ -64,7 +64,7 @@ it("allows regular-user development sessions for household reading", async () =>
   expect(auth.data.access_token).toBe("");
   expect(connection.close).toHaveBeenCalled();
 });
-it("forwards only explicit export requests and refuses redirects", async () => {
+it("forwards only explicit export/artwork requests and refuses redirects", async () => {
   const fetch = vi.fn().mockResolvedValue(new Response("{}"));
   vi.stubGlobal("fetch", fetch);
   const session = await connectDevelopment("fictional-dev-token", vi.fn());
@@ -86,5 +86,56 @@ it("forwards only explicit export requests and refuses redirects", async () => {
     ),
   ).rejects.toMatchObject({ code: "unauthorized" });
   expect(fetch).toHaveBeenCalledTimes(1);
+  fetch.mockResolvedValueOnce(
+    new Response("fictional", { headers: { "Content-Type": "image/png" } }),
+  );
+  await session.client.artwork(
+    "media_player.example",
+    new AbortController().signal,
+  );
+  expect(fetch).toHaveBeenLastCalledWith(
+    "/api/media_player_proxy/media_player.example",
+    expect.objectContaining({
+      method: "GET",
+      redirect: "error",
+      headers: { Authorization: "Bearer fictional-dev-token" },
+    }),
+  );
+  await expect(
+    session.client.artwork(
+      "media_player.example?token=forged",
+      new AbortController().signal,
+    ),
+  ).rejects.toMatchObject({ code: "invalid_request" });
+  expect(fetch).toHaveBeenCalledTimes(2);
+  session.close();
+});
+
+it("forwards only the fixed import POST with the caller's file and credentials", async () => {
+  const fetch = vi
+    .fn()
+    .mockResolvedValue(
+      new Response(
+        JSON.stringify({ imported_count: 1, skipped_count: 0, revision: 6 }),
+      ),
+    );
+  vi.stubGlobal("fetch", fetch);
+  const session = await connectDevelopment("fictional-dev-token", vi.fn());
+  const file = new File(['{"viewings":[]}'], "prior.sqlite");
+  const pending = session.client.prepareImport(info, file, 5);
+  await session.client.importFile(pending, file, new AbortController().signal);
+  expect(fetch).toHaveBeenCalledWith(
+    expect.stringMatching(/\/import\?format=sqlite&request_id=.*&revision=5$/),
+    expect.objectContaining({
+      method: "POST",
+      body: file,
+      redirect: "error",
+      credentials: "omit",
+      headers: {
+        Authorization: "Bearer fictional-dev-token",
+        "Content-Type": "application/octet-stream",
+      },
+    }),
+  );
   session.close();
 });

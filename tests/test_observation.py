@@ -14,7 +14,7 @@ from homeassistant.helpers import entity_registry as er
 from custom_components.kaleidescape_companion.journal import JournalError
 from custom_components.kaleidescape_companion.observation import PlaybackObserver
 from custom_components.kaleidescape_companion.repository import JournalRepository
-from custom_components.kaleidescape_companion.settings import entity_ids, validate
+from custom_components.kaleidescape_companion.settings import entity_ids, form, validate
 
 
 class ObserverTest(unittest.IsolatedAsyncioTestCase):
@@ -188,6 +188,87 @@ class ObserverTest(unittest.IsolatedAsyncioTestCase):
             with self.assertRaisesRegex(ValueError, message):
                 validate(self.hass, {**self.input, **changes}, {})
 
+    async def test_runtime_option_defaults_bounds_and_preserved_values(self):
+        self.assertEqual(self.config["minimum_runtime_minutes"], 10)
+        self.assertEqual(
+            form(self.hass, {})({"tracking_enabled": False})["minimum_runtime_minutes"],
+            10,
+        )
+        configured = validate(
+            self.hass, {**self.input, "minimum_runtime_minutes": 20}, {}
+        )
+        observer = PlaybackObserver(self.hass, self.repository, configured)
+        self.assertEqual(observer.tracker.minimum_runtime_seconds, 1200)
+        self.assertEqual(
+            form(self.hass, configured)({"tracking_enabled": False})[
+                "minimum_runtime_minutes"
+            ],
+            20,
+        )
+        self.assertEqual(
+            validate(self.hass, self.input, configured)["minimum_runtime_minutes"], 20
+        )
+        self.assertEqual(
+            validate(self.hass, {**self.input, "minimum_runtime_minutes": 0}, {})[
+                "minimum_runtime_minutes"
+            ],
+            0,
+        )
+        for invalid in (-1, 1441, True, None, "10", float("nan"), float("inf")):
+            with (
+                self.subTest(value=invalid),
+                self.assertRaisesRegex(ValueError, "invalid_rules"),
+            ):
+                validate(
+                    self.hass, {**self.input, "minimum_runtime_minutes": invalid}, {}
+                )
+
+    async def test_short_playback_stays_live_but_creates_no_journal_entry(self):
+        attributes = {
+            **self.hass.states.get("media_player.example").attributes,
+            "media_duration": 120,
+        }
+        await self.change(0, "media_player.example", "playing", attributes)
+        await self.tick(0.5)
+        await self.change(120, "sensor.example_location", "credits")
+        live = self.observer.live_state()
+        self.assertEqual(live["minimum_runtime_minutes"], 10)
+        self.assertEqual(live["recording_exclusion"], "below_minimum_runtime")
+        self.assertEqual(live["title"], "Example Film")
+        self.assertIsNone(live["session"])
+        self.assertEqual((await self.repository.async_list())["items"], [])
+
+    async def test_legacy_config_uses_default_runtime_filter_and_missing_runtime_waits(
+        self,
+    ):
+        await self.observer.async_stop()
+        legacy = {
+            key: value
+            for key, value in self.config.items()
+            if key != "minimum_runtime_minutes"
+        }
+        self.observer = PlaybackObserver(
+            self.hass, self.repository, legacy, clock=self.clock
+        )
+        self.addAsyncCleanup(self.observer.async_stop)
+        attributes = {
+            **self.hass.states.get("media_player.example").attributes,
+            "media_duration": None,
+        }
+        self.hass.states.async_set("media_player.example", "playing", attributes)
+        await self.hass.async_block_till_done()
+        await self.observer.async_start()
+        await self.tick(30)
+        self.assertEqual(
+            self.observer.live_state()["recording_exclusion"], "runtime_unknown"
+        )
+        self.assertEqual((await self.repository.async_list())["items"], [])
+        await self.change(
+            31, "media_player.example", "playing", {**attributes, "media_duration": 600}
+        )
+        await self.tick(31.5)
+        self.assertEqual(len((await self.repository.async_list())["items"]), 1)
+
     async def test_registered_entity_reference_survives_rename(self):
         registry = er.async_get(self.hass)
         registered = registry.async_get_or_create(
@@ -207,3 +288,45 @@ class ObserverTest(unittest.IsolatedAsyncioTestCase):
             self.hass, {**self.input, "media_player": "media_player.renamed"}, config
         )
         self.assertEqual(same["player_id"], config["player_id"])
+
+    async def test_live_snapshot_exposes_context_without_artwork_urls_or_tokens(self):
+        await self.tick(0.5)
+        attributes = {
+            **self.hass.states.get("media_player.example").attributes,
+            "friendly_name": "Fictional cinema",
+            "entity_picture": (
+                "/api/media_player_proxy/media_player.example"
+                "?token=fictional-secret&cache=example"
+            ),
+        }
+        await self.change(10, "media_player.example", "playing", attributes)
+        live = self.observer.live_state()
+        self.assertEqual(live["name"], "Fictional cinema")
+        self.assertEqual(len(live["artwork_key"]), 16)
+        self.assertAlmostEqual(live["session"]["watched_seconds"], 9.5)
+        self.assertFalse(live["session"]["credits_confirmed"])
+        self.assertNotIn("fictional-secret", str(live))
+        self.assertNotIn("/api/media_player_proxy", str(live))
+        for picture in (
+            "https://untrusted.example/cover.jpg",
+            "//untrusted.example/cover.jpg",
+            "/api/media_player_proxy/media_player.other?token=fictional-secret",
+            "javascript:alert(1)",
+            None,
+        ):
+            await self.change(
+                11,
+                "media_player.example",
+                "playing",
+                {**attributes, "entity_picture": picture},
+            )
+            self.assertIsNone(self.observer.live_state()["artwork_key"])
+        await self.change(
+            12,
+            "media_player.example",
+            "playing",
+            {**attributes, "media_content_id": "different-version"},
+        )
+        self.assertIsNone(self.observer.live_state()["session"])
+        await self.change(13, "media_player.example", "unavailable", attributes)
+        self.assertIsNone(self.observer.live_state()["artwork_key"])

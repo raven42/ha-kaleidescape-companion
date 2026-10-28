@@ -136,7 +136,7 @@ as terminal development so the local check sequence stays consistent.
 ## Integration framework
 
 Integration release versions remain `0.0.0`; API and database schema versions
-are `1` and `3`, respectively; JSON export format remains `2`.
+are `1` and `5`, respectively; JSON export format remains `2`.
 The `kaleidescape_companion` domain coexists with HA's built-in
 `kaleidescape` integration. Existing framework entries open the database on
 reload/restart without a configuration migration.
@@ -149,7 +149,15 @@ work stays on its dedicated worker.
 The [backend guide](backend.md) documents storage, role-scoped API access,
 manual testing, backup/export, restore, and retention. Automatic observation,
 session timing, entity setup, household reading, administrator [management](ui.md),
-and [history sensors](sensors.md) are implemented. Live Now Playing UI and broader catalog/control features remain deferred.
+and [history sensors](sensors.md) are implemented. The administrator Now Playing
+card reuses HA artwork and source states with visible-only snapshot refresh.
+Administrator Settings reuses the native HA options flow. Database uses a shared
+toolbar and table tabs for fixed-table inspection, validated viewing corrections,
+tombstone deletion, explicit permanent purge, and compatible
+JSON/SQLite viewing merge imports; schema 5 adds content-free import audit.
+Transfers and purge use native dialogs; pending work and exact retries prevent
+accidental dismissal. No additional API or schema change is needed for this layout.
+Catalog/control features, progress, and subscriptions remain deferred.
 
 ## Validation
 
@@ -158,8 +166,11 @@ repositories and HA objects/registered command handlers. It covers persistence,
 retry deduplication, optimistic edits, literal search/pagination, migration
 rollback, backup barriers, exported-database restore, permissions, unload,
 shutdown, HTTP export cleanup, automatic timing, partial resumes, credits
-ordering, protected corrections, recovery, and observation overflow. HTTP request/response objects are mocked;
-this is not a full HA OS/Supervisor end-to-end test. Temporary fixtures contain
+ordering, protected corrections, recovery, and observation overflow. HTTP request/response objects are mocked.
+Maintenance tests cover purge references, old replay barriers, atomic rollback,
+revision/confirmation conflicts, cancelled writes, actor/role access, and native
+HA options validation/persistence/reload scheduling.
+This is not a full HA OS/Supervisor end-to-end test. Temporary fixtures contain
 only fictional records.
 
 Security regressions cover private storage permissions, linked-path rejection,
@@ -180,6 +191,9 @@ observer cleanup/recovery on reload. Temporary instances were stopped afterward.
 Those smoke runs predate the shared reader and sensors; they do not validate
 these features on the current 2026.10.4 baseline or establish a supported matrix.
 Automated tests do not replace operator browser review.
+Native number-step validation is also operator QA: the simulated DOM uses exact
+floating-point remainder for fractional steps, so component tests stub form
+validity and exercise actual backend validation independently.
 
 Use an isolated development HA instance for manual UI/config-flow and API
 checks. Do not overwrite the built-in integration. Configure only sources intended

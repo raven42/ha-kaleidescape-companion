@@ -17,6 +17,7 @@ from typing import Any
 from uuid import uuid4
 
 from .history import history_summary
+from .importing import MAX_IMPORT_BYTES, import_viewings
 from .journal import (
     JournalError,
     fields,
@@ -27,6 +28,7 @@ from .journal import (
     timestamp,
     validate_times,
 )
+from .maintenance import inspect_database, purge_database
 from .migrations import SCHEMA_VERSION, UnsupportedSchemaError, migrate
 from .recording import save_session
 from .security import async_finish_cleanup, private_directory, private_file
@@ -51,6 +53,8 @@ class JournalRepository:
         self._pending = 0
         self._close_task: asyncio.Task | None = None
         self._export_active = False
+        self._import_active = False
+        self._import_task: asyncio.Task | None = None
         self._export_directory = path.with_name(f".{path.name}.exports")
 
     @property
@@ -112,6 +116,7 @@ class JournalRepository:
             connection.execute("PRAGMA foreign_keys = ON")
             connection.execute("PRAGMA journal_mode = DELETE")
             connection.execute("PRAGMA synchronous = FULL")
+            connection.execute("PRAGMA secure_delete = ON")
             connection.execute("PRAGMA busy_timeout = 5000")
             page_size = connection.execute("PRAGMA page_size").fetchone()[0]
             pages = connection.execute("PRAGMA page_count").fetchone()[0]
@@ -198,6 +203,126 @@ class JournalRepository:
     def _history_summary(self, upper: str, cutoffs: list[str]) -> dict:
         return history_summary(self._db(), upper, cutoffs)
 
+    async def async_inspect(
+        self, table: str, offset: int = 0, revision: int | None = None
+    ) -> dict:
+        """Read bounded raw pages through a fixed table allowlist."""
+        return await self._call(self._inspect, table, offset, revision)
+
+    def _inspect(self, table: str, offset: int, revision: int | None) -> dict:
+        return inspect_database(self._db(), table, offset, revision)
+
+    async def async_purge(
+        self,
+        request_id: str,
+        expected_revision: int,
+        viewing_ids: list[str],
+        purge_all: bool,
+        confirmation: str,
+        *,
+        actor_id: str | None = None,
+    ) -> dict:
+        """Permanently purge explicitly confirmed entries; caller disables tracking."""
+        if (
+            type(expected_revision) is not int
+            or expected_revision < 0
+            or type(purge_all) is not bool
+        ):
+            raise invalid("Invalid purge revision/scope")
+        if not isinstance(viewing_ids, list) or len(viewing_ids) > 100:
+            raise invalid("Select at most 100 entries")
+        ids = [identifier(value) for value in viewing_ids]
+        if (
+            len(ids) != len(set(ids))
+            or (purge_all and ids)
+            or (not purge_all and not ids)
+        ):
+            raise invalid("Choose selected entries or all entries")
+        if confirmation != ("PURGE ALL" if purge_all else "PURGE"):
+            raise invalid("Purge confirmation does not match")
+        return await self._call(
+            self._purge,
+            identifier(request_id),
+            {
+                "expected_revision": expected_revision,
+                "viewing_ids": sorted(ids),
+                "all": purge_all,
+            },
+            self._actor(actor_id),
+        )
+
+    def _purge(self, request_id: str, data: dict, actor_id: str | None) -> dict:
+        if self._paused:
+            raise JournalError("backup_in_progress", "Journal writes paused for backup")
+        if self._export_active or self._import_active:
+            raise JournalError("busy", "Wait for the active export before purging")
+        return purge_database(self._db(), request_id, data, actor_id)
+
+    @asynccontextmanager
+    async def async_import_slot(self) -> AsyncIterator[None]:
+        """Bound uploads/validation to one per runtime, excluding exports/purge."""
+        if self._import_active or self._export_active:
+            raise JournalError("busy", "Another transfer is in progress")
+        self._import_active = True
+        try:
+            yield
+        finally:
+            try:
+                if self._import_task:
+                    task = self._import_task
+
+                    async def finish_import():
+                        await task
+
+                    await async_finish_cleanup(finish_import())
+            except JournalError:
+                pass  # The operation's caller already receives its safe error.
+            finally:
+                self._import_task = None
+                self._import_active = False
+
+    async def async_import(
+        self,
+        payload: bytes,
+        import_format: str,
+        request_id: str,
+        revision: int,
+        *,
+        actor_id: str | None = None,
+    ) -> dict:
+        """Accept one immutable payload and shield its atomic worker transaction."""
+        if not self._import_active or self._import_task:
+            raise JournalError("busy", "Import slot is not available")
+        if not isinstance(payload, bytes) or len(payload) > MAX_IMPORT_BYTES:
+            raise invalid("Import exceeds 32 MiB")
+        if type(revision) is not int or revision < 0:
+            raise invalid("Invalid dataset revision")
+        task = self._import_task = asyncio.create_task(
+            self._call(
+                self._import,
+                payload,
+                import_format,
+                identifier(request_id),
+                revision,
+                self._actor(actor_id),
+            )
+        )
+        return await asyncio.shield(task)
+
+    def _import(
+        self,
+        payload: bytes,
+        import_format: str,
+        request_id: str,
+        revision: int,
+        actor_id: str | None,
+    ) -> dict:
+        if self._paused:
+            raise JournalError("backup_in_progress", "Journal writes paused for backup")
+        return import_viewings(
+            self._db(), payload, import_format, request_id, revision, actor_id
+        )
+
     async def async_create(
         self, request_id: str, data: dict, *, actor_id: str | None = None
     ) -> dict:
@@ -220,6 +345,7 @@ class JournalRepository:
         patch: dict,
         *,
         actor_id: str | None = None,
+        include_deleted: bool = False,
     ) -> dict:
         """Apply a correction once, with optimistic concurrency."""
         self._validate_revision(expected_revision)
@@ -231,6 +357,7 @@ class JournalRepository:
                 "viewing_id": identifier(viewing_id),
                 "expected_revision": expected_revision,
                 "patch": fields(patch, partial=True),
+                **({"include_deleted": True} if include_deleted else {}),
             },
             self._actor(actor_id),
         )
@@ -285,7 +412,12 @@ class JournalRepository:
                 raise JournalError(
                     "conflict", "Request UUID was used for different data or actor"
                 )
-            return json.loads(cached["response"])
+            response = json.loads(cached["response"])
+            if response.get("purged"):
+                raise JournalError(
+                    "not_found", "This request's viewing was permanently purged"
+                )
+            return response
         if self._paused:
             raise JournalError("backup_in_progress", "Journal writes paused for backup")
         now = datetime.now(UTC).isoformat(timespec="microseconds")
@@ -315,7 +447,9 @@ class JournalRepository:
                     tuple(stored.values()),
                 )
             else:
-                record = self._get(data["viewing_id"])
+                record = self._get(
+                    data["viewing_id"], data.get("include_deleted", False)
+                )
                 if record["revision"] != data["expected_revision"]:
                     raise JournalError(
                         "conflict", "Viewing was changed; reload it first"
@@ -383,12 +517,12 @@ class JournalRepository:
         """Retrieve one visible viewing."""
         return await self._call(self._get, identifier(viewing_id))
 
-    def _get(self, viewing_id: str) -> dict:
+    def _get(self, viewing_id: str, include_deleted: bool = False) -> dict:
         row = (
             self._db()
             .execute(
-                "SELECT * FROM viewings WHERE id = ? AND deleted_at IS NULL",
-                (viewing_id,),
+                "SELECT * FROM viewings WHERE id = ? AND (deleted_at IS NULL OR ?)",
+                (viewing_id, include_deleted),
             )
             .fetchone()
         )
@@ -537,7 +671,7 @@ class JournalRepository:
     @asynccontextmanager
     async def async_export_snapshot(self, export_format: str) -> AsyncIterator[Path]:
         """Reserve one export through creation, streaming, and private cleanup."""
-        if self._export_active:
+        if self._export_active or self._import_active:
             raise JournalError("busy", "Another journal export is in progress")
         self._export_active = True
         task = asyncio.create_task(self.async_export(export_format))

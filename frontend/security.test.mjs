@@ -10,10 +10,10 @@ import { fileURLToPath } from "node:url";
 import { createServer, loadEnv } from "vite";
 import config from "./vite.config.mjs";
 
-function get(port, path, headers = {}) {
+function get(port, path, headers = {}, method = "GET") {
   return new Promise((resolve, reject) => {
     const req = request(
-      { host: "127.0.0.1", port, path, headers },
+      { host: "127.0.0.1", port, path, headers, method },
       (response) => {
         let body = "";
         response.setEncoding("utf8");
@@ -91,7 +91,7 @@ test("Vite rejects foreign hosts and files outside the frontend, without CORS", 
   }
 });
 
-test("export proxy accepts only local-origin export requests and never supplies credentials", async () => {
+test("API proxy accepts only local-origin export/artwork GETs and never supplies credentials", async () => {
   const { createServer: createHttpServer } = await import("node:http");
   const received = [];
   const backend = createHttpServer((request, response) => {
@@ -114,7 +114,7 @@ test("export proxy accepts only local-origin export requests and never supplies 
         ...config.server,
         watch: null,
         proxy: {
-          "^/api/kaleidescape_companion/": {
+          "^/api/(kaleidescape_companion/|media_player_proxy/)": {
             target: `http://127.0.0.1:${backend.address().port}`,
             ws: false,
           },
@@ -170,6 +170,64 @@ test("export proxy accepts only local-origin export requests and never supplies 
       401,
     );
     assert.equal(received[1].authorization, undefined);
+    const artwork = "/api/media_player_proxy/media_player.example";
+    const headers = {
+      Origin: "http://127.0.0.1:5173",
+      Authorization: "Bearer fictional",
+    };
+    assert.equal((await get(port, artwork, headers)).status, 200);
+    assert.equal(received[2].authorization, "Bearer fictional");
+    for (const invalid of [
+      artwork + "?token=fictional",
+      artwork + "?url=http://untrusted.example",
+      "/api/media_player_proxy/sensor.example",
+      artwork + "/browse_media/movie/anything",
+      "/api/media_player_proxy/../auth",
+    ]) {
+      assert.equal((await get(port, invalid, headers)).status, 404);
+    }
+    assert.equal(
+      (
+        await get(port, artwork, {
+          ...headers,
+          Origin: "https://untrusted.example",
+        })
+      ).status,
+      403,
+    );
+    assert.equal(received.length, 3);
+    assert.equal((await get(port, artwork, headers, "POST")).status, 405);
+    assert.equal(received.length, 3);
+    const importing = path.replace(
+      /export\?format=json$/,
+      `import?format=json&request_id=${randomUUID()}&revision=0`,
+    );
+    assert.equal((await get(port, importing, headers, "GET")).status, 405);
+    assert.equal(
+      (
+        await get(
+          port,
+          importing,
+          { ...headers, Origin: "https://untrusted.example" },
+          "POST",
+        )
+      ).status,
+      403,
+    );
+    assert.equal(
+      (
+        await get(
+          port,
+          importing + "&url=http://untrusted.example",
+          headers,
+          "POST",
+        )
+      ).status,
+      404,
+    );
+    assert.equal((await get(port, importing, headers, "POST")).status, 200);
+    assert.equal(received.length, 4);
+    assert.equal(received[3].authorization, "Bearer fictional");
   } finally {
     await server?.close();
     await new Promise((resolve) => backend.close(resolve));

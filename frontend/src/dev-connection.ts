@@ -54,21 +54,32 @@ export async function connectDevelopment(
           return connection.sendMessagePromise(message);
         },
         fetchWithAuth: (path, init) => {
+          const importing =
+            /^\/api\/kaleidescape_companion\/[a-zA-Z0-9_-]{1,64}\/[a-fA-F0-9-]{36}\/import\?format=(json|sqlite)&request_id=[a-f0-9-]{36}&revision=[0-9]{1,18}$/.test(
+              path,
+            );
           if (
             closed ||
-            !/^\/api\/kaleidescape_companion\/[a-zA-Z0-9_-]{1,64}\/[a-fA-F0-9-]{36}\/export\?format=(json|sqlite)$/.test(
-              path,
-            )
+            (!importing &&
+              !/^\/api\/(kaleidescape_companion\/[a-zA-Z0-9_-]{1,64}\/[a-fA-F0-9-]{36}\/export\?format=(json|sqlite)|media_player_proxy\/media_player\.[a-z0-9_]{1,255})$/.test(
+                path,
+              )) ||
+            (init?.method ?? "GET") !== (importing ? "POST" : "GET")
           ) {
             return Promise.reject(new ApiError("unauthorized"));
           }
           return fetch(path, {
             ...init,
-            method: "GET",
+            method: importing ? "POST" : "GET",
             redirect: "error",
             credentials: "omit",
             mode: "same-origin",
-            headers: { Authorization: `Bearer ${auth.data.access_token}` },
+            headers: {
+              Authorization: `Bearer ${auth.data.access_token}`,
+              ...(importing
+                ? { "Content-Type": "application/octet-stream" }
+                : {}),
+            },
           });
         },
       }),

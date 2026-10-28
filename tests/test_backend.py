@@ -81,7 +81,12 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
         self.hass.config_entries.async_get_entry.side_effect = lambda entry_id: (
             self.entry if entry_id == self.entry.entry_id else None
         )
-        self.admin = SimpleNamespace(id=uuid4().hex, is_active=True, is_admin=True)
+        self.admin = SimpleNamespace(
+            id=uuid4().hex,
+            is_active=True,
+            is_admin=True,
+            permissions=SimpleNamespace(check_entity=Mock(return_value=True)),
+        )
         await async_setup_entry(self.hass, self.entry)
         self.addAsyncCleanup(self.hass.async_stop, force=True)
         self.addAsyncCleanup(self.entry.runtime_data.repository.async_close)
@@ -215,7 +220,7 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
             "journal/get", **self.scope, viewing_id=created["result"]["viewing"]["id"]
         )
         self.assertTrue(result["success"])
-        self.assertEqual(self.hass.http.register_view.call_count, 1)
+        self.assertEqual(self.hass.http.register_view.call_count, 2)
 
     async def test_shutdown_drains_and_closes(self):
         await self.create()

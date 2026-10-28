@@ -1,6 +1,6 @@
 # Technical design
 
-Updated: 2026-10-25. This document describes implemented architecture and explicit
+Updated: 2026-10-26. This document describes implemented architecture and explicit
 extension points. [Framework status](framework.md) tracks delivery;
 [product plan](plan.md) orders future work; [interface research](research.md)
 separates evidence from unverified capabilities. The [security policy](security.md)
@@ -41,17 +41,20 @@ prefixed with `frontend/src/`.
 | --- | --- |
 | `__init__.py`, `runtime.py`, `const.py` | Setup/unload, typed config-entry resources, readiness, dataset resolution, identity/version constants |
 | `config_flow.py`, `settings.py`, strings/translations | Single household entry, optional one-player mapping, validated rules, registry-aware references, options reload |
+| `configuration.py` | Actor/entry-scoped sidebar adapter to the native HA options flow, with stale configuration rejection |
 | `observation.py` | HA state listeners, normalized snapshots, ordered bounded queue, ticks, backup buffering, shutdown |
 | `tracker.py` | Deterministic monotonic session state machine; no HA or filesystem dependency |
 | `journal.py` | Record/input validation and safe domain errors |
 | `repository.py` | Single-worker connection, transactions, CRUD/retry/audit, pagination, consistent exports, private storage lifecycle |
 | `recording.py` | Worker-only automatic-session persistence, resume matching, completion, protected correction fields |
+| `maintenance.py`, `importing.py` | Worker-only fixed-table inspection/purge and bounded compatible snapshot validation/merge, with durable retry barriers and minimal audit |
 | `history.py`, `sensor.py` | Worker-only bounded summary queries; shared HA coordinator and seven translated sensor entities |
 | `migrations/` | Ordered schema upgrades, pre-migration snapshots, unsupported-schema rejection |
 | `websocket.py`, `http.py`, `security.py` | HA-authenticated commands/downloads, scope/role checks, record projections, filesystem/cancellation protections |
 | `panel.py`, `diagnostics.py`, `backup.py` | Bundled static-code registration, redacted health, backup write barriers |
 | `frontend/src/api.ts`, `editor.ts` | Typed API transport, exact prepared retries, bounded downloads, correction-form conversion |
-| `frontend/src/panel.ts`, `reader.ts`, `styles.ts` | Administrator editor and household reader with shared styling and request invalidation |
+| `frontend/src/panel.ts`, `reader.ts`, `now-playing.ts`, `styles.ts` | Administrator editor, household reader, and compact live-context card with shared styling and request invalidation |
+| `frontend/src/settings.ts`, `advanced.ts`, `transfers.ts` | Inline native-options form, shared Database toolbar/table tabs/list/detail corrections, transfer/purge dialogs, and exact uncertain retries |
 | `frontend/src/dev.ts`, `dev-connection.ts` | Local development authentication/connection shell only |
 
 Future library/artwork/control modules are added with their feature, tests, and
@@ -91,7 +94,7 @@ and [coordinator guidance](https://contributors.home-assistant.io/core/integrati
 
 The [backend guide](backend.md) defines the implemented schema, API, timing defaults,
 resource limits, and restore procedure. Release/API/schema/export versions are
-independent: integration `0.0.0`, API `1`, SQLite `3`, JSON export `2`.
+independent: integration `0.0.0`, API `1`, SQLite `5`, JSON export `2`.
 
 - Store durable history in `<HA config>/kaleidescape_companion/journal.sqlite3`,
   separate from Recorder and static web roots. Keep history unless explicitly
@@ -111,6 +114,10 @@ independent: integration `0.0.0`, API `1`, SQLite `3`, JSON export `2`.
 - Separate playback sessions from household viewings. Partial resume uses the
   same player/exact content identity and a configurable window; a new session
   after completion is a rewatch. Never merge players or editions by title.
+- Admit automatic sessions only with a reported runtime at or above the configured
+  minimum (10 minutes by default). Unknown runtime waits, 0 disables the filter,
+  and excluded playback cannot confirm credits or create another viewing. Preserve
+  existing/manual history; changing the rule is not a purge or query filter.
 - Measure elapsed watched time monotonically during stable exact `playing` plus
   `content`. Pauses/scans/gaps do not count. Credits provide completion evidence,
   subject to the configured minimum; position is never inferred from watched time.
@@ -147,17 +154,47 @@ management data/forms cannot accidentally become the reader UI. Both render text
 through Lit bindings. Account/connection changes clear cached data and invalidate
 late replies. Corrections send only changed fields. An uncertain write preserves
 its exact UUID/payload for explicit retry; reconnect does not replay it. Exports
-are bounded and aborted on connection changes. The UI currently refreshes explicitly.
+are bounded and aborted on connection changes. Journal lists refresh explicitly;
+the administrator Now Playing card polls its small snapshot while visible.
 
 Vite uses a fixed loopback HA target, memory-only credentials, the official HA
-WebSocket client, and an export-only HTTP proxy. Native Python handles storage,
+WebSocket client, and an export/artwork GET and scoped import POST proxy. Native Python handles storage,
 packaging, validation, and deployment; Lit and HA's own schema/client frameworks
 serve substantive lifecycle/rendering roles and are retained. Introducing a
 second web framework would duplicate HA infrastructure without a current benefit.
 
 ## Extension points and constraints
 
-### Live Now Playing and multiple players
+### Lean Now Playing
+
+The existing `now_playing` command reads selected HA states and in-memory tracker
+context, without database queries, device connections, or service calls. It checks
+administrator status and `POLICY_READ` on each resolved source entity. Additive
+fields include a validated friendly name, snapshot receipt time, current session
+counted time/credits/gaps, backup pause state, configured minimum runtime and
+ignored/waiting reason, and an opaque artwork change key.
+The key hashes an HA-local picture reference; its URL/query token is never returned
+or persisted. A session is shown only for the current raw content identity.
+
+`now-playing.ts` polls about every five seconds after a request finishes, with no
+overlapping refreshes. Hiding/removing the card clears its data, aborts image work,
+and invalidates late replies. Authorization errors clear it and stop automatic
+retries until explicit refresh, page return, or rebind. Regular readers never mount the card.
+
+Artwork uses authenticated GET `/api/media_player_proxy/media_player.<object_id>`
+through HA, with no URL/query supplied by metadata and no copied access token.
+The browser accepts JPEG/PNG/WebP, caps accumulation at 5 MiB, budgets five seconds,
+and revokes object URLs on replacement/disconnect. Missing/slow art has a placeholder.
+No Python image decoder or private artwork cache is introduced. HA owns upstream
+image fetching/caching and its native image authorization; see the security policy
+for the distinction from Companion's administrator-only snapshot API.
+
+The card deliberately has no transport buttons, seek bar, interpolated progress,
+catalog dependency, or separate navigation. Counts describe the current source
+session, not the combined viewing or a durable completion verdict. HA's existing
+media cards/actions remain available. Future controls reuse those actions.
+
+### Future live updates and multiple players
 
 Keep live state separate from persistent checkpoints. Add snapshot/revision-based,
 bounded subscriptions with reconnect resync and access checks on every emission.
@@ -182,7 +219,7 @@ A complete staged main-list generation may mark versions unavailable; partial or
 failed fetches preserve prior data. Collections synchronize independently. Fetch
 details/covers lazily or in small batches so recording stays responsive.
 
-Artwork belongs in a private bounded evictable cache. Resolve opaque IDs to
+Historical/library artwork belongs in a private bounded evictable cache. Resolve opaque IDs to
 backend-owned paths, validate type/size and configured origin, and authenticate
 delivery. Never accept an arbitrary path/URL from the panel or serve household
 artwork from `www`. Cache eviction cannot remove identities or viewing history.
@@ -195,8 +232,11 @@ observe the resulting state. Do not retry uncertain/toggle commands blindly.
 Selected-title launch/resume/start-over each require proven interfaces; see
 [research limitations](research.md). Library synchronization never sends controls.
 
-Broader sharing, imports, and permanent purge require explicit capability and
-retention contracts plus security regressions. Import validates size/schema/paths
-before transactional changes; purge covers retained sessions/retries/audit references.
+Broader sharing and import extensions require explicit capability and retention contracts
+plus security regressions. Import validates size/schema/paths before transactional
+changes. Current administrator purge covers retained sessions/retry content/audit
+references, with recording disabled, dataset revisions, explicit confirmation,
+and durable content-free retry barriers and maintenance receipts. Keep this
+contract when extending retention; external copies are outside live purge scope.
 Do not add unused tables, generic repository layers, or alternate authentication
 in anticipation of these features.

@@ -9,11 +9,40 @@ import type {
   SessionPage,
   Viewing,
 } from "./api";
-import { draftData, draftFrom } from "./editor";
+import { draftData, draftFrom, renderDraftFields } from "./editor";
 import type { Draft } from "./editor";
 import { styles } from "./styles";
 import "./reader";
+import "./now-playing";
+import "./settings";
+import "./advanced";
+import type { KaleidescapeSettings } from "./settings";
+import type { KaleidescapeAdvanced } from "./advanced";
 import type { ViewingSummary } from "./api";
+
+const PAGES = [
+  {
+    id: "now-playing",
+    label: "Now Playing",
+    description: "Live playback and recording context.",
+  },
+  {
+    id: "journal",
+    label: "Journal",
+    description: "Review recordings and make corrections.",
+  },
+  {
+    id: "database",
+    label: "Database",
+    description: "Inspect entries and manage stored history.",
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    description: "Configure playback recording and journal rules.",
+  },
+] as const;
+type Page = (typeof PAGES)[number]["id"];
 
 export class KaleidescapePanel extends LitElement {
   static properties = {
@@ -52,11 +81,12 @@ export class KaleidescapePanel extends LitElement {
   private saving = false;
   private pending: PreparedMutation | null = null;
   private confirmDelete = false;
-  private exporting = false;
-  private exportAbort?: AbortController;
   private error = "";
   private lastError = "";
   private notice = "";
+  private activePage: Page = "journal";
+  private settingsBusy = false;
+  private maintenanceBusy = false;
 
   protected willUpdate(changed: PropertyValues) {
     if (!changed.has("hass") && !changed.has("client")) return;
@@ -92,8 +122,6 @@ export class KaleidescapePanel extends LitElement {
   }
   private clearPrivate() {
     this.generation++;
-    this.exportAbort?.abort();
-    this.exportAbort = undefined;
     this.info = null;
     this.rows = [];
     this.selected = null;
@@ -113,9 +141,10 @@ export class KaleidescapePanel extends LitElement {
     this.saving = false;
     this.loading = false;
     this.detailLoading = false;
-    this.exporting = false;
     this.sessionError = "";
     this.notice = "";
+    this.activePage = "journal";
+    this.settingsBusy = this.maintenanceBusy = false;
   }
   private bind(api: JournalClient | null) {
     if (this.api === api) return;
@@ -137,14 +166,69 @@ export class KaleidescapePanel extends LitElement {
     );
   }
   private discard() {
-    return !this.dirty() || window.confirm("Discard your unsaved changes?");
+    return (
+      (!this.dirty() || window.confirm("Discard your unsaved changes?")) &&
+      (this.activePage !== "database" ||
+        (this.renderRoot
+          .querySelector<KaleidescapeAdvanced>("kaleidescape-advanced")
+          ?.confirmNavigation() ??
+          true)) &&
+      (this.activePage !== "settings" ||
+        (this.renderRoot
+          .querySelector<KaleidescapeSettings>("kaleidescape-settings")
+          ?.confirmNavigation() ??
+          true))
+    );
   }
-  private async refresh() {
+  private async switchPage(page: Page) {
+    if (
+      page === this.activePage ||
+      this.loading ||
+      this.saving ||
+      this.pending ||
+      this.maintenanceBusy ||
+      this.settingsBusy ||
+      !this.discard()
+    )
+      return;
+    this.closeEditor();
+    this.activePage = page;
+    this.error = this.notice = "";
+    this.requestUpdate();
+    if (page === "journal") {
+      this.page = 1;
+      this.history = [];
+      await this.loadList();
+    }
+  }
+  private pageKey(event: KeyboardEvent) {
+    const current = PAGES.findIndex((page) => page.id === this.activePage);
+    const index =
+      event.key === "ArrowRight"
+        ? (current + 1) % PAGES.length
+        : event.key === "ArrowLeft"
+          ? (current + PAGES.length - 1) % PAGES.length
+          : event.key === "Home"
+            ? 0
+            : event.key === "End"
+              ? PAGES.length - 1
+              : -1;
+    if (index < 0) return;
+    event.preventDefault();
+    const switching = this.switchPage(PAGES[index].id);
+    // A Journal refresh may disable tabs while it runs; focus after it completes.
+    void switching
+      .then(() => this.updateComplete)
+      .then(() =>
+        this.renderRoot
+          .querySelector<HTMLButtonElement>(`#page-${this.activePage}`)
+          ?.focus(),
+      );
+  }
+  private async refresh(waitForReload = false) {
     if (!this.api || this.pending || !this.discard()) return;
     const api = this.api,
       generation = ++this.generation;
-    this.exportAbort?.abort();
-    this.exporting = false;
     this.info = null;
     this.rows = [];
     this.closeEditor();
@@ -152,7 +236,16 @@ export class KaleidescapePanel extends LitElement {
     this.error = "";
     this.requestUpdate();
     try {
-      const { entries } = await api.info();
+      let { entries } = await api.info();
+      for (
+        let attempt = 0;
+        waitForReload && !entries.length && attempt < 20;
+        attempt++
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        if (generation !== this.generation) return;
+        ({ entries } = await api.info());
+      }
       if (generation !== this.generation) return;
       if (!entries.length) throw new ApiError("not_ready");
       if (entries[0].api_version !== 1) throw new ApiError("not_ready");
@@ -304,19 +397,26 @@ export class KaleidescapePanel extends LitElement {
           : { data },
       );
       await this.commit();
-    } catch {
-      this.error = "Check the dates and numeric fields before saving.";
-      this.requestUpdate();
+    } catch (error) {
+      if (errorCode(error) === "request_id_unavailable") this.fail(error);
+      else {
+        this.error = "Check the dates and numeric fields before saving.";
+        this.requestUpdate();
+      }
     }
   }
   private async deleteRecord() {
     if (!this.api || !this.info || !this.selected || this.pending) return;
-    this.pending = this.api.prepare(this.info, "delete", {
-      viewing_id: this.selected.id,
-      expected_revision: this.selected.revision,
-    });
-    this.confirmDelete = false;
-    await this.commit();
+    try {
+      this.pending = this.api.prepare(this.info, "delete", {
+        viewing_id: this.selected.id,
+        expected_revision: this.selected.revision,
+      });
+      this.confirmDelete = false;
+      await this.commit();
+    } catch (error) {
+      this.fail(error);
+    }
   }
   private async commit() {
     if (!this.api || !this.pending || this.saving) return;
@@ -384,41 +484,6 @@ export class KaleidescapePanel extends LitElement {
       "Retry discarded. Check the journal before recreating the change.";
     await this.refresh();
   }
-  private async exportData(format: "json" | "sqlite") {
-    if (!this.api || !this.info || this.exporting) return;
-    const api = this.api,
-      scope = this.info,
-      generation = this.generation;
-    const controller = (this.exportAbort = new AbortController());
-    const timeout = setTimeout(() => controller.abort(), 65000);
-    this.exporting = true;
-    this.error = "";
-    this.requestUpdate();
-    try {
-      const blob = await api.download(scope, format, controller.signal);
-      if (generation !== this.generation) return;
-      const url = URL.createObjectURL(blob),
-        anchor = document.createElement("a");
-      try {
-        anchor.href = url;
-        anchor.download = `kaleidescape-journal.${format}`;
-        anchor.click();
-      } finally {
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-      }
-      this.notice =
-        "Export downloaded. Keep this private copy in a protected location.";
-    } catch (error) {
-      if (generation === this.generation) this.fail(error);
-    } finally {
-      clearTimeout(timeout);
-      if (generation === this.generation) {
-        this.exporting = false;
-        this.exportAbort = undefined;
-        this.requestUpdate();
-      }
-    }
-  }
   private date(value: string) {
     return new Date(value).toLocaleString(undefined, {
       dateStyle: "medium",
@@ -428,26 +493,21 @@ export class KaleidescapePanel extends LitElement {
   private bytes(value: number) {
     return `${(value / 1024 / 1024).toFixed(value < 1024 * 1024 ? 2 : 1)} MiB`;
   }
-  private field(
-    key: keyof Draft,
-    label: string,
-    type = "text",
-    required = false,
-    maxLength?: number,
-  ) {
-    return html`<label
-      >${label}<input
-        id=${key === "title" ? "title" : key}
-        name=${key}
-        type=${type}
-        .value=${this.draft![key]}
-        ?required=${required}
-        maxlength=${maxLength ?? nothing}
-        min=${type === "number" ? "0" : nothing}
-        max=${type === "number" ? String(1e9 / 60) : nothing}
-        step=${type === "datetime-local" ? "0.001" : "any"}
-        @input=${(event: Event) => this.input(key, event)}
-    /></label>`;
+  private async refreshInfo() {
+    if (!this.api) return;
+    const generation = this.generation;
+    try {
+      const { entries } = await this.api.info();
+      if (
+        generation === this.generation &&
+        entries[0]?.dataset_id === this.info?.dataset_id
+      ) {
+        this.info = entries[0];
+        this.requestUpdate();
+      }
+    } catch (error) {
+      if (generation === this.generation) this.fail(error);
+    }
   }
   private renderEditor() {
     if (this.detailLoading)
@@ -459,48 +519,8 @@ export class KaleidescapePanel extends LitElement {
       </div>`;
     return html`<form class="editor" @submit=${this.save}>
       <fieldset ?disabled=${this.saving || !!this.pending}>
-        <div class="grid">
-          <div class="full">
-            ${this.field("title", "Title", "text", true, 500)}
-          </div>
-          ${this.field("started_at", "Started · local time", "datetime-local", true)}
-          ${this.field("ended_at", "Ended · local time", "datetime-local")}
-          ${this.field("watched_seconds", "Watched minutes", "number", true)}
-          ${this.field("duration_seconds", "Runtime minutes · optional", "number")}
-          <label
-            >Status<select
-              name="record_status"
-              .value=${this.draft.status}
-              @change=${(event: Event) => this.input("status", event)}
-            >
-              <option value="partial">Partial</option>
-              <option value="completed">Completed</option>
-            </select></label
-          >
-          <label class="full"
-            >Notes<textarea
-              name="notes"
-              maxlength="10000"
-              .value=${this.draft.notes}
-              @input=${(event: Event) => this.input("notes", event)}
-            ></textarea>
-          </label>
-        </div>
+        ${renderDraftFields(this.draft, (key, event) => this.input(key, event))}
         ${this.selected?.origin === "observed" ? html`<small>Only fields you change are marked as manual corrections. Session evidence is retained.</small>` : nothing}
-        <details>
-          <summary>Source identifiers</summary>
-          <div class="grid">
-            ${this.field("source_id", "Source ID", "text", false, 255)}
-            ${this.field("player_id", "Player ID", "text", false, 255)}
-            <div class="full">
-              ${this.field("raw_content_id", "Raw content ID", "text", false, 255)}
-            </div>
-          </div>
-          <small
-            >Keep source identifiers exact. Titles do not establish movie
-            identity.</small
-          >
-        </details>
         <div class="actions">
           <button type="submit" class="primary">
             ${this.saving ? "Saving…" : this.selected ? "Save changes" : "Add entry"}
@@ -576,7 +596,7 @@ export class KaleidescapePanel extends LitElement {
                   ? html`<p>${this.sessionError}</p>`
                   : this.sessions
                     ? this.sessions.items.length
-                      ? html` ${this.sessions.items.map((session) => html`<div class="session">${this.date(session.started_at)}<br />${(session.watched_seconds / 60).toFixed(1)} min watched · ${session.credits_confirmed ? "Credits confirmed" : "Credits unconfirmed"} · ${session.gap_count} timing gaps<br />${session.end_reason ?? "Open session"}</div>`)}
+                      ? html` ${this.sessions.items.map((session) => html`<div class="session">${this.date(session.started_at)}<br />${(session.watched_seconds / 60).toFixed(2)} min watched · ${session.credits_confirmed ? "Credits confirmed" : "Credits unconfirmed"} · ${session.gap_count} timing gaps<br />${session.end_reason ?? "Open session"}</div>`)}
                         ${this.sessions.has_more ? html`<small>Showing the latest 100 sessions.</small>` : nothing}`
                       : html`<p class="muted">
                           No recorded sessions for this entry.
@@ -602,27 +622,35 @@ export class KaleidescapePanel extends LitElement {
         .narrow=${this.narrow}
       ></kaleidescape-reader>`;
     }
-    const blocked = this.loading || this.saving || !!this.pending;
+    const blocked =
+      this.loading ||
+      this.saving ||
+      !!this.pending ||
+      this.maintenanceBusy ||
+      this.settingsBusy;
     return html`<main>
       <header>
         ${this.hass && this.narrow ? html`<button class="menu" aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: true, composed: true }))}>☰</button>` : nothing}
         <div class="grow">
           <span class="eyebrow">Kaleidescape Companion · Administrator</span>
-          <h1>Journal management</h1>
-          <p>Review recordings and make corrections.</p>
+          <h1>Kaleidescape Companion</h1>
+          <p>
+            ${PAGES.find((page) => page.id === this.activePage)!.description}
+          </p>
         </div>
-        ${
-          this.info?.permissions.edit
-            ? html`<button
-                class="primary"
-                ?disabled=${!this.info || blocked}
-                @click=${this.newRecord}
-              >
-                ＋ Add viewing
-              </button>`
-            : nothing
-        }
       </header>
+      ${
+        this.info?.permissions.edit
+          ? html`<div
+              class="page-tabs"
+              role="tablist"
+              aria-label="Companion pages"
+              @keydown=${(event: KeyboardEvent) => this.pageKey(event)}
+            >
+              ${PAGES.map((page) => html`<button id=${`page-${page.id}`} role="tab" aria-selected=${this.activePage === page.id} aria-controls="companion-page" tabindex=${this.activePage === page.id ? "0" : "-1"} ?disabled=${blocked} @click=${() => this.switchPage(page.id)}>${page.label}</button>`)}
+            </div>`
+          : nothing
+      }
       ${this.error ? html`<div class="error" role="alert">${this.error}${this.lastError === "conflict" && this.selected ? html` <button ?disabled=${blocked} @click=${() => this.selectRecord(this.selected!.id)}>Reload entry</button>` : nothing}</div>` : nothing}
       ${this.notice ? html`<div class="notice" role="status">${this.notice}</div>` : nothing}
       ${
@@ -652,211 +680,261 @@ export class KaleidescapePanel extends LitElement {
             ? html`<div class="empty" role="status">
                 <strong
                   >${this.loading ? "Connecting to the journal…" : "Journal unavailable"}</strong
-                >${!this.loading ? html`<button @click=${this.refresh}>Reload connection</button>` : nothing}
+                >${!this.loading ? html`<button @click=${() => this.refresh()}>Reload connection</button>` : nothing}
               </div>`
-            : html`
-                <section class="metrics" aria-label="Database overview">
-                  <div class="metric">
-                    <small>Journal entries</small
-                    ><strong>${this.info.viewing_count}</strong>
-                  </div>
-                  <div class="metric">
-                    <small>Database size</small
-                    ><strong
-                      >${this.bytes(this.info.database_bytes ?? 0)}</strong
-                    ><small
-                      >of
-                      ${this.bytes(this.info.database_limit_bytes ?? 0)}</small
-                    >
-                  </div>
-                  <div class="metric">
-                    <small>Recording</small
-                    ><strong
-                      >${this.info.tracking_enabled ? "Enabled" : "Manual only"}</strong
-                    >
-                  </div>
-                  <div class="metric">
-                    <small>Storage</small
-                    ><strong
-                      >${this.info.backup_in_progress ? "Backing up" : "Ready"}</strong
-                    ><small
-                      >Schema ${this.info.schema_version} · Revision
-                      ${this.info.revision}</small
-                    >
-                  </div>
-                </section>
-                <div class="layout">
-                  <section class="card" aria-label="Journal entries">
-                    <div class="card-head">
-                      <h2>Viewings</h2>
-                      <button ?disabled=${blocked} @click=${this.refresh}>
-                        Refresh
-                      </button>
-                    </div>
-                    <form
-                      class="filters"
-                      @submit=${(event: Event) => {
-                        event.preventDefault();
-                        this.query = this.searchText;
-                        this.status = this.filterStatus;
-                        this.page = 1;
-                        this.history = [];
-                        void this.loadList();
-                      }}
-                    >
-                      <label
-                        >Search titles<input
-                          name="search"
-                          type="search"
-                          maxlength="500"
-                          .value=${this.searchText}
-                          ?disabled=${blocked}
-                          @input=${(event: Event) => {
-                            this.searchText = (
-                              event.target as HTMLInputElement
-                            ).value;
+            : html`<section
+                id="companion-page"
+                role="tabpanel"
+                aria-labelledby=${`page-${this.activePage}`}
+              >
+                ${
+                  this.activePage === "database"
+                    ? html`<kaleidescape-advanced
+                        .client=${this.api}
+                        .scope=${this.info}
+                        @access-denied=${() => this.fail(new ApiError("unauthorized"))}
+                        @maintenance-busy=${(event: CustomEvent<boolean>) => {
+                          this.maintenanceBusy = event.detail;
+                          this.requestUpdate();
+                        }}
+                        @database-changed=${() => this.refreshInfo()}
+                      ></kaleidescape-advanced>`
+                    : this.activePage === "settings"
+                      ? html`<kaleidescape-settings
+                          .client=${this.api}
+                          .scope=${this.info}
+                          @access-denied=${() => this.fail(new ApiError("unauthorized"))}
+                          @settings-busy=${(event: CustomEvent<boolean>) => {
+                            this.settingsBusy = event.detail;
+                            this.requestUpdate();
                           }}
-                      /></label>
-                      <label
-                        >Status<select
-                          name="filter_status"
-                          .value=${this.filterStatus}
-                          ?disabled=${blocked}
-                          @change=${(event: Event) => {
-                            this.filterStatus = (
-                              event.target as HTMLSelectElement
-                            ).value;
+                          @settings-saved=${() => {
+                            this.notice =
+                              "Settings saved. Reloading the integration…";
+                            const api = this.api;
+                            void this.refresh(true).then(() => {
+                              if (this.api === api && this.info) {
+                                this.notice = "Settings saved.";
+                                this.requestUpdate();
+                              }
+                            });
                           }}
-                        >
-                          <option value="">All</option>
-                          <option value="partial">Partial</option>
-                          <option value="completed">Completed</option>
-                        </select></label
-                      >
-                      <button ?disabled=${blocked}>Search</button>
-                    </form>
-                    ${
-                      this.loading
-                        ? html`<div class="empty" role="status">
-                            Loading viewings…
-                          </div>`
-                        : this.rows.length
-                          ? html`<div class="table-wrap">
-                              <table>
-                                <thead>
-                                  <tr>
-                                    <th>Title</th>
-                                    <th>Status</th>
-                                    <th>Watched</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  ${this.rows.map(
-                                    (record) =>
-                                      html` <tr
-                                        class=${this.selected?.id === record.id ? "selected" : ""}
-                                      >
-                                        <td>
-                                          <button
-                                            class="link"
-                                            ?disabled=${this.saving || !!this.pending}
-                                            @click=${() => this.selectRecord(record.id)}
-                                          >
-                                            ${record.title}</button
-                                          ><small
-                                            >${this.date(record.started_at)} ·
-                                            ${record.origin === "observed" ? "Recorded" : "Manual"}</small
-                                          >
-                                        </td>
-                                        <td>
-                                          <span
-                                            class=${`badge ${record.status === "completed" ? "complete" : ""}`}
-                                            >${record.status === "completed" ? "Completed" : "Partial"}</span
-                                          >
-                                        </td>
-                                        <td>
-                                          ${(record.watched_seconds / 60).toFixed(1)}
-                                          min
-                                        </td>
-                                      </tr>`,
-                                  )}
-                                </tbody>
-                              </table>
-                            </div>`
-                          : html`<div class="empty">
-                              <strong
-                                >${this.query || this.status ? "No matching viewings" : "Your journal is empty"}</strong
+                        ></kaleidescape-settings>`
+                      : this.activePage === "now-playing"
+                        ? html`<kaleidescape-now-playing
+                            .client=${this.api}
+                            .scope=${this.info}
+                          ></kaleidescape-now-playing>`
+                        : html`<div class="section-head">
+                              <h2>Journal</h2>
+                              <button
+                                class="primary"
+                                ?disabled=${blocked}
+                                @click=${() => this.newRecord()}
                               >
-                              <p>
-                                ${this.query || this.status ? "Try another title or status." : "Add a manual viewing or enable automatic tracking in the integration settings."}
-                              </p>
-                            </div>`
-                    }
-                    <div class="pagination">
-                      <small>Page ${this.page} · Up to 25 entries</small>
-                      <div class="actions">
-                        <button
-                          ?disabled=${blocked || this.page === 1}
-                          @click=${() => {
-                            this.page = 1;
-                            this.history = [];
-                            void this.loadList();
-                          }}
-                        >
-                          First
-                        </button>
-                        <button
-                          ?disabled=${blocked || !this.history.length}
-                          @click=${() => {
-                            this.page--;
-                            void this.loadList(this.history.pop());
-                          }}
-                        >
-                          Previous
-                        </button>
-                        <button
-                          ?disabled=${blocked || !this.nextCursor}
-                          @click=${() => {
-                            this.history.push(this.cursor);
-                            if (this.history.length > 200) this.history.shift();
-                            this.page++;
-                            void this.loadList(this.nextCursor!);
-                          }}
-                        >
-                          Next
-                        </button>
-                      </div>
-                    </div>
-                  </section>
-                  <section class="card" aria-label="Viewing editor">
-                    <div class="card-head">
-                      <h2>
-                        ${this.selected ? "Edit viewing" : this.draft ? "New viewing" : "Viewing details"}
-                      </h2>
-                      ${this.dirty() ? html`<span class="badge">Unsaved</span>` : nothing}
-                    </div>
-                    ${this.renderEditor()}
-                  </section>
-                </div>
-                <footer class="exports">
-                  <small
-                    >Exports include private history and deleted records. Store
-                    downloads securely.</small
-                  >
-                  <button
-                    ?disabled=${this.exporting || blocked}
-                    @click=${() => this.exportData("json")}
-                  >
-                    ${this.exporting ? "Exporting…" : "Export JSON"}
-                  </button>
-                  <button
-                    ?disabled=${this.exporting || blocked}
-                    @click=${() => this.exportData("sqlite")}
-                  >
-                    Export SQLite
-                  </button>
-                </footer>
-              `
+                                ＋ Add viewing
+                              </button>
+                            </div>
+                            <section
+                              class="metrics"
+                              aria-label="Database overview"
+                            >
+                              <div class="metric">
+                                <small>Journal entries</small
+                                ><strong>${this.info.viewing_count}</strong>
+                              </div>
+                              <div class="metric">
+                                <small>Database size</small
+                                ><strong
+                                  >${this.bytes(this.info.database_bytes ?? 0)}</strong
+                                ><small
+                                  >of
+                                  ${this.bytes(this.info.database_limit_bytes ?? 0)}</small
+                                >
+                              </div>
+                              <div class="metric">
+                                <small>Recording</small
+                                ><strong
+                                  >${this.info.tracking_enabled ? "Enabled" : "Manual only"}</strong
+                                >
+                              </div>
+                              <div class="metric">
+                                <small>Storage</small
+                                ><strong
+                                  >${this.info.backup_in_progress ? "Backing up" : "Ready"}</strong
+                                ><small
+                                  >Schema ${this.info.schema_version} · Revision
+                                  ${this.info.revision}</small
+                                >
+                              </div>
+                            </section>
+                            <div class="layout">
+                              <section
+                                class="card"
+                                aria-label="Journal entries"
+                              >
+                                <div class="card-head">
+                                  <h2>Viewings</h2>
+                                  <button
+                                    ?disabled=${blocked}
+                                    @click=${() => this.refresh()}
+                                  >
+                                    Refresh
+                                  </button>
+                                </div>
+                                <form
+                                  class="filters"
+                                  @submit=${(event: Event) => {
+                                    event.preventDefault();
+                                    this.query = this.searchText;
+                                    this.status = this.filterStatus;
+                                    this.page = 1;
+                                    this.history = [];
+                                    void this.loadList();
+                                  }}
+                                >
+                                  <label
+                                    >Search titles<input
+                                      name="search"
+                                      type="search"
+                                      maxlength="500"
+                                      .value=${this.searchText}
+                                      ?disabled=${blocked}
+                                      @input=${(event: Event) => {
+                                        this.searchText = (
+                                          event.target as HTMLInputElement
+                                        ).value;
+                                      }}
+                                  /></label>
+                                  <label
+                                    >Status<select
+                                      name="filter_status"
+                                      .value=${this.filterStatus}
+                                      ?disabled=${blocked}
+                                      @change=${(event: Event) => {
+                                        this.filterStatus = (
+                                          event.target as HTMLSelectElement
+                                        ).value;
+                                      }}
+                                    >
+                                      <option value="">All</option>
+                                      <option value="partial">Partial</option>
+                                      <option value="completed">
+                                        Completed
+                                      </option>
+                                    </select></label
+                                  >
+                                  <button ?disabled=${blocked}>Search</button>
+                                </form>
+                                ${
+                                  this.loading
+                                    ? html`<div class="empty" role="status">
+                                        Loading viewings…
+                                      </div>`
+                                    : this.rows.length
+                                      ? html`<div class="table-wrap">
+                                          <table>
+                                            <thead>
+                                              <tr>
+                                                <th>Title</th>
+                                                <th>Status</th>
+                                                <th>Watched</th>
+                                              </tr>
+                                            </thead>
+                                            <tbody>
+                                              ${this.rows.map(
+                                                (record) =>
+                                                  html` <tr
+                                                    class=${this.selected?.id === record.id ? "selected" : ""}
+                                                  >
+                                                    <td>
+                                                      <button
+                                                        class="link"
+                                                        ?disabled=${this.saving || !!this.pending}
+                                                        @click=${() => this.selectRecord(record.id)}
+                                                      >
+                                                        ${record.title}</button
+                                                      ><small
+                                                        >${this.date(record.started_at)}
+                                                        ·
+                                                        ${record.origin === "observed" ? "Recorded" : "Manual"}</small
+                                                      >
+                                                    </td>
+                                                    <td>
+                                                      <span
+                                                        class=${`badge ${record.status === "completed" ? "complete" : ""}`}
+                                                        >${record.status === "completed" ? "Completed" : "Partial"}</span
+                                                      >
+                                                    </td>
+                                                    <td>
+                                                      ${(record.watched_seconds / 60).toFixed(2)}
+                                                      min
+                                                    </td>
+                                                  </tr>`,
+                                              )}
+                                            </tbody>
+                                          </table>
+                                        </div>`
+                                      : html`<div class="empty">
+                                          <strong
+                                            >${this.query || this.status ? "No matching viewings" : "Your journal is empty"}</strong
+                                          >
+                                          <p>
+                                            ${this.query || this.status ? "Try another title or status." : "Add a manual viewing or enable automatic tracking in the integration settings."}
+                                          </p>
+                                        </div>`
+                                }
+                                <div class="pagination">
+                                  <small
+                                    >Page ${this.page} · Up to 25 entries</small
+                                  >
+                                  <div class="actions">
+                                    <button
+                                      ?disabled=${blocked || this.page === 1}
+                                      @click=${() => {
+                                        this.page = 1;
+                                        this.history = [];
+                                        void this.loadList();
+                                      }}
+                                    >
+                                      First
+                                    </button>
+                                    <button
+                                      ?disabled=${blocked || !this.history.length}
+                                      @click=${() => {
+                                        this.page--;
+                                        void this.loadList(this.history.pop());
+                                      }}
+                                    >
+                                      Previous
+                                    </button>
+                                    <button
+                                      ?disabled=${blocked || !this.nextCursor}
+                                      @click=${() => {
+                                        this.history.push(this.cursor);
+                                        if (this.history.length > 200)
+                                          this.history.shift();
+                                        this.page++;
+                                        void this.loadList(this.nextCursor!);
+                                      }}
+                                    >
+                                      Next
+                                    </button>
+                                  </div>
+                                </div>
+                              </section>
+                              <section class="card" aria-label="Viewing editor">
+                                <div class="card-head">
+                                  <h2>
+                                    ${this.selected ? "Edit viewing" : this.draft ? "New viewing" : "Viewing details"}
+                                  </h2>
+                                  ${this.dirty() ? html`<span class="badge">Unsaved</span>` : nothing}
+                                </div>
+                                ${this.renderEditor()}
+                              </section>
+                            </div> `
+                }
+              </section>`
       }
     </main>`;
   }

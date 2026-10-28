@@ -191,6 +191,8 @@ class RepositorySecurityTest(unittest.IsolatedAsyncioTestCase):
         await self.repository.async_close()
         with closing(sqlite3.connect(self.path)) as db:
             db.execute("DROP TABLE manual_audit")
+            db.execute("DROP TABLE maintenance_audit")
+            db.execute("DROP TABLE import_audit")
             db.execute("PRAGMA user_version = 2")
             db.commit()
         reopened = JournalRepository(self.path)

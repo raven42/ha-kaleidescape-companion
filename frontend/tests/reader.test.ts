@@ -135,6 +135,12 @@ it("selects the reader for a non-admin standalone session", async () => {
     );
     expect(panel.shadowRoot!.textContent).not.toContain("Export JSON");
     expect(panel.shadowRoot!.textContent).not.toContain("＋ Add viewing");
+    expect(
+      panel.shadowRoot!.querySelector("kaleidescape-now-playing"),
+    ).toBeNull();
+    expect(
+      transport.calls.some((call) => call.type.endsWith("/now_playing")),
+    ).toBe(false);
   } finally {
     panel.remove();
   }

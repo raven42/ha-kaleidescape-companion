@@ -3,6 +3,7 @@ import {
   ApiError,
   JournalClient,
   MAX_DOWNLOAD_BYTES,
+  MAX_ARTWORK_BYTES,
   errorMessage,
 } from "../src/api";
 import { FixtureTransport, info } from "./fixture";
@@ -29,6 +30,41 @@ it("takes only entry/dataset identifiers from metadata and freezes retry input",
   expect(request.message.data).toEqual({ title: "Initial title" });
   expect(request.message.dataset_id).toBe(info.dataset_id);
   expect(request.message.request_id).not.toBe("forged");
+});
+it("creates secure mutation request UUIDs when randomUUID is unavailable", () => {
+  const getRandomValues = crypto.getRandomValues.bind(crypto);
+  vi.stubGlobal("crypto", { getRandomValues });
+  try {
+    const client = new JournalClient({
+      callWS: vi.fn(),
+      fetchWithAuth: vi.fn(),
+    });
+    const ids = ["create", "update", "delete"].map(
+      (operation) =>
+        client.prepare(info, operation as "create" | "update" | "delete", {})
+          .message.request_id,
+    );
+    for (const id of ids)
+      expect(id).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+      );
+    expect(new Set(ids).size).toBe(3);
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
+it("refuses mutation preparation when secure randomness is unavailable", () => {
+  vi.stubGlobal("crypto", undefined);
+  try {
+    const callWS = vi.fn();
+    const client = new JournalClient({ callWS, fetchWithAuth: vi.fn() });
+    expect(() => client.prepare(info, "delete", {})).toThrowError(
+      "request_id_unavailable",
+    );
+    expect(callWS).not.toHaveBeenCalled();
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });
 it("bounds requests and treats a timeout as an unconfirmed result", async () => {
   vi.useFakeTimers();
@@ -80,4 +116,75 @@ it("does not render error details or credentials supplied by the server", () => 
   expect(errorMessage(new ApiError("unauthorized"))).toContain(
     "Access to this operation is denied",
   );
+});
+it("fetches only an HA media-player cover without query credentials and rejects active content", async () => {
+  const fetchWithAuth = vi
+    .fn()
+    .mockResolvedValue(
+      new Response("fictional", { headers: { "Content-Type": "image/jpeg" } }),
+    );
+  const client = new JournalClient({ callWS: vi.fn(), fetchWithAuth });
+  const signal = new AbortController().signal;
+  expect((await client.artwork("media_player.example", signal))?.type).toBe(
+    "image/jpeg",
+  );
+  expect(fetchWithAuth).toHaveBeenCalledWith(
+    "/api/media_player_proxy/media_player.example",
+    {
+      signal,
+      cache: "no-store",
+      redirect: "error",
+    },
+  );
+  for (const value of [
+    "https://untrusted.example/image",
+    "media_player.example?token=secret",
+    "../auth",
+    "sensor.example",
+  ]) {
+    await expect(client.artwork(value, signal)).rejects.toMatchObject({
+      code: "invalid_request",
+    });
+  }
+  expect(fetchWithAuth).toHaveBeenCalledTimes(1);
+  fetchWithAuth.mockResolvedValueOnce(
+    new Response("<svg></svg>", {
+      headers: { "Content-Type": "image/svg+xml" },
+    }),
+  );
+  expect(await client.artwork("media_player.example", signal)).toBeNull();
+  const cancel = vi.fn().mockResolvedValue(undefined);
+  fetchWithAuth.mockResolvedValueOnce({
+    ok: false,
+    status: 404,
+    body: { cancel },
+  });
+  expect(await client.artwork("media_player.example", signal)).toBeNull();
+  expect(cancel).toHaveBeenCalled();
+});
+it("bounds cover downloads, cancels overflow, and propagates revoked authentication", async () => {
+  const reader = {
+    read: vi.fn().mockResolvedValue({
+      value: { byteLength: MAX_ARTWORK_BYTES + 1 },
+      done: false,
+    }),
+    cancel: vi.fn().mockResolvedValue(undefined),
+    releaseLock: vi.fn(),
+  };
+  const fetchWithAuth = vi.fn().mockResolvedValue({
+    ok: true,
+    headers: new Headers({ "Content-Type": "image/png" }),
+    body: { getReader: () => reader },
+  });
+  const client = new JournalClient({ callWS: vi.fn(), fetchWithAuth });
+  const signal = new AbortController().signal;
+  await expect(
+    client.artwork("media_player.example", signal),
+  ).rejects.toMatchObject({ code: "export_too_large" });
+  expect(reader.cancel).toHaveBeenCalled();
+  expect(reader.releaseLock).toHaveBeenCalled();
+  fetchWithAuth.mockResolvedValueOnce(new Response(null, { status: 403 }));
+  await expect(
+    client.artwork("media_player.example", signal),
+  ).rejects.toMatchObject({ code: "unauthorized" });
 });

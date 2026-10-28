@@ -9,11 +9,11 @@ not a claim of independent security certification.
 
 | Boundary | Policy and limitation |
 | --- | --- |
-| Browser → integration API | Active authenticated HA users may read the shared household viewing summary. Mutations, notes/source/session details, Now Playing, and exports require an active administrator. Dataset IDs select data; they are not credentials. |
+| Browser → integration API | Active authenticated HA users may read the shared household viewing summary. Mutations, notes/source/session details, Now Playing, and exports require an active administrator. Now Playing also checks read permission on the configured source entities. Dataset IDs select data; they are not credentials. |
 | Integration → HA | Custom integrations execute in Core's process with Core's filesystem, entity, credential, and network access. Entity selection is application behavior, not a sandbox. Other code running as HA can read this database. |
 | HA users → one another | All active users share one household journal; there is no personal watch history or per-user journal ownership. A positive field allowlist limits regular-user API responses. HA roles are not strong isolation between hostile authenticated users. |
 | Journal → HA entity states | Watch-history sensor states/attributes deliberately expose movie titles, times, and counts through HA entity access. Recorder, dashboards, automations, and backups can retain these values outside the private database. Notes, source identities, sessions, and audit actors must never enter sensors. |
-| HA → devices and services | Current observation reads selected HA entity states and sends no device requests or controls. Future connectors may contact only configured destinations using explicitly supported operations. |
+| HA → devices and services | Current observation reads selected HA entity states and sends no controls or direct device requests. Now Playing artwork uses HA’s existing image proxy; HA may fetch its artwork source. Future connectors may contact only configured destinations using explicitly supported operations. |
 | Device/imported data → storage and UI | Treat metadata, notes, HTML, image references, and imported files as untrusted, including data from local devices. Validate before storing or using it, and render text without executing markup. |
 | Storage → filesystem and exports | Journal contents, source identifiers, audit actors, backups, and retry responses are private household data. Keep them outside static web roots and access them through the authenticated API. |
 | Development machine → test HA deployment | Deployment is an explicit privileged SSH operation. Verify the host key and target, send only the runtime package, and configure restart through fixed HA OS/Container commands. Normal checks must never connect to or modify the target. |
@@ -88,17 +88,25 @@ HA process against a journal directory.
 4. Vite custom environment-variable exposure is disabled. Keep explicit host
    restrictions, CORS disabled for the standalone shell, strict filesystem
    serving, and fixed ports. The development HTTP proxy accepts only GETs to the
-   explicit journal export route and a fixed `127.0.0.1:8123` target. It checks
+   explicit journal export route and query-free `/api/media_player_proxy/media_player.<object_id>`
+   artwork route, plus POST to the scoped import route with fixed format/request/revision
+   query fields, at a fixed `127.0.0.1:8123` target. It rejects image query tokens,
+   browse-media subpaths, and arbitrary paths/URLs. It checks
    the origin or same-origin Fetch Metadata, passes the browser's bearer header,
    and injects no credentials. WebSockets go directly to local HA; there is no
    WebSocket proxy or origin rewriting. Any extension requires a boundary review.
 5. Render imported strings through Lit text bindings. Avoid `unsafeHTML`, script
    URLs, remote executable assets, and broad HTML sanitization exceptions.
-   Validate image/link protocols and destinations when those features arrive.
+   Current cover images use only the fixed HA image route and bounded raster
+   image blobs, never metadata-supplied URLs. Validate any future image/link
+   protocols and destinations before extending that allowlist.
    Serve the compiled bundle through HA in production; Vite is a development tool.
 
 The management UI renders metadata through text bindings, sends only changed
 fields for corrections, and keeps expected revisions and request UUIDs on writes.
+Request UUIDs use native `crypto.randomUUID` or cryptographic `getRandomValues`
+with UUID v4 formatting; never substitute timestamps or `Math.random`. If secure
+randomness is unavailable, preparation fails visibly before any write is sent.
 An unconfirmed write locks its exact payload for explicit retry, including an
 unload/error after a possible commit. Explicitly discarding that retry, navigation,
 or reload can lose it, so inspect history before recreating an entry.
@@ -116,6 +124,8 @@ review fixture uses fictional data and is excluded from the packaged panel.
 | Viewing title, start/end times, runtime, watched time, status, origin | Allowed | Allowed |
 | Notes, raw source/player/content identifiers, session evidence, storage health | Denied by the integration API | Allowed |
 | Create/correct/delete, Now Playing, JSON/SQLite export | Denied | Allowed |
+| Integration settings, fixed raw-table inspection, selected/all permanent purge | Denied | Allowed |
+| Viewing-only JSON/SQLite merge imports and Database viewing corrections | Denied | Allowed |
 
 Anonymous and inactive users are denied all journal operations. Regular-user
 `info` returns only API version, scope, revision, visible-record count, and
@@ -137,6 +147,131 @@ external automations when deciding history retention and who can access HA.
 These summaries refresh from one local worker query every 30 seconds while entities
 are enabled, with no device/network polling. Failed refreshes mark sensors unavailable.
 
+## Now Playing and current artwork
+
+The compact Now Playing card preserves administrator-only snapshot access and
+checks HA entity `POLICY_READ` for all resolved configured source entities before
+reading their live state. No journal ownership/sharing capability changes.
+Responses include session timing/credits/gaps and health, not image URLs or proxy
+tokens. The artwork change key is an opaque hash of the HA-local picture reference,
+kept in memory only. External, malformed, and unrelated picture references do not
+enable the cover request. Current-session context must match the source content ID.
+
+The browser builds an exact, query-free HA media-player proxy path from a validated
+entity ID and fetches it using HA authentication, with redirects refused. Only
+JPEG/PNG/WebP are accepted. Accumulation is capped at 5 MiB and image requests have
+a five-second browser budget. This is a browser limit; HA owns upstream fetching
+and caching. No new arbitrary-fetch endpoint, persistent image store, Python image
+decoder, or device connection is introduced by Companion. Missing or failed artwork
+has a placeholder. Raw picture URLs, tokens, and image bytes never enter the journal,
+exports, diagnostics, or logs.
+
+HA's existing media-player image route has its own authentication/token behavior;
+it is not a Companion administrator-only endpoint. Other HA users may already
+access images according to HA's wider trust model. The card never copies signed
+image URLs or adds query tokens, and Vite passes only the browser's bearer header
+on the allowlisted export/artwork GET and scoped import POST routes; it never
+injects credentials of its own.
+
+The snapshot refreshes about every five seconds while the card/page is visible;
+requests do not overlap. Hiding/unmounting or account/connection changes clear data,
+abort image work, revoke object URLs, and invalidate late results. Denied access
+clears the card and stops automatic retries until explicit refresh, page return, or rebind.
+There are no controls or HA action calls. Source metadata is text, never executable
+markup. Future user sharing, subscriptions, controls, remote URLs, or historical
+artwork require another boundary review and regression tests.
+
+The automatic runtime-admission rule validates its numeric configuration and
+normalized source duration; it adds no fetches or control operations. It preserves
+existing records, manual corrections, tombstones, audit, and retry semantics.
+Unknown runtime waits when the rule is enabled. Now Playing's cutoff/exclusion
+fields stay on the existing administrator/source-permission surface, outside
+regular-user journal projections and history sensors. This is a recording heuristic,
+not a security boundary or a reliable source content classification.
+
+## Settings and permanent maintenance
+
+Administrator tabs mount only their selected view. Switching pages stops Now
+Playing polling and cancels an abandoned settings flow. Drafts require discard
+confirmation, and pending mutations retain their exact retry state until resolved
+or explicitly discarded. Regular users keep the read-only journal without these
+controls. Database New Entry uses the existing administrator journal/create API,
+with no create/edit capability for internal evidence, audit, retry, or metadata
+tables. Moving controls into tabs changes no API authorization or data projection.
+The shared Database toolbar reuses these same endpoints: single-entry deletion
+uses the journal tombstone API and remains distinct from permanent purge. Internal
+tables disable mutation controls. Native transfer/purge dialogs block dismissal
+during accepted work or an uncertain result; explicit retry discard remains
+available. Cancelled file selection clears its private File and native input.
+
+The sidebar settings adapter operates only this Companion entry's native HA
+options flow. Start/submit/cancel require an active administrator; flows bind to
+the authenticated actor and entry and reject configuration changes since opening.
+Unknown setting fields and another user's or integration's flows are rejected.
+Validation, storage, and reload stay in the existing HA options flow. This adds
+no general options/action proxy or Vite HTTP route. A lost save response requires
+reopening and inspecting the persisted values rather than blindly replaying it.
+
+Database inspection is administrator-only, includes private data, and accepts
+only seven internal table names with 25-row pages and revision-bound pagination.
+Database corrections reuse validated viewing fields, optimistic revisions, manual
+audit, and exact retry semantics, including for tombstones; they preserve deletion
+status and session evidence. Internal tables/immutable fields are read-only.
+There is no arbitrary SQL or filesystem path API. Render raw values
+as text; account/connection changes clear details and invalidate late responses.
+
+Permanent selected/all purge requires recording disabled and no active observer,
+explicit server-validated confirmation, dataset revision, and a request UUID.
+Backup/export activity blocks purging. One transaction removes viewing/session
+content, related manual audit rows, and cached response content, including legacy
+responses without an audit row. Minimal UUID/fingerprint retry barriers remain
+so old create/update requests cannot resurrect or return purged data. A schema 4
+maintenance audit/receipt retains only actor, operation/request UUID, time, count,
+and revision. It contains no purged viewing identities, titles, notes, or source
+IDs; request fingerprints are hashes, not stored payloads. Exact purge retries
+are bound to actor/payload and remain safe after a lost response or restart.
+
+SQLite secure deletion is enabled for the live database; this does not promise
+physical erasure from storage, rollback remnants, host snapshots, or external
+copies. Purge does not remove exports, migration/HA backups, already viewed browser
+data, or HA Recorder/automation history. It leaves the dataset identity and
+minimal maintenance/retry metadata intact. No automatic retention policy is added.
+
+## Compatible viewing imports
+
+Imports are explicitly initiated, active-admin-only raw POST uploads scoped to
+the current entry/dataset. Check access and readiness before upload, before
+accepting worker work, and before returning results. Require recording disabled
+and no observer. Bound uploads to 32 MiB and one import per runtime, with 10,000
+viewings and a 30-second request/validation budget. Keep the slot until accepted
+work finishes after cancellation; exports/purge cannot overlap. The normal backup
+barrier and database growth limit still apply. No uploaded paths are accepted.
+
+Parse JSON strictly and validate all recognized values/IDs/timestamps before a
+single transaction. SQLite uploads are deserialized in memory with defensive and
+query-only operation, trusted schema disabled, native limits and a progress
+deadline. Select only known columns from the regular viewings table; the authorizer
+denies functions, attachments, and other operations. Reject views/virtual tables,
+incompatible structures, oversized rows, malformed files, duplicate keys/IDs, and
+non-finite numeric fields. No source schema, trigger, SQL script, extension, session,
+audit, receipt, configuration, or live recorder state is installed.
+
+Merge only new IDs and retain existing entries/tombstones unchanged. Preserve
+validated viewing snapshots and precision without fabricating historical actors
+or timing evidence. Schema 5 records only the importing actor, request UUID,
+imported/skipped counts, dataset revision, and time; filenames and contents are
+not retained in audit/logs. Actor/payload-bound receipts make exact retries safe,
+including after a subsequent purge. A separate explicit import from an older
+backup can intentionally restore purged content. Unknown source keys are ignored;
+recognized values are never trusted based solely on an export/schema version.
+
+Uploads stay in memory; account/connection changes abort browser work, clear file
+selection, and ignore late results. An accepted transaction can still finish; an
+uncertain result retains the original immutable File/request for explicit retry.
+Private files and bytes already observed cannot be recalled. Native SQLite and
+Core dependencies still need upstream maintenance; this is not a sandbox against
+a compromised HA process or a guarantee against every parser vulnerability.
+
 ## Future connectors, controls, and sharing
 
 - Use HA's shared HTTP client, certificate verification, bounded timeouts,
@@ -153,8 +288,8 @@ are enabled, with no device/network polling. Failed refreshes mark sensors unava
   Check relevant entity permissions as well as journal permissions. Subscriptions
   must stop releasing data when access is revoked or their entry unloads.
 - Imports must validate size, schema, paths, identifiers, and content before
-  applying transactional changes. A permanent-purge feature must cover sessions,
-  retry responses, and audit references as well as the visible viewing.
+  applying transactional changes. Any extension to permanent purge must preserve
+  coverage of sessions, retry responses, audit references, and retry barriers.
 
 ## Operator procedures
 
@@ -252,17 +387,21 @@ Use the [documented backup/restore procedure](backend.md#export-backup-and-resto
 Treat JSON/SQLite downloads and migration backups as private, including exports
 containing tombstones. SQLite exports also contain retry responses and audit
 metadata. JSON format 2 is a viewing/session export and does not include the
-manual audit table. Keep backups encrypted where practical and restrict access
+audit tables. Keep backups encrypted where practical and restrict access
 to the backup destination; downloaded files are outside this integration's
 permission and cleanup control.
 
 The journal deliberately retains history. A visible delete is a tombstone,
 not permanent erasure: content can remain in sessions, retry responses, SQLite
 pages, exports, and backups. There is no automatic history, audit, or retry purge.
+Administrators may explicitly purge selected/all entries through Database as
+described above. Live content and references are removed while content-free retry
+barriers and maintenance audit remain. Separate copies require separate retention.
 Monitor storage and retain only the migration backups and downloaded copies you
 need. At the database cap, writes fail with `storage_error`; reads remain usable.
 Before reaching capacity, archive a protected snapshot and plan retention or a
-reviewed limit change. Never edit or delete live SQLite files to reclaim space.
+reviewed limit change. Purge makes freed pages reusable but need not shrink the
+database file. Never edit or delete live SQLite files to reclaim space.
 Host backups and migration copies also need disk headroom beyond the page cap.
 
 For complete dataset removal, stop HA, remove only the integration's dedicated

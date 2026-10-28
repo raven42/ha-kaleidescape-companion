@@ -1,15 +1,15 @@
-const D = globalThis, J = D.ShadowRoot && (D.ShadyCSS === void 0 || D.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, F = /* @__PURE__ */ Symbol(), Q = /* @__PURE__ */ new WeakMap();
-let ht = class {
+const j = globalThis, nt = j.ShadowRoot && (j.ShadyCSS === void 0 || j.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, rt = /* @__PURE__ */ Symbol(), dt = /* @__PURE__ */ new WeakMap();
+let kt = class {
   constructor(t, e, i) {
-    if (this._$cssResult$ = !0, i !== F) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
+    if (this._$cssResult$ = !0, i !== rt) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
     this.cssText = t, this.t = e;
   }
   get styleSheet() {
     let t = this.o;
     const e = this.t;
-    if (J && t === void 0) {
+    if (nt && t === void 0) {
       const i = e !== void 0 && e.length === 1;
-      i && (t = Q.get(e)), t === void 0 && ((this.o = t = new CSSStyleSheet()).replaceSync(this.cssText), i && Q.set(e, t));
+      i && (t = dt.get(e)), t === void 0 && ((this.o = t = new CSSStyleSheet()).replaceSync(this.cssText), i && dt.set(e, t));
     }
     return t;
   }
@@ -17,90 +17,90 @@ let ht = class {
     return this.cssText;
   }
 };
-const vt = (r) => new ht(typeof r == "string" ? r : r + "", void 0, F), bt = (r, ...t) => {
-  const e = r.length === 1 ? r[0] : t.reduce((i, s, n) => i + ((a) => {
-    if (a._$cssResult$ === !0) return a.cssText;
-    if (typeof a == "number") return a;
-    throw Error("Value passed to 'css' function must be a 'css' function result: " + a + ". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.");
-  })(s) + r[n + 1], r[0]);
-  return new ht(e, r, F);
-}, yt = (r, t) => {
-  if (J) r.adoptedStyleSheets = t.map((e) => e instanceof CSSStyleSheet ? e : e.styleSheet);
+const Dt = (n) => new kt(typeof n == "string" ? n : n + "", void 0, rt), J = (n, ...t) => {
+  const e = n.length === 1 ? n[0] : t.reduce((i, s, a) => i + ((o) => {
+    if (o._$cssResult$ === !0) return o.cssText;
+    if (typeof o == "number") return o;
+    throw Error("Value passed to 'css' function must be a 'css' function result: " + o + ". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.");
+  })(s) + n[a + 1], n[0]);
+  return new kt(e, n, rt);
+}, Tt = (n, t) => {
+  if (nt) n.adoptedStyleSheets = t.map((e) => e instanceof CSSStyleSheet ? e : e.styleSheet);
   else for (const e of t) {
-    const i = document.createElement("style"), s = D.litNonce;
-    s !== void 0 && i.setAttribute("nonce", s), i.textContent = e.cssText, r.appendChild(i);
+    const i = document.createElement("style"), s = j.litNonce;
+    s !== void 0 && i.setAttribute("nonce", s), i.textContent = e.cssText, n.appendChild(i);
   }
-}, X = J ? (r) => r : (r) => r instanceof CSSStyleSheet ? ((t) => {
+}, ct = nt ? (n) => n : (n) => n instanceof CSSStyleSheet ? ((t) => {
   let e = "";
   for (const i of t.cssRules) e += i.cssText;
-  return vt(e);
-})(r) : r;
-const { is: _t, defineProperty: xt, getOwnPropertyDescriptor: wt, getOwnPropertyNames: At, getOwnPropertySymbols: St, getPrototypeOf: Et } = Object, L = globalThis, G = L.trustedTypes, Ct = G ? G.emptyScript : "", kt = L.reactiveElementPolyfillSupport, U = (r, t) => r, W = { toAttribute(r, t) {
+  return Dt(e);
+})(n) : n;
+const { is: Ot, defineProperty: zt, getOwnPropertyDescriptor: Nt, getOwnPropertyNames: Lt, getOwnPropertySymbols: jt, getPrototypeOf: Mt } = Object, K = globalThis, ut = K.trustedTypes, It = ut ? ut.emptyScript : "", Bt = K.reactiveElementPolyfillSupport, R = (n, t) => n, X = { toAttribute(n, t) {
   switch (t) {
     case Boolean:
-      r = r ? Ct : null;
+      n = n ? It : null;
       break;
     case Object:
     case Array:
-      r = r == null ? r : JSON.stringify(r);
+      n = n == null ? n : JSON.stringify(n);
   }
-  return r;
-}, fromAttribute(r, t) {
-  let e = r;
+  return n;
+}, fromAttribute(n, t) {
+  let e = n;
   switch (t) {
     case Boolean:
-      e = r !== null;
+      e = n !== null;
       break;
     case Number:
-      e = r === null ? null : Number(r);
+      e = n === null ? null : Number(n);
       break;
     case Object:
     case Array:
       try {
-        e = JSON.parse(r);
+        e = JSON.parse(n);
       } catch {
         e = null;
       }
   }
   return e;
-} }, dt = (r, t) => !_t(r, t), tt = { attribute: !0, type: String, converter: W, reflect: !1, useDefault: !1, hasChanged: dt };
-Symbol.metadata ??= /* @__PURE__ */ Symbol("metadata"), L.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
-let x = class extends HTMLElement {
+} }, St = (n, t) => !Ot(n, t), pt = { attribute: !0, type: String, converter: X, reflect: !1, useDefault: !1, hasChanged: St };
+Symbol.metadata ??= /* @__PURE__ */ Symbol("metadata"), K.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
+let E = class extends HTMLElement {
   static addInitializer(t) {
     this._$Ei(), (this.l ??= []).push(t);
   }
   static get observedAttributes() {
     return this.finalize(), this._$Eh && [...this._$Eh.keys()];
   }
-  static createProperty(t, e = tt) {
+  static createProperty(t, e = pt) {
     if (e.state && (e.attribute = !1), this._$Ei(), this.prototype.hasOwnProperty(t) && ((e = Object.create(e)).wrapped = !0), this.elementProperties.set(t, e), !e.noAccessor) {
       const i = /* @__PURE__ */ Symbol(), s = this.getPropertyDescriptor(t, i, e);
-      s !== void 0 && xt(this.prototype, t, s);
+      s !== void 0 && zt(this.prototype, t, s);
     }
   }
   static getPropertyDescriptor(t, e, i) {
-    const { get: s, set: n } = wt(this.prototype, t) ?? { get() {
+    const { get: s, set: a } = Nt(this.prototype, t) ?? { get() {
       return this[e];
-    }, set(a) {
-      this[e] = a;
+    }, set(o) {
+      this[e] = o;
     } };
-    return { get: s, set(a) {
-      const d = s?.call(this);
-      n?.call(this, a), this.requestUpdate(t, d, i);
+    return { get: s, set(o) {
+      const h = s?.call(this);
+      a?.call(this, o), this.requestUpdate(t, h, i);
     }, configurable: !0, enumerable: !0 };
   }
   static getPropertyOptions(t) {
-    return this.elementProperties.get(t) ?? tt;
+    return this.elementProperties.get(t) ?? pt;
   }
   static _$Ei() {
-    if (this.hasOwnProperty(U("elementProperties"))) return;
-    const t = Et(this);
+    if (this.hasOwnProperty(R("elementProperties"))) return;
+    const t = Mt(this);
     t.finalize(), t.l !== void 0 && (this.l = [...t.l]), this.elementProperties = new Map(t.elementProperties);
   }
   static finalize() {
-    if (this.hasOwnProperty(U("finalized"))) return;
-    if (this.finalized = !0, this._$Ei(), this.hasOwnProperty(U("properties"))) {
-      const e = this.properties, i = [...At(e), ...St(e)];
+    if (this.hasOwnProperty(R("finalized"))) return;
+    if (this.finalized = !0, this._$Ei(), this.hasOwnProperty(R("properties"))) {
+      const e = this.properties, i = [...Lt(e), ...jt(e)];
       for (const s of i) this.createProperty(s, e[s]);
     }
     const t = this[Symbol.metadata];
@@ -119,8 +119,8 @@ let x = class extends HTMLElement {
     const e = [];
     if (Array.isArray(t)) {
       const i = new Set(t.flat(1 / 0).reverse());
-      for (const s of i) e.unshift(X(s));
-    } else t !== void 0 && e.push(X(t));
+      for (const s of i) e.unshift(ct(s));
+    } else t !== void 0 && e.push(ct(t));
     return e;
   }
   static _$Eu(t, e) {
@@ -146,7 +146,7 @@ let x = class extends HTMLElement {
   }
   createRenderRoot() {
     const t = this.shadowRoot ?? this.attachShadow(this.constructor.shadowRootOptions);
-    return yt(t, this.constructor.elementStyles), t;
+    return Tt(t, this.constructor.elementStyles), t;
   }
   connectedCallback() {
     this.renderRoot ??= this.createRenderRoot(), this.enableUpdating(!0), this._$EO?.forEach((t) => t.hostConnected?.());
@@ -162,29 +162,29 @@ let x = class extends HTMLElement {
   _$ET(t, e) {
     const i = this.constructor.elementProperties.get(t), s = this.constructor._$Eu(t, i);
     if (s !== void 0 && i.reflect === !0) {
-      const n = (i.converter?.toAttribute !== void 0 ? i.converter : W).toAttribute(e, i.type);
-      this._$Em = t, n == null ? this.removeAttribute(s) : this.setAttribute(s, n), this._$Em = null;
+      const a = (i.converter?.toAttribute !== void 0 ? i.converter : X).toAttribute(e, i.type);
+      this._$Em = t, a == null ? this.removeAttribute(s) : this.setAttribute(s, a), this._$Em = null;
     }
   }
   _$AK(t, e) {
     const i = this.constructor, s = i._$Eh.get(t);
     if (s !== void 0 && this._$Em !== s) {
-      const n = i.getPropertyOptions(s), a = typeof n.converter == "function" ? { fromAttribute: n.converter } : n.converter?.fromAttribute !== void 0 ? n.converter : W;
+      const a = i.getPropertyOptions(s), o = typeof a.converter == "function" ? { fromAttribute: a.converter } : a.converter?.fromAttribute !== void 0 ? a.converter : X;
       this._$Em = s;
-      const d = a.fromAttribute(e, n.type);
-      this[s] = d ?? this._$Ej?.get(s) ?? d, this._$Em = null;
+      const h = o.fromAttribute(e, a.type);
+      this[s] = h ?? this._$Ej?.get(s) ?? h, this._$Em = null;
     }
   }
-  requestUpdate(t, e, i, s = !1, n) {
+  requestUpdate(t, e, i, s = !1, a) {
     if (t !== void 0) {
-      const a = this.constructor;
-      if (s === !1 && (n = this[t]), i ??= a.getPropertyOptions(t), !((i.hasChanged ?? dt)(n, e) || i.useDefault && i.reflect && n === this._$Ej?.get(t) && !this.hasAttribute(a._$Eu(t, i)))) return;
+      const o = this.constructor;
+      if (s === !1 && (a = this[t]), i ??= o.getPropertyOptions(t), !((i.hasChanged ?? St)(a, e) || i.useDefault && i.reflect && a === this._$Ej?.get(t) && !this.hasAttribute(o._$Eu(t, i)))) return;
       this.C(t, e, i);
     }
     this.isUpdatePending === !1 && (this._$ES = this._$EP());
   }
-  C(t, e, { useDefault: i, reflect: s, wrapped: n }, a) {
-    i && !(this._$Ej ??= /* @__PURE__ */ new Map()).has(t) && (this._$Ej.set(t, a ?? e ?? this[t]), n !== !0 || a !== void 0) || (this._$AL.has(t) || (this.hasUpdated || i || (e = void 0), this._$AL.set(t, e)), s === !0 && this._$Em !== t && (this._$Eq ??= /* @__PURE__ */ new Set()).add(t));
+  C(t, e, { useDefault: i, reflect: s, wrapped: a }, o) {
+    i && !(this._$Ej ??= /* @__PURE__ */ new Map()).has(t) && (this._$Ej.set(t, o ?? e ?? this[t]), a !== !0 || o !== void 0) || (this._$AL.has(t) || (this.hasUpdated || i || (e = void 0), this._$AL.set(t, e)), s === !0 && this._$Em !== t && (this._$Eq ??= /* @__PURE__ */ new Set()).add(t));
   }
   async _$EP() {
     this.isUpdatePending = !0;
@@ -203,13 +203,13 @@ let x = class extends HTMLElement {
     if (!this.isUpdatePending) return;
     if (!this.hasUpdated) {
       if (this.renderRoot ??= this.createRenderRoot(), this._$Ep) {
-        for (const [s, n] of this._$Ep) this[s] = n;
+        for (const [s, a] of this._$Ep) this[s] = a;
         this._$Ep = void 0;
       }
       const i = this.constructor.elementProperties;
-      if (i.size > 0) for (const [s, n] of i) {
-        const { wrapped: a } = n, d = this[s];
-        a !== !0 || this._$AL.has(s) || d === void 0 || this.C(s, void 0, n, d);
+      if (i.size > 0) for (const [s, a] of i) {
+        const { wrapped: o } = a, h = this[s];
+        o !== !0 || this._$AL.has(s) || h === void 0 || this.C(s, void 0, a, h);
       }
     }
     let t = !1;
@@ -246,70 +246,70 @@ let x = class extends HTMLElement {
   firstUpdated(t) {
   }
 };
-x.elementStyles = [], x.shadowRootOptions = { mode: "open" }, x[U("elementProperties")] = /* @__PURE__ */ new Map(), x[U("finalized")] = /* @__PURE__ */ new Map(), kt?.({ ReactiveElement: x }), (L.reactiveElementVersions ??= []).push("2.1.2");
-const K = globalThis, et = (r) => r, N = K.trustedTypes, it = N ? N.createPolicy("lit-html", { createHTML: (r) => r }) : void 0, ct = "$lit$", m = `lit$${Math.random().toFixed(9).slice(2)}$`, pt = "?" + m, Ut = `<${pt}>`, y = document, R = () => y.createComment(""), T = (r) => r === null || typeof r != "object" && typeof r != "function", Y = Array.isArray, Rt = (r) => Y(r) || typeof r?.[Symbol.iterator] == "function", H = `[ 	
-\f\r]`, C = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, st = /-->/g, rt = />/g, $ = RegExp(`>|${H}(?:([^\\s"'>=/]+)(${H}*=${H}*(?:[^ 	
-\f\r"'\`<>=]|("|')|))|$)`, "g"), nt = /'/g, at = /"/g, ut = /^(?:script|style|textarea|title)$/i, Tt = (r) => (t, ...e) => ({ _$litType$: r, strings: t, values: e }), l = Tt(1), S = /* @__PURE__ */ Symbol.for("lit-noChange"), h = /* @__PURE__ */ Symbol.for("lit-nothing"), ot = /* @__PURE__ */ new WeakMap(), v = y.createTreeWalker(y, 129);
-function ft(r, t) {
-  if (!Y(r) || !r.hasOwnProperty("raw")) throw Error("invalid template strings array");
-  return it !== void 0 ? it.createHTML(t) : t;
+E.elementStyles = [], E.shadowRootOptions = { mode: "open" }, E[R("elementProperties")] = /* @__PURE__ */ new Map(), E[R("finalized")] = /* @__PURE__ */ new Map(), Bt?.({ ReactiveElement: E }), (K.reactiveElementVersions ??= []).push("2.1.2");
+const ot = globalThis, gt = (n) => n, M = ot.trustedTypes, ft = M ? M.createPolicy("lit-html", { createHTML: (n) => n }) : void 0, Et = "$lit$", _ = `lit$${Math.random().toFixed(9).slice(2)}$`, Ct = "?" + _, Ht = `<${Ct}>`, S = document, D = () => S.createComment(""), T = (n) => n === null || typeof n != "object" && typeof n != "function", lt = Array.isArray, Wt = (n) => lt(n) || typeof n?.[Symbol.iterator] == "function", Y = `[ 	
+\f\r]`, q = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, mt = /-->/g, bt = />/g, x = RegExp(`>|${Y}(?:([^\\s"'>=/]+)(${Y}*=${Y}*(?:[^ 	
+\f\r"'\`<>=]|("|')|))|$)`, "g"), vt = /'/g, yt = /"/g, At = /^(?:script|style|textarea|title)$/i, Ft = (n) => (t, ...e) => ({ _$litType$: n, strings: t, values: e }), r = Ft(1), C = /* @__PURE__ */ Symbol.for("lit-noChange"), l = /* @__PURE__ */ Symbol.for("lit-nothing"), $t = /* @__PURE__ */ new WeakMap(), k = S.createTreeWalker(S, 129);
+function Ut(n, t) {
+  if (!lt(n) || !n.hasOwnProperty("raw")) throw Error("invalid template strings array");
+  return ft !== void 0 ? ft.createHTML(t) : t;
 }
-const qt = (r, t) => {
-  const e = r.length - 1, i = [];
-  let s, n = t === 2 ? "<svg>" : t === 3 ? "<math>" : "", a = C;
-  for (let d = 0; d < e; d++) {
-    const o = r[d];
-    let c, u, p = -1, f = 0;
-    for (; f < o.length && (a.lastIndex = f, u = a.exec(o), u !== null); ) f = a.lastIndex, a === C ? u[1] === "!--" ? a = st : u[1] !== void 0 ? a = rt : u[2] !== void 0 ? (ut.test(u[2]) && (s = RegExp("</" + u[2], "g")), a = $) : u[3] !== void 0 && (a = $) : a === $ ? u[0] === ">" ? (a = s ?? C, p = -1) : u[1] === void 0 ? p = -2 : (p = a.lastIndex - u[2].length, c = u[1], a = u[3] === void 0 ? $ : u[3] === '"' ? at : nt) : a === at || a === nt ? a = $ : a === st || a === rt ? a = C : (a = $, s = void 0);
-    const g = a === $ && r[d + 1].startsWith("/>") ? " " : "";
-    n += a === C ? o + Ut : p >= 0 ? (i.push(c), o.slice(0, p) + ct + o.slice(p) + m + g) : o + m + (p === -2 ? d : g);
+const Vt = (n, t) => {
+  const e = n.length - 1, i = [];
+  let s, a = t === 2 ? "<svg>" : t === 3 ? "<math>" : "", o = q;
+  for (let h = 0; h < e; h++) {
+    const d = n[h];
+    let c, p, u = -1, v = 0;
+    for (; v < d.length && (o.lastIndex = v, p = o.exec(d), p !== null); ) v = o.lastIndex, o === q ? p[1] === "!--" ? o = mt : p[1] !== void 0 ? o = bt : p[2] !== void 0 ? (At.test(p[2]) && (s = RegExp("</" + p[2], "g")), o = x) : p[3] !== void 0 && (o = x) : o === x ? p[0] === ">" ? (o = s ?? q, u = -1) : p[1] === void 0 ? u = -2 : (u = o.lastIndex - p[2].length, c = p[1], o = p[3] === void 0 ? x : p[3] === '"' ? yt : vt) : o === yt || o === vt ? o = x : o === mt || o === bt ? o = q : (o = x, s = void 0);
+    const y = o === x && n[h + 1].startsWith("/>") ? " " : "";
+    a += o === q ? d + Ht : u >= 0 ? (i.push(c), d.slice(0, u) + Et + d.slice(u) + _ + y) : d + _ + (u === -2 ? h : y);
   }
-  return [ft(r, n + (r[e] || "<?>") + (t === 2 ? "</svg>" : t === 3 ? "</math>" : "")), i];
+  return [Ut(n, a + (n[e] || "<?>") + (t === 2 ? "</svg>" : t === 3 ? "</math>" : "")), i];
 };
-class q {
+class O {
   constructor({ strings: t, _$litType$: e }, i) {
     let s;
     this.parts = [];
-    let n = 0, a = 0;
-    const d = t.length - 1, o = this.parts, [c, u] = qt(t, e);
-    if (this.el = q.createElement(c, i), v.currentNode = this.el.content, e === 2 || e === 3) {
-      const p = this.el.content.firstChild;
-      p.replaceWith(...p.childNodes);
+    let a = 0, o = 0;
+    const h = t.length - 1, d = this.parts, [c, p] = Vt(t, e);
+    if (this.el = O.createElement(c, i), k.currentNode = this.el.content, e === 2 || e === 3) {
+      const u = this.el.content.firstChild;
+      u.replaceWith(...u.childNodes);
     }
-    for (; (s = v.nextNode()) !== null && o.length < d; ) {
+    for (; (s = k.nextNode()) !== null && d.length < h; ) {
       if (s.nodeType === 1) {
-        if (s.hasAttributes()) for (const p of s.getAttributeNames()) if (p.endsWith(ct)) {
-          const f = u[a++], g = s.getAttribute(p).split(m), O = /([.?@])?(.*)/.exec(f);
-          o.push({ type: 1, index: n, name: O[2], strings: g, ctor: O[1] === "." ? Ot : O[1] === "?" ? Dt : O[1] === "@" ? Nt : M }), s.removeAttribute(p);
-        } else p.startsWith(m) && (o.push({ type: 6, index: n }), s.removeAttribute(p));
-        if (ut.test(s.tagName)) {
-          const p = s.textContent.split(m), f = p.length - 1;
-          if (f > 0) {
-            s.textContent = N ? N.emptyScript : "";
-            for (let g = 0; g < f; g++) s.append(p[g], R()), v.nextNode(), o.push({ type: 2, index: ++n });
-            s.append(p[f], R());
+        if (s.hasAttributes()) for (const u of s.getAttributeNames()) if (u.endsWith(Et)) {
+          const v = p[o++], y = s.getAttribute(u).split(_), L = /([.?@])?(.*)/.exec(v);
+          d.push({ type: 1, index: a, name: L[2], strings: y, ctor: L[1] === "." ? Kt : L[1] === "?" ? Gt : L[1] === "@" ? Yt : G }), s.removeAttribute(u);
+        } else u.startsWith(_) && (d.push({ type: 6, index: a }), s.removeAttribute(u));
+        if (At.test(s.tagName)) {
+          const u = s.textContent.split(_), v = u.length - 1;
+          if (v > 0) {
+            s.textContent = M ? M.emptyScript : "";
+            for (let y = 0; y < v; y++) s.append(u[y], D()), k.nextNode(), d.push({ type: 2, index: ++a });
+            s.append(u[v], D());
           }
         }
-      } else if (s.nodeType === 8) if (s.data === pt) o.push({ type: 2, index: n });
+      } else if (s.nodeType === 8) if (s.data === Ct) d.push({ type: 2, index: a });
       else {
-        let p = -1;
-        for (; (p = s.data.indexOf(m, p + 1)) !== -1; ) o.push({ type: 7, index: n }), p += m.length - 1;
+        let u = -1;
+        for (; (u = s.data.indexOf(_, u + 1)) !== -1; ) d.push({ type: 7, index: a }), u += _.length - 1;
       }
-      n++;
+      a++;
     }
   }
   static createElement(t, e) {
-    const i = y.createElement("template");
+    const i = S.createElement("template");
     return i.innerHTML = t, i;
   }
 }
-function E(r, t, e = r, i) {
-  if (t === S) return t;
+function A(n, t, e = n, i) {
+  if (t === C) return t;
   let s = i !== void 0 ? e._$Co?.[i] : e._$Cl;
-  const n = T(t) ? void 0 : t._$litDirective$;
-  return s?.constructor !== n && (s?._$AO?.(!1), n === void 0 ? s = void 0 : (s = new n(r), s._$AT(r, e, i)), i !== void 0 ? (e._$Co ??= [])[i] = s : e._$Cl = s), s !== void 0 && (t = E(r, s._$AS(r, t.values), s, i)), t;
+  const a = T(t) ? void 0 : t._$litDirective$;
+  return s?.constructor !== a && (s?._$AO?.(!1), a === void 0 ? s = void 0 : (s = new a(n), s._$AT(n, e, i)), i !== void 0 ? (e._$Co ??= [])[i] = s : e._$Cl = s), s !== void 0 && (t = A(n, s._$AS(n, t.values), s, i)), t;
 }
-class Pt {
+class Jt {
   constructor(t, e) {
     this._$AV = [], this._$AN = void 0, this._$AD = t, this._$AM = e;
   }
@@ -320,29 +320,29 @@ class Pt {
     return this._$AM._$AU;
   }
   u(t) {
-    const { el: { content: e }, parts: i } = this._$AD, s = (t?.creationScope ?? y).importNode(e, !0);
-    v.currentNode = s;
-    let n = v.nextNode(), a = 0, d = 0, o = i[0];
-    for (; o !== void 0; ) {
-      if (a === o.index) {
+    const { el: { content: e }, parts: i } = this._$AD, s = (t?.creationScope ?? S).importNode(e, !0);
+    k.currentNode = s;
+    let a = k.nextNode(), o = 0, h = 0, d = i[0];
+    for (; d !== void 0; ) {
+      if (o === d.index) {
         let c;
-        o.type === 2 ? c = new P(n, n.nextSibling, this, t) : o.type === 1 ? c = new o.ctor(n, o.name, o.strings, this, t) : o.type === 6 && (c = new zt(n, this, t)), this._$AV.push(c), o = i[++d];
+        d.type === 2 ? c = new z(a, a.nextSibling, this, t) : d.type === 1 ? c = new d.ctor(a, d.name, d.strings, this, t) : d.type === 6 && (c = new Qt(a, this, t)), this._$AV.push(c), d = i[++h];
       }
-      a !== o?.index && (n = v.nextNode(), a++);
+      o !== d?.index && (a = k.nextNode(), o++);
     }
-    return v.currentNode = y, s;
+    return k.currentNode = S, s;
   }
   p(t) {
     let e = 0;
     for (const i of this._$AV) i !== void 0 && (i.strings !== void 0 ? (i._$AI(t, i, e), e += i.strings.length - 2) : i._$AI(t[e])), e++;
   }
 }
-class P {
+class z {
   get _$AU() {
     return this._$AM?._$AU ?? this._$Cv;
   }
   constructor(t, e, i, s) {
-    this.type = 2, this._$AH = h, this._$AN = void 0, this._$AA = t, this._$AB = e, this._$AM = i, this.options = s, this._$Cv = s?.isConnected ?? !0;
+    this.type = 2, this._$AH = l, this._$AN = void 0, this._$AA = t, this._$AB = e, this._$AM = i, this.options = s, this._$Cv = s?.isConnected ?? !0;
   }
   get parentNode() {
     let t = this._$AA.parentNode;
@@ -356,7 +356,7 @@ class P {
     return this._$AB;
   }
   _$AI(t, e = this) {
-    t = E(this, t, e), T(t) ? t === h || t == null || t === "" ? (this._$AH !== h && this._$AR(), this._$AH = h) : t !== this._$AH && t !== S && this._(t) : t._$litType$ !== void 0 ? this.$(t) : t.nodeType !== void 0 ? this.T(t) : Rt(t) ? this.k(t) : this._(t);
+    t = A(this, t, e), T(t) ? t === l || t == null || t === "" ? (this._$AH !== l && this._$AR(), this._$AH = l) : t !== this._$AH && t !== C && this._(t) : t._$litType$ !== void 0 ? this.$(t) : t.nodeType !== void 0 ? this.T(t) : Wt(t) ? this.k(t) : this._(t);
   }
   O(t) {
     return this._$AA.parentNode.insertBefore(t, this._$AB);
@@ -365,92 +365,92 @@ class P {
     this._$AH !== t && (this._$AR(), this._$AH = this.O(t));
   }
   _(t) {
-    this._$AH !== h && T(this._$AH) ? this._$AA.nextSibling.data = t : this.T(y.createTextNode(t)), this._$AH = t;
+    this._$AH !== l && T(this._$AH) ? this._$AA.nextSibling.data = t : this.T(S.createTextNode(t)), this._$AH = t;
   }
   $(t) {
-    const { values: e, _$litType$: i } = t, s = typeof i == "number" ? this._$AC(t) : (i.el === void 0 && (i.el = q.createElement(ft(i.h, i.h[0]), this.options)), i);
+    const { values: e, _$litType$: i } = t, s = typeof i == "number" ? this._$AC(t) : (i.el === void 0 && (i.el = O.createElement(Ut(i.h, i.h[0]), this.options)), i);
     if (this._$AH?._$AD === s) this._$AH.p(e);
     else {
-      const n = new Pt(s, this), a = n.u(this.options);
-      n.p(e), this.T(a), this._$AH = n;
+      const a = new Jt(s, this), o = a.u(this.options);
+      a.p(e), this.T(o), this._$AH = a;
     }
   }
   _$AC(t) {
-    let e = ot.get(t.strings);
-    return e === void 0 && ot.set(t.strings, e = new q(t)), e;
+    let e = $t.get(t.strings);
+    return e === void 0 && $t.set(t.strings, e = new O(t)), e;
   }
   k(t) {
-    Y(this._$AH) || (this._$AH = [], this._$AR());
+    lt(this._$AH) || (this._$AH = [], this._$AR());
     const e = this._$AH;
     let i, s = 0;
-    for (const n of t) s === e.length ? e.push(i = new P(this.O(R()), this.O(R()), this, this.options)) : i = e[s], i._$AI(n), s++;
+    for (const a of t) s === e.length ? e.push(i = new z(this.O(D()), this.O(D()), this, this.options)) : i = e[s], i._$AI(a), s++;
     s < e.length && (this._$AR(i && i._$AB.nextSibling, s), e.length = s);
   }
   _$AR(t = this._$AA.nextSibling, e) {
     for (this._$AP?.(!1, !0, e); t !== this._$AB; ) {
-      const i = et(t).nextSibling;
-      et(t).remove(), t = i;
+      const i = gt(t).nextSibling;
+      gt(t).remove(), t = i;
     }
   }
   setConnected(t) {
     this._$AM === void 0 && (this._$Cv = t, this._$AP?.(t));
   }
 }
-class M {
+class G {
   get tagName() {
     return this.element.tagName;
   }
   get _$AU() {
     return this._$AM._$AU;
   }
-  constructor(t, e, i, s, n) {
-    this.type = 1, this._$AH = h, this._$AN = void 0, this.element = t, this.name = e, this._$AM = s, this.options = n, i.length > 2 || i[0] !== "" || i[1] !== "" ? (this._$AH = Array(i.length - 1).fill(new String()), this.strings = i) : this._$AH = h;
+  constructor(t, e, i, s, a) {
+    this.type = 1, this._$AH = l, this._$AN = void 0, this.element = t, this.name = e, this._$AM = s, this.options = a, i.length > 2 || i[0] !== "" || i[1] !== "" ? (this._$AH = Array(i.length - 1).fill(new String()), this.strings = i) : this._$AH = l;
   }
   _$AI(t, e = this, i, s) {
-    const n = this.strings;
-    let a = !1;
-    if (n === void 0) t = E(this, t, e, 0), a = !T(t) || t !== this._$AH && t !== S, a && (this._$AH = t);
+    const a = this.strings;
+    let o = !1;
+    if (a === void 0) t = A(this, t, e, 0), o = !T(t) || t !== this._$AH && t !== C, o && (this._$AH = t);
     else {
-      const d = t;
-      let o, c;
-      for (t = n[0], o = 0; o < n.length - 1; o++) c = E(this, d[i + o], e, o), c === S && (c = this._$AH[o]), a ||= !T(c) || c !== this._$AH[o], c === h ? t = h : t !== h && (t += (c ?? "") + n[o + 1]), this._$AH[o] = c;
+      const h = t;
+      let d, c;
+      for (t = a[0], d = 0; d < a.length - 1; d++) c = A(this, h[i + d], e, d), c === C && (c = this._$AH[d]), o ||= !T(c) || c !== this._$AH[d], c === l ? t = l : t !== l && (t += (c ?? "") + a[d + 1]), this._$AH[d] = c;
     }
-    a && !s && this.j(t);
+    o && !s && this.j(t);
   }
   j(t) {
-    t === h ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, t ?? "");
+    t === l ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, t ?? "");
   }
 }
-class Ot extends M {
+class Kt extends G {
   constructor() {
     super(...arguments), this.type = 3;
   }
   j(t) {
-    this.element[this.name] = t === h ? void 0 : t;
+    this.element[this.name] = t === l ? void 0 : t;
   }
 }
-class Dt extends M {
+class Gt extends G {
   constructor() {
     super(...arguments), this.type = 4;
   }
   j(t) {
-    this.element.toggleAttribute(this.name, !!t && t !== h);
+    this.element.toggleAttribute(this.name, !!t && t !== l);
   }
 }
-class Nt extends M {
-  constructor(t, e, i, s, n) {
-    super(t, e, i, s, n), this.type = 5;
+class Yt extends G {
+  constructor(t, e, i, s, a) {
+    super(t, e, i, s, a), this.type = 5;
   }
   _$AI(t, e = this) {
-    if ((t = E(this, t, e, 0) ?? h) === S) return;
-    const i = this._$AH, s = t === h && i !== h || t.capture !== i.capture || t.once !== i.once || t.passive !== i.passive, n = t !== h && (i === h || s);
-    s && this.element.removeEventListener(this.name, this, i), n && this.element.addEventListener(this.name, this, t), this._$AH = t;
+    if ((t = A(this, t, e, 0) ?? l) === C) return;
+    const i = this._$AH, s = t === l && i !== l || t.capture !== i.capture || t.once !== i.once || t.passive !== i.passive, a = t !== l && (i === l || s);
+    s && this.element.removeEventListener(this.name, this, i), a && this.element.addEventListener(this.name, this, t), this._$AH = t;
   }
   handleEvent(t) {
     typeof this._$AH == "function" ? this._$AH.call(this.options?.host ?? this.element, t) : this._$AH.handleEvent(t);
   }
 }
-class zt {
+class Qt {
   constructor(t, e, i) {
     this.element = t, this.type = 6, this._$AN = void 0, this._$AM = e, this.options = i;
   }
@@ -458,22 +458,22 @@ class zt {
     return this._$AM._$AU;
   }
   _$AI(t) {
-    E(this, t);
+    A(this, t);
   }
 }
-const jt = K.litHtmlPolyfillSupport;
-jt?.(q, P), (K.litHtmlVersions ??= []).push("3.3.3");
-const Lt = (r, t, e) => {
+const Xt = ot.litHtmlPolyfillSupport;
+Xt?.(O, z), (ot.litHtmlVersions ??= []).push("3.3.3");
+const Zt = (n, t, e) => {
   const i = e?.renderBefore ?? t;
   let s = i._$litPart$;
   if (s === void 0) {
-    const n = e?.renderBefore ?? null;
-    i._$litPart$ = s = new P(t.insertBefore(R(), n), n, void 0, e ?? {});
+    const a = e?.renderBefore ?? null;
+    i._$litPart$ = s = new z(t.insertBefore(D(), a), a, void 0, e ?? {});
   }
-  return s._$AI(r), s;
+  return s._$AI(n), s;
 };
-const Z = globalThis;
-class A extends x {
+const ht = globalThis;
+class b extends E {
   constructor() {
     super(...arguments), this.renderOptions = { host: this }, this._$Do = void 0;
   }
@@ -483,7 +483,7 @@ class A extends x {
   }
   update(t) {
     const e = this.render();
-    this.hasUpdated || (this.renderOptions.isConnected = this.isConnected), super.update(t), this._$Do = Lt(e, this.renderRoot, this.renderOptions);
+    this.hasUpdated || (this.renderOptions.isConnected = this.isConnected), super.update(t), this._$Do = Zt(e, this.renderRoot, this.renderOptions);
   }
   connectedCallback() {
     super.connectedCallback(), this._$Do?.setConnected(!0);
@@ -492,26 +492,57 @@ class A extends x {
     super.disconnectedCallback(), this._$Do?.setConnected(!1);
   }
   render() {
-    return S;
+    return C;
   }
 }
-A._$litElement$ = !0, A.finalized = !0, Z.litElementHydrateSupport?.({ LitElement: A });
-const Mt = Z.litElementPolyfillSupport;
-Mt?.({ LitElement: A });
-(Z.litElementVersions ??= []).push("4.2.2");
-class b extends Error {
+b._$litElement$ = !0, b.finalized = !0, ht.litElementHydrateSupport?.({ LitElement: b });
+const te = ht.litElementPolyfillSupport;
+te?.({ LitElement: b });
+(ht.litElementVersions ??= []).push("4.2.2");
+class g extends Error {
   constructor(t) {
     super(t), this.code = t;
   }
 }
-const _ = "kaleidescape_companion", Ht = 15e3, k = ({ entry_id: r, dataset_id: t }) => ({
-  entry_id: r,
+const m = "kaleidescape_companion", ee = 15e3, $ = ({ entry_id: n, dataset_id: t }) => ({
+  entry_id: n,
   dataset_id: t
-}), It = 256 * 1024 * 1024;
-function w(r) {
-  return typeof r == "object" && r !== null && "code" in r && typeof r.code == "string" ? r.code : "connection_lost";
+}), ie = 256 * 1024 * 1024, se = 5 * 1024 * 1024, ae = 32 * 1024 * 1024;
+function ne() {
+  const n = globalThis.crypto;
+  if (typeof n?.randomUUID == "function") return n.randomUUID();
+  if (typeof n?.getRandomValues != "function")
+    throw new g("request_id_unavailable");
+  const t = n.getRandomValues(new Uint8Array(16));
+  t[6] = t[6] & 15 | 64, t[8] = t[8] & 63 | 128;
+  const e = Array.from(
+    t,
+    (i) => i.toString(16).padStart(2, "0")
+  ).join("");
+  return `${e.slice(0, 8)}-${e.slice(8, 12)}-${e.slice(12, 16)}-${e.slice(16, 20)}-${e.slice(20)}`;
 }
-function gt(r) {
+async function wt(n, t, e) {
+  const i = n.body?.getReader();
+  if (!i) throw new g("storage_error");
+  const s = [];
+  let a = 0;
+  try {
+    for (; ; ) {
+      const { value: o, done: h } = await i.read();
+      if (h) break;
+      if (a += o.byteLength, a > t) throw new g("export_too_large");
+      s.push(new Uint8Array(o));
+    }
+    return new Blob(s, { type: e });
+  } finally {
+    await i.cancel().catch(() => {
+    }), i.releaseLock();
+  }
+}
+function f(n) {
+  return typeof n == "object" && n !== null && "code" in n && typeof n.code == "string" ? n.code : "connection_lost";
+}
+function N(n) {
   return {
     unauthorized: "Access to this operation is denied. Your journal has been cleared from this view.",
     not_ready: "The integration is not loaded. Reload the connection after it starts.",
@@ -523,18 +554,22 @@ function gt(r) {
     backup_in_progress: "A backup is running. Retry after it finishes.",
     storage_error: "The journal could not access storage. Check HA diagnostics and available space.",
     export_too_large: "This export exceeds the download size limit.",
-    export_timeout: "The export timed out. Try again when the server is less busy."
-  }[w(r)] ?? "The connection was interrupted. The result could not be confirmed.";
+    export_timeout: "The export timed out. Try again when the server is less busy.",
+    request_id_unavailable: "This browser cannot create a secure request ID. Try a supported browser. No change was sent.",
+    tracking_enabled: "Disable automatic tracking in Settings before importing or purging entries.",
+    import_too_large: "Choose an import file no larger than 32 MiB.",
+    import_timeout: "The import result is unconfirmed. Retry the same file and request to confirm it."
+  }[f(n)] ?? "The connection was interrupted. The result could not be confirmed.";
 }
-async function Wt(r) {
+async function re(n) {
   let t;
   try {
     return await Promise.race([
-      r,
+      n,
       new Promise((e, i) => {
         t = setTimeout(
-          () => i(new b("connection_lost")),
-          Ht
+          () => i(new g("connection_lost")),
+          ee
         );
       })
     ]);
@@ -542,20 +577,20 @@ async function Wt(r) {
     clearTimeout(t);
   }
 }
-class mt {
+class qt {
   constructor(t) {
     this.transport = t;
   }
   call(t) {
-    return Wt(this.transport.callWS(t));
+    return re(this.transport.callWS(t));
   }
   info() {
-    return this.call({ type: `${_}/info` });
+    return this.call({ type: `${m}/info` });
   }
   list(t, e = "", i = "", s) {
     return this.call({
-      type: `${_}/journal/list`,
-      ...k(t),
+      type: `${m}/journal/list`,
+      ...$(t),
       query: e,
       limit: 25,
       ...i ? { status: i } : {},
@@ -564,91 +599,222 @@ class mt {
   }
   get(t, e) {
     return this.call({
-      type: `${_}/journal/get`,
-      ...k(t),
+      type: `${m}/journal/get`,
+      ...$(t),
       viewing_id: e
     });
   }
   sessions(t, e) {
     return this.call({
-      type: `${_}/journal/sessions`,
-      ...k(t),
+      type: `${m}/journal/sessions`,
+      ...$(t),
       viewing_id: e
     });
   }
+  nowPlaying(t) {
+    return this.call({ type: `${m}/now_playing`, ...$(t) });
+  }
+  settings(t, e, i = {}) {
+    return this.call({
+      ...i,
+      ...$(t),
+      type: `${m}/settings/${e}`
+    });
+  }
+  inspect(t, e, i = 0, s) {
+    return this.call({
+      type: `${m}/database/inspect`,
+      ...$(t),
+      table: e,
+      offset: i,
+      ...s == null ? {} : { revision: s }
+    });
+  }
+  preparePurge(t, e) {
+    return this.prepareCommand(t, "database/purge", e);
+  }
+  prepareDatabaseUpdate(t, e) {
+    return this.prepareCommand(t, "database/update", e);
+  }
+  prepareImport(t, e, i) {
+    const s = /\.(sqlite|sqlite3|db)$/i.test(e.name) ? "sqlite" : /\.json$/i.test(e.name) ? "json" : null;
+    if (!s) throw new g("invalid_request");
+    if (!e.size || e.size > ae)
+      throw new g("import_too_large");
+    return this.prepareCommand(t, "database/import", { format: s, revision: i });
+  }
+  async importFile(t, e, i) {
+    const { scope: s, message: a } = t, o = new URLSearchParams({
+      format: String(a.format),
+      request_id: String(a.request_id),
+      revision: String(a.revision)
+    }), h = await this.transport.fetchWithAuth(
+      `/api/${m}/${encodeURIComponent(s.entry_id)}/${encodeURIComponent(s.dataset_id)}/import?${o}`,
+      {
+        method: "POST",
+        body: e,
+        signal: i,
+        redirect: "error",
+        headers: { "Content-Type": "application/octet-stream" }
+      }
+    );
+    if (!h.ok) {
+      const d = {
+        401: "unauthorized",
+        403: "unauthorized",
+        413: "import_too_large",
+        404: "not_found"
+      };
+      if (d[h.status]) throw new g(d[h.status]);
+      const c = await h.json().catch(() => null);
+      throw new g(c?.code ?? "connection_lost");
+    }
+    return h.json();
+  }
+  purge(t) {
+    return this.call({ ...t.message });
+  }
+  async artwork(t, e) {
+    if (!/^media_player\.[a-z0-9_]{1,255}$/.test(t))
+      throw new g("invalid_request");
+    const i = await this.transport.fetchWithAuth(
+      `/api/media_player_proxy/${t}`,
+      {
+        signal: e,
+        cache: "no-store",
+        redirect: "error"
+      }
+    );
+    if (!i.ok) {
+      if (await i.body?.cancel(), i.status === 404) return null;
+      throw new g(
+        [401, 403].includes(i.status) ? "unauthorized" : "not_ready"
+      );
+    }
+    const s = i.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase();
+    return !s || !["image/jpeg", "image/png", "image/webp"].includes(s) ? (await i.body?.cancel(), null) : wt(i, se, s);
+  }
   prepare(t, e, i) {
+    return this.prepareCommand(t, `journal/${e}`, i);
+  }
+  prepareCommand(t, e, i) {
     const s = structuredClone({
       ...i,
-      ...k(t),
-      type: `${_}/journal/${e}`,
-      request_id: crypto.randomUUID()
+      ...$(t),
+      type: `${m}/${e}`,
+      request_id: ne()
     });
-    return { scope: k(t), message: Object.freeze(s) };
+    return { scope: $(t), message: Object.freeze(s) };
   }
   mutate(t) {
     return this.call({ ...t.message });
   }
   async download(t, e, i) {
-    const s = `/api/${_}/${encodeURIComponent(t.entry_id)}/${encodeURIComponent(t.dataset_id)}/export?format=${e}`, n = await this.transport.fetchWithAuth(s, {
+    const s = `/api/${m}/${encodeURIComponent(t.entry_id)}/${encodeURIComponent(t.dataset_id)}/export?format=${e}`, a = await this.transport.fetchWithAuth(s, {
       signal: i,
       cache: "no-store",
       redirect: "error"
     });
-    if (!n.ok) {
-      const c = {
+    if (!a.ok) {
+      const o = {
         401: "unauthorized",
         403: "unauthorized",
         404: "not_found",
         413: "export_too_large",
         503: "busy"
       };
-      throw new b(c[n.status] ?? "storage_error");
+      throw new g(o[a.status] ?? "storage_error");
     }
-    const a = n.body?.getReader();
-    if (!a) throw new b("storage_error");
-    const d = [];
-    let o = 0;
-    try {
-      for (; ; ) {
-        const { value: c, done: u } = await a.read();
-        if (u) break;
-        if (o += c.byteLength, o > It) throw new b("export_too_large");
-        d.push(new Uint8Array(c));
-      }
-      return new Blob(d, {
-        type: e === "json" ? "application/json" : "application/vnd.sqlite3"
-      });
-    } finally {
-      await a.cancel().catch(() => {
-      }), a.releaseLock();
-    }
+    return wt(
+      a,
+      ie,
+      e === "json" ? "application/json" : "application/vnd.sqlite3"
+    );
   }
 }
-function lt(r) {
-  const t = new Date(r);
-  return new Date(t.getTime() - t.getTimezoneOffset() * 6e4).toISOString().slice(0, 23);
+function _t(n) {
+  const t = new Date(n);
+  return new Date(t.getTime() - t.getTimezoneOffset() * 6e4).toISOString().slice(0, 19);
 }
-function I(r) {
+function P(n) {
   return {
-    title: r?.title ?? "",
-    started_at: lt(r?.started_at ?? (/* @__PURE__ */ new Date()).toISOString()),
-    ended_at: r?.ended_at ? lt(r.ended_at) : "",
-    duration_seconds: r?.duration_seconds == null ? "" : String(r.duration_seconds / 60),
-    watched_seconds: String((r?.watched_seconds ?? 0) / 60),
-    status: r?.status ?? "partial",
-    notes: r?.notes ?? "",
-    source_id: r?.source_id ?? "",
-    player_id: r?.player_id ?? "",
-    raw_content_id: r?.raw_content_id ?? ""
+    title: n?.title ?? "",
+    started_at: _t(n?.started_at ?? (/* @__PURE__ */ new Date()).toISOString()),
+    ended_at: n?.ended_at ? _t(n.ended_at) : "",
+    duration_seconds: n?.duration_seconds == null ? "" : (n.duration_seconds / 60).toFixed(2),
+    watched_seconds: ((n?.watched_seconds ?? 0) / 60).toFixed(2),
+    status: n?.status ?? "partial",
+    notes: n?.notes ?? "",
+    source_id: n?.source_id ?? "",
+    player_id: n?.player_id ?? "",
+    raw_content_id: n?.raw_content_id ?? ""
   };
 }
-function Bt(r, t) {
+function Rt(n, t) {
   const e = {};
-  for (const [i, s] of Object.entries(r))
+  for (const [i, s] of Object.entries(n))
     t && s === t[i] || (i === "started_at" || i === "ended_at" ? e[i] = s ? new Date(s).toISOString() : null : i === "duration_seconds" || i === "watched_seconds" ? e[i] = s === "" ? null : Number(s) * 60 : ["source_id", "player_id", "raw_content_id"].includes(i) ? e[i] = s === "" ? null : s : e[i] = s);
   return e;
 }
-const $t = bt`
+function Pt(n, t) {
+  function e(i, s, a = "text", o = !1, h) {
+    return r`<label
+      >${s}<input
+        id=${i === "title" ? "title" : i}
+        name=${i}
+        type=${a}
+        .value=${n[i]}
+        ?required=${o}
+        maxlength=${h ?? l}
+        min=${a === "number" ? "0" : l}
+        max=${a === "number" ? String(1e9 / 60) : l}
+        step=${a === "datetime-local" ? "1" : a === "number" ? "0.01" : l}
+        @input=${(d) => t(i, d)}
+    /></label>`;
+  }
+  return r`
+    <div class="grid">
+      <div class="full">${e("title", "Title", "text", !0, 500)}</div>
+      ${e("started_at", "Started · local time", "datetime-local", !0)}
+      ${e("ended_at", "Ended · local time", "datetime-local")}
+      ${e("watched_seconds", "Watched minutes", "number", !0)}
+      ${e("duration_seconds", "Runtime minutes · optional", "number")}
+      <label
+        >Status<select
+          name="record_status"
+          .value=${n.status}
+          @change=${(i) => t("status", i)}
+        >
+          <option value="partial">Partial</option>
+          <option value="completed">Completed</option>
+        </select></label
+      >
+      <label class="full"
+        >Notes<textarea
+          name="notes"
+          maxlength="10000"
+          .value=${n.notes}
+          @input=${(i) => t("notes", i)}
+        ></textarea>
+      </label>
+    </div>
+    <details>
+      <summary>Source identifiers</summary>
+      <div class="grid">
+        ${e("source_id", "Source ID", "text", !1, 255)}
+        ${e("player_id", "Player ID", "text", !1, 255)}
+        <div class="full">
+          ${e("raw_content_id", "Raw content ID", "text", !1, 255)}
+        </div>
+      </div>
+      <small
+        >Keep source identifiers exact. Titles do not establish movie
+        identity.</small
+      >
+    </details>
+  `;
+}
+const U = J`
   :host {
     display: block;
     min-height: 100dvh;
@@ -674,6 +840,7 @@ const $t = bt`
     gap: 16px;
     padding-bottom: 24px;
     border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
   }
   h1 {
     margin: 4px 0 6px;
@@ -791,6 +958,7 @@ const $t = bt`
     gap: 20px;
   }
   .card {
+    min-width: 0;
     overflow: hidden;
   }
   .card-head {
@@ -825,6 +993,8 @@ const $t = bt`
   select,
   textarea {
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
     min-height: 40px;
     border: 1px solid var(--line);
     border-radius: 6px;
@@ -905,6 +1075,7 @@ const $t = bt`
     align-items: center;
   }
   .editor {
+    container: viewing-editor / inline-size;
     padding: 0 20px 20px;
   }
   fieldset {
@@ -915,9 +1086,15 @@ const $t = bt`
   }
   .grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
     margin-bottom: 14px;
+  }
+  .grid > * {
+    min-width: 0;
+  }
+  .settings-grid {
+    align-items: end;
   }
   .full {
     grid-column: 1/-1;
@@ -960,16 +1137,175 @@ const $t = bt`
     margin-bottom: 8px;
     font-size: 16px;
   }
-  .exports {
-    margin-top: 20px;
+  .check {
+    flex-direction: row;
+    align-items: center;
+    margin: 12px 0;
+  }
+  .check input {
+    width: 20px;
+    min-height: 20px;
+    flex-shrink: 0;
+  }
+  .page-tabs {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--line);
+    margin: 20px 0;
+    padding: 4px 0 0;
+  }
+  .page-tabs button {
+    flex-shrink: 0;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    border-radius: 6px 6px 0 0;
+    background: transparent;
+  }
+  .page-tabs [aria-selected="true"] {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: var(--surface);
+  }
+  .section-head {
     display: flex;
     align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 24px;
   }
-  .exports small {
-    flex: 1;
-    min-width: 180px;
+  .section-head h2 {
+    margin: 0;
+  }
+  .settings-page {
+    padding: 20px;
+    max-width: 900px;
+    margin-top: 24px;
+  }
+  .settings-page .card-head {
+    padding: 0;
+  }
+  .settings-page form > button {
+    margin-top: 12px;
+  }
+  .database-entries {
+    padding: 20px;
+  }
+  .database {
+    margin-top: 24px;
+  }
+  .database-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: start;
+    gap: 12px;
+    padding: 20px;
+  }
+  .database-toolbar kaleidescape-transfers {
+    margin-left: auto;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .database-messages {
+    padding: 0 20px;
+  }
+  .database .card-head {
+    padding: 0;
+  }
+  .database .card-head + .editor {
+    margin-top: 20px;
+  }
+  .database-pagination {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px 0 0;
+  }
+  .database-pagination .actions {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+  .database-pagination button {
+    flex: 1 0 auto;
+    padding-inline: 6px;
+    white-space: nowrap;
+  }
+  .table-tabs {
+    margin: 0;
+    padding: 4px 20px 0;
+  }
+  .database-layout {
+    display: grid;
+    grid-template-columns: minmax(230px, 0.8fr) minmax(0, 1.2fr);
+  }
+  .database-detail {
+    padding: 20px;
+    border-left: 1px solid var(--line);
+  }
+  .database-detail .editor {
+    padding: 0;
+  }
+  .entry-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .entry-list li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--line);
+  }
+  .entry-list li.selected {
+    background: var(--secondary-background-color, #edf4f0);
+  }
+  .entry-list input {
+    width: 20px;
+    min-height: 20px;
+    flex-shrink: 0;
+  }
+  .entry-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .entry-name small {
+    display: block;
+  }
+  .database-dialog {
+    width: min(560px, calc(100% - 32px));
+    max-height: calc(100dvh - 48px);
+    overflow: auto;
+    padding: 24px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+    color: inherit;
+  }
+  .database-dialog::backdrop {
+    background: rgb(0 0 0 / 60%);
+  }
+  .database-dialog .card-head {
+    padding: 0;
+  }
+  .dialog-footer {
+    margin-top: 20px;
+  }
+  @media (max-width: 900px) {
+    .database-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .database-detail {
+      border-left: 0;
+      border-top: 1px solid var(--line);
+    }
+    .database-toolbar kaleidescape-transfers {
+      margin-left: 0;
+    }
+  }
+  pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-size: 12px;
   }
   details {
     margin-top: 20px;
@@ -998,15 +1334,67 @@ const $t = bt`
     font-size: 20px;
     padding: 6px 12px;
   }
+  .now-playing {
+    margin-top: 24px;
+  }
+  .playback-message {
+    padding: 0 20px 20px;
+    margin: 0;
+  }
+  .playback-layout {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr);
+    gap: 20px;
+    padding: 0 20px 20px;
+  }
+  .cover {
+    aspect-ratio: 2 / 3;
+    background: var(--secondary-background-color, #f7f9f8);
+    border-radius: 6px;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    align-self: start;
+  }
+  .cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .cover span {
+    padding: 12px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .playback-detail h3 {
+    margin: 4px 0 12px;
+    font-size: 21px;
+    overflow-wrap: anywhere;
+  }
+  .playback-detail p {
+    margin: 8px 0;
+  }
   [hidden] {
     display: none !important;
   }
+  @container viewing-editor (max-width: 640px) {
+    .grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
   @media (max-width: 1000px) {
     .layout {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
   }
   @media (max-width: 600px) {
+    .playback-layout {
+      grid-template-columns: 80px minmax(0, 1fr);
+      gap: 12px;
+      padding-left: 16px;
+      padding-right: 16px;
+    }
     main {
       padding-top: 16px;
     }
@@ -1028,7 +1416,7 @@ const $t = bt`
       font-size: 18px;
     }
     .grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
     .card-head,
     .editor {
@@ -1036,7 +1424,7 @@ const $t = bt`
       padding-right: 16px;
     }
   }
-`, z = class z extends A {
+`, I = class I extends b {
   constructor() {
     super(...arguments), this.narrow = !1, this.api = null, this.userKey = "", this.generation = 0, this.scope = null, this.rows = [], this.loading = !1, this.error = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.next = null, this.history = [], this.page = 1;
   }
@@ -1045,7 +1433,7 @@ const $t = bt`
       if (this.hass) {
         const e = `${this.hass.user?.id}:${this.hass.user?.is_admin}`;
         !this.hass.user || !this.hass.connection.connected ? this.bind(null) : (this.connection !== this.hass.connection || this.userKey !== e || !this.api) && (this.connection = this.hass.connection, this.userKey = e, this.bind(
-          new mt({
+          new qt({
             callWS: (i) => this.hass.callWS(i),
             fetchWithAuth: (i, s) => this.hass.fetchWithAuth(i, s)
           })
@@ -1065,7 +1453,7 @@ const $t = bt`
     t !== this.api && (this.clear(), this.api = t, this.requestUpdate(), t && this.refresh());
   }
   fail(t) {
-    w(t) === "unauthorized" && this.clear(), this.error = gt(t), this.requestUpdate();
+    f(t) === "unauthorized" && this.clear(), this.error = N(t), this.requestUpdate();
   }
   async refresh() {
     if (!this.api) return;
@@ -1075,7 +1463,7 @@ const $t = bt`
       const { entries: e } = await this.api.info();
       if (t !== this.generation) return;
       if (!e[0]?.permissions.read || e[0].api_version !== 1)
-        throw new b("not_ready");
+        throw new g("not_ready");
       this.scope = e[0], await this.load(void 0, t);
     } catch (e) {
       t === this.generation && this.fail(e);
@@ -1108,16 +1496,16 @@ const $t = bt`
     return Number.isNaN(e.getTime()) ? "—" : e.toLocaleString();
   }
   render() {
-    return l`<main>
+    return r`<main>
       <header>
-        ${this.hass && this.narrow ? l`<button aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: !0, composed: !0 }))}>☰</button>` : h}
+        ${this.hass && this.narrow ? r`<button aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: !0, composed: !0 }))}>☰</button>` : l}
         <div>
           <span class="eyebrow">Kaleidescape Companion</span>
           <h1>Viewing history</h1>
           <p>Read-only household journal</p>
         </div>
       </header>
-      ${this.error ? l`<p role="alert" class="error">${this.error}</p>` : h}
+      ${this.error ? r`<p role="alert" class="error">${this.error}</p>` : l}
       <section class="card" aria-label="Viewing history">
         <div class="card-head">
           <h2>Viewings</h2>
@@ -1158,7 +1546,7 @@ const $t = bt`
           >
           <button ?disabled=${this.loading || !this.scope}>Search</button>
         </form>
-        ${this.loading ? l`<p role="status">Loading viewings…</p>` : this.api ? this.rows.length ? l`<div class="table-wrap">
+        ${this.loading ? r`<p role="status">Loading viewings…</p>` : this.api ? this.rows.length ? r`<div class="table-wrap">
                     <table>
                       <thead>
                         <tr>
@@ -1170,7 +1558,7 @@ const $t = bt`
                       </thead>
                       <tbody>
                         ${this.rows.map(
-      (t) => l`<tr>
+      (t) => r`<tr>
                               <td>
                                 <strong>${t.title}</strong
                                 ><small
@@ -1182,16 +1570,16 @@ const $t = bt`
                                 ${t.status === "completed" ? "Completed" : "Partial"}
                               </td>
                               <td>
-                                ${(t.watched_seconds / 60).toFixed(1)} min
+                                ${(t.watched_seconds / 60).toFixed(2)} min
                               </td>
                               <td>
-                                ${t.duration_seconds == null ? "—" : `${(t.duration_seconds / 60).toFixed(1)} min`}
+                                ${t.duration_seconds == null ? "—" : `${(t.duration_seconds / 60).toFixed(2)} min`}
                               </td>
                             </tr>`
     )}
                       </tbody>
                     </table>
-                  </div>` : l`<p>No viewings to display.</p>` : l`<p>
+                  </div>` : r`<p>No viewings to display.</p>` : r`<p>
                   Sign in to Home Assistant to view the household journal.
                 </p>`}
         <div class="pagination">
@@ -1227,16 +1615,1158 @@ const $t = bt`
     </main>`;
   }
 };
-z.properties = {
+I.properties = {
   hass: { attribute: !1 },
   client: { attribute: !1 },
   narrow: { type: Boolean }
-}, z.styles = $t;
-let B = z;
-customElements.get("kaleidescape-reader") || customElements.define("kaleidescape-reader", B);
-const j = class j extends A {
+}, I.styles = U;
+let Z = I;
+customElements.get("kaleidescape-reader") || customElements.define("kaleidescape-reader", Z);
+const oe = {
+  playing: "Playing",
+  paused: "Paused",
+  forward: "Scanning forward",
+  reverse: "Scanning backward",
+  stopped: "Stopped",
+  none: "Stopped"
+}, le = {
+  content: "Main content",
+  credits: "Credits",
+  intermission: "Intermission",
+  disc_menu: "Disc menu",
+  none: "No active content"
+}, B = class B extends b {
   constructor() {
-    super(...arguments), this.narrow = !1, this.api = null, this.generation = 0, this.listRequest = 0, this.detailRequest = 0, this.info = null, this.rows = [], this.selected = null, this.draft = null, this.initial = null, this.sessions = null, this.sessionError = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.nextCursor = null, this.history = [], this.page = 1, this.loading = !1, this.detailLoading = !1, this.saving = !1, this.pending = null, this.confirmDelete = !1, this.exporting = !1, this.error = "", this.lastError = "", this.notice = "";
+    super(...arguments), this.boundScope = "", this.generation = 0, this.player = null, this.loading = !1, this.denied = !1, this.error = "", this.image = "", this.imageKey = "", this.visibility = () => {
+      this.reset(), document.hidden || this.refresh();
+    };
+  }
+  connectedCallback() {
+    super.connectedCallback(), document.addEventListener("visibilitychange", this.visibility), this.requestUpdate("client");
+  }
+  disconnectedCallback() {
+    super.disconnectedCallback(), document.removeEventListener("visibilitychange", this.visibility), this.reset();
+  }
+  willUpdate(t) {
+    if (!t.has("client") && !t.has("scope")) return;
+    const e = this.scope?.permissions.edit ? `${this.scope.entry_id}:${this.scope.dataset_id}` : "";
+    this.boundClient !== this.client || this.boundScope !== e ? (this.reset(), this.boundClient = this.client, this.boundScope = e, this.refresh()) : t.has("client") && !this.timer && !this.loading && this.refresh();
+  }
+  clearImage() {
+    this.image && URL.revokeObjectURL(this.image), this.image = "", this.imageKey = "";
+  }
+  reset() {
+    this.generation++, clearTimeout(this.timer), this.timer = void 0, this.abort?.abort(), this.abort = void 0, this.clearImage(), this.player = null, this.loading = this.denied = !1, this.error = "", this.requestUpdate();
+  }
+  async refresh() {
+    if (!this.isConnected || document.hidden || !this.client || !this.boundScope || this.loading)
+      return;
+    clearTimeout(this.timer);
+    const t = this.client, e = this.scope, i = ++this.generation;
+    this.loading = !0, this.denied = !1, this.error = "", this.requestUpdate();
+    try {
+      const { players: s } = await t.nowPlaying(e);
+      if (i !== this.generation) return;
+      this.player = s[0] ?? null;
+      const a = this.player, o = a?.available && a.artwork_key && a.entity_id ? `${a.entity_id}:${a.raw_content_id}:${a.artwork_key}` : "";
+      if (o !== this.imageKey && (this.clearImage(), this.imageKey = o, this.requestUpdate(), o)) {
+        const h = this.abort = new AbortController(), d = setTimeout(() => h.abort(), 5e3);
+        try {
+          const c = await t.artwork(
+            a.entity_id,
+            h.signal
+          );
+          i === this.generation && c && (this.image = URL.createObjectURL(c));
+        } catch (c) {
+          if (f(c) === "unauthorized") throw c;
+        } finally {
+          clearTimeout(d), this.abort === h && (this.abort = void 0);
+        }
+      }
+    } catch (s) {
+      if (i !== this.generation) return;
+      this.player = null, this.clearImage(), this.denied = f(s) === "unauthorized", this.error = this.denied ? "Now Playing access is unavailable. Check your account and source permissions." : "Now Playing could not refresh. Check the connection or refresh again.";
+    } finally {
+      i === this.generation && (this.loading = !1, this.requestUpdate(), !this.denied && this.isConnected && !document.hidden && (this.timer = setTimeout(() => {
+        this.refresh();
+      }, 5e3)));
+    }
+  }
+  recordingStatus(t, e) {
+    return t.recording_error ? "Recording needs attention. Check HA diagnostics." : t.recording_paused ? "Recording paused for backup." : t.available ? e && t.recording_exclusion === "below_minimum_runtime" ? `Not recording: runtime is below the minimum of ${t.minimum_runtime_minutes} minutes.` : e && t.recording_exclusion === "runtime_unknown" ? "Waiting for a known runtime before recording." : "Recording enabled." : "Recording waiting for source entities.";
+  }
+  render() {
+    const t = this.player, e = t?.available && !["stopped", "none"].includes(t.play_status);
+    return r`<section class="card now-playing" aria-label="Now Playing">
+      <div class="card-head">
+        <h2>Now Playing</h2>
+        <button
+          ?disabled=${this.loading || !this.boundScope}
+          @click=${() => {
+      this.imageKey = "", this.refresh();
+    }}
+        >
+          Refresh playback
+        </button>
+      </div>
+      ${this.error ? r`<p class="playback-message" role="alert">${this.error}</p>` : t ? r`<div class="playback-layout">
+                <div class="cover">
+                  ${this.image ? r`<img
+                          src=${this.image}
+                          alt="Current movie cover"
+                          @error=${() => {
+      const i = this.imageKey;
+      this.clearImage(), this.imageKey = i, this.requestUpdate();
+    }}
+                        />` : r`<span>No artwork available</span>`}
+                </div>
+                <div class="playback-detail">
+                  <small>${t.name ?? "Configured player"}</small>
+                  <h3>
+                    ${t.available ? e ? t.title ?? "Unknown title" : "No movie playing" : "Player unavailable"}
+                  </h3>
+                  ${t.available ? r`<p>${oe[t.play_status] ?? "Unknown playback state"} · ${le[t.location] ?? "Unknown location"}</p>` : l}
+                  ${e && t.duration_seconds != null ? r`<p>Runtime · ${(t.duration_seconds / 60).toFixed(2)} min</p>` : l}
+                  ${e && t.session ? r`<p>
+                            This session ·
+                            ${(t.session.watched_seconds / 60).toFixed(2)}
+                            min counted
+                          </p>
+                          <small
+                            >Pauses and scans are excluded.
+                            ${t.session.credits_confirmed ? "Credits confirmed; journal completion also requires the configured watch threshold." : "Credits not yet confirmed."}
+                            ${t.session.gap_count ? r` ${t.session.gap_count} timing gap(s).` : l}</small
+                          >` : l}
+                  <p role="status">
+                    ${this.recordingStatus(t, !!e)}
+                    ${t.buffered_observations ? r` ${t.buffered_observations} update(s) buffered.` : l}
+                  </p>
+                  <small
+                    >Live snapshot refreshes about every 5 seconds while
+                    visible.</small
+                  >
+                </div>
+              </div>` : r`<p class="playback-message" role="status">
+                ${this.loading ? "Loading playback…" : "Automatic tracking is off. Configure a player in the integration options to show Now Playing."}
+              </p>`}
+    </section>`;
+  }
+};
+B.properties = {
+  client: { attribute: !1 },
+  scope: { attribute: !1 }
+}, B.styles = [
+  U,
+  J`
+      :host {
+        min-height: 0;
+      }
+    `
+];
+let tt = B;
+customElements.get("kaleidescape-now-playing") || customElements.define("kaleidescape-now-playing", tt);
+const xt = [
+  ["media_player", "Kaleidescape media player", "text", "", ""],
+  ["play_status", "Exact play-status sensor", "text", "", ""],
+  ["media_location", "Media-location sensor", "text", "", ""],
+  [
+    "minimum_runtime_minutes",
+    "Minimum runtime to record · minutes (0 disables)",
+    "number",
+    "0",
+    "1440"
+  ],
+  [
+    "minimum_seconds",
+    "Minimum main-content playback before credits completion · seconds",
+    "number",
+    "1",
+    "3600"
+  ],
+  [
+    "resume_hours",
+    "Merge partial viewings within · hours (0 disables)",
+    "number",
+    "0",
+    "168"
+  ]
+], he = {
+  missing_entities: "Select all three source entities to enable tracking.",
+  invalid_entities: "Choose existing media_player and sensor entity IDs.",
+  duplicate_entities: "Choose different sensors for play status and media location.",
+  invalid_rules: "Check the runtime, completion, and partial-resume values."
+}, H = class H extends b {
+  constructor() {
+    super(...arguments), this.generation = 0, this.draft = {}, this.initial = {}, this.loading = !1, this.saving = !1, this.uncertain = !1, this.error = "", this.bound = "";
+  }
+  willUpdate(t) {
+    if (!t.has("client") && !t.has("scope")) return;
+    const e = `${this.scope?.entry_id}:${this.scope?.dataset_id}`;
+    e === this.bound && this.client === this.boundClient || (this.cancelFlow(), this.bound = e, this.boundClient = this.client, this.boundScope = this.scope, this.flow = void 0, this.draft = {}, this.initial = {}, this.uncertain = this.saving = !1, this.client && this.scope && this.start());
+  }
+  disconnectedCallback() {
+    super.disconnectedCallback(), this.cancelFlow(), this.flow = void 0, this.draft = {}, this.initial = {}, this.bound = "", this.boundClient = void 0;
+  }
+  connectedCallback() {
+    super.connectedCallback(), this.requestUpdate("client"), this.requestUpdate("scope");
+  }
+  cancelFlow() {
+    this.generation++, this.flow?.flow_id && this.boundClient && this.boundScope && this.boundClient.settings(this.boundScope, "cancel", { flow_id: this.flow.flow_id }).catch(() => {
+    });
+  }
+  fail(t) {
+    this.error = N(t), f(t) === "unauthorized" && (this.flow = void 0, this.draft = {}, this.initial = {}, this.dispatchEvent(
+      new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
+    ));
+  }
+  async start() {
+    const t = this.client, e = this.scope, i = ++this.generation;
+    this.loading = !0, this.error = "", this.requestUpdate();
+    try {
+      const s = await t.settings(e, "start");
+      if (i !== this.generation) {
+        s.flow_id && t.settings(e, "cancel", { flow_id: s.flow_id }).catch(() => {
+        });
+        return;
+      }
+      this.flow = s, this.draft = Object.fromEntries(
+        (s.fields ?? []).map((a) => [
+          a.name,
+          a.name === "tracking_enabled" ? !!a.default : String(a.default ?? "")
+        ])
+      ), this.initial = { ...this.draft };
+    } catch (s) {
+      i === this.generation && this.fail(s);
+    } finally {
+      i === this.generation && (this.loading = !1, this.requestUpdate());
+    }
+  }
+  confirmNavigation() {
+    return this.saving ? !1 : this.uncertain ? window.confirm(
+      "The settings save may already have committed. Leave this view and inspect saved values before making another change?"
+    ) : JSON.stringify(this.draft) === JSON.stringify(this.initial) || window.confirm("Discard your unsaved settings changes?");
+  }
+  busy() {
+    this.dispatchEvent(
+      new CustomEvent("settings-busy", {
+        detail: this.saving,
+        bubbles: !0,
+        composed: !0
+      })
+    );
+  }
+  reload() {
+    this.confirmNavigation() && (this.cancelFlow(), this.flow = void 0, this.draft = this.initial = {}, this.uncertain = !1, this.start());
+  }
+  async save(t) {
+    if (t.preventDefault(), !this.client || !this.scope || !this.flow?.flow_id || this.saving || this.uncertain || !t.target.reportValidity()) return;
+    const e = this.generation;
+    this.saving = !0, this.busy(), this.error = "", this.requestUpdate();
+    const i = { ...this.draft };
+    for (const [s, , a] of xt)
+      a === "number" ? i[s] = Number(i[s]) : i[s] || delete i[s];
+    try {
+      const s = await this.client.settings(this.scope, "submit", {
+        flow_id: this.flow.flow_id,
+        data: i
+      });
+      if (e !== this.generation) return;
+      this.flow = s, s.type === "create_entry" ? (this.initial = { ...this.draft }, this.saving = !1, this.busy(), this.dispatchEvent(
+        new CustomEvent("settings-saved", { bubbles: !0, composed: !0 })
+      )) : s.type === "form" ? this.error = Object.values(s.errors ?? {}).map(
+        (a) => he[a] ?? "Check the settings and try again."
+      ).join(" ") : this.error = "The settings flow ended. Reload settings to continue.";
+    } catch (s) {
+      e === this.generation && (this.fail(s), this.uncertain = ![
+        "unauthorized",
+        "invalid_request",
+        "conflict"
+      ].includes(f(s)));
+    } finally {
+      e === this.generation && (this.saving = !1, this.busy(), this.requestUpdate());
+    }
+  }
+  render() {
+    return r`<section
+      class="card settings-page"
+      aria-labelledby="settings-title"
+    >
+      <div class="card-head">
+        <h2 id="settings-title">Companion settings</h2>
+        <button ?disabled=${this.saving || this.loading} @click=${this.reload}>
+          Reload settings
+        </button>
+      </div>
+      <p>
+        These are the same settings as the integration’s Configure options.
+        Saving reloads the integration.
+      </p>
+      ${this.error ? r`<p class="error" role="alert">${this.error}</p>` : l}
+      ${this.uncertain ? r`<p class="warning">The save result is unconfirmed. Reload settings to inspect the saved values before making another change.</p>` : l}
+      ${this.loading ? r`<p role="status">Loading settings…</p>` : this.flow?.type === "form" ? r`<form @submit=${this.save}>
+                <fieldset ?disabled=${this.saving || this.uncertain}>
+                  <label class="check"
+                    ><input
+                      name="tracking_enabled"
+                      type="checkbox"
+                      .checked=${!!this.draft.tracking_enabled}
+                      @change=${(t) => {
+      this.draft = {
+        ...this.draft,
+        tracking_enabled: t.target.checked
+      }, this.requestUpdate();
+    }}
+                    />Automatically record playback</label
+                  >
+                  <div class="grid settings-grid">
+                    ${xt.map(
+      ([t, e, i, s, a]) => r`<label class=${i === "text" ? "full" : ""}
+                          >${e}<input
+                            name=${t}
+                            type=${i}
+                            min=${s || l}
+                            max=${a || l}
+                            step=${i === "number" ? "1" : l}
+                            maxlength=${i === "text" ? "255" : l}
+                            ?required=${i === "number" || !!this.draft.tracking_enabled}
+                            .value=${String(this.draft[t] ?? "")}
+                            @input=${(o) => {
+        this.draft = {
+          ...this.draft,
+          [t]: o.target.value
+        };
+      }}
+                        /></label>`
+    )}
+                  </div>
+                  <p class="muted">
+                    Use HA entity IDs for the three sources. The runtime cutoff
+                    uses total duration; missing runtime waits for metadata.
+                    Completion uses watched time and confirmed credits.
+                  </p>
+                  <button class="primary" type="submit">
+                    ${this.saving ? "Saving…" : "Save settings"}
+                  </button>
+                </fieldset>
+                <button
+                  type="button"
+                  ?disabled=${this.saving || this.loading}
+                  @click=${this.reload}
+                >
+                  Cancel changes
+                </button>
+              </form>` : l}
+    </section>`;
+  }
+};
+H.properties = {
+  client: { attribute: !1 },
+  scope: { attribute: !1 }
+}, H.styles = U;
+let et = H;
+customElements.get("kaleidescape-settings") || customElements.define("kaleidescape-settings", et);
+const W = class W extends b {
+  constructor() {
+    super(...arguments), this.disabled = !1, this.bound = "", this.generation = 0, this.working = !1, this.error = "", this.notice = "", this.dialog = null;
+  }
+  willUpdate(t) {
+    if (!t.has("client") && !t.has("scope")) return;
+    const e = `${this.scope?.entry_id}:${this.scope?.dataset_id}`;
+    this.boundClient === this.client && this.bound === e || (this.clear(), this.bound = e, this.boundClient = this.client);
+  }
+  disconnectedCallback() {
+    super.disconnectedCallback(), this.clear(), this.boundClient = void 0;
+  }
+  clear() {
+    this.generation++, this.controller?.abort(), this.controller = void 0, this.file = void 0;
+    const t = this.renderRoot.querySelector('input[type="file"]');
+    t && (t.value = ""), this.pending = void 0, this.working = !1, this.hideDialog(), this.error = this.notice = "", this.busy();
+  }
+  async openDialog(t) {
+    if (this.disabled || this.working || this.pending || !this.dispatchEvent(
+      new CustomEvent("transfer-open", {
+        detail: t,
+        bubbles: !0,
+        composed: !0,
+        cancelable: !0
+      })
+    ))
+      return;
+    const e = this.generation;
+    this.dialog = t, this.error = this.notice = "", this.requestUpdate(), await this.updateComplete, !(e !== this.generation || !this.isConnected) && this.renderRoot.querySelector("dialog")?.showModal();
+  }
+  hideDialog() {
+    this.renderRoot.querySelector("dialog")?.close(), this.dialog = null;
+  }
+  closeDialog(t) {
+    if (t?.preventDefault(), this.working || this.pending) return;
+    const e = this.dialog;
+    this.hideDialog(), this.file = void 0;
+    const i = this.renderRoot.querySelector('input[type="file"]');
+    i && (i.value = ""), this.requestUpdate(), this.renderRoot.querySelector(`[data-transfer="${e}"]`)?.focus();
+  }
+  busy() {
+    this.dispatchEvent(
+      new CustomEvent("transfer-busy", {
+        detail: this.working || !!this.pending,
+        bubbles: !0,
+        composed: !0
+      })
+    );
+  }
+  fail(t) {
+    f(t) === "unauthorized" && (this.clear(), this.dispatchEvent(
+      new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
+    )), this.error = N(t), this.requestUpdate();
+  }
+  async exportData(t) {
+    if (!this.client || !this.scope || this.working || this.pending || this.disabled)
+      return;
+    const e = this.generation, i = this.controller = new AbortController(), s = setTimeout(() => i.abort(), 65e3);
+    this.working = !0, this.error = this.notice = "", this.busy(), this.requestUpdate();
+    try {
+      const a = await this.client.download(
+        this.scope,
+        t,
+        i.signal
+      );
+      if (e !== this.generation) return;
+      const o = URL.createObjectURL(a), h = document.createElement("a");
+      try {
+        h.href = o, h.download = `kaleidescape-journal.${t}`, h.click();
+      } finally {
+        setTimeout(() => URL.revokeObjectURL(o), 1e3);
+      }
+      this.notice = "Export downloaded. Keep this private copy in a protected location.", this.hideDialog();
+    } catch (a) {
+      e === this.generation && this.fail(a);
+    } finally {
+      clearTimeout(s), e === this.generation && (this.working = !1, this.controller = void 0, this.busy(), this.requestUpdate());
+    }
+  }
+  async importData() {
+    if (!(!this.client || !this.scope || !this.file || this.working || this.disabled || this.scope.tracking_enabled))
+      try {
+        this.pending ??= this.client.prepareImport(
+          this.scope,
+          this.file,
+          this.scope.revision
+        );
+        const t = this.generation, e = this.controller = new AbortController(), i = setTimeout(() => e.abort(), 65e3);
+        this.working = !0, this.error = this.notice = "", this.busy(), this.requestUpdate();
+        try {
+          const s = await this.client.importFile(
+            this.pending,
+            this.file,
+            e.signal
+          );
+          if (t !== this.generation) return;
+          this.pending = void 0, this.file = void 0;
+          const a = this.renderRoot.querySelector('input[type="file"]');
+          a && (a.value = ""), this.notice = `Imported ${s.imported_count} entries; skipped ${s.skipped_count} existing entries.`, this.hideDialog(), this.dispatchEvent(
+            new CustomEvent("database-changed", {
+              bubbles: !0,
+              composed: !0
+            })
+          );
+        } catch (s) {
+          if (t !== this.generation) return;
+          [
+            "invalid_request",
+            "unauthorized",
+            "conflict",
+            "not_found",
+            "tracking_enabled",
+            "import_too_large"
+          ].includes(f(s)) && (this.pending = void 0), this.fail(s);
+        } finally {
+          clearTimeout(i), t === this.generation && (this.working = !1, this.controller = void 0, this.busy(), this.requestUpdate());
+        }
+      } catch (t) {
+        this.fail(t);
+      }
+  }
+  render() {
+    const t = this.disabled || this.working || !!this.pending;
+    return r`<div class="actions" aria-label="Import and export">
+        <button
+          data-transfer="import"
+          ?disabled=${t}
+          @click=${() => this.openDialog("import")}
+        >
+          Import
+        </button>
+        <button
+          data-transfer="export"
+          ?disabled=${t}
+          @click=${() => this.openDialog("export")}
+        >
+          Export
+        </button>
+      </div>
+      ${!this.dialog && this.error ? r`<p class="error" role="alert">${this.error}</p>` : l}
+      ${!this.dialog && this.notice ? r`<p class="notice" role="status">${this.notice}</p>` : l}
+      <dialog
+        class="database-dialog"
+        aria-labelledby="transfer-title"
+        @cancel=${this.closeDialog}
+      >
+        <div class="card-head">
+          <h2 id="transfer-title">
+            ${this.dialog === "export" ? "Export database" : "Import viewings"}
+          </h2>
+        </div>
+        ${this.error && this.dialog ? r`<p class="error" role="alert">${this.error}</p>` : l}
+        ${this.dialog === "export" ? r`<p>
+                  Exports include private history and deleted records. Store
+                  downloads securely.
+                </p>
+                <div class="actions">
+                  <button
+                    ?disabled=${t}
+                    @click=${() => this.exportData("json")}
+                  >
+                    Export JSON</button
+                  ><button
+                    ?disabled=${t}
+                    @click=${() => this.exportData("sqlite")}
+                  >
+                    Export SQLite
+                  </button>
+                </div>` : this.dialog === "import" ? r`<p>
+                    Merge compatible JSON or SQLite exports, including prior
+                    versions. Existing IDs stay unchanged. Restores viewing
+                    snapshots and deleted status; session evidence, audit
+                    records, and retry state stay local. Maximum 32 MiB and
+                    10,000 entries.
+                  </p>
+                  ${this.scope?.tracking_enabled ? r`<p class="warning">Disable automatic tracking in Settings before importing.</p>` : l}
+                  <label
+                    >JSON or SQLite export<input
+                      type="file"
+                      accept=".json,.sqlite,.sqlite3,.db"
+                      ?disabled=${t || !!this.scope?.tracking_enabled}
+                      @change=${(e) => {
+      this.file = e.target.files?.[0], this.error = this.notice = "", this.requestUpdate();
+    }}
+                  /></label>
+                  ${this.file ? r`<p>${this.file.name} · ${(this.file.size / 1024).toFixed(1)} KiB</p>` : l}
+                  <div class="actions">
+                    <button
+                      class="primary"
+                      ?disabled=${t || !this.file || !!this.scope?.tracking_enabled}
+                      @click=${this.importData}
+                    >
+                      Import new entries
+                    </button>
+                  </div>
+                  ${this.pending ? r`<div class="warning">
+                          ${this.working ? "Importing…" : "The import result is unconfirmed. Retry the same file and request to confirm it."}
+                          <div class="actions">
+                            <button
+                              ?disabled=${this.working}
+                              @click=${this.importData}
+                            >
+                              Retry same import</button
+                            ><button
+                              ?disabled=${this.working}
+                              @click=${() => {
+      if (window.confirm(
+        "The import may already have committed. Discard its retry and inspect the database before importing again?"
+      )) {
+        this.pending = void 0, this.file = void 0;
+        const e = this.renderRoot.querySelector(
+          'input[type="file"]'
+        );
+        e && (e.value = ""), this.hideDialog(), this.busy(), this.dispatchEvent(
+          new CustomEvent("database-changed", {
+            bubbles: !0,
+            composed: !0
+          })
+        ), this.requestUpdate();
+      }
+    }}
+                            >
+                              Discard import retry & inspect
+                            </button>
+                          </div>
+                        </div>` : l}` : l}
+        <div class="actions dialog-footer">
+          <button
+            ?disabled=${this.working || !!this.pending}
+            @click=${this.closeDialog}
+          >
+            Cancel
+          </button>
+        </div>
+      </dialog>`;
+  }
+};
+W.properties = {
+  client: { attribute: !1 },
+  scope: { attribute: !1 },
+  disabled: { type: Boolean }
+}, W.styles = [
+  U,
+  J`
+      :host {
+        min-height: 0;
+        background: transparent;
+      }
+    `
+];
+let it = W;
+customElements.get("kaleidescape-transfers") || customElements.define("kaleidescape-transfers", it);
+const Q = {
+  viewings: "Viewings",
+  sessions: "Sessions",
+  requests: "Write requests",
+  manual_audit: "Manual audit",
+  maintenance_audit: "Maintenance audit",
+  import_audit: "Import audit",
+  schema_metadata: "Metadata"
+}, F = class F extends b {
+  constructor() {
+    super(...arguments), this.bound = "", this.generation = 0, this.table = "viewings", this.selected = /* @__PURE__ */ new Set(), this.confirming = null, this.confirmation = "", this.purgeOpen = !1, this.transferBusy = !1, this.detail = null, this.draft = null, this.initial = null, this.loading = !1, this.saving = !1, this.error = "", this.notice = "";
+  }
+  willUpdate(t) {
+    if (!t.has("client") && !t.has("scope")) return;
+    const e = `${this.scope?.entry_id}:${this.scope?.dataset_id}`;
+    e === this.bound && this.client === this.boundClient || (this.clear(), this.bound = e, this.boundClient = this.client, this.client && this.scope && this.load());
+  }
+  disconnectedCallback() {
+    super.disconnectedCallback(), this.clear(), this.bound = "", this.boundClient = void 0;
+  }
+  connectedCallback() {
+    super.connectedCallback(), this.requestUpdate("client"), this.requestUpdate("scope");
+  }
+  clear() {
+    this.generation++, this.page = void 0, this.selected.clear(), this.confirming = null, this.hidePurge(), this.confirmation = this.error = this.notice = "", this.pending = this.editPending = void 0, this.detail = this.draft = this.initial = null, this.transferBusy = !1, this.loading = this.saving = !1, this.busy();
+  }
+  hidePurge() {
+    this.renderRoot.querySelector("#purge-dialog")?.close(), this.purgeOpen = !1;
+  }
+  async openPurge() {
+    if (this.blocked || this.table !== "viewings" || this.scope?.tracking_enabled || !this.discard())
+      return;
+    const t = this.generation;
+    this.confirming = null, this.confirmation = "", this.detail = this.draft = this.initial = null, this.purgeOpen = !0, this.requestUpdate(), await this.updateComplete, t === this.generation && this.isConnected && this.renderRoot.querySelector("#purge-dialog")?.showModal();
+  }
+  closePurge(t) {
+    t?.preventDefault(), !(this.saving || this.pending) && (this.hidePurge(), this.confirming = null, this.confirmation = "", this.requestUpdate(), this.renderRoot.querySelector("#purge-entry")?.focus());
+  }
+  get blocked() {
+    return this.loading || this.saving || !!this.pending || !!this.editPending || this.transferBusy;
+  }
+  busy() {
+    this.dispatchEvent(
+      new CustomEvent("maintenance-busy", {
+        detail: !!this.pending || !!this.editPending || this.saving || this.transferBusy,
+        bubbles: !0,
+        composed: !0
+      })
+    );
+  }
+  fail(t) {
+    f(t) === "unauthorized" && (this.clear(), this.dispatchEvent(
+      new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
+    )), this.error = N(t), this.requestUpdate();
+  }
+  async load(t = 0, e) {
+    if (!this.client || !this.scope || this.pending || this.editPending || !this.discard())
+      return;
+    const i = ++this.generation;
+    this.loading = !0, this.error = "", this.selected.clear(), this.confirming = null, this.confirmation = "", this.page = void 0, this.detail = this.draft = this.initial = null, this.requestUpdate();
+    try {
+      const s = await this.client.inspect(
+        this.scope,
+        this.table,
+        t,
+        e
+      );
+      i === this.generation && (this.page = s);
+    } catch (s) {
+      i === this.generation && this.fail(s);
+    } finally {
+      i === this.generation && (this.loading = !1, this.requestUpdate());
+    }
+  }
+  async purge(t) {
+    if (t?.preventDefault(), !(!this.client || !this.scope || this.saving))
+      try {
+        if (!this.pending) {
+          if (!this.page || !this.confirming || this.scope.tracking_enabled || this.confirming === "selected" && !this.selected.size)
+            return;
+          const i = this.confirming === "all";
+          if (this.confirmation !== (i ? "PURGE ALL" : "PURGE") || !this.discard()) return;
+          this.detail = this.draft = this.initial = null, this.pending = this.client.preparePurge(this.scope, {
+            viewing_ids: i ? [] : [...this.selected],
+            all: i,
+            expected_revision: this.page.revision,
+            confirmation: this.confirmation
+          });
+        }
+        const e = this.generation;
+        this.saving = !0, this.error = this.notice = "", this.busy(), this.requestUpdate();
+        try {
+          const i = await this.client.purge(this.pending);
+          if (e !== this.generation) return;
+          this.pending = void 0, this.hidePurge(), this.notice = `Permanently purged ${i.purged_count} entries. Backups and exports were not changed.`, this.dispatchEvent(
+            new CustomEvent("database-changed", {
+              bubbles: !0,
+              composed: !0
+            })
+          ), await this.load();
+        } catch (i) {
+          if (e !== this.generation) return;
+          [
+            "unauthorized",
+            "invalid_request",
+            "conflict",
+            "not_found",
+            "tracking_enabled"
+          ].includes(f(i)) && (this.pending = void 0), this.fail(i);
+        } finally {
+          (e === this.generation || !this.pending) && (this.saving = !1, this.busy(), this.requestUpdate());
+        }
+      } catch (e) {
+        this.fail(e);
+      }
+  }
+  discardRetry() {
+    this.saving || !window.confirm(
+      "The purge may already have committed. Discard its retry and refresh the database to inspect the result?"
+    ) || (this.pending = void 0, this.hidePurge(), this.busy(), this.load());
+  }
+  discard() {
+    return !this.draft || JSON.stringify(this.draft) === JSON.stringify(this.initial) || window.confirm("Discard your unsaved changes?");
+  }
+  confirmNavigation() {
+    return this.discard();
+  }
+  showDetail(t) {
+    this.discard() && (this.detail = t, this.draft = this.table === "viewings" ? P(t) : null, this.initial = this.draft ? { ...this.draft } : null, this.requestUpdate());
+  }
+  newEntry() {
+    this.table !== "viewings" || this.loading || this.saving || this.pending || this.editPending || this.transferBusy || !this.discard() || (this.detail = null, this.draft = P(), this.initial = { ...this.draft }, this.error = this.notice = "", this.requestUpdate(), this.updateComplete.then(
+      () => this.renderRoot.querySelector("#title")?.focus()
+    ));
+  }
+  async saveDetail(t) {
+    if (t?.preventDefault(), !(!this.client || !this.scope || !this.draft || !this.initial || this.saving || this.pending || this.transferBusy) && !(t && !t.target.reportValidity()))
+      try {
+        if (!this.editPending) {
+          const e = Rt(
+            this.draft,
+            this.detail ? this.initial : void 0
+          );
+          if (!Object.keys(e).length) {
+            this.notice = "There are no changes to save.", this.requestUpdate();
+            return;
+          }
+          this.editPending = this.detail ? this.client.prepareDatabaseUpdate(this.scope, {
+            viewing_id: this.detail.id,
+            expected_revision: this.detail.revision,
+            patch: e
+          }) : this.client.prepare(this.scope, "create", { data: e });
+        }
+        await this.mutateDetail();
+      } catch (e) {
+        this.fail(e);
+      }
+  }
+  async deleteEntry() {
+    if (!this.client || !this.scope || this.blocked || this.table !== "viewings" || this.selected.size !== 1)
+      return;
+    const t = this.page?.items.find(
+      (e) => this.selected.has(String(e.id))
+    );
+    if (!(!t || t.deleted_at || !this.discard() || !window.confirm(
+      `Delete “${String(t.title)}” from the journal? Its database record will be retained.`
+    )))
+      try {
+        this.editPending = this.client.prepare(this.scope, "delete", {
+          viewing_id: t.id,
+          expected_revision: t.revision
+        }), this.detail = this.draft = this.initial = null, await this.mutateDetail();
+      } catch (e) {
+        this.fail(e);
+      }
+  }
+  async mutateDetail() {
+    if (!this.client || !this.editPending || this.saving) return;
+    const t = this.editPending.message.type.endsWith("/delete"), e = this.generation;
+    this.saving = !0, this.error = this.notice = "", this.busy(), this.requestUpdate();
+    try {
+      const i = await this.client.mutate(this.editPending);
+      if (e !== this.generation) return;
+      this.editPending = void 0, this.detail = this.draft = this.initial = null, this.notice = t ? "Viewing deleted from the journal. Its database record is retained." : "Viewing saved.", this.dispatchEvent(
+        new CustomEvent("database-changed", {
+          bubbles: !0,
+          composed: !0
+        })
+      );
+      const s = this.generation + 1;
+      if (await this.load(), this.generation !== s || !this.isConnected || t)
+        return;
+      const a = this.page?.items.find((o) => o.id === i.viewing.id);
+      this.showDetail(
+        a ?? i.viewing
+      );
+    } catch (i) {
+      if (e !== this.generation) return;
+      ["invalid_request", "conflict", "unauthorized", "not_found"].includes(
+        f(i)
+      ) && (this.editPending = void 0), this.fail(i);
+    } finally {
+      (e === this.generation || !this.editPending) && (this.saving = !1, this.busy(), this.requestUpdate());
+    }
+  }
+  renderMutationRetry() {
+    return this.editPending ? r`<div class="warning" role="status">
+          ${this.saving ? "Saving…" : "The change result is unconfirmed. Retry the exact change."}
+          <div class="actions">
+            <button
+              ?disabled=${this.saving}
+              @click=${() => this.mutateDetail()}
+            >
+              Retry same change
+            </button>
+            <button
+              ?disabled=${this.saving}
+              @click=${() => {
+      window.confirm(
+        "This change may already have committed. Discard its retry and reload the database?"
+      ) && (this.editPending = void 0, this.draft = this.initial = null, this.busy(), this.load());
+    }}
+            >
+              Discard retry & reload
+            </button>
+          </div>
+        </div>` : l;
+  }
+  renderDetail(t) {
+    return !this.detail && !this.draft ? r`<div class="empty">
+        Select an entry to inspect its details.
+      </div>` : r`<div class="card-head">
+        <h2>
+          ${this.draft ? this.detail ? "Edit viewing" : "New viewing" : "Entry details"}
+        </h2>
+      </div>
+      ${this.draft ? r`<form class="editor" @submit=${this.saveDetail}>
+              <fieldset ?disabled=${t}>
+                ${Pt(this.draft, (e, i) => {
+      this.draft = {
+        ...this.draft,
+        [e]: i.target.value
+      }, this.requestUpdate();
+    })}
+                <p class="muted">
+                  Only changed viewing fields are corrected. Deletion status and
+                  recorded session evidence are preserved.
+                </p>
+                <div class="actions">
+                  <button type="submit" class="primary">
+                    ${this.detail ? "Save viewing" : "Create entry"}</button
+                  ><button
+                    type="button"
+                    @click=${() => {
+      this.discard() && (this.detail = this.draft = this.initial = null, this.requestUpdate());
+    }}
+                  >
+                    Close details
+                  </button>
+                </div>
+              </fieldset>
+            </form>` : r`<p class="muted">
+              System metadata, evidence, retry, and audit records are read-only.
+            </p>`}
+      ${this.detail ? r`<h3>Raw stored values</h3>
+              <pre>${JSON.stringify(this.detail, null, 2)}</pre>` : l}`;
+  }
+  switchTable(t) {
+    this.blocked || this.discard() && (this.table = t, this.draft = this.initial = null, this.load());
+  }
+  tabKey(t, e) {
+    const i = e.indexOf(this.table), s = t.key === "ArrowRight" ? (i + 1) % e.length : t.key === "ArrowLeft" ? (i + e.length - 1) % e.length : t.key === "Home" ? 0 : t.key === "End" ? e.length - 1 : -1;
+    s < 0 || (t.preventDefault(), this.switchTable(e[s]), this.updateComplete.then(
+      () => this.renderRoot.querySelector(`#table-${this.table}`)?.focus()
+    ));
+  }
+  render() {
+    const t = this.blocked, e = Object.keys(this.page?.tables ?? Q), i = this.selected.size === 1 ? this.page?.items.find((a) => this.selected.has(String(a.id))) : void 0, s = this.table === "viewings";
+    return r`<section class="card database" aria-label="Database management">
+      <div class="database-toolbar">
+        <div class="actions" aria-label="Entry actions">
+          <button
+            class="primary"
+            ?disabled=${t || !s}
+            @click=${this.newEntry}
+          >
+            New Entry
+          </button>
+          <button
+            class="danger"
+            ?disabled=${t || !s || !i || !!i.deleted_at}
+            @click=${this.deleteEntry}
+          >
+            Delete entry
+          </button>
+          <button
+            id="purge-entry"
+            class="danger"
+            ?disabled=${t || !s || !!this.scope?.tracking_enabled || !this.page?.tables.viewings}
+            @click=${this.openPurge}
+          >
+            Purge entry
+          </button>
+          <button ?disabled=${t} @click=${() => this.load()}>
+            Refresh database
+          </button>
+        </div>
+        <kaleidescape-transfers
+          .client=${this.client}
+          .scope=${this.scope ? { ...this.scope, revision: this.page?.revision ?? this.scope.revision } : void 0}
+          .disabled=${this.loading || this.saving || !!this.pending || !!this.editPending || this.purgeOpen}
+          @transfer-open=${(a) => {
+      if (a.detail === "import") {
+        if (!this.discard()) {
+          a.preventDefault();
+          return;
+        }
+        this.detail = this.draft = this.initial = null, this.requestUpdate();
+      }
+    }}
+          @transfer-busy=${(a) => {
+      this.transferBusy = a.detail, this.busy(), this.requestUpdate();
+    }}
+          @database-changed=${() => {
+      !this.pending && !this.editPending && this.load();
+    }}
+        ></kaleidescape-transfers>
+      </div>
+      <div class="database-messages">
+        ${this.error ? r`<p class="error" role="alert">${this.error}</p>` : l}
+        ${this.notice ? r`<p class="notice" role="status">${this.notice}</p>` : l}
+        ${this.renderMutationRetry()}
+      </div>
+      <div
+        class="page-tabs table-tabs"
+        role="tablist"
+        aria-label="Database tables"
+        @keydown=${(a) => {
+      t || this.tabKey(a, e);
+    }}
+      >
+        ${e.map(
+      (a) => r`<button
+              role="tab"
+              id=${`table-${a}`}
+              aria-controls="database-rows"
+              aria-selected=${this.table === a}
+              tabindex=${this.table === a ? "0" : "-1"}
+              ?disabled=${t}
+              @click=${() => this.switchTable(a)}
+            >
+              ${Q[a] ?? a}${this.page ? ` (${this.page.tables[a]})` : ""}
+            </button>`
+    )}
+      </div>
+      <div
+        class="database-layout"
+        role="tabpanel"
+        id="database-rows"
+        aria-labelledby=${`table-${this.table}`}
+      >
+        <section class="database-entries" aria-label="Database entries">
+          <div class="card-head">
+            <h2>${Q[this.table] ?? this.table}</h2>
+          </div>
+          ${this.loading ? r`<p role="status">Loading database…</p>` : this.page ? r` <p class="muted">
+                      Schema ${this.scope?.schema_version} · Dataset revision
+                      ${this.page.revision} · ${this.page.tables[this.table]}
+                      rows
+                    </p>
+                    <ul class="entry-list">
+                      ${this.page.items.map(
+      (a) => r`<li
+                            class=${this.detail === a ? "selected" : ""}
+                          >
+                            ${s ? r`<input
+                                    type="checkbox"
+                                    aria-label=${`Select ${String(a.title)}`}
+                                    ?disabled=${t}
+                                    .checked=${this.selected.has(String(a.id))}
+                                    @change=${(o) => {
+        o.target.checked ? this.selected.add(String(a.id)) : this.selected.delete(String(a.id)), this.confirming = null, this.requestUpdate();
+      }}
+                                  />` : l}
+                            <button
+                              class="link entry-name"
+                              ?disabled=${t}
+                              @click=${() => this.showDetail(a)}
+                            >
+                              ${String(a.title ?? a.id ?? a.request_id ?? "Dataset metadata")}
+                              ${s ? r`<small>${a.deleted_at ? "Deleted" : "Visible"}</small>` : l}
+                            </button>
+                          </li>`
+    )}
+                    </ul>
+                    ${this.page.items.length ? l : r`<p>No rows.</p>`}
+                    <div class="pagination database-pagination">
+                      <small
+                        >Rows
+                        ${this.page.items.length ? this.page.offset + 1 : 0}–${this.page.offset + this.page.items.length}
+                        · Up to 25
+                        rows${s ? ` · ${this.selected.size} selected` : ""}</small
+                      >
+                      <div class="actions">
+                        <button
+                          ?disabled=${t || this.page.offset === 0}
+                          @click=${() => this.load()}
+                        >
+                          First
+                        </button>
+                        <button
+                          ?disabled=${t || this.page.offset === 0}
+                          @click=${() => this.load(Math.max(0, this.page.offset - 25), this.page.revision)}
+                        >
+                          Previous
+                        </button>
+                        <button
+                          ?disabled=${t || !this.page.has_more}
+                          @click=${() => this.load(this.page.offset + 25, this.page.revision)}
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>` : l}
+        </section>
+        <section class="database-detail" aria-label="Selected database entry">
+          ${this.renderDetail(t)}
+        </section>
+      </div>
+      <dialog
+        id="purge-dialog"
+        class="database-dialog"
+        aria-labelledby="purge-title"
+        @cancel=${this.closePurge}
+      >
+        <div class="card-head"><h2 id="purge-title">Permanent purge</h2></div>
+        <p>
+          Remove viewing entries and associated sessions, edit audit references,
+          and cached response content. This cannot be undone here. Backups,
+          exports, and HA Recorder history remain.
+        </p>
+        ${this.scope?.tracking_enabled ? r`<p class="warning">Disable automatic tracking in Settings before purging.</p>` : l}
+        ${this.error ? r`<p class="error" role="alert">${this.error}</p>` : l}
+        ${this.pending ? r`<div class="warning" role="status">
+                ${this.saving ? "Purging…" : "The purge result is unconfirmed. Retry the exact request to confirm it."}
+                <div class="actions">
+                  <button ?disabled=${this.saving} @click=${() => this.purge()}>
+                    Retry same purge
+                  </button>
+                  <button ?disabled=${this.saving} @click=${this.discardRetry}>
+                    Discard retry & refresh
+                  </button>
+                </div>
+              </div>` : l}
+        <div class="actions">
+          <button
+            class="danger"
+            ?disabled=${t || !!this.scope?.tracking_enabled || !this.selected.size}
+            @click=${() => {
+      this.confirming = "selected", this.confirmation = "", this.requestUpdate();
+    }}
+          >
+            Purge selected (${this.selected.size})
+          </button>
+          <button
+            class="danger"
+            ?disabled=${t || !!this.scope?.tracking_enabled || !this.page?.tables.viewings}
+            @click=${() => {
+      this.confirming = "all", this.confirmation = "", this.requestUpdate();
+    }}
+          >
+            Purge all entries
+          </button>
+        </div>
+        ${this.confirming && !this.pending ? r`<form @submit=${this.purge}>
+                <h3>
+                  ${this.confirming === "all" ? "Permanently purge all entries?" : `Permanently purge ${this.selected.size} selected entries?`}
+                </h3>
+                <label
+                  >Type ${this.confirming === "all" ? "PURGE ALL" : "PURGE"} to
+                  confirm
+                  <input
+                    name="purge_confirmation"
+                    autocomplete="off"
+                    .value=${this.confirmation}
+                    ?disabled=${t}
+                    @input=${(a) => {
+      this.confirmation = a.target.value, this.requestUpdate();
+    }}
+                  />
+                </label>
+                <div class="actions dialog-footer">
+                  <button
+                    type="submit"
+                    class="danger"
+                    ?disabled=${t || this.confirmation !== (this.confirming === "all" ? "PURGE ALL" : "PURGE")}
+                  >
+                    Confirm permanent purge
+                  </button>
+                </div>
+              </form>` : l}
+        <div class="actions dialog-footer">
+          <button
+            ?disabled=${this.saving || !!this.pending}
+            @click=${this.closePurge}
+          >
+            Cancel purge
+          </button>
+        </div>
+      </dialog>
+    </section>`;
+  }
+};
+F.properties = {
+  client: { attribute: !1 },
+  scope: { attribute: !1 }
+}, F.styles = [
+  U,
+  J`
+      :host {
+        min-height: 0;
+      }
+    `
+];
+let st = F;
+customElements.get("kaleidescape-advanced") || customElements.define("kaleidescape-advanced", st);
+const w = [
+  {
+    id: "now-playing",
+    label: "Now Playing",
+    description: "Live playback and recording context."
+  },
+  {
+    id: "journal",
+    label: "Journal",
+    description: "Review recordings and make corrections."
+  },
+  {
+    id: "database",
+    label: "Database",
+    description: "Inspect entries and manage stored history."
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    description: "Configure playback recording and journal rules."
+  }
+], V = class V extends b {
+  constructor() {
+    super(...arguments), this.narrow = !1, this.api = null, this.generation = 0, this.listRequest = 0, this.detailRequest = 0, this.info = null, this.rows = [], this.selected = null, this.draft = null, this.initial = null, this.sessions = null, this.sessionError = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.nextCursor = null, this.history = [], this.page = 1, this.loading = !1, this.detailLoading = !1, this.saving = !1, this.pending = null, this.confirmDelete = !1, this.error = "", this.lastError = "", this.notice = "", this.activePage = "journal", this.settingsBusy = !1, this.maintenanceBusy = !1;
   }
   willUpdate(t) {
     if (!(!t.has("hass") && !t.has("client")))
@@ -1245,7 +2775,7 @@ const j = class j extends A {
           this.bind(null);
           return;
         }
-        (this.haConnection !== this.hass.connection || this.haUser !== this.hass.user.id) && (this.haConnection = this.hass.connection, this.haUser = this.hass.user.id, this.haClient = new mt({
+        (this.haConnection !== this.hass.connection || this.haUser !== this.hass.user.id) && (this.haConnection = this.hass.connection, this.haUser = this.hass.user.id, this.haClient = new qt({
           callWS: (e) => this.hass.callWS(e),
           fetchWithAuth: (e, i) => this.hass.fetchWithAuth(e, i)
         })), this.bind(this.haClient);
@@ -1259,79 +2789,93 @@ const j = class j extends A {
     super.disconnectedCallback(), this.bind(null);
   }
   clearPrivate() {
-    this.generation++, this.exportAbort?.abort(), this.exportAbort = void 0, this.info = null, this.rows = [], this.selected = null, this.draft = null, this.initial = null, this.sessions = null, this.pending = null, this.history = [], this.nextCursor = null, this.cursor = void 0, this.page = 1, this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.confirmDelete = !1, this.saving = !1, this.loading = !1, this.detailLoading = !1, this.exporting = !1, this.sessionError = "", this.notice = "";
+    this.generation++, this.info = null, this.rows = [], this.selected = null, this.draft = null, this.initial = null, this.sessions = null, this.pending = null, this.history = [], this.nextCursor = null, this.cursor = void 0, this.page = 1, this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.confirmDelete = !1, this.saving = !1, this.loading = !1, this.detailLoading = !1, this.sessionError = "", this.notice = "", this.activePage = "journal", this.settingsBusy = this.maintenanceBusy = !1;
   }
   bind(t) {
     this.api !== t && (this.clearPrivate(), this.api = t, this.error = "", this.requestUpdate(), t && this.refresh());
   }
   fail(t) {
-    w(t) === "unauthorized" && this.clearPrivate(), this.lastError = w(t), this.error = gt(t), this.requestUpdate();
+    f(t) === "unauthorized" && this.clearPrivate(), this.lastError = f(t), this.error = N(t), this.requestUpdate();
   }
   dirty() {
     return this.draft && JSON.stringify(this.draft) !== JSON.stringify(this.initial);
   }
   discard() {
-    return !this.dirty() || window.confirm("Discard your unsaved changes?");
+    return (!this.dirty() || window.confirm("Discard your unsaved changes?")) && (this.activePage !== "database" || (this.renderRoot.querySelector("kaleidescape-advanced")?.confirmNavigation() ?? !0)) && (this.activePage !== "settings" || (this.renderRoot.querySelector("kaleidescape-settings")?.confirmNavigation() ?? !0));
   }
-  async refresh() {
+  async switchPage(t) {
+    t === this.activePage || this.loading || this.saving || this.pending || this.maintenanceBusy || this.settingsBusy || !this.discard() || (this.closeEditor(), this.activePage = t, this.error = this.notice = "", this.requestUpdate(), t === "journal" && (this.page = 1, this.history = [], await this.loadList()));
+  }
+  pageKey(t) {
+    const e = w.findIndex((a) => a.id === this.activePage), i = t.key === "ArrowRight" ? (e + 1) % w.length : t.key === "ArrowLeft" ? (e + w.length - 1) % w.length : t.key === "Home" ? 0 : t.key === "End" ? w.length - 1 : -1;
+    if (i < 0) return;
+    t.preventDefault(), this.switchPage(w[i].id).then(() => this.updateComplete).then(
+      () => this.renderRoot.querySelector(`#page-${this.activePage}`)?.focus()
+    );
+  }
+  async refresh(t = !1) {
     if (!this.api || this.pending || !this.discard()) return;
-    const t = this.api, e = ++this.generation;
-    this.exportAbort?.abort(), this.exporting = !1, this.info = null, this.rows = [], this.closeEditor(), this.loading = !0, this.error = "", this.requestUpdate();
+    const e = this.api, i = ++this.generation;
+    this.info = null, this.rows = [], this.closeEditor(), this.loading = !0, this.error = "", this.requestUpdate();
     try {
-      const { entries: i } = await t.info();
-      if (e !== this.generation) return;
-      if (!i.length) throw new b("not_ready");
-      if (i[0].api_version !== 1) throw new b("not_ready");
-      if (this.info = i[0], !this.info.permissions.edit) return;
+      let { entries: s } = await e.info();
+      for (let a = 0; t && !s.length && a < 20; a++) {
+        if (await new Promise((o) => setTimeout(o, 500)), i !== this.generation) return;
+        ({ entries: s } = await e.info());
+      }
+      if (i !== this.generation) return;
+      if (!s.length) throw new g("not_ready");
+      if (s[0].api_version !== 1) throw new g("not_ready");
+      if (this.info = s[0], !this.info.permissions.edit) return;
       this.history = [], this.cursor = void 0, this.page = 1, await this.loadList();
-    } catch (i) {
-      e === this.generation && this.fail(i);
+    } catch (s) {
+      i === this.generation && this.fail(s);
     } finally {
-      e === this.generation && (this.loading = !1, this.requestUpdate());
+      i === this.generation && (this.loading = !1, this.requestUpdate());
     }
   }
   async loadList(t) {
     if (!this.api || !this.info) return;
-    const e = this.api, i = this.info, s = this.generation, n = ++this.listRequest;
+    const e = this.api, i = this.info, s = this.generation, a = ++this.listRequest;
     this.loading = !0, this.error = "", this.requestUpdate();
     try {
-      const a = await e.list(i, this.query, this.status, t);
-      if (s !== this.generation || n !== this.listRequest)
+      const o = await e.list(i, this.query, this.status, t);
+      if (s !== this.generation || a !== this.listRequest)
         return;
-      this.rows = a.items, this.cursor = t, this.nextCursor = a.next_cursor, this.info = { ...this.info, revision: a.revision };
-    } catch (a) {
-      s === this.generation && n === this.listRequest && (this.rows = [], this.nextCursor = null, this.fail(a));
+      this.rows = o.items, this.cursor = t, this.nextCursor = o.next_cursor, this.info = { ...this.info, revision: o.revision };
+    } catch (o) {
+      s === this.generation && a === this.listRequest && (this.rows = [], this.nextCursor = null, this.fail(o));
     } finally {
-      s === this.generation && n === this.listRequest && (this.loading = !1, this.requestUpdate());
+      s === this.generation && a === this.listRequest && (this.loading = !1, this.requestUpdate());
     }
   }
   async selectRecord(t) {
     if (!this.api || !this.info || this.pending || !this.discard()) return;
     this.closeEditor();
-    const e = this.api, i = this.info, s = this.generation, n = ++this.detailRequest;
+    const e = this.api, i = this.info, s = this.generation, a = ++this.detailRequest;
     this.detailLoading = !0, this.error = "", this.notice = "", this.requestUpdate();
     try {
-      const a = await e.get(i, t);
-      if (s !== this.generation || n !== this.detailRequest)
+      const o = await e.get(i, t);
+      if (s !== this.generation || a !== this.detailRequest)
         return;
-      this.selected = a, this.draft = I(a), this.initial = { ...this.draft }, this.detailLoading = !1, this.requestUpdate();
+      this.selected = o, this.draft = P(o), this.initial = { ...this.draft }, this.detailLoading = !1, this.requestUpdate();
       try {
-        const d = await e.sessions(i, t);
-        s === this.generation && n === this.detailRequest && (this.sessions = d);
-      } catch (d) {
-        s === this.generation && n === this.detailRequest && (w(d) === "unauthorized" ? this.fail(d) : this.sessionError = "Session details could not be loaded.");
+        const h = await e.sessions(i, t);
+        s === this.generation && a === this.detailRequest && (this.sessions = h);
+      } catch (h) {
+        s === this.generation && a === this.detailRequest && (f(h) === "unauthorized" ? this.fail(h) : this.sessionError = "Session details could not be loaded.");
       }
-    } catch (a) {
-      s === this.generation && n === this.detailRequest && this.fail(a);
+    } catch (o) {
+      s === this.generation && a === this.detailRequest && this.fail(o);
     } finally {
-      s === this.generation && n === this.detailRequest && (this.detailLoading = !1, this.requestUpdate());
+      s === this.generation && a === this.detailRequest && (this.detailLoading = !1, this.requestUpdate());
     }
   }
   closeEditor() {
     this.detailRequest++, this.selected = null, this.draft = null, this.initial = null, this.sessions = null, this.sessionError = "", this.confirmDelete = !1, this.detailLoading = !1;
   }
   newRecord() {
-    this.pending || !this.discard() || (this.closeEditor(), this.draft = I(), this.initial = { ...this.draft }, this.error = "", this.notice = "", this.requestUpdate(), this.updateComplete.then(
+    this.pending || !this.discard() || (this.closeEditor(), this.draft = P(), this.initial = { ...this.draft }, this.error = "", this.notice = "", this.requestUpdate(), this.updateComplete.then(
       () => this.renderRoot.querySelector("#title")?.focus()
     ));
   }
@@ -1344,7 +2888,7 @@ const j = class j extends A {
   async save(t) {
     if (t.preventDefault(), !(!this.api || !this.info || !this.draft || this.pending || this.saving || !t.target.reportValidity()))
       try {
-        const i = Bt(
+        const i = Rt(
           this.draft,
           this.selected ? this.initial : void 0
         );
@@ -1365,15 +2909,20 @@ const j = class j extends A {
             patch: i
           } : { data: i }
         ), await this.commit();
-      } catch {
-        this.error = "Check the dates and numeric fields before saving.", this.requestUpdate();
+      } catch (i) {
+        f(i) === "request_id_unavailable" ? this.fail(i) : (this.error = "Check the dates and numeric fields before saving.", this.requestUpdate());
       }
   }
   async deleteRecord() {
-    !this.api || !this.info || !this.selected || this.pending || (this.pending = this.api.prepare(this.info, "delete", {
-      viewing_id: this.selected.id,
-      expected_revision: this.selected.revision
-    }), this.confirmDelete = !1, await this.commit());
+    if (!(!this.api || !this.info || !this.selected || this.pending))
+      try {
+        this.pending = this.api.prepare(this.info, "delete", {
+          viewing_id: this.selected.id,
+          expected_revision: this.selected.revision
+        }), this.confirmDelete = !1, await this.commit();
+      } catch (t) {
+        this.fail(t);
+      }
   }
   async commit() {
     if (!this.api || !this.pending || this.saving) return;
@@ -1382,17 +2931,17 @@ const j = class j extends A {
     try {
       const s = await t.mutate(e);
       if (i !== this.generation) return;
-      this.pending = null, this.closeEditor(), this.notice = s.viewing.deleted_at ? "Entry removed from the journal. Stored history is retained." : "Entry saved.", s.viewing.deleted_at || (this.selected = s.viewing, this.draft = I(s.viewing), this.initial = { ...this.draft }), this.page = 1, this.history = [], await this.loadList();
+      this.pending = null, this.closeEditor(), this.notice = s.viewing.deleted_at ? "Entry removed from the journal. Stored history is retained." : "Entry saved.", s.viewing.deleted_at || (this.selected = s.viewing, this.draft = P(s.viewing), this.initial = { ...this.draft }), this.page = 1, this.history = [], await this.loadList();
       try {
-        const { entries: n } = await t.info();
-        i === this.generation && n[0]?.dataset_id === this.info?.dataset_id && (this.info = n[0]);
-      } catch (n) {
-        i === this.generation && this.fail(n);
+        const { entries: a } = await t.info();
+        i === this.generation && a[0]?.dataset_id === this.info?.dataset_id && (this.info = a[0]);
+      } catch (a) {
+        i === this.generation && this.fail(a);
       }
     } catch (s) {
       if (i !== this.generation) return;
       ["invalid_request", "conflict", "unauthorized"].includes(
-        w(s)
+        f(s)
       ) && (this.pending = null), this.fail(s);
     } finally {
       i === this.generation && (this.saving = !1, this.requestUpdate());
@@ -1403,26 +2952,6 @@ const j = class j extends A {
       "This change may already have committed. Discard its retry and inspect the journal before adding it again?"
     ) && (this.pending = null, this.closeEditor(), this.notice = "Retry discarded. Check the journal before recreating the change.", await this.refresh());
   }
-  async exportData(t) {
-    if (!this.api || !this.info || this.exporting) return;
-    const e = this.api, i = this.info, s = this.generation, n = this.exportAbort = new AbortController(), a = setTimeout(() => n.abort(), 65e3);
-    this.exporting = !0, this.error = "", this.requestUpdate();
-    try {
-      const d = await e.download(i, t, n.signal);
-      if (s !== this.generation) return;
-      const o = URL.createObjectURL(d), c = document.createElement("a");
-      try {
-        c.href = o, c.download = `kaleidescape-journal.${t}`, c.click();
-      } finally {
-        setTimeout(() => URL.revokeObjectURL(o), 1e3);
-      }
-      this.notice = "Export downloaded. Keep this private copy in a protected location.";
-    } catch (d) {
-      s === this.generation && this.fail(d);
-    } finally {
-      clearTimeout(a), s === this.generation && (this.exporting = !1, this.exportAbort = void 0, this.requestUpdate());
-    }
-  }
   date(t) {
     return new Date(t).toLocaleString(void 0, {
       dateStyle: "medium",
@@ -1432,66 +2961,21 @@ const j = class j extends A {
   bytes(t) {
     return `${(t / 1024 / 1024).toFixed(t < 1024 * 1024 ? 2 : 1)} MiB`;
   }
-  field(t, e, i = "text", s = !1, n) {
-    return l`<label
-      >${e}<input
-        id=${t === "title" ? "title" : t}
-        name=${t}
-        type=${i}
-        .value=${this.draft[t]}
-        ?required=${s}
-        maxlength=${n ?? h}
-        min=${i === "number" ? "0" : h}
-        max=${i === "number" ? String(1e9 / 60) : h}
-        step=${i === "datetime-local" ? "0.001" : "any"}
-        @input=${(a) => this.input(t, a)}
-    /></label>`;
+  async refreshInfo() {
+    if (!this.api) return;
+    const t = this.generation;
+    try {
+      const { entries: e } = await this.api.info();
+      t === this.generation && e[0]?.dataset_id === this.info?.dataset_id && (this.info = e[0], this.requestUpdate());
+    } catch (e) {
+      t === this.generation && this.fail(e);
+    }
   }
   renderEditor() {
-    return this.detailLoading ? l`<div class="empty" role="status">Loading entry…</div>` : this.draft ? l`<form class="editor" @submit=${this.save}>
+    return this.detailLoading ? r`<div class="empty" role="status">Loading entry…</div>` : this.draft ? r`<form class="editor" @submit=${this.save}>
       <fieldset ?disabled=${this.saving || !!this.pending}>
-        <div class="grid">
-          <div class="full">
-            ${this.field("title", "Title", "text", !0, 500)}
-          </div>
-          ${this.field("started_at", "Started · local time", "datetime-local", !0)}
-          ${this.field("ended_at", "Ended · local time", "datetime-local")}
-          ${this.field("watched_seconds", "Watched minutes", "number", !0)}
-          ${this.field("duration_seconds", "Runtime minutes · optional", "number")}
-          <label
-            >Status<select
-              name="record_status"
-              .value=${this.draft.status}
-              @change=${(t) => this.input("status", t)}
-            >
-              <option value="partial">Partial</option>
-              <option value="completed">Completed</option>
-            </select></label
-          >
-          <label class="full"
-            >Notes<textarea
-              name="notes"
-              maxlength="10000"
-              .value=${this.draft.notes}
-              @input=${(t) => this.input("notes", t)}
-            ></textarea>
-          </label>
-        </div>
-        ${this.selected?.origin === "observed" ? l`<small>Only fields you change are marked as manual corrections. Session evidence is retained.</small>` : h}
-        <details>
-          <summary>Source identifiers</summary>
-          <div class="grid">
-            ${this.field("source_id", "Source ID", "text", !1, 255)}
-            ${this.field("player_id", "Player ID", "text", !1, 255)}
-            <div class="full">
-              ${this.field("raw_content_id", "Raw content ID", "text", !1, 255)}
-            </div>
-          </div>
-          <small
-            >Keep source identifiers exact. Titles do not establish movie
-            identity.</small
-          >
-        </details>
+        ${Pt(this.draft, (t, e) => this.input(t, e))}
+        ${this.selected?.origin === "observed" ? r`<small>Only fields you change are marked as manual corrections. Session evidence is retained.</small>` : l}
         <div class="actions">
           <button type="submit" class="primary">
             ${this.saving ? "Saving…" : this.selected ? "Save changes" : "Add entry"}
@@ -1504,7 +2988,7 @@ const j = class j extends A {
           >
             Cancel
           </button>
-          ${this.selected ? l`<span class="grow"></span
+          ${this.selected ? r`<span class="grow"></span
                   ><button
                     type="button"
                     class="danger"
@@ -1513,10 +2997,10 @@ const j = class j extends A {
     }}
                   >
                     Delete entry
-                  </button>` : h}
+                  </button>` : l}
         </div>
       </fieldset>
-      ${this.confirmDelete ? l`<div class="warning">
+      ${this.confirmDelete ? r`<div class="warning">
               <strong>Remove this entry from the journal?</strong>
               <p>
                 Stored history and backup copies are retained. This does not
@@ -1538,8 +3022,8 @@ const j = class j extends A {
                   Keep entry
                 </button>
               </div>
-            </div>` : h}
-      ${this.selected ? l`<details>
+            </div>` : l}
+      ${this.selected ? r`<details>
               <summary>Record details & sessions</summary>
               <div class="metadata">
                 Record ${this.selected.id}<br />Origin: ${this.selected.origin}
@@ -1547,46 +3031,49 @@ const j = class j extends A {
                 ${this.date(this.selected.updated_at)}<br />Completion:
                 ${this.selected.completion_reason ?? "Not completed"}
               </div>
-              ${this.sessionError ? l`<p>${this.sessionError}</p>` : this.sessions ? this.sessions.items.length ? l` ${this.sessions.items.map((t) => l`<div class="session">${this.date(t.started_at)}<br />${(t.watched_seconds / 60).toFixed(1)} min watched · ${t.credits_confirmed ? "Credits confirmed" : "Credits unconfirmed"} · ${t.gap_count} timing gaps<br />${t.end_reason ?? "Open session"}</div>`)}
-                        ${this.sessions.has_more ? l`<small>Showing the latest 100 sessions.</small>` : h}` : l`<p class="muted">
+              ${this.sessionError ? r`<p>${this.sessionError}</p>` : this.sessions ? this.sessions.items.length ? r` ${this.sessions.items.map((t) => r`<div class="session">${this.date(t.started_at)}<br />${(t.watched_seconds / 60).toFixed(2)} min watched · ${t.credits_confirmed ? "Credits confirmed" : "Credits unconfirmed"} · ${t.gap_count} timing gaps<br />${t.end_reason ?? "Open session"}</div>`)}
+                        ${this.sessions.has_more ? r`<small>Showing the latest 100 sessions.</small>` : l}` : r`<p class="muted">
                           No recorded sessions for this entry.
-                        </p>` : l`<p class="muted">
+                        </p>` : r`<p class="muted">
                         Session details have not been loaded. Reopen the entry
                         to load them.
                       </p>`}
-            </details>` : h}
-    </form>` : l`<div class="empty">
+            </details>` : l}
+    </form>` : r`<div class="empty">
         <strong>Select an entry</strong>
         <p>Review its details, make corrections, or add a manual viewing.</p>
       </div>`;
   }
   render() {
     if (this.hass?.user && !this.hass.user.is_admin || this.info && !this.info.permissions.edit)
-      return l`<kaleidescape-reader
+      return r`<kaleidescape-reader
         .hass=${this.hass}
         .client=${this.hass ? void 0 : this.client}
         .narrow=${this.narrow}
       ></kaleidescape-reader>`;
-    const t = this.loading || this.saving || !!this.pending;
-    return l`<main>
+    const t = this.loading || this.saving || !!this.pending || this.maintenanceBusy || this.settingsBusy;
+    return r`<main>
       <header>
-        ${this.hass && this.narrow ? l`<button class="menu" aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: !0, composed: !0 }))}>☰</button>` : h}
+        ${this.hass && this.narrow ? r`<button class="menu" aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: !0, composed: !0 }))}>☰</button>` : l}
         <div class="grow">
           <span class="eyebrow">Kaleidescape Companion · Administrator</span>
-          <h1>Journal management</h1>
-          <p>Review recordings and make corrections.</p>
+          <h1>Kaleidescape Companion</h1>
+          <p>
+            ${w.find((e) => e.id === this.activePage).description}
+          </p>
         </div>
-        ${this.info?.permissions.edit ? l`<button
-                class="primary"
-                ?disabled=${!this.info || t}
-                @click=${this.newRecord}
-              >
-                ＋ Add viewing
-              </button>` : h}
       </header>
-      ${this.error ? l`<div class="error" role="alert">${this.error}${this.lastError === "conflict" && this.selected ? l` <button ?disabled=${t} @click=${() => this.selectRecord(this.selected.id)}>Reload entry</button>` : h}</div>` : h}
-      ${this.notice ? l`<div class="notice" role="status">${this.notice}</div>` : h}
-      ${this.pending && !this.saving ? l`<div class="warning">
+      ${this.info?.permissions.edit ? r`<div
+              class="page-tabs"
+              role="tablist"
+              aria-label="Companion pages"
+              @keydown=${(e) => this.pageKey(e)}
+            >
+              ${w.map((e) => r`<button id=${`page-${e.id}`} role="tab" aria-selected=${this.activePage === e.id} aria-controls="companion-page" tabindex=${this.activePage === e.id ? "0" : "-1"} ?disabled=${t} @click=${() => this.switchPage(e.id)}>${e.label}</button>`)}
+            </div>` : l}
+      ${this.error ? r`<div class="error" role="alert">${this.error}${this.lastError === "conflict" && this.selected ? r` <button ?disabled=${t} @click=${() => this.selectRecord(this.selected.id)}>Reload entry</button>` : l}</div>` : l}
+      ${this.notice ? r`<div class="notice" role="status">${this.notice}</div>` : l}
+      ${this.pending && !this.saving ? r`<div class="warning">
               Retry the same change to confirm its result. The form is locked to
               prevent duplicate writes.
               <div class="actions">
@@ -1595,192 +3082,227 @@ const j = class j extends A {
                   Discard retry & inspect journal
                 </button>
               </div>
-            </div>` : h}
-      ${this.api ? this.info ? l`
-                <section class="metrics" aria-label="Database overview">
-                  <div class="metric">
-                    <small>Journal entries</small
-                    ><strong>${this.info.viewing_count}</strong>
-                  </div>
-                  <div class="metric">
-                    <small>Database size</small
-                    ><strong
-                      >${this.bytes(this.info.database_bytes ?? 0)}</strong
-                    ><small
-                      >of
-                      ${this.bytes(this.info.database_limit_bytes ?? 0)}</small
-                    >
-                  </div>
-                  <div class="metric">
-                    <small>Recording</small
-                    ><strong
-                      >${this.info.tracking_enabled ? "Enabled" : "Manual only"}</strong
-                    >
-                  </div>
-                  <div class="metric">
-                    <small>Storage</small
-                    ><strong
-                      >${this.info.backup_in_progress ? "Backing up" : "Ready"}</strong
-                    ><small
-                      >Schema ${this.info.schema_version} · Revision
-                      ${this.info.revision}</small
-                    >
-                  </div>
-                </section>
-                <div class="layout">
-                  <section class="card" aria-label="Journal entries">
-                    <div class="card-head">
-                      <h2>Viewings</h2>
-                      <button ?disabled=${t} @click=${this.refresh}>
-                        Refresh
-                      </button>
-                    </div>
-                    <form
-                      class="filters"
-                      @submit=${(e) => {
+            </div>` : l}
+      ${this.api ? this.info ? r`<section
+                id="companion-page"
+                role="tabpanel"
+                aria-labelledby=${`page-${this.activePage}`}
+              >
+                ${this.activePage === "database" ? r`<kaleidescape-advanced
+                        .client=${this.api}
+                        .scope=${this.info}
+                        @access-denied=${() => this.fail(new g("unauthorized"))}
+                        @maintenance-busy=${(e) => {
+      this.maintenanceBusy = e.detail, this.requestUpdate();
+    }}
+                        @database-changed=${() => this.refreshInfo()}
+                      ></kaleidescape-advanced>` : this.activePage === "settings" ? r`<kaleidescape-settings
+                          .client=${this.api}
+                          .scope=${this.info}
+                          @access-denied=${() => this.fail(new g("unauthorized"))}
+                          @settings-busy=${(e) => {
+      this.settingsBusy = e.detail, this.requestUpdate();
+    }}
+                          @settings-saved=${() => {
+      this.notice = "Settings saved. Reloading the integration…";
+      const e = this.api;
+      this.refresh(!0).then(() => {
+        this.api === e && this.info && (this.notice = "Settings saved.", this.requestUpdate());
+      });
+    }}
+                        ></kaleidescape-settings>` : this.activePage === "now-playing" ? r`<kaleidescape-now-playing
+                            .client=${this.api}
+                            .scope=${this.info}
+                          ></kaleidescape-now-playing>` : r`<div class="section-head">
+                              <h2>Journal</h2>
+                              <button
+                                class="primary"
+                                ?disabled=${t}
+                                @click=${() => this.newRecord()}
+                              >
+                                ＋ Add viewing
+                              </button>
+                            </div>
+                            <section
+                              class="metrics"
+                              aria-label="Database overview"
+                            >
+                              <div class="metric">
+                                <small>Journal entries</small
+                                ><strong>${this.info.viewing_count}</strong>
+                              </div>
+                              <div class="metric">
+                                <small>Database size</small
+                                ><strong
+                                  >${this.bytes(this.info.database_bytes ?? 0)}</strong
+                                ><small
+                                  >of
+                                  ${this.bytes(this.info.database_limit_bytes ?? 0)}</small
+                                >
+                              </div>
+                              <div class="metric">
+                                <small>Recording</small
+                                ><strong
+                                  >${this.info.tracking_enabled ? "Enabled" : "Manual only"}</strong
+                                >
+                              </div>
+                              <div class="metric">
+                                <small>Storage</small
+                                ><strong
+                                  >${this.info.backup_in_progress ? "Backing up" : "Ready"}</strong
+                                ><small
+                                  >Schema ${this.info.schema_version} · Revision
+                                  ${this.info.revision}</small
+                                >
+                              </div>
+                            </section>
+                            <div class="layout">
+                              <section
+                                class="card"
+                                aria-label="Journal entries"
+                              >
+                                <div class="card-head">
+                                  <h2>Viewings</h2>
+                                  <button
+                                    ?disabled=${t}
+                                    @click=${() => this.refresh()}
+                                  >
+                                    Refresh
+                                  </button>
+                                </div>
+                                <form
+                                  class="filters"
+                                  @submit=${(e) => {
       e.preventDefault(), this.query = this.searchText, this.status = this.filterStatus, this.page = 1, this.history = [], this.loadList();
     }}
-                    >
-                      <label
-                        >Search titles<input
-                          name="search"
-                          type="search"
-                          maxlength="500"
-                          .value=${this.searchText}
-                          ?disabled=${t}
-                          @input=${(e) => {
+                                >
+                                  <label
+                                    >Search titles<input
+                                      name="search"
+                                      type="search"
+                                      maxlength="500"
+                                      .value=${this.searchText}
+                                      ?disabled=${t}
+                                      @input=${(e) => {
       this.searchText = e.target.value;
     }}
-                      /></label>
-                      <label
-                        >Status<select
-                          name="filter_status"
-                          .value=${this.filterStatus}
-                          ?disabled=${t}
-                          @change=${(e) => {
+                                  /></label>
+                                  <label
+                                    >Status<select
+                                      name="filter_status"
+                                      .value=${this.filterStatus}
+                                      ?disabled=${t}
+                                      @change=${(e) => {
       this.filterStatus = e.target.value;
     }}
-                        >
-                          <option value="">All</option>
-                          <option value="partial">Partial</option>
-                          <option value="completed">Completed</option>
-                        </select></label
-                      >
-                      <button ?disabled=${t}>Search</button>
-                    </form>
-                    ${this.loading ? l`<div class="empty" role="status">
-                            Loading viewings…
-                          </div>` : this.rows.length ? l`<div class="table-wrap">
-                              <table>
-                                <thead>
-                                  <tr>
-                                    <th>Title</th>
-                                    <th>Status</th>
-                                    <th>Watched</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  ${this.rows.map(
-      (e) => l` <tr
-                                        class=${this.selected?.id === e.id ? "selected" : ""}
-                                      >
-                                        <td>
-                                          <button
-                                            class="link"
-                                            ?disabled=${this.saving || !!this.pending}
-                                            @click=${() => this.selectRecord(e.id)}
-                                          >
-                                            ${e.title}</button
-                                          ><small
-                                            >${this.date(e.started_at)} ·
-                                            ${e.origin === "observed" ? "Recorded" : "Manual"}</small
-                                          >
-                                        </td>
-                                        <td>
-                                          <span
-                                            class=${`badge ${e.status === "completed" ? "complete" : ""}`}
-                                            >${e.status === "completed" ? "Completed" : "Partial"}</span
-                                          >
-                                        </td>
-                                        <td>
-                                          ${(e.watched_seconds / 60).toFixed(1)}
-                                          min
-                                        </td>
-                                      </tr>`
+                                    >
+                                      <option value="">All</option>
+                                      <option value="partial">Partial</option>
+                                      <option value="completed">
+                                        Completed
+                                      </option>
+                                    </select></label
+                                  >
+                                  <button ?disabled=${t}>Search</button>
+                                </form>
+                                ${this.loading ? r`<div class="empty" role="status">
+                                        Loading viewings…
+                                      </div>` : this.rows.length ? r`<div class="table-wrap">
+                                          <table>
+                                            <thead>
+                                              <tr>
+                                                <th>Title</th>
+                                                <th>Status</th>
+                                                <th>Watched</th>
+                                              </tr>
+                                            </thead>
+                                            <tbody>
+                                              ${this.rows.map(
+      (e) => r` <tr
+                                                    class=${this.selected?.id === e.id ? "selected" : ""}
+                                                  >
+                                                    <td>
+                                                      <button
+                                                        class="link"
+                                                        ?disabled=${this.saving || !!this.pending}
+                                                        @click=${() => this.selectRecord(e.id)}
+                                                      >
+                                                        ${e.title}</button
+                                                      ><small
+                                                        >${this.date(e.started_at)}
+                                                        ·
+                                                        ${e.origin === "observed" ? "Recorded" : "Manual"}</small
+                                                      >
+                                                    </td>
+                                                    <td>
+                                                      <span
+                                                        class=${`badge ${e.status === "completed" ? "complete" : ""}`}
+                                                        >${e.status === "completed" ? "Completed" : "Partial"}</span
+                                                      >
+                                                    </td>
+                                                    <td>
+                                                      ${(e.watched_seconds / 60).toFixed(2)}
+                                                      min
+                                                    </td>
+                                                  </tr>`
     )}
-                                </tbody>
-                              </table>
-                            </div>` : l`<div class="empty">
-                              <strong
-                                >${this.query || this.status ? "No matching viewings" : "Your journal is empty"}</strong
-                              >
-                              <p>
-                                ${this.query || this.status ? "Try another title or status." : "Add a manual viewing or enable automatic tracking in the integration settings."}
-                              </p>
-                            </div>`}
-                    <div class="pagination">
-                      <small>Page ${this.page} · Up to 25 entries</small>
-                      <div class="actions">
-                        <button
-                          ?disabled=${t || this.page === 1}
-                          @click=${() => {
+                                            </tbody>
+                                          </table>
+                                        </div>` : r`<div class="empty">
+                                          <strong
+                                            >${this.query || this.status ? "No matching viewings" : "Your journal is empty"}</strong
+                                          >
+                                          <p>
+                                            ${this.query || this.status ? "Try another title or status." : "Add a manual viewing or enable automatic tracking in the integration settings."}
+                                          </p>
+                                        </div>`}
+                                <div class="pagination">
+                                  <small
+                                    >Page ${this.page} · Up to 25 entries</small
+                                  >
+                                  <div class="actions">
+                                    <button
+                                      ?disabled=${t || this.page === 1}
+                                      @click=${() => {
       this.page = 1, this.history = [], this.loadList();
     }}
-                        >
-                          First
-                        </button>
-                        <button
-                          ?disabled=${t || !this.history.length}
-                          @click=${() => {
+                                    >
+                                      First
+                                    </button>
+                                    <button
+                                      ?disabled=${t || !this.history.length}
+                                      @click=${() => {
       this.page--, this.loadList(this.history.pop());
     }}
-                        >
-                          Previous
-                        </button>
-                        <button
-                          ?disabled=${t || !this.nextCursor}
-                          @click=${() => {
+                                    >
+                                      Previous
+                                    </button>
+                                    <button
+                                      ?disabled=${t || !this.nextCursor}
+                                      @click=${() => {
       this.history.push(this.cursor), this.history.length > 200 && this.history.shift(), this.page++, this.loadList(this.nextCursor);
     }}
-                        >
-                          Next
-                        </button>
-                      </div>
-                    </div>
-                  </section>
-                  <section class="card" aria-label="Viewing editor">
-                    <div class="card-head">
-                      <h2>
-                        ${this.selected ? "Edit viewing" : this.draft ? "New viewing" : "Viewing details"}
-                      </h2>
-                      ${this.dirty() ? l`<span class="badge">Unsaved</span>` : h}
-                    </div>
-                    ${this.renderEditor()}
-                  </section>
-                </div>
-                <footer class="exports">
-                  <small
-                    >Exports include private history and deleted records. Store
-                    downloads securely.</small
-                  >
-                  <button
-                    ?disabled=${this.exporting || t}
-                    @click=${() => this.exportData("json")}
-                  >
-                    ${this.exporting ? "Exporting…" : "Export JSON"}
-                  </button>
-                  <button
-                    ?disabled=${this.exporting || t}
-                    @click=${() => this.exportData("sqlite")}
-                  >
-                    Export SQLite
-                  </button>
-                </footer>
-              ` : l`<div class="empty" role="status">
+                                    >
+                                      Next
+                                    </button>
+                                  </div>
+                                </div>
+                              </section>
+                              <section class="card" aria-label="Viewing editor">
+                                <div class="card-head">
+                                  <h2>
+                                    ${this.selected ? "Edit viewing" : this.draft ? "New viewing" : "Viewing details"}
+                                  </h2>
+                                  ${this.dirty() ? r`<span class="badge">Unsaved</span>` : l}
+                                </div>
+                                ${this.renderEditor()}
+                              </section>
+                            </div> `}
+              </section>` : r`<div class="empty" role="status">
                 <strong
                   >${this.loading ? "Connecting to the journal…" : "Journal unavailable"}</strong
-                >${this.loading ? h : l`<button @click=${this.refresh}>Reload connection</button>`}
-              </div>` : l`<div class="empty">
+                >${this.loading ? l : r`<button @click=${() => this.refresh()}>Reload connection</button>`}
+              </div>` : r`<div class="empty">
               <strong>Connect through Home Assistant</strong>
               <p>
                 Open Kaleidescape Companion in HA with an administrator account,
@@ -1790,13 +3312,13 @@ const j = class j extends A {
     </main>`;
   }
 };
-j.properties = {
+V.properties = {
   hass: { attribute: !1 },
   client: { attribute: !1 },
   narrow: { type: Boolean }
-}, j.styles = $t;
-let V = j;
-customElements.get("kaleidescape-panel") || customElements.define("kaleidescape-panel", V);
+}, V.styles = U;
+let at = V;
+customElements.get("kaleidescape-panel") || customElements.define("kaleidescape-panel", at);
 export {
-  V as KaleidescapePanel
+  at as KaleidescapePanel
 };

@@ -3,6 +3,8 @@
 from dataclasses import asdict, dataclass, replace
 from uuid import uuid4
 
+from .const import DEFAULT_MINIMUM_RUNTIME_MINUTES
+
 SETTLE_SECONDS = 0.5
 STOP_GRACE_SECONDS = 2.0
 CHECKPOINT_SECONDS = 30.0
@@ -54,8 +56,14 @@ class Session:
 class PlaybackTracker:
     """Count only observed, stable main-content playback for one player."""
 
-    def __init__(self, player_id: str) -> None:
+    def __init__(
+        self,
+        player_id: str,
+        *,
+        minimum_runtime_seconds: float = DEFAULT_MINIMUM_RUNTIME_MINUTES * 60,
+    ) -> None:
         self.player_id = player_id
+        self.minimum_runtime_seconds = minimum_runtime_seconds
         self.session: Session | None = None
         self._previous: Observation | None = None
         self._counting = False
@@ -65,6 +73,16 @@ class PlaybackTracker:
         self._checkpoint = 0.0
         self._established = False
         self.boot_id = str(uuid4())
+
+    def runtime_exclusion(self, duration: float | None) -> str | None:
+        """Require an eligible source runtime before automatic recording."""
+        if self.minimum_runtime_seconds == 0:
+            return None
+        if duration is None:
+            return "runtime_unknown"
+        if duration < self.minimum_runtime_seconds:
+            return "below_minimum_runtime"
+        return None
 
     def _emit(self, observation: Observation) -> dict:
         assert self.session is not None
@@ -90,6 +108,8 @@ class PlaybackTracker:
         previous = self._previous
         if previous is not None and observation.monotonic < previous.monotonic:
             return []
+        exclusion = self.runtime_exclusion(observation.duration)
+        runtime_eligible = exclusion is None
         emitted = []
         if self.session and self._counting and previous and not observation.gap:
             self.session.watched_seconds += observation.monotonic - previous.monotonic
@@ -100,9 +120,11 @@ class PlaybackTracker:
                 observation.content_id
                 and observation.content_id != self.session.raw_content_id
             )
-            if identity_changed:
+            if identity_changed or exclusion == "below_minimum_runtime":
                 self.session.closed_at = observation.at
-                self.session.end_reason = "identity_changed"
+                self.session.end_reason = (
+                    "identity_changed" if identity_changed else "below_minimum_runtime"
+                )
                 emitted.append(self._emit(observation))
                 self.session = None
                 self._counting = False
@@ -112,7 +134,10 @@ class PlaybackTracker:
             else:
                 has_identity = observation.content_id == self.session.raw_content_id
                 interrupted = (
-                    observation.gap or not observation.available or not has_identity
+                    observation.gap
+                    or not observation.available
+                    or not has_identity
+                    or not runtime_eligible
                 )
                 if interrupted and (
                     observation.gap
@@ -120,6 +145,7 @@ class PlaybackTracker:
                     or (
                         previous.available
                         and previous.content_id == self.session.raw_content_id
+                        and self.runtime_exclusion(previous.duration) is None
                     )
                 ):
                     self.session.gap_count += 1
@@ -131,6 +157,7 @@ class PlaybackTracker:
                 if (
                     has_identity
                     and observation.available
+                    and runtime_eligible
                     and observation.location == "content"
                 ):
                     if self._candidate != observation.content_id:
@@ -141,6 +168,7 @@ class PlaybackTracker:
                 if (
                     has_identity
                     and observation.available
+                    and runtime_eligible
                     and observation.location == "credits"
                     and self._established
                     and observation.title == self.session.title
@@ -188,6 +216,7 @@ class PlaybackTracker:
                 counting = bool(
                     has_identity
                     and observation.available
+                    and runtime_eligible
                     and self._established
                     and observation.play_status == "playing"
                     and observation.location == "content"
@@ -204,6 +233,7 @@ class PlaybackTracker:
             self._counting = False
             usable = bool(
                 observation.available
+                and runtime_eligible
                 and observation.content_id
                 and observation.title
                 and observation.play_status == "playing"

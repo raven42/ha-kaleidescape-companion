@@ -60,6 +60,30 @@ export interface SessionPage {
   items: Session[];
   has_more: boolean;
 }
+export interface NowPlayingPlayer {
+  player_id: string;
+  entity_id: string | null;
+  name: string | null;
+  title: string | null;
+  raw_content_id: string | null;
+  duration_seconds: number | null;
+  play_status: string;
+  location: string;
+  available: boolean;
+  observed_at: string;
+  artwork_key: string | null;
+  session: {
+    watched_seconds: number;
+    credits_confirmed: boolean;
+    gap_count: number;
+  } | null;
+  recording_paused: boolean;
+  minimum_runtime_minutes: number;
+  recording_exclusion: "runtime_unknown" | "below_minimum_runtime" | null;
+  recording_error: string | null;
+  overflow_count: number;
+  buffered_observations: number;
+}
 export interface JournalPage {
   items: ViewingSummary[];
   revision: number;
@@ -67,6 +91,29 @@ export interface JournalPage {
 }
 export interface MutationResult {
   viewing: Viewing;
+  revision: number;
+}
+export interface OptionsForm {
+  type: "form" | "create_entry" | "abort";
+  flow_id?: string;
+  errors?: Record<string, string>;
+  fields?: { name: string; default?: string | number | boolean }[];
+}
+export interface DatabasePage {
+  table: string;
+  tables: Record<string, number>;
+  revision: number;
+  offset: number;
+  items: Record<string, unknown>[];
+  has_more: boolean;
+}
+export interface PurgeResult {
+  purged_count: number;
+  revision: number;
+}
+export interface ImportResult {
+  imported_count: number;
+  skipped_count: number;
   revision: number;
 }
 export type ApiMessage = Record<string, unknown> & { type: string };
@@ -94,6 +141,47 @@ const scopeFields = ({ entry_id, dataset_id }: Scope): Scope => ({
   dataset_id,
 });
 export const MAX_DOWNLOAD_BYTES = 256 * 1024 * 1024;
+export const MAX_ARTWORK_BYTES = 5 * 1024 * 1024;
+export const MAX_IMPORT_BYTES = 32 * 1024 * 1024;
+
+function requestId(): string {
+  const random = globalThis.crypto;
+  if (typeof random?.randomUUID === "function") return random.randomUUID();
+  if (typeof random?.getRandomValues !== "function")
+    throw new ApiError("request_id_unavailable");
+  // getRandomValues also works on HTTP LAN origins. Keep UUID v4 version/variant bits.
+  const bytes = random.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+async function boundedBlob(
+  response: Response,
+  limit: number,
+  type: string,
+): Promise<Blob> {
+  const reader = response.body?.getReader();
+  if (!reader) throw new ApiError("storage_error");
+  const chunks: Uint8Array<ArrayBuffer>[] = [];
+  let length = 0;
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      length += value.byteLength;
+      if (length > limit) throw new ApiError("export_too_large");
+      chunks.push(new Uint8Array(value));
+    }
+    return new Blob(chunks, { type });
+  } finally {
+    await reader.cancel().catch(() => {});
+    reader.releaseLock();
+  }
+}
 
 export function errorCode(error: unknown): string {
   return typeof error === "object" &&
@@ -124,6 +212,13 @@ export function errorMessage(error: unknown): string {
     export_too_large: "This export exceeds the download size limit.",
     export_timeout:
       "The export timed out. Try again when the server is less busy.",
+    request_id_unavailable:
+      "This browser cannot create a secure request ID. Try a supported browser. No change was sent.",
+    tracking_enabled:
+      "Disable automatic tracking in Settings before importing or purging entries.",
+    import_too_large: "Choose an import file no larger than 32 MiB.",
+    import_timeout:
+      "The import result is unconfirmed. Retry the same file and request to confirm it.",
   };
   return (
     messages[errorCode(error)] ??
@@ -186,17 +281,144 @@ export class JournalClient {
       viewing_id,
     });
   }
+  nowPlaying(scope: Scope): Promise<{ players: NowPlayingPlayer[] }> {
+    return this.call({ type: `${DOMAIN}/now_playing`, ...scopeFields(scope) });
+  }
+  settings(
+    scope: Scope,
+    operation: "start" | "submit" | "cancel",
+    values: Record<string, unknown> = {},
+  ): Promise<OptionsForm> {
+    return this.call({
+      ...values,
+      ...scopeFields(scope),
+      type: `${DOMAIN}/settings/${operation}`,
+    });
+  }
+  inspect(
+    scope: Scope,
+    table: string,
+    offset = 0,
+    revision?: number,
+  ): Promise<DatabasePage> {
+    return this.call({
+      type: `${DOMAIN}/database/inspect`,
+      ...scopeFields(scope),
+      table,
+      offset,
+      ...(revision == null ? {} : { revision }),
+    });
+  }
+  preparePurge(
+    scope: Scope,
+    values: Record<string, unknown>,
+  ): PreparedMutation {
+    return this.prepareCommand(scope, "database/purge", values);
+  }
+  prepareDatabaseUpdate(
+    scope: Scope,
+    values: Record<string, unknown>,
+  ): PreparedMutation {
+    return this.prepareCommand(scope, "database/update", values);
+  }
+  prepareImport(scope: Scope, file: File, revision: number): PreparedMutation {
+    const format = /\.(sqlite|sqlite3|db)$/i.test(file.name)
+      ? "sqlite"
+      : /\.json$/i.test(file.name)
+        ? "json"
+        : null;
+    if (!format) throw new ApiError("invalid_request");
+    if (!file.size || file.size > MAX_IMPORT_BYTES)
+      throw new ApiError("import_too_large");
+    return this.prepareCommand(scope, "database/import", { format, revision });
+  }
+  async importFile(
+    pending: PreparedMutation,
+    file: File,
+    signal: AbortSignal,
+  ): Promise<ImportResult> {
+    const { scope, message } = pending;
+    const query = new URLSearchParams({
+      format: String(message.format),
+      request_id: String(message.request_id),
+      revision: String(message.revision),
+    });
+    const response = await this.transport.fetchWithAuth(
+      `/api/${DOMAIN}/${encodeURIComponent(scope.entry_id)}/${encodeURIComponent(scope.dataset_id)}/import?${query}`,
+      {
+        method: "POST",
+        body: file,
+        signal,
+        redirect: "error",
+        headers: { "Content-Type": "application/octet-stream" },
+      },
+    );
+    if (!response.ok) {
+      const codes: Record<number, string> = {
+        401: "unauthorized",
+        403: "unauthorized",
+        413: "import_too_large",
+        404: "not_found",
+      };
+      if (codes[response.status]) throw new ApiError(codes[response.status]);
+      const error = (await response.json().catch(() => null)) as {
+        code?: string;
+      } | null;
+      throw new ApiError(error?.code ?? "connection_lost");
+    }
+    return response.json() as Promise<ImportResult>;
+  }
+  purge(pending: PreparedMutation): Promise<PurgeResult> {
+    return this.call({ ...pending.message });
+  }
+  async artwork(entityId: string, signal: AbortSignal): Promise<Blob | null> {
+    if (!/^media_player\.[a-z0-9_]{1,255}$/.test(entityId))
+      throw new ApiError("invalid_request");
+    // Use HA's existing authenticated image route, without copying query tokens.
+    const response = await this.transport.fetchWithAuth(
+      `/api/media_player_proxy/${entityId}`,
+      {
+        signal,
+        cache: "no-store",
+        redirect: "error",
+      },
+    );
+    if (!response.ok) {
+      await response.body?.cancel();
+      if (response.status === 404) return null;
+      throw new ApiError(
+        [401, 403].includes(response.status) ? "unauthorized" : "not_ready",
+      );
+    }
+    const type = response.headers
+      .get("Content-Type")
+      ?.split(";")[0]
+      .trim()
+      .toLowerCase();
+    if (!type || !["image/jpeg", "image/png", "image/webp"].includes(type)) {
+      await response.body?.cancel();
+      return null;
+    }
+    return boundedBlob(response, MAX_ARTWORK_BYTES, type);
+  }
   prepare(
     scope: Scope,
     operation: "create" | "update" | "delete",
+    values: Record<string, unknown>,
+  ): PreparedMutation {
+    return this.prepareCommand(scope, `journal/${operation}`, values);
+  }
+  private prepareCommand(
+    scope: Scope,
+    operation: string,
     values: Record<string, unknown>,
   ): PreparedMutation {
     // Keep the UUID and exact payload across uncertain transport failures.
     const message = structuredClone({
       ...values,
       ...scopeFields(scope),
-      type: `${DOMAIN}/journal/${operation}`,
-      request_id: crypto.randomUUID(),
+      type: `${DOMAIN}/${operation}`,
+      request_id: requestId(),
     });
     return { scope: scopeFields(scope), message: Object.freeze(message) };
   }
@@ -224,26 +446,10 @@ export class JournalClient {
       };
       throw new ApiError(codes[response.status] ?? "storage_error");
     }
-    // The backend is bounded too; cap browser accumulation before creating a Blob.
-    const reader = response.body?.getReader();
-    if (!reader) throw new ApiError("storage_error");
-    const chunks: Uint8Array<ArrayBuffer>[] = [];
-    let length = 0;
-    try {
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        length += value.byteLength;
-        if (length > MAX_DOWNLOAD_BYTES) throw new ApiError("export_too_large");
-        chunks.push(new Uint8Array(value));
-      }
-      return new Blob(chunks, {
-        type:
-          format === "json" ? "application/json" : "application/vnd.sqlite3",
-      });
-    } finally {
-      await reader.cancel().catch(() => {});
-      reader.releaseLock();
-    }
+    return boundedBlob(
+      response,
+      MAX_DOWNLOAD_BYTES,
+      format === "json" ? "application/json" : "application/vnd.sqlite3",
+    );
   }
 }

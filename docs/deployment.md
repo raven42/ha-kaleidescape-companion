@@ -116,6 +116,11 @@ Remote error messages remain visible; the local failure summary reports the SSH
 exit status or timeout without printing the entire remote script. After a timeout,
 inspect the target state before retrying.
 
+The current database schema is 5 (including import audit). Its first open upgrades an
+older journal and creates a private pre-migration backup. Code supporting only earlier schemas
+cannot read it; code rollback alone is insufficient. A matching database restore
+must be done with HA stopped and may lose changes made since that backup.
+
 ## Review the installed integration
 
 After restart, open **Settings → Devices & services → Add integration →
@@ -127,6 +132,8 @@ sidebar panel at `/kaleidescape-companion` and review:
 - JSON/SQLite downloads and record persistence after another restart.
 - A regular account’s read-only history, without notes, source/session details, or exports.
 - All seven history sensors, their title-list attributes, and counts after the next refresh.
+- With a deliberately selected player, the administrator Now Playing card: cover/placeholder,
+  pause/scan/credits states, counted time, and unavailable/recording-health states.
 - HA logs for setup or storage failures, without posting private logs or records.
 
 Browser review is performed by the operator; automated checks use fictional

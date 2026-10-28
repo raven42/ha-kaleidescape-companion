@@ -11,16 +11,28 @@ The product name is **Kaleidescape Companion**. The HA domain `kaleidescape_comp
   optimistic revisions, and durable request deduplication.
 - Authenticated JSON/SQLite exports, HA backup write barriers, and content-free diagnostics.
 - Private storage permissions, linked-path rejection, bounded exports/database growth,
-  and transactional attribution of manual changes (schema 3).
+  and transactional attribution of manual changes (schema 3), purges (schema 4),
+  and merge imports (schema 5).
 - A [security policy](security.md), security regression tests in the normal check tasks,
   and contributor/agent guidance for future changes.
 - Tests for storage recovery, migration rollback, API validation/permissions, exports, backups, reload, and shutdown.
 - Optional entity mapping and options flow for one player, preserving registered identities across renames.
+- Administrator Settings tab using the same native HA options flow,
+  with stale-configuration/actor scoping and automatic reload.
+- Administrator Database shared toolbar/surface, underline table tabs, inline
+  selection list, viewing detail editor, confirmed tombstone deletion, and
+  import/export dialogs; confirmed selected/all
+  purge, covering sessions/audit/cached content and retaining retry barriers.
+- Configurable total-runtime admission (10 minutes by default, 0 disables),
+  excluding short playback from automatic entries and waiting for missing runtime.
 - Ordered observation, monotonic session timing, checkpoint/restart recovery, credits completion, partial resumes, and rewatch separation.
 - Field corrections/tombstones protected from automatic writes, bounded backup buffering with explicit gaps, and read-only Now Playing/session APIs.
 - Household HA sidebar panel with administrator management and shared Vite UI for journal CRUD, filters,
   pagination, session evidence, database health, and JSON/SQLite downloads.
-- Memory-only development connection, restricted local export proxy, component
+- Compact administrator Now Playing card with HA cover artwork, exact playback/location,
+  runtime, counted session time, credits/gaps, and recording health; visible-only
+  refresh, source read checks, missing-art fallback, and connection cleanup.
+- Memory-only development connection, restricted local export/artwork/import proxy, component
   and proxy security tests, TypeScript checks, formatting, and packaged ES module.
 - A read-only household sidebar view for regular users, with server-side field
   allowlists and administrator-only notes, source/session details, and exports.
@@ -33,11 +45,12 @@ The product name is **Kaleidescape Companion**. The HA domain `kaleidescape_comp
 
 ## Deferred
 
-Multi-player configuration, live subscriptions, catalog synchronization,
-artwork, per-user ownership/selective sharing,
-and playback controls remain deferred. The basic management panel is registered in HA;
+Multi-player configuration, live subscriptions, validated position/progress,
+catalog synchronization and persistent library/historical artwork,
+per-user ownership/selective sharing, and playback controls remain deferred. The basic management panel is registered in HA;
 broader product UI and real-browser compatibility/accessibility checks remain.
-JSON import and permanent purge are also deferred; SQLite restore is documented.
+Compatible viewing-only JSON/SQLite merge imports are implemented; automatic retention
+remains deferred. Full SQLite restore is documented as an offline procedure.
 
 See the [backend API](backend.md) for the implemented manual and observed journal behavior.
 The [design](design.md) distinguishes current source boundaries from future extensions. Phase 1 is not

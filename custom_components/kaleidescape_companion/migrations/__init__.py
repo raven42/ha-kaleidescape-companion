@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from ..security import private_file
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 5
 
 MIGRATIONS = {
     1: (
@@ -104,9 +104,33 @@ MIGRATIONS[3] = (
     )""",
 )
 
+# Permanent purge receipts deliberately contain no viewing identities/content.
+MIGRATIONS[4] = (
+    """CREATE TABLE maintenance_audit (
+        request_id TEXT PRIMARY KEY REFERENCES requests(request_id),
+        actor_id TEXT,
+        operation TEXT NOT NULL CHECK (operation = 'purge'),
+        purged_count INTEGER NOT NULL CHECK (purged_count >= 0),
+        dataset_revision INTEGER NOT NULL CHECK (dataset_revision > 0),
+        occurred_at TEXT NOT NULL
+    )""",
+)
+
 
 class UnsupportedSchemaError(Exception):
     """The database cannot safely be opened by this release."""
+
+
+MIGRATIONS[5] = (
+    """CREATE TABLE import_audit (
+        request_id TEXT PRIMARY KEY REFERENCES requests(request_id),
+        actor_id TEXT,
+        imported_count INTEGER NOT NULL CHECK (imported_count >= 0),
+        skipped_count INTEGER NOT NULL CHECK (skipped_count >= 0),
+        dataset_revision INTEGER NOT NULL CHECK (dataset_revision > 0),
+        occurred_at TEXT NOT NULL
+    )""",
+)
 
 
 def migrate(connection: sqlite3.Connection, path: Path) -> None:

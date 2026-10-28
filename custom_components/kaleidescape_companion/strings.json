@@ -10,8 +10,12 @@
           "media_player": "Kaleidescape media player",
           "play_status": "Exact play-status sensor",
           "media_location": "Media-location sensor",
+          "minimum_runtime_minutes": "Minimum runtime to record (minutes; 0 disables)",
           "minimum_seconds": "Minimum main-content playback before credits completion (seconds)",
           "resume_hours": "Merge partial viewings within (hours; 0 disables)"
+        },
+        "data_description": {
+          "minimum_runtime_minutes": "Ignore shorter playback, such as trailers. Default: 10 minutes. Wait for a known runtime unless disabled. This is separate from watched time required for credits completion."
         }
       }
     },
@@ -22,7 +26,7 @@
       "missing_entities": "Select all three source entities to enable tracking.",
       "invalid_entities": "Choose an existing media player and two sensor entities.",
       "duplicate_entities": "Choose different sensors for play status and media location.",
-      "invalid_rules": "Choose valid completion and partial-resume values."
+      "invalid_rules": "Choose valid runtime, completion, and partial-resume values."
     }
   },
   "options": {
@@ -35,8 +39,12 @@
           "media_player": "Kaleidescape media player",
           "play_status": "Exact play-status sensor",
           "media_location": "Media-location sensor",
+          "minimum_runtime_minutes": "Minimum runtime to record (minutes; 0 disables)",
           "minimum_seconds": "Minimum main-content playback before credits completion (seconds)",
           "resume_hours": "Merge partial viewings within (hours; 0 disables)"
+        },
+        "data_description": {
+          "minimum_runtime_minutes": "Ignore shorter playback, such as trailers. Default: 10 minutes. Wait for a known runtime unless disabled. This is separate from watched time required for credits completion."
         }
       }
     },
@@ -44,7 +52,7 @@
       "missing_entities": "Select all three source entities to enable tracking.",
       "invalid_entities": "Choose an existing media player and two sensor entities.",
       "duplicate_entities": "Choose different sensors for play status and media location.",
-      "invalid_rules": "Choose valid completion and partial-resume values."
+      "invalid_rules": "Choose valid runtime, completion, and partial-resume values."
     }
   },
   "entity": {

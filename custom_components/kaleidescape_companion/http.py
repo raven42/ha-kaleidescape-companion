@@ -10,11 +10,103 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.http import HomeAssistantView
 
 from .const import DOMAIN
-from .journal import JournalError
+from .importing import IMPORT_SECONDS, MAX_IMPORT_BYTES
+from .journal import JournalError, identifier, invalid
 from .runtime import KaleidescapeRuntime, get_runtime
 from .security import async_finish_cleanup, is_active_admin
 
 EXPORT_DOWNLOAD_SECONDS = 60
+
+
+class JournalImportView(HomeAssistantView):
+    """Bound authenticated uploads; no server-side caller paths or SQL scripts."""
+
+    url = f"/api/{DOMAIN}/{{entry_id}}/{{dataset_id}}/import"
+    name = f"api:{DOMAIN}:import"
+    requires_auth = True
+
+    @staticmethod
+    def _authorize(request, runtime, entry):
+        if not is_active_admin(request.get("hass_user")):
+            raise web.HTTPForbidden
+        if not runtime.ready:
+            raise JournalError("not_ready", "Journal integration unloaded")
+        if runtime.observer is not None or (entry.options or entry.data).get(
+            "tracking_enabled"
+        ):
+            raise JournalError("tracking_enabled", "Disable recording before importing")
+
+    async def post(
+        self, request: web.Request, entry_id: str, dataset_id: str
+    ) -> web.Response:
+        if not is_active_admin(request.get("hass_user")):
+            raise web.HTTPForbidden
+        hass = request.app[KEY_HASS]
+        try:
+            runtime = get_runtime(hass, entry_id, dataset_id)
+            entry = hass.config_entries.async_get_entry(entry_id)
+            self._authorize(request, runtime, entry)
+            query = request.query
+            if len(query) != 3 or set(query) != {"format", "request_id", "revision"}:
+                raise invalid("Invalid import options")
+            import_format = query["format"]
+            if (
+                import_format not in {"json", "sqlite"}
+                or not query["revision"].isascii()
+                or not query["revision"].isdigit()
+                or len(query["revision"]) > 18
+            ):
+                raise invalid("Invalid import format/revision")
+            request_id = identifier(query["request_id"])
+            if (
+                request.content_length is not None
+                and request.content_length > MAX_IMPORT_BYTES
+            ):
+                raise JournalError("import_too_large", "Import exceeds 32 MiB")
+            async with runtime.repository.async_import_slot():
+                async with asyncio.timeout(IMPORT_SECONDS):
+                    parts, length = [], 0
+                    async for chunk in request.content.iter_chunked(65536):
+                        length += len(chunk)
+                        if length > MAX_IMPORT_BYTES:
+                            raise JournalError(
+                                "import_too_large", "Import exceeds 32 MiB"
+                            )
+                        parts.append(chunk)
+                    self._authorize(request, runtime, entry)
+                    result = await runtime.repository.async_import(
+                        b"".join(parts),
+                        import_format,
+                        request_id,
+                        int(query["revision"]),
+                        actor_id=request["hass_user"].id,
+                    )
+                    self._authorize(request, runtime, entry)
+                    return self.json(result, headers={"Cache-Control": "no-store"})
+        except TimeoutError:
+            return self.json(
+                {
+                    "code": "import_timeout",
+                    "message": "Import result is unconfirmed; retry the same request",
+                },
+                HTTPStatus.SERVICE_UNAVAILABLE,
+            )
+        except JournalError as error:
+            code = {
+                "invalid_request": 400,
+                "conflict": 409,
+                "import_too_large": 413,
+                "tracking_enabled": 409,
+                "not_found": 404,
+                "not_ready": 503,
+                "busy": 503,
+                "backup_in_progress": 503,
+            }.get(error.code, 500)
+            return self.json(
+                {"code": error.code, "message": str(error)},
+                code,
+                headers={"Cache-Control": "no-store"},
+            )
 
 
 class JournalExportView(HomeAssistantView):

@@ -22,8 +22,12 @@
   <kaleidescape-panel></kaleidescape-panel>
   <script type="module">
     import "../src/panel.ts";
-    import { FixtureTransport } from "./fixture.ts";
-    document.querySelector("kaleidescape-panel").client =
-      new FixtureTransport().client();
+    import { FixtureTransport, playing } from "./fixture.ts";
+    const transport = new FixtureTransport();
+    transport.players = [playing()];
+    // Full-precision source data should display rounded without rewriting untouched fields.
+    transport.records[0].started_at = "2026-10-24T19:15:00.123456Z";
+    transport.records[0].ended_at = "2026-10-24T21:05:00.654321Z";
+    document.querySelector("kaleidescape-panel").client = transport.client();
   </script>
 </html>

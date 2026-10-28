@@ -1,5 +1,89 @@
 # Changelog
 
+## Unreleased — Unified Database management
+
+- Combined Database into one surface with a shared entry/refresh/import/export
+  toolbar, table tabs matching the main navigation, and padded list/detail columns.
+- Added confirmed single-viewing tombstone deletion through the existing journal
+  API, retaining optimistic revisions and exact uncertain-response retries.
+- Moved import/export and selected/all permanent purge into native dialogs.
+  Cancellation clears file selection; pending work/retries retain their safeguards.
+- Updated documentation and component regressions. Browser layout/focus review
+  remains operator work; no deployment or backend/schema changes.
+
+## Unreleased — Page tabs and database entry controls
+
+- Replaced the page toggle/settings dialog with Now Playing, Journal, Database,
+  and Settings tabs, retaining Journal as the default and the native options flow.
+- Limited Add viewing to Journal and added New Entry to Database's viewing list,
+  using the shared form and existing validated, retry-safe create API.
+- Padded the database entries pane and put the row count above compact,
+  single-line First/Previous/Next buttons.
+- Preserved unsaved-change prompts, pending-write locks, account cleanup, and
+  selected-page-only Now Playing polling. Operator browser review remains pending.
+
+## Unreleased — Advanced layout and compatible imports
+
+- Moved Journal/Advanced to a header radio toggle beside Settings; database tables
+  use keyboard-accessible tabs and inline checkbox/name lists with a right-hand
+  detail editor. Internal records remain read-only; deleted viewing corrections
+  preserve deletion status, session evidence, and existing audit/retry protections.
+- Shared viewing fields between both editors and aligned numeric Settings inputs.
+- Moved exports into Advanced and added bounded administrator JSON/SQLite imports
+  from compatible prior exports, merging new IDs without changing existing entries.
+- Added full-file validation, isolated in-memory SQLite reads, atomic imports,
+  durable retries, transfer barriers, and minimal import attribution in schema 5.
+- Updated security/compatibility documentation and regression coverage. No deployment.
+
+## Unreleased — Display precision, settings, and database maintenance
+
+- Display editor timestamps to whole seconds and minutes to two decimals while
+  preserving full precision for unchanged stored fields and automatic recording.
+- Added an administrator Settings dialog backed by the existing HA options flow,
+  with actor/configuration scoping and native validation/reload.
+- Added Advanced raw-table inspection and confirmed selected/all permanent purge,
+  gated by disabled recording, revisions, and backup/export barriers.
+- Purge removes associated sessions, audit references, and cached response content;
+  minimal retry barriers prevent old requests recreating purged entries. Schema 4
+  adds content-free maintenance audit/receipts. Separate backups remain unchanged.
+- Added storage/API/UI regressions; real-browser review remains operator work.
+
+## Unreleased — Minimum movie runtime
+
+- Added a configurable minimum total runtime for automatic entries, defaulting to
+  10 minutes (0 disables), separately from the watched-time completion threshold.
+- Excluded shorter playback and waited for unknown/late runtime before recording;
+  preserved existing/manual history and partial resume across ignored playback.
+- Added Now Playing ignored/waiting messages, translated setup/options labels,
+  and regression coverage for configuration, timing, recovery, and persistence.
+
+## Unreleased — Viewing editor layout
+
+- Prevented form controls and grid columns from expanding beyond the editor card.
+- Stacked fields based on the editor pane's width, including side-by-side layouts.
+- Added fractional-second timestamps to the fictional layout-review page and
+  documented the operator checks for native date/time controls.
+
+## Unreleased — Deletion confirmation fix
+
+- Fixed mutation request-ID generation when a browser lacks `crypto.randomUUID`,
+  using native cryptographic random bytes for UUID v4 IDs.
+- Made deletion preparation failures visible and preserved the entry for retry;
+  saving reports missing secure randomness without blaming form values.
+- Added regressions for confirmation, duplicate clicks, unavailable randomness,
+  and exact retries after an uncertain deletion; rebuilt the panel.
+
+## Unreleased — Lean Now Playing
+
+- Added a compact administrator card with HA cover artwork, exact playback/location
+  status, runtime, counted session time, credits/gaps, and recording health.
+- Reused the existing HA player and snapshot API; no library sync, controls,
+  additional media-player entity, database migration, or artwork service.
+- Added source-entity read checks, token-free artwork change keys, bounded image
+  downloads, visible-only refresh, and cleanup across account/connection changes.
+- Restricted the fixed local development proxy to explicit export/artwork GETs;
+  updated security policy, roadmap, UI guidance, and regression tests.
+
 ## Unreleased — Architecture and documentation cleanup
 
 - Reconciled current features, validation limits, and future phases across the docs;

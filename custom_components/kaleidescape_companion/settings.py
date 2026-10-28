@@ -8,6 +8,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import selector
 
+from .const import DEFAULT_MINIMUM_RUNTIME_MINUTES
+
 ROLES = {
     "media_player": "media_player",
     "play_status": "sensor",
@@ -46,6 +48,18 @@ def form(hass: HomeAssistant, config: dict) -> p.Schema:
             selector.EntitySelectorConfig(domain=domain)
         )
     properties[
+        p.Required(
+            "minimum_runtime_minutes",
+            default=config.get(
+                "minimum_runtime_minutes", DEFAULT_MINIMUM_RUNTIME_MINUTES
+            ),
+        )
+    ] = selector.NumberSelector(
+        selector.NumberSelectorConfig(
+            min=0, max=1440, step=1, mode=selector.NumberSelectorMode.BOX
+        )
+    )
+    properties[
         p.Required("minimum_seconds", default=config.get("minimum_seconds", 300))
     ] = selector.NumberSelector(
         selector.NumberSelectorConfig(
@@ -66,10 +80,11 @@ def validate(hass: HomeAssistant, user_input: dict[str, Any], previous: dict) ->
     """Validate complete mappings; permit registered entities that are offline."""
     config = {**previous, "tracking_enabled": user_input.get("tracking_enabled", False)}
     for key, default, minimum, maximum in (
+        ("minimum_runtime_minutes", DEFAULT_MINIMUM_RUNTIME_MINUTES, 0, 1440),
         ("minimum_seconds", 300, 1, 3600),
         ("resume_hours", 24, 0, 168),
     ):
-        value = user_input.get(key, default)
+        value = user_input.get(key, previous.get(key, default))
         if type(value) not in (int, float) or not minimum <= value <= maximum:
             raise ValueError("invalid_rules")
         config[key] = float(value)

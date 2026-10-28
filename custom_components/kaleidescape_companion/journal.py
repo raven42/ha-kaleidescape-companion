@@ -5,6 +5,21 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
+VIEWING_FIELDS = frozenset(
+    {
+        "title",
+        "started_at",
+        "ended_at",
+        "duration_seconds",
+        "watched_seconds",
+        "status",
+        "source_id",
+        "player_id",
+        "raw_content_id",
+        "notes",
+    }
+)
+
 
 class JournalError(Exception):
     """A safe, public API error."""

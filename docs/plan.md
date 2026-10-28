@@ -1,6 +1,6 @@
 # Product plan
 
-Updated: 2026-10-25
+Updated: 2026-10-26
 
 Kaleidescape Companion maintains a shared household movie journal inside Home
 Assistant. Recording and browsing must work without a library import, external
@@ -12,14 +12,14 @@ remains the source of playback entities; this integration uses
 
 The working implementation includes a manual journal, optional automatic tracking
 of one selected player, administrator management, a regular-user reader, exports,
-and seven history sensors. See [framework status](framework.md) for the complete
+seven history sensors, and a compact administrator Now Playing card. See [framework status](framework.md) for the complete
 implemented/deferred inventory and [technical design](design.md) for code boundaries.
 The [security policy](security.md) governs every phase.
 
 | Phase | Current position | Remaining acceptance work |
 | --- | --- | --- |
 | 1. Foundations | Config/options flow, worker-owned SQLite, migrations, authenticated APIs/panel, diagnostics, backup hooks, exports, and local deployment tooling implemented | Validate the supported HA releases, real config-flow/platform lifecycle, and full HA backup/restore; resolve dependency findings |
-| 2. Journal and read-only Now Playing | One-player timing/recovery, partials/rewatches, manual corrections, reader/admin UI, title search, and history sensors implemented; Now Playing API exists | Dedicated live Now Playing UI, authorized artwork/progress, subscriptions, operator browser review, and real-source transition validation |
+| 2. Journal and read-only Now Playing | One-player timing/recovery, partials/rewatches, corrections, reader/admin UI, sensors, and read-only Now Playing with HA cover artwork/session context implemented | Operator browser review, real-source transition validation, and HA compatibility; subscriptions/progress remain optional follow-ups |
 | 3. Library browser | Planned | Optional server setup, safe read-only synchronization, identity evidence, cached details/artwork, poster/list browsing |
 | 4. Playback and controls | Planned | Permission/capability checks, explicit commands, state confirmation, and authorized device tests |
 | 5. Polish and distribution | Planned | Accessibility/localization, measured performance, release compatibility, license/ownership/reporting setup, and HACS assessment |
@@ -29,17 +29,42 @@ A passing local build does not establish production readiness.
 
 ## Next: finish the journal experience
 
-Keep Journal the default view. Add read-only Now Playing before Library, with
-player/title, exact playback mode, content/credits/intermission location,
-availability, and recording health. Missing catalog metadata must not hide live
-playback. Show position, remaining time, and artwork only with validated source
-data and appropriate entity permissions. Watched time is not a seek position.
+Keep Journal the default view. Administrator navigation uses the ordered tabs
+Now Playing, Journal, Database, and Settings; Library can join them with its phase.
+The compact read-only Now Playing card is mounted only on its own tab. It combines the existing HA player's title,
+cover, runtime, exact playback/location states, and availability with counted
+session time, credits evidence, timing gaps, and recording health. It uses the
+configured player and HA's existing authenticated image route; no library sync,
+image service, new media-player entity, or playback controls are needed.
 
-Use revisioned snapshots plus bounded invalidation subscriptions rather than
-polling every browser for the full journal. Reconnect obtains a fresh snapshot;
-unload or permission changes stop delivery. Preserve current write retry and
-optimistic conflict behavior. The existing household reader policy stays in place;
-any additional live/entity fields require a security review before sharing them.
+Visible cards request a snapshot about every five seconds; hidden/disconnected
+cards stop polling and discard late replies. The full journal still refreshes
+explicitly. Keep this simple snapshot approach until measurements or product
+needs justify revisioned subscriptions. Reconnect/permission changes clear old
+data. Preserve current write retry and optimistic conflict behavior.
+
+Automatic entry admission uses a configurable minimum reported movie runtime,
+defaulting to 10 minutes (0 disables). Short playback does not enter the journal;
+unknown runtime waits when filtering is enabled. Keep this separate from counted
+watch time and credits completion. Preserve existing/manual history and show
+ignored/waiting reasons in Now Playing; source runtime cannot identify all trailers.
+
+Administrator Settings on the main page uses the existing native HA options
+flow; keep one validation/persistence/reload path. Display whole-second times
+and two-decimal minutes without rewriting untouched observed precision.
+Database provides a shared toolbar and underline table tabs, inline row selection,
+viewing details/corrections, import/export dialogs, fixed-table raw inspection, and confirmed selected/all purge,
+with recording disabled, dataset revision checks, associated-content removal,
+and content-free durable retry barriers/audit. Automatic retention remains later
+work; preserve the explicit purge contract and external-copy limitations.
+
+Now Playing retains the current administrator boundary plus source-entity read
+checks. Regular users retain the household journal reader. Any broader live-data
+sharing needs an explicit policy change. Watched time is counted session time,
+not film position, percentage complete, or a saved resume point. Progress/remaining
+time require separately validated source position and timestamp data. Previous
+viewings and direct journal links can follow when they add useful context; the
+current card does not query historical statistics or infer journal completion.
 
 Before calling this the first usable release, validate:
 
@@ -84,8 +109,10 @@ virtualization, WAL, or broad cache warming; these are not measured guarantees.
 
 ## Then: explicit playback controls
 
-Start with capability-gated play/pause/stop for the active player through public HA
-actions, with caller context and entity permissions. Check fresh player identity
+Add a small set of capability-gated play/pause/stop buttons for convenience only
+when useful, calling the existing player's public HA actions with caller context
+and entity permissions. Reuse HA's media player; do not build a duplicate player
+integration or a generic remote-control replacement. Check fresh player identity
 and expected revision, serialize per-player requests, and distinguish an action
 acknowledgement from an observed result. Timeouts are unconfirmed outcomes, not
 instructions to resend a command. Toggle-style pause must not be blindly retried.
@@ -100,9 +127,10 @@ for the operator's existing theater automation.
 
 ## Later expansion and release gates
 
-JSON import, permanent purge/retention controls, selective household sharing,
+Automatic retention, import extensions, selective household sharing,
 additional sources, ratings, and richer statistics remain separate follow-ups.
-Current notes and manual entries already exist. Any import/purge must account for
+Current notes, manual entries, explicit permanent purge, and compatible viewing-only
+JSON/SQLite merge imports already exist. Any import/retention extension must account for
 sessions, request deduplication, audit references, backups, and privacy limits.
 Individual viewer profiles are outside the current shared-household design.
 

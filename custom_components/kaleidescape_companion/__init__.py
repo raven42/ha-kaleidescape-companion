@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
 
 from .const import DOMAIN, NAME
-from .http import JournalExportView
+from .http import JournalExportView, JournalImportView
 from .journal import JournalError
 from .migrations import UnsupportedSchemaError
 from .observation import PlaybackObserver
@@ -64,6 +64,7 @@ async def async_setup_entry(
         if not hass.data.get(f"{DOMAIN}.api_registered"):
             async_register_commands(hass)
             hass.http.register_view(JournalExportView())
+            hass.http.register_view(JournalImportView())
             hass.data[f"{DOMAIN}.api_registered"] = True
         config = dict(entry.options or entry.data)
         if config.get("tracking_enabled"):

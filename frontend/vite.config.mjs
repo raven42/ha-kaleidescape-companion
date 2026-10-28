@@ -1,11 +1,11 @@
 import { defineConfig } from "vite";
 import { fileURLToPath } from "node:url";
-import { HA_TARGET, localExportGuard } from "./dev-proxy.mjs";
+import { HA_TARGET, localApiGuard } from "./dev-proxy.mjs";
 
 export default defineConfig({
   // Custom environment values must never become browser credentials.
   envPrefix: [],
-  plugins: [localExportGuard()],
+  plugins: [localApiGuard()],
   server: {
     host: "127.0.0.1",
     port: 5173,
@@ -13,7 +13,10 @@ export default defineConfig({
     allowedHosts: ["localhost"],
     cors: false,
     proxy: {
-      "^/api/kaleidescape_companion/": { target: HA_TARGET, ws: false },
+      "^/api/(kaleidescape_companion/|media_player_proxy/)": {
+        target: HA_TARGET,
+        ws: false,
+      },
     },
     fs: {
       strict: true,

@@ -3,9 +3,11 @@
 from typing import Any
 
 import probatio as p
+from homeassistant.auth.permissions.const import POLICY_READ
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 
+from .configuration import options_request
 from .const import DOMAIN
 from .journal import JournalError
 from .runtime import get_runtime, loaded_runtimes
@@ -42,6 +44,32 @@ def async_register_commands(hass: HomeAssistant) -> None:
         "journal/get": {**scoped, p.Required("viewing_id"): str},
         "journal/sessions": {**scoped, p.Required("viewing_id"): str},
         "now_playing": scoped,
+        "settings/start": scoped,
+        "settings/submit": {
+            **scoped,
+            p.Required("flow_id"): str,
+            p.Required("data"): dict,
+        },
+        "settings/cancel": {**scoped, p.Required("flow_id"): str},
+        "database/inspect": {
+            **scoped,
+            p.Required("table"): str,
+            p.Optional("offset", default=0): int,
+            p.Optional("revision"): int,
+        },
+        "database/purge": {
+            **mutations,
+            p.Required("expected_revision"): int,
+            p.Required("viewing_ids"): [str],
+            p.Required("all"): bool,
+            p.Required("confirmation"): str,
+        },
+        "database/update": {
+            **mutations,
+            p.Required("viewing_id"): str,
+            p.Required("expected_revision"): int,
+            p.Required("patch"): dict,
+        },
         "journal/list": {
             **scoped,
             p.Optional("query"): str,
@@ -114,6 +142,9 @@ async def async_handle(
                                     "manual_journal": True,
                                     "automatic_tracking": True,
                                     "now_playing": True,
+                                    "settings": True,
+                                    "database_maintenance": True,
+                                    "import": True,
                                 },
                             }
                             if admin
@@ -130,6 +161,35 @@ async def async_handle(
                     result = await repository.async_create(
                         msg["request_id"], msg["data"], actor_id=user.id
                     )
+                case "settings/start" | "settings/submit" | "settings/cancel":
+                    result = await options_request(
+                        hass,
+                        hass.config_entries.async_get_entry(msg["entry_id"]),
+                        user.id,
+                        operation,
+                        msg,
+                    )
+                case "database/inspect":
+                    result = await repository.async_inspect(
+                        msg["table"], msg["offset"], msg.get("revision")
+                    )
+                case "database/purge":
+                    entry = hass.config_entries.async_get_entry(msg["entry_id"])
+                    if runtime.observer is not None or (
+                        entry.options or entry.data
+                    ).get("tracking_enabled"):
+                        raise JournalError(
+                            "tracking_enabled",
+                            "Disable automatic tracking before purging",
+                        )
+                    result = await repository.async_purge(
+                        msg["request_id"],
+                        msg["expected_revision"],
+                        msg["viewing_ids"],
+                        msg["all"],
+                        msg["confirmation"],
+                        actor_id=user.id,
+                    )
                 case "journal/get":
                     result = await repository.async_get(msg["viewing_id"])
                     if not admin:
@@ -137,6 +197,14 @@ async def async_handle(
                 case "journal/sessions":
                     result = await repository.async_sessions(msg["viewing_id"])
                 case "now_playing":
+                    if runtime.observer and any(
+                        not user.permissions.check_entity(entity_id, POLICY_READ)
+                        for entity_id in runtime.observer.entities.values()
+                        if entity_id
+                    ):
+                        raise JournalError(
+                            "unauthorized", "Source entity access denied"
+                        )
                     result = {
                         "players": [runtime.observer.live_state()]
                         if runtime.observer
@@ -153,13 +221,14 @@ async def async_handle(
                         result["items"] = [
                             public_viewing(row) for row in result["items"]
                         ]
-                case "journal/update":
+                case "journal/update" | "database/update":
                     result = await repository.async_update(
                         msg["request_id"],
                         msg["viewing_id"],
                         msg["expected_revision"],
                         msg["patch"],
                         actor_id=user.id,
+                        include_deleted=operation == "database/update",
                     )
                 case "journal/delete":
                     result = await repository.async_delete(
@@ -177,7 +246,7 @@ async def async_handle(
                 msg["id"], "unauthorized", "Journal access changed during the request"
             )
             return
-        if operation != "info" and not runtime.ready:
+        if operation not in {"info", "settings/submit"} and not runtime.ready:
             raise JournalError("not_ready", "Journal integration unloaded")
         connection.send_result(msg["id"], result)
     except JournalError as error:

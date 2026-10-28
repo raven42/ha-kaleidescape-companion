@@ -1,15 +1,18 @@
 """In-process HA entity observation with ordered, bounded playback buffering."""
 
 import asyncio
+import hashlib
 import logging
 from collections import deque
 from collections.abc import Callable
 from datetime import UTC, datetime
+from urllib.parse import urlsplit
 
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_state_change_event
 
+from .const import DEFAULT_MINIMUM_RUNTIME_MINUTES
 from .journal import JournalError, seconds, text
 from .repository import JournalRepository
 from .settings import entity_ids
@@ -33,7 +36,13 @@ class PlaybackObserver:
         self.hass = hass
         self.repository = repository
         self.config = config
-        self.tracker = PlaybackTracker(config["player_id"])
+        self.tracker = PlaybackTracker(
+            config["player_id"],
+            minimum_runtime_seconds=config.get(
+                "minimum_runtime_minutes", DEFAULT_MINIMUM_RUNTIME_MINUTES
+            )
+            * 60,
+        )
         self.entities: dict[str, str | None] = {}
         self._states = {}
         self._queue: deque[Observation] = deque()
@@ -233,15 +242,62 @@ class PlaybackObserver:
     def live_state(self) -> dict:
         """Return read-only source state and recording health, without proxy tokens."""
         current = self._capture()
+        player = self._states.get("media_player")
+        entity_id = self.entities.get("media_player")
+        attributes = player.attributes if player else {}
+        try:
+            name = text(attributes.get("friendly_name"), 255)
+        except JournalError:
+            name = entity_id
+        artwork_key = None
+        picture = attributes.get("entity_picture")
+        # Inspect only HA's own image reference; never return or fetch its URL/token.
+        if (
+            current.available
+            and current.content_id
+            and current.play_status != "stopped"
+        ):
+            try:
+                picture = text(picture, 4096)
+                parsed = urlsplit(picture)
+                if (
+                    not parsed.scheme
+                    and not parsed.netloc
+                    and parsed.path == f"/api/media_player_proxy/{entity_id}"
+                ):
+                    artwork_key = hashlib.sha256(picture.encode()).hexdigest()[:16]
+            except JournalError, ValueError:
+                pass
+        session = self.tracker.session
+        exclusion = self.tracker.runtime_exclusion(current.duration)
+        matching_session = (
+            session is not None
+            and session.closed_at is None
+            and session.raw_content_id == current.content_id
+            and exclusion is None
+        )
         return {
             "player_id": self.config["player_id"],
-            "entity_id": self.entities.get("media_player"),
+            "entity_id": entity_id,
+            "name": name,
             "title": current.title,
             "raw_content_id": current.content_id,
             "duration_seconds": current.duration,
             "play_status": current.play_status,
             "location": current.location,
             "available": current.available,
+            "observed_at": current.at,
+            "artwork_key": artwork_key,
+            "session": {
+                "watched_seconds": session.watched_seconds,
+                "credits_confirmed": session.credits_confirmed,
+                "gap_count": session.gap_count,
+            }
+            if matching_session
+            else None,
+            "recording_paused": self._paused,
+            "minimum_runtime_minutes": self.tracker.minimum_runtime_seconds / 60,
+            "recording_exclusion": exclusion,
             "recording_error": self.last_error,
             "overflow_count": self.overflow_count,
             "buffered_observations": len(self._queue),

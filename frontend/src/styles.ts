@@ -26,6 +26,7 @@ export const styles = css`
     gap: 16px;
     padding-bottom: 24px;
     border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
   }
   h1 {
     margin: 4px 0 6px;
@@ -143,6 +144,7 @@ export const styles = css`
     gap: 20px;
   }
   .card {
+    min-width: 0;
     overflow: hidden;
   }
   .card-head {
@@ -177,6 +179,8 @@ export const styles = css`
   select,
   textarea {
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
     min-height: 40px;
     border: 1px solid var(--line);
     border-radius: 6px;
@@ -257,6 +261,7 @@ export const styles = css`
     align-items: center;
   }
   .editor {
+    container: viewing-editor / inline-size;
     padding: 0 20px 20px;
   }
   fieldset {
@@ -267,9 +272,15 @@ export const styles = css`
   }
   .grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
     margin-bottom: 14px;
+  }
+  .grid > * {
+    min-width: 0;
+  }
+  .settings-grid {
+    align-items: end;
   }
   .full {
     grid-column: 1/-1;
@@ -312,16 +323,175 @@ export const styles = css`
     margin-bottom: 8px;
     font-size: 16px;
   }
-  .exports {
-    margin-top: 20px;
+  .check {
+    flex-direction: row;
+    align-items: center;
+    margin: 12px 0;
+  }
+  .check input {
+    width: 20px;
+    min-height: 20px;
+    flex-shrink: 0;
+  }
+  .page-tabs {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--line);
+    margin: 20px 0;
+    padding: 4px 0 0;
+  }
+  .page-tabs button {
+    flex-shrink: 0;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    border-radius: 6px 6px 0 0;
+    background: transparent;
+  }
+  .page-tabs [aria-selected="true"] {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: var(--surface);
+  }
+  .section-head {
     display: flex;
     align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 24px;
   }
-  .exports small {
-    flex: 1;
-    min-width: 180px;
+  .section-head h2 {
+    margin: 0;
+  }
+  .settings-page {
+    padding: 20px;
+    max-width: 900px;
+    margin-top: 24px;
+  }
+  .settings-page .card-head {
+    padding: 0;
+  }
+  .settings-page form > button {
+    margin-top: 12px;
+  }
+  .database-entries {
+    padding: 20px;
+  }
+  .database {
+    margin-top: 24px;
+  }
+  .database-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: start;
+    gap: 12px;
+    padding: 20px;
+  }
+  .database-toolbar kaleidescape-transfers {
+    margin-left: auto;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .database-messages {
+    padding: 0 20px;
+  }
+  .database .card-head {
+    padding: 0;
+  }
+  .database .card-head + .editor {
+    margin-top: 20px;
+  }
+  .database-pagination {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px 0 0;
+  }
+  .database-pagination .actions {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+  .database-pagination button {
+    flex: 1 0 auto;
+    padding-inline: 6px;
+    white-space: nowrap;
+  }
+  .table-tabs {
+    margin: 0;
+    padding: 4px 20px 0;
+  }
+  .database-layout {
+    display: grid;
+    grid-template-columns: minmax(230px, 0.8fr) minmax(0, 1.2fr);
+  }
+  .database-detail {
+    padding: 20px;
+    border-left: 1px solid var(--line);
+  }
+  .database-detail .editor {
+    padding: 0;
+  }
+  .entry-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .entry-list li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--line);
+  }
+  .entry-list li.selected {
+    background: var(--secondary-background-color, #edf4f0);
+  }
+  .entry-list input {
+    width: 20px;
+    min-height: 20px;
+    flex-shrink: 0;
+  }
+  .entry-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .entry-name small {
+    display: block;
+  }
+  .database-dialog {
+    width: min(560px, calc(100% - 32px));
+    max-height: calc(100dvh - 48px);
+    overflow: auto;
+    padding: 24px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+    color: inherit;
+  }
+  .database-dialog::backdrop {
+    background: rgb(0 0 0 / 60%);
+  }
+  .database-dialog .card-head {
+    padding: 0;
+  }
+  .dialog-footer {
+    margin-top: 20px;
+  }
+  @media (max-width: 900px) {
+    .database-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .database-detail {
+      border-left: 0;
+      border-top: 1px solid var(--line);
+    }
+    .database-toolbar kaleidescape-transfers {
+      margin-left: 0;
+    }
+  }
+  pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-size: 12px;
   }
   details {
     margin-top: 20px;
@@ -350,15 +520,67 @@ export const styles = css`
     font-size: 20px;
     padding: 6px 12px;
   }
+  .now-playing {
+    margin-top: 24px;
+  }
+  .playback-message {
+    padding: 0 20px 20px;
+    margin: 0;
+  }
+  .playback-layout {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr);
+    gap: 20px;
+    padding: 0 20px 20px;
+  }
+  .cover {
+    aspect-ratio: 2 / 3;
+    background: var(--secondary-background-color, #f7f9f8);
+    border-radius: 6px;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    align-self: start;
+  }
+  .cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .cover span {
+    padding: 12px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .playback-detail h3 {
+    margin: 4px 0 12px;
+    font-size: 21px;
+    overflow-wrap: anywhere;
+  }
+  .playback-detail p {
+    margin: 8px 0;
+  }
   [hidden] {
     display: none !important;
   }
+  @container viewing-editor (max-width: 640px) {
+    .grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
   @media (max-width: 1000px) {
     .layout {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
   }
   @media (max-width: 600px) {
+    .playback-layout {
+      grid-template-columns: 80px minmax(0, 1fr);
+      gap: 12px;
+      padding-left: 16px;
+      padding-right: 16px;
+    }
     main {
       padding-top: 16px;
     }
@@ -380,7 +602,7 @@ export const styles = css`
       font-size: 18px;
     }
     .grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
     .card-head,
     .editor {
