@@ -1,9 +1,9 @@
 # Journal backend
 
 The backend records manual journal entries and observed playback from one selected
-HA player. API version is `1`; SQLite schema is `5` and JSON export format is
+HA player. API version is `1`; SQLite schema is `6` and JSON export format is
 `2`. The household reader and administrator [management panel](ui.md) use this API. Live
-subscriptions, library, and controls remain planned; a compact read-only Now Playing
+subscriptions and controls remain planned; [optional library sync](library.md) is implemented. A compact read-only Now Playing
 card uses the existing snapshot API and HA artwork.
 The [security policy](security.md) governs access, privacy, and resource limits.
 
@@ -55,6 +55,11 @@ that separate copy. JSON format 2 remains a viewing/session export, excluding
 the audit tables. SQLite exports include all tables. Schema 5 adds a minimal
 `import_audit` record with authenticated actor, request UUID, imported/skipped
 counts, dataset revision, and time, without imported content or file names.
+
+Schema 6 adds source-scoped library titles, collections/memberships, and artwork
+indexes. Image bytes use a private bounded file cache outside SQLite. Library
+writes reserve journal headroom at a 192 MiB write ceiling; total SQLite growth
+remains capped at 256 MiB. See the [library storage and recovery contract](library.md#storage-artwork-and-recovery).
 
 ## Automatic tracking
 

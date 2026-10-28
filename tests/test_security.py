@@ -193,6 +193,14 @@ class RepositorySecurityTest(unittest.IsolatedAsyncioTestCase):
             db.execute("DROP TABLE manual_audit")
             db.execute("DROP TABLE maintenance_audit")
             db.execute("DROP TABLE import_audit")
+            for table in (
+                "library_memberships",
+                "library_collections",
+                "library_titles",
+                "library_artwork",
+                "library_sources",
+            ):
+                db.execute(f"DROP TABLE {table}")
             db.execute("PRAGMA user_version = 2")
             db.commit()
         reopened = JournalRepository(self.path)

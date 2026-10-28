@@ -31,12 +31,43 @@ const fields = [
     "168",
   ],
 ];
+const libraryFields = [
+  [
+    "library_host",
+    "Library hostname · blank uses my-kaleidescape.local",
+    "text",
+    "",
+    "",
+  ],
+  ["library_interval_hours", "Sync interval · hours", "number", "1", "168"],
+  [
+    "library_artwork_cache_mb",
+    "Artwork cache limit · MiB",
+    "number",
+    "32",
+    "4096",
+  ],
+];
+const libraryChecks = [
+  ["library_sync_collections", "Sync collections and watched status"],
+  ["library_sync_details", "Sync title details and credits"],
+  ["library_sync_artwork", "Sync artwork"],
+];
+const booleanFields = new Set([
+  "tracking_enabled",
+  "library_enabled",
+  ...libraryChecks.map(([key]) => key),
+]);
 const validation: Record<string, string> = {
   missing_entities: "Select all three source entities to enable tracking.",
   invalid_entities: "Choose existing media_player and sensor entity IDs.",
   duplicate_entities:
     "Choose different sensors for play status and media location.",
   invalid_rules: "Check the runtime, completion, and partial-resume values.",
+  invalid_library_host:
+    "Enter a hostname or private LAN HTTP(S) origin without a path, credentials, or query.",
+  invalid_library_options:
+    "Choose a sync interval of 1–168 hours and an artwork cache limit of 32–4096 MiB.",
 };
 
 export class KaleidescapeSettings extends LitElement {
@@ -125,7 +156,7 @@ export class KaleidescapeSettings extends LitElement {
       this.draft = Object.fromEntries(
         (flow.fields ?? []).map((field) => [
           field.name,
-          field.name === "tracking_enabled"
+          booleanFields.has(field.name)
             ? !!field.default
             : String(field.default ?? ""),
         ]),
@@ -189,6 +220,10 @@ export class KaleidescapeSettings extends LitElement {
       if (type === "number") data[key] = Number(data[key]);
       else if (!data[key]) delete data[key];
     }
+    for (const [key, , type] of libraryFields) {
+      if (type === "number") data[key] = Number(data[key]);
+    }
+    data.library_host = String(data.library_host ?? "");
     try {
       const result = await this.client.settings(this.scope, "submit", {
         flow_id: this.flow.flow_id,
@@ -293,6 +328,83 @@ export class KaleidescapeSettings extends LitElement {
                     uses total duration; missing runtime waits for metadata.
                     Completion uses watched time and confirmed credits.
                   </p>
+                  <h3>Library sync</h3>
+                  <label class="check"
+                    ><input
+                      name="library_enabled"
+                      type="checkbox"
+                      .checked=${!!this.draft.library_enabled}
+                      @change=${(event: Event) => {
+                        this.draft = {
+                          ...this.draft,
+                          library_enabled: (event.target as HTMLInputElement)
+                            .checked,
+                        };
+                        this.requestUpdate();
+                      }}
+                    />Enable library sync</label
+                  >
+                  <p class="muted">
+                    Optional, read-only access to your local Kaleidescape
+                    library. Disabled by default; no library discovery or device
+                    requests occur while disabled.
+                  </p>
+                  ${
+                    this.draft.library_enabled
+                      ? html`<div class="grid settings-grid">
+                            ${libraryFields.map(
+                              ([key, label, type, min, max]) =>
+                                html`<label
+                                  class=${type === "text" ? "full" : ""}
+                                  >${label}<input
+                                    name=${key}
+                                    type=${type}
+                                    min=${min || nothing}
+                                    max=${max || nothing}
+                                    step=${type === "number" ? "1" : nothing}
+                                    maxlength=${type === "text" ? "255" : nothing}
+                                    ?required=${type === "number"}
+                                    .value=${String(this.draft[key] ?? "")}
+                                    @input=${(event: Event) => {
+                                      this.draft = {
+                                        ...this.draft,
+                                        [key]: (
+                                          event.target as HTMLInputElement
+                                        ).value,
+                                      };
+                                      this.requestUpdate();
+                                    }}
+                                /></label>`,
+                            )}
+                            ${libraryChecks.map(
+                              ([key, label]) =>
+                                html`<label class="check full"
+                                  ><input
+                                    name=${key}
+                                    type="checkbox"
+                                    .checked=${!!this.draft[key]}
+                                    @change=${(event: Event) => {
+                                      this.draft = {
+                                        ...this.draft,
+                                        [key]: (
+                                          event.target as HTMLInputElement
+                                        ).checked,
+                                      };
+                                      this.requestUpdate();
+                                    }}
+                                  />${label}</label
+                                >`,
+                            )}
+                          </div>
+                          <p class="muted">
+                            Played means watched; Paused takes priority as
+                            in-progress. Detail fields depend on available
+                            source metadata. “Added on” means first detected,
+                            not purchased or downloaded.
+                          </p>
+                          ${this.draft.library_sync_artwork ? html`<p class="warning">Artwork uses additional disk space in a separate private cache, up to ${String(this.draft.library_artwork_cache_mb)} MiB plus one incoming image (up to 5 MiB). The journal database retains its 256 MiB limit. Increase the cache limit for a large library; older covers may be evicted and fetched again. HA backups can include these files.</p>` : nothing}`
+                      : nothing
+                  }
                   <button class="primary" type="submit">
                     ${this.saving ? "Saving…" : "Save settings"}
                   </button>

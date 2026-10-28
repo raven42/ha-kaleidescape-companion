@@ -2,7 +2,7 @@
 
 ## Scope
 
-This repository contains the journal backend, automatic observation, shared reader/administrator UI, and history sensors. Keep feature behavior aligned with the [plan](plan.md), [design](design.md), and [framework status](framework.md). Journal implementation comes before the library browser and controls.
+This repository contains the journal backend, automatic observation, shared reader/administrator UI, history sensors, and opt-in library sync. Keep feature behavior aligned with the [plan](plan.md), [design](design.md), and [framework status](framework.md). Journal implementation comes before the library browser and controls.
 
 ## Tooling
 
@@ -136,7 +136,7 @@ as terminal development so the local check sequence stays consistent.
 ## Integration framework
 
 Integration release versions remain `0.0.0`; API and database schema versions
-are `1` and `5`, respectively; JSON export format remains `2`.
+are `1` and `6`, respectively; JSON export format remains `2`.
 The `kaleidescape_companion` domain coexists with HA's built-in
 `kaleidescape` integration. Existing framework entries open the database on
 reload/restart without a configuration migration.
@@ -157,7 +157,10 @@ tombstone deletion, explicit permanent purge, and compatible
 JSON/SQLite viewing merge imports; schema 5 adds content-free import audit.
 Transfers and purge use native dialogs; pending work and exact retries prevent
 accidental dismissal. No additional API or schema change is needed for this layout.
-Catalog/control features, progress, and subscriptions remain deferred.
+Optional [Library sync](library.md) adds schema 6 source/version/collection
+metadata and a private bounded artwork cache, with default-host discovery and
+manual override. Its Library tab stays disabled until opted in through Settings.
+Playback controls, progress, subscriptions, and broader Library sharing remain deferred.
 
 ## Validation
 

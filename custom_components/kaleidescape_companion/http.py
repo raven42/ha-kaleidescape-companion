@@ -12,10 +12,49 @@ from homeassistant.helpers.http import HomeAssistantView
 from .const import DOMAIN
 from .importing import IMPORT_SECONDS, MAX_IMPORT_BYTES
 from .journal import JournalError, identifier, invalid
-from .runtime import KaleidescapeRuntime, get_runtime
+from .runtime import KaleidescapeRuntime, get_library, get_runtime
 from .security import async_finish_cleanup, is_active_admin
 
 EXPORT_DOWNLOAD_SECONDS = 60
+
+
+class LibraryArtworkView(HomeAssistantView):
+    """Authenticated cached images only; no caller paths/URLs or on-demand fetch."""
+
+    url = f"/api/{DOMAIN}/{{entry_id}}/{{dataset_id}}/library/artwork/{{cache_key}}"
+    name = f"api:{DOMAIN}:library_artwork"
+    requires_auth = True
+
+    async def get(self, request, entry_id: str, dataset_id: str, cache_key: str):
+        if not is_active_admin(request.get("hass_user")):
+            raise web.HTTPForbidden
+        if request.query:
+            raise web.HTTPBadRequest
+        try:
+            hass = request.app[KEY_HASS]
+            runtime = get_runtime(hass, entry_id, dataset_id)
+            library = get_library(hass, entry_id, runtime)
+            data, content_type = await runtime.repository.async_library_artwork(
+                library.source, cache_key
+            )
+            if not is_active_admin(request.get("hass_user")):
+                raise web.HTTPForbidden
+            if not runtime.ready or get_library(hass, entry_id, runtime) is not library:
+                raise web.HTTPNotFound
+            return web.Response(
+                body=data,
+                content_type=content_type,
+                headers={
+                    "Cache-Control": "no-store",
+                    "X-Content-Type-Options": "nosniff",
+                },
+            )
+        except JournalError as error:
+            if error.code == "invalid_request":
+                raise web.HTTPBadRequest from error
+            if error.code in {"not_found", "not_ready", "library_disabled"}:
+                raise web.HTTPNotFound from error
+            raise web.HTTPServiceUnavailable from error
 
 
 class JournalImportView(HomeAssistantView):

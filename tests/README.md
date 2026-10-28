@@ -1,5 +1,14 @@
 # Tests
 
+`test_library.py` uses fictional HTML and mocked networking to check catalog
+completeness/version groups, collection status precedence, filters/pagination,
+first detection, schema 6 migration, reserved journal headroom, private artwork
+limits/rollback, DNS pinning, native HA session/lifecycle, and access revocation.
+`frontend/tests/library.test.ts` covers cached browsing, opt-in behavior, filters,
+safe text, stale results, cover abort/revocation, and outage handling. The normal
+proxy tests include the query-free authenticated library artwork route. Full
+source sync, native browser layout, and other firmware require operator review.
+
 Install `python -m pip install -e '.[dev]'`, then run:
 
 ```sh

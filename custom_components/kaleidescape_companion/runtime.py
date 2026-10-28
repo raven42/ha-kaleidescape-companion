@@ -7,6 +7,7 @@ from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
 from .journal import JournalError
+from .library_sync import LibrarySync
 from .observation import PlaybackObserver
 from .repository import JournalRepository
 
@@ -19,9 +20,24 @@ class KaleidescapeRuntime:
     dataset_id: str
     ready: bool = True
     observer: PlaybackObserver | None = None
+    library: LibrarySync | None = None
 
 
 type KaleidescapeConfigEntry = ConfigEntry[KaleidescapeRuntime]
+
+
+def get_library(
+    hass: HomeAssistant, entry_id: str, runtime: KaleidescapeRuntime
+) -> LibrarySync:
+    """Respect an opt-out immediately, including the window before native reload."""
+    entry = hass.config_entries.async_get_entry(entry_id)
+    if (
+        runtime.library is None
+        or entry is None
+        or not (entry.options or entry.data).get("library_enabled", False)
+    ):
+        raise JournalError("library_disabled", "Enable library sync in Settings first")
+    return runtime.library
 
 
 def loaded_runtimes(hass: HomeAssistant) -> list[tuple[str, KaleidescapeRuntime]]:

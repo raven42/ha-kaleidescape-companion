@@ -3,6 +3,7 @@ import { ApiError, JournalClient } from "../src/api";
 import type {
   ApiMessage,
   JournalInfo,
+  LibraryTitle,
   MutationResult,
   NowPlayingPlayer,
   Transport,
@@ -13,7 +14,8 @@ export const info: JournalInfo = {
   entry_id: "fixture-entry",
   dataset_id: "a323bd20-1b55-4562-87b0-9999944759f3",
   api_version: 1,
-  schema_version: 5,
+  schema_version: 6,
+  library_enabled: false,
   revision: 5,
   viewing_count: 3,
   database_bytes: 81920,
@@ -22,6 +24,31 @@ export const info: JournalInfo = {
   tracking_enabled: true,
   permissions: { read: true, edit: true, export: true },
 };
+export function libraryTitle(
+  overrides: Partial<LibraryTitle> = {},
+): LibraryTitle {
+  return {
+    id: "a".repeat(64),
+    title: "Voyage to Europa",
+    first_seen: "2026-10-27T12:00:00Z",
+    last_seen: "2026-10-27T12:00:00Z",
+    metadata_synced_at: "2026-10-27T12:00:00Z",
+    artwork_key: null,
+    watched_status: "watched",
+    collections: ["Played", "Science Fiction"],
+    actors: ["Fictional Actor"],
+    directors: ["Fictional Director"],
+    writers: ["Fictional Writer"],
+    studios: ["Example Studio"],
+    genres: ["Science Fiction"],
+    rating: "PG",
+    year: 2025,
+    edition: "4K",
+    duration_seconds: 7200,
+    synopsis: "An entirely fictional journey through the stars.",
+    ...overrides,
+  };
+}
 export function record(overrides: Partial<Viewing> = {}): Viewing {
   return {
     id: "7189938b-f61f-44c0-8b1c-f0be346e9551",
@@ -88,6 +115,24 @@ export class FixtureTransport implements Transport {
       watched_seconds: 5400,
     }),
   ];
+  libraryTitles = [
+    libraryTitle(),
+    libraryTitle({
+      id: "b".repeat(64),
+      title: "Midnight at the Observatory",
+      watched_status: "in_progress",
+      collections: ["Played", "Paused"],
+      writers: [],
+      duration_seconds: 5400,
+    }),
+    libraryTitle({
+      id: "c".repeat(64),
+      title: "The Lantern Voyage",
+      watched_status: "unwatched",
+      collections: [],
+      studios: [],
+    }),
+  ];
   revision = 5;
   failure: string | null = null;
   trackingEnabled = true;
@@ -100,6 +145,13 @@ export class FixtureTransport implements Transport {
     minimum_runtime_minutes: 10,
     minimum_seconds: 300,
     resume_hours: 24,
+    library_enabled: false,
+    library_host: "",
+    library_interval_hours: 6,
+    library_sync_collections: true,
+    library_sync_details: true,
+    library_sync_artwork: false,
+    library_artwork_cache_mb: 512,
   };
   purgeResults = new Map<string, { purged_count: number; revision: number }>();
   importResults = new Map<
@@ -121,10 +173,100 @@ export class FixtureTransport implements Transport {
             viewing_count: this.records.length,
             revision: this.revision,
             tracking_enabled: this.trackingEnabled,
+            library_enabled: !!this.options.library_enabled,
           },
         ],
       };
-    else if (operation === "now_playing") result = { players: this.players };
+    else if (operation === "library/info")
+      result = {
+        title_count: this.libraryTitles.length,
+        group_count: this.libraryTitles.length,
+        collection_count: 3,
+        revision: this.revision,
+        last_synced_at: "2026-10-27T12:00:00Z",
+        collections_synced_at: "2026-10-27T12:00:00Z",
+        phase: "idle",
+        error: null,
+        processed: 0,
+        total: 0,
+        last_attempt: "2026-10-27T12:00:00Z",
+        interval_hours: Number(this.options.library_interval_hours),
+        collections_enabled: !!this.options.library_sync_collections,
+        details_enabled: !!this.options.library_sync_details,
+        artwork_enabled: !!this.options.library_sync_artwork,
+        artwork_bytes: 0,
+        artwork_limit_bytes:
+          Number(this.options.library_artwork_cache_mb) * 1048576,
+      };
+    else if (operation === "library/sync") result = { accepted: true };
+    else if (operation === "library/list") {
+      const filters = (message.filters ?? {}) as Record<
+        string,
+        string | number | boolean
+      >;
+      const facets = Object.fromEntries(
+        [
+          "actors",
+          "directors",
+          "writers",
+          "studios",
+          "genres",
+          "collections",
+        ].map((key) => [
+          key,
+          [
+            ...new Set(
+              this.libraryTitles.flatMap(
+                (row) => row[key as keyof LibraryTitle] as string[],
+              ),
+            ),
+          ].sort(),
+        ]),
+      );
+      facets.rating = [...new Set(this.libraryTitles.map((row) => row.rating))];
+      let rows = this.libraryTitles.filter(
+        (row) =>
+          (!filters.query ||
+            row.title
+              .toLowerCase()
+              .includes(String(filters.query).toLowerCase())) &&
+          (!filters.status || row.watched_status === filters.status),
+      );
+      for (const [filter, key] of [
+        ["actor", "actors"],
+        ["director", "directors"],
+        ["writer", "writers"],
+        ["studio", "studios"],
+        ["collection", "collections"],
+      ]) {
+        if (filters[filter])
+          rows = rows.filter((row) =>
+            (row[key as keyof LibraryTitle] as string[]).includes(
+              String(filters[filter]),
+            ),
+          );
+      }
+      if (filters.rating)
+        rows = rows.filter((row) => row.rating === filters.rating);
+      rows.sort((a, b) =>
+        filters.sort === "length"
+          ? (a.duration_seconds ?? 0) - (b.duration_seconds ?? 0)
+          : filters.sort === "watched"
+            ? a.watched_status.localeCompare(b.watched_status)
+            : a.title.localeCompare(b.title),
+      );
+      if (filters.descending) rows.reverse();
+      const offset = Number(filters.offset ?? 0);
+      result = {
+        items: rows.slice(offset, offset + 50),
+        total: rows.length,
+        offset,
+        has_more: rows.length > offset + 50,
+        revision: this.revision,
+        facets,
+        truncated_facets: [],
+      };
+    } else if (operation === "now_playing") result = { players: this.players };
     else if (operation === "settings/start")
       result = {
         type: "form",
@@ -151,6 +293,11 @@ export class FixtureTransport implements Transport {
         maintenance_audit: [],
         import_audit: [],
         schema_metadata: [{ revision: this.revision }],
+        library_sources: [],
+        library_titles: [],
+        library_collections: [],
+        library_memberships: [],
+        library_artwork: [],
       };
       const rows = tables[String(message.table)];
       if (!rows) throw new ApiError("invalid_request");

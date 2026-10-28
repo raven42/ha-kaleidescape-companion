@@ -13,6 +13,7 @@ export interface JournalInfo extends Scope {
   database_limit_bytes?: number;
   backup_in_progress?: boolean;
   tracking_enabled?: boolean;
+  library_enabled?: boolean;
   permissions: { read: boolean; edit: boolean; export: boolean };
 }
 export interface ViewingData {
@@ -115,6 +116,54 @@ export interface ImportResult {
   imported_count: number;
   skipped_count: number;
   revision: number;
+}
+export interface LibraryTitle {
+  id: string;
+  title: string;
+  first_seen: string;
+  last_seen: string;
+  metadata_synced_at: string | null;
+  artwork_key: string | null;
+  watched_status: "watched" | "unwatched" | "in_progress" | "unknown";
+  collections: string[];
+  actors: string[];
+  directors: string[];
+  writers: string[];
+  studios: string[];
+  genres: string[];
+  rating: string;
+  year: number | null;
+  edition: string;
+  duration_seconds: number | null;
+  synopsis: string;
+}
+export interface LibraryPage {
+  items: LibraryTitle[];
+  total: number;
+  offset: number;
+  has_more: boolean;
+  revision: number;
+  facets: Record<string, string[]>;
+  truncated_facets: string[];
+}
+export interface LibraryInfo {
+  title_count: number;
+  group_count: number;
+  collection_count: number;
+  revision: number;
+  last_synced_at: string | null;
+  collections_synced_at: string | null;
+  phase: string;
+  error: string | null;
+  processed: number;
+  total: number;
+  last_attempt: string | null;
+  interval_hours: number;
+  collections_enabled: boolean;
+  details_enabled: boolean;
+  artwork_enabled: boolean;
+  artwork_bytes: number;
+  artwork_limit_bytes: number;
 }
 export type ApiMessage = Record<string, unknown> & { type: string };
 export interface Transport {
@@ -219,6 +268,23 @@ export function errorMessage(error: unknown): string {
     import_too_large: "Choose an import file no larger than 32 MiB.",
     import_timeout:
       "The import result is unconfirmed. Retry the same file and request to confirm it.",
+    library_disabled: "Enable library sync in Settings to use the Library.",
+    library_storage_limit:
+      "Library refresh reached its database storage ceiling. Cached data is retained and journal storage headroom is reserved.",
+    library_unreachable:
+      "The library host could not be reached. Check the hostname and HA network access. Cached data is retained.",
+    library_destination:
+      "The library must use a private LAN hostname or address.",
+    library_format:
+      "The library page format was not recognized. Cached data is retained.",
+    library_response:
+      "The library returned an unsupported response. Cached data is retained.",
+    library_changed:
+      "The library changed during sync. Previous collection data was retained; try again later.",
+    library_too_large:
+      "A library response exceeded its safety limit. Cached data is retained.",
+    library_artwork:
+      "Some artwork could not be cached. Previous artwork is retained when available.",
   };
   return (
     messages[errorCode(error)] ??
@@ -283,6 +349,53 @@ export class JournalClient {
   }
   nowPlaying(scope: Scope): Promise<{ players: NowPlayingPlayer[] }> {
     return this.call({ type: `${DOMAIN}/now_playing`, ...scopeFields(scope) });
+  }
+  libraryInfo(scope: Scope): Promise<LibraryInfo> {
+    return this.call({ type: `${DOMAIN}/library/info`, ...scopeFields(scope) });
+  }
+  libraryList(
+    scope: Scope,
+    filters: Record<string, unknown> = {},
+  ): Promise<LibraryPage> {
+    return this.call({
+      type: `${DOMAIN}/library/list`,
+      ...scopeFields(scope),
+      filters,
+    });
+  }
+  librarySync(scope: Scope): Promise<{ accepted: boolean }> {
+    return this.call({ type: `${DOMAIN}/library/sync`, ...scopeFields(scope) });
+  }
+  async libraryArtwork(
+    scope: Scope,
+    key: string,
+    signal: AbortSignal,
+  ): Promise<Blob> {
+    if (!/^[a-f0-9]{64}$/.test(key)) throw new ApiError("invalid_request");
+    const response = await this.transport.fetchWithAuth(
+      `/api/${DOMAIN}/${encodeURIComponent(scope.entry_id)}/${encodeURIComponent(scope.dataset_id)}/library/artwork/${key}`,
+      {
+        signal,
+        cache: "no-store",
+        redirect: "error",
+      },
+    );
+    if (!response.ok) {
+      await response.body?.cancel();
+      throw new ApiError(
+        [401, 403].includes(response.status) ? "unauthorized" : "not_found",
+      );
+    }
+    const type = response.headers
+      .get("Content-Type")
+      ?.split(";")[0]
+      .trim()
+      .toLowerCase();
+    if (!type || !["image/jpeg", "image/png", "image/webp"].includes(type)) {
+      await response.body?.cancel();
+      throw new ApiError("invalid_request");
+    }
+    return boundedBlob(response, MAX_ARTWORK_BYTES, type);
   }
   settings(
     scope: Scope,

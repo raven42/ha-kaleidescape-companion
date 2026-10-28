@@ -188,3 +188,25 @@ it("bounds cover downloads, cancels overflow, and propagates revoked authenticat
     client.artwork("media_player.example", signal),
   ).rejects.toMatchObject({ code: "unauthorized" });
 });
+
+it("fetches library covers only from the scoped opaque-key endpoint", async () => {
+  const transport = new FixtureTransport(),
+    client = transport.client();
+  const download = vi.spyOn(transport, "fetchWithAuth").mockResolvedValue(
+    new Response(new Uint8Array([137, 80, 78, 71]), {
+      headers: { "Content-Type": "image/png" },
+    }),
+  );
+  const signal = new AbortController().signal,
+    key = "a".repeat(64);
+  const blob = await client.libraryArtwork(info, key, signal);
+  expect(blob.type).toBe("image/png");
+  expect(download).toHaveBeenCalledWith(
+    `/api/kaleidescape_companion/${info.entry_id}/${info.dataset_id}/library/artwork/${key}`,
+    { signal, cache: "no-store", redirect: "error" },
+  );
+  await expect(
+    client.libraryArtwork(info, "../../settings", signal),
+  ).rejects.toMatchObject({ code: "invalid_request" });
+  expect(download).toHaveBeenCalledTimes(1);
+});

@@ -8,8 +8,9 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
 
 from .const import DOMAIN, NAME
-from .http import JournalExportView, JournalImportView
+from .http import JournalExportView, JournalImportView, LibraryArtworkView
 from .journal import JournalError
+from .library_sync import LibrarySync
 from .migrations import UnsupportedSchemaError
 from .observation import PlaybackObserver
 from .panel import async_remove_panel, async_setup_panel
@@ -26,6 +27,8 @@ async def _async_close_runtime(
 ) -> None:
     runtime.ready = False
     try:
+        if runtime.library:
+            await runtime.library.async_stop()
         if runtime.observer:
             await runtime.observer.async_stop(close_reason)
     except JournalError as error:
@@ -65,6 +68,7 @@ async def async_setup_entry(
             async_register_commands(hass)
             hass.http.register_view(JournalExportView())
             hass.http.register_view(JournalImportView())
+            hass.http.register_view(LibraryArtworkView())
             hass.data[f"{DOMAIN}.api_registered"] = True
         config = dict(entry.options or entry.data)
         if config.get("tracking_enabled"):
@@ -74,6 +78,9 @@ async def async_setup_entry(
         panel_registered = True
         platforms_started = True
         await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+        if config.get("library_enabled", False):
+            runtime.library = LibrarySync(hass, repository, config)
+            await runtime.library.async_start()
 
         async def async_stop(_event) -> None:
             await _async_close_runtime(runtime)

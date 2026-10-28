@@ -247,6 +247,14 @@ class MaintenanceStorageTest(unittest.IsolatedAsyncioTestCase):
         with closing(sqlite3.connect(self.path)) as db:
             db.execute("DROP TABLE maintenance_audit")
             db.execute("DROP TABLE import_audit")
+            for table in (
+                "library_memberships",
+                "library_collections",
+                "library_titles",
+                "library_artwork",
+                "library_sources",
+            ):
+                db.execute(f"DROP TABLE {table}")
             db.execute("PRAGMA user_version = 3")
             db.commit()
         self.repository = JournalRepository(self.path)
@@ -255,7 +263,7 @@ class MaintenanceStorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             (await self.repository.async_get(record["id"]))["title"], record["title"]
         )
-        self.assertEqual((await self.repository.async_info())["schema_version"], 5)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 6)
         backup = next(self.path.parent.glob("journal.sqlite3.v3.*.bak"))
         self.assertEqual(backup.stat().st_mode & 0o777, 0o600)
         with closing(sqlite3.connect(backup)) as db:

@@ -88,6 +88,42 @@ it("renders a settings page and saves the native integration options flow", asyn
   });
   expect(saved).toHaveBeenCalledOnce();
 });
+
+it("keeps library sync opt-in and saves library controls through the native options flow", async () => {
+  await mount("kaleidescape-settings");
+  const enabled = root().querySelector<HTMLInputElement>(
+    '[name="library_enabled"]',
+  )!;
+  expect(enabled.checked).toBe(false);
+  expect(root().querySelector('[name="library_host"]')).toBeNull();
+  enabled.checked = true;
+  enabled.dispatchEvent(new Event("change", { bubbles: true }));
+  await flush();
+  input("library_host", "");
+  input("library_interval_hours", "12");
+  const artwork = root().querySelector<HTMLInputElement>(
+    '[name="library_sync_artwork"]',
+  )!;
+  artwork.checked = true;
+  artwork.dispatchEvent(new Event("change", { bubbles: true }));
+  await flush();
+  expect(text()).toContain("additional disk space");
+  expect(text()).toContain("256 MiB limit");
+  button("Save settings").click();
+  await flush();
+  expect(
+    transport.calls.find((call) => call.type.endsWith("/settings/submit"))!
+      .data,
+  ).toMatchObject({
+    library_enabled: true,
+    library_host: "",
+    library_interval_hours: 12,
+    library_sync_collections: true,
+    library_sync_details: true,
+    library_sync_artwork: true,
+    library_artwork_cache_mb: 512,
+  });
+});
 it("cancels without saving and returns server validation errors on the settings page", async () => {
   await mount("kaleidescape-settings");
   const original = transport.callWS.bind(transport);
@@ -374,7 +410,7 @@ it("cancels inline settings changes through the original HA options flow", async
 it("uses table tabs and an inline selection list with a separate editable detail pane", async () => {
   await mount("kaleidescape-advanced");
   expect(root().querySelector('select[name="database_table"]')).toBeNull();
-  expect(root().querySelectorAll('[role="tab"]')).toHaveLength(7);
+  expect(root().querySelectorAll('[role="tab"]')).toHaveLength(12);
   expect(
     root().querySelector("ul.entry-list li input + button"),
   ).not.toBeNull();

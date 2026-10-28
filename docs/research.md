@@ -19,8 +19,8 @@ research downloads are not a documentation dependency or public test fixture.
 
 The [System Control Protocol reference](https://www.kaleidescape.com/wp-content/uploads/Kaleidescape-System-Control-Protocol-Reference-Manual.pdf)
 and pinned source establish available interfaces; they do not establish that an
-operator's installed integration exposes identical behavior. The project currently
-observes HA entities only and implements no browser fetches or player controls.
+operator's installed integration exposes identical behavior. The journal observes HA entities. The optional [library connector](library.md)
+now implements restricted read-only browser GETs; player controls remain absent.
 
 ## Existing HA entities
 

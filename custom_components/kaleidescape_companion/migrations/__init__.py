@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from ..security import private_file
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 
 MIGRATIONS = {
     1: (
@@ -129,6 +129,43 @@ MIGRATIONS[5] = (
         skipped_count INTEGER NOT NULL CHECK (skipped_count >= 0),
         dataset_revision INTEGER NOT NULL CHECK (dataset_revision > 0),
         occurred_at TEXT NOT NULL
+    )""",
+)
+
+
+MIGRATIONS[6] = (
+    """CREATE TABLE library_sources (
+        id TEXT PRIMARY KEY, origin TEXT NOT NULL, first_seen TEXT NOT NULL,
+        last_synced_at TEXT, collections_synced_at TEXT,
+        revision INTEGER NOT NULL DEFAULT 0
+    )""",
+    """CREATE TABLE library_titles (
+        id TEXT PRIMARY KEY, source_id TEXT NOT NULL REFERENCES library_sources(id),
+        source_handle TEXT NOT NULL, source_group TEXT NOT NULL,
+        title TEXT NOT NULL, title_search TEXT NOT NULL, base_hash TEXT NOT NULL,
+        data TEXT NOT NULL, first_seen TEXT NOT NULL, last_seen TEXT NOT NULL,
+        available INTEGER NOT NULL DEFAULT 1, fetched_at TEXT, metadata_synced_at TEXT,
+        artwork_path TEXT, artwork_key TEXT,
+        UNIQUE(source_id, source_handle)
+    )""",
+    """CREATE INDEX library_title_names ON library_titles(source_id, available,
+        title_search, id)""",
+    """CREATE TABLE library_collections (
+        source_id TEXT NOT NULL REFERENCES library_sources(id), name TEXT NOT NULL,
+        first_seen TEXT NOT NULL, last_seen TEXT NOT NULL,
+        available INTEGER NOT NULL DEFAULT 1,
+        PRIMARY KEY(source_id, name)
+    )""",
+    """CREATE TABLE library_memberships (
+        source_id TEXT NOT NULL, title_id TEXT NOT NULL REFERENCES library_titles(id),
+        collection TEXT NOT NULL,
+        PRIMARY KEY(title_id, collection),
+        FOREIGN KEY(source_id, collection)
+            REFERENCES library_collections(source_id, name)
+    )""",
+    """CREATE TABLE library_artwork (
+        cache_key TEXT PRIMARY KEY, content_type TEXT NOT NULL,
+        byte_size INTEGER NOT NULL, stored_at TEXT NOT NULL
     )""",
 )
 

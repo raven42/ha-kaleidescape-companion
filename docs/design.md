@@ -1,6 +1,6 @@
 # Technical design
 
-Updated: 2026-10-26. This document describes implemented architecture and explicit
+Updated: 2026-10-27. This document describes implemented architecture and explicit
 extension points. [Framework status](framework.md) tracks delivery;
 [product plan](plan.md) orders future work; [interface research](research.md)
 separates evidence from unverified capabilities. The [security policy](security.md)
@@ -12,7 +12,8 @@ One custom integration runs inside HA Core and owns one household config entry,
 one SQLite dataset, and one bundled Lit panel. Its domain is
 `kaleidescape_companion`; the built-in `kaleidescape` integration is preserved.
 There is no separate Flask/FastAPI/Django server, authentication system, database
-listener, or direct player connection. HA supplies lifecycle, authentication,
+listener, or direct player control connection. The opt-in library connector reads
+a configured local browser origin; it never sends controls. HA supplies lifecycle, authentication,
 entity registries/events, WebSocket commands, HTTP views, and sensors.
 
 ```mermaid
@@ -48,6 +49,7 @@ prefixed with `frontend/src/`.
 | `repository.py` | Single-worker connection, transactions, CRUD/retry/audit, pagination, consistent exports, private storage lifecycle |
 | `recording.py` | Worker-only automatic-session persistence, resume matching, completion, protected correction fields |
 | `maintenance.py`, `importing.py` | Worker-only fixed-table inspection/purge and bounded compatible snapshot validation/merge, with durable retry barriers and minimal audit |
+| `library_config.py`, `library_parser.py`, `library_sync.py`, `library_store.py` | Opt-in origins/limits, native bounded HTML parsing, scheduled GET-only scans, worker catalog queries/private artwork cache |
 | `history.py`, `sensor.py` | Worker-only bounded summary queries; shared HA coordinator and seven translated sensor entities |
 | `migrations/` | Ordered schema upgrades, pre-migration snapshots, unsupported-schema rejection |
 | `websocket.py`, `http.py`, `security.py` | HA-authenticated commands/downloads, scope/role checks, record projections, filesystem/cancellation protections |
@@ -57,7 +59,7 @@ prefixed with `frontend/src/`.
 | `frontend/src/settings.ts`, `advanced.ts`, `transfers.ts` | Inline native-options form, shared Database toolbar/table tabs/list/detail corrections, transfer/purge dialogs, and exact uncertain retries |
 | `frontend/src/dev.ts`, `dev-connection.ts` | Local development authentication/connection shell only |
 
-Future library/artwork/control modules are added with their feature, tests, and
+Future control and richer library modules are added with their feature, tests, and
 policy changes. Empty reserved implementations and speculative database tables
 are deliberately absent. The boundaries above allow those additions without
 building another server or moving recording into the frontend.
@@ -94,7 +96,7 @@ and [coordinator guidance](https://contributors.home-assistant.io/core/integrati
 
 The [backend guide](backend.md) defines the implemented schema, API, timing defaults,
 resource limits, and restore procedure. Release/API/schema/export versions are
-independent: integration `0.0.0`, API `1`, SQLite `5`, JSON export `2`.
+independent: integration `0.0.0`, API `1`, SQLite `6`, JSON export `2`.
 
 - Store durable history in `<HA config>/kaleidescape_companion/journal.sqlite3`,
   separate from Recorder and static web roots. Keep history unless explicitly
@@ -185,7 +187,7 @@ Artwork uses authenticated GET `/api/media_player_proxy/media_player.<object_id>
 through HA, with no URL/query supplied by metadata and no copied access token.
 The browser accepts JPEG/PNG/WebP, caps accumulation at 5 MiB, budgets five seconds,
 and revokes object URLs on replacement/disconnect. Missing/slow art has a placeholder.
-No Python image decoder or private artwork cache is introduced. HA owns upstream
+Now Playing itself adds no Python image decoder or private artwork cache. HA owns upstream
 image fetching/caching and its native image authorization; see the security policy
 for the distinction from Companion's administrator-only snapshot API.
 
@@ -205,12 +207,19 @@ freeze on pause, scans, gaps, and identity changes.
 
 ### Library and artwork
 
+The implemented [Library slice](library.md) is administrator-only and off by
+default. It adds a disabled/enabled Library tab, default-host discovery/override,
+scheduled catalog/collection/detail sync, first-detected dates, local filtering,
+and a private bounded artwork file cache. Metadata uses schema 6 on the existing
+worker; a 192 MiB library write ceiling preserves 64 MiB of journal growth.
+
 Use HA's managed HTTP session for explicitly configured origins, bounded responses,
 timeouts/concurrency, certificate verification, and restricted redirects. Isolate
 firmware-dependent HTML parsing from network/lifecycle code; never execute embedded
 scripts or call vendor editing routes. Test encoding, escaped metadata, empty
 collections, login/error pages, grouped editions, count mismatches, and layout changes.
-Choose a maintained structural parser when fixtures justify it.
+The initial bounded structural parser uses the native HTML parser and fictional
+fixtures; introduce an external parser only if future firmware needs justify it.
 
 Introduce source, work/version, exact alias, collection/membership, detail, and
 artwork records through migrations. Keep provenance and freshness separate from

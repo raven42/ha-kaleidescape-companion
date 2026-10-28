@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
+from . import library_store
 from .history import history_summary
 from .importing import MAX_IMPORT_BYTES, import_viewings
 from .journal import (
@@ -35,6 +36,7 @@ from .security import async_finish_cleanup, private_directory, private_file
 
 MAX_PENDING = 128
 MAX_DATABASE_BYTES = 256 * 1024 * 1024
+MAX_LIBRARY_DATABASE_BYTES = 192 * 1024 * 1024
 MAX_EXPORT_BYTES = 256 * 1024 * 1024
 EXPORT_BUILD_SECONDS = 30
 
@@ -56,6 +58,7 @@ class JournalRepository:
         self._import_active = False
         self._import_task: asyncio.Task | None = None
         self._export_directory = path.with_name(f".{path.name}.exports")
+        self._artwork_directory = path.parent / "artwork"
 
     @property
     def pending(self) -> int:
@@ -133,6 +136,98 @@ class JournalRepository:
             connection.close()
             raise
         self._connection = connection
+        if self._artwork_directory.exists() or self._artwork_directory.is_symlink():
+            library_store.cache_open(connection, self._artwork_directory)
+
+    async def async_library_info(self, source: str) -> dict:
+        return await self._call(library_store.library_info, self._db(), source)
+
+    async def async_library_list(self, source: str, filters: dict) -> dict:
+        return await self._call(library_store.library_list, self._db(), source, filters)
+
+    async def async_library_candidates(self, source: str) -> list[dict]:
+        return await self._call(library_store.detail_candidates, self._db(), source)
+
+    def _library_write(self, operation, *args):
+        if self._paused:
+            raise JournalError("backup_in_progress", "Library writes paused for backup")
+        if self._import_active or self._export_active:
+            raise JournalError("busy", "Wait for the active transfer before syncing")
+        db = self._db()
+        page_size = db.execute("PRAGMA page_size").fetchone()[0]
+        pages = db.execute("PRAGMA page_count").fetchone()[0]
+        if (
+            pages * page_size >= MAX_LIBRARY_DATABASE_BYTES
+            and operation != self._trim_library_artwork
+        ):
+            raise JournalError(
+                "library_storage_limit",
+                "Library writes reached their storage ceiling; "
+                "journal growth remains available",
+            )
+        previous_limit = db.execute("PRAGMA max_page_count").fetchone()[0]
+        limit = max(pages, min(previous_limit, MAX_LIBRARY_DATABASE_BYTES // page_size))
+        db.execute(f"PRAGMA max_page_count={limit}")
+        try:
+            return operation(db, *args)
+        finally:
+            db.execute(f"PRAGMA max_page_count={previous_limit}")
+
+    async def async_library_catalog(
+        self, origin: str, rows: list, collections=None
+    ) -> None:
+        await self._call(
+            self._library_write, library_store.save_catalog, origin, rows, collections
+        )
+
+    async def async_library_details(
+        self, source, id, details, include_metadata=True
+    ) -> None:
+        await self._call(
+            self._library_write,
+            library_store.save_details,
+            source,
+            id,
+            details,
+            include_metadata,
+        )
+
+    async def async_library_artwork_save(
+        self, source, id, data, content_type, budget
+    ) -> None:
+        await self._call(
+            self._library_write,
+            self._save_library_artwork,
+            source,
+            id,
+            data,
+            content_type,
+            budget,
+        )
+
+    def _save_library_artwork(self, db, source, id, data, content_type, budget):
+        private_directory(self._artwork_directory)
+        library_store.save_artwork(
+            db, self._artwork_directory, source, id, data, content_type, budget
+        )
+
+    async def async_library_artwork(self, source: str, key: str) -> tuple[bytes, str]:
+        return await self._call(
+            library_store.read_artwork, self._db(), self._artwork_directory, source, key
+        )
+
+    async def async_library_trim(self, budget: int) -> None:
+        await self._call(self._library_write, self._trim_library_artwork, budget)
+
+    def _trim_library_artwork(self, db, budget):
+        if self._artwork_directory.exists():
+            with db:
+                evicted = library_store.cache_trim(db, self._artwork_directory, budget)
+                if evicted:
+                    db.execute("UPDATE library_sources SET revision=revision+1")
+                    db.execute("UPDATE schema_metadata SET revision=revision+1")
+            for path in evicted:
+                path.unlink(missing_ok=True)
 
     def _db(self) -> sqlite3.Connection:
         if self._connection is None:

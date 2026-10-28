@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant, callback
 from .configuration import options_request
 from .const import DOMAIN
 from .journal import JournalError
-from .runtime import get_runtime, loaded_runtimes
+from .runtime import get_library, get_runtime, loaded_runtimes
 from .security import is_active_admin, is_active_user
 
 READ_OPERATIONS = frozenset({"info", "journal/list", "journal/get"})
@@ -44,6 +44,9 @@ def async_register_commands(hass: HomeAssistant) -> None:
         "journal/get": {**scoped, p.Required("viewing_id"): str},
         "journal/sessions": {**scoped, p.Required("viewing_id"): str},
         "now_playing": scoped,
+        "library/info": scoped,
+        "library/list": {**scoped, p.Optional("filters", default={}): dict},
+        "library/sync": scoped,
         "settings/start": scoped,
         "settings/submit": {
             **scoped,
@@ -138,6 +141,7 @@ async def async_handle(
                         **(
                             {
                                 "tracking_enabled": runtime.observer is not None,
+                                "library_enabled": runtime.library is not None,
                                 "features": {
                                     "manual_journal": True,
                                     "automatic_tracking": True,
@@ -145,6 +149,7 @@ async def async_handle(
                                     "settings": True,
                                     "database_maintenance": True,
                                     "import": True,
+                                    "library": True,
                                 },
                             }
                             if admin
@@ -157,6 +162,20 @@ async def async_handle(
             runtime = get_runtime(hass, msg["entry_id"], msg["dataset_id"])
             repository = runtime.repository
             match operation:
+                case "library/info" | "library/list" | "library/sync":
+                    library = get_library(hass, msg["entry_id"], runtime)
+                    if operation == "library/sync":
+                        library.request_sync()
+                        result = {"accepted": True}
+                    elif operation == "library/info":
+                        result = {
+                            **await repository.async_library_info(library.source),
+                            **library.status(),
+                        }
+                    else:
+                        result = await repository.async_library_list(
+                            library.source, msg["filters"]
+                        )
                 case "journal/create":
                     result = await repository.async_create(
                         msg["request_id"], msg["data"], actor_id=user.id
@@ -248,6 +267,11 @@ async def async_handle(
             return
         if operation not in {"info", "settings/submit"} and not runtime.ready:
             raise JournalError("not_ready", "Journal integration unloaded")
+        if (
+            operation.startswith("library/")
+            and get_library(hass, msg["entry_id"], runtime) is not library
+        ):
+            raise JournalError("not_ready", "Library integration reloaded")
         connection.send_result(msg["id"], result)
     except JournalError as error:
         connection.send_error(msg["id"], error.code, str(error))

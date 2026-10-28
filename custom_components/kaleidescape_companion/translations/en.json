@@ -4,7 +4,7 @@
     "step": {
       "user": {
         "title": "Kaleidescape Companion",
-        "description": "Create or reopen the journal. Optionally observe existing Home Assistant entities to record playback; no player connections or controls are used.",
+        "description": "Configure optional playback observation and read-only library sync. Library sync is disabled by default; enabling it permits requests to the configured local library host.",
         "data": {
           "tracking_enabled": "Enable automatic tracking",
           "media_player": "Kaleidescape media player",
@@ -12,10 +12,21 @@
           "media_location": "Media-location sensor",
           "minimum_runtime_minutes": "Minimum runtime to record (minutes; 0 disables)",
           "minimum_seconds": "Minimum main-content playback before credits completion (seconds)",
-          "resume_hours": "Merge partial viewings within (hours; 0 disables)"
+          "resume_hours": "Merge partial viewings within (hours; 0 disables)",
+          "library_enabled": "Enable library sync",
+          "library_host": "Library hostname (blank uses my-kaleidescape.local)",
+          "library_interval_hours": "Library sync interval (hours)",
+          "library_sync_collections": "Sync collections and watched status",
+          "library_sync_details": "Sync title details and credits",
+          "library_sync_artwork": "Sync artwork",
+          "library_artwork_cache_mb": "Artwork cache limit (MiB)"
         },
         "data_description": {
-          "minimum_runtime_minutes": "Ignore shorter playback, such as trailers. Default: 10 minutes. Wait for a known runtime unless disabled. This is separate from watched time required for credits completion."
+          "minimum_runtime_minutes": "Ignore shorter playback, such as trailers. Default: 10 minutes. Wait for a known runtime unless disabled. This is separate from watched time required for credits completion.",
+          "library_host": "Leave blank to attempt discovery using my-kaleidescape.local. Enter a hostname or private LAN HTTP(S) origin if name resolution fails. Standard HTTP/HTTPS ports only.",
+          "library_sync_artwork": "Artwork adds disk use in a separate private cache, not the 256 MiB journal database. HA backups can include cached covers. Older covers are evicted when the configured limit is reached.",
+          "library_sync_details": "Fetch available cast, director, writer, studio, synopsis, and runtime metadata. Missing source fields remain unavailable.",
+          "library_artwork_cache_mb": "32\u20134096 MiB; default 512 MiB, plus up to one 5 MiB incoming image. Choose a larger limit for a large library."
         }
       }
     },
@@ -26,14 +37,16 @@
       "missing_entities": "Select all three source entities to enable tracking.",
       "invalid_entities": "Choose an existing media player and two sensor entities.",
       "duplicate_entities": "Choose different sensors for play status and media location.",
-      "invalid_rules": "Choose valid runtime, completion, and partial-resume values."
+      "invalid_rules": "Choose valid runtime, completion, and partial-resume values.",
+      "invalid_library_host": "Enter a valid hostname or private LAN HTTP(S) origin without credentials, a path, or query.",
+      "invalid_library_options": "Choose a sync interval of 1\u2013168 hours and an artwork cache limit of 32\u20134096 MiB."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Playback tracking",
-        "description": "Select one player and its exact status/location sensors. Offline sources suspend timing. Disable tracking to keep only the journal API.",
+        "title": "Kaleidescape Companion settings",
+        "description": "Configure optional playback observation and read-only library sync. Library sync is disabled by default; enabling it permits requests to the configured local library host.",
         "data": {
           "tracking_enabled": "Enable automatic tracking",
           "media_player": "Kaleidescape media player",
@@ -41,10 +54,21 @@
           "media_location": "Media-location sensor",
           "minimum_runtime_minutes": "Minimum runtime to record (minutes; 0 disables)",
           "minimum_seconds": "Minimum main-content playback before credits completion (seconds)",
-          "resume_hours": "Merge partial viewings within (hours; 0 disables)"
+          "resume_hours": "Merge partial viewings within (hours; 0 disables)",
+          "library_enabled": "Enable library sync",
+          "library_host": "Library hostname (blank uses my-kaleidescape.local)",
+          "library_interval_hours": "Library sync interval (hours)",
+          "library_sync_collections": "Sync collections and watched status",
+          "library_sync_details": "Sync title details and credits",
+          "library_sync_artwork": "Sync artwork",
+          "library_artwork_cache_mb": "Artwork cache limit (MiB)"
         },
         "data_description": {
-          "minimum_runtime_minutes": "Ignore shorter playback, such as trailers. Default: 10 minutes. Wait for a known runtime unless disabled. This is separate from watched time required for credits completion."
+          "minimum_runtime_minutes": "Ignore shorter playback, such as trailers. Default: 10 minutes. Wait for a known runtime unless disabled. This is separate from watched time required for credits completion.",
+          "library_host": "Leave blank to attempt discovery using my-kaleidescape.local. Enter a hostname or private LAN HTTP(S) origin if name resolution fails. Standard HTTP/HTTPS ports only.",
+          "library_sync_artwork": "Artwork adds disk use in a separate private cache, not the 256 MiB journal database. HA backups can include cached covers. Older covers are evicted when the configured limit is reached.",
+          "library_sync_details": "Fetch available cast, director, writer, studio, synopsis, and runtime metadata. Missing source fields remain unavailable.",
+          "library_artwork_cache_mb": "32\u20134096 MiB; default 512 MiB, plus up to one 5 MiB incoming image. Choose a larger limit for a large library."
         }
       }
     },
@@ -52,7 +76,9 @@
       "missing_entities": "Select all three source entities to enable tracking.",
       "invalid_entities": "Choose an existing media player and two sensor entities.",
       "duplicate_entities": "Choose different sensors for play status and media location.",
-      "invalid_rules": "Choose valid runtime, completion, and partial-resume values."
+      "invalid_rules": "Choose valid runtime, completion, and partial-resume values.",
+      "invalid_library_host": "Enter a valid hostname or private LAN HTTP(S) origin without credentials, a path, or query.",
+      "invalid_library_options": "Choose a sync interval of 1\u2013168 hours and an artwork cache limit of 32\u20134096 MiB."
     }
   },
   "entity": {

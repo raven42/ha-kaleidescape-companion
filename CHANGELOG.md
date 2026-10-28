@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased — Optional local library
+
+- Added disabled-by-default Library sync with default-host discovery, hostname
+  override, scheduling and collection/detail/artwork options through HA settings.
+- Added source/version/collection metadata and first detection in schema 6, plus
+  local search, metadata/status filters, sorting, and an opt-in Library tab.
+- Preserved Played/Paused source semantics separately from journal completion.
+- Added a private bounded raster cache outside SQLite, authenticated delivery,
+  reserved journal growth, DNS pinning, read-only routes, and lifecycle/backup gates.
+- Added fictional parser/storage/API/UI/security tests and operator documentation.
+  Read-only source format checks succeeded; full sync/browser review remains.
+
 ## Unreleased — Unified Database management
 
 - Combined Database into one surface with a shared entry/refresh/import/export

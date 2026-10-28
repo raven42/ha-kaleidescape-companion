@@ -13,6 +13,11 @@ The product name is **Kaleidescape Companion**. The HA domain `kaleidescape_comp
 - Private storage permissions, linked-path rejection, bounded exports/database growth,
   and transactional attribution of manual changes (schema 3), purges (schema 4),
   and merge imports (schema 5).
+- Opt-in administrator [Library sync](library.md), disabled by default, with
+  default-host discovery/override, interval and data/artwork options, source-scoped
+  versions/collections, first-detection dates, cached filters/sorts, and private covers.
+- Schema 6 library metadata and a bounded evictable artwork file cache, preserving
+  viewing facts and journal write headroom, with backup/unload cancellation.
 - A [security policy](security.md), security regression tests in the normal check tasks,
   and contributor/agent guidance for future changes.
 - Tests for storage recovery, migration rollback, API validation/permissions, exports, backups, reload, and shutdown.
@@ -46,7 +51,7 @@ The product name is **Kaleidescape Companion**. The HA domain `kaleidescape_comp
 ## Deferred
 
 Multi-player configuration, live subscriptions, validated position/progress,
-catalog synchronization and persistent library/historical artwork,
+richer grouped/poster Library browsing, journal identity associations and historical artwork,
 per-user ownership/selective sharing, and playback controls remain deferred. The basic management panel is registered in HA;
 broader product UI and real-browser compatibility/accessibility checks remain.
 Compatible viewing-only JSON/SQLite merge imports are implemented; automatic retention

@@ -16,6 +16,7 @@ import "./reader";
 import "./now-playing";
 import "./settings";
 import "./advanced";
+import "./library";
 import type { KaleidescapeSettings } from "./settings";
 import type { KaleidescapeAdvanced } from "./advanced";
 import type { ViewingSummary } from "./api";
@@ -30,6 +31,11 @@ const PAGES = [
     id: "journal",
     label: "Journal",
     description: "Review recordings and make corrections.",
+  },
+  {
+    id: "library",
+    label: "Library",
+    description: "Browse cached titles, collections, and source metadata.",
   },
   {
     id: "database",
@@ -182,6 +188,7 @@ export class KaleidescapePanel extends LitElement {
   }
   private async switchPage(page: Page) {
     if (
+      (page === "library" && !this.info?.library_enabled) ||
       page === this.activePage ||
       this.loading ||
       this.saving ||
@@ -202,20 +209,23 @@ export class KaleidescapePanel extends LitElement {
     }
   }
   private pageKey(event: KeyboardEvent) {
-    const current = PAGES.findIndex((page) => page.id === this.activePage);
+    const pages = PAGES.filter(
+      (page) => page.id !== "library" || this.info?.library_enabled,
+    );
+    const current = pages.findIndex((page) => page.id === this.activePage);
     const index =
       event.key === "ArrowRight"
-        ? (current + 1) % PAGES.length
+        ? (current + 1) % pages.length
         : event.key === "ArrowLeft"
-          ? (current + PAGES.length - 1) % PAGES.length
+          ? (current + pages.length - 1) % pages.length
           : event.key === "Home"
             ? 0
             : event.key === "End"
-              ? PAGES.length - 1
+              ? pages.length - 1
               : -1;
     if (index < 0) return;
     event.preventDefault();
-    const switching = this.switchPage(PAGES[index].id);
+    const switching = this.switchPage(pages[index].id);
     // A Journal refresh may disable tabs while it runs; focus after it completes.
     void switching
       .then(() => this.updateComplete)
@@ -647,7 +657,7 @@ export class KaleidescapePanel extends LitElement {
               aria-label="Companion pages"
               @keydown=${(event: KeyboardEvent) => this.pageKey(event)}
             >
-              ${PAGES.map((page) => html`<button id=${`page-${page.id}`} role="tab" aria-selected=${this.activePage === page.id} aria-controls="companion-page" tabindex=${this.activePage === page.id ? "0" : "-1"} ?disabled=${blocked} @click=${() => this.switchPage(page.id)}>${page.label}</button>`)}
+              ${PAGES.map((page) => html`<button id=${`page-${page.id}`} role="tab" aria-selected=${this.activePage === page.id} aria-controls="companion-page" tabindex=${this.activePage === page.id ? "0" : "-1"} ?disabled=${blocked || (page.id === "library" && !this.info?.library_enabled)} title=${page.id === "library" && !this.info?.library_enabled ? "Enable library sync in Settings" : nothing} @click=${() => this.switchPage(page.id)}>${page.label}</button>`)}
             </div>`
           : nothing
       }
@@ -688,251 +698,267 @@ export class KaleidescapePanel extends LitElement {
                 aria-labelledby=${`page-${this.activePage}`}
               >
                 ${
-                  this.activePage === "database"
-                    ? html`<kaleidescape-advanced
+                  this.activePage === "library"
+                    ? html`<kaleidescape-library
                         .client=${this.api}
                         .scope=${this.info}
                         @access-denied=${() => this.fail(new ApiError("unauthorized"))}
-                        @maintenance-busy=${(event: CustomEvent<boolean>) => {
-                          this.maintenanceBusy = event.detail;
-                          this.requestUpdate();
+                        @library-disabled=${() => {
+                          this.activePage = "journal";
+                          void this.refresh();
                         }}
-                        @database-changed=${() => this.refreshInfo()}
-                      ></kaleidescape-advanced>`
-                    : this.activePage === "settings"
-                      ? html`<kaleidescape-settings
+                      ></kaleidescape-library>`
+                    : this.activePage === "database"
+                      ? html`<kaleidescape-advanced
                           .client=${this.api}
                           .scope=${this.info}
                           @access-denied=${() => this.fail(new ApiError("unauthorized"))}
-                          @settings-busy=${(event: CustomEvent<boolean>) => {
-                            this.settingsBusy = event.detail;
+                          @maintenance-busy=${(event: CustomEvent<boolean>) => {
+                            this.maintenanceBusy = event.detail;
                             this.requestUpdate();
                           }}
-                          @settings-saved=${() => {
-                            this.notice =
-                              "Settings saved. Reloading the integration…";
-                            const api = this.api;
-                            void this.refresh(true).then(() => {
-                              if (this.api === api && this.info) {
-                                this.notice = "Settings saved.";
-                                this.requestUpdate();
-                              }
-                            });
-                          }}
-                        ></kaleidescape-settings>`
-                      : this.activePage === "now-playing"
-                        ? html`<kaleidescape-now-playing
+                          @database-changed=${() => this.refreshInfo()}
+                        ></kaleidescape-advanced>`
+                      : this.activePage === "settings"
+                        ? html`<kaleidescape-settings
                             .client=${this.api}
                             .scope=${this.info}
-                          ></kaleidescape-now-playing>`
-                        : html`<div class="section-head">
-                              <h2>Journal</h2>
-                              <button
-                                class="primary"
-                                ?disabled=${blocked}
-                                @click=${() => this.newRecord()}
-                              >
-                                ＋ Add viewing
-                              </button>
-                            </div>
-                            <section
-                              class="metrics"
-                              aria-label="Database overview"
-                            >
-                              <div class="metric">
-                                <small>Journal entries</small
-                                ><strong>${this.info.viewing_count}</strong>
-                              </div>
-                              <div class="metric">
-                                <small>Database size</small
-                                ><strong
-                                  >${this.bytes(this.info.database_bytes ?? 0)}</strong
-                                ><small
-                                  >of
-                                  ${this.bytes(this.info.database_limit_bytes ?? 0)}</small
-                                >
-                              </div>
-                              <div class="metric">
-                                <small>Recording</small
-                                ><strong
-                                  >${this.info.tracking_enabled ? "Enabled" : "Manual only"}</strong
-                                >
-                              </div>
-                              <div class="metric">
-                                <small>Storage</small
-                                ><strong
-                                  >${this.info.backup_in_progress ? "Backing up" : "Ready"}</strong
-                                ><small
-                                  >Schema ${this.info.schema_version} · Revision
-                                  ${this.info.revision}</small
-                                >
-                              </div>
-                            </section>
-                            <div class="layout">
-                              <section
-                                class="card"
-                                aria-label="Journal entries"
-                              >
-                                <div class="card-head">
-                                  <h2>Viewings</h2>
-                                  <button
-                                    ?disabled=${blocked}
-                                    @click=${() => this.refresh()}
-                                  >
-                                    Refresh
-                                  </button>
-                                </div>
-                                <form
-                                  class="filters"
-                                  @submit=${(event: Event) => {
-                                    event.preventDefault();
-                                    this.query = this.searchText;
-                                    this.status = this.filterStatus;
-                                    this.page = 1;
-                                    this.history = [];
-                                    void this.loadList();
-                                  }}
-                                >
-                                  <label
-                                    >Search titles<input
-                                      name="search"
-                                      type="search"
-                                      maxlength="500"
-                                      .value=${this.searchText}
-                                      ?disabled=${blocked}
-                                      @input=${(event: Event) => {
-                                        this.searchText = (
-                                          event.target as HTMLInputElement
-                                        ).value;
-                                      }}
-                                  /></label>
-                                  <label
-                                    >Status<select
-                                      name="filter_status"
-                                      .value=${this.filterStatus}
-                                      ?disabled=${blocked}
-                                      @change=${(event: Event) => {
-                                        this.filterStatus = (
-                                          event.target as HTMLSelectElement
-                                        ).value;
-                                      }}
-                                    >
-                                      <option value="">All</option>
-                                      <option value="partial">Partial</option>
-                                      <option value="completed">
-                                        Completed
-                                      </option>
-                                    </select></label
-                                  >
-                                  <button ?disabled=${blocked}>Search</button>
-                                </form>
-                                ${
-                                  this.loading
-                                    ? html`<div class="empty" role="status">
-                                        Loading viewings…
-                                      </div>`
-                                    : this.rows.length
-                                      ? html`<div class="table-wrap">
-                                          <table>
-                                            <thead>
-                                              <tr>
-                                                <th>Title</th>
-                                                <th>Status</th>
-                                                <th>Watched</th>
-                                              </tr>
-                                            </thead>
-                                            <tbody>
-                                              ${this.rows.map(
-                                                (record) =>
-                                                  html` <tr
-                                                    class=${this.selected?.id === record.id ? "selected" : ""}
-                                                  >
-                                                    <td>
-                                                      <button
-                                                        class="link"
-                                                        ?disabled=${this.saving || !!this.pending}
-                                                        @click=${() => this.selectRecord(record.id)}
-                                                      >
-                                                        ${record.title}</button
-                                                      ><small
-                                                        >${this.date(record.started_at)}
-                                                        ·
-                                                        ${record.origin === "observed" ? "Recorded" : "Manual"}</small
-                                                      >
-                                                    </td>
-                                                    <td>
-                                                      <span
-                                                        class=${`badge ${record.status === "completed" ? "complete" : ""}`}
-                                                        >${record.status === "completed" ? "Completed" : "Partial"}</span
-                                                      >
-                                                    </td>
-                                                    <td>
-                                                      ${(record.watched_seconds / 60).toFixed(2)}
-                                                      min
-                                                    </td>
-                                                  </tr>`,
-                                              )}
-                                            </tbody>
-                                          </table>
-                                        </div>`
-                                      : html`<div class="empty">
-                                          <strong
-                                            >${this.query || this.status ? "No matching viewings" : "Your journal is empty"}</strong
-                                          >
-                                          <p>
-                                            ${this.query || this.status ? "Try another title or status." : "Add a manual viewing or enable automatic tracking in the integration settings."}
-                                          </p>
-                                        </div>`
+                            @access-denied=${() => this.fail(new ApiError("unauthorized"))}
+                            @settings-busy=${(event: CustomEvent<boolean>) => {
+                              this.settingsBusy = event.detail;
+                              this.requestUpdate();
+                            }}
+                            @settings-saved=${() => {
+                              this.notice =
+                                "Settings saved. Reloading the integration…";
+                              const api = this.api;
+                              void this.refresh(true).then(() => {
+                                if (this.api === api && this.info) {
+                                  this.notice = "Settings saved.";
+                                  this.requestUpdate();
                                 }
-                                <div class="pagination">
-                                  <small
-                                    >Page ${this.page} · Up to 25 entries</small
+                              });
+                            }}
+                          ></kaleidescape-settings>`
+                        : this.activePage === "now-playing"
+                          ? html`<kaleidescape-now-playing
+                              .client=${this.api}
+                              .scope=${this.info}
+                            ></kaleidescape-now-playing>`
+                          : html`<div class="section-head">
+                                <h2>Journal</h2>
+                                <button
+                                  class="primary"
+                                  ?disabled=${blocked}
+                                  @click=${() => this.newRecord()}
+                                >
+                                  ＋ Add viewing
+                                </button>
+                              </div>
+                              <section
+                                class="metrics"
+                                aria-label="Database overview"
+                              >
+                                <div class="metric">
+                                  <small>Journal entries</small
+                                  ><strong>${this.info.viewing_count}</strong>
+                                </div>
+                                <div class="metric">
+                                  <small>Database size</small
+                                  ><strong
+                                    >${this.bytes(this.info.database_bytes ?? 0)}</strong
+                                  ><small
+                                    >of
+                                    ${this.bytes(this.info.database_limit_bytes ?? 0)}</small
                                   >
-                                  <div class="actions">
+                                </div>
+                                <div class="metric">
+                                  <small>Recording</small
+                                  ><strong
+                                    >${this.info.tracking_enabled ? "Enabled" : "Manual only"}</strong
+                                  >
+                                </div>
+                                <div class="metric">
+                                  <small>Storage</small
+                                  ><strong
+                                    >${this.info.backup_in_progress ? "Backing up" : "Ready"}</strong
+                                  ><small
+                                    >Schema ${this.info.schema_version} ·
+                                    Revision ${this.info.revision}</small
+                                  >
+                                </div>
+                              </section>
+                              <div class="layout">
+                                <section
+                                  class="card"
+                                  aria-label="Journal entries"
+                                >
+                                  <div class="card-head">
+                                    <h2>Viewings</h2>
                                     <button
-                                      ?disabled=${blocked || this.page === 1}
-                                      @click=${() => {
-                                        this.page = 1;
-                                        this.history = [];
-                                        void this.loadList();
-                                      }}
+                                      ?disabled=${blocked}
+                                      @click=${() => this.refresh()}
                                     >
-                                      First
-                                    </button>
-                                    <button
-                                      ?disabled=${blocked || !this.history.length}
-                                      @click=${() => {
-                                        this.page--;
-                                        void this.loadList(this.history.pop());
-                                      }}
-                                    >
-                                      Previous
-                                    </button>
-                                    <button
-                                      ?disabled=${blocked || !this.nextCursor}
-                                      @click=${() => {
-                                        this.history.push(this.cursor);
-                                        if (this.history.length > 200)
-                                          this.history.shift();
-                                        this.page++;
-                                        void this.loadList(this.nextCursor!);
-                                      }}
-                                    >
-                                      Next
+                                      Refresh
                                     </button>
                                   </div>
-                                </div>
-                              </section>
-                              <section class="card" aria-label="Viewing editor">
-                                <div class="card-head">
-                                  <h2>
-                                    ${this.selected ? "Edit viewing" : this.draft ? "New viewing" : "Viewing details"}
-                                  </h2>
-                                  ${this.dirty() ? html`<span class="badge">Unsaved</span>` : nothing}
-                                </div>
-                                ${this.renderEditor()}
-                              </section>
-                            </div> `
+                                  <form
+                                    class="filters"
+                                    @submit=${(event: Event) => {
+                                      event.preventDefault();
+                                      this.query = this.searchText;
+                                      this.status = this.filterStatus;
+                                      this.page = 1;
+                                      this.history = [];
+                                      void this.loadList();
+                                    }}
+                                  >
+                                    <label
+                                      >Search titles<input
+                                        name="search"
+                                        type="search"
+                                        maxlength="500"
+                                        .value=${this.searchText}
+                                        ?disabled=${blocked}
+                                        @input=${(event: Event) => {
+                                          this.searchText = (
+                                            event.target as HTMLInputElement
+                                          ).value;
+                                        }}
+                                    /></label>
+                                    <label
+                                      >Status<select
+                                        name="filter_status"
+                                        .value=${this.filterStatus}
+                                        ?disabled=${blocked}
+                                        @change=${(event: Event) => {
+                                          this.filterStatus = (
+                                            event.target as HTMLSelectElement
+                                          ).value;
+                                        }}
+                                      >
+                                        <option value="">All</option>
+                                        <option value="partial">Partial</option>
+                                        <option value="completed">
+                                          Completed
+                                        </option>
+                                      </select></label
+                                    >
+                                    <button ?disabled=${blocked}>Search</button>
+                                  </form>
+                                  ${
+                                    this.loading
+                                      ? html`<div class="empty" role="status">
+                                          Loading viewings…
+                                        </div>`
+                                      : this.rows.length
+                                        ? html`<div class="table-wrap">
+                                            <table>
+                                              <thead>
+                                                <tr>
+                                                  <th>Title</th>
+                                                  <th>Status</th>
+                                                  <th>Watched</th>
+                                                </tr>
+                                              </thead>
+                                              <tbody>
+                                                ${this.rows.map(
+                                                  (record) =>
+                                                    html` <tr
+                                                      class=${this.selected?.id === record.id ? "selected" : ""}
+                                                    >
+                                                      <td>
+                                                        <button
+                                                          class="link"
+                                                          ?disabled=${this.saving || !!this.pending}
+                                                          @click=${() => this.selectRecord(record.id)}
+                                                        >
+                                                          ${record.title}</button
+                                                        ><small
+                                                          >${this.date(record.started_at)}
+                                                          ·
+                                                          ${record.origin === "observed" ? "Recorded" : "Manual"}</small
+                                                        >
+                                                      </td>
+                                                      <td>
+                                                        <span
+                                                          class=${`badge ${record.status === "completed" ? "complete" : ""}`}
+                                                          >${record.status === "completed" ? "Completed" : "Partial"}</span
+                                                        >
+                                                      </td>
+                                                      <td>
+                                                        ${(record.watched_seconds / 60).toFixed(2)}
+                                                        min
+                                                      </td>
+                                                    </tr>`,
+                                                )}
+                                              </tbody>
+                                            </table>
+                                          </div>`
+                                        : html`<div class="empty">
+                                            <strong
+                                              >${this.query || this.status ? "No matching viewings" : "Your journal is empty"}</strong
+                                            >
+                                            <p>
+                                              ${this.query || this.status ? "Try another title or status." : "Add a manual viewing or enable automatic tracking in the integration settings."}
+                                            </p>
+                                          </div>`
+                                  }
+                                  <div class="pagination">
+                                    <small
+                                      >Page ${this.page} · Up to 25
+                                      entries</small
+                                    >
+                                    <div class="actions">
+                                      <button
+                                        ?disabled=${blocked || this.page === 1}
+                                        @click=${() => {
+                                          this.page = 1;
+                                          this.history = [];
+                                          void this.loadList();
+                                        }}
+                                      >
+                                        First
+                                      </button>
+                                      <button
+                                        ?disabled=${blocked || !this.history.length}
+                                        @click=${() => {
+                                          this.page--;
+                                          void this.loadList(
+                                            this.history.pop(),
+                                          );
+                                        }}
+                                      >
+                                        Previous
+                                      </button>
+                                      <button
+                                        ?disabled=${blocked || !this.nextCursor}
+                                        @click=${() => {
+                                          this.history.push(this.cursor);
+                                          if (this.history.length > 200)
+                                            this.history.shift();
+                                          this.page++;
+                                          void this.loadList(this.nextCursor!);
+                                        }}
+                                      >
+                                        Next
+                                      </button>
+                                    </div>
+                                  </div>
+                                </section>
+                                <section
+                                  class="card"
+                                  aria-label="Viewing editor"
+                                >
+                                  <div class="card-head">
+                                    <h2>
+                                      ${this.selected ? "Edit viewing" : this.draft ? "New viewing" : "Viewing details"}
+                                    </h2>
+                                    ${this.dirty() ? html`<span class="badge">Unsaved</span>` : nothing}
+                                  </div>
+                                  ${this.renderEditor()}
+                                </section>
+                              </div> `
                 }
               </section>`
       }

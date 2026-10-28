@@ -4,6 +4,8 @@ const exportPath =
   /^\/api\/kaleidescape_companion\/[a-zA-Z0-9_-]{1,64}\/[a-fA-F0-9-]{36}\/export\?format=(json|sqlite)$/;
 const artworkPath =
   /^\/api\/media_player_proxy\/media_player\.[a-z0-9_]{1,255}$/;
+const libraryArtworkPath =
+  /^\/api\/kaleidescape_companion\/[a-zA-Z0-9_-]{1,64}\/[a-fA-F0-9-]{36}\/library\/artwork\/[a-f0-9]{64}$/;
 const importPath =
   /^\/api\/kaleidescape_companion\/[a-zA-Z0-9_-]{1,64}\/[a-fA-F0-9-]{36}\/import\?format=(json|sqlite)&request_id=[a-f0-9-]{36}&revision=[0-9]{1,18}$/;
 const origins = new Set(["http://127.0.0.1:5173", "http://localhost:5173"]);
@@ -22,6 +24,7 @@ export function localApiGuard() {
         if (
           !exportPath.test(request.url) &&
           !artworkPath.test(request.url) &&
+          !libraryArtworkPath.test(request.url) &&
           !importing
         )
           code = 404;

@@ -22,7 +22,9 @@ function button(text: string): HTMLButtonElement {
   expect(element, `button ${text}`).toBeTruthy();
   return element!;
 }
-function page(id: "now-playing" | "journal" | "database" | "settings") {
+function page(
+  id: "now-playing" | "journal" | "library" | "database" | "settings",
+) {
   panel.shadowRoot!.querySelector<HTMLButtonElement>(`#page-${id}`)!.click();
 }
 function input(name: string, value: string) {
@@ -391,15 +393,23 @@ it("displays whole-second dates and two-decimal minutes without rewriting untouc
   expect(transport.records[0].watched_seconds).toBe(115.37234567);
 });
 
-it("has four separate top-level tabs and limits creation controls to their pages", async () => {
+it("has five top-level tabs with Library opt-in disabled and limits creation controls to their pages", async () => {
   const tabs = [...panel.shadowRoot!.querySelectorAll('[role="tab"]')];
   expect(tabs.map((tab) => tab.textContent!.trim())).toEqual([
     "Now Playing",
     "Journal",
+    "Library",
     "Database",
     "Settings",
   ]);
   expect(panel.shadowRoot!.querySelector('input[type="radio"]')).toBeNull();
+  expect(
+    panel.shadowRoot!.querySelector<HTMLButtonElement>("#page-library")!
+      .disabled,
+  ).toBe(true);
+  page("library");
+  await settle();
+  expect(panel.shadowRoot!.querySelector("kaleidescape-library")).toBeNull();
   expect(
     panel.shadowRoot!.querySelector("kaleidescape-now-playing"),
   ).toBeNull();
@@ -617,4 +627,23 @@ it("requires confirmation to abandon an uncertain retry and inspect existing rec
   ).toHaveLength(writes);
   expect(panel.shadowRoot!.querySelector("textarea")).toBeNull();
   expect(button("＋ Add viewing").disabled).toBe(false);
+});
+
+it("enables the Library tab after opting in and clears its content on navigation", async () => {
+  transport.options.library_enabled = true;
+  button("Refresh").click();
+  await settle();
+  expect(
+    panel.shadowRoot!.querySelector<HTMLButtonElement>("#page-library")!
+      .disabled,
+  ).toBe(false);
+  page("library");
+  await settle();
+  const library = panel.shadowRoot!.querySelector("kaleidescape-library")!;
+  expect(library).not.toBeNull();
+  await (library as KaleidescapePanel).updateComplete;
+  expect(library.shadowRoot!.textContent).toContain("Voyage to Europa");
+  page("journal");
+  await settle();
+  expect(panel.shadowRoot!.querySelector("kaleidescape-library")).toBeNull();
 });

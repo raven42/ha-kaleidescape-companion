@@ -1,6 +1,6 @@
 # Product plan
 
-Updated: 2026-10-26
+Updated: 2026-10-27
 
 Kaleidescape Companion maintains a shared household movie journal inside Home
 Assistant. Recording and browsing must work without a library import, external
@@ -20,7 +20,7 @@ The [security policy](security.md) governs every phase.
 | --- | --- | --- |
 | 1. Foundations | Config/options flow, worker-owned SQLite, migrations, authenticated APIs/panel, diagnostics, backup hooks, exports, and local deployment tooling implemented | Validate the supported HA releases, real config-flow/platform lifecycle, and full HA backup/restore; resolve dependency findings |
 | 2. Journal and read-only Now Playing | One-player timing/recovery, partials/rewatches, corrections, reader/admin UI, sensors, and read-only Now Playing with HA cover artwork/session context implemented | Operator browser review, real-source transition validation, and HA compatibility; subscriptions/progress remain optional follow-ups |
-| 3. Library browser | Planned | Optional server setup, safe read-only synchronization, identity evidence, cached details/artwork, poster/list browsing |
+| 3. Library browser | Opt-in hostname discovery/override, scheduled GET-only sync, cached titles/collections/details/artwork, search/filter/sort, first detection, and version identities implemented | Operator full-sync/browser/firmware validation; richer grouped/poster browsing and journal identity links remain |
 | 4. Playback and controls | Planned | Permission/capability checks, explicit commands, state confirmation, and authorized device tests |
 | 5. Polish and distribution | Planned | Accessibility/localization, measured performance, release compatibility, license/ownership/reporting setup, and HACS assessment |
 
@@ -30,7 +30,8 @@ A passing local build does not establish production readiness.
 ## Next: finish the journal experience
 
 Keep Journal the default view. Administrator navigation uses the ordered tabs
-Now Playing, Journal, Database, and Settings; Library can join them with its phase.
+Now Playing, Journal, Library, Database, and Settings. Library is disabled until
+explicitly enabled in Settings; its reads/sync are currently administrator-only.
 The compact read-only Now Playing card is mounted only on its own tab. It combines the existing HA player's title,
 cover, runtime, exact playback/location states, and availability with counted
 session time, credits evidence, timing gaps, and recording health. It uses the
@@ -80,8 +81,10 @@ Multiple players can follow this slice. Keep one household dataset and independe
 per-player queues/sessions; never merge simultaneous players by title. Add config
 migration and duplicate-mapping validation when expanding the current one-player flow.
 
-## Then: optional library and enrichment
+## Optional library and enrichment
 
+The [implemented library slice](library.md) uses SQLite as the immediate query
+source, with blank-host discovery, an explicit override, and opt-in scheduling.
 Keep the database as the immediate query source. Configure a server explicitly;
 fetch basic library and collection rows before lazy/throttled details and artwork.
 A server outage or unrecognized page preserves cached data and cannot stop recording.

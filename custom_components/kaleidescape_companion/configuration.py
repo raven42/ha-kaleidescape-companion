@@ -8,6 +8,7 @@ from homeassistant import data_entry_flow
 from homeassistant.helpers import config_validation as cv
 
 from .journal import JournalError, invalid, text
+from .library_config import DEFAULTS as LIBRARY_DEFAULTS
 
 OPTION_FIELDS = frozenset(
     {
@@ -19,6 +20,7 @@ OPTION_FIELDS = frozenset(
         "minimum_seconds",
         "resume_hours",
     }
+    | LIBRARY_DEFAULTS.keys()
 )
 
 

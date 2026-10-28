@@ -13,7 +13,7 @@ not a claim of independent security certification.
 | Integration → HA | Custom integrations execute in Core's process with Core's filesystem, entity, credential, and network access. Entity selection is application behavior, not a sandbox. Other code running as HA can read this database. |
 | HA users → one another | All active users share one household journal; there is no personal watch history or per-user journal ownership. A positive field allowlist limits regular-user API responses. HA roles are not strong isolation between hostile authenticated users. |
 | Journal → HA entity states | Watch-history sensor states/attributes deliberately expose movie titles, times, and counts through HA entity access. Recorder, dashboards, automations, and backups can retain these values outside the private database. Notes, source identities, sessions, and audit actors must never enter sensors. |
-| HA → devices and services | Current observation reads selected HA entity states and sends no controls or direct device requests. Now Playing artwork uses HA’s existing image proxy; HA may fetch its artwork source. Future connectors may contact only configured destinations using explicitly supported operations. |
+| HA → devices and services | Observation reads selected HA states. Optional library sync makes bounded GET-only requests to the configured private LAN browser origin, using validated/pinned DNS results. It is disabled by default and sends no controls or edits. Now Playing artwork uses HA's existing image proxy. |
 | Device/imported data → storage and UI | Treat metadata, notes, HTML, image references, and imported files as untrusted, including data from local devices. Validate before storing or using it, and render text without executing markup. |
 | Storage → filesystem and exports | Journal contents, source identifiers, audit actors, backups, and retry responses are private household data. Keep them outside static web roots and access them through the authenticated API. |
 | Development machine → test HA deployment | Deployment is an explicit privileged SSH operation. Verify the host key and target, send only the runtime package, and configure restart through fixed HA OS/Container commands. Normal checks must never connect to or modify the target. |
@@ -90,7 +90,8 @@ HA process against a journal directory.
    serving, and fixed ports. The development HTTP proxy accepts only GETs to the
    explicit journal export route and query-free `/api/media_player_proxy/media_player.<object_id>`
    artwork route, plus POST to the scoped import route with fixed format/request/revision
-   query fields, at a fixed `127.0.0.1:8123` target. It rejects image query tokens,
+   query fields, and query-free scoped `library/artwork/<opaque key>` GETs,
+   at a fixed `127.0.0.1:8123` target. It rejects image query tokens,
    browse-media subpaths, and arbitrary paths/URLs. It checks
    the origin or same-origin Fetch Metadata, passes the browser's bearer header,
    and injects no credentials. WebSockets go directly to local HA; there is no
@@ -126,6 +127,7 @@ review fixture uses fictional data and is excluded from the packaged panel.
 | Create/correct/delete, Now Playing, JSON/SQLite export | Denied | Allowed |
 | Integration settings, fixed raw-table inspection, selected/all permanent purge | Denied | Allowed |
 | Viewing-only JSON/SQLite merge imports and Database viewing corrections | Denied | Allowed |
+| Cached Library metadata/artwork, sync status, and manual sync | Denied | Allowed when library sync is enabled |
 
 Anonymous and inactive users are denied all journal operations. Regular-user
 `info` returns only API version, scope, revision, visible-record count, and
@@ -213,7 +215,8 @@ no general options/action proxy or Vite HTTP route. A lost save response require
 reopening and inspecting the persisted values rather than blindly replaying it.
 
 Database inspection is administrator-only, includes private data, and accepts
-only seven internal table names with 25-row pages and revision-bound pagination.
+only twelve internal table names with 25-row pages and revision-bound pagination,
+including five read-only library tables.
 Database corrections reuse validated viewing fields, optimistic revisions, manual
 audit, and exact retry semantics, including for tombstones; they preserve deletion
 status and session evidence. Internal tables/immutable fields are read-only.
@@ -290,6 +293,69 @@ a compromised HA process or a guarantee against every parser vulnerability.
 - Imports must validate size, schema, paths, identifiers, and content before
   applying transactional changes. Any extension to permanent purge must preserve
   coverage of sessions, retry responses, audit references, and retry barriers.
+
+## Optional library network and cache boundary
+
+Library sync is off by default. Only explicit enablement constructs its connector,
+creates a managed HA HTTP session, resolves the default `my-kaleidescape.local`
+name or configured host, and schedules GETs. Browsing uses SQLite, not device
+requests. Settings and sync/read/artwork APIs require an active administrator;
+scope/readiness/role checks apply before storage and after awaits. Regular users
+retain their existing positive journal projection. Disabling sync denies Library
+API access but retains private cached data. No cloud store, password login, vendor
+editing route, or playback operation is supported.
+
+Configured origins allow HTTP(S) on standard ports, without credentials, path,
+query, or fragment. Resolution uses HA's shared DNS/mDNS resolver when available.
+Only RFC 1918 IPv4/ULA IPv6 results can be selected. Each scan pins a validated IP
+while retaining the original Host/TLS hostname; changing DNS cannot redirect the
+request to a different destination. Loopback, link-local/metadata, public, multicast,
+and unspecified destinations are rejected. TLS verification stays enabled, cookies
+are disabled, proxy environment settings are ignored, and redirects/compressed
+bodies are refused. The default HTTP interface is plaintext on the local network;
+this is not transport encryption or a sandbox from other HA code.
+
+Only `/movies`, its encoded collection query, `/details` with an encoded source
+handle, and validated `/webcovers/` or `/webcoverslarge/` raster paths are fetched.
+No browser-supplied URL/path/SQL or metadata-supplied external destination is used.
+HTML parsing uses the native structural parser without evaluating scripts. Complete
+group/count/identity checks protect catalog availability; missing/unrecognized or
+partial collection navigation preserves old memberships rather than inventing
+unwatched status. Details and collections retain freshness separately. Source
+Played/Paused labels never create journal completion or dated viewing history.
+
+Requests are sequential, with 5-second DNS/connect, 15-second request, and 30-minute
+scan budgets. HTML responses are capped at 8 MiB, trees at 200,000 nodes/64 levels,
+catalogs at 10,000 handles, collections at 200 and combined memberships at 100,000.
+Known strings/credit arrays are bounded; filters use parameters and fixed sort
+expressions with 50-row pages and bounded suggestions. A single worker still owns
+SQLite. Library writes cannot grow the database beyond 192 MiB, reserving 64 MiB
+of the 256 MiB ceiling for journal growth. Existing databases at/above the library
+ceiling reject new library writes. This does not remove the database's overall
+storage-full limit or isolate library work from shared HA resources.
+
+Artwork uses private `0700`/`0600` files outside SQLite and static web roots. Both
+MIME and JPEG/PNG/WebP magic must match, with a 5 MiB image cap and no Python image
+decoding. Opaque SHA-256 keys resolve only current-source indexed files. Reads
+validate size/hash/type and recheck active-admin access before delivery, with
+`no-store`/`nosniff` headers. The browser displays one bounded cover blob at a time,
+aborts stale requests, and revokes URLs on selection/account/navigation changes.
+
+The configurable cache budget is 32–4096 MiB (default 512), plus at most one 5 MiB
+incoming file during normal writes. Atomic file replacement, transaction rollback,
+linked-file rejection, managed orphan cleanup, and missing-file reconciliation
+protect cache consistency. Eviction affects covers and their cache references,
+not identities or viewing facts. Host backups and separate copies need additional
+space and retain their own data. Journal purge does not purge the catalog cache.
+SQLite snapshots include library metadata/indexes but not cover bytes; JSON
+viewing import/export does not become library restore.
+
+Backup pauses/cancels sync and drains accepted worker writes before copying files;
+resume/reload schedules a fresh read-only scan. Stop/unload cancels requests/timers
+before closing the repository. Failures expose only safe codes, not addresses,
+source IDs, filenames, raw pages, or artwork. Automated checks use fictional data
+and mocked networking. [Library validation](library.md#validation-and-limits)
+distinguishes authorized read-only source checks from full sync/browser review.
 
 ## Operator procedures
 

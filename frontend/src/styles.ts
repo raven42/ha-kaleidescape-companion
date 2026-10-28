@@ -523,6 +523,27 @@ export const styles = css`
   .now-playing {
     margin-top: 24px;
   }
+  .library-page {
+    margin-top: 24px;
+  }
+  .library-filters {
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+    gap: 14px;
+    align-items: end;
+  }
+  .library-title {
+    margin-top: 20px;
+    padding-top: 20px;
+  }
+  .library-note {
+    padding: 0 20px;
+  }
+  .library-title h2,
+  .library-title p {
+    overflow-wrap: anywhere;
+  }
   .playback-message {
     padding: 0 20px 20px;
     margin: 0;

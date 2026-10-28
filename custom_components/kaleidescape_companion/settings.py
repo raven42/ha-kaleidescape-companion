@@ -9,6 +9,8 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import selector
 
 from .const import DEFAULT_MINIMUM_RUNTIME_MINUTES
+from .library_config import DEFAULTS as LIBRARY_DEFAULTS
+from .library_config import validate as validate_library
 
 ROLES = {
     "media_player": "media_player",
@@ -73,12 +75,33 @@ def form(hass: HomeAssistant, config: dict) -> p.Schema:
             )
         )
     )
+    for key, default in LIBRARY_DEFAULTS.items():
+        marker = (p.Optional if key == "library_host" else p.Required)(
+            key, default=config.get(key, default)
+        )
+        if type(default) is bool:
+            properties[marker] = selector.BooleanSelector()
+        elif key == "library_host":
+            properties[marker] = selector.TextSelector()
+        else:
+            properties[marker] = selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=1 if key == "library_interval_hours" else 32,
+                    max=168 if key == "library_interval_hours" else 4096,
+                    step=1,
+                    mode=selector.NumberSelectorMode.BOX,
+                )
+            )
     return p.Schema(properties)
 
 
 def validate(hass: HomeAssistant, user_input: dict[str, Any], previous: dict) -> dict:
     """Validate complete mappings; permit registered entities that are offline."""
-    config = {**previous, "tracking_enabled": user_input.get("tracking_enabled", False)}
+    config = {
+        **previous,
+        **validate_library(user_input, previous),
+        "tracking_enabled": user_input.get("tracking_enabled", False),
+    }
     for key, default, minimum, maximum in (
         ("minimum_runtime_minutes", DEFAULT_MINIMUM_RUNTIME_MINUTES, 0, 1440),
         ("minimum_seconds", 300, 1, 3600),

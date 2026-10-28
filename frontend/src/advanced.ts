@@ -22,6 +22,11 @@ const TABLE_LABELS: Record<string, string> = {
   maintenance_audit: "Maintenance audit",
   import_audit: "Import audit",
   schema_metadata: "Metadata",
+  library_sources: "Library sources",
+  library_titles: "Library titles",
+  library_collections: "Library collections",
+  library_memberships: "Library memberships",
+  library_artwork: "Library artwork",
 };
 
 export class KaleidescapeAdvanced extends LitElement {

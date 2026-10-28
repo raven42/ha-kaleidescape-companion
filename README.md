@@ -2,7 +2,7 @@
 
 A Home Assistant project for a household watch journal, Now Playing, a local movie library browser, and playback controls.
 
-**Status:** shared household journal with optional one-player automatic tracking, a read-only view for regular HA users, administrator management/exports, and seven history sensors. The UI runs in HA’s sidebar and the isolated Vite preview. A compact administrator Now Playing card shows HA artwork, detailed playback state, and session/recording context without library sync. Library browsing, position/progress, and playback controls remain planned. See [framework status](docs/framework.md) for validation and release limits.
+**Status:** shared household journal with optional one-player automatic tracking, a read-only view for regular HA users, administrator management/exports, and seven history sensors. The UI runs in HA’s sidebar and the isolated Vite preview. A compact administrator Now Playing card shows HA artwork, detailed playback state, and session/recording context without library sync. Optional administrator [Library sync](docs/library.md) now caches titles, collections, metadata, and artwork; it is disabled by default. Position/progress and playback controls remain planned. See [framework status](docs/framework.md) for validation and release limits.
 
 ## Documentation
 
@@ -80,6 +80,10 @@ changes. Open **Kaleidescape Companion** in HA’s sidebar using your developmen
 Vite preview uses a memory-only token from the local development instance; see
 the [UI guide](docs/ui.md). Seven [history sensors](docs/sensors.md) are created.
 Regular HA users can browse the household journal; administration remains restricted.
+Library is visible but disabled until **Settings → Enable library sync** is saved.
+Leave its hostname blank to try `my-kaleidescape.local`, or enter a local host.
+Choose the sync interval, collections/details, and optional artwork cache; see the
+[library guide](docs/library.md) for filters, first-detected dates, and disk use.
 Administrators can also open **Settings** from the Companion page and **Database**
 for table inspection and viewing corrections through a shared toolbar, table tabs,
 and list/detail layout. Import/export and selected/all-entry purge use dialogs. Disable

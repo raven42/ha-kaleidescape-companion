@@ -167,9 +167,11 @@ large downloads can still use substantial browser memory. Follow the
 
 ## Settings and Database
 
-The top-level tabs are **Now Playing | Journal | Database | Settings**. Journal
+The top-level tabs are **Now Playing | Journal | Library | Database | Settings**. Journal
 remains the default. Arrow keys, Home, and End move between tabs; the bar scrolls
-horizontally on narrow screens and leaves room for the planned Library tab.
+horizontally on narrow screens. Library stays visibly disabled until opted in
+through Settings. Enabled Library browsing, status, and sync currently require
+an administrator; see the [Library guide](library.md).
 Only the selected page is mounted, so leaving Now Playing stops its polling.
 Regular users retain the existing read-only journal without administrator tabs.
 

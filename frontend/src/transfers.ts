@@ -269,8 +269,9 @@ export class KaleidescapeTransfers extends LitElement {
         ${
           this.dialog === "export"
             ? html`<p>
-                  Exports include private history and deleted records. Store
-                  downloads securely.
+                  Exports include private history and deleted records. SQLite
+                  also includes catalog and source metadata. Store downloads
+                  securely.
                 </p>
                 <div class="actions">
                   <button

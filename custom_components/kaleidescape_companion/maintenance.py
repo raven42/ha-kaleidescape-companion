@@ -14,6 +14,11 @@ TABLE_KEYS = {
     "maintenance_audit": "request_id",
     "import_audit": "request_id",
     "schema_metadata": "singleton",
+    "library_sources": "id",
+    "library_titles": "id",
+    "library_collections": "source_id,name",
+    "library_memberships": "title_id,collection",
+    "library_artwork": "cache_key",
 }
 PAGE_SIZE = 25
 
