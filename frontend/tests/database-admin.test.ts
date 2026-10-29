@@ -218,6 +218,22 @@ it("uses scoped schema completion, validation feedback and literal/structured se
   );
   await search.updateComplete;
   expect(field.value).toBe("title ");
+  for (const partial of ["title IS N", "title IS NOT N"]) {
+    field.value = partial;
+    field.setSelectionRange(partial.length, partial.length);
+    field.dispatchEvent(new Event("input"));
+    await search.updateComplete;
+    expect(search.shadowRoot!.textContent).toContain("IS NOT NULL");
+    [
+      ...search.shadowRoot!.querySelectorAll<HTMLButtonElement>(
+        '[role="option"]',
+      ),
+    ]
+      .find((option) => option.textContent === "IS NOT NULL")!
+      .click();
+    await search.updateComplete;
+    expect(field.value).toBe("title IS NOT NULL ");
+  }
   field.value = "title = 'Voyage'";
   field.setSelectionRange(field.value.length, field.value.length);
   field.dispatchEvent(new Event("input"));

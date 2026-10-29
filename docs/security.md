@@ -240,12 +240,13 @@ without these controls; their Library/Journal tabs share permitted cached reads
 and actor-scoped personal browsing preference writes. Database New Entry uses
 the existing administrator journal/create API, with no create/edit capability
 for internal evidence, audit, retry, or metadata tables. Moving controls into
-tabs changes no API authorization or data projection. The shared Database
-toolbar reuses these same endpoints: single-entry deletion uses the journal
-tombstone API and remains distinct from permanent purge. Internal tables disable
-mutation controls. Native transfer/purge dialogs block dismissal during accepted
-work or an uncertain result; explicit retry discard remains available. Cancelled
-file selection clears its private File and native input.
+tabs does not grant API access or expand data projections. Journal Delete uses
+the tombstone API; Database Delete permanently removes supported selected rows
+through the confirmed mutation contract below. Audit, retry, dataset metadata
+and device-write receipt tables disable mutation controls. Native
+transfer/edit/delete dialogs block dismissal during accepted work or an
+uncertain result; explicit retry discard remains available. Cancelled file
+selection clears its private File and native input.
 
 The sidebar settings adapter operates only this Companion entry's native HA
 options flow. Start/submit/cancel require an active administrator; flows bind to
@@ -635,16 +636,17 @@ integration's permission and cleanup control.
 The journal deliberately retains history. A visible delete is a tombstone, not
 permanent erasure: content can remain in sessions, retry responses, SQLite
 pages, exports, and backups. There is no automatic history, audit, or retry
-purge. Administrators may explicitly purge selected/all entries through Database
-as described above. Live content and references are removed while content-free
-retry barriers and maintenance audit remain. Separate copies require separate
-retention. Monitor storage and retain only the migration backups and downloaded
-copies you need. At the database cap, writes fail with `storage_error`; reads
-remain usable. Before reaching capacity, archive a protected snapshot and plan
-retention or a reviewed limit change. Purge makes freed pages reusable but need
-not shrink the database file. Never edit or delete live SQLite files to reclaim
-space. Host backups and migration copies also need disk headroom beyond the page
-cap.
+purge. Administrators may permanently delete selected supported entries through
+Database as described above. The compatibility bulk viewing-purge API remains
+available with recording disabled. Live content and references are removed while
+content-free retry barriers and operation audit remain. Separate copies require
+separate retention. Monitor storage and retain only the migration backups and
+downloaded copies you need. At the database cap, writes fail with
+`storage_error`; reads remain usable. Before reaching capacity, archive a
+protected snapshot and plan retention or a reviewed limit change. Purge makes
+freed pages reusable but need not shrink the database file. Never edit or delete
+live SQLite files to reclaim space. Host backups and migration copies also need
+disk headroom beyond the page cap.
 
 For complete dataset removal, stop HA, remove only the integration's dedicated
 `kaleidescape_companion/` storage directory, and separately remove its backups

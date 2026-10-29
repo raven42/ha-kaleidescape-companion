@@ -5,10 +5,10 @@ administrator UI manages journal records through the existing HA API. It
 provides title search, status filters, 25-record pages, manual entries,
 corrections, confirmed deletion, session evidence, database health, and private
 JSON/SQLite downloads. Administrators can open Settings and a Database view for
-raw table inspection, viewing corrections, permanent selected/all-entry purge,
-and compatible JSON/SQLite import/export. A compact administrator Now Playing
-card adds live source/session context. The opt-in [Library](library.md) provides
-shared cached browsing with a resizable cover grid, sortable list, and
+raw table inspection, supported-field corrections, permanent selected-entry
+deletion, and compatible JSON/SQLite import/export. A compact administrator Now
+Playing card adds live source/session context. The opt-in [Library](library.md)
+provides shared cached browsing with a resizable cover grid, sortable list, and
 filter/title-detail popups. **Clear Filter** resets the search and all facet
 selections without changing the view, sort, or page size. Source-group editions
 share a row/cover; same-name remakes stay separate, with individual

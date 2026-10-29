@@ -444,3 +444,23 @@ it("orders primary filters before people and completes people names from the ful
   await flush();
   expect(transport.uiPreferences.actor).toEqual(["Fictional Actor"]);
 });
+
+it("keeps Unicode casefold matches returned by people completion", async () => {
+  const root = await mount(new FixtureTransport());
+  const suggest = vi
+    .spyOn(element!.client!, "librarySuggestions")
+    .mockResolvedValue({ items: ["Fictional Straße"], has_more: false });
+  button(root, "Filters").click();
+  await flush();
+  change(root, "actor_search", "STRASSE");
+  await vi.waitFor(() =>
+    expect(
+      root.querySelector<HTMLInputElement>('input[name="actor"]')?.value,
+    ).toBe("Fictional Straße"),
+  );
+  expect(suggest).toHaveBeenCalledWith(element!.scope, "actor", "STRASSE");
+  suggest.mockResolvedValue({ items: [], has_more: false });
+  change(root, "actor_search", "Other");
+  await flush();
+  expect(root.querySelector('input[name="actor"]')).toBeNull();
+});

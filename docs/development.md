@@ -176,32 +176,34 @@ session timing, entity setup, household reading, administrator
 administrator Now Playing card reuses HA artwork and source states with
 visible-only snapshot refresh. Administrator Settings reuses the native HA
 options flow. Database uses a shared toolbar and table tabs for fixed-table
-inspection, validated viewing corrections, tombstone deletion, explicit
-permanent purge, and compatible JSON/SQLite viewing merge imports; schema 5 adds
-content-free import audit. Transfers and purge use native dialogs; pending work
-and exact retries prevent accidental dismissal. No additional API or schema
-change is needed for this layout. Optional [Library sync](library.md) adds
-schema 6 source/version/collection metadata and a private bounded artwork cache,
-with default-host discovery and manual override. Its Library tab stays disabled
-until opted in through Settings. All active users can browse the enabled
-Library; settings and manual sync remain administrator-only. Worker queries
-group source-scoped `source_group` values before pagination while retaining
-exact versions; the popup loads at most 50 versions per page. Hidden collections
-are display-only and use known/custom value lists. Schema 11
-[UI preferences](ui-preferences.md) save view/count, applied filters, search,
-sort and sizing per HA user; hidden names are shared database settings. The
-landing default remains native, with URL main-tab restoration. The
-[purchase-date helper](purchase-dates.md) stays offline; corrected SQLite copies
-use the reviewed missing-data merge. Fixed/resizable table widths and popup
-version navigation need operator browser review. The page-size dropdown offers
-25/100/1000/All; Covers adapts numeric targets to whole rows and All aggregates
-bounded revision-checked chunks. Status flags and explicit format chips use
-public metadata, without guessing missing capabilities. Use
-`.venv/bin/python dev/benchmark_library.py` to time a fictional
-5000-name/10000-version cache without networking; this does not replace browser
-or target-HA timing. [Add to Collection](library-collections.md) is separately
-opt-in and administrator-only; removal remains deferred. Playback controls,
-progress, subscriptions, and selective per-user sharing remain deferred.
+inspection, raw-first details, validated supported-field corrections, permanent
+selected-entry deletion, and compatible JSON/SQLite merge imports. Personal
+Options persist pagination, sort and system-table visibility. Schema 12 adds
+content-free database-operation audit and monotonic settings revisions.
+Transfers and edit/delete confirmations use native dialogs; pending work and
+exact retries prevent accidental dismissal. Journal Delete remains a tombstone.
+Optional [Library sync](library.md) adds schema 6 source/version/collection
+metadata and a private bounded artwork cache, with default-host discovery and
+manual override. Its Library tab stays disabled until opted in through Settings.
+All active users can browse the enabled Library; settings and manual sync remain
+administrator-only. Worker queries group source-scoped `source_group` values
+before pagination while retaining exact versions; the popup loads at most 50
+versions per page. Hidden collections are display-only and use known/custom
+value lists. Schema 11 [UI preferences](ui-preferences.md) save view/count,
+applied filters, search, sort and sizing per HA user; hidden names are shared
+database settings. The landing default remains native, with URL main-tab
+restoration. The [purchase-date helper](purchase-dates.md) stays offline;
+corrected SQLite copies use the reviewed missing-data merge. Fixed/resizable
+table widths and popup version navigation need operator browser review. The
+page-size dropdown offers 25/100/1000/All; Covers adapts numeric targets to
+whole rows and All aggregates bounded revision-checked chunks. Status flags and
+explicit format chips use public metadata, without guessing missing
+capabilities. Use `.venv/bin/python dev/benchmark_library.py` to time a
+fictional 5000-name/10000-version cache without networking; this does not
+replace browser or target-HA timing. [Add to Collection](library-collections.md)
+is separately opt-in and administrator-only; removal remains deferred. Playback
+controls, progress, subscriptions, and selective per-user sharing remain
+deferred.
 
 Library search/status bars are sticky, search includes partial actors/directors,
 and filters use bounded people suggestions. Database now has personal Options,

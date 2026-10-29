@@ -322,10 +322,11 @@ controls.
 
 Broader sharing and import extensions require explicit capability and retention
 contracts plus security regressions. Import validates size/schema/paths before
-transactional changes. Current administrator purge covers retained
-sessions/retry content/audit references, with recording disabled, dataset
-revisions, explicit confirmation, and durable content-free retry barriers and
-maintenance receipts. Keep this contract when extending retention; external
-copies are outside live purge scope. Do not add unused tables, generic
-repository layers, or alternate authentication in anticipation of these
-features.
+transactional changes. Confirmed Database deletion covers supported live rows
+and dependent references with content/row snapshot checks and content-free
+retry/audit barriers. Active playback rows and integrity metadata stay
+protected; recording and sync may remain enabled. The compatibility bulk
+viewing-purge API retains its disabled-recording rule and maintenance receipts.
+Keep these contracts when extending retention; external copies are outside live
+deletion scope. Do not add unused tables, generic repository layers, or
+alternate authentication in anticipation of these features.

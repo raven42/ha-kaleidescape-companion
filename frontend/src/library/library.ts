@@ -683,6 +683,7 @@ export class KaleidescapeLibrary extends LitElement {
   }
   private completePeople(key: string, query: string) {
     this.peopleSearch[key] = query;
+    delete this.peopleChoices[key];
     clearTimeout(this.peopleTimers[key]);
     const request = (this.peopleRequests[key] ?? 0) + 1;
     this.peopleRequests[key] = request;
@@ -955,17 +956,16 @@ export class KaleidescapeLibrary extends LitElement {
           ["director", "Director", "directors"],
         ].map(([key, label, facet]) => {
           const selected = (this.draft[key] ?? []) as string[];
+          // Server suggestions use Unicode casefold; do not narrow them again
+          // with JavaScript's more limited lowercase matching.
           const choices = (
             this.peopleChoices[key] ??
-            this.page?.facets[facet] ??
-            []
-          )
-            .filter((name) =>
+            (this.page?.facets[facet] ?? []).filter((name) =>
               name
                 .toLocaleLowerCase()
                 .includes((this.peopleSearch[key] ?? "").toLocaleLowerCase()),
             )
-            .slice(0, 20);
+          ).slice(0, 20);
           return html`<fieldset>
             <legend>${label}</legend>
             <label

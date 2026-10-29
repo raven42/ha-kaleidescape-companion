@@ -99,11 +99,30 @@ export class DatabaseSearch extends LitElement {
       this.open = false;
     }
   }
-  private choices() {
+  private completion() {
     const prefix = this.value.slice(0, this.cursor);
-    if ((prefix.match(/'/g)?.length ?? 0) % 2) return [];
+    if ((prefix.match(/'/g)?.length ?? 0) % 2)
+      return { start: this.cursor, options: [] as string[] };
     const tail = prefix.match(/[A-Za-z_0-9.<>!=]*$/)?.[0] ?? "";
     const before = prefix.slice(0, prefix.length - tail.length).trim();
+    // Replace the whole partial operator, including multiword IS/NOT forms.
+    const operator = prefix.match(
+      /([A-Za-z_][A-Za-z_0-9.]*)\s+((?:(?:IS(?:\s+NOT)?|NOT)\s+)?[A-Za-z<>!=]*)$/i,
+    );
+    if (
+      operator &&
+      this.fields.some(
+        (field) => field.name.toLowerCase() === operator[1].toLowerCase(),
+      )
+    ) {
+      const partial = operator[2].replace(/\s+/g, " ").toLowerCase();
+      return {
+        start: this.cursor - operator[2].length,
+        options: this.operators
+          .filter((option) => option.toLowerCase().startsWith(partial))
+          .slice(0, 12),
+      };
+    }
     let options: string[];
     if (!before || /(?:\bAND|\bOR|\bNOT|\bWHERE|\()$/i.test(before))
       options = this.fields.map((field) => field.name);
@@ -115,9 +134,12 @@ export class DatabaseSearch extends LitElement {
       options = this.operators;
     else if (/(?:NULL|'|\d|TRUE|FALSE)$/i.test(before)) options = ["AND", "OR"];
     else options = ["''", "0", "TRUE", "FALSE"];
-    return options
-      .filter((option) => option.toLowerCase().startsWith(tail.toLowerCase()))
-      .slice(0, 12);
+    return {
+      start: this.cursor - tail.length,
+      options: options
+        .filter((option) => option.toLowerCase().startsWith(tail.toLowerCase()))
+        .slice(0, 12),
+    };
   }
   private changed() {
     this.dispatchEvent(
@@ -159,9 +181,7 @@ export class DatabaseSearch extends LitElement {
     this.requestUpdate();
   }
   private choose(option: string) {
-    const prefix = this.value.slice(0, this.cursor),
-      tail = prefix.match(/[A-Za-z_0-9.<>!=]*$/)?.[0] ?? "";
-    const start = this.cursor - tail.length;
+    const { start } = this.completion();
     this.value =
       this.value.slice(0, start) + option + " " + this.value.slice(this.cursor);
     this.cursor = start + (option === "''" ? 1 : option.length + 1);
@@ -174,7 +194,7 @@ export class DatabaseSearch extends LitElement {
     });
   }
   protected render() {
-    const choices = this.choices();
+    const { options: choices } = this.completion();
     return html`<div class="search">
         <label
           >Search rows / conditions<input

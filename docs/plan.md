@@ -64,12 +64,14 @@ Administrator Settings on the main page uses the existing native HA options
 flow; keep one validation/persistence/reload path. Display whole-second times
 and two-decimal minutes without rewriting untouched observed precision. Database
 provides a shared toolbar and underline table tabs, inline row selection,
-viewing details/corrections, import/export dialogs, fixed-table raw inspection
-with 10/25/100/500-row pages, search and sorting, and confirmed selected/all
-purge, with recording disabled, dataset revision checks, associated-content
-removal, and content-free durable retry barriers/audit. Automatic retention
-remains later work; preserve the explicit purge contract and external-copy
-limitations.
+raw-first details, explicit supported-field edit dialogs, reviewed
+import/export, and confirmed permanent selected-row deletion. Personal Options
+save 10/25/100/500-row pages, per-table sorting and system-table visibility.
+Schema-aware predicate completion/validation uses bound values. Targeted writes
+can run with recording/sync enabled, protected by content revisions, row
+snapshots, active-session checks and content-free durable retry barriers/audit.
+The compatibility bulk-purge API still requires recording disabled. Automatic
+retention remains later work; preserve external-copy limitations.
 
 Now Playing retains the current administrator boundary plus source-entity read
 checks. Regular users retain the household journal reader. Any broader live-data

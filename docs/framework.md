@@ -56,10 +56,12 @@ The product name is **Kaleidescape Companion**. The HA domain
 - Administrator Settings tab using the same native HA options flow, with
   stale-configuration/actor scoping and automatic reload.
 - Administrator Database shared toolbar/surface, underline table tabs, inline
-  selection list, viewing detail editor, confirmed tombstone deletion, and
-  import/export dialogs, 10/25/100/500-row pages, literal search and column
-  sorting; confirmed selected/all purge, covering sessions/audit/cached content
-  and retaining retry barriers.
+  selection list, raw-first details and confirmed supported-field edit/delete
+  dialogs. Personal Options save 10/25/100/500-row pages, sorting and
+  system-table visibility. Schema-aware condition search and reviewed
+  import/export retain access, revision, row-snapshot and retry protections.
+  Database Delete removes supported live rows and dependent references
+  permanently; Journal Delete remains a tombstone.
 - Configurable total-runtime admission (10 minutes by default, 0 disables),
   excluding short playback from automatic entries and waiting for missing
   runtime.
