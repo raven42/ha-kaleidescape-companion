@@ -2,8 +2,9 @@
 
 ## Unreleased — Library and storage sensors
 
-- Add six HA sensors: total movies unique by source group, unwatched movies,
-  recent additions, last catalog sync, database size and artwork cache size.
+- Add seven HA sensors: total movies unique by source group, watched/unwatched
+  movies, recent additions, last catalog sync, database size and artwork cache
+  size.
 - Keep recent counts exact with a bounded title-list attribute. Schema 10 stores
   the latest non-empty discovery batch on the source row; initial sync is a
   baseline, and unchanged scans/additional formats retain the batch.

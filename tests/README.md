@@ -15,13 +15,13 @@ locks, revocation and stale-result cleanup. See
 [purchase dates](../docs/purchase-dates.md) for operator workflows.
 
 `test_library_sensors.py` checks source-group/movie counts against browsing,
-Played/Paused/unknown precedence, initial/upgrade baselines, durable addition
-batches across unchanged/removal scans, failed catalog rollback, separate
-sources, 1000-title bounded attributes, deduplicated cache sizes, sensor
-classes, opt-out, independent coordinators, unavailable states and stale-source
-replies. All records/files are fictional; no discovery, device request or
-deployment is performed. Existing history IDs and behavior are covered by
-`test_history.py`.
+Played/Paused/unknown precedence, grouped watched counts/source isolation,
+initial/upgrade baselines, durable addition batches across unchanged/removal
+scans, failed catalog rollback, separate sources, 1000-title bounded attributes,
+deduplicated cache sizes, sensor classes, opt-out, independent coordinators,
+unavailable states and stale-source replies. All records/files are fictional; no
+discovery, device request or deployment is performed. Existing history IDs and
+behavior are covered by `test_history.py`.
 
 `test_library.py` uses fictional HTML and mocked networking to check catalog
 completeness/version groups, exclusion of built-in Scenes management, initial

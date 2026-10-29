@@ -156,7 +156,7 @@ versions are independent: integration `0.0.0`, API `1`, SQLite `8`, JSON export
 History queries live beside automatic persistence as a worker-only read model.
 One `DataUpdateCoordinator` refreshes all enabled history sensors every 30
 seconds; entity getters read memory only. Counts remain exact while title arrays
-are bounded by count and encoded byte size. A second coordinator serves six
+are bounded by count and encoded byte size. A second coordinator serves seven
 Library/storage sensors using `library/summary.py` and the same worker.
 `core/sensor_data.py` owns shared title-list limits. Schema 10 keeps the last
 non-empty new-group batch as a bounded snapshot/count/time on the source row,

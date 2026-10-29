@@ -12,7 +12,7 @@ integration remains the source of playback entities; this integration uses
 
 The working implementation includes a manual journal, optional automatic
 tracking of one selected player, administrator management, a regular-user
-reader, exports, seven history and six Library/storage sensors, and a compact
+reader, exports, seven history and seven Library/storage sensors, and a compact
 administrator Now Playing card. See [framework status](framework.md) for the
 complete implemented/deferred inventory and [technical design](design.md) for
 code boundaries. The [security policy](security.md) governs every phase.
@@ -203,10 +203,10 @@ does not prove a vendor protocol.
 
 ### Library entity summaries
 
-Implemented six native HA sensors for unique source-group totals, unwatched
-counts, database/artwork sizes, catalog timestamp and bounded recent additions.
-Schema 10 keeps the latest non-empty discovery batch with source sync state,
-without another table. First catalog is a baseline; unchanged scans and new
-formats do not replace the batch. Full catalogs use the existing paginated
-Library API; a native Media Browser or dedicated catalog dashboard can be
-evaluated separately without a full-catalog sensor attribute.
+Implemented seven native HA sensors for unique source-group totals,
+watched/unwatched counts, database/artwork sizes, catalog timestamp and bounded
+recent additions. Schema 10 keeps the latest non-empty discovery batch with
+source sync state, without another table. First catalog is a baseline; unchanged
+scans and new formats do not replace the batch. Full catalogs use the existing
+paginated Library API; a native Media Browser or dedicated catalog dashboard can
+be evaluated separately without a full-catalog sensor attribute.

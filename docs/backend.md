@@ -75,7 +75,7 @@ also exposes three validated display defaults to active users.
 
 Schema 10 adds the bounded last-addition title snapshot/count/time to
 `library_sources`, committed with the catalog. Existing catalogs establish the
-baseline; it adds no tables and no imported operational state. Six additional
+baseline; it adds no tables and no imported operational state. Seven additional
 [Library/storage sensors](sensors.md#library-and-storage) read local summaries,
 including grouped counts and cached size diagnostics.
 
@@ -243,7 +243,7 @@ status during an awaited operation withholds its result. Accounts share the same
 household history; there is no per-user dataset.
 
 The [history sensors](sensors.md) derive completed and unfinished-partial
-summaries from this database without adding a schema migration. Six
+summaries from this database without adding a schema migration. Seven
 Library/storage sensors separately derive source-group counts and health
 metadata; schema 10 retains the latest non-empty discovery batch. All sensor
 states follow HA entity visibility and may be retained by Recorder and

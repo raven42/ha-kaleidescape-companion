@@ -274,8 +274,8 @@ class HistorySummaryTest(unittest.IsolatedAsyncioTestCase):
         coordinator = entities[0].coordinator
         self.addAsyncCleanup(coordinator.async_shutdown)
         self.addAsyncCleanup(entities[7].coordinator.async_shutdown)
-        self.assertEqual(len(entities), 13)
-        self.assertEqual(len({sensor.unique_id for sensor in entities}), 13)
+        self.assertEqual(len(entities), 14)
+        self.assertEqual(len({sensor.unique_id for sensor in entities}), 14)
         self.assertEqual(coordinator.update_interval.total_seconds(), 30)
         self.assertTrue(
             all(entity.coordinator is coordinator for entity in entities[:7])

@@ -137,6 +137,9 @@
       },
       "recently_added": {
         "name": "Recently added movies"
+      },
+      "watched_movies": {
+        "name": "Watched movies"
       }
     }
   }

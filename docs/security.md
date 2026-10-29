@@ -164,7 +164,8 @@ coordinator's entities unavailable, preserving independence from the other.
 Library states use the currently configured source, reject late results after a
 source change, and become unavailable immediately on opt-out; aggregate storage
 sizes remain readable because disabled caches still occupy space. Missing
-catalog/status context is unknown, never a fabricated zero/unwatched count.
+catalog/status context keeps watched/unwatched counts unknown rather than
+publishing fabricated zeros or incomplete totals.
 
 Title arrays contain at most 50 strings and 8 KiB UTF-8 JSON with an explicit
 truncation flag; integer counts remain exact. The last-title state respects HA's

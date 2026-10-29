@@ -47,11 +47,13 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
     ):
         empty = await self.summary()
         self.assertIsNone(empty["total_movies"])
+        self.assertIsNone(empty["watched_movies"])
         self.assertGreater(empty["database_bytes"], 0)
         self.assertEqual(empty["artwork_cache_bytes"], 0)
         result = await self.scan(collections={})
         self.assertEqual(result["total_movies"], 2)
         self.assertEqual(result["unwatched_movies"], 2)
+        self.assertEqual(result["watched_movies"], 0)
         self.assertEqual(result["recently_added"], 0)
         self.assertEqual(result["recently_added_movies"], [])
         self.assertIsNone(result["recently_added_at"])
@@ -59,6 +61,7 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
         result = await self.scan([], {})
         self.assertEqual(result["total_movies"], 0)
         self.assertEqual(result["unwatched_movies"], 0)
+        self.assertEqual(result["watched_movies"], 0)
         await self.scan(library.ROWS, {})
         self.assertEqual((await self.summary())["recently_added"], 0)
 
@@ -97,6 +100,7 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
     ):
         result = await self.scan()
         self.assertIsNone(result["unwatched_movies"])
+        self.assertIsNone(result["watched_movies"])
         self.assertEqual(result["unknown_movies"], 2)
         for memberships in (
             {"Played": ["fixture-a"], "Paused": ["fixture-a2"]},
@@ -111,12 +115,33 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
                 result["unwatched_movies"],
                 sum(row["watched_status"] == "unwatched" for row in page["items"]),
             )
+            self.assertEqual(
+                result["watched_movies"],
+                sum(row["watched_status"] == "watched" for row in page["items"]),
+            )
         result = await self.scan([*library.ROWS, movie()])
         self.assertEqual(result["total_movies"], 3)
         self.assertIsNone(result["unwatched_movies"])
+        self.assertIsNone(result["watched_movies"])
         self.assertEqual(result["unknown_movies"], 1)
         result = await self.scan([*library.ROWS, movie()], {})
         self.assertEqual(result["unwatched_movies"], 3)
+        self.assertEqual(result["watched_movies"], 0)
+
+    async def test_watched_counts_groups_excludes_paused_and_uses_current_source(self):
+        remake = movie("remake", "remake", title=library.ROWS[0]["title"], year=1990)
+        rows = [*library.ROWS, remake]
+        played = [row["source_handle"] for row in rows]
+        result = await self.scan(rows, {"Played": played})
+        self.assertEqual(result["watched_movies"], 3)
+        result = await self.scan(rows, {"Played": played, "Paused": ["fixture-a2"]})
+        self.assertEqual(result["watched_movies"], 2)
+        await self.repository.async_library_catalog(
+            "http://other-fictional.local", [movie()], {"Played": ["new-handle"]}
+        )
+        self.assertEqual((await self.summary())["watched_movies"], 2)
+        result = await self.scan([remake], {"Played": ["remake"]})
+        self.assertEqual(result["watched_movies"], 1)
 
     async def test_batches_are_atomic_persistent_and_source_scoped(self):
         await self.scan(collections={})
@@ -232,6 +257,15 @@ class LibrarySensorTest(unittest.IsolatedAsyncioTestCase):
         entry, sensors = await self.setup_sensors()
         total = sensors["total_movies"]
         self.assertEqual(total.native_value, 2)
+        watched = sensors["watched_movies"]
+        self.assertEqual(watched.native_value, 0)
+        self.assertEqual(watched.extra_state_attributes["unknown_movies"], 0)
+        self.assertEqual(watched.suggested_display_precision, 0)
+        await self.repository.async_library_catalog(
+            library.ORIGIN, library.ROWS, {"Played": ["fixture-a", "fixture-a2"]}
+        )
+        await watched.coordinator.async_refresh()
+        self.assertEqual(watched.native_value, 1)
         self.assertEqual(sensors["recently_added"].native_value, 0)
         stamp = sensors["last_library_sync"]
         self.assertEqual(stamp.device_class, SensorDeviceClass.TIMESTAMP)
@@ -249,11 +283,19 @@ class LibrarySensorTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(
             all(
                 sensors[key].coordinator is total.coordinator
-                for key in ("database_size", "unwatched_movies", "recently_added")
+                for key in (
+                    "database_size",
+                    "watched_movies",
+                    "unwatched_movies",
+                    "recently_added",
+                )
             )
         )
         object.__setattr__(entry, "data", {"library_enabled": False})
         self.assertFalse(total.available)
+        self.assertFalse(watched.available)
+        self.assertIsNone(watched.native_value)
+        self.assertEqual(watched.extra_state_attributes, {})
         self.assertIsNone(total.native_value)
         self.assertEqual(sensors["recently_added"].extra_state_attributes, {})
         self.assertTrue(size.available)

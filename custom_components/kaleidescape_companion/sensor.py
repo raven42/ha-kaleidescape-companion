@@ -85,6 +85,12 @@ LIBRARY_DESCRIPTIONS = (
         suggested_display_precision=0,
     ),
     SensorEntityDescription(
+        key="watched_movies",
+        translation_key="watched_movies",
+        icon="mdi:movie-check",
+        suggested_display_precision=0,
+    ),
+    SensorEntityDescription(
         key="recently_added",
         translation_key="recently_added",
         icon="mdi:movie-plus",
@@ -272,7 +278,7 @@ class LibrarySensor(CompanionSensor):
                 "truncated": data["recently_added_truncated"],
                 "added_at": data["recently_added_at"],
             }
-        if self.entity_description.key == "unwatched_movies":
+        if self.entity_description.key in {"watched_movies", "unwatched_movies"}:
             return {
                 "unknown_movies": data["unknown_movies"],
                 "collections_synced_at": data["collections_synced_at"],

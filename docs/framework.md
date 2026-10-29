@@ -71,11 +71,11 @@ The product name is **Kaleidescape Companion**. The HA domain
   ESLint/Markdownlint, source/docs formatting, and packaged ES module.
 - A read-only household sidebar view for regular users, with server-side field
   allowlists and administrator-only notes, source/session details, and exports.
-- Thirteen [HA sensors](sensors.md): seven history sensors for completed history
-  and unfinished partial viewings, plus six Library/storage sensors for unique
-  movies, unwatched, recent additions, last sync and storage sizes. Independent
-  shared coordinators use local queries; lists stay bounded and counts exact.
-  Schema 10 persists recent additions on the source row.
+- Fourteen [HA sensors](sensors.md): seven history sensors for completed history
+  and unfinished partial viewings, plus seven Library/storage sensors for unique
+  movies, watched/unwatched counts, recent additions, last sync and storage
+  sizes. Independent shared coordinators use local queries; lists stay bounded
+  and counts exact. Schema 10 persists recent additions on the source row.
 - Project validation script and continuous-integration workflow.
 - Runtime-only archives and explicit VS Code SSH deployment tasks for HA
   OS/Container, with a local target preview, retained previous code, and

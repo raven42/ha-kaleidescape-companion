@@ -144,10 +144,10 @@ administrator sidebar panel at `/kaleidescape-companion` and review:
 - JSON/SQLite downloads and record persistence after another restart.
 - A regular account’s read-only history, without notes, source/session details,
   or exports.
-- All thirteen sensors: seven history sensors plus six Library/storage sensors.
-  Check their bounded attributes/counts after the next refresh, the initial
-  discovery baseline, unchanged-scan batch retention and unavailable/unknown
-  behavior when Library/status data is disabled or missing.
+- All fourteen sensors: seven history sensors plus seven Library/storage
+  sensors. Check their bounded attributes/counts after the next refresh, the
+  initial discovery baseline, unchanged-scan batch retention and
+  unavailable/unknown behavior when Library/status data is disabled or missing.
 - With a deliberately selected player, the administrator Now Playing card:
   cover/placeholder, pause/scan/credits states, counted time, and
   unavailable/recording-health states.

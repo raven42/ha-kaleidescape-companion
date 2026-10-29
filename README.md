@@ -102,7 +102,7 @@ The page order is **Now Playing | Library | Journal | Database | Settings**.
 Settings controls the default landing page and Library view/count; the selected
 tab is retained in the URL. Configure one player's entities for automatic
 recording. Minimum runtime defaults to 10 minutes; 0 disables the cutoff.
-Thirteen [HA sensors](docs/sensors.md) expose viewing history, Library
+Fourteen [HA sensors](docs/sensors.md) expose viewing history, Library
 counts/recent additions, last catalog sync and storage sizes. Full catalogs stay
 in the paginated Library UI/API rather than sensor attributes.
 

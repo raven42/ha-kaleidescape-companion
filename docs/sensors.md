@@ -1,6 +1,6 @@
 # Home Assistant sensors
 
-The integration creates thirteen read-only sensors under a **Kaleidescape
+The integration creates fourteen read-only sensors under a **Kaleidescape
 Companion** service device. Restart/reload the integration after updating its
 files. Find the actual entity IDs under **Settings → Devices & services →
 Kaleidescape Companion**; names/IDs can vary if you rename entities or already
@@ -61,10 +61,10 @@ sessions, audit actors, or paths. See the
 
 ## Library and storage
 
-The six additional sensors share a separate coordinator refreshing local SQLite
-summaries every 30 seconds. No sensor starts a scan, resolves a hostname or
-contacts a device. Updating files and restarting/reloading the integration adds
-them to the same service device; existing history unique IDs are unchanged.
+The seven additional sensors share a separate coordinator refreshing local
+SQLite summaries every 30 seconds. No sensor starts a scan, resolves a hostname
+or contacts a device. Updating files and restarting/reloading the integration
+adds them to the same service device; existing history unique IDs are unchanged.
 
 | Sensor key           | Name / state                   | Notes and attributes                                                                                                                   |
 | -------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -72,6 +72,7 @@ them to the same service device; existing history unique IDs are unchanged.
 | `database_size`      | Database size: MiB             | Main Companion SQLite file size; excludes artwork, backup/export files and transient SQLite sidecars                                   |
 | `last_library_sync`  | Last library sync: timestamp   | Most recent committed complete catalog snapshot; HA renders the UTC timestamp in local time                                            |
 | `artwork_cache_size` | Artwork cache size: MiB        | Indexed image payload bytes for the entire managed cache, counting shared files once; excludes filesystem overhead and temporary files |
+| `watched_movies`     | Watched movies: integer        | Groups marked Played, excluding Paused groups; `unknown_movies` and `collections_synced_at` attributes                                 |
 | `unwatched_movies`   | Unwatched movies: integer      | Grouped Played/Paused status, with `unknown_movies` and `collections_synced_at` attributes                                             |
 | `recently_added`     | Recently added movies: integer | Exact count for the latest addition batch; attributes `movies` (title strings), `truncated`, and `added_at`                            |
 
@@ -89,11 +90,17 @@ versions added by imports are excluded. Same-name remakes with different source
 groups count separately; additional formats of one group count once. Across
 versions the same priority as browsing applies: **Paused → Played → unknown →
 unwatched**. Hidden collection names still determine status. If collection data
-is missing or any current group has unknown status, `unwatched_movies` stays
-unknown rather than treating unknown movies as unwatched. Existing cached
-collection data can be older than the last catalog: its timestamp is exposed. A
-valid catalog updates `last_library_sync` even if later detail/artwork requests
-fail; it does not assert that every cover or collection was synchronized.
+is missing or any current group has unknown status, both `watched_movies` and
+`unwatched_movies` stay unknown rather than publishing incomplete counts.
+Existing cached collection data can be older than the last catalog: its
+timestamp is exposed. A valid catalog updates `last_library_sync` even if later
+detail/artwork requests fail; it does not assert that every cover or collection
+was synchronized.
+
+The watched count describes the cached Library Played collection, independently
+of completed journal viewings and rewatches. Paused takes priority even when
+another format of the same movie belongs to Played. It refreshes with the
+existing Library coordinator; this sensor needs no database migration.
 
 ### Recently added batches
 

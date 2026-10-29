@@ -50,6 +50,7 @@ def library_summary(db, source):
     result = {
         "total_movies": None,
         "unwatched_movies": None,
+        "watched_movies": None,
         "unknown_movies": 0,
         "collections_synced_at": None,
         "last_library_sync": None,
@@ -69,7 +70,7 @@ def library_summary(db, source):
         return result
     counts = db.execute(
         f"""SELECT count(*),coalesce(sum(status_rank=3),0),
-            coalesce(sum(status_rank=2),0) FROM (
+            coalesce(sum(status_rank=2),0),coalesce(sum(status_rank=1),0) FROM (
             SELECT t.source_group,min(CASE ({STATUS_SQL})
                 WHEN 'in_progress' THEN 0 WHEN 'watched' THEN 1
                 WHEN 'unknown' THEN 2 ELSE 3 END) status_rank
@@ -77,13 +78,13 @@ def library_summary(db, source):
             WHERE t.source_id=? AND t.available=1 GROUP BY t.source_group)""",
         (source,),
     ).fetchone()
+    status_known = info["collections_synced_at"] is not None and not counts[2]
     movies = json.loads(info["recently_added_movies"])
     return {
         **result,
         "total_movies": counts[0],
-        "unwatched_movies": counts[1]
-        if info["collections_synced_at"] is not None and not counts[2]
-        else None,
+        "unwatched_movies": counts[1] if status_known else None,
+        "watched_movies": counts[3] if status_known else None,
         "unknown_movies": counts[2],
         "collections_synced_at": info["collections_synced_at"],
         "last_library_sync": info["last_synced_at"],
