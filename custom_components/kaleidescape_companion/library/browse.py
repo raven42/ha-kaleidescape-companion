@@ -11,6 +11,14 @@ MAX_PAGE_SIZE = 1000
 MAX_PAGE_BYTES = 8 * 1024 * 1024
 PURCHASE_SQL = "t.purchased_on"
 
+FAVORITE_SQL = """EXISTS (SELECT 1 FROM library_titles ft JOIN library_memberships fm
+    ON fm.title_id=ft.id WHERE ft.source_id=t.source_id
+    AND ft.source_group=t.source_group
+    AND ft.available=1 AND lower(fm.collection)='favorites')"""
+RECENT_SQL = """s.recently_added_batch IS NOT NULL AND EXISTS
+    (SELECT 1 FROM library_titles rt WHERE rt.source_id=t.source_id
+    AND rt.source_group=t.source_group AND rt.addition_batch=s.recently_added_batch)"""
+
 
 def bounded_page(page):
     """Reject oversized pages rather than silently dropping requested entries."""
@@ -115,6 +123,8 @@ def public_title(row, memberships, shared=None):
                 "watched_status",
             )
         },
+        "is_favorite": bool(row["is_favorite"]),
+        "is_recently_added": bool(row["is_recently_added"]),
         "formats": formats(data),
         "collections": memberships,
         "purchased_on": row["purchased_on"],
@@ -264,15 +274,18 @@ def library_list(db, source, filters, excluded=""):
     if not isinstance(query, str) or len(query) > 500 or "\x00" in query:
         raise invalid("Invalid library search")
     if query:
-        clauses.append("t.title_search LIKE ? ESCAPE '\\'")
-        values.append(
-            "%"
-            + query.casefold()
-            .replace("\\", "\\\\")
-            .replace("%", "\\%")
-            .replace("_", "\\_")
-            + "%"
-        )
+        term = query.casefold()
+        clauses.append("""(instr(t.title_search,?)>0 OR EXISTS (
+            SELECT 1 FROM library_titles credits,
+            json_each(credits.data,'$.actors') person
+            WHERE credits.source_id=t.source_id AND credits.source_group=t.source_group
+            AND credits.available=1 AND instr(companion_casefold(person.value),?)>0)
+            OR EXISTS (SELECT 1 FROM library_titles credits,
+            json_each(credits.data,'$.directors') person
+            WHERE credits.source_id=t.source_id AND credits.source_group=t.source_group
+            AND credits.available=1
+            AND instr(companion_casefold(person.value),?)>0))""")
+        values.extend((term, term, term))
     # Match any selected value within a facet, and all populated facets together.
     # Keep single strings compatible with existing API clients.
     for key in ("collection", "actor", "director", "rating", "status"):
@@ -339,7 +352,8 @@ def library_list(db, source, filters, excluded=""):
     ]
     order = sorts[sort] + (" DESC" if descending else " ASC")
     rows = db.execute(
-        f"""SELECT t.*,({STATUS_SQL}) watched_status,{PURCHASE_SQL} purchased_on
+        f"""SELECT t.*,({STATUS_SQL}) watched_status,{PURCHASE_SQL} purchased_on,
+            ({FAVORITE_SQL}) is_favorite,({RECENT_SQL}) is_recently_added
         FROM {join} WHERE {where}
         ORDER BY {order},t.id LIMIT ? OFFSET ?""",
         (*values, *(hidden if sort == "collection" else ()), limit + 1, offset),
@@ -446,10 +460,12 @@ def grouped_page(
         SELECT DISTINCT t.source_group FROM {join} WHERE {where}
     ), versions AS (
         SELECT t.*,({STATUS_SQL}) watched_status,{collection_sql} collection_sort,
+        ({FAVORITE_SQL}) is_favorite,({RECENT_SQL}) is_recently_added,
         {PURCHASE_SQL} purchased_on
         FROM {join} WHERE t.source_id=? AND t.available=1
     ) SELECT source_group,min(title_search) title_search,min(id) id,
         min(title) title,count(*) version_count,
+        max(is_favorite) is_favorite,max(is_recently_added) is_recently_added,
         min(json_extract(data,'$.year')) year,
         min(json_extract(data,'$.duration_seconds')) duration_seconds,
         max(json_extract(data,'$.duration_seconds')) maximum_duration_seconds,
@@ -474,6 +490,7 @@ def grouped_page(
         for batch in batches([row["id"] for row in page]):
             for row in db.execute(
                 "SELECT id,artwork_key,metadata_synced_at,"
+                "json_extract(data,'$.rating') rating,"
                 "json_extract(data,'$.edition') edition "
                 "FROM library_titles WHERE source_id=? AND id IN ("
                 + ",".join("?" for _ in batch)
@@ -487,6 +504,7 @@ def grouped_page(
             for row in db.execute(
                 "SELECT id,source_group,artwork_key,"
                 "json_extract(data,'$.formats') formats,"
+                "json_extract(data,'$.rating') rating,"
                 "json_extract(data,'$.edition') edition,"
                 "json_extract(data,'$.year') year "
                 "FROM library_titles WHERE source_id=? AND available=1 "
@@ -523,8 +541,12 @@ def grouped_page(
             items.append(
                 {
                     "collections": collections,
+                    "is_favorite": bool(group["is_favorite"]),
+                    "is_recently_added": bool(group["is_recently_added"]),
                     "year": group["year"],
                     "edition": representative["edition"],
+                    "rating": representative["rating"]
+                    or next((row["rating"] for row in rows if row["rating"]), None),
                     "metadata_synced_at": representative["metadata_synced_at"],
                     **{
                         key: group[key]
@@ -605,7 +627,8 @@ def library_versions(db, source, title, offset=0, revision=None, excluded=""):
         (source, group),
     ).fetchone()[0]
     rows = db.execute(
-        f"""SELECT t.*,({STATUS_SQL}) watched_status,{PURCHASE_SQL} purchased_on
+        f"""SELECT t.*,({STATUS_SQL}) watched_status,{PURCHASE_SQL} purchased_on,
+            ({FAVORITE_SQL}) is_favorite,({RECENT_SQL}) is_recently_added
         FROM library_titles t
         JOIN library_sources s ON s.id=t.source_id WHERE t.source_id=?
         AND t.available=1 AND t.source_group=? ORDER BY
@@ -634,3 +657,27 @@ def library_versions(db, source, title, offset=0, revision=None, excluded=""):
             "preferences_key": info["preferences_key"],
         }
     )
+
+
+def suggestions(db, source, field, query):
+    """Bounded people-name completion over the full current cached catalog."""
+    if (
+        field not in ("actor", "director")
+        or not isinstance(query, str)
+        or len(query) > 100
+        or "\x00" in query
+    ):
+        raise invalid("Invalid suggestion request")
+    path = "$.actors" if field == "actor" else "$.directors"
+    rows = [
+        row[0]
+        for row in db.execute(
+            "SELECT DISTINCT person.value FROM library_titles t,"
+            "json_each(t.data,?) person "
+            "WHERE t.source_id=? AND t.available=1 AND person.type='text' "
+            "AND instr(companion_casefold(person.value),?)>0 "
+            "ORDER BY companion_casefold(person.value),person.value LIMIT 21",
+            (path, source, query.casefold()),
+        )
+    ]
+    return {"items": rows[:20], "has_more": len(rows) > 20}

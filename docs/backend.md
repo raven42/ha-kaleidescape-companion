@@ -1,7 +1,7 @@
 # Journal backend
 
 The backend records manual journal entries and observed playback from one
-selected HA player. API version is `1`; SQLite schema is `10` and JSON export
+selected HA player. API version is `1`; SQLite schema is `12` and JSON export
 format is `3`. The household reader and administrator [management panel](ui.md)
 use this API. Live subscriptions and controls remain planned;
 [optional library sync](library.md) is implemented. A compact read-only Now
@@ -20,8 +20,9 @@ development launcher this is `.ha-dev/kaleidescape_companion/journal.sqlite3`.
 One household entry owns the dataset. Unloading, restarting, or removing the
 entry retains its data. Adding the integration again reattaches that dataset.
 
-SQLite operations run on one dedicated worker, outside HA's event loop. Each
-mutation commits the record, dataset revision, and retry result together.
+SQLite operations run on one dedicated worker, outside HA's event loop. Content
+mutations commit the record, dataset revision, and retry result together. UI
+settings use independent row revisions and do not change content revisions.
 Rollback-journal mode and full synchronization are used. A queue of at most 128
 operations bounds pending work; overload returns `busy` for retry. Accepted
 writes finish even if a client disconnects. Shutdown drains accepted work and
@@ -71,7 +72,7 @@ Schema 9 moves the former schema-7 purchase date and import timestamp onto each
 removes both purchase-only tables. Schema 8 collection-add intents remain
 separate because they enforce a durable external-write recovery barrier. See
 [purchase dates](purchase-dates.md) and [reviewed imports](imports.md). `info`
-also exposes three validated display defaults to active users.
+exposes only the validated native landing-page default to active users.
 
 Schema 10 adds the bounded last-addition title snapshot/count/time to
 `library_sources`, committed with the catalog. Existing catalogs establish the
@@ -79,14 +80,29 @@ baseline; it adds no tables and no imported operational state. Seven additional
 [Library/storage sensors](sensors.md#library-and-storage) read local summaries,
 including grouped counts and cached size diagnostics.
 
+Schema 11 adds actor-scoped and shared UI rows in `settings`, plus internal
+source/version batch markers for exact-group recent badges. It seeds former HA
+Library defaults once, then removes those options from HA. The
+[UI preference contract](ui-preferences.md) defines live field patches, bounds,
+private exports, access and migration behavior. UI rows never become movie data.
+
+Schema 12 adds a content-free `database_audit` trail for the confirmed
+administrator [database tools](database.md) and a monotonic `settings_revision`
+on dataset metadata. UI row deletion no longer makes raw settings-page revisions
+ambiguous; ordinary preference edits still leave content revisions unchanged.
+Database writes validate supported fields, row tokens and the inspected content
+revision, and preserve protected identities/receipts.
+
 ### Table responsibilities
 
-There are thirteen tables; a title version is stored once. Separate tables
+There are fifteen tables; a title version is stored once. Separate tables
 represent one-to-many/many-to-many relationships or transactional recovery, not
 separate copies of the same movie.
 
 | Tables                                              | Purpose                                                                                                           |
 | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `settings`                                          | Personal browsing values, shared hidden names and one-time inherited UI defaults; independently revisioned        |
+| `database_audit`                                    | Administrator database edit/delete attribution and affected field names/counts, without row content               |
 | `library_titles`                                    | One row per source/version; descriptive metadata JSON, detection/freshness, artwork reference and purchase date   |
 | `library_sources`                                   | Source namespace, catalog/collection freshness and revision                                                       |
 | `library_collections`, `library_memberships`        | Collections, including empty collections, and many-to-many title membership                                       |
@@ -318,57 +334,39 @@ cannot resurrect it.
 
 ### Database maintenance
 
-Settings and maintenance commands require an active administrator before access
-and after awaited work. They retain entry/dataset scoping. Settings are an
-adapter to HA's own options manager, not another configuration store: flows are
-bound to the initiating actor and this entry, unknown fields/foreign flows are
-rejected, and a changed configuration fingerprint rejects stale submission.
-Starting a new Companion Settings form replaces that user's prior options flow.
-Saving uses the existing `OptionsFlowWithReload`; it does not set arbitrary HA
-options or call actions.
+The [Database guide](database.md) defines raw-first inspection, personal view
+options, condition search/completion, supported per-table fields, confirmations,
+references and concurrency behavior. Inspection accepts only fifteen trusted
+tables, 10/25/100/500-row pages, validated sort columns, a bounded
+2000-character predicate/literal search, revision-bound pagination and an 8 MiB
+result budget. The predicate parser binds values and resolves field/JSON aliases
+from trusted schema; it never executes caller SQL. Inspection has a two-second
+SQL budget.
 
-Inspection accepts only the thirteen internal tables allowlisted in
-`maintenance.py`. `limit` is exactly 10, 25 (default), 100, or 500. `query` is
-at most 500 characters, without NUL; it searches textual representations of all
-selected-table columns using bound literal LIKE matching (SQL wildcard
-characters are escaped). `sort` must exactly match a column in that table's
-integration-owned local schema; `descending` is a strict boolean. The default is
-the first primary-key column, with fixed primary-key tie-breaks for stable
-paging. Text sorts ignore ASCII case; numeric columns retain numeric ordering.
-No SQL expression is accepted. Responses include full table counts, matching
-`total`, `columns`, `limit`, applied `query`/`sort`/`descending`, and
-`has_more`. Conservative serialized responses are capped at 8 MiB
-(`database_page_too_large`); reduce the limit and retry. `offset` is a
-nonnegative integer at most 10,000,000; provide the first page's dataset
-`revision` on later pages. Intervening writes return `refresh_required`. Raw
-values include private notes, actor IDs, source identifiers, tombstones, and
-cached response JSON; this surface is never projected to regular users. SQL,
-paths, or other table names are not accepted.
+`database/inspect` now also returns `dataset_revision`, row snapshot tokens,
+field descriptions/edit permissions, query field/operator names, main-table
+names and deletion policy. `database/validate_query` compiles a condition for
+position-based validation without running it. `database/mutate` accepts a
+cryptographic `request_id` plus `data` containing `table`, `operation` (edit or
+delete), 1–100 selected `rows` with `key`/`token`, an edit `patch` (one row),
+`expected_revision` and confirmation SAVE/DELETE. Active administrator and
+entry/dataset/readiness checks run before/after awaited work. The worker commits
+changes, content revision, receipt and database audit atomically; retries bind
+actor/payload. Open playback rows, system identities, paths, audit and device
+write barriers stay protected. Library cache mutations never edit a device.
 
-Purge requires recording disabled in the saved configuration and no live
-observer, and rejects backup or active export overlap. It uses the **dataset**
-revision (including 0), not a single viewing revision. Pass 1–100 unique viewing
-UUIDs with `all: false` and `confirmation: "PURGE"`; or an empty ID list with
-`all: true` and `confirmation: "PURGE ALL"`. Selected entries may be visible or
-tombstoned. Scope/revision/confirmation failures make no changes.
+Recording and sync may remain enabled for these targeted operations. A changed
+dataset/row returns conflict; no unreviewed partial changes are applied. Active
+transfers/backups block new writes; exact committed retries remain readable.
+Source-owned metadata can be restored by the next sync. Deleting an artwork
+index clears all references before private managed-file cleanup.
 
-One worker transaction removes the chosen viewings, associated sessions and
-manual audit rows, and content from all matching cached mutation responses,
-including legacy requests without audit attribution. Request UUIDs/fingerprints
-remain as content-free `purged` barriers: replay returns `not_found`. A separate
-minimal purge receipt plus `maintenance_audit` records the actor, time, count,
-and new revision, without purged identities/content. Purge retries return the
-same count/revision after restart and are bound to the original actor/payload.
-This prevents accidental repeated purges and old create retries resurrecting
-data. Accepted writes finish even if their caller disconnects or is cancelled.
-
-SQLite `secure_delete=ON` overwrites freed content in the live database, but
-file size may stay constant while pages become reusable; no automatic VACUUM or
-dataset reset runs. This is not a physical secure-erasure guarantee. Other
-browser data, HA Recorder, downloaded exports, HA/host backups, and
-pre-migration snapshots remain separate copies. No automatic retention is added.
-Resume recording explicitly after maintenance; sensors update on their normal
-interval.
+For compatibility, `database/update` retains the earlier viewing correction
+contract and `database/purge` retains its explicitly confirmed selected/all
+viewing purge contract, requiring recording disabled. The new UI uses confirmed
+Database Delete for physical deletion and keeps Journal Delete as a tombstone.
+Imports keep their separate review/disabled-recording contract. These legacy
+APIs are not an unrestricted system-table editor.
 
 ### Try a round trip
 

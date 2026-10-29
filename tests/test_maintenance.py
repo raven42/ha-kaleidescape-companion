@@ -275,7 +275,7 @@ class MaintenanceStorageTest(unittest.IsolatedAsyncioTestCase):
             {"limit": True},
             {"limit": "500"},
             {"limit": None},
-            {"query": "x" * 501},
+            {"query": "x" * 2001},
             {"query": "\x00"},
             {"query": 3},
             {"sort": "title DESC; DROP TABLE viewings"},
@@ -326,6 +326,8 @@ class MaintenanceStorageTest(unittest.IsolatedAsyncioTestCase):
             db.execute("DROP TABLE maintenance_audit")
             db.execute("DROP TABLE import_audit")
             for table in (
+                "database_audit",
+                "settings",
                 "library_collection_intents",
                 "library_memberships",
                 "library_collections",
@@ -334,6 +336,7 @@ class MaintenanceStorageTest(unittest.IsolatedAsyncioTestCase):
                 "library_sources",
             ):
                 db.execute(f"DROP TABLE {table}")
+            db.execute("ALTER TABLE schema_metadata DROP COLUMN settings_revision")
             db.execute("PRAGMA user_version = 3")
             db.commit()
         self.repository = JournalRepository(self.path)
@@ -342,7 +345,7 @@ class MaintenanceStorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             (await self.repository.async_get(record["id"]))["title"], record["title"]
         )
-        self.assertEqual((await self.repository.async_info())["schema_version"], 10)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 12)
         backup = next(self.path.parent.glob("journal.sqlite3.v3.*.bak"))
         self.assertEqual(backup.stat().st_mode & 0o777, 0o600)
         with closing(sqlite3.connect(backup)) as db:

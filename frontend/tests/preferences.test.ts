@@ -91,11 +91,11 @@ it("applies configured cover/count defaults on Library mount", async () => {
   library.scope = {
     ...info,
     library_enabled: true,
-    ui_defaults: {
-      default_landing_page: "library",
-      library_default_view: "covers",
-      library_default_count: 1000,
-    },
+  };
+  transport.uiPreferences = {
+    ...transport.uiPreferences,
+    view: "covers",
+    page_size: 1000,
   };
   element = library;
   document.body.append(library);
@@ -126,6 +126,10 @@ it("saves display defaults and hidden known/custom collections as a value list",
     expect(settings.shadowRoot!.textContent).toContain("Science Fiction"),
   );
   const root = settings.shadowRoot!;
+  expect(
+    root.querySelector<HTMLSelectElement>('[name="default_landing_page"]')!
+      .value,
+  ).toBe("journal");
   const known = [
     ...root.querySelectorAll<HTMLInputElement>(
       '[name="library_excluded_collections"]',
@@ -141,26 +145,48 @@ it("saves display defaults and hidden known/custom collections as a value list",
   custom.dispatchEvent(new Event("input"));
   button(root, "Add hidden name").click();
   await flush();
-  const count = root.querySelector<HTMLInputElement>(
-    '[name="library_default_count"]',
-  )!;
-  count.value = "500";
-  count.dispatchEvent(new Event("input"));
-  const view = root.querySelector<HTMLSelectElement>(
-    '[name="library_default_view"]',
-  )!;
-  view.value = "covers";
-  view.dispatchEvent(new Event("change"));
-  button(root, "Save settings").click();
   await flush();
   expect(
-    transport.calls.find((call) => call.type.endsWith("/settings/submit"))!
-      .data,
-  ).toMatchObject({
-    library_default_count: 500,
-    library_default_view: "covers",
-    library_excluded_collections: ["Science Fiction", "Custom example"],
-  });
+    transport.calls
+      .filter((call) => call.type.endsWith("/ui/shared/update"))
+      .at(-1)!.patch,
+  ).toEqual({ hidden_collections: ["Science Fiction", "Custom example"] });
+  expect(root.querySelector('[name="library_default_count"]')).toBeNull();
+  expect(root.querySelector('[name="library_default_view"]')).toBeNull();
+  expect(
+    transport.calls.some((call) => call.type.endsWith("/settings/submit")),
+  ).toBe(false);
+});
+
+it("keeps shared preference controls unavailable until their saved values load", async () => {
+  const settings = document.createElement(
+    "kaleidescape-settings",
+  ) as KaleidescapeSettings;
+  const client = transport.client();
+  vi.spyOn(client, "uiPreferences").mockRejectedValueOnce(
+    new Error("Interrupted test read"),
+  );
+  settings.client = client;
+  settings.scope = { ...info, library_enabled: true };
+  element = settings;
+  document.body.append(settings);
+  await vi.waitFor(() =>
+    expect(settings.shadowRoot!.textContent).toContain(
+      "Shared display settings could not be loaded",
+    ),
+  );
+  expect(
+    settings.shadowRoot!.querySelector('[name="custom_collection"]'),
+  ).toBeNull();
+  button(settings.shadowRoot!, "Reload settings").click();
+  await vi.waitFor(() =>
+    expect(
+      settings.shadowRoot!.querySelector('[name="custom_collection"]'),
+    ).toBeTruthy(),
+  );
+  expect(
+    transport.calls.some((call) => call.type.endsWith("/ui/shared/update")),
+  ).toBe(false);
 });
 
 it("dismisses a backdrop through the Escape guard, but keeps inside clicks and protected writes open", () => {

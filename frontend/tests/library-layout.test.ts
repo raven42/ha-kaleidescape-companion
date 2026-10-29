@@ -80,47 +80,55 @@ afterEach(() => {
 
 it("uses whole rows and reanchors paging when the viewport column count changes", async () => {
   await titles(230);
-  button("Covers").click();
+  root()
+    .querySelector<HTMLInputElement>(
+      'input[name="library_view"][value="covers"]',
+    )!
+    .click();
   await flush();
   resize(1214); // Eight 150px covers with seven 2px gaps.
   await vi.waitFor(() =>
-    expect(calls().at(-1)!.filters).toMatchObject({ limit: 48, offset: 0 }),
+    expect(calls().at(-1)!.filters).toMatchObject({ limit: 96, offset: 0 }),
   );
   await flush();
-  expect(root().querySelectorAll(".cover-tile")).toHaveLength(48);
+  expect(root().querySelectorAll(".cover-tile")).toHaveLength(96);
   button("Next").click();
   await flush();
   button("Next").click();
   await flush();
-  expect(calls().at(-1)!.filters).toMatchObject({ limit: 48, offset: 96 });
+  expect(calls().at(-1)!.filters).toMatchObject({ limit: 96, offset: 192 });
   resize(1062); // Seven columns: the page containing title 96 starts at 49.
   await vi.waitFor(() =>
-    expect(calls().at(-1)!.filters).toMatchObject({ limit: 49, offset: 49 }),
+    expect(calls().at(-1)!.filters).toMatchObject({ limit: 98, offset: 98 }),
   );
   await flush();
-  expect(root().querySelectorAll(".cover-tile")).toHaveLength(49);
-  expect(root().textContent).toContain("Fictional movie 0096");
+  expect(root().querySelectorAll(".cover-tile")).toHaveLength(98);
+  expect(root().textContent).toContain("Fictional movie 0192");
   expect(root().querySelector(".cover-grid")!.getAttribute("style")).toContain(
     "--cover-columns: 7",
   );
   button("Next").click();
   await flush();
-  expect(calls().at(-1)!.filters).toMatchObject({ limit: 49, offset: 98 });
+  expect(calls().at(-1)!.filters).toMatchObject({ limit: 98, offset: 196 });
 });
 
 it("recomputes complete rows for cover-size and page-size changes, capped at 1000", async () => {
   await titles(1100);
-  button("Covers").click();
+  root()
+    .querySelector<HTMLInputElement>(
+      'input[name="library_view"][value="covers"]',
+    )!
+    .click();
   await flush();
   resize(1214);
   await vi.waitFor(() =>
-    expect(calls().at(-1)!.filters).toMatchObject({ limit: 48 }),
+    expect(calls().at(-1)!.filters).toMatchObject({ limit: 96 }),
   );
   const slider = root().querySelector<HTMLInputElement>('[name="cover_size"]')!;
   slider.value = "90";
   slider.dispatchEvent(new Event("input", { bubbles: true }));
   await vi.waitFor(() =>
-    expect(calls().at(-1)!.filters).toMatchObject({ limit: 39 }),
+    expect(calls().at(-1)!.filters).toMatchObject({ limit: 91 }),
   );
   pageSize("1000");
   await vi.waitFor(
@@ -130,7 +138,11 @@ it("recomputes complete rows for cover-size and page-size changes, capped at 100
   await flush();
   expect(root().querySelectorAll(".cover-tile")).toHaveLength(988);
   expect(root().textContent).toContain("13 covers per row");
-  button("List").click();
+  root()
+    .querySelector<HTMLInputElement>(
+      'input[name="library_view"][value="list"]',
+    )!
+    .click();
   await vi.waitFor(
     () => expect(calls().at(-1)!.filters).toMatchObject({ limit: 1000 }),
     { timeout: 5000 },
@@ -164,12 +176,16 @@ it("paginates 1000 list entries and rejects invalid page targets without a reque
 });
 
 it("shows only actual remaining titles on the final cover page, with no duplicates", async () => {
-  await titles(51);
-  button("Covers").click();
+  await titles(99);
+  root()
+    .querySelector<HTMLInputElement>(
+      'input[name="library_view"][value="covers"]',
+    )!
+    .click();
   await flush();
   resize(1214);
   await vi.waitFor(() =>
-    expect(calls().at(-1)!.filters).toMatchObject({ limit: 48 }),
+    expect(calls().at(-1)!.filters).toMatchObject({ limit: 96 }),
   );
   await flush();
   const first = [...root().querySelectorAll(".cover-tile")].map((item) =>
@@ -181,17 +197,21 @@ it("shows only actual remaining titles on the final cover page, with no duplicat
     item.getAttribute("title"),
   );
   expect(final).toHaveLength(3);
-  expect(new Set([...first, ...final]).size).toBe(51);
+  expect(new Set([...first, ...final]).size).toBe(99);
   expect(button("Next").disabled).toBe(true);
-  pageSize("1");
+  pageSize("25");
   await vi.waitFor(() =>
-    expect(calls().at(-1)!.filters).toMatchObject({ limit: 8 }),
+    expect(calls().at(-1)!.filters).toMatchObject({ limit: 24 }),
   );
 });
 
 it("ignores a stale resized page and cancels pending layout work on unmount", async () => {
   await titles(230);
-  button("Covers").click();
+  root()
+    .querySelector<HTMLInputElement>(
+      'input[name="library_view"][value="covers"]',
+    )!
+    .click();
   await flush();
   let resolve!: (page: LibraryPage) => void;
   const client = element.client!;
@@ -202,19 +222,19 @@ it("ignores a stale resized page and cancels pending layout work on unmount", as
   );
   resize(1214);
   await vi.waitFor(() =>
-    expect(list.mock.calls.at(-1)?.[1]).toMatchObject({ limit: 48 }),
+    expect(list.mock.calls.at(-1)?.[1]).toMatchObject({ limit: 96 }),
   );
   resize(1062);
   await vi.waitFor(() =>
-    expect(calls().at(-1)!.filters).toMatchObject({ limit: 49 }),
+    expect(calls().at(-1)!.filters).toMatchObject({ limit: 98 }),
   );
   await flush();
-  expect(root().querySelectorAll(".cover-tile")).toHaveLength(49);
+  expect(root().querySelectorAll(".cover-tile")).toHaveLength(98);
   resolve({
     items: [libraryTitle({ title: "Stale resized reply" })],
     total: 230,
     offset: 0,
-    limit: 48,
+    limit: 96,
     has_more: true,
     revision: 5,
     facets: {},
@@ -231,7 +251,11 @@ it("ignores a stale resized page and cancels pending layout work on unmount", as
 
 it("coalesces rapid layout changes and cancels a resize that returns to the current page size", async () => {
   await titles(230);
-  button("Covers").click();
+  root()
+    .querySelector<HTMLInputElement>(
+      'input[name="library_view"][value="covers"]',
+    )!
+    .click();
   await flush();
   const before = calls().length;
   for (const width of [1214, 1062, 910, 758]) resize(width);
@@ -240,7 +264,7 @@ it("coalesces rapid layout changes and cancels a resize that returns to the curr
   resize(1214);
   resize(1062);
   await vi.waitFor(() =>
-    expect(calls().at(-1)!.filters).toMatchObject({ limit: 49 }),
+    expect(calls().at(-1)!.filters).toMatchObject({ limit: 98 }),
   );
   expect(calls()).toHaveLength(before + 1);
 });

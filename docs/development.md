@@ -187,17 +187,29 @@ until opted in through Settings. All active users can browse the enabled
 Library; settings and manual sync remain administrator-only. Worker queries
 group source-scoped `source_group` values before pagination while retaining
 exact versions; the popup loads at most 50 versions per page. Hidden collections
-are display-only and use known/custom value lists. Display defaults and the
-current URL tab restore navigation across reloads. Schema 7
-[purchase-date helper](purchase-dates.md) parses invoices offline and updates
-only explicitly selected local version dates. Fixed/resizable table widths and
-popup version navigation need operator browser review. Page targets accept
-1–1000; Covers adapts them to whole rows. Use
+are display-only and use known/custom value lists. Schema 11
+[UI preferences](ui-preferences.md) save view/count, applied filters, search,
+sort and sizing per HA user; hidden names are shared database settings. The
+landing default remains native, with URL main-tab restoration. The
+[purchase-date helper](purchase-dates.md) stays offline; corrected SQLite copies
+use the reviewed missing-data merge. Fixed/resizable table widths and popup
+version navigation need operator browser review. The page-size dropdown offers
+25/100/1000/All; Covers adapts numeric targets to whole rows and All aggregates
+bounded revision-checked chunks. Status flags and explicit format chips use
+public metadata, without guessing missing capabilities. Use
 `.venv/bin/python dev/benchmark_library.py` to time a fictional
 5000-name/10000-version cache without networking; this does not replace browser
 or target-HA timing. [Add to Collection](library-collections.md) is separately
 opt-in and administrator-only; removal remains deferred. Playback controls,
 progress, subscriptions, and selective per-user sharing remain deferred.
+
+Library search/status bars are sticky, search includes partial actors/directors,
+and filters use bounded people suggestions. Database now has personal Options,
+raw-first details and confirmed supported-field edits/deletions with
+schema-aware condition completion; see the [Database guide](database.md). Normal
+checks use only synthetic databases and mocked devices. Schema 12 upgrades
+automatically with a private pre-migration backup; runtime code and frontend
+must ship together.
 
 ## Validation
 

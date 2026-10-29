@@ -7,16 +7,16 @@ baseline, not a claim of independent security certification.
 
 ## Trust boundaries
 
-| Boundary                                 | Policy and limitation                                                                                                                                                                                                                                                                                                                                                          |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Browser → integration API                | Active authenticated HA users may read the shared household viewing summary and enabled cached Library metadata/artwork. Mutations, notes/source/session details, Now Playing, and exports require an active administrator. Now Playing also checks read permission on the configured source entities. Dataset IDs select data; they are not credentials.                      |
-| Integration → HA                         | Custom integrations execute in Core's process with Core's filesystem, entity, credential, and network access. Entity selection is application behavior, not a sandbox. Other code running as HA can read this database.                                                                                                                                                        |
-| HA users → one another                   | All active users share one household journal; there is no personal watch history or per-user journal ownership. A positive field allowlist limits regular-user API responses. HA roles are not strong isolation between hostile authenticated users.                                                                                                                           |
-| Journal/Library → HA entity states       | History/Library sensor states and attributes deliberately expose movie titles, times, counts and storage sizes through HA entity access. Recorder, dashboards, automations, and backups can retain these values outside the private database. Notes, source identities, sessions, and audit actors must never enter sensors.                                                   |
-| HA → devices and services                | Observation reads selected HA states. Optional library sync makes bounded GET-only requests to the configured private LAN browser origin, using validated/pinned DNS results. Sync is disabled by default. A separate off-by-default administrator action can add one selected version to an existing verified collection. Now Playing artwork uses HA's existing image proxy. |
-| Device/imported data → storage and UI    | Treat metadata, notes, HTML, image references, and imported files as untrusted, including data from local devices. Validate before storing or using it, and render text without executing markup.                                                                                                                                                                              |
-| Storage → filesystem and exports         | Journal contents, source identifiers, audit actors, backups, and retry responses are private household data. Keep them outside static web roots and access them through the authenticated API.                                                                                                                                                                                 |
-| Development machine → test HA deployment | Deployment is an explicit privileged SSH operation. Verify the host key and target, send only the runtime package, and configure restart through fixed HA OS/Container commands. Normal checks must never connect to or modify the target.                                                                                                                                     |
+| Boundary                                 | Policy and limitation                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Browser → integration API                | Active authenticated HA users may read the shared household viewing summary and enabled cached Library metadata/artwork. Journal/catalog mutations, notes/source/session details, Now Playing, exports and shared UI preferences require an active administrator. Active users may read/write only their own browsing preferences. Now Playing also checks read permission on the configured source entities. Dataset IDs select data; they are not credentials. |
+| Integration → HA                         | Custom integrations execute in Core's process with Core's filesystem, entity, credential, and network access. Entity selection is application behavior, not a sandbox. Other code running as HA can read this database.                                                                                                                                                                                                                                          |
+| HA users → one another                   | All active users share one household journal; there is no personal watch history or per-user journal ownership. Personal browsing preferences are scoped to authenticated HA user IDs, with shared hidden collection names managed by administrators. A positive field allowlist limits regular-user API responses. HA roles are not strong isolation between hostile authenticated users.                                                                       |
+| Journal/Library → HA entity states       | History/Library sensor states and attributes deliberately expose movie titles, times, counts and storage sizes through HA entity access. Recorder, dashboards, automations, and backups can retain these values outside the private database. Notes, source identities, sessions, and audit actors must never enter sensors.                                                                                                                                     |
+| HA → devices and services                | Observation reads selected HA states. Optional library sync makes bounded GET-only requests to the configured private LAN browser origin, using validated/pinned DNS results. Sync is disabled by default. A separate off-by-default administrator action can add one selected version to an existing verified collection. Now Playing artwork uses HA's existing image proxy.                                                                                   |
+| Device/imported data → storage and UI    | Treat metadata, notes, HTML, image references, and imported files as untrusted, including data from local devices. Validate before storing or using it, and render text without executing markup.                                                                                                                                                                                                                                                                |
+| Storage → filesystem and exports         | Journal contents, source identifiers, audit actors, UI searches/preferences/user IDs, backups, and retry responses are private household data. Keep them outside static web roots and access them through the authenticated API.                                                                                                                                                                                                                                 |
+| Development machine → test HA deployment | Deployment is an explicit privileged SSH operation. Verify the host key and target, send only the runtime package, and configure restart through fixed HA OS/Container commands. Normal checks must never connect to or modify the target.                                                                                                                                                                                                                       |
 
 The integration does not add its own web server, database listener, identity
 system, or general-purpose HA action/SQL/file proxy. Compiled panel assets may
@@ -31,10 +31,12 @@ framework alone does not establish isolation.
 ## Implemented backend protections
 
 - WebSocket reads and cached Library artwork require an active authenticated
-  user; management operations, manual sync, imports, and journal downloads
-  require an active administrator. Check before storage access and after awaited
-  work. A change in active/admin status during a request withholds its result,
-  including an administrator response after a downgrade.
+  user; personal UI field patches additionally require that same authenticated
+  actor, derived on the server. Management operations, shared preferences,
+  manual sync, imports, and journal downloads require an active administrator.
+  Check before storage access and after awaited work. A change in active/admin
+  status during a request withholds its result, including an administrator
+  response after a downgrade.
 - Entry/dataset scoping is validated on every request. Schemas reject unexpected
   fields, and record validation bounds lengths, numbers, dates, and result
   pages.
@@ -111,15 +113,15 @@ fields for corrections, and keeps expected revisions and request UUIDs on
 writes. Request UUIDs use native `crypto.randomUUID` or cryptographic
 `getRandomValues` with UUID v4 formatting; never substitute timestamps or
 `Math.random`. If secure randomness is unavailable, preparation fails visibly
-before any write is sent. An unconfirmed write locks its exact payload for
-explicit retry, including an unload/error after a possible commit. Explicitly
-discarding that retry, navigation, or reload can lose it, so inspect history
-before recreating an entry. Connection/user changes clear private forms/lists,
-invalidate outstanding responses, and abort exports. Downloads have a browser
-byte limit and temporary object URLs are revoked; already downloaded files
-remain the operator's responsibility. The [UI guide](ui.md) documents behavior
-and test limitations. The explicit layout review fixture uses fictional data and
-is excluded from the packaged panel.
+before any write is sent. An unconfirmed content write locks its exact payload
+for explicit retry, including an unload/error after a possible commit.
+Explicitly discarding that retry, navigation, or reload can lose it, so inspect
+history before recreating an entry. Connection/user changes clear private
+forms/lists, invalidate outstanding responses, and abort exports. Downloads have
+a browser byte limit and temporary object URLs are revoked; already downloaded
+files remain the operator's responsibility. The [UI guide](ui.md) documents
+behavior and test limitations. The explicit layout review fixture uses fictional
+data and is excluded from the packaged panel.
 
 ## Household read access and sensors
 
@@ -129,26 +131,29 @@ is excluded from the packaged panel.
 | Viewing title, start/end times, runtime, watched time, status, origin               | Allowed                              | Allowed                              |
 | Notes, raw source/player/content identifiers, session evidence, storage health      | Denied by the integration API        | Allowed                              |
 | Create/correct/delete, Now Playing, JSON/SQLite export                              | Denied                               | Allowed                              |
-| Integration settings, fixed raw-table inspection, selected/all permanent purge      | Denied                               | Allowed                              |
+| Integration settings, raw-table inspection, confirmed Database edit/delete          | Denied                               | Allowed                              |
 | Reviewed viewing/Library JSON/SQLite merge imports and Database viewing corrections | Denied                               | Allowed                              |
 | Cached Library metadata/artwork and counts/revision/sync timestamps                 | Allowed when library sync is enabled | Allowed when library sync is enabled |
 | Library sync progress/configuration/storage/error details and manual sync           | Denied                               | Allowed when library sync is enabled |
+| Personal Library view/count/search/filter/sort/sizing preferences                   | Own values only                      | Own values only                      |
+| Shared hidden collection names                                                      | Denied                               | Allowed                              |
 
-Anonymous and inactive users are denied all journal operations. Regular-user
-`info` returns only API version, scope, revision, visible-record count, Library
-enablement, and permissions. Regular-user `library/info` uses a separate
-positive allowlist of version/group/name/collection counts, source revision, an
-opaque collection-preference key, and catalog/collection timestamps.
-`library/list` uses the same explicit cached-title projection for both roles:
-known display metadata, opaque title/artwork keys, memberships/status, and
-detection/freshness times. It excludes origin, raw source handles/groups, file
-paths, and private journal/session/audit fields. `journal/list` and
-`journal/get` use a positive record-field allowlist; adding a database column
-must not implicitly expose it. Deletion tombstones are excluded from these
-reads. Mutation authorization is enforced on the server; hiding editor/export
-controls is not authorization. Known user/connection/role changes clear the
-browser's old data and ignore late responses. Browser downloads and data already
-observed cannot be recalled when access changes.
+Anonymous and inactive users are denied all journal and UI preference
+operations. Regular-user `info` returns only API version, scope, revision,
+visible-record count, Library enablement, and permissions. Regular-user
+`library/info` uses a separate positive allowlist of
+version/group/name/collection counts, source revision, an opaque
+collection-preference key, and catalog/collection timestamps. `library/list`
+uses the same explicit cached-title projection for both roles: known display
+metadata including rating badges, opaque title/artwork keys, memberships/status,
+group favorite/recent booleans, and detection/freshness times. It excludes
+origin, raw source handles/groups, file paths, and private journal/session/audit
+fields. `journal/list` and `journal/get` use a positive record-field allowlist;
+adding a database column must not implicitly expose it. Deletion tombstones are
+excluded from these reads. Mutation authorization is enforced on the server;
+hiding editor/export controls is not authorization. Known user/connection/role
+changes clear the browser's old data and ignore late responses. Browser
+downloads and data already observed cannot be recalled when access changes.
 
 The household [sensors](sensors.md) publish completed/partial viewing history,
 source-scoped Library counts, last catalog time, storage sizes and a bounded
@@ -174,9 +179,11 @@ count and timestamp on the source row inside the catalog transaction. Initial
 sync is a baseline. Only newly discovered source groups replace the batch;
 metadata/purchase imports, formats and unchanged scans do not. A retained batch
 can describe titles no longer available. Imports cannot supply/restore these
-operational fields; source tables remain outside portable import projections. No
-new table, API, remote operation or full-catalog entity attribute is added. Use
-the existing active-user/enabled-Library paginated API for complete lists.
+operational fields; source tables remain outside portable import projections.
+Schema 11 adds source/version batch markers for exact-group UI badges, with no
+raw marker exposed in the public projection. No remote operation or full-catalog
+entity attribute is added by the sensors. Use the existing
+active-user/enabled-Library paginated API for complete lists.
 
 ## Now Playing and current artwork
 
@@ -229,16 +236,16 @@ Administrator tabs mount only their selected view. Switching pages stops Now
 Playing polling and cancels an abandoned settings flow. Drafts require discard
 confirmation, and pending mutations retain their exact retry state until
 resolved or explicitly discarded. Regular users keep the read-only journal
-without these controls; their Library/Journal tabs share only permitted cached
-reads. Database New Entry uses the existing administrator journal/create API,
-with no create/edit capability for internal evidence, audit, retry, or metadata
-tables. Moving controls into tabs changes no API authorization or data
-projection. The shared Database toolbar reuses these same endpoints:
-single-entry deletion uses the journal tombstone API and remains distinct from
-permanent purge. Internal tables disable mutation controls. Native
-transfer/purge dialogs block dismissal during accepted work or an uncertain
-result; explicit retry discard remains available. Cancelled file selection
-clears its private File and native input.
+without these controls; their Library/Journal tabs share permitted cached reads
+and actor-scoped personal browsing preference writes. Database New Entry uses
+the existing administrator journal/create API, with no create/edit capability
+for internal evidence, audit, retry, or metadata tables. Moving controls into
+tabs changes no API authorization or data projection. The shared Database
+toolbar reuses these same endpoints: single-entry deletion uses the journal
+tombstone API and remains distinct from permanent purge. Internal tables disable
+mutation controls. Native transfer/purge dialogs block dismissal during accepted
+work or an uncertain result; explicit retry discard remains available. Cancelled
+file selection clears its private File and native input.
 
 The sidebar settings adapter operates only this Companion entry's native HA
 options flow. Start/submit/cancel require an active administrator; flows bind to
@@ -249,38 +256,62 @@ This adds no general options/action proxy or Vite HTTP route. A lost save
 response requires reopening and inspecting the persisted values rather than
 blindly replaying it.
 
-Database inspection is administrator-only, includes private data, and accepts
-only thirteen internal table names with 10/25/100/500-row pages (default 25),
-including six read-only library tables. Search is a bound literal pattern of at
-most 500 characters without NUL. Sort columns must match the selected table's
-integration-owned local schema, are quoted internally, and use fixed key
-tie-breaks. Pages remain revision-bound and capped at 8 MiB of conservative
-JSON; oversized pages fail rather than silently truncating. Raw inspection,
-search, sorting and returned column names retain the administrator boundary.
-Database corrections reuse validated viewing fields, optimistic revisions,
-manual audit, and exact retry semantics, including for tombstones; they preserve
-deletion status and session evidence. Internal tables/immutable fields are
-read-only. There is no arbitrary SQL or filesystem path API. Render raw values
-as text; account/connection changes clear details and invalidate late responses.
+Database inspection and the new query/administration commands require an active
+administrator, before storage work and again after awaited results. The
+[Database contract](database.md) allows fifteen fixed tables, known column/JSON
+aliases, 10/25/100/500-row pages and 8 MiB result pages. Column identifiers come
+only from the local migrated schema; values use parameters. The condition parser
+supports comparisons, NULL tests, literal CONTAINS, LIKE and boolean grouping.
+It accepts at most 2000 characters, 128 tokens and eight levels; inspection SQL
+has a two-second progress deadline removed in finally. It cannot execute
+arbitrary SQL/DDL/functions/subqueries, install schemas, or accept paths. Query
+validation returns owned, position-based guidance without echoing entered
+values. Autocomplete uses schema names/operators and text bindings. All columns,
+even protected keys, can be queried without becoming writable.
 
-Permanent selected/all purge requires recording disabled and no active observer,
-explicit server-validated confirmation, dataset revision, and a request UUID.
-Backup/export activity blocks purging. One transaction removes viewing/session
-content, related manual audit rows, and cached response content, including
-legacy responses without an audit row. Minimal UUID/fingerprint retry barriers
-remain so old create/update requests cannot resurrect or return purged data. A
-schema 4 maintenance audit/receipt retains only actor, operation/request UUID,
-time, count, and revision. It contains no purged viewing identities, titles,
-notes, or source IDs; request fingerprints are hashes, not stored payloads.
-Exact purge retries are bound to actor/payload and remain safe after a lost
-response or restart.
+`database/mutate` is a narrow edit/delete API over supported fields. It requires
+entry/dataset scope, actor-bound cryptographic UUID, inspected content revision,
+row keys and snapshot tokens, and explicit SAVE/DELETE confirmation. The worker
+validates all selections before applying one transaction. Stale snapshots or
+intervening content changes fail without partial changes. IDs, relationship
+keys, managed paths, audit/receipt records and dataset identities/counters
+remain protected; native source configuration still uses its existing options
+flow. Open playback sessions/their viewings reject writes. Pending device
+additions protect their source, and retained receipts protect source/version
+foreign keys. Library edits preserve journal headroom. JSON metadata/preferences
+use known field validators, never imported SQL or arbitrary file/network
+references.
 
-SQLite secure deletion is enabled for the live database; this does not promise
-physical erasure from storage, rollback remnants, host snapshots, or external
-copies. Purge does not remove exports, migration/HA backups, already viewed
-browser data, or HA Recorder/automation history. It leaves the dataset identity
-and minimal maintenance/retry metadata intact. No automatic retention policy is
-added.
+Recording and sync need not be disabled for these targeted edits/deletions:
+revision conflicts protect accepted snapshots, while later authoritative source
+sync can recreate/overwrite cached data. Bulk imports and the compatibility
+purge API retain their disabled-recording rule. Backup and transfer barriers
+apply to new operations; exact committed retries return the stored result,
+including during backup. Accepted work can commit after disconnect or access
+loss, but a changed role/activity/readiness withholds the private result.
+
+Schema 12 records `database_audit`: actor, request UUID, operation/table,
+affected field names/count, content revision and time, without copied row
+IDs/content. Database Delete is permanent and handles local references
+transactionally. Viewing deletion removes session/manual-audit links and redacts
+cached viewing responses while retaining replay barriers and the new operation
+audit. Library collection/source/version deletion clears local memberships in
+dependency order; receipt references block deletion rather than weakening
+external-write recovery. Artwork deletion clears indexed references before
+unlinking only its validated, private content-hash file; a failed unlink leaves
+an unserved orphan for normal cache reconciliation. No device write or arbitrary
+filesystem operation is added. Backups/downloads/Recorder copies and physical
+secure erasure stay outside this operation. A crash after commit but before file
+cleanup can leave a private orphan.
+
+Raw-first details and explicit edit/delete dialogs use safe text bindings. Dirty
+edits require explicit discard; pending/unconfirmed mutations block implicit
+dismissal/navigation and preserve their exact retry payload. Account/connection
+changes clear drafts, raw rows and outstanding responses. UI-only Database
+preferences have their own actor-scoped settings row and never grant access to
+raw data. Shared hidden names remain administrator-managed. A monotonic settings
+counter protects raw settings pagination after row deletion; journal/catalog and
+reviewed-import revisions remain independent of ordinary preference saves.
 
 ## Reviewed viewing and Library imports
 
@@ -406,13 +437,17 @@ Only `/movies`, its encoded collection query, `/details` with an encoded source
 handle, and validated `/webcovers/` or `/webcoverslarge/` raster paths are
 fetched. No browser-supplied URL/path/SQL or metadata-supplied external
 destination is used. HTML parsing uses the native structural parser without
-evaluating scripts. Complete group/count/identity checks protect catalog
-availability; missing/unrecognized or partial collection navigation preserves
-old memberships rather than inventing unwatched status. The built-in Scenes
-navigation is excluded because it opens scene management, not a movie
-collection; arbitrary malformed pages still fail. Details and collections retain
-freshness separately. Source Played/Paused labels never create journal
-completion or dated viewing history.
+evaluating scripts. Cached search uses literal Unicode-folded
+title/actor/director substrings. `library/suggest` exposes at most 20 cached
+actor/director names per bounded query, under the same
+active-user/enabled-source scope and access checks. It adds no device request.
+Complete group/count/identity checks protect catalog availability;
+missing/unrecognized or partial collection navigation preserves old memberships
+rather than inventing unwatched status. The built-in Scenes navigation is
+excluded because it opens scene management, not a movie collection; arbitrary
+malformed pages still fail. Details and collections retain freshness separately.
+Source Played/Paused labels never create journal completion or dated viewing
+history.
 
 Requests are sequential, with 5-second DNS/connect, 15-second request, and
 30-minute scan budgets. HTML responses are capped at 8 MiB, trees at 200,000
@@ -437,15 +472,30 @@ Both MIME and JPEG/PNG/WebP magic must match, with a 5 MiB image cap and no
 Python image decoding. Opaque SHA-256 keys resolve only current-source indexed
 files. Reads validate size/hash/type and recheck active-user access, unchanged
 role, and scope/readiness before delivery, with `no-store`/`nosniff` headers.
-The browser loads only visible covers, limits requests to three per mounted
-Library (including the details popup), and keeps only visible page/popup blobs,
-with a hard ceiling of the 1000-entry page plus one popup image (each at most 5
-MiB). The default page target stays 50. Increasing the target increases possible
-DOM/metadata/image memory; visibility loading, cancellation, and revocation
-remain required. Each request has a five-second budget. Leaving the viewport,
-hiding the page, closing details, or changing account/navigation aborts work and
-revokes URLs. These limits do not bound a browser decoder's expanded image
-memory.
+The browser begins image requests only for visible covers, limits them to three
+per mounted Library (including details), and caps each at 5 MiB/five seconds.
+Completed covers are retained in a private session-only LRU of at most 1000
+images and 128 MiB of compressed bytes. Keys include entry/dataset scope and
+content-hash artwork IDs; tokens, raw URLs and bytes never enter UI settings,
+cookies or persistent browser storage. Repeated scroll/page/view/popup visits
+reuse accepted URLs. Eviction prefers offscreen covers, revokes URLs and
+invalidates mounted references; visible entries can be evicted to enforce the
+hard budget. Up to three in-flight downloads (5 MiB each), decode memory and DOM
+memory are additional; decoded memory is not bounded by this byte cap. The
+initial UI page target is 100; numeric choices are 25/100/1000. All aggregates
+source/preference-revision-bound pages of up to 1000 groups, capped at 10,000
+groups and 32 MiB aggregate metadata. It does not bypass per-response 8 MiB
+limits or add an unbounded endpoint. All can increase DOM/image memory, while
+unfinished offscreen/hidden-page image requests still cancel. Completed covers
+survive scrolling, hiding the browser and popup closure in the same Library
+session. Leaving Library, disconnect/account/role/scope changes, detected access
+denial or opt-out dispose the cache and revoke all URLs. Disposed caches reject
+late insertions and stale component responses remain invalidated. HTTP
+authentication and no-store/nosniff policies are unchanged; manual memory
+retention is not an extra network/data-access capability. Known access loss
+clears data, but previously observed bytes cannot be recalled. Increasing the
+target increases possible DOM/image memory and decoded images;
+visibility-triggered fetching, bounded retention and revocation remain required.
 
 The configurable cache budget is 32–4096 MiB (default 512), plus at most one 5
 MiB incoming file during normal writes. Atomic file replacement, transaction
@@ -575,11 +625,12 @@ and the
 Use the
 [documented backup/restore procedure](backend.md#export-backup-and-restore).
 Treat JSON/SQLite downloads and migration backups as private, including exports
-containing tombstones. SQLite exports also contain retry responses and audit
-metadata. JSON format 3 includes portable Library title metadata/dates alongside
-viewing/session snapshots and does not include the audit tables. Keep backups
-encrypted where practical and restrict access to the backup destination;
-downloaded files are outside this integration's permission and cleanup control.
+containing tombstones. SQLite exports also contain retry responses, audit
+metadata, user IDs and private UI searches/preferences. JSON format 3 includes
+portable Library title metadata/dates alongside viewing/session snapshots and
+does not include the audit tables. Keep backups encrypted where practical and
+restrict access to the backup destination; downloaded files are outside this
+integration's permission and cleanup control.
 
 The journal deliberately retains history. A visible delete is a tombstone, not
 permanent erasure: content can remain in sessions, retry responses, SQLite
@@ -632,12 +683,47 @@ security regressions. Contributor and agent instructions link to this policy.
 
 ## Display preferences, navigation, and purchase dates
 
-Display defaults are administrator-managed native HA options. Active users
-receive only the three validated defaults (landing tab, Library view, count
-1–1000). Hidden collections are bounded name lists with custom values; old
-newline strings migrate on save. Known names come from cached metadata, without
-device requests. Regular users do not receive hidden-name settings or the
-unfiltered suggestion list.
+The default landing page remains an administrator-managed native HA option.
+Schema 11 moves Library view/count, applied query/facets, sort, cover size and
+column widths and title/format/library/rating badge toggles to private
+per-HA-user SQLite `settings` rows. Toggle values must be actual booleans; old
+rows inherit new presentation defaults on read without a content revision
+change. Shared hidden collection names use a separate administrator-managed row;
+known names come from cached metadata without device requests. Old HA defaults
+seed initial values once and obsolete UI options are removed from HA entry
+data/options.
+
+`ui/preferences/get` and `/update` derive their owner from the active connection
+user; schemas accept no owner/actor parameter. Scoped `ui/shared/get` and
+`/update` require an active administrator. Before/after-await role, activity,
+entry/dataset and readiness checks apply. Accepted writes can finish after
+access loss, but results are withheld. These four WebSocket commands add no
+HTTP/proxy path, arbitrary settings/configuration API or device operation.
+
+The worker atomically patches allowlisted fields; the last accepted edit to a
+field wins, preserving other fields. UUID retries bind actor, scope, revision
+and exact payload. Row revisions are independent from content revisions.
+Receipts contain only a fingerprint and resulting revision, not a duplicate
+search/filter snapshot. Values are limited to 16 KiB, at most 100 selections per
+facet, 500-character searches, offered page sizes and bounded sizing values.
+Shared hidden names retain their existing 200-name/256-character limits. Failed
+saves have an explicit retry; local choices do not imply persistence.
+Connection/account changes clear values, failed fields and pending responses.
+Database view/count/table/sort options use a separate personal `database` row.
+Other open tabs reload values on remount; no live cross-tab channel is added.
+
+SQLite exports/backups contain private UI preferences and user IDs. Portable
+JSON/SQLite merge imports ignore these settings and operational batch markers.
+Normal users cannot read another user's settings or shared hidden-name values;
+raw table inspection and SQLite downloads remain administrator-only. Shared
+hidden labels are presentation, not an access-control boundary: Played/Paused
+still determine status and Favorites can still supply an independent favorite
+badge. In progress/Watched suppress New without modifying sensor membership.
+Cover format selection uses the highest positively known video format only.
+Recent badges use exact source-group batch markers, never title matching; older
+title-only snapshots wait for the next new-movie batch for badge identity.
+Format chips use positive metadata and fixed text/CSS classes without fetching
+logos or executing source strings. See [UI preferences](ui-preferences.md).
 
 The URL retains only an allowlisted `companion_page` tab, preserving HA's other
 URL parameters and history state. Role and Library enablement restrict

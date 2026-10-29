@@ -50,6 +50,18 @@ async def async_setup_entry(
     repository = JournalRepository(Path(hass.config.path(DOMAIN, "journal.sqlite3")))
     try:
         await repository.async_open()
+        await repository.async_seed_ui_preferences(dict(entry.options or entry.data))
+        ui_keys = {
+            "library_default_view",
+            "library_default_count",
+            "library_excluded_collections",
+        }
+        if ui_keys & (entry.data.keys() | entry.options.keys()):
+            hass.config_entries.async_update_entry(
+                entry,
+                data={k: v for k, v in entry.data.items() if k not in ui_keys},
+                options={k: v for k, v in entry.options.items() if k not in ui_keys},
+            )
         info = await repository.async_info()
     except UnsupportedSchemaError as error:
         await repository.async_close()

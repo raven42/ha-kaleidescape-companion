@@ -486,6 +486,8 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
         await self.repository.async_close()
         with closing(sqlite3.connect(self.path)) as db:
             for table in (
+                "database_audit",
+                "settings",
                 "library_collection_intents",
                 "library_memberships",
                 "library_collections",
@@ -500,12 +502,13 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
             )
 
             db.execute(MIGRATIONS[5][0])
+            db.execute("ALTER TABLE schema_metadata DROP COLUMN settings_revision")
             db.execute("PRAGMA user_version=5")
             db.commit()
         self.repository = JournalRepository(self.path)
         self.addAsyncCleanup(self.repository.async_close)
         await self.repository.async_open()
-        self.assertEqual((await self.repository.async_info())["schema_version"], 10)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 12)
         self.assertEqual(
             await self.repository.async_get(created["viewing"]["id"]),
             created["viewing"],

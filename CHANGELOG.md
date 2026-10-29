@@ -1,5 +1,48 @@
 # Changelog
 
+## Unreleased — Library browsing and protected Database administration
+
+- Add sticky Library search/status bars, debounced title/actor/director search,
+  full-cache people suggestions, ordered compact filters and reusable rating/
+  format badges. Display source Played as Watched; put detailed sync/version
+  information in Options and make cover ratings optional.
+- Add personal Database options, raw-first details, confirmed supported-field
+  edits and permanent selected-row deletion. Keep IDs, links, paths, audit,
+  receipts, operational state and active playback records protected; reject
+  stale snapshots while recording/sync can remain enabled.
+- Add schema-aware predicate completion/validation and bounded execution using
+  bound parameters. Schema 12 adds database operation audit and a monotonic
+  UI-settings revision to support safe preference-row deletion.
+
+## Unreleased — Library layout options and retained covers
+
+- Group live personal view/count/cover-size and overlay controls in an Options
+  popup, retaining sort/order and whole-row numeric cover pagination. Existing
+  database preference rows inherit enabled overlay defaults without a schema
+  change.
+- Show only the highest known SD/HD/4K/4K Cinematic format on covers. Use
+  exclusive top-left Watched/In progress/New indicators and an independent
+  top-right Favorite bookmark; progress/completion overrides New without
+  changing the recent sensor batch. Lists retain detailed format chips.
+- Retain downloaded covers across scrolling, pagination, view changes and
+  details in a private 1000-image/128 MiB session LRU. Fetch only visible
+  covers; keep request limits, eviction cleanup and account/access revocation
+  barriers.
+
+## Unreleased — Persistent Library presentation and badges
+
+- Move Library UI choices to schema 11 database settings, scoped per HA user;
+  save view, page size, applied search/filters, sort, cover size and column
+  widths immediately. Shared hidden names remain administrator-managed. Migrate
+  former HA UI options once; keep the default landing page native.
+- Offer 25/100/1000/All page sizes, keeping whole-row cover pagination and
+  loading All through bounded revision-checked chunks.
+- Add overlapping watched/recent/favorite cover flags and list summary badges,
+  plus explicit 4K/Cinematic, HD, SDR, HDR10, Dolby Vision and Atmos chips.
+  Source-group batch markers distinguish new movies from formats and remakes.
+- Keep UI row revisions independent of content imports/edits, with actor-bound
+  validation, atomic field patches and private SQLite backup/export behavior.
+
 ## Unreleased — Library and storage sensors
 
 - Add seven HA sensors: total movies unique by source group, watched/unwatched

@@ -99,19 +99,24 @@ configurable SSH tasks support HA OS and Container. See
 [deployment](docs/deployment.md).
 
 The page order is **Now Playing | Library | Journal | Database | Settings**.
-Settings controls the default landing page and Library view/count; the selected
-tab is retained in the URL. Configure one player's entities for automatic
-recording. Minimum runtime defaults to 10 minutes; 0 disables the cutoff.
-Fourteen [HA sensors](docs/sensors.md) expose viewing history, Library
-counts/recent additions, last catalog sync and storage sizes. Full catalogs stay
-in the paginated Library UI/API rather than sensor attributes.
+Settings controls the default landing page; the selected tab is retained in the
+URL. Personal [Library preferences](docs/ui-preferences.md) save immediately in
+the database: view, count, filters, search, sort, cover size and column widths.
+Configure one player's entities for automatic recording. Minimum runtime
+defaults to 10 minutes; 0 disables the cutoff. Fourteen
+[HA sensors](docs/sensors.md) expose viewing history, Library counts/recent
+additions, last catalog sync and storage sizes. Full catalogs stay in the
+paginated Library UI/API rather than sensor attributes.
 
 Enable Library explicitly, leaving its host blank to try `my-kaleidescape.local`
 or setting a local host. Choose sync interval, metadata and optional artwork.
 Source groups distinguish remakes from editions; Library offers list/cover
-views, search, checkbox filters, **Clear Filter**, and up to 1000 entries per
-page. Database offers 10/25/100/500-row pages, search, sorting, corrections and
-import/export. Disable recording before journal imports or permanent purges.
+views, search, checkbox filters, **Clear Filter**, status/format badges and
+25/100/1000/All page sizes. [Database tools](docs/database.md) offer sticky
+options, schema-aware condition search, protected confirmed edits/permanent
+deletion, and import/export. Library adds sticky search/status bars, partial
+title/people search, and reusable format/rating badges. Recording must still be
+disabled before merge imports and legacy bulk purge operations.
 
 ## Release status
 

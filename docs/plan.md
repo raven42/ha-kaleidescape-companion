@@ -28,6 +28,12 @@ code boundaries. The [security policy](security.md) governs every phase.
 These phases describe product delivery, not an HA quality-scale certification. A
 passing local build does not establish production readiness.
 
+The current [Database tools](database.md) provide raw-first details, confirmed
+supported edits/deletions, personal view options and schema-aware condition
+completion. Library has sticky search/status bars, partial title/people search,
+compact people filters and reusable rating/format badges. Critical system repair
+beyond the documented protections remains a separate design task.
+
 ## Next: finish the journal experience
 
 Keep Journal the default view. Administrator navigation uses the ordered tabs
@@ -190,11 +196,15 @@ distribution release.
 
 ### Display and purchase metadata follow-up
 
-Implemented shared display defaults, URL main-tab restoration, known/custom
-hidden collection lists and guarded backdrop dismissal. Schema 9 folds purchase
-dates onto title versions and consolidates import audit. The one-time HTML
-preparation helper remains in `dev/`; live [reviewed merge imports](imports.md)
-use exact IDs, selectable new/missing-data changes and preserved conflicts. See
+Implemented native landing-page defaults and URL main-tab restoration. Schema 11
+moves [UI preferences](ui-preferences.md) into the database: personal view,
+count, applied filters/search, sort and sizing save immediately; hidden
+collection lists stay shared and administrator-managed. The Library offers
+25/100/1000/All pages, status flags and explicit format chips. Dialog backdrop
+dismissal remains guarded. Schema 9 folds purchase dates onto title versions and
+consolidates import audit. The one-time HTML preparation helper remains in
+`dev/`; live [reviewed merge imports](imports.md) use exact IDs, selectable
+new/missing-data changes and preserved conflicts. See
 [purchase dates](purchase-dates.md). Add-only collection membership is
 implemented with a separate opt-in, exact version selection, read-back
 confirmation and schema 8 durable receipts. Removal remains pending operator

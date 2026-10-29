@@ -43,7 +43,7 @@ def save_catalog(db, origin, rows, collections=None, *, detected_at=None):
                 (?,?,?)""",
             (source, origin, seen),
         )
-        record_additions(db, source, rows, seen)
+        batch, recent_groups = record_additions(db, source, rows, seen)
         db.execute("UPDATE library_titles SET available=0 WHERE source_id=?", (source,))
         for item in rows:
             handle = item["source_handle"]
@@ -83,10 +83,11 @@ def save_catalog(db, origin, rows, collections=None, *, detected_at=None):
             db.execute(
                 """INSERT INTO library_titles
                 (id,source_id,source_handle,source_group,title,title_search,
-                 base_hash,data,first_seen,last_seen)
-                VALUES (?,?,?,?,?,?,?,?,?,?)
+                 base_hash,data,first_seen,last_seen,addition_batch)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?)
                 ON CONFLICT(source_id,source_handle) DO UPDATE SET
                 source_group=excluded.source_group,title=excluded.title,
+                addition_batch=excluded.addition_batch,
                 title_search=excluded.title_search,
                 fetched_at=CASE WHEN library_titles.base_hash!=excluded.base_hash
                     THEN NULL ELSE library_titles.fetched_at END,
@@ -103,6 +104,7 @@ def save_catalog(db, origin, rows, collections=None, *, detected_at=None):
                     json.dumps(data),
                     seen,
                     seen,
+                    batch if item["source_group"] in recent_groups else None,
                 ),
             )
         db.execute(

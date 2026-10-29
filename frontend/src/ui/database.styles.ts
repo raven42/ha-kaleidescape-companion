@@ -6,6 +6,7 @@ export const databaseStyles = css`
     padding: 20px;
   }
   .database {
+    overflow: visible;
     margin-top: 24px;
   }
   .database-toolbar {

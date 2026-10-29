@@ -4,23 +4,10 @@ import hashlib
 import json
 from datetime import UTC, datetime
 
+from .database_query import OPERATORS, compile_query
+from .database_schema import DELETABLE, MAIN_TABLES, TABLE_KEYS, schema
 from .models import JournalError, invalid
 
-TABLE_KEYS = {
-    "viewings": "id",
-    "sessions": "id",
-    "requests": "request_id",
-    "manual_audit": "request_id",
-    "maintenance_audit": "request_id",
-    "import_audit": "request_id",
-    "schema_metadata": "singleton",
-    "library_sources": "id",
-    "library_titles": "id",
-    "library_collections": "source_id,name",
-    "library_memberships": "title_id,collection",
-    "library_artwork": "cache_key",
-    "library_collection_intents": "request_id",
-}
 PAGE_SIZES = (10, 25, 100, 500)
 MAX_PAGE_BYTES = 8 * 1024 * 1024
 
@@ -44,12 +31,21 @@ def inspect_database(
         or type(limit) is not int
         or limit not in PAGE_SIZES
         or not isinstance(query, str)
-        or len(query) > 500
+        or len(query) > 2000
         or "\x00" in query
         or type(descending) is not bool
     ):
         raise invalid("Invalid database page")
-    current = db.execute("SELECT revision FROM schema_metadata").fetchone()[0]
+    meta = db.execute(
+        "SELECT revision,settings_revision FROM schema_metadata"
+    ).fetchone()
+    current = (
+        meta["settings_revision"]
+        if table == "settings"
+        else meta["revision"] + meta["settings_revision"]
+        if table in {"requests", "schema_metadata"}
+        else meta["revision"]
+    )
     if revision is not None and (type(revision) is not int or revision != current):
         raise JournalError(
             "refresh_required", "Database changed; refresh the first page"
@@ -57,7 +53,8 @@ def inspect_database(
     # Column identifiers come only from this integration's local migrated schema.
     # Imports never install schemas. Caller-supplied sort strings must match one
     # of these columns exactly before being quoted into the fixed SELECT.
-    columns = [row[1] for row in db.execute(f"PRAGMA table_info({table})")]
+    descriptions, fields = schema(db, table)
+    columns = [item["name"] for item in descriptions]
     sort = TABLE_KEYS[table].split(",")[0] if sort is None else sort
     if not isinstance(sort, str) or sort not in columns:
         raise invalid("Invalid database sort")
@@ -65,17 +62,8 @@ def inspect_database(
     def quoted(column):
         return '"' + column.replace('"', '""') + '"'
 
-    where, values = "", ()
-    if query:
-        pattern = (
-            "%"
-            + query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-            + "%"
-        )
-        where = " WHERE " + " OR ".join(
-            f"CAST({quoted(column)} AS TEXT) LIKE ? ESCAPE '\\'" for column in columns
-        )
-        values = (pattern,) * len(columns)
+    predicate, values = compile_query(query, fields)
+    where = " WHERE " + predicate if predicate else ""
     counts = {
         name: db.execute(f"SELECT count(*) FROM {name}").fetchone()[0]
         for name in TABLE_KEYS
@@ -115,12 +103,28 @@ def inspect_database(
         "sort": sort,
         "descending": descending,
         "query": query,
+        "dataset_revision": meta["revision"],
+        "main_tables": MAIN_TABLES,
+        "schema": descriptions,
+        "query_fields": [
+            {key: value for key, value in item.items() if key != "expression"}
+            for item in fields.values()
+        ],
+        "operators": OPERATORS,
+        "deletable": table in DELETABLE,
+        "row_tokens": [row_token(item) for item in items],
     }
     if len(json.dumps(page, ensure_ascii=True).encode()) > MAX_PAGE_BYTES:
         raise JournalError(
             "database_page_too_large", "Reduce the database rows per page"
         )
     return page
+
+
+def row_token(row):
+    return hashlib.sha256(
+        json.dumps(dict(row), sort_keys=True, allow_nan=False).encode()
+    ).hexdigest()
 
 
 def purge_database(db, request_id: str, data: dict, actor_id: str | None) -> dict:

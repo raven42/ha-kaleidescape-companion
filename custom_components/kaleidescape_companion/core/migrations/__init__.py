@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from ..security import private_file
 
-SCHEMA_VERSION = 10
+SCHEMA_VERSION = 12
 
 MIGRATIONS = {
     1: (
@@ -236,6 +236,31 @@ MIGRATIONS[10] = (
     """ALTER TABLE library_sources ADD COLUMN recently_added_movies TEXT
         NOT NULL DEFAULT '[]'""",
     "ALTER TABLE library_sources ADD COLUMN recently_added_at TEXT",
+)
+
+
+MIGRATIONS[11] = (
+    """CREATE TABLE settings (
+        owner TEXT NOT NULL,key TEXT NOT NULL,value TEXT NOT NULL,
+        revision INTEGER NOT NULL CHECK(revision>0),updated_at TEXT NOT NULL,
+        PRIMARY KEY(owner,key))""",
+    "ALTER TABLE library_sources ADD COLUMN recently_added_batch TEXT",
+    "ALTER TABLE library_titles ADD COLUMN addition_batch TEXT",
+    "CREATE INDEX library_title_groups ON library_titles(source_id,source_group)",
+)
+
+
+MIGRATIONS[12] = (
+    "ALTER TABLE schema_metadata ADD COLUMN settings_revision "
+    "INTEGER NOT NULL DEFAULT 0",
+    "UPDATE schema_metadata SET settings_revision="
+    "(SELECT coalesce(sum(revision),0) FROM settings)",
+    """CREATE TABLE database_audit (
+        request_id TEXT PRIMARY KEY REFERENCES requests(request_id), actor_id TEXT,
+        operation TEXT NOT NULL, table_name TEXT NOT NULL,
+        affected_count INTEGER NOT NULL,
+        field_names TEXT NOT NULL, dataset_revision INTEGER NOT NULL,
+        occurred_at TEXT NOT NULL)""",
 )
 
 

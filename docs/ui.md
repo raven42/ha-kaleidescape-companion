@@ -14,13 +14,20 @@ selections without changing the view, sort, or page size. Source-group editions
 share a row/cover; same-name remakes stay separate, with individual
 format/year/version tabs in the popup. List widths stay fixed across sorts and
 can be resized by dragging dividers or using Left/Right/Home on a focused
-divider. Entries per page accepts 1–1000 (default 50). Cover pages round the
-target to complete rows for the measured grid, adapting to window and cover-size
-changes. The final page can contain fewer titles. Large pages use compact
-summaries and visible-only artwork; full metadata loads when opening a title.
-Settings can hide collection names without hiding movies or editing the device.
-Collection additions have a separate opt-in [contract](library-collections.md);
-progress and playback controls remain later work.
+divider. Entries per page offers 25, 100 (initial), 1000 and All. Personal
+browsing preferences save immediately in the database through **Options**. The
+popup groups view, count, cover size, title overlay, format/library badge
+switches and sort/order. Covers show an exclusive top-left Watched/In progress/
+New marker and an independent top-right Favorite bookmark, plus only the highest
+known video format. Lists retain all explicit format chips and summary badges.
+Cover pages round the target to complete rows for the measured grid, adapting to
+window and cover-size changes. The final page can contain fewer titles. Large
+pages use compact summaries and visible-only artwork fetching, retaining
+completed covers in a private bounded Library-session cache; full metadata loads
+when opening a title. Settings can hide collection names without hiding movies
+or editing the device. Collection additions have a separate opt-in
+[contract](library-collections.md); progress and playback controls remain later
+work.
 
 ## Open in Home Assistant
 
@@ -205,93 +212,39 @@ users retain the existing read-only journal without administrator tabs.
 
 **Journal** has the **Add viewing** action. **Settings** displays the recording
 configuration inline, using the integration's existing Configure options and the
-same HA options flow, validation, and automatic reload. Source fields accept HA
-entity IDs. **Cancel changes** discards the form and reloads saved values
-without saving. Switching tabs asks before discarding unsaved journal, database,
-or settings changes. Writes and exact pending retries block navigation where
+same HA options flow, validation, and automatic reload. A separate shared UI
+section saves hidden collection names directly to SQLite without a reload. The
+landing-page default remains in the native form. Source fields accept HA entity
+IDs. **Cancel changes** discards the form and reloads saved values without
+saving. Switching tabs asks before discarding unsaved journal, database, or
+settings changes. Writes and exact pending retries block navigation where
 appropriate. A settings save with an unconfirmed response requires explicit
 confirmation before leaving or reloading; inspect saved values before another
 change.
 
-**Database** uses one shared surface: a toolbar, underline table tabs matching
-the main navigation, then the entry list and right-hand details. The toolbar
-contains **New Entry**, **Delete entry**, **Purge entry**, **Refresh database**,
-**Merge Import**, and **Export**. Thirteen table tabs show friendly names and
-full table counts, including the journal, internal audit/retry metadata, and
-read-only Library tables. Arrow keys/Home/End move between tabs. Below them,
-**Search rows** matches literal text across the selected table's fields. **Rows
-per page** offers 10, 25 (default), 100, and 500; **Sort by** selects a stored
-column, with ascending/descending order. Changes return to the first page and
-clear row selection; switching tables also clears search/sort. Matching-row
-totals accompany revision-bound paging. Pages larger than 8 MiB are rejected
-with a prompt to reduce the page size. Checkboxes sit beside viewing names and
-select up to 100 deletion/purge targets; clicking a name opens its details. The
-entries list is padded; row counts are on their own line above a single row of
-**First**, **Previous**, and **Next** controls. Narrow screens stack the list
-and details within the same surface.
+**Database** has a toolbar, main/system table tabs, schema-aware search, an
+entry list and raw details. Selecting a row always shows raw stored values;
+**Edit entry** opens a separate dialog with supported fields and an explicit
+save confirmation. IDs/links, dataset metadata, managed paths, audit and receipt
+invariants remain protected. Database **Delete entry** permanently deletes up to
+100 selected supported records after typed DELETE confirmation; Journal Delete
+remains a tombstone. Open playback records are protected. Targeted operations
+can run while recording/sync are enabled but reject stale revisions and
+snapshots rather than overwriting concurrent changes.
 
-For `viewings`, **New Entry** in the toolbar opens the shared manual-viewing
-form in the detail pane. It uses the same validated create API and exact-request
-retry behavior as Journal's Add viewing. Internal tables disable
-create/delete/purge controls and remain read-only. Saving refreshes the list and
-shows the new viewing's details.
+**Options** persists rows per page (10/25/100/500), system-table visibility,
+selected table and per-table sort/order in the user's Database settings row. The
+six main tables show initially; the toggle exposes all fifteen. The query
+balloon suggests trusted fields/operators. Enter searches; Tab accepts a
+completion. Plain text remains literal search; conditions include
+`purchased_on IS NULL`, `actors CONTAINS 'name'`, and `title LIKE 'Star%'`.
+Syntax feedback includes positions and does not execute SQL. See the
+[full Database contract and browser review](database.md).
 
-**Delete entry** requires exactly one checked, visible viewing and confirmation.
-It uses the existing revision-checked journal delete API to hide the viewing
-while retaining its database record. Multiple checked entries can be permanently
-purged together. An uncertain create, edit, or delete locks the toolbar and tab
-row until the exact change is retried or explicitly discarded.
-
-The detail pane corrects the same viewing fields as the journal, including for
-deleted entries, using revision checks, exact retries, and unchanged-field
-precision preservation. It retains deletion status and session evidence.
-Internal session, retry, audit, and schema rows are read-only. Raw JSON details
-retain full precision and render as text. Changes invalidate later pages;
-**Refresh database** restarts inspection. There is no SQL console or arbitrary
-table/field write API.
-
-**Merge Import** and **Export** open native dialogs from the shared toolbar.
-Export offers JSON/SQLite. [Merge Import](imports.md) first reviews a compatible
-viewing/Library file without writes, then applies only approved new/missing-data
-changes. The compact searchable review has 25/100/500-row pages, individual
-checkboxes, select-all/none across pages, preserved-conflict labels and
-expandable before/after details. Recording must be disabled. Existing values,
-manual corrections and deletion status remain local. An unconfirmed apply locks
-its exact selection/UUID for explicit retry or **Discard import retry &
-inspect**. A complete trusted database restore uses the
-[offline procedure](backend.md#downloads-and-offline-restore).
-
-For permanent deletion, disable automatic recording in Settings first. Open
-**Purge entry**, then choose **Purge selected** for checked viewings on the
-current page, or **Purge all entries** (including tombstones) in the dialog.
-Type **PURGE** or **PURGE ALL**, respectively, and choose **Confirm permanent
-purge**. Purge removes associated sessions, manual audit references, and cached
-response content transactionally. It retains minimal retry barriers and a
-content-free purge receipt/audit; old mutation retries cannot recreate purged
-viewings. This does not reset the dataset or remove backup/export copies,
-migration snapshots, HA Recorder history, or already observed browser data. It
-does not guarantee physical secure erasure. See
-[maintenance](backend.md#database-maintenance).
-
-A changed dataset revision rejects a stale purge. Backup/export activity blocks
-purging. An uncertain result locks the operation for **Retry same purge**, using
-the exact original UUID and payload; no new purge is prepared automatically. The
-purge dialog stays open and blocks cancellation until the result is resolved or
-the retry is explicitly discarded. Explicit **Discard retry & refresh**, page
-exit, or reconnect can lose this retry, so inspect the database before starting
-another purge. Resume recording explicitly when maintenance is finished. History
-sensors refresh on their next normal update.
-
-For operator browser review, use the fictional Vite review page first: inspect
-whole-second dates/two-decimal minutes without changing other fields, open
-Settings and exercise keyboard focus/Cancel changes, disable recording, inspect
-deleted/raw rows, and test selected/all confirmation and narrow layouts. Then
-review native options reload, aligned numeric setting inputs, matching table-tab
-keyboard navigation, toolbar deletion, viewing corrections, and JSON/SQLite
-import/export dialogs (including Escape/focus return) on an isolated HA
-instance. No real-browser review is automated. The disconnected fixture supports
-mock JSON merges for layout review; real SQLite compatibility is tested on the
-backend.
+Merge Import and Export remain on the Database toolbar, with reviewed
+missing-data merges and guarded dialogs. Source files are never modified;
+purchase preparation stays offline. See [imports](imports.md) and
+[purchase dates](purchase-dates.md).
 
 ## Checks and limits
 
@@ -309,29 +262,21 @@ The
 [known upstream dependency finding](security.md#known-dependency-findings-2026-10-25)
 still blocks a hardened public release.
 
-## Display defaults and reloads
+## Display preferences and reloads
 
-Settings includes a default landing tab, Library List/Covers view, and default
-Library count (1–1000). The selected main tab is retained in the URL as
-`companion_page`, so reload returns to it. A fresh URL uses the configured
-landing tab; role restrictions and disabled Library fall back to an allowed
-page. These are shared household defaults. View/count adjustments within Library
-remain in memory; only the selected main tab is retained in the URL. Hidden
-collections use checkboxes for known cached names and an **Add hidden name**
-control for custom values. Selected names are hidden; movies remain visible.
-Purchase import is on Library for administrators; see
-[purchase dates](purchase-dates.md). All native dialogs support backdrop-click
-dismissal through their Escape/cancel guard. Accepted or uncertain writes remain
-protected until resolved/discarded.
+The native landing-page option and allowlisted `companion_page` URL parameter
+control the selected main tab. Library browsing preferences save per HA user in
+SQLite; shared hidden collection names save separately for administrators.
+Changing these UI values does not reload the integration. See the
+[complete UI preference and badge contract](ui-preferences.md), including
+migration, All limits, failed-save retry, and concrete browser-review steps.
 
-For browser review, use `/review.html?library=1`, save display defaults, switch
-tabs and reload, check known/custom hidden names, and click inside/outside
-filter, title, transfer and purge dialogs. Review both administrator and reader
-layouts. On isolated HA, review a corrected SQLite merge and verify
-selected-version dates before apply. The fictional fixture retains mock settings
-only in the current page's memory; reload resets those mock values while
-preserving the URL tab. Verify durable saved defaults in an isolated HA instance
-after deploying the build.
+Native dialogs support backdrop-click dismissal through their Escape/cancel
+guard. Accepted or uncertain content writes remain protected until resolved or
+explicitly discarded. Purchase-history preparation is offline only; corrected
+SQLite files use Database → Merge Import with review and selected approval. The
+fictional fixture keeps mock preferences in memory, so test durable full-reload
+restoration on isolated HA.
 
 ## Add to Collection
 

@@ -35,6 +35,16 @@
     const transport = new FixtureTransport();
     transport.options.library_enabled = parameters.get("library") === "1";
     transport.players = [playing()];
+    const formats = [
+      "4K Cinematic Dolby Vision",
+      "HD",
+      "4K HDR10 SDR Dolby Atmos",
+    ];
+    transport.libraryTitles.forEach((title, index) => {
+      title.edition = formats[index % formats.length];
+      title.is_recently_added = index !== 1;
+      title.is_favorite = index !== 2;
+    });
     transport.libraryTitles.push(
       libraryTitle({
         id: "d".repeat(64),
@@ -64,6 +74,9 @@
           year: 1980 + (index % 40),
           watched_status: ["watched", "unwatched", "in_progress"][index % 3],
           collections: ["Science Fiction"],
+          edition: formats[index % formats.length],
+          is_recently_added: index % 4 === 0,
+          is_favorite: index % 5 === 0,
         }),
       );
     }

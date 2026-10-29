@@ -16,8 +16,6 @@ export interface JournalInfo extends Scope {
   library_enabled?: boolean;
   ui_defaults?: {
     default_landing_page: string;
-    library_default_view: "list" | "covers";
-    library_default_count: number;
   };
   permissions: { read: boolean; edit: boolean; export: boolean };
 }
@@ -106,6 +104,19 @@ export interface OptionsForm {
   fields?: { name: string; default?: string | number | boolean }[];
 }
 export interface DatabasePage {
+  dataset_revision?: number;
+  schema?: {
+    name: string;
+    type: string;
+    editable: boolean;
+    nullable: boolean;
+    primary: boolean;
+  }[];
+  query_fields?: { name: string; type: string }[];
+  operators?: string[];
+  row_tokens?: string[];
+  main_tables?: string[];
+  deletable?: boolean;
   table: string;
   tables: Record<string, number>;
   revision: number;
@@ -135,8 +146,14 @@ export interface ImportResult {
   skipped_count: number;
   revision: number;
 }
+export interface UISettings {
+  revision: number;
+  values: Record<string, unknown>;
+}
 export interface LibraryTitle {
   purchased_on?: string | null;
+  is_favorite?: boolean;
+  is_recently_added?: boolean;
   id: string;
   title: string;
   formats?: string[];
@@ -164,6 +181,9 @@ export interface LibraryTitle {
 export type LibrarySummary = Pick<
   LibraryTitle,
   | "id"
+  | "is_favorite"
+  | "is_recently_added"
+  | "rating"
   | "purchased_on"
   | "title"
   | "formats"
@@ -366,6 +386,10 @@ export function errorMessage(error: unknown): string {
       "The library returned an unsupported response. Cached data is retained.",
     library_changed:
       "The library changed during sync. Previous collection data was retained; try again later.",
+    query_limit:
+      "This query exceeded its execution budget. Simplify the conditions and try again.",
+    query_syntax:
+      "Check the field names, operators and quoted values in the condition.",
     database_page_too_large:
       "The database page is too large. Choose fewer rows per page.",
     library_page_too_large:
@@ -410,6 +434,33 @@ export class JournalClient {
 
   call<T>(message: ApiMessage): Promise<T> {
     return withRequestDeadline(this.transport.callWS<T>(message));
+  }
+  uiPreferences(
+    scope: Scope,
+    shared = false,
+    area = "library",
+  ): Promise<UISettings> {
+    return this.call({
+      type: `${DOMAIN}/ui/${shared ? "shared" : "preferences"}/get`,
+      ...(area !== "library" ? { area } : {}),
+      ...scopeFields(scope),
+    });
+  }
+  prepareUIPreferences(
+    scope: Scope,
+    shared: boolean,
+    revision: number,
+    patch: Record<string, unknown>,
+    area = "library",
+  ) {
+    return this.prepareCommand(
+      scope,
+      `ui/${shared ? "shared" : "preferences"}/update`,
+      { revision, patch, ...(area !== "library" ? { area } : {}) },
+    );
+  }
+  saveUIPreferences(pending: PreparedMutation): Promise<{ revision: number }> {
+    return this.call({ ...pending.message });
   }
   info(): Promise<{ entries: JournalInfo[] }> {
     return this.call({ type: `${DOMAIN}/info` });
@@ -684,6 +735,82 @@ export class JournalClient {
       return null;
     }
     return boundedBlob(response, MAX_ARTWORK_BYTES, type);
+  }
+  librarySuggestions(
+    scope: Scope,
+    field: string,
+    query: string,
+  ): Promise<{ items: string[]; has_more: boolean }> {
+    return this.call({
+      type: `${DOMAIN}/library/suggest`,
+      ...scopeFields(scope),
+      field,
+      query,
+    });
+  }
+  validateDatabaseQuery(
+    scope: Scope,
+    table: string,
+    query: string,
+  ): Promise<{ valid: boolean }> {
+    return this.call({
+      type: `${DOMAIN}/database/validate_query`,
+      ...scopeFields(scope),
+      table,
+      query,
+    });
+  }
+  prepareDatabaseMutation(scope: Scope, data: Record<string, unknown>) {
+    return this.prepareCommand(scope, "database/mutate", { data });
+  }
+  databaseMutation(pending: PreparedMutation): Promise<{
+    updated_count: number;
+    deleted_count: number;
+    revision: number;
+  }> {
+    return this.call({ ...pending.message });
+  }
+  async libraryAll(
+    scope: Scope,
+    filters: Record<string, unknown>,
+    current: () => boolean,
+  ): Promise<LibraryPage> {
+    let page: LibraryPage | undefined;
+    const items: LibrarySummary[] = [];
+    let bytes = 0;
+    while (current()) {
+      const next = await this.libraryList(scope, {
+        ...filters,
+        grouped: true,
+        limit: 1000,
+        offset: items.length,
+        ...(page
+          ? { revision: page.revision, preferences_key: page.preferences_key }
+          : {}),
+      });
+      if (!current()) throw new ApiError("not_ready");
+      if (
+        page &&
+        (next.revision !== page.revision ||
+          next.preferences_key !== page.preferences_key)
+      )
+        throw new ApiError("refresh_required");
+      bytes += new TextEncoder().encode(JSON.stringify(next.items)).byteLength;
+      if (items.length + next.items.length > 10000 || bytes > 32 * 1024 * 1024)
+        throw new ApiError("library_page_too_large");
+      items.push(...next.items);
+      page = next;
+      if (!next.has_more)
+        return {
+          ...next,
+          items,
+          offset: 0,
+          limit: items.length,
+          has_more: false,
+        };
+      if (!next.items.length) throw new ApiError("refresh_required");
+    }
+    throw new ApiError("not_ready");
   }
   prepare(
     scope: Scope,

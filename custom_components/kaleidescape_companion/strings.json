@@ -20,10 +20,7 @@
           "library_sync_details": "Sync title details and credits",
           "library_sync_artwork": "Sync artwork",
           "library_artwork_cache_mb": "Artwork cache limit (MiB)",
-          "library_excluded_collections": "Hidden collection names",
           "default_landing_page": "Default landing page",
-          "library_default_view": "Default Library view",
-          "library_default_count": "Default Library entries per page",
           "library_allow_collection_add": "Allow Add to Collection on the device"
         },
         "data_description": {
@@ -31,8 +28,7 @@
           "library_host": "Leave blank to attempt discovery using my-kaleidescape.local. Enter a hostname or private LAN HTTP(S) origin if name resolution fails. Standard HTTP/HTTPS ports only.",
           "library_sync_artwork": "Artwork adds disk use in a separate private cache, not the 256 MiB journal database. HA backups can include cached covers. Older covers are evicted when the configured limit is reached.",
           "library_sync_details": "Fetch available cast, director, writer, studio, synopsis, and runtime metadata. Missing source fields remain unavailable.",
-          "library_artwork_cache_mb": "32–4096 MiB; default 512 MiB, plus up to one 5 MiB incoming image. Choose a larger limit for a large library.",
-          "library_excluded_collections": "Hide these collection names from Library labels and filters, keeping movies visible. Played/Paused still determine status. This does not edit the device."
+          "library_artwork_cache_mb": "32–4096 MiB; default 512 MiB, plus up to one 5 MiB incoming image. Choose a larger limit for a large library."
         }
       }
     },
@@ -46,8 +42,7 @@
       "invalid_rules": "Choose valid runtime, completion, and partial-resume values.",
       "invalid_library_host": "Enter a valid hostname or private LAN HTTP(S) origin without credentials, a path, or query.",
       "invalid_library_options": "Choose a sync interval of 1–168 hours and an artwork cache limit of 32–4096 MiB.",
-      "invalid_library_collections": "Choose at most 200 collection names, up to 256 characters each.",
-      "invalid_display_options": "Choose a landing page, List or Covers, and a whole-number entry count from 1–1000."
+      "invalid_display_options": "Choose a valid default landing page."
     }
   },
   "options": {
@@ -70,10 +65,7 @@
           "library_sync_details": "Sync title details and credits",
           "library_sync_artwork": "Sync artwork",
           "library_artwork_cache_mb": "Artwork cache limit (MiB)",
-          "library_excluded_collections": "Hidden collection names",
           "default_landing_page": "Default landing page",
-          "library_default_view": "Default Library view",
-          "library_default_count": "Default Library entries per page",
           "library_allow_collection_add": "Allow Add to Collection on the device"
         },
         "data_description": {
@@ -81,8 +73,7 @@
           "library_host": "Leave blank to attempt discovery using my-kaleidescape.local. Enter a hostname or private LAN HTTP(S) origin if name resolution fails. Standard HTTP/HTTPS ports only.",
           "library_sync_artwork": "Artwork adds disk use in a separate private cache, not the 256 MiB journal database. HA backups can include cached covers. Older covers are evicted when the configured limit is reached.",
           "library_sync_details": "Fetch available cast, director, writer, studio, synopsis, and runtime metadata. Missing source fields remain unavailable.",
-          "library_artwork_cache_mb": "32–4096 MiB; default 512 MiB, plus up to one 5 MiB incoming image. Choose a larger limit for a large library.",
-          "library_excluded_collections": "Hide these collection names from Library labels and filters, keeping movies visible. Played/Paused still determine status. This does not edit the device."
+          "library_artwork_cache_mb": "32–4096 MiB; default 512 MiB, plus up to one 5 MiB incoming image. Choose a larger limit for a large library."
         }
       }
     },
@@ -93,8 +84,7 @@
       "invalid_rules": "Choose valid runtime, completion, and partial-resume values.",
       "invalid_library_host": "Enter a valid hostname or private LAN HTTP(S) origin without credentials, a path, or query.",
       "invalid_library_options": "Choose a sync interval of 1–168 hours and an artwork cache limit of 32–4096 MiB.",
-      "invalid_library_collections": "Choose at most 200 collection names, up to 256 characters each.",
-      "invalid_display_options": "Choose a landing page, List or Covers, and a whole-number entry count from 1–1000."
+      "invalid_display_options": "Choose a valid default landing page."
     }
   },
   "entity": {

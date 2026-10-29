@@ -21,20 +21,22 @@ The vendor describes this local browser interface in
 [Accessing the Browser Interface](https://www.kaleidescape.com/support/article/Accessing-the-Browser-Interface).
 It is a firmware-dependent HTML interface, not a promised public JSON API.
 
-| Setting                 | Default    | Behavior                                                                                                            |
-| ----------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------- |
-| Enable library sync     | Off        | Starts a read-only sync after setup, then schedules further syncs                                                   |
-| Library hostname        | Blank      | Attempts `http://my-kaleidescape.local`; an explicit value overrides discovery                                      |
-| Sync interval           | 6 hours    | Whole hours, 1–168; measured after the preceding scan finishes                                                      |
-| Allow Add to Collection | Off        | Administrators may explicitly add one selected version to an existing offered target; requires collection sync      |
-| Sync collections        | On         | Cache available collections and exact title memberships                                                             |
-| Hidden collection names | Empty list | Select known cached names or add custom values; hide labels/filter choices while keeping movies and status tracking |
-| Sync title details      | On         | Fetch available cast/director/writer/studio, genres, synopsis, and runtime                                          |
-| Sync artwork            | Off        | Fetch validated covers into the private cache; can require detail-page requests even with detail metadata disabled  |
-| Default Library view    | List       | List or Covers; applies when the Library mounts                                                                     |
-| Default Library count   | 50         | 1–1000; Covers rounds to whole rows                                                                                 |
-| Default landing page    | Journal    | Used without an allowed URL tab; reader/disabled pages fall back                                                    |
-| Artwork cache limit     | 512 MiB    | 32–4096 MiB, separate from the database; older covers are evicted when full                                         |
+| Setting                 | Default | Behavior                                                                                                           |
+| ----------------------- | ------- | ------------------------------------------------------------------------------------------------------------------ |
+| Enable library sync     | Off     | Starts a read-only sync after setup, then schedules further syncs                                                  |
+| Library hostname        | Blank   | Attempts `http://my-kaleidescape.local`; an explicit value overrides discovery                                     |
+| Sync interval           | 6 hours | Whole hours, 1–168; measured after the preceding scan finishes                                                     |
+| Allow Add to Collection | Off     | Administrators may explicitly add one selected version to an existing offered target; requires collection sync     |
+| Sync collections        | On      | Cache available collections and exact title memberships                                                            |
+| Sync title details      | On      | Fetch available cast/director/writer/studio, genres, synopsis, and runtime                                         |
+| Sync artwork            | Off     | Fetch validated covers into the private cache; can require detail-page requests even with detail metadata disabled |
+| Default landing page    | Journal | Used without an allowed URL tab; reader/disabled pages fall back                                                   |
+| Artwork cache limit     | 512 MiB | 32–4096 MiB, separate from the database; older covers are evicted when full                                        |
+
+Library view/count, applied filters, sort, cover size and column widths are
+[personal database preferences](ui-preferences.md), saved when changed. Hidden
+collection names are shared database preferences in Settings, also saved
+immediately without reloading HA. The default landing page remains native.
 
 Basic titles, ratings, directors, genres, years, and edition labels always sync.
 Other fields depend on the source; missing writers/studios remain unavailable.
@@ -87,43 +89,52 @@ version IDs remain independent. Unavailable versions and other sources/groups
 cannot supply fallback metadata. No title-text or guessed year/director matching
 merges works.
 
-Search titles and open **Filters** to select collection, actor, director,
+Search titles, actor names or director names using partial text. Input debounces
+for 300 ms; Search/Enter applies immediately. Matches are literal and use
+Unicode case folding, including credits from another available version in the
+same exact source group. Open **Filters** to select collection, actor, director,
 rating, and watched-status checkboxes. Multiple checked values match **any**
 value within that category; different categories must **all** match on the
 **same version**. A matching group still opens all its versions, including those
 that did not match. An unchecked category is unrestricted. Filter-option search
-narrows the checkbox choices, not the titles. **Apply filters** applies the
-draft and returns to page one; Cancel discards it. The toolbar **Clear Filter**
-clears search and all checkbox filters, including unsubmitted search text, and
-returns to page one. It preserves view, sort and page size. Each category offers
-up to 500 known names (collections up to 200), with at most 100 selections per
-category. Writer and studio filters are omitted because the observed source
-supplies neither field.
+narrows collection/rating choices, not the titles. Primary filters appear as
+Watched status, Collection, Rating; actor/director fields below use typed
+suggestions (up to 20 from the full cached source) and removable selected-name
+chips. Rating choices reuse the same badges as title details. **Apply filters**
+applies the draft and returns to page one; Cancel discards it. The toolbar
+**Clear Filter** clears search and all checkbox filters, including unsubmitted
+search text, and returns to page one. It preserves view, sort and page size.
+Each category offers up to 500 known names (collections up to 200), with at most
+100 selections per category. Writer and studio filters are omitted because the
+observed source supplies neither field.
 
 List columns are title/formats, year(s), collection, length, watched status, and
 Added on. Fixed-layout columns keep their widths when sorting or filtering. Drag
 a column divider to resize, or focus it and use Left/Right (Home resets its
-width). Widths stay in memory. Long titles/formats truncate with full-text
-tooltips; collection labels wrap up to three lines. Narrow screens scroll
-horizontally. Heading buttons toggle ascending/descending sort; collection sorts
-by the first alphabetically sorted membership, and missing year/runtime sorts
-first in ascending order. Cover view exposes the same sort choices. Results are
-paged by **name**, with all matching versions grouped before pagination.
-**Entries per page** defaults to 50 and accepts whole numbers from **1 to 1000**
-in either view. In Covers, the target rounds down to a multiple of the current
-column count, with at least one full row. For example, 50 becomes 48 at eight
-columns or 49 at seven. A ResizeObserver measures the grid; window/cover-size
-changes adjust its columns and fetch the nearest page containing the old first
-title after a short debounce. Navigation uses the actual page size, so resizing
-never skips titles. The final page shows only remaining titles and can have an
-incomplete row; entries are never duplicated to fill it. Library view/count
-defaults are configurable in Settings; the selected main tab is retained in the
-URL across reloads. The summary shows the union of visible
-collections/formats/years, minimum–maximum known runtime, earliest detection,
-and a source status priority of In progress, Watched, Unknown, then Unwatched.
-Sorts use the earliest year, minimum known runtime, first visible collection
-name, and earliest detection as applicable. Browsing/view preferences stay in
-memory.
+width). Widths save in the database for the signed-in user. Long titles/formats
+truncate with full-text tooltips; collection labels wrap up to three lines.
+Narrow screens scroll horizontally. Heading buttons toggle ascending/descending
+sort; collection sorts by the first alphabetically sorted membership, and
+missing year/runtime sorts first in ascending order. Cover view exposes the same
+sort choices. Results are paged by **name**, with all matching versions grouped
+before pagination. **Entries per page** offers **25, 100, 1000, All**,
+initially 100. In Covers, numeric targets round down to a multiple of the
+measured column count, with at least one full row: 100 becomes 96 at eight
+columns or 98 at seven. Resizing adjusts the nearest page containing the old
+first title after a short debounce. The final catalog remainder stays visible
+even if its row is incomplete. All loads bounded, revision-checked chunks for
+the entire matching catalog (maximum 10,000 groups and 32 MiB aggregate
+metadata). Nothing is duplicated to fill rows. View, count, applied
+search/filters, sort, cover size and widths save as personal database
+preferences; main-tab navigation remains in the URL. See
+[preference limits and badge criteria](ui-preferences.md).
+
+The summary shows the union of visible collections/formats/years,
+minimum–maximum known runtime, earliest detection, and a source status priority
+of In progress, Watched, Unknown, then Unwatched. Sorts use the earliest year,
+minimum known runtime, first visible collection name, and earliest detection as
+applicable. Browsing preferences restore from the database when Library is
+reopened.
 
 Statuses reflect source collection membership, independently for exact source
 handles: **Paused → In progress**, otherwise **Played → Watched**, otherwise
@@ -143,28 +154,41 @@ syncs and temporary absence. All titles already present at the first sync get
 that first detection date. [Reviewed imports](imports.md) can fill a missing
 calendar purchase date on the schema **9** title-version row. Added on prefers
 that date, falling back to first detection; detection itself is never rewritten.
-Download dates remain unknown. Hidden collection settings now use known-name
-checkboxes and custom values, with automatic migration of the previous newline
-setting. Changing the configured origin creates a separate source namespace,
-even if it reaches the same physical system. Cross-host identity reconciliation
-is deferred.
+Download dates remain unknown. Hidden collection preferences use known-name
+checkboxes and custom values in the shared database settings row, migrated once
+from former HA options. Changing the configured origin creates a separate source
+namespace, even if it reaches the same physical system. Cross-host identity
+reconciliation is deferred.
 
 Sync progress/status refreshes only while the Library page is visible: about
 every five seconds during a scan and 30 seconds when idle. Newly cached metadata
 refreshes the current results from the first page. Leaving the tab stops status
 polling, aborts cover requests, revokes their object URLs, and clears data.
 Cover images load only while visible, with at most three requests at once and a
-five-second budget per request; leaving the viewport releases the blob. Regular
-users poll cached counts/revisions/timestamps every 30 seconds, without
-administrator sync progress, settings, errors, or storage details. Background
-scheduled sync continues independently when enabled. There are no playback
-controls. The separately opted-in [Add to Collection](library-collections.md)
-action is the only supported vendor edit.
+five-second budget per request. Completed images stay in a bounded session LRU
+cache across scrolling, paging, view changes and title popups (1000 images / 128
+MiB compressed bytes). Offscreen unfinished requests still cancel. Cache
+eviction revokes URLs, preferring offscreen images; leaving Library or an
+account/access/scope change clears all retained covers. See
+[cover retention and layout options](ui-preferences.md). Regular users poll
+cached counts/revisions/timestamps every 30 seconds, without administrator sync
+progress, settings, errors, or storage details. Background scheduled sync
+continues independently when enabled. There are no playback controls. The
+separately opted-in [Add to Collection](library-collections.md) action is the
+only supported vendor edit.
+
+The search toolbar sticks to the top of the scrolling Library. A compact sticky
+footer holds title/collection counts, last catalog sync and administrator
+artwork usage. Options contains detailed freshness timestamps and
+individual-version counts. Source Played is displayed as **Watched** in browsing
+labels; Options explains the mapping while API/device collection names remain
+unchanged.
 
 ### Cached API
 
 The scoped `kaleidescape_companion/library/info` and `library/list` WebSocket
-commands, `library/versions`, and query-free
+commands, `library/versions`, `library/suggest` (actor/director query ≤100
+characters; at most 20 results), and query-free
 `/api/kaleidescape_companion/{entry_id}/{dataset_id}/library/artwork/{cache_key}`
 GET require an active HA user and enabled Library. `library/sync` requires an
 administrator. Regular-user info contains only counts, revision, and sync times;
@@ -187,9 +211,9 @@ accepts `title_id`, `offset`, and optional source `revision`, returning at most
 info also includes the name count and an opaque `preferences_key`. List pages
 include that key; subsequent pages can send it to reject stale display
 preferences without changing the source revision. Visible Library polling uses
-it to refresh hidden labels after an external integration-settings change.
-Facets take arrays of at most 100 strings; a single string is retained for
-existing clients. `status` values are `watched`, `unwatched`, `in_progress`, and
+it to refresh hidden labels after an external shared-preference change. Facets
+take arrays of at most 100 strings; a single string is retained for existing
+clients. `status` values are `watched`, `unwatched`, `in_progress`, and
 `unknown`. `sort` is one of `name`, `year`, `collection`, `length`, `watched`,
 or `added`. List pages use source/preference revisions, a 1000-entry ceiling,
 and an 8 MiB conservative serialized JSON payload budget (including facets).
@@ -278,5 +302,6 @@ artwork timing require operator review. For a larger browser fixture, open
 `http://127.0.0.1:5173/review.html?library=1&titles=1200` while Vite runs. The
 optional `titles` parameter generates 1–2000 unique fictional names in memory;
 it contains no artwork and never connects to HA or a device. Check list/cover
-paging at 50 and 1000, resize the window, and change cover size. Ordinary cover
-pages should have complete rows; the final page shows only the actual remainder.
+paging at 25, 100, 1000 and All, resize the window, and change cover size.
+Ordinary cover pages should have complete rows; the final page shows only the
+actual remainder.

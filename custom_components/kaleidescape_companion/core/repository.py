@@ -20,7 +20,7 @@ from ..library.importing import portable_titles
 from ..library.summary import library_summary
 from ..playback.history import history_summary
 from ..playback.recording import save_session
-from . import import_merge, journal_store
+from . import import_merge, journal_store, preferences
 from .importing import MAX_IMPORT_BYTES
 from .maintenance import inspect_database, purge_database
 from .migrations import SCHEMA_VERSION, UnsupportedSchemaError, migrate
@@ -117,6 +117,12 @@ class JournalRepository:
                 leftover.unlink()
         connection = sqlite3.connect(self.path, timeout=5)
         connection.row_factory = sqlite3.Row
+        connection.create_function(
+            "companion_casefold",
+            1,
+            lambda value: str(value or "").casefold(),
+            deterministic=True,
+        )
         try:
             migrate(connection, self.path)
             connection.execute("PRAGMA foreign_keys = ON")
@@ -354,6 +360,44 @@ class JournalRepository:
     def _history_summary(self, upper: str, cutoffs: list[str]) -> dict:
         return history_summary(self._db(), upper, cutoffs)
 
+    async def async_seed_ui_preferences(self, legacy):
+        await self._call(preferences.seed, self._db(), legacy)
+
+    async def async_ui_preferences(self, actor, shared=False, area="library"):
+        return await self._call(
+            preferences.get, self._db(), self._actor(actor), shared, area
+        )
+
+    async def async_ui_preferences_update(
+        self, actor, shared, request, revision, patch, area="library"
+    ):
+        return await self._call(
+            self._ui_preferences_update,
+            self._actor(actor),
+            shared,
+            identifier(request),
+            revision,
+            patch,
+            area,
+        )
+
+    def _ui_preferences_update(self, actor, shared, request, revision, patch, area):
+        if self._paused:
+            raise JournalError(
+                "backup_in_progress", "Settings writes paused for backup"
+            )
+        return preferences.update(
+            self._db(), actor, shared, request, revision, patch, area
+        )
+
+    async def async_hidden_collections(self):
+        return await self._call(preferences.excluded, self._db())
+
+    async def async_library_suggest(self, source, field, query):
+        from ..library.browse import suggestions
+
+        return await self._call(suggestions, self._db(), source, field, query)
+
     async def async_library_summary(self, source: str | None) -> dict:
         """Read a bounded sensor projection; never resolve a host or request a scan."""
         return await self._call(self._library_summary, source)
@@ -381,9 +425,61 @@ class JournalRepository:
         )
 
     def _inspect(self, table, offset, revision, limit, query, sort, descending) -> dict:
-        return inspect_database(
-            self._db(), table, offset, revision, limit, query, sort, descending
+        db = self._db()
+        deadline = time.monotonic() + 2
+        db.set_progress_handler(lambda: int(time.monotonic() > deadline), 1000)
+        try:
+            return inspect_database(
+                db, table, offset, revision, limit, query, sort, descending
+            )
+        except sqlite3.OperationalError as error:
+            if getattr(error, "sqlite_errorcode", None) == sqlite3.SQLITE_INTERRUPT:
+                raise JournalError(
+                    "query_limit", "Query exceeded its two-second execution budget"
+                ) from error
+            raise
+        finally:
+            db.set_progress_handler(None, 0)
+
+    async def async_database_validate_query(self, table, query):
+        return await self._call(self._database_validate_query, table, query)
+
+    def _database_validate_query(self, table, query):
+        from .database_query import compile_query
+        from .database_schema import TABLE_KEYS, schema
+
+        if not isinstance(table, str) or table not in TABLE_KEYS:
+            raise invalid("Invalid table")
+        compile_query(query, schema(self._db(), table)[1])
+        return {"valid": True}
+
+    async def async_database_mutate(self, request, data, actor_id):
+        return await self._call(
+            self._database_mutate, identifier(request), data, self._actor(actor_id)
         )
+
+    def _database_mutate(self, request, data, actor):
+        from .database_mutations import mutation, mutation_fingerprint, replay
+
+        cached = replay(self._db(), request, mutation_fingerprint(actor, data))
+        if cached is not None:
+            return cached
+        if self._paused:
+            raise JournalError(
+                "backup_in_progress", "Database writes paused for backup"
+            )
+        if self._export_active or self._import_active:
+            raise JournalError("busy", "Wait for the active transfer")
+        if (
+            isinstance(data, dict)
+            and isinstance(data.get("table"), str)
+            and data["table"].startswith("library_")
+            and data.get("operation") == "edit"
+        ):
+            return self._library_write(
+                mutation, self._artwork_directory, request, actor, data
+            )
+        return mutation(self._db(), self._artwork_directory, request, actor, data)
 
     async def async_purge(
         self,

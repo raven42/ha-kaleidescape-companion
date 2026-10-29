@@ -15,7 +15,7 @@ export const info: JournalInfo = {
   entry_id: "fixture-entry",
   dataset_id: "a323bd20-1b55-4562-87b0-9999944759f3",
   api_version: 1,
-  schema_version: 10,
+  schema_version: 12,
   library_enabled: false,
   revision: 5,
   viewing_count: 3,
@@ -161,10 +161,7 @@ export class FixtureTransport implements Transport {
     resume_hours: 24,
     library_enabled: false,
     library_host: "",
-    library_excluded_collections: [],
     default_landing_page: "journal",
-    library_default_view: "list",
-    library_default_count: 50,
     library_interval_hours: 6,
     library_sync_collections: true,
     library_allow_collection_add: false,
@@ -179,12 +176,52 @@ export class FixtureTransport implements Transport {
   >();
   players: NowPlayingPlayer[] = [];
   retryResults = new Map<string, MutationResult>();
+  uiPreferences: Record<string, unknown> = {
+    view: "list",
+    page_size: 100,
+    cover_size: 150,
+    show_titles: true,
+    show_format: true,
+    show_badges: true,
+    show_rating: false,
+    widths: [360, 90, 260, 150, 140, 210],
+    query: "",
+    sort: "name",
+    descending: false,
+    collection: [],
+    actor: [],
+    director: [],
+    rating: [],
+    status: [],
+  };
+  sharedPreferences: Record<string, unknown> = { hidden_collections: [] };
+  databasePreferences: Record<string, unknown> = {
+    limit: 25,
+    show_system: false,
+    table: "viewings",
+    sorts: {},
+  };
+  databaseResults = new Map<string, unknown>();
+  private uiRevision = 0;
   async callWS<T>(message: ApiMessage): Promise<T> {
     this.calls.push(structuredClone(message));
     if (this.failure) throw new ApiError(this.failure);
     const operation = message.type.split("/").slice(1).join("/");
     let result: unknown;
-    if (operation === "info")
+    if (operation.startsWith("ui/")) {
+      const shared = operation.startsWith("ui/shared/");
+      const values = shared
+        ? this.sharedPreferences
+        : message.area === "database"
+          ? this.databasePreferences
+          : this.uiPreferences;
+      if (operation.endsWith("/get"))
+        result = { values, revision: this.uiRevision };
+      else {
+        Object.assign(values, message.patch);
+        result = { revision: ++this.uiRevision };
+      }
+    } else if (operation === "info")
       result = {
         entries: [
           {
@@ -195,8 +232,6 @@ export class FixtureTransport implements Transport {
             library_enabled: !!this.options.library_enabled,
             ui_defaults: {
               default_landing_page: String(this.options.default_landing_page),
-              library_default_view: this.options.library_default_view,
-              library_default_count: this.options.library_default_count,
             },
           },
         ],
@@ -361,6 +396,14 @@ export class FixtureTransport implements Transport {
           return {
             ...versions[0],
             version_count: versions.length,
+            is_favorite: versions.some(
+              (row) =>
+                row.is_favorite ||
+                row.collections.some(
+                  (name) => name.toLowerCase() === "favorites",
+                ),
+            ),
+            is_recently_added: versions.some((row) => row.is_recently_added),
             formats: [
               ...new Set(
                 versions.flatMap(
@@ -441,8 +484,68 @@ export class FixtureTransport implements Transport {
       this.options = message.data as typeof this.options;
       this.trackingEnabled = !!this.options.tracking_enabled;
       result = { type: "create_entry" };
+    } else if (operation === "library/suggest") {
+      const field = message.field === "actor" ? "actors" : "directors";
+      const names = [
+        ...new Set(this.libraryTitles.flatMap((row) => row[field])),
+      ]
+        .filter((name) =>
+          name
+            .toLowerCase()
+            .includes(String(message.query ?? "").toLowerCase()),
+        )
+        .sort();
+      result = { items: names.slice(0, 20), has_more: names.length > 20 };
+    } else if (operation === "database/validate_query")
+      result = { valid: true };
+    else if (operation === "database/mutate") {
+      const request = String(message.request_id);
+      if (this.databaseResults.has(request))
+        return structuredClone(this.databaseResults.get(request)) as T;
+      const data = message.data as {
+        table: string;
+        operation: string;
+        expected_revision: number;
+        rows: { key: Record<string, unknown>; token: string }[];
+        patch: Record<string, unknown>;
+      };
+      if (data.expected_revision !== this.revision)
+        throw new ApiError("conflict");
+      const records = [...this.records, ...this.deletedRecords];
+      if (data.table !== "viewings") throw new ApiError("invalid_request");
+      const selected = data.rows.map((item) =>
+        records.find((row) => row.id === item.key.id),
+      );
+      if (selected.some((row) => !row)) throw new ApiError("not_found");
+      if (data.operation === "edit")
+        Object.assign(selected[0]!, data.patch, {
+          revision: selected[0]!.revision + 1,
+        });
+      else {
+        const ids = new Set(selected.map((row) => row!.id));
+        this.records = this.records.filter((row) => !ids.has(row.id));
+        this.deletedRecords = this.deletedRecords.filter(
+          (row) => !ids.has(row.id),
+        );
+      }
+      result = {
+        updated_count: data.operation === "edit" ? 1 : 0,
+        deleted_count: data.operation === "delete" ? selected.length : 0,
+        revision: ++this.revision,
+      };
+      this.databaseResults.set(request, result);
     } else if (operation === "database/inspect") {
       const tables: Record<string, Record<string, unknown>[]> = {
+        settings: [
+          {
+            owner: "user:fictional-review",
+            key: "library",
+            value: JSON.stringify(this.uiPreferences),
+            revision: this.uiRevision,
+            updated_at: "2026-10-29T12:00:00Z",
+          },
+        ],
+        library_collection_intents: [],
         viewings: [...this.records, ...this.deletedRecords].map((row) => ({
           ...row,
         })),
@@ -451,6 +554,7 @@ export class FixtureTransport implements Transport {
         manual_audit: [],
         maintenance_audit: [],
         import_audit: [],
+        database_audit: [],
         schema_metadata: [{ revision: this.revision }],
         library_sources: [],
         library_titles: [],
@@ -460,7 +564,9 @@ export class FixtureTransport implements Transport {
       };
       let rows = tables[String(message.table)];
       if (!rows) throw new ApiError("invalid_request");
-      if (message.revision != null && message.revision !== this.revision)
+      const revision =
+        message.table === "settings" ? this.uiRevision : this.revision;
+      if (message.revision != null && message.revision !== revision)
         throw new ApiError("refresh_required");
       const offset = Number(message.offset ?? 0);
       const limit = Number(message.limit ?? 25);
@@ -478,13 +584,64 @@ export class FixtureTransport implements Transport {
           String(a[sort] ?? "").localeCompare(String(b[sort] ?? "")) *
           (message.descending ? -1 : 1),
       );
+      const editable =
+        String(message.table) === "viewings"
+          ? [
+              "title",
+              "started_at",
+              "ended_at",
+              "duration_seconds",
+              "watched_seconds",
+              "status",
+              "notes",
+            ]
+          : String(message.table) === "settings"
+            ? ["value"]
+            : [];
       result = {
+        dataset_revision: this.revision,
+        main_tables: [
+          "viewings",
+          "sessions",
+          "library_titles",
+          "library_collections",
+          "library_sources",
+          "library_artwork",
+        ],
+        schema: columns.map((name) => ({
+          name,
+          type: ["duration_seconds", "watched_seconds", "revision"].includes(
+            name,
+          )
+            ? "number"
+            : name === "value"
+              ? "json"
+              : "text",
+          nullable: ["ended_at", "duration_seconds"].includes(name),
+          editable: editable.includes(name),
+          primary: name === "id" || name === "owner" || name === "key",
+        })),
+        query_fields: columns.map((name) => ({ name, type: "text" })),
+        operators: ["=", "!=", "IS NULL", "IS NOT NULL", "LIKE", "CONTAINS"],
+        deletable: [
+          "viewings",
+          "sessions",
+          "library_titles",
+          "library_collections",
+          "library_sources",
+          "library_artwork",
+          "settings",
+          "library_memberships",
+        ].includes(String(message.table)),
+        row_tokens: rows
+          .slice(offset, offset + limit)
+          .map((row) => JSON.stringify(row)),
         table: message.table,
         tables: Object.fromEntries(
           Object.entries(tables).map(([name, rows]) => [name, rows.length]),
         ),
         items: rows.slice(offset, offset + limit),
-        revision: this.revision,
+        revision,
         offset,
         has_more: rows.length > offset + limit,
         limit,

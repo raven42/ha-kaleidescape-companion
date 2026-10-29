@@ -1,6 +1,7 @@
 """Worker-only library sensor projections and durable addition-batch snapshots."""
 
 import json
+from uuid import uuid4
 
 from ..core.sensor_data import sensor_titles
 from .browse import STATUS_SQL
@@ -14,10 +15,11 @@ def record_additions(db, source, rows, seen):
     newly discovered movies. Called inside the catalog transaction, before upserts.
     """
     previous = db.execute(
-        "SELECT last_synced_at FROM library_sources WHERE id=?", (source,)
+        "SELECT last_synced_at,recently_added_batch FROM library_sources WHERE id=?",
+        (source,),
     ).fetchone()
     if not previous[0]:
-        return
+        return None, set()
     known = {
         row[0]
         for row in db.execute(
@@ -31,18 +33,34 @@ def record_additions(db, source, rows, seen):
         if group not in known and (group not in added or title < added[group]):
             added[group] = title
     if not added:
-        return
+        batch = previous["recently_added_batch"]
+        groups = (
+            {
+                row[0]
+                for row in db.execute(
+                    "SELECT DISTINCT source_group FROM library_titles "
+                    "WHERE source_id=? AND addition_batch=?",
+                    (source, batch),
+                )
+            }
+            if batch
+            else set()
+        )
+        return batch, groups
     titles = sensor_titles(
         {"title": title}
         for _, title in sorted(
             added.items(), key=lambda item: (item[1].casefold(), item[0])
         )
     )
+    batch = str(uuid4())
     db.execute(
-        """UPDATE library_sources SET recently_added_count=?,
+        """UPDATE library_sources SET recently_added_batch=?,recently_added_count=?,
             recently_added_movies=?,recently_added_at=? WHERE id=?""",
-        (len(added), json.dumps(titles, ensure_ascii=False), seen, source),
+        (batch, len(added), json.dumps(titles, ensure_ascii=False), seen, source),
     )
+
+    return batch, set(added)
 
 
 def library_summary(db, source):

@@ -41,23 +41,24 @@ Runtime paths below are relative to `custom_components/kaleidescape_companion/`.
 HA-discovered entry points remain at its root; feature internals are real Python
 packages with no compatibility forwarding modules or development tools.
 
-| Files                                                                                  | Responsibility                                                                                    |
-| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `__init__.py`, `const.py`                                                              | Setup/unload and stable domain/name/version constants                                             |
-| `config_flow.py`, `backup.py`, `diagnostics.py`, `sensor.py`                           | Required HA configuration, backup, health and sensor entry points                                 |
-| `core/runtime.py`, `core/settings.py`                                                  | Typed entry resources, readiness/scope resolution, entity references and shared option validation |
-| `core/repository.py`                                                                   | Single-worker connection, admission, backup/transfer barriers and asynchronous storage facade     |
-| `core/journal_store.py`, `core/models.py`                                              | Worker-only journal CRUD/search/retry/audit and shared validation/errors                          |
-| `core/maintenance.py`, `core/importing.py`, `core/import_merge.py`, `core/migrations/` | Fixed-table inspection/purge, bounded merge imports and ordered schema upgrades                   |
-| `core/security.py`                                                                     | Shared authorization, private-file and cancellation-cleanup primitives                            |
-| `playback/observer.py`, `playback/tracker.py`                                          | Ordered HA state observation and deterministic monotonic session state machine                    |
-| `playback/recording.py`, `playback/history.py`                                         | Worker-only session persistence, resume matching and bounded sensor summaries                     |
-| `library/config.py`, `library/parser.py`, `library/sync.py`                            | Opt-in configuration, bounded native HTML parsing and serialized catalog/device operations        |
-| `library/browse.py`, `library/store.py`                                                | Local queries/projections, exact-version persistence and private artwork files                    |
-| `library/collections.py`, `library/importing.py`                                       | Validated collection intents/read-back and portable title validation                              |
-| `ui/websocket.py`, `ui/http.py`                                                        | HA-authenticated commands/downloads/uploads and positive reader projections                       |
-| `ui/settings.py`, `ui/preferences.py`, `ui/panel.py`                                   | Scoped native-options adapter, display defaults and compiled-panel registration                   |
-| `ui/assets/panel.js`, strings/translations                                             | Deployed browser module and HA text metadata                                                      |
+| Files                                                                                                                                                                     | Responsibility                                                                                    |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `__init__.py`, `const.py`                                                                                                                                                 | Setup/unload and stable domain/name/version constants                                             |
+| `config_flow.py`, `backup.py`, `diagnostics.py`, `sensor.py`                                                                                                              | Required HA configuration, backup, health and sensor entry points                                 |
+| `core/runtime.py`, `core/settings.py`                                                                                                                                     | Typed entry resources, readiness/scope resolution, entity references and shared option validation |
+| `core/repository.py`                                                                                                                                                      | Single-worker connection, admission, backup/transfer barriers and asynchronous storage facade     |
+| `core/journal_store.py`, `core/models.py`                                                                                                                                 | Worker-only journal CRUD/search/retry/audit and shared validation/errors                          |
+| `core/maintenance.py`, `core/database_schema.py`, `core/database_query.py`, `core/database_mutations.py`, `core/importing.py`, `core/import_merge.py`, `core/migrations/` | Fixed-table inspection/purge, bounded merge imports and ordered schema upgrades                   |
+| `core/preferences.py`                                                                                                                                                     | Worker-only personal/shared UI settings, one-time legacy seed and atomic field-patch receipts     |
+| `core/security.py`                                                                                                                                                        | Shared authorization, private-file and cancellation-cleanup primitives                            |
+| `playback/observer.py`, `playback/tracker.py`                                                                                                                             | Ordered HA state observation and deterministic monotonic session state machine                    |
+| `playback/recording.py`, `playback/history.py`                                                                                                                            | Worker-only session persistence, resume matching and bounded sensor summaries                     |
+| `library/config.py`, `library/parser.py`, `library/sync.py`                                                                                                               | Opt-in configuration, bounded native HTML parsing and serialized catalog/device operations        |
+| `library/browse.py`, `library/store.py`                                                                                                                                   | Local queries/projections, exact-version persistence and private artwork files                    |
+| `library/collections.py`, `library/importing.py`                                                                                                                          | Validated collection intents/read-back and portable title validation                              |
+| `ui/websocket.py`, `ui/http.py`                                                                                                                                           | HA-authenticated commands/downloads/uploads and positive reader projections                       |
+| `ui/settings.py`, `ui/preferences.py`, `ui/panel.py`                                                                                                                      | Native-options adapter, UI value validation and compiled-panel registration                       |
+| `ui/assets/panel.js`, strings/translations                                                                                                                                | Deployed browser module and HA text metadata                                                      |
 
 The root `frontend/` Node workspace contains `src/core/` API transport,
 `src/ui/` application pages/shared form/dialog/styles, `src/library/` browsing
@@ -257,13 +258,22 @@ resize requests, and ignores stale replies. A final catalog remainder is
 retained without duplicating entries. Fixed/resizable columns keep sorts from
 changing table widths. Hidden collection names affect projection, not source
 memberships or status. `frontend/src/library/cover.ts` owns visible-only image
-requests, the per-Library concurrency limit, and blob cleanup. Metadata uses
-schema 10 on the existing worker; a 192 MiB library write ceiling preserves 64
-MiB of journal growth. `ui/preferences.py` validates public display defaults;
-`navigation.ts` retains only the allowlisted main tab in the URL. Purchase dates
-are columns on each title version, independent of first detection and viewing
-evidence. `core/importing.py` validates portable snapshots,
-`library/importing.py` validates exact title-version metadata, and
+requests and the per-Library concurrency limit. `library/image-cache.ts` owns
+private content-keyed object URLs with a 1000-image/128 MiB compressed-byte LRU,
+offscreen-first eviction and full Library/account cleanup. Completed images
+survive scrolling and view/page changes. Options owns live database-backed
+layout toggles; cover format selection and exclusive status/independent Favorite
+indicators live in `library/badges.ts`. Metadata uses schema 12 on the existing
+worker; a 192 MiB library write ceiling preserves 64 MiB of journal growth.
+`ui/preferences.py` validates the native landing default and database UI values;
+`core/preferences.py` atomically patches actor-scoped/shared rows on the worker.
+`frontend/src/ui/preference-store.ts` handles immediate saves and explicit
+failed field retry. Preferences have independent revisions; native options
+reload only for environmental settings. `navigation.ts` retains only the
+allowlisted main tab in the URL. See [UI preferences](ui-preferences.md) for
+limits and badges. Purchase dates are columns on each title version, independent
+of first detection and viewing evidence. `core/importing.py` validates portable
+snapshots, `library/importing.py` validates exact title-version metadata, and
 `core/import_merge.py` owns read-only review plans and transactional
 missing-field merges. The one-time HTML parser and corrected-copy helper live
 only in `dev/`; see [purchase dates](purchase-dates.md) and

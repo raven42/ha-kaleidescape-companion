@@ -14,7 +14,6 @@ DEFAULTS = {
     "library_sync_details": True,
     "library_sync_artwork": False,
     "library_artwork_cache_mb": 512,
-    "library_excluded_collections": [],
 }
 BOOLEANS = {key for key, value in DEFAULTS.items() if type(value) is bool}
 
@@ -123,7 +122,4 @@ def validate(values: dict, previous: dict) -> dict:
             raise ValueError("invalid_library_options")
         config[key] = int(value)
     origin(config["library_host"])
-    config["library_excluded_collections"] = collection_names(
-        config["library_excluded_collections"]
-    )
     return config

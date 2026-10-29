@@ -1,10 +1,12 @@
-/** Visibility-scoped, authenticated cover blobs with a per-Library request limit. */
+/** Visibility-triggered fetching with bounded session retention of completed covers. */
 import { LitElement, css, html } from "lit";
 import type { PropertyValues } from "lit";
 import { errorCode } from "../core/api";
 import type { JournalClient, JournalInfo } from "../core/api";
+import { CoverCache } from "./image-cache";
 
 export class CoverQueue {
+  readonly cache = new CoverCache();
   private active = 0;
   private waiting: (() => void)[] = [];
   acquire(signal: AbortSignal): Promise<() => void> {
@@ -72,8 +74,16 @@ export class LibraryCover extends LitElement {
   private controller?: AbortController;
   private generation = 0;
   private url?: string;
+  private unwatch?: () => void;
+  private get cacheKey() {
+    return JSON.stringify([
+      this.scope?.entry_id,
+      this.scope?.dataset_id,
+      this.artworkKey,
+    ]);
+  }
   private visibility = () => {
-    if (document.hidden) this.clear();
+    if (document.hidden) this.cancelLoad();
     else void this.load();
   };
   connectedCallback() {
@@ -82,14 +92,16 @@ export class LibraryCover extends LitElement {
     this.observer = new IntersectionObserver((entries) => {
       this.visible = entries.some((entry) => entry.isIntersecting);
       if (this.visible) void this.load();
-      else this.clear();
+      else this.cancelLoad();
     });
     this.observer.observe(this);
+    this.requestUpdate("queue");
   }
   disconnectedCallback() {
     super.disconnectedCallback();
     document.removeEventListener("visibilitychange", this.visibility);
     this.observer?.disconnect();
+    this.visible = false;
     this.clear();
   }
   protected updated(changed: PropertyValues) {
@@ -97,18 +109,27 @@ export class LibraryCover extends LitElement {
       ["client", "scope", "artworkKey", "queue"].some((key) => changed.has(key))
     ) {
       this.clear();
+      this.unwatch = this.queue?.cache.watch(this.cacheKey, {
+        invalidate: () => {
+          this.url = undefined;
+          this.requestUpdate();
+        },
+        visible: () => this.visible && this.isConnected && !document.hidden,
+      });
       void this.load();
     }
   }
-  private clear() {
+  private cancelLoad() {
     this.generation++;
     this.controller?.abort();
     this.controller = undefined;
-    if (this.url) {
-      URL.revokeObjectURL(this.url);
-      this.url = undefined;
-      this.requestUpdate();
-    }
+  }
+  private clear() {
+    this.cancelLoad();
+    this.unwatch?.();
+    this.unwatch = undefined;
+    this.url = undefined;
+    this.requestUpdate();
   }
   private async load() {
     if (
@@ -116,13 +137,20 @@ export class LibraryCover extends LitElement {
       document.hidden ||
       !this.isConnected ||
       this.controller ||
-      this.url ||
       !this.client ||
       !this.scope?.library_enabled ||
       !this.artworkKey ||
       !this.queue
     )
       return;
+    const cached = this.queue.cache.get(this.cacheKey);
+    if (cached) {
+      if (this.url !== cached) {
+        this.url = cached;
+        this.requestUpdate();
+      }
+      return;
+    }
     const generation = this.generation;
     const controller = (this.controller = new AbortController());
     let release: (() => void) | undefined;
@@ -130,6 +158,12 @@ export class LibraryCover extends LitElement {
     try {
       release = await this.queue.acquire(controller.signal);
       if (controller.signal.aborted) return;
+      const cached = this.queue.cache.get(this.cacheKey);
+      if (cached) {
+        this.url = cached;
+        this.requestUpdate();
+        return;
+      }
       timeout = setTimeout(() => controller.abort(), 5000);
       const blob = await this.client.libraryArtwork(
         this.scope,
@@ -143,7 +177,7 @@ export class LibraryCover extends LitElement {
         document.hidden
       )
         return;
-      this.url = URL.createObjectURL(blob);
+      this.url = this.queue.cache.put(this.cacheKey, blob);
       this.requestUpdate();
     } catch (error) {
       if (generation === this.generation && errorCode(error) === "unauthorized")
@@ -161,7 +195,7 @@ export class LibraryCover extends LitElement {
       ? html`<img
           src=${this.url}
           alt=${`Cover for ${this.title}`}
-          @error=${this.clear}
+          @error=${() => this.queue?.cache.drop(this.cacheKey)}
         />`
       : html`<span>No cached artwork</span>`;
   }

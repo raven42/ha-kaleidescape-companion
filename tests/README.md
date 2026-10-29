@@ -164,3 +164,36 @@ caller cancellation and backup draining. `library-collection-add.test.ts`
 exercises the administrator UI, role/opt-out behavior, explicit choices, lost
 replies with read-only checking, dismissal guards and stale responses. No test
 contacts a device.
+
+## Database UI preferences and badges
+
+`test_ui_preferences.py` covers setup migration/removal of legacy HA UI options,
+one-time defaults, per-user isolation, shared administrator-only settings,
+validation, exact retries, independent UI revisions, settings-page invalidation,
+write rollback, backup barriers and access changes across awaits. Group-badge
+tests distinguish remakes and retain recent batch identity across replacement
+formats. Frontend `library-preferences.test.ts` covers remount restoration,
+failed-field retry, bounded UTF-8 All aggregation/source changes,
+applied-versus-cancelled facets, and positive-only format/status badges. Shared
+UI controls remain unavailable when their initial saved-value read fails. Layout
+tests use the offered page sizes and measured complete cover rows. User browser
+review remains required; see
+[review steps](../docs/ui-preferences.md#browser-review).
+
+`image-cache.test.ts` covers byte/count LRU eviction, offscreen preference,
+reader invalidation, subscription cleanup, duplicate reuse and disposed-cache
+late-write rejection. Library component tests cover scroll/view reuse and
+account cleanup; badge tests cover exclusive progress/completion/New and
+independent favorites, highest-format selection and sticky Options toggles.
+Preference tests cover actual-boolean validation and defaults for older rows.
+
+`test_database_admin.py` uses real temporary SQLite for typed predicates,
+Unicode people search/suggestions, immutable field and system-table denial,
+reference cleanup, open-session protection, actor/retry binding, audit rollback,
+settings deletion counters, backup barriers and awaited access loss. Frontend
+`database-admin.test.ts` covers raw-first modal editing, typed permanent
+deletion, exact uncertain retries, conflicts, personal view options, schema
+completion and validation feedback. Library preference tests cover live search,
+rating badges, ordered facets and people suggestions. Native Settings tests
+remain separate from these database operations. No household database/device is
+modified.

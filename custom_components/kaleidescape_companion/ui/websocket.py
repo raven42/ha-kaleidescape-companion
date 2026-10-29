@@ -15,7 +15,7 @@ from ..library.config import origin
 from .preferences import public_defaults
 from .settings import fingerprint, options_request
 
-READ_OPERATIONS = frozenset(
+USER_OPERATIONS = frozenset(
     {
         "info",
         "journal/list",
@@ -23,6 +23,9 @@ READ_OPERATIONS = frozenset(
         "library/info",
         "library/list",
         "library/versions",
+        "library/suggest",
+        "ui/preferences/get",
+        "ui/preferences/update",
     }
 )
 PUBLIC_FIELDS = frozenset(
@@ -80,6 +83,24 @@ def async_register_commands(hass: HomeAssistant) -> None:
             p.Optional("offset", default=0): int,
             p.Optional("revision"): int,
         },
+        "library/suggest": {
+            **scoped,
+            p.Required("field"): str,
+            p.Optional("query", default=""): str,
+        },
+        "ui/preferences/get": {**scoped, p.Optional("area", default="library"): str},
+        "ui/shared/get": scoped,
+        "ui/preferences/update": {
+            **mutations,
+            p.Optional("area", default="library"): str,
+            p.Required("revision"): int,
+            p.Required("patch"): dict,
+        },
+        "ui/shared/update": {
+            **mutations,
+            p.Required("revision"): int,
+            p.Required("patch"): dict,
+        },
         "settings/start": scoped,
         "settings/submit": {
             **scoped,
@@ -92,6 +113,12 @@ def async_register_commands(hass: HomeAssistant) -> None:
             p.Required("plan_id"): str,
             p.Required("revision"): int,
             p.Required("selected"): [str],
+        },
+        "database/mutate": {**mutations, p.Required("data"): dict},
+        "database/validate_query": {
+            **scoped,
+            p.Required("table"): str,
+            p.Required("query"): str,
         },
         "database/inspect": {
             **scoped,
@@ -154,7 +181,7 @@ async def async_handle(
     user = connection.user
     operation = msg["type"].removeprefix(f"{DOMAIN}/")
     admin = is_active_admin(user)
-    if not is_active_user(user) or (operation not in READ_OPERATIONS and not admin):
+    if not is_active_user(user) or (operation not in USER_OPERATIONS and not admin):
         connection.send_error(
             msg["id"], "unauthorized", "Access to this journal operation is denied"
         )
@@ -219,6 +246,7 @@ async def async_handle(
                     | "library/list"
                     | "library/sync"
                     | "library/versions"
+                    | "library/suggest"
                     | "library/collections/targets"
                     | "library/collections/add"
                     | "library/collections/check"
@@ -226,9 +254,7 @@ async def async_handle(
                 ):
                     library = get_library(hass, msg["entry_id"], runtime)
                     entry = hass.config_entries.async_get_entry(msg["entry_id"])
-                    excluded = (entry.options or entry.data).get(
-                        "library_excluded_collections", ""
-                    )
+                    excluded = await repository.async_hidden_collections()
                     if operation.startswith("library/collections/"):
                         config_key = fingerprint(entry)
                         adding = operation in {
@@ -340,6 +366,10 @@ async def async_handle(
                                 )
                             }
                         )
+                    elif operation == "library/suggest":
+                        result = await repository.async_library_suggest(
+                            library.source, msg["field"], msg["query"]
+                        )
                     elif operation == "library/versions":
                         result = await repository.async_library_versions(
                             library.source,
@@ -352,6 +382,21 @@ async def async_handle(
                         result = await repository.async_library_list(
                             library.source, msg["filters"], excluded
                         )
+                case "ui/preferences/get" | "ui/shared/get":
+                    result = await repository.async_ui_preferences(
+                        user.id,
+                        operation.startswith("ui/shared/"),
+                        msg.get("area", "library"),
+                    )
+                case "ui/preferences/update" | "ui/shared/update":
+                    result = await repository.async_ui_preferences_update(
+                        user.id,
+                        operation.startswith("ui/shared/"),
+                        msg["request_id"],
+                        msg["revision"],
+                        msg["patch"],
+                        msg.get("area", "library"),
+                    )
                 case "journal/create":
                     result = await repository.async_create(
                         msg["request_id"], msg["data"], actor_id=user.id
@@ -363,6 +408,14 @@ async def async_handle(
                         user.id,
                         operation,
                         msg,
+                    )
+                case "database/mutate":
+                    result = await repository.async_database_mutate(
+                        msg["request_id"], msg["data"], user.id
+                    )
+                case "database/validate_query":
+                    result = await repository.async_database_validate_query(
+                        msg["table"], msg["query"]
                     )
                 case "database/inspect":
                     result = await repository.async_inspect(

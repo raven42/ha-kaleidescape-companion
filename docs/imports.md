@@ -71,11 +71,14 @@ review response, and a 30-second upload/validation/review budget. Oversized
 reviews must be split into smaller files. Older viewing JSON arrays and objects
 with `viewings` remain supported. JSON format 3 additionally includes portable
 `library_titles`. Recognized keys are validated regardless of schema/version;
-unknown keys are ignored. Every viewing needs `id`, `title`, and an ISO
-`started_at` with timezone. Titles need exact ID/source/handle/group/title keys.
-SQLite imports read only known columns from regular allowlisted tables in a
-defensive, query-only in-memory connection; SQL text, views, virtual tables,
-functions and attachments are rejected. No source schema or code is installed.
+unknown keys are ignored. UI settings, actor preferences and operational
+recent-batch markers are never merged from exports. SQLite snapshots still
+contain these private rows; see [UI preference storage](ui-preferences.md).
+Every viewing needs `id`, `title`, and an ISO `started_at` with timezone. Titles
+need exact ID/source/handle/group/title keys. SQLite imports read only known
+columns from regular allowlisted tables in a defensive, query-only in-memory
+connection; SQL text, views, virtual tables, functions and attachments are
+rejected. No source schema or code is installed.
 
 Upload the raw file to the scoped, authenticated preview route:
 

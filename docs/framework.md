@@ -25,17 +25,25 @@ The product name is **Kaleidescape Companion**. The HA domain
   source-scoped versions/collections, first-detection dates, shared read-only
   browsing, multi-select filters with a one-click clear action, sortable lists
   with stable/resizable columns, resizable covers with whole-row pagination,
-  selectable page targets up to 1000 with bounded compact responses,
-  source-defined movie groups with missing-description fallback, bounded
-  individual-version detail tabs, hidden collection names, expanded formats, and
-  authenticated private covers.
+  25/100/1000/All page sizes with bounded chunked responses, source-defined
+  movie groups with missing-description fallback, bounded individual-version
+  detail tabs, hidden collection names, expanded formats, and authenticated
+  private covers with bounded session retention, an Options popup,
+  highest-video-quality cover chips, mutually exclusive Watched/In progress/New
+  indicators and independent Favorite bookmarks.
+- [Protected Database administration](database.md) with raw-first details,
+  confirmed edits/deletions, personal view options, schema-aware query
+  completion and transactional stale-snapshot protection. Schema 12 adds
+  operation audit and a monotonic settings counter.
 - Schema 9 stores [purchase dates](purchase-dates.md) on title versions and
   consolidates import audit. [Reviewed merge imports](imports.md) add new
   records and fill missing viewing/Library metadata by exact ID, with selectable
   approval. Purchase-history HTML preparation remains an offline development
   helper.
-- Configurable landing/Library defaults, URL tab restoration, known/custom
-  hidden collection lists, and guarded backdrop dismissal.
+- Native landing-page defaults and URL tab restoration; schema 11
+  [database UI preferences](ui-preferences.md) save personal browsing choices
+  and shared hidden collection names immediately. Status flags and explicit
+  format chips appear in Library; dialogs retain guarded backdrop dismissal.
 - Schema 6 library metadata and a bounded evictable artwork file cache,
   preserving viewing facts and journal write headroom, with backup/unload
   cancellation.

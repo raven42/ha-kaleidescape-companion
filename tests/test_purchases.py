@@ -77,20 +77,17 @@ class PurchaseParserTest(unittest.TestCase):
                 parse_history(body)
 
     def test_display_defaults_and_collection_list_legacy_migration(self):
-        self.assertEqual(validate({}, {})["library_default_count"], 50)
-        for value in (0, 1001, True, "100", 1.5, None):
-            with self.assertRaises(ValueError):
-                validate({"library_default_count": value}, {})
+        from custom_components.kaleidescape_companion.ui.preferences import (
+            validate_library,
+        )
+
+        self.assertEqual(validate({}, {}), {"default_landing_page": "journal"})
+        self.assertEqual(validate_library({})["page_size"], 100)
+        for value in (0, 50, 1001, True, "100", 1.5, None):
+            with self.assertRaises(JournalError):
+                validate_library({"page_size": value})
         self.assertEqual(
-            validate(
-                {
-                    "library_default_count": 1000,
-                    "library_default_view": "covers",
-                    "default_landing_page": "library",
-                },
-                {},
-            )["library_default_count"],
-            1000,
+            validate_library({"view": "covers", "page_size": 1000})["page_size"], 1000
         )
         self.assertEqual(
             collection_names(" Demo extras\nOther\nDemo extras"),

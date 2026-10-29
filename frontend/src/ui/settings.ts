@@ -9,6 +9,8 @@ import type {
   Scope,
 } from "../core/api";
 import { styles } from "./styles";
+import { collectionLabel } from "../library/badges";
+import { PreferenceStore } from "./preference-store";
 
 const fields = [
   ["media_player", "Kaleidescape media player", "text", "", ""],
@@ -65,8 +67,7 @@ const booleanFields = new Set([
   ...libraryChecks.map(([key]) => key),
 ]);
 const validation: Record<string, string> = {
-  invalid_display_options:
-    "Choose a landing page, List or Covers, and a whole-number entry count from 1–1000.",
+  invalid_display_options: "Choose a valid default landing page.",
   missing_entities: "Select all three source entities to enable tracking.",
   invalid_entities: "Choose existing media_player and sensor entity IDs.",
   duplicate_entities:
@@ -74,8 +75,6 @@ const validation: Record<string, string> = {
   invalid_rules: "Check the runtime, completion, and partial-resume values.",
   invalid_library_host:
     "Enter a hostname or private LAN HTTP(S) origin without a path, credentials, or query.",
-  invalid_library_collections:
-    "Choose at most 200 collection names (256 characters each).",
   invalid_library_options:
     "Choose a sync interval of 1–168 hours and an artwork cache limit of 32–4096 MiB.",
 };
@@ -93,6 +92,10 @@ export class KaleidescapeSettings extends LitElement {
   private draft: Record<string, string | number | boolean | string[]> = {};
   private initial: Record<string, string | number | boolean | string[]> = {};
   private collectionChoices: string[] = [];
+  private hiddenCollections: string[] = [];
+  private sharedPreferences?: PreferenceStore;
+  private sharedReady = false;
+  private sharedError = "";
   private customCollection = "";
   private loading = false;
   private saving = false;
@@ -134,7 +137,19 @@ export class KaleidescapeSettings extends LitElement {
     this.requestUpdate("client");
     this.requestUpdate("scope");
   }
+  protected updated() {
+    const landing = this.renderRoot.querySelector<HTMLSelectElement>(
+      '[name="default_landing_page"]',
+    );
+    const value = String(this.draft.default_landing_page ?? "journal");
+    if (landing && landing.value !== value) landing.value = value;
+  }
   private cancelFlow() {
+    this.sharedPreferences?.dispose();
+    this.sharedPreferences = undefined;
+    this.hiddenCollections = [];
+    this.sharedReady = false;
+    this.sharedError = "";
     this.generation++;
     if (this.flow?.flow_id && this.boundClient && this.boundScope)
       void this.boundClient
@@ -144,6 +159,10 @@ export class KaleidescapeSettings extends LitElement {
   private fail(error: unknown) {
     this.error = errorMessage(error);
     if (errorCode(error) === "unauthorized") {
+      this.sharedPreferences?.dispose();
+      this.sharedPreferences = undefined;
+      this.sharedReady = false;
+      this.hiddenCollections = [];
       this.flow = undefined;
       this.draft = {};
       this.initial = {};
@@ -151,6 +170,7 @@ export class KaleidescapeSettings extends LitElement {
         new CustomEvent("access-denied", { bubbles: true, composed: true }),
       );
     }
+    this.requestUpdate();
   }
   private async start() {
     const client = this.client!,
@@ -172,18 +192,29 @@ export class KaleidescapeSettings extends LitElement {
       this.draft = Object.fromEntries(
         (flow.fields ?? []).map((field) => [
           field.name,
-          field.name === "library_excluded_collections"
-            ? Array.isArray(field.default)
-              ? [...field.default]
-              : String(field.default ?? "")
-                  .split("\n")
-                  .filter(Boolean)
-            : booleanFields.has(field.name)
-              ? !!field.default
-              : String(field.default ?? ""),
+          booleanFields.has(field.name)
+            ? !!field.default
+            : String(field.default ?? ""),
         ]),
       );
       this.initial = { ...this.draft };
+      this.sharedPreferences = new PreferenceStore(
+        client,
+        scope,
+        true,
+        (error) => {
+          if (generation !== this.generation) return;
+          if (error && errorCode(error) === "unauthorized") this.fail(error);
+          else {
+            this.sharedError = error ? errorMessage(error) : "";
+            this.requestUpdate();
+          }
+        },
+      );
+      const shared = await this.sharedPreferences.load();
+      if (generation !== this.generation) return;
+      this.hiddenCollections = [...(shared.hidden_collections as string[])];
+      this.sharedReady = true;
       if (scope.library_enabled) {
         const library = await client.libraryInfo(scope);
         if (generation === this.generation)
@@ -251,7 +282,6 @@ export class KaleidescapeSettings extends LitElement {
       if (type === "number") data[key] = Number(data[key]);
     }
     data.library_host = String(data.library_host ?? "");
-    data.library_default_count = Number(data.library_default_count ?? 50);
     try {
       const result = await this.client.settings(this.scope, "submit", {
         flow_id: this.flow.flow_id,
@@ -303,8 +333,9 @@ export class KaleidescapeSettings extends LitElement {
         </button>
       </div>
       <p>
-        These are the same settings as the integration’s Configure options.
-        Saving reloads the integration.
+        HA runtime settings use the integration’s Configure options and reload
+        when saved. Shared Library display settings save immediately to the
+        database.
       </p>
       ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
       ${this.uncertain ? html`<p class="warning">The save result is unconfirmed. Reload settings to inspect the saved values before making another change.</p>` : nothing}
@@ -313,224 +344,203 @@ export class KaleidescapeSettings extends LitElement {
           ? html`<p role="status">Loading settings…</p>`
           : this.flow?.type === "form"
             ? html`<form @submit=${this.save}>
-                <fieldset ?disabled=${this.saving || this.uncertain}>
-                  <label class="check"
-                    ><input
-                      name="tracking_enabled"
-                      type="checkbox"
-                      .checked=${!!this.draft.tracking_enabled}
-                      @change=${(event: Event) => {
-                        this.draft = {
-                          ...this.draft,
-                          tracking_enabled: (event.target as HTMLInputElement)
-                            .checked,
-                        };
-                        this.requestUpdate();
-                      }}
-                    />Automatically record playback</label
-                  >
-                  <div class="grid settings-grid">
-                    ${fields.map(
-                      ([key, label, type, min, max]) =>
-                        html`<label class=${type === "text" ? "full" : ""}
-                          >${label}<input
-                            name=${key}
-                            type=${type}
-                            min=${min || nothing}
-                            max=${max || nothing}
-                            step=${type === "number" ? "1" : nothing}
-                            maxlength=${type === "text" ? "255" : nothing}
-                            ?required=${type === "number" || !!this.draft.tracking_enabled}
-                            .value=${String(this.draft[key] ?? "")}
-                            @input=${(event: Event) => {
-                              this.draft = {
-                                ...this.draft,
-                                [key]: (event.target as HTMLInputElement).value,
-                              };
-                            }}
-                        /></label>`,
-                    )}
-                  </div>
-                  <p class="muted">
-                    Use HA entity IDs for the three sources. The runtime cutoff
-                    uses total duration; missing runtime waits for metadata.
-                    Completion uses watched time and confirmed credits.
-                  </p>
-                  <h3>Library sync</h3>
-                  <label class="check"
-                    ><input
-                      name="library_enabled"
-                      type="checkbox"
-                      .checked=${!!this.draft.library_enabled}
-                      @change=${(event: Event) => {
-                        this.draft = {
-                          ...this.draft,
-                          library_enabled: (event.target as HTMLInputElement)
-                            .checked,
-                        };
-                        this.requestUpdate();
-                      }}
-                    />Enable library sync</label
-                  >
-                  <p class="muted">
-                    Optional synchronization with your local Kaleidescape
-                    library. Disabled by default; no library discovery or device
-                    requests occur while disabled.
-                  </p>
-                  ${
-                    this.draft.library_enabled
-                      ? html`<div class="grid settings-grid">
-                            ${libraryFields.map(
-                              ([key, label, type, min, max]) =>
-                                html`<label
-                                  class=${type === "text" ? "full" : ""}
-                                  >${label}<input
-                                    name=${key}
-                                    type=${type}
-                                    min=${min || nothing}
-                                    max=${max || nothing}
-                                    step=${type === "number" ? "1" : nothing}
-                                    maxlength=${type === "text" ? "255" : nothing}
-                                    ?required=${type === "number"}
-                                    .value=${String(this.draft[key] ?? "")}
-                                    @input=${(event: Event) => {
-                                      this.draft = {
-                                        ...this.draft,
-                                        [key]: (
-                                          event.target as HTMLInputElement
-                                        ).value,
-                                      };
-                                      this.requestUpdate();
-                                    }}
-                                /></label>`,
-                            )}
-                            ${this.renderCollections()}
-                            ${libraryChecks.map(
-                              ([key, label]) =>
-                                html`<label class="check full"
-                                  ><input
-                                    name=${key}
-                                    type="checkbox"
-                                    .checked=${!!this.draft[key]}
-                                    @change=${(event: Event) => {
-                                      this.draft = {
-                                        ...this.draft,
-                                        [key]: (
-                                          event.target as HTMLInputElement
-                                        ).checked,
-                                      };
-                                      this.requestUpdate();
-                                    }}
-                                  />${label}</label
-                                >`,
-                            )}
-                          </div>
-                          <p class="muted">
-                            Add to Collection is separately disabled by default.
-                            Enabling it lets administrators add an explicitly
-                            selected version to an existing offered collection.
-                            It requires collection sync. Removal is not
-                            supported.
-                          </p>
-                          <p class="muted">
-                            Played means watched; Paused takes priority as
-                            in-progress. Detail fields depend on available
-                            source metadata. “Added on” means first detected,
-                            not purchased or downloaded.
-                          </p>
-                          ${this.draft.library_sync_artwork ? html`<p class="warning">Artwork uses additional disk space in a separate private cache, up to ${String(this.draft.library_artwork_cache_mb)} MiB plus one incoming image (up to 5 MiB). The journal database retains its 256 MiB limit. Increase the cache limit for a large library; older covers may be evicted and fetched again. HA backups can include these files.</p>` : nothing}`
-                      : nothing
-                  }
-                  <h3>Display defaults</h3>
-                  <div class="grid settings-grid">
-                    ${(
-                      [
-                        [
-                          "default_landing_page",
-                          "Default landing page",
-                          [
-                            ["now-playing", "Now Playing"],
-                            ["library", "Library"],
-                            ["journal", "Journal"],
-                            ["database", "Database"],
-                            ["settings", "Settings"],
-                          ],
-                        ],
-                        [
-                          "library_default_view",
-                          "Default Library view",
-                          [
-                            ["list", "List"],
-                            ["covers", "Covers"],
-                          ],
-                        ],
-                      ] as const
-                    ).map(
-                      ([key, label, choices]) =>
-                        html`<label
-                          >${label}<select
-                            name=${key}
-                            .value=${String(this.draft[key] ?? (key === "default_landing_page" ? "journal" : "list"))}
-                            @change=${(event: Event) => {
-                              this.draft = {
-                                ...this.draft,
-                                [key]: (event.target as HTMLSelectElement)
-                                  .value,
-                              };
-                            }}
-                          >
-                            ${choices.map(([value, text]) => html`<option value=${value}>${text}</option>`)}
-                          </select></label
-                        >`,
-                    )}
-                    <label
-                      >Default Library entries per page<input
-                        name="library_default_count"
-                        type="number"
-                        min="1"
-                        max="1000"
-                        step="1"
-                        required
-                        .value=${String(this.draft.library_default_count ?? 50)}
-                        @input=${(event: Event) => {
+                  <fieldset ?disabled=${this.saving || this.uncertain}>
+                    <label class="check"
+                      ><input
+                        name="tracking_enabled"
+                        type="checkbox"
+                        .checked=${!!this.draft.tracking_enabled}
+                        @change=${(event: Event) => {
                           this.draft = {
                             ...this.draft,
-                            library_default_count: (
-                              event.target as HTMLInputElement
+                            tracking_enabled: (event.target as HTMLInputElement)
+                              .checked,
+                          };
+                          this.requestUpdate();
+                        }}
+                      />Automatically record playback</label
+                    >
+                    <div class="grid settings-grid">
+                      ${fields.map(
+                        ([key, label, type, min, max]) =>
+                          html`<label class=${type === "text" ? "full" : ""}
+                            >${label}<input
+                              name=${key}
+                              type=${type}
+                              min=${min || nothing}
+                              max=${max || nothing}
+                              step=${type === "number" ? "1" : nothing}
+                              maxlength=${type === "text" ? "255" : nothing}
+                              ?required=${type === "number" || !!this.draft.tracking_enabled}
+                              .value=${String(this.draft[key] ?? "")}
+                              @input=${(event: Event) => {
+                                this.draft = {
+                                  ...this.draft,
+                                  [key]: (event.target as HTMLInputElement)
+                                    .value,
+                                };
+                              }}
+                          /></label>`,
+                      )}
+                    </div>
+                    <p class="muted">
+                      Use HA entity IDs for the three sources. The runtime
+                      cutoff uses total duration; missing runtime waits for
+                      metadata. Completion uses watched time and confirmed
+                      credits.
+                    </p>
+                    <h3>Library sync</h3>
+                    <label class="check"
+                      ><input
+                        name="library_enabled"
+                        type="checkbox"
+                        .checked=${!!this.draft.library_enabled}
+                        @change=${(event: Event) => {
+                          this.draft = {
+                            ...this.draft,
+                            library_enabled: (event.target as HTMLInputElement)
+                              .checked,
+                          };
+                          this.requestUpdate();
+                        }}
+                      />Enable library sync</label
+                    >
+                    <p class="muted">
+                      Optional synchronization with your local Kaleidescape
+                      library. Disabled by default; no library discovery or
+                      device requests occur while disabled.
+                    </p>
+                    ${
+                      this.draft.library_enabled
+                        ? html`<div class="grid settings-grid">
+                              ${libraryFields.map(
+                                ([key, label, type, min, max]) =>
+                                  html`<label
+                                    class=${type === "text" ? "full" : ""}
+                                    >${label}<input
+                                      name=${key}
+                                      type=${type}
+                                      min=${min || nothing}
+                                      max=${max || nothing}
+                                      step=${type === "number" ? "1" : nothing}
+                                      maxlength=${type === "text" ? "255" : nothing}
+                                      ?required=${type === "number"}
+                                      .value=${String(this.draft[key] ?? "")}
+                                      @input=${(event: Event) => {
+                                        this.draft = {
+                                          ...this.draft,
+                                          [key]: (
+                                            event.target as HTMLInputElement
+                                          ).value,
+                                        };
+                                        this.requestUpdate();
+                                      }}
+                                  /></label>`,
+                              )}
+                              ${libraryChecks.map(
+                                ([key, label]) =>
+                                  html`<label class="check full"
+                                    ><input
+                                      name=${key}
+                                      type="checkbox"
+                                      .checked=${!!this.draft[key]}
+                                      @change=${(event: Event) => {
+                                        this.draft = {
+                                          ...this.draft,
+                                          [key]: (
+                                            event.target as HTMLInputElement
+                                          ).checked,
+                                        };
+                                        this.requestUpdate();
+                                      }}
+                                    />${label}</label
+                                  >`,
+                              )}
+                            </div>
+                            <p class="muted">
+                              Add to Collection is separately disabled by
+                              default. Enabling it lets administrators add an
+                              explicitly selected version to an existing offered
+                              collection. It requires collection sync. Removal
+                              is not supported.
+                            </p>
+                            <p class="muted">
+                              Source collections determine watched status, with
+                              in-progress. Detail fields depend on available
+                              source metadata. “Added on” means first detected,
+                              not purchased or downloaded.
+                            </p>
+                            ${this.draft.library_sync_artwork ? html`<p class="warning">Artwork uses additional disk space in a separate private cache, up to ${String(this.draft.library_artwork_cache_mb)} MiB plus one incoming image (up to 5 MiB). The journal database retains its 256 MiB limit. Increase the cache limit for a large library; older covers may be evicted and fetched again. HA backups can include these files.</p>` : nothing}`
+                        : nothing
+                    }
+                    <h3>Landing page</h3>
+                    <label
+                      >Default landing page<select
+                        name="default_landing_page"
+                        .value=${String(this.draft.default_landing_page ?? "journal")}
+                        @change=${(event: Event) => {
+                          this.draft = {
+                            ...this.draft,
+                            default_landing_page: (
+                              event.target as HTMLSelectElement
                             ).value,
                           };
+                          this.requestUpdate();
                         }}
-                    /></label>
-                  </div>
-                  <p class="muted">
-                    The URL remembers your current tab across reloads. These
-                    defaults apply to fresh visits. Regular users can land on
-                    Journal or an enabled Library.
-                  </p>
-                  <button class="primary" type="submit">
-                    ${this.saving ? "Saving…" : "Save settings"}
+                      >
+                        ${[
+                          ["now-playing", "Now Playing"],
+                          ["library", "Library"],
+                          ["journal", "Journal"],
+                          ["database", "Database"],
+                          ["settings", "Settings"],
+                        ].map(
+                          ([value, label]) =>
+                            html`<option
+                              value=${value}
+                              ?selected=${value === this.draft.default_landing_page}
+                            >
+                              ${label}
+                            </option>`,
+                        )}
+                      </select></label
+                    >
+                    <p class="muted">
+                      The URL remembers your current tab. Library view, page
+                      size, filters and sort save automatically for your HA user
+                      while browsing.
+                    </p>
+                    <button class="primary" type="submit">
+                      ${this.saving ? "Saving…" : "Save settings"}
+                    </button>
+                  </fieldset>
+                  <button
+                    type="button"
+                    ?disabled=${this.saving || this.loading}
+                    @click=${this.reload}
+                  >
+                    Cancel changes
                   </button>
-                </fieldset>
-                <button
-                  type="button"
-                  ?disabled=${this.saving || this.loading}
-                  @click=${this.reload}
-                >
-                  Cancel changes
-                </button>
-              </form>`
+                </form>
+                <h3>Shared Library display settings</h3>
+                <p>Saved to the database as you change them; no HA reload.</p>
+                ${this.renderCollections()}`
             : nothing
       }
     </section>`;
   }
   private renderCollections() {
-    const selected = (this.draft.library_excluded_collections ??
-      []) as string[];
+    if (!this.sharedReady)
+      return html`<p>
+        Shared display settings could not be loaded. Reload settings to retry.
+      </p>`;
+    const selected = this.hiddenCollections;
     const choices = [...new Set([...this.collectionChoices, ...selected])].sort(
       (a, b) => a.localeCompare(b),
     );
     return html`<fieldset class="full">
       <legend>Hidden collection names</legend>
+      ${this.sharedError ? html`<p class="error" role="alert">${this.sharedError}<button type="button" @click=${() => this.sharedPreferences?.retry()}>Retry UI settings</button></p>` : nothing}
       <div class="facet-options">
         ${choices.map(
           (name) =>
@@ -542,17 +552,16 @@ export class KaleidescapeSettings extends LitElement {
                 .checked=${selected.includes(name)}
                 ?disabled=${selected.length >= 200 && !selected.includes(name)}
                 @change=${(event: Event) => {
-                  this.draft = {
-                    ...this.draft,
-                    library_excluded_collections: (
-                      event.target as HTMLInputElement
-                    ).checked
-                      ? [...selected, name]
-                      : selected.filter((value) => value !== name),
-                  };
+                  this.hiddenCollections = (event.target as HTMLInputElement)
+                    .checked
+                    ? [...selected, name]
+                    : selected.filter((value) => value !== name);
+                  this.sharedPreferences?.set({
+                    hidden_collections: this.hiddenCollections,
+                  });
                   this.requestUpdate();
                 }}
-              />${name}</label
+              />${collectionLabel(name)}</label
             >`,
         )}
       </div>
@@ -575,11 +584,12 @@ export class KaleidescapeSettings extends LitElement {
                 (value) =>
                   value.toLocaleLowerCase() === name.toLocaleLowerCase(),
               )
-            )
-              this.draft = {
-                ...this.draft,
-                library_excluded_collections: [...selected, name],
-              };
+            ) {
+              this.hiddenCollections = [...selected, name];
+              this.sharedPreferences?.set({
+                hidden_collections: this.hiddenCollections,
+              });
+            }
             this.customCollection = "";
             this.requestUpdate();
           }}
@@ -589,7 +599,8 @@ export class KaleidescapeSettings extends LitElement {
       </div>
       <small
         >Selected names are hidden from labels and filters. Movies remain
-        visible; Played/Paused still determine status. No device changes.</small
+        visible; source collections still determine status. No device
+        changes.</small
       >
     </fieldset>`;
   }

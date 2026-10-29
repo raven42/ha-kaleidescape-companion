@@ -71,7 +71,9 @@ afterEach(() => {
 
 it("uses checkbox filters with multiple values, discards cancelled drafts, and removes writer/studio filters", async () => {
   expect(text()).toContain("Voyage to Europa");
-  expect(text()).toContain("Paused takes priority");
+  expect(root().querySelector(".library-status")!.textContent).not.toContain(
+    "Played",
+  );
   expect(root().querySelector("[name=writer],[name=studio]")).toBeNull();
   button("Filters").click();
   await flush();
@@ -106,7 +108,9 @@ it("uses checkbox filters with multiple values, discards cancelled drafts, and r
   button("Cancel").click();
   button("Filters (3)").click();
   await flush();
-  expect(root().querySelectorAll("input:checked")).toHaveLength(3);
+  expect(root().querySelectorAll("#filter-dialog input:checked")).toHaveLength(
+    3,
+  );
 });
 
 it("clears applied and draft filters without changing sort, view or page size", async () => {
@@ -118,7 +122,11 @@ it("clears applied and draft filters without changing sort, view or page size", 
   check("status", "in_progress");
   button("Apply filters").click();
   await flush();
-  button("Covers").click();
+  root()
+    .querySelector<HTMLInputElement>(
+      'input[name="library_view"][value="covers"]',
+    )!
+    .click();
   await flush();
   field("library_sort", "year");
   await flush();
@@ -133,7 +141,7 @@ it("clears applied and draft filters without changing sort, view or page size", 
     sort: "year",
     descending: false,
     offset: 0,
-    limit: 50,
+    limit: 100,
   });
   expect(
     root().querySelector<HTMLInputElement>('[name="library_query"]')!.value,
@@ -142,7 +150,9 @@ it("clears applied and draft filters without changing sort, view or page size", 
   expect(button("Filters")).toBeTruthy();
   button("Filters").click();
   await flush();
-  expect(root().querySelectorAll("input:checked")).toHaveLength(0);
+  expect(root().querySelectorAll("#filter-dialog input:checked")).toHaveLength(
+    0,
+  );
   button("Cancel").click();
   await flush();
   field("library_query", "Unsubmitted search");
@@ -184,7 +194,11 @@ it("adds sortable year/collection headings and opens details only in a popup", a
 });
 
 it("switches to tightly spaced resizable covers and opens the same title popup", async () => {
-  button("Covers").click();
+  root()
+    .querySelector<HTMLInputElement>(
+      'input[name="library_view"][value="covers"]',
+    )!
+    .click();
   await flush();
   expect(root().querySelector("table")).toBeNull();
   expect(root().querySelectorAll(".cover-tile")).toHaveLength(3);
@@ -199,7 +213,11 @@ it("switches to tightly spaced resizable covers and opens the same title popup",
     true,
   );
   button("Close").click();
-  button("List").click();
+  root()
+    .querySelector<HTMLInputElement>(
+      'input[name="library_view"][value="list"]',
+    )!
+    .click();
   await flush();
   expect(root().querySelectorAll("tbody tr")).toHaveLength(3);
 });
@@ -313,17 +331,25 @@ it("limits cover requests to three and cancels queued requests on navigation", a
   );
   button("Refresh cached data").click();
   await flush();
-  button("Covers").click();
+  root()
+    .querySelector<HTMLInputElement>(
+      'input[name="library_view"][value="covers"]',
+    )!
+    .click();
   await flush();
   expect(artwork).toHaveBeenCalledTimes(3);
   const signals = artwork.mock.calls.map((call) => call[2]);
-  button("List").click();
+  root()
+    .querySelector<HTMLInputElement>(
+      'input[name="library_view"][value="list"]',
+    )!
+    .click();
   await flush();
   expect(signals.every((signal) => signal.aborted)).toBe(true);
   expect(artwork).toHaveBeenCalledTimes(3);
 });
 
-it("fetches only visible covers and releases images when they leave the viewport", async () => {
+it("fetches only visible covers and reuses retained images after scrolling or changing view", async () => {
   const observers = new Map<Element, IntersectionObserverCallback>();
   vi.stubGlobal(
     "IntersectionObserver",
@@ -343,7 +369,11 @@ it("fetches only visible covers and releases images when they leave the viewport
   transport.libraryTitles = [libraryTitle({ artwork_key: "f".repeat(64) })];
   button("Refresh cached data").click();
   await flush();
-  button("Covers").click();
+  root()
+    .querySelector<HTMLInputElement>(
+      'input[name="library_view"][value="covers"]',
+    )!
+    .click();
   await flush();
   expect(artwork).not.toHaveBeenCalled();
   const cover = covers()[0];
@@ -357,8 +387,38 @@ it("fetches only visible covers and releases images when they leave the viewport
   expect(artwork).toHaveBeenCalledTimes(1);
   intersect(false);
   await flush();
+  expect(revoke).not.toHaveBeenCalled();
+  expect(cover.shadowRoot!.querySelector("img")!.src).toBe(
+    "blob:visible-cover",
+  );
+  intersect(true);
+  await flush();
+  expect(artwork).toHaveBeenCalledTimes(1);
+  root()
+    .querySelector<HTMLInputElement>(
+      'input[name="library_view"][value="list"]',
+    )!
+    .click();
+  await flush();
+  root()
+    .querySelector<HTMLInputElement>(
+      'input[name="library_view"][value="covers"]',
+    )!
+    .click();
+  await flush();
+  const restored = covers()[0];
+  observers.get(restored)!(
+    [{ target: restored, isIntersecting: true } as IntersectionObserverEntry],
+    {} as IntersectionObserver,
+  );
+  await flush();
+  expect(restored.shadowRoot!.querySelector("img")!.src).toBe(
+    "blob:visible-cover",
+  );
+  expect(artwork).toHaveBeenCalledTimes(1);
+  element.client = new FixtureTransport().client();
+  await flush();
   expect(revoke).toHaveBeenCalledWith("blob:visible-cover");
-  expect(cover.shadowRoot!.querySelector("img")).toBeNull();
 });
 
 it("shares browsing without administrator controls and clears denied or disabled data", async () => {
@@ -417,7 +477,8 @@ it("groups source editions in list and covers, lists formats, and switches versi
   button("Refresh cached data").click();
   await flush();
   expect(root().querySelectorAll("tbody tr")).toHaveLength(1);
-  expect(text()).toContain("4K Dolby Vision, HD");
+  expect(root().querySelectorAll(".format-badge").length).toBeGreaterThan(0);
+  expect(text()).toContain("Dolby Vision");
   expect(text()).toContain("2 versions");
   title("Voyage to Europa").click();
   await flush();
@@ -431,7 +492,11 @@ it("groups source editions in list and covers, lists formats, and switches versi
   expect(text()).toContain("Other version synopsis");
   expect(text()).not.toContain("First version synopsis");
   button("Close").click();
-  button("Covers").click();
+  root()
+    .querySelector<HTMLInputElement>(
+      'input[name="library_view"][value="covers"]',
+    )!
+    .click();
   await flush();
   expect(root().querySelectorAll(".cover-tile")).toHaveLength(1);
 });
@@ -457,7 +522,7 @@ it("keeps same-name remakes separate in both views and opens only the selected w
   await flush();
   expect(root().querySelectorAll("tbody tr")).toHaveLength(2);
   expect(text()).toContain("2 titles");
-  expect(text()).toContain("3 versions");
+  expect(text()).toContain("3 individual versions");
   const titles = root().querySelectorAll<HTMLButtonElement>("tbody .link");
   titles[0].click();
   await flush();
@@ -469,7 +534,11 @@ it("keeps same-name remakes separate in both views and opens only the selected w
     "Remake Director",
   );
   button("Close").click();
-  button("Covers").click();
+  root()
+    .querySelector<HTMLInputElement>(
+      'input[name="library_view"][value="covers"]',
+    )!
+    .click();
   await flush();
   const covers = root().querySelectorAll<HTMLButtonElement>(".cover-tile");
   expect(covers).toHaveLength(2);

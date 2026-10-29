@@ -5,6 +5,7 @@ import sqlite3
 import unittest
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
+from uuid import uuid4
 
 import test_backend as backend_tests
 import test_library as library_tests
@@ -17,7 +18,7 @@ from test_library import (
     title_id,
 )
 
-from custom_components.kaleidescape_companion.library.config import validate
+from custom_components.kaleidescape_companion.core.models import JournalError
 
 
 class GroupedLibraryTest(unittest.IsolatedAsyncioTestCase):
@@ -379,10 +380,14 @@ class GroupedLibraryTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(parsed[1]["formats"], ["HD"])
 
     def test_exclusion_setting_is_bounded_and_defaults_empty(self):
-        self.assertEqual(validate({}, {})["library_excluded_collections"], [])
+        from custom_components.kaleidescape_companion.ui.preferences import (
+            validate_shared,
+        )
+
+        self.assertEqual(validate_shared({})["hidden_collections"], [])
         for value in ([123], "a" * 257, "\n".join(["a"] * 201), "bad\x00value"):
-            with self.assertRaises(ValueError):
-                validate({"library_excluded_collections": value}, {})
+            with self.assertRaises(JournalError):
+                validate_shared({"hidden_collections": value})
 
 
 class GroupedLibraryApiTest(unittest.IsolatedAsyncioTestCase):
@@ -397,6 +402,9 @@ class GroupedLibraryApiTest(unittest.IsolatedAsyncioTestCase):
         )
         runtime = self.entry.runtime_data
         runtime.library = SimpleNamespace(source=SOURCE, async_stop=AsyncMock())
+        await runtime.repository.async_ui_preferences_update(
+            self.admin.id, True, str(uuid4()), 0, {"hidden_collections": ["Favorites"]}
+        )
         await runtime.repository.async_library_catalog(
             ORIGIN,
             ROWS,

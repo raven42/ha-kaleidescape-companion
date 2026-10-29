@@ -1,200 +1,200 @@
-const F = globalThis, mt = F.ShadowRoot && (F.ShadyCSS === void 0 || F.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, vt = /* @__PURE__ */ Symbol(), _t = /* @__PURE__ */ new WeakMap();
-let jt = class {
-  constructor(t, e, i) {
-    if (this._$cssResult$ = !0, i !== vt) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
-    this.cssText = t, this.t = e;
+const K = globalThis, _e = K.ShadowRoot && (K.ShadyCSS === void 0 || K.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, ke = /* @__PURE__ */ Symbol(), Ue = /* @__PURE__ */ new WeakMap();
+let Ye = class {
+  constructor(e, t, i) {
+    if (this._$cssResult$ = !0, i !== ke) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
+    this.cssText = e, this.t = t;
   }
   get styleSheet() {
-    let t = this.o;
-    const e = this.t;
-    if (mt && t === void 0) {
-      const i = e !== void 0 && e.length === 1;
-      i && (t = _t.get(e)), t === void 0 && ((this.o = t = new CSSStyleSheet()).replaceSync(this.cssText), i && _t.set(e, t));
+    let e = this.o;
+    const t = this.t;
+    if (_e && e === void 0) {
+      const i = t !== void 0 && t.length === 1;
+      i && (e = Ue.get(t)), e === void 0 && ((this.o = e = new CSSStyleSheet()).replaceSync(this.cssText), i && Ue.set(t, e));
     }
-    return t;
+    return e;
   }
   toString() {
     return this.cssText;
   }
 };
-const Gt = (n) => new jt(typeof n == "string" ? n : n + "", void 0, vt), j = (n, ...t) => {
-  const e = n.length === 1 ? n[0] : t.reduce((i, s, a) => i + ((o) => {
+const nt = (n) => new Ye(typeof n == "string" ? n : n + "", void 0, ke), L = (n, ...e) => {
+  const t = n.length === 1 ? n[0] : e.reduce((i, s, a) => i + ((o) => {
     if (o._$cssResult$ === !0) return o.cssText;
     if (typeof o == "number") return o;
     throw Error("Value passed to 'css' function must be a 'css' function result: " + o + ". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.");
   })(s) + n[a + 1], n[0]);
-  return new jt(e, n, vt);
-}, Xt = (n, t) => {
-  if (mt) n.adoptedStyleSheets = t.map((e) => e instanceof CSSStyleSheet ? e : e.styleSheet);
-  else for (const e of t) {
-    const i = document.createElement("style"), s = F.litNonce;
-    s !== void 0 && i.setAttribute("nonce", s), i.textContent = e.cssText, n.appendChild(i);
+  return new Ye(t, n, ke);
+}, ot = (n, e) => {
+  if (_e) n.adoptedStyleSheets = e.map((t) => t instanceof CSSStyleSheet ? t : t.styleSheet);
+  else for (const t of e) {
+    const i = document.createElement("style"), s = K.litNonce;
+    s !== void 0 && i.setAttribute("nonce", s), i.textContent = t.cssText, n.appendChild(i);
   }
-}, xt = mt ? (n) => n : (n) => n instanceof CSSStyleSheet ? ((t) => {
-  let e = "";
-  for (const i of t.cssRules) e += i.cssText;
-  return Gt(e);
+}, Re = _e ? (n) => n : (n) => n instanceof CSSStyleSheet ? ((e) => {
+  let t = "";
+  for (const i of e.cssRules) t += i.cssText;
+  return nt(t);
 })(n) : n;
-const { is: Qt, defineProperty: Zt, getOwnPropertyDescriptor: te, getOwnPropertyNames: ee, getOwnPropertySymbols: ie, getPrototypeOf: se } = Object, et = globalThis, kt = et.trustedTypes, ae = kt ? kt.emptyScript : "", re = et.reactiveElementPolyfillSupport, P = (n, t) => n, ot = { toAttribute(n, t) {
-  switch (t) {
+const { is: lt, defineProperty: ht, getOwnPropertyDescriptor: dt, getOwnPropertyNames: ct, getOwnPropertySymbols: pt, getPrototypeOf: ut } = Object, ne = globalThis, Te = ne.trustedTypes, gt = Te ? Te.emptyScript : "", ft = ne.reactiveElementPolyfillSupport, O = (n, e) => n, pe = { toAttribute(n, e) {
+  switch (e) {
     case Boolean:
-      n = n ? ae : null;
+      n = n ? gt : null;
       break;
     case Object:
     case Array:
       n = n == null ? n : JSON.stringify(n);
   }
   return n;
-}, fromAttribute(n, t) {
-  let e = n;
-  switch (t) {
+}, fromAttribute(n, e) {
+  let t = n;
+  switch (e) {
     case Boolean:
-      e = n !== null;
+      t = n !== null;
       break;
     case Number:
-      e = n === null ? null : Number(n);
+      t = n === null ? null : Number(n);
       break;
     case Object:
     case Array:
       try {
-        e = JSON.parse(n);
+        t = JSON.parse(n);
       } catch {
-        e = null;
+        t = null;
       }
   }
-  return e;
-} }, Mt = (n, t) => !Qt(n, t), Ct = { attribute: !0, type: String, converter: ot, reflect: !1, useDefault: !1, hasChanged: Mt };
-Symbol.metadata ??= /* @__PURE__ */ Symbol("metadata"), et.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
-let E = class extends HTMLElement {
-  static addInitializer(t) {
-    this._$Ei(), (this.l ??= []).push(t);
+  return t;
+} }, Ge = (n, e) => !lt(n, e), Pe = { attribute: !0, type: String, converter: pe, reflect: !1, useDefault: !1, hasChanged: Ge };
+Symbol.metadata ??= /* @__PURE__ */ Symbol("metadata"), ne.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
+let R = class extends HTMLElement {
+  static addInitializer(e) {
+    this._$Ei(), (this.l ??= []).push(e);
   }
   static get observedAttributes() {
     return this.finalize(), this._$Eh && [...this._$Eh.keys()];
   }
-  static createProperty(t, e = Ct) {
-    if (e.state && (e.attribute = !1), this._$Ei(), this.prototype.hasOwnProperty(t) && ((e = Object.create(e)).wrapped = !0), this.elementProperties.set(t, e), !e.noAccessor) {
-      const i = /* @__PURE__ */ Symbol(), s = this.getPropertyDescriptor(t, i, e);
-      s !== void 0 && Zt(this.prototype, t, s);
+  static createProperty(e, t = Pe) {
+    if (t.state && (t.attribute = !1), this._$Ei(), this.prototype.hasOwnProperty(e) && ((t = Object.create(t)).wrapped = !0), this.elementProperties.set(e, t), !t.noAccessor) {
+      const i = /* @__PURE__ */ Symbol(), s = this.getPropertyDescriptor(e, i, t);
+      s !== void 0 && ht(this.prototype, e, s);
     }
   }
-  static getPropertyDescriptor(t, e, i) {
-    const { get: s, set: a } = te(this.prototype, t) ?? { get() {
-      return this[e];
+  static getPropertyDescriptor(e, t, i) {
+    const { get: s, set: a } = dt(this.prototype, e) ?? { get() {
+      return this[t];
     }, set(o) {
-      this[e] = o;
+      this[t] = o;
     } };
     return { get: s, set(o) {
       const l = s?.call(this);
-      a?.call(this, o), this.requestUpdate(t, l, i);
+      a?.call(this, o), this.requestUpdate(e, l, i);
     }, configurable: !0, enumerable: !0 };
   }
-  static getPropertyOptions(t) {
-    return this.elementProperties.get(t) ?? Ct;
+  static getPropertyOptions(e) {
+    return this.elementProperties.get(e) ?? Pe;
   }
   static _$Ei() {
-    if (this.hasOwnProperty(P("elementProperties"))) return;
-    const t = se(this);
-    t.finalize(), t.l !== void 0 && (this.l = [...t.l]), this.elementProperties = new Map(t.elementProperties);
+    if (this.hasOwnProperty(O("elementProperties"))) return;
+    const e = ut(this);
+    e.finalize(), e.l !== void 0 && (this.l = [...e.l]), this.elementProperties = new Map(e.elementProperties);
   }
   static finalize() {
-    if (this.hasOwnProperty(P("finalized"))) return;
-    if (this.finalized = !0, this._$Ei(), this.hasOwnProperty(P("properties"))) {
-      const e = this.properties, i = [...ee(e), ...ie(e)];
-      for (const s of i) this.createProperty(s, e[s]);
+    if (this.hasOwnProperty(O("finalized"))) return;
+    if (this.finalized = !0, this._$Ei(), this.hasOwnProperty(O("properties"))) {
+      const t = this.properties, i = [...ct(t), ...pt(t)];
+      for (const s of i) this.createProperty(s, t[s]);
     }
-    const t = this[Symbol.metadata];
-    if (t !== null) {
-      const e = litPropertyMetadata.get(t);
-      if (e !== void 0) for (const [i, s] of e) this.elementProperties.set(i, s);
+    const e = this[Symbol.metadata];
+    if (e !== null) {
+      const t = litPropertyMetadata.get(e);
+      if (t !== void 0) for (const [i, s] of t) this.elementProperties.set(i, s);
     }
     this._$Eh = /* @__PURE__ */ new Map();
-    for (const [e, i] of this.elementProperties) {
-      const s = this._$Eu(e, i);
-      s !== void 0 && this._$Eh.set(s, e);
+    for (const [t, i] of this.elementProperties) {
+      const s = this._$Eu(t, i);
+      s !== void 0 && this._$Eh.set(s, t);
     }
     this.elementStyles = this.finalizeStyles(this.styles);
   }
-  static finalizeStyles(t) {
-    const e = [];
-    if (Array.isArray(t)) {
-      const i = new Set(t.flat(1 / 0).reverse());
-      for (const s of i) e.unshift(xt(s));
-    } else t !== void 0 && e.push(xt(t));
-    return e;
+  static finalizeStyles(e) {
+    const t = [];
+    if (Array.isArray(e)) {
+      const i = new Set(e.flat(1 / 0).reverse());
+      for (const s of i) t.unshift(Re(s));
+    } else e !== void 0 && t.push(Re(e));
+    return t;
   }
-  static _$Eu(t, e) {
-    const i = e.attribute;
-    return i === !1 ? void 0 : typeof i == "string" ? i : typeof t == "string" ? t.toLowerCase() : void 0;
+  static _$Eu(e, t) {
+    const i = t.attribute;
+    return i === !1 ? void 0 : typeof i == "string" ? i : typeof e == "string" ? e.toLowerCase() : void 0;
   }
   constructor() {
     super(), this._$Ep = void 0, this.isUpdatePending = !1, this.hasUpdated = !1, this._$Em = null, this._$Ev();
   }
   _$Ev() {
-    this._$ES = new Promise((t) => this.enableUpdating = t), this._$AL = /* @__PURE__ */ new Map(), this._$E_(), this.requestUpdate(), this.constructor.l?.forEach((t) => t(this));
+    this._$ES = new Promise((e) => this.enableUpdating = e), this._$AL = /* @__PURE__ */ new Map(), this._$E_(), this.requestUpdate(), this.constructor.l?.forEach((e) => e(this));
   }
-  addController(t) {
-    (this._$EO ??= /* @__PURE__ */ new Set()).add(t), this.renderRoot !== void 0 && this.isConnected && t.hostConnected?.();
+  addController(e) {
+    (this._$EO ??= /* @__PURE__ */ new Set()).add(e), this.renderRoot !== void 0 && this.isConnected && e.hostConnected?.();
   }
-  removeController(t) {
-    this._$EO?.delete(t);
+  removeController(e) {
+    this._$EO?.delete(e);
   }
   _$E_() {
-    const t = /* @__PURE__ */ new Map(), e = this.constructor.elementProperties;
-    for (const i of e.keys()) this.hasOwnProperty(i) && (t.set(i, this[i]), delete this[i]);
-    t.size > 0 && (this._$Ep = t);
+    const e = /* @__PURE__ */ new Map(), t = this.constructor.elementProperties;
+    for (const i of t.keys()) this.hasOwnProperty(i) && (e.set(i, this[i]), delete this[i]);
+    e.size > 0 && (this._$Ep = e);
   }
   createRenderRoot() {
-    const t = this.shadowRoot ?? this.attachShadow(this.constructor.shadowRootOptions);
-    return Xt(t, this.constructor.elementStyles), t;
+    const e = this.shadowRoot ?? this.attachShadow(this.constructor.shadowRootOptions);
+    return ot(e, this.constructor.elementStyles), e;
   }
   connectedCallback() {
-    this.renderRoot ??= this.createRenderRoot(), this.enableUpdating(!0), this._$EO?.forEach((t) => t.hostConnected?.());
+    this.renderRoot ??= this.createRenderRoot(), this.enableUpdating(!0), this._$EO?.forEach((e) => e.hostConnected?.());
   }
-  enableUpdating(t) {
+  enableUpdating(e) {
   }
   disconnectedCallback() {
-    this._$EO?.forEach((t) => t.hostDisconnected?.());
+    this._$EO?.forEach((e) => e.hostDisconnected?.());
   }
-  attributeChangedCallback(t, e, i) {
-    this._$AK(t, i);
+  attributeChangedCallback(e, t, i) {
+    this._$AK(e, i);
   }
-  _$ET(t, e) {
-    const i = this.constructor.elementProperties.get(t), s = this.constructor._$Eu(t, i);
+  _$ET(e, t) {
+    const i = this.constructor.elementProperties.get(e), s = this.constructor._$Eu(e, i);
     if (s !== void 0 && i.reflect === !0) {
-      const a = (i.converter?.toAttribute !== void 0 ? i.converter : ot).toAttribute(e, i.type);
-      this._$Em = t, a == null ? this.removeAttribute(s) : this.setAttribute(s, a), this._$Em = null;
+      const a = (i.converter?.toAttribute !== void 0 ? i.converter : pe).toAttribute(t, i.type);
+      this._$Em = e, a == null ? this.removeAttribute(s) : this.setAttribute(s, a), this._$Em = null;
     }
   }
-  _$AK(t, e) {
-    const i = this.constructor, s = i._$Eh.get(t);
+  _$AK(e, t) {
+    const i = this.constructor, s = i._$Eh.get(e);
     if (s !== void 0 && this._$Em !== s) {
-      const a = i.getPropertyOptions(s), o = typeof a.converter == "function" ? { fromAttribute: a.converter } : a.converter?.fromAttribute !== void 0 ? a.converter : ot;
+      const a = i.getPropertyOptions(s), o = typeof a.converter == "function" ? { fromAttribute: a.converter } : a.converter?.fromAttribute !== void 0 ? a.converter : pe;
       this._$Em = s;
-      const l = o.fromAttribute(e, a.type);
+      const l = o.fromAttribute(t, a.type);
       this[s] = l ?? this._$Ej?.get(s) ?? l, this._$Em = null;
     }
   }
-  requestUpdate(t, e, i, s = !1, a) {
-    if (t !== void 0) {
+  requestUpdate(e, t, i, s = !1, a) {
+    if (e !== void 0) {
       const o = this.constructor;
-      if (s === !1 && (a = this[t]), i ??= o.getPropertyOptions(t), !((i.hasChanged ?? Mt)(a, e) || i.useDefault && i.reflect && a === this._$Ej?.get(t) && !this.hasAttribute(o._$Eu(t, i)))) return;
-      this.C(t, e, i);
+      if (s === !1 && (a = this[e]), i ??= o.getPropertyOptions(e), !((i.hasChanged ?? Ge)(a, t) || i.useDefault && i.reflect && a === this._$Ej?.get(e) && !this.hasAttribute(o._$Eu(e, i)))) return;
+      this.C(e, t, i);
     }
     this.isUpdatePending === !1 && (this._$ES = this._$EP());
   }
-  C(t, e, { useDefault: i, reflect: s, wrapped: a }, o) {
-    i && !(this._$Ej ??= /* @__PURE__ */ new Map()).has(t) && (this._$Ej.set(t, o ?? e ?? this[t]), a !== !0 || o !== void 0) || (this._$AL.has(t) || (this.hasUpdated || i || (e = void 0), this._$AL.set(t, e)), s === !0 && this._$Em !== t && (this._$Eq ??= /* @__PURE__ */ new Set()).add(t));
+  C(e, t, { useDefault: i, reflect: s, wrapped: a }, o) {
+    i && !(this._$Ej ??= /* @__PURE__ */ new Map()).has(e) && (this._$Ej.set(e, o ?? t ?? this[e]), a !== !0 || o !== void 0) || (this._$AL.has(e) || (this.hasUpdated || i || (t = void 0), this._$AL.set(e, t)), s === !0 && this._$Em !== e && (this._$Eq ??= /* @__PURE__ */ new Set()).add(e));
   }
   async _$EP() {
     this.isUpdatePending = !0;
     try {
       await this._$ES;
-    } catch (e) {
-      Promise.reject(e);
+    } catch (t) {
+      Promise.reject(t);
     }
-    const t = this.scheduleUpdate();
-    return t != null && await t, !this.isUpdatePending;
+    const e = this.scheduleUpdate();
+    return e != null && await e, !this.isUpdatePending;
   }
   scheduleUpdate() {
     return this.performUpdate();
@@ -212,19 +212,19 @@ let E = class extends HTMLElement {
         o !== !0 || this._$AL.has(s) || l === void 0 || this.C(s, void 0, a, l);
       }
     }
-    let t = !1;
-    const e = this._$AL;
+    let e = !1;
+    const t = this._$AL;
     try {
-      t = this.shouldUpdate(e), t ? (this.willUpdate(e), this._$EO?.forEach((i) => i.hostUpdate?.()), this.update(e)) : this._$EM();
+      e = this.shouldUpdate(t), e ? (this.willUpdate(t), this._$EO?.forEach((i) => i.hostUpdate?.()), this.update(t)) : this._$EM();
     } catch (i) {
-      throw t = !1, this._$EM(), i;
+      throw e = !1, this._$EM(), i;
     }
-    t && this._$AE(e);
+    e && this._$AE(t);
   }
-  willUpdate(t) {
+  willUpdate(e) {
   }
-  _$AE(t) {
-    this._$EO?.forEach((e) => e.hostUpdated?.()), this.hasUpdated || (this.hasUpdated = !0, this.firstUpdated(t)), this.updated(t);
+  _$AE(e) {
+    this._$EO?.forEach((t) => t.hostUpdated?.()), this.hasUpdated || (this.hasUpdated = !0, this.firstUpdated(e)), this.updated(e);
   }
   _$EM() {
     this._$AL = /* @__PURE__ */ new Map(), this.isUpdatePending = !1;
@@ -235,83 +235,83 @@ let E = class extends HTMLElement {
   getUpdateComplete() {
     return this._$ES;
   }
-  shouldUpdate(t) {
+  shouldUpdate(e) {
     return !0;
   }
-  update(t) {
-    this._$Eq &&= this._$Eq.forEach((e) => this._$ET(e, this[e])), this._$EM();
+  update(e) {
+    this._$Eq &&= this._$Eq.forEach((t) => this._$ET(t, this[t])), this._$EM();
   }
-  updated(t) {
+  updated(e) {
   }
-  firstUpdated(t) {
+  firstUpdated(e) {
   }
 };
-E.elementStyles = [], E.shadowRootOptions = { mode: "open" }, E[P("elementProperties")] = /* @__PURE__ */ new Map(), E[P("finalized")] = /* @__PURE__ */ new Map(), re?.({ ReactiveElement: E }), (et.reactiveElementVersions ??= []).push("2.1.2");
-const yt = globalThis, St = (n) => n, V = yt.trustedTypes, qt = V ? V.createPolicy("lit-html", { createHTML: (n) => n }) : void 0, It = "$lit$", x = `lit$${Math.random().toFixed(9).slice(2)}$`, Bt = "?" + x, ne = `<${Bt}>`, q = document, D = () => q.createComment(""), z = (n) => n === null || typeof n != "object" && typeof n != "function", $t = Array.isArray, oe = (n) => $t(n) || typeof n?.[Symbol.iterator] == "function", st = `[ 	
-\f\r]`, R = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, At = /-->/g, Et = />/g, C = RegExp(`>|${st}(?:([^\\s"'>=/]+)(${st}*=${st}*(?:[^ 	
-\f\r"'\`<>=]|("|')|))|$)`, "g"), Ut = /'/g, Rt = /"/g, Ht = /^(?:script|style|textarea|title)$/i, le = (n) => (t, ...e) => ({ _$litType$: n, strings: t, values: e }), r = le(1), y = /* @__PURE__ */ Symbol.for("lit-noChange"), h = /* @__PURE__ */ Symbol.for("lit-nothing"), Pt = /* @__PURE__ */ new WeakMap(), S = q.createTreeWalker(q, 129);
-function Ft(n, t) {
-  if (!$t(n) || !n.hasOwnProperty("raw")) throw Error("invalid template strings array");
-  return qt !== void 0 ? qt.createHTML(t) : t;
+R.elementStyles = [], R.shadowRootOptions = { mode: "open" }, R[O("elementProperties")] = /* @__PURE__ */ new Map(), R[O("finalized")] = /* @__PURE__ */ new Map(), ft?.({ ReactiveElement: R }), (ne.reactiveElementVersions ??= []).push("2.1.2");
+const Se = globalThis, Le = (n) => n, Y = Se.trustedTypes, ze = Y ? Y.createPolicy("lit-html", { createHTML: (n) => n }) : void 0, Qe = "$lit$", _ = `lit$${Math.random().toFixed(9).slice(2)}$`, Xe = "?" + _, bt = `<${Xe}>`, E = document, M = () => E.createComment(""), I = (n) => n === null || typeof n != "object" && typeof n != "function", Ce = Array.isArray, mt = (n) => Ce(n) || typeof n?.[Symbol.iterator] == "function", le = `[ 	
+\f\r]`, z = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, De = /-->/g, Oe = />/g, C = RegExp(`>|${le}(?:([^\\s"'>=/]+)(${le}*=${le}*(?:[^ 	
+\f\r"'\`<>=]|("|')|))|$)`, "g"), Ne = /'/g, je = /"/g, Ze = /^(?:script|style|textarea|title)$/i, yt = (n) => (e, ...t) => ({ _$litType$: n, strings: e, values: t }), r = yt(1), $ = /* @__PURE__ */ Symbol.for("lit-noChange"), h = /* @__PURE__ */ Symbol.for("lit-nothing"), Me = /* @__PURE__ */ new WeakMap(), q = E.createTreeWalker(E, 129);
+function et(n, e) {
+  if (!Ce(n) || !n.hasOwnProperty("raw")) throw Error("invalid template strings array");
+  return ze !== void 0 ? ze.createHTML(e) : e;
 }
-const he = (n, t) => {
-  const e = n.length - 1, i = [];
-  let s, a = t === 2 ? "<svg>" : t === 3 ? "<math>" : "", o = R;
-  for (let l = 0; l < e; l++) {
+const vt = (n, e) => {
+  const t = n.length - 1, i = [];
+  let s, a = e === 2 ? "<svg>" : e === 3 ? "<math>" : "", o = z;
+  for (let l = 0; l < t; l++) {
     const d = n[l];
-    let c, u, p = -1, $ = 0;
-    for (; $ < d.length && (o.lastIndex = $, u = o.exec(d), u !== null); ) $ = o.lastIndex, o === R ? u[1] === "!--" ? o = At : u[1] !== void 0 ? o = Et : u[2] !== void 0 ? (Ht.test(u[2]) && (s = RegExp("</" + u[2], "g")), o = C) : u[3] !== void 0 && (o = C) : o === C ? u[0] === ">" ? (o = s ?? R, p = -1) : u[1] === void 0 ? p = -2 : (p = o.lastIndex - u[2].length, c = u[1], o = u[3] === void 0 ? C : u[3] === '"' ? Rt : Ut) : o === Rt || o === Ut ? o = C : o === At || o === Et ? o = R : (o = C, s = void 0);
-    const _ = o === C && n[l + 1].startsWith("/>") ? " " : "";
-    a += o === R ? d + ne : p >= 0 ? (i.push(c), d.slice(0, p) + It + d.slice(p) + x + _) : d + x + (p === -2 ? l : _);
+    let c, g, f = -1, w = 0;
+    for (; w < d.length && (o.lastIndex = w, g = o.exec(d), g !== null); ) w = o.lastIndex, o === z ? g[1] === "!--" ? o = De : g[1] !== void 0 ? o = Oe : g[2] !== void 0 ? (Ze.test(g[2]) && (s = RegExp("</" + g[2], "g")), o = C) : g[3] !== void 0 && (o = C) : o === C ? g[0] === ">" ? (o = s ?? z, f = -1) : g[1] === void 0 ? f = -2 : (f = o.lastIndex - g[2].length, c = g[1], o = g[3] === void 0 ? C : g[3] === '"' ? je : Ne) : o === je || o === Ne ? o = C : o === De || o === Oe ? o = z : (o = C, s = void 0);
+    const x = o === C && n[l + 1].startsWith("/>") ? " " : "";
+    a += o === z ? d + bt : f >= 0 ? (i.push(c), d.slice(0, f) + Qe + d.slice(f) + _ + x) : d + _ + (f === -2 ? l : x);
   }
-  return [Ft(n, a + (n[e] || "<?>") + (t === 2 ? "</svg>" : t === 3 ? "</math>" : "")), i];
+  return [et(n, a + (n[t] || "<?>") + (e === 2 ? "</svg>" : e === 3 ? "</math>" : "")), i];
 };
-class O {
-  constructor({ strings: t, _$litType$: e }, i) {
+class B {
+  constructor({ strings: e, _$litType$: t }, i) {
     let s;
     this.parts = [];
     let a = 0, o = 0;
-    const l = t.length - 1, d = this.parts, [c, u] = he(t, e);
-    if (this.el = O.createElement(c, i), S.currentNode = this.el.content, e === 2 || e === 3) {
-      const p = this.el.content.firstChild;
-      p.replaceWith(...p.childNodes);
+    const l = e.length - 1, d = this.parts, [c, g] = vt(e, t);
+    if (this.el = B.createElement(c, i), q.currentNode = this.el.content, t === 2 || t === 3) {
+      const f = this.el.content.firstChild;
+      f.replaceWith(...f.childNodes);
     }
-    for (; (s = S.nextNode()) !== null && d.length < l; ) {
+    for (; (s = q.nextNode()) !== null && d.length < l; ) {
       if (s.nodeType === 1) {
-        if (s.hasAttributes()) for (const p of s.getAttributeNames()) if (p.endsWith(It)) {
-          const $ = u[o++], _ = s.getAttribute(p).split(x), I = /([.?@])?(.*)/.exec($);
-          d.push({ type: 1, index: a, name: I[2], strings: _, ctor: I[1] === "." ? ce : I[1] === "?" ? ue : I[1] === "@" ? pe : it }), s.removeAttribute(p);
-        } else p.startsWith(x) && (d.push({ type: 6, index: a }), s.removeAttribute(p));
-        if (Ht.test(s.tagName)) {
-          const p = s.textContent.split(x), $ = p.length - 1;
-          if ($ > 0) {
-            s.textContent = V ? V.emptyScript : "";
-            for (let _ = 0; _ < $; _++) s.append(p[_], D()), S.nextNode(), d.push({ type: 2, index: ++a });
-            s.append(p[$], D());
+        if (s.hasAttributes()) for (const f of s.getAttributeNames()) if (f.endsWith(Qe)) {
+          const w = g[o++], x = s.getAttribute(f).split(_), F = /([.?@])?(.*)/.exec(w);
+          d.push({ type: 1, index: a, name: F[2], strings: x, ctor: F[1] === "." ? wt : F[1] === "?" ? xt : F[1] === "@" ? _t : oe }), s.removeAttribute(f);
+        } else f.startsWith(_) && (d.push({ type: 6, index: a }), s.removeAttribute(f));
+        if (Ze.test(s.tagName)) {
+          const f = s.textContent.split(_), w = f.length - 1;
+          if (w > 0) {
+            s.textContent = Y ? Y.emptyScript : "";
+            for (let x = 0; x < w; x++) s.append(f[x], M()), q.nextNode(), d.push({ type: 2, index: ++a });
+            s.append(f[w], M());
           }
         }
-      } else if (s.nodeType === 8) if (s.data === Bt) d.push({ type: 2, index: a });
+      } else if (s.nodeType === 8) if (s.data === Xe) d.push({ type: 2, index: a });
       else {
-        let p = -1;
-        for (; (p = s.data.indexOf(x, p + 1)) !== -1; ) d.push({ type: 7, index: a }), p += x.length - 1;
+        let f = -1;
+        for (; (f = s.data.indexOf(_, f + 1)) !== -1; ) d.push({ type: 7, index: a }), f += _.length - 1;
       }
       a++;
     }
   }
-  static createElement(t, e) {
-    const i = q.createElement("template");
-    return i.innerHTML = t, i;
+  static createElement(e, t) {
+    const i = E.createElement("template");
+    return i.innerHTML = e, i;
   }
 }
-function U(n, t, e = n, i) {
-  if (t === y) return t;
-  let s = i !== void 0 ? e._$Co?.[i] : e._$Cl;
-  const a = z(t) ? void 0 : t._$litDirective$;
-  return s?.constructor !== a && (s?._$AO?.(!1), a === void 0 ? s = void 0 : (s = new a(n), s._$AT(n, e, i)), i !== void 0 ? (e._$Co ??= [])[i] = s : e._$Cl = s), s !== void 0 && (t = U(n, s._$AS(n, t.values), s, i)), t;
+function P(n, e, t = n, i) {
+  if (e === $) return e;
+  let s = i !== void 0 ? t._$Co?.[i] : t._$Cl;
+  const a = I(e) ? void 0 : e._$litDirective$;
+  return s?.constructor !== a && (s?._$AO?.(!1), a === void 0 ? s = void 0 : (s = new a(n), s._$AT(n, t, i)), i !== void 0 ? (t._$Co ??= [])[i] = s : t._$Cl = s), s !== void 0 && (e = P(n, s._$AS(n, e.values), s, i)), e;
 }
-class de {
-  constructor(t, e) {
-    this._$AV = [], this._$AN = void 0, this._$AD = t, this._$AM = e;
+class $t {
+  constructor(e, t) {
+    this._$AV = [], this._$AN = void 0, this._$AD = e, this._$AM = t;
   }
   get parentNode() {
     return this._$AM.parentNode;
@@ -319,35 +319,35 @@ class de {
   get _$AU() {
     return this._$AM._$AU;
   }
-  u(t) {
-    const { el: { content: e }, parts: i } = this._$AD, s = (t?.creationScope ?? q).importNode(e, !0);
-    S.currentNode = s;
-    let a = S.nextNode(), o = 0, l = 0, d = i[0];
+  u(e) {
+    const { el: { content: t }, parts: i } = this._$AD, s = (e?.creationScope ?? E).importNode(t, !0);
+    q.currentNode = s;
+    let a = q.nextNode(), o = 0, l = 0, d = i[0];
     for (; d !== void 0; ) {
       if (o === d.index) {
         let c;
-        d.type === 2 ? c = new M(a, a.nextSibling, this, t) : d.type === 1 ? c = new d.ctor(a, d.name, d.strings, this, t) : d.type === 6 && (c = new ge(a, this, t)), this._$AV.push(c), d = i[++l];
+        d.type === 2 ? c = new H(a, a.nextSibling, this, e) : d.type === 1 ? c = new d.ctor(a, d.name, d.strings, this, e) : d.type === 6 && (c = new kt(a, this, e)), this._$AV.push(c), d = i[++l];
       }
-      o !== d?.index && (a = S.nextNode(), o++);
+      o !== d?.index && (a = q.nextNode(), o++);
     }
-    return S.currentNode = q, s;
+    return q.currentNode = E, s;
   }
-  p(t) {
-    let e = 0;
-    for (const i of this._$AV) i !== void 0 && (i.strings !== void 0 ? (i._$AI(t, i, e), e += i.strings.length - 2) : i._$AI(t[e])), e++;
+  p(e) {
+    let t = 0;
+    for (const i of this._$AV) i !== void 0 && (i.strings !== void 0 ? (i._$AI(e, i, t), t += i.strings.length - 2) : i._$AI(e[t])), t++;
   }
 }
-class M {
+class H {
   get _$AU() {
     return this._$AM?._$AU ?? this._$Cv;
   }
-  constructor(t, e, i, s) {
-    this.type = 2, this._$AH = h, this._$AN = void 0, this._$AA = t, this._$AB = e, this._$AM = i, this.options = s, this._$Cv = s?.isConnected ?? !0;
+  constructor(e, t, i, s) {
+    this.type = 2, this._$AH = h, this._$AN = void 0, this._$AA = e, this._$AB = t, this._$AM = i, this.options = s, this._$Cv = s?.isConnected ?? !0;
   }
   get parentNode() {
-    let t = this._$AA.parentNode;
-    const e = this._$AM;
-    return e !== void 0 && t?.nodeType === 11 && (t = e.parentNode), t;
+    let e = this._$AA.parentNode;
+    const t = this._$AM;
+    return t !== void 0 && e?.nodeType === 11 && (e = t.parentNode), e;
   }
   get startNode() {
     return this._$AA;
@@ -355,135 +355,135 @@ class M {
   get endNode() {
     return this._$AB;
   }
-  _$AI(t, e = this) {
-    t = U(this, t, e), z(t) ? t === h || t == null || t === "" ? (this._$AH !== h && this._$AR(), this._$AH = h) : t !== this._$AH && t !== y && this._(t) : t._$litType$ !== void 0 ? this.$(t) : t.nodeType !== void 0 ? this.T(t) : oe(t) ? this.k(t) : this._(t);
+  _$AI(e, t = this) {
+    e = P(this, e, t), I(e) ? e === h || e == null || e === "" ? (this._$AH !== h && this._$AR(), this._$AH = h) : e !== this._$AH && e !== $ && this._(e) : e._$litType$ !== void 0 ? this.$(e) : e.nodeType !== void 0 ? this.T(e) : mt(e) ? this.k(e) : this._(e);
   }
-  O(t) {
-    return this._$AA.parentNode.insertBefore(t, this._$AB);
+  O(e) {
+    return this._$AA.parentNode.insertBefore(e, this._$AB);
   }
-  T(t) {
-    this._$AH !== t && (this._$AR(), this._$AH = this.O(t));
+  T(e) {
+    this._$AH !== e && (this._$AR(), this._$AH = this.O(e));
   }
-  _(t) {
-    this._$AH !== h && z(this._$AH) ? this._$AA.nextSibling.data = t : this.T(q.createTextNode(t)), this._$AH = t;
+  _(e) {
+    this._$AH !== h && I(this._$AH) ? this._$AA.nextSibling.data = e : this.T(E.createTextNode(e)), this._$AH = e;
   }
-  $(t) {
-    const { values: e, _$litType$: i } = t, s = typeof i == "number" ? this._$AC(t) : (i.el === void 0 && (i.el = O.createElement(Ft(i.h, i.h[0]), this.options)), i);
-    if (this._$AH?._$AD === s) this._$AH.p(e);
+  $(e) {
+    const { values: t, _$litType$: i } = e, s = typeof i == "number" ? this._$AC(e) : (i.el === void 0 && (i.el = B.createElement(et(i.h, i.h[0]), this.options)), i);
+    if (this._$AH?._$AD === s) this._$AH.p(t);
     else {
-      const a = new de(s, this), o = a.u(this.options);
-      a.p(e), this.T(o), this._$AH = a;
+      const a = new $t(s, this), o = a.u(this.options);
+      a.p(t), this.T(o), this._$AH = a;
     }
   }
-  _$AC(t) {
-    let e = Pt.get(t.strings);
-    return e === void 0 && Pt.set(t.strings, e = new O(t)), e;
+  _$AC(e) {
+    let t = Me.get(e.strings);
+    return t === void 0 && Me.set(e.strings, t = new B(e)), t;
   }
-  k(t) {
-    $t(this._$AH) || (this._$AH = [], this._$AR());
-    const e = this._$AH;
+  k(e) {
+    Ce(this._$AH) || (this._$AH = [], this._$AR());
+    const t = this._$AH;
     let i, s = 0;
-    for (const a of t) s === e.length ? e.push(i = new M(this.O(D()), this.O(D()), this, this.options)) : i = e[s], i._$AI(a), s++;
-    s < e.length && (this._$AR(i && i._$AB.nextSibling, s), e.length = s);
+    for (const a of e) s === t.length ? t.push(i = new H(this.O(M()), this.O(M()), this, this.options)) : i = t[s], i._$AI(a), s++;
+    s < t.length && (this._$AR(i && i._$AB.nextSibling, s), t.length = s);
   }
-  _$AR(t = this._$AA.nextSibling, e) {
-    for (this._$AP?.(!1, !0, e); t !== this._$AB; ) {
-      const i = St(t).nextSibling;
-      St(t).remove(), t = i;
+  _$AR(e = this._$AA.nextSibling, t) {
+    for (this._$AP?.(!1, !0, t); e !== this._$AB; ) {
+      const i = Le(e).nextSibling;
+      Le(e).remove(), e = i;
     }
   }
-  setConnected(t) {
-    this._$AM === void 0 && (this._$Cv = t, this._$AP?.(t));
+  setConnected(e) {
+    this._$AM === void 0 && (this._$Cv = e, this._$AP?.(e));
   }
 }
-class it {
+class oe {
   get tagName() {
     return this.element.tagName;
   }
   get _$AU() {
     return this._$AM._$AU;
   }
-  constructor(t, e, i, s, a) {
-    this.type = 1, this._$AH = h, this._$AN = void 0, this.element = t, this.name = e, this._$AM = s, this.options = a, i.length > 2 || i[0] !== "" || i[1] !== "" ? (this._$AH = Array(i.length - 1).fill(new String()), this.strings = i) : this._$AH = h;
+  constructor(e, t, i, s, a) {
+    this.type = 1, this._$AH = h, this._$AN = void 0, this.element = e, this.name = t, this._$AM = s, this.options = a, i.length > 2 || i[0] !== "" || i[1] !== "" ? (this._$AH = Array(i.length - 1).fill(new String()), this.strings = i) : this._$AH = h;
   }
-  _$AI(t, e = this, i, s) {
+  _$AI(e, t = this, i, s) {
     const a = this.strings;
     let o = !1;
-    if (a === void 0) t = U(this, t, e, 0), o = !z(t) || t !== this._$AH && t !== y, o && (this._$AH = t);
+    if (a === void 0) e = P(this, e, t, 0), o = !I(e) || e !== this._$AH && e !== $, o && (this._$AH = e);
     else {
-      const l = t;
+      const l = e;
       let d, c;
-      for (t = a[0], d = 0; d < a.length - 1; d++) c = U(this, l[i + d], e, d), c === y && (c = this._$AH[d]), o ||= !z(c) || c !== this._$AH[d], c === h ? t = h : t !== h && (t += (c ?? "") + a[d + 1]), this._$AH[d] = c;
+      for (e = a[0], d = 0; d < a.length - 1; d++) c = P(this, l[i + d], t, d), c === $ && (c = this._$AH[d]), o ||= !I(c) || c !== this._$AH[d], c === h ? e = h : e !== h && (e += (c ?? "") + a[d + 1]), this._$AH[d] = c;
     }
-    o && !s && this.j(t);
+    o && !s && this.j(e);
   }
-  j(t) {
-    t === h ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, t ?? "");
+  j(e) {
+    e === h ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, e ?? "");
   }
 }
-class ce extends it {
+class wt extends oe {
   constructor() {
     super(...arguments), this.type = 3;
   }
-  j(t) {
-    this.element[this.name] = t === h ? void 0 : t;
+  j(e) {
+    this.element[this.name] = e === h ? void 0 : e;
   }
 }
-class ue extends it {
+class xt extends oe {
   constructor() {
     super(...arguments), this.type = 4;
   }
-  j(t) {
-    this.element.toggleAttribute(this.name, !!t && t !== h);
+  j(e) {
+    this.element.toggleAttribute(this.name, !!e && e !== h);
   }
 }
-class pe extends it {
-  constructor(t, e, i, s, a) {
-    super(t, e, i, s, a), this.type = 5;
+class _t extends oe {
+  constructor(e, t, i, s, a) {
+    super(e, t, i, s, a), this.type = 5;
   }
-  _$AI(t, e = this) {
-    if ((t = U(this, t, e, 0) ?? h) === y) return;
-    const i = this._$AH, s = t === h && i !== h || t.capture !== i.capture || t.once !== i.once || t.passive !== i.passive, a = t !== h && (i === h || s);
-    s && this.element.removeEventListener(this.name, this, i), a && this.element.addEventListener(this.name, this, t), this._$AH = t;
+  _$AI(e, t = this) {
+    if ((e = P(this, e, t, 0) ?? h) === $) return;
+    const i = this._$AH, s = e === h && i !== h || e.capture !== i.capture || e.once !== i.once || e.passive !== i.passive, a = e !== h && (i === h || s);
+    s && this.element.removeEventListener(this.name, this, i), a && this.element.addEventListener(this.name, this, e), this._$AH = e;
   }
-  handleEvent(t) {
-    typeof this._$AH == "function" ? this._$AH.call(this.options?.host ?? this.element, t) : this._$AH.handleEvent(t);
+  handleEvent(e) {
+    typeof this._$AH == "function" ? this._$AH.call(this.options?.host ?? this.element, e) : this._$AH.handleEvent(e);
   }
 }
-class ge {
-  constructor(t, e, i) {
-    this.element = t, this.type = 6, this._$AN = void 0, this._$AM = e, this.options = i;
+class kt {
+  constructor(e, t, i) {
+    this.element = e, this.type = 6, this._$AN = void 0, this._$AM = t, this.options = i;
   }
   get _$AU() {
     return this._$AM._$AU;
   }
-  _$AI(t) {
-    U(this, t);
+  _$AI(e) {
+    P(this, e);
   }
 }
-const fe = yt.litHtmlPolyfillSupport;
-fe?.(O, M), (yt.litHtmlVersions ??= []).push("3.3.3");
-const be = (n, t, e) => {
-  const i = e?.renderBefore ?? t;
+const St = Se.litHtmlPolyfillSupport;
+St?.(B, H), (Se.litHtmlVersions ??= []).push("3.3.3");
+const Ct = (n, e, t) => {
+  const i = t?.renderBefore ?? e;
   let s = i._$litPart$;
   if (s === void 0) {
-    const a = e?.renderBefore ?? null;
-    i._$litPart$ = s = new M(t.insertBefore(D(), a), a, void 0, e ?? {});
+    const a = t?.renderBefore ?? null;
+    i._$litPart$ = s = new H(e.insertBefore(M(), a), a, void 0, t ?? {});
   }
   return s._$AI(n), s;
 };
-const wt = globalThis;
-let v = class extends E {
+const qe = globalThis;
+let y = class extends R {
   constructor() {
     super(...arguments), this.renderOptions = { host: this }, this._$Do = void 0;
   }
   createRenderRoot() {
-    const t = super.createRenderRoot();
-    return this.renderOptions.renderBefore ??= t.firstChild, t;
+    const e = super.createRenderRoot();
+    return this.renderOptions.renderBefore ??= e.firstChild, e;
   }
-  update(t) {
-    const e = this.render();
-    this.hasUpdated || (this.renderOptions.isConnected = this.isConnected), super.update(t), this._$Do = be(e, this.renderRoot, this.renderOptions);
+  update(e) {
+    const t = this.render();
+    this.hasUpdated || (this.renderOptions.isConnected = this.isConnected), super.update(e), this._$Do = Ct(t, this.renderRoot, this.renderOptions);
   }
   connectedCallback() {
     super.connectedCallback(), this._$Do?.setConnected(!0);
@@ -492,57 +492,57 @@ let v = class extends E {
     super.disconnectedCallback(), this._$Do?.setConnected(!1);
   }
   render() {
-    return y;
+    return $;
   }
 };
-v._$litElement$ = !0, v.finalized = !0, wt.litElementHydrateSupport?.({ LitElement: v });
-const me = wt.litElementPolyfillSupport;
-me?.({ LitElement: v });
-(wt.litElementVersions ??= []).push("4.2.2");
-class g extends Error {
-  constructor(t) {
-    super(t), this.code = t;
+y._$litElement$ = !0, y.finalized = !0, qe.litElementHydrateSupport?.({ LitElement: y });
+const qt = qe.litElementPolyfillSupport;
+qt?.({ LitElement: y });
+(qe.litElementVersions ??= []).push("4.2.2");
+class p extends Error {
+  constructor(e) {
+    super(e), this.code = e;
   }
 }
-const b = "kaleidescape_companion", ve = 15e3, m = ({ entry_id: n, dataset_id: t }) => ({
+const b = "kaleidescape_companion", Et = 15e3, m = ({ entry_id: n, dataset_id: e }) => ({
   entry_id: n,
-  dataset_id: t
-}), ye = 256 * 1024 * 1024, Tt = 5 * 1024 * 1024, $e = 32 * 1024 * 1024;
-function we() {
+  dataset_id: e
+}), At = 256 * 1024 * 1024, Ie = 5 * 1024 * 1024, Ut = 32 * 1024 * 1024;
+function Rt() {
   const n = globalThis.crypto;
   if (typeof n?.randomUUID == "function") return n.randomUUID();
   if (typeof n?.getRandomValues != "function")
-    throw new g("request_id_unavailable");
-  const t = n.getRandomValues(new Uint8Array(16));
-  t[6] = t[6] & 15 | 64, t[8] = t[8] & 63 | 128;
-  const e = Array.from(
-    t,
+    throw new p("request_id_unavailable");
+  const e = n.getRandomValues(new Uint8Array(16));
+  e[6] = e[6] & 15 | 64, e[8] = e[8] & 63 | 128;
+  const t = Array.from(
+    e,
     (i) => i.toString(16).padStart(2, "0")
   ).join("");
-  return `${e.slice(0, 8)}-${e.slice(8, 12)}-${e.slice(12, 16)}-${e.slice(16, 20)}-${e.slice(20)}`;
+  return `${t.slice(0, 8)}-${t.slice(8, 12)}-${t.slice(12, 16)}-${t.slice(16, 20)}-${t.slice(20)}`;
 }
-async function B(n, t, e) {
+async function W(n, e, t) {
   const i = n.body?.getReader();
-  if (!i) throw new g("storage_error");
+  if (!i) throw new p("storage_error");
   const s = [];
   let a = 0;
   try {
     for (; ; ) {
       const { value: o, done: l } = await i.read();
       if (l) break;
-      if (a += o.byteLength, a > t) throw new g("export_too_large");
+      if (a += o.byteLength, a > e) throw new p("export_too_large");
       s.push(new Uint8Array(o));
     }
-    return new Blob(s, { type: e });
+    return new Blob(s, { type: t });
   } finally {
     await i.cancel().catch(() => {
     }), i.releaseLock();
   }
 }
-function f(n) {
+function u(n) {
   return typeof n == "object" && n !== null && "code" in n && typeof n.code == "string" ? n.code : "connection_lost";
 }
-function w(n) {
+function v(n) {
   return {
     unauthorized: "Access to this operation is denied. Your journal has been cleared from this view.",
     not_ready: "The integration is not loaded. Reload the connection after it starts.",
@@ -566,6 +566,8 @@ function w(n) {
     library_format: "The library page format was not recognized. Cached data is retained.",
     library_response: "The library returned an unsupported response. Cached data is retained.",
     library_changed: "The library changed during sync. Previous collection data was retained; try again later.",
+    query_limit: "This query exceeded its execution budget. Simplify the conditions and try again.",
+    query_syntax: "Check the field names, operators and quoted values in the condition.",
     database_page_too_large: "The database page is too large. Choose fewer rows per page.",
     library_page_too_large: "This library page is too large. Reduce entries per page and try again.",
     collection_disabled: "Enable Add to Collection and collection sync in Settings first.",
@@ -574,120 +576,137 @@ function w(n) {
     collection_limit: "Collection request history reached its storage limit.",
     library_too_large: "A library response exceeded its safety limit. Cached data is retained.",
     library_artwork: "Some artwork could not be cached. Previous artwork is retained when available."
-  }[f(n)] ?? "The connection was interrupted. The result could not be confirmed.";
+  }[u(n)] ?? "The connection was interrupted. The result could not be confirmed.";
 }
-async function _e(n) {
-  let t;
+async function Tt(n) {
+  let e;
   try {
     return await Promise.race([
       n,
-      new Promise((e, i) => {
-        t = setTimeout(
-          () => i(new g("connection_lost")),
-          ve
+      new Promise((t, i) => {
+        e = setTimeout(
+          () => i(new p("connection_lost")),
+          Et
         );
       })
     ]);
   } finally {
-    clearTimeout(t);
+    clearTimeout(e);
   }
 }
-class Vt {
-  constructor(t) {
-    this.transport = t;
+class tt {
+  constructor(e) {
+    this.transport = e;
   }
-  call(t) {
-    return _e(this.transport.callWS(t));
+  call(e) {
+    return Tt(this.transport.callWS(e));
+  }
+  uiPreferences(e, t = !1, i = "library") {
+    return this.call({
+      type: `${b}/ui/${t ? "shared" : "preferences"}/get`,
+      ...i !== "library" ? { area: i } : {},
+      ...m(e)
+    });
+  }
+  prepareUIPreferences(e, t, i, s, a = "library") {
+    return this.prepareCommand(
+      e,
+      `ui/${t ? "shared" : "preferences"}/update`,
+      { revision: i, patch: s, ...a !== "library" ? { area: a } : {} }
+    );
+  }
+  saveUIPreferences(e) {
+    return this.call({ ...e.message });
   }
   info() {
     return this.call({ type: `${b}/info` });
   }
-  list(t, e = "", i = "", s) {
+  list(e, t = "", i = "", s) {
     return this.call({
       type: `${b}/journal/list`,
-      ...m(t),
-      query: e,
+      ...m(e),
+      query: t,
       limit: 25,
       ...i ? { status: i } : {},
       ...s ? { cursor: s } : {}
     });
   }
-  get(t, e) {
+  get(e, t) {
     return this.call({
       type: `${b}/journal/get`,
-      ...m(t),
-      viewing_id: e
+      ...m(e),
+      viewing_id: t
     });
   }
-  sessions(t, e) {
+  sessions(e, t) {
     return this.call({
       type: `${b}/journal/sessions`,
-      ...m(t),
-      viewing_id: e
+      ...m(e),
+      viewing_id: t
     });
   }
-  nowPlaying(t) {
-    return this.call({ type: `${b}/now_playing`, ...m(t) });
+  nowPlaying(e) {
+    return this.call({ type: `${b}/now_playing`, ...m(e) });
   }
-  libraryInfo(t) {
-    return this.call({ type: `${b}/library/info`, ...m(t) });
+  libraryInfo(e) {
+    return this.call({ type: `${b}/library/info`, ...m(e) });
   }
-  libraryList(t, e = {}) {
+  libraryList(e, t = {}) {
     return this.call({
       type: `${b}/library/list`,
-      ...m(t),
-      filters: e
+      ...m(e),
+      filters: t
     });
   }
-  libraryVersions(t, e, i = 0, s) {
+  libraryVersions(e, t, i = 0, s) {
     return this.call({
       type: `${b}/library/versions`,
-      ...m(t),
-      title_id: e,
+      ...m(e),
+      title_id: t,
       offset: i,
       ...s === void 0 ? {} : { revision: s }
     });
   }
-  librarySync(t) {
-    return this.call({ type: `${b}/library/sync`, ...m(t) });
+  librarySync(e) {
+    return this.call({ type: `${b}/library/sync`, ...m(e) });
   }
-  collectionTargets(t, e, i) {
+  collectionTargets(e, t, i) {
     return this.call({
       type: `${b}/library/collections/targets`,
-      ...m(t),
-      title_id: e,
+      ...m(e),
+      title_id: t,
       revision: i
     });
   }
-  prepareCollectionAdd(t, e, i, s) {
-    return this.prepareCommand(t, "library/collections/add", {
-      title_id: e,
+  prepareCollectionAdd(e, t, i, s) {
+    return this.prepareCommand(e, "library/collections/add", {
+      title_id: t,
       collection: i,
       revision: s
     });
   }
-  collectionAdd(t) {
-    return this.call({ ...t.message });
+  collectionAdd(e) {
+    return this.call({ ...e.message });
   }
-  collectionCheck(t, e) {
+  collectionCheck(e, t) {
     return this.call({
       type: `${b}/library/collections/check`,
-      ...m(t),
-      request_id: e
+      ...m(e),
+      request_id: t
     });
   }
-  collectionAcknowledge(t, e) {
+  collectionAcknowledge(e, t) {
     return this.call({
       type: `${b}/library/collections/acknowledge`,
-      ...m(t),
-      request_id: e,
+      ...m(e),
+      request_id: t,
       confirmation: "ACKNOWLEDGE"
     });
   }
-  async libraryArtwork(t, e, i) {
-    if (!/^[a-f0-9]{64}$/.test(e)) throw new g("invalid_request");
+  async libraryArtwork(e, t, i) {
+    if (!/^[a-f0-9]{64}$/.test(t)) throw new p("invalid_request");
     const s = await this.transport.fetchWithAuth(
-      `/api/${b}/${encodeURIComponent(t.entry_id)}/${encodeURIComponent(t.dataset_id)}/library/artwork/${e}`,
+      `/api/${b}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/library/artwork/${t}`,
       {
         signal: i,
         cache: "no-store",
@@ -695,57 +714,57 @@ class Vt {
       }
     );
     if (!s.ok)
-      throw await s.body?.cancel(), new g(
+      throw await s.body?.cancel(), new p(
         [401, 403].includes(s.status) ? "unauthorized" : "not_found"
       );
     const a = s.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase();
     if (!a || !["image/jpeg", "image/png", "image/webp"].includes(a))
-      throw await s.body?.cancel(), new g("invalid_request");
-    return B(s, Tt, a);
+      throw await s.body?.cancel(), new p("invalid_request");
+    return W(s, Ie, a);
   }
-  settings(t, e, i = {}) {
+  settings(e, t, i = {}) {
     return this.call({
       ...i,
-      ...m(t),
-      type: `${b}/settings/${e}`
+      ...m(e),
+      type: `${b}/settings/${t}`
     });
   }
-  inspect(t, e, i = 0, s, a) {
+  inspect(e, t, i = 0, s, a) {
     return this.call({
       type: `${b}/database/inspect`,
-      ...m(t),
-      table: e,
+      ...m(e),
+      table: t,
       offset: i,
       ...s == null ? {} : { revision: s },
       ...a
     });
   }
-  preparePurge(t, e) {
-    return this.prepareCommand(t, "database/purge", e);
+  preparePurge(e, t) {
+    return this.prepareCommand(e, "database/purge", t);
   }
-  prepareDatabaseUpdate(t, e) {
-    return this.prepareCommand(t, "database/update", e);
+  prepareDatabaseUpdate(e, t) {
+    return this.prepareCommand(e, "database/update", t);
   }
-  prepareImport(t, e, i) {
-    return this.prepareCommand(t, "database/import", {
-      plan_id: e.plan_id,
-      revision: e.revision,
+  prepareImport(e, t, i) {
+    return this.prepareCommand(e, "database/import", {
+      plan_id: t.plan_id,
+      revision: t.revision,
       selected: [...i].sort()
     });
   }
-  applyImport(t) {
-    return this.call({ ...t.message });
+  applyImport(e) {
+    return this.call({ ...e.message });
   }
-  async previewImport(t, e, i) {
-    const s = /\.(sqlite|sqlite3|db)$/i.test(e.name) ? "sqlite" : /\.json$/i.test(e.name) ? "json" : null;
-    if (!s) throw new g("invalid_request");
-    if (!e.size || e.size > $e)
-      throw new g("import_too_large");
+  async previewImport(e, t, i) {
+    const s = /\.(sqlite|sqlite3|db)$/i.test(t.name) ? "sqlite" : /\.json$/i.test(t.name) ? "json" : null;
+    if (!s) throw new p("invalid_request");
+    if (!t.size || t.size > Ut)
+      throw new p("import_too_large");
     const a = await this.transport.fetchWithAuth(
-      `/api/${b}/${encodeURIComponent(t.entry_id)}/${encodeURIComponent(t.dataset_id)}/import/preview?format=${s}`,
+      `/api/${b}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/import/preview?format=${s}`,
       {
         method: "POST",
-        body: e,
+        body: t,
         signal: i,
         redirect: "error",
         cache: "no-store",
@@ -759,57 +778,108 @@ class Vt {
         413: "import_too_large",
         404: "not_found"
       };
-      if (l[a.status]) throw new g(l[a.status]);
+      if (l[a.status]) throw new p(l[a.status]);
       const d = await a.json().catch(() => null);
-      throw new g(d?.code ?? "connection_lost");
+      throw new p(d?.code ?? "connection_lost");
     }
-    const o = await B(
+    const o = await W(
       a,
       8 * 1024 * 1024,
       "application/json"
     );
     return JSON.parse(await o.text());
   }
-  purge(t) {
-    return this.call({ ...t.message });
+  purge(e) {
+    return this.call({ ...e.message });
   }
-  async artwork(t, e) {
-    if (!/^media_player\.[a-z0-9_]{1,255}$/.test(t))
-      throw new g("invalid_request");
+  async artwork(e, t) {
+    if (!/^media_player\.[a-z0-9_]{1,255}$/.test(e))
+      throw new p("invalid_request");
     const i = await this.transport.fetchWithAuth(
-      `/api/media_player_proxy/${t}`,
+      `/api/media_player_proxy/${e}`,
       {
-        signal: e,
+        signal: t,
         cache: "no-store",
         redirect: "error"
       }
     );
     if (!i.ok) {
       if (await i.body?.cancel(), i.status === 404) return null;
-      throw new g(
+      throw new p(
         [401, 403].includes(i.status) ? "unauthorized" : "not_ready"
       );
     }
     const s = i.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase();
-    return !s || !["image/jpeg", "image/png", "image/webp"].includes(s) ? (await i.body?.cancel(), null) : B(i, Tt, s);
+    return !s || !["image/jpeg", "image/png", "image/webp"].includes(s) ? (await i.body?.cancel(), null) : W(i, Ie, s);
   }
-  prepare(t, e, i) {
-    return this.prepareCommand(t, `journal/${e}`, i);
+  librarySuggestions(e, t, i) {
+    return this.call({
+      type: `${b}/library/suggest`,
+      ...m(e),
+      field: t,
+      query: i
+    });
   }
-  prepareCommand(t, e, i) {
+  validateDatabaseQuery(e, t, i) {
+    return this.call({
+      type: `${b}/database/validate_query`,
+      ...m(e),
+      table: t,
+      query: i
+    });
+  }
+  prepareDatabaseMutation(e, t) {
+    return this.prepareCommand(e, "database/mutate", { data: t });
+  }
+  databaseMutation(e) {
+    return this.call({ ...e.message });
+  }
+  async libraryAll(e, t, i) {
+    let s;
+    const a = [];
+    let o = 0;
+    for (; i(); ) {
+      const l = await this.libraryList(e, {
+        ...t,
+        grouped: !0,
+        limit: 1e3,
+        offset: a.length,
+        ...s ? { revision: s.revision, preferences_key: s.preferences_key } : {}
+      });
+      if (!i()) throw new p("not_ready");
+      if (s && (l.revision !== s.revision || l.preferences_key !== s.preferences_key))
+        throw new p("refresh_required");
+      if (o += new TextEncoder().encode(JSON.stringify(l.items)).byteLength, a.length + l.items.length > 1e4 || o > 32 * 1024 * 1024)
+        throw new p("library_page_too_large");
+      if (a.push(...l.items), s = l, !l.has_more)
+        return {
+          ...l,
+          items: a,
+          offset: 0,
+          limit: a.length,
+          has_more: !1
+        };
+      if (!l.items.length) throw new p("refresh_required");
+    }
+    throw new p("not_ready");
+  }
+  prepare(e, t, i) {
+    return this.prepareCommand(e, `journal/${t}`, i);
+  }
+  prepareCommand(e, t, i) {
     const s = structuredClone({
       ...i,
-      ...m(t),
-      type: `${b}/${e}`,
-      request_id: we()
+      ...m(e),
+      type: `${b}/${t}`,
+      request_id: Rt()
     });
-    return { scope: m(t), message: Object.freeze(s) };
+    return { scope: m(e), message: Object.freeze(s) };
   }
-  mutate(t) {
-    return this.call({ ...t.message });
+  mutate(e) {
+    return this.call({ ...e.message });
   }
-  async download(t, e, i) {
-    const s = `/api/${b}/${encodeURIComponent(t.entry_id)}/${encodeURIComponent(t.dataset_id)}/export?format=${e}`, a = await this.transport.fetchWithAuth(s, {
+  async download(e, t, i) {
+    const s = `/api/${b}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/export?format=${t}`, a = await this.transport.fetchWithAuth(s, {
       signal: i,
       cache: "no-store",
       redirect: "error"
@@ -822,24 +892,24 @@ class Vt {
         413: "export_too_large",
         503: "busy"
       };
-      throw new g(o[a.status] ?? "storage_error");
+      throw new p(o[a.status] ?? "storage_error");
     }
-    return B(
+    return W(
       a,
-      ye,
-      e === "json" ? "application/json" : "application/vnd.sqlite3"
+      At,
+      t === "json" ? "application/json" : "application/vnd.sqlite3"
     );
   }
 }
-function Lt(n) {
-  const t = new Date(n);
-  return new Date(t.getTime() - t.getTimezoneOffset() * 6e4).toISOString().slice(0, 19);
+function Be(n) {
+  const e = new Date(n);
+  return new Date(e.getTime() - e.getTimezoneOffset() * 6e4).toISOString().slice(0, 19);
 }
-function T(n) {
+function N(n) {
   return {
     title: n?.title ?? "",
-    started_at: Lt(n?.started_at ?? (/* @__PURE__ */ new Date()).toISOString()),
-    ended_at: n?.ended_at ? Lt(n.ended_at) : "",
+    started_at: Be(n?.started_at ?? (/* @__PURE__ */ new Date()).toISOString()),
+    ended_at: n?.ended_at ? Be(n.ended_at) : "",
     duration_seconds: n?.duration_seconds == null ? "" : (n.duration_seconds / 60).toFixed(2),
     watched_seconds: ((n?.watched_seconds ?? 0) / 60).toFixed(2),
     status: n?.status ?? "partial",
@@ -849,14 +919,14 @@ function T(n) {
     raw_content_id: n?.raw_content_id ?? ""
   };
 }
-function Wt(n, t) {
-  const e = {};
+function it(n, e) {
+  const t = {};
   for (const [i, s] of Object.entries(n))
-    t && s === t[i] || (i === "started_at" || i === "ended_at" ? e[i] = s ? new Date(s).toISOString() : null : i === "duration_seconds" || i === "watched_seconds" ? e[i] = s === "" ? null : Number(s) * 60 : ["source_id", "player_id", "raw_content_id"].includes(i) ? e[i] = s === "" ? null : s : e[i] = s);
-  return e;
+    e && s === e[i] || (i === "started_at" || i === "ended_at" ? t[i] = s ? new Date(s).toISOString() : null : i === "duration_seconds" || i === "watched_seconds" ? t[i] = s === "" ? null : Number(s) * 60 : ["source_id", "player_id", "raw_content_id"].includes(i) ? t[i] = s === "" ? null : s : t[i] = s);
+  return t;
 }
-function Jt(n, t) {
-  function e(i, s, a = "text", o = !1, l) {
+function st(n, e) {
+  function t(i, s, a = "text", o = !1, l) {
     return r`<label
       >${s}<input
         id=${i === "title" ? "title" : i}
@@ -868,21 +938,21 @@ function Jt(n, t) {
         min=${a === "number" ? "0" : h}
         max=${a === "number" ? String(1e9 / 60) : h}
         step=${a === "datetime-local" ? "1" : a === "number" ? "0.01" : h}
-        @input=${(d) => t(i, d)}
+        @input=${(d) => e(i, d)}
     /></label>`;
   }
   return r`
     <div class="grid">
-      <div class="full">${e("title", "Title", "text", !0, 500)}</div>
-      ${e("started_at", "Started · local time", "datetime-local", !0)}
-      ${e("ended_at", "Ended · local time", "datetime-local")}
-      ${e("watched_seconds", "Watched minutes", "number", !0)}
-      ${e("duration_seconds", "Runtime minutes · optional", "number")}
+      <div class="full">${t("title", "Title", "text", !0, 500)}</div>
+      ${t("started_at", "Started · local time", "datetime-local", !0)}
+      ${t("ended_at", "Ended · local time", "datetime-local")}
+      ${t("watched_seconds", "Watched minutes", "number", !0)}
+      ${t("duration_seconds", "Runtime minutes · optional", "number")}
       <label
         >Status<select
           name="record_status"
           .value=${n.status}
-          @change=${(i) => t("status", i)}
+          @change=${(i) => e("status", i)}
         >
           <option value="partial">Partial</option>
           <option value="completed">Completed</option>
@@ -893,17 +963,17 @@ function Jt(n, t) {
           name="notes"
           maxlength="10000"
           .value=${n.notes}
-          @input=${(i) => t("notes", i)}
+          @input=${(i) => e("notes", i)}
         ></textarea>
       </label>
     </div>
     <details>
       <summary>Source identifiers</summary>
       <div class="grid">
-        ${e("source_id", "Source ID", "text", !1, 255)}
-        ${e("player_id", "Player ID", "text", !1, 255)}
+        ${t("source_id", "Source ID", "text", !1, 255)}
+        ${t("player_id", "Player ID", "text", !1, 255)}
         <div class="full">
-          ${e("raw_content_id", "Raw content ID", "text", !1, 255)}
+          ${t("raw_content_id", "Raw content ID", "text", !1, 255)}
         </div>
       </div>
       <small
@@ -913,7 +983,7 @@ function Jt(n, t) {
     </details>
   `;
 }
-const k = j`
+const S = L`
   :host {
     display: block;
     min-height: 0;
@@ -1433,58 +1503,58 @@ const k = j`
       padding-right: 16px;
     }
   }
-`, xe = [
+`, Pt = [
   "now-playing",
   "library",
   "journal",
   "database",
   "settings"
 ];
-function Kt(n, t, e) {
-  const i = (a) => xe.includes(a) && (t || a === "journal" || a === "library") && (a !== "library" || e), s = new URL(location.href).searchParams.get("companion_page");
+function at(n, e, t) {
+  const i = (a) => Pt.includes(a) && (e || a === "journal" || a === "library") && (a !== "library" || t), s = new URL(location.href).searchParams.get("companion_page");
   return i(s) ? s : i(n) ? n : "journal";
 }
-function L(n) {
-  const t = new URL(location.href);
-  t.searchParams.set("companion_page", n), history.replaceState(history.state, "", t);
+function j(n) {
+  const e = new URL(location.href);
+  e.searchParams.set("companion_page", n), history.replaceState(history.state, "", e);
 }
-const A = { ATTRIBUTE: 1, PROPERTY: 3, BOOLEAN_ATTRIBUTE: 4 }, ke = (n) => (...t) => ({ _$litDirective$: n, values: t });
-class Ce {
-  constructor(t) {
+const A = { ATTRIBUTE: 1, PROPERTY: 3, BOOLEAN_ATTRIBUTE: 4 }, Lt = (n) => (...e) => ({ _$litDirective$: n, values: e });
+class zt {
+  constructor(e) {
   }
   get _$AU() {
     return this._$AM._$AU;
   }
-  _$AT(t, e, i) {
-    this._$Ct = t, this._$AM = e, this._$Ci = i;
+  _$AT(e, t, i) {
+    this._$Ct = e, this._$AM = t, this._$Ci = i;
   }
-  _$AS(t, e) {
-    return this.update(t, e);
+  _$AS(e, t) {
+    return this.update(e, t);
   }
-  update(t, e) {
-    return this.render(...e);
+  update(e, t) {
+    return this.render(...t);
   }
 }
-const Se = (n) => n.strings === void 0, qe = {}, Ae = (n, t = qe) => n._$AH = t;
-const Ee = ke(class extends Ce {
+const Dt = (n) => n.strings === void 0, Ot = {}, Nt = (n, e = Ot) => n._$AH = e;
+const jt = Lt(class extends zt {
   constructor(n) {
     if (super(n), n.type !== A.PROPERTY && n.type !== A.ATTRIBUTE && n.type !== A.BOOLEAN_ATTRIBUTE) throw Error("The `live` directive is not allowed on child or event bindings");
-    if (!Se(n)) throw Error("`live` bindings can only contain a single expression");
+    if (!Dt(n)) throw Error("`live` bindings can only contain a single expression");
   }
   render(n) {
     return n;
   }
-  update(n, [t]) {
-    if (t === y || t === h) return t;
-    const e = n.element, i = n.name;
+  update(n, [e]) {
+    if (e === $ || e === h) return e;
+    const t = n.element, i = n.name;
     if (n.type === A.PROPERTY) {
-      if (t === e[i]) return y;
+      if (e === t[i]) return $;
     } else if (n.type === A.BOOLEAN_ATTRIBUTE) {
-      if (!!t === e.hasAttribute(i)) return y;
-    } else if (n.type === A.ATTRIBUTE && e.getAttribute(i) === t + "") return y;
-    return Ae(n), t;
+      if (!!e === t.hasAttribute(i)) return $;
+    } else if (n.type === A.ATTRIBUTE && t.getAttribute(i) === e + "") return $;
+    return Nt(n), e;
   }
-}), Ue = j`
+}), Mt = L`
   .library-page {
     margin-top: 24px;
   }
@@ -1505,19 +1575,20 @@ const Ee = ke(class extends Ce {
     flex: 1;
     min-width: 150px;
   }
-  .view-switch {
+  .library-options {
+    width: min(380px, calc(100% - 32px));
+  }
+  .options-fields {
+    display: grid;
+    gap: 14px;
+  }
+  .view-options {
     display: flex;
-    gap: 0;
+    gap: 24px;
+    border: 1px solid var(--line);
   }
-  .view-switch button[aria-pressed="true"] {
-    color: var(--accent);
-    border-color: var(--accent);
-  }
-  .page-size {
-    width: 130px;
-  }
-  .cover-size {
-    width: 150px;
+  .view-options .check {
+    margin: 0;
   }
   input[type="range"] {
     padding: 0;
@@ -1535,7 +1606,7 @@ const Ee = ke(class extends Ce {
     min-width: 0;
     overflow: hidden;
   }
-  .cover-tile span {
+  .cover-tile > .cover-caption {
     position: absolute;
     bottom: 0;
     inset-inline: 0;
@@ -1550,6 +1621,144 @@ const Ee = ke(class extends Ce {
   .cover-image {
     aspect-ratio: 2 / 3;
   }
+  .cover-flags {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .cover-flag {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  .cover-flag.flag-watched,
+  .cover-flag.flag-progress {
+    width: 52px;
+    height: 52px;
+    clip-path: polygon(0 0, 100% 0, 0 100%);
+  }
+  .cover-flag.flag-watched .badge-symbol,
+  .cover-flag.flag-progress .badge-symbol {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    box-sizing: border-box;
+    border-radius: 50%;
+    font-size: 17px;
+    font-weight: 900;
+  }
+  .cover-flag.flag-watched .badge-symbol {
+    background: #fff;
+    color: #19854a;
+  }
+  .cover-flag.flag-progress .badge-symbol {
+    font-size: 0;
+    border: 4px solid #ffde8a;
+    border-top-color: #fff;
+    box-shadow: 0 1px 3px #9a5c00;
+  }
+  .cover-flag.flag-recent {
+    top: 8px;
+    left: 8px;
+    border-radius: 5px;
+    padding: 4px 9px;
+    font-size: 12px;
+    font-weight: 800;
+    box-shadow: 0 1px 4px #0006;
+  }
+  .cover-flag.flag-favorite {
+    left: auto;
+    right: 6px;
+    width: 30px;
+    height: 43px;
+    display: grid;
+    justify-items: center;
+    padding-top: 4px;
+    font-size: 24px;
+    box-sizing: border-box;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 82%, 0 100%);
+  }
+  .flag-watched {
+    background: #19854a;
+    color: #fff;
+  }
+  .flag-progress {
+    background: #d98c06;
+    color: #fff;
+  }
+  .flag-recent {
+    background: #1369ac;
+    color: #fff;
+  }
+  .flag-favorite {
+    background: #ffc329;
+    color: #241600;
+  }
+  .cover-formats {
+    position: absolute;
+    inset-inline: 3px;
+    bottom: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+  .has-title .cover-formats {
+    bottom: 28px;
+  }
+  .library-summary-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    margin-top: 5px;
+  }
+  .format-badge,
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    border-radius: 4px;
+    padding: 2px 5px;
+    font-size: 11px;
+    font-weight: 750;
+    line-height: 1.3;
+  }
+  .format-badge {
+    background: #e0ebf6;
+    color: #164f7b;
+    border: 1px solid #92b4d6;
+  }
+  .format-four-k,
+  .format-cinematic {
+    background: #ffbd18;
+    color: #171400;
+    border-color: #ffbd18;
+  }
+  .cinematic-label {
+    background: #242018;
+    color: #ffc329;
+    padding: 0 3px;
+    margin-left: 3px;
+    border-radius: 2px;
+  }
+  .format-hd {
+    background: #236d9e;
+    color: #fff;
+    border-color: #236d9e;
+  }
+  .format-vision,
+  .format-atmos {
+    font-weight: 500;
+  }
+  .cover-formats .format-badge {
+    font-size: 9px;
+    padding: 1px 3px;
+  }
+
   .library-table {
     table-layout: fixed;
     width: var(--library-width);
@@ -1626,15 +1835,6 @@ const Ee = ke(class extends Ce {
     width: min(850px, calc(100% - 32px));
     overflow-wrap: anywhere;
   }
-  .purchase-preview {
-    max-height: 50vh;
-    overflow: auto;
-    margin-block: 16px;
-  }
-  .purchase-preview section {
-    padding: 12px;
-    border-bottom: 1px solid var(--line);
-  }
   .library-dialog .playback-layout {
     padding: 24px 0 0;
   }
@@ -1655,92 +1855,294 @@ const Ee = ke(class extends Ce {
   .facet-options .check {
     margin: 8px 0;
   }
-`;
-function N(n) {
-  const t = n.currentTarget;
-  if (n.target !== t) return;
-  const e = t.getBoundingClientRect();
-  n.clientX >= e.left && n.clientX <= e.right && n.clientY >= e.top && n.clientY <= e.bottom || t.dispatchEvent(new Event("cancel", { cancelable: !0 })) && t.close();
-}
-class Dt {
-  constructor() {
-    this.active = 0, this.waiting = [];
+
+  .library-results {
+    overflow: visible;
   }
-  acquire(t) {
-    return new Promise((e, i) => {
+  .library-toolbar {
+    position: sticky;
+    top: var(--companion-sticky-top, 0px);
+    z-index: 8;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    border-radius: 12px 12px 0 0;
+  }
+  .library-toolbar form {
+    min-width: 0;
+  }
+  .library-toolbar form label {
+    min-width: min(180px, 100%);
+  }
+  .library-status {
+    position: sticky;
+    bottom: 0;
+    z-index: 7;
+    margin-top: 12px;
+    padding: 9px 14px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .detail-badges {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .rating-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 4px;
+    padding: 2px 6px;
+    border: 1px solid currentColor;
+    font-weight: 800;
+    font-size: 12px;
+    background: #e8edf2;
+    color: #45535f;
+    white-space: nowrap;
+  }
+  .rating-general {
+    background: #d5efdd;
+    color: #18572c;
+  }
+  .rating-parental {
+    background: #d9eaf8;
+    color: #174e78;
+  }
+  .rating-teen {
+    background: #ffebbd;
+    color: #704600;
+  }
+  .rating-restricted,
+  .rating-adult {
+    background: #f6d6d8;
+    color: #8a2330;
+  }
+  .cover-rating {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    max-width: 45%;
+    overflow: hidden;
+  }
+  .cover-rating .rating-badge {
+    max-width: 100%;
+    font-size: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .has-title .cover-rating {
+    bottom: 28px;
+  }
+  .cover-formats {
+    inset-inline-end: auto;
+    max-width: 64%;
+  }
+  .people-filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .people-filters fieldset {
+    min-width: 0;
+    border: 1px solid var(--line);
+  }
+  .selected-people {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin: 8px 0;
+  }
+  .person-chip {
+    padding: 3px 8px;
+    min-height: 28px;
+    font-size: 12px;
+  }
+  @media (max-width: 700px) {
+    .library-toolbar form {
+      flex-basis: 100%;
+    }
+    .library-toolbar > button {
+      flex: 1;
+      padding-inline: 8px;
+    }
+    .people-filters {
+      grid-template-columns: 1fr;
+    }
+  }
+  .has-rating .cover-formats {
+    max-width: calc(100% - 48px);
+  }
+  .cover-formats .format-badge {
+    max-width: 100%;
+    overflow: hidden;
+  }
+  .cover-formats .cinematic-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+`;
+function k(n) {
+  const e = n.currentTarget;
+  if (n.target !== e) return;
+  const t = e.getBoundingClientRect();
+  n.clientX >= t.left && n.clientX <= t.right && n.clientY >= t.top && n.clientY <= t.bottom || e.dispatchEvent(new Event("cancel", { cancelable: !0 })) && e.close();
+}
+class It {
+  constructor(e = 128 * 1024 * 1024, t = 1e3) {
+    this.maxBytes = e, this.maxEntries = t, this.entries = /* @__PURE__ */ new Map(), this.readers = /* @__PURE__ */ new Map(), this.bytes = 0, this.closed = !1;
+  }
+  get(e) {
+    const t = this.entries.get(e);
+    return t && (this.entries.delete(e), this.entries.set(e, t)), t?.url;
+  }
+  put(e, t) {
+    if (this.closed || t.size > this.maxBytes) return;
+    const i = this.get(e);
+    if (i) return i;
+    for (; this.bytes + t.size > this.maxBytes || this.entries.size >= this.maxEntries; ) {
+      const a = [...this.entries.keys()], o = a.find(
+        (l) => ![...this.readers.get(l) ?? []].some(
+          (d) => d.visible()
+        )
+      ) ?? a[0];
+      if (o === void 0) return;
+      this.drop(o);
+    }
+    const s = { url: URL.createObjectURL(t), size: t.size };
+    return this.entries.set(e, s), this.bytes += s.size, s.url;
+  }
+  watch(e, t) {
+    if (this.closed) return () => {
+    };
+    const i = this.readers.get(e) ?? /* @__PURE__ */ new Set();
+    return i.add(t), this.readers.set(e, i), () => {
+      i.delete(t), i.size || this.readers.delete(e);
+    };
+  }
+  drop(e) {
+    const t = this.entries.get(e);
+    if (t) {
+      this.entries.delete(e), this.bytes -= t.size, URL.revokeObjectURL(t.url);
+      for (const i of this.readers.get(e) ?? []) i.invalidate();
+    }
+  }
+  dispose() {
+    this.closed = !0;
+    for (const e of this.entries.keys()) this.drop(e);
+    this.readers.clear();
+  }
+}
+class He {
+  constructor() {
+    this.cache = new It(), this.active = 0, this.waiting = [];
+  }
+  acquire(e) {
+    return new Promise((t, i) => {
       const s = () => {
         this.waiting = this.waiting.filter((o) => o !== a), i(new DOMException("Aborted", "AbortError"));
       }, a = () => {
-        t.removeEventListener("abort", s), this.active++;
+        e.removeEventListener("abort", s), this.active++;
         let o = !1;
-        e(() => {
+        t(() => {
           o || (o = !0, this.active--, this.waiting.shift()?.());
         });
       };
-      if (t.aborted) return s();
-      this.active < 3 ? a() : (this.waiting.push(a), t.addEventListener("abort", s, { once: !0 }));
+      if (e.aborted) return s();
+      this.active < 3 ? a() : (this.waiting.push(a), e.addEventListener("abort", s, { once: !0 }));
     });
   }
 }
-const W = class W extends v {
+const G = class G extends y {
   constructor() {
     super(...arguments), this.title = "", this.visible = !1, this.generation = 0, this.visibility = () => {
-      document.hidden ? this.clear() : this.load();
+      document.hidden ? this.cancelLoad() : this.load();
     };
   }
+  get cacheKey() {
+    return JSON.stringify([
+      this.scope?.entry_id,
+      this.scope?.dataset_id,
+      this.artworkKey
+    ]);
+  }
   connectedCallback() {
-    super.connectedCallback(), document.addEventListener("visibilitychange", this.visibility), this.observer = new IntersectionObserver((t) => {
-      this.visible = t.some((e) => e.isIntersecting), this.visible ? this.load() : this.clear();
-    }), this.observer.observe(this);
+    super.connectedCallback(), document.addEventListener("visibilitychange", this.visibility), this.observer = new IntersectionObserver((e) => {
+      this.visible = e.some((t) => t.isIntersecting), this.visible ? this.load() : this.cancelLoad();
+    }), this.observer.observe(this), this.requestUpdate("queue");
   }
   disconnectedCallback() {
-    super.disconnectedCallback(), document.removeEventListener("visibilitychange", this.visibility), this.observer?.disconnect(), this.clear();
+    super.disconnectedCallback(), document.removeEventListener("visibilitychange", this.visibility), this.observer?.disconnect(), this.visible = !1, this.clear();
   }
-  updated(t) {
-    ["client", "scope", "artworkKey", "queue"].some((e) => t.has(e)) && (this.clear(), this.load());
+  updated(e) {
+    ["client", "scope", "artworkKey", "queue"].some((t) => e.has(t)) && (this.clear(), this.unwatch = this.queue?.cache.watch(this.cacheKey, {
+      invalidate: () => {
+        this.url = void 0, this.requestUpdate();
+      },
+      visible: () => this.visible && this.isConnected && !document.hidden
+    }), this.load());
+  }
+  cancelLoad() {
+    this.generation++, this.controller?.abort(), this.controller = void 0;
   }
   clear() {
-    this.generation++, this.controller?.abort(), this.controller = void 0, this.url && (URL.revokeObjectURL(this.url), this.url = void 0, this.requestUpdate());
+    this.cancelLoad(), this.unwatch?.(), this.unwatch = void 0, this.url = void 0, this.requestUpdate();
   }
   async load() {
-    if (!this.visible || document.hidden || !this.isConnected || this.controller || this.url || !this.client || !this.scope?.library_enabled || !this.artworkKey || !this.queue)
+    if (!this.visible || document.hidden || !this.isConnected || this.controller || !this.client || !this.scope?.library_enabled || !this.artworkKey || !this.queue)
       return;
-    const t = this.generation, e = this.controller = new AbortController();
-    let i, s;
+    const e = this.queue.cache.get(this.cacheKey);
+    if (e) {
+      this.url !== e && (this.url = e, this.requestUpdate());
+      return;
+    }
+    const t = this.generation, i = this.controller = new AbortController();
+    let s, a;
     try {
-      if (i = await this.queue.acquire(e.signal), e.signal.aborted) return;
-      s = setTimeout(() => e.abort(), 5e3);
-      const a = await this.client.libraryArtwork(
+      if (s = await this.queue.acquire(i.signal), i.signal.aborted) return;
+      const o = this.queue.cache.get(this.cacheKey);
+      if (o) {
+        this.url = o, this.requestUpdate();
+        return;
+      }
+      a = setTimeout(() => i.abort(), 5e3);
+      const l = await this.client.libraryArtwork(
         this.scope,
         this.artworkKey,
-        e.signal
+        i.signal
       );
-      if (t !== this.generation || e.signal.aborted || !this.isConnected || document.hidden)
+      if (t !== this.generation || i.signal.aborted || !this.isConnected || document.hidden)
         return;
-      this.url = URL.createObjectURL(a), this.requestUpdate();
-    } catch (a) {
-      t === this.generation && f(a) === "unauthorized" && this.dispatchEvent(
+      this.url = this.queue.cache.put(this.cacheKey, l), this.requestUpdate();
+    } catch (o) {
+      t === this.generation && u(o) === "unauthorized" && this.dispatchEvent(
         new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
       );
     } finally {
-      clearTimeout(s), i?.(), t === this.generation && (this.controller = void 0);
+      clearTimeout(a), s?.(), t === this.generation && (this.controller = void 0);
     }
   }
   render() {
     return this.url ? r`<img
           src=${this.url}
           alt=${`Cover for ${this.title}`}
-          @error=${this.clear}
+          @error=${() => this.queue?.cache.drop(this.cacheKey)}
         />` : r`<span>No cached artwork</span>`;
   }
 };
-W.properties = {
+G.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   queue: { attribute: !1 },
   artworkKey: { attribute: !1 },
   title: { type: String }
-}, W.styles = j`
+}, G.styles = L`
     :host {
       display: grid;
       width: 100%;
@@ -1760,14 +2162,126 @@ W.properties = {
       font: inherit;
     }
   `;
-let lt = W;
-customElements.get("kaleidescape-library-cover") || customElements.define("kaleidescape-library-cover", lt);
-const J = class J extends v {
+let ue = G;
+customElements.get("kaleidescape-library-cover") || customElements.define("kaleidescape-library-cover", ue);
+class Ee {
+  constructor(e, t, i, s, a = "library") {
+    this.client = e, this.scope = t, this.shared = i, this.error = s, this.area = a, this.values = {}, this.revision = 0, this.active = !0, this.sequence = 0, this.versions = /* @__PURE__ */ new Map(), this.failed = {};
+  }
+  async load() {
+    const e = await this.client.uiPreferences(
+      this.scope,
+      this.shared,
+      this.area
+    );
+    return this.active && (this.values = structuredClone(e.values), this.revision = e.revision), this.values;
+  }
+  set(e) {
+    if (!this.active) return;
+    Object.assign(this.values, structuredClone(e));
+    const t = ++this.sequence;
+    for (const s of Object.keys(e))
+      this.versions.set(s, t), delete this.failed[s];
+    let i;
+    try {
+      i = this.client.saveUIPreferences(
+        this.client.prepareUIPreferences(
+          this.scope,
+          this.shared,
+          this.revision,
+          e,
+          this.area
+        )
+      );
+    } catch (s) {
+      i = Promise.reject(s);
+    }
+    i.then((s) => {
+      this.active && (this.revision = Math.max(this.revision, s.revision), Object.keys(this.failed).length || this.error(null));
+    }).catch((s) => {
+      if (this.active) {
+        for (const [a, o] of Object.entries(e))
+          this.versions.get(a) === t && (this.failed[a] = o);
+        Object.keys(this.failed).length && this.error(s);
+      }
+    });
+  }
+  retry() {
+    const e = this.failed;
+    this.failed = {}, Object.keys(e).length && this.set(e);
+  }
+  dispose() {
+    this.active = !1, this.values = {}, this.failed = {}, this.versions.clear();
+  }
+}
+function Bt(n) {
+  const e = n.watched_status === "in_progress" ? { key: "progress", label: "In progress", symbol: "◔" } : n.watched_status === "watched" ? { key: "watched", label: "Watched", symbol: "✓" } : n.is_recently_added ? { key: "recent", label: "Recently added", symbol: "NEW" } : void 0;
+  return [
+    ...e ? [e] : [],
+    ...n.is_favorite ? [{ key: "favorite", label: "Favorite", symbol: "★" }] : []
+  ];
+}
+function Ae(n) {
+  const e = (n.formats?.length ? n.formats : [n.edition ?? ""]).map(
+    (s) => s.toLowerCase()
+  ), t = (s) => e.some((a) => s.test(a)), i = [];
+  return e.some(
+    (s) => /\b4k\b/.test(s) && !/\bcinematic\b/.test(s)
+  ) && i.push({ key: "four-k", label: "4K" }), e.some((s) => /\b4k\b/.test(s) && /\bcinematic\b/.test(s)) && i.push({ key: "cinematic", label: "4K Cinematic" }), t(/\bhd\b|\b1080p\b/) && i.push({ key: "hd", label: "HD" }), t(/\bsd\b|\b(?:480|576)[pi]\b/) && i.push({ key: "sd", label: "SD" }), t(/\bsdr\b/) && i.push({ key: "sdr", label: "SDR" }), t(/\bhdr10\b/) && i.push({ key: "hdr10", label: "HDR10" }), t(/\bdolby\s*vision\b/) && i.push({ key: "vision", label: "Dolby Vision" }), t(/\bdolby\s*atmos\b/) && i.push({ key: "atmos", label: "Dolby Atmos" }), i;
+}
+function Ht(n) {
+  const e = Ae(n);
+  return ["cinematic", "four-k", "hd", "sd"].map((t) => e.find((i) => i.key === t)).find(Boolean);
+}
+function D(n, e = !1) {
+  const t = e ? Ht(n) : void 0;
+  return (e ? t ? [t] : [] : Ae(n)).map(
+    (i) => r`<span
+        class="format-badge format-${i.key}"
+        aria-label=${i.label}
+        >${i.key === "cinematic" ? r`<b>4K</b><span class="cinematic-label">Cinematic</span>` : i.label}</span
+      >`
+  );
+}
+function Fe(n, e = !1) {
+  return Bt(n).map(
+    (t) => r`<span
+        class=${e ? `cover-flag flag-${t.key}` : `status-badge flag-${t.key}`}
+        title=${t.label}
+        aria-label=${t.label}
+        role="img"
+        ><span class="badge-symbol" aria-hidden="true"
+          >${e ? t.symbol : t.key === "recent" ? "✦" : t.symbol}</span
+        >${e ? "" : ` ${t.label}`}</span
+      >`
+  );
+}
+function V(n) {
+  if (!n?.trim()) return h;
+  const e = n.trim(), t = e.toUpperCase().replaceAll(" ", ""), i = {
+    G: "general",
+    PG: "parental",
+    "PG-13": "teen",
+    PG13: "teen",
+    R: "restricted",
+    "NC-17": "adult",
+    NC17: "adult"
+  }[t] ?? "unrated";
+  return r`<span
+    class=${`rating-badge rating-${i}`}
+    title=${`Rating: ${e}`}
+    >${e}</span
+  >`;
+}
+function T(n) {
+  return n.toLocaleLowerCase() === "played" ? "Watched" : n;
+}
+const Q = class Q extends y {
   constructor() {
     super(...arguments), this.revision = 0, this.enabled = !1, this.blocked = !1, this.generation = 0, this.choices = [], this.selected = "", this.loading = !1, this.busy = !1, this.error = "", this.notice = "";
   }
-  willUpdate(t) {
-    (t.has("client") || t.has("scope") || t.has("version") || t.has("enabled") && !this.enabled) && this.clear();
+  willUpdate(e) {
+    (e.has("client") || e.has("scope") || e.has("version") || e.has("enabled") && !this.enabled) && this.clear();
   }
   disconnectedCallback() {
     super.disconnectedCallback(), this.clear();
@@ -1787,13 +2301,13 @@ const J = class J extends v {
   confirmNavigation() {
     return !this.busy && !this.pending;
   }
-  close(t) {
-    t?.preventDefault(), this.confirmNavigation() && (this.generation++, this.loading = !1, this.renderRoot.querySelector("dialog")?.close(), this.requestUpdate());
+  close(e) {
+    e?.preventDefault(), this.confirmNavigation() && (this.generation++, this.loading = !1, this.renderRoot.querySelector("dialog")?.close(), this.requestUpdate());
   }
-  fail(t) {
-    this.error = w(t), ["unauthorized", "library_disabled"].includes(f(t)) && (this.clear(), this.dispatchEvent(
+  fail(e) {
+    this.error = v(e), ["unauthorized", "library_disabled"].includes(u(e)) && (this.clear(), this.dispatchEvent(
       new CustomEvent(
-        f(t) === "unauthorized" ? "access-denied" : "library-disabled",
+        u(e) === "unauthorized" ? "access-denied" : "library-disabled",
         { bubbles: !0, composed: !0 }
       )
     ));
@@ -1801,34 +2315,34 @@ const J = class J extends v {
   async open() {
     if (!this.client || !this.scope || !this.version || !this.enabled || this.blocked)
       return;
-    const t = ++this.generation;
-    if (this.loading = !0, this.error = this.notice = this.selected = "", this.choices = [], this.requestUpdate(), await this.updateComplete, !(t !== this.generation || !this.isConnected)) {
+    const e = ++this.generation;
+    if (this.loading = !0, this.error = this.notice = this.selected = "", this.choices = [], this.requestUpdate(), await this.updateComplete, !(e !== this.generation || !this.isConnected)) {
       this.renderRoot.querySelector("dialog")?.showModal();
       try {
-        const e = await this.client.collectionTargets(
+        const t = await this.client.collectionTargets(
           this.scope,
           this.version.id,
           this.revision
         );
-        t === this.generation && (this.choices = e.collections);
-      } catch (e) {
-        t === this.generation && this.fail(e);
+        e === this.generation && (this.choices = t.collections);
+      } catch (t) {
+        e === this.generation && this.fail(t);
       } finally {
-        t === this.generation && (this.loading = !1, this.requestUpdate());
+        e === this.generation && (this.loading = !1, this.requestUpdate());
       }
     }
   }
-  changed(t) {
+  changed(e) {
     this.dispatchEvent(
       new CustomEvent("collection-changed", {
-        detail: t,
+        detail: e,
         bubbles: !0,
         composed: !0
       })
     );
   }
-  complete(t) {
-    this.pending = void 0, this.busy = !1, this.notice = t.status === "confirmed" ? "Collection membership confirmed on the device." : t.status === "abandoned" ? "The request was acknowledged without sending another add." : "The add is not confirmed. Close this window and check the pending request on the Library page.", this.close(), this.changed(t);
+  complete(e) {
+    this.pending = void 0, this.busy = !1, this.notice = e.status === "confirmed" ? "Collection membership confirmed on the device." : e.status === "abandoned" ? "The request was acknowledged without sending another add." : "The add is not confirmed. Close this window and check the pending request on the Library page.", this.close(), this.changed(e);
   }
   async submit() {
     if (!this.client || !this.scope || !this.version || !this.selected || this.busy || this.pending)
@@ -1840,35 +2354,35 @@ const J = class J extends v {
         this.selected,
         this.revision
       );
-    } catch (e) {
-      this.fail(e), this.requestUpdate();
+    } catch (t) {
+      this.fail(t), this.requestUpdate();
       return;
     }
-    const t = this.generation;
+    const e = this.generation;
     this.busy = !0, this.error = "", this.requestUpdate();
     try {
-      const e = await this.client.collectionAdd(this.pending);
-      t === this.generation && this.complete(e);
-    } catch (e) {
-      t === this.generation && this.fail(e);
+      const t = await this.client.collectionAdd(this.pending);
+      e === this.generation && this.complete(t);
+    } catch (t) {
+      e === this.generation && this.fail(t);
     } finally {
-      t === this.generation && (this.busy = !1, this.requestUpdate());
+      e === this.generation && (this.busy = !1, this.requestUpdate());
     }
   }
   async check() {
     if (!this.client || !this.scope || !this.pending || this.busy) return;
-    const t = this.generation;
+    const e = this.generation;
     this.busy = !0, this.error = "", this.requestUpdate();
     try {
-      const e = await this.client.collectionCheck(
+      const t = await this.client.collectionCheck(
         this.scope,
         String(this.pending.message.request_id)
       );
-      t === this.generation && this.complete(e);
-    } catch (e) {
-      t === this.generation && (f(e) === "not_found" ? (this.pending = void 0, this.error = "No accepted add request was found. Refresh title details before starting another add.") : this.fail(e));
+      e === this.generation && this.complete(t);
+    } catch (t) {
+      e === this.generation && (u(t) === "not_found" ? (this.pending = void 0, this.error = "No accepted add request was found. Refresh title details before starting another add.") : this.fail(t));
     } finally {
-      t === this.generation && (this.busy = !1, this.requestUpdate());
+      e === this.generation && (this.busy = !1, this.requestUpdate());
     }
   }
   render() {
@@ -1881,7 +2395,7 @@ const J = class J extends v {
       ${this.notice ? r`<p role="status">${this.notice}</p>` : h}
       <dialog
         class="database-dialog"
-        @click=${N}
+        @click=${k}
         @cancel=${this.close}
         aria-labelledby="collection-add-title"
       >
@@ -1913,12 +2427,12 @@ const J = class J extends v {
                     name="add_collection"
                     ?disabled=${this.loading}
                     .value=${this.selected}
-                    @change=${(t) => {
-      this.selected = t.target.value, this.requestUpdate();
+                    @change=${(e) => {
+      this.selected = e.target.value, this.requestUpdate();
     }}
                   >
                     <option value="">Choose a collection</option>
-                    ${this.choices.map((t) => r`<option value=${t}>${t}</option>`)}
+                    ${this.choices.map((e) => r`<option value=${e}>${e}</option>`)}
                   </select></label
                 >
                 ${!this.loading && !this.choices.length && !this.error ? r`<p>No offered, visible collection targets are available. Sync or check the server’s collections.</p>` : h}
@@ -1932,43 +2446,53 @@ const J = class J extends v {
       </dialog>`;
   }
 };
-J.properties = {
+Q.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   version: { attribute: !1 },
   revision: { type: Number },
   enabled: { type: Boolean },
   blocked: { type: Boolean }
-}, J.styles = k;
-let ht = J;
+}, Q.styles = S;
+let ge = Q;
 customElements.get("kaleidescape-library-collection-add") || customElements.define(
   "kaleidescape-library-collection-add",
-  ht
+  ge
 );
-const at = [
+const U = [
   ["collection", "Collection", "collections"],
   ["actor", "Actor", "actors"],
   ["director", "Director", "directors"],
   ["rating", "Rating", "rating"]
-], zt = [
+], We = [
   ["name", "Title"],
   ["year", "Year"],
   ["collection", "Collection"],
   ["length", "Length"],
   ["watched", "Status"],
   ["added", "Added on"]
-], H = {
+], Ve = [
+  ["show_titles", "Show titles on covers"],
+  ["show_format", "Show format"],
+  ["show_badges", "Show library badges"],
+  ["show_rating", "Show rating on covers"]
+], J = {
   watched: "Watched",
   unwatched: "Unwatched",
   in_progress: "In progress",
   unknown: "Unknown"
-}, K = class K extends v {
+}, X = class X extends y {
   constructor() {
     super(...arguments), this.bound = "", this.generation = 0, this.listRequest = 0, this.statusRequest = 0, this.versionRequest = 0, this.versionsLoading = !1, this.versionsError = "", this.widths = [360, 90, 260, 150, 140, 210], this.collectionLocked = !1, this.checkingCollection = !1, this.filters = {
       query: "",
       sort: "name",
       descending: !1
-    }, this.applied = { ...this.filters }, this.loading = !1, this.requesting = !1, this.error = "", this.notice = "", this.covers = new Dt(), this.mode = "list", this.coverSize = 150, this.entriesPerPage = 50, this.coverColumns = 1, this.gridWidth = 0, this.requestLimit = 50, this.requestedOffset = 0, this.draft = {}, this.facetSearch = "", this.visibility = () => {
+    }, this.applied = { ...this.filters }, this.loading = !1, this.requesting = !1, this.error = "", this.notice = "", this.covers = new He(), this.mode = "list", this.coverSize = 150, this.display = {
+      show_titles: !0,
+      show_format: !0,
+      show_badges: !0,
+      show_rating: !1
+    }, this.entriesPerPage = 100, this.preferencesReady = !1, this.preferenceError = "", this.peopleTimers = {}, this.peopleSearch = {}, this.peopleChoices = {}, this.peopleRequests = {}, this.coverColumns = 1, this.gridWidth = 0, this.requestLimit = 50, this.requestedOffset = 0, this.draft = {}, this.facetSearch = "", this.visibility = () => {
       clearTimeout(this.timer), document.hidden ? (clearTimeout(this.layoutTimer), this.layoutTimer = void 0, this.pendingLimit = void 0) : (this.refreshStatus(), this.scheduleLayoutPage());
     };
   }
@@ -1981,43 +2505,95 @@ const at = [
   disconnectedCallback() {
     super.disconnectedCallback(), document.removeEventListener("visibilitychange", this.visibility), this.clear(), this.boundClient = void 0, this.bound = "";
   }
-  willUpdate(t) {
-    if (!t.has("client") && !t.has("scope")) return;
-    const e = `${this.scope?.entry_id}:${this.scope?.dataset_id}:${this.scope?.library_enabled}:${this.scope?.permissions.edit}`;
-    if (!(this.boundClient === this.client && this.bound === e) && (this.clear(), this.boundClient = this.client, this.bound = e, this.client && this.scope?.library_enabled)) {
-      this.mode = this.scope.ui_defaults?.library_default_view === "covers" ? "covers" : "list";
-      const i = this.scope.ui_defaults?.library_default_count ?? 50;
-      this.entriesPerPage = Number.isInteger(i) && i >= 1 && i <= 1e3 ? i : 50, this.load(), this.refreshStatus();
+  willUpdate(e) {
+    if (!e.has("client") && !e.has("scope")) return;
+    const t = `${this.scope?.entry_id}:${this.scope?.dataset_id}:${this.scope?.library_enabled}:${this.scope?.permissions.edit}`;
+    this.boundClient === this.client && this.bound === t || (this.clear(), this.boundClient = this.client, this.bound = t, this.client && this.scope?.library_enabled && (this.initializePreferences(), this.refreshStatus()));
+  }
+  async initializePreferences() {
+    if (!this.client || !this.scope) return;
+    const e = this.generation;
+    this.preferences = new Ee(
+      this.client,
+      this.scope,
+      !1,
+      (t) => {
+        e === this.generation && (t && u(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? v(t) : "", this.requestUpdate()));
+      }
+    );
+    try {
+      const t = await this.preferences.load();
+      if (e !== this.generation) return;
+      this.mode = t.view, this.entriesPerPage = t.page_size, this.coverSize = t.cover_size, this.display = Object.fromEntries(
+        Ve.map(([i]) => [i, t[i]])
+      ), this.widths = [...t.widths], this.applied = Object.fromEntries(
+        [
+          "query",
+          "sort",
+          "descending",
+          ...U.map(([i]) => i),
+          "status"
+        ].map((i) => [i, t[i]])
+      ), this.filters = structuredClone(this.applied), this.preferencesReady = !0, await this.load();
+    } catch (t) {
+      e === this.generation && this.fail(t);
     }
   }
+  saveFilters() {
+    this.preferences?.set(
+      Object.fromEntries(
+        ["query", ...U.map(([e]) => e), "status"].map((e) => [
+          e,
+          this.applied[e] ?? (e === "query" ? "" : [])
+        ])
+      )
+    );
+  }
+  finishColumnResize() {
+    this.resize && (this.resize = void 0, this.preferences?.set({ widths: [...this.widths] }));
+  }
   clear() {
-    this.generation++, this.listRequest++, clearTimeout(this.timer), clearTimeout(this.layoutTimer), this.layoutTimer = void 0, this.pendingLimit = void 0, this.gridObserver?.disconnect(), this.gridObserver = void 0, this.grid = void 0, this.gridWidth = 0, this.coverColumns = 1, this.entriesPerPage = this.requestLimit = 50, this.requestedOffset = 0;
-    for (const t of this.renderRoot.querySelectorAll("dialog"))
-      t.close();
-    this.covers = new Dt(), this.draft = {}, this.facetSearch = "", this.page = this.info = this.selected = void 0, this.collectionLocked = this.checkingCollection = !1, this.clearVersions(), this.widths = [360, 90, 260, 150, 140, 210], this.resize = void 0, this.filters = { query: "", sort: "name", descending: !1 }, this.applied = { ...this.filters }, this.loading = this.requesting = !1, this.error = this.notice = "", this.requestUpdate();
+    clearTimeout(this.searchTimer), this.clearPeople(), this.preferences?.dispose(), this.preferences = void 0, this.preferencesReady = !1, this.preferenceError = "", this.generation++, this.listRequest++, clearTimeout(this.timer), clearTimeout(this.layoutTimer), this.layoutTimer = void 0, this.pendingLimit = void 0, this.gridObserver?.disconnect(), this.gridObserver = void 0, this.grid = void 0, this.gridWidth = 0, this.coverColumns = 1, this.entriesPerPage = this.requestLimit = 100, this.requestedOffset = 0;
+    for (const e of this.renderRoot.querySelectorAll("dialog"))
+      e.close();
+    this.covers.cache.dispose(), this.covers = new He(), this.display = {
+      show_titles: !0,
+      show_format: !0,
+      show_badges: !0,
+      show_rating: !1
+    }, this.draft = {}, this.facetSearch = "", this.page = this.info = this.selected = void 0, this.collectionLocked = this.checkingCollection = !1, this.clearVersions(), this.widths = [360, 90, 260, 150, 140, 210], this.resize = void 0, this.filters = { query: "", sort: "name", descending: !1 }, this.applied = { ...this.filters }, this.loading = this.requesting = !1, this.error = this.notice = "", this.requestUpdate();
   }
   updated() {
-    const t = this.isConnected && this.mode === "covers" && this.scope?.library_enabled && this.client ? this.renderRoot.querySelector(".cover-grid") ?? void 0 : void 0;
-    t !== this.grid && (this.gridObserver?.disconnect(), this.grid = t, t && (this.gridObserver = new ResizeObserver((e) => {
-      const i = e.find((s) => s.target === this.grid);
+    for (const [t, i] of [
+      ["library_page_size", String(this.entriesPerPage)],
+      ["library_sort", String(this.applied.sort)]
+    ]) {
+      const s = this.renderRoot.querySelector(
+        `[name="${t}"]`
+      );
+      s && s.value !== i && (s.value = i);
+    }
+    const e = this.isConnected && this.mode === "covers" && this.scope?.library_enabled && this.client ? this.renderRoot.querySelector(".cover-grid") ?? void 0 : void 0;
+    e !== this.grid && (this.gridObserver?.disconnect(), this.grid = e, e && (this.gridObserver = new ResizeObserver((t) => {
+      const i = t.find((s) => s.target === this.grid);
       i && this.isConnected && this.fitGrid(i.contentRect.width);
-    }), this.gridObserver.observe(t))), t && this.fitGrid(t.getBoundingClientRect().width || this.gridWidth);
+    }), this.gridObserver.observe(e))), e && this.fitGrid(e.getBoundingClientRect().width || this.gridWidth);
   }
   get pageSize() {
-    return this.mode === "list" ? this.entriesPerPage : Math.max(
+    return this.entriesPerPage === "all" ? 1e3 : this.mode === "list" ? this.entriesPerPage : Math.max(
       this.coverColumns,
       Math.floor(this.entriesPerPage / this.coverColumns) * this.coverColumns
     );
   }
-  fitGrid(t) {
-    if (!this.isConnected || !Number.isFinite(t) || t <= 0 || this.mode !== "covers")
+  fitGrid(e) {
+    if (!this.isConnected || !Number.isFinite(e) || e <= 0 || this.mode !== "covers")
       return;
-    this.gridWidth = t;
-    const e = Math.max(
+    this.gridWidth = e;
+    const t = Math.max(
       1,
-      Math.min(1e3, Math.floor((t + 2) / (this.coverSize + 2)))
+      Math.min(1e3, Math.floor((e + 2) / (this.coverSize + 2)))
     );
-    e !== this.coverColumns && (this.coverColumns = e, this.requestUpdate()), this.scheduleLayoutPage();
+    t !== this.coverColumns && (this.coverColumns = t, this.requestUpdate()), this.scheduleLayoutPage();
   }
   scheduleLayoutPage() {
     if (!(!this.client || !this.scope?.library_enabled || !this.isConnected || document.hidden)) {
@@ -2027,50 +2603,50 @@ const at = [
       }
       this.layoutTimer && this.pendingLimit === this.pageSize || (clearTimeout(this.layoutTimer), this.pendingLimit = this.pageSize, this.layoutTimer = setTimeout(() => {
         this.layoutTimer = void 0, this.pendingLimit = void 0;
-        const t = this.loading ? this.requestedOffset : this.page?.offset ?? 0;
-        this.load(Math.floor(t / this.pageSize) * this.pageSize, !0);
+        const e = this.loading ? this.requestedOffset : this.page?.offset ?? 0;
+        this.load(Math.floor(e / this.pageSize) * this.pageSize, !0);
       }, 100), this.requestUpdate());
     }
   }
-  async setMode(t) {
-    this.mode !== t && (this.mode = t, this.requestUpdate(), await this.updateComplete, this.scheduleLayoutPage());
+  async setMode(e) {
+    this.mode !== e && (this.mode = e, this.preferences?.set({ view: e }), this.requestUpdate(), await this.updateComplete, this.scheduleLayoutPage());
   }
-  changePageSize(t) {
-    const e = t.target, i = Number(e.value);
-    if (!Number.isInteger(i) || i < 1 || i > 1e3) {
-      e.reportValidity();
-      return;
-    }
-    this.entriesPerPage = i, this.requestUpdate(), this.scheduleLayoutPage();
+  changePageSize(e) {
+    const t = e.target.value, i = t === "all" ? "all" : Number(t);
+    i !== "all" && ![25, 100, 1e3].includes(i) || (this.entriesPerPage = i, this.preferences?.set({ page_size: i }), this.requestUpdate(), this.scheduleLayoutPage());
   }
-  fail(t) {
-    const e = f(t);
-    (e === "unauthorized" || e === "library_disabled") && (this.clear(), this.dispatchEvent(
+  fail(e) {
+    const t = u(e);
+    (t === "unauthorized" || t === "library_disabled") && (this.clear(), this.dispatchEvent(
       new CustomEvent(
-        e === "unauthorized" ? "access-denied" : "library-disabled",
+        t === "unauthorized" ? "access-denied" : "library-disabled",
         { bubbles: !0, composed: !0 }
       )
-    )), this.error = w(t), this.requestUpdate();
+    )), this.error = v(e), this.requestUpdate();
   }
-  async load(t = 0, e = !1) {
+  async load(e = 0, t = !1) {
     if (this.collectionLocked || !this.client || !this.scope?.library_enabled) return;
     clearTimeout(this.layoutTimer), this.layoutTimer = void 0, this.pendingLimit = void 0;
     const i = this.generation, s = ++this.listRequest, a = this.pageSize;
-    this.requestLimit = a, this.requestedOffset = t, this.loading = !0, this.error = "", this.requestUpdate();
+    this.requestLimit = a, this.requestedOffset = e, this.loading = !0, this.error = "", this.requestUpdate();
     try {
-      const o = await this.client.libraryList(this.scope, {
+      const o = this.entriesPerPage === "all" ? await this.client.libraryAll(
+        this.scope,
+        { ...this.applied },
+        () => i === this.generation && s === this.listRequest
+      ) : await this.client.libraryList(this.scope, {
         ...this.applied,
         grouped: !0,
         limit: a,
-        offset: t,
-        ...t && this.page ? {
+        offset: e,
+        ...e && this.page ? {
           revision: this.page.revision,
           ...this.page.preferences_key ? { preferences_key: this.page.preferences_key } : {}
         } : {}
       });
       if (i !== this.generation || s !== this.listRequest || a !== this.pageSize)
         return;
-      this.page = o, this.selected && (this.selected = o.items.find((l) => l.id === this.selected?.id) ?? (e ? this.selected : void 0), this.selected ? this.versions && (this.versions.revision !== o.revision || this.versions.preferences_key !== o.preferences_key) && this.loadVersions() : this.closeDialog("title-dialog"));
+      this.page = o, this.selected && (this.selected = o.items.find((l) => l.id === this.selected?.id) ?? (t ? this.selected : void 0), this.selected ? this.versions && (this.versions.revision !== o.revision || this.versions.preferences_key !== o.preferences_key) && this.loadVersions() : this.closeDialog("title-dialog"));
     } catch (o) {
       i === this.generation && s === this.listRequest && this.fail(o);
     } finally {
@@ -2081,17 +2657,17 @@ const at = [
     if (!this.client || !this.scope?.library_enabled || document.hidden || !this.isConnected)
       return;
     clearTimeout(this.timer);
-    const t = this.generation, e = ++this.statusRequest;
+    const e = this.generation, t = ++this.statusRequest;
     let i = !1;
     try {
       const s = await this.client.libraryInfo(this.scope);
-      if (t !== this.generation || e !== this.statusRequest)
+      if (e !== this.generation || t !== this.statusRequest)
         return;
       this.info = s, this.page && (this.page.revision !== s.revision || this.page.preferences_key !== s.preferences_key) && !this.loading && this.load();
     } catch (s) {
-      i = f(s) === "unauthorized", t === this.generation && e === this.statusRequest && this.fail(s);
+      i = u(s) === "unauthorized", e === this.generation && t === this.statusRequest && this.fail(s);
     } finally {
-      t === this.generation && e === this.statusRequest && this.isConnected && !i && !document.hidden && (this.timer = setTimeout(
+      e === this.generation && t === this.statusRequest && this.isConnected && !i && !document.hidden && (this.timer = setTimeout(
         () => {
           this.refreshStatus();
         },
@@ -2102,132 +2678,162 @@ const at = [
   async sync() {
     if (!this.client || !this.scope?.permissions.edit || this.requesting)
       return;
-    const t = this.generation;
+    const e = this.generation;
     this.requesting = !0, this.error = this.notice = "", this.requestUpdate();
     try {
-      if (await this.client.librarySync(this.scope), t !== this.generation) return;
+      if (await this.client.librarySync(this.scope), e !== this.generation) return;
       this.notice = "Library sync requested. Cached titles remain available while it runs.", this.refreshStatus();
-    } catch (e) {
-      t === this.generation && this.fail(e);
+    } catch (t) {
+      e === this.generation && this.fail(t);
     } finally {
-      t === this.generation && (this.requesting = !1, this.requestUpdate());
+      e === this.generation && (this.requesting = !1, this.requestUpdate());
     }
   }
-  async openDialog(t) {
-    this.requestUpdate(), await this.updateComplete, this.isConnected && this.renderRoot.querySelector(`#${t}`)?.showModal();
+  async openDialog(e) {
+    this.requestUpdate(), await this.updateComplete, this.isConnected && this.renderRoot.querySelector(`#${e}`)?.showModal();
   }
-  closeDialog(t) {
-    t === "title-dialog" && this.collectionLocked || (this.renderRoot.querySelector(`#${t}`)?.close(), t === "title-dialog" && (this.selected = void 0, this.clearVersions()), this.requestUpdate());
+  closeDialog(e) {
+    e === "filter-dialog" && this.clearPeople(), !(e === "title-dialog" && this.collectionLocked) && (this.renderRoot.querySelector(`#${e}`)?.close(), e === "title-dialog" && (this.selected = void 0, this.clearVersions()), this.requestUpdate());
   }
-  select(t) {
-    this.clearVersions(), this.selected = t, this.openDialog("title-dialog"), this.loadVersions();
+  select(e) {
+    this.clearVersions(), this.selected = e, this.openDialog("title-dialog"), this.loadVersions();
   }
   clearVersions() {
     this.collectionLocked = !1, this.versionRequest++, this.versions = void 0, this.activeVersion = void 0, this.versionsError = "", this.versionsLoading = !1;
   }
-  async loadVersions(t = 0) {
+  async loadVersions(e = 0) {
     if (this.collectionLocked || !this.client || !this.scope || !this.selected) return;
-    const e = this.generation, i = ++this.versionRequest, s = this.selected.id;
+    const t = this.generation, i = ++this.versionRequest, s = this.selected.id;
     this.versionsLoading = !0, this.versionsError = "", this.activeVersion = void 0, this.requestUpdate();
     try {
       const a = await this.client.libraryVersions(
         this.scope,
         s,
-        t,
+        e,
         this.page?.revision
       );
-      if (e !== this.generation || i !== this.versionRequest || this.selected?.id !== s)
+      if (t !== this.generation || i !== this.versionRequest || this.selected?.id !== s)
         return;
       this.versions = a, this.activeVersion = a.items.find((o) => o.id === s) ?? a.items[0];
     } catch (a) {
-      e === this.generation && i === this.versionRequest && (["unauthorized", "library_disabled"].includes(f(a)) ? this.fail(a) : this.versionsError = w(a));
+      t === this.generation && i === this.versionRequest && (["unauthorized", "library_disabled"].includes(u(a)) ? this.fail(a) : this.versionsError = v(a));
     } finally {
-      e === this.generation && i === this.versionRequest && (this.versionsLoading = !1, this.requestUpdate());
+      t === this.generation && i === this.versionRequest && (this.versionsLoading = !1, this.requestUpdate());
     }
   }
-  format(t) {
-    const e = t.formats ?? (t.edition && t.edition.toLowerCase() !== "multiple" ? [t.edition] : []);
-    return e.length ? e.join(", ") + (t.formats_truncated ? "…" : "") : "Formats unavailable · sync library to refresh";
+  format(e) {
+    const t = e.formats ?? (e.edition && e.edition.toLowerCase() !== "multiple" ? [e.edition] : []);
+    return t.length ? t.join(", ") + (e.formats_truncated ? "…" : "") : "Formats unavailable · sync library to refresh";
   }
-  years(t) {
-    return t.years?.join(", ") || String(t.year ?? "—");
+  years(e) {
+    return e.years?.join(", ") || String(e.year ?? "—");
   }
-  runtime(t) {
-    if (t.duration_seconds === null) return "Unknown";
-    const e = (t.duration_seconds / 60).toFixed(2), i = t.maximum_duration_seconds;
-    return `${e}${i != null && i !== t.duration_seconds ? `–${(i / 60).toFixed(2)}` : ""} min`;
+  runtime(e) {
+    if (e.duration_seconds === null) return "Unknown";
+    const t = (e.duration_seconds / 60).toFixed(2), i = e.maximum_duration_seconds;
+    return `${t}${i != null && i !== e.duration_seconds ? `–${(i / 60).toFixed(2)}` : ""} min`;
   }
-  resizeColumn(t, e) {
-    ["ArrowLeft", "ArrowRight", "Home"].includes(t.key) && (t.preventDefault(), this.widths[e] = t.key === "Home" ? [360, 90, 260, 150, 140, 210][e] : Math.max(
+  resizeColumn(e, t) {
+    ["ArrowLeft", "ArrowRight", "Home"].includes(e.key) && (e.preventDefault(), this.widths[t] = e.key === "Home" ? [360, 90, 260, 150, 140, 210][t] : Math.max(
       80,
       Math.min(
         800,
-        this.widths[e] + (t.key === "ArrowLeft" ? -20 : 20)
+        this.widths[t] + (e.key === "ArrowLeft" ? -20 : 20)
       )
-    ), this.requestUpdate());
+    ), this.preferences?.set({ widths: [...this.widths] }), this.requestUpdate());
   }
-  versionKey(t) {
-    if (this.collectionLocked || !this.versions?.items.length || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(t.key))
+  versionKey(e) {
+    if (this.collectionLocked || !this.versions?.items.length || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key))
       return;
-    t.preventDefault();
-    const e = this.versions.items, i = e.findIndex(
+    e.preventDefault();
+    const t = this.versions.items, i = t.findIndex(
       (a) => a.id === this.activeVersion?.id
-    ), s = t.key === "Home" ? 0 : t.key === "End" ? e.length - 1 : (i + (t.key === "ArrowLeft" ? -1 : 1) + e.length) % e.length;
-    this.activeVersion = e[s], this.requestUpdate(), this.updateComplete.then(
+    ), s = e.key === "Home" ? 0 : e.key === "End" ? t.length - 1 : (i + (e.key === "ArrowLeft" ? -1 : 1) + t.length) % t.length;
+    this.activeVersion = t[s], this.requestUpdate(), this.updateComplete.then(
       () => this.renderRoot.querySelector(`#version-${s}`)?.focus()
     );
   }
-  sort(t) {
+  sort(e) {
     this.applied = {
       ...this.applied,
-      sort: t,
-      descending: this.applied.sort === t ? !this.applied.descending : !1
-    }, this.load();
+      sort: e,
+      descending: this.applied.sort === e ? !this.applied.descending : !1
+    }, this.preferences?.set({
+      sort: this.applied.sort,
+      descending: this.applied.descending
+    }), this.load();
   }
   openFilters() {
-    this.draft = structuredClone(this.applied), this.facetSearch = "", this.openDialog("filter-dialog");
+    this.clearPeople(), this.draft = structuredClone(this.applied), this.facetSearch = "", this.openDialog("filter-dialog");
   }
   clearFilters() {
-    this.loading || (this.filters = {
+    clearTimeout(this.searchTimer), this.filters = {
       query: "",
       sort: this.applied.sort,
       descending: this.applied.descending
-    }, this.applied = { ...this.filters }, this.draft = {}, this.facetSearch = "", this.load());
+    }, this.applied = { ...this.filters }, this.draft = {}, this.facetSearch = "", this.saveFilters(), this.load();
   }
-  choices(t, e) {
-    const i = t === "status" ? Object.keys(H) : this.page?.facets[e] ?? [];
+  clearPeople() {
+    for (const e of Object.values(this.peopleTimers)) clearTimeout(e);
+    this.peopleTimers = {}, this.peopleSearch = {}, this.peopleChoices = {};
+    for (const e of ["actor", "director"])
+      this.peopleRequests[e] = (this.peopleRequests[e] ?? 0) + 1;
+  }
+  completePeople(e, t) {
+    this.peopleSearch[e] = t, clearTimeout(this.peopleTimers[e]);
+    const i = (this.peopleRequests[e] ?? 0) + 1;
+    this.peopleRequests[e] = i;
+    const s = this.generation;
+    this.peopleTimers[e] = setTimeout(async () => {
+      try {
+        const a = await this.client.librarySuggestions(
+          this.scope,
+          e,
+          t
+        );
+        s === this.generation && this.peopleRequests[e] === i && this.renderRoot.querySelector("#filter-dialog")?.open && (this.peopleChoices[e] = a.items, this.requestUpdate());
+      } catch (a) {
+        s === this.generation && this.peopleRequests[e] === i && this.fail(a);
+      }
+    }, 200), this.requestUpdate();
+  }
+  applySearch() {
+    clearTimeout(this.searchTimer), this.applied = { ...this.applied, query: this.filters.query }, this.preferences?.set({ query: this.applied.query }), this.load();
+  }
+  choices(e, t) {
+    const i = e === "status" ? Object.keys(J) : this.page?.facets[t] ?? [];
     return [
-      .../* @__PURE__ */ new Set([...i, ...this.draft[t] ?? []])
+      .../* @__PURE__ */ new Set([...i, ...this.draft[e] ?? []])
     ].filter(
-      (s) => s.toLocaleLowerCase().includes(this.facetSearch.toLocaleLowerCase())
+      (s) => (e === "collection" ? T(s) : s).toLocaleLowerCase().includes(this.facetSearch.toLocaleLowerCase())
     );
   }
-  cover(t) {
+  cover(e) {
     return r`<kaleidescape-library-cover
       .client=${this.client}
       .scope=${this.scope}
       .queue=${this.covers}
-      .artworkKey=${t.artwork_key}
-      .title=${t.title}
+      .artworkKey=${e.artwork_key}
+      .title=${e.title}
     ></kaleidescape-library-cover>`;
   }
-  date(t) {
-    return t ? new Date(
-      t.length === 10 ? `${t}T00:00:00` : t
+  date(e) {
+    return e ? new Date(
+      e.length === 10 ? `${e}T00:00:00` : e
     ).toLocaleString(void 0, {
       dateStyle: "medium",
-      ...t.length === 10 ? {} : { timeStyle: "short" }
+      ...e.length === 10 ? {} : { timeStyle: "short" }
     }) : "Not yet synced";
   }
-  async checkCollection(t, e = !1) {
-    if (!this.client || !this.scope || this.checkingCollection || e && !window.confirm(
+  async checkCollection(e, t = !1) {
+    if (!this.client || !this.scope || this.checkingCollection || t && !window.confirm(
       "Inspect the collection on the device first. Acknowledging does not undo an add or send another one; it allows a new request even if this add already applied. Continue?"
     ))
       return;
     const i = this.generation;
     this.checkingCollection = !0, this.error = "", this.requestUpdate();
     try {
-      const s = await (e ? this.client.collectionAcknowledge(this.scope, t) : this.client.collectionCheck(this.scope, t));
+      const s = await (t ? this.client.collectionAcknowledge(this.scope, e) : this.client.collectionCheck(this.scope, e));
       if (i !== this.generation) return;
       this.notice = s.status === "confirmed" ? "Collection membership confirmed on the device." : s.status === "abandoned" ? "Request acknowledged. No device edit was sent." : "The requested membership is not confirmed. Inspect the device before acknowledging this request.", this.load(), this.refreshStatus();
     } catch (s) {
@@ -2236,10 +2842,95 @@ const at = [
       i === this.generation && (this.checkingCollection = !1, this.requestUpdate());
     }
   }
+  renderOptionsDialog() {
+    return r`<dialog
+      id="library-options"
+      class="database-dialog library-options"
+      aria-labelledby="library-options-title"
+      @click=${k}
+    >
+      <div class="card-head">
+        <h2 id="library-options-title">Library options</h2>
+        <button @click=${() => this.closeDialog("library-options")}>
+          Done
+        </button>
+      </div>
+      <p class="muted">Changes save automatically for your HA user.</p>
+      <div class="options-fields">
+        <fieldset class="view-options">
+          <legend>View type</legend>
+          ${["list", "covers"].map((e) => r`<label class="check"><input type="radio" name="library_view" value=${e} .checked=${this.mode === e} @change=${() => this.setMode(e)} />${e === "list" ? "List" : "Cover"}</label>`)}
+        </fieldset>
+        <label
+          >Entries per page<select
+            name="library_page_size"
+            .value=${String(this.entriesPerPage)}
+            @change=${this.changePageSize}
+          >
+            ${[25, 100, 1e3, "all"].map((e) => r`<option value=${e} ?selected=${e === this.entriesPerPage}>${e === "all" ? "All" : e}</option>`)}
+          </select></label
+        >
+        ${this.mode === "covers" ? r`<label
+                >Cover-art size<input
+                  type="range"
+                  name="cover_size"
+                  min="90"
+                  max="300"
+                  step="10"
+                  .value=${String(this.coverSize)}
+                  @change=${() => this.preferences?.set({ cover_size: this.coverSize })}
+                  @input=${(e) => {
+      this.coverSize = Number(
+        e.target.value
+      ), this.fitGrid(this.gridWidth), this.requestUpdate();
+    }}
+              /></label>` : h}
+        ${Ve.map(
+      ([e, t]) => r`<label class="check"
+              ><input
+                type="checkbox"
+                name=${e}
+                .checked=${this.display[e]}
+                @change=${(i) => {
+        const s = i.target.checked;
+        this.display = { ...this.display, [e]: s }, this.preferences?.set({ [e]: s }), this.requestUpdate();
+      }}
+              />${t}</label
+            >`
+    )}
+        <label
+          >Sort by<select
+            name="library_sort"
+            .value=${String(this.applied.sort)}
+            @change=${(e) => this.sort(e.target.value)}
+          >
+            ${We.map(([e, t]) => r`<option value=${e}>${t}</option>`)}
+          </select></label
+        >
+        <button @click=${() => this.sort(String(this.applied.sort))}>
+          ${this.applied.descending ? "Descending ↓" : "Ascending ↑"}
+        </button>
+      </div>
+      ${this.info ? r`<details>
+              <summary>Library details</summary>
+              <p>
+                ${this.info.group_count} movies · ${this.info.title_count}
+                individual versions · ${this.info.collection_count} collections.
+              </p>
+              <p>
+                Catalog synced: ${this.date(this.info.last_synced_at)}<br />Collections
+                synced: ${this.date(this.info.collections_synced_at)}
+              </p>
+              <p>
+                Source “Played” maps to Watched; “Paused” maps to In progress.
+              </p>
+            </details>` : h}
+    </dialog>`;
+  }
   renderFilterDialog() {
     return r`<dialog
       id="filter-dialog"
-      @click=${N}
+      @click=${k}
       class="database-dialog library-dialog"
       aria-labelledby="filters-title"
     >
@@ -2253,43 +2944,101 @@ const at = [
         Match any checked value within a category and all selected categories.
       </p>
       <label
-        >Find filter options<input
+        >Find collections or ratings<input
           name="facet_search"
           type="search"
           .value=${this.facetSearch}
-          @input=${(t) => {
-      this.facetSearch = t.target.value, this.requestUpdate();
+          @input=${(e) => {
+      this.facetSearch = e.target.value, this.requestUpdate();
     }}
       /></label>
       ${this.page?.truncated_facets.length ? r`<p class="muted">Each category shows up to 500 known names.</p>` : h}
       <div class="facet-groups">
-        ${[...at, ["status", "Watched status", "status"]].map(
-      ([t, e, i]) => {
-        const s = this.draft[t] ?? [], a = this.choices(t, i);
+        ${[["status", "Watched status", "status"], U[0], U[3]].map(
+      ([e, t, i]) => {
+        const s = this.draft[e] ?? [], a = this.choices(e, i);
         return r`<fieldset>
-              <legend>${e}</legend>
+              <legend>${t}</legend>
               <div class="facet-options">
                 ${a.length ? a.map(
           (o) => r`<label class="check"
                             ><input
                               type="checkbox"
-                              name=${t}
+                              name=${e}
                               .value=${o}
                               .checked=${s.includes(o)}
                               ?disabled=${s.length >= 100 && !s.includes(o)}
                               @change=${(l) => {
             this.draft = {
               ...this.draft,
-              [t]: l.target.checked ? [...s, o] : s.filter((d) => d !== o)
+              [e]: l.target.checked ? [...s, o] : s.filter((d) => d !== o)
             }, this.requestUpdate();
           }}
-                            />${t === "status" ? H[o] : o}</label
+                            />${e === "status" ? J[o] : e === "rating" ? V(o) : e === "collection" ? T(o) : o}</label
                           >`
         ) : r`<p class="muted">No matching options</p>`}
               </div>
             </fieldset>`;
       }
     )}
+      </div>
+      <div class="people-filters">
+        ${[
+      ["actor", "Actor", "actors"],
+      ["director", "Director", "directors"]
+    ].map(([e, t, i]) => {
+      const s = this.draft[e] ?? [], a = (this.peopleChoices[e] ?? this.page?.facets[i] ?? []).filter(
+        (o) => o.toLocaleLowerCase().includes((this.peopleSearch[e] ?? "").toLocaleLowerCase())
+      ).slice(0, 20);
+      return r`<fieldset>
+            <legend>${t}</legend>
+            <label
+              >Find ${t.toLowerCase()}<input
+                type="search"
+                name=${`${e}_search`}
+                maxlength="100"
+                autocomplete="off"
+                .value=${this.peopleSearch[e] ?? ""}
+                @input=${(o) => this.completePeople(e, o.target.value)}
+            /></label>
+            <div class="selected-people">
+              ${s.map(
+        (o) => r`<button
+                    type="button"
+                    class="person-chip"
+                    aria-label=${`Remove ${o}`}
+                    @click=${() => {
+          this.draft = {
+            ...this.draft,
+            [e]: s.filter((l) => l !== o)
+          }, this.requestUpdate();
+        }}
+                  >
+                    ${o} ×
+                  </button>`
+      )}
+            </div>
+            <div class="facet-options" aria-label=${`${t} suggestions`}>
+              ${a.map(
+        (o) => r`<label class="check"
+                    ><input
+                      type="checkbox"
+                      name=${e}
+                      value=${o}
+                      .checked=${s.includes(o)}
+                      ?disabled=${s.length >= 100 && !s.includes(o)}
+                      @change=${(l) => {
+          this.draft = {
+            ...this.draft,
+            [e]: l.target.checked ? [...s, o] : s.filter((d) => d !== o)
+          }, this.requestUpdate();
+        }}
+                    />${o}</label
+                  >`
+      )}
+            </div>
+          </fieldset>`;
+    })}
       </div>
       <div class="actions dialog-footer">
         <button
@@ -2301,10 +3050,10 @@ const at = [
         ><button
           class="primary"
           @click=${() => {
-      const t = { ...this.applied };
-      for (const e of [...at.map(([i]) => i), "status"])
-        t[e] = this.draft[e] ?? [];
-      this.applied = t, this.closeDialog("filter-dialog"), this.load();
+      const e = { ...this.applied };
+      for (const t of [...U.map(([i]) => i), "status"])
+        e[t] = this.draft[t] ?? [];
+      this.applied = e, this.saveFilters(), this.closeDialog("filter-dialog"), this.load();
     }}
         >
           Apply filters
@@ -2313,22 +3062,22 @@ const at = [
     </dialog>`;
   }
   renderTitleDialog() {
-    const t = this.selected, e = this.activeVersion, i = this.scope?.permissions.edit;
+    const e = this.selected, t = this.activeVersion, i = this.scope?.permissions.edit;
     return r`<dialog
       id="title-dialog"
       @cancel=${(s) => {
       this.collectionLocked && s.preventDefault();
     }}
-      @click=${N}
+      @click=${k}
       class="database-dialog library-dialog"
       aria-labelledby="library-title"
       @close=${() => {
       this.selected = void 0, this.clearVersions(), this.requestUpdate();
     }}
     >
-      ${t ? r`<div class="card-head">
+      ${e ? r`<div class="card-head">
                 <h2 id="library-title">
-                  ${t.title}${t.year ? ` (${t.year})` : ""}
+                  ${e.title}${e.year ? ` (${e.year})` : ""}
                 </h2>
                 <button
                   ?disabled=${this.collectionLocked}
@@ -2337,9 +3086,10 @@ const at = [
                   Close
                 </button>
               </div>
-              <p>
-                ${t.version_count ?? 1} version(s) · ${this.format(t)}
-              </p>
+              <p>${e.version_count ?? 1} version(s)</p>
+              <div class="detail-badges">
+                ${D(e)} ${V(e.rating)}
+              </div>
               ${this.versionsLoading ? r`<p role="status">Loading individual versions…</p>` : h}
               ${this.versionsError ? r`<p class="error" role="alert">${this.versionsError}</p>
                       <button
@@ -2361,55 +3111,58 @@ const at = [
                               role="tab"
                               id=${`version-${a}`}
                               aria-controls="version-details"
-                              tabindex=${s.id === e?.id ? 0 : -1}
-                              aria-selected=${s.id === e?.id}
+                              tabindex=${s.id === t?.id ? 0 : -1}
+                              aria-selected=${s.id === t?.id}
                               @click=${() => {
         this.activeVersion = s, this.requestUpdate();
       }}
                             >
-                              ${this.format(s)} ·
+                              ${D(s)} ·
                               ${s.year ?? "Year unknown"} · Version
                               ${this.versions.offset + a + 1}
                             </button>`
     )}
                       </div>
                       ${this.versions.total > 50 ? r`<div class="actions"><button ?disabled=${!this.versions.offset || this.versionsLoading} @click=${() => this.loadVersions(Math.max(0, this.versions.offset - 50))}>Previous versions</button><button ?disabled=${!this.versions.has_more || this.versionsLoading} @click=${() => this.loadVersions(this.versions.offset + 50)}>Next versions</button></div>` : h}` : h}
-              ${e ? r`<div
+              ${t ? r`<div
                       class="playback-layout"
                       id="version-details"
                       role="tabpanel"
-                      aria-labelledby=${`version-${this.versions?.items.findIndex((s) => s.id === e.id) ?? 0}`}
+                      aria-labelledby=${`version-${this.versions?.items.findIndex((s) => s.id === t.id) ?? 0}`}
                     >
-                      <div class="cover">${this.cover(e)}</div>
+                      <div class="cover">${this.cover(t)}</div>
                       <div>
-                        <p>${e.synopsis || "No synopsis available."}</p>
+                        <p>${t.synopsis || "No synopsis available."}</p>
+                        <div class="detail-badges">
+                          ${D(t)}
+                          ${V(t.rating || "Unrated")}
+                        </div>
                         <p>
-                          ${e.year ?? "Year unknown"} ·
-                          ${e.rating || "Unrated"} · ${this.format(e)} ·
-                          ${H[e.watched_status]}
+                          ${t.year ?? "Year unknown"} ·
+                          ${J[t.watched_status]}
                         </p>
                         <p>
-                          ${e.duration_seconds === null ? "Runtime unknown" : `${(e.duration_seconds / 60).toFixed(2)} min`}
+                          ${t.duration_seconds === null ? "Runtime unknown" : `${(t.duration_seconds / 60).toFixed(2)} min`}
                         </p>
                         ${[
-      ["Collections", e.collections],
-      ["Cast", e.actors],
-      ["Directors", e.directors],
-      ["Genres", e.genres]
+      ["Collections", t.collections],
+      ["Cast", t.actors],
+      ["Directors", t.directors],
+      ["Genres", t.genres]
     ].map(
       ([s, a]) => a.length ? r`<p>
                                 <strong>${s}:</strong>
-                                ${a.join(", ")}
+                                ${(s === "Collections" ? a.map(T) : a).join(", ")}
                               </p>` : h
     )}
                         <p class="muted">
-                          ${e.purchased_on ? r`Purchased ${this.date(e.purchased_on)}<br />` : h}
-                          First detected ${this.date(e.first_seen)}.
+                          ${t.purchased_on ? r`Purchased ${this.date(t.purchased_on)}<br />` : h}
+                          First detected ${this.date(t.first_seen)}.
                         </p>
                         ${i ? r`<kaleidescape-library-collection-add
                                 .client=${this.client}
                                 .scope=${this.scope}
-                                .version=${e}
+                                .version=${t}
                                 .revision=${this.versions?.revision ?? 0}
                                 .enabled=${!!this.info?.collection_add_enabled}
                                 .blocked=${!!this.info?.pending_adds?.length}
@@ -2425,19 +3178,25 @@ const at = [
     </dialog>`;
   }
   render() {
-    const t = this.page?.limit ?? this.requestLimit, e = this.loading || !!this.layoutTimer, i = this.page?.items ?? [], s = this.mode === "covers" && this.page?.has_more && i.length >= this.coverColumns ? i.slice(
+    if (!this.preferencesReady)
+      return r`<p role="status">
+          ${this.error || "Loading Library preferences…"}
+        </p>
+        ${this.error ? r`<button @click=${this.initializePreferences}>Retry Library</button>` : h}`;
+    const e = this.page?.limit ?? this.requestLimit, t = this.loading || !!this.layoutTimer, i = this.page?.items ?? [], s = this.mode === "covers" && this.page?.has_more && i.length >= this.coverColumns ? i.slice(
       0,
       i.length - i.length % this.coverColumns
-    ) : i, a = this.scope?.permissions.edit, o = [...at.map(([l]) => l), "status"].reduce(
+    ) : i, a = this.scope?.permissions.edit, o = [...U.map(([l]) => l), "status"].reduce(
       (l, d) => l + (this.applied[d]?.length ?? 0),
       0
     );
     return r`<section
       class="library-page"
       @access-denied=${(l) => {
-      l.stopPropagation(), this.fail(new g("unauthorized"));
+      l.stopPropagation(), this.fail(new p("unauthorized"));
     }}
     >
+      ${this.preferenceError ? r`<p class="warning" role="alert">Library preferences could not be saved: ${this.preferenceError} <button @click=${() => this.preferences?.retry()}>Retry saving preferences</button></p>` : h}
       <div class="section-head">
         <h2>Library</h2>
         <div class="actions">
@@ -2452,19 +3211,8 @@ const at = [
           ${a ? r`<button class="primary" ?disabled=${this.requesting || !!this.info?.phase && this.info.phase !== "idle"} @click=${this.sync}>Sync now</button>` : h}
         </div>
       </div>
-      ${this.info ? r`<p class="muted">
-                ${this.info.group_count} titles · ${this.info.title_count}
-                versions · ${this.info.collection_count} collections · Last
-                catalog sync: ${this.date(this.info.last_synced_at)}
-                ${a && this.info.phase && this.info.phase !== "idle" ? r`<br />${{ catalog: "Reading titles", collections: "Reading collections", details: "Fetching title data" }[this.info.phase] ?? "Syncing"}… ${this.info.total ? `${this.info.processed}/${this.info.total}` : ""}` : h}
-              </p>
-              <p class="muted">
-                Played means watched; Paused takes priority. Collections last
-                synced: ${this.date(this.info.collections_synced_at)}.
-                ${a && this.info.collections_enabled === !1 ? "Collection sync is disabled; retained statuses may be stale." : ""}
-              </p>
-              ${a && this.info.artwork_enabled ? r`<p class="muted">Artwork cache: ${((this.info.artwork_bytes ?? 0) / 1048576).toFixed(1)} / ${((this.info.artwork_limit_bytes ?? 0) / 1048576).toFixed(0)} MiB</p>` : h}
-              ${a && this.info.error ? r`<p class="warning" role="status">${w(new g(this.info.error))}</p>` : h}` : h}
+      ${a && this.info?.phase && this.info.phase !== "idle" ? r`<p role="status">Syncing… ${this.info.processed ?? 0}/${this.info.total ?? "?"}</p>` : h}
+      ${a && this.info?.error ? r`<p class="warning" role="status">${v(new p(this.info.error))}</p>` : h}
       ${this.error ? r`<p class="error" role="alert">${this.error}<button @click=${() => this.load()}>Refresh results</button></p>` : h}
       ${this.notice ? r`<p class="notice" role="status">${this.notice}</p>` : h}
       ${a ? (this.info?.pending_adds ?? []).map(
@@ -2486,21 +3234,21 @@ const at = [
                   </div>
                 </div>`
     ) : h}
-      <section class="card">
+      <section class="card library-results">
         <div class="library-toolbar">
           <form
             @submit=${(l) => {
-      l.preventDefault(), this.applied = { ...this.applied, query: this.filters.query }, this.load();
+      l.preventDefault(), this.applySearch();
     }}
           >
             <label
-              >Search titles<input
+              >Search titles, actors or directors<input
                 name="library_query"
                 type="search"
                 maxlength="500"
-                .value=${Ee(String(this.filters.query ?? ""))}
+                .value=${jt(String(this.filters.query ?? ""))}
                 @input=${(l) => {
-      this.filters.query = l.target.value;
+      this.filters.query = l.target.value, clearTimeout(this.searchTimer), this.searchTimer = setTimeout(() => this.applySearch(), 300);
     }}
             /></label>
             <button type="submit" ?disabled=${this.loading}>Search</button>
@@ -2511,52 +3259,13 @@ const at = [
           <button ?disabled=${this.loading} @click=${this.clearFilters}>
             Clear Filter
           </button>
-          <div class="view-switch" role="group" aria-label="Library view">
-            ${["list", "covers"].map(
-      (l) => r`<button
-                  aria-pressed=${this.mode === l}
-                  @click=${() => this.setMode(l)}
-                >
-                  ${l === "list" ? "List" : "Covers"}
-                </button>`
-    )}
-          </div>
-          <label class="page-size"
-            >Entries per page<input
-              name="library_page_size"
-              type="number"
-              min="1"
-              max="1000"
-              step="1"
-              .value=${String(this.entriesPerPage)}
-              @change=${this.changePageSize}
-          /></label>
-          ${this.mode === "covers" ? r`<label class="cover-size"
-                    >Cover size<input
-                      type="range"
-                      name="cover_size"
-                      min="90"
-                      max="300"
-                      step="10"
-                      .value=${String(this.coverSize)}
-                      @input=${(l) => {
-      this.coverSize = Number(
-        l.target.value
-      ), this.fitGrid(this.gridWidth), this.requestUpdate();
-    }}
-                  /></label>
-                  <label
-                    >Sort by<select
-                      name="library_sort"
-                      .value=${String(this.applied.sort)}
-                      @change=${(l) => this.sort(l.target.value)}
-                    >
-                      ${zt.map(([l, d]) => r`<option value=${l}>${d}</option>`)}
-                    </select></label
-                  >
-                  <button @click=${() => this.sort(String(this.applied.sort))}>
-                    ${this.applied.descending ? "Descending ↓" : "Ascending ↑"}
-                  </button>` : h}
+          <button
+            aria-haspopup="dialog"
+            aria-controls="library-options"
+            @click=${() => this.openDialog("library-options")}
+          >
+            Options
+          </button>
         </div>
         ${this.mode === "covers" ? r`<div
                 class="cover-grid"
@@ -2564,15 +3273,16 @@ const at = [
               >
                 ${s.map(
       (l) => r`<button
-                      class="cover-tile"
+                      class=${`cover-tile${this.display.show_titles ? " has-title" : ""}${this.display.show_rating && l.rating ? " has-rating" : ""}`}
                       title=${`${l.title}${l.year ? ` (${l.year})` : ""}`}
                       aria-label=${`Details for ${l.title}${l.year ? ` (${l.year})` : ""}`}
                       @click=${() => this.select(l)}
                     >
                       <div class="cover-image">${this.cover(l)}</div>
-                      <span
-                        >${l.title}${l.year ? ` (${l.year})` : ""}</span
-                      >
+                      ${this.display.show_badges ? r`<div class="cover-flags">${Fe(l, !0)}</div>` : h}
+                      ${this.display.show_format ? r`<div class="cover-formats">${D(l, !0)}</div>` : h}
+                      ${this.display.show_rating ? r`<div class="cover-rating">${V(l.rating)}</div>` : h}
+                      ${this.display.show_titles ? r`<span class="cover-caption">${l.title}${l.year ? ` (${l.year})` : ""}</span>` : h}
                     </button>`
     )}
               </div>` : r`<div class="table-wrap">
@@ -2585,7 +3295,7 @@ const at = [
                   </colgroup>
                   <thead>
                     <tr>
-                      ${zt.map(
+                      ${We.map(
       ([l, d], c) => r`<th
                             aria-sort=${this.applied.sort === l ? this.applied.descending ? "descending" : "ascending" : "none"}
                           >
@@ -2608,32 +3318,26 @@ const at = [
                               aria-valuenow=${this.widths[c]}
                               tabindex="0"
                               title="Drag or use Left/Right to resize; Home resets"
-                              @keydown=${(u) => this.resizeColumn(u, c)}
-                              @pointerdown=${(u) => {
-        u.preventDefault(), this.resize = {
+                              @keydown=${(g) => this.resizeColumn(g, c)}
+                              @pointerdown=${(g) => {
+        g.preventDefault(), this.resize = {
           index: c,
-          start: u.clientX,
+          start: g.clientX,
           width: this.widths[c]
-        }, u.currentTarget.setPointerCapture(u.pointerId);
+        }, g.currentTarget.setPointerCapture(g.pointerId);
       }}
-                              @pointermove=${(u) => {
+                              @pointermove=${(g) => {
         this.resize?.index === c && (this.widths[c] = Math.max(
           80,
           Math.min(
             800,
-            this.resize.width + u.clientX - this.resize.start
+            this.resize.width + g.clientX - this.resize.start
           )
         ), this.requestUpdate());
       }}
-                              @pointerup=${() => {
-        this.resize = void 0;
-      }}
-                              @pointercancel=${() => {
-        this.resize = void 0;
-      }}
-                              @lostpointercapture=${() => {
-        this.resize = void 0;
-      }}
+                              @pointerup=${this.finishColumnResize}
+                              @pointercancel=${this.finishColumnResize}
+                              @lostpointercapture=${this.finishColumnResize}
                             ></span>
                           </th>`
     )}
@@ -2647,21 +3351,28 @@ const at = [
                               class="link"
                               @click=${() => this.select(l)}
                             >
-                              ${l.title}</button
-                            ><small title=${this.format(l)}
-                              >${this.format(l)}${(l.version_count ?? 1) > 1 ? ` · ${l.version_count} versions` : ""}</small
+                              ${l.title}
+                            </button>
+                            <div
+                              class="library-summary-line"
+                              title=${this.format(l)}
                             >
+                              ${this.display.show_badges ? Fe(l) : h}
+                              ${this.display.show_format ? D(l) : h}
+                              ${this.display.show_format && !Ae(l).length ? r`<small>${this.format(l)}</small>` : h}
+                              ${(l.version_count ?? 1) > 1 ? r`<small>${l.version_count} versions</small>` : h}
+                            </div>
                           </td>
                           <td title=${this.years(l)}>${this.years(l)}</td>
                           <td>
                             <span
                               class="collection-cell"
-                              title=${l.collections.join(", ")}
-                              >${l.collections.join(", ") || "—"}</span
+                              title=${l.collections.map(T).join(", ")}
+                              >${l.collections.map(T).join(", ") || "—"}</span
                             >
                           </td>
                           <td>${this.runtime(l)}</td>
-                          <td>${H[l.watched_status]}</td>
+                          <td>${J[l.watched_status]}</td>
                           <td
                             title=${l.purchased_on ? "Imported purchase date" : "First detected by Companion"}
                           >
@@ -2675,51 +3386,54 @@ const at = [
         ${this.page?.items.length ? h : r`<p class="empty" role="status">${this.loading ? "Loading library…" : "No cached titles match. Adjust your filters or wait for a library sync."}</p>`}
         <div class="pagination">
           <small
-            >${this.page?.total ?? 0} matching titles · ${this.pageSize} per
+            >${this.page?.total ?? 0} matching titles ·
+            ${this.entriesPerPage === "all" ? "All" : this.pageSize} per
             page${this.mode === "covers" ? ` · ${this.coverColumns} covers per row` : ""}</small
           >
           <div class="actions">
             <button
-              ?disabled=${e || !this.page?.offset}
+              ?disabled=${t || !this.page?.offset}
               @click=${() => this.load()}
             >
               First
             </button>
             <button
-              ?disabled=${e || !this.page?.offset}
-              @click=${() => this.load(Math.max(0, (this.page?.offset ?? 0) - t))}
+              ?disabled=${t || !this.page?.offset}
+              @click=${() => this.load(Math.max(0, (this.page?.offset ?? 0) - e))}
             >
               Previous
             </button>
             <button
-              ?disabled=${e || !this.page?.has_more}
-              @click=${() => this.load((this.page?.offset ?? 0) + t)}
+              ?disabled=${t || !this.page?.has_more}
+              @click=${() => this.load((this.page?.offset ?? 0) + e)}
             >
               Next
             </button>
           </div>
         </div>
       </section>
-      ${this.renderFilterDialog()} ${this.renderTitleDialog()}
+      ${this.info ? r`<footer class="library-status" role="status"><span>${this.info.group_count} titles · ${this.info.collection_count} collections ${a && this.info.artwork_enabled ? `· Artwork ${((this.info.artwork_bytes ?? 0) / 1048576).toFixed(1)}/${((this.info.artwork_limit_bytes ?? 0) / 1048576).toFixed(0)} MiB` : ""} · Synced ${this.date(this.info.last_synced_at)}</span></footer>` : h}
+      ${this.renderOptionsDialog()} ${this.renderFilterDialog()}
+      ${this.renderTitleDialog()}
     </section>`;
   }
 };
-K.properties = {
+X.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 }
-}, K.styles = [k, Ue];
-let dt = K;
-customElements.get("kaleidescape-library") || customElements.define("kaleidescape-library", dt);
-const Y = class Y extends v {
+}, X.styles = [S, Mt];
+let fe = X;
+customElements.get("kaleidescape-library") || customElements.define("kaleidescape-library", fe);
+const Z = class Z extends y {
   constructor() {
     super(...arguments), this.narrow = !1, this.api = null, this.userKey = "", this.generation = 0, this.scope = null, this.rows = [], this.loading = !1, this.error = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.next = null, this.history = [], this.page = 1, this.activePage = "journal", this.navigationReady = !1;
   }
-  willUpdate(t) {
-    if (!(!t.has("hass") && !t.has("client")))
+  willUpdate(e) {
+    if (!(!e.has("hass") && !e.has("client")))
       if (this.hass) {
-        const e = `${this.hass.user?.id}:${this.hass.user?.is_admin}`;
-        !this.hass.user || !this.hass.connection.connected ? this.bind(null) : (this.connection !== this.hass.connection || this.userKey !== e || !this.api) && (this.connection = this.hass.connection, this.userKey = e, this.bind(
-          new Vt({
+        const t = `${this.hass.user?.id}:${this.hass.user?.is_admin}`;
+        !this.hass.user || !this.hass.connection.connected ? this.bind(null) : (this.connection !== this.hass.connection || this.userKey !== t || !this.api) && (this.connection = this.hass.connection, this.userKey = t, this.bind(
+          new tt({
             callWS: (i) => this.hass.callWS(i),
             fetchWithAuth: (i, s) => this.hass.fetchWithAuth(i, s)
           })
@@ -2735,40 +3449,40 @@ const Y = class Y extends v {
   clear() {
     this.generation++, this.scope = null, this.activePage = "journal", this.navigationReady = !1, this.rows = [], this.next = null, this.cursor = void 0, this.history = [], this.page = 1, this.query = this.status = this.searchText = this.filterStatus = "", this.loading = !1, this.error = "";
   }
-  bind(t) {
-    t !== this.api && (this.clear(), this.api = t, this.requestUpdate(), t && this.refresh());
+  bind(e) {
+    e !== this.api && (this.clear(), this.api = e, this.requestUpdate(), e && this.refresh());
   }
-  fail(t) {
-    f(t) === "unauthorized" && this.clear(), this.error = w(t), this.requestUpdate();
+  fail(e) {
+    u(e) === "unauthorized" && this.clear(), this.error = v(e), this.requestUpdate();
   }
   async refresh() {
     if (!this.api) return;
-    const t = ++this.generation;
+    const e = ++this.generation;
     this.scope = null, this.rows = [], this.next = null, this.cursor = void 0, this.history = [], this.page = 1, this.loading = !0, this.error = "", this.requestUpdate();
     try {
-      const { entries: e } = await this.api.info();
-      if (t !== this.generation) return;
-      if (!e[0]?.permissions.read || e[0].api_version !== 1)
-        throw new g("not_ready");
+      const { entries: t } = await this.api.info();
+      if (e !== this.generation) return;
+      if (!t[0]?.permissions.read || t[0].api_version !== 1)
+        throw new p("not_ready");
       if (this.scope = {
-        ...e[0],
+        ...t[0],
         permissions: { read: !0, edit: !1, export: !1 }
       }, !this.navigationReady) {
-        const i = Kt(
+        const i = at(
           this.scope.ui_defaults?.default_landing_page,
           !1,
           !!this.scope.library_enabled
         );
         this.activePage = i === "library" ? "library" : "journal", this.navigationReady = !0;
       }
-      this.scope.library_enabled || (this.activePage = "journal"), L(this.activePage), await this.load(void 0, t);
-    } catch (e) {
-      t === this.generation && this.fail(e);
+      this.scope.library_enabled || (this.activePage = "journal"), j(this.activePage), await this.load(void 0, e);
+    } catch (t) {
+      e === this.generation && this.fail(t);
     } finally {
-      t === this.generation && (this.loading = !1, this.requestUpdate());
+      e === this.generation && (this.loading = !1, this.requestUpdate());
     }
   }
-  async load(t, e = ++this.generation) {
+  async load(e, t = ++this.generation) {
     if (!(!this.api || !this.scope)) {
       this.loading = !0, this.error = "", this.rows = [], this.requestUpdate();
       try {
@@ -2776,31 +3490,31 @@ const Y = class Y extends v {
           this.scope,
           this.query,
           this.status,
-          t
+          e
         );
-        if (e !== this.generation) return;
-        this.rows = i.items, this.next = i.next_cursor, this.cursor = t;
+        if (t !== this.generation) return;
+        this.rows = i.items, this.next = i.next_cursor, this.cursor = e;
       } catch (i) {
-        e === this.generation && (this.next = null, this.fail(i));
+        t === this.generation && (this.next = null, this.fail(i));
       } finally {
-        e === this.generation && (this.loading = !1, this.requestUpdate());
+        t === this.generation && (this.loading = !1, this.requestUpdate());
       }
     }
   }
-  date(t) {
-    if (!t) return "—";
-    const e = new Date(t);
-    return Number.isNaN(e.getTime()) ? "—" : e.toLocaleString();
+  date(e) {
+    if (!e) return "—";
+    const t = new Date(e);
+    return Number.isNaN(t.getTime()) ? "—" : t.toLocaleString();
   }
-  selectPage(t) {
-    t === "library" && !this.scope?.library_enabled || (this.activePage = t, L(t), this.requestUpdate());
+  selectPage(e) {
+    e === "library" && !this.scope?.library_enabled || (this.activePage = e, j(e), this.requestUpdate());
   }
-  tabKey(t) {
-    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(t.key)) return;
-    t.preventDefault();
-    const e = !this.scope?.library_enabled || t.key === "End" ? "journal" : t.key === "Home" || this.activePage === "journal" ? "library" : "journal";
-    this.selectPage(e), this.updateComplete.then(
-      () => this.renderRoot.querySelector(`#reader-${e}`)?.focus()
+  tabKey(e) {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return;
+    e.preventDefault();
+    const t = !this.scope?.library_enabled || e.key === "End" ? "journal" : e.key === "Home" || this.activePage === "journal" ? "library" : "journal";
+    this.selectPage(t), this.updateComplete.then(
+      () => this.renderRoot.querySelector(`#reader-${t}`)?.focus()
     );
   }
   render() {
@@ -2820,7 +3534,7 @@ const Y = class Y extends v {
         aria-label="Companion pages"
         @keydown=${this.tabKey}
       >
-        ${["library", "journal"].map((t) => r`<button id=${`reader-${t}`} role="tab" aria-controls="reader-content" aria-selected=${this.activePage === t} tabindex=${this.activePage === t ? 0 : -1} ?disabled=${t === "library" && !this.scope?.library_enabled} @click=${() => this.selectPage(t)}>${t === "journal" ? "Journal" : "Library"}</button>`)}
+        ${["library", "journal"].map((e) => r`<button id=${`reader-${e}`} role="tab" aria-controls="reader-content" aria-selected=${this.activePage === e} tabindex=${this.activePage === e ? 0 : -1} ?disabled=${e === "library" && !this.scope?.library_enabled} @click=${() => this.selectPage(e)}>${e === "journal" ? "Journal" : "Library"}</button>`)}
       </nav>
       <section
         id="reader-content"
@@ -2830,7 +3544,7 @@ const Y = class Y extends v {
         ${this.activePage === "library" && this.scope ? r`<kaleidescape-library
                 .client=${this.api ?? void 0}
                 .scope=${this.scope}
-                @access-denied=${() => this.fail(new g("unauthorized"))}
+                @access-denied=${() => this.fail(new p("unauthorized"))}
                 @library-disabled=${() => {
       this.activePage = "journal", this.refresh();
     }}
@@ -2846,8 +3560,8 @@ const Y = class Y extends v {
                 </div>
                 <form
                   class="filters"
-                  @submit=${(t) => {
-      t.preventDefault(), this.query = this.searchText, this.status = this.filterStatus, this.history = [], this.page = 1, this.load();
+                  @submit=${(e) => {
+      e.preventDefault(), this.query = this.searchText, this.status = this.filterStatus, this.history = [], this.page = 1, this.load();
     }}
                 >
                   <label
@@ -2857,8 +3571,8 @@ const Y = class Y extends v {
                       maxlength="500"
                       .value=${this.searchText}
                       ?disabled=${this.loading || !this.scope}
-                      @input=${(t) => {
-      this.searchText = t.target.value;
+                      @input=${(e) => {
+      this.searchText = e.target.value;
     }}
                   /></label>
                   <label
@@ -2866,8 +3580,8 @@ const Y = class Y extends v {
                       name="filter_status"
                       .value=${this.filterStatus}
                       ?disabled=${this.loading || !this.scope}
-                      @change=${(t) => {
-      this.filterStatus = t.target.value;
+                      @change=${(e) => {
+      this.filterStatus = e.target.value;
     }}
                     >
                       <option value="">All</option>
@@ -2891,24 +3605,24 @@ const Y = class Y extends v {
                               </thead>
                               <tbody>
                                 ${this.rows.map(
-      (t) => r`<tr>
+      (e) => r`<tr>
                                       <td>
-                                        <strong>${t.title}</strong
+                                        <strong>${e.title}</strong
                                         ><small
                                           >Started
-                                          ${this.date(t.started_at)}<br />Ended
-                                          ${this.date(t.ended_at)}</small
+                                          ${this.date(e.started_at)}<br />Ended
+                                          ${this.date(e.ended_at)}</small
                                         >
                                       </td>
                                       <td>
-                                        ${t.status === "completed" ? "Completed" : "Partial"}
+                                        ${e.status === "completed" ? "Completed" : "Partial"}
                                       </td>
                                       <td>
-                                        ${(t.watched_seconds / 60).toFixed(2)}
+                                        ${(e.watched_seconds / 60).toFixed(2)}
                                         min
                                       </td>
                                       <td>
-                                        ${t.duration_seconds == null ? "—" : `${(t.duration_seconds / 60).toFixed(2)} min`}
+                                        ${e.duration_seconds == null ? "—" : `${(e.duration_seconds / 60).toFixed(2)} min`}
                                       </td>
                                     </tr>`
     )}
@@ -2952,27 +3666,27 @@ const Y = class Y extends v {
     </main>`;
   }
 };
-Y.properties = {
+Z.properties = {
   hass: { attribute: !1 },
   client: { attribute: !1 },
   narrow: { type: Boolean }
-}, Y.styles = k;
-let ct = Y;
-customElements.get("kaleidescape-reader") || customElements.define("kaleidescape-reader", ct);
-const Re = {
+}, Z.styles = S;
+let be = Z;
+customElements.get("kaleidescape-reader") || customElements.define("kaleidescape-reader", be);
+const Ft = {
   playing: "Playing",
   paused: "Paused",
   forward: "Scanning forward",
   reverse: "Scanning backward",
   stopped: "Stopped",
   none: "Stopped"
-}, Pe = {
+}, Wt = {
   content: "Main content",
   credits: "Credits",
   intermission: "Intermission",
   disc_menu: "Disc menu",
   none: "No active content"
-}, G = class G extends v {
+}, ee = class ee extends y {
   constructor() {
     super(...arguments), this.boundScope = "", this.generation = 0, this.player = null, this.loading = !1, this.denied = !1, this.error = "", this.image = "", this.imageKey = "", this.visibility = () => {
       this.reset(), document.hidden || this.refresh();
@@ -2984,10 +3698,10 @@ const Re = {
   disconnectedCallback() {
     super.disconnectedCallback(), document.removeEventListener("visibilitychange", this.visibility), this.reset();
   }
-  willUpdate(t) {
-    if (!t.has("client") && !t.has("scope")) return;
-    const e = this.scope?.permissions.edit ? `${this.scope.entry_id}:${this.scope.dataset_id}` : "";
-    this.boundClient !== this.client || this.boundScope !== e ? (this.reset(), this.boundClient = this.client, this.boundScope = e, this.refresh()) : t.has("client") && !this.timer && !this.loading && this.refresh();
+  willUpdate(e) {
+    if (!e.has("client") && !e.has("scope")) return;
+    const t = this.scope?.permissions.edit ? `${this.scope.entry_id}:${this.scope.dataset_id}` : "";
+    this.boundClient !== this.client || this.boundScope !== t ? (this.reset(), this.boundClient = this.client, this.boundScope = t, this.refresh()) : e.has("client") && !this.timer && !this.loading && this.refresh();
   }
   clearImage() {
     this.image && URL.revokeObjectURL(this.image), this.image = "", this.imageKey = "";
@@ -2999,41 +3713,41 @@ const Re = {
     if (!this.isConnected || document.hidden || !this.client || !this.boundScope || this.loading)
       return;
     clearTimeout(this.timer);
-    const t = this.client, e = this.scope, i = ++this.generation;
+    const e = this.client, t = this.scope, i = ++this.generation;
     this.loading = !0, this.denied = !1, this.error = "", this.requestUpdate();
     try {
-      const { players: s } = await t.nowPlaying(e);
+      const { players: s } = await e.nowPlaying(t);
       if (i !== this.generation) return;
       this.player = s[0] ?? null;
       const a = this.player, o = a?.available && a.artwork_key && a.entity_id ? `${a.entity_id}:${a.raw_content_id}:${a.artwork_key}` : "";
       if (o !== this.imageKey && (this.clearImage(), this.imageKey = o, this.requestUpdate(), o)) {
         const l = this.abort = new AbortController(), d = setTimeout(() => l.abort(), 5e3);
         try {
-          const c = await t.artwork(
+          const c = await e.artwork(
             a.entity_id,
             l.signal
           );
           i === this.generation && c && (this.image = URL.createObjectURL(c));
         } catch (c) {
-          if (f(c) === "unauthorized") throw c;
+          if (u(c) === "unauthorized") throw c;
         } finally {
           clearTimeout(d), this.abort === l && (this.abort = void 0);
         }
       }
     } catch (s) {
       if (i !== this.generation) return;
-      this.player = null, this.clearImage(), this.denied = f(s) === "unauthorized", this.error = this.denied ? "Now Playing access is unavailable. Check your account and source permissions." : "Now Playing could not refresh. Check the connection or refresh again.";
+      this.player = null, this.clearImage(), this.denied = u(s) === "unauthorized", this.error = this.denied ? "Now Playing access is unavailable. Check your account and source permissions." : "Now Playing could not refresh. Check the connection or refresh again.";
     } finally {
       i === this.generation && (this.loading = !1, this.requestUpdate(), !this.denied && this.isConnected && !document.hidden && (this.timer = setTimeout(() => {
         this.refresh();
       }, 5e3)));
     }
   }
-  recordingStatus(t, e) {
-    return t.recording_error ? "Recording needs attention. Check HA diagnostics." : t.recording_paused ? "Recording paused for backup." : t.available ? e && t.recording_exclusion === "below_minimum_runtime" ? `Not recording: runtime is below the minimum of ${t.minimum_runtime_minutes} minutes.` : e && t.recording_exclusion === "runtime_unknown" ? "Waiting for a known runtime before recording." : "Recording enabled." : "Recording waiting for source entities.";
+  recordingStatus(e, t) {
+    return e.recording_error ? "Recording needs attention. Check HA diagnostics." : e.recording_paused ? "Recording paused for backup." : e.available ? t && e.recording_exclusion === "below_minimum_runtime" ? `Not recording: runtime is below the minimum of ${e.minimum_runtime_minutes} minutes.` : t && e.recording_exclusion === "runtime_unknown" ? "Waiting for a known runtime before recording." : "Recording enabled." : "Recording waiting for source entities.";
   }
   render() {
-    const t = this.player, e = t?.available && !["stopped", "none"].includes(t.play_status);
+    const e = this.player, t = e?.available && !["stopped", "none"].includes(e.play_status);
     return r`<section class="card now-playing" aria-label="Now Playing">
       <div class="card-head">
         <h2>Now Playing</h2>
@@ -3046,7 +3760,7 @@ const Re = {
           Refresh playback
         </button>
       </div>
-      ${this.error ? r`<p class="playback-message" role="alert">${this.error}</p>` : t ? r`<div class="playback-layout">
+      ${this.error ? r`<p class="playback-message" role="alert">${this.error}</p>` : e ? r`<div class="playback-layout">
                 <div class="cover">
                   ${this.image ? r`<img
                           src=${this.image}
@@ -3058,25 +3772,25 @@ const Re = {
                         />` : r`<span>No artwork available</span>`}
                 </div>
                 <div class="playback-detail">
-                  <small>${t.name ?? "Configured player"}</small>
+                  <small>${e.name ?? "Configured player"}</small>
                   <h3>
-                    ${t.available ? e ? t.title ?? "Unknown title" : "No movie playing" : "Player unavailable"}
+                    ${e.available ? t ? e.title ?? "Unknown title" : "No movie playing" : "Player unavailable"}
                   </h3>
-                  ${t.available ? r`<p>${Re[t.play_status] ?? "Unknown playback state"} · ${Pe[t.location] ?? "Unknown location"}</p>` : h}
-                  ${e && t.duration_seconds != null ? r`<p>Runtime · ${(t.duration_seconds / 60).toFixed(2)} min</p>` : h}
-                  ${e && t.session ? r`<p>
+                  ${e.available ? r`<p>${Ft[e.play_status] ?? "Unknown playback state"} · ${Wt[e.location] ?? "Unknown location"}</p>` : h}
+                  ${t && e.duration_seconds != null ? r`<p>Runtime · ${(e.duration_seconds / 60).toFixed(2)} min</p>` : h}
+                  ${t && e.session ? r`<p>
                             This session ·
-                            ${(t.session.watched_seconds / 60).toFixed(2)}
+                            ${(e.session.watched_seconds / 60).toFixed(2)}
                             min counted
                           </p>
                           <small
                             >Pauses and scans are excluded.
-                            ${t.session.credits_confirmed ? "Credits confirmed; journal completion also requires the configured watch threshold." : "Credits not yet confirmed."}
-                            ${t.session.gap_count ? r` ${t.session.gap_count} timing gap(s).` : h}</small
+                            ${e.session.credits_confirmed ? "Credits confirmed; journal completion also requires the configured watch threshold." : "Credits not yet confirmed."}
+                            ${e.session.gap_count ? r` ${e.session.gap_count} timing gap(s).` : h}</small
                           >` : h}
                   <p role="status">
-                    ${this.recordingStatus(t, !!e)}
-                    ${t.buffered_observations ? r` ${t.buffered_observations} update(s) buffered.` : h}
+                    ${this.recordingStatus(e, !!t)}
+                    ${e.buffered_observations ? r` ${e.buffered_observations} update(s) buffered.` : h}
                   </p>
                   <small
                     >Live snapshot refreshes about every 5 seconds while
@@ -3089,13 +3803,13 @@ const Re = {
     </section>`;
   }
 };
-G.properties = {
+ee.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 }
-}, G.styles = k;
-let ut = G;
-customElements.get("kaleidescape-now-playing") || customElements.define("kaleidescape-now-playing", ut);
-const Ot = [
+}, ee.styles = S;
+let me = ee;
+customElements.get("kaleidescape-now-playing") || customElements.define("kaleidescape-now-playing", me);
+const Je = [
   ["media_player", "Kaleidescape media player", "text", "", ""],
   ["play_status", "Exact play-status sensor", "text", "", ""],
   ["media_location", "Media-location sensor", "text", "", ""],
@@ -3120,7 +3834,7 @@ const Ot = [
     "0",
     "168"
   ]
-], Nt = [
+], Ke = [
   [
     "library_host",
     "Library hostname · blank uses my-kaleidescape.local",
@@ -3136,32 +3850,31 @@ const Ot = [
     "32",
     "4096"
   ]
-], Yt = [
+], rt = [
   ["library_allow_collection_add", "Allow Add to Collection on the device"],
   ["library_sync_collections", "Sync collections and watched status"],
   ["library_sync_details", "Sync title details and credits"],
   ["library_sync_artwork", "Sync artwork"]
-], Te = /* @__PURE__ */ new Set([
+], Vt = /* @__PURE__ */ new Set([
   "tracking_enabled",
   "library_enabled",
-  ...Yt.map(([n]) => n)
-]), Le = {
-  invalid_display_options: "Choose a landing page, List or Covers, and a whole-number entry count from 1–1000.",
+  ...rt.map(([n]) => n)
+]), Jt = {
+  invalid_display_options: "Choose a valid default landing page.",
   missing_entities: "Select all three source entities to enable tracking.",
   invalid_entities: "Choose existing media_player and sensor entity IDs.",
   duplicate_entities: "Choose different sensors for play status and media location.",
   invalid_rules: "Check the runtime, completion, and partial-resume values.",
   invalid_library_host: "Enter a hostname or private LAN HTTP(S) origin without a path, credentials, or query.",
-  invalid_library_collections: "Choose at most 200 collection names (256 characters each).",
   invalid_library_options: "Choose a sync interval of 1–168 hours and an artwork cache limit of 32–4096 MiB."
-}, X = class X extends v {
+}, te = class te extends y {
   constructor() {
-    super(...arguments), this.generation = 0, this.draft = {}, this.initial = {}, this.collectionChoices = [], this.customCollection = "", this.loading = !1, this.saving = !1, this.uncertain = !1, this.error = "", this.bound = "";
+    super(...arguments), this.generation = 0, this.draft = {}, this.initial = {}, this.collectionChoices = [], this.hiddenCollections = [], this.sharedReady = !1, this.sharedError = "", this.customCollection = "", this.loading = !1, this.saving = !1, this.uncertain = !1, this.error = "", this.bound = "";
   }
-  willUpdate(t) {
-    if (!t.has("client") && !t.has("scope")) return;
-    const e = `${this.scope?.entry_id}:${this.scope?.dataset_id}`;
-    e === this.bound && this.client === this.boundClient || (this.cancelFlow(), this.bound = e, this.boundClient = this.client, this.boundScope = this.scope, this.flow = void 0, this.draft = {}, this.initial = {}, this.collectionChoices = [], this.customCollection = "", this.uncertain = this.saving = !1, this.client && this.scope && this.start());
+  willUpdate(e) {
+    if (!e.has("client") && !e.has("scope")) return;
+    const t = `${this.scope?.entry_id}:${this.scope?.dataset_id}`;
+    t === this.bound && this.client === this.boundClient || (this.cancelFlow(), this.bound = t, this.boundClient = this.client, this.boundScope = this.scope, this.flow = void 0, this.draft = {}, this.initial = {}, this.collectionChoices = [], this.customCollection = "", this.uncertain = this.saving = !1, this.client && this.scope && this.start());
   }
   disconnectedCallback() {
     super.disconnectedCallback(), this.cancelFlow(), this.flow = void 0, this.draft = {}, this.initial = {}, this.collectionChoices = [], this.customCollection = "", this.bound = "", this.boundClient = void 0;
@@ -3169,34 +3882,49 @@ const Ot = [
   connectedCallback() {
     super.connectedCallback(), this.requestUpdate("client"), this.requestUpdate("scope");
   }
+  updated() {
+    const e = this.renderRoot.querySelector(
+      '[name="default_landing_page"]'
+    ), t = String(this.draft.default_landing_page ?? "journal");
+    e && e.value !== t && (e.value = t);
+  }
   cancelFlow() {
-    this.generation++, this.flow?.flow_id && this.boundClient && this.boundScope && this.boundClient.settings(this.boundScope, "cancel", { flow_id: this.flow.flow_id }).catch(() => {
+    this.sharedPreferences?.dispose(), this.sharedPreferences = void 0, this.hiddenCollections = [], this.sharedReady = !1, this.sharedError = "", this.generation++, this.flow?.flow_id && this.boundClient && this.boundScope && this.boundClient.settings(this.boundScope, "cancel", { flow_id: this.flow.flow_id }).catch(() => {
     });
   }
-  fail(t) {
-    this.error = w(t), f(t) === "unauthorized" && (this.flow = void 0, this.draft = {}, this.initial = {}, this.dispatchEvent(
+  fail(e) {
+    this.error = v(e), u(e) === "unauthorized" && (this.sharedPreferences?.dispose(), this.sharedPreferences = void 0, this.sharedReady = !1, this.hiddenCollections = [], this.flow = void 0, this.draft = {}, this.initial = {}, this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
-    ));
+    )), this.requestUpdate();
   }
   async start() {
-    const t = this.client, e = this.scope, i = ++this.generation;
+    const e = this.client, t = this.scope, i = ++this.generation;
     this.loading = !0, this.error = "", this.requestUpdate();
     try {
-      const s = await t.settings(e, "start");
+      const s = await e.settings(t, "start");
       if (i !== this.generation) {
-        s.flow_id && t.settings(e, "cancel", { flow_id: s.flow_id }).catch(() => {
+        s.flow_id && e.settings(t, "cancel", { flow_id: s.flow_id }).catch(() => {
         });
         return;
       }
-      if (this.flow = s, this.draft = Object.fromEntries(
-        (s.fields ?? []).map((a) => [
-          a.name,
-          a.name === "library_excluded_collections" ? Array.isArray(a.default) ? [...a.default] : String(a.default ?? "").split(`
-`).filter(Boolean) : Te.has(a.name) ? !!a.default : String(a.default ?? "")
+      this.flow = s, this.draft = Object.fromEntries(
+        (s.fields ?? []).map((o) => [
+          o.name,
+          Vt.has(o.name) ? !!o.default : String(o.default ?? "")
         ])
-      ), this.initial = { ...this.draft }, e.library_enabled) {
-        const a = await t.libraryInfo(e);
-        i === this.generation && (this.collectionChoices = a.collection_names ?? []);
+      ), this.initial = { ...this.draft }, this.sharedPreferences = new Ee(
+        e,
+        t,
+        !0,
+        (o) => {
+          i === this.generation && (o && u(o) === "unauthorized" ? this.fail(o) : (this.sharedError = o ? v(o) : "", this.requestUpdate()));
+        }
+      );
+      const a = await this.sharedPreferences.load();
+      if (i !== this.generation) return;
+      if (this.hiddenCollections = [...a.hidden_collections], this.sharedReady = !0, t.library_enabled) {
+        const o = await e.libraryInfo(t);
+        i === this.generation && (this.collectionChoices = o.collection_names ?? []);
       }
     } catch (s) {
       i === this.generation && this.fail(s);
@@ -3221,35 +3949,35 @@ const Ot = [
   reload() {
     this.confirmNavigation() && (this.cancelFlow(), this.flow = void 0, this.draft = this.initial = {}, this.uncertain = !1, this.start());
   }
-  async save(t) {
-    if (t.preventDefault(), !this.client || !this.scope || !this.flow?.flow_id || this.saving || this.uncertain || !t.target.reportValidity()) return;
-    const e = this.generation;
+  async save(e) {
+    if (e.preventDefault(), !this.client || !this.scope || !this.flow?.flow_id || this.saving || this.uncertain || !e.target.reportValidity()) return;
+    const t = this.generation;
     this.saving = !0, this.busy(), this.error = "", this.requestUpdate();
     const i = { ...this.draft };
-    for (const [s, , a] of Ot)
+    for (const [s, , a] of Je)
       a === "number" ? i[s] = Number(i[s]) : i[s] || delete i[s];
-    for (const [s, , a] of Nt)
+    for (const [s, , a] of Ke)
       a === "number" && (i[s] = Number(i[s]));
-    i.library_host = String(i.library_host ?? ""), i.library_default_count = Number(i.library_default_count ?? 50);
+    i.library_host = String(i.library_host ?? "");
     try {
       const s = await this.client.settings(this.scope, "submit", {
         flow_id: this.flow.flow_id,
         data: i
       });
-      if (e !== this.generation) return;
+      if (t !== this.generation) return;
       this.flow = s, s.type === "create_entry" ? (this.initial = { ...this.draft }, this.saving = !1, this.busy(), this.dispatchEvent(
         new CustomEvent("settings-saved", { bubbles: !0, composed: !0 })
       )) : s.type === "form" ? this.error = Object.values(s.errors ?? {}).map(
-        (a) => Le[a] ?? "Check the settings and try again."
+        (a) => Jt[a] ?? "Check the settings and try again."
       ).join(" ") : this.error = "The settings flow ended. Reload settings to continue.";
     } catch (s) {
-      e === this.generation && (this.fail(s), this.uncertain = ![
+      t === this.generation && (this.fail(s), this.uncertain = ![
         "unauthorized",
         "invalid_request",
         "conflict"
-      ].includes(f(s)));
+      ].includes(u(s)));
     } finally {
-      e === this.generation && (this.saving = !1, this.busy(), this.requestUpdate());
+      t === this.generation && (this.saving = !1, this.busy(), this.requestUpdate());
     }
   }
   render() {
@@ -3264,219 +3992,200 @@ const Ot = [
         </button>
       </div>
       <p>
-        These are the same settings as the integration’s Configure options.
-        Saving reloads the integration.
+        HA runtime settings use the integration’s Configure options and reload
+        when saved. Shared Library display settings save immediately to the
+        database.
       </p>
       ${this.error ? r`<p class="error" role="alert">${this.error}</p>` : h}
       ${this.uncertain ? r`<p class="warning">The save result is unconfirmed. Reload settings to inspect the saved values before making another change.</p>` : h}
       ${this.loading ? r`<p role="status">Loading settings…</p>` : this.flow?.type === "form" ? r`<form @submit=${this.save}>
-                <fieldset ?disabled=${this.saving || this.uncertain}>
-                  <label class="check"
-                    ><input
-                      name="tracking_enabled"
-                      type="checkbox"
-                      .checked=${!!this.draft.tracking_enabled}
-                      @change=${(t) => {
+                  <fieldset ?disabled=${this.saving || this.uncertain}>
+                    <label class="check"
+                      ><input
+                        name="tracking_enabled"
+                        type="checkbox"
+                        .checked=${!!this.draft.tracking_enabled}
+                        @change=${(e) => {
       this.draft = {
         ...this.draft,
-        tracking_enabled: t.target.checked
+        tracking_enabled: e.target.checked
       }, this.requestUpdate();
     }}
-                    />Automatically record playback</label
-                  >
-                  <div class="grid settings-grid">
-                    ${Ot.map(
-      ([t, e, i, s, a]) => r`<label class=${i === "text" ? "full" : ""}
-                          >${e}<input
-                            name=${t}
-                            type=${i}
-                            min=${s || h}
-                            max=${a || h}
-                            step=${i === "number" ? "1" : h}
-                            maxlength=${i === "text" ? "255" : h}
-                            ?required=${i === "number" || !!this.draft.tracking_enabled}
-                            .value=${String(this.draft[t] ?? "")}
-                            @input=${(o) => {
+                      />Automatically record playback</label
+                    >
+                    <div class="grid settings-grid">
+                      ${Je.map(
+      ([e, t, i, s, a]) => r`<label class=${i === "text" ? "full" : ""}
+                            >${t}<input
+                              name=${e}
+                              type=${i}
+                              min=${s || h}
+                              max=${a || h}
+                              step=${i === "number" ? "1" : h}
+                              maxlength=${i === "text" ? "255" : h}
+                              ?required=${i === "number" || !!this.draft.tracking_enabled}
+                              .value=${String(this.draft[e] ?? "")}
+                              @input=${(o) => {
         this.draft = {
           ...this.draft,
-          [t]: o.target.value
+          [e]: o.target.value
         };
       }}
-                        /></label>`
+                          /></label>`
     )}
-                  </div>
-                  <p class="muted">
-                    Use HA entity IDs for the three sources. The runtime cutoff
-                    uses total duration; missing runtime waits for metadata.
-                    Completion uses watched time and confirmed credits.
-                  </p>
-                  <h3>Library sync</h3>
-                  <label class="check"
-                    ><input
-                      name="library_enabled"
-                      type="checkbox"
-                      .checked=${!!this.draft.library_enabled}
-                      @change=${(t) => {
+                    </div>
+                    <p class="muted">
+                      Use HA entity IDs for the three sources. The runtime
+                      cutoff uses total duration; missing runtime waits for
+                      metadata. Completion uses watched time and confirmed
+                      credits.
+                    </p>
+                    <h3>Library sync</h3>
+                    <label class="check"
+                      ><input
+                        name="library_enabled"
+                        type="checkbox"
+                        .checked=${!!this.draft.library_enabled}
+                        @change=${(e) => {
       this.draft = {
         ...this.draft,
-        library_enabled: t.target.checked
+        library_enabled: e.target.checked
       }, this.requestUpdate();
     }}
-                    />Enable library sync</label
-                  >
-                  <p class="muted">
-                    Optional synchronization with your local Kaleidescape
-                    library. Disabled by default; no library discovery or device
-                    requests occur while disabled.
-                  </p>
-                  ${this.draft.library_enabled ? r`<div class="grid settings-grid">
-                            ${Nt.map(
-      ([t, e, i, s, a]) => r`<label
-                                  class=${i === "text" ? "full" : ""}
-                                  >${e}<input
-                                    name=${t}
-                                    type=${i}
-                                    min=${s || h}
-                                    max=${a || h}
-                                    step=${i === "number" ? "1" : h}
-                                    maxlength=${i === "text" ? "255" : h}
-                                    ?required=${i === "number"}
-                                    .value=${String(this.draft[t] ?? "")}
-                                    @input=${(o) => {
+                      />Enable library sync</label
+                    >
+                    <p class="muted">
+                      Optional synchronization with your local Kaleidescape
+                      library. Disabled by default; no library discovery or
+                      device requests occur while disabled.
+                    </p>
+                    ${this.draft.library_enabled ? r`<div class="grid settings-grid">
+                              ${Ke.map(
+      ([e, t, i, s, a]) => r`<label
+                                    class=${i === "text" ? "full" : ""}
+                                    >${t}<input
+                                      name=${e}
+                                      type=${i}
+                                      min=${s || h}
+                                      max=${a || h}
+                                      step=${i === "number" ? "1" : h}
+                                      maxlength=${i === "text" ? "255" : h}
+                                      ?required=${i === "number"}
+                                      .value=${String(this.draft[e] ?? "")}
+                                      @input=${(o) => {
         this.draft = {
           ...this.draft,
-          [t]: o.target.value
+          [e]: o.target.value
         }, this.requestUpdate();
       }}
-                                /></label>`
+                                  /></label>`
     )}
-                            ${this.renderCollections()}
-                            ${Yt.map(
-      ([t, e]) => r`<label class="check full"
-                                  ><input
-                                    name=${t}
-                                    type="checkbox"
-                                    .checked=${!!this.draft[t]}
-                                    @change=${(i) => {
+                              ${rt.map(
+      ([e, t]) => r`<label class="check full"
+                                    ><input
+                                      name=${e}
+                                      type="checkbox"
+                                      .checked=${!!this.draft[e]}
+                                      @change=${(i) => {
         this.draft = {
           ...this.draft,
-          [t]: i.target.checked
+          [e]: i.target.checked
         }, this.requestUpdate();
       }}
-                                  />${e}</label
-                                >`
+                                    />${t}</label
+                                  >`
     )}
-                          </div>
-                          <p class="muted">
-                            Add to Collection is separately disabled by default.
-                            Enabling it lets administrators add an explicitly
-                            selected version to an existing offered collection.
-                            It requires collection sync. Removal is not
-                            supported.
-                          </p>
-                          <p class="muted">
-                            Played means watched; Paused takes priority as
-                            in-progress. Detail fields depend on available
-                            source metadata. “Added on” means first detected,
-                            not purchased or downloaded.
-                          </p>
-                          ${this.draft.library_sync_artwork ? r`<p class="warning">Artwork uses additional disk space in a separate private cache, up to ${String(this.draft.library_artwork_cache_mb)} MiB plus one incoming image (up to 5 MiB). The journal database retains its 256 MiB limit. Increase the cache limit for a large library; older covers may be evicted and fetched again. HA backups can include these files.</p>` : h}` : h}
-                  <h3>Display defaults</h3>
-                  <div class="grid settings-grid">
-                    ${[
-      [
-        "default_landing_page",
-        "Default landing page",
-        [
-          ["now-playing", "Now Playing"],
-          ["library", "Library"],
-          ["journal", "Journal"],
-          ["database", "Database"],
-          ["settings", "Settings"]
-        ]
-      ],
-      [
-        "library_default_view",
-        "Default Library view",
-        [
-          ["list", "List"],
-          ["covers", "Covers"]
-        ]
-      ]
-    ].map(
-      ([t, e, i]) => r`<label
-                          >${e}<select
-                            name=${t}
-                            .value=${String(this.draft[t] ?? (t === "default_landing_page" ? "journal" : "list"))}
-                            @change=${(s) => {
-        this.draft = {
-          ...this.draft,
-          [t]: s.target.value
-        };
-      }}
-                          >
-                            ${i.map(([s, a]) => r`<option value=${s}>${a}</option>`)}
-                          </select></label
-                        >`
-    )}
+                            </div>
+                            <p class="muted">
+                              Add to Collection is separately disabled by
+                              default. Enabling it lets administrators add an
+                              explicitly selected version to an existing offered
+                              collection. It requires collection sync. Removal
+                              is not supported.
+                            </p>
+                            <p class="muted">
+                              Source collections determine watched status, with
+                              in-progress. Detail fields depend on available
+                              source metadata. “Added on” means first detected,
+                              not purchased or downloaded.
+                            </p>
+                            ${this.draft.library_sync_artwork ? r`<p class="warning">Artwork uses additional disk space in a separate private cache, up to ${String(this.draft.library_artwork_cache_mb)} MiB plus one incoming image (up to 5 MiB). The journal database retains its 256 MiB limit. Increase the cache limit for a large library; older covers may be evicted and fetched again. HA backups can include these files.</p>` : h}` : h}
+                    <h3>Landing page</h3>
                     <label
-                      >Default Library entries per page<input
-                        name="library_default_count"
-                        type="number"
-                        min="1"
-                        max="1000"
-                        step="1"
-                        required
-                        .value=${String(this.draft.library_default_count ?? 50)}
-                        @input=${(t) => {
+                      >Default landing page<select
+                        name="default_landing_page"
+                        .value=${String(this.draft.default_landing_page ?? "journal")}
+                        @change=${(e) => {
       this.draft = {
         ...this.draft,
-        library_default_count: t.target.value
-      };
+        default_landing_page: e.target.value
+      }, this.requestUpdate();
     }}
-                    /></label>
-                  </div>
-                  <p class="muted">
-                    The URL remembers your current tab across reloads. These
-                    defaults apply to fresh visits. Regular users can land on
-                    Journal or an enabled Library.
-                  </p>
-                  <button class="primary" type="submit">
-                    ${this.saving ? "Saving…" : "Save settings"}
+                      >
+                        ${[
+      ["now-playing", "Now Playing"],
+      ["library", "Library"],
+      ["journal", "Journal"],
+      ["database", "Database"],
+      ["settings", "Settings"]
+    ].map(
+      ([e, t]) => r`<option
+                              value=${e}
+                              ?selected=${e === this.draft.default_landing_page}
+                            >
+                              ${t}
+                            </option>`
+    )}
+                      </select></label
+                    >
+                    <p class="muted">
+                      The URL remembers your current tab. Library view, page
+                      size, filters and sort save automatically for your HA user
+                      while browsing.
+                    </p>
+                    <button class="primary" type="submit">
+                      ${this.saving ? "Saving…" : "Save settings"}
+                    </button>
+                  </fieldset>
+                  <button
+                    type="button"
+                    ?disabled=${this.saving || this.loading}
+                    @click=${this.reload}
+                  >
+                    Cancel changes
                   </button>
-                </fieldset>
-                <button
-                  type="button"
-                  ?disabled=${this.saving || this.loading}
-                  @click=${this.reload}
-                >
-                  Cancel changes
-                </button>
-              </form>` : h}
+                </form>
+                <h3>Shared Library display settings</h3>
+                <p>Saved to the database as you change them; no HA reload.</p>
+                ${this.renderCollections()}` : h}
     </section>`;
   }
   renderCollections() {
-    const t = this.draft.library_excluded_collections ?? [], e = [.../* @__PURE__ */ new Set([...this.collectionChoices, ...t])].sort(
+    if (!this.sharedReady)
+      return r`<p>
+        Shared display settings could not be loaded. Reload settings to retry.
+      </p>`;
+    const e = this.hiddenCollections, t = [.../* @__PURE__ */ new Set([...this.collectionChoices, ...e])].sort(
       (i, s) => i.localeCompare(s)
     );
     return r`<fieldset class="full">
       <legend>Hidden collection names</legend>
+      ${this.sharedError ? r`<p class="error" role="alert">${this.sharedError}<button type="button" @click=${() => this.sharedPreferences?.retry()}>Retry UI settings</button></p>` : h}
       <div class="facet-options">
-        ${e.map(
+        ${t.map(
       (i) => r`<label class="check"
               ><input
                 name="library_excluded_collections"
                 type="checkbox"
                 .value=${i}
-                .checked=${t.includes(i)}
-                ?disabled=${t.length >= 200 && !t.includes(i)}
+                .checked=${e.includes(i)}
+                ?disabled=${e.length >= 200 && !e.includes(i)}
                 @change=${(s) => {
-        this.draft = {
-          ...this.draft,
-          library_excluded_collections: s.target.checked ? [...t, i] : t.filter((a) => a !== i)
-        }, this.requestUpdate();
+        this.hiddenCollections = s.target.checked ? [...e, i] : e.filter((a) => a !== i), this.sharedPreferences?.set({
+          hidden_collections: this.hiddenCollections
+        }), this.requestUpdate();
       }}
-              />${i}</label
+              />${T(i)}</label
             >`
     )}
       </div>
@@ -3493,12 +4202,11 @@ const Ot = [
           type="button"
           @click=${() => {
       const i = this.customCollection.trim().replace(/\s+/g, " ");
-      !i || t.length >= 200 || (t.some(
+      !i || e.length >= 200 || (e.some(
         (s) => s.toLocaleLowerCase() === i.toLocaleLowerCase()
-      ) || (this.draft = {
-        ...this.draft,
-        library_excluded_collections: [...t, i]
-      }), this.customCollection = "", this.requestUpdate());
+      ) || (this.hiddenCollections = [...e, i], this.sharedPreferences?.set({
+        hidden_collections: this.hiddenCollections
+      })), this.customCollection = "", this.requestUpdate());
     }}
         >
           Add hidden name
@@ -3506,451 +4214,24 @@ const Ot = [
       </div>
       <small
         >Selected names are hidden from labels and filters. Movies remain
-        visible; Played/Paused still determine status. No device changes.</small
+        visible; source collections still determine status. No device
+        changes.</small
       >
     </fieldset>`;
   }
 };
-X.properties = {
+te.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 }
-}, X.styles = k;
-let pt = X;
-customElements.get("kaleidescape-settings") || customElements.define("kaleidescape-settings", pt);
-const Q = class Q extends v {
-  constructor() {
-    super(...arguments), this.disabled = !1, this.bound = "", this.generation = 0, this.selected = /* @__PURE__ */ new Set(), this.query = "", this.changesOnly = !1, this.page = 0, this.pageSize = 100, this.working = !1, this.error = "", this.notice = "", this.dialog = null;
-  }
-  willUpdate(t) {
-    if (!t.has("client") && !t.has("scope")) return;
-    const e = `${this.scope?.entry_id}:${this.scope?.dataset_id}`;
-    this.boundClient === this.client && this.bound === e || (this.clear(), this.bound = e, this.boundClient = this.client);
-  }
-  disconnectedCallback() {
-    super.disconnectedCallback(), this.clear(), this.boundClient = void 0;
-  }
-  clear() {
-    this.generation++, this.controller?.abort(), this.controller = void 0, this.file = void 0, this.review = void 0, this.selected.clear();
-    const t = this.renderRoot.querySelector('input[type="file"]');
-    t && (t.value = ""), this.pending = void 0, this.working = !1, this.hideDialog(), this.error = this.notice = "", this.busy();
-  }
-  async openDialog(t) {
-    if (this.disabled || this.working || this.pending || !this.dispatchEvent(
-      new CustomEvent("transfer-open", {
-        detail: t,
-        bubbles: !0,
-        composed: !0,
-        cancelable: !0
-      })
-    ))
-      return;
-    const e = this.generation;
-    this.dialog = t, this.error = this.notice = "", this.requestUpdate(), await this.updateComplete, !(e !== this.generation || !this.isConnected) && this.renderRoot.querySelector("dialog")?.showModal();
-  }
-  hideDialog() {
-    this.renderRoot.querySelector("dialog")?.close(), this.dialog = null;
-  }
-  closeDialog(t) {
-    if (t?.preventDefault(), this.working || this.pending) return;
-    const e = this.dialog;
-    this.hideDialog(), this.file = void 0, this.review = void 0, this.selected.clear();
-    const i = this.renderRoot.querySelector('input[type="file"]');
-    i && (i.value = ""), this.requestUpdate(), this.renderRoot.querySelector(`[data-transfer="${e}"]`)?.focus();
-  }
-  busy() {
-    this.dispatchEvent(
-      new CustomEvent("transfer-busy", {
-        detail: this.working || !!this.pending,
-        bubbles: !0,
-        composed: !0
-      })
-    );
-  }
-  fail(t) {
-    f(t) === "unauthorized" && (this.clear(), this.dispatchEvent(
-      new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
-    )), this.error = w(t), this.requestUpdate();
-  }
-  async exportData(t) {
-    if (!this.client || !this.scope || this.working || this.pending || this.disabled)
-      return;
-    const e = this.generation, i = this.controller = new AbortController(), s = setTimeout(() => i.abort(), 65e3);
-    this.working = !0, this.error = this.notice = "", this.busy(), this.requestUpdate();
-    try {
-      const a = await this.client.download(
-        this.scope,
-        t,
-        i.signal
-      );
-      if (e !== this.generation) return;
-      const o = URL.createObjectURL(a), l = document.createElement("a");
-      try {
-        l.href = o, l.download = `kaleidescape-journal.${t}`, l.click();
-      } finally {
-        setTimeout(() => URL.revokeObjectURL(o), 1e3);
-      }
-      this.notice = "Export downloaded. Keep this private copy in a protected location.", this.hideDialog();
-    } catch (a) {
-      e === this.generation && this.fail(a);
-    } finally {
-      clearTimeout(s), e === this.generation && (this.working = !1, this.controller = void 0, this.busy(), this.requestUpdate());
-    }
-  }
-  async previewData() {
-    if (!this.client || !this.scope || !this.file || this.working || this.disabled || this.scope.tracking_enabled)
-      return;
-    const t = this.generation, e = this.controller = new AbortController(), i = setTimeout(() => e.abort(), 65e3);
-    this.working = !0, this.error = this.notice = "", this.review = void 0, this.selected.clear(), this.busy(), this.requestUpdate();
-    try {
-      const s = await this.client.previewImport(
-        this.scope,
-        this.file,
-        e.signal
-      );
-      if (t !== this.generation) return;
-      this.review = s, this.selected = new Set(
-        s.rows.filter((a) => ["new", "merge"].includes(a.action)).map((a) => a.key)
-      ), this.page = 0, this.query = "", this.changesOnly = !1;
-    } catch (s) {
-      t === this.generation && this.fail(s);
-    } finally {
-      clearTimeout(i), t === this.generation && (this.working = !1, this.controller = void 0, this.busy(), this.requestUpdate());
-    }
-  }
-  async importData() {
-    if (!this.client || !this.scope || !this.review || this.working || this.disabled || this.scope.tracking_enabled)
-      return;
-    this.pending ??= this.client.prepareImport(this.scope, this.review, [
-      ...this.selected
-    ]);
-    const t = this.generation;
-    this.working = !0, this.error = this.notice = "", this.busy(), this.requestUpdate();
-    try {
-      const e = await this.client.applyImport(this.pending);
-      if (t !== this.generation) return;
-      this.pending = void 0, this.review = void 0, this.file = void 0, this.selected.clear(), this.notice = `Imported ${e.imported_count} new entries; filled missing data in ${e.updated_count}; left ${e.skipped_count} unchanged or unselected.`, this.hideDialog(), this.dispatchEvent(
-        new CustomEvent("database-changed", { bubbles: !0, composed: !0 })
-      );
-    } catch (e) {
-      if (t !== this.generation) return;
-      [
-        "invalid_request",
-        "unauthorized",
-        "conflict",
-        "not_found",
-        "tracking_enabled"
-      ].includes(f(e)) && (this.pending = void 0, this.review = void 0, this.selected.clear()), this.fail(e);
-    } finally {
-      t === this.generation && (this.working = !1, this.busy(), this.requestUpdate());
-    }
-  }
-  renderReview(t) {
-    if (!this.review) return h;
-    const e = this.review, i = this.query.trim().toLocaleLowerCase(), s = e.rows.filter(
-      (d) => (!this.changesOnly || ["new", "merge"].includes(d.action)) && `${d.title} ${d.detail ?? ""} ${d.table} ${Object.keys(d.changes).join(" ")}`.toLocaleLowerCase().includes(i)
-    ), a = Math.max(0, Math.ceil(s.length / this.pageSize) - 1), o = Math.min(this.page, a), l = s.slice(
-      o * this.pageSize,
-      (o + 1) * this.pageSize
-    );
-    return r`<p role="status">
-        ${e.counts.new} new · ${e.counts.merge} mergeable ·
-        ${e.counts.unchanged} unchanged · ${e.counts.skip} skipped.
-        ${this.selected.size} selected.
-      </p>
-      <div class="actions">
-        <label
-          >Search review<input
-            type="search"
-            .value=${this.query}
-            ?disabled=${t}
-            @input=${(d) => {
-      this.query = d.target.value, this.page = 0, this.requestUpdate();
-    }}
-        /></label>
-        <label class="check"
-          ><input
-            type="checkbox"
-            .checked=${this.changesOnly}
-            ?disabled=${t}
-            @change=${(d) => {
-      this.changesOnly = d.target.checked, this.page = 0, this.requestUpdate();
-    }}
-          />Changes only</label
-        >
-        <button
-          ?disabled=${t}
-          @click=${() => {
-      this.selected = new Set(
-        e.rows.filter((d) => ["new", "merge"].includes(d.action)).map((d) => d.key)
-      ), this.requestUpdate();
-    }}
-        >
-          Select all changes
-        </button>
-        <button
-          ?disabled=${t}
-          @click=${() => {
-      this.selected.clear(), this.requestUpdate();
-    }}
-        >
-          Select none
-        </button>
-      </div>
-      <div class="table-wrap">
-        <table aria-label="Import review">
-          <thead>
-            <tr>
-              <th>Select</th>
-              <th>Entry</th>
-              <th>Action</th>
-              <th>Fields / details</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${l.map(
-      (d) => r`<tr>
-                  <td>
-                    <input
-                      type="checkbox"
-                      aria-label=${`Import ${d.title}`}
-                      .checked=${this.selected.has(d.key)}
-                      ?disabled=${t || !["new", "merge"].includes(d.action)}
-                      @change=${(c) => {
-        c.target.checked ? this.selected.add(d.key) : this.selected.delete(d.key), this.requestUpdate();
-      }}
-                    />
-                  </td>
-                  <td>
-                    ${d.title}<small class="muted" title=${d.key}
-                      >${d.detail}</small
-                    ><small class="muted">${d.table}</small>
-                  </td>
-                  <td>${d.action}</td>
-                  <td>
-                    ${d.reason || Object.keys(d.changes).join(", ") || "No missing data"}
-                    ${d.conflicts.length ? r`<small class="muted">Existing values kept: ${d.conflicts.join(", ")}</small>` : h}
-                    ${Object.keys(d.changes).length ? r`<details>
-                            <summary>Changes</summary>
-                            <pre>${JSON.stringify(d.changes, null, 2)}</pre>
-                          </details>` : h}
-                  </td>
-                </tr>`
-    )}
-          </tbody>
-        </table>
-      </div>
-      <p class="muted">
-        Rows
-        ${s.length ? o * this.pageSize + 1 : 0}–${Math.min((o + 1) * this.pageSize, s.length)}
-        of ${s.length}. Selection covers all review pages.
-      </p>
-      <div class="actions">
-        <button
-          ?disabled=${t || !o}
-          @click=${() => {
-      this.page = o - 1, this.requestUpdate();
-    }}
-        >
-          Previous</button
-        ><button
-          ?disabled=${t || o >= a}
-          @click=${() => {
-      this.page = o + 1, this.requestUpdate();
-    }}
-        >
-          Next
-        </button>
-        <label
-          >Rows per page<select
-            ?disabled=${t}
-            .value=${String(this.pageSize)}
-            @change=${(d) => {
-      this.pageSize = Number(d.target.value), this.page = 0, this.requestUpdate();
-    }}
-          >
-            ${[25, 100, 500].map((d) => r`<option value=${d}>${d}</option>`)}
-          </select></label
-        >
-        <button
-          class="primary"
-          ?disabled=${t || !this.selected.size}
-          @click=${this.importData}
-        >
-          Apply ${this.selected.size} selected changes
-        </button>
-      </div>`;
-  }
-  renderImport(t) {
-    return r`<p>
-        Add new IDs and fill missing data in existing viewings and Library
-        versions. Populated values, manual corrections and deletion status are
-        kept. Only known Library sources match. Newly imported versions stay
-        inactive until a server sync verifies them. Session evidence, collection
-        membership, artwork files, audit and retry state are not restored.
-        Maximum 32 MiB / 10,000 records. Review expires after 10 minutes or any
-        database change.
-      </p>
-      ${this.scope?.tracking_enabled ? r`<p class="warning">Disable automatic tracking in Settings before importing.</p>` : h}
-      <label
-        >JSON or SQLite export<input
-          type="file"
-          accept=".json,.sqlite,.sqlite3,.db"
-          ?disabled=${t || !!this.scope?.tracking_enabled}
-          @change=${(e) => {
-      this.file = e.target.files?.[0], this.review = void 0, this.selected.clear(), this.error = this.notice = "", this.requestUpdate();
-    }}
-      /></label>
-      ${this.file ? r`<p>${this.file.name} · ${(this.file.size / 1024).toFixed(1)} KiB</p>` : h}
-      <div class="actions">
-        <button
-          ?disabled=${t || !this.file || !!this.scope?.tracking_enabled}
-          @click=${this.previewData}
-        >
-          Review import
-        </button>
-      </div>
-      ${this.renderReview(t)}
-      ${this.pending ? r`<div class="warning">
-              ${this.working ? "Importing…" : "The import result is unconfirmed. Retry the same selection and request to confirm it."}
-              <div class="actions">
-                <button ?disabled=${this.working} @click=${this.importData}>
-                  Retry same import</button
-                ><button
-                  ?disabled=${this.working}
-                  @click=${() => {
-      window.confirm(
-        "The import may already have committed. Discard its retry and inspect the database before importing again?"
-      ) && (this.pending = void 0, this.review = void 0, this.file = void 0, this.selected.clear(), this.hideDialog(), this.busy(), this.dispatchEvent(
-        new CustomEvent("database-changed", {
-          bubbles: !0,
-          composed: !0
-        })
-      ), this.requestUpdate());
-    }}
-                >
-                  Discard import retry & inspect
-                </button>
-              </div>
-            </div>` : h}`;
-  }
-  render() {
-    const t = this.disabled || this.working || !!this.pending;
-    return r`<div class="actions" aria-label="Import and export">
-        <button
-          data-transfer="import"
-          ?disabled=${t}
-          @click=${() => this.openDialog("import")}
-        >
-          Merge Import
-        </button>
-        <button
-          data-transfer="export"
-          ?disabled=${t}
-          @click=${() => this.openDialog("export")}
-        >
-          Export
-        </button>
-      </div>
-      ${!this.dialog && this.error ? r`<p class="error" role="alert">${this.error}</p>` : h}
-      ${!this.dialog && this.notice ? r`<p class="notice" role="status">${this.notice}</p>` : h}
-      <dialog
-        class="database-dialog"
-        @click=${N}
-        aria-labelledby="transfer-title"
-        @cancel=${this.closeDialog}
-      >
-        <div class="card-head">
-          <h2 id="transfer-title">
-            ${this.dialog === "export" ? "Export database" : "Merge Import"}
-          </h2>
-        </div>
-        ${this.error && this.dialog ? r`<p class="error" role="alert">${this.error}</p>` : h}
-        ${this.dialog === "export" ? r`<p>
-                  Exports include private history and deleted records. SQLite
-                  also includes catalog and source metadata. Store downloads
-                  securely.
-                </p>
-                <div class="actions">
-                  <button
-                    ?disabled=${t}
-                    @click=${() => this.exportData("json")}
-                  >
-                    Export JSON</button
-                  ><button
-                    ?disabled=${t}
-                    @click=${() => this.exportData("sqlite")}
-                  >
-                    Export SQLite
-                  </button>
-                </div>` : this.dialog === "import" ? this.renderImport(t) : h}
-        <div class="actions dialog-footer">
-          <button
-            ?disabled=${this.working || !!this.pending}
-            @click=${this.closeDialog}
-          >
-            Cancel
-          </button>
-        </div>
-      </dialog>`;
-  }
-};
-Q.properties = {
-  client: { attribute: !1 },
-  scope: { attribute: !1 },
-  disabled: { type: Boolean }
-}, Q.styles = [
-  k,
-  j`
-      .database-dialog {
-        width: min(1100px, calc(100% - 32px));
-      }
-      table {
-        table-layout: fixed;
-      }
-      th:first-child {
-        width: 56px;
-      }
-      th:nth-child(2) {
-        width: 30%;
-      }
-      th:nth-child(3) {
-        width: 90px;
-      }
-      td:first-child {
-        min-width: 0;
-        max-width: none;
-      }
-      td {
-        padding: 8px;
-        vertical-align: top;
-        overflow-wrap: anywhere;
-      }
-      th {
-        padding: 8px;
-      }
-      td input[type="checkbox"] {
-        width: auto;
-      }
-      details {
-        margin-top: 4px;
-      }
-      .table-wrap {
-        max-height: 55dvh;
-        overflow: auto;
-      }
-      th {
-        position: sticky;
-        top: 0;
-      }
-    `
-];
-let gt = Q;
-customElements.get("kaleidescape-transfers") || customElements.define("kaleidescape-transfers", gt);
-const De = j`
+}, te.styles = S;
+let ye = te;
+customElements.get("kaleidescape-settings") || customElements.define("kaleidescape-settings", ye);
+const Kt = L`
   .database-entries {
     padding: 20px;
   }
   .database {
+    overflow: visible;
     margin-top: 24px;
   }
   .database-toolbar {
@@ -4050,598 +4331,1201 @@ const De = j`
       margin-left: 0;
     }
   }
-`, rt = {
-  viewings: "Viewings",
-  sessions: "Sessions",
-  requests: "Write requests",
-  manual_audit: "Manual audit",
-  maintenance_audit: "Maintenance audit",
-  import_audit: "Import audit",
-  schema_metadata: "Metadata",
-  library_sources: "Library sources",
-  library_titles: "Library titles",
-  library_collections: "Library collections",
-  library_memberships: "Library memberships",
-  library_artwork: "Library artwork",
-  library_collection_intents: "Collection add requests"
-}, Z = class Z extends v {
+`, ie = class ie extends y {
   constructor() {
-    super(...arguments), this.bound = "", this.generation = 0, this.table = "viewings", this.filters = { limit: 25, query: "", descending: !1 }, this.search = "", this.columns = [], this.selected = /* @__PURE__ */ new Set(), this.confirming = null, this.confirmation = "", this.purgeOpen = !1, this.transferBusy = !1, this.detail = null, this.draft = null, this.initial = null, this.loading = !1, this.saving = !1, this.error = "", this.notice = "";
-  }
-  willUpdate(t) {
-    if (!t.has("client") && !t.has("scope")) return;
-    const e = `${this.scope?.entry_id}:${this.scope?.dataset_id}`;
-    e === this.bound && this.client === this.boundClient || (this.clear(), this.bound = e, this.boundClient = this.client, this.client && this.scope && this.load());
+    super(...arguments), this.table = "viewings", this.value = "", this.fields = [], this.operators = [], this.disabled = !1, this.open = !1, this.active = 0, this.cursor = 0, this.message = "", this.invalid = !1, this.generation = 0;
   }
   disconnectedCallback() {
-    super.disconnectedCallback(), this.clear(), this.bound = "", this.boundClient = void 0;
+    super.disconnectedCallback(), clearTimeout(this.timer), this.generation++, this.open = !1;
   }
-  connectedCallback() {
-    super.connectedCallback(), this.requestUpdate("client"), this.requestUpdate("scope");
+  willUpdate(e) {
+    ["client", "scope", "table"].some((t) => e.has(t)) && (clearTimeout(this.timer), this.generation++, this.message = "", this.invalid = !1, this.open = !1);
+  }
+  choices() {
+    const e = this.value.slice(0, this.cursor);
+    if ((e.match(/'/g)?.length ?? 0) % 2) return [];
+    const t = e.match(/[A-Za-z_0-9.<>!=]*$/)?.[0] ?? "", i = e.slice(0, e.length - t.length).trim();
+    let s;
+    return !i || /(?:\bAND|\bOR|\bNOT|\bWHERE|\()$/i.test(i) ? s = this.fields.map((a) => a.name) : this.fields.some(
+      (a) => i.toLowerCase().endsWith(a.name.toLowerCase())
+    ) ? s = this.operators : /(?:NULL|'|\d|TRUE|FALSE)$/i.test(i) ? s = ["AND", "OR"] : s = ["''", "0", "TRUE", "FALSE"], s.filter((a) => a.toLowerCase().startsWith(t.toLowerCase())).slice(0, 12);
+  }
+  changed() {
+    this.dispatchEvent(
+      new CustomEvent("query-change", {
+        detail: this.value,
+        bubbles: !0,
+        composed: !0
+      })
+    ), clearTimeout(this.timer);
+    const e = ++this.generation;
+    this.timer = setTimeout(async () => {
+      try {
+        await this.client?.validateDatabaseQuery(
+          this.scope,
+          this.table,
+          this.value
+        ), e === this.generation && (this.message = "", this.invalid = !1);
+      } catch (t) {
+        if (e !== this.generation) return;
+        this.invalid = !0, this.message = u(t) === "query_syntax" && typeof t.message == "string" ? t.message : v(t), u(t) === "unauthorized" && this.dispatchEvent(
+          new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
+        );
+      } finally {
+        e === this.generation && this.requestUpdate();
+      }
+    }, 250), this.requestUpdate();
+  }
+  choose(e) {
+    const t = this.value.slice(0, this.cursor), i = t.match(/[A-Za-z_0-9.<>!=]*$/)?.[0] ?? "", s = this.cursor - i.length;
+    this.value = this.value.slice(0, s) + e + " " + this.value.slice(this.cursor), this.cursor = s + (e === "''" ? 1 : e.length + 1), this.active = 0, this.changed(), this.updateComplete.then(() => {
+      const a = this.renderRoot.querySelector("input");
+      a.focus(), a.setSelectionRange(this.cursor, this.cursor);
+    });
+  }
+  render() {
+    const e = this.choices();
+    return r`<div class="search">
+        <label
+          >Search rows / conditions<input
+            name="database_query"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded=${this.open && !!e.length}
+            aria-controls="query-suggestions"
+            aria-activedescendant=${this.open && e.length ? `query-option-${this.active}` : h}
+            aria-invalid=${this.invalid}
+            aria-describedby="query-help"
+            maxlength="2000"
+            autocomplete="off"
+            .value=${this.value}
+            ?disabled=${this.disabled}
+            @focus=${() => {
+      this.open = !0, this.requestUpdate();
+    }}
+            @blur=${() => {
+      this.open = !1, this.requestUpdate();
+    }}
+            @click=${(t) => {
+      this.cursor = t.target.selectionStart ?? this.value.length, this.open = !0, this.requestUpdate();
+    }}
+            @input=${(t) => {
+      const i = t.target;
+      this.value = i.value, this.cursor = i.selectionStart ?? i.value.length, this.active = 0, this.open = !0, this.changed();
+    }}
+            @keydown=${(t) => {
+      t.key === "Escape" ? (this.open = !1, this.requestUpdate()) : (t.key === "ArrowDown" || t.key === "ArrowUp") && e.length ? (t.preventDefault(), this.open = !0, this.active = (this.active + (t.key === "ArrowDown" ? 1 : -1) + e.length) % e.length, this.requestUpdate()) : t.key === "Tab" && this.open && e.length ? (t.preventDefault(), this.choose(e[this.active] ?? e[0])) : t.key === "Enter" && (t.preventDefault(), this.open = !1, this.dispatchEvent(
+        new CustomEvent("query-submit", {
+          bubbles: !0,
+          composed: !0
+        })
+      ), this.requestUpdate());
+    }} /></label
+        >${this.open && e.length ? r`<div class="suggestions" id="query-suggestions" role="listbox">${e.map((t, i) => r`<button type="button" role="option" id=${`query-option-${i}`} aria-selected=${this.active === i} tabindex="-1" @mousedown=${(s) => s.preventDefault()} @click=${() => this.choose(t)}>${t}</button>`)}</div>` : h}
+      </div>
+      <small id="query-help" class=${this.invalid ? "error" : ""} role="status"
+        >${this.message || "Text searches every column. Conditions: purchased_on IS NULL · actors CONTAINS 'name' · title LIKE 'Star%'. Tab accepts a suggestion; Enter searches."}</small
+      >`;
+  }
+};
+ie.properties = {
+  client: { attribute: !1 },
+  scope: { attribute: !1 },
+  table: {},
+  value: {},
+  fields: { attribute: !1 },
+  operators: { attribute: !1 },
+  disabled: { type: Boolean }
+}, ie.styles = L`
+    :host {
+      display: block;
+      min-width: 0;
+      flex: 1;
+    }
+    label {
+      display: grid;
+      gap: 6px;
+      font: inherit;
+    }
+    input {
+      font: inherit;
+      color: inherit;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .search {
+      position: relative;
+    }
+    .suggestions {
+      position: absolute;
+      z-index: 20;
+      inset-inline: 0;
+      top: 100%;
+      max-height: 220px;
+      overflow: auto;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      box-shadow: 0 4px 12px #0004;
+      display: grid;
+    }
+    button {
+      font: inherit;
+      padding: 8px;
+      text-align: left;
+      color: inherit;
+      background: transparent;
+      border: 0;
+    }
+    button[aria-selected="true"] {
+      background: var(--line);
+    }
+    small {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+    }
+    .error {
+      color: var(--error-color, #b3261e);
+    }
+  `;
+let ve = ie;
+customElements.get("kaleidescape-database-search") || customElements.define("kaleidescape-database-search", ve);
+const se = class se extends y {
+  constructor() {
+    super(...arguments), this.disabled = !1, this.bound = "", this.generation = 0, this.selected = /* @__PURE__ */ new Set(), this.query = "", this.changesOnly = !1, this.page = 0, this.pageSize = 100, this.working = !1, this.error = "", this.notice = "", this.dialog = null;
+  }
+  willUpdate(e) {
+    if (!e.has("client") && !e.has("scope")) return;
+    const t = `${this.scope?.entry_id}:${this.scope?.dataset_id}`;
+    this.boundClient === this.client && this.bound === t || (this.clear(), this.bound = t, this.boundClient = this.client);
+  }
+  disconnectedCallback() {
+    super.disconnectedCallback(), this.clear(), this.boundClient = void 0;
   }
   clear() {
-    this.generation++, this.page = void 0, this.table = "viewings", this.filters = { limit: 25, query: "", descending: !1 }, this.search = "", this.columns = [], this.selected.clear(), this.confirming = null, this.hidePurge(), this.confirmation = this.error = this.notice = "", this.pending = this.editPending = void 0, this.detail = this.draft = this.initial = null, this.transferBusy = !1, this.loading = this.saving = !1, this.busy();
+    this.generation++, this.controller?.abort(), this.controller = void 0, this.file = void 0, this.review = void 0, this.selected.clear();
+    const e = this.renderRoot.querySelector('input[type="file"]');
+    e && (e.value = ""), this.pending = void 0, this.working = !1, this.hideDialog(), this.error = this.notice = "", this.busy();
   }
-  hidePurge() {
-    this.renderRoot.querySelector("#purge-dialog")?.close(), this.purgeOpen = !1;
-  }
-  async openPurge() {
-    if (this.blocked || this.table !== "viewings" || this.scope?.tracking_enabled || !this.discard())
+  async openDialog(e) {
+    if (this.disabled || this.working || this.pending || !this.dispatchEvent(
+      new CustomEvent("transfer-open", {
+        detail: e,
+        bubbles: !0,
+        composed: !0,
+        cancelable: !0
+      })
+    ))
       return;
     const t = this.generation;
-    this.confirming = null, this.confirmation = "", this.detail = this.draft = this.initial = null, this.purgeOpen = !0, this.requestUpdate(), await this.updateComplete, t === this.generation && this.isConnected && this.renderRoot.querySelector("#purge-dialog")?.showModal();
+    this.dialog = e, this.error = this.notice = "", this.requestUpdate(), await this.updateComplete, !(t !== this.generation || !this.isConnected) && this.renderRoot.querySelector("dialog")?.showModal();
   }
-  closePurge(t) {
-    t?.preventDefault(), !(this.saving || this.pending) && (this.hidePurge(), this.confirming = null, this.confirmation = "", this.requestUpdate(), this.renderRoot.querySelector("#purge-entry")?.focus());
+  hideDialog() {
+    this.renderRoot.querySelector("dialog")?.close(), this.dialog = null;
   }
-  get blocked() {
-    return this.loading || this.saving || !!this.pending || !!this.editPending || this.transferBusy;
+  closeDialog(e) {
+    if (e?.preventDefault(), this.working || this.pending) return;
+    const t = this.dialog;
+    this.hideDialog(), this.file = void 0, this.review = void 0, this.selected.clear();
+    const i = this.renderRoot.querySelector('input[type="file"]');
+    i && (i.value = ""), this.requestUpdate(), this.renderRoot.querySelector(`[data-transfer="${t}"]`)?.focus();
   }
   busy() {
     this.dispatchEvent(
-      new CustomEvent("maintenance-busy", {
-        detail: !!this.pending || !!this.editPending || this.saving || this.transferBusy,
+      new CustomEvent("transfer-busy", {
+        detail: this.working || !!this.pending,
         bubbles: !0,
         composed: !0
       })
     );
   }
-  fail(t) {
-    f(t) === "unauthorized" && (this.clear(), this.dispatchEvent(
+  fail(e) {
+    u(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
-    )), this.error = w(t), this.requestUpdate();
+    )), this.error = v(e), this.requestUpdate();
   }
-  async load(t = 0, e) {
-    if (!this.client || !this.scope || this.pending || this.editPending || !this.discard())
+  async exportData(e) {
+    if (!this.client || !this.scope || this.working || this.pending || this.disabled)
       return;
-    const i = ++this.generation;
-    this.loading = !0, this.error = "", this.selected.clear(), this.confirming = null, this.confirmation = "", this.page = void 0, this.detail = this.draft = this.initial = null, this.requestUpdate();
+    const t = this.generation, i = this.controller = new AbortController(), s = setTimeout(() => i.abort(), 65e3);
+    this.working = !0, this.error = this.notice = "", this.busy(), this.requestUpdate();
     try {
-      const s = await this.client.inspect(
+      const a = await this.client.download(
         this.scope,
-        this.table,
-        t,
         e,
-        this.filters
+        i.signal
       );
-      i === this.generation && (this.page = s, this.columns = s.columns, this.filters.sort = s.sort);
-    } catch (s) {
-      i === this.generation && this.fail(s);
+      if (t !== this.generation) return;
+      const o = URL.createObjectURL(a), l = document.createElement("a");
+      try {
+        l.href = o, l.download = `kaleidescape-journal.${e}`, l.click();
+      } finally {
+        setTimeout(() => URL.revokeObjectURL(o), 1e3);
+      }
+      this.notice = "Export downloaded. Keep this private copy in a protected location.", this.hideDialog();
+    } catch (a) {
+      t === this.generation && this.fail(a);
     } finally {
-      i === this.generation && (this.loading = !1, this.requestUpdate());
+      clearTimeout(s), t === this.generation && (this.working = !1, this.controller = void 0, this.busy(), this.requestUpdate());
     }
   }
-  async purge(t) {
-    if (t?.preventDefault(), !(!this.client || !this.scope || this.saving))
+  async previewData() {
+    if (!this.client || !this.scope || !this.file || this.working || this.disabled || this.scope.tracking_enabled)
+      return;
+    const e = this.generation, t = this.controller = new AbortController(), i = setTimeout(() => t.abort(), 65e3);
+    this.working = !0, this.error = this.notice = "", this.review = void 0, this.selected.clear(), this.busy(), this.requestUpdate();
+    try {
+      const s = await this.client.previewImport(
+        this.scope,
+        this.file,
+        t.signal
+      );
+      if (e !== this.generation) return;
+      this.review = s, this.selected = new Set(
+        s.rows.filter((a) => ["new", "merge"].includes(a.action)).map((a) => a.key)
+      ), this.page = 0, this.query = "", this.changesOnly = !1;
+    } catch (s) {
+      e === this.generation && this.fail(s);
+    } finally {
+      clearTimeout(i), e === this.generation && (this.working = !1, this.controller = void 0, this.busy(), this.requestUpdate());
+    }
+  }
+  async importData() {
+    if (!this.client || !this.scope || !this.review || this.working || this.disabled || this.scope.tracking_enabled)
+      return;
+    this.pending ??= this.client.prepareImport(this.scope, this.review, [
+      ...this.selected
+    ]);
+    const e = this.generation;
+    this.working = !0, this.error = this.notice = "", this.busy(), this.requestUpdate();
+    try {
+      const t = await this.client.applyImport(this.pending);
+      if (e !== this.generation) return;
+      this.pending = void 0, this.review = void 0, this.file = void 0, this.selected.clear(), this.notice = `Imported ${t.imported_count} new entries; filled missing data in ${t.updated_count}; left ${t.skipped_count} unchanged or unselected.`, this.hideDialog(), this.dispatchEvent(
+        new CustomEvent("database-changed", { bubbles: !0, composed: !0 })
+      );
+    } catch (t) {
+      if (e !== this.generation) return;
+      [
+        "invalid_request",
+        "unauthorized",
+        "conflict",
+        "not_found",
+        "tracking_enabled"
+      ].includes(u(t)) && (this.pending = void 0, this.review = void 0, this.selected.clear()), this.fail(t);
+    } finally {
+      e === this.generation && (this.working = !1, this.busy(), this.requestUpdate());
+    }
+  }
+  renderReview(e) {
+    if (!this.review) return h;
+    const t = this.review, i = this.query.trim().toLocaleLowerCase(), s = t.rows.filter(
+      (d) => (!this.changesOnly || ["new", "merge"].includes(d.action)) && `${d.title} ${d.detail ?? ""} ${d.table} ${Object.keys(d.changes).join(" ")}`.toLocaleLowerCase().includes(i)
+    ), a = Math.max(0, Math.ceil(s.length / this.pageSize) - 1), o = Math.min(this.page, a), l = s.slice(
+      o * this.pageSize,
+      (o + 1) * this.pageSize
+    );
+    return r`<p role="status">
+        ${t.counts.new} new · ${t.counts.merge} mergeable ·
+        ${t.counts.unchanged} unchanged · ${t.counts.skip} skipped.
+        ${this.selected.size} selected.
+      </p>
+      <div class="actions">
+        <label
+          >Search review<input
+            type="search"
+            .value=${this.query}
+            ?disabled=${e}
+            @input=${(d) => {
+      this.query = d.target.value, this.page = 0, this.requestUpdate();
+    }}
+        /></label>
+        <label class="check"
+          ><input
+            type="checkbox"
+            .checked=${this.changesOnly}
+            ?disabled=${e}
+            @change=${(d) => {
+      this.changesOnly = d.target.checked, this.page = 0, this.requestUpdate();
+    }}
+          />Changes only</label
+        >
+        <button
+          ?disabled=${e}
+          @click=${() => {
+      this.selected = new Set(
+        t.rows.filter((d) => ["new", "merge"].includes(d.action)).map((d) => d.key)
+      ), this.requestUpdate();
+    }}
+        >
+          Select all changes
+        </button>
+        <button
+          ?disabled=${e}
+          @click=${() => {
+      this.selected.clear(), this.requestUpdate();
+    }}
+        >
+          Select none
+        </button>
+      </div>
+      <div class="table-wrap">
+        <table aria-label="Import review">
+          <thead>
+            <tr>
+              <th>Select</th>
+              <th>Entry</th>
+              <th>Action</th>
+              <th>Fields / details</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${l.map(
+      (d) => r`<tr>
+                  <td>
+                    <input
+                      type="checkbox"
+                      aria-label=${`Import ${d.title}`}
+                      .checked=${this.selected.has(d.key)}
+                      ?disabled=${e || !["new", "merge"].includes(d.action)}
+                      @change=${(c) => {
+        c.target.checked ? this.selected.add(d.key) : this.selected.delete(d.key), this.requestUpdate();
+      }}
+                    />
+                  </td>
+                  <td>
+                    ${d.title}<small class="muted" title=${d.key}
+                      >${d.detail}</small
+                    ><small class="muted">${d.table}</small>
+                  </td>
+                  <td>${d.action}</td>
+                  <td>
+                    ${d.reason || Object.keys(d.changes).join(", ") || "No missing data"}
+                    ${d.conflicts.length ? r`<small class="muted">Existing values kept: ${d.conflicts.join(", ")}</small>` : h}
+                    ${Object.keys(d.changes).length ? r`<details>
+                            <summary>Changes</summary>
+                            <pre>${JSON.stringify(d.changes, null, 2)}</pre>
+                          </details>` : h}
+                  </td>
+                </tr>`
+    )}
+          </tbody>
+        </table>
+      </div>
+      <p class="muted">
+        Rows
+        ${s.length ? o * this.pageSize + 1 : 0}–${Math.min((o + 1) * this.pageSize, s.length)}
+        of ${s.length}. Selection covers all review pages.
+      </p>
+      <div class="actions">
+        <button
+          ?disabled=${e || !o}
+          @click=${() => {
+      this.page = o - 1, this.requestUpdate();
+    }}
+        >
+          Previous</button
+        ><button
+          ?disabled=${e || o >= a}
+          @click=${() => {
+      this.page = o + 1, this.requestUpdate();
+    }}
+        >
+          Next
+        </button>
+        <label
+          >Rows per page<select
+            ?disabled=${e}
+            .value=${String(this.pageSize)}
+            @change=${(d) => {
+      this.pageSize = Number(d.target.value), this.page = 0, this.requestUpdate();
+    }}
+          >
+            ${[25, 100, 500].map((d) => r`<option value=${d}>${d}</option>`)}
+          </select></label
+        >
+        <button
+          class="primary"
+          ?disabled=${e || !this.selected.size}
+          @click=${this.importData}
+        >
+          Apply ${this.selected.size} selected changes
+        </button>
+      </div>`;
+  }
+  renderImport(e) {
+    return r`<p>
+        Add new IDs and fill missing data in existing viewings and Library
+        versions. Populated values, manual corrections and deletion status are
+        kept. Only known Library sources match. Newly imported versions stay
+        inactive until a server sync verifies them. Session evidence, collection
+        membership, artwork files, audit and retry state are not restored.
+        Maximum 32 MiB / 10,000 records. Review expires after 10 minutes or any
+        database change.
+      </p>
+      ${this.scope?.tracking_enabled ? r`<p class="warning">Disable automatic tracking in Settings before importing.</p>` : h}
+      <label
+        >JSON or SQLite export<input
+          type="file"
+          accept=".json,.sqlite,.sqlite3,.db"
+          ?disabled=${e || !!this.scope?.tracking_enabled}
+          @change=${(t) => {
+      this.file = t.target.files?.[0], this.review = void 0, this.selected.clear(), this.error = this.notice = "", this.requestUpdate();
+    }}
+      /></label>
+      ${this.file ? r`<p>${this.file.name} · ${(this.file.size / 1024).toFixed(1)} KiB</p>` : h}
+      <div class="actions">
+        <button
+          ?disabled=${e || !this.file || !!this.scope?.tracking_enabled}
+          @click=${this.previewData}
+        >
+          Review import
+        </button>
+      </div>
+      ${this.renderReview(e)}
+      ${this.pending ? r`<div class="warning">
+              ${this.working ? "Importing…" : "The import result is unconfirmed. Retry the same selection and request to confirm it."}
+              <div class="actions">
+                <button ?disabled=${this.working} @click=${this.importData}>
+                  Retry same import</button
+                ><button
+                  ?disabled=${this.working}
+                  @click=${() => {
+      window.confirm(
+        "The import may already have committed. Discard its retry and inspect the database before importing again?"
+      ) && (this.pending = void 0, this.review = void 0, this.file = void 0, this.selected.clear(), this.hideDialog(), this.busy(), this.dispatchEvent(
+        new CustomEvent("database-changed", {
+          bubbles: !0,
+          composed: !0
+        })
+      ), this.requestUpdate());
+    }}
+                >
+                  Discard import retry & inspect
+                </button>
+              </div>
+            </div>` : h}`;
+  }
+  render() {
+    const e = this.disabled || this.working || !!this.pending;
+    return r`<div class="actions" aria-label="Import and export">
+        <button
+          data-transfer="import"
+          ?disabled=${e}
+          @click=${() => this.openDialog("import")}
+        >
+          Merge Import
+        </button>
+        <button
+          data-transfer="export"
+          ?disabled=${e}
+          @click=${() => this.openDialog("export")}
+        >
+          Export
+        </button>
+      </div>
+      ${!this.dialog && this.error ? r`<p class="error" role="alert">${this.error}</p>` : h}
+      ${!this.dialog && this.notice ? r`<p class="notice" role="status">${this.notice}</p>` : h}
+      <dialog
+        class="database-dialog"
+        @click=${k}
+        aria-labelledby="transfer-title"
+        @cancel=${this.closeDialog}
+      >
+        <div class="card-head">
+          <h2 id="transfer-title">
+            ${this.dialog === "export" ? "Export database" : "Merge Import"}
+          </h2>
+        </div>
+        ${this.error && this.dialog ? r`<p class="error" role="alert">${this.error}</p>` : h}
+        ${this.dialog === "export" ? r`<p>
+                  Exports include private history and deleted records. SQLite
+                  also includes catalog and source metadata. Store downloads
+                  securely.
+                </p>
+                <div class="actions">
+                  <button
+                    ?disabled=${e}
+                    @click=${() => this.exportData("json")}
+                  >
+                    Export JSON</button
+                  ><button
+                    ?disabled=${e}
+                    @click=${() => this.exportData("sqlite")}
+                  >
+                    Export SQLite
+                  </button>
+                </div>` : this.dialog === "import" ? this.renderImport(e) : h}
+        <div class="actions dialog-footer">
+          <button
+            ?disabled=${this.working || !!this.pending}
+            @click=${this.closeDialog}
+          >
+            Cancel
+          </button>
+        </div>
+      </dialog>`;
+  }
+};
+se.properties = {
+  client: { attribute: !1 },
+  scope: { attribute: !1 },
+  disabled: { type: Boolean }
+}, se.styles = [
+  S,
+  L`
+      .database-dialog {
+        width: min(1100px, calc(100% - 32px));
+      }
+      table {
+        table-layout: fixed;
+      }
+      th:first-child {
+        width: 56px;
+      }
+      th:nth-child(2) {
+        width: 30%;
+      }
+      th:nth-child(3) {
+        width: 90px;
+      }
+      td:first-child {
+        min-width: 0;
+        max-width: none;
+      }
+      td {
+        padding: 8px;
+        vertical-align: top;
+        overflow-wrap: anywhere;
+      }
+      th {
+        padding: 8px;
+      }
+      td input[type="checkbox"] {
+        width: auto;
+      }
+      details {
+        margin-top: 4px;
+      }
+      .table-wrap {
+        max-height: 55dvh;
+        overflow: auto;
+      }
+      th {
+        position: sticky;
+        top: 0;
+      }
+    `
+];
+let $e = se;
+customElements.get("kaleidescape-transfers") || customElements.define("kaleidescape-transfers", $e);
+const he = {
+  viewings: "Viewings",
+  sessions: "Sessions",
+  library_titles: "Library titles",
+  library_collections: "Library collections",
+  library_sources: "Library sources",
+  library_artwork: "Library artwork",
+  settings: "UI settings",
+  library_memberships: "Library memberships",
+  requests: "Write requests",
+  schema_metadata: "Metadata",
+  manual_audit: "Manual audit",
+  maintenance_audit: "Maintenance audit",
+  import_audit: "Import audit",
+  database_audit: "Database audit",
+  library_collection_intents: "Collection add receipts"
+}, de = [
+  "viewings",
+  "sessions",
+  "library_titles",
+  "library_collections",
+  "library_sources",
+  "library_artwork"
+], ae = class ae extends y {
+  constructor() {
+    super(...arguments), this.bound = "", this.generation = 0, this.request = 0, this.table = "viewings", this.filters = { limit: 25, query: "", descending: !1 }, this.showSystem = !1, this.sorts = {}, this.ready = !1, this.preferenceError = "", this.loading = !1, this.saving = !1, this.transferBusy = !1, this.error = "", this.notice = "", this.search = "", this.selected = /* @__PURE__ */ new Set(), this.operation = null, this.draft = {}, this.nulls = /* @__PURE__ */ new Set(), this.original = "", this.createDraft = N(), this.confirmed = !1, this.deleteWord = "";
+  }
+  willUpdate(e) {
+    if (!e.has("client") && !e.has("scope")) return;
+    const t = `${this.scope?.entry_id}:${this.scope?.dataset_id}:${this.scope?.permissions.edit}`;
+    t === this.bound && this.client === this.boundClient || (this.clear(), this.bound = t, this.boundClient = this.client, this.client && this.scope?.permissions.edit && this.initialize());
+  }
+  connectedCallback() {
+    super.connectedCallback(), this.requestUpdate("client"), this.requestUpdate("scope");
+  }
+  disconnectedCallback() {
+    super.disconnectedCallback(), this.clear(), this.boundClient = void 0, this.bound = "";
+  }
+  clear() {
+    this.generation++, this.request++, this.preferences?.dispose(), this.preferences = void 0, this.ready = !1, this.page = void 0, this.table = "viewings", this.filters = { limit: 25, query: "", descending: !1 }, this.showSystem = !1, this.sorts = {}, this.detail = void 0, this.selected.clear(), this.pending = void 0, this.operation = null, this.draft = {}, this.original = "", this.search = "", this.confirmed = !1, this.deleteWord = "", this.loading = this.saving = this.transferBusy = !1, this.error = this.notice = this.preferenceError = "";
+    for (const e of this.renderRoot.querySelectorAll("dialog"))
+      e.close();
+    this.busy(), this.requestUpdate();
+  }
+  async initialize() {
+    const e = ++this.generation;
+    this.preferences?.dispose(), this.preferences = new Ee(
+      this.client,
+      this.scope,
+      !1,
+      (t) => {
+        e === this.generation && (t && u(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? v(t) : "", this.requestUpdate()));
+      },
+      "database"
+    );
+    try {
+      const t = await this.preferences.load();
+      if (e !== this.generation) return;
+      this.filters.limit = t.limit, this.showSystem = t.show_system, this.sorts = t.sorts ?? {}, this.table = String(t.table ?? "viewings"), !this.showSystem && !de.includes(this.table) && (this.table = "viewings"), this.filters = { ...this.filters, ...this.sorts[this.table] }, this.ready = !0, await this.load();
+    } catch (t) {
+      e === this.generation && this.fail(t);
+    }
+  }
+  updated() {
+    for (const [e, t] of [
+      ["database_limit", String(this.filters.limit)],
+      ["database_sort", this.filters.sort ?? this.page?.columns[0] ?? ""]
+    ]) {
+      const i = this.renderRoot.querySelector(
+        `[name="${e}"]`
+      );
+      i && i.value !== t && (i.value = t);
+    }
+  }
+  get blocked() {
+    return this.loading || this.saving || !!this.pending || this.transferBusy;
+  }
+  busy() {
+    this.dispatchEvent(
+      new CustomEvent("maintenance-busy", {
+        detail: this.saving || !!this.pending || this.transferBusy,
+        bubbles: !0,
+        composed: !0
+      })
+    );
+  }
+  fail(e) {
+    u(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
+      new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
+    ));
+    const t = u(e), i = e?.message;
+    this.error = ["query_syntax", "conflict", "invalid_request", "busy"].includes(t) && typeof i == "string" && i !== t ? i : v(e), this.requestUpdate();
+  }
+  async load(e = 0, t) {
+    if (!this.client || !this.scope || !this.ready || this.pending) return;
+    const i = this.generation, s = ++this.request;
+    this.loading = !0, this.page?.table !== this.table && (this.page = void 0), this.error = "", this.detail = void 0, this.selected.clear(), this.requestUpdate();
+    try {
+      const a = await this.client.inspect(
+        this.scope,
+        this.table,
+        e,
+        t,
+        this.filters
+      );
+      if (i !== this.generation || s !== this.request) return;
+      this.page = a, this.filters.sort = a.sort;
+    } catch (a) {
+      i === this.generation && s === this.request && this.fail(a);
+    } finally {
+      i === this.generation && s === this.request && (this.loading = !1, this.requestUpdate());
+    }
+  }
+  rowKey(e) {
+    return Object.fromEntries(
+      (this.page?.schema ?? []).filter((t) => t.primary).map((t) => [t.name, e[t.name]])
+    );
+  }
+  rowSelection(e) {
+    const t = this.page.items.indexOf(e);
+    return {
+      key: this.rowKey(e),
+      token: this.page.row_tokens?.[t] ?? ""
+    };
+  }
+  selectedRows() {
+    return this.selected.size ? [...this.selected].map((e) => this.page.items[e]) : this.detail ? [this.detail] : [];
+  }
+  showDetail(e) {
+    this.detail = e, this.requestUpdate();
+  }
+  async open(e) {
+    this.requestUpdate(), await this.updateComplete, this.isConnected && this.renderRoot.querySelector(`#${e}`)?.showModal();
+  }
+  async edit() {
+    if (!(this.blocked || !this.detail)) {
+      this.operation = "edit", this.draft = {}, this.nulls.clear();
+      for (const e of this.page?.schema ?? []) {
+        if (!e.editable) continue;
+        const t = this.detail[e.name];
+        this.draft[e.name] = t === null ? "" : typeof t == "string" ? t : JSON.stringify(t), t === null && this.nulls.add(e.name);
+      }
+      this.original = JSON.stringify([this.draft, [...this.nulls]]), this.confirmed = !1, this.open("database-edit");
+    }
+  }
+  newEntry() {
+    this.blocked || this.table !== "viewings" || (this.operation = "new", this.createDraft = N(), this.original = JSON.stringify(this.createDraft), this.confirmed = !1, this.open("database-edit"));
+  }
+  deleteEntries() {
+    this.blocked || !this.page?.deletable || !this.selectedRows().length || (this.operation = "delete", this.deleteWord = "", this.open("database-delete"));
+  }
+  discard() {
+    return this.pending || this.saving ? !1 : (this.operation === "edit" ? JSON.stringify([this.draft, [...this.nulls]]) : this.operation === "new" ? JSON.stringify(this.createDraft) : this.original) === this.original || window.confirm("Discard unsaved database changes?");
+  }
+  confirmNavigation() {
+    return !this.transferBusy && !this.saving && !this.pending && this.discard();
+  }
+  close(e) {
+    if (e?.preventDefault(), !!this.discard()) {
+      for (const t of ["database-edit", "database-delete"])
+        this.renderRoot.querySelector(`#${t}`)?.close();
+      this.operation = null, this.draft = {}, this.original = "", this.requestUpdate();
+    }
+  }
+  async save(e) {
+    if (e?.preventDefault(), !(!this.client || !this.scope || this.saving))
       try {
         if (!this.pending) {
-          if (!this.page || !this.confirming || this.scope.tracking_enabled || this.confirming === "selected" && !this.selected.size)
-            return;
-          const i = this.confirming === "all";
-          if (this.confirmation !== (i ? "PURGE ALL" : "PURGE") || !this.discard()) return;
-          this.detail = this.draft = this.initial = null, this.pending = this.client.preparePurge(this.scope, {
-            viewing_ids: i ? [] : [...this.selected],
-            all: i,
-            expected_revision: this.page.revision,
-            confirmation: this.confirmation
-          });
+          if (!this.operation || !this.page || this.operation === "delete" && this.deleteWord !== "DELETE" || this.operation !== "delete" && !this.confirmed) return;
+          if (this.operation === "new")
+            this.pending = this.client.prepare(this.scope, "create", {
+              data: it(this.createDraft)
+            });
+          else {
+            const i = {};
+            if (this.operation === "edit") {
+              for (const s of this.page.schema ?? []) {
+                if (!s.editable) continue;
+                let a = this.nulls.has(s.name) ? null : this.draft[s.name];
+                if (a !== null && s.type === "number") {
+                  if (!String(a).trim()) throw new Error("invalid");
+                  if (a = Number(a), !Number.isFinite(a)) throw new Error("invalid");
+                }
+                a !== null && s.type === "json" && (a = JSON.parse(String(a)), a = JSON.stringify(a)), JSON.stringify(a) !== JSON.stringify(this.detail[s.name]) && (i[s.name] = a);
+              }
+              if (!Object.keys(i).length) {
+                this.close();
+                return;
+              }
+            }
+            this.pending = this.client.prepareDatabaseMutation(this.scope, {
+              table: this.table,
+              operation: this.operation,
+              rows: (this.operation === "edit" ? [this.detail] : this.selectedRows()).map((s) => this.rowSelection(s)),
+              patch: i,
+              expected_revision: this.page.dataset_revision ?? this.page.revision,
+              confirmation: this.operation === "delete" ? "DELETE" : "SAVE"
+            });
+          }
         }
-        const e = this.generation;
-        this.saving = !0, this.error = this.notice = "", this.busy(), this.requestUpdate();
+        const t = this.generation;
+        this.saving = !0, this.error = "", this.busy(), this.requestUpdate();
         try {
-          const i = await this.client.purge(this.pending);
-          if (e !== this.generation) return;
-          this.pending = void 0, this.hidePurge(), this.notice = `Permanently purged ${i.purged_count} entries. Backups and exports were not changed.`, this.dispatchEvent(
+          if (this.operation === "new" ? await this.client.mutate(this.pending) : await this.client.databaseMutation(this.pending), t !== this.generation) return;
+          this.pending = void 0, this.saving = !1, this.operation = null, this.original = "", this.draft = {};
+          for (const i of this.renderRoot.querySelectorAll(
+            "#database-edit,#database-delete"
+          ))
+            i.close();
+          this.notice = "Database change applied.", this.dispatchEvent(
             new CustomEvent("database-changed", {
               bubbles: !0,
               composed: !0
             })
           ), await this.load();
         } catch (i) {
-          if (e !== this.generation) return;
+          if (t !== this.generation) return;
           [
-            "unauthorized",
             "invalid_request",
             "conflict",
             "not_found",
-            "tracking_enabled"
-          ].includes(f(i)) && (this.pending = void 0), this.fail(i);
+            "unauthorized",
+            "busy",
+            "backup_in_progress",
+            "library_storage_limit"
+          ].includes(u(i)) && (this.pending = void 0), this.fail(i);
         } finally {
-          (e === this.generation || !this.pending) && (this.saving = !1, this.busy(), this.requestUpdate());
+          t === this.generation && (this.saving = !1, this.busy(), this.requestUpdate());
         }
-      } catch (e) {
-        this.fail(e);
+      } catch {
+        this.error = "Check the edited values and JSON syntax before saving.", this.requestUpdate();
       }
   }
-  discardRetry() {
-    this.saving || !window.confirm(
-      "The purge may already have committed. Discard its retry and refresh the database to inspect the result?"
-    ) || (this.pending = void 0, this.hidePurge(), this.busy(), this.load());
+  changeTable(e) {
+    this.blocked || !this.discard() || (this.table = e, this.filters = {
+      limit: this.filters.limit,
+      query: "",
+      descending: !1,
+      ...this.sorts[e]
+    }, this.search = "", this.preferences?.set({ table: e }), this.load());
   }
-  discard() {
-    return !this.draft || JSON.stringify(this.draft) === JSON.stringify(this.initial) || window.confirm("Discard your unsaved changes?");
-  }
-  confirmNavigation() {
-    return this.discard();
-  }
-  showDetail(t) {
-    this.discard() && (this.detail = t, this.draft = this.table === "viewings" ? T(t) : null, this.initial = this.draft ? { ...this.draft } : null, this.requestUpdate());
-  }
-  newEntry() {
-    this.table !== "viewings" || this.loading || this.saving || this.pending || this.editPending || this.transferBusy || !this.discard() || (this.detail = null, this.draft = T(), this.initial = { ...this.draft }, this.error = this.notice = "", this.requestUpdate(), this.updateComplete.then(
-      () => this.renderRoot.querySelector("#title")?.focus()
-    ));
-  }
-  async saveDetail(t) {
-    if (t?.preventDefault(), !(!this.client || !this.scope || !this.draft || !this.initial || this.saving || this.pending || this.transferBusy) && !(t && !t.target.reportValidity()))
-      try {
-        if (!this.editPending) {
-          const e = Wt(
-            this.draft,
-            this.detail ? this.initial : void 0
-          );
-          if (!Object.keys(e).length) {
-            this.notice = "There are no changes to save.", this.requestUpdate();
-            return;
-          }
-          this.editPending = this.detail ? this.client.prepareDatabaseUpdate(this.scope, {
-            viewing_id: this.detail.id,
-            expected_revision: this.detail.revision,
-            patch: e
-          }) : this.client.prepare(this.scope, "create", { data: e });
-        }
-        await this.mutateDetail();
-      } catch (e) {
-        this.fail(e);
+  browse(e) {
+    this.blocked || (this.filters = { ...this.filters, ...e }, e.limit !== void 0 && this.preferences?.set({ limit: e.limit }), (e.sort !== void 0 || e.descending !== void 0) && (this.sorts = {
+      ...this.sorts,
+      [this.table]: {
+        sort: this.filters.sort ?? this.page?.columns[0] ?? "id",
+        descending: this.filters.descending
       }
+    }, this.preferences?.set({ sorts: this.sorts })), this.load());
   }
-  async deleteEntry() {
-    if (!this.client || !this.scope || this.blocked || this.table !== "viewings" || this.selected.size !== 1)
-      return;
-    const t = this.page?.items.find(
-      (e) => this.selected.has(String(e.id))
-    );
-    if (!(!t || t.deleted_at || !this.discard() || !window.confirm(
-      `Delete “${String(t.title)}” from the journal? Its database record will be retained.`
-    )))
-      try {
-        this.editPending = this.client.prepare(this.scope, "delete", {
-          viewing_id: t.id,
-          expected_revision: t.revision
-        }), this.detail = this.draft = this.initial = null, await this.mutateDetail();
-      } catch (e) {
-        this.fail(e);
+  retry() {
+    return this.pending ? r`<div class="warning" role="alert">
+          ${this.saving ? "Saving…" : "Result unconfirmed. Retry this exact request."}<button
+            ?disabled=${this.saving}
+            @click=${() => this.save()}
+          >
+            Retry same change</button
+          ><button
+            ?disabled=${this.saving}
+            @click=${() => {
+      if (window.confirm(
+        "The change may have committed. Discard the retry and refresh to inspect the result?"
+      )) {
+        this.pending = void 0, this.original = "", this.operation = null, this.busy();
+        for (const e of this.renderRoot.querySelectorAll("dialog"))
+          e.close();
+        this.load();
       }
-  }
-  async mutateDetail() {
-    if (!this.client || !this.editPending || this.saving) return;
-    const t = this.editPending.message.type.endsWith("/delete"), e = this.generation;
-    this.saving = !0, this.error = this.notice = "", this.busy(), this.requestUpdate();
-    try {
-      const i = await this.client.mutate(this.editPending);
-      if (e !== this.generation) return;
-      this.editPending = void 0, this.detail = this.draft = this.initial = null, this.notice = t ? "Viewing deleted from the journal. Its database record is retained." : "Viewing saved.", this.dispatchEvent(
-        new CustomEvent("database-changed", {
-          bubbles: !0,
-          composed: !0
-        })
-      );
-      const s = this.generation + 1;
-      if (await this.load(), this.generation !== s || !this.isConnected || t)
-        return;
-      const a = this.page?.items.find((o) => o.id === i.viewing.id);
-      this.showDetail(
-        a ?? i.viewing
-      );
-    } catch (i) {
-      if (e !== this.generation) return;
-      ["invalid_request", "conflict", "unauthorized", "not_found"].includes(
-        f(i)
-      ) && (this.editPending = void 0), this.fail(i);
-    } finally {
-      (e === this.generation || !this.editPending) && (this.saving = !1, this.busy(), this.requestUpdate());
-    }
-  }
-  renderMutationRetry() {
-    return this.editPending ? r`<div class="warning" role="status">
-          ${this.saving ? "Saving…" : "The change result is unconfirmed. Retry the exact change."}
-          <div class="actions">
-            <button
-              ?disabled=${this.saving}
-              @click=${() => this.mutateDetail()}
-            >
-              Retry same change
-            </button>
-            <button
-              ?disabled=${this.saving}
-              @click=${() => {
-      window.confirm(
-        "This change may already have committed. Discard its retry and reload the database?"
-      ) && (this.editPending = void 0, this.draft = this.initial = null, this.busy(), this.load());
     }}
-            >
-              Discard retry & reload
-            </button>
-          </div>
+          >
+            Discard retry & reload
+          </button>
         </div>` : h;
   }
-  renderDetail(t) {
-    return !this.detail && !this.draft ? r`<div class="empty">
-        Select an entry to inspect its details.
-      </div>` : r`<div class="card-head">
-        <h2>
-          ${this.draft ? this.detail ? "Edit viewing" : "New viewing" : "Entry details"}
-        </h2>
+  options() {
+    return r`<dialog
+      id="database-options"
+      class="database-dialog"
+      @click=${k}
+    >
+      <div class="card-head">
+        <h2>Database options</h2>
+        <button
+          @click=${() => this.renderRoot.querySelector("#database-options")?.close()}
+        >
+          Done
+        </button>
       </div>
-      ${this.draft ? r`<form class="editor" @submit=${this.saveDetail}>
-              <fieldset ?disabled=${t}>
-                ${Jt(this.draft, (e, i) => {
-      this.draft = {
-        ...this.draft,
-        [e]: i.target.value
-      }, this.requestUpdate();
-    })}
-                <p class="muted">
-                  Only changed viewing fields are corrected. Deletion status and
-                  recorded session evidence are preserved.
-                </p>
-                <div class="actions">
-                  <button type="submit" class="primary">
-                    ${this.detail ? "Save viewing" : "Create entry"}</button
-                  ><button
-                    type="button"
-                    @click=${() => {
-      this.discard() && (this.detail = this.draft = this.initial = null, this.requestUpdate());
-    }}
-                  >
-                    Close details
-                  </button>
-                </div>
-              </fieldset>
-            </form>` : r`<p class="muted">
-              System metadata, evidence, retry, and audit records are read-only.
-            </p>`}
-      ${this.detail ? r`<h3>Raw stored values</h3>
-              <pre>${JSON.stringify(this.detail, null, 2)}</pre>` : h}`;
-  }
-  switchTable(t) {
-    this.blocked || this.discard() && (this.table = t, this.filters = { limit: this.filters.limit, query: "", descending: !1 }, this.search = "", this.columns = [], this.draft = this.initial = null, this.load());
-  }
-  browse(t) {
-    return this.blocked || !this.discard() ? !1 : (this.filters = { ...this.filters, ...t }, this.draft = this.initial = null, this.load(), !0);
-  }
-  tabKey(t, e) {
-    const i = e.indexOf(this.table), s = t.key === "ArrowRight" ? (i + 1) % e.length : t.key === "ArrowLeft" ? (i + e.length - 1) % e.length : t.key === "Home" ? 0 : t.key === "End" ? e.length - 1 : -1;
-    s < 0 || (t.preventDefault(), this.switchTable(e[s]), this.updateComplete.then(
-      () => this.renderRoot.querySelector(`#table-${this.table}`)?.focus()
-    ));
-  }
-  render() {
-    const t = this.blocked, e = Object.keys(this.page?.tables ?? rt), i = this.selected.size === 1 ? this.page?.items.find((a) => this.selected.has(String(a.id))) : void 0, s = this.table === "viewings";
-    return r`<section class="card database" aria-label="Database management">
-      <div class="database-toolbar">
-        <div class="actions" aria-label="Entry actions">
-          <button
-            class="primary"
-            ?disabled=${t || !s}
-            @click=${this.newEntry}
-          >
-            New Entry
-          </button>
-          <button
-            class="danger"
-            ?disabled=${t || !s || !i || !!i.deleted_at}
-            @click=${this.deleteEntry}
-          >
-            Delete entry
-          </button>
-          <button
-            id="purge-entry"
-            class="danger"
-            ?disabled=${t || !s || !!this.scope?.tracking_enabled || !this.page?.tables.viewings}
-            @click=${this.openPurge}
-          >
-            Purge entry
-          </button>
-          <button ?disabled=${t} @click=${() => this.load()}>
-            Refresh database
-          </button>
-        </div>
-        <kaleidescape-transfers
-          .client=${this.client}
-          .scope=${this.scope ? { ...this.scope, revision: this.page?.revision ?? this.scope.revision } : void 0}
-          .disabled=${this.loading || this.saving || !!this.pending || !!this.editPending || this.purgeOpen}
-          @transfer-open=${(a) => {
-      if (a.detail === "import") {
-        if (!this.discard()) {
-          a.preventDefault();
-          return;
-        }
-        this.detail = this.draft = this.initial = null, this.requestUpdate();
-      }
-    }}
-          @transfer-busy=${(a) => {
-      this.transferBusy = a.detail, this.busy(), this.requestUpdate();
-    }}
-          @database-changed=${() => {
-      !this.pending && !this.editPending && this.load();
-    }}
-        ></kaleidescape-transfers>
-      </div>
-      <div class="database-messages">
-        ${this.error ? r`<p class="error" role="alert">${this.error}</p>` : h}
-        ${this.notice ? r`<p class="notice" role="status">${this.notice}</p>` : h}
-        ${this.renderMutationRetry()}
-      </div>
-      <div
-        class="page-tabs table-tabs"
-        role="tablist"
-        aria-label="Database tables"
-        @keydown=${(a) => {
-      t || this.tabKey(a, e);
-    }}
-      >
-        ${e.map(
-      (a) => r`<button
-              role="tab"
-              id=${`table-${a}`}
-              aria-controls="database-rows"
-              aria-selected=${this.table === a}
-              tabindex=${this.table === a ? "0" : "-1"}
-              ?disabled=${t}
-              @click=${() => this.switchTable(a)}
-            >
-              ${rt[a] ?? a}${this.page ? ` (${this.page.tables[a]})` : ""}
-            </button>`
-    )}
-      </div>
-      <form
-        class="filters database-filters"
-        @submit=${(a) => {
-      a.preventDefault(), this.browse({ query: this.search });
-    }}
-      >
+      <p>View choices save automatically for your HA user.</p>
+      <fieldset ?disabled=${this.blocked}>
         <label
-          >Search rows
-          <input
-            name="database_query"
-            maxlength="500"
-            .value=${this.search}
-            ?disabled=${t}
-            @input=${(a) => {
-      this.search = a.target.value;
-    }}
-          />
-        </label>
-        <button type="submit" ?disabled=${t}>Search</button>
-        <label
-          >Rows per page
-          <select
+          >Rows per page<select
             name="database_limit"
             .value=${String(this.filters.limit)}
-            ?disabled=${t}
-            @change=${(a) => {
-      const o = a.target;
-      this.browse({ limit: Number(o.value) }) || (o.value = String(this.filters.limit));
-    }}
+            @change=${(e) => this.browse({ limit: Number(e.target.value) })}
           >
-            ${[10, 25, 100, 500].map((a) => r`<option value=${a}>${a}</option>`)}
-          </select>
-        </label>
-        <label
-          >Sort by
-          <select
+            ${[10, 25, 100, 500].map((e) => r`<option value=${e}>${e}</option>`)}
+          </select></label
+        ><label class="check"
+          ><input
+            name="show_system"
+            type="checkbox"
+            .checked=${this.showSystem}
+            @change=${(e) => {
+      this.showSystem = e.target.checked, this.preferences?.set({ show_system: this.showSystem }), !this.showSystem && !de.includes(this.table) && this.changeTable("viewings"), this.requestUpdate();
+    }}
+          />Show system tables</label
+        ><label
+          >Sort by<select
             name="database_sort"
-            .value=${this.filters.sort ?? this.columns[0] ?? ""}
-            ?disabled=${t || !this.columns.length}
-            @change=${(a) => {
-      const o = a.target;
-      this.browse({ sort: o.value }) || (o.value = this.filters.sort ?? this.columns[0] ?? "");
-    }}
+            .value=${this.filters.sort ?? ""}
+            @change=${(e) => this.browse({ sort: e.target.value })}
           >
-            ${this.columns.map((a) => r`<option value=${a}>${a.replaceAll("_", " ")}</option>`)}
-          </select>
-        </label>
-        <button
-          type="button"
-          ?disabled=${t}
+            ${this.page?.columns.map((e) => r`<option value=${e}>${e}</option>`)}
+          </select></label
+        ><button
           aria-label="Reverse database sort"
           @click=${() => this.browse({ descending: !this.filters.descending })}
         >
           ${this.filters.descending ? "Descending ↓" : "Ascending ↑"}
         </button>
-      </form>
-      <div
-        class="database-layout"
-        role="tabpanel"
-        id="database-rows"
-        aria-labelledby=${`table-${this.table}`}
-      >
-        <section class="database-entries" aria-label="Database entries">
-          <div class="card-head">
-            <h2>${rt[this.table] ?? this.table}</h2>
-          </div>
-          ${this.loading ? r`<p role="status">Loading database…</p>` : this.page ? r` <p class="muted">
-                      Schema ${this.scope?.schema_version} · Dataset revision
-                      ${this.page.revision} · ${this.page.tables[this.table]}
-                      rows
-                    </p>
-                    <ul class="entry-list">
-                      ${this.page.items.map(
-      (a) => r`<li
-                            class=${this.detail === a ? "selected" : ""}
-                          >
-                            ${s ? r`<input
-                                    type="checkbox"
-                                    aria-label=${`Select ${String(a.title)}`}
-                                    ?disabled=${t || this.selected.size >= 100 && !this.selected.has(String(a.id))}
-                                    .checked=${this.selected.has(String(a.id))}
-                                    @change=${(o) => {
-        if (o.target.checked) {
-          if (this.selected.size >= 100) return;
-          this.selected.add(String(a.id));
-        } else
-          this.selected.delete(String(a.id));
-        this.confirming = null, this.requestUpdate();
-      }}
-                                  />` : h}
-                            <button
-                              class="link entry-name"
-                              ?disabled=${t}
-                              @click=${() => this.showDetail(a)}
-                            >
-                              ${String(a.title ?? a.id ?? a.request_id ?? "Dataset metadata")}
-                              ${s ? r`<small>${a.deleted_at ? "Deleted" : "Visible"}</small>` : h}
-                            </button>
-                          </li>`
-    )}
-                    </ul>
-                    ${this.page.items.length ? h : r`<p>No rows.</p>`}
-                    <div class="pagination database-pagination">
-                      <small
-                        >Rows
-                        ${this.page.items.length ? this.page.offset + 1 : 0}–${this.page.offset + this.page.items.length}
-                        of ${this.page.total} · Up to ${this.page.limit}
-                        rows${s ? ` · ${this.selected.size} selected (maximum 100)` : ""}</small
-                      >
-                      <div class="actions">
-                        <button
-                          ?disabled=${t || this.page.offset === 0}
-                          @click=${() => this.load()}
-                        >
-                          First
-                        </button>
-                        <button
-                          ?disabled=${t || this.page.offset === 0}
-                          @click=${() => this.load(Math.max(0, this.page.offset - this.page.limit), this.page.revision)}
-                        >
-                          Previous
-                        </button>
-                        <button
-                          ?disabled=${t || !this.page.has_more}
-                          @click=${() => this.load(this.page.offset + this.page.limit, this.page.revision)}
-                        >
-                          Next
-                        </button>
-                      </div>
-                    </div>` : h}
-        </section>
-        <section class="database-detail" aria-label="Selected database entry">
-          ${this.renderDetail(t)}
-        </section>
-      </div>
-      <dialog
-        id="purge-dialog"
-        @click=${N}
-        class="database-dialog"
-        aria-labelledby="purge-title"
-        @cancel=${this.closePurge}
-      >
-        <div class="card-head"><h2 id="purge-title">Permanent purge</h2></div>
-        <p>
-          Remove viewing entries and associated sessions, edit audit references,
-          and cached response content. This cannot be undone here. Backups,
-          exports, and HA Recorder history remain.
-        </p>
-        ${this.scope?.tracking_enabled ? r`<p class="warning">Disable automatic tracking in Settings before purging.</p>` : h}
-        ${this.error ? r`<p class="error" role="alert">${this.error}</p>` : h}
-        ${this.pending ? r`<div class="warning" role="status">
-                ${this.saving ? "Purging…" : "The purge result is unconfirmed. Retry the exact request to confirm it."}
-                <div class="actions">
-                  <button ?disabled=${this.saving} @click=${() => this.purge()}>
-                    Retry same purge
-                  </button>
-                  <button ?disabled=${this.saving} @click=${this.discardRetry}>
-                    Discard retry & refresh
-                  </button>
-                </div>
-              </div>` : h}
+      </fieldset>
+      <p class="muted">
+        IDs, relationship keys, managed paths, audit history, dataset metadata
+        and write receipts remain protected.
+      </p>
+    </dialog>`;
+  }
+  render() {
+    if (!this.ready)
+      return r`<p>${this.error || "Loading database preferences…"}</p>
+        ${this.error ? r`<button @click=${() => this.initialize()}>Retry loading database</button>` : h}`;
+    const e = Object.keys(this.page?.tables ?? he).filter(
+      (i) => this.showSystem || de.includes(i)
+    ), t = (this.page?.schema ?? []).some((i) => i.editable);
+    return r`<section class="card database" aria-label="Database management">
+      <div class="database-toolbar">
         <div class="actions">
           <button
-            class="danger"
-            ?disabled=${t || !!this.scope?.tracking_enabled || !this.selected.size}
-            @click=${() => {
-      this.confirming = "selected", this.confirmation = "", this.requestUpdate();
-    }}
+            class="primary"
+            ?disabled=${this.blocked || this.table !== "viewings"}
+            @click=${this.newEntry}
           >
-            Purge selected (${this.selected.size})
-          </button>
-          <button
+            New Entry</button
+          ><button
             class="danger"
-            ?disabled=${t || !!this.scope?.tracking_enabled || !this.page?.tables.viewings}
-            @click=${() => {
-      this.confirming = "all", this.confirmation = "", this.requestUpdate();
-    }}
+            ?disabled=${this.blocked || !this.page?.deletable || !this.selectedRows().length}
+            @click=${this.deleteEntries}
           >
-            Purge all entries
+            Delete entry${this.selected.size ? ` (${this.selected.size})` : ""}</button
+          ><button ?disabled=${this.blocked} @click=${() => this.load()}>
+            Refresh database</button
+          ><button
+            ?disabled=${this.blocked}
+            @click=${() => this.open("database-options")}
+          >
+            Options
           </button>
         </div>
-        ${this.confirming && !this.pending ? r`<form @submit=${this.purge}>
-                <h3>
-                  ${this.confirming === "all" ? "Permanently purge all entries?" : `Permanently purge ${this.selected.size} selected entries?`}
-                </h3>
-                <label
-                  >Type ${this.confirming === "all" ? "PURGE ALL" : "PURGE"} to
-                  confirm
-                  <input
-                    name="purge_confirmation"
-                    autocomplete="off"
-                    .value=${this.confirmation}
-                    ?disabled=${t}
-                    @input=${(a) => {
-      this.confirmation = a.target.value, this.requestUpdate();
+        <kaleidescape-transfers
+          .client=${this.client}
+          .scope=${this.scope ? { ...this.scope, revision: this.page?.dataset_revision ?? this.scope.revision } : void 0}
+          .disabled=${this.blocked || !!this.operation}
+          @transfer-busy=${(i) => {
+      this.transferBusy = i.detail, this.busy();
     }}
-                  />
-                </label>
-                <div class="actions dialog-footer">
-                  <button
-                    type="submit"
-                    class="danger"
-                    ?disabled=${t || this.confirmation !== (this.confirming === "all" ? "PURGE ALL" : "PURGE")}
+          @database-changed=${() => {
+      this.pending || this.load();
+    }}
+        ></kaleidescape-transfers>
+      </div>
+      <div class="database-messages">
+        ${this.error ? r`<p class="error" role="alert">${this.error}</p>` : h}${this.notice ? r`<p role="status">${this.notice}</p>` : h}${this.preferenceError ? r`<p class="warning">${this.preferenceError}<button @click=${() => this.preferences?.retry()}>Retry preferences</button></p>` : h}${this.retry()}
+      </div>
+      <div
+        class="page-tabs table-tabs"
+        role="tablist"
+        aria-label="Database tables"
+        @keydown=${(i) => {
+      const s = e.indexOf(this.table), a = i.key === "ArrowRight" ? (s + 1) % e.length : i.key === "ArrowLeft" ? (s + e.length - 1) % e.length : i.key === "Home" ? 0 : i.key === "End" ? e.length - 1 : -1;
+      a >= 0 && !this.blocked && (i.preventDefault(), this.changeTable(e[a]), this.updateComplete.then(
+        () => this.renderRoot.querySelector(`#table-${this.table}`)?.focus()
+      ));
+    }}
+      >
+        ${e.map((i) => r`<button role="tab" id=${`table-${i}`} aria-selected=${this.table === i} tabindex=${this.table === i ? 0 : -1} ?disabled=${this.blocked} @click=${() => this.changeTable(i)}>${he[i] ?? i}${this.page ? ` (${this.page.tables[i]})` : ""}</button>`)}
+      </div>
+      <div class="database-filters filters">
+        <kaleidescape-database-search
+          .client=${this.client}
+          .scope=${this.scope}
+          .table=${this.table}
+          .value=${this.search}
+          .fields=${this.page?.query_fields ?? []}
+          .operators=${this.page?.operators ?? []}
+          .disabled=${this.blocked}
+          @query-change=${(i) => {
+      this.search = i.detail;
+    }}
+          @query-submit=${() => this.browse({ query: this.search })}
+          @access-denied=${() => this.fail({ code: "unauthorized" })}
+        ></kaleidescape-database-search
+        ><button
+          ?disabled=${this.blocked}
+          @click=${() => this.browse({ query: this.search })}
+        >
+          Search
+        </button>
+      </div>
+      <div class="database-layout">
+        <section class="database-entries" aria-label="Database entries">
+          <div class="card-head">
+            <h2>${he[this.table] ?? this.table}</h2>
+          </div>
+          ${this.loading ? r`<p role="status">Loading database…</p>` : h}
+          <ul class="entry-list">
+            ${this.page?.items.map(
+      (i, s) => r`<li class=${this.detail === i ? "selected" : ""}>
+                  ${this.page?.deletable ? r`<input
+                          type="checkbox"
+                          aria-label=${`Select ${String(i.title ?? i.name ?? i.id ?? i.cache_key ?? i.owner ?? "row")}`}
+                          .checked=${this.selected.has(s)}
+                          ?disabled=${this.blocked || this.selected.size >= 100 && !this.selected.has(s)}
+                          @change=${(a) => {
+        a.target.checked ? this.selected.add(s) : this.selected.delete(s), this.requestUpdate();
+      }}
+                        />` : h}<button
+                    class="link entry-name"
+                    ?disabled=${this.blocked}
+                    @click=${() => this.showDetail(i)}
                   >
-                    Confirm permanent purge
+                    ${String(i.title ?? i.name ?? i.id ?? i.cache_key ?? i.owner ?? i.request_id ?? "Dataset metadata")}
                   </button>
-                </div>
-              </form>` : h}
-        <div class="actions dialog-footer">
-          <button
-            ?disabled=${this.saving || !!this.pending}
-            @click=${this.closePurge}
-          >
-            Cancel purge
-          </button>
+                </li>`
+    )}
+          </ul>
+          ${this.page ? r`<div class="pagination database-pagination">
+                  <small
+                    >Rows
+                    ${this.page.items.length ? this.page.offset + 1 : 0}–${this.page.offset + this.page.items.length}
+                    of ${this.page.total} · ${this.selected.size} selected
+                    (maximum 100)</small
+                  >
+                  <div class="actions">
+                    <button
+                      ?disabled=${this.blocked || !this.page.offset}
+                      @click=${() => this.load()}
+                    >
+                      First</button
+                    ><button
+                      ?disabled=${this.blocked || !this.page.offset}
+                      @click=${() => this.load(Math.max(0, this.page.offset - this.page.limit), this.page.revision)}
+                    >
+                      Previous</button
+                    ><button
+                      ?disabled=${this.blocked || !this.page.has_more}
+                      @click=${() => this.load(this.page.offset + this.page.limit, this.page.revision)}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>` : h}
+        </section>
+        <section class="database-detail" aria-label="Selected database entry">
+          <div class="card-head">
+            <h2>Entry details</h2>
+            ${this.detail ? r`<button ?disabled=${this.blocked || !t} @click=${this.edit}>Edit entry</button>` : h}
+          </div>
+          ${this.detail ? r`<pre>${JSON.stringify(this.detail, null, 2)}</pre>
+                  ${t ? h : r`<p class="muted">This table protects system integrity; stored values are read-only.</p>`}` : r`<p class="empty">
+                  Select an entry to inspect raw values.
+                </p>`}
+        </section>
+      </div>
+      ${this.options()}
+      <dialog
+        id="database-edit"
+        class="database-dialog"
+        @click=${k}
+        @cancel=${this.close}
+      >
+        <div class="card-head">
+          <h2>
+            ${this.operation === "new" ? "New viewing" : "Edit database entry"}
+          </h2>
         </div>
+        <p class="warning">
+          Only supported fields can change. Source metadata may be restored by a
+          later sync. Open playback sessions and their viewings are protected
+          until closed. Session corrections do not recalculate viewing
+          summaries.
+        </p>
+        ${this.error ? r`<p class="error">${this.error}</p>` : h}${this.retry()}
+        <form @submit=${this.save}>
+          <fieldset ?disabled=${this.saving || !!this.pending}>
+            ${this.operation === "new" ? st(this.createDraft, (i, s) => {
+      this.createDraft = {
+        ...this.createDraft,
+        [i]: s.target.value
+      }, this.requestUpdate();
+    }) : (this.page?.schema ?? []).filter((i) => i.editable).map(
+      (i) => r`<div class="database-edit-field">
+                          <label
+                            >${i.name}${i.type === "json" || i.name === "notes" ? r`<textarea
+                                    name=${i.name}
+                                    .value=${this.draft[i.name] ?? ""}
+                                    ?disabled=${this.nulls.has(i.name)}
+                                    @input=${(s) => {
+        this.draft = {
+          ...this.draft,
+          [i.name]: s.target.value
+        };
+      }}
+                                  ></textarea>` : r`<input
+                                    name=${i.name}
+                                    type=${i.type === "number" ? "number" : "text"}
+                                    step="any"
+                                    .value=${this.draft[i.name] ?? ""}
+                                    ?disabled=${this.nulls.has(i.name)}
+                                    @input=${(s) => {
+        this.draft = {
+          ...this.draft,
+          [i.name]: s.target.value
+        };
+      }}
+                                  />`}</label
+                          >${i.nullable ? r`<label class="check"
+                                  ><input
+                                    type="checkbox"
+                                    aria-label=${`Set ${i.name} to NULL`}
+                                    .checked=${this.nulls.has(i.name)}
+                                    @change=${(s) => {
+        s.target.checked ? this.nulls.add(i.name) : this.nulls.delete(i.name), this.requestUpdate();
+      }}
+                                  />NULL</label
+                                >` : h}
+                        </div>`
+    )}<label class="check"
+              ><input
+                name="confirm_edit"
+                type="checkbox"
+                .checked=${this.confirmed}
+                @change=${(i) => {
+      this.confirmed = i.target.checked, this.requestUpdate();
+    }}
+              />I reviewed these changes and confirm saving.</label
+            ><button type="submit" class="primary" ?disabled=${!this.confirmed}>
+              Save changes
+            </button>
+          </fieldset>
+          <button
+            type="button"
+            ?disabled=${this.saving || !!this.pending}
+            @click=${this.close}
+          >
+            Cancel edit
+          </button>
+        </form>
+      </dialog>
+      <dialog
+        id="database-delete"
+        class="database-dialog"
+        @click=${k}
+        @cancel=${this.close}
+      >
+        <h2>Permanently delete ${this.selectedRows().length} entries?</h2>
+        <p>
+          Database deletion is permanent. Associated memberships/session
+          references may also be removed, and artwork references cleared. Source
+          sync may recreate cached library records. Existing exports and backups
+          remain.
+        </p>
+        ${this.error ? r`<p class="error">${this.error}</p>` : h}${this.retry()}<label
+          >Type DELETE to confirm<input
+            name="delete_confirmation"
+            .value=${this.deleteWord}
+            ?disabled=${!!this.pending || this.saving}
+            @input=${(i) => {
+      this.deleteWord = i.target.value, this.requestUpdate();
+    }} /></label
+        ><button
+          class="danger"
+          ?disabled=${this.deleteWord !== "DELETE" || this.saving || !!this.pending}
+          @click=${() => this.save()}
+        >
+          Confirm delete</button
+        ><button
+          ?disabled=${this.saving || !!this.pending}
+          @click=${this.close}
+        >
+          Cancel delete
+        </button>
       </dialog>
     </section>`;
   }
 };
-Z.properties = {
+ae.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 }
-}, Z.styles = [k, De];
-let ft = Z;
-customElements.get("kaleidescape-database") || customElements.define("kaleidescape-database", ft);
-const nt = [
+}, ae.styles = [S, Kt];
+let we = ae;
+customElements.get("kaleidescape-database") || customElements.define("kaleidescape-database", we);
+const ce = [
   {
     id: "now-playing",
     label: "Now Playing",
@@ -4667,20 +5551,20 @@ const nt = [
     label: "Settings",
     description: "Configure playback recording and journal rules."
   }
-], tt = class tt extends v {
+], re = class re extends y {
   constructor() {
     super(...arguments), this.narrow = !1, this.api = null, this.generation = 0, this.listRequest = 0, this.detailRequest = 0, this.info = null, this.rows = [], this.selected = null, this.draft = null, this.initial = null, this.sessions = null, this.sessionError = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.nextCursor = null, this.history = [], this.page = 1, this.loading = !1, this.detailLoading = !1, this.saving = !1, this.pending = null, this.confirmDelete = !1, this.error = "", this.lastError = "", this.notice = "", this.activePage = "journal", this.navigationReady = !1, this.settingsBusy = !1, this.maintenanceBusy = !1;
   }
-  willUpdate(t) {
-    if (!(!t.has("hass") && !t.has("client")))
+  willUpdate(e) {
+    if (!(!e.has("hass") && !e.has("client")))
       if (this.hass) {
         if (!this.hass.user?.is_admin || !this.hass.connection.connected) {
           this.bind(null);
           return;
         }
-        (this.haConnection !== this.hass.connection || this.haUser !== this.hass.user.id) && (this.haConnection = this.hass.connection, this.haUser = this.hass.user.id, this.haClient = new Vt({
-          callWS: (e) => this.hass.callWS(e),
-          fetchWithAuth: (e, i) => this.hass.fetchWithAuth(e, i)
+        (this.haConnection !== this.hass.connection || this.haUser !== this.hass.user.id) && (this.haConnection = this.hass.connection, this.haUser = this.hass.user.id, this.haClient = new tt({
+          callWS: (t) => this.hass.callWS(t),
+          fetchWithAuth: (t, i) => this.hass.fetchWithAuth(t, i)
         })), this.bind(this.haClient);
       } else
         this.bind(this.client ?? null);
@@ -4694,11 +5578,11 @@ const nt = [
   clearPrivate() {
     this.generation++, this.info = null, this.rows = [], this.selected = null, this.draft = null, this.initial = null, this.sessions = null, this.pending = null, this.history = [], this.nextCursor = null, this.cursor = void 0, this.page = 1, this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.confirmDelete = !1, this.saving = !1, this.loading = !1, this.detailLoading = !1, this.sessionError = "", this.notice = "", this.activePage = "journal", this.navigationReady = !1, this.settingsBusy = this.maintenanceBusy = !1;
   }
-  bind(t) {
-    this.api !== t && (this.clearPrivate(), this.api = t, this.error = "", this.requestUpdate(), t && this.refresh());
+  bind(e) {
+    this.api !== e && (this.clearPrivate(), this.api = e, this.error = "", this.requestUpdate(), e && this.refresh());
   }
-  fail(t) {
-    f(t) === "unauthorized" && this.clearPrivate(), this.lastError = f(t), this.error = w(t), this.requestUpdate();
+  fail(e) {
+    u(e) === "unauthorized" && this.clearPrivate(), this.lastError = u(e), this.error = v(e), this.requestUpdate();
   }
   dirty() {
     return this.draft && JSON.stringify(this.draft) !== JSON.stringify(this.initial);
@@ -4706,73 +5590,73 @@ const nt = [
   discard() {
     return (!this.dirty() || window.confirm("Discard your unsaved changes?")) && (this.activePage !== "library" || (this.renderRoot.querySelector("kaleidescape-library")?.confirmNavigation() ?? !0)) && (this.activePage !== "database" || (this.renderRoot.querySelector("kaleidescape-database")?.confirmNavigation() ?? !0)) && (this.activePage !== "settings" || (this.renderRoot.querySelector("kaleidescape-settings")?.confirmNavigation() ?? !0));
   }
-  async switchPage(t) {
-    t === "library" && !this.info?.library_enabled || t === this.activePage || this.loading || this.saving || this.pending || this.maintenanceBusy || this.settingsBusy || !this.discard() || (this.closeEditor(), this.activePage = t, L(t), this.error = this.notice = "", this.requestUpdate(), t === "journal" && (this.page = 1, this.history = [], await this.loadList()));
+  async switchPage(e) {
+    e === "library" && !this.info?.library_enabled || e === this.activePage || this.loading || this.saving || this.pending || this.maintenanceBusy || this.settingsBusy || !this.discard() || (this.closeEditor(), this.activePage = e, j(e), this.error = this.notice = "", this.requestUpdate(), e === "journal" && (this.page = 1, this.history = [], await this.loadList()));
   }
-  pageKey(t) {
-    const e = nt.filter(
+  pageKey(e) {
+    const t = ce.filter(
       (o) => o.id !== "library" || this.info?.library_enabled
-    ), i = e.findIndex((o) => o.id === this.activePage), s = t.key === "ArrowRight" ? (i + 1) % e.length : t.key === "ArrowLeft" ? (i + e.length - 1) % e.length : t.key === "Home" ? 0 : t.key === "End" ? e.length - 1 : -1;
+    ), i = t.findIndex((o) => o.id === this.activePage), s = e.key === "ArrowRight" ? (i + 1) % t.length : e.key === "ArrowLeft" ? (i + t.length - 1) % t.length : e.key === "Home" ? 0 : e.key === "End" ? t.length - 1 : -1;
     if (s < 0) return;
-    t.preventDefault(), this.switchPage(e[s].id).then(() => this.updateComplete).then(
+    e.preventDefault(), this.switchPage(t[s].id).then(() => this.updateComplete).then(
       () => this.renderRoot.querySelector(`#page-${this.activePage}`)?.focus()
     );
   }
-  async refresh(t = !1) {
+  async refresh(e = !1) {
     if (!this.api || this.pending || !this.discard()) return;
-    const e = this.api, i = ++this.generation;
+    const t = this.api, i = ++this.generation;
     this.info = null, this.rows = [], this.closeEditor(), this.loading = !0, this.error = "", this.requestUpdate();
     try {
-      let { entries: s } = await e.info();
-      for (let a = 0; t && !s.length && a < 20; a++) {
+      let { entries: s } = await t.info();
+      for (let a = 0; e && !s.length && a < 20; a++) {
         if (await new Promise((o) => setTimeout(o, 500)), i !== this.generation) return;
-        ({ entries: s } = await e.info());
+        ({ entries: s } = await t.info());
       }
       if (i !== this.generation) return;
-      if (!s.length) throw new g("not_ready");
-      if (s[0].api_version !== 1) throw new g("not_ready");
+      if (!s.length) throw new p("not_ready");
+      if (s[0].api_version !== 1) throw new p("not_ready");
       if (this.info = s[0], !this.info.permissions.edit) return;
-      this.navigationReady || (this.activePage = Kt(
+      this.navigationReady || (this.activePage = at(
         this.info.ui_defaults?.default_landing_page,
         !0,
         !!this.info.library_enabled
-      ), this.navigationReady = !0, L(this.activePage)), this.activePage === "library" && !this.info.library_enabled && (this.activePage = "journal", L(this.activePage)), this.history = [], this.cursor = void 0, this.page = 1, await this.loadList();
+      ), this.navigationReady = !0, j(this.activePage)), this.activePage === "library" && !this.info.library_enabled && (this.activePage = "journal", j(this.activePage)), this.history = [], this.cursor = void 0, this.page = 1, await this.loadList();
     } catch (s) {
       i === this.generation && this.fail(s);
     } finally {
       i === this.generation && (this.loading = !1, this.requestUpdate());
     }
   }
-  async loadList(t) {
+  async loadList(e) {
     if (!this.api || !this.info) return;
-    const e = this.api, i = this.info, s = this.generation, a = ++this.listRequest;
+    const t = this.api, i = this.info, s = this.generation, a = ++this.listRequest;
     this.loading = !0, this.error = "", this.requestUpdate();
     try {
-      const o = await e.list(i, this.query, this.status, t);
+      const o = await t.list(i, this.query, this.status, e);
       if (s !== this.generation || a !== this.listRequest)
         return;
-      this.rows = o.items, this.cursor = t, this.nextCursor = o.next_cursor, this.info = { ...this.info, revision: o.revision };
+      this.rows = o.items, this.cursor = e, this.nextCursor = o.next_cursor, this.info = { ...this.info, revision: o.revision };
     } catch (o) {
       s === this.generation && a === this.listRequest && (this.rows = [], this.nextCursor = null, this.fail(o));
     } finally {
       s === this.generation && a === this.listRequest && (this.loading = !1, this.requestUpdate());
     }
   }
-  async selectRecord(t) {
+  async selectRecord(e) {
     if (!this.api || !this.info || this.pending || !this.discard()) return;
     this.closeEditor();
-    const e = this.api, i = this.info, s = this.generation, a = ++this.detailRequest;
+    const t = this.api, i = this.info, s = this.generation, a = ++this.detailRequest;
     this.detailLoading = !0, this.error = "", this.notice = "", this.requestUpdate();
     try {
-      const o = await e.get(i, t);
+      const o = await t.get(i, e);
       if (s !== this.generation || a !== this.detailRequest)
         return;
-      this.selected = o, this.draft = T(o), this.initial = { ...this.draft }, this.detailLoading = !1, this.requestUpdate();
+      this.selected = o, this.draft = N(o), this.initial = { ...this.draft }, this.detailLoading = !1, this.requestUpdate();
       try {
-        const l = await e.sessions(i, t);
+        const l = await t.sessions(i, e);
         s === this.generation && a === this.detailRequest && (this.sessions = l);
       } catch (l) {
-        s === this.generation && a === this.detailRequest && (f(l) === "unauthorized" ? this.fail(l) : this.sessionError = "Session details could not be loaded.");
+        s === this.generation && a === this.detailRequest && (u(l) === "unauthorized" ? this.fail(l) : this.sessionError = "Session details could not be loaded.");
       }
     } catch (o) {
       s === this.generation && a === this.detailRequest && this.fail(o);
@@ -4784,20 +5668,20 @@ const nt = [
     this.detailRequest++, this.selected = null, this.draft = null, this.initial = null, this.sessions = null, this.sessionError = "", this.confirmDelete = !1, this.detailLoading = !1;
   }
   newRecord() {
-    this.pending || !this.discard() || (this.closeEditor(), this.draft = T(), this.initial = { ...this.draft }, this.error = "", this.notice = "", this.requestUpdate(), this.updateComplete.then(
+    this.pending || !this.discard() || (this.closeEditor(), this.draft = N(), this.initial = { ...this.draft }, this.error = "", this.notice = "", this.requestUpdate(), this.updateComplete.then(
       () => this.renderRoot.querySelector("#title")?.focus()
     ));
   }
-  input(t, e) {
+  input(e, t) {
     this.draft && (this.draft = {
       ...this.draft,
-      [t]: e.target.value
+      [e]: t.target.value
     }, this.requestUpdate());
   }
-  async save(t) {
-    if (t.preventDefault(), !(!this.api || !this.info || !this.draft || this.pending || this.saving || !t.target.reportValidity()))
+  async save(e) {
+    if (e.preventDefault(), !(!this.api || !this.info || !this.draft || this.pending || this.saving || !e.target.reportValidity()))
       try {
-        const i = Wt(
+        const i = it(
           this.draft,
           this.selected ? this.initial : void 0
         );
@@ -4819,7 +5703,7 @@ const nt = [
           } : { data: i }
         ), await this.commit();
       } catch (i) {
-        f(i) === "request_id_unavailable" ? this.fail(i) : (this.error = "Check the dates and numeric fields before saving.", this.requestUpdate());
+        u(i) === "request_id_unavailable" ? this.fail(i) : (this.error = "Check the dates and numeric fields before saving.", this.requestUpdate());
       }
   }
   async deleteRecord() {
@@ -4829,20 +5713,20 @@ const nt = [
           viewing_id: this.selected.id,
           expected_revision: this.selected.revision
         }), this.confirmDelete = !1, await this.commit();
-      } catch (t) {
-        this.fail(t);
+      } catch (e) {
+        this.fail(e);
       }
   }
   async commit() {
     if (!this.api || !this.pending || this.saving) return;
-    const t = this.api, e = this.pending, i = this.generation;
+    const e = this.api, t = this.pending, i = this.generation;
     this.saving = !0, this.error = "", this.notice = "", this.requestUpdate();
     try {
-      const s = await t.mutate(e);
+      const s = await e.mutate(t);
       if (i !== this.generation) return;
-      this.pending = null, this.closeEditor(), this.notice = s.viewing.deleted_at ? "Entry removed from the journal. Stored history is retained." : "Entry saved.", s.viewing.deleted_at || (this.selected = s.viewing, this.draft = T(s.viewing), this.initial = { ...this.draft }), this.page = 1, this.history = [], await this.loadList();
+      this.pending = null, this.closeEditor(), this.notice = s.viewing.deleted_at ? "Entry removed from the journal. Stored history is retained." : "Entry saved.", s.viewing.deleted_at || (this.selected = s.viewing, this.draft = N(s.viewing), this.initial = { ...this.draft }), this.page = 1, this.history = [], await this.loadList();
       try {
-        const { entries: a } = await t.info();
+        const { entries: a } = await e.info();
         i === this.generation && a[0]?.dataset_id === this.info?.dataset_id && (this.info = a[0]);
       } catch (a) {
         i === this.generation && this.fail(a);
@@ -4850,7 +5734,7 @@ const nt = [
     } catch (s) {
       if (i !== this.generation) return;
       ["invalid_request", "conflict", "unauthorized"].includes(
-        f(s)
+        u(s)
       ) && (this.pending = null), this.fail(s);
     } finally {
       i === this.generation && (this.saving = !1, this.requestUpdate());
@@ -4861,29 +5745,29 @@ const nt = [
       "This change may already have committed. Discard its retry and inspect the journal before adding it again?"
     ) && (this.pending = null, this.closeEditor(), this.notice = "Retry discarded. Check the journal before recreating the change.", await this.refresh());
   }
-  date(t) {
-    return new Date(t).toLocaleString(void 0, {
+  date(e) {
+    return new Date(e).toLocaleString(void 0, {
       dateStyle: "medium",
       timeStyle: "short"
     });
   }
-  bytes(t) {
-    return `${(t / 1024 / 1024).toFixed(t < 1024 * 1024 ? 2 : 1)} MiB`;
+  bytes(e) {
+    return `${(e / 1024 / 1024).toFixed(e < 1024 * 1024 ? 2 : 1)} MiB`;
   }
   async refreshInfo() {
     if (!this.api) return;
-    const t = this.generation;
+    const e = this.generation;
     try {
-      const { entries: e } = await this.api.info();
-      t === this.generation && e[0]?.dataset_id === this.info?.dataset_id && (this.info = e[0], this.requestUpdate());
-    } catch (e) {
-      t === this.generation && this.fail(e);
+      const { entries: t } = await this.api.info();
+      e === this.generation && t[0]?.dataset_id === this.info?.dataset_id && (this.info = t[0], this.requestUpdate());
+    } catch (t) {
+      e === this.generation && this.fail(t);
     }
   }
   renderEditor() {
     return this.detailLoading ? r`<div class="empty" role="status">Loading entry…</div>` : this.draft ? r`<form class="editor" @submit=${this.save}>
       <fieldset ?disabled=${this.saving || !!this.pending}>
-        ${Jt(this.draft, (t, e) => this.input(t, e))}
+        ${st(this.draft, (e, t) => this.input(e, t))}
         ${this.selected?.origin === "observed" ? r`<small>Only fields you change are marked as manual corrections. Session evidence is retained.</small>` : h}
         <div class="actions">
           <button type="submit" class="primary">
@@ -4940,7 +5824,7 @@ const nt = [
                 ${this.date(this.selected.updated_at)}<br />Completion:
                 ${this.selected.completion_reason ?? "Not completed"}
               </div>
-              ${this.sessionError ? r`<p>${this.sessionError}</p>` : this.sessions ? this.sessions.items.length ? r` ${this.sessions.items.map((t) => r`<div class="session">${this.date(t.started_at)}<br />${(t.watched_seconds / 60).toFixed(2)} min watched · ${t.credits_confirmed ? "Credits confirmed" : "Credits unconfirmed"} · ${t.gap_count} timing gaps<br />${t.end_reason ?? "Open session"}</div>`)}
+              ${this.sessionError ? r`<p>${this.sessionError}</p>` : this.sessions ? this.sessions.items.length ? r` ${this.sessions.items.map((e) => r`<div class="session">${this.date(e.started_at)}<br />${(e.watched_seconds / 60).toFixed(2)} min watched · ${e.credits_confirmed ? "Credits confirmed" : "Credits unconfirmed"} · ${e.gap_count} timing gaps<br />${e.end_reason ?? "Open session"}</div>`)}
                         ${this.sessions.has_more ? r`<small>Showing the latest 100 sessions.</small>` : h}` : r`<p class="muted">
                           No recorded sessions for this entry.
                         </p>` : r`<p class="muted">
@@ -4960,7 +5844,7 @@ const nt = [
         .client=${this.hass ? void 0 : this.client}
         .narrow=${this.narrow}
       ></kaleidescape-reader>`;
-    const t = this.loading || this.saving || !!this.pending || this.maintenanceBusy || this.settingsBusy;
+    const e = this.loading || this.saving || !!this.pending || this.maintenanceBusy || this.settingsBusy;
     return r`<main>
       <header>
         ${this.hass && this.narrow ? r`<button class="menu" aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: !0, composed: !0 }))}>☰</button>` : h}
@@ -4968,7 +5852,7 @@ const nt = [
           <span class="eyebrow">Kaleidescape Companion · Administrator</span>
           <h1>Kaleidescape Companion</h1>
           <p>
-            ${nt.find((e) => e.id === this.activePage).description}
+            ${ce.find((t) => t.id === this.activePage).description}
           </p>
         </div>
       </header>
@@ -4976,11 +5860,11 @@ const nt = [
               class="page-tabs"
               role="tablist"
               aria-label="Companion pages"
-              @keydown=${(e) => this.pageKey(e)}
+              @keydown=${(t) => this.pageKey(t)}
             >
-              ${nt.map((e) => r`<button id=${`page-${e.id}`} role="tab" aria-selected=${this.activePage === e.id} aria-controls="companion-page" tabindex=${this.activePage === e.id ? "0" : "-1"} ?disabled=${t || e.id === "library" && !this.info?.library_enabled} title=${e.id === "library" && !this.info?.library_enabled ? "Enable library sync in Settings" : h} @click=${() => this.switchPage(e.id)}>${e.label}</button>`)}
+              ${ce.map((t) => r`<button id=${`page-${t.id}`} role="tab" aria-selected=${this.activePage === t.id} aria-controls="companion-page" tabindex=${this.activePage === t.id ? "0" : "-1"} ?disabled=${e || t.id === "library" && !this.info?.library_enabled} title=${t.id === "library" && !this.info?.library_enabled ? "Enable library sync in Settings" : h} @click=${() => this.switchPage(t.id)}>${t.label}</button>`)}
             </div>` : h}
-      ${this.error ? r`<div class="error" role="alert">${this.error}${this.lastError === "conflict" && this.selected ? r` <button ?disabled=${t} @click=${() => this.selectRecord(this.selected.id)}>Reload entry</button>` : h}</div>` : h}
+      ${this.error ? r`<div class="error" role="alert">${this.error}${this.lastError === "conflict" && this.selected ? r` <button ?disabled=${e} @click=${() => this.selectRecord(this.selected.id)}>Reload entry</button>` : h}</div>` : h}
       ${this.notice ? r`<div class="notice" role="status">${this.notice}</div>` : h}
       ${this.pending && !this.saving ? r`<div class="warning">
               Retry the same change to confirm its result. The form is locked to
@@ -5000,30 +5884,30 @@ const nt = [
                 ${this.activePage === "library" ? r`<kaleidescape-library
                         .client=${this.api}
                         .scope=${this.info}
-                        @access-denied=${() => this.fail(new g("unauthorized"))}
+                        @access-denied=${() => this.fail(new p("unauthorized"))}
                         @library-disabled=${() => {
       this.activePage = "journal", this.refresh();
     }}
                       ></kaleidescape-library>` : this.activePage === "database" ? r`<kaleidescape-database
                           .client=${this.api}
                           .scope=${this.info}
-                          @access-denied=${() => this.fail(new g("unauthorized"))}
-                          @maintenance-busy=${(e) => {
-      this.maintenanceBusy = e.detail, this.requestUpdate();
+                          @access-denied=${() => this.fail(new p("unauthorized"))}
+                          @maintenance-busy=${(t) => {
+      this.maintenanceBusy = t.detail, this.requestUpdate();
     }}
                           @database-changed=${() => this.refreshInfo()}
                         ></kaleidescape-database>` : this.activePage === "settings" ? r`<kaleidescape-settings
                             .client=${this.api}
                             .scope=${this.info}
-                            @access-denied=${() => this.fail(new g("unauthorized"))}
-                            @settings-busy=${(e) => {
-      this.settingsBusy = e.detail, this.requestUpdate();
+                            @access-denied=${() => this.fail(new p("unauthorized"))}
+                            @settings-busy=${(t) => {
+      this.settingsBusy = t.detail, this.requestUpdate();
     }}
                             @settings-saved=${() => {
       this.notice = "Settings saved. Reloading the integration…";
-      const e = this.api;
+      const t = this.api;
       this.refresh(!0).then(() => {
-        this.api === e && this.info && (this.notice = "Settings saved.", this.requestUpdate());
+        this.api === t && this.info && (this.notice = "Settings saved.", this.requestUpdate());
       });
     }}
                           ></kaleidescape-settings>` : this.activePage === "now-playing" ? r`<kaleidescape-now-playing
@@ -5033,7 +5917,7 @@ const nt = [
                                 <h2>Journal</h2>
                                 <button
                                   class="primary"
-                                  ?disabled=${t}
+                                  ?disabled=${e}
                                   @click=${() => this.newRecord()}
                                 >
                                   ＋ Add viewing
@@ -5080,7 +5964,7 @@ const nt = [
                                   <div class="card-head">
                                     <h2>Viewings</h2>
                                     <button
-                                      ?disabled=${t}
+                                      ?disabled=${e}
                                       @click=${() => this.refresh()}
                                     >
                                       Refresh
@@ -5088,8 +5972,8 @@ const nt = [
                                   </div>
                                   <form
                                     class="filters"
-                                    @submit=${(e) => {
-      e.preventDefault(), this.query = this.searchText, this.status = this.filterStatus, this.page = 1, this.history = [], this.loadList();
+                                    @submit=${(t) => {
+      t.preventDefault(), this.query = this.searchText, this.status = this.filterStatus, this.page = 1, this.history = [], this.loadList();
     }}
                                   >
                                     <label
@@ -5098,18 +5982,18 @@ const nt = [
                                         type="search"
                                         maxlength="500"
                                         .value=${this.searchText}
-                                        ?disabled=${t}
-                                        @input=${(e) => {
-      this.searchText = e.target.value;
+                                        ?disabled=${e}
+                                        @input=${(t) => {
+      this.searchText = t.target.value;
     }}
                                     /></label>
                                     <label
                                       >Status<select
                                         name="filter_status"
                                         .value=${this.filterStatus}
-                                        ?disabled=${t}
-                                        @change=${(e) => {
-      this.filterStatus = e.target.value;
+                                        ?disabled=${e}
+                                        @change=${(t) => {
+      this.filterStatus = t.target.value;
     }}
                                       >
                                         <option value="">All</option>
@@ -5119,7 +6003,7 @@ const nt = [
                                         </option>
                                       </select></label
                                     >
-                                    <button ?disabled=${t}>Search</button>
+                                    <button ?disabled=${e}>Search</button>
                                   </form>
                                   ${this.loading ? r`<div class="empty" role="status">
                                           Loading viewings…
@@ -5134,30 +6018,30 @@ const nt = [
                                               </thead>
                                               <tbody>
                                                 ${this.rows.map(
-      (e) => r` <tr
-                                                      class=${this.selected?.id === e.id ? "selected" : ""}
+      (t) => r` <tr
+                                                      class=${this.selected?.id === t.id ? "selected" : ""}
                                                     >
                                                       <td>
                                                         <button
                                                           class="link"
                                                           ?disabled=${this.saving || !!this.pending}
-                                                          @click=${() => this.selectRecord(e.id)}
+                                                          @click=${() => this.selectRecord(t.id)}
                                                         >
-                                                          ${e.title}</button
+                                                          ${t.title}</button
                                                         ><small
-                                                          >${this.date(e.started_at)}
+                                                          >${this.date(t.started_at)}
                                                           ·
-                                                          ${e.origin === "observed" ? "Recorded" : "Manual"}</small
+                                                          ${t.origin === "observed" ? "Recorded" : "Manual"}</small
                                                         >
                                                       </td>
                                                       <td>
                                                         <span
-                                                          class=${`badge ${e.status === "completed" ? "complete" : ""}`}
-                                                          >${e.status === "completed" ? "Completed" : "Partial"}</span
+                                                          class=${`badge ${t.status === "completed" ? "complete" : ""}`}
+                                                          >${t.status === "completed" ? "Completed" : "Partial"}</span
                                                         >
                                                       </td>
                                                       <td>
-                                                        ${(e.watched_seconds / 60).toFixed(2)}
+                                                        ${(t.watched_seconds / 60).toFixed(2)}
                                                         min
                                                       </td>
                                                     </tr>`
@@ -5179,7 +6063,7 @@ const nt = [
                                     >
                                     <div class="actions">
                                       <button
-                                        ?disabled=${t || this.page === 1}
+                                        ?disabled=${e || this.page === 1}
                                         @click=${() => {
       this.page = 1, this.history = [], this.loadList();
     }}
@@ -5187,7 +6071,7 @@ const nt = [
                                         First
                                       </button>
                                       <button
-                                        ?disabled=${t || !this.history.length}
+                                        ?disabled=${e || !this.history.length}
                                         @click=${() => {
       this.page--, this.loadList(
         this.history.pop()
@@ -5197,7 +6081,7 @@ const nt = [
                                         Previous
                                       </button>
                                       <button
-                                        ?disabled=${t || !this.nextCursor}
+                                        ?disabled=${e || !this.nextCursor}
                                         @click=${() => {
       this.history.push(this.cursor), this.history.length > 200 && this.history.shift(), this.page++, this.loadList(this.nextCursor);
     }}
@@ -5234,13 +6118,13 @@ const nt = [
     </main>`;
   }
 };
-tt.properties = {
+re.properties = {
   hass: { attribute: !1 },
   client: { attribute: !1 },
   narrow: { type: Boolean }
-}, tt.styles = k;
-let bt = tt;
-customElements.get("kaleidescape-panel") || customElements.define("kaleidescape-panel", bt);
+}, re.styles = S;
+let xe = re;
+customElements.get("kaleidescape-panel") || customElements.define("kaleidescape-panel", xe);
 export {
-  bt as KaleidescapePanel
+  xe as KaleidescapePanel
 };

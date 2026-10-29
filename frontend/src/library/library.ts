@@ -16,6 +16,14 @@ import { styles } from "../ui/styles";
 import { libraryStyles } from "./styles";
 import { dismissBackdrop } from "../ui/dialog";
 import { CoverQueue } from "./cover";
+import { PreferenceStore } from "../ui/preference-store";
+import {
+  formatBadges,
+  renderFormatBadges,
+  renderStatusBadges,
+  renderRatingBadge,
+  collectionLabel,
+} from "./badges";
 import "./collections";
 
 const FILTERS = [
@@ -33,6 +41,12 @@ const SORTS = [
   ["added", "Added on"],
 ] as const;
 type Filters = Record<string, string | string[] | boolean>;
+const DISPLAY_OPTIONS = [
+  ["show_titles", "Show titles on covers"],
+  ["show_format", "Show format"],
+  ["show_badges", "Show library badges"],
+  ["show_rating", "Show rating on covers"],
+] as const;
 const STATUS: Record<string, string> = {
   watched: "Watched",
   unwatched: "Unwatched",
@@ -84,7 +98,22 @@ export class KaleidescapeLibrary extends LitElement {
   private covers = new CoverQueue();
   private mode: "list" | "covers" = "list";
   private coverSize = 150;
-  private entriesPerPage = 50;
+  private display = {
+    show_titles: true,
+    show_format: true,
+    show_badges: true,
+    show_rating: false,
+  };
+  private entriesPerPage: number | "all" = 100;
+  private preferences?: PreferenceStore;
+  private preferencesReady = false;
+  private preferenceError = "";
+  private searchTimer?: ReturnType<typeof setTimeout>;
+  private peopleTimers: Partial<Record<string, ReturnType<typeof setTimeout>>> =
+    {};
+  private peopleSearch: Record<string, string> = {};
+  private peopleChoices: Record<string, string[]> = {};
+  private peopleRequests: Record<string, number> = {};
   private coverColumns = 1;
   private gridWidth = 0;
   private grid?: HTMLElement;
@@ -127,18 +156,74 @@ export class KaleidescapeLibrary extends LitElement {
     this.boundClient = this.client;
     this.bound = key;
     if (this.client && this.scope?.library_enabled) {
-      this.mode =
-        this.scope.ui_defaults?.library_default_view === "covers"
-          ? "covers"
-          : "list";
-      const count = this.scope.ui_defaults?.library_default_count ?? 50;
-      this.entriesPerPage =
-        Number.isInteger(count) && count >= 1 && count <= 1000 ? count : 50;
-      void this.load();
+      void this.initializePreferences();
       void this.refreshStatus();
     }
   }
+  private async initializePreferences() {
+    if (!this.client || !this.scope) return;
+    const generation = this.generation;
+    this.preferences = new PreferenceStore(
+      this.client,
+      this.scope,
+      false,
+      (error) => {
+        if (generation !== this.generation) return;
+        if (error && errorCode(error) === "unauthorized") this.fail(error);
+        else {
+          this.preferenceError = error ? errorMessage(error) : "";
+          this.requestUpdate();
+        }
+      },
+    );
+    try {
+      const values = await this.preferences.load();
+      if (generation !== this.generation) return;
+      this.mode = values.view as "list" | "covers";
+      this.entriesPerPage = values.page_size as number | "all";
+      this.coverSize = values.cover_size as number;
+      this.display = Object.fromEntries(
+        DISPLAY_OPTIONS.map(([key]) => [key, values[key]]),
+      ) as typeof this.display;
+      this.widths = [...(values.widths as number[])];
+      this.applied = Object.fromEntries(
+        [
+          "query",
+          "sort",
+          "descending",
+          ...FILTERS.map(([key]) => key),
+          "status",
+        ].map((key) => [key, values[key]]),
+      ) as Filters;
+      this.filters = structuredClone(this.applied);
+      this.preferencesReady = true;
+      await this.load();
+    } catch (error) {
+      if (generation === this.generation) this.fail(error);
+    }
+  }
+  private saveFilters() {
+    this.preferences?.set(
+      Object.fromEntries(
+        ["query", ...FILTERS.map(([key]) => key), "status"].map((key) => [
+          key,
+          this.applied[key] ?? (key === "query" ? "" : []),
+        ]),
+      ),
+    );
+  }
+  private finishColumnResize() {
+    if (!this.resize) return;
+    this.resize = undefined;
+    this.preferences?.set({ widths: [...this.widths] });
+  }
   private clear() {
+    clearTimeout(this.searchTimer);
+    this.clearPeople();
+    this.preferences?.dispose();
+    this.preferences = undefined;
+    this.preferencesReady = false;
+    this.preferenceError = "";
     this.generation++;
     this.listRequest++;
     clearTimeout(this.timer);
@@ -150,11 +235,18 @@ export class KaleidescapeLibrary extends LitElement {
     this.grid = undefined;
     this.gridWidth = 0;
     this.coverColumns = 1;
-    this.entriesPerPage = this.requestLimit = 50;
+    this.entriesPerPage = this.requestLimit = 100;
     this.requestedOffset = 0;
     for (const dialog of this.renderRoot.querySelectorAll("dialog"))
       dialog.close();
+    this.covers.cache.dispose();
     this.covers = new CoverQueue();
+    this.display = {
+      show_titles: true,
+      show_format: true,
+      show_badges: true,
+      show_rating: false,
+    };
     this.draft = {};
     this.facetSearch = "";
     this.page = this.info = this.selected = undefined;
@@ -169,6 +261,16 @@ export class KaleidescapeLibrary extends LitElement {
     this.requestUpdate();
   }
   protected updated() {
+    // Select options are child parts; synchronize after they exist on first render.
+    for (const [name, value] of [
+      ["library_page_size", String(this.entriesPerPage)],
+      ["library_sort", String(this.applied.sort)],
+    ]) {
+      const select = this.renderRoot.querySelector<HTMLSelectElement>(
+        `[name="${name}"]`,
+      );
+      if (select && select.value !== value) select.value = value;
+    }
     const grid =
       this.isConnected &&
       this.mode === "covers" &&
@@ -192,6 +294,7 @@ export class KaleidescapeLibrary extends LitElement {
       this.fitGrid(grid.getBoundingClientRect().width || this.gridWidth);
   }
   private get pageSize() {
+    if (this.entriesPerPage === "all") return 1000;
     if (this.mode === "list") return this.entriesPerPage;
     return Math.max(
       this.coverColumns,
@@ -248,18 +351,17 @@ export class KaleidescapeLibrary extends LitElement {
   private async setMode(mode: "list" | "covers") {
     if (this.mode === mode) return;
     this.mode = mode;
+    this.preferences?.set({ view: mode });
     this.requestUpdate();
     await this.updateComplete;
     this.scheduleLayoutPage();
   }
   private changePageSize(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const value = Number(input.value);
-    if (!Number.isInteger(value) || value < 1 || value > 1000) {
-      input.reportValidity();
-      return;
-    }
+    const raw = (event.target as HTMLSelectElement).value;
+    const value = raw === "all" ? "all" : Number(raw);
+    if (value !== "all" && ![25, 100, 1000].includes(value)) return;
     this.entriesPerPage = value;
+    this.preferences?.set({ page_size: value });
     this.requestUpdate();
     this.scheduleLayoutPage();
   }
@@ -292,20 +394,28 @@ export class KaleidescapeLibrary extends LitElement {
     this.error = "";
     this.requestUpdate();
     try {
-      const page = await this.client.libraryList(this.scope, {
-        ...this.applied,
-        grouped: true,
-        limit,
-        offset,
-        ...(offset && this.page
-          ? {
-              revision: this.page.revision,
-              ...(this.page.preferences_key
-                ? { preferences_key: this.page.preferences_key }
+      const page =
+        this.entriesPerPage === "all"
+          ? await this.client.libraryAll(
+              this.scope,
+              { ...this.applied },
+              () =>
+                generation === this.generation && request === this.listRequest,
+            )
+          : await this.client.libraryList(this.scope, {
+              ...this.applied,
+              grouped: true,
+              limit,
+              offset,
+              ...(offset && this.page
+                ? {
+                    revision: this.page.revision,
+                    ...(this.page.preferences_key
+                      ? { preferences_key: this.page.preferences_key }
+                      : {}),
+                  }
                 : {}),
-            }
-          : {}),
-      });
+            });
       if (
         generation !== this.generation ||
         request !== this.listRequest ||
@@ -408,6 +518,7 @@ export class KaleidescapeLibrary extends LitElement {
       this.renderRoot.querySelector<HTMLDialogElement>(`#${id}`)?.showModal();
   }
   private closeDialog(id: string) {
+    if (id === "filter-dialog") this.clearPeople();
     if (id === "title-dialog" && this.collectionLocked) return;
     this.renderRoot.querySelector<HTMLDialogElement>(`#${id}`)?.close();
     if (id === "title-dialog") {
@@ -501,6 +612,7 @@ export class KaleidescapeLibrary extends LitElement {
               this.widths[index] + (event.key === "ArrowLeft" ? -20 : 20),
             ),
           );
+    this.preferences?.set({ widths: [...this.widths] });
     this.requestUpdate();
   }
   private versionKey(event: KeyboardEvent) {
@@ -536,15 +648,20 @@ export class KaleidescapeLibrary extends LitElement {
       sort: key,
       descending: this.applied.sort === key ? !this.applied.descending : false,
     };
+    this.preferences?.set({
+      sort: this.applied.sort,
+      descending: this.applied.descending,
+    });
     void this.load();
   }
   private openFilters() {
+    this.clearPeople();
     this.draft = structuredClone(this.applied);
     this.facetSearch = "";
     void this.openDialog("filter-dialog");
   }
   private clearFilters() {
-    if (this.loading) return;
+    clearTimeout(this.searchTimer);
     this.filters = {
       query: "",
       sort: this.applied.sort,
@@ -553,6 +670,53 @@ export class KaleidescapeLibrary extends LitElement {
     this.applied = { ...this.filters };
     this.draft = {};
     this.facetSearch = "";
+    this.saveFilters();
+    void this.load();
+  }
+  private clearPeople() {
+    for (const timer of Object.values(this.peopleTimers)) clearTimeout(timer);
+    this.peopleTimers = {};
+    this.peopleSearch = {};
+    this.peopleChoices = {};
+    for (const key of ["actor", "director"])
+      this.peopleRequests[key] = (this.peopleRequests[key] ?? 0) + 1;
+  }
+  private completePeople(key: string, query: string) {
+    this.peopleSearch[key] = query;
+    clearTimeout(this.peopleTimers[key]);
+    const request = (this.peopleRequests[key] ?? 0) + 1;
+    this.peopleRequests[key] = request;
+    const generation = this.generation;
+    this.peopleTimers[key] = setTimeout(async () => {
+      try {
+        const result = await this.client!.librarySuggestions(
+          this.scope!,
+          key,
+          query,
+        );
+        if (
+          generation === this.generation &&
+          this.peopleRequests[key] === request &&
+          this.renderRoot.querySelector<HTMLDialogElement>("#filter-dialog")
+            ?.open
+        ) {
+          this.peopleChoices[key] = result.items;
+          this.requestUpdate();
+        }
+      } catch (error) {
+        if (
+          generation === this.generation &&
+          this.peopleRequests[key] === request
+        )
+          this.fail(error);
+      }
+    }, 200);
+    this.requestUpdate();
+  }
+  private applySearch() {
+    clearTimeout(this.searchTimer);
+    this.applied = { ...this.applied, query: this.filters.query };
+    this.preferences?.set({ query: this.applied.query });
     void this.load();
   }
   private choices(key: string, facet: string) {
@@ -562,7 +726,9 @@ export class KaleidescapeLibrary extends LitElement {
     return [
       ...new Set([...values, ...((this.draft[key] ?? []) as string[])]),
     ].filter((value) =>
-      value.toLocaleLowerCase().includes(this.facetSearch.toLocaleLowerCase()),
+      (key === "collection" ? collectionLabel(value) : value)
+        .toLocaleLowerCase()
+        .includes(this.facetSearch.toLocaleLowerCase()),
     );
   }
   private cover(row: LibrarySummary) {
@@ -619,6 +785,104 @@ export class KaleidescapeLibrary extends LitElement {
       }
     }
   }
+  private renderOptionsDialog() {
+    return html`<dialog
+      id="library-options"
+      class="database-dialog library-options"
+      aria-labelledby="library-options-title"
+      @click=${dismissBackdrop}
+    >
+      <div class="card-head">
+        <h2 id="library-options-title">Library options</h2>
+        <button @click=${() => this.closeDialog("library-options")}>
+          Done
+        </button>
+      </div>
+      <p class="muted">Changes save automatically for your HA user.</p>
+      <div class="options-fields">
+        <fieldset class="view-options">
+          <legend>View type</legend>
+          ${(["list", "covers"] as const).map((mode) => html`<label class="check"><input type="radio" name="library_view" value=${mode} .checked=${this.mode === mode} @change=${() => this.setMode(mode)} />${mode === "list" ? "List" : "Cover"}</label>`)}
+        </fieldset>
+        <label
+          >Entries per page<select
+            name="library_page_size"
+            .value=${String(this.entriesPerPage)}
+            @change=${this.changePageSize}
+          >
+            ${[25, 100, 1000, "all"].map((value) => html`<option value=${value} ?selected=${value === this.entriesPerPage}>${value === "all" ? "All" : value}</option>`)}
+          </select></label
+        >
+        ${
+          this.mode === "covers"
+            ? html`<label
+                >Cover-art size<input
+                  type="range"
+                  name="cover_size"
+                  min="90"
+                  max="300"
+                  step="10"
+                  .value=${String(this.coverSize)}
+                  @change=${() => this.preferences?.set({ cover_size: this.coverSize })}
+                  @input=${(event: Event) => {
+                    this.coverSize = Number(
+                      (event.target as HTMLInputElement).value,
+                    );
+                    this.fitGrid(this.gridWidth);
+                    this.requestUpdate();
+                  }}
+              /></label>`
+            : nothing
+        }
+        ${DISPLAY_OPTIONS.map(
+          ([key, label]) =>
+            html`<label class="check"
+              ><input
+                type="checkbox"
+                name=${key}
+                .checked=${this.display[key]}
+                @change=${(event: Event) => {
+                  const value = (event.target as HTMLInputElement).checked;
+                  this.display = { ...this.display, [key]: value };
+                  this.preferences?.set({ [key]: value });
+                  this.requestUpdate();
+                }}
+              />${label}</label
+            >`,
+        )}
+        <label
+          >Sort by<select
+            name="library_sort"
+            .value=${String(this.applied.sort)}
+            @change=${(event: Event) => this.sort((event.target as HTMLSelectElement).value)}
+          >
+            ${SORTS.map(([key, label]) => html`<option value=${key}>${label}</option>`)}
+          </select></label
+        >
+        <button @click=${() => this.sort(String(this.applied.sort))}>
+          ${this.applied.descending ? "Descending ↓" : "Ascending ↑"}
+        </button>
+      </div>
+      ${
+        this.info
+          ? html`<details>
+              <summary>Library details</summary>
+              <p>
+                ${this.info.group_count} movies · ${this.info.title_count}
+                individual versions · ${this.info.collection_count} collections.
+              </p>
+              <p>
+                Catalog synced: ${this.date(this.info.last_synced_at)}<br />Collections
+                synced: ${this.date(this.info.collections_synced_at)}
+              </p>
+              <p>
+                Source “Played” maps to Watched; “Paused” maps to In progress.
+              </p>
+            </details>`
+          : nothing
+      }
+    </dialog>`;
+  }
   private renderFilterDialog() {
     return html`<dialog
       id="filter-dialog"
@@ -636,7 +900,7 @@ export class KaleidescapeLibrary extends LitElement {
         Match any checked value within a category and all selected categories.
       </p>
       <label
-        >Find filter options<input
+        >Find collections or ratings<input
           name="facet_search"
           type="search"
           .value=${this.facetSearch}
@@ -647,7 +911,7 @@ export class KaleidescapeLibrary extends LitElement {
       /></label>
       ${this.page?.truncated_facets.length ? html`<p class="muted">Each category shows up to 500 known names.</p>` : nothing}
       <div class="facet-groups">
-        ${[...FILTERS, ["status", "Watched status", "status"]].map(
+        ${[["status", "Watched status", "status"], FILTERS[0], FILTERS[3]].map(
           ([key, label, facet]) => {
             const selected = (this.draft[key] ?? []) as string[];
             const choices = this.choices(key, facet);
@@ -675,7 +939,7 @@ export class KaleidescapeLibrary extends LitElement {
                                 };
                                 this.requestUpdate();
                               }}
-                            />${key === "status" ? STATUS[value] : value}</label
+                            />${key === "status" ? STATUS[value] : key === "rating" ? renderRatingBadge(value) : key === "collection" ? collectionLabel(value) : value}</label
                           >`,
                       )
                     : html`<p class="muted">No matching options</p>`
@@ -684,6 +948,79 @@ export class KaleidescapeLibrary extends LitElement {
             </fieldset>`;
           },
         )}
+      </div>
+      <div class="people-filters">
+        ${[
+          ["actor", "Actor", "actors"],
+          ["director", "Director", "directors"],
+        ].map(([key, label, facet]) => {
+          const selected = (this.draft[key] ?? []) as string[];
+          const choices = (
+            this.peopleChoices[key] ??
+            this.page?.facets[facet] ??
+            []
+          )
+            .filter((name) =>
+              name
+                .toLocaleLowerCase()
+                .includes((this.peopleSearch[key] ?? "").toLocaleLowerCase()),
+            )
+            .slice(0, 20);
+          return html`<fieldset>
+            <legend>${label}</legend>
+            <label
+              >Find ${label.toLowerCase()}<input
+                type="search"
+                name=${`${key}_search`}
+                maxlength="100"
+                autocomplete="off"
+                .value=${this.peopleSearch[key] ?? ""}
+                @input=${(event: Event) => this.completePeople(key, (event.target as HTMLInputElement).value)}
+            /></label>
+            <div class="selected-people">
+              ${selected.map(
+                (name) =>
+                  html`<button
+                    type="button"
+                    class="person-chip"
+                    aria-label=${`Remove ${name}`}
+                    @click=${() => {
+                      this.draft = {
+                        ...this.draft,
+                        [key]: selected.filter((item) => item !== name),
+                      };
+                      this.requestUpdate();
+                    }}
+                  >
+                    ${name} ×
+                  </button>`,
+              )}
+            </div>
+            <div class="facet-options" aria-label=${`${label} suggestions`}>
+              ${choices.map(
+                (value) =>
+                  html`<label class="check"
+                    ><input
+                      type="checkbox"
+                      name=${key}
+                      value=${value}
+                      .checked=${selected.includes(value)}
+                      ?disabled=${selected.length >= 100 && !selected.includes(value)}
+                      @change=${(event: Event) => {
+                        this.draft = {
+                          ...this.draft,
+                          [key]: (event.target as HTMLInputElement).checked
+                            ? [...selected, value]
+                            : selected.filter((item) => item !== value),
+                        };
+                        this.requestUpdate();
+                      }}
+                    />${value}</label
+                  >`,
+              )}
+            </div>
+          </fieldset>`;
+        })}
       </div>
       <div class="actions dialog-footer">
         <button
@@ -700,6 +1037,7 @@ export class KaleidescapeLibrary extends LitElement {
             for (const key of [...FILTERS.map(([key]) => key), "status"])
               next[key] = this.draft[key] ?? [];
             this.applied = next;
+            this.saveFilters();
             this.closeDialog("filter-dialog");
             void this.load();
           }}
@@ -740,9 +1078,10 @@ export class KaleidescapeLibrary extends LitElement {
                   Close
                 </button>
               </div>
-              <p>
-                ${group.version_count ?? 1} version(s) · ${this.format(group)}
-              </p>
+              <p>${group.version_count ?? 1} version(s)</p>
+              <div class="detail-badges">
+                ${renderFormatBadges(group)} ${renderRatingBadge(group.rating)}
+              </div>
               ${this.versionsLoading ? html`<p role="status">Loading individual versions…</p>` : nothing}
               ${
                 this.versionsError
@@ -779,7 +1118,7 @@ export class KaleidescapeLibrary extends LitElement {
                                 this.requestUpdate();
                               }}
                             >
-                              ${this.format(item)} ·
+                              ${renderFormatBadges(item)} ·
                               ${item.year ?? "Year unknown"} · Version
                               ${this.versions!.offset + index + 1}
                             </button>`,
@@ -799,9 +1138,12 @@ export class KaleidescapeLibrary extends LitElement {
                       <div class="cover">${this.cover(row)}</div>
                       <div>
                         <p>${row.synopsis || "No synopsis available."}</p>
+                        <div class="detail-badges">
+                          ${renderFormatBadges(row)}
+                          ${renderRatingBadge(row.rating || "Unrated")}
+                        </div>
                         <p>
                           ${row.year ?? "Year unknown"} ·
-                          ${row.rating || "Unrated"} · ${this.format(row)} ·
                           ${STATUS[row.watched_status]}
                         </p>
                         <p>
@@ -816,7 +1158,7 @@ export class KaleidescapeLibrary extends LitElement {
                           (values as string[]).length
                             ? html`<p>
                                 <strong>${label}:</strong>
-                                ${(values as string[]).join(", ")}
+                                ${(label === "Collections" ? (values as string[]).map(collectionLabel) : (values as string[])).join(", ")}
                               </p>`
                             : nothing,
                         )}
@@ -864,6 +1206,11 @@ export class KaleidescapeLibrary extends LitElement {
     </dialog>`;
   }
   protected render() {
+    if (!this.preferencesReady)
+      return html`<p role="status">
+          ${this.error || "Loading Library preferences…"}
+        </p>
+        ${this.error ? html`<button @click=${this.initializePreferences}>Retry Library</button>` : nothing}`;
     const step = this.page?.limit ?? this.requestLimit;
     const paging = this.loading || !!this.layoutTimer;
     const pageItems = this.page?.items ?? [];
@@ -889,6 +1236,7 @@ export class KaleidescapeLibrary extends LitElement {
         this.fail(new ApiError("unauthorized"));
       }}
     >
+      ${this.preferenceError ? html`<p class="warning" role="alert">Library preferences could not be saved: ${this.preferenceError} <button @click=${() => this.preferences?.retry()}>Retry saving preferences</button></p>` : nothing}
       <div class="section-head">
         <h2>Library</h2>
         <div class="actions">
@@ -904,23 +1252,8 @@ export class KaleidescapeLibrary extends LitElement {
           ${admin ? html`<button class="primary" ?disabled=${this.requesting || (!!this.info?.phase && this.info.phase !== "idle")} @click=${this.sync}>Sync now</button>` : nothing}
         </div>
       </div>
-      ${
-        this.info
-          ? html`<p class="muted">
-                ${this.info.group_count} titles · ${this.info.title_count}
-                versions · ${this.info.collection_count} collections · Last
-                catalog sync: ${this.date(this.info.last_synced_at)}
-                ${admin && this.info.phase && this.info.phase !== "idle" ? html`<br />${({ catalog: "Reading titles", collections: "Reading collections", details: "Fetching title data" } as Record<string, string>)[this.info.phase] ?? "Syncing"}… ${this.info.total ? `${this.info.processed}/${this.info.total}` : ""}` : nothing}
-              </p>
-              <p class="muted">
-                Played means watched; Paused takes priority. Collections last
-                synced: ${this.date(this.info.collections_synced_at)}.
-                ${admin && this.info.collections_enabled === false ? "Collection sync is disabled; retained statuses may be stale." : ""}
-              </p>
-              ${admin && this.info.artwork_enabled ? html`<p class="muted">Artwork cache: ${((this.info.artwork_bytes ?? 0) / 1048576).toFixed(1)} / ${((this.info.artwork_limit_bytes ?? 0) / 1048576).toFixed(0)} MiB</p>` : nothing}
-              ${admin && this.info.error ? html`<p class="warning" role="status">${errorMessage(new ApiError(this.info.error))}</p>` : nothing}`
-          : nothing
-      }
+      ${admin && this.info?.phase && this.info.phase !== "idle" ? html`<p role="status">Syncing… ${this.info.processed ?? 0}/${this.info.total ?? "?"}</p>` : nothing}
+      ${admin && this.info?.error ? html`<p class="warning" role="status">${errorMessage(new ApiError(this.info.error))}</p>` : nothing}
       ${this.error ? html`<p class="error" role="alert">${this.error}<button @click=${() => this.load()}>Refresh results</button></p>` : nothing}
       ${this.notice ? html`<p class="notice" role="status">${this.notice}</p>` : nothing}
       ${
@@ -947,23 +1280,24 @@ export class KaleidescapeLibrary extends LitElement {
             )
           : nothing
       }
-      <section class="card">
+      <section class="card library-results">
         <div class="library-toolbar">
           <form
             @submit=${(event: Event) => {
               event.preventDefault();
-              this.applied = { ...this.applied, query: this.filters.query };
-              void this.load();
+              this.applySearch();
             }}
           >
             <label
-              >Search titles<input
+              >Search titles, actors or directors<input
                 name="library_query"
                 type="search"
                 maxlength="500"
                 .value=${live(String(this.filters.query ?? ""))}
                 @input=${(event: Event) => {
                   this.filters.query = (event.target as HTMLInputElement).value;
+                  clearTimeout(this.searchTimer);
+                  this.searchTimer = setTimeout(() => this.applySearch(), 300);
                 }}
             /></label>
             <button type="submit" ?disabled=${this.loading}>Search</button>
@@ -974,59 +1308,13 @@ export class KaleidescapeLibrary extends LitElement {
           <button ?disabled=${this.loading} @click=${this.clearFilters}>
             Clear Filter
           </button>
-          <div class="view-switch" role="group" aria-label="Library view">
-            ${(["list", "covers"] as const).map(
-              (mode) =>
-                html`<button
-                  aria-pressed=${this.mode === mode}
-                  @click=${() => this.setMode(mode)}
-                >
-                  ${mode === "list" ? "List" : "Covers"}
-                </button>`,
-            )}
-          </div>
-          <label class="page-size"
-            >Entries per page<input
-              name="library_page_size"
-              type="number"
-              min="1"
-              max="1000"
-              step="1"
-              .value=${String(this.entriesPerPage)}
-              @change=${this.changePageSize}
-          /></label>
-          ${
-            this.mode === "covers"
-              ? html`<label class="cover-size"
-                    >Cover size<input
-                      type="range"
-                      name="cover_size"
-                      min="90"
-                      max="300"
-                      step="10"
-                      .value=${String(this.coverSize)}
-                      @input=${(event: Event) => {
-                        this.coverSize = Number(
-                          (event.target as HTMLInputElement).value,
-                        );
-                        this.fitGrid(this.gridWidth);
-                        this.requestUpdate();
-                      }}
-                  /></label>
-                  <label
-                    >Sort by<select
-                      name="library_sort"
-                      .value=${String(this.applied.sort)}
-                      @change=${(event: Event) => this.sort((event.target as HTMLSelectElement).value)}
-                    >
-                      ${SORTS.map(([key, label]) => html`<option value=${key}>${label}</option>`)}
-                    </select></label
-                  >
-                  <button @click=${() => this.sort(String(this.applied.sort))}>
-                    ${this.applied.descending ? "Descending ↓" : "Ascending ↑"}
-                  </button>`
-              : nothing
-          }
+          <button
+            aria-haspopup="dialog"
+            aria-controls="library-options"
+            @click=${() => this.openDialog("library-options")}
+          >
+            Options
+          </button>
         </div>
         ${
           this.mode === "covers"
@@ -1037,15 +1325,16 @@ export class KaleidescapeLibrary extends LitElement {
                 ${coverItems.map(
                   (item) =>
                     html`<button
-                      class="cover-tile"
+                      class=${`cover-tile${this.display.show_titles ? " has-title" : ""}${this.display.show_rating && item.rating ? " has-rating" : ""}`}
                       title=${`${item.title}${item.year ? ` (${item.year})` : ""}`}
                       aria-label=${`Details for ${item.title}${item.year ? ` (${item.year})` : ""}`}
                       @click=${() => this.select(item)}
                     >
                       <div class="cover-image">${this.cover(item)}</div>
-                      <span
-                        >${item.title}${item.year ? ` (${item.year})` : ""}</span
-                      >
+                      ${this.display.show_badges ? html`<div class="cover-flags">${renderStatusBadges(item, true)}</div>` : nothing}
+                      ${this.display.show_format ? html`<div class="cover-formats">${renderFormatBadges(item, true)}</div>` : nothing}
+                      ${this.display.show_rating ? html`<div class="cover-rating">${renderRatingBadge(item.rating)}</div>` : nothing}
+                      ${this.display.show_titles ? html`<span class="cover-caption">${item.title}${item.year ? ` (${item.year})` : ""}</span>` : nothing}
                     </button>`,
                 )}
               </div>`
@@ -1108,15 +1397,9 @@ export class KaleidescapeLibrary extends LitElement {
                                 );
                                 this.requestUpdate();
                               }}
-                              @pointerup=${() => {
-                                this.resize = undefined;
-                              }}
-                              @pointercancel=${() => {
-                                this.resize = undefined;
-                              }}
-                              @lostpointercapture=${() => {
-                                this.resize = undefined;
-                              }}
+                              @pointerup=${this.finishColumnResize}
+                              @pointercancel=${this.finishColumnResize}
+                              @lostpointercapture=${this.finishColumnResize}
                             ></span>
                           </th>`,
                       )}
@@ -1131,17 +1414,24 @@ export class KaleidescapeLibrary extends LitElement {
                               class="link"
                               @click=${() => this.select(item)}
                             >
-                              ${item.title}</button
-                            ><small title=${this.format(item)}
-                              >${this.format(item)}${(item.version_count ?? 1) > 1 ? ` · ${item.version_count} versions` : ""}</small
+                              ${item.title}
+                            </button>
+                            <div
+                              class="library-summary-line"
+                              title=${this.format(item)}
                             >
+                              ${this.display.show_badges ? renderStatusBadges(item) : nothing}
+                              ${this.display.show_format ? renderFormatBadges(item) : nothing}
+                              ${this.display.show_format && !formatBadges(item).length ? html`<small>${this.format(item)}</small>` : nothing}
+                              ${(item.version_count ?? 1) > 1 ? html`<small>${item.version_count} versions</small>` : nothing}
+                            </div>
                           </td>
                           <td title=${this.years(item)}>${this.years(item)}</td>
                           <td>
                             <span
                               class="collection-cell"
-                              title=${item.collections.join(", ")}
-                              >${item.collections.join(", ") || "—"}</span
+                              title=${item.collections.map(collectionLabel).join(", ")}
+                              >${item.collections.map(collectionLabel).join(", ") || "—"}</span
                             >
                           </td>
                           <td>${this.runtime(item)}</td>
@@ -1160,7 +1450,8 @@ export class KaleidescapeLibrary extends LitElement {
         ${!this.page?.items.length ? html`<p class="empty" role="status">${this.loading ? "Loading library…" : "No cached titles match. Adjust your filters or wait for a library sync."}</p>` : nothing}
         <div class="pagination">
           <small
-            >${this.page?.total ?? 0} matching titles · ${this.pageSize} per
+            >${this.page?.total ?? 0} matching titles ·
+            ${this.entriesPerPage === "all" ? "All" : this.pageSize} per
             page${this.mode === "covers" ? ` · ${this.coverColumns} covers per row` : ""}</small
           >
           <div class="actions">
@@ -1185,7 +1476,9 @@ export class KaleidescapeLibrary extends LitElement {
           </div>
         </div>
       </section>
-      ${this.renderFilterDialog()} ${this.renderTitleDialog()}
+      ${this.info ? html`<footer class="library-status" role="status"><span>${this.info.group_count} titles · ${this.info.collection_count} collections ${admin && this.info.artwork_enabled ? `· Artwork ${((this.info.artwork_bytes ?? 0) / 1048576).toFixed(1)}/${((this.info.artwork_limit_bytes ?? 0) / 1048576).toFixed(0)} MiB` : ""} · Synced ${this.date(this.info.last_synced_at)}</span></footer>` : nothing}
+      ${this.renderOptionsDialog()} ${this.renderFilterDialog()}
+      ${this.renderTitleDialog()}
     </section>`;
   }
 }

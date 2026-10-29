@@ -10,7 +10,6 @@ from homeassistant.helpers import selector
 
 from ..const import DEFAULT_MINIMUM_RUNTIME_MINUTES
 from ..library.config import DEFAULTS as LIBRARY_DEFAULTS
-from ..library.config import collection_names
 from ..library.config import validate as validate_library
 from ..ui.preferences import CHOICES
 from ..ui.preferences import DEFAULTS as UI_DEFAULTS
@@ -39,7 +38,7 @@ def entity_ids(hass: HomeAssistant, config: dict) -> dict[str, str | None]:
     return result
 
 
-def form(hass: HomeAssistant, config: dict, collections=()) -> p.Schema:
+def form(hass: HomeAssistant, config: dict) -> p.Schema:
     """Build selectors without hard-coded household entity names."""
     properties = {
         p.Required(
@@ -87,17 +86,6 @@ def form(hass: HomeAssistant, config: dict, collections=()) -> p.Schema:
             properties[marker] = selector.BooleanSelector()
         elif key == "library_host":
             properties[marker] = selector.TextSelector()
-        elif key == "library_excluded_collections":
-            marker = p.Optional(key, default=collection_names(config.get(key, [])))
-            properties[marker] = selector.SelectSelector(
-                selector.SelectSelectorConfig(
-                    options=sorted(
-                        set(collections) | set(collection_names(config.get(key, [])))
-                    ),
-                    multiple=True,
-                    custom_value=True,
-                )
-            )
         else:
             properties[marker] = selector.NumberSelector(
                 selector.NumberSelectorConfig(

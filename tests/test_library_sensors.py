@@ -180,6 +180,12 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
                 "recently_added_at",
             ):
                 db.execute(f"ALTER TABLE library_sources DROP COLUMN {column}")
+            db.execute("DROP TABLE settings")
+            db.execute("DROP TABLE database_audit")
+            db.execute("DROP INDEX library_title_groups")
+            db.execute("ALTER TABLE library_sources DROP COLUMN recently_added_batch")
+            db.execute("ALTER TABLE library_titles DROP COLUMN addition_batch")
+            db.execute("ALTER TABLE schema_metadata DROP COLUMN settings_revision")
             db.execute("PRAGMA user_version=9")
             db.commit()
         self.repository = JournalRepository(self.path)
