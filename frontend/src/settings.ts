@@ -2,7 +2,7 @@
 import { LitElement, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
 import { errorCode, errorMessage } from "./api";
-import type { JournalClient, OptionsForm, Scope } from "./api";
+import type { JournalClient, JournalInfo, OptionsForm, Scope } from "./api";
 import { styles } from "./styles";
 
 const fields = [
@@ -49,6 +49,7 @@ const libraryFields = [
   ],
 ];
 const libraryChecks = [
+  ["library_allow_collection_add", "Allow Add to Collection on the device"],
   ["library_sync_collections", "Sync collections and watched status"],
   ["library_sync_details", "Sync title details and credits"],
   ["library_sync_artwork", "Sync artwork"],
@@ -59,6 +60,8 @@ const booleanFields = new Set([
   ...libraryChecks.map(([key]) => key),
 ]);
 const validation: Record<string, string> = {
+  invalid_display_options:
+    "Choose a landing page, List or Covers, and a whole-number entry count from 1–1000.",
   missing_entities: "Select all three source entities to enable tracking.",
   invalid_entities: "Choose existing media_player and sensor entity IDs.",
   duplicate_entities:
@@ -66,6 +69,8 @@ const validation: Record<string, string> = {
   invalid_rules: "Check the runtime, completion, and partial-resume values.",
   invalid_library_host:
     "Enter a hostname or private LAN HTTP(S) origin without a path, credentials, or query.",
+  invalid_library_collections:
+    "Choose at most 200 collection names (256 characters each).",
   invalid_library_options:
     "Choose a sync interval of 1–168 hours and an artwork cache limit of 32–4096 MiB.",
 };
@@ -77,11 +82,13 @@ export class KaleidescapeSettings extends LitElement {
   };
   static styles = styles;
   client?: JournalClient;
-  scope?: Scope;
+  scope?: JournalInfo;
   private generation = 0;
   private flow?: OptionsForm;
-  private draft: Record<string, string | number | boolean> = {};
-  private initial: Record<string, string | number | boolean> = {};
+  private draft: Record<string, string | number | boolean | string[]> = {};
+  private initial: Record<string, string | number | boolean | string[]> = {};
+  private collectionChoices: string[] = [];
+  private customCollection = "";
   private loading = false;
   private saving = false;
   private uncertain = false;
@@ -101,6 +108,8 @@ export class KaleidescapeSettings extends LitElement {
     this.flow = undefined;
     this.draft = {};
     this.initial = {};
+    this.collectionChoices = [];
+    this.customCollection = "";
     this.uncertain = this.saving = false;
     if (this.client && this.scope) void this.start();
   }
@@ -110,6 +119,8 @@ export class KaleidescapeSettings extends LitElement {
     this.flow = undefined;
     this.draft = {};
     this.initial = {};
+    this.collectionChoices = [];
+    this.customCollection = "";
     this.bound = "";
     this.boundClient = undefined;
   }
@@ -156,12 +167,23 @@ export class KaleidescapeSettings extends LitElement {
       this.draft = Object.fromEntries(
         (flow.fields ?? []).map((field) => [
           field.name,
-          booleanFields.has(field.name)
-            ? !!field.default
-            : String(field.default ?? ""),
+          field.name === "library_excluded_collections"
+            ? Array.isArray(field.default)
+              ? [...field.default]
+              : String(field.default ?? "")
+                  .split("\n")
+                  .filter(Boolean)
+            : booleanFields.has(field.name)
+              ? !!field.default
+              : String(field.default ?? ""),
         ]),
       );
       this.initial = { ...this.draft };
+      if (scope.library_enabled) {
+        const library = await client.libraryInfo(scope);
+        if (generation === this.generation)
+          this.collectionChoices = library.collection_names ?? [];
+      }
     } catch (error) {
       if (generation === this.generation) this.fail(error);
     } finally {
@@ -224,6 +246,7 @@ export class KaleidescapeSettings extends LitElement {
       if (type === "number") data[key] = Number(data[key]);
     }
     data.library_host = String(data.library_host ?? "");
+    data.library_default_count = Number(data.library_default_count ?? 50);
     try {
       const result = await this.client.settings(this.scope, "submit", {
         flow_id: this.flow.flow_id,
@@ -345,7 +368,7 @@ export class KaleidescapeSettings extends LitElement {
                     />Enable library sync</label
                   >
                   <p class="muted">
-                    Optional, read-only access to your local Kaleidescape
+                    Optional synchronization with your local Kaleidescape
                     library. Disabled by default; no library discovery or device
                     requests occur while disabled.
                   </p>
@@ -376,6 +399,7 @@ export class KaleidescapeSettings extends LitElement {
                                     }}
                                 /></label>`,
                             )}
+                            ${this.renderCollections()}
                             ${libraryChecks.map(
                               ([key, label]) =>
                                 html`<label class="check full"
@@ -397,6 +421,13 @@ export class KaleidescapeSettings extends LitElement {
                             )}
                           </div>
                           <p class="muted">
+                            Add to Collection is separately disabled by default.
+                            Enabling it lets administrators add an explicitly
+                            selected version to an existing offered collection.
+                            It requires collection sync. Removal is not
+                            supported.
+                          </p>
+                          <p class="muted">
                             Played means watched; Paused takes priority as
                             in-progress. Detail fields depend on available
                             source metadata. “Added on” means first detected,
@@ -405,6 +436,72 @@ export class KaleidescapeSettings extends LitElement {
                           ${this.draft.library_sync_artwork ? html`<p class="warning">Artwork uses additional disk space in a separate private cache, up to ${String(this.draft.library_artwork_cache_mb)} MiB plus one incoming image (up to 5 MiB). The journal database retains its 256 MiB limit. Increase the cache limit for a large library; older covers may be evicted and fetched again. HA backups can include these files.</p>` : nothing}`
                       : nothing
                   }
+                  <h3>Display defaults</h3>
+                  <div class="grid settings-grid">
+                    ${(
+                      [
+                        [
+                          "default_landing_page",
+                          "Default landing page",
+                          [
+                            ["now-playing", "Now Playing"],
+                            ["library", "Library"],
+                            ["journal", "Journal"],
+                            ["database", "Database"],
+                            ["settings", "Settings"],
+                          ],
+                        ],
+                        [
+                          "library_default_view",
+                          "Default Library view",
+                          [
+                            ["list", "List"],
+                            ["covers", "Covers"],
+                          ],
+                        ],
+                      ] as const
+                    ).map(
+                      ([key, label, choices]) =>
+                        html`<label
+                          >${label}<select
+                            name=${key}
+                            .value=${String(this.draft[key] ?? (key === "default_landing_page" ? "journal" : "list"))}
+                            @change=${(event: Event) => {
+                              this.draft = {
+                                ...this.draft,
+                                [key]: (event.target as HTMLSelectElement)
+                                  .value,
+                              };
+                            }}
+                          >
+                            ${choices.map(([value, text]) => html`<option value=${value}>${text}</option>`)}
+                          </select></label
+                        >`,
+                    )}
+                    <label
+                      >Default Library entries per page<input
+                        name="library_default_count"
+                        type="number"
+                        min="1"
+                        max="1000"
+                        step="1"
+                        required
+                        .value=${String(this.draft.library_default_count ?? 50)}
+                        @input=${(event: Event) => {
+                          this.draft = {
+                            ...this.draft,
+                            library_default_count: (
+                              event.target as HTMLInputElement
+                            ).value,
+                          };
+                        }}
+                    /></label>
+                  </div>
+                  <p class="muted">
+                    The URL remembers your current tab across reloads. These
+                    defaults apply to fresh visits. Regular users can land on
+                    Journal or an enabled Library.
+                  </p>
                   <button class="primary" type="submit">
                     ${this.saving ? "Saving…" : "Save settings"}
                   </button>
@@ -420,6 +517,76 @@ export class KaleidescapeSettings extends LitElement {
             : nothing
       }
     </section>`;
+  }
+  private renderCollections() {
+    const selected = (this.draft.library_excluded_collections ??
+      []) as string[];
+    const choices = [...new Set([...this.collectionChoices, ...selected])].sort(
+      (a, b) => a.localeCompare(b),
+    );
+    return html`<fieldset class="full">
+      <legend>Hidden collection names</legend>
+      <div class="facet-options">
+        ${choices.map(
+          (name) =>
+            html`<label class="check"
+              ><input
+                name="library_excluded_collections"
+                type="checkbox"
+                .value=${name}
+                .checked=${selected.includes(name)}
+                ?disabled=${selected.length >= 200 && !selected.includes(name)}
+                @change=${(event: Event) => {
+                  this.draft = {
+                    ...this.draft,
+                    library_excluded_collections: (
+                      event.target as HTMLInputElement
+                    ).checked
+                      ? [...selected, name]
+                      : selected.filter((value) => value !== name),
+                  };
+                  this.requestUpdate();
+                }}
+              />${name}</label
+            >`,
+        )}
+      </div>
+      <div class="actions">
+        <label
+          >Custom collection name<input
+            name="custom_collection"
+            maxlength="256"
+            .value=${this.customCollection}
+            @input=${(event: Event) => {
+              this.customCollection = (event.target as HTMLInputElement).value;
+            }} /></label
+        ><button
+          type="button"
+          @click=${() => {
+            const name = this.customCollection.trim().replace(/\s+/g, " ");
+            if (!name || selected.length >= 200) return;
+            if (
+              !selected.some(
+                (value) =>
+                  value.toLocaleLowerCase() === name.toLocaleLowerCase(),
+              )
+            )
+              this.draft = {
+                ...this.draft,
+                library_excluded_collections: [...selected, name],
+              };
+            this.customCollection = "";
+            this.requestUpdate();
+          }}
+        >
+          Add hidden name
+        </button>
+      </div>
+      <small
+        >Selected names are hidden from labels and filters. Movies remain
+        visible; Played/Paused still determine status. No device changes.</small
+      >
+    </fieldset>`;
   }
 }
 if (!customElements.get("kaleidescape-settings"))

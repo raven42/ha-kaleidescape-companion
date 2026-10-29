@@ -1,13 +1,41 @@
 # Tests
 
+`test_purchases.py` exercises fictional multi-page invoices, rental/pending/cancelled
+exclusions, earliest dates, ambiguous matching, transactional date corrections,
+actor-bound retries, upload limits, access revocation, cancellation/slot cleanup,
+and private corrected-copy generation with input preservation.
+`frontend/tests/preferences.test.ts` checks display defaults, URL restoration,
+collection lists, guarded backdrop dismissal, and uncertain purchase retries.
+See [purchase dates](../docs/purchase-dates.md) for the operator workflow.
+
+
 `test_library.py` uses fictional HTML and mocked networking to check catalog
-completeness/version groups, collection status precedence, filters/pagination,
-first detection, schema 6 migration, reserved journal headroom, private artwork
+completeness/version groups, exclusion of built-in Scenes management, initial
+collection sync, status precedence, multi-select filters/sorts/pagination,
+first detection, schema 6/7 migrations, reserved journal headroom, private artwork
 limits/rollback, DNS pinning, native HA session/lifecycle, and access revocation.
-`frontend/tests/library.test.ts` covers cached browsing, opt-in behavior, filters,
-safe text, stale results, cover abort/revocation, and outage handling. The normal
+`frontend/tests/library.test.ts` covers cached cover/list browsing, resizable
+covers, detail/filter dialogs, sortable headings, multi-select/cancel behavior,
+reader controls, safe text, stale results, cover concurrency/abort/revocation, and
+outage handling. Reader tests cover enabled/disabled Library tabs and cleanup;
+backend tests enforce positive reader projections and artwork access revocation. The normal
 proxy tests include the query-free authenticated library artwork route. Full
 source sync, native browser layout, and other firmware require operator review.
+`test_library_browse.py` covers source-group browsing before pagination, same-name
+remake separation, missing descriptive metadata and source isolation, distinct versions/years,
+filter matching on one version, hidden-label/status preservation, preference-key
+pagination, bounded/scoped version reads, and revocation. UI tests cover stable
+column widths, keyboard resizing, version switching, and discarded late details.
+Database tests cover 10/25/100/500-row pages, literal search, column/direction
+validation, response byte budgets, revision checks, and access revocation. UI
+checks cover paging/search/sort, selection clearing and read-only table transitions.
+No normal test sends device collection writes.
+`library-layout.test.ts` simulates viewport changes, cover sizing, row-aligned
+pagination, 1000-row DOM updates, invalid targets, final remainders, stale replies,
+and teardown. Backend tests cover the 1000-entry ceiling, conservative response
+byte limits, compact summaries, and a 999-parameter SQLite limit. The optional
+`scripts/benchmark_library.py` uses only fictional temporary storage to measure
+warm page-query latency/size; it is separate from correctness assertions.
 
 Install `python -m pip install -e '.[dev]'`, then run:
 
@@ -107,3 +135,12 @@ and the frontend build.
 `fixtures/` remains reserved for minimized, sanitized protocol/library
 examples. Never copy household exports or raw snapshots here. See the
 [backend guide](../docs/backend.md) for manual testing with authenticated HA.
+
+
+`test_library_collections.py` checks fictional add form/hidden-value parsing,
+source/version/target/revision restrictions, exact multipart destination and
+fields, read-back/no-op behavior, durable uncertain requests, actor/UUID barriers,
+restart checks, explicit acknowledgment, wider membership changes, caller
+cancellation and backup draining. `library-collection-add.test.ts` exercises the
+administrator UI, role/opt-out behavior, explicit choices, lost replies with
+read-only checking, dismissal guards and stale responses. No test contacts a device.

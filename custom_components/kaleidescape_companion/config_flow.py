@@ -11,7 +11,16 @@ from homeassistant.config_entries import (
 from homeassistant.core import callback
 
 from .const import DOMAIN, NAME
+from .runtime import KaleidescapeRuntime
 from .settings import form, validate
+
+
+async def collections(hass, entry):
+    runtime = getattr(entry, "runtime_data", None)
+    if isinstance(runtime, KaleidescapeRuntime) and runtime.ready and runtime.library:
+        info = await runtime.repository.async_library_info(runtime.library.source)
+        return info["collection_names"]
+    return []
 
 
 class KaleidescapeConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -62,5 +71,9 @@ class KaleidescapeOptionsFlow(OptionsFlowWithReload):
             else:
                 return self.async_create_entry(title="", data=updated)
         return self.async_show_form(
-            step_id="init", data_schema=form(self.hass, config), errors=errors
+            step_id="init",
+            data_schema=form(
+                self.hass, config, await collections(self.hass, self.config_entry)
+            ),
+            errors=errors,
         )

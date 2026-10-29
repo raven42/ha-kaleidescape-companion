@@ -1,9 +1,10 @@
 /** Administrator raw inspection and explicitly confirmed permanent purging. */
-import { LitElement, css, html, nothing } from "lit";
+import { LitElement, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
 import { errorCode, errorMessage } from "./api";
 import type {
   DatabasePage,
+  DatabaseQuery,
   JournalClient,
   JournalInfo,
   PreparedMutation,
@@ -13,6 +14,7 @@ import { draftData, draftFrom, renderDraftFields } from "./editor";
 import type { Draft } from "./editor";
 import "./transfers";
 import { styles } from "./styles";
+import { dismissBackdrop } from "./dialog";
 
 const TABLE_LABELS: Record<string, string> = {
   viewings: "Viewings",
@@ -27,6 +29,9 @@ const TABLE_LABELS: Record<string, string> = {
   library_collections: "Library collections",
   library_memberships: "Library memberships",
   library_artwork: "Library artwork",
+  library_purchase_dates: "Purchase dates",
+  library_purchase_audit: "Purchase date audit",
+  library_collection_intents: "Collection add requests",
 };
 
 export class KaleidescapeAdvanced extends LitElement {
@@ -34,14 +39,7 @@ export class KaleidescapeAdvanced extends LitElement {
     client: { attribute: false },
     scope: { attribute: false },
   };
-  static styles = [
-    styles,
-    css`
-      :host {
-        min-height: 0;
-      }
-    `,
-  ];
+  static styles = styles;
   client?: JournalClient;
   scope?: JournalInfo;
   private boundClient?: JournalClient;
@@ -49,6 +47,9 @@ export class KaleidescapeAdvanced extends LitElement {
   private generation = 0;
   private page?: DatabasePage;
   private table = "viewings";
+  private filters: DatabaseQuery = { limit: 25, query: "", descending: false };
+  private search = "";
+  private columns: string[] = [];
   private selected = new Set<string>();
   private confirming: "selected" | "all" | null = null;
   private confirmation = "";
@@ -86,6 +87,10 @@ export class KaleidescapeAdvanced extends LitElement {
   private clear() {
     this.generation++;
     this.page = undefined;
+    this.table = "viewings";
+    this.filters = { limit: 25, query: "", descending: false };
+    this.search = "";
+    this.columns = [];
     this.selected.clear();
     this.confirming = null;
     this.hidePurge();
@@ -185,8 +190,13 @@ export class KaleidescapeAdvanced extends LitElement {
         this.table,
         offset,
         revision,
+        this.filters,
       );
-      if (generation === this.generation) this.page = page;
+      if (generation === this.generation) {
+        this.page = page;
+        this.columns = page.columns;
+        this.filters.sort = page.sort;
+      }
     } catch (error) {
       if (generation === this.generation) this.fail(error);
     } finally {
@@ -521,8 +531,18 @@ export class KaleidescapeAdvanced extends LitElement {
     if (this.blocked) return;
     if (!this.discard()) return;
     this.table = table;
+    this.filters = { limit: this.filters.limit, query: "", descending: false };
+    this.search = "";
+    this.columns = [];
     this.draft = this.initial = null;
     void this.load();
+  }
+  private browse(change: Partial<DatabaseQuery>) {
+    if (this.blocked || !this.discard()) return false;
+    this.filters = { ...this.filters, ...change };
+    this.draft = this.initial = null;
+    void this.load();
+    return true;
   }
   private tabKey(event: KeyboardEvent, tables: string[]) {
     const index = tables.indexOf(this.table);
@@ -633,6 +653,65 @@ export class KaleidescapeAdvanced extends LitElement {
             </button>`,
         )}
       </div>
+      <form
+        class="filters database-filters"
+        @submit=${(event: Event) => {
+          event.preventDefault();
+          this.browse({ query: this.search });
+        }}
+      >
+        <label
+          >Search rows
+          <input
+            name="database_query"
+            maxlength="500"
+            .value=${this.search}
+            ?disabled=${blocked}
+            @input=${(event: Event) => {
+              this.search = (event.target as HTMLInputElement).value;
+            }}
+          />
+        </label>
+        <button type="submit" ?disabled=${blocked}>Search</button>
+        <label
+          >Rows per page
+          <select
+            name="database_limit"
+            .value=${String(this.filters.limit)}
+            ?disabled=${blocked}
+            @change=${(event: Event) => {
+              const control = event.target as HTMLSelectElement;
+              if (!this.browse({ limit: Number(control.value) }))
+                control.value = String(this.filters.limit);
+            }}
+          >
+            ${[10, 25, 100, 500].map((count) => html`<option value=${count}>${count}</option>`)}
+          </select>
+        </label>
+        <label
+          >Sort by
+          <select
+            name="database_sort"
+            .value=${this.filters.sort ?? this.columns[0] ?? ""}
+            ?disabled=${blocked || !this.columns.length}
+            @change=${(event: Event) => {
+              const control = event.target as HTMLSelectElement;
+              if (!this.browse({ sort: control.value }))
+                control.value = this.filters.sort ?? this.columns[0] ?? "";
+            }}
+          >
+            ${this.columns.map((column) => html`<option value=${column}>${column.replaceAll("_", " ")}</option>`)}
+          </select>
+        </label>
+        <button
+          type="button"
+          ?disabled=${blocked}
+          aria-label="Reverse database sort"
+          @click=${() => this.browse({ descending: !this.filters.descending })}
+        >
+          ${this.filters.descending ? "Descending ↓" : "Ascending ↑"}
+        </button>
+      </form>
       <div
         class="database-layout"
         role="tabpanel"
@@ -663,15 +742,17 @@ export class KaleidescapeAdvanced extends LitElement {
                                 ? html`<input
                                     type="checkbox"
                                     aria-label=${`Select ${String(row.title)}`}
-                                    ?disabled=${blocked}
+                                    ?disabled=${blocked || (this.selected.size >= 100 && !this.selected.has(String(row.id)))}
                                     .checked=${this.selected.has(String(row.id))}
                                     @change=${(event: Event) => {
                                       if (
                                         (event.target as HTMLInputElement)
                                           .checked
-                                      )
+                                      ) {
+                                        if (this.selected.size >= 100) return;
                                         this.selected.add(String(row.id));
-                                      else this.selected.delete(String(row.id));
+                                      } else
+                                        this.selected.delete(String(row.id));
                                       this.confirming = null;
                                       this.requestUpdate();
                                     }}
@@ -694,8 +775,8 @@ export class KaleidescapeAdvanced extends LitElement {
                       <small
                         >Rows
                         ${this.page.items.length ? this.page.offset + 1 : 0}–${this.page.offset + this.page.items.length}
-                        · Up to 25
-                        rows${viewings ? ` · ${this.selected.size} selected` : ""}</small
+                        of ${this.page.total} · Up to ${this.page.limit}
+                        rows${viewings ? ` · ${this.selected.size} selected (maximum 100)` : ""}</small
                       >
                       <div class="actions">
                         <button
@@ -706,13 +787,13 @@ export class KaleidescapeAdvanced extends LitElement {
                         </button>
                         <button
                           ?disabled=${blocked || this.page.offset === 0}
-                          @click=${() => this.load(Math.max(0, this.page!.offset - 25), this.page!.revision)}
+                          @click=${() => this.load(Math.max(0, this.page!.offset - this.page!.limit), this.page!.revision)}
                         >
                           Previous
                         </button>
                         <button
                           ?disabled=${blocked || !this.page.has_more}
-                          @click=${() => this.load(this.page!.offset + 25, this.page!.revision)}
+                          @click=${() => this.load(this.page!.offset + this.page!.limit, this.page!.revision)}
                         >
                           Next
                         </button>
@@ -727,6 +808,7 @@ export class KaleidescapeAdvanced extends LitElement {
       </div>
       <dialog
         id="purge-dialog"
+        @click=${dismissBackdrop}
         class="database-dialog"
         aria-labelledby="purge-title"
         @cancel=${this.closePurge}

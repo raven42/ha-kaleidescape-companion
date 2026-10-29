@@ -214,6 +214,81 @@ class MaintenanceStorageTest(unittest.IsolatedAsyncioTestCase):
             with self.assert_error("invalid_request"):
                 await self.repository.async_inspect(table, offset)
 
+    async def test_inspection_page_sizes_search_sort_and_byte_budget(self):
+        await self.create(title="Fictional viewing 000")
+
+        def seed():
+            db = self.repository._db()
+            row = dict(db.execute("SELECT * FROM viewings").fetchone())
+            with db:
+                db.executemany(
+                    "INSERT INTO viewings ("
+                    + ",".join(row)
+                    + ") VALUES ("
+                    + ",".join("?" for _ in row)
+                    + ")",
+                    [
+                        tuple(
+                            {
+                                **row,
+                                "id": str(uuid4()),
+                                "title": f"Fictional viewing {index:03}",
+                            }.values()
+                        )
+                        for index in range(1, 503)
+                    ],
+                )
+
+        await self.repository._call(seed)
+        for limit in (10, 25, 100, 500):
+            page = await self.repository.async_inspect(
+                "viewings", limit=limit, sort="title"
+            )
+            self.assertEqual(len(page["items"]), limit)
+            self.assertEqual(page["limit"], limit)
+            self.assertEqual(page["total"], 503)
+            self.assertTrue(page["has_more"])
+            self.assertEqual(page["items"][0]["title"], "Fictional viewing 000")
+        final = await self.repository.async_inspect(
+            "viewings", 500, page["revision"], limit=500, sort="title"
+        )
+        self.assertEqual(len(final["items"]), 3)
+        self.assertFalse(final["has_more"])
+        descending = await self.repository.async_inspect(
+            "viewings", limit=10, sort="title", descending=True
+        )
+        self.assertEqual(descending["items"][0]["title"], "Fictional viewing 502")
+        found = await self.repository.async_inspect(
+            "viewings", query="VIEWING 50", sort="title"
+        )
+        self.assertEqual(found["total"], 3)
+        self.assertEqual(found["tables"]["viewings"], 503)
+        self.assertIn("title", found["columns"])
+        await self.create(title="Literal 100%_ marker")
+        literal = await self.repository.async_inspect("viewings", query="%_")
+        self.assertEqual(literal["total"], 1)
+        self.assertEqual(literal["items"][0]["title"], "Literal 100%_ marker")
+        for arguments in (
+            {"limit": 26},
+            {"limit": True},
+            {"limit": "500"},
+            {"limit": None},
+            {"query": "x" * 501},
+            {"query": "\x00"},
+            {"query": 3},
+            {"sort": "title DESC; DROP TABLE viewings"},
+            {"sort": "sqlite_master"},
+            {"sort": []},
+            {"descending": 1},
+        ):
+            with self.assert_error("invalid_request"):
+                await self.repository.async_inspect("viewings", **arguments)
+        with patch(
+            "custom_components.kaleidescape_companion.maintenance.MAX_PAGE_BYTES", 1000
+        ):
+            with self.assert_error("database_page_too_large"):
+                await self.repository.async_inspect("viewings", limit=500)
+
     async def test_cancelled_request_still_commits_and_retry_returns_receipt(self):
         _, record = await self.create()
         request = str(uuid4())
@@ -248,6 +323,9 @@ class MaintenanceStorageTest(unittest.IsolatedAsyncioTestCase):
             db.execute("DROP TABLE maintenance_audit")
             db.execute("DROP TABLE import_audit")
             for table in (
+                "library_collection_intents",
+                "library_purchase_dates",
+                "library_purchase_audit",
                 "library_memberships",
                 "library_collections",
                 "library_titles",
@@ -263,7 +341,7 @@ class MaintenanceStorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             (await self.repository.async_get(record["id"]))["title"], record["title"]
         )
-        self.assertEqual((await self.repository.async_info())["schema_version"], 6)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 8)
         backup = next(self.path.parent.glob("journal.sqlite3.v3.*.bak"))
         self.assertEqual(backup.stat().st_mode & 0o777, 0o600)
         with closing(sqlite3.connect(backup)) as db:
@@ -338,13 +416,21 @@ class MaintenanceApiTest(unittest.IsolatedAsyncioTestCase):
         repository = self.entry.runtime_data.repository
         original = repository.async_inspect
 
-        async def revoke(*args):
-            result = await original(*args)
+        async def revoke(*args, **kwargs):
+            result = await original(*args, **kwargs)
             self.admin.is_admin = False
             return result
 
         with patch.object(repository, "async_inspect", side_effect=revoke):
-            result = await self.call("database/inspect", **self.scope, table="requests")
+            result = await self.call(
+                "database/inspect",
+                **self.scope,
+                table="requests",
+                limit=500,
+                query="fictional",
+                sort="request_id",
+                descending=True,
+            )
         self.assertEqual(result["code"], "unauthorized")
 
     async def prepare_flow(self):

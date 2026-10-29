@@ -1,5 +1,64 @@
 # Changelog
 
+## Unreleased
+
+- Group Library editions by source-scoped `source_group`, keeping same-name
+  remakes separate. Fill missing descriptions from sibling versions at read time
+  while preserving raw metadata and version-specific facts.
+- Restrict full-viewport sizing to the main panel, fixing Library and Add to
+  Collection spacing. Order tabs Now Playing, Library, Journal, Database, Settings.
+- Add Database page sizes of 10/25/100/500, literal search, column sorting, and
+  bounded responses; retain administrator-only inspection and purge safeguards.
+- Add rough development/runtime organization and calendar/Gmail integration
+  investigations to the product plan.
+
+- Add separately opted-in administrator Add to Collection for one version and
+  existing target, with read-back verification, protected recovery UI, and schema 8
+  durable receipts that prevent automatic POST replay. Removal remains deferred.
+
+
+- Add configurable landing/Library defaults, URL tab restoration, known/custom
+  hidden-collection lists, and guarded dialog backdrop dismissal.
+- Add private purchase-history preview and explicit date corrections (schema 7),
+  plus an offline corrected-copy helper; preserve journal and first detection.
+## Unreleased — Adaptive Library pagination
+
+- Added entries-per-page targets from 1 to 1000, defaulting to 50.
+- Fit cover pages to complete measured grid rows; debounce viewport/cover-size
+  changes, preserve the current title range, and use the effective size for paging.
+  The final catalog remainder stays visible without duplicated entries.
+- Added compact group summaries, an 8 MiB list-response budget, batched lookups,
+  resize/lifecycle/page-size regressions, and a fictional query benchmark.
+- Avoided redundant empty-cover renders on large pages; artwork stays visible-only
+  with three requests at once. No device operations or deployment.
+
+## Unreleased — Grouped Library and stable tables
+
+- Grouped identical case-folded names in list/cover views before pagination,
+  preserving exact versions and exposing each version in the detail popup.
+- Expanded summary `Multiple` formats from concrete source rows; retained
+  individual format/year/runtime/status/collection metadata.
+- Stabilized table widths across sorts, added accessible drag/keyboard column
+  resizing, and truncated/wrapped long fields.
+- Added validated hidden-collection preferences to native and sidebar Settings;
+  preserved movies and Played/Paused status, with stale-preference refresh checks.
+- Added the bounded authenticated version-read API and regression tests; split
+  worker browse queries from catalog writes/cache files. No schema migration.
+- Documented device collection write-back evidence and a separate validation plan;
+  no vendor POST, write capability, or deployment is part of this change.
+
+## Unreleased — Shared Library browsing
+
+- Enabled read-only Library metadata/artwork access for active household users;
+  retained administrator-only settings, manual sync, and detailed storage/status.
+- Added resizable cover grids, sortable year/collection/list headings, and modal
+  title details. Moved filters into multi-select checkbox dialogs and removed
+  writer/studio filters.
+- Excluded the vendor's built-in Scenes management page from collection discovery,
+  fixing initial collection sync failing despite a valid title catalog.
+- Bounded visible cover requests, cleared/revoked image blobs on navigation and
+  account changes, and expanded role/filter/parser/UI regression coverage.
+
 ## Unreleased — Optional local library
 
 - Added disabled-by-default Library sync with default-host discovery, hostname

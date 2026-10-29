@@ -6,7 +6,16 @@ corrections, confirmed deletion, session evidence, database health, and private
 JSON/SQLite downloads. Administrators can open Settings and a Database view for
 raw table inspection, viewing corrections, permanent selected/all-entry purge,
 and compatible JSON/SQLite import/export. A compact administrator Now Playing card adds live source/session context.
-Library browsing, progress, and playback controls remain later work.
+The opt-in [Library](library.md) provides shared cached browsing with a resizable cover grid, sortable list, and filter/title-detail popups. Source-group editions share a row/cover; same-name remakes stay separate, with individual
+format/year/version tabs in the popup. List widths stay fixed across sorts and
+can be resized by dragging dividers or using Left/Right/Home on a focused divider.
+Entries per page accepts 1–1000 (default 50). Cover pages round the target to
+complete rows for the measured grid, adapting to window and cover-size changes.
+The final page can contain fewer titles. Large pages use compact summaries and
+visible-only artwork; full metadata loads when opening a title.
+Settings can hide collection names without hiding movies or editing the device.
+Collection write-back has a separate [plan](library-collections.md); progress and
+playback controls remain later work.
 
 ## Open in Home Assistant
 
@@ -14,7 +23,7 @@ Build the frontend with `npm --prefix frontend run build`, restart HA, and add
 the Kaleidescape Companion integration if it is not already configured. Open **Kaleidescape Companion**
 in the sidebar, or visit `/kaleidescape-companion` on that HA instance. The panel
 uses the existing signed-in HA connection. Active regular users see a read-only
-household journal with title search, status filters, pagination, and viewing times.
+household Journal with title search, status filters, pagination, and viewing times, plus the Library tab when enabled.
 Administrators retain the management UI, settings, Database view, notes/session details, health, and exports. No
 extra token is needed. Rebuild after frontend edits, reload the integration to
 refresh the asset URL, and reload the browser page to load the new component.
@@ -167,11 +176,13 @@ large downloads can still use substantial browser memory. Follow the
 
 ## Settings and Database
 
-The top-level tabs are **Now Playing | Journal | Library | Database | Settings**. Journal
+The top-level tabs are **Now Playing | Library | Journal | Database | Settings**. Journal
 remains the default. Arrow keys, Home, and End move between tabs; the bar scrolls
 horizontally on narrow screens. Library stays visibly disabled until opted in
-through Settings. Enabled Library browsing, status, and sync currently require
-an administrator; see the [Library guide](library.md).
+through Settings. Enabled Library metadata/artwork and public freshness/counts are
+shared with active regular users through Library/Journal tabs. Settings, manual
+sync, and detailed sync/storage status remain administrator-only; see the
+[Library guide](library.md).
 Only the selected page is mounted, so leaving Now Playing stops its polling.
 Regular users retain the existing read-only journal without administrator tabs.
 
@@ -187,11 +198,16 @@ leaving or reloading; inspect saved values before another change.
 **Database** uses one shared surface: a toolbar, underline table tabs matching the
 main navigation, then the entry list and right-hand details. The toolbar contains
 **New Entry**, **Delete entry**, **Purge entry**, **Refresh database**, **Import**,
-and **Export**. The seven table tabs show friendly names and counts for `viewings`,
-`sessions`, `requests`, `manual_audit`, `maintenance_audit`, `import_audit`, and
-`schema_metadata`. Arrow keys/Home/End move between tabs. Each request returns at
-most 25 raw rows with counts. Checkboxes sit beside viewing names and select
-deletion/purge targets; clicking a name opens its details. The entries list is padded;
+and **Export**. Fifteen table tabs show friendly names and full table counts,
+including the journal, internal audit/retry metadata, and read-only Library tables.
+Arrow keys/Home/End move between tabs. Below them, **Search rows** matches literal
+text across the selected table's fields. **Rows per page** offers 10, 25 (default),
+100, and 500; **Sort by** selects a stored column, with ascending/descending order.
+Changes return to the first page and clear row selection; switching tables also
+clears search/sort. Matching-row totals accompany revision-bound paging. Pages
+larger than 8 MiB are rejected with a prompt to reduce the page size.
+Checkboxes sit beside viewing names and select up to 100 deletion/purge targets;
+clicking a name opens its details. The entries list is padded;
 row counts are on their own line above a single row of **First**, **Previous**,
 and **Next** controls. Narrow screens stack the list and details within the same surface.
 
@@ -280,3 +296,48 @@ Journal lists refresh explicitly; only the small Now Playing snapshot refreshes
 automatically. There are no live subscriptions or automatic journal-list polls. The initial panel has not been validated across a supported HA release
 matrix. The [known upstream dependency finding](security.md#known-dependency-findings-2026-10-25)
 still blocks a hardened public release.
+
+
+## Display defaults and reloads
+
+Settings includes a default landing tab, Library List/Covers view, and default
+Library count (1–1000). The selected main tab is retained in the URL as
+`companion_page`, so reload returns to it. A fresh URL uses the configured landing
+tab; role restrictions and disabled Library fall back to an allowed page.
+These are shared household defaults. View/count adjustments within Library remain
+in memory; only the selected main tab is retained in the URL.
+Hidden collections use checkboxes for known cached names and an **Add hidden name**
+control for custom values. Selected names are hidden; movies remain visible.
+Purchase import is on Library for administrators; see [purchase dates](purchase-dates.md).
+All native dialogs support backdrop-click dismissal through their Escape/cancel
+guard. Accepted or uncertain writes remain protected until resolved/discarded.
+
+For browser review, use `/tests/review.html?library=1`, save display defaults, switch
+tabs and reload, check known/custom hidden names, and click inside/outside filter,
+title, transfer and purge dialogs. Review both administrator and reader layouts.
+On isolated HA, preview purchase HTML and verify selected-version dates before apply.
+The fictional fixture retains mock settings only in the current page's memory;
+reload resets those mock values while preserving the URL tab. Verify durable
+saved defaults in an isolated HA instance after deploying the build.
+
+
+## Add to Collection
+
+After enabling Library, collection sync, and **Allow Add to Collection on the
+device** in Settings, administrators can open a title, select its exact version,
+and choose **Add to Collection…**. The dialog loads offered existing targets on
+explicit open; Add submits one version/one collection and verifies membership.
+Readers receive no controls or mutation requests. Removal is deferred.
+
+A lost response exposes **Check add result**, which sends no new add. Known pending
+requests survive reload in a Library warning with **Check membership** and explicit
+**Acknowledge unconfirmed add**. Inspect the device before acknowledgment; this
+only retires the local uncertainty and permits a new request. It does not undo
+anything or prove the previous add failed. Accepted/unknown requests protect dialog
+and version navigation. [The backend contract](library-collections.md) documents
+scope, receipts, recovery and firmware limits.
+
+For browser review, use the fictional Vite fixture with Library enabled, opt in
+through Settings, open an individual title/version and inspect target choice,
+submission, Cancel/backdrop and narrow layouts. The fixture simulates device
+behavior; real firmware add/read-back requires an isolated operator test.

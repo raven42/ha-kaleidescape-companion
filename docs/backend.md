@@ -1,7 +1,7 @@
 # Journal backend
 
 The backend records manual journal entries and observed playback from one selected
-HA player. API version is `1`; SQLite schema is `6` and JSON export format is
+HA player. API version is `1`; SQLite schema is `8` and JSON export format is
 `2`. The household reader and administrator [management panel](ui.md) use this API. Live
 subscriptions and controls remain planned; [optional library sync](library.md) is implemented. A compact read-only Now Playing
 card uses the existing snapshot API and HA artwork.
@@ -60,6 +60,13 @@ Schema 6 adds source-scoped library titles, collections/memberships, and artwork
 indexes. Image bytes use a private bounded file cache outside SQLite. Library
 writes reserve journal headroom at a 192 MiB write ceiling; total SQLite growth
 remains capped at 256 MiB. See the [library storage and recovery contract](library.md#storage-artwork-and-recovery).
+
+Schema 7 adds `library_purchase_dates` and `library_purchase_audit`.
+Administrator-only purchase previews use a bounded scoped upload; applies use
+`library/purchases/apply` with explicit IDs/dates, source revision, and request UUID.
+Household Library reads expose only the resulting calendar date.
+See [purchase dates](purchase-dates.md) for matching, retries, and copied databases.
+`info` also exposes three validated display defaults to active users.
 
 ## Automatic tracking
 
@@ -212,7 +219,7 @@ the loaded entry and dataset. All journal commands require both `entry_id` and
 | `settings/start` | None beyond scope | Native HA options form: `flow_id`, `fields`, `errors` |
 | `settings/submit` | `flow_id`, `data` | Updated form/errors or `type: create_entry` after native persistence/reload scheduling |
 | `settings/cancel` | `flow_id` | Abort this user's Companion options flow without saving |
-| `database/inspect` | `table`; optional `offset`, `revision` | Fixed table counts, up to 25 raw `items`, `offset`, `revision`, `has_more` |
+| `database/inspect` | `table`; optional `offset`, `revision`, `limit`, `query`, `sort`, `descending` | Table counts, bounded raw `items`, matching `total`, `columns`, applied query/sort/limit, `offset`, `revision`, `has_more` |
 | `database/purge` | `request_id`, dataset `expected_revision`, `viewing_ids`, `all`, `confirmation` | Content-free `purged_count` and dataset `revision` |
 | `database/update` | `request_id`, `viewing_id`, viewing `expected_revision`, `patch` | Existing validated viewing corrections, including tombstones; no immutable/internal field edits |
 
@@ -269,11 +276,19 @@ and a changed configuration fingerprint rejects stale submission. Starting a new
 Companion Settings form replaces that user's prior options flow. Saving uses the existing
 `OptionsFlowWithReload`; it does not set arbitrary HA options or call actions.
 
-Inspection accepts only `viewings`, `sessions`, `requests`, `manual_audit`,
-`maintenance_audit`, `import_audit`, and `schema_metadata`. Rows sort by their internal primary
-key with fixed 25-row pages, counts, and `has_more`. `offset` is a nonnegative
-integer at most 10,000,000; provide the first page's dataset `revision` on later
-pages. Intervening writes return `refresh_required`. Raw values include private
+Inspection accepts only the fifteen internal tables allowlisted in `maintenance.py`.
+`limit` is exactly 10, 25 (default), 100, or 500. `query` is at most 500 characters,
+without NUL; it searches textual representations of all selected-table columns
+using bound literal LIKE matching (SQL wildcard characters are escaped). `sort`
+must exactly match a column in that table's integration-owned local schema;
+`descending` is a strict boolean. The default is the first primary-key column,
+with fixed primary-key tie-breaks for stable paging. Text sorts ignore ASCII case;
+numeric columns retain numeric ordering. No SQL expression is accepted.
+Responses include full table counts, matching `total`, `columns`, `limit`, applied
+`query`/`sort`/`descending`, and `has_more`. Conservative serialized responses are
+capped at 8 MiB (`database_page_too_large`); reduce the limit and retry.
+`offset` is a nonnegative integer at most 10,000,000; provide the first page's
+dataset `revision` on later pages. Intervening writes return `refresh_required`. Raw values include private
 notes, actor IDs, source identifiers, tombstones, and cached response JSON; this
 surface is never projected to regular users. SQL, paths, or other table names
 are not accepted.

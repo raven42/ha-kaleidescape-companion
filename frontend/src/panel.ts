@@ -12,6 +12,7 @@ import type {
 import { draftData, draftFrom, renderDraftFields } from "./editor";
 import type { Draft } from "./editor";
 import { styles } from "./styles";
+import { landingPage, rememberPage } from "./navigation";
 import "./reader";
 import "./now-playing";
 import "./settings";
@@ -19,6 +20,7 @@ import "./advanced";
 import "./library";
 import type { KaleidescapeSettings } from "./settings";
 import type { KaleidescapeAdvanced } from "./advanced";
+import type { KaleidescapeLibrary } from "./library";
 import type { ViewingSummary } from "./api";
 
 const PAGES = [
@@ -28,14 +30,14 @@ const PAGES = [
     description: "Live playback and recording context.",
   },
   {
-    id: "journal",
-    label: "Journal",
-    description: "Review recordings and make corrections.",
-  },
-  {
     id: "library",
     label: "Library",
     description: "Browse cached titles, collections, and source metadata.",
+  },
+  {
+    id: "journal",
+    label: "Journal",
+    description: "Review recordings and make corrections.",
   },
   {
     id: "database",
@@ -91,6 +93,7 @@ export class KaleidescapePanel extends LitElement {
   private lastError = "";
   private notice = "";
   private activePage: Page = "journal";
+  private navigationReady = false;
   private settingsBusy = false;
   private maintenanceBusy = false;
 
@@ -150,6 +153,7 @@ export class KaleidescapePanel extends LitElement {
     this.sessionError = "";
     this.notice = "";
     this.activePage = "journal";
+    this.navigationReady = false;
     this.settingsBusy = this.maintenanceBusy = false;
   }
   private bind(api: JournalClient | null) {
@@ -174,6 +178,11 @@ export class KaleidescapePanel extends LitElement {
   private discard() {
     return (
       (!this.dirty() || window.confirm("Discard your unsaved changes?")) &&
+      (this.activePage !== "library" ||
+        (this.renderRoot
+          .querySelector<KaleidescapeLibrary>("kaleidescape-library")
+          ?.confirmNavigation() ??
+          true)) &&
       (this.activePage !== "database" ||
         (this.renderRoot
           .querySelector<KaleidescapeAdvanced>("kaleidescape-advanced")
@@ -200,6 +209,7 @@ export class KaleidescapePanel extends LitElement {
       return;
     this.closeEditor();
     this.activePage = page;
+    rememberPage(page);
     this.error = this.notice = "";
     this.requestUpdate();
     if (page === "journal") {
@@ -261,6 +271,19 @@ export class KaleidescapePanel extends LitElement {
       if (entries[0].api_version !== 1) throw new ApiError("not_ready");
       this.info = entries[0];
       if (!this.info.permissions.edit) return;
+      if (!this.navigationReady) {
+        this.activePage = landingPage(
+          this.info.ui_defaults?.default_landing_page,
+          true,
+          !!this.info.library_enabled,
+        );
+        this.navigationReady = true;
+        rememberPage(this.activePage);
+      }
+      if (this.activePage === "library" && !this.info.library_enabled) {
+        this.activePage = "journal";
+        rememberPage(this.activePage);
+      }
       this.history = [];
       this.cursor = undefined;
       this.page = 1;

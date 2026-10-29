@@ -15,7 +15,15 @@ The product name is **Kaleidescape Companion**. The HA domain `kaleidescape_comp
   and merge imports (schema 5).
 - Opt-in administrator [Library sync](library.md), disabled by default, with
   default-host discovery/override, interval and data/artwork options, source-scoped
-  versions/collections, first-detection dates, cached filters/sorts, and private covers.
+  versions/collections, first-detection dates, shared read-only browsing, multi-select filters, sortable
+  lists with stable/resizable columns, resizable covers with whole-row pagination,
+  selectable page targets up to 1000 with bounded compact responses, source-defined movie groups with missing-description fallback,
+  bounded individual-version detail tabs, hidden collection names, expanded formats,
+  and authenticated private covers.
+- Schema 7 adds private [purchase dates](purchase-dates.md), explicit administrator
+  preview/apply, content-free audit, and an offline corrected-copy helper.
+- Configurable landing/Library defaults, URL tab restoration, known/custom hidden
+  collection lists, and guarded backdrop dismissal.
 - Schema 6 library metadata and a bounded evictable artwork file cache, preserving
   viewing facts and journal write headroom, with backup/unload cancellation.
 - A [security policy](security.md), security regression tests in the normal check tasks,
@@ -26,7 +34,7 @@ The product name is **Kaleidescape Companion**. The HA domain `kaleidescape_comp
   with stale-configuration/actor scoping and automatic reload.
 - Administrator Database shared toolbar/surface, underline table tabs, inline
   selection list, viewing detail editor, confirmed tombstone deletion, and
-  import/export dialogs; confirmed selected/all
+  import/export dialogs, 10/25/100/500-row pages, literal search and column sorting; confirmed selected/all
   purge, covering sessions/audit/cached content and retaining retry barriers.
 - Configurable total-runtime admission (10 minutes by default, 0 disables),
   excluding short playback from automatic entries and waiting for missing runtime.
@@ -51,10 +59,11 @@ The product name is **Kaleidescape Companion**. The HA domain `kaleidescape_comp
 ## Deferred
 
 Multi-player configuration, live subscriptions, validated position/progress,
-richer grouped/poster Library browsing, journal identity associations and historical artwork,
+canonical work/edition identities, journal identity associations and historical artwork,
 per-user ownership/selective sharing, and playback controls remain deferred. The basic management panel is registered in HA;
 broader product UI and real-browser compatibility/accessibility checks remain.
-Compatible viewing-only JSON/SQLite merge imports are implemented; automatic retention
+Administrator [Add to Collection](library-collections.md) is implemented behind a separate off-by-default option.
+Removal remains planned; automatic sync stays GET-only. Compatible viewing-only JSON/SQLite merge imports are implemented; automatic retention
 remains deferred. Full SQLite restore is documented as an offline procedure.
 
 See the [backend API](backend.md) for the implemented manual and observed journal behavior.

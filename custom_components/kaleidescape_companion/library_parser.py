@@ -145,15 +145,25 @@ def catalog(source: str) -> tuple[list[dict], list[str] | None]:
         if not handle or not group or title is None or not clean(title.text()):
             raise malformed()
         groups.add(group)
-        if handle in rows:
-            if rows[handle]["source_group"] != group:
-                raise malformed()
-            continue  # Repeated selection/version row; preserve the exact handle.
 
         def cell(cls):
             value = node.find(cls=cls)
             return clean(value.text()) if value else ""
 
+        edition = cell("movie_media_type")
+        known = [edition] if edition and edition.casefold() != "multiple" else []
+        if handle in rows:
+            if rows[handle]["source_group"] != group:
+                raise malformed()
+            formats = sorted(
+                set(rows[handle]["formats"]) | set(known), key=str.casefold
+            )
+            if len(formats) > 100:
+                raise malformed()
+            rows[handle]["formats"] = formats
+            if formats:
+                rows[handle]["edition"] = formats[0]
+            continue  # A summary row and its concrete format may share a handle.
         year = cell("movie_year")
         rows[handle] = {
             "source_handle": handle,
@@ -165,7 +175,8 @@ def catalog(source: str) -> tuple[list[dict], list[str] | None]:
             "year": int(year)
             if year.isascii() and year.isdigit() and len(year) == 4
             else None,
-            "edition": cell("movie_media_type"),
+            "edition": edition,
+            "formats": known,
         }
         if len(rows) > MAX_TITLES:
             raise malformed()
@@ -183,6 +194,10 @@ def catalog(source: str) -> tuple[list[dict], list[str] | None]:
             continue
         values = parse_qs(url.query).get("collection", [])
         if len(values) == 1 and (name := clean(values[0], 256)):
+            # The built-in Scenes menu opens scene management, not a title
+            # collection. Parsing it as Movies aborts every collection refresh.
+            if name.casefold() == "scenes":
+                continue
             collections.add(name)
     if len(collections) > MAX_COLLECTIONS:
         raise malformed()

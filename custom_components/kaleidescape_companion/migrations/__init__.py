@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from ..security import private_file
 
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 8
 
 MIGRATIONS = {
     1: (
@@ -167,6 +167,34 @@ MIGRATIONS[6] = (
         cache_key TEXT PRIMARY KEY, content_type TEXT NOT NULL,
         byte_size INTEGER NOT NULL, stored_at TEXT NOT NULL
     )""",
+)
+
+
+MIGRATIONS[7] = (
+    """CREATE TABLE library_purchase_dates (
+        title_id TEXT PRIMARY KEY REFERENCES library_titles(id),
+        purchased_on TEXT NOT NULL, imported_at TEXT NOT NULL
+    )""",
+    """CREATE TABLE library_purchase_audit (
+        request_id TEXT PRIMARY KEY REFERENCES requests(request_id),
+        actor_id TEXT, updated_count INTEGER NOT NULL,
+        source_revision INTEGER NOT NULL, occurred_at TEXT NOT NULL
+    )""",
+)
+
+
+MIGRATIONS[8] = (
+    """CREATE TABLE library_collection_intents (
+        request_id TEXT PRIMARY KEY REFERENCES requests(request_id),
+        source_id TEXT NOT NULL REFERENCES library_sources(id),
+        title_id TEXT REFERENCES library_titles(id), collection TEXT,
+        expected_members_hash TEXT, status TEXT NOT NULL
+            CHECK(status IN ('uncertain','confirmed','abandoned')),
+        actor_id TEXT NOT NULL, acknowledged_by TEXT,
+        created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+    )""",
+    """CREATE UNIQUE INDEX library_collection_pending
+        ON library_collection_intents(source_id) WHERE status='uncertain'""",
 )
 
 

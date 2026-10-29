@@ -1,11 +1,11 @@
-"""Opt-in, sequential, bounded GET-only library synchronization owned by HA."""
+"""Opt-in bounded catalog reads and separately enabled collection additions."""
 
 import asyncio
 import socket
 from datetime import UTC, datetime, timedelta
 from urllib.parse import urlencode
 
-from aiohttp import ClientError, ClientTimeout, DummyCookieJar
+from aiohttp import ClientError, ClientTimeout, DummyCookieJar, FormData
 from homeassistant.helpers.aiohttp_client import (
     DATA_RESOLVER,
     async_create_clientsession,
@@ -13,9 +13,11 @@ from homeassistant.helpers.aiohttp_client import (
 from yarl import URL
 
 from .journal import JournalError
+from .library_collections import form_targets, member_hash, parameters
 from .library_config import DEFAULTS, lan_address, origin
 from .library_parser import artwork_path, catalog, details
 from .library_store import MAX_ARTWORK_BYTES, image_type, source_id
+from .security import async_finish_cleanup
 
 
 class LibrarySync:
@@ -37,6 +39,8 @@ class LibrarySync:
         self.total = 0
         self.last_attempt = None
         self.address = None
+        self.operation_lock = asyncio.Lock()
+        self.collection_task = None
 
     async def async_start(self):
         self.session = async_create_clientsession(
@@ -77,10 +81,245 @@ class LibrarySync:
     async def async_stop(self):
         self.stopped = True
         await self._cancel()
+        await self._drain_collection()
 
     async def async_pause(self):
         self.paused = True
         await self._cancel()
+        await self._drain_collection()
+
+    async def _drain_collection(self):
+        if self.collection_task and not self.collection_task.done():
+
+            async def finish():
+                try:
+                    await self.collection_task
+                except JournalError, ClientError, OSError, TimeoutError:
+                    pass
+
+            await async_finish_cleanup(finish())
+
+    def _collection_ready(self):
+        if self.stopped or self.paused:
+            raise JournalError("not_ready", "Library is paused")
+
+    async def async_collection_operation(self, operation, authorize):
+        self._collection_ready()
+        if self.operation_lock.locked() or (
+            self.collection_task and not self.collection_task.done()
+        ):
+            raise JournalError("busy", "Wait for the active Library operation")
+
+        async def run():
+            try:
+                async with asyncio.timeout(90):
+                    if self.operation_lock.locked():
+                        raise JournalError(
+                            "busy", "Wait for the active Library operation"
+                        )
+                    async with self.operation_lock:
+                        self._collection_ready()
+                        authorize()
+                        return await operation()
+            except JournalError as error:
+                return error
+            except ClientError, OSError, TimeoutError, UnicodeError:
+                return JournalError(
+                    "library_unreachable", "Collection operation could not be confirmed"
+                )
+
+        self.collection_task = self.hass.async_create_background_task(
+            run(), "Kaleidescape collection add"
+        )
+        result = await asyncio.shield(self.collection_task)
+        if isinstance(result, JournalError):
+            raise result
+        return result
+
+    async def async_collection_targets(self, title, revision, excluded, authorize):
+        if type(revision) is not int or revision < 0:
+            raise JournalError("invalid_request", "Invalid source revision")
+
+        async def targets():
+            state = await self.repository.async_collection_snapshot(
+                self.source, title, excluded
+            )
+            if revision != state["revision"]:
+                raise JournalError(
+                    "refresh_required", "Library changed; refresh title details"
+                )
+            self.address = await self._resolve()
+            page = await self._get("/movies")
+            choices = await self.hass.async_add_executor_job(
+                form_targets, page, state["version"]["source_handle"]
+            )
+            authorize()
+            return {
+                "collections": [
+                    name for name in state["collections"] if name in choices
+                ],
+                "revision": state["revision"],
+            }
+
+        return await self.async_collection_operation(targets, authorize)
+
+    async def _collection_members(self, collection):
+        rows, _ = await self._listing(
+            "/movies?" + urlencode({"collection": collection, "sort": 2})
+        )
+        return rows
+
+    async def _post_collection_add(self, handle, collection):
+        """One fixed multipart operation. No forwarding of supplied routes or forms."""
+        form = FormData(default_to_multipart=True)
+        form.add_field("submit_type", "Add-To-Collection")
+        form.add_field("add_to_collection_select", collection)
+        form.add_field("check-" + handle, "on")
+        base = URL(self.origin)
+        url = URL(self.origin + "/movies").with_host(self.address)
+        async with self.session.post(
+            url,
+            data=form,
+            allow_redirects=False,
+            timeout=ClientTimeout(total=15, connect=5),
+            headers={"Host": base.authority},
+            server_hostname=base.host if base.scheme == "https" else None,
+        ) as response:
+            if (
+                response.status not in {200, 302, 303}
+                or response.headers.get("Content-Encoding", "identity").lower()
+                != "identity"
+            ):
+                raise JournalError(
+                    "collection_response", "Collection add response was not recognized"
+                )
+            if response.status != 200 and response.headers.get("Location") not in {
+                "/movies",
+                "movies",
+            }:
+                raise JournalError(
+                    "collection_response", "Collection add redirect was rejected"
+                )
+            length = 0
+            async for part in response.content.iter_chunked(65536):
+                length += len(part)
+                if length > 8 * 1024 * 1024:
+                    raise JournalError(
+                        "library_too_large", "Collection response exceeded its limit"
+                    )
+
+    async def async_collection_add(
+        self, request, title, collection, revision, actor, excluded, authorize
+    ):
+        request, fingerprint = parameters(
+            request, self.source, title, collection, revision, actor
+        )
+
+        async def add():
+            cached = await self.repository.async_collection_lookup(request, fingerprint)
+            if cached is not None:
+                return (
+                    await self._check_collection(request)
+                    if cached["status"] == "uncertain"
+                    else cached
+                )
+            state = await self.repository.async_collection_snapshot(
+                self.source, title, excluded
+            )
+            if state["revision"] != revision:
+                raise JournalError(
+                    "refresh_required", "Library changed; refresh title details"
+                )
+            if state["pending"]:
+                raise JournalError(
+                    "collection_uncertain", "Resolve the previous collection request"
+                )
+            if collection not in state["collections"]:
+                raise JournalError("invalid_request", "Unknown or hidden collection")
+            self.address = await self._resolve()
+            page = await self._get("/movies")
+            rows, _ = await self.hass.async_add_executor_job(catalog, page)
+            version = state["version"]
+            if not any(
+                all(
+                    row[key] == version[key]
+                    for key in ("source_handle", "source_group", "title")
+                )
+                for row in rows
+            ):
+                raise JournalError(
+                    "refresh_required", "Source identity changed; sync the Library"
+                )
+            choices = await self.hass.async_add_executor_job(
+                form_targets, page, version["source_handle"]
+            )
+            if collection not in choices:
+                raise JournalError(
+                    "collection_form", "Collection is not an available add target"
+                )
+            members = await self._collection_members(collection)
+            before = {row["source_handle"] for row in members}
+            expected = await self.hass.async_add_executor_job(
+                member_hash, before | {version["source_handle"]}
+            )
+            authorize()
+            self._collection_ready()
+            await self.repository.async_collection_begin(
+                self.source,
+                request,
+                fingerprint,
+                title,
+                collection,
+                revision,
+                expected,
+                actor,
+            )
+            may_have_posted = False
+            try:
+                authorize()
+                self._collection_ready()
+                if version["source_handle"] not in before:
+                    may_have_posted = True
+                    try:
+                        await self._post_collection_add(
+                            version["source_handle"], choices[collection]
+                        )
+                    except ClientError, OSError, TimeoutError, JournalError:
+                        pass  # A response failure is not proof the POST failed.
+                    members = await self._collection_members(collection)
+                return await self.repository.async_collection_finish(
+                    self.source, request, members
+                )
+            except BaseException:
+                if not may_have_posted:
+                    await async_finish_cleanup(
+                        self.repository.async_collection_finish(
+                            self.source, request, acknowledge=actor
+                        )
+                    )
+                raise
+
+        return await self.async_collection_operation(add, authorize)
+
+    async def _check_collection(self, request):
+        row = await self.repository.async_collection_intent(self.source, request)
+        if row["status"] != "uncertain":
+            return {"status": row["status"], "request_id": request}
+        self.address = await self._resolve()
+        members = await self._collection_members(row["collection"])
+        return await self.repository.async_collection_finish(
+            self.source, request, members
+        )
+
+    async def async_collection_check(self, request, authorize, acknowledge=None):
+        async def check():
+            if acknowledge is not None:
+                return await self.repository.async_collection_finish(
+                    self.source, request, acknowledge=acknowledge
+                )
+            return await self._check_collection(request)
+
+        return await self.async_collection_operation(check, authorize)
 
     async def async_resume(self):
         self.paused = False
@@ -211,7 +450,8 @@ class LibrarySync:
         self.processed = self.total = 0
         try:
             async with asyncio.timeout(1800):
-                await self._sync()
+                async with self.operation_lock:
+                    await self._sync()
         except asyncio.CancelledError:
             raise
         except JournalError as error:

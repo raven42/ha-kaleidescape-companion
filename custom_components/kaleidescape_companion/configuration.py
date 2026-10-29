@@ -9,6 +9,7 @@ from homeassistant.helpers import config_validation as cv
 
 from .journal import JournalError, invalid, text
 from .library_config import DEFAULTS as LIBRARY_DEFAULTS
+from .ui_config import DEFAULTS as UI_DEFAULTS
 
 OPTION_FIELDS = frozenset(
     {
@@ -21,6 +22,7 @@ OPTION_FIELDS = frozenset(
         "resume_hours",
     }
     | LIBRARY_DEFAULTS.keys()
+    | UI_DEFAULTS.keys()
 )
 
 

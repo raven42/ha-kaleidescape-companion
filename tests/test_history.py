@@ -64,6 +64,8 @@ class HouseholdReadTest(unittest.IsolatedAsyncioTestCase):
                 "revision",
                 "viewing_count",
                 "api_version",
+                "library_enabled",
+                "ui_defaults",
                 "permissions",
             },
         )

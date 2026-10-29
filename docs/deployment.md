@@ -116,7 +116,7 @@ Remote error messages remain visible; the local failure summary reports the SSH
 exit status or timeout without printing the entire remote script. After a timeout,
 inspect the target state before retrying.
 
-The current database schema is 6 (including import audit and optional library metadata). Its first open upgrades an
+The current database schema is 8 (including import audit, Library metadata, purchase dates, and collection-add receipts). Its first open upgrades an
 older journal and creates a private pre-migration backup. Code supporting only earlier schemas
 cannot read it; code rollback alone is insufficient. A matching database restore
 must be done with HA stopped and may lose changes made since that backup.

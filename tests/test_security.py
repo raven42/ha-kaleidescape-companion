@@ -194,6 +194,9 @@ class RepositorySecurityTest(unittest.IsolatedAsyncioTestCase):
             db.execute("DROP TABLE maintenance_audit")
             db.execute("DROP TABLE import_audit")
             for table in (
+                "library_collection_intents",
+                "library_purchase_dates",
+                "library_purchase_audit",
                 "library_memberships",
                 "library_collections",
                 "library_titles",

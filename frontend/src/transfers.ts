@@ -4,6 +4,7 @@ import type { PropertyValues } from "lit";
 import { errorCode, errorMessage } from "./api";
 import type { JournalClient, JournalInfo, PreparedMutation } from "./api";
 import { styles } from "./styles";
+import { dismissBackdrop } from "./dialog";
 
 export class KaleidescapeTransfers extends LitElement {
   static properties = {
@@ -257,6 +258,7 @@ export class KaleidescapeTransfers extends LitElement {
       ${!this.dialog && this.notice ? html`<p class="notice" role="status">${this.notice}</p>` : nothing}
       <dialog
         class="database-dialog"
+        @click=${dismissBackdrop}
         aria-labelledby="transfer-title"
         @cancel=${this.closeDialog}
       >

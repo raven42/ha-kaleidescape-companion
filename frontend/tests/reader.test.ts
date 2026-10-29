@@ -145,3 +145,59 @@ it("selects the reader for a non-admin standalone session", async () => {
     panel.remove();
   }
 });
+
+it("offers enabled Library browsing to readers without sync/settings and unmounts it on return", async () => {
+  transport.options.library_enabled = true;
+  button("Refresh").click();
+  await vi.waitFor(() => expect(button("Library").disabled).toBe(false));
+  button("Library").click();
+  await reader.updateComplete;
+  const library = reader.shadowRoot!.querySelector("kaleidescape-library")!;
+  await vi.waitFor(() =>
+    expect(library.shadowRoot!.textContent).toContain("Voyage to Europa"),
+  );
+  expect(library.shadowRoot!.textContent).not.toContain("Sync now");
+  expect(button("Settings")).toBeUndefined();
+  expect(
+    transport.calls.some((call) => call.type.endsWith("/library/sync")),
+  ).toBe(false);
+  button("Journal").click();
+  await reader.updateComplete;
+  expect(reader.shadowRoot!.querySelector("kaleidescape-library")).toBeNull();
+  expect(content()).toContain("The Lantern Voyage");
+});
+
+it("orders reader tabs Library then Journal and follows that order with Home and End", async () => {
+  transport.options.library_enabled = true;
+  button("Refresh").click();
+  await vi.waitFor(() => expect(button("Library").disabled).toBe(false));
+  const tabs = reader.shadowRoot!.querySelector('[role="tablist"]')!;
+  expect(
+    [...tabs.querySelectorAll("button")].map((tab) => tab.textContent!.trim()),
+  ).toEqual(["Library", "Journal"]);
+  for (const [key, label] of [
+    ["Home", "Library"],
+    ["End", "Journal"],
+  ]) {
+    tabs.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
+    await reader.updateComplete;
+    expect(button(label).getAttribute("aria-selected")).toBe("true");
+  }
+});
+
+it("keeps Library disabled without requests before opt-in and clears it on connection loss", async () => {
+  expect(button("Library").disabled).toBe(true);
+  button("Library").click();
+  expect(transport.calls.some((call) => call.type.includes("/library/"))).toBe(
+    false,
+  );
+  transport.options.library_enabled = true;
+  button("Refresh").click();
+  await vi.waitFor(() => expect(button("Library").disabled).toBe(false));
+  button("Library").click();
+  await reader.updateComplete;
+  reader.client = undefined;
+  await reader.updateComplete;
+  expect(reader.shadowRoot!.querySelector("kaleidescape-library")).toBeNull();
+  expect(content()).not.toContain("Voyage to Europa");
+});

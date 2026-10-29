@@ -8,6 +8,8 @@ const libraryArtworkPath =
   /^\/api\/kaleidescape_companion\/[a-zA-Z0-9_-]{1,64}\/[a-fA-F0-9-]{36}\/library\/artwork\/[a-f0-9]{64}$/;
 const importPath =
   /^\/api\/kaleidescape_companion\/[a-zA-Z0-9_-]{1,64}\/[a-fA-F0-9-]{36}\/import\?format=(json|sqlite)&request_id=[a-f0-9-]{36}&revision=[0-9]{1,18}$/;
+const purchasePreviewPath =
+  /^\/api\/kaleidescape_companion\/[a-zA-Z0-9_-]{1,64}\/[a-fA-F0-9-]{36}\/library\/purchases\/preview$/;
 const origins = new Set(["http://127.0.0.1:5173", "http://localhost:5173"]);
 export function localApiGuard() {
   return {
@@ -20,7 +22,8 @@ export function localApiGuard() {
         )
           return next();
         let code;
-        const importing = importPath.test(request.url);
+        const importing =
+          importPath.test(request.url) || purchasePreviewPath.test(request.url);
         if (
           !exportPath.test(request.url) &&
           !artworkPath.test(request.url) &&

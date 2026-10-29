@@ -44,9 +44,11 @@ async function mount(
     tag === "kaleidescape-advanced" ? "The Lantern Voyage" : "Save settings",
   );
 }
-function selectFirst() {
-  const checkbox = root().querySelector<HTMLInputElement>(
-    'input[type="checkbox"]',
+function selectViewing() {
+  const checkbox = [
+    ...root().querySelectorAll<HTMLInputElement>('input[type="checkbox"]'),
+  ].find(
+    (input) => input.getAttribute("aria-label") === `Select ${record().title}`,
   )!;
   checkbox.checked = true;
   checkbox.dispatchEvent(new Event("change", { bubbles: true }));
@@ -101,6 +103,12 @@ it("keeps library sync opt-in and saves library controls through the native opti
   await flush();
   input("library_host", "");
   input("library_interval_hours", "12");
+  input("custom_collection", "Demo extras");
+  button("Add hidden name").click();
+  await flush();
+  input("custom_collection", "Archived collection");
+  button("Add hidden name").click();
+  await flush();
   const artwork = root().querySelector<HTMLInputElement>(
     '[name="library_sync_artwork"]',
   )!;
@@ -118,6 +126,7 @@ it("keeps library sync opt-in and saves library controls through the native opti
     library_enabled: true,
     library_host: "",
     library_interval_hours: 12,
+    library_excluded_collections: ["Demo extras", "Archived collection"],
     library_sync_collections: true,
     library_sync_details: true,
     library_sync_artwork: true,
@@ -178,7 +187,7 @@ it("shows raw deleted records as text, bounded table navigation, and refuses pur
 });
 it("requires typed confirmation and purges only selected entries", async () => {
   await mount("kaleidescape-advanced");
-  selectFirst();
+  selectViewing();
   await flush();
   button("Purge entry").click();
   await flush();
@@ -263,6 +272,127 @@ it("groups the entries pagination controls separately from their row count", asy
   expect(actions.querySelector("small")).toBeNull();
 });
 
+it("changes database page sizes, searches, and sorts while clearing page selections", async () => {
+  transport.records.push(
+    ...Array.from({ length: 500 }, (_, index) =>
+      record({
+        id: `fictional-${String(index).padStart(3, "0")}`,
+        title: `Fictional row ${String(index).padStart(3, "0")}`,
+      }),
+    ),
+  );
+  await mount("kaleidescape-advanced");
+  const select = async (name: string, value: string) => {
+    const control = root().querySelector<HTMLSelectElement>(
+      `[name="${name}"]`,
+    )!;
+    control.value = value;
+    control.dispatchEvent(new Event("change", { bubbles: true }));
+    await flush();
+  };
+  expect(
+    [...root().querySelectorAll('[name="database_limit"] option')].map(
+      (option) => option.textContent,
+    ),
+  ).toEqual(["10", "25", "100", "500"]);
+  selectViewing();
+  await select("database_limit", "100");
+  expect(root().querySelectorAll(".entry-list li")).toHaveLength(100);
+  expect(button("Delete entry").disabled).toBe(true);
+  button("Next").click();
+  await flush();
+  expect(transport.calls.at(-1)).toMatchObject({
+    offset: 100,
+    limit: 100,
+    revision: 5,
+  });
+  expect(text()).toContain("Rows 101–200 of 503");
+  await select("database_sort", "title");
+  expect(transport.calls.at(-1)).toMatchObject({ offset: 0, sort: "title" });
+  expect(root().querySelector(".entry-name")!.textContent).toContain(
+    "A Map of Quiet Places",
+  );
+  button("Ascending ↑").click();
+  await flush();
+  expect(transport.calls.at(-1)).toMatchObject({
+    sort: "title",
+    descending: true,
+  });
+  expect(root().querySelector(".entry-name")!.textContent).toContain(
+    "The Lantern Voyage",
+  );
+  await select("database_limit", "500");
+  expect(root().querySelectorAll(".entry-list li")).toHaveLength(500);
+  const checkboxes = root().querySelectorAll<HTMLInputElement>(
+    '.entry-list input[type="checkbox"]',
+  );
+  for (const checkbox of [...checkboxes].slice(0, 100)) {
+    checkbox.checked = true;
+    checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+  await flush();
+  expect(checkboxes[100].disabled).toBe(true);
+  expect(checkboxes[0].disabled).toBe(false);
+  expect(text()).toContain("100 selected (maximum 100)");
+  button("Next").click();
+  await flush();
+  expect(root().querySelectorAll(".entry-list li")).toHaveLength(3);
+  expect(button("Next").disabled).toBe(true);
+  input("database_query", "Fictional row 49");
+  root()
+    .querySelector("form.database-filters")!
+    .dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  await flush();
+  expect(transport.calls.at(-1)).toMatchObject({
+    offset: 0,
+    query: "Fictional row 49",
+    limit: 500,
+    sort: "title",
+    descending: true,
+  });
+  expect(root().querySelectorAll(".entry-list li")).toHaveLength(10);
+  expect(text()).toContain("Rows 1–10 of 10");
+  root().querySelector<HTMLButtonElement>("#table-sessions")!.click();
+  await flush();
+  expect(transport.calls.at(-1)).toMatchObject({
+    table: "sessions",
+    query: "",
+    limit: 500,
+    descending: false,
+  });
+  expect(transport.calls.at(-1)!.sort).toBeUndefined();
+});
+
+it("preserves the database draft and applied controls when browsing changes are cancelled", async () => {
+  await mount("kaleidescape-advanced");
+  button("New Entry").click();
+  await flush();
+  input("title", "Keep this fictional draft");
+  const before = transport.calls.length;
+  vi.mocked(window.confirm).mockReturnValue(false);
+  for (const [name, value, applied] of [
+    ["database_limit", "100", "25"],
+    ["database_sort", "title", "id"],
+  ]) {
+    const control = root().querySelector<HTMLSelectElement>(
+      `[name="${name}"]`,
+    )!;
+    control.value = value;
+    control.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(control.value).toBe(applied);
+  }
+  button("Ascending ↑").click();
+  input("database_query", "Another title");
+  root()
+    .querySelector("form.database-filters")!
+    .dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  await flush();
+  expect(transport.calls).toHaveLength(before);
+  expect(root().querySelector<HTMLInputElement>('[name="title"]')!.value).toBe(
+    "Keep this fictional draft",
+  );
+});
+
 it("uses one database surface with a shared toolbar and the main underline tab design", async () => {
   await mount("kaleidescape-advanced");
   expect(root().querySelectorAll(".card")).toHaveLength(1);
@@ -289,7 +419,7 @@ it("uses one database surface with a shared toolbar and the main underline tab d
 
 it("deletes one selected viewing only after confirmation and retries the same request", async () => {
   await mount("kaleidescape-advanced");
-  selectFirst();
+  selectViewing();
   await flush();
   vi.mocked(window.confirm).mockReturnValueOnce(false);
   button("Delete entry").click();
@@ -541,6 +671,12 @@ it("clears raw details on denial and ignores inspection results after connection
     revision: 5,
     offset: 0,
     has_more: false,
+    limit: 25,
+    total: 1,
+    columns: ["title"],
+    sort: "title",
+    query: "",
+    descending: false,
   });
   await flush();
   expect(text()).not.toContain("Stale private content");

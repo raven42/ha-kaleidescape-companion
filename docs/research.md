@@ -51,6 +51,7 @@ objects nor a general protocol transport is an approved extension interface.
 | `/movies?collection=Played&sort=2` | Editable source Played membership, with no dated viewing history |
 | `/movies?collection=New&sort=2` | Source New membership, separate from journal status |
 | `/movies?collection=Paused&sort=2` | Source label, not a saved position; an empty count may be `No` |
+| Built-in `Scenes` menu | Opens scene management without a Movies listing/count; excluded from movie-collection discovery |
 | `/details?id=<handle>&callback=true` | Details, group/version identifiers, synopsis/cast/genres/runtime, collection and artwork references |
 | `/KaleidescapeMovies.csv` | Title/genre/rating/lead actor/director/year/type/minute runtime; lacks stable IDs and memberships |
 | `/webcovers/...jpg`, `/webcoverslarge/...jpg` | Artwork references suitable for a future restricted backend cache |
@@ -67,6 +68,19 @@ and New are editable labels. They cannot establish dates, completed viewings,
 rewatches, or saved positions. Preserve source-scoped selection groups/versions;
 one observed resemblance between playback and browser IDs does not justify
 universal prefix stripping, title matching, or automatic edition merging.
+
+## Collection editing evidence (2026-10-28)
+
+Read-only HTML/static-script inspection identified a multipart Movies POST for
+adding selected handles to an existing collection. No POST was sent; removal and
+writability semantics were not verified. The [write-back plan](library-collections.md)
+records observed field names, unknowns, capability/authorization boundaries,
+preflight/read-back requirements, and uncertain-result handling. Sync remains GET-only.
+
+The same source listing contained `Multiple` summary rows followed by concrete
+format rows, sometimes repeating the summary handle. The parser now retains
+those concrete formats on the exact handle. No raw page or source script belongs
+in fixtures, documentation, or the runtime bundle.
 
 ## Protocol and control gates
 

@@ -14,6 +14,11 @@ export interface JournalInfo extends Scope {
   backup_in_progress?: boolean;
   tracking_enabled?: boolean;
   library_enabled?: boolean;
+  ui_defaults?: {
+    default_landing_page: string;
+    library_default_view: "list" | "covers";
+    library_default_count: number;
+  };
   permissions: { read: boolean; edit: boolean; export: boolean };
 }
 export interface ViewingData {
@@ -107,6 +112,18 @@ export interface DatabasePage {
   offset: number;
   items: Record<string, unknown>[];
   has_more: boolean;
+  limit: number;
+  total: number;
+  columns: string[];
+  sort: string;
+  descending: boolean;
+  query: string;
+}
+export interface DatabaseQuery {
+  limit: number;
+  query: string;
+  sort?: string;
+  descending: boolean;
 }
 export interface PurgeResult {
   purged_count: number;
@@ -118,8 +135,14 @@ export interface ImportResult {
   revision: number;
 }
 export interface LibraryTitle {
+  purchased_on?: string | null;
   id: string;
   title: string;
+  formats?: string[];
+  formats_truncated?: boolean;
+  years?: number[];
+  version_count?: number;
+  maximum_duration_seconds?: number | null;
   first_seen: string;
   last_seen: string;
   metadata_synced_at: string | null;
@@ -137,8 +160,30 @@ export interface LibraryTitle {
   duration_seconds: number | null;
   synopsis: string;
 }
+export type LibrarySummary = Pick<
+  LibraryTitle,
+  | "id"
+  | "purchased_on"
+  | "title"
+  | "formats"
+  | "formats_truncated"
+  | "years"
+  | "version_count"
+  | "maximum_duration_seconds"
+  | "first_seen"
+  | "last_seen"
+  | "metadata_synced_at"
+  | "artwork_key"
+  | "watched_status"
+  | "collections"
+  | "year"
+  | "edition"
+  | "duration_seconds"
+>;
 export interface LibraryPage {
-  items: LibraryTitle[];
+  limit?: number;
+  preferences_key?: string;
+  items: LibrarySummary[];
   total: number;
   offset: number;
   has_more: boolean;
@@ -146,24 +191,62 @@ export interface LibraryPage {
   facets: Record<string, string[]>;
   truncated_facets: string[];
 }
+export interface LibraryVersionPage {
+  preferences_key?: string;
+  items: LibraryTitle[];
+  total: number;
+  offset: number;
+  has_more: boolean;
+  revision: number;
+}
 export interface LibraryInfo {
+  collection_add_enabled?: boolean;
+  pending_adds?: {
+    request_id: string;
+    title_id: string;
+    title: string;
+    collection: string;
+  }[];
+  collection_names?: string[];
+  preferences_key?: string;
+  name_count?: number;
   title_count: number;
   group_count: number;
   collection_count: number;
   revision: number;
   last_synced_at: string | null;
   collections_synced_at: string | null;
-  phase: string;
-  error: string | null;
-  processed: number;
-  total: number;
-  last_attempt: string | null;
-  interval_hours: number;
-  collections_enabled: boolean;
-  details_enabled: boolean;
-  artwork_enabled: boolean;
-  artwork_bytes: number;
-  artwork_limit_bytes: number;
+  phase?: string;
+  error?: string | null;
+  processed?: number;
+  total?: number;
+  last_attempt?: string | null;
+  interval_hours?: number;
+  collections_enabled?: boolean;
+  details_enabled?: boolean;
+  artwork_enabled?: boolean;
+  artwork_bytes?: number;
+  artwork_limit_bytes?: number;
+}
+export interface PurchasePreview {
+  revision: number;
+  rows: {
+    title: string;
+    purchased_on: string;
+    ambiguous: boolean;
+    versions_truncated: boolean;
+    versions: {
+      id: string;
+      title: string;
+      year: number | null;
+      edition: string;
+      purchased_on: string | null;
+    }[];
+  }[];
+}
+export interface CollectionAddResult {
+  status: "confirmed" | "uncertain" | "abandoned";
+  request_id: string;
 }
 export type ApiMessage = Record<string, unknown> & { type: string };
 export interface Transport {
@@ -281,6 +364,18 @@ export function errorMessage(error: unknown): string {
       "The library returned an unsupported response. Cached data is retained.",
     library_changed:
       "The library changed during sync. Previous collection data was retained; try again later.",
+    database_page_too_large:
+      "The database page is too large. Choose fewer rows per page.",
+    library_page_too_large:
+      "This library page is too large. Reduce entries per page and try again.",
+    purchase_too_large: "Purchase history exceeds the 8 MiB upload limit.",
+    collection_disabled:
+      "Enable Add to Collection and collection sync in Settings first.",
+    collection_form:
+      "The server’s collection add form was not recognized. Refresh or sync before starting another add.",
+    collection_uncertain:
+      "Check or acknowledge the previous unconfirmed collection add first.",
+    collection_limit: "Collection request history reached its storage limit.",
     library_too_large:
       "A library response exceeded its safety limit. Cached data is retained.",
     library_artwork:
@@ -363,8 +458,112 @@ export class JournalClient {
       filters,
     });
   }
+  libraryVersions(
+    scope: Scope,
+    title_id: string,
+    offset = 0,
+    revision?: number,
+  ): Promise<LibraryVersionPage> {
+    return this.call({
+      type: `${DOMAIN}/library/versions`,
+      ...scopeFields(scope),
+      title_id,
+      offset,
+      ...(revision === undefined ? {} : { revision }),
+    });
+  }
   librarySync(scope: Scope): Promise<{ accepted: boolean }> {
     return this.call({ type: `${DOMAIN}/library/sync`, ...scopeFields(scope) });
+  }
+  collectionTargets(
+    scope: Scope,
+    title_id: string,
+    revision: number,
+  ): Promise<{ collections: string[]; revision: number }> {
+    return this.call({
+      type: `${DOMAIN}/library/collections/targets`,
+      ...scopeFields(scope),
+      title_id,
+      revision,
+    });
+  }
+  prepareCollectionAdd(
+    scope: Scope,
+    title_id: string,
+    collection: string,
+    revision: number,
+  ) {
+    return this.prepareCommand(scope, "library/collections/add", {
+      title_id,
+      collection,
+      revision,
+    });
+  }
+  collectionAdd(pending: PreparedMutation): Promise<CollectionAddResult> {
+    return this.call({ ...pending.message });
+  }
+  collectionCheck(
+    scope: Scope,
+    request_id: string,
+  ): Promise<CollectionAddResult> {
+    return this.call({
+      type: `${DOMAIN}/library/collections/check`,
+      ...scopeFields(scope),
+      request_id,
+    });
+  }
+  collectionAcknowledge(
+    scope: Scope,
+    request_id: string,
+  ): Promise<CollectionAddResult> {
+    return this.call({
+      type: `${DOMAIN}/library/collections/acknowledge`,
+      ...scopeFields(scope),
+      request_id,
+      confirmation: "ACKNOWLEDGE",
+    });
+  }
+  async purchasePreview(
+    scope: Scope,
+    file: File,
+    signal: AbortSignal,
+  ): Promise<PurchasePreview> {
+    if (file.size > 8 * 1024 * 1024) throw new ApiError("purchase_too_large");
+    const response = await this.transport.fetchWithAuth(
+      `/api/${DOMAIN}/${encodeURIComponent(scope.entry_id)}/${encodeURIComponent(scope.dataset_id)}/library/purchases/preview`,
+      {
+        method: "POST",
+        body: file,
+        signal,
+        redirect: "error",
+        headers: { "Content-Type": "application/octet-stream" },
+      },
+    );
+    if (!response.ok) {
+      if ([401, 403].includes(response.status))
+        throw new ApiError("unauthorized");
+      if (response.status === 413) throw new ApiError("purchase_too_large");
+      const error = (await response.json().catch(() => null)) as {
+        code?: string;
+      } | null;
+      throw new ApiError(error?.code ?? "connection_lost");
+    }
+    return response.json() as Promise<PurchasePreview>;
+  }
+  preparePurchaseDates(
+    scope: Scope,
+    revision: number,
+    updates: { title_id: string; purchased_on: string }[],
+  ) {
+    return this.prepareCommand(scope, "library/purchases/apply", {
+      revision,
+      updates,
+    });
+  }
+  purchaseDates(
+    pending: PreparedMutation,
+  ): Promise<{ updated_count: number; revision: number }> {
+    return this.call({ ...pending.message });
   }
   async libraryArtwork(
     scope: Scope,
@@ -413,6 +612,7 @@ export class JournalClient {
     table: string,
     offset = 0,
     revision?: number,
+    filters?: DatabaseQuery,
   ): Promise<DatabasePage> {
     return this.call({
       type: `${DOMAIN}/database/inspect`,
@@ -420,6 +620,7 @@ export class JournalClient {
       table,
       offset,
       ...(revision == null ? {} : { revision }),
+      ...filters,
     });
   }
   preparePurge(

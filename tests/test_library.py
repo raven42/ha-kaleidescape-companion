@@ -141,6 +141,16 @@ class LibraryParserTest(unittest.TestCase):
         with self.assertRaises(JournalError):
             catalog(listing([ROWS[0], {**ROWS[0], "source_group": "other"}]))
 
+    def test_scene_management_is_not_a_movie_collection(self):
+        rows, names = catalog(
+            listing(collections=("Played", "Paused", "Scenes", "Favorites"))
+        )
+        self.assertEqual(len(rows), 3)
+        self.assertEqual(names, ["Favorites", "Paused", "Played"])
+        # Continue to reject arbitrary non-listing HTML, including scene pages.
+        with self.assertRaises(JournalError):
+            catalog('<html><form id="scene_management">Scenes</form></html>')
+
     def test_scripts_and_external_or_traversing_artwork_are_not_used(self):
         for path in (
             "http://evil.invalid/a.jpg",
@@ -219,8 +229,6 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
             ("collection", "Favorites"),
             ("actor", "Zoë Example"),
             ("director", "A. Director"),
-            ("writer", "A. Writer"),
-            ("studio", "Example Studio"),
             ("rating", "PG"),
         ):
             self.assertGreater((await self.page(**{key: value}))["total"], 0)
@@ -243,6 +251,43 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
         raw = await self.repository.async_inspect("library_titles")
         self.assertEqual(len(raw["items"]), 3)
         self.assertEqual(sum(row["available"] for row in raw["items"]), 1)
+
+    async def test_multiselect_matches_any_value_within_and_all_facets_together(self):
+        await self.seed()
+        self.assertEqual(
+            (await self.page(status=["watched", "in_progress"]))["total"], 2
+        )
+        self.assertEqual(
+            (await self.page(collection=["Favorites", "Paused"]))["total"], 2
+        )
+        page = await self.page(
+            collection=["Favorites", "Paused"], actor=["Missing", "Zoë Example"]
+        )
+        self.assertEqual(page["total"], 1)
+        self.assertEqual(page["items"][0]["id"], title_id(SOURCE, "fixture-a"))
+        self.assertEqual(
+            (await self.page(rating=["PG", "PG-13"], director=["B. Director"]))[
+                "total"
+            ],
+            1,
+        )
+        self.assertEqual((await self.page(collection=["' OR 1=1 --"]))["total"], 0)
+        self.assertEqual((await self.page(actor=[]))["total"], 3)
+        self.assertNotIn("writers", page["facets"])
+        self.assertNotIn("studios", page["facets"])
+
+    async def test_heading_sorts_are_stable_and_support_year_collections_and_added(
+        self,
+    ):
+        await self.seed()
+        self.assertEqual((await self.page(sort="year"))["items"][0]["year"], 2024)
+        self.assertEqual(
+            (await self.page(sort="year", descending=True))["items"][0]["year"], 2025
+        )
+        for sort in ("name", "year", "collection", "length", "watched", "added"):
+            first = await self.page(sort=sort)
+            self.assertEqual(await self.page(sort=sort), first)
+            self.assertEqual(first["total"], 3)
 
     async def test_failed_generation_rolls_back_membership_and_availability(self):
         await self.seed()
@@ -310,7 +355,11 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
             {"offset": True},
             {"offset": -1},
             {"status": "finished"},
-            {"actor": []},
+            {"actor": ["x"] * 101},
+            {"actor": [None]},
+            {"status": ["watched", "finished"]},
+            {"writer": "A. Writer"},
+            {"studio": "Example Studio"},
             {"extra": "x"},
         ):
             with self.assert_error("invalid_request"):
@@ -437,6 +486,9 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
         await self.repository.async_close()
         with closing(sqlite3.connect(self.path)) as db:
             for table in (
+                "library_collection_intents",
+                "library_purchase_dates",
+                "library_purchase_audit",
                 "library_memberships",
                 "library_collections",
                 "library_titles",
@@ -449,7 +501,7 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
         self.repository = JournalRepository(self.path)
         self.addAsyncCleanup(self.repository.async_close)
         await self.repository.async_open()
-        self.assertEqual((await self.repository.async_info())["schema_version"], 6)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 8)
         self.assertEqual(
             await self.repository.async_get(created["viewing"]["id"]),
             created["viewing"],
@@ -487,6 +539,26 @@ class LibrarySyncTest(unittest.IsolatedAsyncioTestCase):
         sync._listing.assert_awaited_once_with("/movies")
         sync._get.assert_not_awaited()
         self.assertEqual((await self.page())["total"], 3)
+
+    async def test_initial_collections_sync_skips_builtin_scene_management(self):
+        sync = await self.connector(library_sync_details=False)
+        pages = {
+            "/movies": listing(collections=("Played", "Paused", "Scenes", "Favorites")),
+            "/movies?collection=Favorites&sort=2": listing([ROWS[0]]),
+            "/movies?collection=Paused&sort=2": listing([ROWS[1]]),
+            "/movies?collection=Played&sort=2": listing([ROWS[0], ROWS[1]]),
+        }
+        sync._get = AsyncMock(side_effect=lambda path: pages[path])
+        await sync._sync()
+        self.assertIsNone(sync.error)
+        self.assertEqual(
+            (await self.repository.async_library_info(SOURCE))["collection_count"], 3
+        )
+        self.assertEqual((await self.page(collection="Favorites"))["total"], 1)
+        self.assertEqual((await self.page(status="in_progress"))["total"], 1)
+        self.assertFalse(
+            any("Scenes" in call.args[0] for call in sync._get.await_args_list)
+        )
 
     async def test_full_sync_uses_only_bounded_read_routes_and_caches_covers(self):
         sync = await self.connector(library_sync_artwork=True)
@@ -634,7 +706,7 @@ class LibraryApiTest(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = backend_tests.BackendTest.asyncSetUp
     call = backend_tests.BackendTest.call
 
-    async def test_disabled_is_inert_and_non_admin_cannot_read_library(self):
+    async def test_disabled_is_inert_and_readers_cannot_request_sync(self):
         self.assertIsNone(self.entry.runtime_data.library)
         for operation in ("library/info", "library/list", "library/sync"):
             result = await self.call(operation, **self.scope)
@@ -643,7 +715,10 @@ class LibraryApiTest(unittest.IsolatedAsyncioTestCase):
                 id="fictional-reader", is_active=True, is_admin=False
             )
             result = await self.call(operation, user=reader, **self.scope)
-            self.assertEqual(result["code"], "unauthorized")
+            self.assertEqual(
+                result["code"],
+                "unauthorized" if operation == "library/sync" else "library_disabled",
+            )
 
     async def test_enabled_lifecycle_and_read_projection(self):
         await async_unload_entry(self.hass, self.entry)
@@ -664,6 +739,103 @@ class LibraryApiTest(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(result["result"]["total"], 3)
             await async_unload_entry(self.hass, self.entry)
             sync.async_stop.assert_awaited_once()
+
+    async def test_active_readers_get_only_shared_library_fields_and_cached_artwork(
+        self,
+    ):
+        object.__setattr__(self.entry, "data", {"library_enabled": True})
+        runtime = self.entry.runtime_data
+        runtime.library = SimpleNamespace(
+            source=SOURCE, status=Mock(), async_stop=AsyncMock()
+        )
+        await runtime.repository.async_library_catalog(
+            ORIGIN, ROWS, {"Played": [], "Paused": []}
+        )
+        reader = SimpleNamespace(id="fictional-reader", is_active=True, is_admin=False)
+        info = (await self.call("info", user=reader))["result"]["entries"][0]
+        self.assertTrue(info["library_enabled"])
+        result = (await self.call("library/info", user=reader, **self.scope))["result"]
+        self.assertEqual(
+            set(result),
+            {
+                "title_count",
+                "group_count",
+                "name_count",
+                "preferences_key",
+                "collection_count",
+                "revision",
+                "last_synced_at",
+                "collections_synced_at",
+            },
+        )
+        runtime.library.status.assert_not_called()
+        page = (await self.call("library/list", user=reader, **self.scope))["result"]
+        self.assertEqual(page["total"], 3)
+        for row in page["items"]:
+            self.assertFalse(
+                set(row)
+                & {
+                    "source_handle",
+                    "source_group",
+                    "source_id",
+                    "origin",
+                    "artwork_path",
+                    "data",
+                }
+            )
+        with patch.object(
+            runtime.repository,
+            "async_library_info",
+            side_effect=AssertionError("Unauthorized storage read"),
+        ):
+            result = await self.call("library/sync", user=reader, **self.scope)
+            self.assertEqual(result["code"], "unauthorized")
+            reader.is_active = False
+            for operation in ("library/list", "library/info"):
+                result = await self.call(operation, user=reader, **self.scope)
+                self.assertEqual(result["code"], "unauthorized")
+        reader.is_active = True
+        image = b"\xff\xd8\xfffictional-reader-cover"
+        await runtime.repository.async_library_artwork_save(
+            SOURCE, title_id(SOURCE, "fixture-a"), image, "image/jpeg", 100
+        )
+        key = hashlib.sha256(image).hexdigest()
+        request = make_mocked_request(
+            "GET", "/api/fictional", app={KEY_HASS: self.hass}
+        )
+        request["hass_user"] = reader
+        view = LibraryArtworkView()
+        self.assertEqual(
+            (await view.get(request, **self.scope, cache_key=key)).body, image
+        )
+        original = runtime.repository.async_library_artwork
+
+        async def deactivate(*args):
+            result = await original(*args)
+            reader.is_active = False
+            return result
+
+        with patch.object(runtime.repository, "async_library_artwork", deactivate):
+            with self.assertRaises(web.HTTPForbidden):
+                await view.get(request, **self.scope, cache_key=key)
+        with patch.object(
+            runtime.repository, "async_library_artwork", AsyncMock()
+        ) as read:
+            with self.assertRaises(web.HTTPForbidden):
+                await view.get(request, **self.scope, cache_key=key)
+            read.assert_not_awaited()
+        reader.is_active = True
+        original_list = runtime.repository.async_library_list
+
+        async def deactivate_list(*args):
+            result = await original_list(*args)
+            reader.is_active = False
+            return result
+
+        with patch.object(runtime.repository, "async_library_list", deactivate_list):
+            result = await self.call("library/list", user=reader, **self.scope)
+            self.assertEqual(result["code"], "unauthorized")
+            self.assertNotIn("Midnight", str(result))
 
     async def test_real_managed_session_lifecycle_without_any_device_requests(self):
         await async_unload_entry(self.hass, self.entry)

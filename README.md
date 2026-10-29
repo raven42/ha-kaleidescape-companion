@@ -2,7 +2,7 @@
 
 A Home Assistant project for a household watch journal, Now Playing, a local movie library browser, and playback controls.
 
-**Status:** shared household journal with optional one-player automatic tracking, a read-only view for regular HA users, administrator management/exports, and seven history sensors. The UI runs in HA’s sidebar and the isolated Vite preview. A compact administrator Now Playing card shows HA artwork, detailed playback state, and session/recording context without library sync. Optional administrator [Library sync](docs/library.md) now caches titles, collections, metadata, and artwork; it is disabled by default. Position/progress and playback controls remain planned. See [framework status](docs/framework.md) for validation and release limits.
+**Status:** shared household journal with optional one-player automatic tracking, a read-only view for regular HA users, administrator management/exports, and seven history sensors. The UI runs in HA’s sidebar and the isolated Vite preview. A compact administrator Now Playing card shows HA artwork, detailed playback state, and session/recording context without library sync. Optional administrator-managed [Library sync](docs/library.md) caches titles, collections, metadata, and artwork for all active HA users; it is disabled by default. Library browsing supports page targets up to 1000, whole cover rows, source-defined movie groups, a resizable cover grid, fixed/resizable table columns, checkbox filters, individual-version detail popups, and configurable hidden collection names. Administrator-only [Add to Collection](docs/library-collections.md) is separately opt-in; removal remains planned. Position/progress and playback controls remain planned. See [framework status](docs/framework.md) for validation and release limits.
 
 ## Documentation
 
@@ -32,6 +32,10 @@ tests/                                   Storage, API, lifecycle, and packaging 
 docs/                                   Product, architecture, API, security, and operator guides
 .github/workflows/                       CI checks
 ```
+
+Display defaults include the landing tab and Library view/count. The current tab
+is retained in the URL. [Purchase-date import](docs/purchase-dates.md) provides a
+private preview and explicit local date corrections.
 
 ## Development setup
 
@@ -80,7 +84,7 @@ changes. Open **Kaleidescape Companion** in HA’s sidebar using your developmen
 Vite preview uses a memory-only token from the local development instance; see
 the [UI guide](docs/ui.md). Seven [history sensors](docs/sensors.md) are created.
 Regular HA users can browse the household journal; administration remains restricted.
-Library is visible but disabled until **Settings → Enable library sync** is saved.
+Library is visible but disabled until an administrator saves **Settings → Enable library sync**. Once enabled, regular users can browse Library beside Journal; settings and manual sync remain administrator-only.
 Leave its hostname blank to try `my-kaleidescape.local`, or enter a local host.
 Choose the sync interval, collections/details, and optional artwork cache; see the
 [library guide](docs/library.md) for filters, first-detected dates, and disk use.

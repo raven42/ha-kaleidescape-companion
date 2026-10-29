@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from . import library_store
+from . import library_browse, library_collections, library_store, purchases
 from .history import history_summary
 from .importing import MAX_IMPORT_BYTES, import_viewings
 from .journal import (
@@ -139,14 +139,82 @@ class JournalRepository:
         if self._artwork_directory.exists() or self._artwork_directory.is_symlink():
             library_store.cache_open(connection, self._artwork_directory)
 
-    async def async_library_info(self, source: str) -> dict:
-        return await self._call(library_store.library_info, self._db(), source)
+    async def async_library_info(self, source: str, excluded: str = "") -> dict:
+        return await self._call(
+            library_browse.library_info, self._db(), source, excluded
+        )
 
-    async def async_library_list(self, source: str, filters: dict) -> dict:
-        return await self._call(library_store.library_list, self._db(), source, filters)
+    async def async_library_list(
+        self, source: str, filters: dict, excluded: str = ""
+    ) -> dict:
+        return await self._call(
+            library_browse.library_list, self._db(), source, filters, excluded
+        )
+
+    async def async_library_versions(
+        self,
+        source: str,
+        title: str,
+        offset: int = 0,
+        revision: int | None = None,
+        excluded: str = "",
+    ) -> dict:
+        return await self._call(
+            library_browse.library_versions,
+            self._db(),
+            source,
+            title,
+            offset,
+            revision,
+            excluded,
+        )
 
     async def async_library_candidates(self, source: str) -> list[dict]:
         return await self._call(library_store.detail_candidates, self._db(), source)
+
+    async def async_collection_snapshot(self, source, title=None, excluded=""):
+        return await self._call(
+            library_collections.snapshot, self._db(), source, title, excluded
+        )
+
+    async def async_collection_lookup(self, request, fingerprint):
+        return await self._call(
+            library_collections.lookup, self._db(), request, fingerprint
+        )
+
+    async def async_collection_intent(self, source, request):
+        return await self._call(library_collections.intent, self._db(), source, request)
+
+    async def async_collection_begin(self, *args):
+        return await self._call(self._library_write, library_collections.begin, *args)
+
+    async def async_collection_finish(
+        self, source, request, members=None, acknowledge=None
+    ):
+        return await self._call(
+            self._library_write,
+            library_collections.finish,
+            source,
+            request,
+            members,
+            acknowledge,
+        )
+
+    async def async_purchase_preview(self, source, body):
+        return await self._call(purchases.preview, self._db(), source, body)
+
+    async def async_purchase_apply(
+        self, source, request_id, revision, updates, actor_id
+    ):
+        return await self._call(
+            self._library_write,
+            purchases.apply,
+            source,
+            request_id,
+            revision,
+            updates,
+            actor_id,
+        )
 
     def _library_write(self, operation, *args):
         if self._paused:
@@ -299,13 +367,25 @@ class JournalRepository:
         return history_summary(self._db(), upper, cutoffs)
 
     async def async_inspect(
-        self, table: str, offset: int = 0, revision: int | None = None
+        self,
+        table: str,
+        offset: int = 0,
+        revision: int | None = None,
+        *,
+        limit: int = 25,
+        query: str = "",
+        sort: str | None = None,
+        descending: bool = False,
     ) -> dict:
         """Read bounded raw pages through a fixed table allowlist."""
-        return await self._call(self._inspect, table, offset, revision)
+        return await self._call(
+            self._inspect, table, offset, revision, limit, query, sort, descending
+        )
 
-    def _inspect(self, table: str, offset: int, revision: int | None) -> dict:
-        return inspect_database(self._db(), table, offset, revision)
+    def _inspect(self, table, offset, revision, limit, query, sort, descending) -> dict:
+        return inspect_database(
+            self._db(), table, offset, revision, limit, query, sort, descending
+        )
 
     async def async_purge(
         self,

@@ -1,4 +1,4 @@
-"""Authenticated, bounded, admin-only streaming journal exports."""
+"""Authenticated cached artwork and administrator-only journal transfers."""
 
 import asyncio
 from http import HTTPStatus
@@ -13,7 +13,7 @@ from .const import DOMAIN
 from .importing import IMPORT_SECONDS, MAX_IMPORT_BYTES
 from .journal import JournalError, identifier, invalid
 from .runtime import KaleidescapeRuntime, get_library, get_runtime
-from .security import async_finish_cleanup, is_active_admin
+from .security import async_finish_cleanup, is_active_admin, is_active_user
 
 EXPORT_DOWNLOAD_SECONDS = 60
 
@@ -26,7 +26,9 @@ class LibraryArtworkView(HomeAssistantView):
     requires_auth = True
 
     async def get(self, request, entry_id: str, dataset_id: str, cache_key: str):
-        if not is_active_admin(request.get("hass_user")):
+        user = request.get("hass_user")
+        admin = is_active_admin(user)
+        if not is_active_user(user):
             raise web.HTTPForbidden
         if request.query:
             raise web.HTTPBadRequest
@@ -37,7 +39,11 @@ class LibraryArtworkView(HomeAssistantView):
             data, content_type = await runtime.repository.async_library_artwork(
                 library.source, cache_key
             )
-            if not is_active_admin(request.get("hass_user")):
+            if (
+                request.get("hass_user") is not user
+                or not is_active_user(user)
+                or is_active_admin(user) != admin
+            ):
                 raise web.HTTPForbidden
             if not runtime.ready or get_library(hass, entry_id, runtime) is not library:
                 raise web.HTTPNotFound

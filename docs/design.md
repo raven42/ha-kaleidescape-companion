@@ -49,7 +49,8 @@ prefixed with `frontend/src/`.
 | `repository.py` | Single-worker connection, transactions, CRUD/retry/audit, pagination, consistent exports, private storage lifecycle |
 | `recording.py` | Worker-only automatic-session persistence, resume matching, completion, protected correction fields |
 | `maintenance.py`, `importing.py` | Worker-only fixed-table inspection/purge and bounded compatible snapshot validation/merge, with durable retry barriers and minimal audit |
-| `library_config.py`, `library_parser.py`, `library_sync.py`, `library_store.py` | Opt-in origins/limits, native bounded HTML parsing, scheduled GET-only scans, worker catalog queries/private artwork cache |
+| `library_config.py`, `library_parser.py`, `library_sync.py` | Opt-in origins/display preferences/limits, native bounded HTML parsing, scheduled GET-only scans |
+| `library_browse.py`, `library_store.py` | Worker-only grouping/filter/projection queries, exact-version persistence, private artwork file cache |
 | `history.py`, `sensor.py` | Worker-only bounded summary queries; shared HA coordinator and seven translated sensor entities |
 | `migrations/` | Ordered schema upgrades, pre-migration snapshots, unsupported-schema rejection |
 | `websocket.py`, `http.py`, `security.py` | HA-authenticated commands/downloads, scope/role checks, record projections, filesystem/cancellation protections |
@@ -207,16 +208,34 @@ freeze on pause, scans, gaps, and identity changes.
 
 ### Library and artwork
 
-The implemented [Library slice](library.md) is administrator-only and off by
-default. It adds a disabled/enabled Library tab, default-host discovery/override,
+The implemented [Library slice](library.md) is off by default. Active users can
+browse cached metadata/artwork; configuration and manual sync are administrator-only. It adds a disabled/enabled Library tab, default-host discovery/override,
 scheduled catalog/collection/detail sync, first-detected dates, local filtering,
-and a private bounded artwork file cache. Metadata uses schema 6 on the existing
+and a private bounded artwork file cache. Shared browsing provides a resizable
+cover grid, sortable list, checkbox filter popup (any within/all across categories),
+and title-detail modal. Names group before pagination without merging identities;
+the modal separately loads bounded version pages. List reads accept 1–1000 rows
+(default 50), with compact grouped summaries and an 8 MiB conservative JSON budget.
+Cover pagination rounds the selected target to complete rows, observes the actual
+grid width, debounces resize requests, and ignores stale replies. A final catalog
+remainder is retained without duplicating entries. Fixed/resizable columns keep
+sorts from changing table widths. Hidden collection names affect projection,
+not source memberships or status. `frontend/src/library-cover.ts` owns visible-only image
+requests, the per-Library concurrency limit, and blob cleanup. Metadata uses schema 8 on the existing
 worker; a 192 MiB library write ceiling preserves 64 MiB of journal growth.
+`ui_config.py` validates public display defaults; `navigation.ts` retains only the
+allowlisted main tab in the URL. `purchases.py` and `purchase_http.py` parse bounded
+private invoice uploads, preview exact-name matches, and apply explicit local date
+corrections through revision/UUID-bound transactions. Schema 7 keeps dates and
+content-free audit separate from first detection and viewing evidence. The optional
+[offline helper](purchase-dates.md) creates a corrected private copy.
+
 
 Use HA's managed HTTP session for explicitly configured origins, bounded responses,
 timeouts/concurrency, certificate verification, and restricted redirects. Isolate
 firmware-dependent HTML parsing from network/lifecycle code; never execute embedded
-scripts or call vendor editing routes. Test encoding, escaped metadata, empty
+scripts. Only the separate explicit Add to Collection action may call its fixed
+verified form route. Test encoding, escaped metadata, empty
 collections, login/error pages, grouped editions, count mismatches, and layout changes.
 The initial bounded structural parser uses the native HTML parser and fictional
 fixtures; introduce an external parser only if future firmware needs justify it.
@@ -232,6 +251,13 @@ Historical/library artwork belongs in a private bounded evictable cache. Resolve
 backend-owned paths, validate type/size and configured origin, and authenticate
 delivery. Never accept an arbitrary path/URL from the panel or serve household
 artwork from `www`. Cache eviction cannot remove identities or viewing history.
+
+The separately opted-in [Add to Collection](library-collections.md) uses
+`library_collections.py` for fixed-form/hidden-value parsing and schema 8 durable
+intents, and LibrarySync for serialized preflight/POST/read-back. The source lock
+and accepted-task drain coordinate scan, backup, cancellation and unload. The
+frontend version dialog sends only opaque IDs, labels, revision and UUID; checks
+never repeat a POST. Removal semantics remain unverified and are not implemented.
 
 ### Playback, import, and sharing
 

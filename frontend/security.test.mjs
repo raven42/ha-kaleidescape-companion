@@ -252,6 +252,39 @@ test("API proxy accepts only local-origin export/artwork GETs and never supplies
     );
     assert.equal((await get(port, cover, headers, "POST")).status, 405);
     assert.equal(received.length, 5);
+    const purchasePreview = path.replace(
+      /export\?format=json$/,
+      "library/purchases/preview",
+    );
+    assert.equal(
+      (await get(port, purchasePreview, headers, "POST")).status,
+      200,
+    );
+    assert.equal(received[5].authorization, "Bearer fictional");
+    assert.equal((await get(port, purchasePreview, headers)).status, 405);
+    assert.equal(
+      (
+        await get(
+          port,
+          purchasePreview + "?url=http://evil.invalid",
+          headers,
+          "POST",
+        )
+      ).status,
+      404,
+    );
+    assert.equal(
+      (
+        await get(
+          port,
+          purchasePreview,
+          { ...headers, Origin: "https://evil.invalid" },
+          "POST",
+        )
+      ).status,
+      403,
+    );
+    assert.equal(received.length, 6);
   } finally {
     await server?.close();
     await new Promise((resolve) => backend.close(resolve));

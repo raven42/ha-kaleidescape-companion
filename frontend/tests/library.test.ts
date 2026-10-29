@@ -28,7 +28,32 @@ function field(name: string, value: string) {
     }),
   );
 }
+function check(name: string, value: string) {
+  const input = [
+    ...root().querySelectorAll<HTMLInputElement>(`input[name="${name}"]`),
+  ].find((item) => item.value === value)!;
+  input.click();
+}
+function title(label: string) {
+  return [...root().querySelectorAll<HTMLButtonElement>("tbody .link")].find(
+    (item) => item.textContent!.trim() === label,
+  )!;
+}
+const covers = () => [...root().querySelectorAll("kaleidescape-library-cover")];
 beforeEach(async () => {
+  vi.stubGlobal(
+    "IntersectionObserver",
+    class {
+      constructor(private callback: IntersectionObserverCallback) {}
+      observe(target: Element) {
+        this.callback(
+          [{ target, isIntersecting: true } as IntersectionObserverEntry],
+          this as unknown as IntersectionObserver,
+        );
+      }
+      disconnect() {}
+    },
+  );
   transport = new FixtureTransport();
   element = document.createElement(
     "kaleidescape-library",
@@ -41,63 +66,120 @@ beforeEach(async () => {
 afterEach(() => {
   element.remove();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
-it("queries the local cache, displays first detection and source status, and filters available metadata", async () => {
+it("uses checkbox filters with multiple values, discards cancelled drafts, and removes writer/studio filters", async () => {
   expect(text()).toContain("Voyage to Europa");
   expect(text()).toContain("Paused takes priority");
-  expect(text()).toContain("purchase/download date is unknown");
-  expect(
-    transport.calls.some((call) => call.type.endsWith("/library/sync")),
-  ).toBe(false);
-  field("library_query", "Midnight");
-  field("library_status", "in_progress");
-  field("library_sort", "length");
-  field("library_order", "desc");
-  field("actor", "Fictional Actor");
-  button("Search & filter").click();
+  expect(root().querySelector("[name=writer],[name=studio]")).toBeNull();
+  button("Filters").click();
   await flush();
-  const call = transport.calls
-    .filter((call) => call.type.endsWith("/library/list"))
-    .at(-1)!;
-  expect(call.filters).toMatchObject({
+  expect(root().querySelector<HTMLDialogElement>("#filter-dialog")!.open).toBe(
+    true,
+  );
+  check("status", "in_progress");
+  await flush();
+  check("status", "watched");
+  await flush();
+  check("actor", "Fictional Actor");
+  await flush();
+  button("Apply filters").click();
+  await flush();
+  field("library_query", "Midnight");
+  button("Search").click();
+  await flush();
+  expect(
+    transport.calls
+      .filter((call) => call.type.endsWith("/library/list"))
+      .at(-1)!.filters,
+  ).toMatchObject({
     query: "Midnight",
-    status: "in_progress",
-    sort: "length",
-    descending: true,
-    actor: "Fictional Actor",
+    status: ["in_progress", "watched"],
+    actor: ["Fictional Actor"],
     offset: 0,
   });
   expect(root().querySelectorAll("tbody tr")).toHaveLength(1);
-  expect(text()).toContain("In progress");
-  button("Sync now").click();
+  button("Filters (3)").click();
   await flush();
-  expect(
-    transport.calls.some((call) => call.type.endsWith("/library/sync")),
-  ).toBe(true);
+  button("Clear filters").click();
+  button("Cancel").click();
+  button("Filters (3)").click();
+  await flush();
+  expect(root().querySelectorAll("input:checked")).toHaveLength(3);
 });
 
-it("renders untrusted metadata as text and disables unavailable metadata controls", async () => {
+it("adds sortable year/collection headings and opens details only in a popup", async () => {
+  expect(root().querySelector("#title-dialog .playback-layout")).toBeNull();
+  const year = [
+    ...root().querySelectorAll<HTMLButtonElement>("th button"),
+  ].find((item) => item.textContent!.includes("Year"))!;
+  year.click();
+  await flush();
+  expect(transport.calls.at(-1)!.filters).toMatchObject({
+    sort: "year",
+    descending: false,
+  });
+  expect(year.closest("th")!.getAttribute("aria-sort")).toBe("ascending");
+  year.click();
+  await flush();
+  expect(transport.calls.at(-1)!.filters).toMatchObject({
+    sort: "year",
+    descending: true,
+  });
+  title("Voyage to Europa").click();
+  await flush();
+  expect(root().querySelector<HTMLDialogElement>("#title-dialog")!.open).toBe(
+    true,
+  );
+  expect(text()).toContain("First detected");
+  expect(root().querySelector(".library-title")).toBeNull();
+  button("Close").click();
+  await flush();
+  expect(root().querySelector("#title-dialog .playback-layout")).toBeNull();
+});
+
+it("switches to tightly spaced resizable covers and opens the same title popup", async () => {
+  button("Covers").click();
+  await flush();
+  expect(root().querySelector("table")).toBeNull();
+  expect(root().querySelectorAll(".cover-tile")).toHaveLength(3);
+  field("cover_size", "250");
+  await flush();
+  expect(root().querySelector(".cover-grid")!.getAttribute("style")).toContain(
+    "250px",
+  );
+  root().querySelector<HTMLButtonElement>(".cover-tile")!.click();
+  await flush();
+  expect(root().querySelector<HTMLDialogElement>("#title-dialog")!.open).toBe(
+    true,
+  );
+  button("Close").click();
+  button("List").click();
+  await flush();
+  expect(root().querySelectorAll("tbody tr")).toHaveLength(3);
+});
+
+it("renders untrusted title/filter metadata as text", async () => {
   transport.libraryTitles = [
     libraryTitle({
       title: "<img src=x onerror=attack()>",
-      writers: [],
-      studios: [],
+      actors: ["<script>attack()</script>"],
     }),
   ];
   button("Refresh cached data").click();
   await flush();
-  expect(text()).toContain("<img src=x onerror=attack()>");
+  title("<img src=x onerror=attack()>").click();
+  await flush();
+  expect(text()).toContain("<script>attack()</script>");
   expect(root().querySelector("img,script")).toBeNull();
-  expect(
-    root().querySelector<HTMLInputElement>('[name="writer"]')!.disabled,
-  ).toBe(true);
-  expect(
-    root().querySelector<HTMLInputElement>('[name="studio"]')!.disabled,
-  ).toBe(true);
+  button("Close").click();
+  button("Filters").click();
+  await flush();
+  expect(root().querySelector("script")).toBeNull();
 });
 
-it("ignores stale list replies after replacing the connection and stops status polling on unmount", async () => {
+it("ignores stale list replies after replacing the connection and clears on unmount", async () => {
   let resolve!: (page: LibraryPage) => void;
   vi.spyOn(element.client!, "libraryList").mockReturnValue(
     new Promise((done) => {
@@ -106,8 +188,7 @@ it("ignores stale list replies after replacing the connection and stops status p
   );
   button("Refresh cached data").click();
   await flush();
-  const replacement = new FixtureTransport();
-  element.client = replacement.client();
+  element.client = new FixtureTransport().client();
   await flush();
   resolve({
     items: [libraryTitle({ title: "Stale private title" })],
@@ -125,7 +206,7 @@ it("ignores stale list replies after replacing the connection and stops status p
   expect(root().querySelector("tbody tr")).toBeNull();
 });
 
-it("aborts cover requests, revokes object URLs, and never applies an old cover", async () => {
+it("aborts late covers and revokes displayed URLs when closing details or changing accounts", async () => {
   let resolve!: (blob: Blob) => void;
   const artwork = vi.spyOn(element.client!, "libraryArtwork").mockReturnValue(
     new Promise((done) => {
@@ -139,34 +220,115 @@ it("aborts cover requests, revokes object URLs, and never applies an old cover",
   transport.libraryTitles = [libraryTitle({ artwork_key: "f".repeat(64) })];
   button("Refresh cached data").click();
   await flush();
+  expect(artwork).not.toHaveBeenCalled();
+  title("Voyage to Europa").click();
+  await flush();
   const signal = artwork.mock.calls[0][2];
-  element.client = new FixtureTransport().client();
+  button("Close").click();
   await flush();
   expect(signal.aborted).toBe(true);
   resolve(new Blob(["fictional"], { type: "image/png" }));
   await flush();
   expect(create).not.toHaveBeenCalled();
-  const client = element.client!;
-  vi.spyOn(client, "libraryArtwork").mockResolvedValue(
-    new Blob(["fictional"], { type: "image/png" }),
+  artwork.mockResolvedValue(new Blob(["fictional"], { type: "image/png" }));
+  title("Voyage to Europa").click();
+  await flush();
+  expect(covers()[0].shadowRoot!.querySelector("img")!.src).toBe(
+    "blob:fictional-cover",
   );
-  const replacement = new FixtureTransport();
-  replacement.libraryTitles = [libraryTitle({ artwork_key: "f".repeat(64) })];
-  vi.spyOn(client, "libraryList").mockResolvedValue(
-    await replacement.client().libraryList(info),
+  covers()[0]
+    .shadowRoot!.querySelector("img")!
+    .dispatchEvent(new Event("error"));
+  await flush();
+  expect(covers()[0].shadowRoot!.querySelector("img")).toBeNull();
+  expect(revoke).toHaveBeenCalledWith("blob:fictional-cover");
+  element.client = new FixtureTransport().client();
+  await flush();
+  expect(root().querySelector("#title-dialog .playback-layout")).toBeNull();
+});
+
+it("limits cover requests to three and cancels queued requests on navigation", async () => {
+  const artwork = vi
+    .spyOn(element.client!, "libraryArtwork")
+    .mockImplementation(
+      (_scope, _key, signal) =>
+        new Promise((_resolve, reject) => {
+          signal.addEventListener(
+            "abort",
+            () => reject(new DOMException("Aborted", "AbortError")),
+            { once: true },
+          );
+        }),
+    );
+  transport.libraryTitles = Array.from({ length: 12 }, (_, i) =>
+    libraryTitle({
+      id: String(i),
+      title: `Fictional title ${i}`,
+      artwork_key: "f".repeat(64),
+    }),
   );
   button("Refresh cached data").click();
   await flush();
-  expect(root().querySelector("img")!.src).toBe("blob:fictional-cover");
-  root().querySelector("img")!.dispatchEvent(new Event("error"));
+  button("Covers").click();
   await flush();
-  expect(root().querySelector("img")).toBeNull();
-  expect(text()).toContain("No cached artwork");
-  element.remove();
-  expect(revoke).toHaveBeenCalledWith("blob:fictional-cover");
+  expect(artwork).toHaveBeenCalledTimes(3);
+  const signals = artwork.mock.calls.map((call) => call[2]);
+  button("List").click();
+  await flush();
+  expect(signals.every((signal) => signal.aborted)).toBe(true);
+  expect(artwork).toHaveBeenCalledTimes(3);
 });
 
-it("clears private data and polling on denied access; disabled mounting performs no requests", async () => {
+it("fetches only visible covers and releases images when they leave the viewport", async () => {
+  const observers = new Map<Element, IntersectionObserverCallback>();
+  vi.stubGlobal(
+    "IntersectionObserver",
+    class {
+      constructor(private callback: IntersectionObserverCallback) {}
+      observe(target: Element) {
+        observers.set(target, this.callback);
+      }
+      disconnect() {}
+    },
+  );
+  const artwork = vi
+    .spyOn(element.client!, "libraryArtwork")
+    .mockResolvedValue(new Blob(["fictional"], { type: "image/png" }));
+  vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:visible-cover");
+  const revoke = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+  transport.libraryTitles = [libraryTitle({ artwork_key: "f".repeat(64) })];
+  button("Refresh cached data").click();
+  await flush();
+  button("Covers").click();
+  await flush();
+  expect(artwork).not.toHaveBeenCalled();
+  const cover = covers()[0];
+  const intersect = (visible: boolean) =>
+    observers.get(cover)!(
+      [{ target: cover, isIntersecting: visible } as IntersectionObserverEntry],
+      {} as IntersectionObserver,
+    );
+  intersect(true);
+  await flush();
+  expect(artwork).toHaveBeenCalledTimes(1);
+  intersect(false);
+  await flush();
+  expect(revoke).toHaveBeenCalledWith("blob:visible-cover");
+  expect(cover.shadowRoot!.querySelector("img")).toBeNull();
+});
+
+it("shares browsing without administrator controls and clears denied or disabled data", async () => {
+  element.scope = {
+    ...info,
+    library_enabled: true,
+    permissions: { read: true, edit: false, export: false },
+  };
+  await flush();
+  expect(button("Sync now")).toBeUndefined();
+  expect(text()).toContain("Voyage to Europa");
+  expect(
+    transport.calls.some((call) => call.type.endsWith("/library/sync")),
+  ).toBe(false);
   transport.failure = "unauthorized";
   button("Refresh cached data").click();
   await flush();
@@ -181,7 +343,7 @@ it("clears private data and polling on denied access; disabled mounting performs
   expect(status).not.toHaveBeenCalled();
 });
 
-it("keeps the cached catalog usable when a sync reports an outage", async () => {
+it("keeps cached titles usable when sync reports an outage", async () => {
   vi.spyOn(element.client!, "libraryInfo").mockResolvedValue({
     ...(await transport.client().libraryInfo(info)),
     error: "library_unreachable",
@@ -190,4 +352,163 @@ it("keeps the cached catalog usable when a sync reports an outage", async () => 
   await flush();
   expect(text()).toContain("Cached data is retained");
   expect(text()).toContain("Voyage to Europa");
+});
+
+it("groups source editions in list and covers, lists formats, and switches version details", async () => {
+  transport.libraryTitles = [
+    libraryTitle({
+      edition: "4K Dolby Vision",
+      synopsis: "First version synopsis",
+    }),
+    libraryTitle({
+      id: "d".repeat(64),
+      edition: "HD",
+      year: 2025,
+      synopsis: "Other version synopsis",
+      duration_seconds: 6600,
+    }),
+  ];
+  transport.libraryGroups.set("a".repeat(64), "fictional-work");
+  transport.libraryGroups.set("d".repeat(64), "fictional-work");
+  button("Refresh cached data").click();
+  await flush();
+  expect(root().querySelectorAll("tbody tr")).toHaveLength(1);
+  expect(text()).toContain("4K Dolby Vision, HD");
+  expect(text()).toContain("2 versions");
+  title("Voyage to Europa").click();
+  await flush();
+  expect(root().querySelectorAll(".version-tabs button")).toHaveLength(2);
+  expect(text()).toContain("First version synopsis");
+  const tabs = root().querySelectorAll<HTMLButtonElement>(
+    ".version-tabs button",
+  );
+  tabs[1].click();
+  await flush();
+  expect(text()).toContain("Other version synopsis");
+  expect(text()).not.toContain("First version synopsis");
+  button("Close").click();
+  button("Covers").click();
+  await flush();
+  expect(root().querySelectorAll(".cover-tile")).toHaveLength(1);
+});
+
+it("keeps same-name remakes separate in both views and opens only the selected work", async () => {
+  transport.libraryTitles = [
+    libraryTitle({ year: 1995, directors: ["Original Director"] }),
+    libraryTitle({
+      id: "d".repeat(64),
+      year: 2025,
+      directors: ["Remake Director"],
+    }),
+    libraryTitle({
+      id: "e".repeat(64),
+      year: 2025,
+      edition: "HD",
+      directors: ["Remake Director"],
+    }),
+  ];
+  transport.libraryGroups.set("d".repeat(64), "fictional-remake");
+  transport.libraryGroups.set("e".repeat(64), "fictional-remake");
+  button("Refresh cached data").click();
+  await flush();
+  expect(root().querySelectorAll("tbody tr")).toHaveLength(2);
+  expect(text()).toContain("2 titles");
+  expect(text()).toContain("3 versions");
+  const titles = root().querySelectorAll<HTMLButtonElement>("tbody .link");
+  titles[0].click();
+  await flush();
+  expect(root().querySelectorAll(".version-tabs button")).toHaveLength(1);
+  expect(root().querySelector("#title-dialog")!.textContent).toContain(
+    "Original Director",
+  );
+  expect(root().querySelector("#title-dialog")!.textContent).not.toContain(
+    "Remake Director",
+  );
+  button("Close").click();
+  button("Covers").click();
+  await flush();
+  const covers = root().querySelectorAll<HTMLButtonElement>(".cover-tile");
+  expect(covers).toHaveLength(2);
+  expect(covers[0].getAttribute("title")).toBe("Voyage to Europa (1995)");
+  expect(covers[1].getAttribute("title")).toBe("Voyage to Europa (2025)");
+  covers[1].click();
+  await flush();
+  expect(root().querySelectorAll(".version-tabs button")).toHaveLength(2);
+  expect(root().querySelector("#title-dialog")!.textContent).toContain(
+    "Remake Director",
+  );
+});
+
+it("keeps column widths stable when sorting and supports keyboard resizing", async () => {
+  const before = [...root().querySelectorAll("col")].map((col) =>
+    col.getAttribute("style"),
+  );
+  const header = root().querySelector<HTMLButtonElement>("th button")!;
+  header.click();
+  await flush();
+  expect(
+    [...root().querySelectorAll("col")].map((col) => col.getAttribute("style")),
+  ).toEqual(before);
+  const separator = root().querySelector('[role="separator"]')!;
+  separator.dispatchEvent(
+    new KeyboardEvent("keydown", {
+      key: "ArrowRight",
+      bubbles: true,
+      cancelable: true,
+    }),
+  );
+  await flush();
+  expect(root().querySelector("col")!.getAttribute("style")).toContain("380px");
+  header.click();
+  await flush();
+  expect(root().querySelector("col")!.getAttribute("style")).toContain("380px");
+  separator.dispatchEvent(
+    new KeyboardEvent("keydown", {
+      key: "Home",
+      bubbles: true,
+      cancelable: true,
+    }),
+  );
+  await flush();
+  expect(root().querySelector("col")!.getAttribute("style")).toBe(before[0]);
+});
+
+it("discards late version details after closing the popup or replacing the account", async () => {
+  let resolve!: (
+    value: Awaited<
+      ReturnType<NonNullable<typeof element.client>["libraryVersions"]>
+    >,
+  ) => void;
+  vi.spyOn(element.client!, "libraryVersions").mockReturnValue(
+    new Promise((done) => {
+      resolve = done;
+    }),
+  );
+  title("Voyage to Europa").click();
+  await flush();
+  button("Close").click();
+  await flush();
+  resolve({
+    items: [libraryTitle({ synopsis: "Stale version details" })],
+    total: 1,
+    offset: 0,
+    has_more: false,
+    revision: 5,
+  });
+  await flush();
+  expect(text()).not.toContain("Stale version details");
+  expect(root().querySelector("#title-dialog .playback-layout")).toBeNull();
+});
+
+it("refreshes cached labels when display preferences change without a source revision change", async () => {
+  const before = transport.calls.filter((call) =>
+    call.type.endsWith("/library/list"),
+  ).length;
+  transport.preferencesKey = "1".repeat(64);
+  document.dispatchEvent(new Event("visibilitychange"));
+  await flush();
+  expect(
+    transport.calls.filter((call) => call.type.endsWith("/library/list"))
+      .length,
+  ).toBe(before + 1);
 });

@@ -397,8 +397,8 @@ it("has five top-level tabs with Library opt-in disabled and limits creation con
   const tabs = [...panel.shadowRoot!.querySelectorAll('[role="tab"]')];
   expect(tabs.map((tab) => tab.textContent!.trim())).toEqual([
     "Now Playing",
-    "Journal",
     "Library",
+    "Journal",
     "Database",
     "Settings",
   ]);

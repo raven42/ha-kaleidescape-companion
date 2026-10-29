@@ -49,7 +49,7 @@ local development account as described in the [UI guide](ui.md). Existing entrie
 can enable automatic tracking through **Configure**. Select one player and its
 two sensors as described in the [tracking guide](backend.md#automatic-tracking).
 Seven [history sensors](sensors.md) are created. Regular HA users see the read-only
-household journal. Keep analytics off if you do not want development telemetry.
+household journal and the enabled cached Library. Keep analytics off if you do not want development telemetry.
 
 HA uses `.ha-dev/`, including credentials, logs, and storage. That directory,
 `.venv/`, npm dependencies, and build intermediates are ignored by Git. The
@@ -160,7 +160,18 @@ accidental dismissal. No additional API or schema change is needed for this layo
 Optional [Library sync](library.md) adds schema 6 source/version/collection
 metadata and a private bounded artwork cache, with default-host discovery and
 manual override. Its Library tab stays disabled until opted in through Settings.
-Playback controls, progress, subscriptions, and broader Library sharing remain deferred.
+All active users can browse the enabled Library; settings and manual sync remain
+administrator-only. Worker queries group names before pagination while retaining
+exact versions; the popup loads at most 50 versions per page. Hidden collections
+are display-only and use known/custom value lists. Display defaults and the current
+URL tab restore navigation across reloads. Schema 7 [purchase-date import](purchase-dates.md)
+previews invoices offline and updates only explicitly selected local version dates.
+Fixed/resizable table widths and popup version navigation need
+operator browser review. Page targets accept 1–1000; Covers adapts them to whole
+rows. Use `.venv/bin/python scripts/benchmark_library.py` to time a fictional
+5000-name/10000-version cache without networking; this does not replace browser
+or target-HA timing. [Add to Collection](library-collections.md) is separately opt-in and administrator-only; removal remains deferred. Playback controls, progress, subscriptions, and selective
+per-user sharing remain deferred.
 
 ## Validation
 

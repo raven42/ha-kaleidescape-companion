@@ -220,7 +220,7 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
             "journal/get", **self.scope, viewing_id=created["result"]["viewing"]["id"]
         )
         self.assertTrue(result["success"])
-        self.assertEqual(self.hass.http.register_view.call_count, 3)
+        self.assertEqual(self.hass.http.register_view.call_count, 4)
 
     async def test_shutdown_drains_and_closes(self):
         await self.create()

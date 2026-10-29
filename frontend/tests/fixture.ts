@@ -14,7 +14,7 @@ export const info: JournalInfo = {
   entry_id: "fixture-entry",
   dataset_id: "a323bd20-1b55-4562-87b0-9999944759f3",
   api_version: 1,
-  schema_version: 6,
+  schema_version: 8,
   library_enabled: false,
   revision: 5,
   viewing_count: 3,
@@ -133,11 +133,24 @@ export class FixtureTransport implements Transport {
       studios: [],
     }),
   ];
+  // Fictional source groups stay in the transport, outside public API records.
+  libraryGroups = new Map<string, string>();
+  private groupKey(row: LibraryTitle) {
+    return this.libraryGroups.get(row.id) ?? row.id;
+  }
+  preferencesKey = "0".repeat(64);
   revision = 5;
   failure: string | null = null;
+  pendingAdds: {
+    request_id: string;
+    title_id: string;
+    title: string;
+    collection: string;
+  }[] = [];
+  collectionResults = new Map<string, { status: string; request_id: string }>();
   trackingEnabled = true;
   deletedRecords: Viewing[] = [];
-  options: Record<string, string | number | boolean> = {
+  options: Record<string, string | number | boolean | string[]> = {
     tracking_enabled: true,
     media_player: "media_player.example",
     play_status: "sensor.example_status",
@@ -147,8 +160,13 @@ export class FixtureTransport implements Transport {
     resume_hours: 24,
     library_enabled: false,
     library_host: "",
+    library_excluded_collections: [],
+    default_landing_page: "journal",
+    library_default_view: "list",
+    library_default_count: 50,
     library_interval_hours: 6,
     library_sync_collections: true,
+    library_allow_collection_add: false,
     library_sync_details: true,
     library_sync_artwork: false,
     library_artwork_cache_mb: 512,
@@ -174,14 +192,30 @@ export class FixtureTransport implements Transport {
             revision: this.revision,
             tracking_enabled: this.trackingEnabled,
             library_enabled: !!this.options.library_enabled,
+            ui_defaults: {
+              default_landing_page: String(this.options.default_landing_page),
+              library_default_view: this.options.library_default_view,
+              library_default_count: this.options.library_default_count,
+            },
           },
         ],
       };
     else if (operation === "library/info")
       result = {
+        collection_add_enabled:
+          !!this.options.library_allow_collection_add &&
+          !!this.options.library_sync_collections,
+        pending_adds: this.pendingAdds,
+        preferences_key: this.preferencesKey,
         title_count: this.libraryTitles.length,
-        group_count: this.libraryTitles.length,
+        name_count: new Set(
+          this.libraryTitles.map((row) => row.title.toLowerCase()),
+        ).size,
+        group_count: new Set(
+          this.libraryTitles.map((row) => this.groupKey(row)),
+        ).size,
         collection_count: 3,
+        collection_names: ["Played", "Paused", "Science Fiction"],
         revision: this.revision,
         last_synced_at: "2026-10-27T12:00:00Z",
         collections_synced_at: "2026-10-27T12:00:00Z",
@@ -198,21 +232,85 @@ export class FixtureTransport implements Transport {
         artwork_limit_bytes:
           Number(this.options.library_artwork_cache_mb) * 1048576,
       };
-    else if (operation === "library/sync") result = { accepted: true };
+    else if (operation === "library/versions") {
+      const title = this.libraryTitles.find(
+        (row) => row.id === message.title_id,
+      );
+      if (!title) throw new ApiError("not_found");
+      const rows = this.libraryTitles
+        .filter((row) => this.groupKey(row) === this.groupKey(title))
+        .map((row) => ({
+          ...row,
+          formats:
+            row.formats ?? (row.edition === "Multiple" ? [] : [row.edition]),
+        }));
+      const offset = Number(message.offset ?? 0);
+      result = {
+        preferences_key: this.preferencesKey,
+        items: rows.slice(offset, offset + 50),
+        total: rows.length,
+        offset,
+        has_more: rows.length > offset + 50,
+        revision: this.revision,
+      };
+    } else if (operation === "library/collections/targets")
+      result = { collections: ["Science Fiction"], revision: this.revision };
+    else if (operation === "library/collections/add") {
+      const request = String(message.request_id);
+      if (this.collectionResults.has(request))
+        return this.collectionResults.get(request) as T;
+      const version = this.libraryTitles.find(
+        (item) => item.id === message.title_id,
+      )!;
+      version.collections = [
+        ...new Set([...version.collections, String(message.collection)]),
+      ];
+      result = { status: "confirmed", request_id: request };
+      this.collectionResults.set(
+        request,
+        result as { status: string; request_id: string },
+      );
+      this.revision++;
+    } else if (
+      operation === "library/collections/check" ||
+      operation === "library/collections/acknowledge"
+    ) {
+      const request = String(message.request_id);
+      if (operation.endsWith("acknowledge")) {
+        this.pendingAdds = this.pendingAdds.filter(
+          (item) => item.request_id !== request,
+        );
+        this.collectionResults.set(request, {
+          status: "abandoned",
+          request_id: request,
+        });
+      }
+      result = this.collectionResults.get(request) ?? {
+        status: "uncertain",
+        request_id: request,
+      };
+    } else if (operation === "library/purchases/apply") {
+      for (const update of message.updates as {
+        title_id: string;
+        purchased_on: string;
+      }[]) {
+        const title = this.libraryTitles.find(
+          (title) => title.id === update.title_id,
+        );
+        if (title) title.purchased_on = update.purchased_on;
+      }
+      result = {
+        updated_count: (message.updates as unknown[]).length,
+        revision: ++this.revision,
+      };
+    } else if (operation === "library/sync") result = { accepted: true };
     else if (operation === "library/list") {
       const filters = (message.filters ?? {}) as Record<
         string,
-        string | number | boolean
+        string | string[] | number | boolean
       >;
       const facets = Object.fromEntries(
-        [
-          "actors",
-          "directors",
-          "writers",
-          "studios",
-          "genres",
-          "collections",
-        ].map((key) => [
+        ["actors", "directors", "collections"].map((key) => [
           key,
           [
             ...new Set(
@@ -230,38 +328,99 @@ export class FixtureTransport implements Transport {
             row.title
               .toLowerCase()
               .includes(String(filters.query).toLowerCase())) &&
-          (!filters.status || row.watched_status === filters.status),
+          (!filters.status ||
+            !(filters.status as string[]).length ||
+            (filters.status as string[]).includes(row.watched_status)),
       );
       for (const [filter, key] of [
         ["actor", "actors"],
         ["director", "directors"],
-        ["writer", "writers"],
-        ["studio", "studios"],
         ["collection", "collections"],
       ]) {
-        if (filters[filter])
+        const selected = filters[filter] as string[] | undefined;
+        if (selected?.length)
           rows = rows.filter((row) =>
-            (row[key as keyof LibraryTitle] as string[]).includes(
-              String(filters[filter]),
+            selected.some((value) =>
+              (row[key as keyof LibraryTitle] as string[]).includes(value),
             ),
           );
       }
-      if (filters.rating)
-        rows = rows.filter((row) => row.rating === filters.rating);
+      if ((filters.rating as string[] | undefined)?.length)
+        rows = rows.filter((row) =>
+          (filters.rating as string[]).includes(row.rating),
+        );
+      if (filters.grouped) {
+        const matching = new Set(rows.map((row) => this.groupKey(row)));
+        rows = [...matching].map((name) => {
+          const versions = this.libraryTitles
+            .filter((row) => this.groupKey(row) === name)
+            .sort((a, b) => a.id.localeCompare(b.id));
+          const minimum = versions
+            .map((row) => row.duration_seconds)
+            .filter((value): value is number => value !== null);
+          return {
+            ...versions[0],
+            version_count: versions.length,
+            formats: [
+              ...new Set(
+                versions.flatMap(
+                  (row) =>
+                    row.formats ??
+                    (row.edition === "Multiple" ? [] : [row.edition]),
+                ),
+              ),
+            ].sort(),
+            years: [
+              ...new Set(
+                versions
+                  .map((row) => row.year)
+                  .filter((year): year is number => year !== null),
+              ),
+            ].sort(),
+            collections: [
+              ...new Set(versions.flatMap((row) => row.collections)),
+            ].sort(),
+            watched_status: versions.some(
+              (row) => row.watched_status === "in_progress",
+            )
+              ? "in_progress"
+              : versions.some((row) => row.watched_status === "watched")
+                ? "watched"
+                : versions.some((row) => row.watched_status === "unknown")
+                  ? "unknown"
+                  : "unwatched",
+            duration_seconds: minimum.length ? Math.min(...minimum) : null,
+            maximum_duration_seconds: minimum.length
+              ? Math.max(...minimum)
+              : null,
+          };
+        });
+      }
       rows.sort((a, b) =>
         filters.sort === "length"
           ? (a.duration_seconds ?? 0) - (b.duration_seconds ?? 0)
           : filters.sort === "watched"
             ? a.watched_status.localeCompare(b.watched_status)
-            : a.title.localeCompare(b.title),
+            : filters.sort === "year"
+              ? (a.year ?? 0) - (b.year ?? 0)
+              : filters.sort === "collection"
+                ? ([...a.collections]
+                    .sort()[0]
+                    ?.localeCompare([...b.collections].sort()[0] ?? "") ?? -1)
+                : filters.sort === "added"
+                  ? a.first_seen.localeCompare(b.first_seen)
+                  : a.title.localeCompare(b.title),
       );
       if (filters.descending) rows.reverse();
+      const limit = Number(filters.limit ?? 50);
       const offset = Number(filters.offset ?? 0);
       result = {
-        items: rows.slice(offset, offset + 50),
+        preferences_key: this.preferencesKey,
+        limit,
+        items: rows.slice(offset, offset + limit),
         total: rows.length,
         offset,
-        has_more: rows.length > offset + 50,
+        has_more: rows.length > offset + limit,
         revision: this.revision,
         facets,
         truncated_facets: [],
@@ -299,20 +458,41 @@ export class FixtureTransport implements Transport {
         library_memberships: [],
         library_artwork: [],
       };
-      const rows = tables[String(message.table)];
+      let rows = tables[String(message.table)];
       if (!rows) throw new ApiError("invalid_request");
       if (message.revision != null && message.revision !== this.revision)
         throw new ApiError("refresh_required");
       const offset = Number(message.offset ?? 0);
+      const limit = Number(message.limit ?? 25);
+      const query = String(message.query ?? "");
+      const columns = Object.keys(rows[0] ?? { id: "" });
+      const sort = String(message.sort ?? columns[0]);
+      if (query)
+        rows = rows.filter((row) =>
+          Object.values(row).some((value) =>
+            String(value).toLowerCase().includes(query.toLowerCase()),
+          ),
+        );
+      rows.sort(
+        (a, b) =>
+          String(a[sort] ?? "").localeCompare(String(b[sort] ?? "")) *
+          (message.descending ? -1 : 1),
+      );
       result = {
         table: message.table,
         tables: Object.fromEntries(
           Object.entries(tables).map(([name, rows]) => [name, rows.length]),
         ),
-        items: rows.slice(offset, offset + 25),
+        items: rows.slice(offset, offset + limit),
         revision: this.revision,
         offset,
-        has_more: rows.length > offset + 25,
+        has_more: rows.length > offset + limit,
+        limit,
+        query,
+        sort,
+        columns,
+        descending: !!message.descending,
+        total: rows.length,
       };
     } else if (operation === "database/purge") {
       const request = String(message.request_id);
@@ -409,6 +589,26 @@ export class FixtureTransport implements Transport {
     return structuredClone(result) as T;
   }
   async fetchWithAuth(path?: string, init?: RequestInit): Promise<Response> {
+    if (path?.endsWith("/library/purchases/preview"))
+      return new Response(
+        JSON.stringify({
+          revision: this.revision,
+          rows: [
+            {
+              title: this.libraryTitles[0].title,
+              purchased_on: "2020-01-02",
+              ambiguous: false,
+              versions_truncated: false,
+              versions: [
+                {
+                  ...this.libraryTitles[0],
+                  purchased_on: this.libraryTitles[0].purchased_on ?? null,
+                },
+              ],
+            },
+          ],
+        }),
+      );
     if (path?.includes("/import?")) {
       const query = new URL(path, "http://fixture.invalid").searchParams;
       const request = query.get("request_id")!;

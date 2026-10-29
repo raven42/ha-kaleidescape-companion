@@ -10,11 +10,40 @@ DEFAULTS = {
     "library_host": "",
     "library_interval_hours": 6,
     "library_sync_collections": True,
+    "library_allow_collection_add": False,
     "library_sync_details": True,
     "library_sync_artwork": False,
     "library_artwork_cache_mb": 512,
+    "library_excluded_collections": [],
 }
 BOOLEANS = {key for key, value in DEFAULTS.items() if type(value) is bool}
+
+
+def collection_names(value) -> list[str]:
+    """Migrate old newline preferences and accept bounded custom names."""
+    if isinstance(value, str):
+        if len(value) > 51_400:
+            raise ValueError("invalid_library_collections")
+        value = value.splitlines()
+    if not isinstance(value, list) or len(value) > 200:
+        raise ValueError("invalid_library_collections")
+    names = []
+    for name in value:
+        if (
+            not isinstance(name, str)
+            or len(name) > 256
+            or any(ord(char) < 32 for char in name)
+        ):
+            raise ValueError("invalid_library_collections")
+        name = " ".join(name.split())
+        if name and name.casefold() not in {item.casefold() for item in names}:
+            names.append(name)
+    return names
+
+
+def excluded_collections(value) -> set[str]:
+    """Names are display preferences, never fetch routes or control operations."""
+    return {name.casefold() for name in collection_names(value)}
 
 
 def origin(value: str) -> str:
@@ -94,4 +123,7 @@ def validate(values: dict, previous: dict) -> dict:
             raise ValueError("invalid_library_options")
         config[key] = int(value)
     origin(config["library_host"])
+    config["library_excluded_collections"] = collection_names(
+        config["library_excluded_collections"]
+    )
     return config

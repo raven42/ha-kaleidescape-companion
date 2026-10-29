@@ -1,0 +1,234 @@
+/** Simulated DOM only: URL restoration, defaults, collections, and dismissal. */
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import "../src/panel";
+import "../src/library-purchases";
+import type { KaleidescapePanel } from "../src/panel";
+import type { KaleidescapeSettings } from "../src/settings";
+import type { KaleidescapeLibrary } from "../src/library";
+import type { LibraryPurchases } from "../src/library-purchases";
+import { FixtureTransport, info } from "./fixture";
+import { landingPage, rememberPage } from "../src/navigation";
+import { dismissBackdrop } from "../src/dialog";
+import { ApiError } from "../src/api";
+
+let element: HTMLElement;
+let transport: FixtureTransport;
+async function flush() {
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+function button(root: ShadowRoot, label: string) {
+  return [...root.querySelectorAll<HTMLButtonElement>("button")].find(
+    (item) => item.textContent?.trim() === label,
+  )!;
+}
+beforeEach(() => {
+  transport = new FixtureTransport();
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      disconnect() {}
+    },
+  );
+  vi.stubGlobal(
+    "IntersectionObserver",
+    class {
+      observe() {}
+      disconnect() {}
+    },
+  );
+  window.confirm = vi.fn(() => true);
+});
+afterEach(() => {
+  element?.remove();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+it("restores the selected tab after remount and preserves unrelated URL parameters", async () => {
+  history.replaceState({ ha: true }, "", "/?example=1");
+  transport.options.library_enabled = true;
+  const mount = () => {
+    const panel = document.createElement(
+      "kaleidescape-panel",
+    ) as KaleidescapePanel;
+    panel.client = transport.client();
+    document.body.append(panel);
+    element = panel;
+    return panel;
+  };
+  let panel = mount();
+  await vi.waitFor(() =>
+    expect(button(panel.shadowRoot!, "Library").disabled).toBe(false),
+  );
+  button(panel.shadowRoot!, "Library").click();
+  await flush();
+  expect(location.search).toContain("companion_page=library");
+  expect(location.search).toContain("example=1");
+  expect(history.state).toEqual({ ha: true });
+  panel.remove();
+  panel = mount();
+  await vi.waitFor(() =>
+    expect(
+      panel.shadowRoot!.querySelector("kaleidescape-library"),
+    ).toBeTruthy(),
+  );
+});
+
+it("uses landing defaults only without an allowed URL tab and restricts reader/disabled tabs", () => {
+  expect(landingPage("library", true, true)).toBe("library");
+  rememberPage("settings");
+  expect(landingPage("library", true, true)).toBe("settings");
+  expect(landingPage("database", false, true)).toBe("journal");
+  rememberPage("library");
+  expect(landingPage("now-playing", false, false)).toBe("journal");
+  history.replaceState(null, "", "/?companion_page=javascript:alert(1)");
+  expect(landingPage("journal", true, true)).toBe("journal");
+});
+
+it("applies configured cover/count defaults on Library mount", async () => {
+  const library = document.createElement(
+    "kaleidescape-library",
+  ) as KaleidescapeLibrary;
+  library.client = transport.client();
+  library.scope = {
+    ...info,
+    library_enabled: true,
+    ui_defaults: {
+      default_landing_page: "library",
+      library_default_view: "covers",
+      library_default_count: 1000,
+    },
+  };
+  element = library;
+  document.body.append(library);
+  await vi.waitFor(() =>
+    expect(library.shadowRoot!.querySelector(".cover-grid")).toBeTruthy(),
+  );
+  expect(
+    transport.calls.find((call) => call.type.endsWith("/library/list"))!
+      .filters,
+  ).toMatchObject({ limit: 1000 });
+  expect(
+    library.shadowRoot!.querySelector<HTMLInputElement>(
+      '[name="library_page_size"]',
+    )!.value,
+  ).toBe("1000");
+});
+
+it("saves display defaults and hidden known/custom collections as a value list", async () => {
+  transport.options.library_enabled = true;
+  const settings = document.createElement(
+    "kaleidescape-settings",
+  ) as KaleidescapeSettings;
+  settings.client = transport.client();
+  settings.scope = { ...info, library_enabled: true };
+  element = settings;
+  document.body.append(settings);
+  await vi.waitFor(() =>
+    expect(settings.shadowRoot!.textContent).toContain("Science Fiction"),
+  );
+  const root = settings.shadowRoot!;
+  const known = [
+    ...root.querySelectorAll<HTMLInputElement>(
+      '[name="library_excluded_collections"]',
+    ),
+  ].find((input) => input.value === "Science Fiction")!;
+  known.checked = true;
+  known.dispatchEvent(new Event("change"));
+  await flush();
+  const custom = root.querySelector<HTMLInputElement>(
+    '[name="custom_collection"]',
+  )!;
+  custom.value = "Custom example";
+  custom.dispatchEvent(new Event("input"));
+  button(root, "Add hidden name").click();
+  await flush();
+  const count = root.querySelector<HTMLInputElement>(
+    '[name="library_default_count"]',
+  )!;
+  count.value = "500";
+  count.dispatchEvent(new Event("input"));
+  const view = root.querySelector<HTMLSelectElement>(
+    '[name="library_default_view"]',
+  )!;
+  view.value = "covers";
+  view.dispatchEvent(new Event("change"));
+  button(root, "Save settings").click();
+  await flush();
+  expect(
+    transport.calls.find((call) => call.type.endsWith("/settings/submit"))!
+      .data,
+  ).toMatchObject({
+    library_default_count: 500,
+    library_default_view: "covers",
+    library_excluded_collections: ["Science Fiction", "Custom example"],
+  });
+});
+
+it("dismisses a backdrop through the Escape guard, but keeps inside clicks and protected writes open", () => {
+  const dialog = document.createElement("dialog");
+  element = dialog;
+  document.body.append(dialog);
+  dialog.addEventListener("click", dismissBackdrop);
+  vi.spyOn(dialog, "getBoundingClientRect").mockReturnValue({
+    left: 10,
+    right: 100,
+    top: 10,
+    bottom: 100,
+  } as DOMRect);
+  dialog.showModal();
+  dialog.dispatchEvent(new MouseEvent("click", { clientX: 20, clientY: 20 }));
+  expect(dialog.open).toBe(true);
+  const guard = (event: Event) => event.preventDefault();
+  dialog.addEventListener("cancel", guard);
+  dialog.dispatchEvent(new MouseEvent("click", { clientX: 0, clientY: 0 }));
+  expect(dialog.open).toBe(true);
+  dialog.removeEventListener("cancel", guard);
+  dialog.dispatchEvent(new MouseEvent("click", { clientX: 0, clientY: 0 }));
+  expect(dialog.open).toBe(false);
+});
+
+it("requires explicit purchase selection and keeps the exact request across an uncertain reply", async () => {
+  const purchases = document.createElement(
+    "kaleidescape-library-purchases",
+  ) as LibraryPurchases;
+  const client = transport.client();
+  purchases.client = client;
+  purchases.scope = info;
+  element = purchases;
+  document.body.append(purchases);
+  await flush();
+  const root = purchases.shadowRoot!;
+  button(root, "Import purchase dates").click();
+  await flush();
+  const input = root.querySelector<HTMLInputElement>('input[type="file"]')!;
+  Object.defineProperty(input, "files", {
+    configurable: true,
+    value: [new File(["fictional"], "history.html", { type: "text/html" })],
+  });
+  input.dispatchEvent(new Event("change"));
+  await vi.waitFor(() =>
+    expect(root.textContent).toContain("0 versions selected"),
+  );
+  button(root, "Select unambiguous matches").click();
+  await flush();
+  const original = client.purchaseDates.bind(client);
+  const save = vi
+    .spyOn(client, "purchaseDates")
+    .mockRejectedValueOnce(new ApiError("connection_lost"));
+  button(root, "Apply 1 purchase dates").click();
+  await flush();
+  const dialog = root.querySelector("dialog")!;
+  expect(dialog.dispatchEvent(new Event("cancel", { cancelable: true }))).toBe(
+    false,
+  );
+  expect(dialog.open).toBe(true);
+  const first = save.mock.calls[0][0];
+  save.mockImplementation(original);
+  button(root, "Retry same correction").click();
+  await flush();
+  expect(save.mock.calls[1][0]).toEqual(first);
+  expect(dialog.open).toBe(false);
+  expect(transport.libraryTitles[0].purchased_on).toBe("2020-01-02");
+});
