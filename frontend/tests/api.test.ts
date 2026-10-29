@@ -5,7 +5,7 @@ import {
   MAX_DOWNLOAD_BYTES,
   MAX_ARTWORK_BYTES,
   errorMessage,
-} from "../src/api";
+} from "../src/core/api";
 import { FixtureTransport, info } from "./fixture";
 
 it("takes only entry/dataset identifiers from metadata and freezes retry input", async () => {

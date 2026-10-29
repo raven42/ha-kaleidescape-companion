@@ -8,49 +8,42 @@
       "label": "Setup dependencies",
       "type": "process",
       "command": "bash",
-      "args": [
-        "scripts/dev.sh",
-        "setup"
-      ],
+      "args": ["dev/dev.sh", "setup"],
       "problemMatcher": []
     },
     {
       "label": "Build frontend",
       "type": "process",
       "command": "npm",
-      "args": [
-        "--prefix",
-        "frontend",
-        "run",
-        "build"
-      ],
-      "problemMatcher": [
-        "$tsc"
-      ],
+      "args": ["--prefix", "frontend", "run", "build"],
+      "problemMatcher": ["$tsc"],
       "group": "build"
     },
     {
       "label": "Build integration package",
       "type": "process",
       "command": "${workspaceFolder}/.venv/bin/python",
-      "args": ["scripts/deploy.py", "package"],
+      "args": ["dev/deploy.py", "package"],
       "dependsOn": ["Check all"],
       "dependsOrder": "sequence",
       "problemMatcher": [],
-      "group": { "kind": "build", "isDefault": true }
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
     },
     {
       "label": "Initialize deployment settings",
       "type": "process",
       "command": "${workspaceFolder}/.venv/bin/python",
-      "args": ["scripts/deploy.py", "init"],
+      "args": ["dev/deploy.py", "init"],
       "problemMatcher": []
     },
     {
       "label": "Preview test HA deployment",
       "type": "process",
       "command": "${workspaceFolder}/.venv/bin/python",
-      "args": ["scripts/deploy.py", "plan"],
+      "args": ["dev/deploy.py", "plan"],
       "dependsOn": ["Build integration package"],
       "problemMatcher": []
     },
@@ -58,75 +51,70 @@
       "label": "Deploy to test HA",
       "type": "process",
       "command": "${workspaceFolder}/.venv/bin/python",
-      "args": ["scripts/deploy.py", "deploy"],
+      "args": ["dev/deploy.py", "deploy"],
       "dependsOn": ["Build integration package"],
       "problemMatcher": [],
-      "presentation": { "panel": "dedicated", "reveal": "always" },
-      "runOptions": { "instanceLimit": 1 }
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      }
     },
     {
       "label": "Check configuration and restart test HA",
       "type": "process",
       "command": "${workspaceFolder}/.venv/bin/python",
-      "args": ["scripts/deploy.py", "restart"],
+      "args": ["dev/deploy.py", "restart"],
       "problemMatcher": [],
-      "presentation": { "panel": "dedicated", "reveal": "always" },
-      "runOptions": { "instanceLimit": 1 }
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      }
     },
     {
       "label": "Build, deploy and restart test HA",
-      "dependsOn": ["Deploy to test HA", "Check configuration and restart test HA"],
+      "dependsOn": [
+        "Deploy to test HA",
+        "Check configuration and restart test HA"
+      ],
       "dependsOrder": "sequence",
       "problemMatcher": [],
-      "runOptions": { "instanceLimit": 1 }
+      "runOptions": {
+        "instanceLimit": 1
+      }
     },
     {
       "label": "Test Python",
       "type": "process",
       "command": "${workspaceFolder}/.venv/bin/python",
-      "args": [
-        "-m",
-        "unittest",
-        "discover",
-        "-s",
-        "tests",
-        "-v"
-      ],
+      "args": ["-m", "unittest", "discover", "-s", "tests", "-v"],
       "problemMatcher": [],
       "group": "test"
     },
     {
-      "label": "Check scaffold",
+      "label": "Check project",
       "type": "process",
       "command": "${workspaceFolder}/.venv/bin/python",
-      "args": [
-        "scripts/check_scaffold.py"
-      ],
+      "args": ["dev/check_project.py"],
       "problemMatcher": []
     },
     {
       "label": "Lint Python",
       "type": "process",
       "command": "${workspaceFolder}/.venv/bin/python",
-      "args": [
-        "-m",
-        "ruff",
-        "check",
-        "."
-      ],
+      "args": ["-m", "ruff", "check", "."],
       "problemMatcher": []
     },
     {
       "label": "Check Python formatting",
       "type": "process",
       "command": "${workspaceFolder}/.venv/bin/python",
-      "args": [
-        "-m",
-        "ruff",
-        "format",
-        "--check",
-        "."
-      ],
+      "args": ["-m", "ruff", "format", "--check", "."],
       "problemMatcher": []
     },
     {
@@ -141,7 +129,7 @@
       "label": "Audit dependencies (network)",
       "type": "process",
       "command": "bash",
-      "args": ["scripts/dev.sh", "audit"],
+      "args": ["dev/dev.sh", "audit"],
       "problemMatcher": []
     },
     {
@@ -152,10 +140,31 @@
       "problemMatcher": []
     },
     {
+      "label": "Lint frontend",
+      "type": "process",
+      "command": "npm",
+      "args": ["--prefix", "frontend", "run", "lint"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Lint Markdown",
+      "type": "process",
+      "command": "npm",
+      "args": ["--prefix", "frontend", "run", "lint:markdown"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Check documentation formatting",
+      "type": "process",
+      "command": "npm",
+      "args": ["--prefix", "frontend", "run", "format:docs:check"],
+      "problemMatcher": []
+    },
+    {
       "label": "Check all",
       "type": "process",
       "command": "bash",
-      "args": ["scripts/dev.sh", "check"],
+      "args": ["dev/dev.sh", "check"],
       "group": {
         "kind": "test",
         "isDefault": true
@@ -166,10 +175,7 @@
       "label": "Run frontend preview",
       "type": "process",
       "command": "bash",
-      "args": [
-        "scripts/dev.sh",
-        "preview"
-      ],
+      "args": ["dev/dev.sh", "preview"],
       "problemMatcher": [],
       "presentation": {
         "panel": "dedicated",
@@ -183,10 +189,7 @@
       "label": "Run Home Assistant",
       "type": "process",
       "command": "bash",
-      "args": [
-        "scripts/dev.sh",
-        "ha"
-      ],
+      "args": ["dev/dev.sh", "ha"],
       "problemMatcher": [],
       "presentation": {
         "panel": "dedicated",
@@ -200,11 +203,7 @@
       "label": "Open frontend webview",
       "type": "process",
       "command": "bash",
-      "args": [
-        "-c",
-        ":",
-        "${input:openFrontendWebview}"
-      ],
+      "args": ["-c", ":", "${input:openFrontendWebview}"],
       "problemMatcher": [],
       "presentation": {
         "reveal": "never",
@@ -216,11 +215,7 @@
       "label": "Open Home Assistant webview",
       "type": "process",
       "command": "bash",
-      "args": [
-        "-c",
-        ":",
-        "${input:openHomeAssistantWebview}"
-      ],
+      "args": ["-c", ":", "${input:openHomeAssistantWebview}"],
       "problemMatcher": [],
       "presentation": {
         "reveal": "never",
@@ -230,10 +225,7 @@
     },
     {
       "label": "Open server webviews",
-      "dependsOn": [
-        "Open frontend webview",
-        "Open Home Assistant webview"
-      ],
+      "dependsOn": ["Open frontend webview", "Open Home Assistant webview"],
       "dependsOrder": "sequence",
       "problemMatcher": []
     }

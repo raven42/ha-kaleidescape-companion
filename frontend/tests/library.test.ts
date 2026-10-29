@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import "../src/library";
-import type { KaleidescapeLibrary } from "../src/library";
-import type { LibraryPage } from "../src/api";
+import "../src/library/library";
+import type { KaleidescapeLibrary } from "../src/library/library";
+import type { LibraryPage } from "../src/core/api";
 import { FixtureTransport, info, libraryTitle } from "./fixture";
 
 let element: KaleidescapeLibrary;
@@ -107,6 +107,50 @@ it("uses checkbox filters with multiple values, discards cancelled drafts, and r
   button("Filters (3)").click();
   await flush();
   expect(root().querySelectorAll("input:checked")).toHaveLength(3);
+});
+
+it("clears applied and draft filters without changing sort, view or page size", async () => {
+  field("library_query", "Midnight");
+  button("Search").click();
+  await flush();
+  button("Filters").click();
+  await flush();
+  check("status", "in_progress");
+  button("Apply filters").click();
+  await flush();
+  button("Covers").click();
+  await flush();
+  field("library_sort", "year");
+  await flush();
+  button("Clear Filter").click();
+  await flush();
+  expect(
+    transport.calls
+      .filter((call) => call.type.endsWith("/library/list"))
+      .at(-1)!.filters,
+  ).toMatchObject({
+    query: "",
+    sort: "year",
+    descending: false,
+    offset: 0,
+    limit: 50,
+  });
+  expect(
+    root().querySelector<HTMLInputElement>('[name="library_query"]')!.value,
+  ).toBe("");
+  expect(root().querySelectorAll(".cover-tile")).toHaveLength(3);
+  expect(button("Filters")).toBeTruthy();
+  button("Filters").click();
+  await flush();
+  expect(root().querySelectorAll("input:checked")).toHaveLength(0);
+  button("Cancel").click();
+  await flush();
+  field("library_query", "Unsubmitted search");
+  button("Clear Filter").click();
+  await flush();
+  expect(
+    root().querySelector<HTMLInputElement>('[name="library_query"]')!.value,
+  ).toBe("");
 });
 
 it("adds sortable year/collection headings and opens details only in a popup", async () => {

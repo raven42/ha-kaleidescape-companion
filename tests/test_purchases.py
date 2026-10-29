@@ -1,6 +1,5 @@
 """Fictional offline invoices, scoped corrections, permissions, and private copies."""
 
-import asyncio
 import hashlib
 import importlib.util
 import json
@@ -9,25 +8,18 @@ import unittest
 from contextlib import closing, redirect_stdout
 from io import StringIO
 from pathlib import Path
-from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
-import test_backend as backend
 import test_library as library
-from aiohttp import web
-from aiohttp.test_utils import make_mocked_request
-from homeassistant.components.http import KEY_HASS
 
-from custom_components.kaleidescape_companion.journal import JournalError
-from custom_components.kaleidescape_companion.library_config import collection_names
-from custom_components.kaleidescape_companion.library_store import title_id
-from custom_components.kaleidescape_companion.purchase_http import PurchasePreviewView
-from custom_components.kaleidescape_companion.purchases import (
+from custom_components.kaleidescape_companion.core.models import JournalError
+from custom_components.kaleidescape_companion.library.config import collection_names
+from custom_components.kaleidescape_companion.library.store import title_id
+from custom_components.kaleidescape_companion.ui.preferences import validate
+from dev.purchase_history import (
     DATE_BINDING,
     parse_history,
 )
-from custom_components.kaleidescape_companion.ui_config import validate
 
 
 def invoice(
@@ -116,6 +108,16 @@ class PurchaseStorageTest(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = library.LibraryStorageTest.asyncSetUp
     assert_error = library.LibraryStorageTest.assert_error
 
+    async def preview(self, *args):
+        from dev.purchase_history import preview
+
+        return await self.repository._call(preview, self.repository._db(), *args)
+
+    async def apply(self, *args):
+        from dev.purchase_history import apply
+
+        return await self.repository._call(self.repository._library_write, apply, *args)
+
     async def seed(self):
         await self.repository.async_library_catalog(library.ORIGIN, library.ROWS, {})
         self.id = title_id(library.SOURCE, library.ROWS[0]["source_handle"])
@@ -125,9 +127,7 @@ class PurchaseStorageTest(unittest.IsolatedAsyncioTestCase):
     ):
         await self.seed()
         title = library.ROWS[0]["title"]
-        preview = await self.repository.async_purchase_preview(
-            library.SOURCE, invoice(title).encode()
-        )
+        preview = await self.preview(library.SOURCE, invoice(title).encode())
         self.assertEqual(len(preview["rows"][0]["versions"]), 2)
         before = (
             await self.repository.async_library_versions(library.SOURCE, self.id)
@@ -141,10 +141,10 @@ class PurchaseStorageTest(unittest.IsolatedAsyncioTestCase):
             updates,
             "fictional-admin",
         )
-        result = await self.repository.async_purchase_apply(*args)
-        self.assertEqual(await self.repository.async_purchase_apply(*args), result)
+        result = await self.apply(*args)
+        self.assertEqual(await self.apply(*args), result)
         with self.assert_error("conflict"):
-            await self.repository.async_purchase_apply(*args[:-1], "other-admin")
+            await self.apply(*args[:-1], "other-admin")
         await self.repository.async_library_catalog(library.ORIGIN, library.ROWS, {})
         rows = (await self.repository.async_library_versions(library.SOURCE, self.id))[
             "items"
@@ -162,7 +162,7 @@ class PurchaseStorageTest(unittest.IsolatedAsyncioTestCase):
             )
         )["items"][0]
         self.assertEqual(group["purchased_on"], "2020-01-02")
-        audit = await self.repository.async_inspect("library_purchase_audit")
+        audit = await self.repository.async_inspect("import_audit")
         self.assertEqual(len(audit["items"]), 1)
         self.assertNotIn(title, json.dumps(audit))
         self.assertEqual((await self.repository.async_info())["viewing_count"], 0)
@@ -178,7 +178,7 @@ class PurchaseStorageTest(unittest.IsolatedAsyncioTestCase):
             },
         ]
         await self.repository.async_library_catalog(library.ORIGIN, rows, {})
-        preview = await self.repository.async_purchase_preview(
+        preview = await self.preview(
             library.SOURCE,
             (
                 invoice(library.ROWS[0]["title"]) + invoice("Unmatched fictional title")
@@ -192,11 +192,18 @@ class PurchaseStorageTest(unittest.IsolatedAsyncioTestCase):
             {"title_id": "f" * 64, "purchased_on": "2020-01-02"},
         ]
         with self.assert_error("not_found"):
-            await self.repository.async_purchase_apply(
+            await self.apply(
                 library.SOURCE, str(uuid4()), preview["revision"], updates, "admin"
             )
         self.assertEqual(
-            (await self.repository.async_inspect("library_purchase_dates"))["items"], []
+            [
+                r
+                for r in (await self.repository.async_inspect("library_titles"))[
+                    "items"
+                ]
+                if r["purchased_on"]
+            ],
+            [],
         )
         for bad in (
             [],
@@ -205,11 +212,11 @@ class PurchaseStorageTest(unittest.IsolatedAsyncioTestCase):
             [{"title_id": id, "purchased_on": "2999-01-02"}],
         ):
             with self.assert_error("invalid_request"):
-                await self.repository.async_purchase_apply(
+                await self.apply(
                     library.SOURCE, str(uuid4()), preview["revision"], bad, "admin"
                 )
         with self.assert_error("conflict"):
-            await self.repository.async_purchase_apply(
+            await self.apply(
                 library.SOURCE,
                 str(uuid4()),
                 preview["revision"] - 1,
@@ -226,7 +233,7 @@ class PurchaseStorageTest(unittest.IsolatedAsyncioTestCase):
         output = self.path.parent / "private" / "corrected.sqlite"
         spec = importlib.util.spec_from_file_location(
             "offline_purchases",
-            Path(__file__).resolve().parents[1] / "scripts/import_purchase_dates.py",
+            Path(__file__).resolve().parents[1] / "dev/import_purchase_dates.py",
         )
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
@@ -237,124 +244,8 @@ class PurchaseStorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(output.parent.stat().st_mode & 0o777, 0o700)
         with closing(sqlite3.connect(output)) as db:
             self.assertEqual(
-                db.execute("SELECT count(*) FROM library_purchase_dates").fetchone()[0],
+                db.execute(
+                    "SELECT count(*) FROM library_titles WHERE purchased_on IS NOT NULL"
+                ).fetchone()[0],
                 2,
             )
-
-
-class PurchaseApiTest(unittest.IsolatedAsyncioTestCase):
-    call = backend.BackendTest.call
-
-    async def asyncSetUp(self):
-        await backend.BackendTest.asyncSetUp(self)
-        object.__setattr__(self.entry, "data", {"library_enabled": True})
-        self.entry.runtime_data.library = SimpleNamespace(
-            source=library.SOURCE, async_stop=AsyncMock()
-        )
-        await self.entry.runtime_data.repository.async_library_catalog(
-            library.ORIGIN, library.ROWS, {}
-        )
-
-    async def test_apply_admin_scoping_and_revoked_reply(self):
-        reader = SimpleNamespace(is_active=True, is_admin=False, id="reader")
-        arguments = {
-            **self.scope,
-            "request_id": str(uuid4()),
-            "revision": 1,
-            "updates": [
-                {
-                    "title_id": title_id(
-                        library.SOURCE, library.ROWS[0]["source_handle"]
-                    ),
-                    "purchased_on": "2020-01-02",
-                }
-            ],
-        }
-        denied = await self.call("library/purchases/apply", user=reader, **arguments)
-        self.assertEqual(denied["code"], "unauthorized")
-        repo = self.entry.runtime_data.repository
-        original = repo.async_purchase_apply
-
-        async def revoke(*args):
-            result = await original(*args)
-            self.admin.is_admin = False
-            return result
-
-        with patch.object(repo, "async_purchase_apply", revoke):
-            result = await self.call("library/purchases/apply", **arguments)
-            self.assertEqual(result["code"], "unauthorized")
-        self.assertEqual(
-            len((await repo.async_inspect("library_purchase_dates"))["items"]), 1
-        )
-
-    async def test_upload_authorization_size_and_post_await_rechecks(self):
-        body = invoice(library.ROWS[0]["title"]).encode()
-        payload = SimpleNamespace(iter_chunked=lambda size: chunks(body))
-        request = make_mocked_request(
-            "POST",
-            "/api/fictional",
-            headers={"Content-Length": str(len(body))},
-            app={KEY_HASS: self.hass},
-            payload=payload,
-        )
-        request["hass_user"] = self.admin
-        view = PurchasePreviewView()
-        response = await view.post(request, **self.scope)
-        self.assertEqual(response.status, 200)
-        self.assertEqual(len(json.loads(response.body)["rows"]), 1)
-        request["hass_user"] = SimpleNamespace(is_active=True, is_admin=False)
-        with self.assertRaises(web.HTTPForbidden):
-            await view.post(request, **self.scope)
-        request["hass_user"] = self.admin
-        repo = self.entry.runtime_data.repository
-        original = repo.async_purchase_preview
-
-        async def revoke(*args):
-            result = await original(*args)
-            self.admin.is_active = False
-            return result
-
-        with patch.object(repo, "async_purchase_preview", revoke):
-            with self.assertRaises(web.HTTPForbidden):
-                await view.post(request, **self.scope)
-        self.admin.is_active = True
-        payload.iter_chunked = lambda size: chunks(b" " * (8 * 1024 * 1024 + 1))
-        response = await view.post(request, **self.scope)
-        self.assertEqual(response.status, 413)
-
-    async def test_cancelled_preview_drains_before_releasing_transfer_slot(self):
-        started, release = asyncio.Event(), asyncio.Event()
-        body = invoice(library.ROWS[0]["title"]).encode()
-        payload = SimpleNamespace(iter_chunked=lambda size: chunks(body))
-        request = make_mocked_request(
-            "POST", "/api/fictional", app={KEY_HASS: self.hass}, payload=payload
-        )
-        request["hass_user"] = self.admin
-        repo = self.entry.runtime_data.repository
-        original = repo.async_purchase_preview
-
-        async def slow(*args):
-            started.set()
-            await release.wait()
-            return await original(*args)
-
-        with patch.object(repo, "async_purchase_preview", slow):
-            task = asyncio.create_task(
-                PurchasePreviewView().post(request, **self.scope)
-            )
-            await started.wait()
-            task.cancel()
-            await asyncio.sleep(0)
-            with self.assertRaises(JournalError) as error:
-                async with repo.async_import_slot():
-                    self.fail("Cancelled preview released its slot early")
-            self.assertEqual(error.exception.code, "busy")
-            release.set()
-            with self.assertRaises(asyncio.CancelledError):
-                await task
-        async with repo.async_import_slot():
-            pass
-
-
-async def chunks(body):
-    yield body

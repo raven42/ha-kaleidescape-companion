@@ -24,21 +24,21 @@ from custom_components.kaleidescape_companion.backup import (
     async_post_backup,
     async_pre_backup,
 )
-from custom_components.kaleidescape_companion.http import LibraryArtworkView
-from custom_components.kaleidescape_companion.journal import JournalError
-from custom_components.kaleidescape_companion.library_config import (
+from custom_components.kaleidescape_companion.core.models import JournalError
+from custom_components.kaleidescape_companion.core.repository import JournalRepository
+from custom_components.kaleidescape_companion.library.config import (
     DEFAULTS,
     origin,
     validate,
 )
-from custom_components.kaleidescape_companion.library_parser import (
+from custom_components.kaleidescape_companion.library.parser import (
     artwork_path,
     catalog,
     details,
 )
-from custom_components.kaleidescape_companion.library_store import source_id, title_id
-from custom_components.kaleidescape_companion.library_sync import LibrarySync
-from custom_components.kaleidescape_companion.repository import JournalRepository
+from custom_components.kaleidescape_companion.library.store import source_id, title_id
+from custom_components.kaleidescape_companion.library.sync import LibrarySync
+from custom_components.kaleidescape_companion.ui.http import LibraryArtworkView
 
 ORIGIN = "http://fictional-cinema.local"
 SOURCE = source_id(ORIGIN)
@@ -374,7 +374,7 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_library_ceiling_preserves_space_and_write_access_for_recording(self):
         with patch(
-            "custom_components.kaleidescape_companion.repository.MAX_LIBRARY_DATABASE_BYTES",
+            "custom_components.kaleidescape_companion.core.repository.MAX_LIBRARY_DATABASE_BYTES",
             1,
         ):
             with self.assert_error("library_storage_limit"):
@@ -487,8 +487,6 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
         with closing(sqlite3.connect(self.path)) as db:
             for table in (
                 "library_collection_intents",
-                "library_purchase_dates",
-                "library_purchase_audit",
                 "library_memberships",
                 "library_collections",
                 "library_titles",
@@ -496,12 +494,18 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
                 "library_sources",
             ):
                 db.execute(f"DROP TABLE {table}")
+            db.execute("DROP TABLE import_audit")
+            from custom_components.kaleidescape_companion.core.migrations import (
+                MIGRATIONS,
+            )
+
+            db.execute(MIGRATIONS[5][0])
             db.execute("PRAGMA user_version=5")
             db.commit()
         self.repository = JournalRepository(self.path)
         self.addAsyncCleanup(self.repository.async_close)
         await self.repository.async_open()
-        self.assertEqual((await self.repository.async_info())["schema_version"], 8)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 10)
         self.assertEqual(
             await self.repository.async_get(created["viewing"]["id"]),
             created["viewing"],

@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import "../src/panel";
-import type { KaleidescapeReader } from "../src/reader";
-import type { KaleidescapePanel } from "../src/panel";
-import type { ApiMessage, Hass } from "../src/api";
+import "../src/ui/panel";
+import type { KaleidescapeReader } from "../src/ui/reader";
+import type { KaleidescapePanel } from "../src/ui/panel";
+import type { ApiMessage, Hass } from "../src/core/api";
 import { FixtureTransport, info } from "./fixture";
 
 let reader: KaleidescapeReader;

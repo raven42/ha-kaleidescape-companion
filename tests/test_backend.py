@@ -28,13 +28,15 @@ from custom_components.kaleidescape_companion.backup import (
     async_pre_backup,
 )
 from custom_components.kaleidescape_companion.const import DOMAIN, NAME
+from custom_components.kaleidescape_companion.core.migrations import (
+    UnsupportedSchemaError,
+)
+from custom_components.kaleidescape_companion.core.models import JournalError
+from custom_components.kaleidescape_companion.core.repository import JournalRepository
 from custom_components.kaleidescape_companion.diagnostics import (
     async_get_config_entry_diagnostics,
 )
-from custom_components.kaleidescape_companion.http import JournalExportView
-from custom_components.kaleidescape_companion.journal import JournalError
-from custom_components.kaleidescape_companion.migrations import UnsupportedSchemaError
-from custom_components.kaleidescape_companion.repository import JournalRepository
+from custom_components.kaleidescape_companion.ui.http import JournalExportView
 
 
 def entry():
@@ -220,7 +222,7 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
             "journal/get", **self.scope, viewing_id=created["result"]["viewing"]["id"]
         )
         self.assertTrue(result["success"])
-        self.assertEqual(self.hass.http.register_view.call_count, 4)
+        self.assertEqual(self.hass.http.register_view.call_count, 3)
 
     async def test_shutdown_drains_and_closes(self):
         await self.create()
@@ -289,7 +291,7 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(repository, "async_export", capture),
             patch(
-                "custom_components.kaleidescape_companion.http.web.StreamResponse",
+                "custom_components.kaleidescape_companion.ui.http.web.StreamResponse",
                 return_value=response,
             ),
         ):
@@ -316,7 +318,7 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(repository, "async_export", capture),
             patch(
-                "custom_components.kaleidescape_companion.http.web.StreamResponse",
+                "custom_components.kaleidescape_companion.ui.http.web.StreamResponse",
                 return_value=response,
             ),
         ):

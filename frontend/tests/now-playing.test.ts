@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import "../src/now-playing";
-import type { KaleidescapeNowPlaying } from "../src/now-playing";
-import type { NowPlayingPlayer } from "../src/api";
+import "../src/playback/now-playing";
+import type { KaleidescapeNowPlaying } from "../src/playback/now-playing";
+import type { NowPlayingPlayer } from "../src/core/api";
 import { FixtureTransport, info, playing } from "./fixture";
 
 let element: KaleidescapeNowPlaying;

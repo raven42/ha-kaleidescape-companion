@@ -1,10 +1,10 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { connectDevelopment } from "../src/dev-connection";
-import "../src/dev";
-import type { KaleidescapeDevelopment } from "../src/dev";
+import { connectDevelopment } from "../dev/connection";
+import "../dev/main";
+import type { KaleidescapeDevelopment } from "../dev/main";
 import { FixtureTransport } from "./fixture";
 
-vi.mock("../src/dev-connection", () => ({
+vi.mock("../dev/connection", () => ({
   connectDevelopment: vi.fn(),
   DEVELOPMENT_HA: "http://127.0.0.1:8123",
 }));

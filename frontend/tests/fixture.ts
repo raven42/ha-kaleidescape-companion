@@ -1,20 +1,21 @@
 /** Fictional in-memory transport for UI tests and the explicit review page only. */
-import { ApiError, JournalClient } from "../src/api";
+import { ApiError, JournalClient } from "../src/core/api";
 import type {
   ApiMessage,
+  ImportResult,
   JournalInfo,
   LibraryTitle,
   MutationResult,
   NowPlayingPlayer,
   Transport,
   Viewing,
-} from "../src/api";
+} from "../src/core/api";
 
 export const info: JournalInfo = {
   entry_id: "fixture-entry",
   dataset_id: "a323bd20-1b55-4562-87b0-9999944759f3",
   api_version: 1,
-  schema_version: 8,
+  schema_version: 10,
   library_enabled: false,
   revision: 5,
   viewing_count: 3,
@@ -289,20 +290,19 @@ export class FixtureTransport implements Transport {
         status: "uncertain",
         request_id: request,
       };
-    } else if (operation === "library/purchases/apply") {
-      for (const update of message.updates as {
-        title_id: string;
-        purchased_on: string;
-      }[]) {
-        const title = this.libraryTitles.find(
-          (title) => title.id === update.title_id,
-        );
-        if (title) title.purchased_on = update.purchased_on;
+    } else if (operation === "database/import") {
+      const request = String(message.request_id);
+      if (this.importResults.has(request))
+        result = this.importResults.get(request);
+      else {
+        result = {
+          imported_count: (message.selected as string[]).length,
+          updated_count: 0,
+          skipped_count: 0,
+          revision: ++this.revision,
+        };
+        this.importResults.set(request, result as ImportResult);
       }
-      result = {
-        updated_count: (message.updates as unknown[]).length,
-        revision: ++this.revision,
-      };
     } else if (operation === "library/sync") result = { accepted: true };
     else if (operation === "library/list") {
       const filters = (message.filters ?? {}) as Record<
@@ -589,71 +589,43 @@ export class FixtureTransport implements Transport {
     return structuredClone(result) as T;
   }
   async fetchWithAuth(path?: string, init?: RequestInit): Promise<Response> {
-    if (path?.endsWith("/library/purchases/preview"))
-      return new Response(
-        JSON.stringify({
-          revision: this.revision,
-          rows: [
-            {
-              title: this.libraryTitles[0].title,
-              purchased_on: "2020-01-02",
-              ambiguous: false,
-              versions_truncated: false,
-              versions: [
-                {
-                  ...this.libraryTitles[0],
-                  purchased_on: this.libraryTitles[0].purchased_on ?? null,
-                },
-              ],
-            },
-          ],
-        }),
-      );
-    if (path?.includes("/import?")) {
-      const query = new URL(path, "http://fixture.invalid").searchParams;
-      const request = query.get("request_id")!;
-      if (this.importResults.has(request))
-        return new Response(JSON.stringify(this.importResults.get(request)));
+    if (path?.includes("/import/preview?")) {
       if (this.trackingEnabled)
         return new Response(JSON.stringify({ code: "tracking_enabled" }), {
           status: 409,
         });
-      if (query.get("format") !== "json")
-        return new Response(JSON.stringify({ code: "invalid_request" }), {
-          status: 400,
-        });
       try {
         const document = JSON.parse(await (init?.body as File).text());
-        const rows = Array.isArray(document) ? document : document.viewings;
-        if (
-          !Array.isArray(rows) ||
-          rows.some((row) => !row.id || !row.title || !row.started_at)
-        )
-          throw new Error("Invalid fixture import");
-        let imported = 0,
-          skipped = 0;
-        for (const row of rows) {
-          if (
-            [...this.records, ...this.deletedRecords].some(
-              (record) => record.id === row.id,
-            )
-          ) {
-            skipped++;
-            continue;
-          }
-          const viewing = record(row);
-          (viewing.deleted_at ? this.deletedRecords : this.records).push(
-            viewing,
-          );
-          imported++;
-        }
-        const result = {
-          imported_count: imported,
-          skipped_count: skipped,
-          revision: ++this.revision,
-        };
-        this.importResults.set(request, result);
-        return new Response(JSON.stringify(result));
+        const records = Array.isArray(document) ? document : document.viewings;
+        const rows = records.map((row: Viewing) => ({
+          key: `viewings:${row.id}`,
+          title: row.title,
+          table: "viewings",
+          action: this.records.some((item) => item.id === row.id)
+            ? "unchanged"
+            : "new",
+          changes: { title: { before: null, after: row.title } },
+          conflicts: [],
+          reason: "",
+        }));
+        return new Response(
+          JSON.stringify({
+            plan_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            revision: this.revision,
+            expires_in: 600,
+            rows,
+            counts: {
+              new: rows.filter(
+                (row: { action: string }) => row.action === "new",
+              ).length,
+              merge: 0,
+              unchanged: rows.filter(
+                (row: { action: string }) => row.action === "unchanged",
+              ).length,
+              skip: 0,
+            },
+          }),
+        );
       } catch {
         return new Response(JSON.stringify({ code: "invalid_request" }), {
           status: 400,

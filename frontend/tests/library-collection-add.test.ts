@@ -1,9 +1,9 @@
 /** Fictional device adapter and simulated dialogs; no browser/device connection. */
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import "../src/library-collection-add";
-import type { LibraryCollectionAdd } from "../src/library-collection-add";
-import { ApiError } from "../src/api";
-import type { CollectionAddResult } from "../src/api";
+import "../src/library/collections";
+import type { LibraryCollectionAdd } from "../src/library/collections";
+import { ApiError } from "../src/core/api";
+import type { CollectionAddResult } from "../src/core/api";
 import { FixtureTransport, info } from "./fixture";
 
 let element: LibraryCollectionAdd;

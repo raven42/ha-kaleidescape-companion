@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import "../src/advanced";
-import "../src/settings";
-import type { KaleidescapeAdvanced } from "../src/advanced";
-import type { KaleidescapeSettings } from "../src/settings";
-import type { KaleidescapeTransfers } from "../src/transfers";
-import { ApiError } from "../src/api";
-import type { ApiMessage, DatabasePage } from "../src/api";
+import "../src/ui/database";
+import "../src/ui/settings";
+import type { KaleidescapeDatabase } from "../src/ui/database";
+import type { KaleidescapeSettings } from "../src/ui/settings";
+import type { KaleidescapeTransfers } from "../src/ui/transfers";
+import { ApiError } from "../src/core/api";
+import type { ApiMessage, DatabasePage } from "../src/core/api";
 import { FixtureTransport, info, record } from "./fixture";
 
 let transport: FixtureTransport;
-let element: KaleidescapeAdvanced | KaleidescapeSettings;
+let element: KaleidescapeDatabase | KaleidescapeSettings;
 const root = () => element.shadowRoot!;
 const text = () => root().textContent!.replace(/\s+/g, " ");
 function button(label: string) {
@@ -32,7 +32,7 @@ function input(name: string, value: string) {
   input.dispatchEvent(new Event("input", { bubbles: true }));
 }
 async function mount(
-  tag: "kaleidescape-advanced" | "kaleidescape-settings",
+  tag: "kaleidescape-database" | "kaleidescape-settings",
   tracking = false,
 ) {
   transport.trackingEnabled = tracking;
@@ -41,7 +41,7 @@ async function mount(
   element.scope = { ...info, tracking_enabled: tracking };
   document.body.append(element);
   await waitFor(
-    tag === "kaleidescape-advanced" ? "The Lantern Voyage" : "Save settings",
+    tag === "kaleidescape-database" ? "The Lantern Voyage" : "Save settings",
   );
 }
 function selectViewing() {
@@ -178,7 +178,7 @@ it("shows raw deleted records as text, bounded table navigation, and refuses pur
       deleted_at: "2026-10-26T01:00:00Z",
     }),
   ];
-  await mount("kaleidescape-advanced", true);
+  await mount("kaleidescape-database", true);
   expect(text()).toContain("Deleted");
   expect(text()).toContain("<img src=x onerror=attack()>");
   expect(root().querySelector("img,script")).toBeNull();
@@ -186,7 +186,7 @@ it("shows raw deleted records as text, bounded table navigation, and refuses pur
   expect(transport.calls[0]).toMatchObject({ table: "viewings", offset: 0 });
 });
 it("requires typed confirmation and purges only selected entries", async () => {
-  await mount("kaleidescape-advanced");
+  await mount("kaleidescape-database");
   selectViewing();
   await flush();
   button("Purge entry").click();
@@ -210,7 +210,7 @@ it("requires typed confirmation and purges only selected entries", async () => {
 });
 
 it("creates a manual viewing from the toolbar and retries an uncertain create exactly", async () => {
-  await mount("kaleidescape-advanced");
+  await mount("kaleidescape-database");
   const original = transport.callWS.bind(transport);
   let interrupt = true;
   vi.spyOn(transport, "callWS").mockImplementation(
@@ -258,7 +258,7 @@ it("creates a manual viewing from the toolbar and retries an uncertain create ex
 });
 
 it("groups the entries pagination controls separately from their row count", async () => {
-  await mount("kaleidescape-advanced");
+  await mount("kaleidescape-database");
   const pagination = root().querySelector(
     ".database-entries .database-pagination",
   )!;
@@ -281,7 +281,7 @@ it("changes database page sizes, searches, and sorts while clearing page selecti
       }),
     ),
   );
-  await mount("kaleidescape-advanced");
+  await mount("kaleidescape-database");
   const select = async (name: string, value: string) => {
     const control = root().querySelector<HTMLSelectElement>(
       `[name="${name}"]`,
@@ -364,7 +364,7 @@ it("changes database page sizes, searches, and sorts while clearing page selecti
 });
 
 it("preserves the database draft and applied controls when browsing changes are cancelled", async () => {
-  await mount("kaleidescape-advanced");
+  await mount("kaleidescape-database");
   button("New Entry").click();
   await flush();
   input("title", "Keep this fictional draft");
@@ -394,7 +394,7 @@ it("preserves the database draft and applied controls when browsing changes are 
 });
 
 it("uses one database surface with a shared toolbar and the main underline tab design", async () => {
-  await mount("kaleidescape-advanced");
+  await mount("kaleidescape-database");
   expect(root().querySelectorAll(".card")).toHaveLength(1);
   const toolbar = root().querySelector(".database-toolbar")!;
   expect(
@@ -418,7 +418,7 @@ it("uses one database surface with a shared toolbar and the main underline tab d
 });
 
 it("deletes one selected viewing only after confirmation and retries the same request", async () => {
-  await mount("kaleidescape-advanced");
+  await mount("kaleidescape-database");
   selectViewing();
   await flush();
   vi.mocked(window.confirm).mockReturnValueOnce(false);
@@ -463,7 +463,7 @@ it("keeps multi-selection for purge and disables a single-entry delete for multi
   transport.deletedRecords = [
     record({ id: "fictional-deleted", deleted_at: "2026-10-26T01:00:00Z" }),
   ];
-  await mount("kaleidescape-advanced");
+  await mount("kaleidescape-database");
   const boxes = [
     ...root().querySelectorAll<HTMLInputElement>(".entry-list input"),
   ];
@@ -490,7 +490,7 @@ it("keeps multi-selection for purge and disables a single-entry delete for multi
 });
 
 it("preserves a dirty viewing when import navigation or table navigation is cancelled", async () => {
-  await mount("kaleidescape-advanced");
+  await mount("kaleidescape-database");
   root().querySelector<HTMLButtonElement>(".entry-name")!.click();
   await flush();
   input("notes", "Keep this draft");
@@ -501,7 +501,7 @@ it("preserves a dirty viewing when import navigation or table navigation is canc
   )!;
   await transfers.updateComplete;
   [...transfers.shadowRoot!.querySelectorAll("button")]
-    .find((button) => button.textContent!.trim() === "Import")!
+    .find((button) => button.textContent!.trim() === "Merge Import")!
     .click();
   await transfers.updateComplete;
   expect(
@@ -538,7 +538,7 @@ it("cancels inline settings changes through the original HA options flow", async
 });
 
 it("uses table tabs and an inline selection list with a separate editable detail pane", async () => {
-  await mount("kaleidescape-advanced");
+  await mount("kaleidescape-database");
   expect(root().querySelector('select[name="database_table"]')).toBeNull();
   expect(root().querySelectorAll('[role="tab"]')).toHaveLength(12);
   expect(
@@ -574,7 +574,7 @@ it("uses table tabs and an inline selection list with a separate editable detail
 });
 
 it("locks an uncertain edit to its original UUID and retains conflicting drafts", async () => {
-  await mount("kaleidescape-advanced");
+  await mount("kaleidescape-database");
   root().querySelector<HTMLButtonElement>(".entry-name")!.click();
   await flush();
   input("notes", "One edit only");
@@ -604,7 +604,7 @@ it("locks an uncertain edit to its original UUID and retains conflicting drafts"
   expect(calls[0]).toEqual(calls[1]);
 });
 it("requires a distinct purge-all confirmation and retries lost responses with the exact UUID and payload", async () => {
-  await mount("kaleidescape-advanced");
+  await mount("kaleidescape-database");
   const original = transport.callWS.bind(transport);
   let interrupt = true;
   vi.spyOn(transport, "callWS").mockImplementation(
@@ -636,7 +636,7 @@ it("requires a distinct purge-all confirmation and retries lost responses with t
   expect(calls[0]).toEqual(calls[1]);
 });
 it("preserves data on stale purge conflicts and allows a fresh inspection", async () => {
-  await mount("kaleidescape-advanced");
+  await mount("kaleidescape-database");
   button("Purge entry").click();
   await flush();
   button("Purge all entries").click();
@@ -653,7 +653,7 @@ it("preserves data on stale purge conflicts and allows a fresh inspection", asyn
   expect(text()).toContain("Dataset revision 6");
 });
 it("clears raw details on denial and ignores inspection results after connection changes", async () => {
-  await mount("kaleidescape-advanced");
+  await mount("kaleidescape-database");
   let resolve!: (page: DatabasePage) => void;
   vi.spyOn(transport, "callWS").mockReturnValue(
     new Promise((done) => {

@@ -8,16 +8,15 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
 
 from .const import DOMAIN, NAME
-from .http import JournalExportView, JournalImportView, LibraryArtworkView
-from .journal import JournalError
-from .library_sync import LibrarySync
-from .migrations import UnsupportedSchemaError
-from .observation import PlaybackObserver
-from .panel import async_remove_panel, async_setup_panel
-from .purchase_http import PurchasePreviewView
-from .repository import JournalRepository
-from .runtime import KaleidescapeConfigEntry, KaleidescapeRuntime, loaded_runtimes
-from .websocket import async_register_commands
+from .core.migrations import UnsupportedSchemaError
+from .core.models import JournalError
+from .core.repository import JournalRepository
+from .core.runtime import KaleidescapeConfigEntry, KaleidescapeRuntime, loaded_runtimes
+from .library.sync import LibrarySync
+from .playback.observer import PlaybackObserver
+from .ui.http import JournalExportView, JournalImportView, LibraryArtworkView
+from .ui.panel import async_remove_panel, async_setup_panel
+from .ui.websocket import async_register_commands
 
 _LOGGER = logging.getLogger(__name__)
 PLATFORMS = [Platform.SENSOR]
@@ -70,7 +69,6 @@ async def async_setup_entry(
             hass.http.register_view(JournalExportView())
             hass.http.register_view(JournalImportView())
             hass.http.register_view(LibraryArtworkView())
-            hass.http.register_view(PurchasePreviewView())
             hass.data[f"{DOMAIN}.api_registered"] = True
         config = dict(entry.options or entry.data)
         if config.get("tracking_enabled"):

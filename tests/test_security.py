@@ -18,12 +18,12 @@ import test_backend as backend_tests
 import test_repository as repository_tests
 from aiohttp import web
 
+from custom_components.kaleidescape_companion.core.models import JournalError
+from custom_components.kaleidescape_companion.core.repository import JournalRepository
 from custom_components.kaleidescape_companion.diagnostics import (
     async_get_config_entry_diagnostics,
 )
-from custom_components.kaleidescape_companion.http import JournalExportView
-from custom_components.kaleidescape_companion.journal import JournalError
-from custom_components.kaleidescape_companion.repository import JournalRepository
+from custom_components.kaleidescape_companion.ui.http import JournalExportView
 
 request_id = repository_tests.request_id
 viewing = repository_tests.viewing
@@ -195,8 +195,6 @@ class RepositorySecurityTest(unittest.IsolatedAsyncioTestCase):
             db.execute("DROP TABLE import_audit")
             for table in (
                 "library_collection_intents",
-                "library_purchase_dates",
-                "library_purchase_audit",
                 "library_memberships",
                 "library_collections",
                 "library_titles",
@@ -235,7 +233,7 @@ class RepositorySecurityTest(unittest.IsolatedAsyncioTestCase):
             with self.subTest(format=format):
                 with (
                     patch(
-                        "custom_components.kaleidescape_companion.repository.MAX_EXPORT_BYTES",
+                        "custom_components.kaleidescape_companion.core.repository.MAX_EXPORT_BYTES",
                         1,
                     ),
                     self.assert_error("export_too_large"),
@@ -245,7 +243,7 @@ class RepositorySecurityTest(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(list(self.repository._export_directory.iterdir()), [])
         with (
             patch(
-                "custom_components.kaleidescape_companion.repository.EXPORT_BUILD_SECONDS",
+                "custom_components.kaleidescape_companion.core.repository.EXPORT_BUILD_SECONDS",
                 -1,
             ),
             self.assert_error("export_timeout"),
@@ -261,7 +259,8 @@ class RepositorySecurityTest(unittest.IsolatedAsyncioTestCase):
         reopened = JournalRepository(self.path)
         self.addAsyncCleanup(reopened.async_close)
         with patch(
-            "custom_components.kaleidescape_companion.repository.MAX_DATABASE_BYTES", 1
+            "custom_components.kaleidescape_companion.core.repository.MAX_DATABASE_BYTES",
+            1,
         ):
             await reopened.async_open()
         size = self.path.stat().st_size
@@ -352,7 +351,7 @@ class APISecurityTest(unittest.IsolatedAsyncioTestCase):
         }
         self.admin.is_active = False
         with patch(
-            "custom_components.kaleidescape_companion.websocket.get_runtime",
+            "custom_components.kaleidescape_companion.ui.websocket.get_runtime",
             side_effect=AssertionError("Unauthorized runtime access"),
         ):
             for command, data in commands.items():
@@ -363,7 +362,7 @@ class APISecurityTest(unittest.IsolatedAsyncioTestCase):
                         "unauthorized",
                     )
         with patch(
-            "custom_components.kaleidescape_companion.http.get_runtime",
+            "custom_components.kaleidescape_companion.ui.http.get_runtime",
             side_effect=AssertionError("Unauthorized runtime access"),
         ):
             with self.assertRaises(web.HTTPForbidden):
@@ -390,7 +389,8 @@ class APISecurityTest(unittest.IsolatedAsyncioTestCase):
     async def test_http_timeout_before_headers_cleans_up_and_releases_slot(self):
         repository = self.entry.runtime_data.repository
         with patch(
-            "custom_components.kaleidescape_companion.http.EXPORT_DOWNLOAD_SECONDS", 0
+            "custom_components.kaleidescape_companion.ui.http.EXPORT_DOWNLOAD_SECONDS",
+            0,
         ):
             response = await JournalExportView().get(
                 self.export_request(self.admin), **self.scope
@@ -451,7 +451,7 @@ class APISecurityTest(unittest.IsolatedAsyncioTestCase):
             write_eof=AsyncMock(),
         )
         with patch(
-            "custom_components.kaleidescape_companion.http.web.StreamResponse",
+            "custom_components.kaleidescape_companion.ui.http.web.StreamResponse",
             return_value=stream,
         ) as response_type:
             first = asyncio.create_task(
@@ -493,11 +493,11 @@ class APISecurityTest(unittest.IsolatedAsyncioTestCase):
         repository = self.entry.runtime_data.repository
         with (
             patch(
-                "custom_components.kaleidescape_companion.http.EXPORT_DOWNLOAD_SECONDS",
+                "custom_components.kaleidescape_companion.ui.http.EXPORT_DOWNLOAD_SECONDS",
                 0.5,
             ),
             patch(
-                "custom_components.kaleidescape_companion.http.web.StreamResponse",
+                "custom_components.kaleidescape_companion.ui.http.web.StreamResponse",
                 return_value=stream,
             ),
         ):

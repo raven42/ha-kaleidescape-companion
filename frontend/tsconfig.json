@@ -6,11 +6,12 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "strict": true,
     "noEmit": true,
+    "allowJs": true,
     "useDefineForClassFields": false,
     "skipLibCheck": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "types": ["vite/client"]
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"]
+  "include": ["src/**/*.ts", "dev/**/*.ts", "tests/**/*.ts"]
 }

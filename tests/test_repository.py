@@ -12,9 +12,9 @@ from pathlib import Path
 from unittest.mock import patch
 from uuid import uuid4
 
-from custom_components.kaleidescape_companion import migrations
-from custom_components.kaleidescape_companion.journal import JournalError
-from custom_components.kaleidescape_companion.repository import JournalRepository
+from custom_components.kaleidescape_companion.core import migrations
+from custom_components.kaleidescape_companion.core.models import JournalError
+from custom_components.kaleidescape_companion.core.repository import JournalRepository
 
 
 def request_id():
@@ -210,7 +210,7 @@ class RepositoryTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_queue_overload_does_not_block_backup_release(self):
         with patch(
-            "custom_components.kaleidescape_companion.repository.MAX_PENDING", 0
+            "custom_components.kaleidescape_companion.core.repository.MAX_PENDING", 0
         ):
             with self.assert_error("busy"):
                 await self.repository.async_list()
@@ -227,7 +227,7 @@ class RepositoryTest(unittest.IsolatedAsyncioTestCase):
         json_path = await self.repository.async_export("json")
         self.addCleanup(json_path.unlink, missing_ok=True)
         exported = json.loads(json_path.read_text())
-        self.assertEqual(exported["metadata"]["format_version"], 2)
+        self.assertEqual(exported["metadata"]["format_version"], 3)
         self.assertIsNotNone(exported["viewings"][0]["deleted_at"])
         snapshot = await self.repository.async_export("sqlite")
         self.addCleanup(snapshot.unlink, missing_ok=True)

@@ -3,7 +3,7 @@ import {
   createConnection,
   createLongLivedTokenAuth,
 } from "home-assistant-js-websocket";
-import { connectDevelopment } from "../src/dev-connection";
+import { connectDevelopment } from "../dev/connection";
 import { info } from "./fixture";
 
 vi.mock("home-assistant-js-websocket", () => ({
@@ -122,10 +122,9 @@ it("forwards only the fixed import POST with the caller's file and credentials",
   vi.stubGlobal("fetch", fetch);
   const session = await connectDevelopment("fictional-dev-token", vi.fn());
   const file = new File(['{"viewings":[]}'], "prior.sqlite");
-  const pending = session.client.prepareImport(info, file, 5);
-  await session.client.importFile(pending, file, new AbortController().signal);
+  await session.client.previewImport(info, file, new AbortController().signal);
   expect(fetch).toHaveBeenCalledWith(
-    expect.stringMatching(/\/import\?format=sqlite&request_id=.*&revision=5$/),
+    expect.stringMatching(/\/import\/preview\?format=sqlite$/),
     expect.objectContaining({
       method: "POST",
       body: file,
@@ -137,5 +136,55 @@ it("forwards only the fixed import POST with the caller's file and credentials",
       },
     }),
   );
+  session.close();
+});
+
+it("authenticates Library artwork and import previews through the shared exact routes", async () => {
+  const fetch = vi.fn();
+  vi.stubGlobal("fetch", fetch);
+  const session = await connectDevelopment("fictional-dev-token", vi.fn());
+  fetch.mockResolvedValueOnce(
+    new Response("fictional image", {
+      headers: { "Content-Type": "image/png" },
+    }),
+  );
+  await session.client.libraryArtwork(
+    info,
+    "a".repeat(64),
+    new AbortController().signal,
+  );
+  expect(fetch).toHaveBeenLastCalledWith(
+    expect.stringContaining(`/library/artwork/${"a".repeat(64)}`),
+    expect.objectContaining({
+      method: "GET",
+      headers: { Authorization: "Bearer fictional-dev-token" },
+      redirect: "error",
+    }),
+  );
+  fetch.mockResolvedValueOnce(
+    new Response(JSON.stringify({ items: [], revision: 5 })),
+  );
+  const file = new File(["{}"], "prior.json");
+  await session.client.previewImport(info, file, new AbortController().signal);
+  expect(fetch).toHaveBeenLastCalledWith(
+    expect.stringContaining("/import/preview?format=json"),
+    expect.objectContaining({
+      method: "POST",
+      body: file,
+      headers: {
+        Authorization: "Bearer fictional-dev-token",
+        "Content-Type": "application/octet-stream",
+      },
+      credentials: "omit",
+    }),
+  );
+  await expect(
+    session.client.libraryArtwork(
+      { ...info, entry_id: "../../auth" },
+      "a".repeat(64),
+      new AbortController().signal,
+    ),
+  ).rejects.toMatchObject({ code: "unauthorized" });
+  expect(fetch).toHaveBeenCalledTimes(2);
   session.close();
 });

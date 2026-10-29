@@ -1,15 +1,12 @@
 /** Simulated DOM only: URL restoration, defaults, collections, and dismissal. */
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import "../src/panel";
-import "../src/library-purchases";
-import type { KaleidescapePanel } from "../src/panel";
-import type { KaleidescapeSettings } from "../src/settings";
-import type { KaleidescapeLibrary } from "../src/library";
-import type { LibraryPurchases } from "../src/library-purchases";
+import "../src/ui/panel";
+import type { KaleidescapePanel } from "../src/ui/panel";
+import type { KaleidescapeSettings } from "../src/ui/settings";
+import type { KaleidescapeLibrary } from "../src/library/library";
 import { FixtureTransport, info } from "./fixture";
-import { landingPage, rememberPage } from "../src/navigation";
-import { dismissBackdrop } from "../src/dialog";
-import { ApiError } from "../src/api";
+import { landingPage, rememberPage } from "../src/ui/navigation";
+import { dismissBackdrop } from "../src/ui/dialog";
 
 let element: HTMLElement;
 let transport: FixtureTransport;
@@ -187,48 +184,4 @@ it("dismisses a backdrop through the Escape guard, but keeps inside clicks and p
   dialog.removeEventListener("cancel", guard);
   dialog.dispatchEvent(new MouseEvent("click", { clientX: 0, clientY: 0 }));
   expect(dialog.open).toBe(false);
-});
-
-it("requires explicit purchase selection and keeps the exact request across an uncertain reply", async () => {
-  const purchases = document.createElement(
-    "kaleidescape-library-purchases",
-  ) as LibraryPurchases;
-  const client = transport.client();
-  purchases.client = client;
-  purchases.scope = info;
-  element = purchases;
-  document.body.append(purchases);
-  await flush();
-  const root = purchases.shadowRoot!;
-  button(root, "Import purchase dates").click();
-  await flush();
-  const input = root.querySelector<HTMLInputElement>('input[type="file"]')!;
-  Object.defineProperty(input, "files", {
-    configurable: true,
-    value: [new File(["fictional"], "history.html", { type: "text/html" })],
-  });
-  input.dispatchEvent(new Event("change"));
-  await vi.waitFor(() =>
-    expect(root.textContent).toContain("0 versions selected"),
-  );
-  button(root, "Select unambiguous matches").click();
-  await flush();
-  const original = client.purchaseDates.bind(client);
-  const save = vi
-    .spyOn(client, "purchaseDates")
-    .mockRejectedValueOnce(new ApiError("connection_lost"));
-  button(root, "Apply 1 purchase dates").click();
-  await flush();
-  const dialog = root.querySelector("dialog")!;
-  expect(dialog.dispatchEvent(new Event("cancel", { cancelable: true }))).toBe(
-    false,
-  );
-  expect(dialog.open).toBe(true);
-  const first = save.mock.calls[0][0];
-  save.mockImplementation(original);
-  button(root, "Retry same correction").click();
-  await flush();
-  expect(save.mock.calls[1][0]).toEqual(first);
-  expect(dialog.open).toBe(false);
-  expect(transport.libraryTitles[0].purchased_on).toBe("2020-01-02");
 });

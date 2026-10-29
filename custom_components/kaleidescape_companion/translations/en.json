@@ -119,6 +119,24 @@
       },
       "partial_movies": {
         "name": "Partially watched movies"
+      },
+      "total_movies": {
+        "name": "Total movies"
+      },
+      "database_size": {
+        "name": "Database size"
+      },
+      "last_library_sync": {
+        "name": "Last library sync"
+      },
+      "artwork_cache_size": {
+        "name": "Artwork cache size"
+      },
+      "unwatched_movies": {
+        "name": "Unwatched movies"
+      },
+      "recently_added": {
+        "name": "Recently added movies"
       }
     }
   }

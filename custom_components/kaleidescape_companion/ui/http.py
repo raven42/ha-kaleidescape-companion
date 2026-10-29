@@ -1,0 +1,278 @@
+"""Authenticated cached artwork and administrator-only journal transfers."""
+
+import asyncio
+from http import HTTPStatus
+from pathlib import Path
+
+from aiohttp import web
+from homeassistant.components.http import KEY_HASS
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.http import HomeAssistantView
+
+from ..const import DOMAIN
+from ..core.importing import IMPORT_SECONDS, MAX_IMPORT_BYTES
+from ..core.models import JournalError, invalid
+from ..core.runtime import KaleidescapeRuntime, get_library, get_runtime
+from ..core.security import async_finish_cleanup, is_active_admin, is_active_user
+
+EXPORT_DOWNLOAD_SECONDS = 60
+
+
+class LibraryArtworkView(HomeAssistantView):
+    """Authenticated cached images only; no caller paths/URLs or on-demand fetch."""
+
+    url = f"/api/{DOMAIN}/{{entry_id}}/{{dataset_id}}/library/artwork/{{cache_key}}"
+    name = f"api:{DOMAIN}:library_artwork"
+    requires_auth = True
+
+    async def get(self, request, entry_id: str, dataset_id: str, cache_key: str):
+        user = request.get("hass_user")
+        admin = is_active_admin(user)
+        if not is_active_user(user):
+            raise web.HTTPForbidden
+        if request.query:
+            raise web.HTTPBadRequest
+        try:
+            hass = request.app[KEY_HASS]
+            runtime = get_runtime(hass, entry_id, dataset_id)
+            library = get_library(hass, entry_id, runtime)
+            data, content_type = await runtime.repository.async_library_artwork(
+                library.source, cache_key
+            )
+            if (
+                request.get("hass_user") is not user
+                or not is_active_user(user)
+                or is_active_admin(user) != admin
+            ):
+                raise web.HTTPForbidden
+            if not runtime.ready or get_library(hass, entry_id, runtime) is not library:
+                raise web.HTTPNotFound
+            return web.Response(
+                body=data,
+                content_type=content_type,
+                headers={
+                    "Cache-Control": "no-store",
+                    "X-Content-Type-Options": "nosniff",
+                },
+            )
+        except JournalError as error:
+            if error.code == "invalid_request":
+                raise web.HTTPBadRequest from error
+            if error.code in {"not_found", "not_ready", "library_disabled"}:
+                raise web.HTTPNotFound from error
+            raise web.HTTPServiceUnavailable from error
+
+
+class JournalImportView(HomeAssistantView):
+    """Bound authenticated uploads; no server-side caller paths or SQL scripts."""
+
+    url = f"/api/{DOMAIN}/{{entry_id}}/{{dataset_id}}/import/preview"
+    name = f"api:{DOMAIN}:import_preview"
+    requires_auth = True
+
+    @staticmethod
+    def _authorize(request, runtime, entry):
+        if not is_active_admin(request.get("hass_user")):
+            raise web.HTTPForbidden
+        if not runtime.ready:
+            raise JournalError("not_ready", "Journal integration unloaded")
+        if runtime.observer is not None or (entry.options or entry.data).get(
+            "tracking_enabled"
+        ):
+            raise JournalError("tracking_enabled", "Disable recording before importing")
+
+    async def post(
+        self, request: web.Request, entry_id: str, dataset_id: str
+    ) -> web.Response:
+        if not is_active_admin(request.get("hass_user")):
+            raise web.HTTPForbidden
+        hass = request.app[KEY_HASS]
+        user = request["hass_user"]
+        try:
+            runtime = get_runtime(hass, entry_id, dataset_id)
+            entry = hass.config_entries.async_get_entry(entry_id)
+            self._authorize(request, runtime, entry)
+            query = request.query
+            if (
+                len(query) != 1
+                or set(query) != {"format"}
+                or query["format"] not in {"json", "sqlite"}
+            ):
+                raise invalid("Invalid import options")
+            import_format = query["format"]
+            if (
+                request.content_length is not None
+                and request.content_length > MAX_IMPORT_BYTES
+            ):
+                raise JournalError("import_too_large", "Import exceeds 32 MiB")
+            async with runtime.repository.async_import_slot():
+                async with asyncio.timeout(IMPORT_SECONDS):
+                    parts, length = [], 0
+                    async for chunk in request.content.iter_chunked(65536):
+                        length += len(chunk)
+                        if length > MAX_IMPORT_BYTES:
+                            raise JournalError(
+                                "import_too_large", "Import exceeds 32 MiB"
+                            )
+                        parts.append(chunk)
+                    if request.get("hass_user") is not user:
+                        raise web.HTTPForbidden
+                    self._authorize(request, runtime, entry)
+                    result = await runtime.repository.async_import_preview(
+                        b"".join(parts),
+                        import_format,
+                        actor_id=user.id,
+                    )
+                    if request.get("hass_user") is not user:
+                        raise web.HTTPForbidden
+                    self._authorize(request, runtime, entry)
+                    return self.json(result, headers={"Cache-Control": "no-store"})
+        except TimeoutError:
+            return self.json(
+                {
+                    "code": "import_timeout",
+                    "message": "Import preview timed out; review the file again",
+                },
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                headers={"Cache-Control": "no-store"},
+            )
+        except JournalError as error:
+            code = {
+                "invalid_request": 400,
+                "conflict": 409,
+                "import_too_large": 413,
+                "tracking_enabled": 409,
+                "not_found": 404,
+                "not_ready": 503,
+                "busy": 503,
+                "backup_in_progress": 503,
+            }.get(error.code, 500)
+            return self.json(
+                {"code": error.code, "message": str(error)},
+                code,
+                headers={"Cache-Control": "no-store"},
+            )
+
+
+class JournalExportView(HomeAssistantView):
+    """Resolve scope for every request; never retain an unloaded repository."""
+
+    url = f"/api/{DOMAIN}/{{entry_id}}/{{dataset_id}}/export"
+    name = f"api:{DOMAIN}:export"
+    requires_auth = True
+
+    async def get(
+        self, request: web.Request, entry_id: str, dataset_id: str
+    ) -> web.StreamResponse:
+        """Hold the export slot until the snapshot is removed, even on failure."""
+        if not is_active_admin(request.get("hass_user")):
+            raise web.HTTPForbidden
+        hass = request.app[KEY_HASS]
+        streaming = asyncio.Event()
+        try:
+            runtime = get_runtime(hass, entry_id, dataset_id)
+            export_format = request.query.get("format", "json")
+            async with asyncio.timeout(EXPORT_DOWNLOAD_SECONDS):
+                snapshot = runtime.repository.async_export_snapshot(export_format)
+                async with snapshot as path:
+                    if not runtime.ready:
+                        raise JournalError("not_ready", "Journal integration unloaded")
+                    return await self._stream(
+                        hass, request, path, export_format, streaming, runtime
+                    )
+        except TimeoutError:
+            if streaming.is_set():
+                raise ConnectionResetError("Journal export timed out") from None
+            return self.json(
+                {"code": "export_timeout", "message": "Journal export timed out"},
+                HTTPStatus.SERVICE_UNAVAILABLE,
+            )
+        except OSError:
+            # Executor/file errors may contain paths; never put them in the API.
+            if streaming.is_set():
+                if request.transport is not None:
+                    request.transport.close()
+                raise ConnectionResetError("Journal export failed") from None
+            return self.json(
+                {"code": "storage_error", "message": "Journal export failed"},
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+            )
+        except JournalError as error:
+            code = {
+                "invalid_request": HTTPStatus.BAD_REQUEST,
+                "not_found": HTTPStatus.NOT_FOUND,
+                "not_ready": HTTPStatus.SERVICE_UNAVAILABLE,
+                "busy": HTTPStatus.SERVICE_UNAVAILABLE,
+                "export_too_large": HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+                "export_timeout": HTTPStatus.SERVICE_UNAVAILABLE,
+            }.get(error.code, HTTPStatus.INTERNAL_SERVER_ERROR)
+            response = self.json({"code": error.code, "message": str(error)}, code)
+            if error.code == "busy":
+                response.headers["Retry-After"] = "5"
+            return response
+
+    @staticmethod
+    async def _stream(
+        hass: HomeAssistant,
+        request: web.Request,
+        path: Path,
+        export_format: str,
+        streaming: asyncio.Event,
+        runtime: KaleidescapeRuntime,
+    ) -> web.StreamResponse:
+        """Check access across awaited work and never cache private downloads."""
+        if not is_active_admin(request.get("hass_user")):
+            raise web.HTTPForbidden
+        file = None
+        opening = asyncio.ensure_future(hass.async_add_executor_job(path.open, "rb"))
+        try:
+            try:
+                file = await asyncio.shield(opening)
+            except asyncio.CancelledError:
+                # The open still runs in the executor; close before unlinking.
+                async def close_when_opened() -> None:
+                    opened = await opening
+                    await hass.async_add_executor_job(opened.close)
+
+                await async_finish_cleanup(close_when_opened())
+                raise
+            if not is_active_admin(request.get("hass_user")):
+                raise web.HTTPForbidden
+            if not runtime.ready:
+                raise JournalError("not_ready", "Journal integration unloaded")
+            response = web.StreamResponse(
+                headers={
+                    "Content-Type": "application/json"
+                    if export_format == "json"
+                    else "application/vnd.sqlite3",
+                    "Content-Disposition": (
+                        f'attachment; filename="kaleidescape-journal.{export_format}"'
+                    ),
+                    "Cache-Control": "no-store",
+                    "X-Content-Type-Options": "nosniff",
+                }
+            )
+            streaming.set()
+            await response.prepare(request)
+
+            async def read_chunk() -> bytes:
+                return await hass.async_add_executor_job(file.read, 65536)
+
+            while chunk := await async_finish_cleanup(read_chunk()):
+                if not runtime.ready or not is_active_admin(request.get("hass_user")):
+                    raise ConnectionResetError("Journal export access removed")
+                await response.write(chunk)
+            await response.write_eof()
+            return response
+        except asyncio.CancelledError, ConnectionResetError:
+            # Once headers are sent, a timeout must close the partial transfer.
+            if streaming.is_set() and request.transport is not None:
+                request.transport.close()
+            raise
+        finally:
+            if file is not None:
+
+                async def close_file() -> None:
+                    await hass.async_add_executor_job(file.close)
+
+                await async_finish_cleanup(close_file())

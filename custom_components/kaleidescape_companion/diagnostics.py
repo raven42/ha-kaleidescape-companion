@@ -3,7 +3,7 @@
 from homeassistant.core import HomeAssistant
 
 from .const import VERSION
-from .runtime import KaleidescapeConfigEntry
+from .core.runtime import KaleidescapeConfigEntry
 
 
 async def async_get_config_entry_diagnostics(

@@ -17,7 +17,7 @@ from test_library import (
     title_id,
 )
 
-from custom_components.kaleidescape_companion.library_config import validate
+from custom_components.kaleidescape_companion.library.config import validate
 
 
 class GroupedLibraryTest(unittest.IsolatedAsyncioTestCase):
@@ -257,7 +257,7 @@ class GroupedLibraryTest(unittest.IsolatedAsyncioTestCase):
         self.assertIn("synopsis", details["items"][0])
         budget = len(json.dumps(one, ensure_ascii=False).encode()) + 16
         with patch(
-            "custom_components.kaleidescape_companion.library_browse.MAX_PAGE_BYTES",
+            "custom_components.kaleidescape_companion.library.browse.MAX_PAGE_BYTES",
             budget,
         ):
             with self.assert_error("library_page_too_large"):

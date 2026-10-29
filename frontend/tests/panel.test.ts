@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import "../src/panel";
-import type { KaleidescapePanel } from "../src/panel";
-import { ApiError } from "../src/api";
-import type { ApiMessage, Hass, Viewing } from "../src/api";
-import { draftData, draftFrom } from "../src/editor";
+import "../src/ui/panel";
+import type { KaleidescapePanel } from "../src/ui/panel";
+import { ApiError } from "../src/core/api";
+import type { ApiMessage, Hass, Viewing } from "../src/core/api";
+import { draftData, draftFrom } from "../src/ui/editor";
 import { FixtureTransport, info, record } from "./fixture";
 
 let panel: KaleidescapePanel;
@@ -427,7 +427,7 @@ it("has five top-level tabs with Library opt-in disabled and limits creation con
   expect(panel.shadowRoot!.textContent).not.toContain("＋ Add viewing");
   page("database");
   await settle();
-  const database = panel.shadowRoot!.querySelector("kaleidescape-advanced")!;
+  const database = panel.shadowRoot!.querySelector("kaleidescape-database")!;
   expect(database).not.toBeNull();
   expect(database.shadowRoot!.textContent).toContain("New Entry");
   expect(
@@ -448,7 +448,7 @@ it("has five top-level tabs with Library opt-in disabled and limits creation con
   await settle();
   expect(
     panel.shadowRoot!.querySelector(
-      '[role="tablist"],kaleidescape-settings,kaleidescape-advanced,kaleidescape-now-playing',
+      '[role="tablist"],kaleidescape-settings,kaleidescape-database,kaleidescape-now-playing',
     ),
   ).toBeNull();
 });
@@ -584,7 +584,7 @@ it("does not release a completed export after switching connections", async () =
   try {
     page("database");
     await settle();
-    const advanced = panel.shadowRoot!.querySelector("kaleidescape-advanced")!;
+    const advanced = panel.shadowRoot!.querySelector("kaleidescape-database")!;
     await (advanced as KaleidescapePanel).updateComplete;
     const transfers = advanced.shadowRoot!.querySelector(
       "kaleidescape-transfers",

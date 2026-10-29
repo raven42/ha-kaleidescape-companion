@@ -1,126 +1,122 @@
 # Kaleidescape Companion
 
-A Home Assistant project for a household watch journal, Now Playing, a local movie library browser, and playback controls.
+A Home Assistant integration for a shared household watch journal, Now Playing,
+and an optional local movie library. It uses HA's built-in **Kaleidescape**
+integration for playback observations. Playback controls remain planned.
 
-**Status:** shared household journal with optional one-player automatic tracking, a read-only view for regular HA users, administrator management/exports, and seven history sensors. The UI runs in HA’s sidebar and the isolated Vite preview. A compact administrator Now Playing card shows HA artwork, detailed playback state, and session/recording context without library sync. Optional administrator-managed [Library sync](docs/library.md) caches titles, collections, metadata, and artwork for all active HA users; it is disabled by default. Library browsing supports page targets up to 1000, whole cover rows, source-defined movie groups, a resizable cover grid, fixed/resizable table columns, checkbox filters, individual-version detail popups, and configurable hidden collection names. Administrator-only [Add to Collection](docs/library-collections.md) is separately opt-in; removal remains planned. Position/progress and playback controls remain planned. See [framework status](docs/framework.md) for validation and release limits.
+Active HA users can browse the journal and enabled Library. Administrators can
+correct records, manage the database, configure tracking and sync, and
+explicitly add a version to a device collection. Library sync and collection
+additions are separate opt-in features, both disabled by default. See the
+[framework status](docs/framework.md) for delivered features and validation
+limits.
 
 ## Documentation
 
-- [Product plan](docs/plan.md)
-- [Technical design](docs/design.md)
-- [Interface research and capability limits](docs/research.md)
-- [Development guide](docs/development.md)
+- [Development and checks](docs/development.md)
 - [Build and deploy to test HA](docs/deployment.md)
-- [Security policy, trust boundaries, and hardening](docs/security.md)
+- [Security policy and hardening](docs/security.md)
+- [Product plan](docs/plan.md) and [technical design](docs/design.md)
 - [Journal backend and API](docs/backend.md)
-- [Journal management UI](docs/ui.md)
-- [Watch-history sensors](docs/sensors.md)
-- [Framework status](docs/framework.md)
-- [Changelog](CHANGELOG.md)
-
-## Project identity
-
-The project and display name are **Kaleidescape Companion**. The internal Home Assistant domain is `kaleidescape_companion`: the built-in **Kaleidescape** integration (`kaleidescape`) must remain available to supply player entities. Never install this project over the built-in integration. The Python client `pykaleidescape` is also an existing, separate project.
+- [User interface](docs/ui.md) and [HA sensors](docs/sensors.md)
+- [Library](docs/library.md),
+  [collection additions](docs/library-collections.md), and
+  [purchase dates](docs/purchase-dates.md) and
+  [reviewed merge imports](docs/imports.md)
+- [Interface research](docs/research.md) and [changelog](CHANGELOG.md)
 
 ## Layout
 
 ```text
-custom_components/kaleidescape_companion/  Integration backend, sensors, and bundled panel
-frontend/                                TypeScript/Lit panel source and preview
-scripts/                                 Local development, validation, packaging, and SSH deployment
-tests/                                   Storage, API, lifecycle, and packaging tests
-docs/                                   Product, architecture, API, security, and operator guides
-.github/workflows/                       CI checks
+custom_components/kaleidescape_companion/
+  core/       SQLite worker, migrations, journal operations, settings and security
+  library/    Catalog sync, metadata, artwork, collections and title validation
+  playback/   HA observations, session tracking, recording and history summaries
+  ui/         Authenticated APIs, panel registration and compiled assets
+  *.py        Required HA entry points and integration constants
+frontend/
+  src/        Typed UI source grouped into core, library, playback and ui
+  dev/        Preview shell, guarded local proxy and fictional review page
+  tests/      Component and proxy security tests
+dev/         Development, validation, packaging and deployment tools
+tests/       Python storage, API, lifecycle and deployment tests
+docs/        Product, architecture, security and operator guides
 ```
 
-Display defaults include the landing tab and Library view/count. The current tab
-is retained in the URL. [Purchase-date import](docs/purchase-dates.md) provides a
-private preview and explicit local date corrections.
+The `dev/` tools and frontend development sources are excluded from deployment.
+Only the integration directory is installed into HA.
 
 ## Development setup
 
-Requires Python **3.14.2+**, Node.js **22.12+**, and npm. From the repository root:
+Requires Python **3.14.2+**, Node.js **22.13+ (22.x) or 24+**, and npm. From the
+repository root:
 
 ```sh
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e '.[dev]'
-cd frontend
-npm ci
-npm run build
-cd ..
+npm --prefix frontend ci
+bash dev/dev.sh check
 ```
 
-`pyproject.toml` defines the editable Python package and its `dev` extra,
-including Home Assistant **2026.10.4** and Ruff. This HA version is the local
-development baseline, not a declared minimum supported HA release. Re-run
-`python -m pip install -e '.[dev]'` after changing Python dependencies.
-Frontend dependencies are installed separately from `frontend/package-lock.json`.
+Python dependencies and development tools come from `pyproject.toml`; Node tools
+use `frontend/package-lock.json`. HA **2026.10.4** is the development baseline,
+not a declared minimum supported HA release. An editable pip install prepares
+imports and tools; HA discovers the integration through `custom_components/`.
 
-Read the [security policy](docs/security.md) before development or installation.
-Custom integrations run with HA's privileges; this project does not sandbox
-itself from HA. Use an isolated development instance and development credentials.
+Read the [security policy](docs/security.md). Use an isolated HA instance,
+fictional records and development credentials. Custom integrations execute with
+HA's privileges.
 
-Run the complete local checks and build the bundled panel:
+Start the servers in separate terminals:
 
 ```sh
-bash scripts/dev.sh check
+bash dev/dev.sh preview  # http://127.0.0.1:5173
+bash dev/dev.sh ha       # http://127.0.0.1:8123
 ```
 
-Individual checks are listed in the [development guide](docs/development.md#checks-and-packaging).
+The HA launcher keeps configuration and storage in ignored `.ha-dev/` and links
+only this integration into its `custom_components/`. Complete HA onboarding, add
+**Kaleidescape Companion** under **Settings → Devices & services**, and open its
+sidebar page. In HA, the panel uses your signed-in session. The standalone Vite
+preview uses a memory-only token from the isolated development instance.
 
-Run the servers in separate terminals from the repository root:
+The [development guide](docs/development.md) covers VS Code tasks, individual
+checks and manual browser review. All checks and packaging remain local;
+deployment and restart tasks are explicit.
 
-```sh
-bash scripts/dev.sh preview  # http://127.0.0.1:5173
-bash scripts/dev.sh ha       # http://127.0.0.1:8123
-```
+## Installation and use
 
-The HA launcher links this checkout's integration into `.ha-dev/custom_components/`
-and keeps HA configuration, credentials, and storage in the ignored `.ha-dev/`
-directory. Complete local HA onboarding, then add **Kaleidescape Companion** under
-**Settings → Devices & services → Add integration**. Restart HA after backend
-changes. Open **Kaleidescape Companion** in HA’s sidebar using your development account. The standalone
-Vite preview uses a memory-only token from the local development instance; see
-the [UI guide](docs/ui.md). Seven [history sensors](docs/sensors.md) are created.
-Regular HA users can browse the household journal; administration remains restricted.
-Library is visible but disabled until an administrator saves **Settings → Enable library sync**. Once enabled, regular users can browse Library beside Journal; settings and manual sync remain administrator-only.
-Leave its hostname blank to try `my-kaleidescape.local`, or enter a local host.
-Choose the sync interval, collections/details, and optional artwork cache; see the
-[library guide](docs/library.md) for filters, first-detected dates, and disk use.
-Administrators can also open **Settings** from the Companion page and **Database**
-for table inspection and viewing corrections through a shared toolbar, table tabs,
-and list/detail layout. Import/export and selected/all-entry purge use dialogs. Disable
-recording before importing or purging; see the [UI and maintenance guide](docs/ui.md#settings-and-database).
-Enable automatic tracking in the integration’s
-**Configure** options. Minimum runtime defaults to 10 minutes to exclude short
-playback such as trailers; set 0 to disable it. See the
-[tracking guide](docs/backend.md#automatic-tracking).
+Copy `custom_components/kaleidescape_companion/` into the target HA
+configuration's `custom_components/`, then restart HA and add **Kaleidescape
+Companion**. Preserve the built-in `kaleidescape` integration. This project's
+domain is `kaleidescape_companion`.
 
-An editable pip install prepares Python imports and tools; HA discovers custom
-integrations under its configuration directory's `custom_components/`. For
-installation into another HA instance, copy
-`custom_components/kaleidescape_companion/` into that instance's
-`custom_components/` directory and restart HA. Node is only needed by developers:
-`npm run build` packages the standalone module into the integration's
-`frontend/panel.js`.
+Production needs the compiled `ui/assets/panel.js`, which is included in the
+runtime package. It needs neither Node nor Vite. The VS Code default build task
+checks the project and creates `dist/kaleidescape-companion.tar.gz`;
+configurable SSH tasks support HA OS and Container. See
+[deployment](docs/deployment.md).
 
-See the [development guide](docs/development.md#development-setup) for
-configuration details. The optional `bash scripts/dev.sh setup` performs the
-venv/editable-install/npm steps above; `bash scripts/dev.sh check` runs all checks
-and the frontend build.
+The page order is **Now Playing | Library | Journal | Database | Settings**.
+Settings controls the default landing page and Library view/count; the selected
+tab is retained in the URL. Configure one player's entities for automatic
+recording. Minimum runtime defaults to 10 minutes; 0 disables the cutoff.
+Thirteen [HA sensors](docs/sensors.md) expose viewing history, Library
+counts/recent additions, last catalog sync and storage sizes. Full catalogs stay
+in the paginated Library UI/API rather than sensor attributes.
 
-VS Code's default build task also creates `dist/kaleidescape-companion.tar.gz`.
-Configurable SSH tasks deploy to a test HA OS or Container instance, with an
-offline target preview and a separate configuration-check/restart task. See the
-[deployment guide](docs/deployment.md); build and test tasks never deploy automatically.
+Enable Library explicitly, leaving its host blank to try `my-kaleidescape.local`
+or setting a local host. Choose sync interval, metadata and optional artwork.
+Source groups distinguish remakes from editions; Library offers list/cover
+views, search, checkbox filters, **Clear Filter**, and up to 1000 entries per
+page. Database offers 10/25/100/500-row pages, search, sorting, corrections and
+import/export. Disable recording before journal imports or permanent purges.
 
-## Delivery order
+## Release status
 
-1. Foundations
-2. Watch journal and read-only Now Playing
-3. Library browser
-4. Playback and controls
-5. Polish
-
-Foundations, journal features, and basic Now Playing are implemented, with operator/release validation remaining before the first release. Follow the [roadmap](docs/plan.md) for acceptance gates and expansion. Project URLs, ownership, supported HA releases, a license, and the [dependency release blocker](docs/security.md#known-dependency-findings-2026-10-25) must be settled before publication; HACS metadata is preparatory.
+This is a development integration. Operator browser, real-source, backup and HA
+compatibility validation remain. Repository ownership/URLs, a license, supported
+HA releases and the documented
+[dependency release blocker](docs/security.md#known-dependency-findings-2026-10-25)
+must be resolved before publication. HACS metadata is preparatory.

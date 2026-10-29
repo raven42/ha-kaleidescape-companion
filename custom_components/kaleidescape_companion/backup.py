@@ -2,7 +2,7 @@
 
 from homeassistant.core import HomeAssistant
 
-from .runtime import loaded_runtimes
+from .core.runtime import loaded_runtimes
 
 
 async def async_pre_backup(hass: HomeAssistant) -> None:

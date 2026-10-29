@@ -1,8 +1,8 @@
 /** Layout observers are simulated; these checks do not launch a browser. */
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import "../src/library";
-import type { KaleidescapeLibrary } from "../src/library";
-import type { LibraryPage } from "../src/api";
+import "../src/library/library";
+import type { KaleidescapeLibrary } from "../src/library/library";
+import type { LibraryPage } from "../src/core/api";
 import { FixtureTransport, info, libraryTitle } from "./fixture";
 
 let element: KaleidescapeLibrary;

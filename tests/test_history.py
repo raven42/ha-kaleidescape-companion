@@ -16,12 +16,12 @@ from custom_components.kaleidescape_companion import (
     async_setup_entry,
     async_unload_entry,
 )
-from custom_components.kaleidescape_companion.history import _sensor_titles
-from custom_components.kaleidescape_companion.journal import JournalError
+from custom_components.kaleidescape_companion.core.models import JournalError
+from custom_components.kaleidescape_companion.core.sensor_data import sensor_titles
 from custom_components.kaleidescape_companion.sensor import (
     async_setup_entry as setup_sensors,
 )
-from custom_components.kaleidescape_companion.websocket import PUBLIC_FIELDS
+from custom_components.kaleidescape_companion.ui.websocket import PUBLIC_FIELDS
 
 
 class HouseholdReadTest(unittest.IsolatedAsyncioTestCase):
@@ -32,7 +32,7 @@ class HouseholdReadTest(unittest.IsolatedAsyncioTestCase):
     async def test_inactive_and_anonymous_readers_are_denied_and_scope_is_bound(self):
         user = SimpleNamespace(id="reader", is_active=False, is_admin=False)
         with patch(
-            "custom_components.kaleidescape_companion.websocket.get_runtime",
+            "custom_components.kaleidescape_companion.ui.websocket.get_runtime",
             side_effect=AssertionError("Unauthorized runtime lookup"),
         ):
             for account in (None, user):
@@ -86,7 +86,7 @@ class HouseholdReadTest(unittest.IsolatedAsyncioTestCase):
             self.assertNotIn("Private note", json.dumps(public))
             self.assertNotIn("notes", public)
         with patch(
-            "custom_components.kaleidescape_companion.websocket.get_runtime",
+            "custom_components.kaleidescape_companion.ui.websocket.get_runtime",
             side_effect=AssertionError("Unauthorized runtime lookup"),
         ):
             for command, data in (
@@ -161,11 +161,11 @@ class HistorySummaryTest(unittest.IsolatedAsyncioTestCase):
         titles = ["🎬" * 500] * 4 + ["x" * 172]
         self.assertEqual(len(json.dumps(titles, ensure_ascii=False).encode()), 8192)
         self.assertEqual(
-            _sensor_titles([{"title": title} for title in [*titles, "Overflow"]]),
+            sensor_titles([{"title": title} for title in [*titles, "Overflow"]]),
             titles,
         )
         escaped = ['"\\\n' * 166] * 10
-        result = _sensor_titles([{"title": title} for title in escaped])
+        result = sensor_titles([{"title": title} for title in escaped])
         self.assertLess(len(result), len(escaped))
         self.assertLessEqual(len(json.dumps(result, ensure_ascii=False).encode()), 8192)
         self.assertGreater(
@@ -273,10 +273,13 @@ class HistorySummaryTest(unittest.IsolatedAsyncioTestCase):
         entities = added.call_args.args[0]
         coordinator = entities[0].coordinator
         self.addAsyncCleanup(coordinator.async_shutdown)
-        self.assertEqual(len(entities), 7)
-        self.assertEqual(len({sensor.unique_id for sensor in entities}), 7)
+        self.addAsyncCleanup(entities[7].coordinator.async_shutdown)
+        self.assertEqual(len(entities), 13)
+        self.assertEqual(len({sensor.unique_id for sensor in entities}), 13)
         self.assertEqual(coordinator.update_interval.total_seconds(), 30)
-        self.assertTrue(all(entity.coordinator is coordinator for entity in entities))
+        self.assertTrue(
+            all(entity.coordinator is coordinator for entity in entities[:7])
+        )
         await self.add("X" * 500, datetime.now(UTC) - timedelta(minutes=1))
         await coordinator.async_refresh()
         last = entities[0]

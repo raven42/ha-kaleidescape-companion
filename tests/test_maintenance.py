@@ -16,11 +16,13 @@ from homeassistant.config_entries import OptionsFlowManager
 from test_tracking import observation
 
 from custom_components.kaleidescape_companion.config_flow import KaleidescapeOptionsFlow
-from custom_components.kaleidescape_companion.configuration import options_request
-from custom_components.kaleidescape_companion.journal import JournalError
-from custom_components.kaleidescape_companion.migrations import UnsupportedSchemaError
-from custom_components.kaleidescape_companion.repository import JournalRepository
-from custom_components.kaleidescape_companion.tracker import PlaybackTracker
+from custom_components.kaleidescape_companion.core.migrations import (
+    UnsupportedSchemaError,
+)
+from custom_components.kaleidescape_companion.core.models import JournalError
+from custom_components.kaleidescape_companion.core.repository import JournalRepository
+from custom_components.kaleidescape_companion.playback.tracker import PlaybackTracker
+from custom_components.kaleidescape_companion.ui.settings import options_request
 
 
 class MaintenanceStorageTest(unittest.IsolatedAsyncioTestCase):
@@ -284,7 +286,8 @@ class MaintenanceStorageTest(unittest.IsolatedAsyncioTestCase):
             with self.assert_error("invalid_request"):
                 await self.repository.async_inspect("viewings", **arguments)
         with patch(
-            "custom_components.kaleidescape_companion.maintenance.MAX_PAGE_BYTES", 1000
+            "custom_components.kaleidescape_companion.core.maintenance.MAX_PAGE_BYTES",
+            1000,
         ):
             with self.assert_error("database_page_too_large"):
                 await self.repository.async_inspect("viewings", limit=500)
@@ -324,8 +327,6 @@ class MaintenanceStorageTest(unittest.IsolatedAsyncioTestCase):
             db.execute("DROP TABLE import_audit")
             for table in (
                 "library_collection_intents",
-                "library_purchase_dates",
-                "library_purchase_audit",
                 "library_memberships",
                 "library_collections",
                 "library_titles",
@@ -341,7 +342,7 @@ class MaintenanceStorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             (await self.repository.async_get(record["id"]))["title"], record["title"]
         )
-        self.assertEqual((await self.repository.async_info())["schema_version"], 8)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 10)
         backup = next(self.path.parent.glob("journal.sqlite3.v3.*.bak"))
         self.assertEqual(backup.stat().st_mode & 0o777, 0o600)
         with closing(sqlite3.connect(backup)) as db:
@@ -350,7 +351,7 @@ class MaintenanceStorageTest(unittest.IsolatedAsyncioTestCase):
         older = JournalRepository(self.path)
         self.addAsyncCleanup(older.async_close)
         with patch(
-            "custom_components.kaleidescape_companion.migrations.SCHEMA_VERSION", 3
+            "custom_components.kaleidescape_companion.core.migrations.SCHEMA_VERSION", 3
         ):
             with self.assertRaises(UnsupportedSchemaError):
                 await older.async_open()
@@ -387,7 +388,7 @@ class MaintenanceApiTest(unittest.IsolatedAsyncioTestCase):
             ):
                 with self.subTest(operation=operation, user=user):
                     with patch(
-                        "custom_components.kaleidescape_companion.websocket.get_runtime",
+                        "custom_components.kaleidescape_companion.ui.websocket.get_runtime",
                         side_effect=AssertionError("Storage must not be accessed"),
                     ):
                         result = await self.call(

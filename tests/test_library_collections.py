@@ -10,15 +10,15 @@ from uuid import uuid4
 import test_backend as backend
 import test_library as library
 
-from custom_components.kaleidescape_companion.journal import JournalError
-from custom_components.kaleidescape_companion.library_collections import (
+from custom_components.kaleidescape_companion.core.models import JournalError
+from custom_components.kaleidescape_companion.library.collections import (
     form_targets,
     member_hash,
     parameters,
 )
-from custom_components.kaleidescape_companion.library_config import DEFAULTS
-from custom_components.kaleidescape_companion.library_store import title_id
-from custom_components.kaleidescape_companion.library_sync import LibrarySync
+from custom_components.kaleidescape_companion.library.config import DEFAULTS
+from custom_components.kaleidescape_companion.library.store import title_id
+from custom_components.kaleidescape_companion.library.sync import LibrarySync
 
 
 def form():
@@ -286,7 +286,7 @@ class CollectionOperationTest(unittest.IsolatedAsyncioTestCase):
     async def test_receipt_limit_rejects_before_post(self):
         await self.seed()
         with patch(
-            "custom_components.kaleidescape_companion.library_collections.MAX_RECEIPTS",
+            "custom_components.kaleidescape_companion.library.collections.MAX_RECEIPTS",
             0,
         ):
             with self.assert_error("collection_limit"):

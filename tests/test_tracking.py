@@ -10,9 +10,9 @@ from pathlib import Path
 from unittest.mock import patch
 from uuid import uuid4
 
-from custom_components.kaleidescape_companion import migrations
-from custom_components.kaleidescape_companion.repository import JournalRepository
-from custom_components.kaleidescape_companion.tracker import (
+from custom_components.kaleidescape_companion.core import migrations
+from custom_components.kaleidescape_companion.core.repository import JournalRepository
+from custom_components.kaleidescape_companion.playback.tracker import (
     Observation,
     PlaybackTracker,
 )

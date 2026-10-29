@@ -11,10 +11,14 @@ from homeassistant.config_entries import ConfigEntries
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 
-from custom_components.kaleidescape_companion.journal import JournalError
-from custom_components.kaleidescape_companion.observation import PlaybackObserver
-from custom_components.kaleidescape_companion.repository import JournalRepository
-from custom_components.kaleidescape_companion.settings import entity_ids, form, validate
+from custom_components.kaleidescape_companion.core.models import JournalError
+from custom_components.kaleidescape_companion.core.repository import JournalRepository
+from custom_components.kaleidescape_companion.core.settings import (
+    entity_ids,
+    form,
+    validate,
+)
+from custom_components.kaleidescape_companion.playback.observer import PlaybackObserver
 
 
 class ObserverTest(unittest.IsolatedAsyncioTestCase):
@@ -113,10 +117,12 @@ class ObserverTest(unittest.IsolatedAsyncioTestCase):
         await self.observer.async_pause()
         await self.repository.async_pause()
         with patch(
-            "custom_components.kaleidescape_companion.observation.MAX_OBSERVATIONS", 2
+            "custom_components.kaleidescape_companion.playback.observer.MAX_OBSERVATIONS",
+            2,
         ):
             with self.assertLogs(
-                "custom_components.kaleidescape_companion.observation", level="WARNING"
+                "custom_components.kaleidescape_companion.playback.observer",
+                level="WARNING",
             ):
                 await self.change(10, "sensor.example_status", "paused")
                 await self.change(20, "sensor.example_status", "playing")
@@ -136,7 +142,8 @@ class ObserverTest(unittest.IsolatedAsyncioTestCase):
             side_effect=JournalError("storage_error", "test"),
         ):
             with self.assertLogs(
-                "custom_components.kaleidescape_companion.observation", level="ERROR"
+                "custom_components.kaleidescape_companion.playback.observer",
+                level="ERROR",
             ):
                 with self.assertRaises(JournalError):
                     await self.tick(0.5)

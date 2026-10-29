@@ -46,7 +46,7 @@ class NowPlayingAPITest(unittest.IsolatedAsyncioTestCase):
             SimpleNamespace(is_active=False, is_admin=True),
         ):
             with patch(
-                "custom_components.kaleidescape_companion.websocket.get_runtime",
+                "custom_components.kaleidescape_companion.ui.websocket.get_runtime",
                 side_effect=AssertionError("Unauthorized source lookup"),
             ):
                 result = await self.call("now_playing", user=user, **self.scope)

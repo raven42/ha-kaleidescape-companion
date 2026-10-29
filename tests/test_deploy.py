@@ -6,13 +6,14 @@ import os
 import shlex
 import shutil
 import subprocess
+import sys
 import tarfile
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts import deploy
+from dev import deploy
 
 
 class DeployTest(unittest.TestCase):
@@ -87,6 +88,39 @@ class DeployTest(unittest.TestCase):
                 all(member.isfile() and member.mode == 0o644 for member in archive)
             )
 
+    def test_real_archive_imports_all_runtime_packages_without_checkout_fallback(self):
+        """Exercise deployed imports from an archive, not the editable installation."""
+        payload = deploy.runtime_package(Path(__file__).resolve().parents[1])
+        destination = self.root / "isolated"
+        destination.mkdir()
+        components = destination / "custom_components"
+        components.mkdir()
+        modules = []
+        with tarfile.open(fileobj=io.BytesIO(payload), mode="r:gz") as archive:
+            archive.extractall(components, filter="data")
+            for member in archive:
+                if member.name.endswith(".py"):
+                    parts = list(Path(member.name).with_suffix("").parts)
+                    if parts[-1] == "__init__":
+                        parts.pop()
+                    modules.append("custom_components." + ".".join(parts))
+        script = """
+import importlib, json, pathlib, sys
+root = pathlib.Path(sys.argv[1]).resolve()
+sys.path.insert(0, str(root))
+for name in json.loads(sys.argv[2]):
+    module = importlib.import_module(name)
+    assert pathlib.Path(module.__file__).resolve().is_relative_to(root), name
+assert not any(name == 'dev' or name.startswith('dev.') for name in sys.modules)
+"""
+        result = subprocess.run(
+            [sys.executable, "-I", "-c", script, str(destination), json.dumps(modules)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_package_rejects_links_missing_bundle_wrong_domain_and_size_overflow(self):
         source = self.source / "const.py"
         source.unlink()
@@ -105,7 +139,7 @@ class DeployTest(unittest.TestCase):
         (self.source / "manifest.json").write_text('{"domain":"kaleidescape"}')
         with self.assertRaisesRegex(ValueError, "domain"):
             deploy.runtime_package(self.root)
-        (self.source / "frontend/panel.js").unlink()
+        (self.source / "ui/assets/panel.js").unlink()
         with self.assertRaisesRegex(ValueError, "build the frontend"):
             deploy.runtime_package(self.root)
 

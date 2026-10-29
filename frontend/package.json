@@ -4,25 +4,40 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22.12.0"
+    "node": "^22.13.0 || >=24"
   },
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "test": "node --test security.test.mjs && vitest run",
-    "format": "prettier --write src tests *.mjs *.mts index.html",
-    "format:check": "prettier --check src tests *.mjs *.mts index.html",
+    "test": "node --test tests/security.test.mjs && vitest run",
+    "format": "prettier --write src dev tests *.mjs *.mts",
+    "format:check": "prettier --check src dev tests *.mjs *.mts",
     "typecheck": "tsc --noEmit",
-    "build": "npm run typecheck && vite build && node ../scripts/package-frontend.mjs"
+    "build": "npm run typecheck && vite build && node dev/package.mjs",
+    "lint": "eslint src dev tests *.mjs *.mts",
+    "lint:markdown": "cd .. && frontend/node_modules/.bin/markdownlint-cli2",
+    "format:docs": "cd .. && frontend/node_modules/.bin/prettier --write --prose-wrap always --ignore-path .gitignore \"**/*.md\" \".github/**/*.md\"",
+    "format:docs:check": "cd .. && frontend/node_modules/.bin/prettier --check --prose-wrap always --ignore-path .gitignore \"**/*.md\" \".github/**/*.md\""
   },
   "dependencies": {
-    "home-assistant-js-websocket": "^9.7.1",
     "lit": "^3.3.1"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.13.0",
+    "globals": "^17.13.0",
     "happy-dom": "^21.0.4",
+    "home-assistant-js-websocket": "^9.8.0",
+    "markdownlint-cli2": "0.24.0",
     "prettier": "^3.9.10",
     "typescript": "~5.9.3",
+    "typescript-eslint": "^8.72.1",
     "vite": "^7.1.0",
     "vitest": "^5.0.5"
+  },
+  "overrides": {
+    "markdownlint-cli2": {
+      "katex": "^0.18.2",
+      "re2js": "^2.8.7"
+    }
   }
 }

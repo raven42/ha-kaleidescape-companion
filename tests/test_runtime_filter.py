@@ -6,7 +6,7 @@ from uuid import uuid4
 import test_repository as repository_tests
 from test_tracking import observation
 
-from custom_components.kaleidescape_companion.tracker import PlaybackTracker
+from custom_components.kaleidescape_companion.playback.tracker import PlaybackTracker
 
 
 class RuntimeFilterTest(unittest.TestCase):

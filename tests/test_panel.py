@@ -12,7 +12,11 @@ from custom_components.kaleidescape_companion import (
     async_unload_entry,
 )
 from custom_components.kaleidescape_companion.const import NAME
-from custom_components.kaleidescape_companion.panel import ASSET, ASSET_URL, PANEL_PATH
+from custom_components.kaleidescape_companion.ui.panel import (
+    ASSET,
+    ASSET_URL,
+    PANEL_PATH,
+)
 
 
 class PanelTest(unittest.IsolatedAsyncioTestCase):

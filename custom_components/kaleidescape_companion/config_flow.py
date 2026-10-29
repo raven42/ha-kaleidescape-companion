@@ -11,8 +11,8 @@ from homeassistant.config_entries import (
 from homeassistant.core import callback
 
 from .const import DOMAIN, NAME
-from .runtime import KaleidescapeRuntime
-from .settings import form, validate
+from .core.runtime import KaleidescapeRuntime
+from .core.settings import form, validate
 
 
 async def collections(hass, entry):

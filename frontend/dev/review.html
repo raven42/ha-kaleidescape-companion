@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  />
+  <title>Fictional journal UI review</title>
+  <style>
+    body {
+      margin: 0;
+    }
+    aside {
+      background: #183a30;
+      color: white;
+      padding: 12px 24px;
+      font: 13px system-ui;
+    }
+  </style>
+  <aside>
+    UI test fixture · Fictional records · Changes stay in this page's memory ·
+    <a href="?library=1">Administrator Library</a> ·
+    <a href="?library=1&amp;role=reader">Household reader Library</a> ·
+    <a href="?library=1&amp;titles=1200">1,200-title Library</a>
+  </aside>
+  <kaleidescape-panel></kaleidescape-panel>
+  <script type="module">
+    import "../src/ui/panel.ts";
+    import {
+      FixtureTransport,
+      libraryTitle,
+      playing,
+    } from "../tests/fixture.ts";
+    import { JournalClient } from "../src/core/api.ts";
+    const parameters = new URLSearchParams(location.search);
+    const transport = new FixtureTransport();
+    transport.options.library_enabled = parameters.get("library") === "1";
+    transport.players = [playing()];
+    transport.libraryTitles.push(
+      libraryTitle({
+        id: "d".repeat(64),
+        edition: "HD",
+        year: 2025,
+        synopsis: "A separate fictional version, grouped for browsing only.",
+        duration_seconds: 6900,
+      }),
+    );
+    transport.libraryGroups.set("a".repeat(64), "fictional-voyage");
+    transport.libraryGroups.set("d".repeat(64), "fictional-voyage");
+    transport.libraryTitles.push(
+      libraryTitle({
+        id: "e".repeat(64),
+        year: 1995,
+        directors: ["Original Fictional Director"],
+        synopsis:
+          "An independent same-name work, never grouped with the remake.",
+      }),
+    );
+    const titleCount = Number(parameters.get("titles"));
+    if (Number.isInteger(titleCount) && titleCount >= 1 && titleCount <= 2000) {
+      transport.libraryTitles = Array.from({ length: titleCount }, (_, index) =>
+        libraryTitle({
+          id: index.toString(16).padStart(64, "0"),
+          title: `Fictional movie ${String(index + 1).padStart(4, "0")}`,
+          year: 1980 + (index % 40),
+          watched_status: ["watched", "unwatched", "in_progress"][index % 3],
+          collections: ["Science Fiction"],
+        }),
+      );
+    }
+    // Full-precision source data should display rounded without rewriting untouched fields.
+    transport.records[0].started_at = "2026-10-24T19:15:00.123456Z";
+    transport.records[0].ended_at = "2026-10-24T21:05:00.654321Z";
+    const client = new JournalClient({
+      async callWS(message) {
+        const result = await transport.callWS(message);
+        if (parameters.get("role") === "reader") {
+          if (message.type === "kaleidescape_companion/info") {
+            result.entries = result.entries.map((entry) => ({
+              entry_id: entry.entry_id,
+              dataset_id: entry.dataset_id,
+              api_version: entry.api_version,
+              revision: entry.revision,
+              viewing_count: entry.viewing_count,
+              library_enabled: entry.library_enabled,
+              ui_defaults: entry.ui_defaults,
+              permissions: { read: true, edit: false, export: false },
+            }));
+          } else if (message.type === "kaleidescape_companion/library/info") {
+            return Object.fromEntries(
+              [
+                "title_count",
+                "group_count",
+                "name_count",
+                "preferences_key",
+                "collection_count",
+                "revision",
+                "last_synced_at",
+                "collections_synced_at",
+              ].map((key) => [key, result[key]]),
+            );
+          }
+        }
+        return result;
+      },
+      fetchWithAuth: transport.fetchWithAuth.bind(transport),
+    });
+    document.querySelector("kaleidescape-panel").client = client;
+  </script>
+</html>
