@@ -226,7 +226,12 @@ assert not any(name == 'dev' or name.startswith('dev.') for name in sys.modules)
         self.assertNotIn("-l", deploy.ssh_command(self.load_settings(data), "true"))
 
     def test_local_settings_initialization_preserves_existing_file(self):
-        deploy.initialize_config(self.settings)
+        with patch("sys.stdout", new_callable=io.StringIO) as output:
+            deploy.initialize_config(self.settings)
+        self.assertEqual(
+            output.getvalue(),
+            f"Edit {self.settings} for your test instance before deploying.\n",
+        )
         original = self.settings.read_bytes()
         self.assertEqual(self.settings.stat().st_mode & 0o777, 0o600)
         with self.assertRaises(FileExistsError):

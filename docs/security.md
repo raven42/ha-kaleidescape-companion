@@ -5,6 +5,13 @@ networking, imports, exports, or frontend rendering must preserve these rules
 and include tests for the affected boundary. This is a maintained security
 baseline, not a claim of independent security certification.
 
+Frontend tests retain Lit lifecycle diagnostics and fail on unexpected console
+warnings/errors; only the test build's expected development-mode banner is
+suppressed. Cover configuration changes clear stale image state before
+rendering, while preserving authenticated, visibility-triggered fetching and
+bounded cache retention. These logging controls do not suppress production
+diagnostics.
+
 ## Trust boundaries
 
 | Boundary                                 | Policy and limitation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |

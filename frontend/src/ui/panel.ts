@@ -1201,6 +1201,7 @@ export class KaleidescapePanel extends LitElement {
                           .scope=${this.info}
                           @access-denied=${() => this.fail(new ApiError("unauthorized"))}
                           @maintenance-busy=${(event: CustomEvent<boolean>) => {
+                            if (this.maintenanceBusy === event.detail) return;
                             this.maintenanceBusy = event.detail;
                             this.requestUpdate();
                           }}
@@ -1212,6 +1213,7 @@ export class KaleidescapePanel extends LitElement {
                             .scope=${this.info}
                             @access-denied=${() => this.fail(new ApiError("unauthorized"))}
                             @settings-busy=${(event: CustomEvent<boolean>) => {
+                              if (this.settingsBusy === event.detail) return;
                               this.settingsBusy = event.detail;
                               this.requestUpdate();
                             }}

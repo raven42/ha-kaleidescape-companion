@@ -149,6 +149,14 @@ them. CI and `dev/dev.sh check` include Ruff, ESLint, Markdownlint,
 source/documentation formatting, proxy security tests, component tests, and the
 production build.
 
+Component tests use Lit's development build with lifecycle diagnostics enabled.
+Only its expected development-mode startup banner is suppressed in the test
+setup. Unexpected console warnings/errors remain visible and fail tests, so
+successful runs should not contain routine `stderr` sections. CLI tests capture
+and verify expected prompts instead of printing temporary paths. Project npm
+settings disable dependency lifecycle scripts and unrelated npm upgrade notices;
+explicit dependency/security checks remain available.
+
 `frontend/package-lock.json` fixes the frontend dependency resolution. Commit
 lockfile updates with the corresponding source change. CI repeats the build and
 checks the packaged module matches its source. Minimum supported HA and frontend

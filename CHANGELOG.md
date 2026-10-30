@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased — Build and test diagnostics
+
+- Reset cover state before rendering and skip unchanged panel busy-state updates
+  to avoid redundant Lit renders.
+- Capture expected deployment-test prompts and suppress only Lit's test startup
+  banner; fail component tests on unexpected console warnings/errors.
+- Disable unrelated npm upgrade notices while retaining dependency lifecycle
+  script restrictions.
+
 ## Unreleased — Library-selected Journal corrections
 
 - Share Add viewing's Library autocomplete with list/calendar editors; require

@@ -103,8 +103,9 @@ export class LibraryCover extends LitElement {
     this.observer?.disconnect();
     this.visible = false;
     this.clear();
+    this.requestUpdate();
   }
-  protected updated(changed: PropertyValues) {
+  protected willUpdate(changed: PropertyValues) {
     if (
       ["client", "scope", "artworkKey", "queue"].some((key) => changed.has(key))
     ) {
@@ -129,7 +130,6 @@ export class LibraryCover extends LitElement {
     this.unwatch?.();
     this.unwatch = undefined;
     this.url = undefined;
-    this.requestUpdate();
   }
   private async load() {
     if (

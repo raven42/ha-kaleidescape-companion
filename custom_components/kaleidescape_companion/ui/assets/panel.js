@@ -326,7 +326,7 @@ class ai {
     for (; d !== void 0; ) {
       if (o === d.index) {
         let c;
-        d.type === 2 ? c = new B(a, a.nextSibling, this, e) : d.type === 1 ? c = new d.ctor(a, d.name, d.strings, this, e) : d.type === 6 && (c = new li(a, this, e)), this._$AV.push(c), d = i[++l];
+        d.type === 2 ? c = new F(a, a.nextSibling, this, e) : d.type === 1 ? c = new d.ctor(a, d.name, d.strings, this, e) : d.type === 6 && (c = new li(a, this, e)), this._$AV.push(c), d = i[++l];
       }
       o !== d?.index && (a = L.nextNode(), o++);
     }
@@ -337,7 +337,7 @@ class ai {
     for (const i of this._$AV) i !== void 0 && (i.strings !== void 0 ? (i._$AI(e, i, t), t += i.strings.length - 2) : i._$AI(e[t])), t++;
   }
 }
-class B {
+class F {
   get _$AU() {
     return this._$AM?._$AU ?? this._$Cv;
   }
@@ -383,7 +383,7 @@ class B {
     Ze(this._$AH) || (this._$AH = [], this._$AR());
     const t = this._$AH;
     let i, s = 0;
-    for (const a of e) s === t.length ? t.push(i = new B(this.O(G()), this.O(G()), this, this.options)) : i = t[s], i._$AI(a), s++;
+    for (const a of e) s === t.length ? t.push(i = new F(this.O(G()), this.O(G()), this, this.options)) : i = t[s], i._$AI(a), s++;
     s < t.length && (this._$AR(i && i._$AB.nextSibling, s), t.length = s);
   }
   _$AR(e = this._$AA.nextSibling, t) {
@@ -461,14 +461,14 @@ class li {
     I(this, e);
   }
 }
-const hi = { I: B }, di = Xe.litHtmlPolyfillSupport;
-di?.(X, B), (Xe.litHtmlVersions ??= []).push("3.3.3");
+const hi = { I: F }, di = Xe.litHtmlPolyfillSupport;
+di?.(X, F), (Xe.litHtmlVersions ??= []).push("3.3.3");
 const ci = (n, e, t) => {
   const i = t?.renderBefore ?? e;
   let s = i._$litPart$;
   if (s === void 0) {
     const a = t?.renderBefore ?? null;
-    i._$litPart$ = s = new B(e.insertBefore(G(), a), a, void 0, t ?? {});
+    i._$litPart$ = s = new F(e.insertBefore(G(), a), a, void 0, t ?? {});
   }
   return s._$AI(n), s;
 };
@@ -1181,9 +1181,9 @@ const ne = class ne extends k {
     }), this.observer.observe(this), this.requestUpdate("queue");
   }
   disconnectedCallback() {
-    super.disconnectedCallback(), document.removeEventListener("visibilitychange", this.visibility), this.observer?.disconnect(), this.visible = !1, this.clear();
+    super.disconnectedCallback(), document.removeEventListener("visibilitychange", this.visibility), this.observer?.disconnect(), this.visible = !1, this.clear(), this.requestUpdate();
   }
-  updated(e) {
+  willUpdate(e) {
     ["client", "scope", "artworkKey", "queue"].some((t) => e.has(t)) && (this.clear(), this.unwatch = this.queue?.cache.watch(this.cacheKey, {
       invalidate: () => {
         this.url = void 0, this.requestUpdate();
@@ -1195,7 +1195,7 @@ const ne = class ne extends k {
     this.generation++, this.controller?.abort(), this.controller = void 0;
   }
   clear() {
-    this.cancelLoad(), this.unwatch?.(), this.unwatch = void 0, this.url = void 0, this.requestUpdate();
+    this.cancelLoad(), this.unwatch?.(), this.unwatch = void 0, this.url = void 0;
   }
   async load() {
     if (!this.visible || document.hidden || !this.isConnected || this.controller || !this.client || !this.scope?.library_enabled || !this.artworkKey || !this.queue)
@@ -3478,7 +3478,7 @@ const It = q`
   "database",
   "settings"
 ];
-function Ft(n, e, t) {
+function Bt(n, e, t) {
   const i = (a) => Ei.includes(a) && (e || a === "journal" || a === "library") && (a !== "library" || t), s = new URL(location.href).searchParams.get("companion_page");
   return i(s) ? s : i(n) ? n : "journal";
 }
@@ -3541,7 +3541,7 @@ const Ui = Tt(class extends Lt {
     return Dt(n), e;
   }
 });
-class F {
+class B {
   constructor(e, t, i, s, a = "library") {
     this.client = e, this.scope = t, this.shared = i, this.error = s, this.area = a, this.values = {}, this.revision = 0, this.active = !0, this.sequence = 0, this.versions = /* @__PURE__ */ new Map(), this.failed = {};
   }
@@ -3833,14 +3833,14 @@ const J = [
   async initializePreferences() {
     if (!this.client || !this.scope) return;
     const e = this.generation;
-    this.preferences = new F(
+    this.preferences = new B(
       this.client,
       this.scope,
       !1,
       (t) => {
         e === this.generation && (t && g(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? w(t) : "", this.requestUpdate()));
       }
-    ), this.searchPreferences = new F(
+    ), this.searchPreferences = new B(
       this.client,
       this.scope,
       !1,
@@ -4976,7 +4976,7 @@ const pe = class pe extends k {
   async load() {
     if (!this.client || !this.scope) return;
     const e = ++this.generation;
-    this.store?.dispose(), this.store = new F(
+    this.store?.dispose(), this.store = new B(
       this.client,
       this.scope,
       !1,
@@ -4984,7 +4984,7 @@ const pe = class pe extends k {
         e === this.generation && (t ? this.fail(t) : (this.error = "", this.requestUpdate()));
       },
       "search"
-    ), this.viewStore?.dispose(), this.viewStore = new F(
+    ), this.viewStore?.dispose(), this.viewStore = new B(
       this.client,
       this.scope,
       !1,
@@ -5148,7 +5148,7 @@ const ge = class ge extends k {
         ...t[0],
         permissions: { read: !0, edit: !1, export: !1 }
       }, !this.navigationReady) {
-        const i = Ft(
+        const i = Bt(
           this.scope.ui_defaults?.default_landing_page,
           !1,
           !!this.scope.library_enabled
@@ -5762,8 +5762,8 @@ be.properties = {
       }
     `
 ];
-let Fe = be;
-customElements.get("kaleidescape-calendar-export") || customElements.define("kaleidescape-calendar-export", Fe);
+let Be = be;
+customElements.get("kaleidescape-calendar-export") || customElements.define("kaleidescape-calendar-export", Be);
 const me = class me extends k {
   constructor() {
     super(...arguments), this.disabled = !1, this.working = !1, this.error = "", this.generation = 0, this.bound = "";
@@ -5913,8 +5913,8 @@ me.properties = {
   scope: { attribute: !1 },
   disabled: { type: Boolean }
 }, me.styles = _;
-let Be = me;
-customElements.get("kaleidescape-metadata-repair") || customElements.define("kaleidescape-metadata-repair", Be);
+let Fe = me;
+customElements.get("kaleidescape-metadata-repair") || customElements.define("kaleidescape-metadata-repair", Fe);
 const St = [
   ["media_player", "Kaleidescape media player", "text", "", ""],
   ["play_status", "Exact play-status sensor", "text", "", ""],
@@ -5956,7 +5956,7 @@ const St = [
     "32",
     "4096"
   ]
-], Bt = [
+], Ft = [
   ["library_allow_collection_add", "Allow Add to Collection on the device"],
   ["library_sync_collections", "Sync collections and watched status"],
   ["library_sync_details", "Sync title details and credits"],
@@ -5965,7 +5965,7 @@ const St = [
   "calendar_enabled",
   "tracking_enabled",
   "library_enabled",
-  ...Bt.map(([n]) => n)
+  ...Ft.map(([n]) => n)
 ]), Di = {
   invalid_calendar: "Choose an existing calendar that supports creating events.",
   invalid_calendar_template: "Use only the listed brace fields, without attributes or format specifiers.",
@@ -6021,7 +6021,7 @@ const St = [
           o.name,
           Li.has(o.name) ? !!o.default : String(o.default ?? "")
         ])
-      ), this.initial = { ...this.draft }, this.sharedPreferences = new F(
+      ), this.initial = { ...this.draft }, this.sharedPreferences = new B(
         e,
         t,
         !0,
@@ -6295,7 +6295,7 @@ const St = [
       }}
                                   /></label>`
     )}
-                              ${Bt.map(
+                              ${Ft.map(
       ([e, t]) => r`<label class="check full"
                                     ><input
                                       name=${e}
@@ -7423,7 +7423,7 @@ const K = {
   }
   async initialize() {
     const e = ++this.generation;
-    this.preferences?.dispose(), this.preferences = new F(
+    this.preferences?.dispose(), this.preferences = new B(
       this.client,
       this.scope,
       !1,
@@ -8151,7 +8151,7 @@ const Re = [
       if (!s.length) throw new f("not_ready");
       if (s[0].api_version !== 1) throw new f("not_ready");
       if (this.info = s[0], !this.info.permissions.edit) return;
-      this.navigationReady || (this.activePage = Ft(
+      this.navigationReady || (this.activePage = Bt(
         this.info.ui_defaults?.default_landing_page,
         !0,
         !!this.info.library_enabled
@@ -8720,7 +8720,7 @@ const Re = [
                           .scope=${this.info}
                           @access-denied=${() => this.fail(new f("unauthorized"))}
                           @maintenance-busy=${(t) => {
-      this.maintenanceBusy = t.detail, this.requestUpdate();
+      this.maintenanceBusy !== t.detail && (this.maintenanceBusy = t.detail, this.requestUpdate());
     }}
                           @database-changed=${() => this.refreshInfo()}
                         ></kaleidescape-database>` : this.activePage === "settings" ? r`<kaleidescape-settings
@@ -8728,7 +8728,7 @@ const Re = [
                             .scope=${this.info}
                             @access-denied=${() => this.fail(new f("unauthorized"))}
                             @settings-busy=${(t) => {
-      this.settingsBusy = t.detail, this.requestUpdate();
+      this.settingsBusy !== t.detail && (this.settingsBusy = t.detail, this.requestUpdate());
     }}
                             @settings-saved=${() => {
       this.activePage = "settings", M("settings"), this.notice = "Settings saved. Reloading the integration…";
