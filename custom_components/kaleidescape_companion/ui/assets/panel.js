@@ -1,15 +1,15 @@
-const ie = globalThis, Je = ie.ShadowRoot && (ie.ShadyCSS === void 0 || ie.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, Ke = /* @__PURE__ */ Symbol(), it = /* @__PURE__ */ new WeakMap();
-let St = class {
+const ie = globalThis, Ge = ie.ShadowRoot && (ie.ShadyCSS === void 0 || ie.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, Qe = /* @__PURE__ */ Symbol(), at = /* @__PURE__ */ new WeakMap();
+let Ct = class {
   constructor(e, t, i) {
-    if (this._$cssResult$ = !0, i !== Ke) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
+    if (this._$cssResult$ = !0, i !== Qe) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
     this.cssText = e, this.t = t;
   }
   get styleSheet() {
     let e = this.o;
     const t = this.t;
-    if (Je && e === void 0) {
+    if (Ge && e === void 0) {
       const i = t !== void 0 && t.length === 1;
-      i && (e = it.get(t)), e === void 0 && ((this.o = e = new CSSStyleSheet()).replaceSync(this.cssText), i && it.set(t, e));
+      i && (e = at.get(t)), e === void 0 && ((this.o = e = new CSSStyleSheet()).replaceSync(this.cssText), i && at.set(t, e));
     }
     return e;
   }
@@ -17,28 +17,28 @@ let St = class {
     return this.cssText;
   }
 };
-const Ft = (n) => new St(typeof n == "string" ? n : n + "", void 0, Ke), q = (n, ...e) => {
+const Vt = (n) => new Ct(typeof n == "string" ? n : n + "", void 0, Qe), q = (n, ...e) => {
   const t = n.length === 1 ? n[0] : e.reduce((i, s, a) => i + ((o) => {
     if (o._$cssResult$ === !0) return o.cssText;
     if (typeof o == "number") return o;
     throw Error("Value passed to 'css' function must be a 'css' function result: " + o + ". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.");
   })(s) + n[a + 1], n[0]);
-  return new St(t, n, Ke);
-}, Bt = (n, e) => {
-  if (Je) n.adoptedStyleSheets = e.map((t) => t instanceof CSSStyleSheet ? t : t.styleSheet);
+  return new Ct(t, n, Qe);
+}, Ht = (n, e) => {
+  if (Ge) n.adoptedStyleSheets = e.map((t) => t instanceof CSSStyleSheet ? t : t.styleSheet);
   else for (const t of e) {
     const i = document.createElement("style"), s = ie.litNonce;
     s !== void 0 && i.setAttribute("nonce", s), i.textContent = t.cssText, n.appendChild(i);
   }
-}, st = Je ? (n) => n : (n) => n instanceof CSSStyleSheet ? ((e) => {
+}, rt = Ge ? (n) => n : (n) => n instanceof CSSStyleSheet ? ((e) => {
   let t = "";
   for (const i of e.cssRules) t += i.cssText;
-  return Ft(t);
+  return Vt(t);
 })(n) : n;
-const { is: Vt, defineProperty: Ht, getOwnPropertyDescriptor: Wt, getOwnPropertyNames: Jt, getOwnPropertySymbols: Kt, getPrototypeOf: Yt } = Object, xe = globalThis, at = xe.trustedTypes, Gt = at ? at.emptyScript : "", Qt = xe.reactiveElementPolyfillSupport, Y = (n, e) => n, ze = { toAttribute(n, e) {
+const { is: Wt, defineProperty: Jt, getOwnPropertyDescriptor: Kt, getOwnPropertyNames: Yt, getOwnPropertySymbols: Gt, getPrototypeOf: Qt } = Object, _e = globalThis, nt = _e.trustedTypes, Xt = nt ? nt.emptyScript : "", Zt = _e.reactiveElementPolyfillSupport, Y = (n, e) => n, Ue = { toAttribute(n, e) {
   switch (e) {
     case Boolean:
-      n = n ? Gt : null;
+      n = n ? Xt : null;
       break;
     case Object:
     case Array:
@@ -63,8 +63,8 @@ const { is: Vt, defineProperty: Ht, getOwnPropertyDescriptor: Wt, getOwnProperty
       }
   }
   return t;
-} }, qt = (n, e) => !Vt(n, e), rt = { attribute: !0, type: String, converter: ze, reflect: !1, useDefault: !1, hasChanged: qt };
-Symbol.metadata ??= /* @__PURE__ */ Symbol("metadata"), xe.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
+} }, zt = (n, e) => !Wt(n, e), ot = { attribute: !0, type: String, converter: Ue, reflect: !1, useDefault: !1, hasChanged: zt };
+Symbol.metadata ??= /* @__PURE__ */ Symbol("metadata"), _e.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
 let j = class extends HTMLElement {
   static addInitializer(e) {
     this._$Ei(), (this.l ??= []).push(e);
@@ -72,14 +72,14 @@ let j = class extends HTMLElement {
   static get observedAttributes() {
     return this.finalize(), this._$Eh && [...this._$Eh.keys()];
   }
-  static createProperty(e, t = rt) {
+  static createProperty(e, t = ot) {
     if (t.state && (t.attribute = !1), this._$Ei(), this.prototype.hasOwnProperty(e) && ((t = Object.create(t)).wrapped = !0), this.elementProperties.set(e, t), !t.noAccessor) {
       const i = /* @__PURE__ */ Symbol(), s = this.getPropertyDescriptor(e, i, t);
-      s !== void 0 && Ht(this.prototype, e, s);
+      s !== void 0 && Jt(this.prototype, e, s);
     }
   }
   static getPropertyDescriptor(e, t, i) {
-    const { get: s, set: a } = Wt(this.prototype, e) ?? { get() {
+    const { get: s, set: a } = Kt(this.prototype, e) ?? { get() {
       return this[t];
     }, set(o) {
       this[t] = o;
@@ -90,17 +90,17 @@ let j = class extends HTMLElement {
     }, configurable: !0, enumerable: !0 };
   }
   static getPropertyOptions(e) {
-    return this.elementProperties.get(e) ?? rt;
+    return this.elementProperties.get(e) ?? ot;
   }
   static _$Ei() {
     if (this.hasOwnProperty(Y("elementProperties"))) return;
-    const e = Yt(this);
+    const e = Qt(this);
     e.finalize(), e.l !== void 0 && (this.l = [...e.l]), this.elementProperties = new Map(e.elementProperties);
   }
   static finalize() {
     if (this.hasOwnProperty(Y("finalized"))) return;
     if (this.finalized = !0, this._$Ei(), this.hasOwnProperty(Y("properties"))) {
-      const t = this.properties, i = [...Jt(t), ...Kt(t)];
+      const t = this.properties, i = [...Yt(t), ...Gt(t)];
       for (const s of i) this.createProperty(s, t[s]);
     }
     const e = this[Symbol.metadata];
@@ -119,8 +119,8 @@ let j = class extends HTMLElement {
     const t = [];
     if (Array.isArray(e)) {
       const i = new Set(e.flat(1 / 0).reverse());
-      for (const s of i) t.unshift(st(s));
-    } else e !== void 0 && t.push(st(e));
+      for (const s of i) t.unshift(rt(s));
+    } else e !== void 0 && t.push(rt(e));
     return t;
   }
   static _$Eu(e, t) {
@@ -146,7 +146,7 @@ let j = class extends HTMLElement {
   }
   createRenderRoot() {
     const e = this.shadowRoot ?? this.attachShadow(this.constructor.shadowRootOptions);
-    return Bt(e, this.constructor.elementStyles), e;
+    return Ht(e, this.constructor.elementStyles), e;
   }
   connectedCallback() {
     this.renderRoot ??= this.createRenderRoot(), this.enableUpdating(!0), this._$EO?.forEach((e) => e.hostConnected?.());
@@ -162,14 +162,14 @@ let j = class extends HTMLElement {
   _$ET(e, t) {
     const i = this.constructor.elementProperties.get(e), s = this.constructor._$Eu(e, i);
     if (s !== void 0 && i.reflect === !0) {
-      const a = (i.converter?.toAttribute !== void 0 ? i.converter : ze).toAttribute(t, i.type);
+      const a = (i.converter?.toAttribute !== void 0 ? i.converter : Ue).toAttribute(t, i.type);
       this._$Em = e, a == null ? this.removeAttribute(s) : this.setAttribute(s, a), this._$Em = null;
     }
   }
   _$AK(e, t) {
     const i = this.constructor, s = i._$Eh.get(e);
     if (s !== void 0 && this._$Em !== s) {
-      const a = i.getPropertyOptions(s), o = typeof a.converter == "function" ? { fromAttribute: a.converter } : a.converter?.fromAttribute !== void 0 ? a.converter : ze;
+      const a = i.getPropertyOptions(s), o = typeof a.converter == "function" ? { fromAttribute: a.converter } : a.converter?.fromAttribute !== void 0 ? a.converter : Ue;
       this._$Em = s;
       const l = o.fromAttribute(t, a.type);
       this[s] = l ?? this._$Ej?.get(s) ?? l, this._$Em = null;
@@ -178,7 +178,7 @@ let j = class extends HTMLElement {
   requestUpdate(e, t, i, s = !1, a) {
     if (e !== void 0) {
       const o = this.constructor;
-      if (s === !1 && (a = this[e]), i ??= o.getPropertyOptions(e), !((i.hasChanged ?? qt)(a, t) || i.useDefault && i.reflect && a === this._$Ej?.get(e) && !this.hasAttribute(o._$Eu(e, i)))) return;
+      if (s === !1 && (a = this[e]), i ??= o.getPropertyOptions(e), !((i.hasChanged ?? zt)(a, t) || i.useDefault && i.reflect && a === this._$Ej?.get(e) && !this.hasAttribute(o._$Eu(e, i)))) return;
       this.C(e, t, i);
     }
     this.isUpdatePending === !1 && (this._$ES = this._$EP());
@@ -246,54 +246,54 @@ let j = class extends HTMLElement {
   firstUpdated(e) {
   }
 };
-j.elementStyles = [], j.shadowRootOptions = { mode: "open" }, j[Y("elementProperties")] = /* @__PURE__ */ new Map(), j[Y("finalized")] = /* @__PURE__ */ new Map(), Qt?.({ ReactiveElement: j }), (xe.reactiveElementVersions ??= []).push("2.1.2");
-const Ye = globalThis, nt = (n) => n, se = Ye.trustedTypes, ot = se ? se.createPolicy("lit-html", { createHTML: (n) => n }) : void 0, Ct = "$lit$", z = `lit$${Math.random().toFixed(9).slice(2)}$`, Et = "?" + z, Xt = `<${Et}>`, D = document, G = () => D.createComment(""), Q = (n) => n === null || typeof n != "object" && typeof n != "function", Ge = Array.isArray, Zt = (n) => Ge(n) || typeof n?.[Symbol.iterator] == "function", qe = `[ 	
-\f\r]`, V = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, lt = /-->/g, ht = />/g, U = RegExp(`>|${qe}(?:([^\\s"'>=/]+)(${qe}*=${qe}*(?:[^ 	
-\f\r"'\`<>=]|("|')|))|$)`, "g"), dt = /'/g, ct = /"/g, zt = /^(?:script|style|textarea|title)$/i, ei = (n) => (e, ...t) => ({ _$litType$: n, strings: e, values: t }), r = ei(1), C = /* @__PURE__ */ Symbol.for("lit-noChange"), h = /* @__PURE__ */ Symbol.for("lit-nothing"), ut = /* @__PURE__ */ new WeakMap(), T = D.createTreeWalker(D, 129);
-function Rt(n, e) {
-  if (!Ge(n) || !n.hasOwnProperty("raw")) throw Error("invalid template strings array");
-  return ot !== void 0 ? ot.createHTML(e) : e;
+j.elementStyles = [], j.shadowRootOptions = { mode: "open" }, j[Y("elementProperties")] = /* @__PURE__ */ new Map(), j[Y("finalized")] = /* @__PURE__ */ new Map(), Zt?.({ ReactiveElement: j }), (_e.reactiveElementVersions ??= []).push("2.1.2");
+const Xe = globalThis, lt = (n) => n, se = Xe.trustedTypes, ht = se ? se.createPolicy("lit-html", { createHTML: (n) => n }) : void 0, Et = "$lit$", E = `lit$${Math.random().toFixed(9).slice(2)}$`, Rt = "?" + E, ei = `<${Rt}>`, D = document, G = () => D.createComment(""), Q = (n) => n === null || typeof n != "object" && typeof n != "function", Ze = Array.isArray, ti = (n) => Ze(n) || typeof n?.[Symbol.iterator] == "function", ze = `[ 	
+\f\r]`, V = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, dt = /-->/g, ct = />/g, U = RegExp(`>|${ze}(?:([^\\s"'>=/]+)(${ze}*=${ze}*(?:[^ 	
+\f\r"'\`<>=]|("|')|))|$)`, "g"), ut = /'/g, pt = /"/g, Ut = /^(?:script|style|textarea|title)$/i, ii = (n) => (e, ...t) => ({ _$litType$: n, strings: e, values: t }), r = ii(1), C = /* @__PURE__ */ Symbol.for("lit-noChange"), h = /* @__PURE__ */ Symbol.for("lit-nothing"), gt = /* @__PURE__ */ new WeakMap(), L = D.createTreeWalker(D, 129);
+function At(n, e) {
+  if (!Ze(n) || !n.hasOwnProperty("raw")) throw Error("invalid template strings array");
+  return ht !== void 0 ? ht.createHTML(e) : e;
 }
-const ti = (n, e) => {
+const si = (n, e) => {
   const t = n.length - 1, i = [];
   let s, a = e === 2 ? "<svg>" : e === 3 ? "<math>" : "", o = V;
   for (let l = 0; l < t; l++) {
     const d = n[l];
     let c, p, u = -1, y = 0;
-    for (; y < d.length && (o.lastIndex = y, p = o.exec(d), p !== null); ) y = o.lastIndex, o === V ? p[1] === "!--" ? o = lt : p[1] !== void 0 ? o = ht : p[2] !== void 0 ? (zt.test(p[2]) && (s = RegExp("</" + p[2], "g")), o = U) : p[3] !== void 0 && (o = U) : o === U ? p[0] === ">" ? (o = s ?? V, u = -1) : p[1] === void 0 ? u = -2 : (u = o.lastIndex - p[2].length, c = p[1], o = p[3] === void 0 ? U : p[3] === '"' ? ct : dt) : o === ct || o === dt ? o = U : o === lt || o === ht ? o = V : (o = U, s = void 0);
+    for (; y < d.length && (o.lastIndex = y, p = o.exec(d), p !== null); ) y = o.lastIndex, o === V ? p[1] === "!--" ? o = dt : p[1] !== void 0 ? o = ct : p[2] !== void 0 ? (Ut.test(p[2]) && (s = RegExp("</" + p[2], "g")), o = U) : p[3] !== void 0 && (o = U) : o === U ? p[0] === ">" ? (o = s ?? V, u = -1) : p[1] === void 0 ? u = -2 : (u = o.lastIndex - p[2].length, c = p[1], o = p[3] === void 0 ? U : p[3] === '"' ? pt : ut) : o === pt || o === ut ? o = U : o === dt || o === ct ? o = V : (o = U, s = void 0);
     const v = o === U && n[l + 1].startsWith("/>") ? " " : "";
-    a += o === V ? d + Xt : u >= 0 ? (i.push(c), d.slice(0, u) + Ct + d.slice(u) + z + v) : d + z + (u === -2 ? l : v);
+    a += o === V ? d + ei : u >= 0 ? (i.push(c), d.slice(0, u) + Et + d.slice(u) + E + v) : d + E + (u === -2 ? l : v);
   }
-  return [Rt(n, a + (n[t] || "<?>") + (e === 2 ? "</svg>" : e === 3 ? "</math>" : "")), i];
+  return [At(n, a + (n[t] || "<?>") + (e === 2 ? "</svg>" : e === 3 ? "</math>" : "")), i];
 };
 class X {
   constructor({ strings: e, _$litType$: t }, i) {
     let s;
     this.parts = [];
     let a = 0, o = 0;
-    const l = e.length - 1, d = this.parts, [c, p] = ti(e, t);
-    if (this.el = X.createElement(c, i), T.currentNode = this.el.content, t === 2 || t === 3) {
+    const l = e.length - 1, d = this.parts, [c, p] = si(e, t);
+    if (this.el = X.createElement(c, i), L.currentNode = this.el.content, t === 2 || t === 3) {
       const u = this.el.content.firstChild;
       u.replaceWith(...u.childNodes);
     }
-    for (; (s = T.nextNode()) !== null && d.length < l; ) {
+    for (; (s = L.nextNode()) !== null && d.length < l; ) {
       if (s.nodeType === 1) {
-        if (s.hasAttributes()) for (const u of s.getAttributeNames()) if (u.endsWith(Ct)) {
-          const y = p[o++], v = s.getAttribute(u).split(z), x = /([.?@])?(.*)/.exec(y);
-          d.push({ type: 1, index: a, name: x[2], strings: v, ctor: x[1] === "." ? si : x[1] === "?" ? ai : x[1] === "@" ? ri : _e }), s.removeAttribute(u);
-        } else u.startsWith(z) && (d.push({ type: 6, index: a }), s.removeAttribute(u));
-        if (zt.test(s.tagName)) {
-          const u = s.textContent.split(z), y = u.length - 1;
+        if (s.hasAttributes()) for (const u of s.getAttributeNames()) if (u.endsWith(Et)) {
+          const y = p[o++], v = s.getAttribute(u).split(E), x = /([.?@])?(.*)/.exec(y);
+          d.push({ type: 1, index: a, name: x[2], strings: v, ctor: x[1] === "." ? ri : x[1] === "?" ? ni : x[1] === "@" ? oi : Se }), s.removeAttribute(u);
+        } else u.startsWith(E) && (d.push({ type: 6, index: a }), s.removeAttribute(u));
+        if (Ut.test(s.tagName)) {
+          const u = s.textContent.split(E), y = u.length - 1;
           if (y > 0) {
             s.textContent = se ? se.emptyScript : "";
-            for (let v = 0; v < y; v++) s.append(u[v], G()), T.nextNode(), d.push({ type: 2, index: ++a });
+            for (let v = 0; v < y; v++) s.append(u[v], G()), L.nextNode(), d.push({ type: 2, index: ++a });
             s.append(u[y], G());
           }
         }
-      } else if (s.nodeType === 8) if (s.data === Et) d.push({ type: 2, index: a });
+      } else if (s.nodeType === 8) if (s.data === Rt) d.push({ type: 2, index: a });
       else {
         let u = -1;
-        for (; (u = s.data.indexOf(z, u + 1)) !== -1; ) d.push({ type: 7, index: a }), u += z.length - 1;
+        for (; (u = s.data.indexOf(E, u + 1)) !== -1; ) d.push({ type: 7, index: a }), u += E.length - 1;
       }
       a++;
     }
@@ -309,7 +309,7 @@ function I(n, e, t = n, i) {
   const a = Q(e) ? void 0 : e._$litDirective$;
   return s?.constructor !== a && (s?._$AO?.(!1), a === void 0 ? s = void 0 : (s = new a(n), s._$AT(n, t, i)), i !== void 0 ? (t._$Co ??= [])[i] = s : t._$Cl = s), s !== void 0 && (e = I(n, s._$AS(n, e.values), s, i)), e;
 }
-class ii {
+class ai {
   constructor(e, t) {
     this._$AV = [], this._$AN = void 0, this._$AD = e, this._$AM = t;
   }
@@ -321,16 +321,16 @@ class ii {
   }
   u(e) {
     const { el: { content: t }, parts: i } = this._$AD, s = (e?.creationScope ?? D).importNode(t, !0);
-    T.currentNode = s;
-    let a = T.nextNode(), o = 0, l = 0, d = i[0];
+    L.currentNode = s;
+    let a = L.nextNode(), o = 0, l = 0, d = i[0];
     for (; d !== void 0; ) {
       if (o === d.index) {
         let c;
-        d.type === 2 ? c = new B(a, a.nextSibling, this, e) : d.type === 1 ? c = new d.ctor(a, d.name, d.strings, this, e) : d.type === 6 && (c = new ni(a, this, e)), this._$AV.push(c), d = i[++l];
+        d.type === 2 ? c = new B(a, a.nextSibling, this, e) : d.type === 1 ? c = new d.ctor(a, d.name, d.strings, this, e) : d.type === 6 && (c = new li(a, this, e)), this._$AV.push(c), d = i[++l];
       }
-      o !== d?.index && (a = T.nextNode(), o++);
+      o !== d?.index && (a = L.nextNode(), o++);
     }
-    return T.currentNode = D, s;
+    return L.currentNode = D, s;
   }
   p(e) {
     let t = 0;
@@ -356,7 +356,7 @@ class B {
     return this._$AB;
   }
   _$AI(e, t = this) {
-    e = I(this, e, t), Q(e) ? e === h || e == null || e === "" ? (this._$AH !== h && this._$AR(), this._$AH = h) : e !== this._$AH && e !== C && this._(e) : e._$litType$ !== void 0 ? this.$(e) : e.nodeType !== void 0 ? this.T(e) : Zt(e) ? this.k(e) : this._(e);
+    e = I(this, e, t), Q(e) ? e === h || e == null || e === "" ? (this._$AH !== h && this._$AR(), this._$AH = h) : e !== this._$AH && e !== C && this._(e) : e._$litType$ !== void 0 ? this.$(e) : e.nodeType !== void 0 ? this.T(e) : ti(e) ? this.k(e) : this._(e);
   }
   O(e) {
     return this._$AA.parentNode.insertBefore(e, this._$AB);
@@ -368,19 +368,19 @@ class B {
     this._$AH !== h && Q(this._$AH) ? this._$AA.nextSibling.data = e : this.T(D.createTextNode(e)), this._$AH = e;
   }
   $(e) {
-    const { values: t, _$litType$: i } = e, s = typeof i == "number" ? this._$AC(e) : (i.el === void 0 && (i.el = X.createElement(Rt(i.h, i.h[0]), this.options)), i);
+    const { values: t, _$litType$: i } = e, s = typeof i == "number" ? this._$AC(e) : (i.el === void 0 && (i.el = X.createElement(At(i.h, i.h[0]), this.options)), i);
     if (this._$AH?._$AD === s) this._$AH.p(t);
     else {
-      const a = new ii(s, this), o = a.u(this.options);
+      const a = new ai(s, this), o = a.u(this.options);
       a.p(t), this.T(o), this._$AH = a;
     }
   }
   _$AC(e) {
-    let t = ut.get(e.strings);
-    return t === void 0 && ut.set(e.strings, t = new X(e)), t;
+    let t = gt.get(e.strings);
+    return t === void 0 && gt.set(e.strings, t = new X(e)), t;
   }
   k(e) {
-    Ge(this._$AH) || (this._$AH = [], this._$AR());
+    Ze(this._$AH) || (this._$AH = [], this._$AR());
     const t = this._$AH;
     let i, s = 0;
     for (const a of e) s === t.length ? t.push(i = new B(this.O(G()), this.O(G()), this, this.options)) : i = t[s], i._$AI(a), s++;
@@ -388,15 +388,15 @@ class B {
   }
   _$AR(e = this._$AA.nextSibling, t) {
     for (this._$AP?.(!1, !0, t); e !== this._$AB; ) {
-      const i = nt(e).nextSibling;
-      nt(e).remove(), e = i;
+      const i = lt(e).nextSibling;
+      lt(e).remove(), e = i;
     }
   }
   setConnected(e) {
     this._$AM === void 0 && (this._$Cv = e, this._$AP?.(e));
   }
 }
-class _e {
+class Se {
   get tagName() {
     return this.element.tagName;
   }
@@ -421,7 +421,7 @@ class _e {
     e === h ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, e ?? "");
   }
 }
-class si extends _e {
+class ri extends Se {
   constructor() {
     super(...arguments), this.type = 3;
   }
@@ -429,7 +429,7 @@ class si extends _e {
     this.element[this.name] = e === h ? void 0 : e;
   }
 }
-class ai extends _e {
+class ni extends Se {
   constructor() {
     super(...arguments), this.type = 4;
   }
@@ -437,7 +437,7 @@ class ai extends _e {
     this.element.toggleAttribute(this.name, !!e && e !== h);
   }
 }
-class ri extends _e {
+class oi extends Se {
   constructor(e, t, i, s, a) {
     super(e, t, i, s, a), this.type = 5;
   }
@@ -450,7 +450,7 @@ class ri extends _e {
     typeof this._$AH == "function" ? this._$AH.call(this.options?.host ?? this.element, e) : this._$AH.handleEvent(e);
   }
 }
-class ni {
+class li {
   constructor(e, t, i) {
     this.element = e, this.type = 6, this._$AN = void 0, this._$AM = t, this.options = i;
   }
@@ -461,9 +461,9 @@ class ni {
     I(this, e);
   }
 }
-const oi = { I: B }, li = Ye.litHtmlPolyfillSupport;
-li?.(X, B), (Ye.litHtmlVersions ??= []).push("3.3.3");
-const hi = (n, e, t) => {
+const hi = { I: B }, di = Xe.litHtmlPolyfillSupport;
+di?.(X, B), (Xe.litHtmlVersions ??= []).push("3.3.3");
+const ci = (n, e, t) => {
   const i = t?.renderBefore ?? e;
   let s = i._$litPart$;
   if (s === void 0) {
@@ -472,7 +472,7 @@ const hi = (n, e, t) => {
   }
   return s._$AI(n), s;
 };
-const Qe = globalThis;
+const et = globalThis;
 let k = class extends j {
   constructor() {
     super(...arguments), this.renderOptions = { host: this }, this._$Do = void 0;
@@ -483,7 +483,7 @@ let k = class extends j {
   }
   update(e) {
     const t = this.render();
-    this.hasUpdated || (this.renderOptions.isConnected = this.isConnected), super.update(e), this._$Do = hi(t, this.renderRoot, this.renderOptions);
+    this.hasUpdated || (this.renderOptions.isConnected = this.isConnected), super.update(e), this._$Do = ci(t, this.renderRoot, this.renderOptions);
   }
   connectedCallback() {
     super.connectedCallback(), this._$Do?.setConnected(!0);
@@ -495,12 +495,12 @@ let k = class extends j {
     return C;
   }
 };
-k._$litElement$ = !0, k.finalized = !0, Qe.litElementHydrateSupport?.({ LitElement: k });
-const di = Qe.litElementPolyfillSupport;
-di?.({ LitElement: k });
-(Qe.litElementVersions ??= []).push("4.2.2");
-const L = { ATTRIBUTE: 1, CHILD: 2, PROPERTY: 3, BOOLEAN_ATTRIBUTE: 4 }, Ut = (n) => (...e) => ({ _$litDirective$: n, values: e });
-let At = class {
+k._$litElement$ = !0, k.finalized = !0, et.litElementHydrateSupport?.({ LitElement: k });
+const ui = et.litElementPolyfillSupport;
+ui?.({ LitElement: k });
+(et.litElementVersions ??= []).push("4.2.2");
+const T = { ATTRIBUTE: 1, CHILD: 2, PROPERTY: 3, BOOLEAN_ATTRIBUTE: 4 }, Tt = (n) => (...e) => ({ _$litDirective$: n, values: e });
+let Lt = class {
   constructor(e) {
   }
   get _$AU() {
@@ -516,11 +516,11 @@ let At = class {
     return this.render(...t);
   }
 };
-const { I: ci } = oi, pt = (n) => n, ui = (n) => n.strings === void 0, gt = () => document.createComment(""), H = (n, e, t) => {
+const { I: pi } = hi, ft = (n) => n, gi = (n) => n.strings === void 0, bt = () => document.createComment(""), H = (n, e, t) => {
   const i = n._$AA.parentNode, s = e === void 0 ? n._$AB : e._$AA;
   if (t === void 0) {
-    const a = i.insertBefore(gt(), s), o = i.insertBefore(gt(), s);
-    t = new ci(a, o, n, n.options);
+    const a = i.insertBefore(bt(), s), o = i.insertBefore(bt(), s);
+    t = new pi(a, o, n, n.options);
   } else {
     const a = t._$AB.nextSibling, o = t._$AM, l = o !== n;
     if (l) {
@@ -530,22 +530,22 @@ const { I: ci } = oi, pt = (n) => n, ui = (n) => n.strings === void 0, gt = () =
     if (a !== s || l) {
       let d = t._$AA;
       for (; d !== a; ) {
-        const c = pt(d).nextSibling;
-        pt(i).insertBefore(d, s), d = c;
+        const c = ft(d).nextSibling;
+        ft(i).insertBefore(d, s), d = c;
       }
     }
   }
   return t;
-}, A = (n, e, t = n) => (n._$AI(e, t), n), pi = {}, Lt = (n, e = pi) => n._$AH = e, gi = (n) => n._$AH, Ce = (n) => {
+}, A = (n, e, t = n) => (n._$AI(e, t), n), fi = {}, Dt = (n, e = fi) => n._$AH = e, bi = (n) => n._$AH, Ee = (n) => {
   n._$AR(), n._$AA.remove();
 };
-const ft = (n, e, t) => {
+const mt = (n, e, t) => {
   const i = /* @__PURE__ */ new Map();
   for (let s = e; s <= t; s++) i.set(n[s], s);
   return i;
-}, fi = Ut(class extends At {
+}, mi = Tt(class extends Lt {
   constructor(n) {
-    if (super(n), n.type !== L.CHILD) throw Error("repeat() can only be used in text expressions");
+    if (super(n), n.type !== T.CHILD) throw Error("repeat() can only be used in text expressions");
   }
   dt(n, e, t) {
     let i;
@@ -559,7 +559,7 @@ const ft = (n, e, t) => {
     return this.dt(n, e, t).values;
   }
   update(n, [e, t, i]) {
-    const s = gi(n), { values: a, keys: o } = this.dt(e, t, i);
+    const s = bi(n), { values: a, keys: o } = this.dt(e, t, i);
     if (!Array.isArray(s)) return this.ut = o, a;
     const l = this.ut ??= [], d = [];
     let c, p, u = 0, y = s.length - 1, v = 0, x = a.length - 1;
@@ -569,24 +569,24 @@ const ft = (n, e, t) => {
     else if (l[y] === o[x]) d[x] = A(s[y], a[x]), y--, x--;
     else if (l[u] === o[x]) d[x] = A(s[u], a[x]), H(n, d[x + 1], s[u]), u++, x--;
     else if (l[y] === o[v]) d[v] = A(s[y], a[v]), H(n, s[u], s[y]), y--, v++;
-    else if (c === void 0 && (c = ft(o, v, x), p = ft(l, u, y)), c.has(l[u])) if (c.has(l[y])) {
-      const E = p.get(o[v]), Se = E !== void 0 ? s[E] : null;
-      if (Se === null) {
-        const tt = H(n, s[u]);
-        A(tt, a[v]), d[v] = tt;
-      } else d[v] = A(Se, a[v]), H(n, s[u], Se), s[E] = null;
+    else if (c === void 0 && (c = mt(o, v, x), p = mt(l, u, y)), c.has(l[u])) if (c.has(l[y])) {
+      const z = p.get(o[v]), Ce = z !== void 0 ? s[z] : null;
+      if (Ce === null) {
+        const st = H(n, s[u]);
+        A(st, a[v]), d[v] = st;
+      } else d[v] = A(Ce, a[v]), H(n, s[u], Ce), s[z] = null;
       v++;
-    } else Ce(s[y]), y--;
-    else Ce(s[u]), u++;
+    } else Ee(s[y]), y--;
+    else Ee(s[u]), u++;
     for (; v <= x; ) {
-      const E = H(n, d[x + 1]);
-      A(E, a[v]), d[v++] = E;
+      const z = H(n, d[x + 1]);
+      A(z, a[v]), d[v++] = z;
     }
     for (; u <= y; ) {
-      const E = s[u++];
-      E !== null && Ce(E);
+      const z = s[u++];
+      z !== null && Ee(z);
     }
-    return this.ut = o, Lt(n, d), C;
+    return this.ut = o, Dt(n, d), C;
   }
 });
 class f extends Error {
@@ -594,11 +594,11 @@ class f extends Error {
     super(e), this.code = e;
   }
 }
-const b = "kaleidescape_companion", bi = 15e3, $ = ({ entry_id: n, dataset_id: e }) => ({
+const b = "kaleidescape_companion", yi = 15e3, $ = ({ entry_id: n, dataset_id: e }) => ({
   entry_id: n,
   dataset_id: e
-}), mi = 256 * 1024 * 1024, bt = 5 * 1024 * 1024, yi = 32 * 1024 * 1024;
-function Tt() {
+}), vi = 256 * 1024 * 1024, yt = 5 * 1024 * 1024, $i = 32 * 1024 * 1024;
+function jt() {
   const n = globalThis.crypto;
   if (typeof n?.randomUUID == "function") return n.randomUUID();
   if (typeof n?.getRandomValues != "function")
@@ -669,7 +669,7 @@ function w(n) {
     library_artwork: "Some artwork could not be cached. Previous artwork is retained when available."
   }[g(n)] ?? "The connection was interrupted. The result could not be confirmed.";
 }
-async function vi(n) {
+async function wi(n) {
   let e;
   try {
     return await Promise.race([
@@ -677,7 +677,7 @@ async function vi(n) {
       new Promise((t, i) => {
         e = setTimeout(
           () => i(new f("connection_lost")),
-          bi
+          yi
         );
       })
     ]);
@@ -685,12 +685,12 @@ async function vi(n) {
     clearTimeout(e);
   }
 }
-class Dt {
+class Pt {
   constructor(e) {
     this.transport = e;
   }
   call(e) {
-    return vi(this.transport.callWS(e));
+    return wi(this.transport.callWS(e));
   }
   metadataPreview(e) {
     return this.call({
@@ -862,7 +862,7 @@ class Dt {
     const a = s.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase();
     if (!a || !["image/jpeg", "image/png", "image/webp"].includes(a))
       throw await s.body?.cancel(), new f("invalid_request");
-    return Z(s, bt, a);
+    return Z(s, yt, a);
   }
   settings(e, t, i = {}) {
     return this.call({
@@ -920,7 +920,7 @@ class Dt {
   async previewImport(e, t, i) {
     const s = /\.(sqlite|sqlite3|db)$/i.test(t.name) ? "sqlite" : /\.json$/i.test(t.name) ? "json" : null;
     if (!s) throw new f("invalid_request");
-    if (!t.size || t.size > yi)
+    if (!t.size || t.size > $i)
       throw new f("import_too_large");
     const a = await this.transport.fetchWithAuth(
       `/api/${b}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/import/preview?format=${s}`,
@@ -972,7 +972,7 @@ class Dt {
       );
     }
     const s = i.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase();
-    return !s || !["image/jpeg", "image/png", "image/webp"].includes(s) ? (await i.body?.cancel(), null) : Z(i, bt, s);
+    return !s || !["image/jpeg", "image/png", "image/webp"].includes(s) ? (await i.body?.cancel(), null) : Z(i, yt, s);
   }
   librarySuggestions(e, t, i, s = !1) {
     return this.call({
@@ -1064,7 +1064,7 @@ class Dt {
       ...i,
       ...$(e),
       type: `${b}/${t}`,
-      request_id: Tt()
+      request_id: jt()
     });
     return { scope: $(e), message: Object.freeze(s) };
   }
@@ -1089,7 +1089,7 @@ class Dt {
     }
     return Z(
       a,
-      mi,
+      vi,
       t === "json" ? "application/json" : "application/vnd.sqlite3"
     );
   }
@@ -1097,7 +1097,7 @@ class Dt {
 function m(n, e, t = `${e}s`) {
   return `${n} ${n === 1 ? e : t}`;
 }
-class $i {
+class ki {
   constructor(e = 128 * 1024 * 1024, t = 1e3) {
     this.maxBytes = e, this.maxEntries = t, this.entries = /* @__PURE__ */ new Map(), this.readers = /* @__PURE__ */ new Map(), this.bytes = 0, this.closed = !1;
   }
@@ -1144,7 +1144,7 @@ class $i {
 }
 class R {
   constructor() {
-    this.cache = new $i(), this.active = 0, this.waiting = [];
+    this.cache = new ki(), this.active = 0, this.waiting = [];
   }
   acquire(e) {
     return new Promise((t, i) => {
@@ -1265,16 +1265,16 @@ ne.properties = {
       font: inherit;
     }
   `;
-let Re = ne;
-customElements.get("kaleidescape-library-cover") || customElements.define("kaleidescape-library-cover", Re);
-function wi(n) {
+let Ae = ne;
+customElements.get("kaleidescape-library-cover") || customElements.define("kaleidescape-library-cover", Ae);
+function xi(n) {
   const e = n.watched_status === "in_progress" ? { key: "progress", label: "In progress", symbol: "◔" } : n.watched_status === "watched" ? { key: "watched", label: "Watched", symbol: "✓" } : n.is_recently_added ? { key: "recent", label: "Recently added", symbol: "NEW" } : void 0;
   return [
     ...e ? [e] : [],
     ...n.is_favorite ? [{ key: "favorite", label: "Favorite", symbol: "★" }] : []
   ];
 }
-function Xe(n) {
+function tt(n) {
   const e = (n.formats?.length ? n.formats : [n.edition ?? ""]).map(
     (s) => s.toLowerCase()
   ), t = (s) => e.some((a) => s.test(a)), i = [];
@@ -1282,13 +1282,13 @@ function Xe(n) {
     (s) => /\b4k\b/.test(s) && !/\bcinematic\b/.test(s)
   ) && i.push({ key: "four-k", label: "4K" }), e.some((s) => /\b4k\b/.test(s) && /\bcinematic\b/.test(s)) && i.push({ key: "cinematic", label: "4K Cinematic" }), t(/\bhd\b|\b1080p\b/) && i.push({ key: "hd", label: "HD" }), t(/\bsd\b|\b(?:480|576)[pi]\b/) && i.push({ key: "sd", label: "SD" }), t(/\bsdr\b/) && i.push({ key: "sdr", label: "SDR" }), t(/\bhdr10\b/) && i.push({ key: "hdr10", label: "HDR10" }), t(/\bdolby\s*vision\b/) && i.push({ key: "vision", label: "Dolby Vision" }), t(/\bdolby\s*atmos\b/) && i.push({ key: "atmos", label: "Dolby Atmos" }), i;
 }
-function ki(n) {
-  const e = Xe(n);
+function _i(n) {
+  const e = tt(n);
   return ["cinematic", "four-k", "hd", "sd"].map((t) => e.find((i) => i.key === t)).find(Boolean);
 }
 function O(n, e = !1, t, i = !1) {
-  const s = e ? ki(n) : void 0;
-  return (e ? s ? [s] : [] : Xe(n)).map((a) => {
+  const s = e ? _i(n) : void 0;
+  return (e ? s ? [s] : [] : tt(n)).map((a) => {
     const o = a.key === "cinematic" ? r`<b>4K</b><span class="cinematic-label">Cinematic</span>` : a.label;
     return t ? r`<button
           type="button"
@@ -1305,8 +1305,8 @@ function O(n, e = !1, t, i = !1) {
         >`;
   });
 }
-function mt(n, e = !1) {
-  return wi(n).map(
+function vt(n, e = !1) {
+  return xi(n).map(
     (t) => r`<span
         class=${e ? `cover-flag flag-${t.key}` : `status-badge flag-${t.key}`}
         title=${t.label}
@@ -1346,7 +1346,7 @@ function N(n, e, t = !1) {
 function P(n) {
   return n.toLocaleLowerCase() === "played" ? "Watched" : n;
 }
-const Ze = q`
+const qe = q`
   .library-page {
     margin-top: 24px;
   }
@@ -2373,7 +2373,7 @@ const Ze = q`
       padding-right: 16px;
     }
   }
-`, xi = q`
+`, Si = q`
   :host {
     display: block;
   }
@@ -2524,7 +2524,7 @@ function S(n) {
 function W(n) {
   return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
 }
-function _i(n) {
+function qi(n) {
   return [
     new Date(n.getFullYear(), n.getMonth(), 1).toISOString(),
     new Date(n.getFullYear(), n.getMonth() + 1, 1).toISOString()
@@ -2595,7 +2595,7 @@ const oe = class oe extends k {
     const e = ++this.generation;
     this.closeDetails(), this.items = [], this.loading = !0, this.error = "", this.requestUpdate();
     try {
-      const [t, i] = _i(this.month), s = await this.client.calendarMonth(
+      const [t, i] = qi(this.month), s = await this.client.calendarMonth(
         this.scope,
         t,
         i,
@@ -2790,7 +2790,7 @@ const oe = class oe extends k {
                       class="cover-stack"
                       style=${`--spread:${1 + (p.length - 1) * 0.15}`}
                     >
-                      ${fi(
+                      ${mi(
         p,
         (u) => u.id,
         (u, y) => r`<button
@@ -2835,9 +2835,9 @@ oe.properties = {
   fitScreen: { type: Boolean },
   disabled: { type: Boolean },
   editable: { type: Boolean }
-}, oe.styles = [_, Ze, xi];
-let Ue = oe;
-customElements.get("kaleidescape-journal-calendar") || customElements.define("kaleidescape-journal-calendar", Ue);
+}, oe.styles = [_, qe, Si];
+let Te = oe;
+customElements.get("kaleidescape-journal-calendar") || customElements.define("kaleidescape-journal-calendar", Te);
 const le = class le extends k {
   constructor() {
     super(...arguments), this.viewingId = "", this.disabled = !1, this.queue = new R(), this.error = "", this.generation = 0, this.bound = "";
@@ -2925,13 +2925,13 @@ le.properties = {
       }
     `
 ];
-let Ae = le;
-customElements.get("kaleidescape-viewing-library") || customElements.define("kaleidescape-viewing-library", Ae);
+let Le = le;
+customElements.get("kaleidescape-viewing-library") || customElements.define("kaleidescape-viewing-library", Le);
 function ae(n) {
   const e = new Date(n);
   return new Date(e.getTime() - e.getTimezoneOffset() * 6e4).toISOString().slice(0, 19);
 }
-function yt(n) {
+function $t(n) {
   return {
     title: n?.title ?? "",
     started_at: ae(n?.started_at ?? (/* @__PURE__ */ new Date()).toISOString()),
@@ -2945,40 +2945,42 @@ function yt(n) {
     raw_content_id: n?.raw_content_id ?? ""
   };
 }
-function Si(n, e) {
+function Ci(n, e) {
   const t = {};
   for (const [i, s] of Object.entries(n))
     e && s === e[i] || (i === "started_at" || i === "ended_at" ? t[i] = s ? new Date(s).toISOString() : null : i === "duration_seconds" || i === "watched_seconds" ? t[i] = s === "" ? null : Number(s) * 60 : ["source_id", "player_id", "raw_content_id"].includes(i) ? t[i] = s === "" ? null : s : t[i] = s);
   return t;
 }
-function qi(n, e) {
-  function t(i, s, a = "text", o = !1, l) {
+function zi(n, e, t) {
+  function i(s, a, o = "text", l = !1, d) {
     return r`<label
-      >${s}<input
-        id=${i === "title" ? "title" : i}
-        name=${i}
-        type=${a}
-        .value=${n[i]}
-        ?required=${o}
-        maxlength=${l ?? h}
-        min=${a === "number" ? "0" : h}
-        max=${a === "number" ? String(1e9 / 60) : h}
-        step=${a === "datetime-local" ? "1" : a === "number" ? "0.01" : h}
-        @input=${(d) => e(i, d)}
+      >${a}<input
+        id=${s === "title" ? "title" : s}
+        name=${s}
+        type=${o}
+        .value=${n[s]}
+        ?required=${l}
+        maxlength=${d ?? h}
+        min=${o === "number" ? "0" : h}
+        max=${o === "number" ? String(1e9 / 60) : h}
+        step=${o === "datetime-local" ? "1" : o === "number" ? "0.01" : h}
+        @input=${(c) => e(s, c)}
     /></label>`;
   }
   return r`
     <div class="grid">
-      <div class="full">${t("title", "Title", "text", !0, 500)}</div>
-      ${t("started_at", "Started · local time", "datetime-local", !0)}
-      ${t("ended_at", "Ended · local time", "datetime-local")}
-      ${t("watched_seconds", "Watched minutes", "number", !0)}
-      ${t("duration_seconds", "Runtime minutes · optional", "number")}
+      <div class="full">
+        ${t ?? i("title", "Title", "text", !0, 500)}
+      </div>
+      ${i("started_at", "Started · local time", "datetime-local", !0)}
+      ${i("ended_at", "Ended · local time", "datetime-local")}
+      ${i("watched_seconds", "Watched minutes", "number", !0)}
+      ${i("duration_seconds", "Runtime minutes · optional", "number")}
       <label
         >Status<select
           name="record_status"
           .value=${n.status}
-          @change=${(i) => e("status", i)}
+          @change=${(s) => e("status", s)}
         >
           <option value="partial">Partial</option>
           <option value="completed">Completed</option>
@@ -2989,17 +2991,17 @@ function qi(n, e) {
           name="notes"
           maxlength="10000"
           .value=${n.notes}
-          @input=${(i) => e("notes", i)}
+          @input=${(s) => e("notes", s)}
         ></textarea>
       </label>
     </div>
     <details>
       <summary>Source identifiers</summary>
       <div class="grid">
-        ${t("source_id", "Source ID", "text", !1, 255)}
-        ${t("player_id", "Player ID", "text", !1, 255)}
+        ${i("source_id", "Source ID", "text", !1, 255)}
+        ${i("player_id", "Player ID", "text", !1, 255)}
         <div class="full">
-          ${t("raw_content_id", "Raw content ID", "text", !1, 255)}
+          ${i("raw_content_id", "Raw content ID", "text", !1, 255)}
         </div>
       </div>
       <small
@@ -3009,72 +3011,36 @@ function qi(n, e) {
     </details>
   `;
 }
-function re() {
-  const n = ae((/* @__PURE__ */ new Date()).toISOString());
-  return {
-    library_title_id: "",
-    date: n.slice(0, 10),
-    time: n.slice(11, 16),
-    status: "completed",
-    watched_minutes: "",
-    notes: ""
-  };
-}
-function jt(n) {
-  if (!/^[a-f0-9]{64}$/.test(n.library_title_id))
-    throw new Error("Select a Library movie from the suggestions.");
-  const e = n.time.trim().match(/^(\d{1,2})(?::?(\d{2}))?\s*(am|pm)?$/i);
-  if (!e || !/^\d{4}-\d{2}-\d{2}$/.test(n.date))
-    throw new Error("Enter a date and time such as 19:30 or 7:30 PM.");
-  let t = Number(e[1]);
-  const i = Number(e[2] ?? 0), s = e[3]?.toLowerCase();
-  if (i > 59 || t > (s ? 12 : 23) || s && t < 1)
-    throw new Error("Enter a valid local time.");
-  s && (t = t % 12 + (s === "pm" ? 12 : 0));
-  const a = `${n.date}T${String(t).padStart(2, "0")}:${String(i).padStart(2, "0")}:00`, o = new Date(a);
-  if (!Number.isFinite(o.getTime()) || ae(o.toISOString()) !== a)
-    throw new Error(
-      "That local date/time does not exist. Check the date or daylight-saving transition."
-    );
-  const l = Number(n.watched_minutes) * 60;
-  if (n.status === "partial" && (!n.watched_minutes.trim() || !Number.isFinite(l) || l <= 0))
-    throw new Error("Enter positive watched minutes for a partial viewing.");
-  return {
-    library_title_id: n.library_title_id,
-    started_at: o.toISOString(),
-    status: n.status,
-    notes: n.notes,
-    ...n.status === "partial" ? { watched_seconds: l } : {}
-  };
-}
 const he = class he extends k {
   constructor() {
-    super(...arguments), this.draft = re(), this.disabled = !1, this.fuzzySearch = !0, this.query = "", this.items = [], this.open = !1, this.active = 0, this.error = "", this.request = 0, this.bound = "";
+    super(...arguments), this.value = "", this.initialTitle = "", this.requireRuntime = !0, this.disabled = !1, this.fuzzySearch = !0, this.query = "", this.items = [], this.open = !1, this.active = 0, this.error = "", this.request = 0, this.bound = "";
   }
   willUpdate(e) {
+    let t = !1;
     if (e.has("client") || e.has("scope")) {
-      const t = `${this.scope?.entry_id}:${this.scope?.dataset_id}`;
-      (t !== this.bound || this.client !== this.boundClient) && (this.clear(), this.bound = t, this.boundClient = this.client);
+      const i = `${this.scope?.entry_id}:${this.scope?.dataset_id}`;
+      (i !== this.bound || this.client !== this.boundClient) && (this.clear(), this.bound = i, this.boundClient = this.client, t = !0);
     }
-    e.has("fuzzySearch") && !this.selected && this.query && this.search(this.query), e.has("draft") && this.selected && this.selected.id !== this.draft.library_title_id && this.clear();
+    e.has("initialTitle") && this.clear(), e.has("fuzzySearch") && !t && !this.selected && this.query && this.search(this.query), e.has("value") && this.selected && this.selected.id !== this.value && this.clear();
   }
   disconnectedCallback() {
     super.disconnectedCallback(), this.clear(), this.bound = "", this.boundClient = void 0;
   }
   clear() {
-    clearTimeout(this.timer), this.request++, this.items = [], this.selected = void 0, this.query = "", this.open = !1, this.error = "";
+    clearTimeout(this.timer), this.request++, this.items = [], this.selected = void 0, this.query = this.initialTitle, this.open = !1, this.error = "";
   }
-  change(e) {
+  change() {
     this.dispatchEvent(
-      new CustomEvent("draft-change", {
-        detail: { ...this.draft, ...e },
+      new CustomEvent("title-selection", {
+        detail: { query: this.query, movie: this.selected ?? null },
         bubbles: !0,
         composed: !0
       })
     );
   }
   search(e) {
-    this.query = e, this.selected = void 0, this.items = [], this.open = !0, this.active = 0, this.error = "", this.change({ library_title_id: "" }), clearTimeout(this.timer);
+    if (this.disabled || !this.client || !this.scope) return;
+    this.query = e, this.selected = void 0, this.items = [], this.open = !0, this.active = 0, this.error = "", this.change(), clearTimeout(this.timer);
     const t = ++this.request;
     this.timer = setTimeout(async () => {
       try {
@@ -3095,7 +3061,7 @@ const he = class he extends k {
     }, 200), this.requestUpdate();
   }
   choose(e) {
-    this.disabled || !e.duration_seconds || (this.selected = e, this.query = e.title, this.open = !1, this.items = [], this.change({ library_title_id: e.id }), this.requestUpdate());
+    this.disabled || this.requireRuntime && !e.duration_seconds || (this.selected = e, this.query = e.title, this.open = !1, this.items = [], this.change(), this.requestUpdate());
   }
   render() {
     return r`<fieldset ?disabled=${this.disabled}>
@@ -3123,10 +3089,90 @@ const he = class he extends k {
       e.key === "Escape" ? (this.open = !1, this.requestUpdate()) : ["ArrowDown", "ArrowUp"].includes(e.key) && this.items.length ? (e.preventDefault(), this.active = (this.active + (e.key === "ArrowDown" ? 1 : -1) + this.items.length) % this.items.length, this.open = !0, this.requestUpdate()) : ["Enter", "Tab"].includes(e.key) && this.open && this.items[this.active] && (e.preventDefault(), this.choose(this.items[this.active]));
     }}
         /></label>
-        ${this.open ? r`<div class="movie-suggestions" id="movie-suggestions" role="listbox">${this.items.map((e, t) => r`<button type="button" role="option" id=${`movie-option-${t}`} aria-selected=${this.active === t} ?disabled=${!e.duration_seconds} @mousedown=${(i) => i.preventDefault()} @click=${() => this.choose(e)}><strong>${e.title}</strong> · ${e.year ?? "Year unknown"} · ${(e.formats ?? []).join(", ")} · ${e.duration_seconds ? `${(e.duration_seconds / 60).toFixed(2)} min` : "Runtime missing—sync details"}</button>`)}${this.items.length ? h : r`<small>Type a title; only cached Library movies can be selected.</small>`}</div>` : h}
+        ${this.open ? r`<div class="movie-suggestions" id="movie-suggestions" role="listbox">${this.items.map((e, t) => r`<button type="button" role="option" id=${`movie-option-${t}`} aria-selected=${this.active === t} ?disabled=${this.requireRuntime && !e.duration_seconds} @mousedown=${(i) => i.preventDefault()} @click=${() => this.choose(e)}><strong>${e.title}</strong> · ${e.year ?? "Year unknown"} · ${(e.formats?.length ? e.formats : [e.edition]).filter(Boolean).join(", ")} · ${e.duration_seconds ? `${(e.duration_seconds / 60).toFixed(2)} min` : "Runtime unknown"}</button>`)}${this.items.length ? h : r`<small>Type a title; only cached Library movies can be selected.</small>`}</div>` : h}
       </div>
       ${this.error ? r`<p class="error" role="alert">${this.error}</p>` : h}
       ${this.selected ? r`<p class="manual-metadata">${this.selected.year ?? ""} ${O(this.selected)} ${N(this.selected.rating)} · ${((this.selected.duration_seconds ?? 0) / 60).toFixed(2)} min</p>` : h}
+    </fieldset>`;
+  }
+};
+he.properties = {
+  client: { attribute: !1 },
+  scope: { attribute: !1 },
+  value: { type: String },
+  initialTitle: { type: String },
+  requireRuntime: { type: Boolean },
+  disabled: { type: Boolean },
+  fuzzySearch: { attribute: !1 }
+}, he.styles = [_, qe];
+let De = he;
+customElements.get("kaleidescape-library-title-picker") || customElements.define(
+  "kaleidescape-library-title-picker",
+  De
+);
+function re() {
+  const n = ae((/* @__PURE__ */ new Date()).toISOString());
+  return {
+    library_title_id: "",
+    date: n.slice(0, 10),
+    time: n.slice(11, 16),
+    status: "completed",
+    watched_minutes: "",
+    notes: ""
+  };
+}
+function Ot(n) {
+  if (!/^[a-f0-9]{64}$/.test(n.library_title_id))
+    throw new Error("Select a Library movie from the suggestions.");
+  const e = n.time.trim().match(/^(\d{1,2})(?::?(\d{2}))?\s*(am|pm)?$/i);
+  if (!e || !/^\d{4}-\d{2}-\d{2}$/.test(n.date))
+    throw new Error("Enter a date and time such as 19:30 or 7:30 PM.");
+  let t = Number(e[1]);
+  const i = Number(e[2] ?? 0), s = e[3]?.toLowerCase();
+  if (i > 59 || t > (s ? 12 : 23) || s && t < 1)
+    throw new Error("Enter a valid local time.");
+  s && (t = t % 12 + (s === "pm" ? 12 : 0));
+  const a = `${n.date}T${String(t).padStart(2, "0")}:${String(i).padStart(2, "0")}:00`, o = new Date(a);
+  if (!Number.isFinite(o.getTime()) || ae(o.toISOString()) !== a)
+    throw new Error(
+      "That local date/time does not exist. Check the date or daylight-saving transition."
+    );
+  const l = Number(n.watched_minutes) * 60;
+  if (n.status === "partial" && (!n.watched_minutes.trim() || !Number.isFinite(l) || l <= 0))
+    throw new Error("Enter positive watched minutes for a partial viewing.");
+  return {
+    library_title_id: n.library_title_id,
+    started_at: o.toISOString(),
+    status: n.status,
+    notes: n.notes,
+    ...n.status === "partial" ? { watched_seconds: l } : {}
+  };
+}
+const de = class de extends k {
+  constructor() {
+    super(...arguments), this.draft = re(), this.disabled = !1, this.fuzzySearch = !0, this.runtime = null;
+  }
+  change(e) {
+    this.dispatchEvent(
+      new CustomEvent("draft-change", {
+        detail: { ...this.draft, ...e },
+        bubbles: !0,
+        composed: !0
+      })
+    );
+  }
+  render() {
+    return r`<fieldset ?disabled=${this.disabled}>
+      <kaleidescape-library-title-picker
+        .client=${this.client}
+        .scope=${this.scope}
+        .value=${this.draft.library_title_id}
+        .disabled=${this.disabled}
+        .fuzzySearch=${this.fuzzySearch}
+        @title-selection=${(e) => {
+      this.runtime = e.detail.movie?.duration_seconds ?? null, this.change({ library_title_id: e.detail.movie?.id ?? "" });
+    }}
+      ></kaleidescape-library-title-picker>
       <div class="grid">
         <label
           >Started · local date<input
@@ -3154,7 +3200,7 @@ const he = class he extends k {
             <option value="partial">Partial</option>
           </select></label
         >
-        ${this.draft.status === "partial" ? r`<label>Watched minutes<input name="watched_minutes" type="number" min="0.01" step="0.01" max=${(this.selected?.duration_seconds ?? 1e9) / 60} .value=${this.draft.watched_minutes} @input=${(e) => this.change({ watched_minutes: e.target.value })} /></label>` : h}
+        ${this.draft.status === "partial" ? r`<label>Watched minutes<input name="watched_minutes" type="number" min="0.01" step="0.01" max=${(this.runtime ?? 1e9) / 60} .value=${this.draft.watched_minutes} @input=${(e) => this.change({ watched_minutes: e.target.value })} /></label>` : h}
         <label class="full"
           >Notes<textarea
             name="notes"
@@ -3171,16 +3217,16 @@ const he = class he extends k {
     </fieldset>`;
   }
 };
-he.properties = {
+de.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   draft: { attribute: !1 },
   disabled: { type: Boolean },
   fuzzySearch: { attribute: !1 }
-}, he.styles = [_, Ze];
-let Le = he;
-customElements.get("kaleidescape-manual-viewing") || customElements.define("kaleidescape-manual-viewing", Le);
-const et = q`
+}, de.styles = [_, qe];
+let je = de;
+customElements.get("kaleidescape-manual-viewing") || customElements.define("kaleidescape-manual-viewing", je);
+const it = q`
   .entries-header {
     position: sticky;
     top: var(--companion-sticky-top, 0px);
@@ -3282,7 +3328,7 @@ const et = q`
     }
   }
 `;
-function Pt(n, e, t, i = !1) {
+function Nt(n, e, t, i = !1) {
   const s = new Date(n.started_at), a = Number.isNaN(s.getTime()) ? "—" : s.toLocaleDateString();
   return r`<li
     class=${e === n.id ? "journal-row selected" : "journal-row"}
@@ -3302,7 +3348,7 @@ function Pt(n, e, t, i = !1) {
     >
   </li>`;
 }
-function Ot(n, e) {
+function Mt(n, e) {
   return r`<h3 class="journal-title">${n.title}</h3>
     <dl class="journal-summary">
       <div>
@@ -3333,7 +3379,7 @@ function Ot(n, e) {
       </div>
     </dl>`;
 }
-const Nt = q`
+const It = q`
   .journal [hidden] {
     display: none;
   }
@@ -3425,25 +3471,25 @@ const Nt = q`
       grid-template-columns: minmax(0, 1fr);
     }
   }
-`, Ci = [
+`, Ei = [
   "now-playing",
   "library",
   "journal",
   "database",
   "settings"
 ];
-function Mt(n, e, t) {
-  const i = (a) => Ci.includes(a) && (e || a === "journal" || a === "library") && (a !== "library" || t), s = new URL(location.href).searchParams.get("companion_page");
+function Ft(n, e, t) {
+  const i = (a) => Ei.includes(a) && (e || a === "journal" || a === "library") && (a !== "library" || t), s = new URL(location.href).searchParams.get("companion_page");
   return i(s) ? s : i(n) ? n : "journal";
 }
 function M(n) {
   const e = new URL(location.href);
   e.searchParams.set("companion_page", n), history.replaceState(history.state, "", e);
 }
-function vt(n) {
+function wt(n) {
   return n.toLocaleLowerCase().normalize("NFKD").replace(new RegExp("\\p{M}", "gu"), "").match(/[\p{L}\p{N}_]+/gu)?.join(" ") ?? "";
 }
-function Ei(n, e) {
+function Ri(n, e) {
   const t = Math.min(2, Math.max(1, Math.ceil(n.length / 4)));
   if (n.length < 3 || Math.max(n.length, e.length) > 100 || Math.abs(n.length - e.length) > t)
     return !1;
@@ -3464,22 +3510,22 @@ function Ei(n, e) {
   }
   return i[e.length] <= t;
 }
-function $t(n, e, t = !1) {
+function kt(n, e, t = !1) {
   if (n.toLocaleLowerCase().includes(e.toLocaleLowerCase()))
     return !0;
   if (!t) return !1;
-  const i = vt(e), s = vt(n);
+  const i = wt(e), s = wt(n);
   if (!i) return !1;
   if (s.includes(i)) return !0;
   const a = i.split(" "), o = s.split(" ");
   return a.length <= 12 && a.every(
-    (l) => o.some((d) => d.includes(l) || Ei(l, d))
+    (l) => o.some((d) => d.includes(l) || Ri(l, d))
   );
 }
-const zi = Ut(class extends At {
+const Ui = Tt(class extends Lt {
   constructor(n) {
-    if (super(n), n.type !== L.PROPERTY && n.type !== L.ATTRIBUTE && n.type !== L.BOOLEAN_ATTRIBUTE) throw Error("The `live` directive is not allowed on child or event bindings");
-    if (!ui(n)) throw Error("`live` bindings can only contain a single expression");
+    if (super(n), n.type !== T.PROPERTY && n.type !== T.ATTRIBUTE && n.type !== T.BOOLEAN_ATTRIBUTE) throw Error("The `live` directive is not allowed on child or event bindings");
+    if (!gi(n)) throw Error("`live` bindings can only contain a single expression");
   }
   render(n) {
     return n;
@@ -3487,12 +3533,12 @@ const zi = Ut(class extends At {
   update(n, [e]) {
     if (e === C || e === h) return e;
     const t = n.element, i = n.name;
-    if (n.type === L.PROPERTY) {
+    if (n.type === T.PROPERTY) {
       if (e === t[i]) return C;
-    } else if (n.type === L.BOOLEAN_ATTRIBUTE) {
+    } else if (n.type === T.BOOLEAN_ATTRIBUTE) {
       if (!!e === t.hasAttribute(i)) return C;
-    } else if (n.type === L.ATTRIBUTE && t.getAttribute(i) === e + "") return C;
-    return Lt(n), e;
+    } else if (n.type === T.ATTRIBUTE && t.getAttribute(i) === e + "") return C;
+    return Dt(n), e;
   }
 });
 class F {
@@ -3545,7 +3591,7 @@ class F {
     this.active = !1, this.values = {}, this.failed = {}, this.versions.clear();
   }
 }
-const de = class de extends k {
+const ce = class ce extends k {
   constructor() {
     super(...arguments), this.revision = 0, this.enabled = !1, this.blocked = !1, this.generation = 0, this.choices = [], this.selected = "", this.loading = !1, this.busy = !1, this.error = "", this.notice = "";
   }
@@ -3710,18 +3756,18 @@ const de = class de extends k {
       </dialog>`;
   }
 };
-de.properties = {
+ce.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   version: { attribute: !1 },
   revision: { type: Number },
   enabled: { type: Boolean },
   blocked: { type: Boolean }
-}, de.styles = _;
-let Te = de;
+}, ce.styles = _;
+let Pe = ce;
 customElements.get("kaleidescape-library-collection-add") || customElements.define(
   "kaleidescape-library-collection-add",
-  Te
+  Pe
 );
 const J = [
   ["collection", "Collection", "collections"],
@@ -3731,7 +3777,7 @@ const J = [
   ["genre", "Genre", "genres"],
   ["year", "Year", "year"],
   ["format", "Viewing format", "format"]
-], wt = [
+], xt = [
   ["name", "Title"],
   ["year", "Year"],
   ["collection", "Collection"],
@@ -3739,7 +3785,7 @@ const J = [
   ["watched", "Status"],
   ["added", "Added on"],
   ["random", "Random"]
-], kt = [
+], _t = [
   ["show_titles", "Show titles on covers"],
   ["show_format", "Show format"],
   ["show_badges", "Show library badges"],
@@ -3750,7 +3796,7 @@ const J = [
   unwatched: "Unwatched",
   in_progress: "In progress",
   unknown: "Unknown"
-}, ce = class ce extends k {
+}, ue = class ue extends k {
   constructor() {
     super(...arguments), this.bound = "", this.generation = 0, this.listRequest = 0, this.statusRequest = 0, this.purchaseLoading = !1, this.purchaseError = "", this.purchaseDetailsOpen = !1, this.versionRequest = 0, this.versionsLoading = !1, this.versionsError = "", this.widths = [360, 90, 260, 150, 140, 210], this.collectionLocked = !1, this.checkingCollection = !1, this.filters = {
       query: "",
@@ -3810,7 +3856,7 @@ const J = [
       ]);
       if (e !== this.generation) return;
       this.fuzzySearch = i.fuzzy_search, this.mode = t.view, this.entriesPerPage = t.page_size, this.coverSize = t.cover_size, this.display = Object.fromEntries(
-        kt.map(([s]) => [s, t[s]])
+        _t.map(([s]) => [s, t[s]])
       ), this.scope?.permissions.edit && this.display.show_library_cost && this.loadPurchaseTotals(), this.widths = [...t.widths], this.applied = Object.fromEntries(
         [
           "query",
@@ -4062,7 +4108,7 @@ const J = [
     if (e === "random") {
       let i;
       try {
-        i = Tt().replaceAll("-", "");
+        i = jt().replaceAll("-", "");
       } catch (s) {
         this.fail(s);
         return;
@@ -4145,7 +4191,7 @@ const J = [
     return [
       .../* @__PURE__ */ new Set([...i, ...this.draft[e] ?? []])
     ].filter(
-      (s) => $t(
+      (s) => kt(
         e === "collection" ? P(s) : s,
         this.facetSearch,
         this.fuzzySearch
@@ -4299,7 +4345,7 @@ const J = [
       ), this.fitGrid(this.gridWidth), this.requestUpdate();
     }}
               /></label>` : h}
-        ${kt.filter(
+        ${_t.filter(
       ([e]) => e !== "show_library_cost" || this.scope?.permissions.edit
     ).map(
       ([e, t]) => r`<label class="check"
@@ -4392,7 +4438,7 @@ const J = [
       ["director", "Director", "directors"]
     ].map(([e, t, i]) => {
       const s = this.draft[e] ?? [], a = (this.peopleChoices[e] ?? (this.page?.facets[i] ?? []).filter(
-        (o) => $t(o, this.peopleSearch[e] ?? "", this.fuzzySearch)
+        (o) => kt(o, this.peopleSearch[e] ?? "", this.fuzzySearch)
       )).slice(0, 20);
       return r`<fieldset>
             <legend>${t}</legend>
@@ -4680,7 +4726,7 @@ const J = [
                 name="library_query"
                 type="search"
                 maxlength="500"
-                .value=${zi(String(this.filters.query ?? ""))}
+                .value=${Ui(String(this.filters.query ?? ""))}
                 @input=${(l) => {
       this.filters.query = l.target.value, clearTimeout(this.searchTimer), this.searchTimer = setTimeout(() => this.applySearch(), 300);
     }}
@@ -4699,7 +4745,7 @@ const J = [
               .value=${String(this.applied.sort)}
               @change=${(l) => this.sort(l.target.value)}
             >
-              ${wt.map(([l, d]) => r`<option value=${l}>${d}</option>`)}
+              ${xt.map(([l, d]) => r`<option value=${l}>${d}</option>`)}
             </select></label
           >
           <button @click=${() => this.sort(String(this.applied.sort))}>
@@ -4725,7 +4771,7 @@ const J = [
                       @click=${() => this.select(l)}
                     >
                       <div class="cover-image">${this.cover(l)}</div>
-                      ${this.display.show_badges ? r`<div class="cover-flags">${mt(l, !0)}</div>` : h}
+                      ${this.display.show_badges ? r`<div class="cover-flags">${vt(l, !0)}</div>` : h}
                       ${this.display.show_format ? r`<div class="cover-formats">${O(l, !0)}</div>` : h}
                       ${this.display.show_rating ? r`<div class="cover-rating">${N(l.rating)}</div>` : h}
                       ${this.display.show_titles ? r`<span class="cover-caption">${l.title}${l.year ? ` (${l.year})` : ""}</span>` : h}
@@ -4741,7 +4787,7 @@ const J = [
                   </colgroup>
                   <thead>
                     <tr>
-                      ${wt.filter(([l]) => l !== "random").map(
+                      ${xt.filter(([l]) => l !== "random").map(
       ([l, d], c) => r`<th
                             aria-sort=${this.applied.sort === l ? this.applied.descending ? "descending" : "ascending" : "none"}
                           >
@@ -4803,9 +4849,9 @@ const J = [
                               class="library-summary-line"
                               title=${this.format(l)}
                             >
-                              ${this.display.show_badges ? mt(l) : h}
+                              ${this.display.show_badges ? vt(l) : h}
                               ${this.display.show_format ? O(l) : h}
-                              ${this.display.show_format && !Xe(l).length ? r`<small>${this.format(l)}</small>` : h}
+                              ${this.display.show_format && !tt(l).length ? r`<small>${this.format(l)}</small>` : h}
                               ${(l.version_count ?? 1) > 1 ? r`<small>${m(l.version_count, "version")}</small>` : h}
                             </div>
                           </td>
@@ -4882,15 +4928,15 @@ const J = [
     </section>`;
   }
 };
-ce.properties = {
+ue.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   openTitleId: { attribute: !1 },
   openCriterion: { attribute: !1 }
-}, ce.styles = [_, Ze];
-let De = ce;
-customElements.get("kaleidescape-library") || customElements.define("kaleidescape-library", De);
-const ue = class ue extends k {
+}, ue.styles = [_, qe];
+let Oe = ue;
+customElements.get("kaleidescape-library") || customElements.define("kaleidescape-library", Oe);
+const pe = class pe extends k {
   constructor() {
     super(...arguments), this.disabled = !1, this.view = "list", this.calendarSize = 180, this.calendarFit = !1, this.bound = "", this.generation = 0, this.ready = !1, this.fuzzy = !0, this.error = "";
   }
@@ -5051,14 +5097,14 @@ const ue = class ue extends k {
       </dialog>`;
   }
 };
-ue.properties = {
+pe.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, ue.styles = _;
-let je = ue;
-customElements.get("kaleidescape-journal-options") || customElements.define("kaleidescape-journal-options", je);
-const pe = class pe extends k {
+}, pe.styles = _;
+let Ne = pe;
+customElements.get("kaleidescape-journal-options") || customElements.define("kaleidescape-journal-options", Ne);
+const ge = class ge extends k {
   constructor() {
     super(...arguments), this.narrow = !1, this.api = null, this.userKey = "", this.generation = 0, this.scope = null, this.rows = [], this.selected = null, this.detailLoading = !1, this.detailRequest = 0, this.loading = !1, this.error = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.next = null, this.history = [], this.page = 1, this.activePage = "journal", this.navigationReady = !1;
   }
@@ -5067,7 +5113,7 @@ const pe = class pe extends k {
       if (this.hass) {
         const t = `${this.hass.user?.id}:${this.hass.user?.is_admin}`;
         !this.hass.user || !this.hass.connection.connected ? this.bind(null) : (this.connection !== this.hass.connection || this.userKey !== t || !this.api) && (this.connection = this.hass.connection, this.userKey = t, this.bind(
-          new Dt({
+          new Pt({
             callWS: (i) => this.hass.callWS(i),
             fetchWithAuth: (i, s) => this.hass.fetchWithAuth(i, s)
           })
@@ -5102,7 +5148,7 @@ const pe = class pe extends k {
         ...t[0],
         permissions: { read: !0, edit: !1, export: !1 }
       }, !this.navigationReady) {
-        const i = Mt(
+        const i = Ft(
           this.scope.ui_defaults?.default_landing_page,
           !1,
           !!this.scope.library_enabled
@@ -5313,7 +5359,7 @@ const pe = class pe extends k {
                                         tabindex="0"
                                         aria-label="Viewings"
                                       >
-                                        ${this.rows.map((e) => Pt(e, this.selected?.id, (t) => {
+                                        ${this.rows.map((e) => Nt(e, this.selected?.id, (t) => {
       this.selectRecord(t);
     }))}
                                       </ul>` : r`<div class="empty">
@@ -5333,7 +5379,7 @@ const pe = class pe extends k {
                             </div>
                             ${this.detailLoading ? r`<div class="empty" role="status">
                                     Loading entry…
-                                  </div>` : this.selected ? r`${Ot(this.selected, (e) => this.date(e))}
+                                  </div>` : this.selected ? r`${Mt(this.selected, (e) => this.date(e))}
                                       <kaleidescape-viewing-library
                                         .client=${this.api ?? void 0}
                                         .scope=${this.scope ?? void 0}
@@ -5392,27 +5438,27 @@ const pe = class pe extends k {
     </main>`;
   }
 };
-pe.properties = {
+ge.properties = {
   hass: { attribute: !1 },
   client: { attribute: !1 },
   narrow: { type: Boolean }
-}, pe.styles = [_, et, Nt];
-let Pe = pe;
-customElements.get("kaleidescape-reader") || customElements.define("kaleidescape-reader", Pe);
-const Ri = {
+}, ge.styles = [_, it, It];
+let Me = ge;
+customElements.get("kaleidescape-reader") || customElements.define("kaleidescape-reader", Me);
+const Ai = {
   playing: "Playing",
   paused: "Paused",
   forward: "Scanning forward",
   reverse: "Scanning backward",
   stopped: "Stopped",
   none: "Stopped"
-}, Ui = {
+}, Ti = {
   content: "Main content",
   credits: "Credits",
   intermission: "Intermission",
   disc_menu: "Disc menu",
   none: "No active content"
-}, ge = class ge extends k {
+}, fe = class fe extends k {
   constructor() {
     super(...arguments), this.boundScope = "", this.generation = 0, this.player = null, this.loading = !1, this.denied = !1, this.error = "", this.image = "", this.imageKey = "", this.visibility = () => {
       this.reset(), document.hidden || this.refresh();
@@ -5502,7 +5548,7 @@ const Ri = {
                   <h3>
                     ${e.available ? t ? e.title ?? "Unknown title" : "No movie playing" : "Player unavailable"}
                   </h3>
-                  ${e.available ? r`<p>${Ri[e.play_status] ?? "Unknown playback state"} · ${Ui[e.location] ?? "Unknown location"}</p>` : h}
+                  ${e.available ? r`<p>${Ai[e.play_status] ?? "Unknown playback state"} · ${Ti[e.location] ?? "Unknown location"}</p>` : h}
                   ${t && e.duration_seconds != null ? r`<p>Runtime · ${(e.duration_seconds / 60).toFixed(2)} min</p>` : h}
                   ${t && e.session ? r`<p>
                             This session ·
@@ -5529,13 +5575,13 @@ const Ri = {
     </section>`;
   }
 };
-ge.properties = {
+fe.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 }
-}, ge.styles = _;
-let Oe = ge;
-customElements.get("kaleidescape-now-playing") || customElements.define("kaleidescape-now-playing", Oe);
-const fe = class fe extends k {
+}, fe.styles = _;
+let Ie = fe;
+customElements.get("kaleidescape-now-playing") || customElements.define("kaleidescape-now-playing", Ie);
+const be = class be extends k {
   constructor() {
     super(...arguments), this.disabled = !1, this.working = !1, this.error = "", this.generation = 0, this.bound = "";
   }
@@ -5701,11 +5747,11 @@ const fe = class fe extends k {
     </section>`;
   }
 };
-fe.properties = {
+be.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, fe.styles = [
+}, be.styles = [
   _,
   q`
       /* This compact confirmation scrolls as one surface, without a painted footer. */
@@ -5716,9 +5762,9 @@ fe.properties = {
       }
     `
 ];
-let Ne = fe;
-customElements.get("kaleidescape-calendar-export") || customElements.define("kaleidescape-calendar-export", Ne);
-const be = class be extends k {
+let Fe = be;
+customElements.get("kaleidescape-calendar-export") || customElements.define("kaleidescape-calendar-export", Fe);
+const me = class me extends k {
   constructor() {
     super(...arguments), this.disabled = !1, this.working = !1, this.error = "", this.generation = 0, this.bound = "";
   }
@@ -5862,14 +5908,14 @@ const be = class be extends k {
     </section>`;
   }
 };
-be.properties = {
+me.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, be.styles = _;
-let Me = be;
-customElements.get("kaleidescape-metadata-repair") || customElements.define("kaleidescape-metadata-repair", Me);
-const xt = [
+}, me.styles = _;
+let Be = me;
+customElements.get("kaleidescape-metadata-repair") || customElements.define("kaleidescape-metadata-repair", Be);
+const St = [
   ["media_player", "Kaleidescape media player", "text", "", ""],
   ["play_status", "Exact play-status sensor", "text", "", ""],
   ["media_location", "Media-location sensor", "text", "", ""],
@@ -5894,7 +5940,7 @@ const xt = [
     "0",
     "168"
   ]
-], _t = [
+], qt = [
   [
     "library_host",
     "Library hostname · blank uses my-kaleidescape.local",
@@ -5910,17 +5956,17 @@ const xt = [
     "32",
     "4096"
   ]
-], It = [
+], Bt = [
   ["library_allow_collection_add", "Allow Add to Collection on the device"],
   ["library_sync_collections", "Sync collections and watched status"],
   ["library_sync_details", "Sync title details and credits"],
   ["library_sync_artwork", "Sync artwork"]
-], Ai = /* @__PURE__ */ new Set([
+], Li = /* @__PURE__ */ new Set([
   "calendar_enabled",
   "tracking_enabled",
   "library_enabled",
-  ...It.map(([n]) => n)
-]), Li = {
+  ...Bt.map(([n]) => n)
+]), Di = {
   invalid_calendar: "Choose an existing calendar that supports creating events.",
   invalid_calendar_template: "Use only the listed brace fields, without attributes or format specifiers.",
   invalid_display_options: "Choose a valid default landing page.",
@@ -5930,7 +5976,7 @@ const xt = [
   invalid_rules: "Check the runtime, completion, and partial-resume values.",
   invalid_library_host: "Enter a hostname or private LAN HTTP(S) origin without a path, credentials, or query.",
   invalid_library_options: "Choose a sync interval of 1–168 hours and an artwork cache limit of 32–4096 MiB."
-}, me = class me extends k {
+}, ye = class ye extends k {
   constructor() {
     super(...arguments), this.generation = 0, this.draft = {}, this.initial = {}, this.collectionChoices = [], this.hiddenCollections = [], this.sharedReady = !1, this.sharedError = "", this.customCollection = "", this.loading = !1, this.saving = !1, this.uncertain = !1, this.error = "", this.bound = "";
   }
@@ -5973,7 +6019,7 @@ const xt = [
       this.flow = s, this.draft = Object.fromEntries(
         (s.fields ?? []).map((o) => [
           o.name,
-          Ai.has(o.name) ? !!o.default : String(o.default ?? "")
+          Li.has(o.name) ? !!o.default : String(o.default ?? "")
         ])
       ), this.initial = { ...this.draft }, this.sharedPreferences = new F(
         e,
@@ -6022,9 +6068,9 @@ const xt = [
     const t = this.generation;
     this.saving = !0, this.busy(), this.error = "", this.requestUpdate();
     const i = { ...this.draft };
-    for (const [s, , a] of xt)
+    for (const [s, , a] of St)
       a === "number" ? i[s] = Number(i[s]) : i[s] || delete i[s];
-    for (const [s, , a] of _t)
+    for (const [s, , a] of qt)
       a === "number" && (i[s] = Number(i[s]));
     i.library_host = String(i.library_host ?? ""), i.calendar_entity || delete i.calendar_entity;
     try {
@@ -6036,7 +6082,7 @@ const xt = [
       this.flow = s, s.type === "create_entry" ? (this.initial = { ...this.draft }, this.saving = !1, this.busy(), this.dispatchEvent(
         new CustomEvent("settings-saved", { bubbles: !0, composed: !0 })
       )) : s.type === "form" ? this.error = Object.values(s.errors ?? {}).map(
-        (a) => Li[a] ?? "Check the settings and try again."
+        (a) => Di[a] ?? "Check the settings and try again."
       ).join(" ") : this.error = "The settings flow ended. Reload settings to continue.";
     } catch (s) {
       t === this.generation && (this.fail(s), this.uncertain = ![
@@ -6103,7 +6149,7 @@ const xt = [
                       />Automatically record playback</label
                     >
                     <div class="grid settings-grid">
-                      ${xt.map(
+                      ${St.map(
       ([e, t, i, s, a]) => r`<label class=${i === "text" ? "full" : ""}
                             >${t}<input
                               name=${e}
@@ -6229,7 +6275,7 @@ const xt = [
                       device requests occur while disabled.
                     </p>
                     ${this.draft.library_enabled ? r`<div class="grid settings-grid">
-                              ${_t.map(
+                              ${qt.map(
       ([e, t, i, s, a]) => r`<label
                                     class=${i === "text" ? "full" : ""}
                                     >${t}<input
@@ -6249,7 +6295,7 @@ const xt = [
       }}
                                   /></label>`
     )}
-                              ${It.map(
+                              ${Bt.map(
       ([e, t]) => r`<label class="check full"
                                     ><input
                                       name=${e}
@@ -6384,13 +6430,13 @@ const xt = [
     </fieldset>`;
   }
 };
-me.properties = {
+ye.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 }
-}, me.styles = _;
-let Ie = me;
-customElements.get("kaleidescape-settings") || customElements.define("kaleidescape-settings", Ie);
-const Ti = q`
+}, ye.styles = _;
+let Ve = ye;
+customElements.get("kaleidescape-settings") || customElements.define("kaleidescape-settings", Ve);
+const ji = q`
   .database {
     overflow: visible;
     margin-top: 24px;
@@ -6477,7 +6523,7 @@ const Ti = q`
       margin-left: 0;
     }
   }
-`, ye = class ye extends k {
+`, ve = class ve extends k {
   constructor() {
     super(...arguments), this.table = "viewings", this.value = "", this.fields = [], this.operators = [], this.disabled = !1, this.open = !1, this.active = 0, this.cursor = 0, this.message = "", this.invalid = !1, this.generation = 0;
   }
@@ -6593,7 +6639,7 @@ const Ti = q`
       >`;
   }
 };
-ye.properties = {
+ve.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   table: {},
@@ -6601,7 +6647,7 @@ ye.properties = {
   fields: { attribute: !1 },
   operators: { attribute: !1 },
   disabled: { type: Boolean }
-}, ye.styles = q`
+}, ve.styles = q`
     :host {
       display: block;
       min-width: 0;
@@ -6669,9 +6715,9 @@ ye.properties = {
       color: var(--error-color, #b3261e);
     }
   `;
-let Fe = ye;
-customElements.get("kaleidescape-database-search") || customElements.define("kaleidescape-database-search", Fe);
-const ve = class ve extends k {
+let He = ve;
+customElements.get("kaleidescape-database-search") || customElements.define("kaleidescape-database-search", He);
+const $e = class $e extends k {
   constructor() {
     super(...arguments), this.disabled = !1, this.bound = "", this.request = 0, this.query = "", this.items = [], this.active = -1, this.loading = !1, this.more = !1, this.error = "";
   }
@@ -6790,13 +6836,13 @@ const ve = class ve extends k {
       </div>`;
   }
 };
-ve.properties = {
+$e.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   review: { attribute: !1 },
   row: { attribute: !1 },
   disabled: { type: Boolean }
-}, ve.styles = [
+}, $e.styles = [
   _,
   q`
       :host {
@@ -6832,12 +6878,12 @@ ve.properties = {
       }
     `
 ];
-let Be = ve;
+let We = $e;
 customElements.get("kaleidescape-import-matcher") || customElements.define(
   "kaleidescape-import-matcher",
-  Be
+  We
 );
-const $e = class $e extends k {
+const we = class we extends k {
   constructor() {
     super(...arguments), this.disabled = !1, this.bound = "", this.generation = 0, this.selected = /* @__PURE__ */ new Set(), this.query = "", this.changesOnly = !1, this.page = 0, this.pageSize = 100, this.working = !1, this.error = "", this.notice = "", this.dialog = null;
   }
@@ -7283,11 +7329,11 @@ const $e = class $e extends k {
       </dialog>`;
   }
 };
-$e.properties = {
+we.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, $e.styles = [
+}, we.styles = [
   _,
   q`
       .database-dialog {
@@ -7333,8 +7379,8 @@ $e.properties = {
       }
     `
 ];
-let Ve = $e;
-customElements.get("kaleidescape-transfers") || customElements.define("kaleidescape-transfers", Ve);
+let Je = we;
+customElements.get("kaleidescape-transfers") || customElements.define("kaleidescape-transfers", Je);
 const K = {
   viewings: "Viewings",
   sessions: "Sessions",
@@ -7354,7 +7400,7 @@ const K = {
   calendar_publications: "Calendar publications",
   calendar_sync_jobs: "Calendar exports",
   calendar_sync_items: "Calendar export items"
-}, te = ["viewings", "sessions", "library"], we = class we extends k {
+}, te = ["viewings", "sessions", "library"], ke = class ke extends k {
   constructor() {
     super(...arguments), this.bound = "", this.generation = 0, this.request = 0, this.table = "viewings", this.filters = { limit: 25, query: "", descending: !1 }, this.showSystem = !1, this.sorts = {}, this.fuzzySearch = !0, this.ready = !1, this.preferenceError = "", this.loading = !1, this.saving = !1, this.transferBusy = !1, this.error = "", this.notice = "", this.search = "", this.selected = /* @__PURE__ */ new Set(), this.operation = null, this.draft = {}, this.nulls = /* @__PURE__ */ new Set(), this.original = "", this.createDraft = re(), this.confirmed = !1, this.deleteWord = "", this.covers = new R();
   }
@@ -7532,7 +7578,7 @@ const K = {
           if (!this.operation || !this.page || this.operation === "delete" && this.deleteWord !== "DELETE" || this.operation !== "delete" && !this.confirmed) return;
           if (this.operation === "new")
             this.pending = this.client.prepare(this.scope, "create", {
-              data: jt(this.createDraft)
+              data: Ot(this.createDraft)
             });
           else {
             const i = {};
@@ -8008,13 +8054,13 @@ const K = {
     </section>`;
   }
 };
-we.properties = {
+ke.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 }
-}, we.styles = [_, et, Ti];
-let He = we;
-customElements.get("kaleidescape-database") || customElements.define("kaleidescape-database", He);
-const Ee = [
+}, ke.styles = [_, it, ji];
+let Ke = ke;
+customElements.get("kaleidescape-database") || customElements.define("kaleidescape-database", Ke);
+const Re = [
   {
     id: "now-playing",
     label: "Now Playing",
@@ -8040,9 +8086,9 @@ const Ee = [
     label: "Settings",
     description: "Configure playback recording and journal rules."
   }
-], ke = class ke extends k {
+], xe = class xe extends k {
   constructor() {
-    super(...arguments), this.narrow = !1, this.api = null, this.generation = 0, this.listRequest = 0, this.detailRequest = 0, this.info = null, this.rows = [], this.selected = null, this.draft = null, this.initial = null, this.manual = null, this.manualInitial = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.journalReady = !1, this.sessions = null, this.sessionError = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.nextCursor = null, this.history = [], this.page = 1, this.loading = !1, this.detailLoading = !1, this.saving = !1, this.pending = null, this.confirmDelete = !1, this.error = "", this.lastError = "", this.notice = "", this.activePage = "journal", this.navigationReady = !1, this.settingsBusy = !1, this.maintenanceBusy = !1;
+    super(...arguments), this.narrow = !1, this.api = null, this.generation = 0, this.listRequest = 0, this.detailRequest = 0, this.info = null, this.rows = [], this.selected = null, this.editMovieId = null, this.editTitleTouched = !1, this.draft = null, this.initial = null, this.manual = null, this.manualInitial = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.journalReady = !1, this.sessions = null, this.sessionError = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.nextCursor = null, this.history = [], this.page = 1, this.loading = !1, this.detailLoading = !1, this.saving = !1, this.pending = null, this.confirmDelete = !1, this.error = "", this.lastError = "", this.notice = "", this.activePage = "journal", this.navigationReady = !1, this.settingsBusy = !1, this.maintenanceBusy = !1;
   }
   willUpdate(e) {
     if (!(!e.has("hass") && !e.has("client")))
@@ -8051,7 +8097,7 @@ const Ee = [
           this.bind(null);
           return;
         }
-        (this.haConnection !== this.hass.connection || this.haUser !== this.hass.user.id) && (this.haConnection = this.hass.connection, this.haUser = this.hass.user.id, this.haClient = new Dt({
+        (this.haConnection !== this.hass.connection || this.haUser !== this.hass.user.id) && (this.haConnection = this.hass.connection, this.haUser = this.hass.user.id, this.haClient = new Pt({
           callWS: (t) => this.hass.callWS(t),
           fetchWithAuth: (t, i) => this.hass.fetchWithAuth(t, i)
         })), this.bind(this.haClient);
@@ -8065,7 +8111,7 @@ const Ee = [
     super.disconnectedCallback(), this.bind(null);
   }
   clearPrivate() {
-    this.manual = null, this.manualInitial = "", this.sort = "completed_at", this.descending = !0, this.generation++, this.info = null, this.rows = [], this.selected = null, this.draft = null, this.initial = null, this.sessions = null, this.pending = null, this.history = [], this.nextCursor = null, this.cursor = void 0, this.page = 1, this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.confirmDelete = !1, this.saving = !1, this.loading = !1, this.detailLoading = !1, this.sessionError = "", this.notice = "", this.activePage = "journal", this.navigationReady = !1, this.settingsBusy = this.maintenanceBusy = !1, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.journalMovie = void 0, this.libraryTitleId = void 0, this.libraryCriterion = void 0, this.journalReady = !1;
+    this.manual = null, this.manualInitial = "", this.sort = "completed_at", this.descending = !0, this.generation++, this.info = null, this.rows = [], this.selected = null, this.editMovieId = null, this.editTitleTouched = !1, this.draft = null, this.initial = null, this.sessions = null, this.pending = null, this.history = [], this.nextCursor = null, this.cursor = void 0, this.page = 1, this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.confirmDelete = !1, this.saving = !1, this.loading = !1, this.detailLoading = !1, this.sessionError = "", this.notice = "", this.activePage = "journal", this.navigationReady = !1, this.settingsBusy = this.maintenanceBusy = !1, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.journalMovie = void 0, this.libraryTitleId = void 0, this.libraryCriterion = void 0, this.journalReady = !1;
   }
   bind(e) {
     this.api !== e && (this.clearPrivate(), this.api = e, this.error = "", this.requestUpdate(), e && this.refresh());
@@ -8074,7 +8120,7 @@ const Ee = [
     g(e) === "unauthorized" && this.clearPrivate(), this.lastError = g(e), this.error = w(e), this.requestUpdate();
   }
   dirty() {
-    return this.manual ? JSON.stringify(this.manual) !== this.manualInitial : this.draft && JSON.stringify(this.draft) !== JSON.stringify(this.initial);
+    return this.manual ? JSON.stringify(this.manual) !== this.manualInitial : this.draft && (this.editTitleTouched || JSON.stringify(this.draft) !== JSON.stringify(this.initial));
   }
   discard() {
     return (!this.dirty() || window.confirm("Discard your unsaved changes?")) && (this.activePage !== "library" || (this.renderRoot.querySelector("kaleidescape-library")?.confirmNavigation() ?? !0)) && (this.activePage !== "database" || (this.renderRoot.querySelector("kaleidescape-database")?.confirmNavigation() ?? !0)) && (this.activePage !== "settings" || (this.renderRoot.querySelector("kaleidescape-settings")?.confirmNavigation() ?? !0));
@@ -8083,7 +8129,7 @@ const Ee = [
     e === "library" && !this.info?.library_enabled || e === this.activePage && !(e === "journal" && this.journalMovie) || this.loading || this.saving || this.pending || this.maintenanceBusy || this.settingsBusy || !this.discard() || (this.closeEditor(), this.libraryTitleId = t?.libraryTitleId, this.libraryCriterion = t?.libraryCriterion, e === "journal" && (this.journalMovie = t?.movie, this.query = this.searchText = "", this.status = this.filterStatus = ""), this.activePage = e, M(e), this.error = this.notice = "", this.requestUpdate(), e === "journal" && (this.page = 1, this.history = [], await this.loadList()));
   }
   pageKey(e) {
-    const t = Ee.filter(
+    const t = Re.filter(
       (o) => o.id !== "library" || this.info?.library_enabled
     ), i = t.findIndex((o) => o.id === this.activePage), s = e.key === "ArrowRight" ? (i + 1) % t.length : e.key === "ArrowLeft" ? (i + t.length - 1) % t.length : e.key === "Home" ? 0 : e.key === "End" ? t.length - 1 : -1;
     if (s < 0) return;
@@ -8105,7 +8151,7 @@ const Ee = [
       if (!s.length) throw new f("not_ready");
       if (s[0].api_version !== 1) throw new f("not_ready");
       if (this.info = s[0], !this.info.permissions.edit) return;
-      this.navigationReady || (this.activePage = Mt(
+      this.navigationReady || (this.activePage = Ft(
         this.info.ui_defaults?.default_landing_page,
         !0,
         !!this.info.library_enabled
@@ -8163,15 +8209,19 @@ const Ee = [
     }
   }
   closeEditor() {
-    this.renderRoot.querySelectorAll("dialog").forEach((e) => e.close()), this.manual = null, this.manualInitial = "", this.detailRequest++, this.selected = null, this.draft = null, this.initial = null, this.sessions = null, this.sessionError = "", this.confirmDelete = !1, this.detailLoading = !1;
+    this.renderRoot.querySelectorAll("dialog").forEach((e) => e.close()), this.manual = null, this.manualInitial = "", this.detailRequest++, this.selected = null, this.editMovieId = null, this.editTitleTouched = !1, this.draft = null, this.initial = null, this.sessions = null, this.sessionError = "", this.confirmDelete = !1, this.detailLoading = !1;
   }
   newRecord() {
-    this.pending || !this.discard() || (this.closeEditor(), this.draft = yt(), this.initial = { ...this.draft }, this.manual = re(), this.manualInitial = JSON.stringify(this.manual), this.error = "", this.notice = "", this.requestUpdate(), this.updateComplete.then(async () => {
+    this.pending || !this.discard() || (this.closeEditor(), this.draft = $t(), this.initial = { ...this.draft }, this.manual = re(), this.manualInitial = JSON.stringify(this.manual), this.error = "", this.notice = "", this.requestUpdate(), this.updateComplete.then(async () => {
       this.renderRoot.querySelector("#journal-editor")?.showModal();
       const e = this.renderRoot.querySelector(
         "kaleidescape-manual-viewing"
       );
-      await e?.updateComplete, e?.shadowRoot?.querySelector("input")?.focus();
+      await e?.updateComplete;
+      const t = e?.shadowRoot?.querySelector(
+        "kaleidescape-library-title-picker"
+      );
+      await t?.updateComplete, t?.shadowRoot?.querySelector("input")?.focus();
     }));
   }
   input(e, t) {
@@ -8181,10 +8231,17 @@ const Ee = [
     }, this.requestUpdate());
   }
   async save(e) {
-    if (e.preventDefault(), !(!this.api || !this.info || !this.draft || this.pending || this.saving || !e.target.reportValidity()))
+    if (e.preventDefault(), !(!this.api || !this.info || !this.draft || this.pending || this.saving || !e.target.reportValidity())) {
+      if (!this.manual && this.editTitleTouched && !this.editMovieId) {
+        this.error = "Select a Library movie from the suggestions.", this.requestUpdate();
+        return;
+      }
       try {
-        const i = this.manual ? jt(this.manual) : Si(this.draft, this.selected ? this.initial : void 0);
-        if (this.selected && !Object.keys(i).length) {
+        const i = this.manual ? Ot(this.manual) : {
+          ...Ci(this.draft, this.selected ? this.initial : void 0),
+          ...this.editTitleTouched ? { library_title_id: this.editMovieId } : {}
+        };
+        if (this.manual || delete i.title, this.selected && !Object.keys(i).length) {
           this.notice = "There are no changes to save.", this.requestUpdate();
           return;
         }
@@ -8204,6 +8261,7 @@ const Ee = [
       } catch (i) {
         g(i) === "request_id_unavailable" ? this.fail(i) : (this.error = this.manual && i instanceof Error ? i.message : "Check the dates and numeric fields before saving.", this.requestUpdate());
       }
+    }
   }
   async deleteRecord() {
     if (!(!this.api || !this.info || !this.selected || this.pending))
@@ -8276,9 +8334,28 @@ const Ee = [
       this.manual = e.detail, this.requestUpdate();
     }}
                 @access-denied=${() => this.fail(new f("unauthorized"))}
-              ></kaleidescape-manual-viewing>` : qi(
+              ></kaleidescape-manual-viewing>` : zi(
       this.draft,
-      (e, t) => this.input(e, t)
+      (e, t) => this.input(e, t),
+      r`<kaleidescape-library-title-picker
+                    .client=${this.api}
+                    .scope=${this.info}
+                    .initialTitle=${this.initial?.title ?? ""}
+                    .value=${this.editMovieId ?? ""}
+                    .requireRuntime=${!1}
+                    .fuzzySearch=${this.fuzzySearch}
+                    .disabled=${this.saving || !!this.pending || !this.info?.library_enabled}
+                    @title-selection=${(e) => {
+        this.draft && (this.editTitleTouched = !0, this.editMovieId = e.detail.movie?.id ?? null, this.draft = { ...this.draft, title: e.detail.query }, this.requestUpdate());
+      }}
+                    @access-denied=${() => this.fail(new f("unauthorized"))}
+                  ></kaleidescape-library-title-picker>
+                  <small
+                    >Selecting a different movie keeps the recorded times and
+                    watched minutes. Adjust those fields separately if
+                    needed.</small
+                  >
+                  ${this.info?.library_enabled ? h : r`<small>Enable Library to change the movie. Existing timing and notes can still be corrected.</small>`}`
     )}
         ${this.selected?.origin === "observed" ? r`<small>Only fields you change are marked as manual corrections. Session evidence is retained.</small>` : h}
         <div class="actions dialog-footer">
@@ -8301,7 +8378,7 @@ const Ee = [
     await i, t === this.generation && s === this.detailRequest && this.selected?.id === e && !this.draft && this.info?.permissions.edit && this.editRecord();
   }
   editRecord() {
-    !this.selected || this.pending || this.saving || (this.draft = yt(this.selected), this.initial = { ...this.draft }, this.error = this.notice = "", this.requestUpdate(), this.updateComplete.then(
+    !this.selected || this.pending || this.saving || (this.draft = $t(this.selected), this.editMovieId = null, this.editTitleTouched = !1, this.initial = { ...this.draft }, this.error = this.notice = "", this.requestUpdate(), this.updateComplete.then(
       () => this.renderRoot.querySelector("#journal-editor")?.showModal()
     ));
   }
@@ -8311,7 +8388,7 @@ const Ee = [
     await this.selectRecord(e), t && this.selected?.id === e && !this.draft && this.editRecord();
   }
   cancelEdit(e) {
-    e?.preventDefault(), !(this.saving || this.pending || !this.discard()) && (this.draft = this.initial = null, this.manual = null, this.manualInitial = "", this.renderRoot.querySelector("#journal-editor")?.close(), this.requestUpdate());
+    e?.preventDefault(), !(this.saving || this.pending || !this.discard()) && (this.draft = this.initial = null, this.editMovieId = null, this.editTitleTouched = !1, this.manual = null, this.manualInitial = "", this.renderRoot.querySelector("#journal-editor")?.close(), this.requestUpdate());
   }
   openDelete() {
     !this.selected || this.saving || this.pending || !this.discard() || (this.confirmDelete = !0, this.requestUpdate(), this.updateComplete.then(
@@ -8464,7 +8541,7 @@ const Ee = [
                               tabindex="0"
                               aria-label="Viewings"
                             >
-                              ${this.rows.map((i) => Pt(i, this.selected?.id, (s) => {
+                              ${this.rows.map((i) => Nt(i, this.selected?.id, (s) => {
       this.selectRecord(s);
     }, this.saving || !!this.pending))}
                             </ul>` : r`<div class="empty">
@@ -8487,7 +8564,7 @@ const Ee = [
                     </div>
                     ${this.detailLoading ? r`<div class="empty" role="status">
                             Loading entry…
-                          </div>` : this.selected ? r`${Ot(this.selected, (i) => this.date(i))}
+                          </div>` : this.selected ? r`${Mt(this.selected, (i) => this.date(i))}
                               <kaleidescape-viewing-library
                                 .client=${this.api}
                                 .scope=${this.info}
@@ -8609,7 +8686,7 @@ const Ee = [
           <span class="eyebrow">Kaleidescape Companion · Administrator</span>
           <h1>Kaleidescape Companion</h1>
           <p>
-            ${Ee.find((t) => t.id === this.activePage).description}
+            ${Re.find((t) => t.id === this.activePage).description}
           </p>
         </div>
       </header>
@@ -8619,7 +8696,7 @@ const Ee = [
               aria-label="Companion pages"
               @keydown=${(t) => this.pageKey(t)}
             >
-              ${Ee.map((t) => r`<button id=${`page-${t.id}`} role="tab" aria-selected=${this.activePage === t.id} aria-controls="companion-page" tabindex=${this.activePage === t.id ? "0" : "-1"} ?disabled=${e || t.id === "library" && !this.info?.library_enabled} title=${t.id === "library" && !this.info?.library_enabled ? "Enable library sync in Settings" : h} @click=${() => this.switchPage(t.id)}>${t.label}</button>`)}
+              ${Re.map((t) => r`<button id=${`page-${t.id}`} role="tab" aria-selected=${this.activePage === t.id} aria-controls="companion-page" tabindex=${this.activePage === t.id ? "0" : "-1"} ?disabled=${e || t.id === "library" && !this.info?.library_enabled} title=${t.id === "library" && !this.info?.library_enabled ? "Enable library sync in Settings" : h} @click=${() => this.switchPage(t.id)}>${t.label}</button>`)}
             </div>` : h}
       ${this.error ? r`<div class="error" role="alert">${this.error}${this.lastError === "conflict" && this.selected ? r` <button ?disabled=${e} @click=${this.reloadSelected}>Reload entry</button>` : h}</div>` : h}
       ${this.notice ? r`<div class="notice" role="status">${this.notice}</div>` : h}
@@ -8678,13 +8755,13 @@ const Ee = [
     </main>`;
   }
 };
-ke.properties = {
+xe.properties = {
   hass: { attribute: !1 },
   client: { attribute: !1 },
   narrow: { type: Boolean }
-}, ke.styles = [_, et, Nt];
-let We = ke;
-customElements.get("kaleidescape-panel") || customElements.define("kaleidescape-panel", We);
+}, xe.styles = [_, it, It];
+let Ye = xe;
+customElements.get("kaleidescape-panel") || customElements.define("kaleidescape-panel", Ye);
 export {
-  We as KaleidescapePanel
+  Ye as KaleidescapePanel
 };

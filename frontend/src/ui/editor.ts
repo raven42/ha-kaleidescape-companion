@@ -1,5 +1,6 @@
 /** Form conversion preserves untouched observed fields and opaque source IDs. */
 import { html, nothing } from "lit";
+import type { TemplateResult } from "lit";
 import type { Viewing, ViewingData } from "../core/api";
 
 export interface Draft {
@@ -62,6 +63,7 @@ export function draftData(
 export function renderDraftFields(
   draft: Draft,
   change: (key: keyof Draft, event: Event) => void,
+  titleField?: TemplateResult,
 ) {
   function field(
     key: keyof Draft,
@@ -86,7 +88,9 @@ export function renderDraftFields(
   }
   return html`
     <div class="grid">
-      <div class="full">${field("title", "Title", "text", true, 500)}</div>
+      <div class="full">
+        ${titleField ?? field("title", "Title", "text", true, 500)}
+      </div>
       ${field("started_at", "Started · local time", "datetime-local", true)}
       ${field("ended_at", "Ended · local time", "datetime-local")}
       ${field("watched_seconds", "Watched minutes", "number", true)}

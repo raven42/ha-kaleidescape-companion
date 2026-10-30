@@ -795,6 +795,55 @@ class JournalRepository:
             self._actor(actor_id),
         )
 
+    async def async_correct_viewing(
+        self, request_id, viewing_id, expected_revision, patch, *, actor_id, source=None
+    ):
+        """Normal Journal edits accept a Library ID instead of a free-text title."""
+        if not isinstance(patch, dict) or "title" in patch:
+            raise invalid("Select a Library movie from the suggestions")
+        if "library_title_id" not in patch:
+            return await self.async_update(
+                request_id, viewing_id, expected_revision, patch, actor_id=actor_id
+            )
+        if not source:
+            raise JournalError("library_disabled", "Enable Library to change the movie")
+        self._validate_revision(expected_revision)
+        return await self._call(
+            self._correct_library,
+            identifier(request_id),
+            identifier(viewing_id),
+            expected_revision,
+            source,
+            patch,
+            self._actor(actor_id),
+        )
+
+    def _correct_library(self, request, viewing_id, revision, source, patch, actor):
+        from ..playback.manual import correction
+
+        db = self._db()
+        receipt = {
+            "library_source": source,
+            "viewing_id": viewing_id,
+            "expected_revision": revision,
+            "patch": patch,
+        }
+        cached = db.execute(
+            "SELECT 1 FROM requests WHERE request_id=?", (request,)
+        ).fetchone()
+        data = (
+            {}
+            if cached
+            else {
+                "viewing_id": viewing_id,
+                "expected_revision": revision,
+                "patch": correction(db, source, patch),
+            }
+        )
+        return journal_store.mutate(
+            db, "update", request, data, actor, self._paused, self._calendar, receipt
+        )
+
     async def async_delete(
         self,
         request_id: str,

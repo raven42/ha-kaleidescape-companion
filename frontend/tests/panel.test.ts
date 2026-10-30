@@ -5,7 +5,7 @@ import { ApiError } from "../src/core/api";
 import type { ApiMessage, Hass, Viewing } from "../src/core/api";
 import { draftData, draftFrom } from "../src/ui/editor";
 import { FixtureTransport, info, record } from "./fixture";
-import { selectManual } from "./manual-helpers";
+import { selectManual, titlePicker } from "./manual-helpers";
 
 let panel: KaleidescapePanel;
 let transport: FixtureTransport;
@@ -309,7 +309,9 @@ describe("journal management", () => {
     expect(panel.shadowRoot!.querySelector("img,script,iframe")).toBeNull();
     await selectViewing(payload);
     expect(
-      panel.shadowRoot!.querySelector<HTMLInputElement>("#title")!.value,
+      titlePicker(panel.shadowRoot!).querySelector<HTMLInputElement>(
+        '[name="library_movie"]',
+      )!.value,
     ).toBe(payload);
   });
   it("clears private records and drafts on authorization failure", async () => {
@@ -766,13 +768,15 @@ it("applies the Journal fuzzy toggle to search and an already-open New entry pic
   )!;
   await (manual as unknown as { updateComplete: Promise<unknown> })
     .updateComplete;
-  const movie = manual.shadowRoot!.querySelector<HTMLInputElement>(
+  const movie = titlePicker(manual.shadowRoot!).querySelector<HTMLInputElement>(
     '[name="library_movie"]',
   )!;
   movie.value = "Vyoage";
   movie.dispatchEvent(new Event("input"));
   await vi.waitFor(() =>
-    expect(manual.shadowRoot!.querySelector('[role="option"]')).toBeTruthy(),
+    expect(
+      titlePicker(manual.shadowRoot!).querySelector('[role="option"]'),
+    ).toBeTruthy(),
   );
   options.shadowRoot!.querySelector<HTMLInputElement>("input")!.click();
   await settle();
@@ -784,12 +788,16 @@ it("applies the Journal fuzzy toggle to search and an already-open New entry pic
     ).toMatchObject({ query: "Vyoage", fuzzy: false }),
   );
   await vi.waitFor(() =>
-    expect(manual.shadowRoot!.querySelector('[role="option"]')).toBeNull(),
+    expect(
+      titlePicker(manual.shadowRoot!).querySelector('[role="option"]'),
+    ).toBeNull(),
   );
   movie.value = "voyage";
   movie.dispatchEvent(new Event("input"));
   await vi.waitFor(() =>
-    expect(manual.shadowRoot!.querySelector('[role="option"]')).toBeTruthy(),
+    expect(
+      titlePicker(manual.shadowRoot!).querySelector('[role="option"]'),
+    ).toBeTruthy(),
   );
   expect(transport.searchPreferences.fuzzy_search).toBe(false);
   expect(

@@ -963,9 +963,27 @@ export class FixtureTransport implements Transport {
         operation === "journal/update" ||
         operation === "database/update"
       ) {
+        const patch = {
+          ...(message.patch as Partial<Viewing> & {
+            library_title_id?: string;
+          }),
+        };
+        if (operation === "journal/update" && "title" in patch)
+          throw new ApiError("invalid_request");
+        if (patch.library_title_id) {
+          if (!this.options.library_enabled)
+            throw new ApiError("library_disabled");
+          const movie = this.libraryTitles.find(
+            (row) => row.id === patch.library_title_id,
+          );
+          if (!movie) throw new ApiError("invalid_request");
+          this.viewingLinks.set(this.records[index].id, movie.id);
+          patch.title = movie.title;
+          delete patch.library_title_id;
+        }
         saved = this.records[index] = {
           ...this.records[index],
-          ...(message.patch as Partial<Viewing>),
+          ...patch,
           revision: this.records[index].revision + 1,
         };
       } else if (operation === "journal/delete") {

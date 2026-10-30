@@ -6,7 +6,7 @@ import {
 } from "../src/ui/manual-viewing";
 import { FixtureTransport, info, libraryTitle } from "./fixture";
 import type { LibraryTitle } from "../src/core/api";
-import { selectManual } from "./manual-helpers";
+import { selectManual, titlePicker } from "./manual-helpers";
 let host: HTMLElement | undefined;
 afterEach(() => {
   host?.remove();
@@ -76,7 +76,7 @@ it("selects exact versions, exposes partial minutes conditionally and clears sel
   expect(
     fields.shadowRoot!.querySelector('[name="watched_minutes"]'),
   ).toBeTruthy();
-  const input = fields.shadowRoot!.querySelector<HTMLInputElement>(
+  const input = titlePicker(fields.shadowRoot!).querySelector<HTMLInputElement>(
     '[name="library_movie"]',
   )!;
   input.value = "Changed";
@@ -96,13 +96,16 @@ it("ignores late title suggestions after unmount and disallows versions without 
   fields.scope = info;
   document.body.append(fields);
   await fields.updateComplete;
-  const input = fields.shadowRoot!.querySelector<HTMLInputElement>("input")!;
+  const input = titlePicker(fields.shadowRoot!).querySelector<HTMLInputElement>(
+    "input",
+  )!;
   input.value = "Voyage";
   input.dispatchEvent(new Event("input"));
   await vi.waitFor(() =>
     expect(
-      fields.shadowRoot!.querySelector<HTMLButtonElement>('[role="option"]')
-        ?.disabled,
+      titlePicker(fields.shadowRoot!).querySelector<HTMLButtonElement>(
+        '[role="option"]',
+      )?.disabled,
     ).toBe(true),
   );
   let resolve:

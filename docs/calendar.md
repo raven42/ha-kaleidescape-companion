@@ -30,13 +30,19 @@ Escape or a backdrop click dismisses the popup.
 
 Administrators also have **Edit viewing** in the popup. It loads the current
 Journal record and opens the same editor as the list view for title, start/end,
-runtime, watched minutes, status and notes. **Delete entry** in that editor
-opens the normal confirmation; Keep entry returns to the editor. Confirming sets
-the viewing's deletion marker and hides it from Journal/calendar reads,
-retaining the stored row and session history for recovery. This action never
-permanently purges the record. Saving or deleting refreshes the current month.
-Household readers retain read-only details. Revision checks, unsaved-change
-guards and explicit retries after uncertain writes match the list editor.
+runtime, watched minutes, status and notes. Its Movie from Library field uses
+the same autocomplete as Add viewing; changing the title requires selecting an
+exact version, distinguished by year/format. That selection updates the title,
+Library link and metadata together while preserving recorded timing, watched
+minutes and playback identifiers. Existing history can still receive timing or
+note corrections with Library disabled, but changing the movie requires Library
+access. **Delete entry** in that editor opens the normal confirmation; Keep
+entry returns to the editor. Confirming sets the viewing's deletion marker and
+hides it from Journal/calendar reads, retaining the stored row and session
+history for recovery. This action never permanently purges the record. Saving or
+deleting refreshes the current month. Household readers retain read-only
+details. Revision checks, unsaved-change guards and explicit retries after
+uncertain writes match the list editor.
 
 Title and person-name links open Library with a fresh search matching titles,
 actors and directors. Year, genre, rating and format links open Library with one

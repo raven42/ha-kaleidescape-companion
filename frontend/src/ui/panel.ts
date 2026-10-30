@@ -16,6 +16,7 @@ import { draftData, draftFrom, renderDraftFields } from "./editor";
 import type { Draft } from "./editor";
 import { manualDraft, manualData } from "./manual-viewing";
 import type { ManualDraft } from "./manual-viewing";
+import type { TitleSelection } from "./library-title-picker";
 import { styles } from "./styles";
 import { entryLayoutStyles } from "./entry-layout.styles";
 import { journalStyles, viewingDetails, viewingListRow } from "./journal-view";
@@ -83,6 +84,8 @@ export class KaleidescapePanel extends LitElement {
   private info: JournalInfo | null = null;
   private rows: ViewingSummary[] = [];
   private selected: Viewing | null = null;
+  private editMovieId: string | null = null;
+  private editTitleTouched = false;
   private draft: Draft | null = null;
   private initial: Draft | null = null;
   private manual: ManualDraft | null = null;
@@ -161,6 +164,8 @@ export class KaleidescapePanel extends LitElement {
     this.info = null;
     this.rows = [];
     this.selected = null;
+    this.editMovieId = null;
+    this.editTitleTouched = false;
     this.draft = null;
     this.initial = null;
     this.sessions = null;
@@ -209,7 +214,8 @@ export class KaleidescapePanel extends LitElement {
     return this.manual
       ? JSON.stringify(this.manual) !== this.manualInitial
       : this.draft &&
-          JSON.stringify(this.draft) !== JSON.stringify(this.initial);
+          (this.editTitleTouched ||
+            JSON.stringify(this.draft) !== JSON.stringify(this.initial));
   }
   private discard() {
     return (
@@ -434,6 +440,8 @@ export class KaleidescapePanel extends LitElement {
     this.manualInitial = "";
     this.detailRequest++;
     this.selected = null;
+    this.editMovieId = null;
+    this.editTitleTouched = false;
     this.draft = null;
     this.initial = null;
     this.sessions = null;
@@ -455,8 +463,12 @@ export class KaleidescapePanel extends LitElement {
       this.renderRoot
         .querySelector<HTMLDialogElement>("#journal-editor")
         ?.showModal();
-      const picker = this.renderRoot.querySelector<LitElement>(
+      const fields = this.renderRoot.querySelector<LitElement>(
         "kaleidescape-manual-viewing",
+      );
+      await fields?.updateComplete;
+      const picker = fields?.shadowRoot?.querySelector<LitElement>(
+        "kaleidescape-library-title-picker",
       );
       await picker?.updateComplete;
       picker?.shadowRoot?.querySelector<HTMLInputElement>("input")?.focus();
@@ -476,10 +488,21 @@ export class KaleidescapePanel extends LitElement {
       return;
     const form = event.target as HTMLFormElement;
     if (!form.reportValidity()) return;
+    if (!this.manual && this.editTitleTouched && !this.editMovieId) {
+      this.error = "Select a Library movie from the suggestions.";
+      this.requestUpdate();
+      return;
+    }
     try {
       const data = this.manual
         ? manualData(this.manual)
-        : draftData(this.draft, this.selected ? this.initial! : undefined);
+        : {
+            ...draftData(this.draft, this.selected ? this.initial! : undefined),
+            ...(this.editTitleTouched
+              ? { library_title_id: this.editMovieId! }
+              : {}),
+          };
+      if (!this.manual) delete (data as { title?: string }).title;
       if (this.selected && !Object.keys(data).length) {
         this.notice = "There are no changes to save.";
         this.requestUpdate();
@@ -645,8 +668,32 @@ export class KaleidescapePanel extends LitElement {
                 }}
                 @access-denied=${() => this.fail(new ApiError("unauthorized"))}
               ></kaleidescape-manual-viewing>`
-            : renderDraftFields(this.draft, (key, event) =>
-                this.input(key, event),
+            : renderDraftFields(
+                this.draft,
+                (key, event) => this.input(key, event),
+                html`<kaleidescape-library-title-picker
+                    .client=${this.api}
+                    .scope=${this.info}
+                    .initialTitle=${this.initial?.title ?? ""}
+                    .value=${this.editMovieId ?? ""}
+                    .requireRuntime=${false}
+                    .fuzzySearch=${this.fuzzySearch}
+                    .disabled=${this.saving || !!this.pending || !this.info?.library_enabled}
+                    @title-selection=${(event: CustomEvent<TitleSelection>) => {
+                      if (!this.draft) return;
+                      this.editTitleTouched = true;
+                      this.editMovieId = event.detail.movie?.id ?? null;
+                      this.draft = { ...this.draft, title: event.detail.query };
+                      this.requestUpdate();
+                    }}
+                    @access-denied=${() => this.fail(new ApiError("unauthorized"))}
+                  ></kaleidescape-library-title-picker>
+                  <small
+                    >Selecting a different movie keeps the recorded times and
+                    watched minutes. Adjust those fields separately if
+                    needed.</small
+                  >
+                  ${!this.info?.library_enabled ? html`<small>Enable Library to change the movie. Existing timing and notes can still be corrected.</small>` : nothing}`,
               )
         }
         ${this.selected?.origin === "observed" ? html`<small>Only fields you change are marked as manual corrections. Session evidence is retained.</small>` : nothing}
@@ -688,6 +735,8 @@ export class KaleidescapePanel extends LitElement {
   private editRecord() {
     if (!this.selected || this.pending || this.saving) return;
     this.draft = draftFrom(this.selected);
+    this.editMovieId = null;
+    this.editTitleTouched = false;
     this.initial = { ...this.draft };
     this.error = this.notice = "";
     this.requestUpdate();
@@ -708,6 +757,8 @@ export class KaleidescapePanel extends LitElement {
     event?.preventDefault();
     if (this.saving || this.pending || !this.discard()) return;
     this.draft = this.initial = null;
+    this.editMovieId = null;
+    this.editTitleTouched = false;
     this.manual = null;
     this.manualInitial = "";
     this.renderRoot

@@ -420,6 +420,17 @@ viewing deleted and retains history; it does not use Database's permanent
 deletion. The current calendar month refreshes after a confirmed save/delete.
 Household readers see no editor or delete controls.
 
+The list and calendar editors use **Movie from Library**, the same autocomplete
+as Add viewing, with the global personal fuzzy-search choice. Typing clears the
+selection; saving a changed title requires choosing a suggestion. Year and
+format distinguish same-name movies/versions. Selection updates title, exact
+Library link and metadata, preserving timing, runtime, watched minutes and raw
+playback identity unless separately corrected. Unchanged historical titles can
+remain while editing other facts; with Library disabled the movie field is
+read-only. Add viewing still requires a selected version with known runtime;
+editing can select a version whose runtime is missing because existing recorded
+facts remain intact.
+
 With Library enabled, Journal details show locally cached artwork and a **View
 in Library** link for the saved exact version. Library title details provide
 **View journal entries for this movie**, opening the Journal filtered by

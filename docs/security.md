@@ -913,6 +913,29 @@ origins/paths/credentials, and stay outside household journal projections and
 portable imports/exports. Journal sort expressions are fixed and cursors bind
 sort, filters and mode; callers supply no SQL.
 
+Normal `journal/update` title changes likewise accept only a selected
+`library_title_id`, never a free-text title or caller-supplied snapshot. The
+worker validates the exact available scanned version in the enabled current
+source (excluding purchase-match placeholders), derives title/link/metadata and
+commits them atomically with the normal revision, audit and retry receipt.
+Recorded timing/runtime/watched values and raw playback identifiers are
+preserved; the latter cannot be overridden in a selection patch. Other field
+corrections remain possible with Library disabled. Existing historical titles
+are not guessed, migrated or required to match by name. Database/import
+validation stays separate. No schema change is needed.
+
+The Add and Edit dialogs share one bounded autocomplete with year/format
+disambiguation and the global personal fuzzy mode. Typed text invalidates a
+selection and cannot establish identity; clearing, scope/client changes and
+unmount invalidate pending suggestions. Add requires positive cached runtime;
+Edit can select missing-runtime versions while preserving recorded facts.
+Selections require an explicit suggestion and Save action. Server checks apply
+before storage and after awaits; retries bind the original selected source,
+version, patch, actor and revision even after metadata changes. Tests cover
+forgery, same-name/version selection, opt-out, stale rows, exact retries and
+transaction rollback. These changes perform no device/calendar-provider writes
+except the existing separately configured completion-publishing behavior.
+
 Observed checkpoints now persist the same bounded snapshot before completion
 enqueue, independently of calendar opt-in. Resolution is restricted to the
 native configured Library source and exact stored version IDs/handles. Only the

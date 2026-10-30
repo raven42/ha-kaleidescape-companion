@@ -6,6 +6,7 @@ import type { KaleidescapeReader } from "../src/ui/reader";
 import type { JournalCalendar } from "../src/ui/journal-calendar";
 import type { ApiMessage, Viewing } from "../src/core/api";
 import { ApiError } from "../src/core/api";
+import { titlePicker } from "./manual-helpers";
 import { FixtureTransport } from "./fixture";
 
 let panel: KaleidescapePanel | KaleidescapeReader;
@@ -89,7 +90,9 @@ it("refetches the exact current viewing and saves only changed fields while reta
   await edit();
   expect(calendarRoot().querySelector("dialog")!.open).toBe(false);
   expect(
-    editor().querySelector<HTMLInputElement>('[name="title"]')!.value,
+    titlePicker(editor()).querySelector<HTMLInputElement>(
+      '[name="library_movie"]',
+    )!.value,
   ).toBe("The Lantern Voyage");
   input("watched_seconds", "85.50");
   save();

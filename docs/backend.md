@@ -352,6 +352,19 @@ from the first page. Do not parse or alter cursors.
 
 ### Record fields
 
+`journal/update` accepts ordinary changed timing/status/note fields, and an
+optional `patch.library_title_id` to explicitly select a different available,
+scanned version in the enabled current Library. A free-text `title` patch is
+rejected. The worker derives title/link/metadata from that exact ID and commits
+them with the correction, revision and audit/UUID receipt. It preserves recorded
+source/player/content identifiers and runtime/times/watched values unless
+separately corrected; a selection patch cannot also override raw identifiers. It
+may select a version with missing runtime because no timing is inferred. No
+caller-supplied metadata snapshot is accepted. Actor/source/payload-bound
+retries resolve before rereading a changed/unavailable version. Other historical
+corrections work without Library enabled. Database corrections/imports retain
+their separate administrator validation paths.
+
 `journal/create` now requires enabled cached Library access. Its `data` accepts
 only `library_title_id` (an exact available version in the configured source),
 `started_at`, optional `status` (default `completed`), `notes`, and

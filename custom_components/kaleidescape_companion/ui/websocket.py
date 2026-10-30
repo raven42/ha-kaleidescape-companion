@@ -662,14 +662,26 @@ async def async_handle(
                         result["items"] = [
                             public_viewing(row) for row in result["items"]
                         ]
-                case "journal/update" | "database/update":
+                case "journal/update":
+                    library = None
+                    if "library_title_id" in msg["patch"]:
+                        library = get_library(hass, msg["entry_id"], runtime)
+                    result = await repository.async_correct_viewing(
+                        msg["request_id"],
+                        msg["viewing_id"],
+                        msg["expected_revision"],
+                        msg["patch"],
+                        actor_id=user.id,
+                        source=library.source if library else None,
+                    )
+                case "database/update":
                     result = await repository.async_update(
                         msg["request_id"],
                         msg["viewing_id"],
                         msg["expected_revision"],
                         msg["patch"],
                         actor_id=user.id,
-                        include_deleted=operation == "database/update",
+                        include_deleted=True,
                     )
                 case "journal/delete":
                     result = await repository.async_delete(
@@ -699,7 +711,9 @@ async def async_handle(
             or operation == "journal/create"
         ) and get_library(hass, msg["entry_id"], runtime) is not library:
             raise JournalError("not_ready", "Library integration reloaded")
-        if operation.startswith("journal/calendar") and library is not None:
+        if (
+            operation.startswith("journal/calendar") or operation == "journal/update"
+        ) and library is not None:
             if get_library(hass, msg["entry_id"], runtime) is not library:
                 raise JournalError("not_ready", "Library integration reloaded")
         connection.send_result(msg["id"], result)

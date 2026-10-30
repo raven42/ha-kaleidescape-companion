@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased — Library-selected Journal corrections
+
+- Share Add viewing's Library autocomplete with list/calendar editors; require
+  an exact suggestion when changing a movie, with year/format disambiguation.
+- Atomically update the title, Library reference and metadata from that version;
+  preserve recorded viewing facts and reject forged free-text title patches.
+- Retain historical timing/note corrections when Library is disabled, and keep
+  revision checks, actor-bound retries, audit and recoverable deletion.
+- Add selection, authorization, linkage and rollback regressions.
+
 ## Unreleased — Calendar viewing editor
 
 - Add administrator Edit viewing to calendar details, loading the current
