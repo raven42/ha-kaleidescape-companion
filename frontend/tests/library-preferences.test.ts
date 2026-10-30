@@ -245,6 +245,60 @@ it("discards late private totals after an account/scope change", async () => {
   expect(root.querySelector(".purchase-details")).toBeNull();
 });
 
+it.each([25, "all"])(
+  "shuffles on HTTP without randomUUID with page size %s",
+  async (pageSize) => {
+    const getRandomValues = crypto.getRandomValues.bind(crypto);
+    vi.stubGlobal("crypto", { getRandomValues });
+    try {
+      const transport = new FixtureTransport();
+      transport.libraryTitles = Array.from({ length: 60 }, (_, index) =>
+        libraryTitle({
+          id: String(index).padStart(64, "0"),
+          title: `Fictional ${index}`,
+        }),
+      );
+      const root = await mount(transport);
+      change(root, "library_page_size", String(pageSize));
+      await vi.waitFor(() =>
+        expect(transport.uiPreferences.page_size).toBe(pageSize),
+      );
+      change(root, "library_sort", "random");
+      await vi.waitFor(() => expect(button(root, "Randomize")).toBeTruthy());
+      const seed = transport.uiPreferences.random_seed;
+      expect(seed).toMatch(/^[a-f0-9]{32}$/);
+      expect(
+        root.querySelector<HTMLSelectElement>('[name="library_sort"]')!.value,
+      ).toBe("random");
+      button(root, "Randomize").click();
+      await vi.waitFor(() =>
+        expect(transport.uiPreferences.random_seed).not.toBe(seed),
+      );
+      const next = transport.uiPreferences.random_seed;
+      if (pageSize === 25) {
+        await vi.waitFor(() =>
+          expect(button(root, "Next").disabled).toBe(false),
+        );
+        button(root, "Next").click();
+        await flush();
+      }
+      expect(
+        root.querySelector<HTMLSelectElement>('[name="library_sort"]')!.value,
+      ).toBe("random");
+      expect(button(root, "Randomize")).toBeTruthy();
+      const calls = transport.calls.filter((call) =>
+        call.type.endsWith("library/list"),
+      );
+      expect(calls.at(-1)?.filters).toMatchObject({
+        sort: "random",
+        random_seed: next,
+      });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  },
+);
+
 it("All loads bounded revision-bound pages and keeps the entire final remainder", async () => {
   const transport = new FixtureTransport();
   transport.libraryTitles = Array.from({ length: 1105 }, (_, i) =>

@@ -4,7 +4,7 @@ import { counted } from "../core/text";
 import { LitElement, html, nothing } from "lit";
 import { live } from "lit/directives/live.js";
 import type { PropertyValues } from "lit";
-import { ApiError, errorCode, errorMessage } from "../core/api";
+import { ApiError, errorCode, errorMessage, randomId } from "../core/api";
 import type {
   JournalClient,
   JournalInfo,
@@ -722,7 +722,13 @@ export class KaleidescapeLibrary extends LitElement {
   private sort(key: string) {
     let seed = String(this.applied.random_seed ?? "");
     if (key === "random") {
-      const fresh = crypto.randomUUID().replaceAll("-", "");
+      let fresh: string;
+      try {
+        fresh = randomId().replaceAll("-", "");
+      } catch (error) {
+        this.fail(error);
+        return;
+      }
       seed =
         fresh !== seed
           ? fresh

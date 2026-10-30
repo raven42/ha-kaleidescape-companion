@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — Random sorting over HTTP
+
+- Reuse the API client's cryptographic UUID fallback for shuffle seeds when
+  `crypto.randomUUID` is unavailable on HTTP connections. Preserve Randomize and
+  the selected shuffle across paged and All results.
+
 ## Unreleased — Administrator Library purchase totals
 
 - Add a sticky, off-by-default footer-cost toggle and expandable Purchase

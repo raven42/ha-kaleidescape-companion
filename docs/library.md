@@ -370,6 +370,9 @@ footer has extra space below the buttons.
 
 ## Random order
 
+Random sorting supports HTTP Home Assistant connections as well as HTTPS; it
+uses the API client's existing browser-compatible random ID generator.
+
 Choose **Sort by → Random** to shuffle the movie list and return to the first
 page. The direction button becomes **Randomize**; each click starts a new
 shuffle. Random is available in both List and Cover views, without adding a

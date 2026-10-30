@@ -1112,6 +1112,10 @@ filters are added to URLs or persistent browser storage.
 
 ## Library random sorting
 
+Shuffle seeds use the same cryptographic ID generator as mutation requests,
+including its `getRandomValues` fallback on HTTP LAN origins. Missing random
+generation reports a visible error rather than silently abandoning a sort.
+
 Random sorting uses a bounded personal `random_seed` (empty or 32 lowercase
 hexadecimal characters), validated in both settings patches and list filters. A
 deterministic worker-only SHA-256 function ranks source groups or exact version

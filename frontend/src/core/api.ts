@@ -358,7 +358,7 @@ export const MAX_DOWNLOAD_BYTES = 256 * 1024 * 1024;
 export const MAX_ARTWORK_BYTES = 5 * 1024 * 1024;
 export const MAX_IMPORT_BYTES = 32 * 1024 * 1024;
 
-function requestId(): string {
+export function randomId(): string {
   const random = globalThis.crypto;
   if (typeof random?.randomUUID === "function") return random.randomUUID();
   if (typeof random?.getRandomValues !== "function")
@@ -1009,7 +1009,7 @@ export class JournalClient {
       ...values,
       ...scopeFields(scope),
       type: `${DOMAIN}/${operation}`,
-      request_id: requestId(),
+      request_id: randomId(),
     });
     return { scope: scopeFields(scope), message: Object.freeze(message) };
   }
