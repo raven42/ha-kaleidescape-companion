@@ -12,6 +12,8 @@ import { journalStyles, viewingDetails, viewingListRow } from "./journal-view";
 import { landingPage, rememberPage } from "./navigation";
 import "../library/library";
 import "./journal-options";
+import type { JournalOptionsValue } from "./journal-options";
+import type { LibraryCriterion } from "../library/criteria";
 
 export class KaleidescapeReader extends LitElement {
   static properties = {
@@ -42,8 +44,11 @@ export class KaleidescapeReader extends LitElement {
   private descending = true;
   private fuzzySearch = true;
   private journalView: "list" | "calendar" = "list";
+  private calendarSize = 180;
+  private calendarFit = false;
   private journalMovie?: { id: string; title: string };
   private libraryTitleId?: string;
+  private libraryCriterion?: LibraryCriterion;
   private next: string | null = null;
   private cursor?: string;
   private history: (string | undefined)[] = [];
@@ -99,8 +104,11 @@ export class KaleidescapeReader extends LitElement {
     this.descending = true;
     this.fuzzySearch = true;
     this.journalView = "list";
+    this.calendarSize = 180;
+    this.calendarFit = false;
     this.journalMovie = undefined;
     this.libraryTitleId = undefined;
+    this.libraryCriterion = undefined;
     this.loading = false;
     this.error = "";
   }
@@ -225,13 +233,18 @@ export class KaleidescapeReader extends LitElement {
   }
   private selectPage(
     page: "journal" | "library",
-    target?: { movie?: { id: string; title: string }; libraryTitleId?: string },
+    target?: {
+      movie?: { id: string; title: string };
+      libraryTitleId?: string;
+      libraryCriterion?: LibraryCriterion;
+    },
   ) {
     if (page === "library" && !this.scope?.library_enabled) return;
     this.selected = null;
     this.detailLoading = false;
     this.detailRequest++;
     this.libraryTitleId = target?.libraryTitleId;
+    this.libraryCriterion = target?.libraryCriterion;
     this.activePage = page;
     if (page === "journal") {
       this.journalMovie = target?.movie;
@@ -291,6 +304,7 @@ export class KaleidescapeReader extends LitElement {
                 .client=${this.api ?? undefined}
                 .scope=${this.scope}
                 .openTitleId=${this.libraryTitleId}
+                .openCriterion=${this.libraryCriterion}
                 @open-title-journal=${(event: CustomEvent<{ id: string; title: string }>) => this.selectPage("journal", { movie: event.detail })}
                 @access-denied=${() => this.fail(new ApiError("unauthorized"))}
                 @library-disabled=${() => {
@@ -311,12 +325,11 @@ export class KaleidescapeReader extends LitElement {
                       .scope=${this.scope}
                       .disabled=${this.loading}
                       @journal-options=${(
-                        event: CustomEvent<{
-                          fuzzy_search: boolean;
-                          view: "list" | "calendar";
-                        }>,
+                        event: CustomEvent<JournalOptionsValue>,
                       ) => {
                         this.journalView = event.detail.view;
+                        this.calendarSize = event.detail.calendar_size;
+                        this.calendarFit = event.detail.calendar_fit;
                         this.requestUpdate();
                         const changed =
                           this.fuzzySearch !== event.detail.fuzzy_search;
@@ -416,6 +429,9 @@ export class KaleidescapeReader extends LitElement {
                         .status=${this.status}
                         .fuzzy=${this.fuzzySearch}
                         .libraryTitleId=${this.journalMovie?.id}
+                        .daySize=${this.calendarSize}
+                        .fitScreen=${this.calendarFit}
+                        @browse-library=${(event: CustomEvent<LibraryCriterion>) => this.selectPage("library", { libraryCriterion: event.detail })}
                         @access-denied=${() => this.fail(new ApiError("unauthorized"))}
                       ></kaleidescape-journal-calendar>`
                     : html`

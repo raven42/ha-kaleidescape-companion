@@ -407,9 +407,18 @@ isolated operator test, not the fictional preview.
 with previous/next navigation. Local start dates place the posters; search and
 status filters still apply. Same-day covers overlap with about 15% exposed,
 bringing hovered/focused covers forward. Clicking opens compact movie and
-viewing details in one popup, without purchase/detection fields. Turn Calendar
-view off to restore the split list/details layout. See
+viewing details in one popup, without purchase/detection fields. Options
+provides a saved size slider and Fit month to screen. Detail names open fresh
+Library searches; year, genre, rating and format links replace Library filters.
+Turn Calendar view off to restore the split list/details layout. See
 [calendar behavior and browser checks](calendar.md#journal-month-view).
+
+Administrators can open **Edit viewing** from calendar details. Both Journal
+layouts use the same basic editor and its **Delete entry** button, with normal
+confirmation, revision checks and uncertain-write retry. Deletion marks the
+viewing deleted and retains history; it does not use Database's permanent
+deletion. The current calendar month refreshes after a confirmed save/delete.
+Household readers see no editor or delete controls.
 
 With Library enabled, Journal details show locally cached artwork and a **View
 in Library** link for the saved exact version. Library title details provide

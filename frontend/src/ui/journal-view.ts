@@ -147,6 +147,10 @@ export const journalStyles = css`
   .journal-dialog .editor {
     padding: 0;
   }
+  .journal-dialog .delete-viewing {
+    margin-inline-end: auto;
+    order: 0;
+  }
   @media (max-width: 600px) {
     .journal-summary {
       grid-template-columns: minmax(0, 1fr);

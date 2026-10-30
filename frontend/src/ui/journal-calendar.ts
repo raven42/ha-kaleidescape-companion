@@ -13,6 +13,7 @@ import { counted } from "../core/text";
 import { CoverQueue } from "../library/cover";
 import { renderFormatBadges, renderRatingBadge } from "../library/badges";
 import { libraryStyles } from "../library/styles";
+import type { LibraryCriterion } from "../library/criteria";
 import { styles } from "./styles";
 import { calendarStyles } from "./journal-calendar.styles";
 import { dismissBackdrop } from "./dialog";
@@ -36,6 +37,10 @@ export class JournalCalendar extends LitElement {
     status: { type: String },
     fuzzy: { type: Boolean },
     libraryTitleId: { attribute: false },
+    daySize: { type: Number },
+    fitScreen: { type: Boolean },
+    disabled: { type: Boolean },
+    editable: { type: Boolean },
   };
   static styles = [styles, libraryStyles, calendarStyles];
   client?: JournalClient;
@@ -44,6 +49,14 @@ export class JournalCalendar extends LitElement {
   status = "";
   fuzzy = true;
   libraryTitleId?: string;
+  daySize = 180;
+  fitScreen = false;
+  disabled = false;
+  // Only the administrator host connects the shared Journal editor.
+  editable = false;
+  private fittedSize = 180;
+  private resizeObserver?: ResizeObserver;
+  private layoutFrame?: number;
   private month = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   private items: CalendarViewing[] = [];
   private loading = false;
@@ -59,7 +72,73 @@ export class JournalCalendar extends LitElement {
   private detailRequest = 0;
   private detailLoading = false;
   private detailError = "";
+  connectedCallback() {
+    super.connectedCallback();
+    window.addEventListener("resize", this.scheduleLayout);
+    window.visualViewport?.addEventListener("resize", this.scheduleLayout);
+    this.requestUpdate();
+  }
+  protected updated() {
+    if (!this.isConnected) return;
+    if (!this.resizeObserver) {
+      this.resizeObserver = new ResizeObserver(this.scheduleLayout);
+      this.resizeObserver.observe(this);
+      // The surrounding sticky search/header and footer consume viewport space.
+      if (this.previousElementSibling)
+        this.resizeObserver.observe(this.previousElementSibling);
+      if (this.nextElementSibling)
+        this.resizeObserver.observe(this.nextElementSibling);
+    }
+    this.scheduleLayout();
+  }
+  private scheduleLayout = () => {
+    if (!this.fitScreen || !this.isConnected || this.layoutFrame !== undefined)
+      return;
+    this.layoutFrame = requestAnimationFrame(() => {
+      this.layoutFrame = undefined;
+      if (!this.fitScreen || !this.isConnected) return;
+      const viewport = window.visualViewport?.height ?? window.innerHeight;
+      const top = Math.max(
+        0,
+        this.getBoundingClientRect().top,
+        this.previousElementSibling?.getBoundingClientRect().bottom ?? 0,
+      );
+      const main = this.closest("main");
+      const reserve =
+        [".month-bar", ".weekday"].reduce(
+          (height, selector) =>
+            height +
+            (this.renderRoot.querySelector(selector)?.getBoundingClientRect()
+              .height ?? 0),
+          0,
+        ) +
+        [...this.renderRoot.querySelectorAll(".month-status")].reduce(
+          (height, node) => height + node.getBoundingClientRect().height,
+          0,
+        ) +
+        (this.nextElementSibling?.getBoundingClientRect().height ?? 0) +
+        (main ? parseFloat(getComputedStyle(main).paddingBottom) || 0 : 0) +
+        16;
+      const first = new Date(
+        this.month.getFullYear(),
+        this.month.getMonth(),
+        1,
+      );
+      const days = new Date(
+        this.month.getFullYear(),
+        this.month.getMonth() + 1,
+        0,
+      ).getDate();
+      const weeks = Math.ceil((first.getDay() + days) / 7);
+      const size = Math.max(48, Math.floor((viewport - top - reserve) / weeks));
+      if (size !== this.fittedSize) {
+        this.fittedSize = size;
+        this.requestUpdate();
+      }
+    });
+  };
   protected willUpdate() {
+    if (!this.isConnected) return;
     const privacy = `${this.scope?.entry_id}:${this.scope?.dataset_id}:${this.scope?.library_enabled}:${this.scope?.permissions.edit}`;
     if (privacy !== this.privacy || this.client !== this.boundClient) {
       this.clear();
@@ -81,6 +160,12 @@ export class JournalCalendar extends LitElement {
   }
   disconnectedCallback() {
     super.disconnectedCallback();
+    window.removeEventListener("resize", this.scheduleLayout);
+    window.visualViewport?.removeEventListener("resize", this.scheduleLayout);
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = undefined;
+    if (this.layoutFrame !== undefined) cancelAnimationFrame(this.layoutFrame);
+    this.layoutFrame = undefined;
     this.clear();
     this.signature = this.privacy = "";
     this.boundClient = undefined;
@@ -187,6 +272,47 @@ export class JournalCalendar extends LitElement {
       }
     }
   }
+  private browse(key: LibraryCriterion["key"], value: string) {
+    if (!this.scope?.library_enabled || !this.movie) return;
+    this.closeDetails();
+    this.dispatchEvent(
+      new CustomEvent<LibraryCriterion>("browse-library", {
+        detail: { key, value },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    this.requestUpdate();
+  }
+  private editViewing() {
+    if (
+      !this.selected ||
+      !this.editable ||
+      !this.scope?.permissions.edit ||
+      this.disabled ||
+      this.detailLoading
+    )
+      return;
+    const id = this.selected.id;
+    this.closeDetails();
+    this.dispatchEvent(
+      new CustomEvent<string>("edit-viewing", {
+        detail: id,
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    this.requestUpdate();
+  }
+  private detailLink(key: LibraryCriterion["key"], value: string) {
+    return html`<button
+      type="button"
+      class="link detail-link"
+      @click=${() => this.browse(key, value)}
+    >
+      ${value}
+    </button>`;
+  }
   private renderDetails() {
     const viewing = this.selected,
       movie = this.movie;
@@ -207,7 +333,7 @@ export class JournalCalendar extends LitElement {
     >
       <div class="card-head">
         <h2 id="calendar-movie-title">
-          ${viewing?.title ?? "Viewing details"}
+          ${viewing && movie ? this.detailLink("query", viewing.title) : (viewing?.title ?? "Viewing details")}
         </h2>
         <button
           @click=${() => {
@@ -234,10 +360,10 @@ export class JournalCalendar extends LitElement {
                 ${this.detailError ? html`<p class="error" role="alert">${this.detailError} <button @click=${() => this.select(viewing, this.selectedArtwork)}>Retry details</button></p>` : nothing}
                 ${
                   movie
-                    ? html`<div class="movie-badges">
-                          ${renderFormatBadges(movie)}${renderRatingBadge(movie.rating ?? "")}
+                    ? html`<div class="detail-badges">
+                          ${renderFormatBadges(movie, false, (value) => this.browse("format", value))}${renderRatingBadge(movie.rating ?? "", (value) => this.browse("rating", value))}
                         </div>
-                        ${movie.year ? html`<p><strong>Year:</strong> ${movie.year}</p>` : nothing}
+                        ${movie.year ? html`<p><strong>Year:</strong> ${this.detailLink("year", String(movie.year))}</p>` : nothing}
                         ${[
                           ["Cast", movie.actors],
                           ["Directors", movie.directors],
@@ -246,7 +372,7 @@ export class JournalCalendar extends LitElement {
                           (names as string[] | null)?.length
                             ? html`<p>
                                 <strong>${label}:</strong>
-                                ${(names as string[]).join(", ")}
+                                ${(names as string[]).map((name, index) => html`${index ? ", " : ""}${this.detailLink(label === "Genres" ? "genre" : "query", name)}`)}
                               </p>`
                             : nothing,
                         )}`
@@ -272,6 +398,19 @@ export class JournalCalendar extends LitElement {
             </div>`
           : nothing
       }
+      ${
+        viewing && this.editable && this.scope?.permissions.edit
+          ? html`<div class="dialog-footer">
+              <button
+                class="primary"
+                ?disabled=${this.disabled || this.detailLoading}
+                @click=${this.editViewing}
+              >
+                Edit viewing
+              </button>
+            </div>`
+          : nothing
+      }
     </dialog>`;
   }
   protected render() {
@@ -292,7 +431,7 @@ export class JournalCalendar extends LitElement {
     return html`<div class="month-bar">
         <button
           aria-label="Previous month"
-          ?disabled=${year <= 100 && month === 0}
+          ?disabled=${this.disabled || (year <= 100 && month === 0)}
           @click=${() => this.move(-1)}
         >
           ←
@@ -302,7 +441,7 @@ export class JournalCalendar extends LitElement {
         </h2>
         <button
           aria-label="Next month"
-          ?disabled=${year >= 9998 && month === 11}
+          ?disabled=${this.disabled || (year >= 9998 && month === 11)}
           @click=${() => this.move(1)}
         >
           →
@@ -313,6 +452,7 @@ export class JournalCalendar extends LitElement {
       <div class="calendar-scroll">
         <div
           class="month-grid"
+          style=${`--calendar-day-size:${this.fitScreen ? this.fittedSize : this.daySize}px`}
           aria-label="Viewing calendar"
           aria-busy=${this.loading}
         >
@@ -340,6 +480,7 @@ export class JournalCalendar extends LitElement {
                             style=${`--index:${index};--layer:${index + 1}`}
                             aria-label=${`${row.title} · ${row.status === "completed" ? "Completed" : "Partial"}`}
                             title=${row.title}
+                            ?disabled=${this.disabled}
                             @click=${() => this.select(row, row.artwork_key)}
                           >
                             <kaleidescape-library-cover

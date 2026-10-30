@@ -23,6 +23,8 @@ import { dismissBackdrop } from "./dialog";
 import { landingPage, rememberPage } from "./navigation";
 import "./reader";
 import "./journal-options";
+import type { JournalOptionsValue } from "./journal-options";
+import type { LibraryCriterion } from "../library/criteria";
 import "../playback/now-playing";
 import "./settings";
 import "./database";
@@ -89,8 +91,11 @@ export class KaleidescapePanel extends LitElement {
   private descending = true;
   private fuzzySearch = true;
   private journalView: "list" | "calendar" = "list";
+  private calendarSize = 180;
+  private calendarFit = false;
   private journalMovie?: { id: string; title: string };
   private libraryTitleId?: string;
+  private libraryCriterion?: LibraryCriterion;
   private journalReady = false;
   private sessions: SessionPage | null = null;
   private sessionError = "";
@@ -179,8 +184,11 @@ export class KaleidescapePanel extends LitElement {
     this.settingsBusy = this.maintenanceBusy = false;
     this.fuzzySearch = true;
     this.journalView = "list";
+    this.calendarSize = 180;
+    this.calendarFit = false;
     this.journalMovie = undefined;
     this.libraryTitleId = undefined;
+    this.libraryCriterion = undefined;
     this.journalReady = false;
   }
   private bind(api: JournalClient | null) {
@@ -225,7 +233,11 @@ export class KaleidescapePanel extends LitElement {
   }
   private async switchPage(
     page: Page,
-    target?: { movie?: { id: string; title: string }; libraryTitleId?: string },
+    target?: {
+      movie?: { id: string; title: string };
+      libraryTitleId?: string;
+      libraryCriterion?: LibraryCriterion;
+    },
   ) {
     if (
       (page === "library" && !this.info?.library_enabled) ||
@@ -241,6 +253,7 @@ export class KaleidescapePanel extends LitElement {
       return;
     this.closeEditor();
     this.libraryTitleId = target?.libraryTitleId;
+    this.libraryCriterion = target?.libraryCriterion;
     if (page === "journal") {
       this.journalMovie = target?.movie;
       this.query = this.searchText = "";
@@ -638,6 +651,7 @@ export class KaleidescapePanel extends LitElement {
         }
         ${this.selected?.origin === "observed" ? html`<small>Only fields you change are marked as manual corrections. Session evidence is retained.</small>` : nothing}
         <div class="actions dialog-footer">
+          ${this.selected && !this.manual ? html`<button type="button" class="danger delete-viewing" @click=${this.openDelete}>Delete entry</button>` : nothing}
           <button type="button" @click=${this.cancelEdit}>Cancel</button>
           <button type="submit" class="primary">
             ${this.saving ? "Saving…" : this.selected ? "Save changes" : "Add entry"}
@@ -645,6 +659,31 @@ export class KaleidescapePanel extends LitElement {
         </div>
       </fieldset>
     </form>`;
+  }
+  private async editCalendarViewing(id: string) {
+    if (
+      !this.info?.permissions.edit ||
+      this.activePage !== "journal" ||
+      this.journalView !== "calendar" ||
+      this.loading ||
+      this.saving ||
+      this.pending ||
+      this.detailLoading
+    )
+      return;
+    const generation = this.generation;
+    // Refetch the administrator record: the compact calendar has no edit revision.
+    const selection = this.selectRecord(id);
+    const request = this.detailRequest;
+    await selection;
+    if (
+      generation === this.generation &&
+      request === this.detailRequest &&
+      this.selected?.id === id &&
+      !this.draft &&
+      this.info?.permissions.edit
+    )
+      this.editRecord();
   }
   private editRecord() {
     if (!this.selected || this.pending || this.saving) return;
@@ -761,14 +800,11 @@ export class KaleidescapePanel extends LitElement {
               .scope=${this.info}
               .disabled=${blocked}
               @access-denied=${() => this.fail(new ApiError("unauthorized"))}
-              @journal-options=${(
-                event: CustomEvent<{
-                  fuzzy_search: boolean;
-                  view: "list" | "calendar";
-                }>,
-              ) => {
+              @journal-options=${(event: CustomEvent<JournalOptionsValue>) => {
                 this.journalReady = true;
                 this.journalView = event.detail.view;
+                this.calendarSize = event.detail.calendar_size;
+                this.calendarFit = event.detail.calendar_fit;
                 const changed = this.fuzzySearch !== event.detail.fuzzy_search;
                 this.fuzzySearch = event.detail.fuzzy_search;
                 if (changed) {
@@ -860,6 +896,12 @@ export class KaleidescapePanel extends LitElement {
                 .status=${this.status}
                 .fuzzy=${this.fuzzySearch}
                 .libraryTitleId=${this.journalMovie?.id}
+                .daySize=${this.calendarSize}
+                .fitScreen=${this.calendarFit}
+                .disabled=${blocked || this.detailLoading}
+                .editable=${true}
+                @edit-viewing=${(event: CustomEvent<string>) => this.editCalendarViewing(event.detail)}
+                @browse-library=${(event: CustomEvent<LibraryCriterion>) => this.switchPage("library", { libraryCriterion: event.detail })}
                 @access-denied=${() => this.fail(new ApiError("unauthorized"))}
               ></kaleidescape-journal-calendar>`
             : html`
@@ -1094,6 +1136,7 @@ export class KaleidescapePanel extends LitElement {
                         .client=${this.api}
                         .scope=${this.info}
                         .openTitleId=${this.libraryTitleId}
+                        .openCriterion=${this.libraryCriterion}
                         @open-title-journal=${(event: CustomEvent<{ id: string; title: string }>) => this.switchPage("journal", { movie: event.detail })}
                         @access-denied=${() => this.fail(new ApiError("unauthorized"))}
                         @library-disabled=${() => {

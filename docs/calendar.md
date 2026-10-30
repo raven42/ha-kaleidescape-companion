@@ -8,6 +8,14 @@ next arrows move one month; reopening starts at the current month. This view
 reads the local Journal and needs no HA calendar entity or publishing opt-in.
 Administrator and household readers share the same calendar.
 
+With Calendar view enabled, Options also offers **Calendar size** (60–320 px day
+rows, initially 180 px) and **Fit month to screen**. Dragging the slider updates
+covers immediately and saves when released. Fit sizes the rows to the available
+viewport height, accounting for the header, footer and number of weeks; it
+follows window resizing and month navigation. Turning Fit off restores the saved
+slider size. Extremely small screens may still require scrolling to keep dates
+and covers usable. These choices save separately for each HA user.
+
 Viewings appear on their browser-local start date, including partial viewings
 unless excluded by the Journal status filter. Search, fuzzy-search mode and a
 Library movie filter apply to the month. Deleted entries are excluded. Each
@@ -20,6 +28,23 @@ status. The viewing date appears once; a start/end date range appears only when
 the local dates differ. Purchase and detection details are omitted. Close,
 Escape or a backdrop click dismisses the popup.
 
+Administrators also have **Edit viewing** in the popup. It loads the current
+Journal record and opens the same editor as the list view for title, start/end,
+runtime, watched minutes, status and notes. **Delete entry** in that editor
+opens the normal confirmation; Keep entry returns to the editor. Confirming sets
+the viewing's deletion marker and hides it from Journal/calendar reads,
+retaining the stored row and session history for recovery. This action never
+permanently purges the record. Saving or deleting refreshes the current month.
+Household readers retain read-only details. Revision checks, unsaved-change
+guards and explicit retries after uncertain writes match the list editor.
+
+Title and person-name links open Library with a fresh search matching titles,
+actors and directors. Year, genre, rating and format links open Library with one
+exact filter instead. Both actions clear the old Library search and facet
+selections, preserve sort/display preferences, reset pagination and save the new
+criteria. Names search across actor/director roles. These controls require
+enabled, linked Library metadata and work for both household roles.
+
 The exact saved Library version supplies current cached metadata and artwork
 when Library is enabled and that version remains available in the current
 source. Missing metadata or artwork uses a placeholder. Images use the existing
@@ -31,7 +56,14 @@ SQLite budget; narrow the search/status filter if that limit is exceeded.
 Operator browser review: check a month with multiple same-day viewings, hover
 and keyboard focus on rear posters, previous/next navigation, same-day versus
 overnight date labels, missing artwork, mobile horizontal scrolling and popup
-dismissal. Automated component tests do not establish rendered browser geometry.
+dismissal. Check the slider, Fit on five- and six-week months, and detail links
+replacing old Library criteria. Automated component tests do not establish
+rendered browser geometry.
+
+Also review Edit viewing, Cancel, Save, and Delete entry → Keep entry/Confirm
+deletion on fictional entries, including the nested confirmation and editor
+button alignment. Verify the removed viewing disappears from the month and that
+household users have no edit action.
 
 ## Publish to an HA calendar
 

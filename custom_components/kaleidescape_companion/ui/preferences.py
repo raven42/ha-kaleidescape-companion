@@ -179,7 +179,7 @@ def validate_database(patch, previous=None):
 
 
 SEARCH_DEFAULTS = {"fuzzy_search": True}
-JOURNAL_DEFAULTS = {"view": "list"}
+JOURNAL_DEFAULTS = {"view": "list", "calendar_size": 180, "calendar_fit": False}
 
 
 def validate_journal(patch, previous=None):
@@ -188,6 +188,11 @@ def validate_journal(patch, previous=None):
     values = {**JOURNAL_DEFAULTS, **(previous or {}), **patch}
     if values["view"] not in ("list", "calendar"):
         raise invalid("Choose List or Calendar")
+    size = values["calendar_size"]
+    if type(size) is not int or not 60 <= size <= 320:
+        raise invalid("Choose a calendar size between 60 and 320 pixels")
+    if type(values["calendar_fit"]) is not bool:
+        raise invalid("Invalid calendar fit option")
     return values
 
 

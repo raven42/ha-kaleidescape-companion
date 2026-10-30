@@ -204,10 +204,15 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
     ):
         self.assertEqual(
             (await self.repository.async_ui_preferences("a", area="journal"))["values"],
-            {"view": "list"},
+            {"view": "list", "calendar_size": 180, "calendar_fit": False},
         )
         await self.repository.async_ui_preferences_update(
-            "a", False, str(uuid4()), 0, {"view": "calendar"}, "journal"
+            "a",
+            False,
+            str(uuid4()),
+            0,
+            {"view": "calendar", "calendar_size": 90, "calendar_fit": True},
+            "journal",
         )
         await self.repository.async_close()
         self.repository = JournalRepository(self.path)
@@ -216,17 +221,25 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
         await self.repository.async_seed_ui_preferences({})
         self.assertEqual(
             (await self.repository.async_ui_preferences("a", area="journal"))["values"],
-            {"view": "calendar"},
+            {"view": "calendar", "calendar_size": 90, "calendar_fit": True},
         )
         self.assertEqual(
             (await self.repository.async_ui_preferences("b", area="journal"))["values"],
-            {"view": "list"},
+            {"view": "list", "calendar_size": 180, "calendar_fit": False},
         )
         self.assertEqual(
             (await self.repository.async_ui_preferences("a", area="search"))["values"],
             {"fuzzy_search": True},
         )
-        for values in ({"view": "covers"}, {"fuzzy_search": False}):
+        for values in (
+            {"view": "covers"},
+            {"fuzzy_search": False},
+            {"calendar_size": True},
+            {"calendar_size": 59},
+            {"calendar_size": 321},
+            {"calendar_size": 90.5},
+            {"calendar_fit": "true"},
+        ):
             with self.assert_error("invalid_request"):
                 await self.repository.async_ui_preferences_update(
                     "a", False, str(uuid4()), 0, values, "journal"

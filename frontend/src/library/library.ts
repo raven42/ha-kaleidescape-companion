@@ -28,6 +28,7 @@ import {
   collectionLabel,
 } from "./badges";
 import "./collections";
+import type { LibraryCriterion } from "./criteria";
 
 const FILTERS = [
   ["collection", "Collection", "collections"],
@@ -67,11 +68,13 @@ export class KaleidescapeLibrary extends LitElement {
     client: { attribute: false },
     scope: { attribute: false },
     openTitleId: { attribute: false },
+    openCriterion: { attribute: false },
   };
   static styles = [styles, libraryStyles];
   client?: JournalClient;
   scope?: JournalInfo;
   openTitleId?: string;
+  openCriterion?: LibraryCriterion;
   private boundClient?: JournalClient;
   private bound = "";
   private generation = 0;
@@ -166,18 +169,23 @@ export class KaleidescapeLibrary extends LitElement {
     this.bound = "";
   }
   protected willUpdate(changed: PropertyValues) {
-    if (changed.has("openTitleId") && this.openTitleId && this.preferencesReady)
-      void this.openLinkedTitle(this.openTitleId);
-    if (!changed.has("client") && !changed.has("scope")) return;
+    if (!this.isConnected) return;
     const key = `${this.scope?.entry_id}:${this.scope?.dataset_id}:${this.scope?.library_enabled}:${this.scope?.permissions.edit}`;
-    if (this.boundClient === this.client && this.bound === key) return;
-    this.clear();
-    this.boundClient = this.client;
-    this.bound = key;
-    if (this.client && this.scope?.library_enabled) {
-      void this.initializePreferences();
-      void this.refreshStatus();
+    if (this.boundClient !== this.client || this.bound !== key) {
+      this.clear();
+      this.boundClient = this.client;
+      this.bound = key;
+      if (this.client && this.scope?.library_enabled) {
+        void this.initializePreferences();
+        void this.refreshStatus();
+      }
+      return;
     }
+    if (!this.preferencesReady) return;
+    if (changed.has("openCriterion") && this.openCriterion)
+      this.fromDetails(this.openCriterion.key, this.openCriterion.value);
+    if (changed.has("openTitleId") && this.openTitleId)
+      void this.openLinkedTitle(this.openTitleId);
   }
   private async initializePreferences() {
     if (!this.client || !this.scope) return;
@@ -237,7 +245,9 @@ export class KaleidescapeLibrary extends LitElement {
       ) as Filters;
       this.filters = structuredClone(this.applied);
       this.preferencesReady = true;
-      await this.load();
+      if (this.openCriterion)
+        this.fromDetails(this.openCriterion.key, this.openCriterion.value);
+      else await this.load();
       if (this.openTitleId && generation === this.generation)
         void this.openLinkedTitle(this.openTitleId);
     } catch (error) {

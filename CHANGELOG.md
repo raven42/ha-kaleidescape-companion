@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased — Calendar viewing editor
+
+- Add administrator Edit viewing to calendar details, loading the current
+  record/revision into the shared Journal editor.
+- Add Delete entry inside the shared editor with the existing confirmation and
+  recoverable deletion marker; retain row/session history and refresh the month.
+- Preserve household read-only details, conflict/draft protections and exact
+  uncertain-write retries; add component and lifecycle regressions.
+
+## Unreleased — Calendar sizing and Library detail links
+
+- Add saved Journal calendar size and Fit month to screen controls; resize
+  covers without rereading month data.
+- Make compact detail titles, people, genres, years, ratings and format badges
+  open Library with fresh, saved search/filter criteria for either household
+  role.
+- Validate new personal preferences, guard unmounted views against reloads, and
+  add sizing, navigation, persistence and lifecycle regressions.
+
 ## Unreleased — Journal month calendar
 
 - Add a saved Calendar-view toggle under Journal Options for both household

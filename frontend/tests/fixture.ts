@@ -212,7 +212,11 @@ export class FixtureTransport implements Transport {
   };
   sharedPreferences: Record<string, unknown> = { hidden_collections: [] };
   searchPreferences: Record<string, unknown> = { fuzzy_search: true };
-  journalPreferences: Record<string, unknown> = { view: "list" };
+  journalPreferences: Record<string, unknown> = {
+    view: "list",
+    calendar_size: 180,
+    calendar_fit: false,
+  };
   purchaseTotals = {
     purchase_count: 0,
     unique_transactions: 0,

@@ -4,6 +4,7 @@ import "../src/ui/panel";
 import type { JournalCalendar } from "../src/ui/journal-calendar";
 import { dayKey, monthBounds } from "../src/ui/journal-calendar";
 import type { JournalOptions } from "../src/ui/journal-options";
+import type { KaleidescapeLibrary } from "../src/library/library";
 import type { KaleidescapePanel } from "../src/ui/panel";
 import type { KaleidescapeReader } from "../src/ui/reader";
 import { ApiError } from "../src/core/api";
@@ -120,7 +121,9 @@ it("opens compact combined movie and viewing details for the chosen poster witho
     /Purchase|Detected|First detected|fictional viewing for interface testing|fictional-source/,
   );
   expect(dialog.querySelector("textarea, input, form")).toBeNull();
-  dialog.querySelector<HTMLButtonElement>("button")!.click();
+  [...dialog.querySelectorAll<HTMLButtonElement>("button")]
+    .find((node) => node.textContent?.trim() === "Close")!
+    .click();
   await calendar.updateComplete;
   expect(dialog.open).toBe(false);
   expect(dialog.textContent).not.toContain("Fictional Actor");
@@ -251,5 +254,141 @@ it.each(["kaleidescape-panel", "kaleidescape-reader"])(
       ).not.toBeNull(),
     );
     expect(transport.journalPreferences.view).toBe("list");
+  },
+);
+
+it("resizes day rows without reloading month data and fits different week counts to the available height", async () => {
+  const transport = await mount();
+  const grid = root().querySelector<HTMLElement>(".month-grid")!;
+  const reads = () =>
+    transport.calls.filter((call) => call.type.endsWith("journal/calendar"))
+      .length;
+  calendar.daySize = 90;
+  await calendar.updateComplete;
+  expect(grid.style.getPropertyValue("--calendar-day-size")).toBe("90px");
+  expect(reads()).toBe(1);
+  vi.spyOn(calendar, "getBoundingClientRect").mockReturnValue({
+    top: 200,
+  } as DOMRect);
+  vi.spyOn(window, "innerHeight", "get").mockReturnValue(1000);
+  calendar.fitScreen = true;
+  await vi.waitFor(() =>
+    expect(grid.style.getPropertyValue("--calendar-day-size")).toBe("156px"),
+  );
+  // August 2026 takes six weeks, compared with five for October.
+  button("Previous month").click();
+  await vi.waitFor(() =>
+    expect(root().textContent).toContain("September 2026"),
+  );
+  button("Previous month").click();
+  await vi.waitFor(() =>
+    expect(root().querySelectorAll(".day")).toHaveLength(42),
+  );
+  await vi.waitFor(() =>
+    expect(grid.style.getPropertyValue("--calendar-day-size")).toBe("130px"),
+  );
+  calendar.fitScreen = false;
+  await calendar.updateComplete;
+  expect(grid.style.getPropertyValue("--calendar-day-size")).toBe("90px");
+});
+
+it.each([
+  ["Fictional Actor", "query", "Fictional Actor"],
+  ["Fictional Director", "query", "Fictional Director"],
+  ["Science Fiction", "genre", "Science Fiction"],
+  ["2025", "year", "2025"],
+  ["PG", "rating", "PG"],
+  ["4K", "format", "4K"],
+  ["The Lantern Voyage", "query", "The Lantern Voyage"],
+])(
+  "routes a compact-detail %s link to fresh Library criteria",
+  async (label, key, value) => {
+    const transport = new FixtureTransport();
+    transport.viewingLinks.set(
+      transport.records[0].id,
+      transport.libraryTitles[0].id,
+    );
+    await mount(transport);
+    const navigate = vi.fn();
+    calendar.addEventListener("browse-library", navigate);
+    posters()[0].click();
+    await vi.waitFor(() =>
+      expect(root().querySelector("dialog")!.textContent).toContain(
+        "Fictional Actor",
+      ),
+    );
+    const link = [
+      ...root().querySelectorAll<HTMLButtonElement>("dialog button"),
+    ].find((node) => node.textContent?.trim() === label)!;
+    link.click();
+    expect(navigate.mock.calls[0][0].detail).toEqual({ key, value });
+    expect(root().querySelector("dialog")!.open).toBe(false);
+  },
+);
+
+it.each(["kaleidescape-panel", "kaleidescape-reader"])(
+  "opens Library with replaced and saved criteria in %s",
+  async (tag) => {
+    const transport = new FixtureTransport();
+    transport.options.library_enabled = true;
+    transport.journalPreferences.view = "calendar";
+    transport.uiPreferences.query = "Old search";
+    transport.uiPreferences.genre = ["Old genre"];
+    transport.uiPreferences.rating = ["R"];
+    transport.viewingLinks.set(
+      transport.records[0].id,
+      transport.libraryTitles[0].id,
+    );
+    parent = document.createElement(tag) as
+      KaleidescapePanel | KaleidescapeReader;
+    parent.client = transport.client();
+    document.body.append(parent);
+    await vi.waitFor(() =>
+      expect(
+        parent!.shadowRoot!.querySelector("kaleidescape-journal-calendar"),
+      ).not.toBeNull(),
+    );
+    calendar = parent.shadowRoot!.querySelector(
+      "kaleidescape-journal-calendar",
+    ) as JournalCalendar;
+    await vi.waitFor(() => expect(posters()).toHaveLength(3));
+    posters()[0].click();
+    await vi.waitFor(() =>
+      expect(root().querySelector("dialog")!.textContent).toContain(
+        "Science Fiction",
+      ),
+    );
+    [...root().querySelectorAll<HTMLButtonElement>("dialog button")]
+      .find((node) => node.textContent?.trim() === "Science Fiction")!
+      .click();
+    await vi.waitFor(() =>
+      expect(
+        parent!.shadowRoot!.querySelector("kaleidescape-library"),
+      ).not.toBeNull(),
+    );
+    const library = parent.shadowRoot!.querySelector(
+      "kaleidescape-library",
+    ) as KaleidescapeLibrary;
+    await vi.waitFor(() =>
+      expect(transport.uiPreferences.genre).toEqual(["Science Fiction"]),
+    );
+    expect(transport.uiPreferences.query).toBe("");
+    expect(transport.uiPreferences.rating).toEqual([]);
+    expect(
+      library.shadowRoot!.querySelector<HTMLInputElement>(
+        '[name="library_query"]',
+      )!.value,
+    ).toBe("");
+    expect(
+      transport.calls
+        .filter((call) => call.type.endsWith("library/list"))
+        .at(-1)!.filters,
+    ).toMatchObject({ query: "", genre: ["Science Fiction"], offset: 0 });
+    expect(location.search).not.toContain("Science");
+    expect(
+      transport.calls.some((call) =>
+        /library\/sync$|journal\/create$/.test(call.type),
+      ),
+    ).toBe(false);
   },
 );

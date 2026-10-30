@@ -1064,8 +1064,34 @@ the existing visibility-loaded, bounded authenticated artwork cache. Account,
 scope and Library-enablement changes clear state/cache and invalidate pending
 month/detail replies. Dialog dismissal also invalidates pending details.
 
-The personal Journal `view` preference accepts only `list` or `calendar` through
-the existing actor-owned preference API and validated Database settings editor.
+Calendar details expose an Edit viewing action only in the administrator host
+with edit permission. It passes only the viewing UUID to the shared Journal
+editor, which refetches the full administrator record/revision through the
+existing authenticated `journal/get` path. Scope/connection changes invalidate
+late reads. The compact month/detail projections remain unchanged and contain no
+extra private fields or edit revisions. Household readers bind no editor.
+
+Both Journal layouts share changed-field updates, optimistic revisions,
+actor-scoped request UUIDs and guarded uncertain-write retries. The editor's
+Delete entry action uses the existing confirmed `journal/delete` tombstone,
+retaining the row/session history and excluding it from visible reads. It adds
+no physical-delete/restore API and makes no Database purge call. Successful
+mutations refresh the current month without resetting navigation. Regression
+tests cover role separation, stale reads/conflicts, changed-field patches,
+cancelled deletion, exact retry and retained tombstones; browser dialog geometry
+remains an operator check.
+
+The personal Journal `view` preference accepts only `list` or `calendar`;
+`calendar_size` accepts integer heights of 60–320 pixels and `calendar_fit`
+accepts only booleans. They use the existing actor-owned preference API and
+validated Database settings editor. Fit uses local viewport geometry and cleans
+up observers/listeners on unmount. Resizing changes no content or API access.
+Compact detail links use Lit text-bound buttons and pass only a typed search or
+single-facet criterion to Library, which replaces and saves personal criteria
+through its existing validation path. Both roles keep their existing enabled
+Library boundary; no metadata URLs, remote fetches or SQL expressions are used.
+Account/scope changes clear pending navigation state, and late preference reads
+cannot overwrite the selected criterion. Searches/filters stay out of URLs.
 Search migration removes only obsolete fuzzy-search keys, preserving Journal
 layout. No schema change or broader write permission is introduced. Regression
 tests use fictional temporary storage and component DOMs; real-browser geometry

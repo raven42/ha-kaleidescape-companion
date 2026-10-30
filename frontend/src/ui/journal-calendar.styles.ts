@@ -33,7 +33,8 @@ export const calendarStyles = css`
   }
   .day {
     padding: 6px;
-    min-height: 140px;
+    min-height: 0;
+    height: var(--calendar-day-size);
     border-top: 1px solid var(--line);
     border-inline-end: 1px solid var(--line);
   }
@@ -51,6 +52,8 @@ export const calendarStyles = css`
   }
   .cover-stack {
     position: relative;
+    width: min(100%, calc((var(--calendar-day-size) - 32px) * 2 / 3));
+    margin-inline: auto;
     aspect-ratio: 2 / 3;
     isolation: isolate;
   }
@@ -121,12 +124,6 @@ export const calendarStyles = css`
   }
   .movie-detail p {
     overflow-wrap: anywhere;
-  }
-  .movie-badges {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    align-items: center;
   }
   @media (max-width: 600px) {
     .movie-detail {

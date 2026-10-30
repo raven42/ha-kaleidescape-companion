@@ -36,6 +36,8 @@ it("saves the global personal search choice and restores it when reopened", asyn
   expect(changed.mock.calls[0][0].detail).toEqual({
     fuzzy_search: false,
     view: "list",
+    calendar_size: 180,
+    calendar_fit: false,
   });
   element.remove();
   const reopened = await mount(transport);
@@ -92,6 +94,8 @@ it("persists Calendar view independently of the global search preference", async
   expect(changed.mock.calls.at(-1)![0].detail).toEqual({
     fuzzy_search: true,
     view: "calendar",
+    calendar_size: 180,
+    calendar_fit: false,
   });
   expect(transport.searchPreferences).toEqual({ fuzzy_search: true });
   element.remove();
@@ -100,6 +104,44 @@ it("persists Calendar view independently of the global search preference", async
     reopened.querySelector<HTMLInputElement>('[name="journal_calendar_view"]')!
       .checked,
   ).toBe(true);
+});
+
+it("saves live calendar sizing and fit options independently for the current user", async () => {
+  const transport = new FixtureTransport();
+  transport.journalPreferences.view = "calendar";
+  const root = await mount(transport);
+  const changed = vi.fn();
+  element.addEventListener("journal-options", changed);
+  const size = root.querySelector<HTMLInputElement>(
+    '[name="journal_calendar_size"]',
+  )!;
+  size.value = "95";
+  size.dispatchEvent(new Event("input"));
+  expect(changed.mock.calls.at(-1)![0].detail.calendar_size).toBe(95);
+  expect(transport.journalPreferences.calendar_size).toBe(180);
+  size.dispatchEvent(new Event("change"));
+  await vi.waitFor(() =>
+    expect(transport.journalPreferences.calendar_size).toBe(95),
+  );
+  root
+    .querySelector<HTMLInputElement>('[name="journal_calendar_fit"]')!
+    .click();
+  await element.updateComplete;
+  expect(size.disabled).toBe(true);
+  await vi.waitFor(() =>
+    expect(transport.journalPreferences.calendar_fit).toBe(true),
+  );
+  element.remove();
+  const reopened = await mount(transport);
+  expect(
+    reopened.querySelector<HTMLInputElement>('[name="journal_calendar_size"]')!
+      .value,
+  ).toBe("95");
+  expect(
+    reopened.querySelector<HTMLInputElement>('[name="journal_calendar_fit"]')!
+      .checked,
+  ).toBe(true);
+  expect(transport.searchPreferences).toEqual({ fuzzy_search: true });
 });
 
 it("shares the saved mode in both directions when moving between views", async () => {

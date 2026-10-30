@@ -7,6 +7,13 @@ import { PreferenceStore } from "./preference-store";
 import { styles } from "./styles";
 import { dismissBackdrop } from "./dialog";
 
+export interface JournalOptionsValue {
+  fuzzy_search: boolean;
+  view: "list" | "calendar";
+  calendar_size: number;
+  calendar_fit: boolean;
+}
+
 export class JournalOptions extends LitElement {
   static properties = {
     client: { attribute: false },
@@ -20,6 +27,8 @@ export class JournalOptions extends LitElement {
   private store?: PreferenceStore;
   private viewStore?: PreferenceStore;
   private view: "list" | "calendar" = "list";
+  private calendarSize = 180;
+  private calendarFit = false;
   private bound = "";
   private boundClient?: JournalClient;
   private generation = 0;
@@ -52,6 +61,8 @@ export class JournalOptions extends LitElement {
     this.viewStore?.dispose();
     this.viewStore = undefined;
     this.view = "list";
+    this.calendarSize = 180;
+    this.calendarFit = false;
     this.ready = false;
     this.fuzzy = true;
     this.error = "";
@@ -60,7 +71,12 @@ export class JournalOptions extends LitElement {
   private notify() {
     this.dispatchEvent(
       new CustomEvent("journal-options", {
-        detail: { fuzzy_search: this.fuzzy, view: this.view },
+        detail: {
+          fuzzy_search: this.fuzzy,
+          view: this.view,
+          calendar_size: this.calendarSize,
+          calendar_fit: this.calendarFit,
+        },
         bubbles: true,
         composed: true,
       }),
@@ -117,6 +133,8 @@ export class JournalOptions extends LitElement {
       if (generation !== this.generation) return;
       this.fuzzy = values.fuzzy_search as boolean;
       this.view = journal.view as "list" | "calendar";
+      this.calendarSize = journal.calendar_size as number;
+      this.calendarFit = journal.calendar_fit as boolean;
       this.ready = true;
       this.error = "";
       this.notify();
@@ -183,6 +201,51 @@ export class JournalOptions extends LitElement {
           Show a month of viewings on their local start dates. Off restores the
           entry list.
         </p>
+        ${
+          this.view === "calendar"
+            ? html`
+                <label
+                  >Calendar size · ${this.calendarSize} px
+                  <input
+                    name="journal_calendar_size"
+                    type="range"
+                    min="60"
+                    max="320"
+                    step="1"
+                    .value=${String(this.calendarSize)}
+                    ?disabled=${this.calendarFit}
+                    @input=${(event: Event) => {
+                      this.calendarSize = Number(
+                        (event.target as HTMLInputElement).value,
+                      );
+                      this.notify();
+                      this.requestUpdate();
+                    }}
+                    @change=${() => this.viewStore?.set({ calendar_size: this.calendarSize })}
+                  />
+                </label>
+                <label class="check"
+                  ><input
+                    name="journal_calendar_fit"
+                    type="checkbox"
+                    .checked=${this.calendarFit}
+                    @change=${(event: Event) => {
+                      this.calendarFit = (
+                        event.target as HTMLInputElement
+                      ).checked;
+                      this.viewStore?.set({ calendar_fit: this.calendarFit });
+                      this.notify();
+                      this.requestUpdate();
+                    }}
+                  />Fit month to screen</label
+                >
+                <p class="muted">
+                  Size controls the day rows and covers. Fit uses the available
+                  screen height; very small screens may still need scrolling.
+                </p>
+              `
+            : nothing
+        }
         <div class="dialog-footer">
           <button
             @click=${() => this.renderRoot.querySelector("dialog")?.close()}

@@ -11,7 +11,7 @@ user within this dataset. Other household users keep their own choices.
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Personal Library preferences  | List/Covers, entries per page, cover size, title overlay, format/library/rating badge toggles, column widths, applied title search, selected collection/actor/director/rating/status/genre/year/format filters, sort field, direction, random shuffle seed and administrator footer-cost toggle |
 | Personal search preferences   | One fuzzy-search choice across Library, Journal and manual title pickers                                                                                                                                                                                                                        |
-| Personal Journal preferences  | Entry list or Calendar view, toggled from Journal Options                                                                                                                                                                                                                                       |
+| Personal Journal preferences  | Entry list or Calendar view, calendar day-row size and fit-to-screen toggle, set in Journal Options                                                                                                                                                                                             |
 | Personal Database preferences | Table, row count, system-table visibility and per-table sort/order                                                                                                                                                                                                                              |
 | Shared UI preferences         | Hidden collection names, edited by administrators in Settings using known-name checkboxes and custom values                                                                                                                                                                                     |
 | Native HA options             | Default landing page, playback sources and recording rules, Library connection/sync/artwork options and collection-add opt-in                                                                                                                                                                   |
@@ -191,8 +191,13 @@ regular users cannot inspect another user's search preferences.
 ## Journal layout
 
 **Journal → Options → Calendar view** saves `view: calendar` or `view: list` in
-the personal `journal` row (`area=journal`). List is the initial default. The
-choice is independent of global fuzzy search and does not reload HA. Both
+the personal `journal` row (`area=journal`). List is the initial default.
+`calendar_size` is an integer day-row height of 60–320 pixels (default 180);
+`calendar_fit` is a boolean, initially false. The slider updates locally while
+dragging and saves on release; Fit saves immediately and temporarily replaces
+the slider size with a viewport-based height. Disabling Fit restores the saved
+size. These layout changes do not reload month data or discard loaded covers.
+The choice is independent of global fuzzy search and does not reload HA. Both
 household roles can change their own layout. The displayed month and Journal
 search/status remain temporary component state; opening Calendar starts at the
 current local month. See the [month view guide](calendar.md#journal-month-view).
