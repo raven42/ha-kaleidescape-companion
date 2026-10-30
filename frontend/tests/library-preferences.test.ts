@@ -86,6 +86,48 @@ it("restores view, page size, search and sort after navigating away", async () =
     transport.calls.some((call) => call.type.endsWith("/settings/submit")),
   ).toBe(false);
 });
+it("reshuffles Random sorting, preserves its seed through filtering and reload, and keeps six columns", async () => {
+  const transport = new FixtureTransport();
+  let root = await mount(transport);
+  change(root, "library_sort", "random");
+  await flush();
+  const seed = transport.uiPreferences.random_seed;
+  expect(seed).toMatch(/^[a-f0-9]{32}$/);
+  expect(button(root, "Randomize")).toBeTruthy();
+  expect(root.querySelectorAll("thead th")).toHaveLength(6);
+  expect(
+    transport.calls.filter((call) => call.type.endsWith("library/list")).at(-1)
+      ?.filters,
+  ).toMatchObject({ sort: "random", random_seed: seed, offset: 0 });
+  button(root, "Randomize").click();
+  await flush();
+  const next = transport.uiPreferences.random_seed;
+  expect(next).not.toBe(seed);
+  expect(
+    transport.calls.filter((call) => call.type.endsWith("library/list")).at(-1)
+      ?.filters,
+  ).toMatchObject({ sort: "random", random_seed: next });
+  button(root, "Clear Filter").click();
+  await flush();
+  expect(
+    transport.calls.filter((call) => call.type.endsWith("library/list")).at(-1)
+      ?.filters,
+  ).toMatchObject({ random_seed: next });
+  element!.remove();
+  root = await mount(transport);
+  expect(
+    root.querySelector<HTMLSelectElement>('[name="library_sort"]')!.value,
+  ).toBe("random");
+  expect(button(root, "Randomize")).toBeTruthy();
+  expect(
+    transport.calls.filter((call) => call.type.endsWith("library/list")).at(-1)
+      ?.filters,
+  ).toMatchObject({ random_seed: next });
+  change(root, "library_sort", "name");
+  await flush();
+  expect(button(root, "Ascending ↑")).toBeTruthy();
+});
+
 it("All loads bounded revision-bound pages and keeps the entire final remainder", async () => {
   const transport = new FixtureTransport();
   transport.libraryTitles = Array.from({ length: 1105 }, (_, i) =>

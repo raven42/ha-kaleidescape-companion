@@ -128,6 +128,9 @@ class JournalRepository:
         from .search import matches
 
         connection.create_function("companion_matches", 3, matches, deterministic=True)
+        connection.create_function(
+            "companion_shuffle", 2, library_browse.shuffle_key, deterministic=True
+        )
         from ..library.formats import labels as format_labels
 
         connection.create_function(

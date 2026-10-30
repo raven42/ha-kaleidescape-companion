@@ -208,30 +208,30 @@ without raw source IDs, origins, or paths. Access, role, scope/readiness, and
 opt-out are checked again after awaited work.
 
 List `filters` accepts `query`, `fuzzy`, `collection`, `actor`, `director`,
-`rating`, `genre`, `year`, `format`, `status`, `sort`, `descending`, `offset`,
-optional `revision`, `grouped`, and `limit`. `limit` must be an integer from 1
-to 1000 (default 50); list responses echo it. `grouped=true` is used by the UI;
-omitted/false preserves the original version-list API. Grouped responses contain
-compact display summaries; full synopses/credits are fetched only through
-`library/versions`. Group summaries include `version_count`, `formats` (up to
-100 with a truncation flag), `years` (up to 100), and maximum known runtime. A
-group's opaque ID is a representative current version key; it is not a permanent
-film identity. `library/versions` accepts `title_id`, `offset`, and optional
-source `revision`, returning at most 50 positively projected versions sharing
-the selected source group. Regular-user info also includes the name count and an
-opaque `preferences_key`. List pages include that key; subsequent pages can send
-it to reject stale display preferences without changing the source revision.
-Visible Library polling uses it to refresh hidden labels after an external
-shared-preference change. Facets take arrays of at most 100 strings; a single
-string is retained for existing clients. `status` values are `watched`,
-`unwatched`, `in_progress`, and `unknown`. `sort` is one of `name`, `year`,
-`collection`, `length`, `watched`, or `added`. List pages use source/preference
-revisions, a 1000-entry ceiling, and an 8 MiB conservative serialized JSON
-payload budget (including facets). Oversized pages fail with
-`library_page_too_large`; reduce the target and retry. Internal lookup batches
-stay below 999 SQLite parameters. Individual-version pages share the byte budget
-and remain capped at 50. Fixed sort expressions and bound values accept no
-client SQL or paths.
+`rating`, `genre`, `year`, `format`, `status`, `sort`, `descending`,
+`random_seed`, `offset`, optional `revision`, `grouped`, and `limit`. `limit`
+must be an integer from 1 to 1000 (default 50); list responses echo it.
+`grouped=true` is used by the UI; omitted/false preserves the original
+version-list API. Grouped responses contain compact display summaries; full
+synopses/credits are fetched only through `library/versions`. Group summaries
+include `version_count`, `formats` (up to 100 with a truncation flag), `years`
+(up to 100), and maximum known runtime. A group's opaque ID is a representative
+current version key; it is not a permanent film identity. `library/versions`
+accepts `title_id`, `offset`, and optional source `revision`, returning at most
+50 positively projected versions sharing the selected source group. Regular-user
+info also includes the name count and an opaque `preferences_key`. List pages
+include that key; subsequent pages can send it to reject stale display
+preferences without changing the source revision. Visible Library polling uses
+it to refresh hidden labels after an external shared-preference change. Facets
+take arrays of at most 100 strings; a single string is retained for existing
+clients. `status` values are `watched`, `unwatched`, `in_progress`, and
+`unknown`. `sort` is one of `name`, `year`, `collection`, `length`, `watched`,
+or `added`. List pages use source/preference revisions, a 1000-entry ceiling,
+and an 8 MiB conservative serialized JSON payload budget (including facets).
+Oversized pages fail with `library_page_too_large`; reduce the target and retry.
+Internal lookup batches stay below 999 SQLite parameters. Individual-version
+pages share the byte budget and remain capped at 50. Fixed sort expressions and
+bound values accept no client SQL or paths.
 
 ## Storage, artwork, and recovery
 
@@ -367,3 +367,22 @@ default when `fuzzy` is omitted.
 
 The filter panes use consistent inner heading padding, and their sticky action
 footer has extra space below the buttons.
+
+## Random order
+
+Choose **Sort by → Random** to shuffle the movie list and return to the first
+page. The direction button becomes **Randomize**; each click starts a new
+shuffle. Random is available in both List and Cover views, without adding a
+spreadsheet column. Switching to another sort restores the usual direction
+control.
+
+The personal Library preferences retain the shuffle seed with the sort choice.
+Paging, filtering, switching layouts, cover resizing and reloads preserve that
+order until the next shuffle. Movie groups are shuffled as units, so alternate
+formats stay together. Normal content-revision checks still apply during paging.
+
+For the list API, `sort=random` uses `random_seed`, an empty default or a
+32-character lowercase hexadecimal string. The worker orders a deterministic
+SHA-256 rank of the seed and source group (exact version ID for ungrouped
+queries). Different pages and All use the same seed; `descending` has no effect
+in Random mode. The seed is a browsing preference, not a credential.

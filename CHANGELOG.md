@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — Random Library sorting
+
+- Add Random sorting in List and Cover views, with a Randomize button that
+  starts a fresh shuffle from page one.
+- Save the shuffle seed with personal preferences and keep the order stable
+  across paging, filters, layouts and reloads; retain six spreadsheet columns.
+
 ## Unreleased — Linked Journal and Library details
 
 - Show cached artwork and an exact Library detail link in Journal entries for

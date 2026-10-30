@@ -3162,7 +3162,8 @@ const N = [
   ["collection", "Collection"],
   ["length", "Length"],
   ["watched", "Status"],
-  ["added", "Added on"]
+  ["added", "Added on"],
+  ["random", "Random"]
 ], ht = [
   ["show_titles", "Show titles on covers"],
   ["show_format", "Show format"],
@@ -3233,6 +3234,7 @@ const N = [
         [
           "query",
           "sort",
+          "random_seed",
           "descending",
           ...N.map(([s]) => s),
           "status"
@@ -3472,13 +3474,20 @@ const N = [
     );
   }
   sort(e) {
+    let t = String(this.applied.random_seed ?? "");
+    if (e === "random") {
+      const i = crypto.randomUUID().replaceAll("-", "");
+      t = i !== t ? i : (i[0] === "0" ? "1" : "0") + i.slice(1);
+    }
     this.applied = {
       ...this.applied,
       sort: e,
-      descending: this.applied.sort === e ? !this.applied.descending : !1
+      descending: e !== "random" && this.applied.sort === e ? !this.applied.descending : !1,
+      random_seed: t
     }, this.preferences?.set({
       sort: this.applied.sort,
-      descending: this.applied.descending
+      descending: this.applied.descending,
+      random_seed: t
     }), this.load();
   }
   openFilters() {
@@ -3488,7 +3497,8 @@ const N = [
     clearTimeout(this.searchTimer), this.filters = {
       query: "",
       sort: this.applied.sort,
-      descending: this.applied.descending
+      descending: this.applied.descending,
+      random_seed: this.applied.random_seed
     }, this.applied = { ...this.filters }, this.draft = {}, this.facetSearch = "", this.saveFilters(), this.load();
   }
   fromDetails(e, t) {
@@ -3496,6 +3506,7 @@ const N = [
       query: e === "query" ? t : "",
       sort: this.applied.sort,
       descending: this.applied.descending,
+      random_seed: this.applied.random_seed,
       ...e === "query" ? {} : { [e]: [t] }
     }, this.applied = structuredClone(this.filters), this.draft = {}, this.facetSearch = "", this.saveFilters(), this.closeDialog("title-dialog"), this.load(), this.updateComplete.then(
       () => this.renderRoot.querySelector('[name="library_query"]')?.focus()
@@ -4043,7 +4054,7 @@ const N = [
             </select></label
           >
           <button @click=${() => this.sort(String(this.applied.sort))}>
-            ${this.applied.descending ? "Descending ↓" : "Ascending ↑"}
+            ${this.applied.sort === "random" ? "Randomize" : this.applied.descending ? "Descending ↓" : "Ascending ↑"}
           </button>
           <button
             aria-haspopup="dialog"
@@ -4081,7 +4092,7 @@ const N = [
                   </colgroup>
                   <thead>
                     <tr>
-                      ${lt.map(
+                      ${lt.filter(([h]) => h !== "random").map(
       ([h, d], c) => r`<th
                             aria-sort=${this.applied.sort === h ? this.applied.descending ? "descending" : "ascending" : "none"}
                           >

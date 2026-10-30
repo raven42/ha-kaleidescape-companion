@@ -44,6 +44,7 @@ const SORTS = [
   ["length", "Length"],
   ["watched", "Status"],
   ["added", "Added on"],
+  ["random", "Random"],
 ] as const;
 type Filters = Record<string, string | string[] | boolean>;
 const DISPLAY_OPTIONS = [
@@ -219,6 +220,7 @@ export class KaleidescapeLibrary extends LitElement {
         [
           "query",
           "sort",
+          "random_seed",
           "descending",
           ...FILTERS.map(([key]) => key),
           "status",
@@ -699,14 +701,27 @@ export class KaleidescapeLibrary extends LitElement {
     );
   }
   private sort(key: string) {
+    let seed = String(this.applied.random_seed ?? "");
+    if (key === "random") {
+      const fresh = crypto.randomUUID().replaceAll("-", "");
+      seed =
+        fresh !== seed
+          ? fresh
+          : (fresh[0] === "0" ? "1" : "0") + fresh.slice(1);
+    }
     this.applied = {
       ...this.applied,
       sort: key,
-      descending: this.applied.sort === key ? !this.applied.descending : false,
+      descending:
+        key !== "random" && this.applied.sort === key
+          ? !this.applied.descending
+          : false,
+      random_seed: seed,
     };
     this.preferences?.set({
       sort: this.applied.sort,
       descending: this.applied.descending,
+      random_seed: seed,
     });
     void this.load();
   }
@@ -722,6 +737,7 @@ export class KaleidescapeLibrary extends LitElement {
       query: "",
       sort: this.applied.sort,
       descending: this.applied.descending,
+      random_seed: this.applied.random_seed,
     };
     this.applied = { ...this.filters };
     this.draft = {};
@@ -737,6 +753,7 @@ export class KaleidescapeLibrary extends LitElement {
       query: key === "query" ? value : "",
       sort: this.applied.sort,
       descending: this.applied.descending,
+      random_seed: this.applied.random_seed,
       ...(key === "query" ? {} : { [key]: [value] }),
     };
     this.applied = structuredClone(this.filters);
@@ -1455,7 +1472,7 @@ export class KaleidescapeLibrary extends LitElement {
             </select></label
           >
           <button @click=${() => this.sort(String(this.applied.sort))}>
-            ${this.applied.descending ? "Descending ↓" : "Ascending ↑"}
+            ${this.applied.sort === "random" ? "Randomize" : this.applied.descending ? "Descending ↓" : "Ascending ↑"}
           </button>
           <button
             aria-haspopup="dialog"
@@ -1497,7 +1514,7 @@ export class KaleidescapeLibrary extends LitElement {
                   </colgroup>
                   <thead>
                     <tr>
-                      ${SORTS.map(
+                      ${SORTS.filter(([key]) => key !== "random").map(
                         ([key, label], index) =>
                           html`<th
                             aria-sort=${this.applied.sort === key ? (this.applied.descending ? "descending" : "ascending") : "none"}

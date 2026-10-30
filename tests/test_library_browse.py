@@ -27,6 +27,49 @@ class GroupedLibraryTest(unittest.IsolatedAsyncioTestCase):
     page = library_tests.LibraryStorageTest.page
     assert_error = library_tests.LibraryStorageTest.assert_error
 
+    async def test_seeded_random_sort_is_stable_across_pages_and_reshuffles(self):
+        rows = [
+            {
+                **ROWS[0],
+                "source_handle": f"movie-{i}-version-{j}",
+                "source_group": f"group-{i}",
+                "title": f"Fictional movie {i}",
+            }
+            for i in range(30)
+            for j in range(2)
+        ]
+        await self.repository.async_library_catalog(ORIGIN, rows, {})
+        filters = {"grouped": True, "sort": "random", "random_seed": "a" * 32}
+        whole = await self.page(**filters, limit=100)
+        expected = [row["id"] for row in whole["items"]]
+        paged = []
+        for offset in range(0, 30, 7):
+            page = await self.page(
+                **filters, limit=7, offset=offset, revision=whole["revision"]
+            )
+            paged.extend(row["id"] for row in page["items"])
+        self.assertEqual(paged, expected)
+        self.assertEqual(len(set(paged)), 30)
+        self.assertTrue(all(row["version_count"] == 2 for row in whole["items"]))
+        self.assertEqual(
+            [
+                row["id"]
+                for row in (await self.page(**filters, descending=True, limit=100))[
+                    "items"
+                ]
+            ],
+            expected,
+        )
+        reshuffled = await self.page(**{**filters, "random_seed": "b" * 32}, limit=100)
+        self.assertNotEqual([row["id"] for row in reshuffled["items"]], expected)
+        self.assertEqual({row["id"] for row in reshuffled["items"]}, set(expected))
+        for seed in (None, 1, True, "bad", "a" * 33, "' OR 1=1 --"):
+            with self.subTest(seed=seed), self.assert_error("invalid_request"):
+                await self.page(sort="random", random_seed=seed)
+        versions = await self.page(sort="random", random_seed="a" * 32, limit=100)
+        self.assertEqual(versions["total"], 60)
+        self.assertEqual(len({row["id"] for row in versions["items"]}), 60)
+
     async def test_year_genre_formats_and_unrated_filters_use_exact_positive_metadata(
         self,
     ):

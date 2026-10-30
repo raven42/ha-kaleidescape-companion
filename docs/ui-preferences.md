@@ -7,17 +7,19 @@ user within this dataset. Other household users keep their own choices.
 
 ## What is stored
 
-| Scope                         | Values                                                                                                                                                                                                                                   |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Personal Library preferences  | List/Covers, entries per page, cover size, title overlay, format/library/rating badge toggles, column widths, applied title search, selected collection/actor/director/rating/status/genre/year/format filters, sort field and direction |
-| Personal search preferences   | One fuzzy-search choice across Library, Journal and manual title pickers                                                                                                                                                                 |
-| Personal Database preferences | Table, row count, system-table visibility and per-table sort/order                                                                                                                                                                       |
-| Shared UI preferences         | Hidden collection names, edited by administrators in Settings using known-name checkboxes and custom values                                                                                                                              |
-| Native HA options             | Default landing page, playback sources and recording rules, Library connection/sync/artwork options and collection-add opt-in                                                                                                            |
+| Scope                         | Values                                                                                                                                                                                                                                                        |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Personal Library preferences  | List/Covers, entries per page, cover size, title overlay, format/library/rating badge toggles, column widths, applied title search, selected collection/actor/director/rating/status/genre/year/format filters, sort field, direction and random shuffle seed |
+| Personal search preferences   | One fuzzy-search choice across Library, Journal and manual title pickers                                                                                                                                                                                      |
+| Personal Database preferences | Table, row count, system-table visibility and per-table sort/order                                                                                                                                                                                            |
+| Shared UI preferences         | Hidden collection names, edited by administrators in Settings using known-name checkboxes and custom values                                                                                                                                                   |
+| Native HA options             | Default landing page, playback sources and recording rules, Library connection/sync/artwork options and collection-add opt-in                                                                                                                                 |
 
 Open **Options** beside Filters/Clear Filter for view type, entries per page,
 cover-art size (in Cover mode), title overlays, format/library/rating badge
-toggles. Sort/order controls are in the main sticky Library toolbar and save to
+toggles. Random sorting replaces the direction button with **Randomize**; the
+shuffle seed saves with the personal sort and remains stable across pages and
+reloads. Sort/order controls are in the main sticky Library toolbar and save to
 the same personal row. Choices save immediately and the popup stays open while
 adjusting them; Done, Escape or a backdrop click closes it without rolling back
 accepted changes. Titles, format and library badges start enabled. Titles

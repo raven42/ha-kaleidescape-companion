@@ -198,6 +198,7 @@ export class FixtureTransport implements Transport {
     widths: [360, 90, 260, 150, 140, 210],
     query: "",
     sort: "name",
+    random_seed: "",
     descending: false,
     collection: [],
     actor: [],
@@ -569,7 +570,16 @@ export class FixtureTransport implements Transport {
                   ? a.first_seen.localeCompare(b.first_seen)
                   : a.title.localeCompare(b.title),
       );
-      if (filters.descending) rows.reverse();
+      if (filters.sort === "random") {
+        // A deterministic fixture shuffle; production uses SHA-256 on the worker.
+        const rank = (id: string) => {
+          let value = 2166136261;
+          for (const char of `${filters.random_seed}:${id}`)
+            value = Math.imul(value ^ char.charCodeAt(0), 16777619) >>> 0;
+          return value;
+        };
+        rows.sort((a, b) => rank(a.id) - rank(b.id));
+      } else if (filters.descending) rows.reverse();
       const limit = Number(filters.limit ?? 50);
       const offset = Number(filters.offset ?? 0);
       result = {

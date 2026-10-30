@@ -1109,3 +1109,15 @@ removal does not delete viewing history; absent targets yield no navigable link.
 Browser linkage state and cached image URLs are cleared on scope/account changes
 and unmount; stale responses cannot restore old content. No record identities or
 filters are added to URLs or persistent browser storage.
+
+## Library random sorting
+
+Random sorting uses a bounded personal `random_seed` (empty or 32 lowercase
+hexadecimal characters), validated in both settings patches and list filters. A
+deterministic worker-only SHA-256 function ranks source groups or exact version
+IDs; seeds are SQL parameters, never SQL expressions. Pagination and All reuse
+the same seed and normal content/source/preference revision checks. Sorting
+changes no content, access permissions, device state or journal links. The seed
+is stored with personal Library preferences, not in URLs or browser storage;
+existing ownership and retry protections apply. No schema change or additional
+package is required.

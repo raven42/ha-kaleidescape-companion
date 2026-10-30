@@ -1,6 +1,7 @@
 """Validated native landing option and private, database-backed UI preferences."""
 
 import json
+import re
 
 from ..core.models import invalid, text
 from ..library.config import collection_names
@@ -26,6 +27,7 @@ LIBRARY_DEFAULTS = {
     "widths": [360, 90, 260, 150, 140, 210],
     "query": "",
     "sort": "name",
+    "random_seed": "",
     "descending": False,
     "collection": [],
     "actor": [],
@@ -36,7 +38,7 @@ LIBRARY_DEFAULTS = {
     "format": [],
     "status": [],
 }
-SORTS = {"name", "year", "collection", "length", "watched", "added"}
+SORTS = {"name", "year", "collection", "length", "watched", "added", "random"}
 
 
 def validate(values, previous):
@@ -63,6 +65,9 @@ def validate_library(patch, previous=None):
     values = {**LIBRARY_DEFAULTS, **(previous or {}), **patch}
     if values["view"] not in ("list", "covers") or values["sort"] not in tuple(SORTS):
         raise invalid("Invalid Library view/sort")
+    seed = values["random_seed"]
+    if not isinstance(seed, str) or (seed and not re.fullmatch(r"[a-f0-9]{32}", seed)):
+        raise invalid("Invalid Library shuffle seed")
     count = values["page_size"]
     if not (type(count) is int and count in {25, 100, 1000}) and count != "all":
         raise invalid("Choose 25, 100, 1000, or All")

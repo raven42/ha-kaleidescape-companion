@@ -204,6 +204,11 @@ def library_info(db, source, excluded=""):
     }
 
 
+def shuffle_key(value, seed):
+    """Keep one stable shuffle across pages until its seed changes."""
+    return hashlib.sha256(f"{seed}:{value}".encode()).digest()
+
+
 def library_list(db, source, filters, excluded=""):
     """Query local SQLite with parameters and fixed sort expressions."""
     allowed = {
@@ -218,6 +223,7 @@ def library_list(db, source, filters, excluded=""):
         "format",
         "status",
         "sort",
+        "random_seed",
         "descending",
         "offset",
         "revision",
@@ -253,6 +259,9 @@ def library_list(db, source, filters, excluded=""):
         + ")"
     )
     sort = filters.get("sort", "name")
+    seed = filters.get("random_seed", "")
+    if not isinstance(seed, str) or (seed and not re.fullmatch(r"[a-f0-9]{32}", seed)):
+        raise invalid("Invalid Library shuffle seed")
     sorts = {
         "name": "t.title_search",
         "length": "json_extract(t.data,'$.duration_seconds')",
@@ -260,6 +269,7 @@ def library_list(db, source, filters, excluded=""):
         "year": "json_extract(t.data,'$.year')",
         "collection": collection_sql,
         "added": f"coalesce({PURCHASE_SQL},t.first_seen)",
+        "random": "companion_shuffle(t.id,?)",
     }
     if not isinstance(sort, str) or sort not in sorts:
         raise invalid("Invalid library sort")
@@ -381,18 +391,22 @@ def library_list(db, source, filters, excluded=""):
             offset,
             info,
             limit,
+            seed,
         )
     total = db.execute(f"SELECT count(*) FROM {join} WHERE {where}", values).fetchone()[
         0
     ]
-    order = sorts[sort] + (" DESC" if descending else " ASC")
+    order = sorts[sort] + (" DESC" if descending and sort != "random" else " ASC")
+    sort_values = (
+        (seed,) if sort == "random" else hidden if sort == "collection" else ()
+    )
     rows = db.execute(
         f"""SELECT t.*,({STATUS_SQL}) watched_status,
             {PURCHASE_SQL} effective_purchased_on,
             ({FAVORITE_SQL}) is_favorite,({RECENT_SQL}) is_recently_added
         FROM {join} WHERE {where}
         ORDER BY {order},t.id LIMIT ? OFFSET ?""",
-        (*values, *(hidden if sort == "collection" else ()), limit + 1, offset),
+        (*values, *sort_values, limit + 1, offset),
     ).fetchall()
     memberships = memberships_for(
         db, source, [row["id"] for row in rows[:limit]], hidden, by_id=True
@@ -499,6 +513,7 @@ def grouped_page(
     offset,
     info,
     limit,
+    seed="",
 ):
     """Filter per version, group before pagination, and summarize all versions."""
     join = "library t JOIN library_sources s ON s.id=t.source_id"
@@ -512,8 +527,9 @@ def grouped_page(
         "length": "duration_seconds",
         "watched": "status_rank",
         "added": "coalesce(purchased_on,first_seen)",
+        "random": "companion_shuffle(source_group,?)",
     }
-    direction = "DESC" if descending else "ASC"
+    direction = "DESC" if descending and sort != "random" else "ASC"
     groups = db.execute(
         f"""WITH matching AS (
         SELECT DISTINCT t.source_group FROM {join} WHERE {where}
@@ -537,7 +553,14 @@ def grouped_page(
         GROUP BY source_group
         ORDER BY {sorts[sort]} {direction},title_search,source_group
         LIMIT ? OFFSET ?""",
-        (*values, *hidden, source, limit + 1, offset),
+        (
+            *values,
+            *hidden,
+            source,
+            *((seed,) if sort == "random" else ()),
+            limit + 1,
+            offset,
+        ),
     ).fetchall()
     page = groups[:limit]
     if not page:
