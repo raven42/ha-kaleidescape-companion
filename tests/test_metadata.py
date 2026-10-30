@@ -130,7 +130,6 @@ class MetadataTest(unittest.IsolatedAsyncioTestCase):
         claimed = await self.repository.async_calendar_claim()
         data = event_data(
             claimed,
-            "dataset",
             "{title} {year}",
             "{cast} | {director} | {genre} | {rating}",
         )

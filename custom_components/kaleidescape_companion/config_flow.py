@@ -11,6 +11,7 @@ from homeassistant.config_entries import (
 from homeassistant.core import callback
 
 from .const import DOMAIN, NAME
+from .core.runtime import KaleidescapeRuntime
 from .core.settings import form, validate
 
 
@@ -60,6 +61,10 @@ class KaleidescapeOptionsFlow(OptionsFlowWithReload):
             except ValueError as error:
                 errors["base"] = str(error)
             else:
+                runtime = getattr(self.config_entry, "runtime_data", None)
+                if updated != config and isinstance(runtime, KaleidescapeRuntime):
+                    # Removing an active HA panel sends its browser to the dashboard.
+                    runtime.preserve_panel_on_reload = True
                 return self.async_create_entry(title="", data=updated)
         return self.async_show_form(
             step_id="init",

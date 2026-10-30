@@ -72,6 +72,26 @@ it("filters titles and status and sends bounded page requests", async () => {
   await waitFor("A Map of Quiet Places");
   expect(content()).not.toContain("The Lantern Voyage");
 });
+it("opens household-safe entry details without exposing administrator fields", async () => {
+  button("The Lantern Voyage").click();
+  await vi.waitFor(() =>
+    expect(
+      reader.shadowRoot!.querySelector(".entries-detail .journal-title")
+        ?.textContent,
+    ).toBe("The Lantern Voyage"),
+  );
+  expect(content()).toContain("Runtime");
+  expect(content()).not.toContain("fictional viewing for interface testing");
+  expect(content()).not.toContain("fictional-source");
+  expect(reader.shadowRoot!.querySelector("form.editor, textarea")).toBeNull();
+  expect(button("Edit viewing")).toBeUndefined();
+  expect(
+    transport.calls.some((call) => call.type.endsWith("/journal/get")),
+  ).toBe(true);
+  expect(
+    transport.calls.some((call) => call.type.endsWith("/journal/sessions")),
+  ).toBe(false);
+});
 it("clears records on denied access", async () => {
   transport.failure = "unauthorized";
   button("Refresh").click();

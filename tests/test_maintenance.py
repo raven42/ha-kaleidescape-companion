@@ -495,6 +495,7 @@ class MaintenanceApiTest(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(result["result"], {"type": "create_entry"})
         self.assertEqual(self.entry.options["minimum_runtime_minutes"], 20)
+        self.assertTrue(self.entry.runtime_data.preserve_panel_on_reload)
         self.hass.config_entries.async_schedule_reload.assert_called_once_with(
             self.entry.entry_id
         )

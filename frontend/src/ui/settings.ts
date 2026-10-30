@@ -510,7 +510,7 @@ export class KaleidescapeSettings extends LitElement {
                               </datalist>
                               Allowed fields: {title}, {year}, {collection},
                               {cast}, {director}, {writer}, {studio}, {genre},
-                              {duration}, {rating}, {artwork}, {format},
+                              {duration}, {rating}, {format},
                               {edition}, {synopsis}, {purchase_date},
                               {added_on}, {status}, {started_at}, {ended_at},
                               {watched}. Duration and watched time are minutes;

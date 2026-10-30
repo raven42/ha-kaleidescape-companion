@@ -8,6 +8,7 @@ from homeassistant.components import frontend
 from homeassistant.config_entries import ConfigEntries
 
 from custom_components.kaleidescape_companion import (
+    async_remove_entry,
     async_setup_entry,
     async_unload_entry,
 )
@@ -85,6 +86,42 @@ class PanelTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             self.hass.data[frontend.DATA_PANELS][PANEL_PATH].component_name, "foreign"
         )
+        await async_remove_entry(self.hass, self.entry)
+        self.assertEqual(
+            self.hass.data[frontend.DATA_PANELS][PANEL_PATH].component_name, "foreign"
+        )
+
+    async def test_options_reload_keeps_the_same_panel_route_until_ready(self):
+        panel = self.hass.data[frontend.DATA_PANELS][PANEL_PATH]
+        self.entry.runtime_data.preserve_panel_on_reload = True
+        await async_unload_entry(self.hass, self.entry)
+        self.assertIs(self.hass.data[frontend.DATA_PANELS][PANEL_PATH], panel)
+        self.assertFalse(self.entry.runtime_data.ready)
+        await async_setup_entry(self.hass, self.entry)
+        self.addAsyncCleanup(self.entry.runtime_data.repository.async_close)
+        self.assertIs(self.hass.data[frontend.DATA_PANELS][PANEL_PATH], panel)
+        self.assertFalse(self.entry.runtime_data.preserve_panel_on_reload)
+        self.assertTrue(self.entry.runtime_data.ready)
+        self.entry.runtime_data.preserve_panel_on_reload = True
+        await async_unload_entry(self.hass, self.entry)
+        await async_remove_entry(self.hass, self.entry)
+        self.assertFalse(frontend.async_panel_exists(self.hass, PANEL_PATH))
+
+    async def test_retained_panel_can_update_its_asset_without_removing_the_route(self):
+        from custom_components.kaleidescape_companion.ui.panel import async_setup_panel
+
+        self.entry.runtime_data.preserve_panel_on_reload = True
+        await async_unload_entry(self.hass, self.entry)
+        with patch(
+            "custom_components.kaleidescape_companion.ui.panel._asset_digest",
+            return_value="new-build",
+        ):
+            self.assertFalse(await async_setup_panel(self.hass))
+        panel = self.hass.data[frontend.DATA_PANELS][PANEL_PATH]
+        self.assertEqual(
+            panel.config["_panel_custom"]["module_url"], f"{ASSET_URL}?v=new-build"
+        )
+        self.assertFalse(panel.require_admin)
 
     async def test_failed_panel_registration_closes_backend(self):
         await async_unload_entry(self.hass, self.entry)

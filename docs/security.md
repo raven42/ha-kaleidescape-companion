@@ -800,6 +800,16 @@ this change.
 
 ## Exact Library admission and calendar publishing
 
+The Companion sidebar's code-only panel is retained across a validated native
+options reload so HA does not navigate away from Settings. Storage/runtime
+readiness and authorization checks still reject reads while unloaded; retaining
+the route does not retain access to the old repository. Ordinary unload/disable
+and entry removal remove the owned panel. Registration/update/removal verify the
+component name and fixed asset path before touching an existing route,
+preserving foreign-panel collisions. Journal list/details share the existing
+positive household projection; administrator edit dialogs retain revision,
+confirmation, retry and unsaved-change protections.
+
 Schema 13 changes administrator `journal/create` to require an exact available
 version in the enabled configured Library. Only the version ID, start time,
 optional status/notes and partial watched time are accepted. The worker derives
@@ -845,17 +855,20 @@ are rechecked immediately before calling HA. Configuration changes stop
 unstarted calls; accepted calls can finish. HA owns provider credentials and
 networking; Companion adds no direct provider connection, arbitrary destination,
 token or Vite route. Providers and readers sharing the calendar can see titles,
-bounded metadata/times and opaque viewing/version/artwork references. Settings
-and the export confirmation disclose this sharing.
+bounded human-readable details and times from the chosen templates. Settings and
+the export confirmation disclose this sharing.
 
 Flat title/description brace substitution accepts only listed fields, never
 attribute/index access, format specifiers, conversions or executable/Jinja
 templates. Title templates are capped at 500 characters, description templates
 at 5000, rendered titles at 1024 and complete descriptions at 32 KiB. List/text
-substitutions are bounded. The human description is followed by a versioned
-plain JSON marker for future local calendar views. Artwork is an opaque
-reference, not a URL or image bytes. Notes, raw handles, origins, paths and
-credentials never enter events. No external image fetch/decoder is added.
+substitutions are bounded. Only the rendered title/description and interval
+enter provider events: no appended JSON, dataset/viewing/version IDs or
+artwork-cache references. Legacy `{artwork}` placeholders render blank. Notes,
+raw handles, origins, paths and credentials never enter events. Existing
+provider descriptions are not rewritten. Future local calendar views/cards will
+read the authenticated Journal/Library database instead of provider metadata. No
+external image fetch/decoder is added.
 
 Completion and a content-free `calendar_publications` receipt commit atomically.
 One queued viewing per ten-second tick is claimed as sending before the external

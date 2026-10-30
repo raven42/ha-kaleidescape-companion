@@ -12,6 +12,7 @@ import type {
 } from "../core/api";
 import { styles } from "./styles";
 import { databaseStyles } from "./database.styles";
+import { entryLayoutStyles } from "./entry-layout.styles";
 import { PreferenceStore } from "./preference-store";
 import { dismissBackdrop } from "./dialog";
 import { manualDraft, manualData } from "./manual-viewing";
@@ -47,7 +48,7 @@ export class KaleidescapeDatabase extends LitElement {
     client: { attribute: false },
     scope: { attribute: false },
   };
-  static styles = [styles, databaseStyles];
+  static styles = [styles, entryLayoutStyles, databaseStyles];
   client?: JournalClient;
   scope?: JournalInfo;
   private boundClient?: JournalClient;
@@ -699,8 +700,11 @@ export class KaleidescapeDatabase extends LitElement {
           </button></label
         >
       </div>
-      <div class="database-layout">
-        <section class="database-entries" aria-label="Database entries">
+      <div class="entries-layout">
+        <section
+          class="database-entries entries-list"
+          aria-label="Database entries"
+        >
           <div class="card-head">
             <h2>${LABELS[this.table] ?? this.table}</h2>
           </div>
@@ -765,7 +769,10 @@ export class KaleidescapeDatabase extends LitElement {
               : nothing
           }
         </section>
-        <section class="database-detail" aria-label="Selected database entry">
+        <section
+          class="database-detail entries-detail"
+          aria-label="Selected database entry"
+        >
           <div class="card-head">
             <h2>Entry details</h2>
             ${this.detail ? html`<button ?disabled=${this.blocked || !editable} @click=${this.edit}>Edit entry</button>` : nothing}

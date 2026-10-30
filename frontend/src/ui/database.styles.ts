@@ -2,9 +2,6 @@
 import { css } from "lit";
 
 export const databaseStyles = css`
-  .database-entries {
-    padding: 20px;
-  }
   .database {
     overflow: visible;
     margin-top: 24px;
@@ -81,52 +78,10 @@ export const databaseStyles = css`
     margin: 0;
     padding: 4px 20px 0;
   }
-  .database-layout {
-    display: grid;
-    grid-template-columns: minmax(230px, 0.8fr) minmax(0, 1.2fr);
-  }
-  .database-detail {
-    padding: 20px;
-    border-left: 1px solid var(--line);
-  }
   .database-detail .editor {
     padding: 0;
   }
-  .entry-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-  .entry-list li {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    border-top: 1px solid var(--line);
-  }
-  .entry-list li.selected {
-    background: var(--secondary-background-color, #edf4f0);
-  }
-  .entry-list input {
-    width: 20px;
-    min-height: 20px;
-    flex-shrink: 0;
-  }
-  .entry-name {
-    min-width: 0;
-    overflow-wrap: anywhere;
-  }
-  .entry-name small {
-    display: block;
-  }
   @media (max-width: 900px) {
-    .database-layout {
-      grid-template-columns: minmax(0, 1fr);
-    }
-    .database-detail {
-      border-left: 0;
-      border-top: 1px solid var(--line);
-    }
     .database-toolbar kaleidescape-transfers {
       margin-left: 0;
     }

@@ -4,6 +4,8 @@ import type { PropertyValues } from "lit";
 import { ApiError, JournalClient, errorCode, errorMessage } from "../core/api";
 import type { Hass, JournalInfo, ViewingSummary } from "../core/api";
 import { styles } from "./styles";
+import { entryLayoutStyles } from "./entry-layout.styles";
+import { journalStyles, viewingDetails } from "./journal-view";
 import { landingPage, rememberPage } from "./navigation";
 import "../library/library";
 import "./journal-options";
@@ -14,7 +16,7 @@ export class KaleidescapeReader extends LitElement {
     client: { attribute: false },
     narrow: { type: Boolean },
   };
-  static styles = styles;
+  static styles = [styles, entryLayoutStyles, journalStyles];
   hass?: Hass;
   client?: JournalClient;
   narrow = false;
@@ -24,6 +26,9 @@ export class KaleidescapeReader extends LitElement {
   private generation = 0;
   private scope: JournalInfo | null = null;
   private rows: ViewingSummary[] = [];
+  private selected: ViewingSummary | null = null;
+  private detailLoading = false;
+  private detailRequest = 0;
   private loading = false;
   private error = "";
   private query = "";
@@ -76,6 +81,9 @@ export class KaleidescapeReader extends LitElement {
     this.activePage = "journal";
     this.navigationReady = false;
     this.rows = [];
+    this.selected = null;
+    this.detailLoading = false;
+    this.detailRequest++;
     this.next = null;
     this.cursor = undefined;
     this.history = [];
@@ -104,6 +112,9 @@ export class KaleidescapeReader extends LitElement {
     const generation = ++this.generation;
     this.scope = null;
     this.rows = [];
+    this.selected = null;
+    this.detailLoading = false;
+    this.detailRequest++;
     this.next = null;
     this.cursor = undefined;
     this.history = [];
@@ -146,6 +157,9 @@ export class KaleidescapeReader extends LitElement {
     this.loading = true;
     this.error = "";
     this.rows = [];
+    this.selected = null;
+    this.detailLoading = false;
+    this.detailRequest++;
     this.requestUpdate();
     try {
       const result = await this.api.list(
@@ -173,6 +187,27 @@ export class KaleidescapeReader extends LitElement {
       }
     }
   }
+  private async selectRecord(id: string) {
+    if (!this.api || !this.scope) return;
+    const generation = this.generation,
+      request = ++this.detailRequest;
+    this.selected = null;
+    this.detailLoading = true;
+    this.requestUpdate();
+    try {
+      const row = await this.api.get(this.scope, id);
+      if (generation === this.generation && request === this.detailRequest)
+        this.selected = row;
+    } catch (error) {
+      if (generation === this.generation && request === this.detailRequest)
+        this.fail(error);
+    } finally {
+      if (generation === this.generation && request === this.detailRequest) {
+        this.detailLoading = false;
+        this.requestUpdate();
+      }
+    }
+  }
   private date(value: string | null) {
     if (!value) return "—";
     const date = new Date(value);
@@ -180,6 +215,9 @@ export class KaleidescapeReader extends LitElement {
   }
   private selectPage(page: "journal" | "library") {
     if (page === "library" && !this.scope?.library_enabled) return;
+    this.selected = null;
+    this.detailLoading = false;
+    this.detailRequest++;
     this.activePage = page;
     rememberPage(page);
     this.requestUpdate();
@@ -237,9 +275,8 @@ export class KaleidescapeReader extends LitElement {
                   void this.refresh();
                 }}
               ></kaleidescape-library>`
-            : html`<section class="card" aria-label="Viewing history">
-                <div class="card-head">
-                  <h2>Viewings</h2>
+            : html`<section class="card journal" aria-label="Viewing history">
+                <div class="journal-toolbar">
                   <button
                     ?disabled=${this.loading || !this.api}
                     @click=${this.refresh}
@@ -265,7 +302,7 @@ export class KaleidescapeReader extends LitElement {
                   ></kaleidescape-journal-options>
                 </div>
                 <form
-                  class="filters"
+                  class="filters journal-filters"
                   @submit=${(event: Event) => {
                     event.preventDefault();
                     this.query = this.searchText;
@@ -338,88 +375,103 @@ export class KaleidescapeReader extends LitElement {
                     Search
                   </button>
                 </form>
-                ${
-                  this.loading
-                    ? html`<p role="status">Loading viewings…</p>`
-                    : !this.api
-                      ? html`<p>
-                          Sign in to Home Assistant to view the household
-                          journal.
-                        </p>`
-                      : !this.rows.length
-                        ? html`<p>No viewings to display.</p>`
-                        : html`<div class="table-wrap">
-                            <table>
-                              <thead>
-                                <tr>
-                                  <th>Movie</th>
-                                  <th>Status</th>
-                                  <th>Watched</th>
-                                  <th>Runtime</th>
-                                </tr>
-                              </thead>
-                              <tbody>
+                <div class="entries-layout">
+                  <section class="entries-list" aria-label="Journal entries">
+                    <div class="card-head">
+                      <h2>Viewings (${this.scope?.viewing_count ?? 0})</h2>
+                    </div>
+                    ${
+                      this.loading
+                        ? html`<div class="empty" role="status">
+                            Loading viewings…
+                          </div>`
+                        : !this.api
+                          ? html`<p>
+                              Sign in to Home Assistant to view the household
+                              journal.
+                            </p>`
+                          : this.rows.length
+                            ? html`<ul class="entry-list">
                                 ${this.rows.map(
                                   (row) =>
-                                    html`<tr>
-                                      <td>
-                                        <strong>${row.title}</strong
-                                        ><small
-                                          >Started
-                                          ${this.date(row.started_at)}<br />Ended
-                                          ${this.date(row.ended_at)}</small
+                                    html`<li
+                                      class=${this.selected?.id === row.id ? "selected" : ""}
+                                    >
+                                      <div class="entry-name">
+                                        <button
+                                          class="link"
+                                          aria-current=${this.selected?.id === row.id ? "true" : nothing}
+                                          @click=${() => this.selectRecord(row.id)}
                                         >
-                                      </td>
-                                      <td>
-                                        ${row.status === "completed" ? "Completed" : "Partial"}
-                                      </td>
-                                      <td>
-                                        ${(row.watched_seconds / 60).toFixed(2)}
-                                        min
-                                      </td>
-                                      <td>
-                                        ${row.duration_seconds == null ? "—" : `${(row.duration_seconds / 60).toFixed(2)} min`}
-                                      </td>
-                                    </tr>`,
+                                          ${row.title}</button
+                                        ><small
+                                          >${this.date(row.started_at)} ·
+                                          ${row.status === "completed" ? "Completed" : "Partial"}</small
+                                        ><small
+                                          >${(row.watched_seconds / 60).toFixed(2)}
+                                          min watched</small
+                                        >
+                                      </div>
+                                    </li>`,
                                 )}
-                              </tbody>
-                            </table>
+                              </ul>`
+                            : html`<div class="empty">
+                                No viewings to display.
+                              </div>`
+                    }
+                    <div class="pagination">
+                      <small>Page ${this.page} · Up to 25 entries</small>
+                      <div class="actions">
+                        <button
+                          ?disabled=${this.loading || this.page === 1}
+                          @click=${() => {
+                            this.history = [];
+                            this.page = 1;
+                            void this.load();
+                          }}
+                        >
+                          First
+                        </button>
+                        <button
+                          ?disabled=${this.loading || !this.history.length}
+                          @click=${() => {
+                            this.page--;
+                            void this.load(this.history.pop());
+                          }}
+                        >
+                          Previous
+                        </button>
+                        <button
+                          ?disabled=${this.loading || !this.next}
+                          @click=${() => {
+                            this.history.push(this.cursor);
+                            if (this.history.length > 200) this.history.shift();
+                            this.page++;
+                            void this.load(this.next!);
+                          }}
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  </section>
+                  <section class="entries-detail" aria-label="Viewing details">
+                    <div class="card-head"><h2>Viewing details</h2></div>
+                    ${
+                      this.detailLoading
+                        ? html`<div class="empty" role="status">
+                            Loading entry…
                           </div>`
-                }
-                <div class="pagination">
-                  <small>Page ${this.page} · Up to 25 entries</small>
-                  <div class="actions">
-                    <button
-                      ?disabled=${this.loading || this.page === 1}
-                      @click=${() => {
-                        this.history = [];
-                        this.page = 1;
-                        void this.load();
-                      }}
-                    >
-                      First
-                    </button>
-                    <button
-                      ?disabled=${this.loading || !this.history.length}
-                      @click=${() => {
-                        this.page--;
-                        void this.load(this.history.pop());
-                      }}
-                    >
-                      Previous
-                    </button>
-                    <button
-                      ?disabled=${this.loading || !this.next}
-                      @click=${() => {
-                        this.history.push(this.cursor);
-                        if (this.history.length > 200) this.history.shift();
-                        this.page++;
-                        void this.load(this.next!);
-                      }}
-                    >
-                      Next
-                    </button>
-                  </div>
+                        : this.selected
+                          ? viewingDetails(this.selected, (value) =>
+                              this.date(value),
+                            )
+                          : html`<div class="empty">
+                              <strong>Select an entry</strong>
+                              <p>View its watching history and duration.</p>
+                            </div>`
+                    }
+                  </section>
                 </div>
               </section>`
         }

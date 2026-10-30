@@ -23,6 +23,7 @@ class KaleidescapeRuntime:
     observer: PlaybackObserver | None = None
     library: LibrarySync | None = None
     calendar: CalendarPublisher | None = None
+    preserve_panel_on_reload: bool = False
 
 
 type KaleidescapeConfigEntry = ConfigEntry[KaleidescapeRuntime]

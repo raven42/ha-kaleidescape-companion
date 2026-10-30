@@ -8,6 +8,15 @@ are untouched. Save native settings and sync Library details first. See
 [metadata repair](calendar.md#repair-existing-journal-metadata) for identity
 rules, retry behavior and limits.
 
+Both Journal roles use a single shared surface: toolbar/search/sort above a
+selectable entry list and readable details pane. On narrow screens the details
+stack beneath the list. Administrator Add/Edit opens a separate dialog with
+consistent Save/Cancel actions, guarded dismissal and retry handling; Journal
+Delete has its own confirmation and retains stored history. Regular users see
+only the household-safe summary fields and have no edit/session controls.
+Administrator database size, recording/backup status and schema/revision appear
+in a compact footer instead of separate overview cards.
+
 The household reader lets active users browse viewing summaries. The
 administrator UI manages journal records through the existing HA API. It
 provides title search, status filters, 25-record pages, manual entries,
@@ -330,22 +339,25 @@ placeholders. Automatic publishing applies to new completions. The explicit
 Journal export has confirmation, duplicate-format warning, progress,
 cancellation and uncertain-result handling. It matches rendered title/start/end
 before creating historical events and never updates/deletes remote events.
-Templates append opaque version/artwork references for future calendar views.
+Events contain only configured human-readable templates and times; there is no
+appended Companion metadata. Future calendar views/cards will use the local
+Journal database and Library artwork instead of parsing provider events.
 Provider sharing, boundaries, recovery and real-provider validation are
 documented in [calendar procedures](calendar.md).
 
 ## Dialog actions and detail browsing
 
 Settings has a sticky top action bar with adjacent Save/Cancel; native runtime
-settings still save through HA. Dialogs share consistent action footers with
-padding below buttons. Library filter panes have padded headings and content.
-Database search/sort are aligned together, with Options at the toolbar's far
-right. Database raw details remain read-only until Edit opens a separate modal.
-Typing into a NULL field clears its NULL selection; protected IDs/links/receipts
-remain unchanged. Existing artwork routes provide cached previews when Library
-is enabled, and related-row links switch table and select the exact target,
-including composite collection keys. Missing/evicted data is reported without
-inventing it.
+settings still save through HA. Options reloads retain the Companion sidebar
+route and Settings tab; the saved form reopens when the runtime is ready.
+Dialogs share consistent action footers with padding below buttons. Library
+filter panes have padded headings and content. Database search/sort are aligned
+together, with Options at the toolbar's far right. Database raw details remain
+read-only until Edit opens a separate modal. Typing into a NULL field clears its
+NULL selection; protected IDs/links/receipts remain unchanged. Existing artwork
+routes provide cached previews when Library is enabled, and related-row links
+switch table and select the exact target, including composite collection keys.
+Missing/evicted data is reported without inventing it.
 
 Movie details expose buttons for title/cast/director names, years, genres,
 collections, watched status, formats and ratings. Names clear facets and replace

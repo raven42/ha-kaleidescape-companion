@@ -29,7 +29,6 @@ FIELDS = (
     "duration",
     "watched",
     "rating",
-    "artwork",
     "format",
     "edition",
     "synopsis",
@@ -57,7 +56,9 @@ def template(value, maximum=500, *, empty=False):
         raise ValueError("invalid_calendar_template")
     try:
         for _, field, spec, conversion in Formatter().parse(value):
-            if field is not None and (field not in FIELDS or spec or conversion):
+            if field is not None and (
+                field not in (*FIELDS, "artwork") or spec or conversion
+            ):
                 raise ValueError
     except ValueError as error:
         raise ValueError("invalid_calendar_template") from error

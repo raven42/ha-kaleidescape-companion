@@ -165,15 +165,19 @@ window and must account for the operator's existing theater automation.
 ## Planned investigations
 
 - Implemented opt-in [HA calendar publishing](calendar.md) on new completion,
-  with configurable flat title placeholders and versioned artwork/viewing
-  references in event descriptions. Schema 14 includes editable description
-  templates and explicit historical Journal export with matching, progress and
-  protected delivery/job receipts.
+  with configurable flat title/description placeholders and plain-text events.
+  Internal identifiers/artwork references remain in the database. Schema 14
+  includes editable description templates and explicit historical Journal export
+  with matching, progress and protected delivery/job receipts.
 - Next: a monthly Journal calendar with title/artwork, then an HA dashboard card
-  for that view. Design authenticated artwork resolution, paging, timezone and
-  missing-cache behavior; do not require external calendar access just to browse
-  the local journal. Investigate explicit calendar reconciliation/republishing
-  before allowing uncertain writes to be retried.
+  for that view, both reading the local Journal/Library database rather than
+  provider event metadata. Design authenticated artwork resolution, paging,
+  timezone and missing-cache behavior; do not require external calendar access
+  just to browse the local journal. Investigate explicit calendar
+  reconciliation/republishing before allowing uncertain writes to be retried.
+  Provide a bounded date-range read projection for the card, preserving
+  household/admin field boundaries without raw SQL or administrator table
+  access.
 - Explore optional Gmail integration for publishing when movies were watched.
   Determine the intended workflow, authorization, and sharing details during
   design.

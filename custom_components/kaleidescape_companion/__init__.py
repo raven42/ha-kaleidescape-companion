@@ -93,15 +93,12 @@ async def async_setup_entry(
             if config.get("library_enabled", False)
             else None
         )
-        runtime.calendar = CalendarPublisher(
-            hass, repository, entry, runtime.dataset_id
-        )
+        runtime.calendar = CalendarPublisher(hass, repository, entry)
         await runtime.calendar.async_start()
         if config.get("tracking_enabled"):
             runtime.observer = PlaybackObserver(hass, repository, config)
             await runtime.observer.async_start()
-        await async_setup_panel(hass)
-        panel_registered = True
+        panel_registered = await async_setup_panel(hass)
         platforms_started = True
         await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
         if config.get("library_enabled", False):
@@ -141,5 +138,13 @@ async def async_unload_entry(
         elif config.get("player_id") != runtime.observer.config["player_id"]:
             reason = "player_changed"
     await _async_close_runtime(runtime, reason)
-    async_remove_panel(hass)
+    if not runtime.preserve_panel_on_reload or entry.disabled_by is not None:
+        async_remove_panel(hass)
     return True
+
+
+async def async_remove_entry(
+    hass: HomeAssistant, entry: KaleidescapeConfigEntry
+) -> None:
+    """Remove any panel retained across an options reload that failed to finish."""
+    async_remove_panel(hass)

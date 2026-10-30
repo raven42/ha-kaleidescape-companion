@@ -65,7 +65,7 @@ these flat placeholders:
 
 ```text
 {title} {year} {collection} {cast} {director} {writer} {studio} {genre}
-{duration} {watched} {rating} {artwork} {format} {edition} {synopsis}
+{duration} {watched} {rating} {format} {edition} {synopsis}
 {purchase_date} {added_on} {status} {started_at} {ended_at}
 ```
 
@@ -87,17 +87,20 @@ conversion. The fixed
 [HA calendar.create_event action](https://www.home-assistant.io/actions/calendar.create_event/)
 receives the selected entity, summary, start/end timestamps and description.
 
-The rendered description is followed by a versioned JSON object identified by
-`kaleidescape_companion.calendar.v1`: dataset/viewing/version references, a
-cached artwork key and bounded movie/timing fields. `{artwork}` is an opaque
-`kaleidescape_companion:artwork:<key>` reference, not a downloadable URL. No
-credentials, signed image URLs, image bytes, notes, device origins, raw handles
-or filesystem paths are published. Descriptions are capped at 32 KiB. Existing
-calendar providers do not automatically display a cover from this reference.
-Future Companion calendar views/cards can resolve the version through the
-authenticated Library API; eviction or unavailable metadata must show a
-placeholder. Event descriptions and references remain in calendar-provider
-storage, exports and shared calendars independently of local deletion.
+Events contain only the rendered title/description and viewing interval. An
+empty description template produces an empty description. Companion does not
+append JSON, dataset/viewing/version IDs, or artwork-cache references. Old
+templates containing `{artwork}` remain valid but that placeholder now renders
+blank. No credentials, signed image URLs, image bytes, notes, device origins,
+raw handles or filesystem paths are published. Descriptions are capped at 32
+KiB. Existing events are not rewritten; older exported descriptions may still
+contain the previous metadata block.
+
+Planned Companion calendar views/cards will read the local Journal database and
+its stored Library snapshots, using authenticated artwork access. They will not
+parse provider events or require a calendar export. Evicted or missing artwork
+must show a placeholder. Provider copies of previously published details remain
+independent of local deletion.
 
 ## Delivery and recovery
 
@@ -188,13 +191,13 @@ cross-provider exactly-once delivery.
 Automated tests use temporary SQLite and a simulated HA calendar action, never a
 real provider. On an isolated HA instance, configure a disposable writable
 calendar, enable the option, complete a fictional movie, and check title,
-timezone, interval, metadata and exactly one receipt/event after reload. Review
-opt-out and unavailable-calendar behavior. Export existing fictional history
-twice and confirm the second run matches events; verify description templates
-and the format-change warning. This operator check is still needed; no live
-calendar was used to implement the feature.
+timezone, interval, rendered description and exactly one receipt/event after
+reload. Review opt-out and unavailable-calendar behavior. Export existing
+fictional history twice and confirm the second run matches events; verify
+description templates and the format-change warning. This operator check is
+still needed; no live calendar was used to implement the feature.
 
-Planned: a monthly Journal calendar with cover artwork, an HA dashboard card for
-that view, and explicit event reconciliation/edit/delete workflows. Gmail or
-other sharing connectors need a separate authorization and privacy design; they
-are not implemented by this feature.
+Planned: a database-backed monthly Journal calendar with cover artwork, an HA
+dashboard card for that view, and explicit event reconciliation/edit/delete
+workflows. Gmail or other sharing connectors need a separate authorization and
+privacy design; they are not implemented by this feature.

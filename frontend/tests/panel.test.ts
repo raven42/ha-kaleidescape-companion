@@ -35,6 +35,24 @@ function input(name: string, value: string) {
   element.value = value;
   element.dispatchEvent(new Event("input", { bubbles: true }));
 }
+async function selectViewing(title = "The Lantern Voyage", editing = true) {
+  button(title).click();
+  await vi.waitFor(() =>
+    expect(
+      panel.shadowRoot!.querySelector(".entries-detail .journal-title")
+        ?.textContent,
+    ).toBe(title),
+  );
+  if (editing) {
+    button("Edit viewing").click();
+    await vi.waitFor(() =>
+      expect(
+        panel.shadowRoot!.querySelector<HTMLDialogElement>("#journal-editor")
+          ?.open,
+      ).toBe(true),
+    );
+  }
+}
 async function save() {
   panel
     .shadowRoot!.querySelector("form.editor")!
@@ -58,9 +76,54 @@ afterEach(() => {
 });
 
 describe("journal management", () => {
+  it("uses one split surface and keeps viewing details read-only until Edit", async () => {
+    await selectViewing("The Lantern Voyage", false);
+    const root = panel.shadowRoot!;
+    expect(
+      root.querySelector(".journal .entries-layout .entries-list"),
+    ).not.toBeNull();
+    expect(
+      root.querySelector(".journal .entries-layout .entries-detail"),
+    ).not.toBeNull();
+    expect(root.querySelector(".metrics")).toBeNull();
+    expect(root.querySelector("form.editor")).toBeNull();
+    expect(root.querySelector<HTMLDialogElement>("#journal-editor")!.open).toBe(
+      false,
+    );
+    button("Edit viewing").click();
+    await settle();
+    expect(root.querySelector<HTMLDialogElement>("#journal-editor")!.open).toBe(
+      true,
+    );
+    button("Cancel").click();
+    await settle();
+    expect(
+      root.querySelector(".entries-detail .journal-title")?.textContent,
+    ).toBe("The Lantern Voyage");
+    expect(root.querySelector("form.editor")).toBeNull();
+  });
+  it("guards Escape dismissal of a dirty journal dialog", async () => {
+    await selectViewing();
+    input("notes", "Unsaved correction");
+    await settle();
+    vi.mocked(window.confirm).mockReturnValue(false);
+    const dialog =
+      panel.shadowRoot!.querySelector<HTMLDialogElement>("#journal-editor")!;
+    dialog.dispatchEvent(new Event("cancel", { cancelable: true }));
+    expect(dialog.open).toBe(true);
+    expect(
+      panel.shadowRoot!.querySelector<HTMLTextAreaElement>("textarea")!.value,
+    ).toBe("Unsaved correction");
+    vi.mocked(window.confirm).mockReturnValue(true);
+    dialog.dispatchEvent(new Event("cancel", { cancelable: true }));
+    await settle();
+    expect(dialog.open).toBe(false);
+    expect(
+      transport.calls.some((call) => call.type.endsWith("journal/update")),
+    ).toBe(false);
+  });
   it("loads the scoped list and saves only changed observed fields", async () => {
-    button("The Lantern Voyage").click();
-    await waitFor("Edit viewing");
+    await selectViewing();
     input("notes", "A correction only");
     await save();
     await waitFor("Entry saved.");
@@ -96,8 +159,7 @@ describe("journal management", () => {
     const getRandomValues = crypto.getRandomValues.bind(crypto);
     vi.stubGlobal("crypto", { getRandomValues });
     try {
-      button("The Lantern Voyage").click();
-      await waitFor("Edit viewing");
+      await selectViewing();
       button("Delete entry").click();
       await settle();
       const confirm = button("Confirm deletion");
@@ -117,8 +179,7 @@ describe("journal management", () => {
     }
   });
   it("shows a deletion preparation failure without sending or locking the entry", async () => {
-    button("The Lantern Voyage").click();
-    await waitFor("Edit viewing");
+    await selectViewing();
     button("Delete entry").click();
     await settle();
     vi.stubGlobal("crypto", undefined);
@@ -169,8 +230,7 @@ describe("journal management", () => {
           return result;
         },
       );
-      button("The Lantern Voyage").click();
-      await waitFor("Edit viewing");
+      await selectViewing();
       button("Delete entry").click();
       await settle();
       button("Confirm deletion").click();
@@ -189,8 +249,7 @@ describe("journal management", () => {
     }
   });
   it("preserves a conflict draft and never silently overwrites a newer record", async () => {
-    button("The Lantern Voyage").click();
-    await waitFor("Edit viewing");
+    await selectViewing();
     input("notes", "Keep my draft");
     transport.records[0].revision++;
     await save();
@@ -248,15 +307,13 @@ describe("journal management", () => {
     button("Refresh").click();
     await waitFor(payload);
     expect(panel.shadowRoot!.querySelector("img,script,iframe")).toBeNull();
-    button(payload).click();
-    await waitFor("Edit viewing");
+    await selectViewing(payload);
     expect(
       panel.shadowRoot!.querySelector<HTMLInputElement>("#title")!.value,
     ).toBe(payload);
   });
   it("clears private records and drafts on authorization failure", async () => {
-    button("The Lantern Voyage").click();
-    await waitFor("Edit viewing");
+    await selectViewing();
     input("notes", "private draft");
     transport.failure = "unauthorized";
     await save();
@@ -366,8 +423,7 @@ it("displays whole-second dates and two-decimal minutes without rewriting untouc
   transport.records[0] = source;
   button("Refresh").click();
   await settle();
-  button(source.title).click();
-  await waitFor("Edit viewing");
+  await selectViewing(source.title);
   const start = panel.shadowRoot!.querySelector<HTMLInputElement>(
     '[name="started_at"]',
   )!;
@@ -455,8 +511,7 @@ it("has five top-level tabs with Library opt-in disabled and limits creation con
 });
 
 it("keeps unsaved journal and settings changes when a tab switch is cancelled", async () => {
-  button("The Lantern Voyage").click();
-  await waitFor("Edit viewing");
+  await selectViewing();
   input("notes", "Keep this draft");
   vi.mocked(window.confirm).mockReturnValue(false);
   page("database");
@@ -532,6 +587,7 @@ it("saves inline settings and returns to the Settings form with persisted values
   )!;
   field.value = "20";
   field.dispatchEvent(new Event("input", { bubbles: true }));
+  vi.spyOn(panel.client!, "info").mockResolvedValueOnce({ entries: [] });
   settings
     .shadowRoot!.querySelector("form")!
     .dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
@@ -550,6 +606,9 @@ it("saves inline settings and returns to the Settings form with persisted values
       .shadowRoot!.querySelector("#page-settings")!
       .getAttribute("aria-selected"),
   ).toBe("true");
+  expect(new URL(location.href).searchParams.get("companion_page")).toBe(
+    "settings",
+  );
 });
 
 it("stops Now Playing polling when leaving its tab", async () => {

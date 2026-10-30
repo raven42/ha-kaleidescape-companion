@@ -35,8 +35,8 @@
           "library_artwork_cache_mb": "32–4096 MiB; default 512 MiB, plus up to one 5 MiB incoming image. Choose a larger limit for a large library.",
           "calendar_enabled": "Disabled by default. Publishes new completions only, including manual viewings. Calendar providers and people sharing the calendar can see movie metadata. Existing history and imports are not backfilled.",
           "calendar_entity": "Select a calendar that supports creating events.",
-          "calendar_title": "Allowed fields: {title}, {year}, {collection}, {cast}, {director}, {writer}, {studio}, {genre}, {duration}, {watched}, {rating}, {artwork}, {format}, {edition}, {synopsis}, {purchase_date}, {added_on}, {status}, {started_at}, {ended_at}. Duration and watched time are minutes; missing metadata is blank. Use {{ and }} for literal braces.",
-          "calendar_description": "Allowed fields: {title}, {year}, {collection}, {cast}, {director}, {writer}, {studio}, {genre}, {duration}, {watched}, {rating}, {artwork}, {format}, {edition}, {synopsis}, {purchase_date}, {added_on}, {status}, {started_at}, {ended_at}. Duration and watched time are minutes; missing metadata is blank. Use {{ and }} for literal braces."
+          "calendar_title": "Allowed fields: {title}, {year}, {collection}, {cast}, {director}, {writer}, {studio}, {genre}, {duration}, {watched}, {rating}, {format}, {edition}, {synopsis}, {purchase_date}, {added_on}, {status}, {started_at}, {ended_at}. Duration and watched time are minutes; missing metadata is blank. Use {{ and }} for literal braces.",
+          "calendar_description": "Allowed fields: {title}, {year}, {collection}, {cast}, {director}, {writer}, {studio}, {genre}, {duration}, {watched}, {rating}, {format}, {edition}, {synopsis}, {purchase_date}, {added_on}, {status}, {started_at}, {ended_at}. Duration and watched time are minutes; missing metadata is blank. Use {{ and }} for literal braces."
         }
       }
     },
@@ -90,8 +90,8 @@
           "library_artwork_cache_mb": "32–4096 MiB; default 512 MiB, plus up to one 5 MiB incoming image. Choose a larger limit for a large library.",
           "calendar_enabled": "Disabled by default. Publishes new completions only, including manual viewings. Calendar providers and people sharing the calendar can see movie metadata. Existing history and imports are not backfilled.",
           "calendar_entity": "Select a calendar that supports creating events.",
-          "calendar_title": "Allowed fields: {title}, {year}, {collection}, {cast}, {director}, {writer}, {studio}, {genre}, {duration}, {watched}, {rating}, {artwork}, {format}, {edition}, {synopsis}, {purchase_date}, {added_on}, {status}, {started_at}, {ended_at}. Duration and watched time are minutes; missing metadata is blank. Use {{ and }} for literal braces.",
-          "calendar_description": "Allowed fields: {title}, {year}, {collection}, {cast}, {director}, {writer}, {studio}, {genre}, {duration}, {watched}, {rating}, {artwork}, {format}, {edition}, {synopsis}, {purchase_date}, {added_on}, {status}, {started_at}, {ended_at}. Duration and watched time are minutes; missing metadata is blank. Use {{ and }} for literal braces."
+          "calendar_title": "Allowed fields: {title}, {year}, {collection}, {cast}, {director}, {writer}, {studio}, {genre}, {duration}, {watched}, {rating}, {format}, {edition}, {synopsis}, {purchase_date}, {added_on}, {status}, {started_at}, {ended_at}. Duration and watched time are minutes; missing metadata is blank. Use {{ and }} for literal braces.",
+          "calendar_description": "Allowed fields: {title}, {year}, {collection}, {cast}, {director}, {writer}, {studio}, {genre}, {duration}, {watched}, {rating}, {format}, {edition}, {synopsis}, {purchase_date}, {added_on}, {status}, {started_at}, {ended_at}. Duration and watched time are minutes; missing metadata is blank. Use {{ and }} for literal braces."
         }
       }
     },

@@ -189,7 +189,6 @@ class JournalCalendarSync:
         try:
             data = event_data(
                 row,
-                p.dataset,
                 p.config.get("calendar_title", DEFAULTS["calendar_title"]),
                 p.config.get("calendar_description", DEFAULTS["calendar_description"]),
             )

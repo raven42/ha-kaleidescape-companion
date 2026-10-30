@@ -116,39 +116,10 @@ export const styles = css`
     outline: 3px solid var(--accent);
     outline-offset: 3px;
   }
-  .metrics {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin: 24px 0;
-  }
-  .metric,
   .card {
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 12px;
-  }
-  .metric {
-    padding: 16px 20px;
-  }
-  .metric strong {
-    display: block;
-    font-size: 21px;
-    margin: 5px 0 0;
-    font-weight: 600;
-  }
-  .metric small {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-  }
-  .layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.3fr) minmax(340px, 1fr);
-    align-items: start;
-    gap: 20px;
-  }
-  .card {
     min-width: 0;
     overflow: hidden;
   }
@@ -388,16 +359,6 @@ export const styles = css`
     border-bottom-color: var(--accent);
     background: var(--surface);
   }
-  .section-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-top: 24px;
-  }
-  .section-head h2 {
-    margin: 0;
-  }
   .settings-page {
     padding: 20px;
     max-width: 900px;
@@ -544,11 +505,6 @@ export const styles = css`
       grid-template-columns: minmax(0, 1fr);
     }
   }
-  @media (max-width: 1000px) {
-    .layout {
-      grid-template-columns: minmax(0, 1fr);
-    }
-  }
   @media (max-width: 600px) {
     .playback-layout {
       grid-template-columns: 80px minmax(0, 1fr);
@@ -564,17 +520,6 @@ export const styles = css`
     }
     header .primary {
       width: 100%;
-    }
-    .metrics {
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin: 16px 0;
-    }
-    .metric {
-      padding: 12px;
-    }
-    .metric strong {
-      font-size: 18px;
     }
     .grid {
       grid-template-columns: minmax(0, 1fr);

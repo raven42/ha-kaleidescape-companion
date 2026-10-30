@@ -1,7 +1,6 @@
 """Publish newly completed viewings via the fixed calendar.create_event action."""
 
 import asyncio
-import json
 import logging
 from datetime import datetime, timedelta
 
@@ -19,8 +18,8 @@ from .config import DEFAULTS, FIELDS, fingerprint, target, template
 _LOGGER = logging.getLogger(__name__)
 
 
-def event_data(row, dataset, title_template, description_template=None):
-    """Plain text and versioned, bounded JSON references; no URLs or auth tokens."""
+def event_data(row, title_template, description_template=None):
+    """Render only the chosen human-readable templates; no internal identifiers."""
     metadata = row["metadata"]
     aliases = {
         "cast": "actors",
@@ -45,9 +44,8 @@ def event_data(row, dataset, title_template, description_template=None):
         if row["duration_seconds"] is not None
         else "",
         watched=f"{row['watched_seconds'] / 60:.2f}",
-        artwork=f"kaleidescape_companion:artwork:{metadata['artwork_key']}"
-        if metadata.get("artwork_key")
-        else "",
+        # Preserve old templates without publishing internal cache references.
+        artwork="",
     )
     summary = template(title_template).format_map(values)
     if not summary.strip() or len(summary) > 1024:
@@ -58,15 +56,6 @@ def event_data(row, dataset, title_template, description_template=None):
     )
     if end <= start:
         end = start + timedelta(seconds=max(1, row["watched_seconds"]))
-    description = {
-        "schema": "kaleidescape_companion.calendar.v1",
-        "dataset_id": dataset,
-        "viewing_id": row["id"],
-        "library_title_id": row["library_title_id"],
-        "artwork_key": metadata.get("artwork_key"),
-        "movie": values,
-    }
-    encoded = json.dumps(description, ensure_ascii=False)
     description_text = template(
         DEFAULTS["calendar_description"]
         if description_template is None
@@ -74,9 +63,8 @@ def event_data(row, dataset, title_template, description_template=None):
         5000,
         empty=True,
     ).format_map(values)
-    description_text += "\n\nKaleidescape Companion data:\n" + encoded
     if len(description_text.encode()) > 32 * 1024:
-        raise ValueError("Calendar event metadata is too large")
+        raise ValueError("Calendar event description is too large")
     return {
         "summary": summary,
         "start_date_time": start.isoformat(),
@@ -88,13 +76,8 @@ def event_data(row, dataset, title_template, description_template=None):
 class CalendarPublisher:
     """One durable attempt per viewing; no backfill or blind service retries."""
 
-    def __init__(self, hass, repository, entry, dataset):
-        self.hass, self.repository, self.entry, self.dataset = (
-            hass,
-            repository,
-            entry,
-            dataset,
-        )
+    def __init__(self, hass, repository, entry):
+        self.hass, self.repository, self.entry = hass, repository, entry
         self.config = dict(entry.options or entry.data)
         self.cancel = None
         self.running = None
@@ -162,7 +145,6 @@ class CalendarPublisher:
                 return
             data = event_data(
                 row,
-                self.dataset,
                 self.config.get("calendar_title", "Watched: {title}"),
                 self.config.get(
                     "calendar_description", DEFAULTS["calendar_description"]

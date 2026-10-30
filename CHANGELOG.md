@@ -1,5 +1,16 @@
 # Changelog
 
+## Journal layout, Settings navigation and plain calendar events
+
+- Export only configured calendar title/description templates and times. Remove
+  appended Companion JSON/IDs/artwork references; legacy artwork placeholders
+  render blank. Future calendar views/cards will read the local database.
+- Preserve the Companion panel route across native options reloads and reopen
+  the Settings form on the same tab after saving.
+- Give administrator and household Journals a shared toolbar and split
+  entry-list/details surface. Open administrator corrections/manual additions in
+  guarded dialogs and consolidate health metrics into a status line.
+
 ## Observed viewing metadata and Journal repair
 
 - Save bounded Library metadata and exact version links for observed viewings,

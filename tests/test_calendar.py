@@ -237,7 +237,7 @@ class CalendarTest(unittest.IsolatedAsyncioTestCase):
             },
             options={},
         )
-        publisher = CalendarPublisher(hass, self.repository, entry, "fictional-dataset")
+        publisher = CalendarPublisher(hass, self.repository, entry)
         await self.enable(fingerprint=fingerprint(entry.data))
         calls = []
 
@@ -268,11 +268,10 @@ class CalendarTest(unittest.IsolatedAsyncioTestCase):
         entry.data = {**entry.data, "calendar_enabled": True}
         self.assertEqual(calls[0]["entity_id"], "calendar.movies")
         self.assertIn("2025", calls[0]["summary"])
-        description = json.loads(
-            calls[0]["description"].split("Kaleidescape Companion data:\n", 1)[1]
-        )
-        self.assertEqual(description["schema"], "kaleidescape_companion.calendar.v1")
-        self.assertTrue(description["library_title_id"])
+        self.assertIn("Fictional Actor", calls[0]["description"])
+        self.assertNotIn("Kaleidescape Companion data:", calls[0]["description"])
+        self.assertNotIn("fictional-dataset", calls[0]["description"])
+        self.assertNotIn("library_title_id", calls[0]["description"])
         self.assertNotIn("Never share", json.dumps(calls))
         self.assertNotIn(library.ORIGIN, json.dumps(calls))
         await publisher.async_publish_one()
@@ -350,7 +349,7 @@ class CalendarTest(unittest.IsolatedAsyncioTestCase):
             "calendar_entity": {"entity_id": "calendar.movies"},
         }
         publisher = CalendarPublisher(
-            hass, self.repository, SimpleNamespace(data=config, options={}), "fictional"
+            hass, self.repository, SimpleNamespace(data=config, options={})
         )
         await self.enable(fingerprint=fingerprint(config))
         await self.create()
@@ -464,7 +463,7 @@ class HistoricalCalendarTest(unittest.IsolatedAsyncioTestCase):
             "calendar_description": "{title} · {director} · {watched} minutes",
         }
         entry = SimpleNamespace(data=config, options={})
-        publisher = CalendarPublisher(hass, self.repository, entry, "fictional")
+        publisher = CalendarPublisher(hass, self.repository, entry)
         await self.enable(fingerprint=fingerprint(config))
         calls, reads = [], []
 
@@ -737,6 +736,27 @@ class HistoricalCalendarTest(unittest.IsolatedAsyncioTestCase):
             ],
             "",
         )
+
+    async def test_only_user_templates_are_exported_and_legacy_artwork_is_blank(self):
+        from custom_components.kaleidescape_companion.calendar.publisher import (
+            event_data,
+        )
+
+        await self.seed()
+        await self.enable()
+        await self.create()
+        row = await self.repository.async_calendar_claim()
+        empty = event_data(row, "{title}", "")
+        self.assertEqual(empty["description"], "")
+        human = event_data(row, "{title}", "{cast} |{artwork}| {director}")
+        self.assertEqual(human["description"], "Fictional Actor || A. Director")
+        for value in (
+            row["id"],
+            row["library_title_id"],
+            "Kaleidescape Companion data:",
+            "kaleidescape_companion:",
+        ):
+            self.assertNotIn(value, json.dumps(human))
 
 
 class LibraryCompletionTest(unittest.IsolatedAsyncioTestCase):
