@@ -9,6 +9,7 @@ import type {
   JournalClient,
   JournalInfo,
   LibraryInfo,
+  LibraryPurchaseTotals,
   LibraryPage,
   LibraryTitle,
   LibrarySummary,
@@ -52,6 +53,7 @@ const DISPLAY_OPTIONS = [
   ["show_format", "Show format"],
   ["show_badges", "Show library badges"],
   ["show_rating", "Show rating on covers"],
+  ["show_library_cost", "Show total library cost in footer"],
 ] as const;
 const STATUS: Record<string, string> = {
   watched: "Watched",
@@ -77,6 +79,10 @@ export class KaleidescapeLibrary extends LitElement {
   private statusRequest = 0;
   private page?: LibraryPage;
   private info?: LibraryInfo;
+  private purchaseTotals?: LibraryPurchaseTotals;
+  private purchaseLoading = false;
+  private purchaseError = "";
+  private purchaseDetailsOpen = false;
   private selected?: LibrarySummary;
   private versions?: LibraryVersionPage;
   private activeVersion?: LibraryTitle;
@@ -112,6 +118,7 @@ export class KaleidescapeLibrary extends LitElement {
     show_format: true,
     show_badges: true,
     show_rating: false,
+    show_library_cost: false,
   };
   private entriesPerPage: number | "all" = 100;
   private preferences?: PreferenceStore;
@@ -215,6 +222,8 @@ export class KaleidescapeLibrary extends LitElement {
       this.display = Object.fromEntries(
         DISPLAY_OPTIONS.map(([key]) => [key, values[key]]),
       ) as typeof this.display;
+      if (this.scope?.permissions.edit && this.display.show_library_cost)
+        void this.loadPurchaseTotals();
       this.widths = [...(values.widths as number[])];
       this.applied = Object.fromEntries(
         [
@@ -251,6 +260,13 @@ export class KaleidescapeLibrary extends LitElement {
     this.preferences?.set({ widths: [...this.widths] });
   }
   private clear() {
+    this.purchaseTotals = undefined;
+    this.purchaseLoading = false;
+    this.purchaseError = "";
+    this.purchaseDetailsOpen = false;
+    const details =
+      this.renderRoot.querySelector<HTMLDetailsElement>(".purchase-details");
+    if (details) details.open = false;
     clearTimeout(this.searchTimer);
     this.clearPeople();
     this.preferences?.dispose();
@@ -282,6 +298,7 @@ export class KaleidescapeLibrary extends LitElement {
       show_format: true,
       show_badges: true,
       show_rating: false,
+      show_library_cost: false,
     };
     this.draft = {};
     this.facetSearch = "";
@@ -499,6 +516,8 @@ export class KaleidescapeLibrary extends LitElement {
       if (generation !== this.generation || request !== this.statusRequest)
         return;
       this.info = info;
+      if (this.display.show_library_cost || this.purchaseDetailsOpen)
+        void this.loadPurchaseTotals();
       if (
         this.page &&
         (this.page.revision !== info.revision ||
@@ -895,6 +914,91 @@ export class KaleidescapeLibrary extends LitElement {
       }
     }
   }
+  private async loadPurchaseTotals(force = false) {
+    if (
+      !this.client ||
+      !this.scope?.library_enabled ||
+      !this.scope.permissions.edit ||
+      this.purchaseLoading ||
+      (!force &&
+        this.purchaseTotals &&
+        this.purchaseTotals.revision === this.info?.revision)
+    )
+      return;
+    const generation = this.generation;
+    this.purchaseLoading = true;
+    this.purchaseError = "";
+    this.requestUpdate();
+    try {
+      const result = await this.client.libraryPurchaseTotals(this.scope);
+      if (generation === this.generation) this.purchaseTotals = result;
+    } catch (error) {
+      if (generation !== this.generation) return;
+      this.purchaseTotals = undefined;
+      this.purchaseError = errorMessage(error);
+      if (["unauthorized", "library_disabled"].includes(errorCode(error)))
+        this.fail(error);
+    } finally {
+      if (generation === this.generation) {
+        this.purchaseLoading = false;
+        this.requestUpdate();
+      }
+    }
+  }
+  private purchaseAmount(field: "library_cost" | "retail_price" | "savings") {
+    if (!this.purchaseTotals)
+      return this.purchaseError ? "Unavailable" : "Loading…";
+    if (!this.purchaseTotals.purchase_count) return "No recorded purchases";
+    return (
+      this.purchaseTotals.currencies
+        .map((row) => row[field])
+        .filter((value) => value !== null)
+        .join(" · ") || "Not available"
+    );
+  }
+  private renderPurchaseDetails() {
+    if (!this.scope?.permissions.edit) return nothing;
+    const totals = this.purchaseTotals;
+    return html`<details
+      class="purchase-details"
+      @toggle=${(event: Event) => {
+        this.purchaseDetailsOpen = (event.target as HTMLDetailsElement).open;
+        if (this.purchaseDetailsOpen) void this.loadPurchaseTotals();
+      }}
+    >
+      <summary>Purchase details</summary>
+      <p class="muted">
+        Recorded purchases for this Library source, including unavailable
+        titles. Filters do not change these totals. Currencies are kept
+        separate.
+      </p>
+      ${this.purchaseLoading ? html`<p role="status">Loading purchase totals…</p>` : nothing}
+      ${this.purchaseError ? html`<p class="error" role="alert">${this.purchaseError} <button @click=${() => this.loadPurchaseTotals(true)}>Retry purchase totals</button></p>` : nothing}
+      ${
+        totals
+          ? html`<dl class="purchase-summary">
+                <dt>Total library cost</dt>
+                <dd>${this.purchaseAmount("library_cost")}</dd>
+                <dt>Total retail price</dt>
+                <dd>${this.purchaseAmount("retail_price")}</dd>
+                <dt>Savings</dt>
+                <dd>${this.purchaseAmount("savings")}</dd>
+                <dt>Unique transactions</dt>
+                <dd>${totals.unique_transactions}</dd>
+              </dl>
+              <p class="muted">
+                ${counted(totals.purchase_count, "purchase record")}. Missing
+                prices are excluded. Savings use records with both prices in the
+                same currency.
+              </p>
+              ${totals.missing_purchase_prices || totals.missing_retail_prices ? html`<p class="muted">${counted(totals.missing_purchase_prices, "missing paid price")} · ${counted(totals.missing_retail_prices, "missing retail price")}.</p>` : nothing}
+              ${totals.unpaired_prices ? html`<p class="muted">${counted(totals.unpaired_prices, "purchase record")} excluded from savings because prices are missing or use different currencies.</p>` : nothing}
+              ${totals.missing_order_ids ? html`<p class="muted">${counted(totals.missing_order_ids, "purchase record")} without an order ID; not included in the transaction count.</p>` : nothing}
+              ${totals.duplicate_purchases ? html`<p class="muted">${counted(totals.duplicate_purchases, "duplicate purchase record")} counted only once.</p>` : nothing}`
+          : nothing
+      }
+    </details>`;
+  }
   private renderOptionsDialog() {
     return html`<dialog
       id="library-options"
@@ -964,7 +1068,10 @@ export class KaleidescapeLibrary extends LitElement {
               /></label>`
             : nothing
         }
-        ${DISPLAY_OPTIONS.map(
+        ${DISPLAY_OPTIONS.filter(
+          ([key]) =>
+            key !== "show_library_cost" || this.scope?.permissions.edit,
+        ).map(
           ([key, label]) =>
             html`<label class="check"
               ><input
@@ -975,6 +1082,8 @@ export class KaleidescapeLibrary extends LitElement {
                   const value = (event.target as HTMLInputElement).checked;
                   this.display = { ...this.display, [key]: value };
                   this.preferences?.set({ [key]: value });
+                  if (key === "show_library_cost" && value)
+                    void this.loadPurchaseTotals();
                   this.requestUpdate();
                 }}
               />${label}</label
@@ -1000,6 +1109,7 @@ export class KaleidescapeLibrary extends LitElement {
             </details>`
           : nothing
       }
+      ${this.renderPurchaseDetails()}
     </dialog>`;
   }
   private renderFilterDialog() {
@@ -1649,6 +1759,7 @@ export class KaleidescapeLibrary extends LitElement {
                 >${counted(this.info.group_count, "title")} ·
                 ${counted(this.info.collection_count, "collection")}
                 ${admin && this.info.artwork_enabled ? `· Artwork ${((this.info.artwork_bytes ?? 0) / 1048576).toFixed(1)}/${((this.info.artwork_limit_bytes ?? 0) / 1048576).toFixed(0)} MiB` : ""}
+                ${admin && this.display.show_library_cost ? `· Library cost ${this.purchaseAmount("library_cost")}` : ""}
                 · Synced ${this.date(this.info.last_synced_at)}</span
               >
               <div class="actions">

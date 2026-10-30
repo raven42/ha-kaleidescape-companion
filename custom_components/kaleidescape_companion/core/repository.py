@@ -166,6 +166,11 @@ class JournalRepository:
             library_browse.library_info, self._db(), source, excluded
         )
 
+    async def async_purchase_totals(self, source):
+        from ..library.purchases import totals
+
+        return await self._call(self._search_read, totals, source)
+
     async def async_library_list(
         self, source: str, filters: dict, excluded: str = ""
     ) -> dict:

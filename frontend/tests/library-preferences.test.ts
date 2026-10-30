@@ -128,6 +128,123 @@ it("reshuffles Random sorting, preserves its seed through filtering and reload, 
   expect(button(root, "Ascending ↑")).toBeTruthy();
 });
 
+it("shows admin purchase details and persists the optional footer cost", async () => {
+  const transport = new FixtureTransport();
+  transport.purchaseTotals = {
+    ...transport.purchaseTotals,
+    purchase_count: 3,
+    unique_transactions: 2,
+    missing_purchase_prices: 1,
+    missing_order_ids: 1,
+    currencies: [
+      {
+        currency: "$",
+        library_cost: "$12.34",
+        retail_price: "$20.00",
+        savings: "$7.66",
+      },
+    ],
+  };
+  let root = await mount(transport);
+  expect(
+    transport.calls.some((call) =>
+      call.type.endsWith("library/purchases/summary"),
+    ),
+  ).toBe(false);
+  button(root, "Options").click();
+  const details = root.querySelector<HTMLDetailsElement>(".purchase-details")!;
+  expect(details).not.toBeNull();
+  details.open = true;
+  details.dispatchEvent(new Event("toggle"));
+  await vi.waitFor(() => expect(details.textContent).toContain("$12.34"));
+  expect(details.textContent).toContain("$20.00");
+  expect(details.textContent).toContain("$7.66");
+  expect([...details.querySelectorAll("dd")].at(-1)?.textContent).toBe("2");
+  expect(root.querySelector(".library-status")!.textContent).not.toContain(
+    "Library cost",
+  );
+  root.querySelector<HTMLInputElement>('[name="show_library_cost"]')!.click();
+  await flush();
+  expect(transport.uiPreferences.show_library_cost).toBe(true);
+  expect(root.querySelector(".library-status")!.textContent).toContain(
+    "Library cost $12.34",
+  );
+  element!.remove();
+  root = await mount(transport);
+  await vi.waitFor(() =>
+    expect(root.querySelector(".library-status")!.textContent).toContain(
+      "Library cost $12.34",
+    ),
+  );
+  expect(
+    root.querySelector<HTMLInputElement>('[name="show_library_cost"]')!.checked,
+  ).toBe(true);
+});
+
+it("never exposes or requests financial totals for readers, even with a saved footer flag", async () => {
+  const transport = new FixtureTransport();
+  transport.uiPreferences.show_library_cost = true;
+  element = document.createElement(
+    "kaleidescape-library",
+  ) as KaleidescapeLibrary;
+  element.client = transport.client();
+  element.scope = {
+    ...info,
+    library_enabled: true,
+    permissions: { read: true, edit: false, export: false },
+  };
+  document.body.append(element);
+  await flush();
+  const root = element.shadowRoot!;
+  expect(root.querySelector('[name="show_library_cost"]')).toBeNull();
+  expect(root.querySelector(".purchase-details")).toBeNull();
+  expect(root.querySelector(".library-status")!.textContent).not.toContain(
+    "Library cost",
+  );
+  expect(
+    transport.calls.some((call) =>
+      call.type.endsWith("library/purchases/summary"),
+    ),
+  ).toBe(false);
+});
+
+it("discards late private totals after an account/scope change", async () => {
+  const transport = new FixtureTransport();
+  const root = await mount(transport);
+  let release!: (
+    value: typeof transport.purchaseTotals & { revision: number },
+  ) => void;
+  vi.spyOn(element!.client!, "libraryPurchaseTotals").mockReturnValue(
+    new Promise((done) => {
+      release = done;
+    }),
+  );
+  root.querySelector<HTMLInputElement>('[name="show_library_cost"]')!.click();
+  await flush();
+  element!.scope = {
+    ...info,
+    library_enabled: true,
+    permissions: { read: true, edit: false, export: false },
+  };
+  await flush();
+  release({
+    ...transport.purchaseTotals,
+    revision: 1,
+    purchase_count: 1,
+    currencies: [
+      {
+        currency: "$",
+        library_cost: "$9876.54",
+        retail_price: null,
+        savings: null,
+      },
+    ],
+  });
+  await flush();
+  expect(root.textContent).not.toContain("9876.54");
+  expect(root.querySelector(".purchase-details")).toBeNull();
+});
+
 it("All loads bounded revision-bound pages and keeps the entire final remainder", async () => {
   const transport = new FixtureTransport();
   transport.libraryTitles = Array.from({ length: 1105 }, (_, i) =>

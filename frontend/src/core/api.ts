@@ -279,6 +279,22 @@ export interface LibraryInfo {
   artwork_bytes?: number;
   artwork_limit_bytes?: number;
 }
+export interface LibraryPurchaseTotals {
+  revision: number;
+  purchase_count: number;
+  unique_transactions: number;
+  missing_purchase_prices: number;
+  missing_retail_prices: number;
+  missing_order_ids: number;
+  unpaired_prices: number;
+  duplicate_purchases: number;
+  currencies: {
+    currency: string;
+    library_cost: string | null;
+    retail_price: string | null;
+    savings: string | null;
+  }[];
+}
 export interface ImportReviewRow {
   needs_match?: boolean;
   can_match?: boolean;
@@ -589,6 +605,12 @@ export class JournalClient {
   }
   libraryInfo(scope: Scope): Promise<LibraryInfo> {
     return this.call({ type: `${DOMAIN}/library/info`, ...scopeFields(scope) });
+  }
+  libraryPurchaseTotals(scope: Scope): Promise<LibraryPurchaseTotals> {
+    return this.call({
+      type: `${DOMAIN}/library/purchases/summary`,
+      ...scopeFields(scope),
+    });
   }
   libraryList(
     scope: Scope,

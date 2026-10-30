@@ -24,6 +24,7 @@ LIBRARY_DEFAULTS = {
     "show_format": True,
     "show_badges": True,
     "show_rating": False,
+    "show_library_cost": False,
     "widths": [360, 90, 260, 150, 140, 210],
     "query": "",
     "sort": "name",
@@ -80,6 +81,7 @@ def validate_library(patch, previous=None):
             "show_format",
             "show_badges",
             "show_rating",
+            "show_library_cost",
         )
     ):
         raise invalid("Invalid display toggle")

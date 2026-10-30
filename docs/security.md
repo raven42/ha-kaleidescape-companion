@@ -1121,3 +1121,22 @@ changes no content, access permissions, device state or journal links. The seed
 is stored with personal Library preferences, not in URLs or browser storage;
 existing ownership and retry protections apply. No schema change or additional
 package is required.
+
+## Administrator purchase aggregates
+
+`library/purchases/summary` is excluded from active-user read operations:
+inactive or non-administrator users are rejected before storage access. It uses
+the current enabled Library source, dataset scope and existing post-await
+role/readiness/source checks. Financial aggregates are never attached to shared
+Library info, Journal responses, sensors or artwork. Personal footer visibility
+is not authorization. Role/scope changes and unmount clear cached totals and
+ignore late responses; the controls are hidden from household readers.
+
+The worker streams at most 100,000 invoice records within two-second SQL/Python
+budgets and returns no partial result on exhaustion. Stable invoice identities
+are counted once; currency prefixes remain separate and arithmetic uses integer
+cents, serialized as formatted strings. Only aggregate counts and totals are
+returned, not invoice/order identifiers or raw history. The personal toggle
+`show_library_cost` is a strictly validated boolean, default false, using
+existing ownership/retry protections. No schema migration, provider request,
+device access or financial inference is added.

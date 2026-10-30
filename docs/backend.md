@@ -603,3 +603,21 @@ deleted viewings, ambiguous matches and unmatched names remain unchanged. The
 upgrade increments changed viewing revisions and the content revision, without
 altering viewing facts or publishing calendar events. The reviewed metadata
 repair remains available for entries that could not be linked automatically.
+
+## Administrator Library purchase summary
+
+`library/purchases/summary` is a scoped, administrator-only read. It returns the
+source revision, deduplicated purchase-record count, unique known-order count,
+missing-price/order counts, unpaired-price and duplicate counts, and currency
+buckets with formatted `library_cost`, `retail_price` and `savings` strings.
+Missing totals stay null; no currency is invented for an empty history. Values
+are decimal strings to preserve integer-cent precision in browsers.
+
+The worker streams embedded purchase histories for the configured source,
+excluding pending unmatched history, and counts stable invoice IDs once. It
+includes unavailable owners and repeat invoices, but not the redundant flat
+summary columns. Distinct known order IDs determine the transaction count;
+missing IDs do not create synthetic transactions. Savings require both prices in
+one currency. Reads have a two-second SQL/Python budget and a 100,000-record
+ceiling; exceeding either returns an error without partial totals. No schema,
+networking or device-write change is involved.

@@ -3,9 +3,10 @@
 import hashlib
 import json
 import re
+import time
 from urllib.parse import urlsplit
 
-from ..core.models import invalid, text, timestamp
+from ..core.models import JournalError, invalid, text, timestamp
 from .importing import purchase_date
 from .title_matching import TitleMatcher, TitleQuery, store_title
 
@@ -31,6 +32,95 @@ INVOICE_FIELDS = (
 )
 SUMMARY_FIELDS = ("purchase_price", "retail_price", "order_id", "href")
 MAX_HISTORY = 1000
+
+
+def totals(db, source):
+    """Sum recorded invoices once, using integer cents and separate currencies."""
+    deadline = time.monotonic() + 2
+    currencies, invoices, orders = {}, set(), set()
+    counts = dict.fromkeys(
+        (
+            "purchase_count",
+            "missing_purchase_prices",
+            "missing_retail_prices",
+            "missing_order_ids",
+            "unpaired_prices",
+            "duplicate_purchases",
+        ),
+        0,
+    )
+    for index, row in enumerate(
+        db.execute(
+            "SELECT invoice.value FROM library t,json_each(t.purchase_history) invoice "
+            "WHERE t.source_id=? AND t.purchase_match_pending=0 ORDER BY t.id "
+            "LIMIT 100001",
+            (source,),
+        )
+    ):
+        if index == 100000 or time.monotonic() > deadline:
+            raise JournalError(
+                "purchase_totals_limit", "Purchase totals exceed the read budget"
+            )
+        invoice = json.loads(row[0])
+        if invoice["id"] in invoices:
+            counts["duplicate_purchases"] += 1
+            continue
+        invoices.add(invoice["id"])
+        counts["purchase_count"] += 1
+        if invoice.get("order_id"):
+            orders.add(invoice["order_id"])
+        else:
+            counts["missing_order_ids"] += 1
+        paid = price_cents(invoice.get("purchase_price"))
+        retail = price_cents(invoice.get("retail_price"))
+        for value, field, missing in (
+            (paid, "library_cost", "missing_purchase_prices"),
+            (retail, "retail_price", "missing_retail_prices"),
+        ):
+            if value is None:
+                counts[missing] += 1
+                continue
+            currency, cents = value
+            bucket = currencies.setdefault(
+                currency, {"library_cost": None, "retail_price": None, "savings": None}
+            )
+            bucket[field] = (bucket[field] or 0) + cents
+        if paid and retail and paid[0] == retail[0]:
+            bucket = currencies[paid[0]]
+            bucket["savings"] = (bucket["savings"] or 0) + retail[1] - paid[1]
+        else:
+            counts["unpaired_prices"] += 1
+    revision = db.execute(
+        "SELECT revision FROM library_sources WHERE id=?", (source,)
+    ).fetchone()
+    return {
+        **counts,
+        "unique_transactions": len(orders),
+        "revision": revision[0] if revision else 0,
+        "currencies": [
+            {
+                "currency": currency,
+                **{
+                    key: money(currency, value) if value is not None else None
+                    for key, value in values.items()
+                },
+            }
+            for currency, values in sorted(currencies.items())
+        ],
+    }
+
+
+def price_cents(value):
+    value = price(value)
+    if value is None:
+        return None
+    match = re.fullmatch(r"([^\d\s.,+-]{1,8})\s*([\d,]+)\.([0-9]{2})", value)
+    return match[1], int(match[2].replace(",", "")) * 100 + int(match[3])
+
+
+def money(currency, cents):
+    amount = abs(cents)
+    return f"{'-' if cents < 0 else ''}{currency}{amount // 100}.{amount % 100:02d}"
 
 
 def price(value):

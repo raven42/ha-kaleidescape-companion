@@ -7,13 +7,13 @@ user within this dataset. Other household users keep their own choices.
 
 ## What is stored
 
-| Scope                         | Values                                                                                                                                                                                                                                                        |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Personal Library preferences  | List/Covers, entries per page, cover size, title overlay, format/library/rating badge toggles, column widths, applied title search, selected collection/actor/director/rating/status/genre/year/format filters, sort field, direction and random shuffle seed |
-| Personal search preferences   | One fuzzy-search choice across Library, Journal and manual title pickers                                                                                                                                                                                      |
-| Personal Database preferences | Table, row count, system-table visibility and per-table sort/order                                                                                                                                                                                            |
-| Shared UI preferences         | Hidden collection names, edited by administrators in Settings using known-name checkboxes and custom values                                                                                                                                                   |
-| Native HA options             | Default landing page, playback sources and recording rules, Library connection/sync/artwork options and collection-add opt-in                                                                                                                                 |
+| Scope                         | Values                                                                                                                                                                                                                                                                                          |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Personal Library preferences  | List/Covers, entries per page, cover size, title overlay, format/library/rating badge toggles, column widths, applied title search, selected collection/actor/director/rating/status/genre/year/format filters, sort field, direction, random shuffle seed and administrator footer-cost toggle |
+| Personal search preferences   | One fuzzy-search choice across Library, Journal and manual title pickers                                                                                                                                                                                                                        |
+| Personal Database preferences | Table, row count, system-table visibility and per-table sort/order                                                                                                                                                                                                                              |
+| Shared UI preferences         | Hidden collection names, edited by administrators in Settings using known-name checkboxes and custom values                                                                                                                                                                                     |
+| Native HA options             | Default landing page, playback sources and recording rules, Library connection/sync/artwork options and collection-add opt-in                                                                                                                                                                   |
 
 Open **Options** beside Filters/Clear Filter for view type, entries per page,
 cover-art size (in Cover mode), title overlays, format/library/rating badge
@@ -185,3 +185,13 @@ existing settings table and does not require a database schema change.
 The active-user ownership, strict boolean validation, scoped access and exact
 actor/area-bound retries still apply. Shared preferences remain Library-only;
 regular users cannot inspect another user's search preferences.
+
+## Administrator purchase display
+
+`show_library_cost` defaults to false in personal Library settings. The
+administrator's Library Options toggle saves immediately and restores after
+navigation/reload. The expandable Purchase details section is administrator-only
+and its open state is not persisted. Regular users receive no monetary data,
+even if their saved preferences contain the footer flag after a role change. See
+[purchase totals](library.md#administrator-purchase-totals) for calculation
+scope and missing-data behavior.

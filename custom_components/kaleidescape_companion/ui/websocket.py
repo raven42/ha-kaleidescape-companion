@@ -93,6 +93,7 @@ def async_register_commands(hass: HomeAssistant) -> None:
             p.Optional("revision"): int,
         },
         "library/viewing": {**scoped, p.Required("viewing_id"): str},
+        "library/purchases/summary": scoped,
         "library/viewings": {
             **scoped,
             p.Required("title_id"): str,
@@ -301,6 +302,7 @@ async def async_handle(
                     | "library/search"
                     | "library/viewing"
                     | "library/viewings"
+                    | "library/purchases/summary"
                     | "library/collections/targets"
                     | "library/collections/add"
                     | "library/collections/check"
@@ -420,6 +422,8 @@ async def async_handle(
                                 )
                             }
                         )
+                    elif operation == "library/purchases/summary":
+                        result = await repository.async_purchase_totals(library.source)
                     elif operation == "library/viewing":
                         result = await repository.async_viewing_library(
                             library.source, msg["viewing_id"]

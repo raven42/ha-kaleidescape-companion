@@ -195,6 +195,7 @@ export class FixtureTransport implements Transport {
     show_format: true,
     show_badges: true,
     show_rating: false,
+    show_library_cost: false,
     widths: [360, 90, 260, 150, 140, 210],
     query: "",
     sort: "name",
@@ -211,6 +212,21 @@ export class FixtureTransport implements Transport {
   };
   sharedPreferences: Record<string, unknown> = { hidden_collections: [] };
   searchPreferences: Record<string, unknown> = { fuzzy_search: true };
+  purchaseTotals = {
+    purchase_count: 0,
+    unique_transactions: 0,
+    missing_purchase_prices: 0,
+    missing_retail_prices: 0,
+    missing_order_ids: 0,
+    unpaired_prices: 0,
+    duplicate_purchases: 0,
+    currencies: [] as {
+      currency: string;
+      library_cost: string | null;
+      retail_price: string | null;
+      savings: string | null;
+    }[],
+  };
   databasePreferences: Record<string, unknown> = {
     limit: 25,
     show_system: false,
@@ -255,6 +271,8 @@ export class FixtureTransport implements Transport {
           },
         ],
       };
+    else if (operation === "library/purchases/summary")
+      result = { ...this.purchaseTotals, revision: this.revision };
     else if (operation === "library/info")
       result = {
         collection_add_enabled:

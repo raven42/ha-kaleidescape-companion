@@ -386,3 +386,27 @@ For the list API, `sort=random` uses `random_seed`, an empty default or a
 SHA-256 rank of the seed and source group (exact version ID for ungrouped
 queries). Different pages and All use the same seed; `descending` has no effect
 in Random mode. The seed is a browsing preference, not a credential.
+
+## Administrator purchase totals
+
+Library Options includes **Show total library cost in footer**, off by default
+and saved immediately in personal Library preferences. Administrators also have
+an expandable **Purchase details** section showing total library cost, total
+retail price, savings and unique transactions. Totals load only when that
+section opens or the footer option is enabled, then refresh with source revision
+changes. Household readers have neither control nor purchase totals.
+
+These are totals of recorded purchase history for the configured Library source,
+including invoices owned by unavailable versions. Search/filters, page size and
+hidden collection names do not change them. Each stable invoice identity is
+counted once across versions; repeat purchases with different identities remain
+separate. Allocated bundle prices are used as imported. Flat earliest-invoice
+summary columns are not added again.
+
+Amounts use exact integer-cent arithmetic and stay separated by their recorded
+currency prefix. Missing paid/retail prices are excluded, with coverage counts
+shown. Savings sum retail minus paid only for invoices with both prices in the
+same currency; they can be negative. Unique transactions count distinct known
+order IDs, not title/version rows. Purchases without an order ID are reported
+separately rather than assigned invented transactions. These recorded totals do
+not estimate missing prices or currency conversions.

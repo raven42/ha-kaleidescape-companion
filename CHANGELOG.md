@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased — Administrator Library purchase totals
+
+- Add a sticky, off-by-default footer-cost toggle and expandable Purchase
+  details for total paid cost, retail price, savings and unique transactions.
+- Read source-scoped invoice history once per identity, keep currencies separate
+  and expose missing-price/order coverage using exact cent arithmetic.
+- Protect financial summaries with administrator checks before and after reads;
+  keep household UI/API projections free of monetary data.
+
 ## Unreleased — Random Library sorting
 
 - Add Random sorting in List and Cover views, with a Randomize button that

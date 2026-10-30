@@ -29,6 +29,20 @@ export const libraryStyles = css`
     display: grid;
     gap: 14px;
   }
+  .purchase-details {
+    margin-top: 16px;
+  }
+  .purchase-summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px 16px;
+  }
+  .purchase-summary dd {
+    margin: 0;
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
   .view-options {
     display: flex;
     gap: 24px;
