@@ -10,7 +10,7 @@ case "${1:-help}" in
     if [[ ! -x .venv/bin/python ]]; then
       python3 -m venv .venv
     fi
-    .venv/bin/python -m pip install -e '.[dev]'
+    .venv/bin/python -m pip install --find-links ../kaleidescape-api/dist -e '.[dev]'
     (cd frontend && npm ci)
     ;;
   check)

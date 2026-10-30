@@ -322,9 +322,12 @@ Selected-title launch/resume/start-over each require proven interfaces; see
 [research limitations](research.md) and the proposed
 [selected-title adapter](playback-controls.md). The latter specifies documented
 player discovery, exact-version enrichment and an experimental launch boundary.
-A standalone protocol client/operator harness now exists; native HA control
-registration, discovery and enrichment remain unimplemented. Library
-synchronization never sends controls.
+The independent [Kaleidescape API project](https://pypi.org/project/kaleidescape-api/)
+provides persistent TCP, the current request catalog, events, discovery and the
+operator CLI. It has no application dependencies and is excluded from
+integration deployment; runtime HA code does not import it yet. Native HA
+control registration, discovery settings and persisted enrichment remain
+unimplemented. Library synchronization never sends controls.
 
 Broader sharing and import extensions require explicit capability and retention
 contracts plus security regressions. Import validates size/schema/paths before

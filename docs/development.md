@@ -23,19 +23,20 @@ From the repository root:
 ```sh
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e '.[dev]'
+python -m pip install --find-links ../kaleidescape-api/dist -e '.[dev]'
 npm --prefix frontend ci
 bash dev/dev.sh check
 ```
 
 The editable install reads the `dev` extra in `pyproject.toml`, which includes
-Home Assistant and Ruff. Frontend dependencies use the npm lockfile.
-`frontend/.npmrc` disables dependency lifecycle hooks; the SDK's development
-Husky hook is not needed. The explicit build commands still run, and esbuild
-uses its platform package. The optional `bash dev/dev.sh setup` performs the
-same installation steps. An existing virtual environment is reused; deactivate
-and recreate it when changing Python versions. HA installs additional
-integration requirements on first start, which needs internet access.
+Home Assistant and Ruff. The separate editable API install provides its CLI and
+development tools. Frontend dependencies use the npm lockfile. `frontend/.npmrc`
+disables dependency lifecycle hooks; the SDK's development Husky hook is not
+needed. The explicit build commands still run, and esbuild uses its platform
+package. The optional `bash dev/dev.sh setup` performs the same installation
+steps. An existing virtual environment is reused; deactivate and recreate it
+when changing Python versions. HA installs additional integration requirements
+on first start, which needs internet access.
 
 Run these in separate terminals:
 
@@ -168,7 +169,19 @@ The
 [standalone playback protocol harness](playback-controls.md#standalone-protocol-proof-of-concept)
 accepts explicit IP/serial and probe/PLAY/STOP operands without starting HA.
 Handle launch is experimental. Normal checks use fictional loopback emulation;
-real device tests are operator actions, separate from build/test tasks.
+real device tests are operator actions, separate from build/test tasks. The
+[protocol library guide](protocol-library.md) explains the separate project and
+future integration boundary. Its own
+[README](https://pypi.org/project/kaleidescape-api/) covers Python 3.11+ setup,
+the public API, command catalog, examples and CLI. `dev/dev.sh check` also runs
+that project's independent checks. Use **Check Kaleidescape API** or
+`python ../kaleidescape-api/tools/check.py` to check only the library. Build its
+wheel/sdist with **Build Kaleidescape API** or
+`python -m build ../kaleidescape-api`. It is not included in HA deployment. The
+API's development extra includes Pyright; its checks use the existing Node.js
+installation. After building, run
+`python ../kaleidescape-api/tools/check_distribution.py` to verify source docs,
+examples and tests against a wheel installed in a clean temporary environment.
 
 ## Integration framework
 

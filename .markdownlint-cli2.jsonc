@@ -12,10 +12,11 @@
   },
   "ignores": [
     "**/node_modules/**",
-    ".venv/**",
+    "**/.venv/**",
+    "**/.package-test/**",
     ".ha-dev/**",
     "**/dist/**",
-    "build/**",
+    "**/build/**",
     "**/*.egg-info/**",
   ],
 }

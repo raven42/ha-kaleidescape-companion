@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased — Official protocol library and experimental extensions
+
+- Audit the independent API's source/docs and add bugbear/async linting,
+  Pyright, generated typed command members, malformed-input regressions and
+  isolated source/wheel verification. Clarify the directory tree and include
+  examples documentation in source distributions.
+
+- Split TCP codecs, persistent sessions, documented commands and models into an
+  independent `lib/kaleidescape-api/` Python 3.11+ project with 206 current Rev
+  17 request definitions. Include its own packaging, docs, examples, CLI, source
+  distribution, test framework and Python-version CI matrix; exclude it from
+  integration deployment until an HA adapter is implemented.
+- Add serial/zone routing, bounded event iterators, binary responses, multipart
+  content/music browsing, discovery and structured status/error handling.
+- Isolate undocumented movie launch and configurable profiles in a separate
+  adapter; preserve operator preflight, dry runs and uncertain outcomes.
+- Extend the CLI with offline catalog listing, documented commands, discovery
+  and bounded events. Add codec/emulator/lifecycle regressions.
+
 ## Unreleased — Standalone playback protocol proof of concept
 
 - Add a standard-library TCP client and operator CLI with IP/serial operands,

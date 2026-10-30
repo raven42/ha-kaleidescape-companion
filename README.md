@@ -23,6 +23,7 @@ limits.
   [collection additions](docs/library-collections.md), and
   [purchase dates](docs/purchase-dates.md) and
   [reviewed merge imports](docs/imports.md)
+- [Independent Kaleidescape API library](https://pypi.org/project/kaleidescape-api/)
 - [Interface research](docs/research.md) and [changelog](CHANGELOG.md)
 
 ## Layout
@@ -43,8 +44,9 @@ tests/       Python storage, API, lifecycle and deployment tests
 docs/        Product, architecture, security and operator guides
 ```
 
-The `dev/` tools and frontend development sources are excluded from deployment.
-Only the integration directory is installed into HA.
+The `dev/` tools, independent API project and frontend development sources are
+excluded from integration deployment. Only the integration directory is
+installed into HA.
 
 ## Development setup
 
@@ -54,7 +56,7 @@ repository root:
 ```sh
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e '.[dev]'
+python -m pip install --find-links ../kaleidescape-api/dist -e '.[dev]'
 npm --prefix frontend ci
 bash dev/dev.sh check
 ```

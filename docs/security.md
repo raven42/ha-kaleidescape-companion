@@ -454,22 +454,48 @@ must satisfy the matching evidence; unknown exact IDs require manual matching.
 - Keep library synchronization read-only. Playback requires an explicit user
   action, a configured player, a supported operation, and server-side permission
   checks. Do not expose raw protocol or general HA service forwarding.
-- The
-  [standalone playback harness](playback-controls.md#standalone-protocol-proof-of-concept)
-  is an explicit operator tool, with no HA action/API registration or database
-  writes. It uses literal private LAN IPs on port 10000 and verifies the
-  directly connected serial/movie-zone capability before controls. It bounds
-  frames to 4 KiB, each response to 128 KiB/256 messages, metadata to 128 rows,
-  each connection/request to 5 seconds and observation to 10 seconds. It
-  validates checksums, escaping, address/sequence correlation and returned
-  metadata handles. Partial frames, wrong-device events and acknowledgements
-  alone cannot confirm title playback. Possible sends are never automatically
-  replayed; cancellation closes the socket. No discovery, wake or prefix
-  fallback runs implicitly. Reports go to the operator's stdout without raw
-  protocol logging. They contain private device/movie data and must not enter
-  fixtures, Git or public logs. Operations serialize per client instance; the
-  proof of concept has no cross-process lock or durable receipt. It is not a
-  production HA control path.
+- The [independent API project](https://pypi.org/project/kaleidescape-api/)
+  separates documented TCP requests from explicitly imported undocumented
+  extensions. Its own
+  [security policy](https://pypi.org/project/kaleidescape-api/) describes the
+  general library boundary. It has no HA/application dependencies, storage or
+  handler registration, and is excluded from the integration package until a
+  native adapter is implemented. Its public command API is a trusted
+  Python/operator interface, not an authorization boundary or HA service.
+  Importing the API opens no sockets. General clients require literal private
+  LAN destinations on port 10000. The CLI additionally verifies the connected
+  serial before operations; playback also verifies movie-zone capability and
+  exact handle metadata. Discovery routes queries through the seed and never
+  follows returned IPs. No automatic wake, namespace fallback, command replay,
+  event registration, syslog message or polling runs on connect. Standalone
+  regression checks also enforce typed public command members, unknown-field
+  preservation and malformed-input handling. CLI command framing, encoded length
+  and local-session routing are checked before connection/binary negotiation.
+  Distribution checks use fictional emulators in a clean local environment and
+  do not connect to devices.
+- Sessions bound incoming frames to 4 KiB, correlated responses to 128 KiB/256
+  messages, metadata to 128 rows, browse pages to 100 rows and discovery to 64
+  components/60 seconds. Connection/request defaults are 5 seconds (configurable
+  up to 15); request budgets include queue waiting. Each connection accepts at
+  most 32 callers, with one on-wire request. Event subscriptions are capped at
+  32, with 64 buffered events by default and a configurable maximum of 1024;
+  overflow ends that subscription with an explicit resynchronization error.
+  Codecs validate escaping, checksums and printable/binary framing. Replies
+  correlate by normalized device/zone and sequence; multipart counts/identities
+  are checked before completion. Timeout/cancellation after sending closes the
+  session so late replies cannot acknowledge reused sequences. Possible writes
+  are reported as uncertain and never replayed. Reconnect/resubscription is
+  explicit. Closing during setup prevents a late connection from surviving.
+- The operator workflow separately observes playback for up to 10 seconds;
+  acknowledgement and existing title strings cannot prove a new launch or exact
+  edition. The CLI event operation collects at most 256 events over 1–300
+  seconds. Dry runs skip control/binary negotiation and redact passcode fields.
+  There is no raw wire logging; structured reports contain private movie/device
+  data and must remain outside Git/public logs. The implementation serializes
+  per client, without cross-process locking or durable receipts. Native HA
+  permissions, capability gates and durable actor-bound outcomes remain future
+  integration work. The earlier launch/stop result does not certify expanded
+  commands, events or binary mode on hardware.
 - Future HA discovery/control opt-ins must be separate from Library sync. TCP
   connections require LAN validation, pinned destinations, verified serials and
   bounded framing/read budgets. Device replies and cached handles are untrusted;

@@ -1,19 +1,24 @@
 # Selected-title playback design
 
 Research date: 2026-10-30. A standalone experimental protocol client and
-operator harness are implemented. HA controls, settings, discovery and handle
-persistence below remain proposed. Implementation checks use a fictional
-emulator; the operator subsequently reported successful selected-title playback
-and STOP on one live player. No agent device connection or deployment was
-performed. Library sync remains read-only; Now Playing remains observational.
+operator harness are implemented. The [protocol libraries](protocol-library.md)
+now add documented command coverage, persistent sessions, events and discovery.
+HA controls, native settings and handle persistence below remain proposed.
+Implementation checks use a fictional emulator; the operator subsequently
+reported successful selected-title playback and STOP on one live player. No
+agent device connection or deployment was performed. Library sync remains
+read-only; Now Playing remains observational.
 
 ## Standalone protocol proof of concept
 
-The pure standard-library transport lives in
-`custom_components/kaleidescape_companion/playback/protocol.py`. The operator
-utility `dev/playback_control.py` loads that module without importing or
-starting HA. No additional packages, database migration or configuration file is
-needed. It never reads or updates the household database.
+The independent standard-library project lives in `../kaleidescape-api/`, with
+undocumented operations in `kaleidescape_api.extensions`. Install it with
+`python -m pip install -e '.[dev]'` from the Companion repository root. The
+utility `dev/playback_control.py` delegates to its installed CLI without
+importing or starting HA. No database migration or configuration file is needed.
+It never reads or updates the household database. See the
+[library API and extended CLI](protocol-library.md) for documented requests,
+discovery, events and binary-response testing.
 
 Set these shell variables to your test player's literal private LAN IP and
 hexadecimal serial number (without spaces or a `#` prefix):
@@ -47,11 +52,12 @@ python3 dev/playback_control.py --ipaddress "$PLAYER_IP" --serial-number "$PLAYE
 python3 dev/playback_control.py --ipaddress "$PLAYER_IP" --serial-number "$PLAYER_SERIAL" --play "$MOVIE_HANDLE"
 ```
 
-`--play` and `--stop` are mutually exclusive. With neither, the utility only
-probes. `--dry-run` also works with bare `--play` or `--stop`; it makes
-read-only preflight queries but sends no control. Device operations can
-interrupt content and trigger theater automations. There is no automatic wake,
-STOP-before-PLAY, retry, namespace fallback or background connection.
+Operations are mutually exclusive. With no operation, the utility only probes.
+`--dry-run` also works with bare `--play` or `--stop`; it makes read-only
+preflight queries but sends no control. Device operations can interrupt content
+and trigger theater automations. There is no automatic wake, STOP-before-PLAY,
+retry or namespace fallback. The library supports caller-owned persistent
+sessions; the playback workflow closes its session after the operation.
 
 Each operation first checks that the directly connected device's serial matches
 the operand and that it reports a movie zone. Connecting through a server or
@@ -166,14 +172,15 @@ Keep public HA media-player actions for power, play/pause, stop and chapter
 navigation, with the caller's context, entity permissions and actual capability
 flags. Do not create replacement entities or patch the built-in integration.
 
-For discovery and the missing launch operation, use a small asynchronous adapter
-under `playback/`. Prefer an upstream public, typed launch/addressing API if one
-becomes available and matches HA's dependency version. Until then, a restricted
-native `asyncio` client is preferable to depending on private client internals.
-It must implement proper framing, escaping, response correlation and bounds; a
-TCP read is not necessarily a complete response line. This is a limited adapter,
-not a general remote/protocol API. Do not introduce a conflicting pykaleidescape
-pin alongside the built-in integration.
+Discovery and missing launch operations now live in the independent
+`lib/kaleidescape-api/` project; see the [library guide](protocol-library.md).
+Prefer an upstream public, typed launch/addressing API if one becomes available
+and matches HA's dependency version. Until then, a restricted native `asyncio`
+client is preferable to depending on private client internals. It must implement
+proper framing, escaping, response correlation and bounds; a TCP read is not
+necessarily a complete response line. The library is a trusted Python/operator
+API; HA must expose only fixed capability-gated intents. Do not expose generic
+dispatch through HA or introduce a conflicting pykaleidescape dependency pin.
 
 ## Discovery and native HA settings
 
@@ -271,9 +278,9 @@ depend on operator protocol evidence, so this investigation adds no schema.
 
 ## Implementation and acceptance sequence
 
-1. Implement the bounded protocol/parser and discovery with fictional emulator
-   tests, the opt-in/native default-player settings and a read-only identity
-   report. No playback commands in discovery or sync.
+1. Implemented: bounded protocol/parser, catalog, discovery and events with
+   fictional emulator tests. Next: opt-in native default-player settings and a
+   read-only identity report in HA. No playback commands in discovery or sync.
 2. Implement handle enrichment and its migration, with changed-system,
    unavailable-version, same-name remake and edition-ambiguity tests. Do not
    require a full catalog rescan for every launch.

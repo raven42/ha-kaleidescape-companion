@@ -33,7 +33,11 @@ database changes. Local tests establish emulator behavior, not live-device
 compatibility. Separately, operator-supplied output from October 30 establishes
 one successful selected-title launch and STOP sequence; its
 [scope and remaining limits](playback-controls.md#operator-validation--2026-10-30)
-do not establish exact-edition or general firmware compatibility.
+do not establish exact-edition or general firmware compatibility. The
+[independent API project](https://pypi.org/project/kaleidescape-api/) now
+implement the current Rev 17 request catalog and isolated experimental launch.
+Expanded discovery, events, binary and music/disc capabilities are
+emulator-tested; hardware validation remains separate.
 
 ## Existing HA entities
 
