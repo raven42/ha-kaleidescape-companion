@@ -956,9 +956,9 @@ substitutions are bounded. Only the rendered title/description and interval
 enter provider events: no appended JSON, dataset/viewing/version IDs or
 artwork-cache references. Legacy `{artwork}` placeholders render blank. Notes,
 raw handles, origins, paths and credentials never enter events. Existing
-provider descriptions are not rewritten. Future local calendar views/cards will
-read the authenticated Journal/Library database instead of provider metadata. No
-external image fetch/decoder is added.
+provider descriptions are not rewritten. The local Journal calendar and future
+dashboard card read the authenticated Journal/Library database instead of
+provider metadata. No external image fetch/decoder is added.
 
 Completion and a content-free `calendar_publications` receipt commit atomically.
 One queued viewing per ten-second tick is claimed as sending before the external
@@ -1042,6 +1042,36 @@ viewings, sessions and Library; sources, collections and artwork require the
 system-table toggle without changing their field/edit/delete policy.
 
 ## Search preferences and bounded fuzzy reads
+
+### Journal month view
+
+`journal/calendar` and `journal/calendar/get` allow active authenticated users
+with the existing dataset/readiness checks and post-await role/source checks.
+Both roles receive the same positive projections: the eight safe viewing fields,
+opaque current-source Library/artwork links on month rows, and a compact movie
+projection on detail reads. Notes, raw source IDs, private invoice fields,
+purchase/detection dates and full metadata snapshots are excluded. Library
+opt-out or an unavailable/noncurrent version withholds linked metadata/artwork;
+the Journal itself remains readable. No provider/device call or new HTTP/proxy
+route is introduced.
+
+Month reads validate timezone-aware bounds and a positive span of at most 32
+days, limit to 1000 nondeleted viewings, bind all search values, and run on the
+single worker with the two-second SQLite budget. An exceeded row/time limit
+returns an error rather than a misleading partial month. Exact version links
+reuse existing indexes. The browser uses local start dates, text bindings and
+the existing visibility-loaded, bounded authenticated artwork cache. Account,
+scope and Library-enablement changes clear state/cache and invalidate pending
+month/detail replies. Dialog dismissal also invalidates pending details.
+
+The personal Journal `view` preference accepts only `list` or `calendar` through
+the existing actor-owned preference API and validated Database settings editor.
+Search migration removes only obsolete fuzzy-search keys, preserving Journal
+layout. No schema change or broader write permission is introduced. Regression
+tests use fictional temporary storage and component DOMs; real-browser geometry
+remains an operator check.
+
+### Global fuzzy search
 
 Personal search preferences use `area=search` and one strictly boolean
 `fuzzy_search` field, enabled by default. Journal and Library controls read and

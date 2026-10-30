@@ -347,9 +347,9 @@ Journal export has confirmation, duplicate-format warning, progress,
 cancellation and uncertain-result handling. It matches rendered title/start/end
 before creating historical events and never updates/deletes remote events.
 Events contain only configured human-readable templates and times; there is no
-appended Companion metadata. Future calendar views/cards will use the local
-Journal database and Library artwork instead of parsing provider events.
-Provider sharing, boundaries, recovery and real-provider validation are
+appended Companion metadata. The Journal month view uses the local database and
+Library artwork instead of parsing provider events; a dashboard card remains
+planned. Provider sharing, boundaries, recovery and real-provider validation are
 documented in [calendar procedures](calendar.md).
 
 ## Dialog actions and detail browsing
@@ -402,6 +402,14 @@ operator review remains pending. Real-provider/device validation requires an
 isolated operator test, not the fictional preview.
 
 ## Journal and Library navigation
+
+**Journal → Options → Calendar view** switches to a saved personal month layout
+with previous/next navigation. Local start dates place the posters; search and
+status filters still apply. Same-day covers overlap with about 15% exposed,
+bringing hovered/focused covers forward. Clicking opens compact movie and
+viewing details in one popup, without purchase/detection fields. Turn Calendar
+view off to restore the split list/details layout. See
+[calendar behavior and browser checks](calendar.md#journal-month-view).
 
 With Library enabled, Journal details show locally cached artwork and a **View
 in Library** link for the saved exact version. Library title details provide

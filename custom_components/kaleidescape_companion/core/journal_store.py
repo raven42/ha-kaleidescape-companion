@@ -15,6 +15,37 @@ from uuid import uuid4
 
 from .models import JournalError, identifier, invalid, text, validate_times
 
+PUBLIC_FIELDS = frozenset(
+    {
+        "id",
+        "title",
+        "started_at",
+        "ended_at",
+        "duration_seconds",
+        "watched_seconds",
+        "status",
+        "origin",
+    }
+)
+
+
+def public_viewing(record):
+    """Share only the household viewing fields, independently of caller role."""
+    return {key: record[key] for key in PUBLIC_FIELDS if key in record.keys()}
+
+
+def library_group(db, source, title_id):
+    if not isinstance(title_id, str) or not re.fullmatch(r"[a-f0-9]{64}", title_id):
+        raise invalid("Invalid Library entry")
+    row = db.execute(
+        "SELECT source_group FROM library WHERE id=? AND source_id=? "
+        "AND available=1 AND purchase_match_pending=0",
+        (title_id, source),
+    ).fetchone()
+    if row is None:
+        raise JournalError("not_found", "Library entry is unavailable")
+    return row[0]
+
 
 def record(row: sqlite3.Row) -> dict:
     """Keep storage-only search and correction bookkeeping out of API records."""
@@ -76,15 +107,7 @@ def list_viewings(
     group = None
     if library_scope:
         source, title_id = library_scope
-        if not isinstance(title_id, str) or not re.fullmatch(r"[a-f0-9]{64}", title_id):
-            raise invalid("Invalid Library entry")
-        group = db.execute(
-            "SELECT source_group FROM library WHERE id=? AND source_id=? "
-            "AND available=1 AND purchase_match_pending=0",
-            (title_id, source),
-        ).fetchone()
-        if group is None:
-            raise JournalError("not_found", "Library entry is unavailable")
+        group = library_group(db, source, title_id)
         binding.append(list(library_scope))
     key = (
         "coalesce(ended_at,completed_at,started_at)"
@@ -108,7 +131,7 @@ def list_viewings(
             "library_title_id IN (SELECT id FROM library "
             "WHERE source_id=? AND source_group=? AND purchase_match_pending=0)"
         )
-        values.extend((library_scope[0], group[0]))
+        values.extend((library_scope[0], group))
     if viewing_status:
         predicates.append("status = ?")
         values.append(viewing_status)

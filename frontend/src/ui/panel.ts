@@ -1,3 +1,4 @@
+import "./journal-calendar";
 import "./viewing-library";
 /** Admin journal management, shared by the HA panel and isolated Vite preview. */
 import { counted } from "../core/text";
@@ -87,6 +88,7 @@ export class KaleidescapePanel extends LitElement {
   private sort = "completed_at";
   private descending = true;
   private fuzzySearch = true;
+  private journalView: "list" | "calendar" = "list";
   private journalMovie?: { id: string; title: string };
   private libraryTitleId?: string;
   private journalReady = false;
@@ -176,6 +178,7 @@ export class KaleidescapePanel extends LitElement {
     this.navigationReady = false;
     this.settingsBusy = this.maintenanceBusy = false;
     this.fuzzySearch = true;
+    this.journalView = "list";
     this.journalMovie = undefined;
     this.libraryTitleId = undefined;
     this.journalReady = false;
@@ -761,9 +764,11 @@ export class KaleidescapePanel extends LitElement {
               @journal-options=${(
                 event: CustomEvent<{
                   fuzzy_search: boolean;
+                  view: "list" | "calendar";
                 }>,
               ) => {
                 this.journalReady = true;
+                this.journalView = event.detail.view;
                 const changed = this.fuzzySearch !== event.detail.fuzzy_search;
                 this.fuzzySearch = event.detail.fuzzy_search;
                 if (changed) {
@@ -812,7 +817,7 @@ export class KaleidescapePanel extends LitElement {
                 <option value="completed">Completed</option>
               </select></label
             >
-            <label
+            <label ?hidden=${this.journalView === "calendar"}
               >Sort by<select
                 name="journal_sort"
                 .value=${this.sort}
@@ -832,6 +837,7 @@ export class KaleidescapePanel extends LitElement {
             >
             <button
               type="button"
+              ?hidden=${this.journalView === "calendar"}
               ?disabled=${blocked}
               @click=${() => {
                 this.descending = !this.descending;
@@ -845,70 +851,88 @@ export class KaleidescapePanel extends LitElement {
             <button ?disabled=${blocked}>Search</button>
           </form>
         </div>
-        <div class="entries-layout">
-          <section class="entries-list" aria-label="Journal entries">
-            <div class="card-head">
-              <h2>Viewings (${this.info?.viewing_count ?? 0})</h2>
-            </div>
-            ${
-              this.loading
-                ? html`<div class="empty" role="status">Loading viewings…</div>`
-                : this.rows.length
-                  ? html`<ul
-                      class="entry-list"
-                      tabindex="0"
-                      aria-label="Viewings"
-                    >
-                      ${this.rows.map((record) => viewingListRow(record, this.selected?.id, (id) => void this.selectRecord(id), this.saving || !!this.pending))}
-                    </ul>`
-                  : html`<div class="empty">
-                      <strong
-                        >${this.query || this.status ? "No matching viewings" : "Your journal is empty"}</strong
-                      >
-                      <p>
-                        ${this.query || this.status ? "Try another title or status." : "Add a manual viewing or enable automatic tracking in the integration settings."}
-                      </p>
-                    </div>`
-            }
-          </section>
-          <section
-            class="entries-detail"
-            aria-label="Viewing details"
-            tabindex="0"
-          >
-            <div class="card-head">
-              <h2>Viewing details</h2>
-              ${this.selected ? html`<button ?disabled=${blocked} @click=${this.editRecord}>Edit viewing</button><button class="danger" ?disabled=${blocked} @click=${this.openDelete}>Delete entry</button>` : nothing}
-            </div>
-            ${
-              this.detailLoading
-                ? html`<div class="empty" role="status">Loading entry…</div>`
-                : this.selected
-                  ? html`${viewingDetails(this.selected, (value) => this.date(value))}
-                      <kaleidescape-viewing-library
-                        .client=${this.api}
-                        .scope=${this.info}
-                        .viewingId=${this.selected.id}
-                        .disabled=${blocked}
-                        @access-denied=${() => this.fail(new ApiError("unauthorized"))}
-                        @open-library-title=${(event: CustomEvent<string>) => this.switchPage("library", { libraryTitleId: event.detail })}
-                      ></kaleidescape-viewing-library>
-                      ${
-                        this.selected.notes
-                          ? html`<h3>Notes</h3>
-                              <p class="journal-notes">
-                                ${this.selected.notes}
-                              </p>`
-                          : nothing
-                      }
-                      ${this.renderEvidence()}`
-                  : html`<div class="empty">
-                      <strong>Select an entry</strong>
-                      <p>Review its details or add a manual viewing.</p>
-                    </div>`
-            }
-          </section>
-        </div>
+        ${
+          this.journalView === "calendar"
+            ? html`<kaleidescape-journal-calendar
+                .client=${this.api ?? undefined}
+                .scope=${this.info ?? undefined}
+                .query=${this.query}
+                .status=${this.status}
+                .fuzzy=${this.fuzzySearch}
+                .libraryTitleId=${this.journalMovie?.id}
+                @access-denied=${() => this.fail(new ApiError("unauthorized"))}
+              ></kaleidescape-journal-calendar>`
+            : html`
+                <div class="entries-layout">
+                  <section class="entries-list" aria-label="Journal entries">
+                    <div class="card-head">
+                      <h2>Viewings (${this.info?.viewing_count ?? 0})</h2>
+                    </div>
+                    ${
+                      this.loading
+                        ? html`<div class="empty" role="status">
+                            Loading viewings…
+                          </div>`
+                        : this.rows.length
+                          ? html`<ul
+                              class="entry-list"
+                              tabindex="0"
+                              aria-label="Viewings"
+                            >
+                              ${this.rows.map((record) => viewingListRow(record, this.selected?.id, (id) => void this.selectRecord(id), this.saving || !!this.pending))}
+                            </ul>`
+                          : html`<div class="empty">
+                              <strong
+                                >${this.query || this.status ? "No matching viewings" : "Your journal is empty"}</strong
+                              >
+                              <p>
+                                ${this.query || this.status ? "Try another title or status." : "Add a manual viewing or enable automatic tracking in the integration settings."}
+                              </p>
+                            </div>`
+                    }
+                  </section>
+                  <section
+                    class="entries-detail"
+                    aria-label="Viewing details"
+                    tabindex="0"
+                  >
+                    <div class="card-head">
+                      <h2>Viewing details</h2>
+                      ${this.selected ? html`<button ?disabled=${blocked} @click=${this.editRecord}>Edit viewing</button><button class="danger" ?disabled=${blocked} @click=${this.openDelete}>Delete entry</button>` : nothing}
+                    </div>
+                    ${
+                      this.detailLoading
+                        ? html`<div class="empty" role="status">
+                            Loading entry…
+                          </div>`
+                        : this.selected
+                          ? html`${viewingDetails(this.selected, (value) => this.date(value))}
+                              <kaleidescape-viewing-library
+                                .client=${this.api}
+                                .scope=${this.info}
+                                .viewingId=${this.selected.id}
+                                .disabled=${blocked}
+                                @access-denied=${() => this.fail(new ApiError("unauthorized"))}
+                                @open-library-title=${(event: CustomEvent<string>) => this.switchPage("library", { libraryTitleId: event.detail })}
+                              ></kaleidescape-viewing-library>
+                              ${
+                                this.selected.notes
+                                  ? html`<h3>Notes</h3>
+                                      <p class="journal-notes">
+                                        ${this.selected.notes}
+                                      </p>`
+                                  : nothing
+                              }
+                              ${this.renderEvidence()}`
+                          : html`<div class="empty">
+                              <strong>Select an entry</strong>
+                              <p>Review its details or add a manual viewing.</p>
+                            </div>`
+                    }
+                  </section>
+                </div>
+              `
+        }
         <footer class="entries-footer journal-status">
           <span>
             ${counted(this.info?.viewing_count ?? 0, "entry", "entries")} ·
@@ -920,7 +944,7 @@ export class KaleidescapePanel extends LitElement {
             Schema ${this.info?.schema_version} · Revision
             ${this.info?.revision}
           </span>
-          <div class="pagination">
+          <div class="pagination" ?hidden=${this.journalView === "calendar"}>
             <small>Page ${this.page} · Up to 25 entries</small>
             <div class="actions">
               <button

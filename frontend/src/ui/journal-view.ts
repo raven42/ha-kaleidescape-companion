@@ -65,6 +65,9 @@ export function viewingDetails(
 }
 
 export const journalStyles = css`
+  .journal [hidden] {
+    display: none;
+  }
   .journal {
     margin-top: 24px;
     overflow: visible;

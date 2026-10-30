@@ -93,6 +93,22 @@ export interface JournalPage {
   revision: number;
   next_cursor: string | null;
 }
+export interface CalendarViewing extends ViewingSummary {
+  library_title_id: string | null;
+  artwork_key: string | null;
+}
+export interface CalendarMovie {
+  title: string;
+  artwork_key: string | null;
+  actors: string[] | null;
+  directors: string[] | null;
+  genres: string[] | null;
+  rating: string | null;
+  year: number | null;
+  duration_seconds: number | null;
+  edition: string | null;
+  formats: string[] | null;
+}
 export interface ViewingLibraryLink {
   title_id: string;
   title: string;
@@ -579,6 +595,36 @@ export class JournalClient {
   get(scope: Scope, viewing_id: string): Promise<Viewing> {
     return this.call({
       type: `${DOMAIN}/journal/get`,
+      ...scopeFields(scope),
+      viewing_id,
+    });
+  }
+  calendarMonth(
+    scope: Scope,
+    start: string,
+    end: string,
+    query = "",
+    status = "",
+    fuzzy = false,
+    titleId?: string,
+  ): Promise<{ items: CalendarViewing[]; revision: number }> {
+    return this.call({
+      type: `${DOMAIN}/journal/calendar`,
+      ...scopeFields(scope),
+      start,
+      end,
+      query,
+      fuzzy,
+      ...(status ? { status } : {}),
+      ...(titleId ? { title_id: titleId } : {}),
+    });
+  }
+  calendarDetails(
+    scope: Scope,
+    viewing_id: string,
+  ): Promise<{ viewing: ViewingSummary; movie: CalendarMovie | null }> {
+    return this.call({
+      type: `${DOMAIN}/journal/calendar/get`,
       ...scopeFields(scope),
       viewing_id,
     });

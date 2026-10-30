@@ -33,7 +33,10 @@ it("saves the global personal search choice and restores it when reopened", asyn
     expect(transport.searchPreferences.fuzzy_search).toBe(false),
   );
   expect(transport.uiPreferences).not.toHaveProperty("fuzzy_search");
-  expect(changed.mock.calls[0][0].detail).toEqual({ fuzzy_search: false });
+  expect(changed.mock.calls[0][0].detail).toEqual({
+    fuzzy_search: false,
+    view: "list",
+  });
   element.remove();
   const reopened = await mount(transport);
   expect(reopened.querySelector<HTMLInputElement>("input")!.checked).toBe(
@@ -52,14 +55,14 @@ it("ignores late preference reads after unmount", async () => {
     "kaleidescape-journal-options",
   ) as JournalOptions;
   const client = transport.client();
-  let release: (value: {
+  const releases: ((value: {
     values: Record<string, unknown>;
     revision: number;
-  }) => void = () => {};
+  }) => void)[] = [];
   vi.spyOn(client, "uiPreferences").mockImplementation(
     () =>
       new Promise((resolve) => {
-        release = resolve;
+        releases.push(resolve);
       }),
   );
   const changed = vi.fn();
@@ -69,9 +72,34 @@ it("ignores late preference reads after unmount", async () => {
   document.body.append(element);
   await element.updateComplete;
   element.remove();
-  release({ values: { fuzzy_search: false }, revision: 1 });
+  for (const release of releases)
+    release({ values: { fuzzy_search: false, view: "calendar" }, revision: 1 });
   await new Promise((resolve) => setTimeout(resolve, 0));
   expect(changed).not.toHaveBeenCalled();
+});
+
+it("persists Calendar view independently of the global search preference", async () => {
+  const transport = new FixtureTransport();
+  const root = await mount(transport);
+  const changed = vi.fn();
+  element.addEventListener("journal-options", changed);
+  root
+    .querySelector<HTMLInputElement>('[name="journal_calendar_view"]')!
+    .click();
+  await vi.waitFor(() =>
+    expect(transport.journalPreferences.view).toBe("calendar"),
+  );
+  expect(changed.mock.calls.at(-1)![0].detail).toEqual({
+    fuzzy_search: true,
+    view: "calendar",
+  });
+  expect(transport.searchPreferences).toEqual({ fuzzy_search: true });
+  element.remove();
+  const reopened = await mount(transport);
+  expect(
+    reopened.querySelector<HTMLInputElement>('[name="journal_calendar_view"]')!
+      .checked,
+  ).toBe(true);
 });
 
 it("shares the saved mode in both directions when moving between views", async () => {

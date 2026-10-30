@@ -8,6 +8,7 @@ from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 
 from ..const import DOMAIN
+from ..core.journal_store import public_viewing
 from ..core.models import JournalError
 from ..core.runtime import get_library, get_runtime, loaded_runtimes
 from ..core.security import is_active_admin, is_active_user
@@ -20,6 +21,8 @@ USER_OPERATIONS = frozenset(
         "info",
         "journal/list",
         "journal/get",
+        "journal/calendar",
+        "journal/calendar/get",
         "library/info",
         "library/list",
         "library/versions",
@@ -31,23 +34,6 @@ USER_OPERATIONS = frozenset(
         "ui/preferences/update",
     }
 )
-PUBLIC_FIELDS = frozenset(
-    {
-        "id",
-        "title",
-        "started_at",
-        "ended_at",
-        "duration_seconds",
-        "watched_seconds",
-        "status",
-        "origin",
-    }
-)
-
-
-def public_viewing(record: dict) -> dict:
-    """Use a positive allowlist so future private fields cannot leak into reads."""
-    return {key: value for key, value in record.items() if key in PUBLIC_FIELDS}
 
 
 @callback
@@ -59,6 +45,16 @@ def async_register_commands(hass: HomeAssistant) -> None:
         "info": {},
         "journal/create": {**mutations, p.Required("data"): dict},
         "journal/get": {**scoped, p.Required("viewing_id"): str},
+        "journal/calendar": {
+            **scoped,
+            p.Required("start"): str,
+            p.Required("end"): str,
+            p.Optional("query", default=""): str,
+            p.Optional("status"): str,
+            p.Optional("fuzzy", default=False): bool,
+            p.Optional("title_id"): str,
+        },
+        "journal/calendar/get": {**scoped, p.Required("viewing_id"): str},
         "journal/sessions": {**scoped, p.Required("viewing_id"): str},
         "journal/metadata/preview": scoped,
         "journal/metadata/repair": {
@@ -609,6 +605,29 @@ async def async_handle(
                         msg["confirmation"],
                         actor_id=user.id,
                     )
+                case "journal/calendar" | "journal/calendar/get":
+                    entry = hass.config_entries.async_get_entry(msg["entry_id"])
+                    enabled = entry is not None and (entry.options or entry.data).get(
+                        "library_enabled", False
+                    )
+                    library = (
+                        get_library(hass, msg["entry_id"], runtime) if enabled else None
+                    )
+                    source = library.source if library else None
+                    if operation.endswith("/get"):
+                        result = await repository.async_calendar_details(
+                            msg["viewing_id"], source
+                        )
+                    else:
+                        result = await repository.async_calendar_month(
+                            msg["start"],
+                            msg["end"],
+                            msg["query"],
+                            msg.get("status"),
+                            msg["fuzzy"],
+                            source,
+                            msg.get("title_id"),
+                        )
                 case "journal/get":
                     result = await repository.async_get(msg["viewing_id"])
                     if not admin:
@@ -680,6 +699,9 @@ async def async_handle(
             or operation == "journal/create"
         ) and get_library(hass, msg["entry_id"], runtime) is not library:
             raise JournalError("not_ready", "Library integration reloaded")
+        if operation.startswith("journal/calendar") and library is not None:
+            if get_library(hass, msg["entry_id"], runtime) is not library:
+                raise JournalError("not_ready", "Library integration reloaded")
         connection.send_result(msg["id"], result)
     except JournalError as error:
         connection.send_error(msg["id"], error.code, str(error))

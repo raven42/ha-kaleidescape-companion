@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased — Journal month calendar
+
+- Add a saved Calendar-view toggle under Journal Options for both household
+  roles, with month navigation, overlapping artwork and hover/keyboard
+  foregrounding.
+- Open compact movie/viewing details from each cover; show local viewing dates,
+  watched minutes and Library badges/metadata without purchase/detection fields.
+- Add bounded, source-scoped month/detail reads, reuse exact Library links and
+  authenticated image caching, and preserve Journal layout across startup search
+  migration. External calendar publishing remains independent.
+- Add storage, authorization, preference and component regressions; browser
+  layout review remains an operator step.
+
 ## Unreleased — Random sorting over HTTP
 
 - Reuse the API client's cryptographic UUID fallback for shuffle seeds when

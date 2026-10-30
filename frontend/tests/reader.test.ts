@@ -67,7 +67,8 @@ it("renders titles and timing as text without management controls or private met
       (call) =>
         call.type.endsWith("/info") ||
         call.type.endsWith("/journal/list") ||
-        (call.type.endsWith("/ui/preferences/get") && call.area === "search"),
+        (call.type.endsWith("/ui/preferences/get") &&
+          ["search", "journal"].includes(String(call.area))),
     ),
   ).toBe(true);
 });

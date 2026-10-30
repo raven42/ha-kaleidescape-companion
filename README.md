@@ -121,6 +121,9 @@ disabled before merge imports and legacy bulk purge operations.
 Manual additions select an exact cached Library movie, default to Completed and
 infer runtime/end time; Partial exposes watched minutes. Journal can sort by
 completion date (partials first) or title in either direction. Optional
+[Journal Calendar view](docs/calendar.md#journal-month-view) under Journal
+Options shows monthly overlapping covers and compact viewing/movie details for
+both household roles, independently of calendar publishing. Optional
 [calendar publishing](docs/calendar.md), disabled by default, adds new
 completions to one writable HA calendar with configurable title/description
 templates and bounded metadata.

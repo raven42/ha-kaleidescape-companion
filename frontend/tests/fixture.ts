@@ -212,6 +212,7 @@ export class FixtureTransport implements Transport {
   };
   sharedPreferences: Record<string, unknown> = { hidden_collections: [] };
   searchPreferences: Record<string, unknown> = { fuzzy_search: true };
+  journalPreferences: Record<string, unknown> = { view: "list" };
   purchaseTotals = {
     purchase_count: 0,
     unique_transactions: 0,
@@ -249,7 +250,9 @@ export class FixtureTransport implements Transport {
           ? this.databasePreferences
           : message.area === "search"
             ? this.searchPreferences
-            : this.uiPreferences;
+            : message.area === "journal"
+              ? this.journalPreferences
+              : this.uiPreferences;
       if (operation.endsWith("/get"))
         result = { values, revision: this.uiRevision };
       else {
@@ -809,6 +812,71 @@ export class FixtureTransport implements Transport {
       };
       this.purgeResults.set(request, receipt);
       result = receipt;
+    } else if (
+      operation === "journal/calendar" ||
+      operation === "journal/calendar/get"
+    ) {
+      const summary = (row: Viewing) => ({
+        id: row.id,
+        title: row.title,
+        started_at: row.started_at,
+        ended_at: row.ended_at,
+        duration_seconds: row.duration_seconds,
+        watched_seconds: row.watched_seconds,
+        status: row.status,
+        origin: row.origin,
+      });
+      const movieFor = (row: Viewing) =>
+        this.options.library_enabled
+          ? this.libraryTitles.find(
+              (title) => title.id === this.viewingLinks.get(row.id),
+            )
+          : undefined;
+      if (operation.endsWith("/get")) {
+        const row = this.records.find((row) => row.id === message.viewing_id);
+        if (!row) throw new ApiError("not_found");
+        const title = movieFor(row);
+        result = {
+          viewing: summary(row),
+          movie: title
+            ? {
+                title: title.title,
+                artwork_key: title.artwork_key,
+                actors: title.actors,
+                directors: title.directors,
+                genres: title.genres,
+                rating: title.rating,
+                year: title.year,
+                duration_seconds: title.duration_seconds,
+                edition: title.edition,
+                formats: title.formats ?? null,
+              }
+            : null,
+        };
+      } else
+        result = {
+          items: this.records
+            .filter(
+              (row) =>
+                !row.deleted_at &&
+                new Date(row.started_at) >= new Date(String(message.start)) &&
+                new Date(row.started_at) < new Date(String(message.end)) &&
+                matches(
+                  row.title,
+                  String(message.query ?? ""),
+                  message.fuzzy !== false,
+                ) &&
+                (!message.status || row.status === message.status) &&
+                (!message.title_id ||
+                  this.viewingLinks.get(row.id) === message.title_id),
+            )
+            .map((row) => ({
+              ...summary(row),
+              library_title_id: movieFor(row)?.id ?? null,
+              artwork_key: movieFor(row)?.artwork_key ?? null,
+            })),
+          revision: this.revision,
+        };
     } else if (operation === "journal/list" || operation === "library/viewings")
       result = {
         items: this.records.filter(

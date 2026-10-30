@@ -178,6 +178,13 @@ and outbox receipts, adding confirmed historical Journal export with bounded
 remote matching. No automatic history/import backfill occurs. Automated tests
 use simulated calendar actions; provider/browser review stays an operator step.
 
+Journal's personal Calendar-view toggle uses bounded local-month reads and the
+existing authenticated Library artwork cache, independently of external
+publishing. It is available to both household roles, with compact positive
+detail projections. Component tests cover navigation, poster stacks, popup
+content and late-response cleanup; rendered browser review remains with the
+operator. See the [month view guide](calendar.md#journal-month-view).
+
 The [backend guide](backend.md) documents storage, role-scoped API access,
 manual testing, backup/export, restore, and retention. Automatic observation,
 session timing, entity setup, household reading, administrator

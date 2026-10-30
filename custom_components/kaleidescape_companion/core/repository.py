@@ -937,6 +937,35 @@ class JournalRepository:
             journal_store.viewing_library, self._db(), source, identifier(viewing_id)
         )
 
+    async def async_calendar_month(
+        self,
+        start,
+        end,
+        query="",
+        viewing_status=None,
+        fuzzy=False,
+        source=None,
+        title_id=None,
+    ):
+        from .journal_calendar import month
+
+        return await self._call(
+            self._search_read,
+            month,
+            start,
+            end,
+            query,
+            viewing_status,
+            fuzzy,
+            source,
+            title_id,
+        )
+
+    async def async_calendar_details(self, viewing_id, source=None):
+        from .journal_calendar import details
+
+        return await self._call(self._search_read, details, viewing_id, source)
+
     async def async_list(
         self,
         *,

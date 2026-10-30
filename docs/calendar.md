@@ -1,5 +1,40 @@
 # Watched movies calendar
 
+## Journal month view
+
+Open **Journal → Options → Calendar view** to switch between the entry list and
+a monthly calendar. This choice saves immediately for your HA user. Previous and
+next arrows move one month; reopening starts at the current month. This view
+reads the local Journal and needs no HA calendar entity or publishing opt-in.
+Administrator and household readers share the same calendar.
+
+Viewings appear on their browser-local start date, including partial viewings
+unless excluded by the Journal status filter. Search, fuzzy-search mode and a
+Library movie filter apply to the month. Deleted entries are excluded. Each
+viewing has a poster; same-day posters overlap diagonally with about 15% of each
+rear cover exposed. Hover or keyboard focus brings that poster forward.
+
+Click a poster to open compact viewing/movie details: artwork, rating, cast,
+directors, genres, runtime, year, format/version badges, watched minutes and
+status. The viewing date appears once; a start/end date range appears only when
+the local dates differ. Purchase and detection details are omitted. Close,
+Escape or a backdrop click dismisses the popup.
+
+The exact saved Library version supplies current cached metadata and artwork
+when Library is enabled and that version remains available in the current
+source. Missing metadata or artwork uses a placeholder. Images use the existing
+visibility-loaded authenticated cache, retained while this calendar is mounted
+and cleared on account/scope changes or departure. No device or calendar
+provider is contacted. A month read is limited to 1000 viewings and a two-second
+SQLite budget; narrow the search/status filter if that limit is exceeded.
+
+Operator browser review: check a month with multiple same-day viewings, hover
+and keyboard focus on rear posters, previous/next navigation, same-day versus
+overnight date labels, missing artwork, mobile horizontal scrolling and popup
+dismissal. Automated component tests do not establish rendered browser geometry.
+
+## Publish to an HA calendar
+
 Enable **Add watched movies to calendar** in the integration's Configure options
 or Companion **Settings**. It is disabled by default. Select one existing HA
 calendar that supports creating events; read-only calendars cannot be used. The
@@ -96,11 +131,11 @@ raw handles or filesystem paths are published. Descriptions are capped at 32
 KiB. Existing events are not rewritten; older exported descriptions may still
 contain the previous metadata block.
 
-Planned Companion calendar views/cards will read the local Journal database and
-its stored Library snapshots, using authenticated artwork access. They will not
-parse provider events or require a calendar export. Evicted or missing artwork
-must show a placeholder. Provider copies of previously published details remain
-independent of local deletion.
+The Journal month view reads the local database and exact linked Library
+version, using authenticated artwork access. A future dashboard card will use
+the same local approach, without parsing provider events or requiring an export.
+Evicted or missing artwork shows a placeholder. Provider copies of previously
+published details remain independent of local deletion.
 
 ## Delivery and recovery
 
@@ -197,7 +232,7 @@ fictional history twice and confirm the second run matches events; verify
 description templates and the format-change warning. This operator check is
 still needed; no live calendar was used to implement the feature.
 
-Planned: a database-backed monthly Journal calendar with cover artwork, an HA
-dashboard card for that view, and explicit event reconciliation/edit/delete
-workflows. Gmail or other sharing connectors need a separate authorization and
-privacy design; they are not implemented by this feature.
+Planned: an HA dashboard card for the Journal month view and explicit provider
+event reconciliation/edit/delete workflows. Gmail or other sharing connectors
+need a separate authorization and privacy design; they are not implemented by
+this feature.

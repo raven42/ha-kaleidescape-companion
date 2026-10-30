@@ -6,9 +6,11 @@ from datetime import UTC, datetime
 
 from ..ui.preferences import (
     DATABASE_DEFAULTS,
+    JOURNAL_DEFAULTS,
     LIBRARY_DEFAULTS,
     SEARCH_DEFAULTS,
     validate_database,
+    validate_journal,
     validate_library,
     validate_search,
     validate_shared,
@@ -61,24 +63,26 @@ def migrate_search(db):
         )
     for row in rows:
         values = json.loads(row["value"])
-        if row["key"] == "journal":
+        if "fuzzy_search" not in values:
+            continue
+        del values["fuzzy_search"]
+        if row["key"] == "journal" and not values:
             db.execute(
                 "DELETE FROM settings WHERE owner=? AND key='journal'", (row["owner"],)
             )
-        elif "fuzzy_search" in values:
-            del values["fuzzy_search"]
+        else:
             db.execute(
                 "UPDATE settings SET value=?,revision=revision+1 "
                 "WHERE owner=? AND key=?",
                 (json.dumps(values), row["owner"], row["key"]),
             )
-        else:
-            continue
         db.execute("UPDATE schema_metadata SET settings_revision=settings_revision+1")
 
 
 def get(db, actor, shared=False, area="library"):
-    if area not in ("library", "database", "search") or (shared and area != "library"):
+    if area not in ("library", "database", "search", "journal") or (
+        shared and area != "library"
+    ):
         raise JournalError("invalid_request", "Unknown UI preference area")
     owner, key = ("household", "library_shared") if shared else (f"user:{actor}", area)
     row = db.execute(
@@ -90,6 +94,8 @@ def get(db, actor, shared=False, area="library"):
         values = DATABASE_DEFAULTS
     elif area == "search":
         values = SEARCH_DEFAULTS
+    elif area == "journal":
+        values = JOURNAL_DEFAULTS
     elif shared:
         values = {"hidden_collections": []}
     else:
@@ -105,6 +111,8 @@ def get(db, actor, shared=False, area="library"):
             if area == "database"
             else validate_search
             if area == "search"
+            else validate_journal
+            if area == "journal"
             else validate_library
         )({}, values)
     return {"values": values, "revision": row["revision"] if row else 0}
@@ -146,6 +154,8 @@ def update(db, actor, shared, request, revision, patch, area="library"):
         if area == "database"
         else validate_search
         if area == "search"
+        else validate_journal
+        if area == "journal"
         else validate_library
     )(patch, current["values"])
     owner, key = ("household", "library_shared") if shared else (f"user:{actor}", area)

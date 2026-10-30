@@ -1,6 +1,7 @@
 /** Positive metadata-only badges; never infer capabilities from resolution. */
 import { html, nothing } from "lit";
 import type { LibrarySummary } from "../core/api";
+type VideoMetadata = { formats?: string[] | null; edition?: string | null };
 export function statusBadges(row: LibrarySummary) {
   const status =
     row.watched_status === "in_progress"
@@ -17,7 +18,7 @@ export function statusBadges(row: LibrarySummary) {
       : []),
   ];
 }
-export function formatBadges(row: LibrarySummary) {
+export function formatBadges(row: VideoMetadata) {
   const formats = (row.formats?.length ? row.formats : [row.edition ?? ""]).map(
     (value) => value.toLowerCase(),
   );
@@ -44,14 +45,14 @@ export function formatBadges(row: LibrarySummary) {
     badges.push({ key: "atmos", label: "Dolby Atmos" });
   return badges;
 }
-export function highestVideoFormat(row: LibrarySummary) {
+export function highestVideoFormat(row: VideoMetadata) {
   const badges = formatBadges(row);
   return ["cinematic", "four-k", "hd", "sd"]
     .map((key) => badges.find((badge) => badge.key === key))
     .find(Boolean);
 }
 export function renderFormatBadges(
-  row: LibrarySummary,
+  row: VideoMetadata,
   cover = false,
   select?: (value: string) => void,
   disabled = false,

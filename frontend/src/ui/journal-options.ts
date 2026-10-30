@@ -1,4 +1,4 @@
-/** Per-user Journal search options shared by the reader and administrator views. */
+/** Personal Journal layout and global search options for both household roles. */
 import { LitElement, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
 import type { JournalClient, Scope } from "../core/api";
@@ -18,6 +18,8 @@ export class JournalOptions extends LitElement {
   scope?: Scope;
   disabled = false;
   private store?: PreferenceStore;
+  private viewStore?: PreferenceStore;
+  private view: "list" | "calendar" = "list";
   private bound = "";
   private boundClient?: JournalClient;
   private generation = 0;
@@ -47,6 +49,9 @@ export class JournalOptions extends LitElement {
     this.generation++;
     this.store?.dispose();
     this.store = undefined;
+    this.viewStore?.dispose();
+    this.viewStore = undefined;
+    this.view = "list";
     this.ready = false;
     this.fuzzy = true;
     this.error = "";
@@ -55,7 +60,7 @@ export class JournalOptions extends LitElement {
   private notify() {
     this.dispatchEvent(
       new CustomEvent("journal-options", {
-        detail: { fuzzy_search: this.fuzzy },
+        detail: { fuzzy_search: this.fuzzy, view: this.view },
         bubbles: true,
         composed: true,
       }),
@@ -89,10 +94,29 @@ export class JournalOptions extends LitElement {
       },
       "search",
     );
+    this.viewStore?.dispose();
+    this.viewStore = new PreferenceStore(
+      this.client,
+      this.scope,
+      false,
+      (error) => {
+        if (generation !== this.generation) return;
+        if (error) this.fail(error);
+        else {
+          this.error = "";
+          this.requestUpdate();
+        }
+      },
+      "journal",
+    );
     try {
-      const values = await this.store.load();
+      const [values, journal] = await Promise.all([
+        this.store.load(),
+        this.viewStore.load(),
+      ]);
       if (generation !== this.generation) return;
       this.fuzzy = values.fuzzy_search as boolean;
+      this.view = journal.view as "list" | "calendar";
       this.ready = true;
       this.error = "";
       this.notify();
@@ -101,6 +125,11 @@ export class JournalOptions extends LitElement {
       if (generation === this.generation) this.fail(error);
     }
   }
+  private retry() {
+    if (!this.ready) return this.load();
+    this.store?.retry();
+    this.viewStore?.retry();
+  }
   protected render() {
     return html`<button
         ?disabled=${!this.ready || this.disabled}
@@ -108,7 +137,7 @@ export class JournalOptions extends LitElement {
       >
         Options
       </button>
-      ${this.error ? html`<span class="error" role="alert">${this.error}<button @click=${() => (this.ready ? this.store?.retry() : this.load())}>Retry Journal options</button></span>` : nothing}
+      ${this.error ? html`<span class="error" role="alert">${this.error}<button @click=${this.retry}>Retry Journal options</button></span>` : nothing}
       <dialog
         class="database-dialog"
         aria-labelledby="journal-options-title"
@@ -134,6 +163,25 @@ export class JournalOptions extends LitElement {
           and Movie from Library completion. Off matches literal text, ignoring
           case. On also tolerates small spelling mistakes and word order
           differences.
+        </p>
+        <label class="check"
+          ><input
+            name="journal_calendar_view"
+            type="checkbox"
+            .checked=${this.view === "calendar"}
+            @change=${(event: Event) => {
+              this.view = (event.target as HTMLInputElement).checked
+                ? "calendar"
+                : "list";
+              this.viewStore?.set({ view: this.view });
+              this.notify();
+              this.requestUpdate();
+            }}
+          />Calendar view</label
+        >
+        <p class="muted">
+          Show a month of viewings on their local start dates. Off restores the
+          entry list.
         </p>
         <div class="dialog-footer">
           <button

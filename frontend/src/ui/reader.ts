@@ -1,3 +1,4 @@
+import "./journal-calendar";
 import "./viewing-library";
 import { counted } from "../core/text";
 /** Household journal/library browsing; no management or export requests. */
@@ -40,6 +41,7 @@ export class KaleidescapeReader extends LitElement {
   private sort = "completed_at";
   private descending = true;
   private fuzzySearch = true;
+  private journalView: "list" | "calendar" = "list";
   private journalMovie?: { id: string; title: string };
   private libraryTitleId?: string;
   private next: string | null = null;
@@ -96,6 +98,7 @@ export class KaleidescapeReader extends LitElement {
     this.sort = "completed_at";
     this.descending = true;
     this.fuzzySearch = true;
+    this.journalView = "list";
     this.journalMovie = undefined;
     this.libraryTitleId = undefined;
     this.loading = false;
@@ -308,8 +311,13 @@ export class KaleidescapeReader extends LitElement {
                       .scope=${this.scope}
                       .disabled=${this.loading}
                       @journal-options=${(
-                        event: CustomEvent<{ fuzzy_search: boolean }>,
+                        event: CustomEvent<{
+                          fuzzy_search: boolean;
+                          view: "list" | "calendar";
+                        }>,
                       ) => {
+                        this.journalView = event.detail.view;
+                        this.requestUpdate();
                         const changed =
                           this.fuzzySearch !== event.detail.fuzzy_search;
                         this.fuzzySearch = event.detail.fuzzy_search;
@@ -363,7 +371,7 @@ export class KaleidescapeReader extends LitElement {
                         <option value="partial">Partial</option>
                       </select></label
                     >
-                    <label
+                    <label ?hidden=${this.journalView === "calendar"}
                       >Sort by<select
                         name="journal_sort"
                         .value=${this.sort}
@@ -383,6 +391,7 @@ export class KaleidescapeReader extends LitElement {
                     >
                     <button
                       type="button"
+                      ?hidden=${this.journalView === "calendar"}
                       ?disabled=${this.loading || !this.scope}
                       @click=${() => {
                         this.descending = !this.descending;
@@ -398,67 +407,93 @@ export class KaleidescapeReader extends LitElement {
                     </button>
                   </form>
                 </div>
-                <div class="entries-layout">
-                  <section class="entries-list" aria-label="Journal entries">
-                    <div class="card-head">
-                      <h2>Viewings (${this.scope?.viewing_count ?? 0})</h2>
-                    </div>
-                    ${
-                      this.loading
-                        ? html`<div class="empty" role="status">
-                            Loading viewings…
-                          </div>`
-                        : !this.api
-                          ? html`<p>
-                              Sign in to Home Assistant to view the household
-                              journal.
-                            </p>`
-                          : this.rows.length
-                            ? html`<ul
-                                class="entry-list"
-                                tabindex="0"
-                                aria-label="Viewings"
-                              >
-                                ${this.rows.map((row) => viewingListRow(row, this.selected?.id, (id) => void this.selectRecord(id)))}
-                              </ul>`
-                            : html`<div class="empty">
-                                No viewings to display.
-                              </div>`
-                    }
-                  </section>
-                  <section
-                    class="entries-detail"
-                    aria-label="Viewing details"
-                    tabindex="0"
-                  >
-                    <div class="card-head"><h2>Viewing details</h2></div>
-                    ${
-                      this.detailLoading
-                        ? html`<div class="empty" role="status">
-                            Loading entry…
-                          </div>`
-                        : this.selected
-                          ? html`${viewingDetails(this.selected, (value) => this.date(value))}
-                              <kaleidescape-viewing-library
-                                .client=${this.api ?? undefined}
-                                .scope=${this.scope ?? undefined}
-                                .viewingId=${this.selected.id}
-                                @access-denied=${() => this.fail(new ApiError("unauthorized"))}
-                                @open-library-title=${(event: CustomEvent<string>) => this.selectPage("library", { libraryTitleId: event.detail })}
-                              ></kaleidescape-viewing-library>`
-                          : html`<div class="empty">
-                              <strong>Select an entry</strong>
-                              <p>View its watching history and duration.</p>
-                            </div>`
-                    }
-                  </section>
-                </div>
+                ${
+                  this.journalView === "calendar"
+                    ? html`<kaleidescape-journal-calendar
+                        .client=${this.api ?? undefined}
+                        .scope=${this.scope ?? undefined}
+                        .query=${this.query}
+                        .status=${this.status}
+                        .fuzzy=${this.fuzzySearch}
+                        .libraryTitleId=${this.journalMovie?.id}
+                        @access-denied=${() => this.fail(new ApiError("unauthorized"))}
+                      ></kaleidescape-journal-calendar>`
+                    : html`
+                        <div class="entries-layout">
+                          <section
+                            class="entries-list"
+                            aria-label="Journal entries"
+                          >
+                            <div class="card-head">
+                              <h2>
+                                Viewings (${this.scope?.viewing_count ?? 0})
+                              </h2>
+                            </div>
+                            ${
+                              this.loading
+                                ? html`<div class="empty" role="status">
+                                    Loading viewings…
+                                  </div>`
+                                : !this.api
+                                  ? html`<p>
+                                      Sign in to Home Assistant to view the
+                                      household journal.
+                                    </p>`
+                                  : this.rows.length
+                                    ? html`<ul
+                                        class="entry-list"
+                                        tabindex="0"
+                                        aria-label="Viewings"
+                                      >
+                                        ${this.rows.map((row) => viewingListRow(row, this.selected?.id, (id) => void this.selectRecord(id)))}
+                                      </ul>`
+                                    : html`<div class="empty">
+                                        No viewings to display.
+                                      </div>`
+                            }
+                          </section>
+                          <section
+                            class="entries-detail"
+                            aria-label="Viewing details"
+                            tabindex="0"
+                          >
+                            <div class="card-head">
+                              <h2>Viewing details</h2>
+                            </div>
+                            ${
+                              this.detailLoading
+                                ? html`<div class="empty" role="status">
+                                    Loading entry…
+                                  </div>`
+                                : this.selected
+                                  ? html`${viewingDetails(this.selected, (value) => this.date(value))}
+                                      <kaleidescape-viewing-library
+                                        .client=${this.api ?? undefined}
+                                        .scope=${this.scope ?? undefined}
+                                        .viewingId=${this.selected.id}
+                                        @access-denied=${() => this.fail(new ApiError("unauthorized"))}
+                                        @open-library-title=${(event: CustomEvent<string>) => this.selectPage("library", { libraryTitleId: event.detail })}
+                                      ></kaleidescape-viewing-library>`
+                                  : html`<div class="empty">
+                                      <strong>Select an entry</strong>
+                                      <p>
+                                        View its watching history and duration.
+                                      </p>
+                                    </div>`
+                            }
+                          </section>
+                        </div>
+                      `
+                }
                 <footer class="entries-footer journal-status">
                   <span
                     >${counted(this.scope?.viewing_count ?? 0, "viewing")} ·
                     Revision ${this.scope?.revision ?? 0}</span
                   >
-                  <div class="pagination">
+                  <div
+                    class="pagination"
+                    ?hidden=${this.journalView === "calendar"}
+                  >
                     <small>Page ${this.page} · Up to 25 entries</small>
                     <div class="actions">
                       <button

@@ -16,12 +16,12 @@ from custom_components.kaleidescape_companion import (
     async_setup_entry,
     async_unload_entry,
 )
+from custom_components.kaleidescape_companion.core.journal_store import PUBLIC_FIELDS
 from custom_components.kaleidescape_companion.core.models import JournalError
 from custom_components.kaleidescape_companion.core.sensor_data import sensor_titles
 from custom_components.kaleidescape_companion.sensor import (
     async_setup_entry as setup_sensors,
 )
-from custom_components.kaleidescape_companion.ui.websocket import PUBLIC_FIELDS
 
 
 class HouseholdReadTest(unittest.IsolatedAsyncioTestCase):

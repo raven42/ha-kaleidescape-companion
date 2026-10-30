@@ -11,6 +11,7 @@ user within this dataset. Other household users keep their own choices.
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Personal Library preferences  | List/Covers, entries per page, cover size, title overlay, format/library/rating badge toggles, column widths, applied title search, selected collection/actor/director/rating/status/genre/year/format filters, sort field, direction, random shuffle seed and administrator footer-cost toggle |
 | Personal search preferences   | One fuzzy-search choice across Library, Journal and manual title pickers                                                                                                                                                                                                                        |
+| Personal Journal preferences  | Entry list or Calendar view, toggled from Journal Options                                                                                                                                                                                                                                       |
 | Personal Database preferences | Table, row count, system-table visibility and per-table sort/order                                                                                                                                                                                                                              |
 | Shared UI preferences         | Hidden collection names, edited by administrators in Settings using known-name checkboxes and custom values                                                                                                                                                                                     |
 | Native HA options             | Default landing page, playback sources and recording rules, Library connection/sync/artwork options and collection-add opt-in                                                                                                                                                                   |
@@ -178,13 +179,23 @@ choices.
 Changes save immediately, with the current mode restored when opening another
 view or reloading, without changing HA options. Startup consolidates old Journal
 and Library choices using the most recently saved preference row, removes the
-obsolete Journal row and Library fuzzy-search key, and preserves other Library
-preferences. An existing global choice is never overwritten. This uses the
-existing settings table and does not require a database schema change.
+obsolete per-view fuzzy-search keys, and preserves other Journal/Library
+preferences. An empty legacy Journal row is removed; a saved Calendar view is
+retained. An existing global choice is never overwritten. This uses the existing
+settings table and does not require a database schema change.
 
 The active-user ownership, strict boolean validation, scoped access and exact
 actor/area-bound retries still apply. Shared preferences remain Library-only;
 regular users cannot inspect another user's search preferences.
+
+## Journal layout
+
+**Journal → Options → Calendar view** saves `view: calendar` or `view: list` in
+the personal `journal` row (`area=journal`). List is the initial default. The
+choice is independent of global fuzzy search and does not reload HA. Both
+household roles can change their own layout. The displayed month and Journal
+search/status remain temporary component state; opening Calendar starts at the
+current local month. See the [month view guide](calendar.md#journal-month-view).
 
 ## Administrator purchase display
 

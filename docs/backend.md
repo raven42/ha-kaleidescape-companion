@@ -275,12 +275,15 @@ device connections.
 ## Authenticated API
 
 Use HA's existing authenticated WebSocket connection. Active users may call
-`info`, `journal/list`, and `journal/get` to browse the shared household
-journal. Other commands and all exports require an active administrator. No
-token or unauthenticated data endpoint is added by this integration.
-Authorization is repeated before returning private results after awaited work;
-accepted writes remain committed if access changes during processing. These
-endpoint checks do not sandbox the integration from the rest of HA.
+`info`, `journal/list`, `journal/get`, `journal/calendar` and
+`journal/calendar/get` to browse the shared household journal. Personal UI
+preferences and enabled cached Library reads also permit active users as
+documented below. Management commands and all exports require an active
+administrator. No token or unauthenticated data endpoint is added by this
+integration. Authorization is repeated before returning private results after
+awaited work; accepted writes remain committed if access changes during
+processing. These endpoint checks do not sandbox the integration from the rest
+of HA.
 
 `info` includes `permissions: {read, edit, export}`. For regular users it
 returns only scope, API version, revision, visible viewing count, and these
@@ -575,6 +578,31 @@ truncation. No arbitrary regex, wildcard execution, SQL or new remote access is
 added.
 
 ## Journal and Library display links
+
+### Month calendar reads
+
+`journal/calendar` accepts timezone-aware ISO `start` and `end` bounds, plus
+optional `query`, `status`, boolean `fuzzy` and linked Library `title_id`. The
+browser sends local midnight at the start of the month and next month as UTC
+instants. The worker normalizes them to UTC, accepts a positive span of at most
+32 days (including DST changes), and reads nondeleted viewings in the half-open
+`started_at` range. The existing date index supports this query. Results contain
+the eight safe viewing fields plus nullable exact `library_title_id` and
+`artwork_key`, ordered by start and ID, and the current content revision. The
+hard limit is 1000 viewings; excess returns `calendar_limit` instead of a
+partial month. SQLite work has a two-second budget.
+
+`journal/calendar/get` accepts a viewing UUID and returns `viewing` with those
+same eight safe fields and nullable `movie` metadata: title, artwork key,
+rating, actors, directors, genres, runtime seconds, year, edition and formats.
+Both roles receive the same positive projections, without notes, raw source data
+or purchase/detection fields. The movie uses the exact saved Library link and
+current configured source; disabled Library access or an unavailable version
+returns no linked metadata/artwork while retaining the viewing. Both routes
+recheck role, entry readiness and any Library source across awaits. No provider
+or device action, new table, or schema migration is added.
+
+### Exact display links
 
 A viewing's existing `library_title_id` identifies the exact scanned version.
 Schema 17 indexes that reference on non-deleted viewings; no duplicate reverse

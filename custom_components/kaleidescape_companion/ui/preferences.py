@@ -179,6 +179,16 @@ def validate_database(patch, previous=None):
 
 
 SEARCH_DEFAULTS = {"fuzzy_search": True}
+JOURNAL_DEFAULTS = {"view": "list"}
+
+
+def validate_journal(patch, previous=None):
+    if not isinstance(patch, dict) or set(patch) - JOURNAL_DEFAULTS.keys():
+        raise invalid("Unknown Journal preferences")
+    values = {**JOURNAL_DEFAULTS, **(previous or {}), **patch}
+    if values["view"] not in ("list", "calendar"):
+        raise invalid("Choose List or Calendar")
+    return values
 
 
 def validate_search(patch, previous=None):

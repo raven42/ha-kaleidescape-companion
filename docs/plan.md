@@ -169,21 +169,20 @@ window and must account for the operator's existing theater automation.
   Internal identifiers/artwork references remain in the database. Schema 14
   includes editable description templates and explicit historical Journal export
   with matching, progress and protected delivery/job receipts.
-- Next: a monthly Journal calendar with title/artwork, then an HA dashboard card
-  for that view, both reading the local Journal/Library database rather than
-  provider event metadata. Design authenticated artwork resolution, paging,
-  timezone and missing-cache behavior; do not require external calendar access
-  just to browse the local journal. Investigate explicit calendar
-  reconciliation/republishing before allowing uncertain writes to be retried.
-  Provide a bounded date-range read projection for the card, preserving
-  household/admin field boundaries without raw SQL or administrator table
-  access.
+- Implemented: Journal's saved month-calendar option, local-start-date grouping,
+  overlapping authenticated covers and compact movie/viewing details. Month
+  reads are bounded and use exact Library links, independently of provider
+  access. Next: an HA dashboard card using this local approach, with its own
+  scoped read/refresh lifecycle and operator layout review. Investigate explicit
+  provider reconciliation/republishing before allowing uncertain writes to be
+  retried; preserve household/admin boundaries without raw SQL or administrator
+  table access.
 - Explore optional Gmail integration for publishing when movies were watched.
   Determine the intended workflow, authorization, and sharing details during
   design.
 
-Calendar views/cards and Gmail are follow-up tasks only. Publishing currently
-uses the configured HA calendar provider; no direct Gmail connector exists.
+The standalone calendar card and Gmail remain follow-up tasks. Publishing uses
+the configured HA calendar provider; no direct Gmail connector exists.
 
 The development/runtime organization pass is implemented: root `dev/` tools,
 feature packages in `core/`, `library/`, `playback/` and `ui/`, frontend feature

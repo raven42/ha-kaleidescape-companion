@@ -40,7 +40,9 @@ The product name is **Kaleidescape Companion**. The HA domain
   protected manual display snapshots and opt-in
   [calendar publishing](calendar.md) with durable one-attempt receipts. Schema
   14 adds configurable descriptions and explicit, matched historical Journal
-  export. Monthly calendar views and an HA card remain planned.
+  export. Journal Options also provides a saved monthly calendar with
+  overlapping cached covers and compact viewing/movie detail popups for both
+  roles. A standalone HA dashboard card remains planned.
 - Shared Library metadata snapshots for manual/observed viewings, persisted
   before observed completion enqueue. Settings provides a reviewed, fill-only
   repair for older Journal entries, preserving raw identities, existing values,
