@@ -44,14 +44,14 @@ def save_catalog(db, origin, rows, collections=None, *, detected_at=None):
             (source, origin, seen),
         )
         batch, recent_groups = record_additions(db, source, rows, seen)
-        db.execute("UPDATE library_titles SET available=0 WHERE source_id=?", (source,))
+        db.execute("UPDATE library SET available=0 WHERE source_id=?", (source,))
         for item in rows:
             handle = item["source_handle"]
             fingerprint = hashlib.sha256(
                 json.dumps(item, sort_keys=True).encode()
             ).hexdigest()
             existing = db.execute(
-                "SELECT data,base_hash,metadata_synced_at FROM library_titles "
+                "SELECT data,base_hash,metadata_synced_at FROM library "
                 "WHERE source_id=? AND source_handle=?",
                 (source, handle),
             ).fetchone()
@@ -81,7 +81,7 @@ def save_catalog(db, origin, rows, collections=None, *, detected_at=None):
                 }
             data.update(base)
             db.execute(
-                """INSERT INTO library_titles
+                """INSERT INTO library
                 (id,source_id,source_handle,source_group,title,title_search,
                  base_hash,data,first_seen,last_seen,addition_batch)
                 VALUES (?,?,?,?,?,?,?,?,?,?,?)
@@ -89,8 +89,8 @@ def save_catalog(db, origin, rows, collections=None, *, detected_at=None):
                 source_group=excluded.source_group,title=excluded.title,
                 addition_batch=excluded.addition_batch,
                 title_search=excluded.title_search,
-                fetched_at=CASE WHEN library_titles.base_hash!=excluded.base_hash
-                    THEN NULL ELSE library_titles.fetched_at END,
+                fetched_at=CASE WHEN library.base_hash!=excluded.base_hash
+                    THEN NULL ELSE library.fetched_at END,
                 base_hash=excluded.base_hash,data=excluded.data,
                 last_seen=excluded.last_seen,available=1""",
                 (
@@ -125,7 +125,7 @@ def save_catalog(db, origin, rows, collections=None, *, detected_at=None):
                 )
                 for handle in handles:
                     row = db.execute(
-                        """SELECT id FROM library_titles WHERE source_id=? AND
+                        """SELECT id FROM library WHERE source_id=? AND
                             source_handle=? AND available=1""",
                         (source, handle),
                     ).fetchone()
@@ -152,7 +152,7 @@ def detail_candidates(db, source):
         for row in db.execute(
             """SELECT id,source_handle,fetched_at,metadata_synced_at,
                 artwork_path,artwork_key
-        FROM library_titles WHERE source_id=? AND available=1
+        FROM library WHERE source_id=? AND available=1
         ORDER BY fetched_at IS NOT NULL,fetched_at,id LIMIT 10000""",
             (source,),
         )
@@ -161,7 +161,7 @@ def detail_candidates(db, source):
 
 def save_details(db, source, id, details, include_metadata):
     row = db.execute(
-        "SELECT data FROM library_titles WHERE id=? AND source_id=?", (id, source)
+        "SELECT data FROM library WHERE id=? AND source_id=?", (id, source)
     ).fetchone()
     if row is None:
         raise JournalError("not_found", "Library title is no longer available")
@@ -172,7 +172,7 @@ def save_details(db, source, id, details, include_metadata):
         )
     with db:
         db.execute(
-            """UPDATE library_titles SET data=?,fetched_at=?,
+            """UPDATE library SET data=?,fetched_at=?,
             metadata_synced_at=CASE WHEN ? THEN ? ELSE metadata_synced_at END,
             artwork_path=? WHERE id=? AND source_id=?""",
             (
@@ -211,7 +211,7 @@ def cache_open(db, directory: Path):
         for key in keys:
             if not (directory / f"{key}.img").exists():
                 db.execute(
-                    "UPDATE library_titles SET artwork_key=NULL WHERE artwork_key=?",
+                    "UPDATE library SET artwork_key=NULL WHERE artwork_key=?",
                     (key,),
                 )
                 db.execute("DELETE FROM library_artwork WHERE cache_key=?", (key,))
@@ -234,9 +234,7 @@ def cache_trim(db, directory: Path, budget: int, incoming=0, keep=None):
         path = directory / f"{row[0]}.img"
         private_file(path)
         evicted.append(path)
-        db.execute(
-            "UPDATE library_titles SET artwork_key=NULL WHERE artwork_key=?", (row[0],)
-        )
+        db.execute("UPDATE library SET artwork_key=NULL WHERE artwork_key=?", (row[0],))
         db.execute("DELETE FROM library_artwork WHERE cache_key=?", (row[0],))
         total -= row[1]
     return evicted
@@ -255,7 +253,7 @@ def save_artwork(
         raise JournalError("library_artwork", "Cover image was rejected")
     if (
         db.execute(
-            "SELECT 1 FROM library_titles WHERE id=? AND source_id=?", (id, source)
+            "SELECT 1 FROM library WHERE id=? AND source_id=?", (id, source)
         ).fetchone()
         is None
     ):
@@ -286,8 +284,7 @@ def save_artwork(
                     (key, content_type, len(data), now()),
                 )
                 db.execute(
-                    "UPDATE library_titles SET artwork_key=? "
-                    "WHERE id=? AND source_id=?",
+                    "UPDATE library SET artwork_key=? WHERE id=? AND source_id=?",
                     (key, id, source),
                 )
                 changed(db, source)
@@ -306,7 +303,7 @@ def read_artwork(db, directory: Path, source: str, key: str):
         raise invalid("Invalid cover identity")
     row = db.execute(
         """SELECT content_type FROM library_artwork a WHERE cache_key=? AND EXISTS
-            (SELECT 1 FROM library_titles WHERE source_id=? AND
+            (SELECT 1 FROM library WHERE source_id=? AND
             artwork_key=a.cache_key)""",
         (key, source),
     ).fetchone()

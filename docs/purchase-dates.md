@@ -51,10 +51,11 @@ It refuses existing outputs and creates the file with owner-only permissions,
 without changing an existing output directory's permissions. Root
 `purchases.json` is ignored by Git; keep outputs elsewhere private too. Import
 this array directly with **Database → Merge Import**, review the proposed
-movie-group links, then explicitly select the purchases to apply. Schema 15
-retains repeat orders and the six fields in a private `library_purchases` table.
-An ambiguous title remains unlinked rather than being attached to the wrong
-remake. See the
+Library matches, then explicitly select the purchases to apply. Schema 16 stores
+all six fields and repeat orders in the matched Library entry's private
+`purchase_history`, with flat summary columns for its earliest invoice.
+Ambiguous or unmatched names require a known-title choice before import; they
+cannot be stored as disconnected purchases. See the
 [purchase import rules](imports.md#import-purchase-history-json).
 
 ## Import an existing corrected copy
@@ -68,18 +69,19 @@ by the reader. The file is read into memory; it is never migrated, overwritten
 or removed.
 
 Schema **9** stores `purchased_on` and `purchase_imported_at` directly on
-`library_titles`. Migration copies prior dates, consolidates historical purchase
-and general import audit into `import_audit`, and removes the two purchase-only
-tables. Original actors, timestamps and source revisions are retained without
-inventing dataset revisions for historical purchase applies. Migration keeps a
-private pre-upgrade backup. Subsequent catalog syncs preserve purchase columns.
+`library_titles` (renamed `library` in schema 16). Migration copies prior dates,
+consolidates historical purchase and general import audit into `import_audit`,
+and removes the two purchase-only tables. Original actors, timestamps and source
+revisions are retained without inventing dataset revisions for historical
+purchase applies. Migration keeps a private pre-upgrade backup. Subsequent
+catalog syncs preserve purchase columns.
 
 **Added on** uses the calendar purchase date when present, otherwise first
 detection; grouped titles use their earliest known purchase date. Version
 details show purchase date and detection separately. Purchase dates are not
 download/viewing times. Importing them does not rewrite detection or journal
-facts. Schema 15 additionally derives dates from linked purchase history where
-an explicit version date is missing. JSON format 4, SQLite exports and HA
+facts. Schema 16 additionally derives dates from embedded purchase history where
+an explicit version date is missing. JSON format 5, SQLite exports and HA
 backups include the dates and private purchase records.
 
 ## Prepare another corrected SQLite copy

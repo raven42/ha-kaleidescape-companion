@@ -19,8 +19,8 @@ function create() {
   element.client = new FixtureTransport().client();
   element.scope = info;
   element.row = {
-    key: "library_purchases:example",
-    table: "library_purchases",
+    key: "purchases:example",
+    table: "library",
     title: "Unknown spelling",
     action: "new",
     changes: {},

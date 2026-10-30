@@ -31,8 +31,8 @@ function review(count = 3): ImportReview {
     rows: Array.from(
       { length: count },
       (_, i): ImportReview["rows"][number] => ({
-        key: `library_titles:${i}`,
-        table: "library_titles",
+        key: `library:${i}`,
+        table: "library",
         title: `Fictional ${i}`,
         action: i === 0 ? "new" : i === 1 ? "unchanged" : "merge",
         changes:
@@ -70,8 +70,8 @@ it("puts unresolved purchases first and uses the revised token after choosing a 
   const value = review();
   value.rows[1] = {
     ...value.rows[1],
-    table: "library_purchases",
-    key: "library_purchases:unresolved",
+    table: "library",
+    key: "purchases:unresolved",
     needs_match: true,
     can_match: true,
     selected_by_default: false,
@@ -131,11 +131,7 @@ it("puts unresolved purchases first and uses the revised token after choosing a 
   await flush();
   expect(apply.mock.calls[0][0].message).toMatchObject({
     plan_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
-    selected: [
-      "library_purchases:unresolved",
-      "library_titles:0",
-      "library_titles:2",
-    ],
+    selected: ["library:0", "library:2", "purchases:unresolved"],
   });
 });
 
@@ -143,8 +139,8 @@ it("leaves purchase records unchecked until their suggested links are approved",
   const value = review(1);
   value.rows[0] = {
     ...value.rows[0],
-    table: "library_purchases",
-    key: "library_purchases:purchase",
+    table: "library",
+    key: "purchases:purchase",
     selected_by_default: false,
     detail: "Review Library group link: 2025 · 2 versions (exact name only)",
   };
@@ -167,7 +163,7 @@ it("leaves purchase records unchecked until their suggested links are approved",
   button("Apply 1 selected change").click();
   await flush();
   expect(apply.mock.calls[0][0].message.selected).toEqual([
-    "library_purchases:purchase",
+    "purchases:purchase",
   ]);
 });
 
@@ -190,7 +186,7 @@ it("reviews before writes, permits explicit deselection, and reports new/merged 
   await flush();
   button("Apply 1 selected change").click();
   await flush();
-  expect(apply.mock.calls[0][0].message.selected).toEqual(["library_titles:2"]);
+  expect(apply.mock.calls[0][0].message.selected).toEqual(["library:2"]);
   expect(text()).toContain("filled missing data in 1");
   expect(root().querySelector<HTMLDialogElement>("dialog")!.open).toBe(false);
 });
@@ -311,4 +307,22 @@ it("aborts preview on connection change, ignores late private results, and clear
   await flush();
   expect(text()).not.toContain("private.json");
   expect(text()).toContain("Access to this operation is denied");
+});
+
+it("keeps unmatched purchases unselectable even when selecting all changes", async () => {
+  const value = review();
+  value.rows[0] = {
+    ...value.rows[0],
+    needs_match: true,
+    selected_by_default: false,
+  };
+  await preview(value);
+  const unresolved = root().querySelector<HTMLInputElement>(
+    'tbody input[type="checkbox"]',
+  )!;
+  expect(unresolved.disabled).toBe(true);
+  button("Select all changes").click();
+  await flush();
+  expect(unresolved.checked).toBe(false);
+  expect(text()).toContain("1 selected");
 });

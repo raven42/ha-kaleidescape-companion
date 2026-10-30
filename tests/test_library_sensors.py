@@ -174,7 +174,6 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
         await self.scan(collections={})
         await self.repository.async_close()
         with closing(sqlite3.connect(self.path)) as db:
-            db.execute("DROP TABLE library_purchases")
             db.execute("DROP INDEX library_purchase_matches")
             for column in (
                 "recently_added_count",
@@ -186,7 +185,7 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
             db.execute("DROP TABLE database_audit")
             db.execute("DROP INDEX library_title_groups")
             db.execute("ALTER TABLE library_sources DROP COLUMN recently_added_batch")
-            db.execute("ALTER TABLE library_titles DROP COLUMN addition_batch")
+            db.execute("ALTER TABLE library DROP COLUMN addition_batch")
             db.execute("ALTER TABLE schema_metadata DROP COLUMN settings_revision")
             db.execute("DROP TABLE calendar_sync_items")
             db.execute("DROP TABLE calendar_sync_jobs")
@@ -194,6 +193,16 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
             db.execute("DROP INDEX viewings_completed")
             db.execute("ALTER TABLE viewings DROP COLUMN library_title_id")
             db.execute("ALTER TABLE viewings DROP COLUMN library_metadata")
+            db.execute("ALTER TABLE library RENAME TO library_titles")
+            for column in (
+                "purchase_history",
+                "purchase_price",
+                "retail_price",
+                "order_id",
+                "href",
+                "purchase_match_pending",
+            ):
+                db.execute(f"ALTER TABLE library_titles DROP COLUMN {column}")
             db.execute("PRAGMA user_version=9")
             db.commit()
         self.repository = JournalRepository(self.path)

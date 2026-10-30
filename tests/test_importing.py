@@ -170,36 +170,36 @@ class ImportStorageTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_json_library_fields_known_sources_and_conflicts(self):
         id = await self.seed_library()
-        original = parse_bundle(await self.snapshot(), "sqlite")["library_titles"][0]
+        original = parse_bundle(await self.snapshot(), "sqlite")["library"][0]
         row = {
             **original,
             "purchased_on": "2020-01-02",
             "data": {"actors": ["Fictional Actor"], "year": 1901},
         }
-        plan = await self.preview(payload(library_titles=[row]))
+        plan = await self.preview(payload(library=[row]))
         selected = plan["rows"][0]
         self.assertIn("purchased_on", selected["changes"])
         await self.apply(plan)
         row["purchased_on"] = "2021-01-02"
-        plan = await self.preview(payload(library_titles=[row]))
+        plan = await self.preview(payload(library=[row]))
         self.assertIn("purchased_on", plan["rows"][0]["conflicts"])
         self.assertNotIn("purchased_on", plan["rows"][0]["changes"])
         unknown = {**original, "source_id": "a" * 64}
         unknown["id"] = title_id(unknown["source_id"], unknown["source_handle"])
-        plan = await self.preview(payload(library_titles=[unknown]))
+        plan = await self.preview(payload(library=[unknown]))
         self.assertEqual(plan["rows"][0]["action"], "skip")
         bad = {**original, "id": "b" * 64}
         with self.assert_error("invalid_request"):
-            await self.preview(payload(library_titles=[bad]))
+            await self.preview(payload(library=[bad]))
         self.assertTrue(id)
 
     async def test_portable_json_export_round_trips_dates_without_cache_or_origins(
         self,
     ):
         id = await self.seed_library()
-        source = parse_bundle(await self.snapshot(), "sqlite")["library_titles"][0]
+        source = parse_bundle(await self.snapshot(), "sqlite")["library"][0]
         source["purchased_on"] = "2020-01-02"
-        await self.apply(await self.preview(payload(library_titles=[source])))
+        await self.apply(await self.preview(payload(library=[source])))
         await self.repository.async_library_details(
             library.SOURCE,
             id,
@@ -211,16 +211,16 @@ class ImportStorageTest(unittest.IsolatedAsyncioTestCase):
         async with self.repository.async_export_snapshot("json") as path:
             data = path.read_bytes()
         document = json.loads(data)
-        self.assertEqual(document["metadata"]["format_version"], 4)
-        self.assertTrue(document["library_titles"])
+        self.assertEqual(document["metadata"]["format_version"], 5)
+        self.assertTrue(document["library"])
         self.assertNotIn(library.ORIGIN, data.decode())
-        for row in document["library_titles"]:
+        for row in document["library"]:
             self.assertFalse(
                 {"artwork_path", "artwork_key", "base_hash", "fetched_at"} & row.keys()
             )
         plan = await self.preview(data)
         self.assertEqual(plan["counts"]["merge"], 0)
-        rows = parse_bundle(data, "json")["library_titles"]
+        rows = parse_bundle(data, "json")["library"]
         self.assertEqual(
             next(row for row in rows if row["id"] == source["id"])["purchased_on"],
             "2020-01-02",
@@ -230,14 +230,14 @@ class ImportStorageTest(unittest.IsolatedAsyncioTestCase):
         self,
     ):
         await self.seed_library()
-        row = parse_bundle(await self.snapshot(), "sqlite")["library_titles"][0]
+        row = parse_bundle(await self.snapshot(), "sqlite")["library"][0]
         row.update(source_handle="fictional-new", source_group="fictional-group")
         row["id"] = title_id(row["source_id"], row["source_handle"])
         row.update(artwork_path="/private/untrusted", artwork_key="a" * 64)
-        await self.apply(await self.preview(payload(library_titles=[row])))
+        await self.apply(await self.preview(payload(library=[row])))
         stored = next(
             r
-            for r in (await self.repository.async_inspect("library_titles"))["items"]
+            for r in (await self.repository.async_inspect("library"))["items"]
             if r["id"] == row["id"]
         )
         self.assertEqual(stored["available"], 0)
@@ -435,7 +435,7 @@ class ImportStorageTest(unittest.IsolatedAsyncioTestCase):
         self.repository = JournalRepository(self.path)
         self.addAsyncCleanup(self.repository.async_close)
         await self.repository.async_open()
-        titles = (await self.repository.async_inspect("library_titles"))["items"]
+        titles = (await self.repository.async_inspect("library"))["items"]
         self.assertEqual(titles[0]["purchased_on"], "2020-01-02")
         audit = (await self.repository.async_inspect("import_audit"))["items"][0]
         self.assertEqual(

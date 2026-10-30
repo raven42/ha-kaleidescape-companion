@@ -21,7 +21,7 @@ def prepare(db, source, data):
     if not isinstance(key, str) or not re.fullmatch(r"[a-f0-9]{64}", key):
         raise invalid("Select a Library version from the suggestions")
     row = db.execute(
-        "SELECT * FROM library_titles WHERE id=? AND source_id=? AND available=1",
+        "SELECT * FROM library WHERE id=? AND source_id=? AND available=1",
         (key, source),
     ).fetchone()
     if row is None:

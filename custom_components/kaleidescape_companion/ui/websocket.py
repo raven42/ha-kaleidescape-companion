@@ -419,6 +419,7 @@ async def async_handle(
                             msg["offset"],
                             msg.get("revision"),
                             excluded,
+                            admin=admin,
                         )
                     else:
                         result = await repository.async_library_list(

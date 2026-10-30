@@ -7,7 +7,7 @@ from contextlib import closing
 from datetime import UTC, datetime
 
 from ..library.importing import TITLE_COLUMNS, purchase_date, title_record
-from ..library.purchases import PURCHASE_COLUMNS, purchase_record
+from ..library.purchases import PURCHASE_COLUMNS, embedded_history, purchase_record
 from .models import (
     VIEWING_FIELDS,
     fields,
@@ -53,6 +53,7 @@ def _sqlite_bundle(payload: bytes, deadline: float) -> dict:
         raise invalid("Expected a SQLite export")
     allowed = {
         "viewings": IMPORT_COLUMNS,
+        "library": TITLE_COLUMNS,
         "library_titles": TITLE_COLUMNS,
         "library_purchases": PURCHASE_COLUMNS,
         "library_purchase_dates": {"title_id", "purchased_on"},
@@ -60,7 +61,7 @@ def _sqlite_bundle(payload: bytes, deadline: float) -> dict:
     with closing(sqlite3.connect(":memory:")) as db:
         db.setconfig(sqlite3.SQLITE_DBCONFIG_DEFENSIVE, True)
         db.setconfig(sqlite3.SQLITE_DBCONFIG_TRUSTED_SCHEMA, False)
-        db.setlimit(sqlite3.SQLITE_LIMIT_LENGTH, 65536)
+        db.setlimit(sqlite3.SQLITE_LIMIT_LENGTH, 4 * 1024 * 1024)
         db.setlimit(sqlite3.SQLITE_LIMIT_COLUMN, 64)
         db.setlimit(sqlite3.SQLITE_LIMIT_SQL_LENGTH, 4096)
         db.deserialize(payload)
@@ -78,7 +79,7 @@ def _sqlite_bundle(payload: bytes, deadline: float) -> dict:
             names = {row[1] for row in db.execute(f"PRAGMA table_info({name})")}
             required = {
                 "viewings": {"id", "title", "started_at"},
-                "library_titles": {
+                "library": {
                     "id",
                     "title",
                     "source_id",
@@ -87,11 +88,14 @@ def _sqlite_bundle(payload: bytes, deadline: float) -> dict:
                 },
                 "library_purchases": {"id", "title", "purchased_on"},
                 "library_purchase_dates": {"title_id", "purchased_on"},
-            }[name]
+            }["library" if name == "library_titles" else name]
             if not required <= names:
                 raise invalid("Import is missing required columns")
             columns[name] = sorted(names & keys)
-        if not ({"viewings", "library_titles", "library_purchases"} & columns.keys()):
+        if not (
+            {"viewings", "library", "library_titles", "library_purchases"}
+            & columns.keys()
+        ):
             raise invalid("Import requires viewing, Library title or purchase records")
         db.set_authorizer(
             lambda action, table, _column, _database, _source: (
@@ -199,21 +203,66 @@ def parse_bundle(payload: bytes, import_format: str) -> dict:
             document = {"library_purchases" if purchases else "viewings": document}
         if (
             not isinstance(document, dict)
-            or not {"viewings", "library_titles", "library_purchases"} & document.keys()
+            or not {"viewings", "library", "library_titles", "library_purchases"}
+            & document.keys()
         ):
             raise invalid("Import requires viewing, Library title or purchase records")
+        if "library" in document and "library_titles" in document:
+            raise invalid("Import contains both current and legacy Library tables")
+        document["library"] = document.get(
+            "library", document.get("library_titles", [])
+        )
+        purchases = (
+            list(document.get("library_purchases", []))
+            if isinstance(document.get("library_purchases", []), list)
+            else None
+        )
+        if purchases is None:
+            raise invalid("Expected a list of purchase records")
+        if (
+            not isinstance(document["library"], list)
+            or len(document["library"]) > MAX_IMPORT_ROWS
+        ):
+            raise invalid("Import requires at most 10000 Library entries")
+        for row in document["library"]:
+            if time.monotonic() > deadline:
+                raise invalid("Import validation exceeded its time budget")
+            if not isinstance(row, dict):
+                raise invalid("Expected a Library entry")
+            if not isinstance(
+                row.get("purchase_match_pending", 0), (bool, int)
+            ) or row.get("purchase_match_pending", 0) not in (0, 1):
+                raise invalid("Invalid pending purchase marker")
+            for invoice in embedded_history(row, decode_json):
+                if len(purchases) >= MAX_IMPORT_ROWS:
+                    raise invalid("Import requires at most 10000 purchases")
+                purchases.append(
+                    {
+                        **invoice,
+                        "library_id": None
+                        if row.get("purchase_match_pending")
+                        else row.get("id"),
+                    }
+                )
+        document["purchases"] = purchases
         now = datetime.now(UTC).isoformat(timespec="microseconds")
         result = {}
         for table, normalize in (
             ("viewings", lambda row: _record(row, now)),
-            ("library_titles", lambda row: title_record(row, now, decode_json)),
-            ("library_purchases", purchase_record),
+            ("library", lambda row: title_record(row, now, decode_json)),
+            ("purchases", purchase_record),
         ):
             rows = document.get(table, [])
             if not isinstance(rows, list) or len(rows) > MAX_IMPORT_ROWS:
                 raise invalid("Import requires at most 10000 records")
             seen, records = set(), []
             for row in rows:
+                if (
+                    table == "library"
+                    and isinstance(row, dict)
+                    and row.get("purchase_match_pending")
+                ):
+                    continue
                 if time.monotonic() > deadline:
                     raise invalid("Import validation exceeded its time budget")
                 record = normalize(row)
@@ -235,10 +284,10 @@ def parse_bundle(payload: bytes, import_format: str) -> dict:
             if not isinstance(key, str) or key in dates:
                 raise invalid("Duplicate legacy purchase date")
             dates[key] = purchase_date(row["purchased_on"])
-        title_ids = {row["id"] for row in result["library_titles"]}
+        title_ids = {row["id"] for row in result["library"]}
         if dates.keys() - title_ids:
             raise invalid("Legacy purchase date has no title")
-        for row in result["library_titles"]:
+        for row in result["library"]:
             if row["id"] in dates and row["purchased_on"] is None:
                 row["purchased_on"] = dates[row["id"]]
         return result

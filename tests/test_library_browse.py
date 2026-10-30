@@ -142,7 +142,7 @@ class GroupedLibraryTest(unittest.IsolatedAsyncioTestCase):
             {title_id(SOURCE, "fixture-a"), title_id(SOURCE, "fixture-a2")},
         )
         self.assertEqual(
-            len((await self.repository.async_inspect("library_titles"))["items"]), 3
+            len((await self.repository.async_inspect("library"))["items"]), 3
         )
         self.assertEqual((await self.repository.async_info())["viewing_count"], 0)
 
@@ -235,7 +235,7 @@ class GroupedLibraryTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(sparse["rating"], "R")
         raw = next(
             row
-            for row in (await self.repository.async_inspect("library_titles"))["items"]
+            for row in (await self.repository.async_inspect("library"))["items"]
             if row["id"] == sparse["id"]
         )
         self.assertIsNone(json.loads(raw["data"])["year"])
@@ -527,8 +527,8 @@ class GroupedLibraryApiTest(unittest.IsolatedAsyncioTestCase):
         reader.is_active = True
         original = runtime.repository.async_library_versions
 
-        async def opt_out(*args):
-            result = await original(*args)
+        async def opt_out(*args, **kwargs):
+            result = await original(*args, **kwargs)
             object.__setattr__(self.entry, "data", {"library_enabled": False})
             return result
 

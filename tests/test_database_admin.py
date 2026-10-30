@@ -60,16 +60,16 @@ class DatabaseStorageTest(unittest.IsolatedAsyncioTestCase):
     ):
         await self.seed()
         page = await self.page(
-            "library_titles", query="purchased_on IS NULL AND actors CONTAINS 'zoË'"
+            "library", query="purchased_on IS NULL AND actors CONTAINS 'zoË'"
         )
         self.assertGreater(page["total"], 0)
         self.assertEqual(
-            (await self.page("library_titles", query="title LIKE '%100%'"))["total"], 1
+            (await self.page("library", query="title LIKE '%100%'"))["total"], 1
         )
         self.assertGreater(
             (
                 await self.page(
-                    "library_titles", query="NOT (year < 2000) AND artwork_key IS NULL"
+                    "library", query="NOT (year < 2000) AND artwork_key IS NULL"
                 )
             )["total"],
             0,
@@ -77,7 +77,7 @@ class DatabaseStorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             (
                 await self.page(
-                    "library_titles",
+                    "library",
                     query="source_id = 'bad' OR title = ''' OR 1=1 --'",
                 )
             )["total"],
@@ -93,12 +93,10 @@ class DatabaseStorageTest(unittest.IsolatedAsyncioTestCase):
             "(" * 10 + "title = 'x'" + ")" * 10,
         ):
             with self.assert_error("query_syntax"):
-                await self.page("library_titles", query=query)
+                await self.page("library", query=query)
         self.assertIn("actors", {field["name"] for field in page["query_fields"]})
         self.assertNotIn("expression", json.dumps(page["query_fields"]))
-        self.assertEqual(
-            (await self.page("library_titles"))["total"], len(library.ROWS)
-        )
+        self.assertEqual((await self.page("library"))["total"], len(library.ROWS))
 
     async def test_viewing_edit_delete_exact_retry_audit_and_stale_snapshot(self):
         original = await self.repository.async_create(str(uuid4()), viewing())
@@ -141,7 +139,7 @@ class DatabaseStorageTest(unittest.IsolatedAsyncioTestCase):
             library.ROWS,
             {"Favorites": [library.ROWS[0]["source_handle"]]},
         )
-        page = await self.page("library_titles")
+        page = await self.page("library")
         await self.mutate(
             page,
             patch_data={
@@ -151,19 +149,17 @@ class DatabaseStorageTest(unittest.IsolatedAsyncioTestCase):
                 ),
             },
         )
-        row = (await self.page("library_titles", query="purchased_on IS NOT NULL"))[
-            "items"
-        ][0]
+        row = (await self.page("library", query="purchased_on IS NOT NULL"))["items"][0]
         self.assertEqual(json.loads(row["data"])["actors"], ["A New Actor"])
         with self.assert_error("invalid_request"):
             await self.mutate(
-                await self.page("library_titles"),
+                await self.page("library"),
                 patch_data={"data": '{"actors": "bad"}'},
             )
         await self.mutate(await self.page("library_collections"), "delete")
         self.assertEqual((await self.page("library_memberships"))["total"], 0)
         await self.mutate(await self.page("library_sources"), "delete")
-        self.assertEqual((await self.page("library_titles"))["total"], 0)
+        self.assertEqual((await self.page("library"))["total"], 0)
 
     async def test_protected_system_rows_backup_and_transaction_rollback(self):
         await self.repository.async_create(str(uuid4()), viewing())

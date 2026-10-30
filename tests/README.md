@@ -102,9 +102,8 @@
   purchase audit into import audit without losing original actor/source
   revisions. Retain separate relational collections, sessions, cache and
   recovery tables.
-- Extend JSON format 3 with portable Library titles/dates; exclude source
-  origins, artwork paths/keys and operational state from the portable title
-  projection.
+- Extend JSON format 3 with portable Library/dates; exclude source origins,
+  artwork paths/keys and operational state from the portable title projection.
 
 ## Unreleased
 

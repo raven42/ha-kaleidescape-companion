@@ -25,21 +25,28 @@ starts its details at the top.
 selected table and each table's sort field/order as personal database
 preferences. These use a separate settings row from Library preferences and
 require no HA reload. Initially the three main tables are visible: viewings,
-sessions and Library titles. Collections, artwork and sources are system tables.
-**Show system tables** exposes all eighteen tables for inspection; it does not
-remove write protections.
+sessions and Library. Collections, artwork and sources are system tables. **Show
+system tables** exposes all eighteen tables for inspection; it does not remove
+write protections.
 
-| Table                                                                          | Supported editing/deletion                                                                                                                                |
-| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `viewings`                                                                     | Correct title/times/runtime/watched time/status/notes; permanently delete closed entries and their session references                                     |
-| `sessions`                                                                     | Correct title/runtime/watched time or delete closed sessions; viewing summaries are not automatically recalculated                                        |
-| `library_titles`                                                               | Correct title, known descriptive metadata JSON, purchase/detection dates and availability; delete versions and local memberships                          |
-| `library_collections`                                                          | Correct detection dates/availability; delete a local collection and its memberships                                                                       |
-| `library_sources`                                                              | Correct the source detection date while keeping sync state protected; delete a source and its local versions/collections/memberships when receipts permit |
-| `library_artwork`                                                              | Delete a managed cache entry, clear all title references, then unlink its private managed file; byte size/type/hash are protected                         |
-| `library_memberships`                                                          | Delete a local membership; relationship keys cannot be edited                                                                                             |
-| `settings`                                                                     | Validate/edit recognized Library/shared/Database preference JSON or delete a row to restore defaults                                                      |
-| Audit, request, dataset metadata, calendar and collection-write receipt tables | Inspect/search/sort only; identity, attribution and replay barriers remain protected                                                                      |
+| Table                                                                          | Supported editing/deletion                                                                                                                                                           |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `viewings`                                                                     | Correct title/times/runtime/watched time/status/notes; permanently delete closed entries and their session references                                                                |
+| `sessions`                                                                     | Correct title/runtime/watched time or delete closed sessions; viewing summaries are not automatically recalculated                                                                   |
+| `library`                                                                      | Correct title, known descriptive metadata JSON, purchase/detection dates, paid/retail summary prices and availability; delete versions, owned purchase history and local memberships |
+| `library_collections`                                                          | Correct detection dates/availability; delete a local collection and its memberships                                                                                                  |
+| `library_sources`                                                              | Correct the source detection date while keeping sync state protected; delete a source and its local versions/collections/memberships when receipts permit                            |
+| `library_artwork`                                                              | Delete a managed cache entry, clear all title references, then unlink its private managed file; byte size/type/hash are protected                                                    |
+| `library_memberships`                                                          | Delete a local membership; relationship keys cannot be edited                                                                                                                        |
+| `settings`                                                                     | Validate/edit recognized Library/shared/Database preference JSON or delete a row to restore defaults                                                                                 |
+| Audit, request, dataset metadata, calendar and collection-write receipt tables | Inspect/search/sort only; identity, attribution and replay barriers remain protected                                                                                                 |
+
+Library `purchase_history` keeps all orders on the owning version. Flat order,
+link and price fields summarize its earliest invoice. Price edits update both
+representations. Order/link/identity/raw history are protected; purchase dates
+remain editable. Deleting a version/source removes its purchases with it, so
+export before deletion if that history must be retained. Prices, orders, links
+and history never enter standard-user responses.
 
 Source-owned values may be replaced or recreated by later synchronization.
 Deleting cached collection membership does not remove it on the device.
@@ -121,7 +128,7 @@ the 8 MiB response limit and revision-bound pagination.
 
 Merge Import and Export retain their existing authenticated review/download
 contracts; see [imports](imports.md). SQLite exports/backups contain private
-preferences, source identities, audit actors and retry state. JSON format 4
+preferences, source identities, audit actors and retry state. JSON format 5
 contains portable viewing/Library metadata and private purchase history; it
 excludes UI/audit operational rows. Purchase JSON arrays can be uploaded
 directly for reviewed import. Enable **Show system tables** to inspect Library
@@ -145,7 +152,7 @@ enable **Options → Show system tables** to inspect them. Search and sort/order
 sit together above the entries, with Options at the toolbar's far right. Choices
 remain personal database preferences.
 
-Raw detail panes show cached cover previews for Library titles/artwork using the
+Raw detail panes show cached cover previews for Library/artwork using the
 existing authenticated Library artwork endpoint. Library must be enabled and the
 artwork still referenced by the configured source; unavailable or evicted
 artwork shows a placeholder. There is no direct device/image fetch from this

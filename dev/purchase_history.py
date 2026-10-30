@@ -273,7 +273,7 @@ def preview(db, source, body):
         matches = db.execute(
             "SELECT t.id,t.source_group,t.title,json_extract(t.data,'$.year') year,"
             "json_extract(t.data,'$.edition') edition,t.purchased_on "
-            "FROM library_titles t "
+            "FROM library t "
             "WHERE t.source_id=? AND t.available=1 "
             "AND t.title_search=? ORDER BY t.id LIMIT 51",
             (source, purchase["title"].casefold()),
@@ -346,8 +346,7 @@ def apply(db, source, request_id, revision, updates, actor_id):
             )
         for update in normalized:
             row = db.execute(
-                "SELECT 1 FROM library_titles "
-                "WHERE id=? AND source_id=? AND available=1",
+                "SELECT 1 FROM library WHERE id=? AND source_id=? AND available=1",
                 (update["title_id"], source),
             ).fetchone()
             if row is None:
@@ -355,8 +354,7 @@ def apply(db, source, request_id, revision, updates, actor_id):
                     "not_found", "A selected Library version is unavailable"
                 )
             db.execute(
-                "UPDATE library_titles SET purchased_on=?,purchase_imported_at=? "
-                "WHERE id=?",
+                "UPDATE library SET purchased_on=?,purchase_imported_at=? WHERE id=?",
                 (
                     update["purchased_on"],
                     datetime.now(UTC).isoformat(),

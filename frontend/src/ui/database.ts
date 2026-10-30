@@ -24,8 +24,7 @@ import { CoverQueue } from "../library/cover";
 const LABELS: Record<string, string> = {
   viewings: "Viewings",
   sessions: "Sessions",
-  library_titles: "Library titles",
-  library_purchases: "Library purchases",
+  library: "Library",
   library_collections: "Library collections",
   library_sources: "Library sources",
   library_artwork: "Library artwork",
@@ -42,7 +41,7 @@ const LABELS: Record<string, string> = {
   calendar_sync_jobs: "Calendar exports",
   calendar_sync_items: "Calendar export items",
 };
-const MAIN = ["viewings", "sessions", "library_titles"];
+const MAIN = ["viewings", "sessions", "library"];
 type Row = Record<string, unknown>;
 export class KaleidescapeDatabase extends LitElement {
   static properties = {
@@ -767,7 +766,7 @@ export class KaleidescapeDatabase extends LitElement {
             this.detail
               ? html`${
                     (this.table === "library_artwork" ||
-                      this.table === "library_titles") &&
+                      this.table === "library") &&
                     (this.detail.cache_key || this.detail.artwork_key)
                       ? html`<div class="database-preview">
                             <kaleidescape-library-cover

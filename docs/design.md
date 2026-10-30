@@ -264,7 +264,7 @@ private content-keyed object URLs with a 1000-image/128 MiB compressed-byte LRU,
 offscreen-first eviction and full Library/account cleanup. Completed images
 survive scrolling and view/page changes. Options owns live database-backed
 layout toggles; cover format selection and exclusive status/independent Favorite
-indicators live in `library/badges.ts`. Metadata uses schema 15 on the existing
+indicators live in `library/badges.ts`. Metadata uses schema 16 on the existing
 worker; a 192 MiB library write ceiling preserves 64 MiB of journal growth.
 `ui/preferences.py` validates the native landing default and database UI values;
 `core/preferences.py` atomically patches actor-scoped/shared rows on the worker.

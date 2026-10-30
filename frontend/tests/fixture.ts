@@ -17,7 +17,7 @@ export const info: JournalInfo = {
   entry_id: "fixture-entry",
   dataset_id: "a323bd20-1b55-4562-87b0-9999944759f3",
   api_version: 1,
-  schema_version: 15,
+  schema_version: 16,
   library_enabled: false,
   revision: 5,
   viewing_count: 3,
@@ -660,7 +660,7 @@ export class FixtureTransport implements Transport {
         database_audit: [],
         schema_metadata: [{ revision: this.revision }],
         library_sources: [],
-        library_titles: [],
+        library: [],
         library_collections: [],
         library_memberships: [],
         library_artwork: [],
@@ -703,7 +703,7 @@ export class FixtureTransport implements Transport {
             : [];
       result = {
         dataset_revision: this.revision,
-        main_tables: ["viewings", "sessions", "library_titles"],
+        main_tables: ["viewings", "sessions", "library"],
         schema: columns.map((name) => ({
           name,
           type: ["duration_seconds", "watched_seconds", "revision"].includes(
@@ -722,7 +722,7 @@ export class FixtureTransport implements Transport {
         deletable: [
           "viewings",
           "sessions",
-          "library_titles",
+          "library",
           "library_collections",
           "library_sources",
           "library_artwork",

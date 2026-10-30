@@ -227,7 +227,7 @@ class RepositoryTest(unittest.IsolatedAsyncioTestCase):
         json_path = await self.repository.async_export("json")
         self.addCleanup(json_path.unlink, missing_ok=True)
         exported = json.loads(json_path.read_text())
-        self.assertEqual(exported["metadata"]["format_version"], 4)
+        self.assertEqual(exported["metadata"]["format_version"], 5)
         self.assertIsNotNone(exported["viewings"][0]["deleted_at"])
         snapshot = await self.repository.async_export("sqlite")
         self.addCleanup(snapshot.unlink, missing_ok=True)

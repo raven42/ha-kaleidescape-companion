@@ -28,7 +28,7 @@ def search(db, source, query, excluded, fuzzy=True):
         raise invalid("Title search is limited to twelve words")
     # Score names only; load the ten full display records after ranking.
     rows = db.execute(
-        "SELECT id,title FROM library_titles WHERE source_id=? AND available=1 "
+        "SELECT id,title FROM library WHERE source_id=? AND available=1 "
         "ORDER BY title_search,id LIMIT 10001",
         (source,),
     ).fetchall()
@@ -57,7 +57,7 @@ def search(db, source, query, excluded, fuzzy=True):
         row = db.execute(
             f"SELECT t.*,({STATUS_SQL}) watched_status,({FAVORITE_SQL}) "
             f"is_favorite,({RECENT_SQL}) is_recently_added,"
-            f"{PURCHASE_SQL} effective_purchased_on FROM library_titles t "
+            f"{PURCHASE_SQL} effective_purchased_on FROM library t "
             f"JOIN library_sources s ON s.id=t.source_id WHERE t.id=? AND "
             f"t.source_id=?",
             (key, source),

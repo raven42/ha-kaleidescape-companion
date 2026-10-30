@@ -141,8 +141,7 @@ def mutation(db, directory, request, actor, data, calendar=None):
                 sources.update(
                     item[0]
                     for item in db.execute(
-                        "SELECT DISTINCT source_id FROM library_titles "
-                        "WHERE artwork_key=?",
+                        "SELECT DISTINCT source_id FROM library WHERE artwork_key=?",
                         (row["cache_key"],),
                     )
                 )
@@ -271,11 +270,7 @@ def validated_patch(db, table, row, patch, now):
                 else None,
             )
         return result
-    if table == "library_purchases":
-        from ..library.purchases import price
-
-        return {key: price(value) for key, value in patch.items()}
-    if table == "library_titles":
+    if table == "library":
         from ..library.importing import title_record
 
         raw = {**row, **patch}
@@ -310,8 +305,20 @@ def validated_patch(db, table, row, patch, now):
                         **checked["data"],
                     }
                 )
+            elif key in {"purchase_price", "retail_price"}:
+                from ..library.purchases import price
+
+                result[key] = price(patch[key])
             elif key != "available":
                 result[key] = checked[key]
+        if {"purchase_price", "retail_price"} & patch.keys():
+            records = json.loads(row["purchase_history"])
+            if not records:
+                raise invalid("Import a matched purchase before editing its prices")
+            for key in ("purchase_price", "retail_price"):
+                if key in patch:
+                    records[0][key] = result[key]
+            result["purchase_history"] = json.dumps(records)
         if "title" in patch:
             result["title_search"] = checked["title"].casefold()
     elif table == "settings":
@@ -374,7 +381,7 @@ def validated_patch(db, table, row, patch, now):
             )
     if table == "sessions":
         result["revision"] = row["revision"] + 1
-    if table in {"library_titles", "library_collections"} and result.get(
+    if table in {"library", "library_collections"} and result.get(
         "first_seen", row["first_seen"]
     ) > result.get("last_seen", row["last_seen"]):
         raise invalid("First detected must not follow last detected")
@@ -390,7 +397,7 @@ def delete_row(db, table, row):
         )
         db.execute("DELETE FROM manual_audit WHERE viewing_id=?", (row["id"],))
         db.execute("DELETE FROM sessions WHERE viewing_id=?", (row["id"],))
-    elif table == "library_titles":
+    elif table == "library":
         if db.execute(
             "SELECT 1 FROM library_collection_intents WHERE title_id=?", (row["id"],)
         ).fetchone():
@@ -401,14 +408,9 @@ def delete_row(db, table, row):
             "SELECT 1 FROM library_collection_intents WHERE source_id=?", (row["id"],)
         ).fetchone():
             raise JournalError("conflict", "Device-write receipts protect this source")
-        db.execute(
-            "UPDATE library_purchases SET source_id=NULL,source_group=NULL "
-            "WHERE source_id=?",
-            (row["id"],),
-        )
         db.execute("DELETE FROM library_memberships WHERE source_id=?", (row["id"],))
         db.execute("DELETE FROM library_collections WHERE source_id=?", (row["id"],))
-        db.execute("DELETE FROM library_titles WHERE source_id=?", (row["id"],))
+        db.execute("DELETE FROM library WHERE source_id=?", (row["id"],))
     elif table == "library_collections":
         db.execute(
             "DELETE FROM library_memberships WHERE source_id=? AND collection=?",
@@ -416,6 +418,6 @@ def delete_row(db, table, row):
         )
     elif table == "library_artwork":
         db.execute(
-            "UPDATE library_titles SET artwork_key=NULL WHERE artwork_key=?",
+            "UPDATE library SET artwork_key=NULL WHERE artwork_key=?",
             (row["cache_key"],),
         )

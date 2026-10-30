@@ -5,7 +5,7 @@ import sqlite3
 import unittest
 from contextlib import closing
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import test_database_admin as database
@@ -13,6 +13,7 @@ import test_importing as importing
 import test_library as library
 
 from custom_components.kaleidescape_companion.core.importing import parse_bundle
+from custom_components.kaleidescape_companion.core.migrations import MIGRATIONS, migrate
 from custom_components.kaleidescape_companion.core.repository import JournalRepository
 from custom_components.kaleidescape_companion.playback.metadata import snapshot
 
@@ -42,8 +43,15 @@ class PurchaseImportTest(unittest.IsolatedAsyncioTestCase):
     snapshot = importing.ImportStorageTest.snapshot
     mutate = database.DatabaseStorageTest.mutate
 
-    async def page(self, **kwargs):
-        return await self.repository.async_inspect("library_purchases", **kwargs)
+    async def page(self):
+        return await self.repository.async_inspect("library", limit=100)
+
+    async def invoices(self):
+        return [
+            (row, invoice)
+            for row in (await self.page())["items"]
+            for invoice in json.loads(row["purchase_history"])
+        ]
 
     async def match_review(self, plan, key, title_id):
         result = await self.repository.async_import_match(
@@ -57,8 +65,35 @@ class PurchaseImportTest(unittest.IsolatedAsyncioTestCase):
             ],
         }
 
-    async def test_unresolved_first_manual_title_choice_and_rotated_approval(self):
-        await self.seed_library()
+    async def test_unresolved_cannot_import_and_manual_match_rotates_approval(self):
+        target = await self.seed_library()
+        plan = await self.preview(
+            payload(purchase(title="Different store spelling"), purchase())
+        )
+        row = plan["rows"][0]
+        self.assertTrue(row["needs_match"])
+        self.assertEqual(row["action"], "skip")
+        self.assertEqual(row["table"], "library")
+        with self.assert_error("invalid_request"):
+            await self.apply(plan, [row["key"]])
+        matched = await self.match_review(plan, row["key"], target)
+        self.assertFalse(matched["rows"][0]["needs_match"])
+        self.assertEqual(await self.invoices(), [])
+        with self.assert_error("conflict"):
+            await self.apply(plan, [row["key"]])
+        request = str(uuid4())
+        result = await self.apply(matched, [row["key"]], request)
+        self.assertEqual(result, await self.apply(matched, [row["key"]], request))
+        owner, invoice = (await self.invoices())[0]
+        self.assertEqual(owner["id"], target)
+        self.assertEqual(invoice["title"], "Different store spelling")
+        self.assertEqual((await self.page())["total"], 3)
+        fresh = await self.preview(payload(purchase(title="Different store spelling")))
+        self.assertEqual(fresh["counts"]["unchanged"], 1)
+        self.assertFalse(fresh["rows"][0]["can_match"])
+
+    async def test_ambiguous_remakes_and_sources_require_review_choice(self):
+        target = await self.seed_library()
         remake = {
             **library.ROWS[0],
             "source_handle": "remake",
@@ -70,71 +105,30 @@ class PurchaseImportTest(unittest.IsolatedAsyncioTestCase):
             library.ORIGIN, [*library.ROWS, remake], {}
         )
         plan = await self.preview(
-            payload(
-                purchase(title=library.ROWS[1]["title"]),
-                purchase(title="A different purchase spelling"),
-                purchase(),
-            )
+            payload(purchase(title=library.ROWS[0]["title"]), purchase(title="Unknown"))
         )
-        self.assertEqual(
-            [row["needs_match"] for row in plan["rows"]], [True, True, False]
-        )
+        self.assertTrue(all(row["needs_match"] for row in plan["rows"]))
         key = plan["rows"][0]["key"]
         choices = await self.repository.async_import_match_search(
             plan["plan_id"], plan["revision"], key, "VOYAGE", "fictional-admin"
         )
-        self.assertEqual(len(choices["items"]), 2)
         self.assertEqual({row["year"] for row in choices["items"]}, {1990, 2025})
-        chosen = next(row for row in choices["items"] if row["year"] == 2025)
-        revised = await self.match_review(plan, key, chosen["id"])
-        self.assertNotEqual(plan["plan_id"], revised["plan_id"])
-        row = next(row for row in revised["rows"] if row["key"] == key)
-        self.assertFalse(row["needs_match"])
-        self.assertIn(library.ROWS[0]["title"], row["detail"])
-        self.assertEqual((await self.page())["total"], 0)
-        with self.assert_error("conflict"):
-            await self.apply(plan, [key])
-        request = str(uuid4())
-        applied = await self.apply(revised, [key], request=request)
-        self.assertEqual(await self.apply(revised, [key], request=request), applied)
-        stored = (await self.page())["items"][0]
-        self.assertEqual(stored["title"], "A different purchase spelling")
-        self.assertEqual(stored["source_group"], "group-a")
-
-    async def test_match_unlinked_purchase_clear_choice_and_protect_stored_links(
-        self,
-    ):
-        body = payload(purchase(title="Original store spelling"))
-        await self.apply(await self.preview(body))
-        target = await self.seed_library()
-        original = (await self.page())["items"][0]
-        plan = await self.preview(body)
-        self.assertEqual(plan["rows"][0]["action"], "unchanged")
-        key = plan["rows"][0]["key"]
         matched = await self.match_review(plan, key, target)
-        self.assertEqual(
-            set(matched["rows"][0]["changes"]), {"source_id", "source_group"}
-        )
         cleared = await self.match_review(matched, key, None)
-        self.assertTrue(cleared["rows"][0]["needs_match"])
-        self.assertEqual(cleared["rows"][0]["action"], "unchanged")
+        self.assertEqual(cleared["rows"][0]["action"], "skip")
         with self.assert_error("invalid_request"):
             await self.apply(cleared, [key])
-        matched = await self.match_review(cleared, key, target)
-        await self.apply(matched, [key])
-        stored = (await self.page())["items"][0]
-        self.assertEqual(stored["purchase_price"], original["purchase_price"])
-        self.assertEqual(stored["imported_at"], original["imported_at"])
-        fresh = await self.preview(body)
-        self.assertFalse(fresh["rows"][0]["can_match"])
-        with self.assert_error("invalid_request"):
-            await self.match_review(fresh, key, target)
+        with self.assert_error("not_found"):
+            await self.match_review(cleared, key, "f" * 64)
+        await self.repository.async_library_catalog(
+            "http://other-fictional.local", library.ROWS, {}
+        )
+        plan = await self.preview(payload(purchase()))
+        self.assertTrue(plan["rows"][0]["needs_match"])
 
-    async def test_match_search_and_choices_recheck_actor_review_and_live_revision(
-        self,
-    ):
+    async def test_review_role_revision_and_search_bounds(self):
         target = await self.seed_library()
-        plan = await self.preview(payload(purchase(title="Unmatched")))
+        plan = await self.preview(payload(purchase(title="Unknown")))
         key = plan["rows"][0]["key"]
         with self.assert_error("conflict"):
             await self.repository.async_import_match_search(
@@ -144,169 +138,173 @@ class PurchaseImportTest(unittest.IsolatedAsyncioTestCase):
             await self.repository.async_import_match(
                 plan["plan_id"], plan["revision"], key, target, "other-admin"
             )
-        with self.assert_error("not_found"):
-            await self.match_review(plan, key, "f" * 64)
         for query in ("x" * 101, "\x00", "\ud800"):
             with self.assert_error("invalid_request"):
                 await self.repository.async_import_match_search(
                     plan["plan_id"], plan["revision"], key, query, "fictional-admin"
                 )
-        literal = await self.repository.async_import_match_search(
+        choices = await self.repository.async_import_match_search(
             plan["plan_id"], plan["revision"], key, "%_", "fictional-admin"
         )
-        self.assertEqual([row["title"] for row in literal["items"]], ["Midnight 100%_"])
+        self.assertEqual([row["title"] for row in choices["items"]], ["Midnight 100%_"])
         await self.repository.async_library_catalog(library.ORIGIN, library.ROWS, {})
         with self.assert_error("conflict"):
             await self.match_review(plan, key, target)
-        fresh = await self.preview(payload(purchase(title="Unmatched")))
-        with self.assert_error("conflict"):
-            await self.repository.async_import_match_search(
-                plan["plan_id"], plan["revision"], key, "Voyage", "fictional-admin"
-            )
-        self.assertNotEqual(fresh["plan_id"], plan["plan_id"])
 
-    async def test_review_only_selection_repeat_orders_dates_and_private_projection(
+    async def test_repeat_orders_stay_on_one_entry_and_private_fields_stay_private(
         self,
     ):
-        title_id = await self.seed_library()
-        body = payload(
-            purchase(), purchase(order_id="OTHER-ORDER", purchased_on="2022-05-06")
+        title = await self.seed_library()
+        plan = await self.preview(
+            payload(
+                purchase(purchased_on="2022-05-06"), purchase(order_id="OTHER-ORDER")
+            )
         )
-        plan = await self.preview(body)
-        self.assertEqual((await self.page())["total"], 0)
-        self.assertEqual(plan["counts"]["new"], 2)
         self.assertTrue(all(not row["selected_by_default"] for row in plan["rows"]))
-        self.assertIn("2 versions", plan["rows"][0]["detail"])
-        request = str(uuid4())
-        result = await self.apply(plan, request=request)
-        self.assertEqual(result["imported_count"], 2)
-        versions = await self.repository.async_library_versions(
-            library.SOURCE, title_id
-        )
+        await self.apply(plan)
+        invoices = await self.invoices()
+        self.assertEqual(len(invoices), 2)
+        self.assertEqual(len({row["id"] for row, _ in invoices}), 1)
+        self.assertEqual((await self.page())["total"], 3)
+        versions = await self.repository.async_library_versions(library.SOURCE, title)
         self.assertTrue(
             all(row["purchased_on"] == "2020-01-02" for row in versions["items"])
         )
         grouped = await self.repository.async_library_list(
-            library.SOURCE, {"grouped": True, "sort": "added"}
+            library.SOURCE, {"grouped": True}
         )
-        self.assertEqual(grouped["items"][0]["purchased_on"], "2020-01-02")
-        for projection in (versions, grouped):
-            self.assertNotIn("PRIVATE-DEMO-ORDER", json.dumps(projection))
-            self.assertNotIn("purchase_price", json.dumps(projection))
-            self.assertNotIn("movie-store", json.dumps(projection))
         suggestions = await self.repository.async_library_search(
             library.SOURCE, "Voyage", ""
         )
-        self.assertEqual(suggestions["items"][0]["purchased_on"], "2020-01-02")
+        for projection in (
+            versions,
+            grouped,
+            suggestions,
+            await self.repository.async_library_summary(library.SOURCE),
+        ):
+            for private in (
+                "PRIVATE-DEMO-ORDER",
+                "purchase_price",
+                "retail_price",
+                "order_id",
+                "href",
+                "purchase_history",
+            ):
+                self.assertNotIn(private, json.dumps(projection))
+        private = await self.repository.async_library_versions(
+            library.SOURCE, title, admin=True
+        )
+        self.assertEqual(
+            sum(len(row["purchase_history"]) for row in private["items"]), 2
+        )
 
-        def viewing_snapshot():
+        def display():
             db = self.repository._db()
-            row = db.execute(
-                "SELECT * FROM library_titles WHERE id=?", (title_id,)
-            ).fetchone()
-            return snapshot(db, row)
+            return snapshot(
+                db, db.execute("SELECT * FROM library WHERE id=?", (title,)).fetchone()
+            )
 
-        display = await self.repository._call(viewing_snapshot)
-        self.assertEqual(display["purchase_date"], "2020-01-02")
-        self.assertNotIn("PRIVATE-DEMO-ORDER", json.dumps(display))
-        self.assertNotIn("purchase_price", display)
-        audit = await self.repository.async_inspect("import_audit")
-        self.assertNotIn("PRIVATE-DEMO-ORDER", json.dumps(audit))
-        await self.repository.async_library_catalog(library.ORIGIN, library.ROWS, {})
-        self.assertEqual((await self.page())["total"], 2)
-        self.assertEqual((await self.preview(body))["counts"]["new"], 0)
-        await self.repository.async_close()
-        self.repository = JournalRepository(self.path)
-        self.addAsyncCleanup(self.repository.async_close)
-        await self.repository.async_open()
-        self.assertEqual(await self.apply(plan, request=request), result)
-        with self.assert_error("conflict"):
-            await self.apply(plan, request=request, actor="other-admin")
-
-    async def test_unmatched_and_ambiguous_names_stay_unlinked_then_can_fill(self):
-        body = payload(purchase())
-        await self.apply(await self.preview(body))
-        self.assertIsNone((await self.page())["items"][0]["source_id"])
-        await self.seed_library()
-        remake = {
-            **library.ROWS[0],
-            "source_handle": "remake",
-            "source_group": "remake",
-            "year": 1990,
-        }
-        await self.repository.async_library_catalog(
-            library.ORIGIN, [*library.ROWS, remake], {}
+        self.assertNotIn(
+            "PRIVATE-DEMO-ORDER", json.dumps(await self.repository._call(display))
         )
-        plan = await self.preview(body)
-        self.assertEqual(plan["counts"]["merge"], 0)
-        self.assertIn("without a Library link", plan["rows"][0]["detail"])
         await self.repository.async_library_catalog(library.ORIGIN, library.ROWS, {})
-        plan = await self.preview(body)
-        self.assertEqual(set(plan["rows"][0]["changes"]), {"source_id", "source_group"})
-        await self.apply(plan)
-        self.assertEqual((await self.page())["items"][0]["source_group"], "group-a")
-        await self.repository.async_library_catalog(
-            "http://other-fictional.local", library.ROWS, {}
+        self.assertEqual(len(await self.invoices()), 2)
+        self.assertEqual(
+            (
+                await self.preview(
+                    payload(
+                        purchase(purchased_on="2022-05-06"),
+                        purchase(order_id="OTHER-ORDER"),
+                    )
+                )
+            )["counts"]["new"],
+            0,
         )
-        plan = await self.preview(payload(purchase(order_id="AMBIGUOUS-SOURCE")))
-        self.assertNotIn("source_id", plan["rows"][0]["changes"])
 
-    async def test_fill_only_prices_and_export_round_trips_and_explicit_date_wins(self):
-        title_id = await self.seed_library()
+    async def test_fill_only_prices_private_export_and_legacy_title_dates(self):
+        target = await self.seed_library()
         await self.apply(await self.preview(payload(purchase(purchase_price=None))))
         plan = await self.preview(payload(purchase()))
         self.assertEqual(set(plan["rows"][0]["changes"]), {"purchase_price"})
         await self.apply(plan)
-        plan = await self.preview(payload(purchase(purchase_price="$0.00")))
-        self.assertEqual(plan["counts"]["merge"], 0)
-        self.assertIn("purchase_price", plan["rows"][0]["conflicts"])
+        conflict = await self.preview(payload(purchase(purchase_price="$0.00")))
+        self.assertEqual(conflict["counts"]["merge"], 0)
+        self.assertIn("purchase_price", conflict["rows"][0]["conflicts"])
         async with self.repository.async_export_snapshot("json") as path:
             exported = path.read_bytes()
-        doc = json.loads(exported)
-        self.assertEqual(doc["metadata"]["format_version"], 4)
-        self.assertEqual(doc["library_purchases"][0]["order_id"], "PRIVATE-DEMO-ORDER")
+        document = json.loads(exported)
+        self.assertEqual(document["metadata"]["format_version"], 5)
+        self.assertNotIn("library_purchases", document)
+        self.assertNotIn("library_titles", document)
+        self.assertEqual(
+            sum(len(row["purchase_history"]) for row in document["library"]), 1
+        )
         self.assertEqual((await self.preview(exported))["counts"]["merge"], 0)
         self.assertEqual(
             (await self.preview(await self.snapshot(), "sqlite"))["counts"]["merge"], 0
         )
-        version = next(row for row in doc["library_titles"] if row["id"] == title_id)
+        version = next(row for row in document["library"] if row["id"] == target)
+        version = {
+            key: value
+            for key, value in version.items()
+            if key
+            not in {
+                "purchase_history",
+                "purchase_price",
+                "retail_price",
+                "order_id",
+                "href",
+                "purchase_match_pending",
+            }
+        }
         version["purchased_on"] = "2023-04-05"
-        await self.apply(
-            await self.preview(importing.payload(library_titles=[version]))
-        )
-        versions = (
-            await self.repository.async_library_versions(library.SOURCE, title_id)
-        )["items"]
-        self.assertEqual(
-            next(row for row in versions if row["id"] == title_id)["purchased_on"],
-            "2023-04-05",
-        )
-        # Dates are derived, not copied into every format's stored purchase date.
-        raw = (await self.repository.async_inspect("library_titles"))["items"]
-        self.assertTrue(
-            all(row["purchased_on"] is None for row in raw if row["id"] != title_id)
-        )
+        legacy = await self.preview(importing.payload(library_titles=[version]))
+        self.assertEqual(legacy["counts"]["new"], 0)
+        self.assertEqual(legacy["counts"]["merge"], 0)
+        raw = next(row for row in (await self.page())["items"] if row["id"] == target)
+        self.assertEqual(raw["purchased_on"], "2020-01-02")
+        self.assertEqual(len(await self.invoices()), 1)
 
-    async def test_explicit_links_require_a_cached_group_with_the_same_name(self):
+    async def test_flat_purchase_fields_import_and_summary_validation(
+        self,
+    ):
+        target = await self.seed_library()
+        async with self.repository.async_export_snapshot("json") as path:
+            entry = next(
+                row
+                for row in json.loads(path.read_text())["library"]
+                if row["id"] == target
+            )
+        entry.pop("purchase_history")
+        entry.update(
+            {key: value for key, value in purchase().items() if key != "title"}
+        )
+        plan = await self.preview(importing.payload(library=[entry]))
+        purchase_row = next(
+            row for row in plan["rows"] if row["key"].startswith("purchases:")
+        )
+        await self.apply(plan, [purchase_row["key"]])
+        owner, invoice = (await self.invoices())[0]
+        self.assertEqual(owner["id"], target)
+        self.assertEqual(invoice["purchase_price"], "$12.99")
+        async with self.repository.async_export_snapshot("json") as path:
+            exported = json.loads(path.read_text())
+        entry = next(row for row in exported["library"] if row["id"] == target)
+        entry["purchase_price"] = "$1.00"
+        with self.assert_error("invalid_request"):
+            await self.preview(json.dumps(exported).encode())
+        for price in (True, -1, "-$1.00"):
+            with self.assert_error("invalid_request"):
+                await self.preview(
+                    importing.payload(
+                        library=[
+                            {**entry, "purchase_history": [], "purchase_price": price}
+                        ]
+                    )
+                )
+
+    async def test_legacy_purchase_only_sqlite_validation_and_atomic_failure(self):
         await self.seed_library()
-        body = payload(purchase(source_id=library.SOURCE, source_group="group-b"))
-        plan = await self.preview(body)
-        self.assertNotIn("source_id", plan["rows"][0]["changes"])
-        self.assertIn("without a Library link", plan["rows"][0]["detail"])
-        unknown = payload(purchase(source_id="f" * 64, source_group="group-a"))
-        self.assertNotIn(
-            "source_id", (await self.preview(unknown))["rows"][0]["changes"]
-        )
-        valid = payload(purchase(source_id=library.SOURCE, source_group="group-a"))
-        plan = await self.preview(valid)
-        self.assertEqual(plan["rows"][0]["changes"]["source_group"]["after"], "group-a")
-        await self.apply(plan)
-        # Reimporting cannot move an approved purchase to another movie group.
-        plan = await self.preview(body)
-        self.assertEqual(plan["counts"]["merge"], 0)
-        self.assertEqual((await self.page())["items"][0]["source_group"], "group-a")
-
-    async def test_validation_sqlite_purchase_only_and_atomic_failure(self):
         for row in (
             purchase(purchase_price=-1),
             purchase(purchase_price=True),
@@ -323,19 +321,18 @@ class PurchaseImportTest(unittest.IsolatedAsyncioTestCase):
                 await self.preview(payload(row))
         with self.assert_error("invalid_request"):
             await self.preview(payload(purchase(), purchase()))
-        normalized = parse_bundle(payload(purchase()), "json")["library_purchases"][0]
+        normalized = parse_bundle(payload(purchase()), "json")["purchases"][0]
         with closing(sqlite3.connect(":memory:")) as db:
+            columns = ("id", "title", "purchased_on", "order_id", "href")
             db.execute(
                 "CREATE TABLE library_purchases(id,title,purchased_on,order_id,href)"
             )
-            columns = ("id", "title", "purchased_on", "order_id", "href")
             db.execute(
                 "INSERT INTO library_purchases VALUES (?,?,?,?,?)",
-                tuple(normalized[k] for k in columns),
+                tuple(normalized[key] for key in columns),
             )
             db.commit()
             plan = await self.preview(db.serialize(), "sqlite")
-        self.assertEqual(plan["counts"]["new"], 1)
         with closing(sqlite3.connect(self.path)) as db:
             db.execute(
                 "CREATE TRIGGER fail_purchase BEFORE INSERT ON import_audit "
@@ -343,72 +340,193 @@ class PurchaseImportTest(unittest.IsolatedAsyncioTestCase):
             )
         with self.assert_error("storage_error"):
             await self.apply(plan)
-        self.assertEqual((await self.page())["total"], 0)
+        self.assertEqual(await self.invoices(), [])
         with closing(sqlite3.connect(":memory:")) as db:
             db.execute(
-                "CREATE VIEW library_purchases AS SELECT 'id' id,'title' title,"
-                "'2020-01-02' purchased_on"
+                "CREATE VIEW library_purchases AS SELECT 'id' id,'title' "
+                "title,'2020-01-02' purchased_on"
             )
             with self.assert_error("invalid_request"):
                 await self.preview(db.serialize(), "sqlite")
 
-    async def test_database_price_edits_deletions_and_source_detachment(self):
-        title_id = await self.seed_library()
+    async def test_prices_edit_history_in_same_row_and_delete_cannot_orphan(self):
+        await self.seed_library()
         await self.apply(await self.preview(payload(purchase())))
+        owner, invoice = (await self.invoices())[0]
         page = await self.page()
-        for field in ("id", "order_id", "purchased_on", "source_group", "href"):
+        page["items"] = [owner]
+        # Mutation helpers derive tokens from the selected row.
+        for field in ("id", "order_id", "href", "purchase_history", "source_group"):
             with self.assert_error("invalid_request"):
                 await self.mutate(page, patch_data={field: "changed"})
         await self.mutate(page, patch_data={"purchase_price": "$0.00"})
-        self.assertEqual((await self.page())["items"][0]["purchase_price"], "$0.00")
-        await self.mutate(await self.page(), operation="delete")
-        versions = await self.repository.async_library_versions(
-            library.SOURCE, title_id
+        owner, invoice = (await self.invoices())[0]
+        self.assertEqual(
+            (owner["purchase_price"], invoice["purchase_price"]), ("$0.00", "$0.00")
         )
-        self.assertTrue(all(row["purchased_on"] is None for row in versions["items"]))
-        await self.apply(await self.preview(payload(purchase())))
-        sources = await self.repository.async_inspect("library_sources")
-        await self.mutate(sources, operation="delete")
-        row = (await self.page())["items"][0]
-        self.assertIsNone(row["source_id"])
-        self.assertIsNone(row["source_group"])
-        self.assertEqual(row["order_id"], "PRIVATE-DEMO-ORDER")
+        page = await self.page()
+        page["items"] = [owner]
+        await self.mutate(page, operation="delete")
+        self.assertEqual(await self.invoices(), [])
+        with self.assert_error("invalid_request"):
+            await self.repository.async_inspect("library_titles")
+        with self.assert_error("invalid_request"):
+            await self.repository.async_inspect("library_purchases")
 
-    async def test_schema_14_upgrade_preserves_titles_and_retains_private_backup(self):
-        await self.seed_library()
+    async def test_schema_15_consolidates_linked_and_preserves_unmatched_for_review(
+        self,
+    ):
+        target = await self.seed_library()
         await self.repository.async_close()
         with closing(sqlite3.connect(self.path)) as db:
-            db.execute("DROP TABLE library_purchases")
-            db.execute("DROP INDEX library_purchase_matches")
-            db.execute("PRAGMA user_version=14")
+            db.execute("ALTER TABLE library RENAME TO library_titles")
+            for column in (
+                "purchase_history",
+                "purchase_price",
+                "retail_price",
+                "order_id",
+                "href",
+                "purchase_match_pending",
+            ):
+                db.execute(f"ALTER TABLE library_titles DROP COLUMN {column}")
+            for statement in MIGRATIONS[15][:-1]:
+                db.execute(statement)
+            for row in (
+                purchase(source_id=library.SOURCE, source_group="group-a"),
+                purchase(title="Old unmatched spelling"),
+            ):
+                record = parse_bundle(payload(row), "json")["purchases"][0]
+                record.pop("library_id")
+                record.update(
+                    title_search=record["title"].casefold(),
+                    imported_at="2026-01-01T00:00:00Z",
+                )
+                db.execute(
+                    f"INSERT INTO library_purchases ({','.join(record)}) "
+                    f"VALUES ({','.join('?' for _ in record)})",
+                    tuple(record.values()),
+                )
+            db.execute(
+                "INSERT INTO settings VALUES "
+                "('user:test','database',?,1,'2026-01-01T00:00:00Z')",
+                (
+                    json.dumps(
+                        {
+                            "table": "library_titles",
+                            "sorts": {
+                                "library_titles": {"sort": "title", "descending": True},
+                                "library_purchases": {
+                                    "sort": "imported_at",
+                                    "descending": False,
+                                },
+                            },
+                        }
+                    ),
+                ),
+            )
+            db.execute("PRAGMA user_version=15")
+            db.commit()
         self.repository = JournalRepository(self.path)
         self.addAsyncCleanup(self.repository.async_close)
         await self.repository.async_open()
-        self.assertEqual((await self.repository.async_info())["schema_version"], 15)
-        self.assertEqual((await self.page())["total"], 0)
-        self.assertEqual(
-            (await self.repository.async_inspect("library_titles"))["total"], 3
+        self.assertEqual((await self.repository.async_info())["schema_version"], 16)
+        invoices = await self.invoices()
+        self.assertEqual(len(invoices), 2)
+        pending = next(row for row, _ in invoices if row["purchase_match_pending"])
+        self.assertEqual(pending["available"], 0)
+        backups = list(self.path.parent.glob(self.path.name + ".v15.*.bak"))
+        self.assertEqual(len(backups), 1)
+        self.assertEqual(backups[0].stat().st_mode & 0o777, 0o600)
+        async with self.repository.async_export_snapshot("json") as path:
+            exported = path.read_bytes()
+        plan = await self.preview(exported)
+        unresolved = next(row for row in plan["rows"] if row["needs_match"])
+        matched = await self.match_review(plan, unresolved["key"], target)
+        await self.apply(matched, [unresolved["key"]])
+        self.assertEqual(len(await self.invoices()), 2)
+        moved = next(
+            invoice
+            for _, invoice in await self.invoices()
+            if invoice["title"] == "Old unmatched spelling"
         )
-        backups = list(self.path.parent.glob(self.path.name + ".v14.*.bak"))
+        self.assertEqual(moved["imported_at"], "2026-01-01T00:00:00.000000+00:00")
+        self.assertFalse(
+            any(row["purchase_match_pending"] for row, _ in await self.invoices())
+        )
+        self.assertEqual((await self.page())["total"], 3)
+
+        def integrity():
+            return self.repository._db().execute("PRAGMA foreign_key_check").fetchall()
+
+        self.assertEqual(await self.repository._call(integrity), [])
+        preferences = await self.repository.async_ui_preferences(
+            "test", area="database"
+        )
+        self.assertEqual(preferences["values"]["table"], "library")
+        self.assertEqual(
+            preferences["values"]["sorts"],
+            {"library": {"sort": "title", "descending": True}},
+        )
+
+    async def test_failed_consolidation_rolls_back_table_rename_and_retains_backup(
+        self,
+    ):
+        path = self.path.parent / "synthetic-legacy.sqlite"
+        with closing(sqlite3.connect(path)) as db:
+            db.row_factory = sqlite3.Row
+            for version in range(1, 16):
+                for statement in MIGRATIONS[version]:
+                    db.execute(statement)
+                if version == 1:
+                    db.execute(
+                        "INSERT INTO schema_metadata VALUES (1,?,'2026-01-01',0)",
+                        (str(uuid4()),),
+                    )
+            db.execute("PRAGMA user_version=15")
+            db.commit()
+            with patch(
+                "custom_components.kaleidescape_companion.core.migrations.library.consolidate",
+                side_effect=sqlite3.OperationalError("synthetic failure"),
+            ):
+                with self.assertRaises(sqlite3.OperationalError):
+                    migrate(db, path)
+            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 15)
+            tables = {
+                row[0]
+                for row in db.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table'"
+                )
+            }
+            self.assertIn("library_titles", tables)
+            self.assertIn("library_purchases", tables)
+            self.assertNotIn("library", tables)
+        backups = list(path.parent.glob(path.name + ".v15.*.bak"))
         self.assertEqual(len(backups), 1)
         self.assertEqual(backups[0].stat().st_mode & 0o777, 0o600)
 
-    async def test_large_purchase_review_explicit_selection_and_stale_apply(self):
+    async def test_large_review_selection_stale_apply_and_restart_retry(self):
         await self.seed_library()
         body = payload(
             *(purchase(order_id=f"DEMO-ORDER-{index}") for index in range(2000))
         )
         plan = await self.preview(body)
         self.assertEqual(plan["counts"]["new"], 2000)
-        self.assertTrue(all(not row["selected_by_default"] for row in plan["rows"]))
         await self.repository.async_library_catalog(library.ORIGIN, library.ROWS, {})
         with self.assert_error("conflict"):
             await self.apply(plan, [plan["rows"][0]["key"]])
         plan = await self.preview(body)
-        result = await self.apply(plan, [plan["rows"][-1]["key"]])
+        request = str(uuid4())
+        selected = [plan["rows"][-1]["key"]]
+        result = await self.apply(plan, selected, request)
         self.assertEqual(result["imported_count"], 1)
         self.assertEqual(result["skipped_count"], 1999)
-        self.assertEqual((await self.page())["total"], 1)
+        await self.repository.async_close()
+        self.repository = JournalRepository(self.path)
+        self.addAsyncCleanup(self.repository.async_close)
+        await self.repository.async_open()
+        self.assertEqual(await self.apply(plan, selected, request), result)
+        with self.assert_error("conflict"):
+            await self.apply(plan, selected, request, actor="other-admin")
 
 
 class PurchaseMatchApiTest(unittest.IsolatedAsyncioTestCase):
@@ -459,4 +577,76 @@ class PurchaseMatchApiTest(unittest.IsolatedAsyncioTestCase):
             denied = await self.call("database/import/match", **args, title_id=target)
         self.assertEqual(denied["code"], "unauthorized")
         self.admin.is_admin = True
-        self.assertEqual((await repo.async_inspect("library_purchases"))["total"], 0)
+        self.assertEqual(
+            sum(
+                len(json.loads(row["purchase_history"]))
+                for row in (await repo.async_inspect("library"))["items"]
+            ),
+            0,
+        )
+
+
+class PurchaseLibraryAccessTest(unittest.IsolatedAsyncioTestCase):
+    asyncSetUp = importing.ImportApiTest.asyncSetUp
+    call = importing.ImportApiTest.call
+
+    async def seed(self):
+        object.__setattr__(self.entry, "data", {"library_enabled": True})
+        runtime = self.entry.runtime_data
+        runtime.library = SimpleNamespace(source=library.SOURCE, async_stop=AsyncMock())
+        repo = runtime.repository
+        await repo.async_library_catalog(library.ORIGIN, library.ROWS, {})
+        async with repo.async_import_slot():
+            plan = await repo.async_import_preview(
+                payload(purchase()), "json", actor_id=self.admin.id
+            )
+        await repo.async_import_apply(
+            str(uuid4()),
+            plan["plan_id"],
+            plan["revision"],
+            [plan["rows"][0]["key"]],
+            actor_id=self.admin.id,
+        )
+        return repo
+
+    async def test_purchase_fields_only_enter_administrator_detail_responses(self):
+        await self.seed()
+        target = library.title_id(library.SOURCE, library.ROWS[0]["source_handle"])
+        args = {**self.scope, "title_id": target}
+        private = await self.call("library/versions", **args)
+        self.assertIn("PRIVATE-DEMO-ORDER", json.dumps(private))
+        reader = SimpleNamespace(id="reader", is_active=True, is_admin=False)
+        for operation, values in (
+            ("library/versions", {"title_id": target}),
+            ("library/list", {"filters": {"grouped": True}}),
+            ("library/search", {"query": "Voyage"}),
+        ):
+            result = await self.call(operation, user=reader, **self.scope, **values)
+            self.assertTrue(result["success"])
+            for field in (
+                "purchase_history",
+                "purchase_price",
+                "retail_price",
+                "order_id",
+                "PRIVATE-DEMO-ORDER",
+            ):
+                self.assertNotIn(field, json.dumps(result))
+        denied = await self.call(
+            "database/inspect", user=reader, **self.scope, table="library"
+        )
+        self.assertEqual(denied["code"], "unauthorized")
+
+    async def test_downgrade_while_loading_private_details_withholds_response(self):
+        repo = await self.seed()
+        original = repo.async_library_versions
+
+        async def downgrade(*args, **kwargs):
+            result = await original(*args, **kwargs)
+            self.admin.is_admin = False
+            return result
+
+        target = library.title_id(library.SOURCE, library.ROWS[0]["source_handle"])
+        with patch.object(repo, "async_library_versions", side_effect=downgrade):
+            result = await self.call("library/versions", **self.scope, title_id=target)
+        self.assertEqual(result["code"], "unauthorized")
+        self.assertNotIn("PRIVATE-DEMO-ORDER", json.dumps(result))

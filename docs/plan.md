@@ -1,6 +1,6 @@
 # Product plan
 
-Updated: 2026-10-28
+Updated: 2026-10-29
 
 Kaleidescape Companion maintains a shared household movie journal inside Home
 Assistant. Recording and browsing must work without a library import, external
@@ -216,14 +216,18 @@ count, applied filters/search, sort and sizing save immediately; hidden
 collection lists stay shared and administrator-managed. The Library offers
 25/100/1000/All pages, status flags and explicit format chips. Dialog backdrop
 dismissal remains guarded. Schema 9 folds purchase dates onto title versions and
-consolidates import audit. The one-time HTML preparation helper remains in
-`dev/`; live [reviewed merge imports](imports.md) use exact IDs, selectable
-new/missing-data changes and preserved conflicts. See
-[purchase dates](purchase-dates.md). Add-only collection membership is
-implemented with a separate opt-in, exact version selection, read-back
-confirmation and schema 8 durable receipts. Removal remains pending operator
-investigation. Live add validation is still an operator step; the copied journal
-does not prove a vendor protocol.
+consolidates import audit. Schema 16 renames `library_titles` to `library`,
+embeds repeat invoice history and private purchase summary columns on its owner,
+and removes the separate purchase table. Purchase imports require a scanned
+match, with a manual picker for ambiguity; only administrators receive
+prices/orders. JSON format 5 preserves the embedded history and reads legacy
+formats. The one-time HTML preparation helper remains in `dev/`; live
+[reviewed merge imports](imports.md) use exact IDs, selectable new/missing-data
+changes and preserved conflicts. See [purchase dates](purchase-dates.md).
+Add-only collection membership is implemented with a separate opt-in, exact
+version selection, read-back confirmation and schema 8 durable receipts. Removal
+remains pending operator investigation. Live add validation is still an operator
+step; the copied journal does not prove a vendor protocol.
 
 ### Library entity summaries
 

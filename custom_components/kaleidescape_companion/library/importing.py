@@ -18,6 +18,12 @@ TITLE_COLUMNS = {
     "first_seen",
     "last_seen",
     "purchased_on",
+    "purchase_history",
+    "purchase_price",
+    "retail_price",
+    "order_id",
+    "href",
+    "purchase_match_pending",
 }
 
 
@@ -82,11 +88,12 @@ def title_record(row, now, decode):
 def portable_titles(db):
     """Export no origin, fetch URL, cache key/path, receipt, or device state."""
     columns = ",".join(sorted(TITLE_COLUMNS))
-    for row in db.execute(f"SELECT {columns} FROM library_titles ORDER BY id"):
+    for row in db.execute(f"SELECT {columns} FROM library ORDER BY id"):
         record = dict(row)
         record["data"] = {
             key: value
             for key, value in json.loads(record["data"]).items()
             if key in PUBLIC_FIELDS
         }
+        record["purchase_history"] = json.loads(record["purchase_history"])
         yield record

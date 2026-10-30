@@ -259,10 +259,10 @@ snapshots rather than overwriting concurrent changes.
 
 **Options** persists rows per page (10/25/100/500), system-table visibility,
 selected table and per-table sort/order in the user's Database settings row. The
-three main tables (viewings, sessions and Library titles) show initially; the
-toggle exposes all eighteen. Collections, artwork and sources are system tables.
-The query balloon suggests trusted fields/operators. Enter searches; Tab accepts
-a completion. Plain text remains literal search; conditions include
+three main tables (viewings, sessions and Library) show initially; the toggle
+exposes all eighteen. Collections, artwork and sources are system tables. The
+query balloon suggests trusted fields/operators. Enter searches; Tab accepts a
+completion. Plain text remains literal search; conditions include
 `purchased_on IS NULL`, `actors CONTAINS 'name'`, and `title LIKE 'Star%'`.
 Syntax feedback includes positions and does not execute SQL. See the
 [full Database contract and browser review](database.md).

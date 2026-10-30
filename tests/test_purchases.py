@@ -460,9 +460,7 @@ class PurchaseStorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             [
                 r
-                for r in (await self.repository.async_inspect("library_titles"))[
-                    "items"
-                ]
+                for r in (await self.repository.async_inspect("library"))["items"]
                 if r["purchased_on"]
             ],
             [],
@@ -502,7 +500,7 @@ class PurchaseStorageTest(unittest.IsolatedAsyncioTestCase):
         with closing(sqlite3.connect(output)) as db:
             self.assertEqual(
                 db.execute(
-                    "SELECT count(*) FROM library_titles WHERE purchased_on IS NOT NULL"
+                    "SELECT count(*) FROM library WHERE purchased_on IS NOT NULL"
                 ).fetchone()[0],
                 2,
             )

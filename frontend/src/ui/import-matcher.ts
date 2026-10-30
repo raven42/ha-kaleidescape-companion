@@ -250,7 +250,7 @@ export class KaleidescapeImportMatcher extends LitElement {
         <button ?disabled=${this.disabled} @click=${this.cancel}>
           Cancel match</button
         ><button ?disabled=${this.disabled} @click=${() => this.choose(null)}>
-          Keep unlinked
+          Clear match
         </button>
       </div>`;
   }

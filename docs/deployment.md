@@ -126,7 +126,7 @@ started successfully. Remote error messages remain visible; the local failure
 summary reports the SSH exit status or timeout without printing the entire
 remote script. After a timeout, inspect the target state before retrying.
 
-The current database schema is 15 (nineteen tables, including private UI
+The current database schema is 16 (eighteen tables, including private UI
 preferences, import audit, Library metadata, purchase dates, collection-add
 receipts, completion-calendar outbox, purchase history and exact-group
 addition-batch markers). Deploy the Python code and compiled frontend together,

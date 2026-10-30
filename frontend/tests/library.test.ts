@@ -803,3 +803,32 @@ it("lets household readers browse from cover details without administrator or de
     ),
   ).toBe(false);
 });
+
+it("shows private purchase history only in administrator title details", async () => {
+  transport.libraryTitles[0].purchase_history = [
+    {
+      id: "p".repeat(64),
+      title: "<script>Private purchase</script>",
+      purchased_on: "2020-01-02",
+      purchase_price: "$12.99",
+      retail_price: "$24.99",
+      order_id: "FICTIONAL-ORDER",
+      href: "https://store.example.invalid/movie",
+    },
+  ];
+  title("Voyage to Europa").click();
+  await flush();
+  expect(text()).toContain("Purchase history · Administrator");
+  expect(text()).toContain("FICTIONAL-ORDER");
+  expect(root().querySelector("script")).toBeNull();
+  element.scope = {
+    ...info,
+    library_enabled: true,
+    permissions: { read: true, edit: false, export: false },
+  };
+  await flush();
+  title("Voyage to Europa").click();
+  await flush();
+  expect(text()).not.toContain("FICTIONAL-ORDER");
+  expect(text()).not.toContain("Purchase history · Administrator");
+});

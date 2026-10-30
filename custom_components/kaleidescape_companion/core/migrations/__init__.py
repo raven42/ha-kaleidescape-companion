@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from ..security import private_file
 
-SCHEMA_VERSION = 15
+SCHEMA_VERSION = 16
 
 MIGRATIONS = {
     1: (
@@ -310,6 +310,18 @@ MIGRATIONS[15] = (
 )
 
 
+MIGRATIONS[16] = (
+    "ALTER TABLE library_titles RENAME TO library",
+    "ALTER TABLE library ADD COLUMN purchase_history TEXT NOT NULL DEFAULT '[]'",
+    "ALTER TABLE library ADD COLUMN purchase_price TEXT",
+    "ALTER TABLE library ADD COLUMN retail_price TEXT",
+    "ALTER TABLE library ADD COLUMN order_id TEXT",
+    "ALTER TABLE library ADD COLUMN href TEXT",
+    "ALTER TABLE library ADD COLUMN purchase_match_pending INTEGER NOT NULL "
+    "DEFAULT 0 CHECK(purchase_match_pending IN (0,1))",
+)
+
+
 def migrate(connection: sqlite3.Connection, path: Path) -> None:
     """Upgrade atomically; retain a consistent copy before existing DB upgrades."""
     version = connection.execute("PRAGMA user_version").fetchone()[0]
@@ -332,6 +344,10 @@ def migrate(connection: sqlite3.Connection, path: Path) -> None:
         for target in range(version + 1, SCHEMA_VERSION + 1):
             for statement in MIGRATIONS[target]:
                 connection.execute(statement)
+            if target == 16:
+                from .library import consolidate
+
+                consolidate(connection)
             if target == 1:
                 connection.execute(
                     "INSERT INTO schema_metadata VALUES (1, ?, ?, 0)",

@@ -3783,6 +3783,23 @@ const j = [
                           ${t.purchased_on ? r`Purchased ${this.date(t.purchased_on)}<br />` : h}
                           First detected ${this.date(t.first_seen)}.
                         </p>
+                        ${i && t.purchase_history?.length ? r` <details>
+                                <summary>
+                                  Purchase history · Administrator
+                                </summary>
+                                ${t.purchase_history.map(
+      (s) => r`<p>
+                                      ${this.date(s.purchased_on)} ·
+                                      ${s.title}<br />
+                                      Paid:
+                                      ${s.purchase_price ?? "Unknown"} ·
+                                      Retail:
+                                      ${s.retail_price ?? "Unknown"}<br />
+                                      Order: ${s.order_id ?? "Unknown"}
+                                      ${s.href ? r`<br />Store reference: ${s.href}` : h}
+                                    </p>`
+    )}
+                              </details>` : h}
                         ${i ? r`<kaleidescape-library-collection-add
                                 .client=${this.client}
                                 .scope=${this.scope}
@@ -5853,7 +5870,7 @@ const ue = class ue extends v {
         <button ?disabled=${this.disabled} @click=${this.cancel}>
           Cancel match</button
         ><button ?disabled=${this.disabled} @click=${() => this.choose(null)}>
-          Keep unlinked
+          Clear match
         </button>
       </div>`;
   }
@@ -5998,7 +6015,7 @@ const pe = class pe extends v {
       if (e !== this.generation) return;
       this.review = s, this.selected = new Set(
         s.rows.filter(
-          (a) => ["new", "merge"].includes(a.action) && a.selected_by_default !== !1
+          (a) => !a.needs_match && ["new", "merge"].includes(a.action) && a.selected_by_default !== !1
         ).map((a) => a.key)
       ), this.page = 0, this.query = "", this.changesOnly = !1;
     } catch (s) {
@@ -6068,7 +6085,7 @@ const pe = class pe extends v {
   renderReview(e) {
     if (!this.review) return h;
     const t = this.review, i = this.query.trim().toLocaleLowerCase(), s = t.rows.filter(
-      (d) => (!this.changesOnly || d.needs_match || ["new", "merge"].includes(d.action)) && `${d.title} ${d.detail ?? ""} ${d.table} ${Object.keys(d.changes).join(" ")}`.toLocaleLowerCase().includes(i)
+      (d) => (!this.changesOnly || d.needs_match || !d.needs_match && ["new", "merge"].includes(d.action)) && `${d.title} ${d.detail ?? ""} ${d.table} ${Object.keys(d.changes).join(" ")}`.toLocaleLowerCase().includes(i)
     ).sort(
       (d, c) => +!!c.needs_match - +!!d.needs_match
     ), a = Math.max(0, Math.ceil(s.length / this.pageSize) - 1), o = Math.min(this.page, a), l = s.slice(
@@ -6091,7 +6108,7 @@ const pe = class pe extends v {
         ${t.counts.new} new · ${t.counts.merge} mergeable ·
         ${t.counts.unchanged} unchanged · ${t.counts.skip} skipped.
         ${this.selected.size} selected.
-        ${t.rows.some((d) => d.needs_match) ? r`${y(t.rows.filter((d) => d.needs_match).length, "unlinked purchase")} shown first.` : h}
+        ${t.rows.some((d) => d.needs_match) ? r`${y(t.rows.filter((d) => d.needs_match).length, "purchase requiring a match")} shown first.` : h}
       </p>
       <div class="actions">
         <label
@@ -6117,7 +6134,9 @@ const pe = class pe extends v {
           ?disabled=${e}
           @click=${() => {
       this.selected = new Set(
-        t.rows.filter((d) => ["new", "merge"].includes(d.action)).map((d) => d.key)
+        t.rows.filter(
+          (d) => !d.needs_match && ["new", "merge"].includes(d.action)
+        ).map((d) => d.key)
       ), this.requestUpdate();
     }}
         >
@@ -6150,7 +6169,7 @@ const pe = class pe extends v {
                       type="checkbox"
                       aria-label=${`Import ${d.title}`}
                       .checked=${this.selected.has(d.key)}
-                      ?disabled=${e || !["new", "merge"].includes(d.action)}
+                      ?disabled=${e || !!d.needs_match || !["new", "merge"].includes(d.action)}
                       @change=${(c) => {
         c.target.checked ? this.selected.add(d.key) : this.selected.delete(d.key), this.requestUpdate();
       }}
@@ -6388,8 +6407,7 @@ customElements.get("kaleidescape-transfers") || customElements.define("kaleidesc
 const O = {
   viewings: "Viewings",
   sessions: "Sessions",
-  library_titles: "Library titles",
-  library_purchases: "Library purchases",
+  library: "Library",
   library_collections: "Library collections",
   library_sources: "Library sources",
   library_artwork: "Library artwork",
@@ -6405,7 +6423,7 @@ const O = {
   calendar_publications: "Calendar publications",
   calendar_sync_jobs: "Calendar exports",
   calendar_sync_items: "Calendar export items"
-}, Y = ["viewings", "sessions", "library_titles"], ge = class ge extends v {
+}, Y = ["viewings", "sessions", "library"], ge = class ge extends v {
   constructor() {
     super(...arguments), this.bound = "", this.generation = 0, this.request = 0, this.table = "viewings", this.filters = { limit: 25, query: "", descending: !1 }, this.showSystem = !1, this.sorts = {}, this.ready = !1, this.preferenceError = "", this.loading = !1, this.saving = !1, this.transferBusy = !1, this.error = "", this.notice = "", this.search = "", this.selected = /* @__PURE__ */ new Set(), this.operation = null, this.draft = {}, this.nulls = /* @__PURE__ */ new Set(), this.original = "", this.createDraft = Z(), this.confirmed = !1, this.deleteWord = "", this.covers = new ee();
   }
@@ -6866,7 +6884,7 @@ const O = {
             <h2>Entry details</h2>
             ${this.detail ? r`<button ?disabled=${this.blocked || !t} @click=${this.edit}>Edit entry</button>` : h}
           </div>
-          ${this.detail ? r`${(this.table === "library_artwork" || this.table === "library_titles") && (this.detail.cache_key || this.detail.artwork_key) ? r`<div class="database-preview">
+          ${this.detail ? r`${(this.table === "library_artwork" || this.table === "library") && (this.detail.cache_key || this.detail.artwork_key) ? r`<div class="database-preview">
                             <kaleidescape-library-cover
                               .client=${this.client}
                               .scope=${this.scope}

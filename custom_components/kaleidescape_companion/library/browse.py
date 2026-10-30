@@ -9,16 +9,17 @@ from .config import excluded_collections
 
 MAX_PAGE_SIZE = 1000
 MAX_PAGE_BYTES = 8 * 1024 * 1024
-PURCHASE_SQL = """coalesce(t.purchased_on,(SELECT min(p.purchased_on)
-    FROM library_purchases p WHERE p.source_id=t.source_id
+PURCHASE_SQL = """coalesce(t.purchased_on,(SELECT
+    min(json_extract(p.purchase_history,'$[0].purchased_on'))
+    FROM library p WHERE p.source_id=t.source_id
     AND p.source_group=t.source_group))"""
 
-FAVORITE_SQL = """EXISTS (SELECT 1 FROM library_titles ft JOIN library_memberships fm
+FAVORITE_SQL = """EXISTS (SELECT 1 FROM library ft JOIN library_memberships fm
     ON fm.title_id=ft.id WHERE ft.source_id=t.source_id
     AND ft.source_group=t.source_group
     AND ft.available=1 AND lower(fm.collection)='favorites')"""
 RECENT_SQL = """s.recently_added_batch IS NOT NULL AND EXISTS
-    (SELECT 1 FROM library_titles rt WHERE rt.source_id=t.source_id
+    (SELECT 1 FROM library rt WHERE rt.source_id=t.source_id
     AND rt.source_group=t.source_group AND rt.addition_batch=s.recently_added_batch)"""
 
 
@@ -90,7 +91,7 @@ def group_metadata(db, source, groups):
     fields = ",".join(f"json_extract(data,'$.{key}') {key}" for key in SHARED_FIELDS)
     for batch in batches(list(dict.fromkeys(groups))):
         for row in db.execute(
-            f"SELECT source_group,{fields} FROM library_titles "
+            f"SELECT source_group,{fields} FROM library "
             "WHERE source_id=? AND available=1 AND source_group IN ("
             + ",".join("?" for _ in batch)
             + ") ORDER BY metadata_synced_at IS NOT NULL DESC,length(data) DESC,id",
@@ -140,7 +141,7 @@ def memberships_for(db, source, keys, hidden, *, by_id=False):
     for batch in batches(keys):
         for row in db.execute(
             "SELECT m.title_id,m.collection FROM library_memberships m "
-            "JOIN library_titles t ON t.id=m.title_id WHERE t.source_id=? "
+            "JOIN library t ON t.id=m.title_id WHERE t.source_id=? "
             "AND t.available=1 AND "
             + ("t.id" if by_id else "t.source_group")
             + " IN ("
@@ -165,7 +166,7 @@ def library_info(db, source, excluded=""):
             json.dumps(hidden, ensure_ascii=False).encode()
         ).hexdigest(),
         "name_count": db.execute(
-            "SELECT count(DISTINCT title_search) FROM library_titles "
+            "SELECT count(DISTINCT title_search) FROM library "
             "WHERE source_id=? AND available=1",
             (source,),
         ).fetchone()[0],
@@ -175,11 +176,11 @@ def library_info(db, source, excluded=""):
             else {"last_synced_at": None, "collections_synced_at": None, "revision": 0}
         ),
         "title_count": db.execute(
-            "SELECT count(*) FROM library_titles WHERE source_id=? AND available=1",
+            "SELECT count(*) FROM library WHERE source_id=? AND available=1",
             (source,),
         ).fetchone()[0],
         "group_count": db.execute(
-            "SELECT count(DISTINCT source_group) FROM library_titles "
+            "SELECT count(DISTINCT source_group) FROM library "
             "WHERE source_id=? AND available=1",
             (source,),
         ).fetchone()[0],
@@ -285,11 +286,11 @@ def library_list(db, source, filters, excluded=""):
     if query:
         term = query.casefold()
         clauses.append("""(companion_matches(t.title,?,?) OR EXISTS (
-            SELECT 1 FROM library_titles credits,
+            SELECT 1 FROM library credits,
             json_each(credits.data,'$.actors') person
             WHERE credits.source_id=t.source_id AND credits.source_group=t.source_group
             AND credits.available=1 AND companion_matches(person.value,?,?))
-            OR EXISTS (SELECT 1 FROM library_titles credits,
+            OR EXISTS (SELECT 1 FROM library credits,
             json_each(credits.data,'$.directors') person
             WHERE credits.source_id=t.source_id AND credits.source_group=t.source_group
             AND credits.available=1
@@ -366,7 +367,7 @@ def library_list(db, source, filters, excluded=""):
             clauses.append(f"({STATUS_SQL}) IN ({placeholders})")
         values.append(json.dumps(selected))
     where = " AND ".join(clauses)
-    join = "library_titles t JOIN library_sources s ON s.id=t.source_id"
+    join = "library t JOIN library_sources s ON s.id=t.source_id"
     if grouped:
         return grouped_page(
             db,
@@ -432,7 +433,7 @@ def library_facets(db, source, hidden):
         options = [
             row[0]
             for row in db.execute(
-                """SELECT DISTINCT value FROM library_titles t,json_each(t.data,?)
+                """SELECT DISTINCT value FROM library t,json_each(t.data,?)
                     WHERE source_id=? AND available=1 ORDER BY value LIMIT 501""",
                 (f"$.{key}", source),
             )
@@ -445,7 +446,7 @@ def library_facets(db, source, hidden):
         for row in db.execute(
             "SELECT DISTINCT "
             "coalesce(nullif(json_extract(data,'$.rating'),''),'Unrated') "
-            "FROM library_titles WHERE source_id=? AND available=1 "
+            "FROM library WHERE source_id=? AND available=1 "
             "ORDER BY 1 LIMIT 500",
             (source,),
         )
@@ -453,7 +454,7 @@ def library_facets(db, source, hidden):
     facets["year"] = [
         str(row[0])
         for row in db.execute(
-            "SELECT DISTINCT json_extract(data,'$.year') FROM library_titles "
+            "SELECT DISTINCT json_extract(data,'$.year') FROM library "
             "WHERE source_id=? AND available=1 "
             "AND json_extract(data,'$.year') IS NOT NULL "
             "ORDER BY 1 DESC LIMIT 500",
@@ -463,7 +464,7 @@ def library_facets(db, source, hidden):
     options = [
         row[0]
         for row in db.execute(
-            "SELECT DISTINCT value FROM library_titles t,"
+            "SELECT DISTINCT value FROM library t,"
             "json_each(companion_formats(t.data)) "
             "WHERE source_id=? AND available=1 ORDER BY value LIMIT 501",
             (source,),
@@ -500,7 +501,7 @@ def grouped_page(
     limit,
 ):
     """Filter per version, group before pagination, and summarize all versions."""
-    join = "library_titles t JOIN library_sources s ON s.id=t.source_id"
+    join = "library t JOIN library_sources s ON s.id=t.source_id"
     total = db.execute(
         f"SELECT count(DISTINCT t.source_group) FROM {join} WHERE {where}", values
     ).fetchone()[0]
@@ -550,7 +551,7 @@ def grouped_page(
                 "SELECT id,artwork_key,metadata_synced_at,"
                 "json_extract(data,'$.rating') rating,"
                 "json_extract(data,'$.edition') edition "
-                "FROM library_titles WHERE source_id=? AND id IN ("
+                "FROM library WHERE source_id=? AND id IN ("
                 + ",".join("?" for _ in batch)
                 + ")",
                 (source, *batch),
@@ -565,7 +566,7 @@ def grouped_page(
                 "json_extract(data,'$.rating') rating,"
                 "json_extract(data,'$.edition') edition,"
                 "json_extract(data,'$.year') year "
-                "FROM library_titles WHERE source_id=? AND available=1 "
+                "FROM library WHERE source_id=? AND available=1 "
                 "AND source_group IN ("
                 + ",".join("?" for _ in batch)
                 + ") ORDER BY id",
@@ -657,7 +658,9 @@ def grouped_page(
     )
 
 
-def library_versions(db, source, title, offset=0, revision=None, excluded=""):
+def library_versions(
+    db, source, title, offset=0, revision=None, excluded="", admin=False
+):
     """An opaque version key selects its source-defined group in this source only."""
     if (
         not isinstance(title, str)
@@ -672,15 +675,14 @@ def library_versions(db, source, title, offset=0, revision=None, excluded=""):
     ):
         raise JournalError("refresh_required", "Library changed; reopen the title")
     row = db.execute(
-        "SELECT source_group FROM library_titles WHERE id=? AND source_id=? "
-        "AND available=1",
+        "SELECT source_group FROM library WHERE id=? AND source_id=? AND available=1",
         (title, source),
     ).fetchone()
     if row is None:
         raise JournalError("not_found", "Library title is unavailable")
     group = row[0]
     total = db.execute(
-        "SELECT count(*) FROM library_titles WHERE source_id=? AND available=1 "
+        "SELECT count(*) FROM library WHERE source_id=? AND available=1 "
         "AND source_group=?",
         (source, group),
     ).fetchone()[0]
@@ -688,7 +690,7 @@ def library_versions(db, source, title, offset=0, revision=None, excluded=""):
         f"""SELECT t.*,({STATUS_SQL}) watched_status,
             {PURCHASE_SQL} effective_purchased_on,
             ({FAVORITE_SQL}) is_favorite,({RECENT_SQL}) is_recently_added
-        FROM library_titles t
+        FROM library t
         JOIN library_sources s ON s.id=t.source_id WHERE t.source_id=?
         AND t.available=1 AND t.source_group=? ORDER BY
         json_extract(data,'$.year'),json_extract(data,'$.edition'),t.id
@@ -706,7 +708,14 @@ def library_versions(db, source, title, offset=0, revision=None, excluded=""):
     return bounded_page(
         {
             "items": [
-                public_title(row, memberships.get(row["id"], []), shared)
+                {
+                    **public_title(row, memberships.get(row["id"], []), shared),
+                    **(
+                        {"purchase_history": json.loads(row["purchase_history"])}
+                        if admin
+                        else {}
+                    ),
+                }
                 for row in rows[:50]
             ],
             "total": total,
@@ -732,7 +741,7 @@ def suggestions(db, source, field, query, fuzzy=False):
     rows = [
         row[0]
         for row in db.execute(
-            "SELECT DISTINCT person.value FROM library_titles t,"
+            "SELECT DISTINCT person.value FROM library t,"
             "json_each(t.data,?) person "
             "WHERE t.source_id=? AND t.available=1 AND person.type='text' "
             "AND companion_matches(person.value,?,?) "

@@ -235,7 +235,7 @@ client SQL or paths.
 
 ## Storage, artwork, and recovery
 
-Schema **6** added `library_sources`, `library_titles`, `library_collections`,
+Schema **6** added `library_sources`, `library`, `library_collections`,
 `library_memberships`, and `library_artwork` to the existing worker-owned SQLite
 database. Library writes advance revisions but never rewrite viewing snapshots,
 manual corrections, session evidence, or journal status. Concurrent sync can
@@ -258,7 +258,7 @@ Python does not decode images.
 
 HA backups pause sync and drain accepted worker/file writes before copying
 storage. SQLite exports include library metadata and cache indexes, but not
-artwork files. JSON format 4 includes portable title metadata, purchase dates
+artwork files. JSON format 5 includes portable title metadata, purchase dates
 and private purchase-history records. Missing cover files are reconciled when
 storage opens and can be fetched again. [Reviewed imports](imports.md) can merge
 title metadata/dates but do not restore source configuration,

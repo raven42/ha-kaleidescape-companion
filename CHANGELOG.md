@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased — Purchases owned by Library entries
+
+- Rename the scanned database table to `library` and its Database tab to
+  Library.
+- Store repeat invoice history and earliest-invoice summary fields on the owning
+  entry; remove the separate purchase table with a private backup and
+  transactional migration, including previously unmatched history awaiting
+  review.
+- Require a scanned match before purchase import; retain compact manual matching
+  for ambiguous names and support old JSON/SQLite exports and corrected dates.
+- Keep prices, order IDs, links and invoice history administrator-only,
+  including API responses; show history in administrator title details. Purchase
+  dates remain shared. JSON format 5 exports the embedded history.
+
 ## Journal layout, Settings navigation and plain calendar events
 
 - Export only configured calendar title/description templates and times. Remove

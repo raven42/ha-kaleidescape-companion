@@ -128,7 +128,7 @@ def snapshot(db, source, title=None, excluded=""):
     version = None
     if title is not None:
         version = db.execute(
-            "SELECT source_handle,source_group,title FROM library_titles "
+            "SELECT source_handle,source_group,title FROM library "
             "WHERE source_id=? AND id=? AND available=1",
             (source, title),
         ).fetchone()
@@ -139,7 +139,7 @@ def snapshot(db, source, title=None, excluded=""):
         dict(row)
         for row in db.execute(
             "SELECT i.request_id,i.title_id,i.collection,t.title "
-            "FROM library_collection_intents i LEFT JOIN library_titles t "
+            "FROM library_collection_intents i LEFT JOIN library t "
             "ON t.id=i.title_id WHERE i.source_id=? AND i.status='uncertain' "
             "ORDER BY i.created_at",
             (source,),
@@ -170,7 +170,7 @@ def intent(db, source, request):
     identifier(request)
     row = db.execute(
         "SELECT i.*,t.source_handle FROM library_collection_intents i "
-        "LEFT JOIN library_titles t ON t.id=i.title_id "
+        "LEFT JOIN library t ON t.id=i.title_id "
         "WHERE i.request_id=? AND i.source_id=?",
         (request, source),
     ).fetchone()
@@ -234,7 +234,7 @@ def finish(db, source, request, members=None, acknowledge=None):
                 ids = []
                 for handle in handles:
                     version = db.execute(
-                        "SELECT id FROM library_titles "
+                        "SELECT id FROM library "
                         "WHERE source_id=? AND source_handle=? AND available=1",
                         (source, handle),
                     ).fetchone()

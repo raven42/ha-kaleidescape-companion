@@ -3,8 +3,7 @@
 TABLE_KEYS = {
     "viewings": "id",
     "sessions": "id",
-    "library_titles": "id",
-    "library_purchases": "id",
+    "library": "id",
     "library_collections": "source_id,name",
     "library_sources": "id",
     "library_artwork": "cache_key",
@@ -24,7 +23,7 @@ TABLE_KEYS = {
 MAIN_TABLES = (
     "viewings",
     "sessions",
-    "library_titles",
+    "library",
 )
 EDITABLE = {
     "viewings": {
@@ -37,11 +36,12 @@ EDITABLE = {
         "notes",
     },
     "sessions": {"title", "duration_seconds", "watched_seconds"},
-    "library_purchases": {"purchase_price", "retail_price"},
-    "library_titles": {
+    "library": {
         "title",
         "data",
         "purchased_on",
+        "purchase_price",
+        "retail_price",
         "first_seen",
         "last_seen",
         "available",
@@ -52,7 +52,7 @@ EDITABLE = {
 }
 DELETABLE = {*EDITABLE, "library_artwork", "library_memberships"}
 JSON_FIELDS = {
-    "library_titles": {
+    "library": {
         "actors": "array",
         "directors": "array",
         "writers": "array",
@@ -76,7 +76,12 @@ def schema(db, table):
             {
                 "name": name,
                 "type": "json"
-                if (table, name) in {("library_titles", "data"), ("settings", "value")}
+                if (table, name)
+                in {
+                    ("library", "data"),
+                    ("library", "purchase_history"),
+                    ("settings", "value"),
+                }
                 else "number"
                 if kind in {"INTEGER", "REAL"}
                 else "text",
@@ -110,14 +115,8 @@ def references(db, table):
             group["key"][item[4]] = item[3]
     result = list(groups.values())
     logical = {
-        "viewings": [("library_titles", {"id": "library_title_id"})],
-        "library_titles": [("library_artwork", {"cache_key": "artwork_key"})],
-        "library_purchases": [
-            (
-                "library_titles",
-                {"source_id": "source_id", "source_group": "source_group"},
-            )
-        ],
+        "viewings": [("library", {"id": "library_title_id"})],
+        "library": [("library_artwork", {"cache_key": "artwork_key"})],
         "calendar_publications": [("viewings", {"id": "viewing_id"})],
         "calendar_sync_items": [("viewings", {"id": "viewing_id"})],
     }

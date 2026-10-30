@@ -17,7 +17,6 @@ from ..library import browse as library_browse
 from ..library import collections as library_collections
 from ..library import store as library_store
 from ..library.importing import portable_titles
-from ..library.purchases import portable_purchases
 from ..library.summary import library_summary
 from ..playback.history import history_summary
 from ..playback.recording import save_session
@@ -178,6 +177,8 @@ class JournalRepository:
         offset: int = 0,
         revision: int | None = None,
         excluded: str = "",
+        *,
+        admin: bool = False,
     ) -> dict:
         return await self._call(
             library_browse.library_versions,
@@ -187,6 +188,7 @@ class JournalRepository:
             offset,
             revision,
             excluded,
+            admin,
         )
 
     async def async_library_candidates(self, source: str) -> list[dict]:
@@ -1032,7 +1034,7 @@ class JournalRepository:
                 finally:
                     destination.close()
             else:
-                metadata = {"format_version": 4, **self._info()}
+                metadata = {"format_version": 5, **self._info()}
                 with path.open("w", encoding="utf-8") as output:
                     output.write(
                         '{"metadata": ' + json.dumps(metadata) + ', "viewings": ['
@@ -1063,17 +1065,9 @@ class JournalRepository:
                         json.dump(dict(row), output, allow_nan=False)
                         first = False
                         self._check_export(started, output.tell())
-                    output.write('], "library_titles": [')
+                    output.write('], "library": [')
                     first = True
                     for row in portable_titles(db):
-                        if not first:
-                            output.write(",")
-                        json.dump(row, output, allow_nan=False)
-                        first = False
-                        self._check_export(started, output.tell())
-                    output.write('], "library_purchases": [')
-                    first = True
-                    for row in portable_purchases(db):
                         if not first:
                             output.write(",")
                         json.dump(row, output, allow_nan=False)

@@ -58,81 +58,92 @@ browser loses an unconfirmed retry. There is no automatic write retry.
   UUID.
 
 For the one-time purchase corrections, select the preserved `corrected.sqlite`,
-review the **library_titles** rows with **purchased_on** changes, and approve
-those rows. Legacy schema-7/8 `library_purchase_dates` records are joined to
-exact version IDs during validation. Existing live purchase dates remain
-unchanged; conflicts are visible in review. The source file is never modified.
-The saved HTML is no longer needed by the integration. See
+review the **library** rows with **purchased_on** changes, and approve those
+rows. Legacy schema-7/8 `library_purchase_dates` records are joined to exact
+version IDs during validation. Existing live purchase dates remain unchanged;
+conflicts are visible in review. The source file is never modified. The saved
+HTML is no longer needed by the integration. See
 [purchase dates](purchase-dates.md) for the retained offline helper.
 
 ## Import purchase-history JSON
 
-Select `purchases.json` using the same **Database → Merge Import** dialog. The
-six-field array from the offline helper is accepted directly. Schema 15 stores
-each purchase in `library_purchases`, separate from scanned title versions:
-`title`, `purchased_on`, `purchase_price`, `retail_price`, `order_id`, and
-`href`, plus an internal identity, optional Library source/group link, and
-import time. Repeat orders remain separate; prices are not copied onto every
-video format. Allocated bundle shares from the helper are retained as supplied.
+Select `purchases.json` using **Database → Merge Import**. The six-field array
+from the offline helper is accepted directly. Purchases are merged into the
+existing **Library** table, not a separate purchase table. Every imported
+purchase must belong to an existing scanned Library entry; Library entries
+without purchases remain valid.
 
-Review each proposed link before selecting rows, or explicitly use **Select all
-changes** after reviewing the matches. A case-insensitive exact title match must
-identify just one available source/group across the cached Library. It suggests
-a movie group, not ownership of any particular version. Ambiguous, unmatched or
-unverified explicit links appear first in the review. Choose **Match title…** to
-search cached Library titles by a partial name, then choose the intended movie
-using its year, director and version count. This explicitly associates the
-purchase with that known movie group, even when its store title differs. Choose
-**Keep unlinked** to retain the purchase without a Library association. Changing
-a choice only revises the review; **Apply selected changes** performs the
-writes. Existing unlinked purchases can be matched on reimport, including
-otherwise unchanged rows. Previously stored links are preserved. No new Library
-titles are created from purchases, and names never replace exact IDs for
-ordinary title imports.
+Each Library row has `purchase_history`, containing the title, purchase date,
+paid/retail prices, order ID, store reference and stable invoice identity for
+every purchase. Flat `purchase_price`, `retail_price`, `order_id` and `href`
+columns summarize its earliest invoice. Repeat orders are retained; a
+movie-group purchase belongs to one stable representative version, rather than
+being copied across all formats. Bundle allocations are retained as supplied.
+Invoice import times are retained as private provenance. Compatible flat Library
+exports with purchase columns are also accepted; supplied summary values must
+agree with embedded history when both are present.
 
-Each match choice issues a new review token without extending its expiry. A lost
-matching response requires a fresh file review. Search/filtering and page
-changes preserve the selection, and unresolved rows stay above other results.
-Manual associations remain on the stored purchase. A portable import into a
-different database may require matching again when the purchase and Library
-names differ; a full trusted database restore retains the stored association.
+Purchase rows start unchecked. A case-insensitive exact name must identify one
+available source/group across the cached Library to suggest a target. Remakes or
+multiple sources require an explicit match. Unmatched purchases appear first and
+cannot be selected/applied. Choose **Match title…**, search a partial name, then
+choose the intended movie using its year, director and version count. This also
+handles different store spellings. **Clear match** returns the purchase to the
+unresolved state; leave it unchecked to skip it. **Select all changes** includes
+only eligible matched rows. No new Library row is created by a purchase import.
 
-The purchase identity is derived from title, date, order ID and store link.
-Duplicate identities in one input are rejected. Reimporting fills missing prices
-or links and reports conflicting populated prices without overwriting them.
-Changed identity fields describe a different purchase. Purchase rows show their
-date and proposed group in the compact review; **Changes** includes prices and
-order fields. The same selection, expiry, revision, retry and atomic-write rules
-apply as for other imports.
+Match choices only revise the review. Each issues a fresh approval token without
+extending expiry; a lost response requires reviewing again. **Apply selected
+changes** commits all selected invoices with revision checks, receipts and audit
+counts in one transaction. Already stored associations are preserved. Invoice
+identity uses title/date/order/link; duplicate identities are rejected, and
+reimporting fills missing prices while preserving populated conflicts. Changing
+an identity field describes another purchase. Exact entry IDs embedded in new
+exports preserve reviewed store-name aliases when that entry exists locally.
 
-Library **Purchased/Added on** and date sorting use the earliest linked purchase
-where a version has no explicit purchase date. Existing version dates keep
-priority. Prices, order IDs and store links are private administrator data;
-normal Library responses and calendar templates do not expose them. Saved links
-are passive text and are never fetched. Use **Database → Options → Show system
-tables → Library purchases** to inspect, search, edit prices or delete
-purchases. Identity fields and links are protected. Deleting a purchase removes
-its derived date contribution; deleting a source detaches its purchases without
-erasing their history. Sync preserves purchases and their links.
+An upgrade from schema 15 preserves previously unlinked purchases as unavailable
+Library entries with `purchase_match_pending=1`. They never appear in the
+scanned Library or sensors. Export JSON, review that export, and use **Match
+title…** on those purchases to move their history onto real scanned entries.
+Empty pending entries are removed after the move. Upgrade backups retain the
+original data.
+
+Library **Purchased/Added on** uses an explicit version date, otherwise the
+earliest purchase in its movie group. Existing explicit dates keep priority.
+Administrator title details show purchase history; **Database → Library** shows
+its raw columns and supports confirmed price edits. Editing summary prices also
+updates the earliest invoice. Identity/order/link/history fields remain
+protected. Deleting a Library entry or source permanently deletes its owned
+purchases too; export first if they must be retained. Sync preserves purchase
+columns/history.
+
+Standard-user APIs omit prices, orders, store links and the complete history;
+only the date is shared. Sensors, viewing snapshots and calendar templates never
+receive those private fields. Store references remain passive text and are never
+fetched. JSON and SQLite exports are private administrator downloads.
 
 ## Formats, limits and APIs
 
 Limits are 32 MiB per file, 10,000 combined viewing/title/purchase records, an 8
 MiB review response, and a 30-second upload/validation/review budget. Oversized
 reviews must be split into smaller files. Older viewing JSON arrays and objects
-with `viewings` remain supported. JSON format 4 includes portable
-`library_titles` and private `library_purchases`; older format-3 titles remain
-supported. Recognized keys are validated regardless of schema/version; unknown
-keys are ignored. UI settings, actor preferences and operational recent-batch
-markers are never merged from exports. SQLite snapshots still contain these
-private rows; see [UI preference storage](ui-preferences.md). Every viewing
-needs `id`, `title`, and an ISO `started_at` with timezone. Titles need exact
+with `viewings` remain supported. JSON format 5 includes portable `library`
+entries with embedded purchase history. Legacy `library_titles`, schema-15
+`library_purchases`, and schema-7/8 purchase-date tables remain readable.
+Recognized keys are validated regardless of schema/version; unknown keys are
+ignored. UI settings, actor preferences and operational recent-batch markers are
+never merged from exports. SQLite snapshots still contain these private rows;
+see [UI preference storage](ui-preferences.md). Every viewing needs `id`,
+`title`, and an ISO `started_at` with timezone. Titles need exact
 ID/source/handle/group/title keys. Purchase records need title/date; optional
 prices must be nonnegative currency strings with two decimal places, and order
-IDs/links are bounded validated text. SQLite imports read only known columns
-from regular allowlisted tables in a defensive, query-only in-memory connection;
-SQL text, views, virtual tables, functions and attachments are rejected. No
-source schema or code is installed.
+IDs/links are bounded validated text. Each entry supports up to 1000 invoices
+and 2 MiB of embedded history. Scan the source before importing purchase
+history; new metadata rows imported in the same review do not qualify as scanned
+targets. SQLite imports read only known columns from regular allowlisted tables
+in a defensive, query-only in-memory connection; SQL text, views, virtual
+tables, functions and attachments are rejected. No source schema or code is
+installed.
 
 Upload the raw file to the scoped, authenticated preview route:
 
@@ -154,7 +165,7 @@ skip reason. Apply through the authenticated HA WebSocket command:
   "request_id": "new-request-uuid",
   "plan_id": "returned-review-uuid",
   "revision": 42,
-  "selected": ["library_titles:returned-exact-version-id"]
+  "selected": ["library:returned-exact-version-id"]
 }
 ```
 

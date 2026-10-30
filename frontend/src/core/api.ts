@@ -165,7 +165,17 @@ export interface UISettings {
   revision: number;
   values: Record<string, unknown>;
 }
+export interface LibraryPurchase {
+  id: string;
+  title: string;
+  purchased_on: string;
+  purchase_price: string | null;
+  retail_price: string | null;
+  order_id: string | null;
+  href: string | null;
+}
 export interface LibraryTitle {
+  purchase_history?: LibraryPurchase[];
   purchased_on?: string | null;
   is_favorite?: boolean;
   is_recently_added?: boolean;
@@ -269,7 +279,7 @@ export interface ImportReviewRow {
   can_match?: boolean;
   detail?: string;
   key: string;
-  table: "viewings" | "library_titles" | "library_purchases";
+  table: "viewings" | "library";
   selected_by_default?: boolean;
   title: string;
   action: "new" | "merge" | "unchanged" | "skip";

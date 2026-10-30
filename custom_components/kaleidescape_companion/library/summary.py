@@ -23,7 +23,7 @@ def record_additions(db, source, rows, seen):
     known = {
         row[0]
         for row in db.execute(
-            "SELECT DISTINCT source_group FROM library_titles WHERE source_id=?",
+            "SELECT DISTINCT source_group FROM library WHERE source_id=?",
             (source,),
         )
     }
@@ -38,7 +38,7 @@ def record_additions(db, source, rows, seen):
             {
                 row[0]
                 for row in db.execute(
-                    "SELECT DISTINCT source_group FROM library_titles "
+                    "SELECT DISTINCT source_group FROM library "
                     "WHERE source_id=? AND addition_batch=?",
                     (source, batch),
                 )
@@ -92,7 +92,7 @@ def library_summary(db, source):
             SELECT t.source_group,min(CASE ({STATUS_SQL})
                 WHEN 'in_progress' THEN 0 WHEN 'watched' THEN 1
                 WHEN 'unknown' THEN 2 ELSE 3 END) status_rank
-            FROM library_titles t JOIN library_sources s ON s.id=t.source_id
+            FROM library t JOIN library_sources s ON s.id=t.source_id
             WHERE t.source_id=? AND t.available=1 GROUP BY t.source_group)""",
         (source,),
     ).fetchone()

@@ -258,6 +258,7 @@ export class KaleidescapeTransfers extends LitElement {
         review.rows
           .filter(
             (row) =>
+              !row.needs_match &&
               ["new", "merge"].includes(row.action) &&
               row.selected_by_default !== false,
           )
@@ -407,7 +408,7 @@ export class KaleidescapeTransfers extends LitElement {
         (row) =>
           (!this.changesOnly ||
             row.needs_match ||
-            ["new", "merge"].includes(row.action)) &&
+            (!row.needs_match && ["new", "merge"].includes(row.action))) &&
           `${row.title} ${row.detail ?? ""} ${row.table} ${Object.keys(row.changes).join(" ")}`
             .toLocaleLowerCase()
             .includes(query),
@@ -443,7 +444,7 @@ export class KaleidescapeTransfers extends LitElement {
         ${review.counts.new} new · ${review.counts.merge} mergeable ·
         ${review.counts.unchanged} unchanged · ${review.counts.skip} skipped.
         ${this.selected.size} selected.
-        ${review.rows.some((row) => row.needs_match) ? html`${counted(review.rows.filter((row) => row.needs_match).length, "unlinked purchase")} shown first.` : nothing}
+        ${review.rows.some((row) => row.needs_match) ? html`${counted(review.rows.filter((row) => row.needs_match).length, "purchase requiring a match")} shown first.` : nothing}
       </p>
       <div class="actions">
         <label
@@ -474,7 +475,10 @@ export class KaleidescapeTransfers extends LitElement {
           @click=${() => {
             this.selected = new Set(
               review.rows
-                .filter((row) => ["new", "merge"].includes(row.action))
+                .filter(
+                  (row) =>
+                    !row.needs_match && ["new", "merge"].includes(row.action),
+                )
                 .map((row) => row.key),
             );
             this.requestUpdate();
@@ -511,7 +515,7 @@ export class KaleidescapeTransfers extends LitElement {
                       type="checkbox"
                       aria-label=${`Import ${row.title}`}
                       .checked=${this.selected.has(row.key)}
-                      ?disabled=${blocked || !["new", "merge"].includes(row.action)}
+                      ?disabled=${blocked || !!row.needs_match || !["new", "merge"].includes(row.action)}
                       @change=${(event: Event) => {
                         if ((event.target as HTMLInputElement).checked)
                           this.selected.add(row.key);

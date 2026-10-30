@@ -24,7 +24,7 @@ def snapshot(db, row):
     }
     hidden = excluded_collections(excluded(db))
     purchased = db.execute(
-        f"SELECT {PURCHASE_SQL} FROM library_titles t WHERE t.id=?", (row["id"],)
+        f"SELECT {PURCHASE_SQL} FROM library t WHERE t.id=?", (row["id"],)
     ).fetchone()[0]
     for key, value in data.items():
         if isinstance(value, list):
@@ -61,7 +61,7 @@ def library_row(db, viewing, source):
         return None
     if viewing["library_title_id"]:
         return db.execute(
-            "SELECT * FROM library_titles WHERE source_id=? AND id=?",
+            "SELECT * FROM library WHERE source_id=? AND id=?",
             (source, viewing["library_title_id"]),
         ).fetchone()
     raw = viewing["raw_content_id"]
@@ -73,7 +73,7 @@ def library_row(db, viewing, source):
         handles.append(f"{match[1]}-{match[2]}")
     placeholders = ",".join("?" for _ in handles)
     rows = db.execute(
-        f"SELECT * FROM library_titles WHERE source_id=? "
+        f"SELECT * FROM library WHERE source_id=? "
         f"AND source_handle IN ({placeholders}) LIMIT 2",
         (source, *handles),
     ).fetchall()

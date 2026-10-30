@@ -202,17 +202,19 @@ value lists. Schema 11 [UI preferences](ui-preferences.md) save view/count,
 applied filters, search, sort and sizing per HA user; hidden names are shared
 database settings. The landing default remains native, with URL main-tab
 restoration. The [purchase-date helper](purchase-dates.md) stays offline;
-corrected SQLite copies use the reviewed missing-data merge. Fixed/resizable
-table widths and popup version navigation need operator browser review. The
-page-size dropdown offers 25/100/1000/All; Covers adapts numeric targets to
-whole rows and All aggregates bounded revision-checked chunks. Status flags and
-explicit format chips use public metadata, without guessing missing
-capabilities. Use `.venv/bin/python dev/benchmark_library.py` to time a
-fictional 5000-name/10000-version cache without networking; this does not
-replace browser or target-HA timing. [Add to Collection](library-collections.md)
-is separately opt-in and administrator-only; removal remains deferred. Playback
-controls, progress, subscriptions, and selective per-user sharing remain
-deferred.
+corrected SQLite copies use the reviewed missing-data merge. Schema 16
+consolidates invoice history onto the scanned `library` table. Purchase imports
+require a matched entry; prices/orders/history stay administrator-only, while
+dates remain shared. Fixed/resizable table widths and popup version navigation
+need operator browser review. The page-size dropdown offers 25/100/1000/All;
+Covers adapts numeric targets to whole rows and All aggregates bounded
+revision-checked chunks. Status flags and explicit format chips use public
+metadata, without guessing missing capabilities. Use
+`.venv/bin/python dev/benchmark_library.py` to time a fictional
+5000-name/10000-version cache without networking; this does not replace browser
+or target-HA timing. [Add to Collection](library-collections.md) is separately
+opt-in and administrator-only; removal remains deferred. Playback controls,
+progress, subscriptions, and selective per-user sharing remain deferred.
 
 Library search/status bars are sticky, search includes partial actors/directors,
 and filters use bounded people suggestions. Database now has personal Options,

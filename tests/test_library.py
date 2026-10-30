@@ -248,7 +248,7 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
         page = await self.page()
         self.assertEqual(page["total"], 1)
         self.assertEqual(page["items"][0]["first_seen"], first)
-        raw = await self.repository.async_inspect("library_titles")
+        raw = await self.repository.async_inspect("library")
         self.assertEqual(len(raw["items"]), 3)
         self.assertEqual(sum(row["available"] for row in raw["items"]), 1)
 
@@ -491,8 +491,7 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
                 "library_collection_intents",
                 "library_memberships",
                 "library_collections",
-                "library_purchases",
-                "library_titles",
+                "library",
                 "library_artwork",
                 "library_sources",
             ):
@@ -515,7 +514,7 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
         self.repository = JournalRepository(self.path)
         self.addAsyncCleanup(self.repository.async_close)
         await self.repository.async_open()
-        self.assertEqual((await self.repository.async_info())["schema_version"], 15)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 16)
         self.assertEqual(
             await self.repository.async_get(created["viewing"]["id"]),
             created["viewing"],

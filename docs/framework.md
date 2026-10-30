@@ -50,11 +50,12 @@ The product name is **Kaleidescape Companion**. The HA domain
   records and fill missing viewing/Library metadata by exact ID, with selectable
   approval. Purchase-history HTML preparation remains an offline development
   helper.
-- Schema 15 preserves repeated purchase orders in private Library purchase
-  history. Direct purchase JSON imports use selectable reviews, conservative
-  movie-group suggestions and an explicit known-title picker for unresolved
-  purchases; derived dates preserve explicit version dates. Administrator JSON
-  format 4 exports include portable purchase records.
+- Schema 16 renames the scanned table to **Library** and embeds repeated
+  purchase history on its owning entry, removing the separate purchase table.
+  Purchase JSON reviews require matched scanned targets, with a known-title
+  picker for ambiguity; administrator-only prices/orders stay outside household
+  projections. JSON format 5 includes the embedded history and reads older
+  exports.
 - Native landing-page defaults and URL tab restoration; schema 11
   [database UI preferences](ui-preferences.md) save personal browsing choices
   and shared hidden collection names immediately. Status flags and explicit

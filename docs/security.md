@@ -148,7 +148,8 @@ uses the same explicit cached-title projection for both roles: known display
 metadata including rating badges, opaque title/artwork keys, memberships/status,
 group favorite/recent booleans, and detection/freshness times. It excludes
 origin, raw source handles/groups, file paths, and private journal/session/audit
-fields. `journal/list` and `journal/get` use a positive record-field allowlist;
+fields. Administrator-only version details additionally include private invoice
+history. `journal/list` and `journal/get` use a positive record-field allowlist;
 adding a database column must not implicitly expose it. Deletion tombstones are
 excluded from these reads. Mutation authorization is enforced on the server;
 hiding editor/export controls is not authorization. Known user/connection/role
@@ -338,12 +339,12 @@ time.
 Strict JSON rejects duplicate keys, non-finite values and malformed recognized
 fields. SQLite is deserialized in memory, with defensive/query-only operation,
 trusted schema disabled, limits and progress deadline. Inspect only regular
-allowlisted `viewings`, `library_titles`, `library_purchases` and legacy
-`library_purchase_dates` tables, then allow SELECT/READ only; views, virtual
-tables, functions, attachments and extensions are denied. Source
-schemas/triggers are never installed. Validate the entire file before review or
-writes. Import no session, audit, receipt, configuration, network origin,
-fetch/artwork path/key, collection membership or live recorder state.
+allowlisted `viewings`, `library` and legacy `library_titles`,
+`library_purchases` and `library_purchase_dates` tables, then allow SELECT/READ
+only; views, virtual tables, functions, attachments and extensions are denied.
+Source schemas/triggers are never installed. Validate the entire file before
+review or writes. Import no session, audit, receipt, configuration, network
+origin, fetch/artwork path/key, collection membership or live recorder state.
 
 Match viewing UUIDs and validated source-scoped version IDs, never title text.
 Skip unknown Library sources and existing tombstones. Fill only missing allowed
@@ -366,31 +367,36 @@ replies. Browser reload loses its pending retry; inspect before recreating it.
 Native SQLite/Core remain upstream parser dependencies, not a process sandbox. A
 full trusted restore remains offline.
 
-Schema 15 adds private `library_purchases` history. The standalone purchase JSON
-array and portable purchase table use validated title/date/order/link identities
-hashed on the worker. Duplicate identities are rejected; provided IDs must
-match. Price strings are bounded to 64 characters and nonnegative currency
-syntax including zero, order IDs to 256, and passive HTTP(S)/store-relative
-links to 2048 without credentials/control characters. Links are never fetched or
-used as origins. Purchase amounts/order IDs/links remain outside active-user
-Library projections, sensors, viewing snapshots and calendar fields.
-Administrator exports contain this private data and require the existing export
-permissions.
+Schema 16 stores invoices directly in `library` (renamed from `library_titles`)
+and removes the separate schema-15 purchase table. `purchase_history` retains
+repeat orders; flat private columns summarize the earliest invoice. Purchase
+identities hash title/date/order/link on the worker; provided IDs must match and
+duplicate identities are rejected. Prices are bounded nonnegative currency text
+including zero, order IDs to 256 characters, passive HTTP(S)/store-relative
+links to 2048 without credentials/control characters, and each history to 1000
+records / 2 MiB. Links are never fetched or used as origins.
 
-Purchase-only association is a reviewed work-level suggestion: one exact
-case-insensitive name must resolve to one available source/group. An explicit
-imported link must also match that cached group/name. Ambiguous/unmatched links
-are cleared, without creating title versions. Existing links are preserved.
-Purchase rows start unchecked in the UI. Applying an explicitly selected row
-persists that proposed association in the same revision-bound transaction; there
-is no background/name-based relinking. Ordinary version imports and playback
-identity retain their exact-ID rules. Prices and missing links merge fill-only,
-with populated conflicts preserved. Identity fields and associations are
-protected in Database edits; confirmed price edits/deletes retain existing row
-tokens, actor receipts and audit protections. Source deletion detaches the
-purchase association; history is retained. Only the earliest linked date enters
-Library projections when a stored version date is absent. No device/provider
-operation or purchase HTML parser is added to the runtime.
+Purchase imports must target an existing scanned Library entry. A unique exact
+case-insensitive name suggests a source group and its stable representative
+entry; ambiguous/missing targets cannot be applied. Explicit review can match a
+store alias to an exact available entry. Stored associations cannot move through
+reimport. Invoice merges fill missing values only, preserve conflicts and commit
+atomically with revisions/audit/receipts; sync leaves history untouched. Upgrade
+only: old unmatched invoices become unavailable pending Library rows, excluded
+from browse/sensor projections, until reviewed matching moves their history and
+removes the emptied pending row. Migration retains a private backup.
+
+Purchase prices/order IDs/links/history are omitted by positive public
+projections, not merely hidden in the UI. Only administrator `library/versions`
+responses add stored history, with role/activity checks before and after awaited
+work. Household lists/search, sensors, viewing snapshots and calendar fields
+never receive it. Public purchase dates remain shared. Raw Library inspection
+and exports require administrator access. Confirmed Database price edits update
+both the flat summary and earliest invoice; identity/link/raw history are
+protected. Deleting a Library entry/source deletes its owned purchases,
+preserving the invariant that no persisted invoice can be orphaned. Backups and
+exports retain their own copies. No device/provider operation or HTML parser is
+added.
 
 Unresolved purchase rows are prioritized in review. Administrator-only scoped
 `database/import/search` and `/match` WebSocket commands validate the current
@@ -399,10 +405,10 @@ worker. Recording must be disabled; role/activity/runtime scope is rechecked
 after awaits. Search is literal partial-name matching, at most 100 characters,
 20 grouped suggestions and a two-second SQLite budget. It supplies only bounded
 cached title/year/director/version labels and exact IDs, with no device request.
-An explicit choice resolves an available exact title ID to its stored source
-group. It can associate an alias/remake deliberately without rewriting purchase
-identity or playback/version identity. Already stored associations cannot be
-reassigned through this interface.
+An explicit choice resolves an available exact entry ID as the history owner. It
+can associate an alias/remake deliberately without rewriting purchase identity
+or playback/version identity. Already stored associations cannot be reassigned
+through this interface.
 
 Choices modify only the bounded in-memory review. Each choice rotates its token,
 keeps the original expiry, and updates the displayed patch/counts. An old
@@ -675,7 +681,7 @@ Use the
 [documented backup/restore procedure](backend.md#export-backup-and-restore).
 Treat JSON/SQLite downloads and migration backups as private, including exports
 containing tombstones. SQLite exports also contain retry responses, audit
-metadata, user IDs and private UI searches/preferences. JSON format 4 includes
+metadata, user IDs and private UI searches/preferences. JSON format 5 includes
 portable Library title metadata/dates and private purchase history alongside
 viewing/session snapshots and does not include the audit tables. Keep backups
 encrypted where practical and restrict access to the backup destination;
@@ -792,7 +798,7 @@ links are copied; unsupported links become null. Bundle allocations use bounded
 captured charges and explicit Included markers, with integer-cent arithmetic;
 multi-bundle invoices share their combined total because the saved page exposes
 no membership mapping. Missing/unsupported/mixed-currency charges are not
-guessed. Price strings and order numbers remain private offline data. JSON
+guessed. Price strings and order numbers remain private administrator data. JSON
 output is created owner-only, refuses existing files/links, and leaves existing
 parent-directory permissions alone. Root `purchases.json` is ignored by Git.
 Keep saved HTML/JSON/reports/corrected copies private and excluded from
@@ -1006,8 +1012,8 @@ and relationship fields remain protected. Artwork previews reuse
 enabled/current-source Library authorization, private object-URL retention and
 response limits; unavailable/evicted/unreferenced artwork shows a placeholder.
 NULL input and dialog layout changes add no write capability. Main tables are
-viewings, sessions and Library titles; sources, collections and artwork require
-the system-table toggle without changing their field/edit/delete policy.
+viewings, sessions and Library; sources, collections and artwork require the
+system-table toggle without changing their field/edit/delete policy.
 
 ## Search preferences and bounded fuzzy reads
 

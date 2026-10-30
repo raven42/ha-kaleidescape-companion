@@ -1,8 +1,8 @@
 # Journal backend
 
 The backend records manual journal entries and observed playback from one
-selected HA player. API version is `1`; SQLite schema is `15` and JSON export
-format is `4`. The household reader and administrator [management panel](ui.md)
+selected HA player. API version is `1`; SQLite schema is `16` and JSON export
+format is `5`. The household reader and administrator [management panel](ui.md)
 use this API. Live subscriptions and controls remain planned;
 [optional library sync](library.md) is implemented. A compact read-only Now
 Playing card uses the existing snapshot API and HA artwork. The
@@ -55,11 +55,11 @@ SQLite snapshots and remains outside ordinary journal responses and diagnostics.
 Schema 4 adds `maintenance_audit`: actor, purge operation/request UUID, count,
 dataset revision, and time, without viewing identities or content. Upgrading an
 existing schema retains the usual private migration backup; purging never
-removes that separate copy. JSON format 4 carries viewing/session snapshots,
-portable Library titles and private purchases, excluding the audit tables.
-SQLite exports include all tables. Schema 5 adds a minimal `import_audit` record
-with authenticated actor, request UUID, imported/skipped counts, dataset
-revision, and time, without imported content or file names.
+removes that separate copy. JSON format 5 carries viewing/session snapshots,
+portable Library entries with private embedded purchase history, excluding the
+audit tables. SQLite exports include all tables. Schema 5 adds a minimal
+`import_audit` record with authenticated actor, request UUID, imported/skipped
+counts, dataset revision, and time, without imported content or file names.
 
 Schema 6 adds source-scoped library titles, collections/memberships, and artwork
 indexes. Image bytes use a private bounded file cache outside SQLite. Library
@@ -68,17 +68,23 @@ remains capped at 256 MiB. See the
 [library storage and recovery contract](library.md#storage-artwork-and-recovery).
 
 Schema 9 moves the former schema-7 purchase date and import timestamp onto each
-`library_titles` version, folds purchase audit history into `import_audit`, and
-removes both purchase-only tables. Schema 8 collection-add intents remain
-separate because they enforce a durable external-write recovery barrier. See
-[purchase dates](purchase-dates.md) and [reviewed imports](imports.md). `info`
-exposes only the validated native landing-page default to active users.
+`library_titles` version (renamed `library` in schema 16), folds purchase audit
+history into `import_audit`, and removes both purchase-only tables. Schema 8
+collection-add intents remain separate because they enforce a durable
+external-write recovery barrier. See [purchase dates](purchase-dates.md) and
+[reviewed imports](imports.md). `info` exposes only the validated native
+landing-page default to active users.
 
-Schema 15 adds private `library_purchases` invoice records, preserving repeated
-orders independently of scanned title formats. Reviewed imports can suggest
-unambiguous cached movie-group links; prices and order IDs stay
-administrator-only. The earliest linked date fills Library date projections
-without rewriting explicit title-version dates. See
+Schema 16 renames `library_titles` to `library` (shown as **Library**) and
+consolidates schema-15 invoice records into each entry's `purchase_history`
+JSON. Flat `purchase_price`, `retail_price`, `order_id` and `href` columns
+summarize the earliest invoice; all repeat orders remain in the history. Only
+one representative version owns a movie-group purchase, so formats do not
+duplicate charges. No separate purchase table remains. Prices, order IDs, links
+and history are administrator-only; the date remains shared. Reviewed imports
+require an existing scanned entry or a manual match before applying a purchase.
+The upgrade preserves previously unlinked history as unavailable pending Library
+entries, which can be matched through a reviewed JSON reimport. See
 [purchase imports](imports.md#import-purchase-history-json).
 
 Schema 10 adds the bounded last-addition title snapshot/count/time to
@@ -131,7 +137,7 @@ separate copies of the same movie.
 | `database_audit`                                    | Administrator database edit/delete attribution and affected field names/counts, without row content               |
 | `calendar_sync_jobs`, `calendar_sync_items`         | Explicit historical export attribution/progress and replay barriers, without copied event content                 |
 | `calendar_publications`                             | Durable one-attempt completion publishing state, target and configuration fingerprint; no copied event content    |
-| `library_titles`                                    | One row per source/version; descriptive metadata JSON, detection/freshness, artwork reference and purchase date   |
+| `library`                                           | One row per source/version; descriptive metadata JSON, detection/freshness, artwork reference and purchase date   |
 | `library_sources`                                   | Source namespace, catalog/collection freshness and revision                                                       |
 | `library_collections`, `library_memberships`        | Collections, including empty collections, and many-to-many title membership                                       |
 | `library_artwork`                                   | Deduplicated bounded file-cache index; image bytes live outside SQLite                                            |
@@ -520,7 +526,7 @@ disconnect/error paths. Owned snapshots left by a crash are removed on the next
 storage open. JSON contains format metadata, viewing records and
 field-correction markers, and sessions, including tombstones. SQLite includes
 the full database, including request deduplication and manual audit metadata.
-JSON format 4 additionally contains portable Library title metadata, purchase
+JSON format 5 additionally contains portable Library title metadata, purchase
 dates and private invoice history, without device origins, fetch paths or cache
 keys. It does not include audit tables. Reviewed viewing/Library merge imports
 are supported through Database; full SQLite restore remains an offline
