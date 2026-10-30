@@ -88,8 +88,8 @@ let A = class extends HTMLElement {
       this[t] = o;
     } };
     return { get: s, set(o) {
-      const l = s?.call(this);
-      a?.call(this, o), this.requestUpdate(e, l, i);
+      const h = s?.call(this);
+      a?.call(this, o), this.requestUpdate(e, h, i);
     }, configurable: !0, enumerable: !0 };
   }
   static getPropertyOptions(e) {
@@ -174,8 +174,8 @@ let A = class extends HTMLElement {
     if (s !== void 0 && this._$Em !== s) {
       const a = i.getPropertyOptions(s), o = typeof a.converter == "function" ? { fromAttribute: a.converter } : a.converter?.fromAttribute !== void 0 ? a.converter : we;
       this._$Em = s;
-      const l = o.fromAttribute(t, a.type);
-      this[s] = l ?? this._$Ej?.get(s) ?? l, this._$Em = null;
+      const h = o.fromAttribute(t, a.type);
+      this[s] = h ?? this._$Ej?.get(s) ?? h, this._$Em = null;
     }
   }
   requestUpdate(e, t, i, s = !1, a) {
@@ -211,8 +211,8 @@ let A = class extends HTMLElement {
       }
       const i = this.constructor.elementProperties;
       if (i.size > 0) for (const [s, a] of i) {
-        const { wrapped: o } = a, l = this[s];
-        o !== !0 || this._$AL.has(s) || l === void 0 || this.C(s, void 0, a, l);
+        const { wrapped: o } = a, h = this[s];
+        o !== !0 || this._$AL.has(s) || h === void 0 || this.C(s, void 0, a, h);
       }
     }
     let e = !1;
@@ -252,7 +252,7 @@ let A = class extends HTMLElement {
 A.elementStyles = [], A.shadowRootOptions = { mode: "open" }, A[I("elementProperties")] = /* @__PURE__ */ new Map(), A[I("finalized")] = /* @__PURE__ */ new Map(), Lt?.({ ReactiveElement: A }), (be.reactiveElementVersions ??= []).push("2.1.2");
 const Ne = globalThis, Ke = (n) => n, X = Ne.trustedTypes, Ye = X ? X.createPolicy("lit-html", { createHTML: (n) => n }) : void 0, ut = "$lit$", C = `lit$${Math.random().toFixed(9).slice(2)}$`, pt = "?" + C, Tt = `<${pt}>`, U = document, B = () => U.createComment(""), H = (n) => n === null || typeof n != "object" && typeof n != "function", Me = Array.isArray, Pt = (n) => Me(n) || typeof n?.[Symbol.iterator] == "function", ve = `[ 	
 \f\r]`, D = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, Ge = /-->/g, Xe = />/g, E = RegExp(`>|${ve}(?:([^\\s"'>=/]+)(${ve}*=${ve}*(?:[^ 	
-\f\r"'\`<>=]|("|')|))|$)`, "g"), Qe = /'/g, Ze = /"/g, gt = /^(?:script|style|textarea|title)$/i, Dt = (n) => (e, ...t) => ({ _$litType$: n, strings: e, values: t }), r = Dt(1), x = /* @__PURE__ */ Symbol.for("lit-noChange"), h = /* @__PURE__ */ Symbol.for("lit-nothing"), et = /* @__PURE__ */ new WeakMap(), R = U.createTreeWalker(U, 129);
+\f\r"'\`<>=]|("|')|))|$)`, "g"), Qe = /'/g, Ze = /"/g, gt = /^(?:script|style|textarea|title)$/i, Dt = (n) => (e, ...t) => ({ _$litType$: n, strings: e, values: t }), r = Dt(1), x = /* @__PURE__ */ Symbol.for("lit-noChange"), l = /* @__PURE__ */ Symbol.for("lit-nothing"), et = /* @__PURE__ */ new WeakMap(), R = U.createTreeWalker(U, 129);
 function ft(n, e) {
   if (!Me(n) || !n.hasOwnProperty("raw")) throw Error("invalid template strings array");
   return Ye !== void 0 ? Ye.createHTML(e) : e;
@@ -260,12 +260,12 @@ function ft(n, e) {
 const jt = (n, e) => {
   const t = n.length - 1, i = [];
   let s, a = e === 2 ? "<svg>" : e === 3 ? "<math>" : "", o = D;
-  for (let l = 0; l < t; l++) {
-    const d = n[l];
-    let c, f, b = -1, q = 0;
-    for (; q < d.length && (o.lastIndex = q, f = o.exec(d), f !== null); ) q = o.lastIndex, o === D ? f[1] === "!--" ? o = Ge : f[1] !== void 0 ? o = Xe : f[2] !== void 0 ? (gt.test(f[2]) && (s = RegExp("</" + f[2], "g")), o = E) : f[3] !== void 0 && (o = E) : o === E ? f[0] === ">" ? (o = s ?? D, b = -1) : f[1] === void 0 ? b = -2 : (b = o.lastIndex - f[2].length, c = f[1], o = f[3] === void 0 ? E : f[3] === '"' ? Ze : Qe) : o === Ze || o === Qe ? o = E : o === Ge || o === Xe ? o = D : (o = E, s = void 0);
-    const S = o === E && n[l + 1].startsWith("/>") ? " " : "";
-    a += o === D ? d + Tt : b >= 0 ? (i.push(c), d.slice(0, b) + ut + d.slice(b) + C + S) : d + C + (b === -2 ? l : S);
+  for (let h = 0; h < t; h++) {
+    const d = n[h];
+    let c, g, b = -1, q = 0;
+    for (; q < d.length && (o.lastIndex = q, g = o.exec(d), g !== null); ) q = o.lastIndex, o === D ? g[1] === "!--" ? o = Ge : g[1] !== void 0 ? o = Xe : g[2] !== void 0 ? (gt.test(g[2]) && (s = RegExp("</" + g[2], "g")), o = E) : g[3] !== void 0 && (o = E) : o === E ? g[0] === ">" ? (o = s ?? D, b = -1) : g[1] === void 0 ? b = -2 : (b = o.lastIndex - g[2].length, c = g[1], o = g[3] === void 0 ? E : g[3] === '"' ? Ze : Qe) : o === Ze || o === Qe ? o = E : o === Ge || o === Xe ? o = D : (o = E, s = void 0);
+    const S = o === E && n[h + 1].startsWith("/>") ? " " : "";
+    a += o === D ? d + Tt : b >= 0 ? (i.push(c), d.slice(0, b) + ut + d.slice(b) + C + S) : d + C + (b === -2 ? h : S);
   }
   return [ft(n, a + (n[t] || "<?>") + (e === 2 ? "</svg>" : e === 3 ? "</math>" : "")), i];
 };
@@ -274,15 +274,15 @@ class F {
     let s;
     this.parts = [];
     let a = 0, o = 0;
-    const l = e.length - 1, d = this.parts, [c, f] = jt(e, t);
+    const h = e.length - 1, d = this.parts, [c, g] = jt(e, t);
     if (this.el = F.createElement(c, i), R.currentNode = this.el.content, t === 2 || t === 3) {
       const b = this.el.content.firstChild;
       b.replaceWith(...b.childNodes);
     }
-    for (; (s = R.nextNode()) !== null && d.length < l; ) {
+    for (; (s = R.nextNode()) !== null && d.length < h; ) {
       if (s.nodeType === 1) {
         if (s.hasAttributes()) for (const b of s.getAttributeNames()) if (b.endsWith(ut)) {
-          const q = f[o++], S = s.getAttribute(b).split(C), J = /([.?@])?(.*)/.exec(q);
+          const q = g[o++], S = s.getAttribute(b).split(C), J = /([.?@])?(.*)/.exec(q);
           d.push({ type: 1, index: a, name: J[2], strings: S, ctor: J[1] === "." ? Nt : J[1] === "?" ? Mt : J[1] === "@" ? It : me }), s.removeAttribute(b);
         } else b.startsWith(C) && (d.push({ type: 6, index: a }), s.removeAttribute(b));
         if (gt.test(s.tagName)) {
@@ -325,11 +325,11 @@ class Ot {
   u(e) {
     const { el: { content: t }, parts: i } = this._$AD, s = (e?.creationScope ?? U).importNode(t, !0);
     R.currentNode = s;
-    let a = R.nextNode(), o = 0, l = 0, d = i[0];
+    let a = R.nextNode(), o = 0, h = 0, d = i[0];
     for (; d !== void 0; ) {
       if (o === d.index) {
         let c;
-        d.type === 2 ? c = new W(a, a.nextSibling, this, e) : d.type === 1 ? c = new d.ctor(a, d.name, d.strings, this, e) : d.type === 6 && (c = new Bt(a, this, e)), this._$AV.push(c), d = i[++l];
+        d.type === 2 ? c = new W(a, a.nextSibling, this, e) : d.type === 1 ? c = new d.ctor(a, d.name, d.strings, this, e) : d.type === 6 && (c = new Bt(a, this, e)), this._$AV.push(c), d = i[++h];
       }
       o !== d?.index && (a = R.nextNode(), o++);
     }
@@ -345,7 +345,7 @@ class W {
     return this._$AM?._$AU ?? this._$Cv;
   }
   constructor(e, t, i, s) {
-    this.type = 2, this._$AH = h, this._$AN = void 0, this._$AA = e, this._$AB = t, this._$AM = i, this.options = s, this._$Cv = s?.isConnected ?? !0;
+    this.type = 2, this._$AH = l, this._$AN = void 0, this._$AA = e, this._$AB = t, this._$AM = i, this.options = s, this._$Cv = s?.isConnected ?? !0;
   }
   get parentNode() {
     let e = this._$AA.parentNode;
@@ -359,7 +359,7 @@ class W {
     return this._$AB;
   }
   _$AI(e, t = this) {
-    e = P(this, e, t), H(e) ? e === h || e == null || e === "" ? (this._$AH !== h && this._$AR(), this._$AH = h) : e !== this._$AH && e !== x && this._(e) : e._$litType$ !== void 0 ? this.$(e) : e.nodeType !== void 0 ? this.T(e) : Pt(e) ? this.k(e) : this._(e);
+    e = P(this, e, t), H(e) ? e === l || e == null || e === "" ? (this._$AH !== l && this._$AR(), this._$AH = l) : e !== this._$AH && e !== x && this._(e) : e._$litType$ !== void 0 ? this.$(e) : e.nodeType !== void 0 ? this.T(e) : Pt(e) ? this.k(e) : this._(e);
   }
   O(e) {
     return this._$AA.parentNode.insertBefore(e, this._$AB);
@@ -368,7 +368,7 @@ class W {
     this._$AH !== e && (this._$AR(), this._$AH = this.O(e));
   }
   _(e) {
-    this._$AH !== h && H(this._$AH) ? this._$AA.nextSibling.data = e : this.T(U.createTextNode(e)), this._$AH = e;
+    this._$AH !== l && H(this._$AH) ? this._$AA.nextSibling.data = e : this.T(U.createTextNode(e)), this._$AH = e;
   }
   $(e) {
     const { values: t, _$litType$: i } = e, s = typeof i == "number" ? this._$AC(e) : (i.el === void 0 && (i.el = F.createElement(ft(i.h, i.h[0]), this.options)), i);
@@ -407,21 +407,21 @@ class me {
     return this._$AM._$AU;
   }
   constructor(e, t, i, s, a) {
-    this.type = 1, this._$AH = h, this._$AN = void 0, this.element = e, this.name = t, this._$AM = s, this.options = a, i.length > 2 || i[0] !== "" || i[1] !== "" ? (this._$AH = Array(i.length - 1).fill(new String()), this.strings = i) : this._$AH = h;
+    this.type = 1, this._$AH = l, this._$AN = void 0, this.element = e, this.name = t, this._$AM = s, this.options = a, i.length > 2 || i[0] !== "" || i[1] !== "" ? (this._$AH = Array(i.length - 1).fill(new String()), this.strings = i) : this._$AH = l;
   }
   _$AI(e, t = this, i, s) {
     const a = this.strings;
     let o = !1;
     if (a === void 0) e = P(this, e, t, 0), o = !H(e) || e !== this._$AH && e !== x, o && (this._$AH = e);
     else {
-      const l = e;
+      const h = e;
       let d, c;
-      for (e = a[0], d = 0; d < a.length - 1; d++) c = P(this, l[i + d], t, d), c === x && (c = this._$AH[d]), o ||= !H(c) || c !== this._$AH[d], c === h ? e = h : e !== h && (e += (c ?? "") + a[d + 1]), this._$AH[d] = c;
+      for (e = a[0], d = 0; d < a.length - 1; d++) c = P(this, h[i + d], t, d), c === x && (c = this._$AH[d]), o ||= !H(c) || c !== this._$AH[d], c === l ? e = l : e !== l && (e += (c ?? "") + a[d + 1]), this._$AH[d] = c;
     }
     o && !s && this.j(e);
   }
   j(e) {
-    e === h ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, e ?? "");
+    e === l ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, e ?? "");
   }
 }
 class Nt extends me {
@@ -429,7 +429,7 @@ class Nt extends me {
     super(...arguments), this.type = 3;
   }
   j(e) {
-    this.element[this.name] = e === h ? void 0 : e;
+    this.element[this.name] = e === l ? void 0 : e;
   }
 }
 class Mt extends me {
@@ -437,7 +437,7 @@ class Mt extends me {
     super(...arguments), this.type = 4;
   }
   j(e) {
-    this.element.toggleAttribute(this.name, !!e && e !== h);
+    this.element.toggleAttribute(this.name, !!e && e !== l);
   }
 }
 class It extends me {
@@ -445,8 +445,8 @@ class It extends me {
     super(e, t, i, s, a), this.type = 5;
   }
   _$AI(e, t = this) {
-    if ((e = P(this, e, t, 0) ?? h) === x) return;
-    const i = this._$AH, s = e === h && i !== h || e.capture !== i.capture || e.once !== i.once || e.passive !== i.passive, a = e !== h && (i === h || s);
+    if ((e = P(this, e, t, 0) ?? l) === x) return;
+    const i = this._$AH, s = e === l && i !== l || e.capture !== i.capture || e.once !== i.once || e.passive !== i.passive, a = e !== l && (i === l || s);
     s && this.element.removeEventListener(this.name, this, i), a && this.element.addEventListener(this.name, this, e), this._$AH = e;
   }
   handleEvent(e) {
@@ -507,7 +507,7 @@ class p extends Error {
     super(e), this.code = e;
   }
 }
-const g = "kaleidescape_companion", Jt = 15e3, m = ({ entry_id: n, dataset_id: e }) => ({
+const f = "kaleidescape_companion", Jt = 15e3, m = ({ entry_id: n, dataset_id: e }) => ({
   entry_id: n,
   dataset_id: e
 }), Vt = 256 * 1024 * 1024, tt = 5 * 1024 * 1024, Kt = 32 * 1024 * 1024;
@@ -531,8 +531,8 @@ async function V(n, e, t) {
   let a = 0;
   try {
     for (; ; ) {
-      const { value: o, done: l } = await i.read();
-      if (l) break;
+      const { value: o, done: h } = await i.read();
+      if (h) break;
       if (a += o.byteLength, a > e) throw new p("export_too_large");
       s.push(new Uint8Array(o));
     }
@@ -607,7 +607,7 @@ class bt {
   }
   metadataPreview(e) {
     return this.call({
-      type: `${g}/journal/metadata/preview`,
+      type: `${f}/journal/metadata/preview`,
       ...m(e)
     });
   }
@@ -622,7 +622,7 @@ class bt {
   }
   uiPreferences(e, t = !1, i = "library") {
     return this.call({
-      type: `${g}/ui/${t ? "shared" : "preferences"}/get`,
+      type: `${f}/ui/${t ? "shared" : "preferences"}/get`,
       ...i !== "library" ? { area: i } : {},
       ...m(e)
     });
@@ -638,51 +638,51 @@ class bt {
     return this.call({ ...e.message });
   }
   info() {
-    return this.call({ type: `${g}/info` });
+    return this.call({ type: `${f}/info` });
   }
-  list(e, t = "", i = "", s, a = "completed_at", o = !0, l = !1) {
+  list(e, t = "", i = "", s, a = "completed_at", o = !0, h = !1) {
     return this.call({
-      type: `${g}/journal/list`,
+      type: `${f}/journal/list`,
       ...m(e),
       query: t,
       limit: 25,
       sort: a,
       descending: o,
-      fuzzy: l,
+      fuzzy: h,
       ...i ? { status: i } : {},
       ...s ? { cursor: s } : {}
     });
   }
   get(e, t) {
     return this.call({
-      type: `${g}/journal/get`,
+      type: `${f}/journal/get`,
       ...m(e),
       viewing_id: t
     });
   }
   sessions(e, t) {
     return this.call({
-      type: `${g}/journal/sessions`,
+      type: `${f}/journal/sessions`,
       ...m(e),
       viewing_id: t
     });
   }
   nowPlaying(e) {
-    return this.call({ type: `${g}/now_playing`, ...m(e) });
+    return this.call({ type: `${f}/now_playing`, ...m(e) });
   }
   libraryInfo(e) {
-    return this.call({ type: `${g}/library/info`, ...m(e) });
+    return this.call({ type: `${f}/library/info`, ...m(e) });
   }
   libraryList(e, t = {}) {
     return this.call({
-      type: `${g}/library/list`,
+      type: `${f}/library/list`,
       ...m(e),
       filters: t
     });
   }
   libraryVersions(e, t, i = 0, s) {
     return this.call({
-      type: `${g}/library/versions`,
+      type: `${f}/library/versions`,
       ...m(e),
       title_id: t,
       offset: i,
@@ -690,11 +690,11 @@ class bt {
     });
   }
   librarySync(e) {
-    return this.call({ type: `${g}/library/sync`, ...m(e) });
+    return this.call({ type: `${f}/library/sync`, ...m(e) });
   }
   collectionTargets(e, t, i) {
     return this.call({
-      type: `${g}/library/collections/targets`,
+      type: `${f}/library/collections/targets`,
       ...m(e),
       title_id: t,
       revision: i
@@ -712,14 +712,14 @@ class bt {
   }
   collectionCheck(e, t) {
     return this.call({
-      type: `${g}/library/collections/check`,
+      type: `${f}/library/collections/check`,
       ...m(e),
       request_id: t
     });
   }
   collectionAcknowledge(e, t) {
     return this.call({
-      type: `${g}/library/collections/acknowledge`,
+      type: `${f}/library/collections/acknowledge`,
       ...m(e),
       request_id: t,
       confirmation: "ACKNOWLEDGE"
@@ -728,7 +728,7 @@ class bt {
   async libraryArtwork(e, t, i) {
     if (!/^[a-f0-9]{64}$/.test(t)) throw new p("invalid_request");
     const s = await this.transport.fetchWithAuth(
-      `/api/${g}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/library/artwork/${t}`,
+      `/api/${f}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/library/artwork/${t}`,
       {
         signal: i,
         cache: "no-store",
@@ -748,12 +748,12 @@ class bt {
     return this.call({
       ...i,
       ...m(e),
-      type: `${g}/settings/${t}`
+      type: `${f}/settings/${t}`
     });
   }
   inspect(e, t, i = 0, s, a) {
     return this.call({
-      type: `${g}/database/inspect`,
+      type: `${f}/database/inspect`,
       ...m(e),
       table: t,
       offset: i,
@@ -769,7 +769,7 @@ class bt {
   }
   searchImportMatches(e, t, i, s) {
     return this.call({
-      type: `${g}/database/import/search`,
+      type: `${f}/database/import/search`,
       ...m(e),
       plan_id: t.plan_id,
       revision: t.revision,
@@ -779,7 +779,7 @@ class bt {
   }
   matchImportPurchase(e, t, i, s) {
     return this.call({
-      type: `${g}/database/import/match`,
+      type: `${f}/database/import/match`,
       ...m(e),
       plan_id: t.plan_id,
       revision: t.revision,
@@ -803,7 +803,7 @@ class bt {
     if (!t.size || t.size > Kt)
       throw new p("import_too_large");
     const a = await this.transport.fetchWithAuth(
-      `/api/${g}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/import/preview?format=${s}`,
+      `/api/${f}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/import/preview?format=${s}`,
       {
         method: "POST",
         body: t,
@@ -814,13 +814,13 @@ class bt {
       }
     );
     if (!a.ok) {
-      const l = {
+      const h = {
         401: "unauthorized",
         403: "unauthorized",
         413: "import_too_large",
         404: "not_found"
       };
-      if (l[a.status]) throw new p(l[a.status]);
+      if (h[a.status]) throw new p(h[a.status]);
       const d = await a.json().catch(() => null);
       throw new p(d?.code ?? "connection_lost");
     }
@@ -856,7 +856,7 @@ class bt {
   }
   librarySuggestions(e, t, i, s = !1) {
     return this.call({
-      type: `${g}/library/suggest`,
+      type: `${f}/library/suggest`,
       ...m(e),
       field: t,
       query: i,
@@ -865,7 +865,7 @@ class bt {
   }
   librarySearch(e, t, i = !0) {
     return this.call({
-      type: `${g}/library/search`,
+      type: `${f}/library/search`,
       ...m(e),
       query: t,
       fuzzy: i
@@ -873,7 +873,7 @@ class bt {
   }
   calendarStatus(e) {
     return this.call({
-      type: `${g}/calendar/status`,
+      type: `${f}/calendar/status`,
       ...m(e)
     });
   }
@@ -888,14 +888,14 @@ class bt {
   }
   calendarCancel(e, t) {
     return this.call({
-      type: `${g}/calendar/cancel`,
+      type: `${f}/calendar/cancel`,
       ...m(e),
       job_id: t
     });
   }
   validateDatabaseQuery(e, t, i) {
     return this.call({
-      type: `${g}/database/validate_query`,
+      type: `${f}/database/validate_query`,
       ...m(e),
       table: t,
       query: i
@@ -912,7 +912,7 @@ class bt {
     const a = [];
     let o = 0;
     for (; i(); ) {
-      const l = await this.libraryList(e, {
+      const h = await this.libraryList(e, {
         ...t,
         grouped: !0,
         limit: 1e3,
@@ -920,19 +920,19 @@ class bt {
         ...s ? { revision: s.revision, preferences_key: s.preferences_key } : {}
       });
       if (!i()) throw new p("not_ready");
-      if (s && (l.revision !== s.revision || l.preferences_key !== s.preferences_key))
+      if (s && (h.revision !== s.revision || h.preferences_key !== s.preferences_key))
         throw new p("refresh_required");
-      if (o += new TextEncoder().encode(JSON.stringify(l.items)).byteLength, a.length + l.items.length > 1e4 || o > 32 * 1024 * 1024)
+      if (o += new TextEncoder().encode(JSON.stringify(h.items)).byteLength, a.length + h.items.length > 1e4 || o > 32 * 1024 * 1024)
         throw new p("library_page_too_large");
-      if (a.push(...l.items), s = l, !l.has_more)
+      if (a.push(...h.items), s = h, !h.has_more)
         return {
-          ...l,
+          ...h,
           items: a,
           offset: 0,
           limit: a.length,
           has_more: !1
         };
-      if (!l.items.length) throw new p("refresh_required");
+      if (!h.items.length) throw new p("refresh_required");
     }
     throw new p("not_ready");
   }
@@ -943,7 +943,7 @@ class bt {
     const s = structuredClone({
       ...i,
       ...m(e),
-      type: `${g}/${t}`,
+      type: `${f}/${t}`,
       request_id: Yt()
     });
     return { scope: m(e), message: Object.freeze(s) };
@@ -952,7 +952,7 @@ class bt {
     return this.call({ ...e.message });
   }
   async download(e, t, i) {
-    const s = `/api/${g}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/export?format=${t}`, a = await this.transport.fetchWithAuth(s, {
+    const s = `/api/${f}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/export?format=${t}`, a = await this.transport.fetchWithAuth(s, {
       signal: i,
       cache: "no-store",
       redirect: "error"
@@ -999,7 +999,7 @@ function Xt(n, e) {
   return t;
 }
 function Qt(n, e) {
-  function t(i, s, a = "text", o = !1, l) {
+  function t(i, s, a = "text", o = !1, h) {
     return r`<label
       >${s}<input
         id=${i === "title" ? "title" : i}
@@ -1007,10 +1007,10 @@ function Qt(n, e) {
         type=${a}
         .value=${n[i]}
         ?required=${o}
-        maxlength=${l ?? h}
-        min=${a === "number" ? "0" : h}
-        max=${a === "number" ? String(1e9 / 60) : h}
-        step=${a === "datetime-local" ? "1" : a === "number" ? "0.01" : h}
+        maxlength=${h ?? l}
+        min=${a === "number" ? "0" : l}
+        max=${a === "number" ? String(1e9 / 60) : l}
+        step=${a === "datetime-local" ? "1" : a === "number" ? "0.01" : l}
         @input=${(d) => e(i, d)}
     /></label>`;
   }
@@ -2122,7 +2122,7 @@ function st(n, e = !1) {
   );
 }
 function M(n, e, t = !1) {
-  if (!n?.trim()) return h;
+  if (!n?.trim()) return l;
   const i = n.trim(), s = i.toUpperCase().replaceAll(" ", ""), a = {
     G: "general",
     PG: "parental",
@@ -2176,15 +2176,15 @@ function yt(n) {
     throw new Error(
       "That local date/time does not exist. Check the date or daylight-saving transition."
     );
-  const l = Number(n.watched_minutes) * 60;
-  if (n.status === "partial" && (!n.watched_minutes.trim() || !Number.isFinite(l) || l <= 0))
+  const h = Number(n.watched_minutes) * 60;
+  if (n.status === "partial" && (!n.watched_minutes.trim() || !Number.isFinite(h) || h <= 0))
     throw new Error("Enter positive watched minutes for a partial viewing.");
   return {
     library_title_id: n.library_title_id,
     started_at: o.toISOString(),
     status: n.status,
     notes: n.notes,
-    ...n.status === "partial" ? { watched_seconds: l } : {}
+    ...n.status === "partial" ? { watched_seconds: h } : {}
   };
 }
 const te = class te extends v {
@@ -2250,7 +2250,7 @@ const te = class te extends v {
             aria-autocomplete="list"
             aria-expanded=${this.open && !!this.items.length}
             aria-controls="movie-suggestions"
-            aria-activedescendant=${this.open && this.items[this.active] ? `movie-option-${this.active}` : h}
+            aria-activedescendant=${this.open && this.items[this.active] ? `movie-option-${this.active}` : l}
             .value=${this.query}
             @input=${(e) => this.search(e.target.value)}
             @focus=${() => {
@@ -2263,10 +2263,10 @@ const te = class te extends v {
       e.key === "Escape" ? (this.open = !1, this.requestUpdate()) : ["ArrowDown", "ArrowUp"].includes(e.key) && this.items.length ? (e.preventDefault(), this.active = (this.active + (e.key === "ArrowDown" ? 1 : -1) + this.items.length) % this.items.length, this.open = !0, this.requestUpdate()) : ["Enter", "Tab"].includes(e.key) && this.open && this.items[this.active] && (e.preventDefault(), this.choose(this.items[this.active]));
     }}
         /></label>
-        ${this.open ? r`<div class="movie-suggestions" id="movie-suggestions" role="listbox">${this.items.map((e, t) => r`<button type="button" role="option" id=${`movie-option-${t}`} aria-selected=${this.active === t} ?disabled=${!e.duration_seconds} @mousedown=${(i) => i.preventDefault()} @click=${() => this.choose(e)}><strong>${e.title}</strong> · ${e.year ?? "Year unknown"} · ${(e.formats ?? []).join(", ")} · ${e.duration_seconds ? `${(e.duration_seconds / 60).toFixed(2)} min` : "Runtime missing—sync details"}</button>`)}${this.items.length ? h : r`<small>Type a title; only cached Library movies can be selected.</small>`}</div>` : h}
+        ${this.open ? r`<div class="movie-suggestions" id="movie-suggestions" role="listbox">${this.items.map((e, t) => r`<button type="button" role="option" id=${`movie-option-${t}`} aria-selected=${this.active === t} ?disabled=${!e.duration_seconds} @mousedown=${(i) => i.preventDefault()} @click=${() => this.choose(e)}><strong>${e.title}</strong> · ${e.year ?? "Year unknown"} · ${(e.formats ?? []).join(", ")} · ${e.duration_seconds ? `${(e.duration_seconds / 60).toFixed(2)} min` : "Runtime missing—sync details"}</button>`)}${this.items.length ? l : r`<small>Type a title; only cached Library movies can be selected.</small>`}</div>` : l}
       </div>
-      ${this.error ? r`<p class="error" role="alert">${this.error}</p>` : h}
-      ${this.selected ? r`<p class="manual-metadata">${this.selected.year ?? ""} ${N(this.selected)} ${M(this.selected.rating)} · ${((this.selected.duration_seconds ?? 0) / 60).toFixed(2)} min</p>` : h}
+      ${this.error ? r`<p class="error" role="alert">${this.error}</p>` : l}
+      ${this.selected ? r`<p class="manual-metadata">${this.selected.year ?? ""} ${N(this.selected)} ${M(this.selected.rating)} · ${((this.selected.duration_seconds ?? 0) / 60).toFixed(2)} min</p>` : l}
       <div class="grid">
         <label
           >Started · local date<input
@@ -2294,7 +2294,7 @@ const te = class te extends v {
             <option value="partial">Partial</option>
           </select></label
         >
-        ${this.draft.status === "partial" ? r`<label>Watched minutes<input name="watched_minutes" type="number" min="0.01" step="0.01" max=${(this.selected?.duration_seconds ?? 1e9) / 60} .value=${this.draft.watched_minutes} @input=${(e) => this.change({ watched_minutes: e.target.value })} /></label>` : h}
+        ${this.draft.status === "partial" ? r`<label>Watched minutes<input name="watched_minutes" type="number" min="0.01" step="0.01" max=${(this.selected?.duration_seconds ?? 1e9) / 60} .value=${this.draft.watched_minutes} @input=${(e) => this.change({ watched_minutes: e.target.value })} /></label>` : l}
         <label class="full"
           >Notes<textarea
             name="notes"
@@ -2430,7 +2430,7 @@ function vt(n, e, t, i = !1) {
     <button
       class="link entry-name"
       title=${n.title}
-      aria-current=${e === n.id ? "true" : h}
+      aria-current=${e === n.id ? "true" : l}
       ?disabled=${i}
       @click=${() => t(n.id)}
     >
@@ -2588,13 +2588,13 @@ function ii(n, e) {
   for (let a = 1; a <= n.length; a++) {
     const o = Array(e.length + 1).fill(t + 1);
     o[0] = a;
-    for (let l = Math.max(1, a - t); l <= Math.min(e.length, a + t); l++) {
+    for (let h = Math.max(1, a - t); h <= Math.min(e.length, a + t); h++) {
       let d = Math.min(
-        i[l] + 1,
-        o[l - 1] + 1,
-        i[l - 1] + +(n[a - 1] !== e[l - 1])
+        i[h] + 1,
+        o[h - 1] + 1,
+        i[h - 1] + +(n[a - 1] !== e[h - 1])
       );
-      a > 1 && l > 1 && n[a - 1] === e[l - 2] && n[a - 2] === e[l - 1] && (d = Math.min(d, s[l - 2] + 1)), o[l] = d;
+      a > 1 && h > 1 && n[a - 1] === e[h - 2] && n[a - 2] === e[h - 1] && (d = Math.min(d, s[h - 2] + 1)), o[h] = d;
     }
     if (Math.min(...o) > t) return !1;
     s = i, i = o;
@@ -2610,7 +2610,7 @@ function rt(n, e, t = !1) {
   if (s.includes(i)) return !0;
   const a = i.split(" "), o = s.split(" ");
   return a.length <= 12 && a.every(
-    (l) => o.some((d) => d.includes(l) || ii(l, d))
+    (h) => o.some((d) => d.includes(h) || ii(h, d))
   );
 }
 const z = { ATTRIBUTE: 1, PROPERTY: 3, BOOLEAN_ATTRIBUTE: 4 }, si = (n) => (...e) => ({ _$litDirective$: n, values: e });
@@ -2640,7 +2640,7 @@ const li = si(class extends ai {
     return n;
   }
   update(n, [e]) {
-    if (e === x || e === h) return e;
+    if (e === x || e === l) return e;
     const t = n.element, i = n.name;
     if (n.type === z.PROPERTY) {
       if (e === t[i]) return x;
@@ -2664,7 +2664,7 @@ class hi {
     if (i) return i;
     for (; this.bytes + t.size > this.maxBytes || this.entries.size >= this.maxEntries; ) {
       const a = [...this.entries.keys()], o = a.find(
-        (l) => ![...this.readers.get(l) ?? []].some(
+        (h) => ![...this.readers.get(h) ?? []].some(
           (d) => d.visible()
         )
       ) ?? a[0];
@@ -2768,14 +2768,14 @@ const ie = class ie extends v {
         return;
       }
       a = setTimeout(() => i.abort(), 5e3);
-      const l = await this.client.libraryArtwork(
+      const h = await this.client.libraryArtwork(
         this.scope,
         this.artworkKey,
         i.signal
       );
       if (t !== this.generation || i.signal.aborted || !this.isConnected || document.hidden)
         return;
-      this.url = this.queue.cache.put(this.cacheKey, l), this.requestUpdate();
+      this.url = this.queue.cache.put(this.cacheKey, h), this.requestUpdate();
     } catch (o) {
       t === this.generation && u(o) === "unauthorized" && this.dispatchEvent(
         new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
@@ -2980,13 +2980,13 @@ const se = class se extends v {
     }
   }
   render() {
-    return !this.scope?.permissions.edit || !this.version || !this.enabled ? h : r`<button
+    return !this.scope?.permissions.edit || !this.version || !this.enabled ? l : r`<button
         ?disabled=${this.blocked || this.busy}
         @click=${this.open}
       >
         Add to Collection…
       </button>
-      ${this.notice ? r`<p role="status">${this.notice}</p>` : h}
+      ${this.notice ? r`<p role="status">${this.notice}</p>` : l}
       <dialog
         class="database-dialog"
         @click=${w}
@@ -3006,8 +3006,8 @@ const se = class se extends v {
           Kaleidescape. Other memberships are preserved. Removal is not
           supported.
         </p>
-        ${this.loading ? r`<p role="status">Reading available collections from the device…</p>` : h}
-        ${this.error ? r`<p role="alert" class="error">${this.error}</p>` : h}
+        ${this.loading ? r`<p role="status">Reading available collections from the device…</p>` : l}
+        ${this.error ? r`<p role="alert" class="error">${this.error}</p>` : l}
         ${this.pending ? r`<p class="warning">
                   ${this.busy ? "Waiting for the device and read-back verification…" : "The result is unconfirmed. Check its status without sending another add."}
                 </p>
@@ -3026,11 +3026,11 @@ const se = class se extends v {
                     ${this.choices.map((e) => r`<option value=${e}>${e}</option>`)}
                   </select></label
                 >
-                ${!this.loading && !this.choices.length && !this.error ? r`<p>No offered, visible collection targets are available. Sync or check the server’s collections.</p>` : h} `}
+                ${!this.loading && !this.choices.length && !this.error ? r`<p>No offered, visible collection targets are available. Sync or check the server’s collections.</p>` : l} `}
         <div class="dialog-footer">
           <button ?disabled=${this.busy || !!this.pending} @click=${this.close}>
             Cancel</button
-          >${this.pending ? h : r`<button class="primary" ?disabled=${this.loading || !this.selected} @click=${this.submit}>Add selected version</button>`}
+          >${this.pending ? l : r`<button class="primary" ?disabled=${this.loading || !this.selected} @click=${this.submit}>Add selected version</button>`}
         </div>
       </dialog>`;
   }
@@ -3239,7 +3239,7 @@ const j = [
       });
       if (i !== this.generation || s !== this.listRequest || a !== this.pageSize)
         return;
-      this.page = o, this.selected && (this.selected = o.items.find((l) => l.id === this.selected?.id) ?? (t ? this.selected : void 0), this.selected ? this.versions && (this.versions.revision !== o.revision || this.versions.preferences_key !== o.preferences_key) && this.loadVersions() : this.closeDialog("title-dialog"));
+      this.page = o, this.selected && (this.selected = o.items.find((h) => h.id === this.selected?.id) ?? (t ? this.selected : void 0), this.selected ? this.versions && (this.versions.revision !== o.revision || this.versions.preferences_key !== o.preferences_key) && this.loadVersions() : this.closeDialog("title-dialog"));
     } catch (o) {
       i === this.generation && s === this.listRequest && this.fail(o);
     } finally {
@@ -3518,7 +3518,7 @@ const j = [
         e.target.value
       ), this.fitGrid(this.gridWidth), this.requestUpdate();
     }}
-              /></label>` : h}
+              /></label>` : l}
         ${ot.map(
       ([e, t]) => r`<label class="check"
               ><input
@@ -3547,7 +3547,7 @@ const j = [
               <p>
                 Source “Played” maps to Watched; “Paused” maps to In progress.
               </p>
-            </details>` : h}
+            </details>` : l}
     </dialog>`;
   }
   renderFilterDialog() {
@@ -3572,7 +3572,7 @@ const j = [
       this.facetSearch = e.target.value, this.requestUpdate();
     }}
       /></label>
-      ${this.page?.truncated_facets.length ? r`<p class="muted">Each category shows up to 500 known names.</p>` : h}
+      ${this.page?.truncated_facets.length ? r`<p class="muted">Each category shows up to 500 known names.</p>` : l}
       <div class="facet-groups">
         ${[
       ["status", "Watched status", "status"],
@@ -3590,10 +3590,10 @@ const j = [
                             .value=${o}
                             .checked=${s.includes(o)}
                             ?disabled=${s.length >= 100 && !s.includes(o)}
-                            @change=${(l) => {
+                            @change=${(h) => {
           this.draft = {
             ...this.draft,
-            [e]: l.target.checked ? [...s, o] : s.filter((d) => d !== o)
+            [e]: h.target.checked ? [...s, o] : s.filter((d) => d !== o)
           }, this.requestUpdate();
         }}
                           />${e === "status" ? K[o] : e === "rating" ? M(o) : e === "collection" ? L(o) : o}</label
@@ -3631,7 +3631,7 @@ const j = [
                     @click=${() => {
           this.draft = {
             ...this.draft,
-            [e]: s.filter((l) => l !== o)
+            [e]: s.filter((h) => h !== o)
           }, this.requestUpdate();
         }}
                   >
@@ -3648,10 +3648,10 @@ const j = [
                       value=${o}
                       .checked=${s.includes(o)}
                       ?disabled=${s.length >= 100 && !s.includes(o)}
-                      @change=${(l) => {
+                      @change=${(h) => {
           this.draft = {
             ...this.draft,
-            [e]: l.target.checked ? [...s, o] : s.filter((d) => d !== o)
+            [e]: h.target.checked ? [...s, o] : s.filter((d) => d !== o)
           }, this.requestUpdate();
         }}
                     />${o}</label
@@ -3700,7 +3700,7 @@ const j = [
     >
       ${e ? r`<div class="card-head">
                 <h2 id="library-title">
-                  ${this.detailLink("query", e.title)}${e.year ? r` (${this.detailLink("year", String(e.year))})` : h}
+                  ${this.detailLink("query", e.title)}${e.year ? r` (${this.detailLink("year", String(e.year))})` : l}
                 </h2>
                 <button
                   ?disabled=${this.collectionLocked}
@@ -3714,7 +3714,7 @@ const j = [
                 ${N(e, !1, (s) => this.fromDetails("format", s), this.collectionLocked || this.checkingCollection)}
                 ${M(e.rating, (s) => this.fromDetails("rating", s), this.collectionLocked || this.checkingCollection)}
               </div>
-              ${this.versionsLoading ? r`<p role="status">Loading individual versions…</p>` : h}
+              ${this.versionsLoading ? r`<p role="status">Loading individual versions…</p>` : l}
               ${this.versionsError ? r`<p class="error" role="alert">${this.versionsError}</p>
                       <button
                         @click=${async () => {
@@ -3722,7 +3722,7 @@ const j = [
     }}
                       >
                         Refresh title details
-                      </button>` : h}
+                      </button>` : l}
               ${this.versions && this.versions.total > 1 ? r`<div
                         class="page-tabs version-tabs"
                         role="tablist"
@@ -3745,13 +3745,13 @@ const j = [
                             </button>`
     )}
                       </div>
-                      ${this.versions.total > 50 ? r`<div class="actions"><button ?disabled=${!this.versions.offset || this.versionsLoading} @click=${() => this.loadVersions(Math.max(0, this.versions.offset - 50))}>Previous versions</button><button ?disabled=${!this.versions.has_more || this.versionsLoading} @click=${() => this.loadVersions(this.versions.offset + 50)}>Next versions</button></div>` : h}` : h}
+                      ${this.versions.total > 50 ? r`<div class="actions"><button ?disabled=${!this.versions.offset || this.versionsLoading} @click=${() => this.loadVersions(Math.max(0, this.versions.offset - 50))}>Previous versions</button><button ?disabled=${!this.versions.has_more || this.versionsLoading} @click=${() => this.loadVersions(this.versions.offset + 50)}>Next versions</button></div>` : l}` : l}
               ${t ? r`<div
                       class="playback-layout"
                       id="version-details"
                       role=${(this.versions?.total ?? 1) > 1 ? "tabpanel" : "region"}
-                      aria-label=${(this.versions?.total ?? 1) === 1 ? "Version details" : h}
-                      aria-labelledby=${(this.versions?.total ?? 1) > 1 ? `version-${this.versions?.items.findIndex((s) => s.id === t.id) ?? 0}` : h}
+                      aria-label=${(this.versions?.total ?? 1) === 1 ? "Version details" : l}
+                      aria-labelledby=${(this.versions?.total ?? 1) > 1 ? `version-${this.versions?.items.findIndex((s) => s.id === t.id) ?? 0}` : l}
                     >
                       <div class="cover">${this.cover(t)}</div>
                       <div>
@@ -3776,11 +3776,11 @@ const j = [
     ].map(
       ([s, a, o]) => a.length ? r`<p>
                                 <strong>${s}:</strong>
-                                ${a.map((l, d) => r`${d ? ", " : ""}${this.detailLink(o, l, s === "Collections" ? L(l) : l)}`)}
-                              </p>` : h
+                                ${a.map((h, d) => r`${d ? ", " : ""}${this.detailLink(o, h, s === "Collections" ? L(h) : h)}`)}
+                              </p>` : l
     )}
                         <p class="muted">
-                          ${t.purchased_on ? r`Purchased ${this.date(t.purchased_on)}<br />` : h}
+                          ${t.purchased_on ? r`Purchased ${this.date(t.purchased_on)}<br />` : l}
                           First detected ${this.date(t.first_seen)}.
                         </p>
                         ${i && t.purchase_history?.length ? r` <details>
@@ -3796,10 +3796,10 @@ const j = [
                                       Retail:
                                       ${s.retail_price ?? "Unknown"}<br />
                                       Order: ${s.order_id ?? "Unknown"}
-                                      ${s.href ? r`<br />Store reference: ${s.href}` : h}
+                                      ${s.href ? r`<br />Store reference: ${s.href}` : l}
                                     </p>`
     )}
-                              </details>` : h}
+                              </details>` : l}
                         ${i ? r`<kaleidescape-library-collection-add
                                 .client=${this.client}
                                 .scope=${this.scope}
@@ -3813,9 +3813,9 @@ const j = [
                                 @collection-changed=${(s) => {
       this.collectionLocked = !1, this.notice = s.detail.status === "confirmed" ? "Collection membership confirmed on the device." : "Check the pending collection add before making another change.", this.load(), this.refreshStatus();
     }}
-                              ></kaleidescape-library-collection-add>` : h}
+                              ></kaleidescape-library-collection-add>` : l}
                       </div>
-                    </div>` : h}` : h}
+                    </div>` : l}` : l}
     </dialog>`;
   }
   render() {
@@ -3823,49 +3823,49 @@ const j = [
       return r`<p role="status">
           ${this.error || "Loading Library preferences…"}
         </p>
-        ${this.error ? r`<button @click=${this.initializePreferences}>Retry Library</button>` : h}`;
+        ${this.error ? r`<button @click=${this.initializePreferences}>Retry Library</button>` : l}`;
     const e = this.page?.limit ?? this.requestLimit, t = this.loading || !!this.layoutTimer, i = this.page?.items ?? [], s = this.mode === "covers" && this.page?.has_more && i.length >= this.coverColumns ? i.slice(
       0,
       i.length - i.length % this.coverColumns
-    ) : i, a = this.scope?.permissions.edit, o = [...j.map(([l]) => l), "status"].reduce(
-      (l, d) => l + (this.applied[d]?.length ?? 0),
+    ) : i, a = this.scope?.permissions.edit, o = [...j.map(([h]) => h), "status"].reduce(
+      (h, d) => h + (this.applied[d]?.length ?? 0),
       0
     );
     return r`<section
       class="library-page"
-      @access-denied=${(l) => {
-      l.stopPropagation(), this.fail(new p("unauthorized"));
+      @access-denied=${(h) => {
+      h.stopPropagation(), this.fail(new p("unauthorized"));
     }}
     >
-      ${this.preferenceError ? r`<p class="warning" role="alert">Library preferences could not be saved: ${this.preferenceError} <button @click=${() => this.preferences?.retry()}>Retry saving preferences</button></p>` : h}
-      ${a && this.info?.phase && this.info.phase !== "idle" ? r`<p role="status">Syncing… ${this.info.processed ?? 0}/${this.info.total ?? "?"}</p>` : h}
-      ${a && this.info?.error ? r`<p class="warning" role="status">${$(new p(this.info.error))}</p>` : h}
-      ${this.error ? r`<p class="error" role="alert">${this.error}<button @click=${() => this.load()}>Refresh results</button></p>` : h}
-      ${this.notice ? r`<p class="notice" role="status">${this.notice}</p>` : h}
+      ${this.preferenceError ? r`<p class="warning" role="alert">Library preferences could not be saved: ${this.preferenceError} <button @click=${() => this.preferences?.retry()}>Retry saving preferences</button></p>` : l}
+      ${a && this.info?.phase && this.info.phase !== "idle" ? r`<p role="status">Syncing… ${this.info.processed ?? 0}/${this.info.total ?? "?"}</p>` : l}
+      ${a && this.info?.error ? r`<p class="warning" role="status">${$(new p(this.info.error))}</p>` : l}
+      ${this.error ? r`<p class="error" role="alert">${this.error}<button @click=${() => this.load()}>Refresh results</button></p>` : l}
+      ${this.notice ? r`<p class="notice" role="status">${this.notice}</p>` : l}
       ${a ? (this.info?.pending_adds ?? []).map(
-      (l) => r`<div class="warning" role="status">
-                  Unconfirmed collection add: <strong>${l.title}</strong> →
-                  ${l.collection}. Checking never sends another add.
+      (h) => r`<div class="warning" role="status">
+                  Unconfirmed collection add: <strong>${h.title}</strong> →
+                  ${h.collection}. Checking never sends another add.
                   <div class="actions">
                     <button
                       ?disabled=${this.checkingCollection}
-                      @click=${() => this.checkCollection(l.request_id)}
+                      @click=${() => this.checkCollection(h.request_id)}
                     >
                       Check membership</button
                     ><button
                       ?disabled=${this.checkingCollection}
-                      @click=${() => this.checkCollection(l.request_id, !0)}
+                      @click=${() => this.checkCollection(h.request_id, !0)}
                     >
                       Acknowledge unconfirmed add
                     </button>
                   </div>
                 </div>`
-    ) : h}
+    ) : l}
       <section class="card library-results">
         <div class="library-toolbar">
           <form
-            @submit=${(l) => {
-      l.preventDefault(), this.applySearch();
+            @submit=${(h) => {
+      h.preventDefault(), this.applySearch();
     }}
           >
             <label
@@ -3874,8 +3874,8 @@ const j = [
                 type="search"
                 maxlength="500"
                 .value=${li(String(this.filters.query ?? ""))}
-                @input=${(l) => {
-      this.filters.query = l.target.value, clearTimeout(this.searchTimer), this.searchTimer = setTimeout(() => this.applySearch(), 300);
+                @input=${(h) => {
+      this.filters.query = h.target.value, clearTimeout(this.searchTimer), this.searchTimer = setTimeout(() => this.applySearch(), 300);
     }}
             /></label>
             <button type="submit" ?disabled=${this.loading}>Search</button>
@@ -3890,9 +3890,9 @@ const j = [
             >Sort by<select
               name="library_sort"
               .value=${String(this.applied.sort)}
-              @change=${(l) => this.sort(l.target.value)}
+              @change=${(h) => this.sort(h.target.value)}
             >
-              ${nt.map(([l, d]) => r`<option value=${l}>${d}</option>`)}
+              ${nt.map(([h, d]) => r`<option value=${h}>${d}</option>`)}
             </select></label
           >
           <button @click=${() => this.sort(String(this.applied.sort))}>
@@ -3911,40 +3911,40 @@ const j = [
                 style=${`--cover-size: ${this.coverSize}px; --cover-columns: ${this.coverColumns}`}
               >
                 ${s.map(
-      (l) => r`<button
-                      class=${`cover-tile${this.display.show_titles ? " has-title" : ""}${this.display.show_rating && l.rating ? " has-rating" : ""}`}
-                      title=${`${l.title}${l.year ? ` (${l.year})` : ""}`}
-                      aria-label=${`Details for ${l.title}${l.year ? ` (${l.year})` : ""}`}
-                      @click=${() => this.select(l)}
+      (h) => r`<button
+                      class=${`cover-tile${this.display.show_titles ? " has-title" : ""}${this.display.show_rating && h.rating ? " has-rating" : ""}`}
+                      title=${`${h.title}${h.year ? ` (${h.year})` : ""}`}
+                      aria-label=${`Details for ${h.title}${h.year ? ` (${h.year})` : ""}`}
+                      @click=${() => this.select(h)}
                     >
-                      <div class="cover-image">${this.cover(l)}</div>
-                      ${this.display.show_badges ? r`<div class="cover-flags">${st(l, !0)}</div>` : h}
-                      ${this.display.show_format ? r`<div class="cover-formats">${N(l, !0)}</div>` : h}
-                      ${this.display.show_rating ? r`<div class="cover-rating">${M(l.rating)}</div>` : h}
-                      ${this.display.show_titles ? r`<span class="cover-caption">${l.title}${l.year ? ` (${l.year})` : ""}</span>` : h}
+                      <div class="cover-image">${this.cover(h)}</div>
+                      ${this.display.show_badges ? r`<div class="cover-flags">${st(h, !0)}</div>` : l}
+                      ${this.display.show_format ? r`<div class="cover-formats">${N(h, !0)}</div>` : l}
+                      ${this.display.show_rating ? r`<div class="cover-rating">${M(h.rating)}</div>` : l}
+                      ${this.display.show_titles ? r`<span class="cover-caption">${h.title}${h.year ? ` (${h.year})` : ""}</span>` : l}
                     </button>`
     )}
               </div>` : r`<div class="table-wrap">
                 <table
                   class="library-table"
-                  style=${`--library-width: ${this.widths.reduce((l, d) => l + d, 0)}px`}
+                  style=${`--library-width: ${this.widths.reduce((h, d) => h + d, 0)}px`}
                 >
                   <colgroup>
-                    ${this.widths.map((l) => r`<col style=${`width: ${l}px`} />`)}
+                    ${this.widths.map((h) => r`<col style=${`width: ${h}px`} />`)}
                   </colgroup>
                   <thead>
                     <tr>
                       ${nt.map(
-      ([l, d], c) => r`<th
-                            aria-sort=${this.applied.sort === l ? this.applied.descending ? "descending" : "ascending" : "none"}
+      ([h, d], c) => r`<th
+                            aria-sort=${this.applied.sort === h ? this.applied.descending ? "descending" : "ascending" : "none"}
                           >
                             <button
                               class="sort-heading"
-                              @click=${() => this.sort(l)}
+                              @click=${() => this.sort(h)}
                             >
                               <span>${d}</span
                               ><span class="sort-icon" aria-hidden="true"
-                                >${this.applied.sort === l ? this.applied.descending ? "↓" : "↑" : "↕"}</span
+                                >${this.applied.sort === h ? this.applied.descending ? "↓" : "↑" : "↕"}</span
                               >
                             </button>
                             <span
@@ -3957,20 +3957,20 @@ const j = [
                               aria-valuenow=${this.widths[c]}
                               tabindex="0"
                               title="Drag or use Left/Right to resize; Home resets"
-                              @keydown=${(f) => this.resizeColumn(f, c)}
-                              @pointerdown=${(f) => {
-        f.preventDefault(), this.resize = {
+                              @keydown=${(g) => this.resizeColumn(g, c)}
+                              @pointerdown=${(g) => {
+        g.preventDefault(), this.resize = {
           index: c,
-          start: f.clientX,
+          start: g.clientX,
           width: this.widths[c]
-        }, f.currentTarget.setPointerCapture(f.pointerId);
+        }, g.currentTarget.setPointerCapture(g.pointerId);
       }}
-                              @pointermove=${(f) => {
+                              @pointermove=${(g) => {
         this.resize?.index === c && (this.widths[c] = Math.max(
           80,
           Math.min(
             800,
-            this.resize.width + f.clientX - this.resize.start
+            this.resize.width + g.clientX - this.resize.start
           )
         ), this.requestUpdate());
       }}
@@ -3984,45 +3984,45 @@ const j = [
                   </thead>
                   <tbody>
                     ${(this.page?.items ?? []).map(
-      (l) => r`<tr>
+      (h) => r`<tr>
                           <td>
                             <button
                               class="link"
-                              @click=${() => this.select(l)}
+                              @click=${() => this.select(h)}
                             >
-                              ${l.title}
+                              ${h.title}
                             </button>
                             <div
                               class="library-summary-line"
-                              title=${this.format(l)}
+                              title=${this.format(h)}
                             >
-                              ${this.display.show_badges ? st(l) : h}
-                              ${this.display.show_format ? N(l) : h}
-                              ${this.display.show_format && !Be(l).length ? r`<small>${this.format(l)}</small>` : h}
-                              ${(l.version_count ?? 1) > 1 ? r`<small>${y(l.version_count, "version")}</small>` : h}
+                              ${this.display.show_badges ? st(h) : l}
+                              ${this.display.show_format ? N(h) : l}
+                              ${this.display.show_format && !Be(h).length ? r`<small>${this.format(h)}</small>` : l}
+                              ${(h.version_count ?? 1) > 1 ? r`<small>${y(h.version_count, "version")}</small>` : l}
                             </div>
                           </td>
-                          <td title=${this.years(l)}>${this.years(l)}</td>
+                          <td title=${this.years(h)}>${this.years(h)}</td>
                           <td>
                             <span
                               class="collection-cell"
-                              title=${l.collections.map(L).join(", ")}
-                              >${l.collections.map(L).join(", ") || "—"}</span
+                              title=${h.collections.map(L).join(", ")}
+                              >${h.collections.map(L).join(", ") || "—"}</span
                             >
                           </td>
-                          <td>${this.runtime(l)}</td>
-                          <td>${K[l.watched_status]}</td>
+                          <td>${this.runtime(h)}</td>
+                          <td>${K[h.watched_status]}</td>
                           <td
-                            title=${l.purchased_on ? "Imported purchase date" : "First detected by Companion"}
+                            title=${h.purchased_on ? "Imported purchase date" : "First detected by Companion"}
                           >
-                            ${this.date(l.purchased_on ?? l.first_seen)}
+                            ${this.date(h.purchased_on ?? h.first_seen)}
                           </td>
                         </tr>`
     )}
                   </tbody>
                 </table>
               </div>`}
-        ${this.page?.items.length ? h : r`<p class="empty" role="status">${this.loading ? "Loading library…" : "No cached titles match. Adjust your filters or wait for a library sync."}</p>`}
+        ${this.page?.items.length ? l : r`<p class="empty" role="status">${this.loading ? "Loading library…" : "No cached titles match. Adjust your filters or wait for a library sync."}</p>`}
         <div class="pagination">
           <small
             >${y(this.page?.total ?? 0, "matching title")} ·
@@ -4066,9 +4066,9 @@ const j = [
     }}
                 >
                   Refresh cached data</button
-                >${a ? r`<button ?disabled=${this.requesting || !!this.info?.phase && this.info.phase !== "idle"} @click=${this.sync}>Sync now</button>` : h}
+                >${a ? r`<button ?disabled=${this.requesting || !!this.info?.phase && this.info.phase !== "idle"} @click=${this.sync}>Sync now</button>` : l}
               </div>
-            </footer>` : h}
+            </footer>` : l}
       ${this.renderOptionsDialog()} ${this.renderFilterDialog()}
       ${this.renderTitleDialog()}
     </section>`;
@@ -4139,7 +4139,7 @@ const re = class re extends v {
       >
         Options
       </button>
-      ${this.error ? r`<span class="error" role="alert">${this.error}<button @click=${() => this.ready ? this.store?.retry() : this.load()}>Retry Journal options</button></span>` : h}
+      ${this.error ? r`<span class="error" role="alert">${this.error}<button @click=${() => this.ready ? this.store?.retry() : this.load()}>Retry Journal options</button></span>` : l}
       <dialog
         class="database-dialog"
         aria-labelledby="journal-options-title"
@@ -4291,14 +4291,14 @@ const ne = class ne extends v {
   render() {
     return r`<main>
       <header>
-        ${this.hass && this.narrow ? r`<button aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: !0, composed: !0 }))}>☰</button>` : h}
+        ${this.hass && this.narrow ? r`<button aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: !0, composed: !0 }))}>☰</button>` : l}
         <div>
           <span class="eyebrow">Kaleidescape Companion</span>
           <h1>Viewing history</h1>
           <p>Read-only household journal</p>
         </div>
       </header>
-      ${this.error ? r`<p role="alert" class="error">${this.error}</p>` : h}
+      ${this.error ? r`<p role="alert" class="error">${this.error}</p>` : l}
       <nav
         class="page-tabs"
         role="tablist"
@@ -4532,17 +4532,17 @@ const di = {
       this.player = s[0] ?? null;
       const a = this.player, o = a?.available && a.artwork_key && a.entity_id ? `${a.entity_id}:${a.raw_content_id}:${a.artwork_key}` : "";
       if (o !== this.imageKey && (this.clearImage(), this.imageKey = o, this.requestUpdate(), o)) {
-        const l = this.abort = new AbortController(), d = setTimeout(() => l.abort(), 5e3);
+        const h = this.abort = new AbortController(), d = setTimeout(() => h.abort(), 5e3);
         try {
           const c = await e.artwork(
             a.entity_id,
-            l.signal
+            h.signal
           );
           i === this.generation && c && (this.image = URL.createObjectURL(c));
         } catch (c) {
           if (u(c) === "unauthorized") throw c;
         } finally {
-          clearTimeout(d), this.abort === l && (this.abort = void 0);
+          clearTimeout(d), this.abort === h && (this.abort = void 0);
         }
       }
     } catch (s) {
@@ -4587,8 +4587,8 @@ const di = {
                   <h3>
                     ${e.available ? t ? e.title ?? "Unknown title" : "No movie playing" : "Player unavailable"}
                   </h3>
-                  ${e.available ? r`<p>${di[e.play_status] ?? "Unknown playback state"} · ${ci[e.location] ?? "Unknown location"}</p>` : h}
-                  ${t && e.duration_seconds != null ? r`<p>Runtime · ${(e.duration_seconds / 60).toFixed(2)} min</p>` : h}
+                  ${e.available ? r`<p>${di[e.play_status] ?? "Unknown playback state"} · ${ci[e.location] ?? "Unknown location"}</p>` : l}
+                  ${t && e.duration_seconds != null ? r`<p>Runtime · ${(e.duration_seconds / 60).toFixed(2)} min</p>` : l}
                   ${t && e.session ? r`<p>
                             This session ·
                             ${(e.session.watched_seconds / 60).toFixed(2)}
@@ -4597,11 +4597,11 @@ const di = {
                           <small
                             >Pauses and scans are excluded.
                             ${e.session.credits_confirmed ? "Credits confirmed; journal completion also requires the configured watch threshold." : "Credits not yet confirmed."}
-                            ${e.session.gap_count ? r` ${y(e.session.gap_count, "timing gap")}.` : h}</small
-                          >` : h}
+                            ${e.session.gap_count ? r` ${y(e.session.gap_count, "timing gap")}.` : l}</small
+                          >` : l}
                   <p role="status">
                     ${this.recordingStatus(e, !!t)}
-                    ${e.buffered_observations ? r` ${y(e.buffered_observations, "update")} buffered.` : h}
+                    ${e.buffered_observations ? r` ${y(e.buffered_observations, "update")} buffered.` : l}
                   </p>
                   <small
                     >Live snapshot refreshes about every 5 seconds while
@@ -4720,14 +4720,14 @@ const le = class le extends v {
           Sync all watched movies to calendar</button
         ><button type="button" ?disabled=${this.working} @click=${this.refresh}>
           Refresh export status</button
-        >${this.status?.active ? r`<button type="button" ?disabled=${this.working} @click=${this.cancel}>Cancel export</button>` : h}
+        >${this.status?.active ? r`<button type="button" ?disabled=${this.working} @click=${this.cancel}>Cancel export</button>` : l}
       </div>
       ${e ? r`<p role="status">
               ${e.finished ? "Export finished" : "Export in progress"} ·
               ${y(e.total, "viewing")} ·
               ${Object.entries(e.counts).map(([t, i]) => `${i} ${t}`).join(" · ")}
-            </p>` : h}
-      ${this.error ? r`<p role="alert" class="error">${this.error}</p>` : h}
+            </p>` : l}
+      ${this.error ? r`<p role="alert" class="error">${this.error}</p>` : l}
       <dialog
         class="database-dialog"
         aria-labelledby="calendar-export-title"
@@ -4765,7 +4765,7 @@ const le = class le extends v {
     }}
                 >
                   Discard retry & inspect
-                </button>` : h}
+                </button>` : l}
         <div class="dialog-footer">
           <button
             type="button"
@@ -4891,8 +4891,8 @@ const he = class he extends v {
       >
         ${this.working ? "Checking…" : "Repair Journal Library metadata"}
       </button>
-      ${this.result ? r`<p role="status">Updated ${y(this.result.updated_count, "entry", "entries")} · ${this.result.unmatched_count} unmatched · ${this.result.active_count} active and skipped.</p>` : h}
-      ${this.error ? r`<p role="alert" class="error">${this.error}</p>` : h}
+      ${this.result ? r`<p role="status">Updated ${y(this.result.updated_count, "entry", "entries")} · ${this.result.unmatched_count} unmatched · ${this.result.active_count} active and skipped.</p>` : l}
+      ${this.error ? r`<p role="alert" class="error">${this.error}</p>` : l}
       <dialog
         class="database-dialog"
         aria-labelledby="metadata-repair-title"
@@ -4900,7 +4900,7 @@ const he = class he extends v {
         @cancel=${this.close}
       >
         <h2 id="metadata-repair-title">Repair Journal Library metadata</h2>
-        ${e ? r`<p>${y(e.updated_count, "entry", "entries")} with missing details can be updated. ${e.unchanged_count} already up to date · ${e.unmatched_count} unmatched · ${e.active_count} active and skipped.</p>` : h}
+        ${e ? r`<p>${y(e.updated_count, "entry", "entries")} with missing details can be updated. ${e.unchanged_count} already up to date · ${e.unmatched_count} unmatched · ${e.active_count} active and skipped.</p>` : l}
         <p>
           Matches use version identifiers in the configured Library, including
           recognized playback handles. Movie names are never guessed. Existing
@@ -4910,7 +4910,7 @@ const he = class he extends v {
           Existing calendar events are not edited or recreated. Sync the Library
           first if its details need refreshing.
         </p>
-        ${this.error ? r`<p role="alert" class="error">${this.error}</p>` : h}
+        ${this.error ? r`<p role="alert" class="error">${this.error}</p>` : l}
         ${this.pending ? r`<p role="alert">
                   The result is unconfirmed. Retry the same repair to retrieve
                   its result.
@@ -4925,7 +4925,7 @@ const he = class he extends v {
     }}
                 >
                   Discard retry & review again
-                </button>` : h}
+                </button>` : l}
         <div class="dialog-footer">
           <button
             type="button"
@@ -5165,8 +5165,8 @@ const lt = [
         when saved. Shared Library display settings save immediately to the
         database.
       </p>
-      ${this.error ? r`<p class="error" role="alert">${this.error}</p>` : h}
-      ${this.uncertain ? r`<p class="warning">The save result is unconfirmed. Reload settings to inspect the saved values before making another change.</p>` : h}
+      ${this.error ? r`<p class="error" role="alert">${this.error}</p>` : l}
+      ${this.uncertain ? r`<p class="warning">The save result is unconfirmed. Reload settings to inspect the saved values before making another change.</p>` : l}
       ${this.loading ? r`<p role="status">Loading settings…</p>` : this.flow?.type === "form" ? r`<form
                   id="companion-settings-form"
                   @submit=${this.save}
@@ -5193,10 +5193,10 @@ const lt = [
                             >${t}<input
                               name=${e}
                               type=${i}
-                              min=${s || h}
-                              max=${a || h}
-                              step=${i === "number" ? "1" : h}
-                              maxlength=${i === "text" ? "255" : h}
+                              min=${s || l}
+                              max=${a || l}
+                              step=${i === "number" ? "1" : l}
+                              maxlength=${i === "text" ? "255" : l}
                               ?required=${i === "number" || !!this.draft.tracking_enabled}
                               .value=${String(this.draft[e] ?? "")}
                               @input=${(o) => {
@@ -5288,7 +5288,7 @@ const lt = [
                               {started_at}, {ended_at}, {watched}. Duration and
                               watched time are minutes; missing values are
                               blank. Use double braces for literal braces.
-                            </p>` : h}
+                            </p>` : l}
                     <kaleidescape-calendar-export
                       .client=${this.client}
                       .scope=${this.scope}
@@ -5320,10 +5320,10 @@ const lt = [
                                     >${t}<input
                                       name=${e}
                                       type=${i}
-                                      min=${s || h}
-                                      max=${a || h}
-                                      step=${i === "number" ? "1" : h}
-                                      maxlength=${i === "text" ? "255" : h}
+                                      min=${s || l}
+                                      max=${a || l}
+                                      step=${i === "number" ? "1" : l}
+                                      maxlength=${i === "text" ? "255" : l}
                                       ?required=${i === "number"}
                                       .value=${String(this.draft[e] ?? "")}
                                       @input=${(o) => {
@@ -5363,12 +5363,12 @@ const lt = [
                               source metadata. “Added on” means first detected,
                               not purchased or downloaded.
                             </p>
-                            ${this.draft.library_sync_artwork ? r`<p class="warning">Artwork uses additional disk space in a separate private cache, up to ${String(this.draft.library_artwork_cache_mb)} MiB plus one incoming image (up to 5 MiB). The journal database retains its 256 MiB limit. Increase the cache limit for a large library; older covers may be evicted and fetched again. HA backups can include these files.</p>` : h}` : h}
+                            ${this.draft.library_sync_artwork ? r`<p class="warning">Artwork uses additional disk space in a separate private cache, up to ${String(this.draft.library_artwork_cache_mb)} MiB plus one incoming image (up to 5 MiB). The journal database retains its 256 MiB limit. Increase the cache limit for a large library; older covers may be evicted and fetched again. HA backups can include these files.</p>` : l}` : l}
                     ${this.initial.library_enabled ? r`<kaleidescape-metadata-repair
                             .client=${this.client}
                             .scope=${this.scope}
                             .disabled=${this.saving || this.uncertain || JSON.stringify(this.draft) !== JSON.stringify(this.initial)}
-                          ></kaleidescape-metadata-repair>` : h}
+                          ></kaleidescape-metadata-repair>` : l}
                     <h3>Landing page</h3>
                     <label
                       >Default landing page<select
@@ -5406,7 +5406,7 @@ const lt = [
                 </form>
                 <h3>Shared Library display settings</h3>
                 <p>Saved to the database as you change them; no HA reload.</p>
-                ${this.renderCollections()}` : h}
+                ${this.renderCollections()}` : l}
     </section>`;
   }
   renderCollections() {
@@ -5419,7 +5419,7 @@ const lt = [
     );
     return r`<fieldset class="full">
       <legend>Hidden collection names</legend>
-      ${this.sharedError ? r`<p class="error" role="alert">${this.sharedError}<button type="button" @click=${() => this.sharedPreferences?.retry()}>Retry UI settings</button></p>` : h}
+      ${this.sharedError ? r`<p class="error" role="alert">${this.sharedError}<button type="button" @click=${() => this.sharedPreferences?.retry()}>Retry UI settings</button></p>` : l}
       <div class="facet-options">
         ${t.map(
       (i) => r`<label class="check"
@@ -5585,7 +5585,7 @@ const gi = _`
       const o = s[2].replace(/\s+/g, " ").toLowerCase();
       return {
         start: this.cursor - s[2].length,
-        options: this.operators.filter((l) => l.toLowerCase().startsWith(o)).slice(0, 12)
+        options: this.operators.filter((h) => h.toLowerCase().startsWith(o)).slice(0, 12)
       };
     }
     let a;
@@ -5641,7 +5641,7 @@ const gi = _`
             aria-autocomplete="list"
             aria-expanded=${this.open && !!e.length}
             aria-controls="query-suggestions"
-            aria-activedescendant=${this.open && e.length ? `query-option-${this.active}` : h}
+            aria-activedescendant=${this.open && e.length ? `query-option-${this.active}` : l}
             aria-invalid=${this.invalid}
             aria-describedby="query-help"
             maxlength="2000"
@@ -5671,7 +5671,7 @@ const gi = _`
     }}
           /><slot name="actions"></slot>
         </div>
-        ${this.open && e.length ? r`<div class="suggestions" id="query-suggestions" role="listbox">${e.map((t, i) => r`<button type="button" role="option" id=${`query-option-${i}`} aria-selected=${this.active === i} tabindex="-1" @mousedown=${(s) => s.preventDefault()} @click=${() => this.choose(t)}>${t}</button>`)}</div>` : h}
+        ${this.open && e.length ? r`<div class="suggestions" id="query-suggestions" role="listbox">${e.map((t, i) => r`<button type="button" role="option" id=${`query-option-${i}`} aria-selected=${this.active === i} tabindex="-1" @mousedown=${(s) => s.preventDefault()} @click=${() => this.choose(t)}>${t}</button>`)}</div>` : l}
       </div>
       <small id="query-help" class=${this.invalid ? "error" : ""} role="status"
         >${this.message || "Text searches every column. Conditions: purchased_on IS NULL · actors CONTAINS 'name' · title LIKE 'Star%'. Tab accepts a suggestion; Enter searches."}</small
@@ -5824,7 +5824,7 @@ const ue = class ue extends v {
           aria-autocomplete="list"
           aria-controls="purchase-matches"
           aria-expanded=${!!this.items.length}
-          aria-activedescendant=${this.active >= 0 ? `purchase-match-${this.active}` : h}
+          aria-activedescendant=${this.active >= 0 ? `purchase-match-${this.active}` : l}
           maxlength="100"
           .value=${this.query}
           ?disabled=${this.disabled}
@@ -5835,11 +5835,11 @@ const ue = class ue extends v {
       }, 250), this.requestUpdate();
     }}
       /></label>
-      ${this.loading ? r`<p role="status">Searching cached Library…</p>` : h}
+      ${this.loading ? r`<p role="status">Searching cached Library…</p>` : l}
       ${this.error ? r`<p class="error" role="alert">${this.error}</p>
               <button ?disabled=${this.disabled} @click=${() => this.search()}>
                 Retry search
-              </button>` : h}
+              </button>` : l}
       <ul
         id="purchase-matches"
         class="suggestions"
@@ -5864,8 +5864,8 @@ const ue = class ue extends v {
             </li>`
     )}
       </ul>
-      ${!this.loading && !this.error && !this.items.length ? r`<p class="muted">No matching titles. Try part of the Library title.</p>` : h}
-      ${this.more ? r`<p class="muted">Showing 20 movies. Refine the search for more specific results.</p>` : h}
+      ${!this.loading && !this.error && !this.items.length ? r`<p class="muted">No matching titles. Try part of the Library title.</p>` : l}
+      ${this.more ? r`<p class="muted">Showing 20 movies. Refine the search for more specific results.</p>` : l}
       <div class="actions">
         <button ?disabled=${this.disabled} @click=${this.cancel}>
           Cancel match</button
@@ -5988,9 +5988,9 @@ const pe = class pe extends v {
         i.signal
       );
       if (t !== this.generation) return;
-      const o = URL.createObjectURL(a), l = document.createElement("a");
+      const o = URL.createObjectURL(a), h = document.createElement("a");
       try {
-        l.href = o, l.download = `kaleidescape-journal.${e}`, l.click();
+        h.href = o, h.download = `kaleidescape-journal.${e}`, h.click();
       } finally {
         setTimeout(() => URL.revokeObjectURL(o), 1e3);
       }
@@ -6072,7 +6072,7 @@ const pe = class pe extends v {
         ...this.review,
         ...o,
         rows: this.review.rows.map(
-          (l) => l.key === i ? a : l
+          (h) => h.key === i ? a : h
         )
       }, this.matching = void 0, ["new", "merge"].includes(s.row.action) ? this.selected.add(i) : this.selected.delete(i), this.page = 0;
     } catch (s) {
@@ -6083,12 +6083,12 @@ const pe = class pe extends v {
     }
   }
   renderReview(e) {
-    if (!this.review) return h;
+    if (!this.review) return l;
     const t = this.review, i = this.query.trim().toLocaleLowerCase(), s = t.rows.filter(
       (d) => (!this.changesOnly || d.needs_match || !d.needs_match && ["new", "merge"].includes(d.action)) && `${d.title} ${d.detail ?? ""} ${d.table} ${Object.keys(d.changes).join(" ")}`.toLocaleLowerCase().includes(i)
     ).sort(
       (d, c) => +!!c.needs_match - +!!d.needs_match
-    ), a = Math.max(0, Math.ceil(s.length / this.pageSize) - 1), o = Math.min(this.page, a), l = s.slice(
+    ), a = Math.max(0, Math.ceil(s.length / this.pageSize) - 1), o = Math.min(this.page, a), h = s.slice(
       o * this.pageSize,
       (o + 1) * this.pageSize
     );
@@ -6103,13 +6103,19 @@ const pe = class pe extends v {
       this.matching = void 0, this.requestUpdate();
     }}
               @access-denied=${() => this.fail({ code: "unauthorized" })}
-            ></kaleidescape-import-matcher>` : h}
+            ></kaleidescape-import-matcher>` : l}
       <p role="status">
         ${t.counts.new} new · ${t.counts.merge} mergeable ·
         ${t.counts.unchanged} unchanged · ${t.counts.skip} skipped.
         ${this.selected.size} selected.
-        ${t.rows.some((d) => d.needs_match) ? r`${y(t.rows.filter((d) => d.needs_match).length, "purchase requiring a match")} shown first.` : h}
+        ${t.rows.some((d) => d.needs_match) ? r`${y(t.rows.filter((d) => d.needs_match).length, "purchase requiring a match")} shown first.` : l}
       </p>
+      ${t.rows.some((d) => d.key.startsWith("purchases:")) ? r`<p class="muted">
+              Purchase records are attached to the matched existing Library
+              entry. New means a new purchase record, not a new movie. Purchase
+              titles preserve the store's wording; Library titles are kept
+              unchanged.
+            </p>` : l}
       <div class="actions">
         <label
           >Search review<input
@@ -6162,47 +6168,57 @@ const pe = class pe extends v {
             </tr>
           </thead>
           <tbody>
-            ${l.map(
-      (d) => r`<tr>
-                  <td>
-                    <input
-                      type="checkbox"
-                      aria-label=${`Import ${d.title}`}
-                      .checked=${this.selected.has(d.key)}
-                      ?disabled=${e || !!d.needs_match || !["new", "merge"].includes(d.action)}
-                      @change=${(c) => {
-        c.target.checked ? this.selected.add(d.key) : this.selected.delete(d.key), this.requestUpdate();
+            ${h.map((d) => {
+      const c = d.key.startsWith("purchases:"), g = c ? d.needs_match ? "Choose Library match" : {
+        new: "Add purchase to Library entry",
+        merge: "Update purchase record",
+        unchanged: "Purchase already imported",
+        skip: "Skip purchase"
+      }[d.action] : d.action;
+      return r`<tr>
+                <td>
+                  <input
+                    type="checkbox"
+                    aria-label=${`Import ${d.title}`}
+                    .checked=${this.selected.has(d.key)}
+                    ?disabled=${e || !!d.needs_match || !["new", "merge"].includes(d.action)}
+                    @change=${(b) => {
+        b.target.checked ? this.selected.add(d.key) : this.selected.delete(d.key), this.requestUpdate();
       }}
-                    />
-                  </td>
-                  <td>
-                    ${d.title}<small class="muted" title=${d.key}
-                      >${d.detail}</small
-                    ><small class="muted">${d.table}</small>
-                  </td>
-                  <td>${d.action}</td>
-                  <td>
-                    ${d.reason || Object.keys(d.changes).join(", ") || "No missing data"}
-                    ${d.needs_match ? r`<small class="warning">No Library match selected</small>` : h}
-                    ${d.can_match ? r`<button
-                            ?disabled=${e || !!this.matching || !!this.scope?.tracking_enabled}
-                            @click=${() => this.openMatch(d)}
-                          >
-                            Match title…
-                          </button>` : h}
-                    ${d.conflicts.length ? r`<small class="muted">Existing values kept: ${d.conflicts.join(", ")}</small>` : h}
-                    ${Object.keys(d.changes).length ? r`<details>
-                            <summary>Changes</summary>
-                            <pre>${JSON.stringify(d.changes, null, 2)}</pre>
-                          </details>` : h}
-                  </td>
-                </tr>`
-    )}
+                  />
+                </td>
+                <td>
+                  ${d.title}<small class="muted" title=${d.key}
+                    >${d.detail}</small
+                  ><small class="muted"
+                    >${c ? "Purchase history on Library entry" : d.table}</small
+                  >
+                </td>
+                <td>${g}</td>
+                <td>
+                  ${d.reason || Object.keys(d.changes).join(", ") || "No missing data"}
+                  ${d.needs_match ? r`<small class="warning">No Library match selected</small>` : l}
+                  ${d.can_match ? r`<button
+                          ?disabled=${e || !!this.matching || !!this.scope?.tracking_enabled}
+                          @click=${() => this.openMatch(d)}
+                        >
+                          Match title…
+                        </button>` : l}
+                  ${d.conflicts.length ? r`<small class="muted">Existing ${c ? "purchase " : ""}values kept: ${d.conflicts.join(", ")}</small>` : l}
+                  ${Object.keys(d.changes).length ? r`<details>
+                          <summary>
+                            ${c ? d.action === "new" ? "Purchase record to add" : "Purchase record changes" : "Changes"}
+                          </summary>
+                          <pre>${JSON.stringify(d.changes, null, 2)}</pre>
+                        </details>` : l}
+                </td>
+              </tr>`;
+    })}
           </tbody>
         </table>
       </div>
       <p class="muted">
-        ${l.length === 1 ? "Row" : "Rows"}
+        ${h.length === 1 ? "Row" : "Rows"}
         ${s.length ? o * this.pageSize + 1 : 0}–${Math.min((o + 1) * this.pageSize, s.length)}
         of ${s.length}. Selection covers all review pages.
       </p>
@@ -6248,7 +6264,7 @@ const pe = class pe extends v {
         unlinked. Purchase rows start unchecked; select the purchases and links
         you approve.
       </p>
-      ${this.scope?.tracking_enabled ? r`<p class="warning">Disable automatic tracking in Settings before importing.</p>` : h}
+      ${this.scope?.tracking_enabled ? r`<p class="warning">Disable automatic tracking in Settings before importing.</p>` : l}
       <label
         >JSON or SQLite file<input
           type="file"
@@ -6258,7 +6274,7 @@ const pe = class pe extends v {
       this.file = t.target.files?.[0], this.review = void 0, this.matching = void 0, this.selected.clear(), this.error = this.notice = "", this.requestUpdate();
     }}
       /></label>
-      ${this.file ? r`<p>${this.file.name} · ${(this.file.size / 1024).toFixed(1)} KiB</p>` : h}
+      ${this.file ? r`<p>${this.file.name} · ${(this.file.size / 1024).toFixed(1)} KiB</p>` : l}
       <div class="actions">
         <button
           ?disabled=${e || !this.file || !!this.scope?.tracking_enabled}
@@ -6289,7 +6305,7 @@ const pe = class pe extends v {
                   Discard import retry & inspect
                 </button>
               </div>
-            </div>` : h}`;
+            </div>` : l}`;
   }
   render() {
     const e = this.disabled || this.working || !!this.pending;
@@ -6309,8 +6325,8 @@ const pe = class pe extends v {
           Export
         </button>
       </div>
-      ${!this.dialog && this.error ? r`<p class="error" role="alert">${this.error}</p>` : h}
-      ${!this.dialog && this.notice ? r`<p class="notice" role="status">${this.notice}</p>` : h}
+      ${!this.dialog && this.error ? r`<p class="error" role="alert">${this.error}</p>` : l}
+      ${!this.dialog && this.notice ? r`<p class="notice" role="status">${this.notice}</p>` : l}
       <dialog
         class="database-dialog"
         @click=${w}
@@ -6322,7 +6338,7 @@ const pe = class pe extends v {
             ${this.dialog === "export" ? "Export database" : "Merge Import"}
           </h2>
         </div>
-        ${this.error && this.dialog ? r`<p class="error" role="alert">${this.error}</p>` : h}
+        ${this.error && this.dialog ? r`<p class="error" role="alert">${this.error}</p>` : l}
         ${this.dialog === "export" ? r`<p>
                   Exports include private history and deleted records. SQLite
                   also includes catalog and source metadata. Store downloads
@@ -6340,14 +6356,14 @@ const pe = class pe extends v {
                   >
                     Export SQLite
                   </button>
-                </div>` : this.dialog === "import" ? this.renderImport(e) : h}
+                </div>` : this.dialog === "import" ? this.renderImport(e) : l}
         <div class="actions dialog-footer">
           <button
             ?disabled=${this.working || !!this.pending}
             @click=${this.closeDialog}
           >
             Cancel</button
-          >${this.dialog === "import" && this.review ? r`<button class="primary" ?disabled=${e || !!this.matching || !this.selected.size} @click=${this.importData}>Apply ${y(this.selected.size, "selected change")}</button>` : h}
+          >${this.dialog === "import" && this.review ? r`<button class="primary" ?disabled=${e || !!this.matching || !this.selected.size} @click=${this.importData}>Apply ${y(this.selected.size, "selected change")}</button>` : l}
         </div>
       </dialog>`;
   }
@@ -6372,7 +6388,7 @@ pe.properties = {
         width: 30%;
       }
       th:nth-child(3) {
-        width: 90px;
+        width: 160px;
       }
       td:first-child {
         min-width: 0;
@@ -6521,11 +6537,11 @@ const O = {
       return;
     const t = [];
     for (const [a, o] of Object.entries(e.key)) {
-      const l = this.detail[o];
-      if (l == null || !/^[a-z_]+$/.test(a) || !["string", "number"].includes(typeof l))
+      const h = this.detail[o];
+      if (h == null || !/^[a-z_]+$/.test(a) || !["string", "number"].includes(typeof h))
         return;
       t.push(
-        `${a} = ${typeof l == "number" ? l : `'${String(l).replaceAll("'", "''")}'`}`
+        `${a} = ${typeof h == "number" ? h : `'${String(h).replaceAll("'", "''")}'`}`
       );
     }
     Y.includes(e.table) || (this.showSystem = !0, this.preferences?.set({ show_system: !0 })), this.table = e.table, this.search = `WHERE ${t.join(" AND ")}`, this.filters = {
@@ -6699,7 +6715,7 @@ const O = {
           >
             Discard retry & reload
           </button>
-        </div>` : h;
+        </div>` : l;
   }
   options() {
     return r`<dialog
@@ -6745,7 +6761,7 @@ const O = {
   render() {
     if (!this.ready)
       return r`<p>${this.error || "Loading database preferences…"}</p>
-        ${this.error ? r`<button @click=${() => this.initialize()}>Retry loading database</button>` : h}`;
+        ${this.error ? r`<button @click=${() => this.initialize()}>Retry loading database</button>` : l}`;
     const e = Object.keys(this.page?.tables ?? O).filter(
       (i) => this.showSystem || Y.includes(i)
     ), t = (this.page?.schema ?? []).some((i) => i.editable);
@@ -6789,7 +6805,7 @@ const O = {
           </button>
         </div>
         <div class="database-messages">
-          ${this.error ? r`<p class="error" role="alert">${this.error}</p>` : h}${this.notice ? r`<p role="status">${this.notice}</p>` : h}${this.preferenceError ? r`<p class="warning">${this.preferenceError}<button @click=${() => this.preferences?.retry()}>Retry preferences</button></p>` : h}${this.retry()}
+          ${this.error ? r`<p class="error" role="alert">${this.error}</p>` : l}${this.notice ? r`<p role="status">${this.notice}</p>` : l}${this.preferenceError ? r`<p class="warning">${this.preferenceError}<button @click=${() => this.preferences?.retry()}>Retry preferences</button></p>` : l}${this.retry()}
         </div>
         <div
           class="page-tabs table-tabs"
@@ -6852,7 +6868,7 @@ const O = {
           <div class="card-head">
             <h2>${O[this.table] ?? this.table}</h2>
           </div>
-          ${this.loading ? r`<p role="status">Loading database…</p>` : h}
+          ${this.loading ? r`<p role="status">Loading database…</p>` : l}
           <ul class="entry-list" tabindex="0" aria-label="Database rows">
             ${this.page?.items.map(
       (i, s) => r`<li class=${this.detail === i ? "selected" : ""}>
@@ -6864,7 +6880,7 @@ const O = {
                           @change=${(a) => {
         a.target.checked ? this.selected.add(s) : this.selected.delete(s), this.requestUpdate();
       }}
-                        />` : h}<button
+                        />` : l}<button
                     class="link entry-name"
                     ?disabled=${this.blocked}
                     @click=${() => this.showDetail(i)}
@@ -6882,7 +6898,7 @@ const O = {
         >
           <div class="card-head">
             <h2>Entry details</h2>
-            ${this.detail ? r`<button ?disabled=${this.blocked || !t} @click=${this.edit}>Edit entry</button>` : h}
+            ${this.detail ? r`<button ?disabled=${this.blocked || !t} @click=${this.edit}>Edit entry</button>` : l}
           </div>
           ${this.detail ? r`${(this.table === "library_artwork" || this.table === "library") && (this.detail.cache_key || this.detail.artwork_key) ? r`<div class="database-preview">
                             <kaleidescape-library-cover
@@ -6893,12 +6909,12 @@ const O = {
                               .title=${String(this.detail.title ?? "Database artwork")}
                             ></kaleidescape-library-cover>
                           </div>
-                          ${this.scope?.library_enabled ? h : r`<small>Enable Library to preview cached artwork.</small>`}` : h}
+                          ${this.scope?.library_enabled ? l : r`<small>Enable Library to preview cached artwork.</small>`}` : l}
                   <div class="database-references">
                     ${(this.page?.references ?? []).filter((i) => Object.values(i.key).every((s) => this.detail?.[s] != null)).map((i) => r`<button class="link" ?disabled=${this.blocked} @click=${() => this.follow(i)}>Open ${O[i.table] ?? i.table} · ${Object.values(i.key).join(", ")}</button>`)}
                   </div>
                   <pre>${JSON.stringify(this.detail, null, 2)}</pre>
-                  ${t ? h : r`<p class="muted">This table protects system integrity; stored values are read-only.</p>`}` : r`<p class="empty">
+                  ${t ? l : r`<p class="muted">This table protects system integrity; stored values are read-only.</p>`}` : r`<p class="empty">
                   Select an entry to inspect raw values.
                 </p>`}
         </section>
@@ -6933,7 +6949,7 @@ const O = {
                     Next
                   </button>
                 </div>
-              </div>` : h}
+              </div>` : l}
       </footer>
       ${this.options()}
       <dialog
@@ -6953,7 +6969,7 @@ const O = {
           until closed. Session corrections do not recalculate viewing
           summaries.
         </p>
-        ${this.error ? r`<p class="error">${this.error}</p>` : h}${this.retry()}
+        ${this.error ? r`<p class="error">${this.error}</p>` : l}${this.retry()}
         <form @submit=${this.save}>
           <fieldset ?disabled=${this.saving || !!this.pending}>
             ${this.operation === "new" ? r`<kaleidescape-manual-viewing
@@ -7000,7 +7016,7 @@ const O = {
         s.target.checked ? this.nulls.add(i.name) : this.nulls.delete(i.name), this.requestUpdate();
       }}
                                   />NULL</label
-                                >` : h}
+                                >` : l}
                         </div>`
     )}<label class="check"
               ><input
@@ -7046,7 +7062,7 @@ const O = {
           sync may recreate cached library records. Existing exports and backups
           remain.
         </p>
-        ${this.error ? r`<p class="error">${this.error}</p>` : h}${this.retry()}<label
+        ${this.error ? r`<p class="error">${this.error}</p>` : l}${this.retry()}<label
           >Type DELETE to confirm<input
             name="delete_confirmation"
             .value=${this.deleteWord}
@@ -7215,10 +7231,10 @@ const $e = [
         return;
       this.selected = o, this.draft = this.initial = null, this.detailLoading = !1, this.requestUpdate();
       try {
-        const l = await t.sessions(i, e);
-        s === this.generation && a === this.detailRequest && (this.sessions = l);
-      } catch (l) {
-        s === this.generation && a === this.detailRequest && (u(l) === "unauthorized" ? this.fail(l) : this.sessionError = "Session details could not be loaded.");
+        const h = await t.sessions(i, e);
+        s === this.generation && a === this.detailRequest && (this.sessions = h);
+      } catch (h) {
+        s === this.generation && a === this.detailRequest && (u(h) === "unauthorized" ? this.fail(h) : this.sessionError = "Session details could not be loaded.");
       }
     } catch (o) {
       s === this.generation && a === this.detailRequest && this.fail(o);
@@ -7344,7 +7360,7 @@ const $e = [
       this.draft,
       (e, t) => this.input(e, t)
     )}
-        ${this.selected?.origin === "observed" ? r`<small>Only fields you change are marked as manual corrections. Session evidence is retained.</small>` : h}
+        ${this.selected?.origin === "observed" ? r`<small>Only fields you change are marked as manual corrections. Session evidence is retained.</small>` : l}
         <div class="actions dialog-footer">
           <button type="button" @click=${this.cancelEdit}>Cancel</button>
           <button type="submit" class="primary">
@@ -7389,13 +7405,13 @@ const $e = [
                 ${this.selected.completion_reason ?? "Not completed"}
               </div>
               ${this.sessionError ? r`<p>${this.sessionError}</p>` : this.sessions ? this.sessions.items.length ? r` ${this.sessions.items.map((e) => r`<div class="session">${this.date(e.started_at)}<br />${(e.watched_seconds / 60).toFixed(2)} min watched · ${e.credits_confirmed ? "Credits confirmed" : "Credits unconfirmed"} · ${y(e.gap_count, "timing gap")}<br />${e.end_reason ?? "Open session"}</div>`)}
-                        ${this.sessions.has_more ? r`<small>Showing the latest 100 sessions.</small>` : h}` : r`<p class="muted">
+                        ${this.sessions.has_more ? r`<small>Showing the latest 100 sessions.</small>` : l}` : r`<p class="muted">
                           No recorded sessions for this entry.
                         </p>` : r`<p class="muted">
                         Session details have not been loaded. Reopen the entry
                         to load them.
                       </p>`}
-            </details>` : h}
+            </details>` : l}
     `;
   }
   renderJournal() {
@@ -7408,7 +7424,7 @@ const $e = [
               ><button @click=${this.inspectJournal}>
                 Discard retry & inspect journal
               </button>
-            </div>` : h;
+            </div>` : l;
     return r`<section class="card journal" aria-label="Journal">
         <div class="entries-header">
           <div class="journal-toolbar">
@@ -7521,11 +7537,11 @@ const $e = [
           >
             <div class="card-head">
               <h2>Viewing details</h2>
-              ${this.selected ? r`<button ?disabled=${e} @click=${this.editRecord}>Edit viewing</button><button class="danger" ?disabled=${e} @click=${this.openDelete}>Delete entry</button>` : h}
+              ${this.selected ? r`<button ?disabled=${e} @click=${this.editRecord}>Edit viewing</button><button class="danger" ?disabled=${e} @click=${this.openDelete}>Delete entry</button>` : l}
             </div>
             ${this.detailLoading ? r`<div class="empty" role="status">Loading entry…</div>` : this.selected ? r`${$t(this.selected, (i) => this.date(i))}
                     ${this.selected.notes ? r`<h3>Notes</h3>
-                            <p class="journal-notes">${this.selected.notes}</p>` : h}
+                            <p class="journal-notes">${this.selected.notes}</p>` : l}
                     ${this.renderEvidence()}` : r`<div class="empty">
                       <strong>Select an entry</strong>
                       <p>Review its details or add a manual viewing.</p>
@@ -7584,10 +7600,10 @@ const $e = [
         <h2 id="journal-editor-title">
           ${this.manual ? "New viewing" : "Edit viewing"}
         </h2>
-        ${this.notice ? r`<p class="notice" role="status">${this.notice}</p>` : h}
-        ${this.error ? r`<p class="error" role="alert">${this.error}</p>` : h}
-        ${this.lastError === "conflict" && this.selected ? r`<button @click=${this.reloadSelected}>Reload entry</button>` : h}
-        ${this.draft ? t : h}${this.draft ? this.renderEditor() : h}
+        ${this.notice ? r`<p class="notice" role="status">${this.notice}</p>` : l}
+        ${this.error ? r`<p class="error" role="alert">${this.error}</p>` : l}
+        ${this.lastError === "conflict" && this.selected ? r`<button @click=${this.reloadSelected}>Reload entry</button>` : l}
+        ${this.draft ? t : l}${this.draft ? this.renderEditor() : l}
       </dialog>
       <dialog
         id="journal-delete"
@@ -7602,7 +7618,7 @@ const $e = [
           Stored history and backup copies are retained. This does not
           permanently erase the data.
         </p>
-        ${this.error ? r`<p class="error" role="alert">${this.error}</p>` : h}${this.confirmDelete ? t : h}
+        ${this.error ? r`<p class="error" role="alert">${this.error}</p>` : l}${this.confirmDelete ? t : l}
         <div class="dialog-footer">
           <button
             ?disabled=${this.saving || !!this.pending}
@@ -7629,7 +7645,7 @@ const $e = [
     const e = this.loading || this.saving || !!this.pending || this.maintenanceBusy || this.settingsBusy;
     return r`<main>
       <header>
-        ${this.hass && this.narrow ? r`<button class="menu" aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: !0, composed: !0 }))}>☰</button>` : h}
+        ${this.hass && this.narrow ? r`<button class="menu" aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: !0, composed: !0 }))}>☰</button>` : l}
         <div class="grow">
           <span class="eyebrow">Kaleidescape Companion · Administrator</span>
           <h1>Kaleidescape Companion</h1>
@@ -7644,10 +7660,10 @@ const $e = [
               aria-label="Companion pages"
               @keydown=${(t) => this.pageKey(t)}
             >
-              ${$e.map((t) => r`<button id=${`page-${t.id}`} role="tab" aria-selected=${this.activePage === t.id} aria-controls="companion-page" tabindex=${this.activePage === t.id ? "0" : "-1"} ?disabled=${e || t.id === "library" && !this.info?.library_enabled} title=${t.id === "library" && !this.info?.library_enabled ? "Enable library sync in Settings" : h} @click=${() => this.switchPage(t.id)}>${t.label}</button>`)}
-            </div>` : h}
-      ${this.error ? r`<div class="error" role="alert">${this.error}${this.lastError === "conflict" && this.selected ? r` <button ?disabled=${e} @click=${this.reloadSelected}>Reload entry</button>` : h}</div>` : h}
-      ${this.notice ? r`<div class="notice" role="status">${this.notice}</div>` : h}
+              ${$e.map((t) => r`<button id=${`page-${t.id}`} role="tab" aria-selected=${this.activePage === t.id} aria-controls="companion-page" tabindex=${this.activePage === t.id ? "0" : "-1"} ?disabled=${e || t.id === "library" && !this.info?.library_enabled} title=${t.id === "library" && !this.info?.library_enabled ? "Enable library sync in Settings" : l} @click=${() => this.switchPage(t.id)}>${t.label}</button>`)}
+            </div>` : l}
+      ${this.error ? r`<div class="error" role="alert">${this.error}${this.lastError === "conflict" && this.selected ? r` <button ?disabled=${e} @click=${this.reloadSelected}>Reload entry</button>` : l}</div>` : l}
+      ${this.notice ? r`<div class="notice" role="status">${this.notice}</div>` : l}
       ${this.api ? this.info ? r`<section
                 id="companion-page"
                 role="tabpanel"
@@ -7689,7 +7705,7 @@ const $e = [
               </section>` : r`<div class="empty" role="status">
                 <strong
                   >${this.loading ? "Connecting to the journal…" : "Journal unavailable"}</strong
-                >${this.loading ? h : r`<button @click=${() => this.refresh()}>Reload connection</button>`}
+                >${this.loading ? l : r`<button @click=${() => this.refresh()}>Reload connection</button>`}
               </div>` : r`<div class="empty">
               <strong>Connect through Home Assistant</strong>
               <p>

@@ -829,6 +829,12 @@ helper and reviewed exact-ID SQLite merge. Date display remains in the shared
 positive Library projection; account/invoice content never enters that
 projection.
 
+Purchase import review labels distinguish invoice additions from existing
+Library entries. Context labels preserve the original field keys and
+before/after values, reviewed operation, target, selection and approval
+requirements. Invoice titles and other imported values are rendered as text,
+never markup.
+
 ## Explicit collection additions
 
 The [Add to Collection contract](library-collections.md) narrowly extends the

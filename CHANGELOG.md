@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased — Clear purchase import review
+
+- Distinguish purchase additions/updates from Library entries in import review
+  while preserving the original field keys and before/after values.
+
 ## Unreleased — Purchase export release year
 
 - Include a separate integer `year` in purchase JSON, inferred from the

@@ -37,7 +37,7 @@ export class KaleidescapeTransfers extends LitElement {
         width: 30%;
       }
       th:nth-child(3) {
-        width: 90px;
+        width: 160px;
       }
       td:first-child {
         min-width: 0;
@@ -446,6 +446,16 @@ export class KaleidescapeTransfers extends LitElement {
         ${this.selected.size} selected.
         ${review.rows.some((row) => row.needs_match) ? html`${counted(review.rows.filter((row) => row.needs_match).length, "purchase requiring a match")} shown first.` : nothing}
       </p>
+      ${
+        review.rows.some((row) => row.key.startsWith("purchases:"))
+          ? html`<p class="muted">
+              Purchase records are attached to the matched existing Library
+              entry. New means a new purchase record, not a new movie. Purchase
+              titles preserve the store's wording; Library titles are kept
+              unchanged.
+            </p>`
+          : nothing
+      }
       <div class="actions">
         <label
           >Search review<input
@@ -507,54 +517,68 @@ export class KaleidescapeTransfers extends LitElement {
             </tr>
           </thead>
           <tbody>
-            ${visible.map(
-              (row) =>
-                html`<tr>
-                  <td>
-                    <input
-                      type="checkbox"
-                      aria-label=${`Import ${row.title}`}
-                      .checked=${this.selected.has(row.key)}
-                      ?disabled=${blocked || !!row.needs_match || !["new", "merge"].includes(row.action)}
-                      @change=${(event: Event) => {
-                        if ((event.target as HTMLInputElement).checked)
-                          this.selected.add(row.key);
-                        else this.selected.delete(row.key);
-                        this.requestUpdate();
-                      }}
-                    />
-                  </td>
-                  <td>
-                    ${row.title}<small class="muted" title=${row.key}
-                      >${row.detail}</small
-                    ><small class="muted">${row.table}</small>
-                  </td>
-                  <td>${row.action}</td>
-                  <td>
-                    ${row.reason || Object.keys(row.changes).join(", ") || "No missing data"}
-                    ${row.needs_match ? html`<small class="warning">No Library match selected</small>` : nothing}
-                    ${
-                      row.can_match
-                        ? html`<button
-                            ?disabled=${blocked || !!this.matching || !!this.scope?.tracking_enabled}
-                            @click=${() => this.openMatch(row)}
-                          >
-                            Match title…
-                          </button>`
-                        : nothing
-                    }
-                    ${row.conflicts.length ? html`<small class="muted">Existing values kept: ${row.conflicts.join(", ")}</small>` : nothing}
-                    ${
-                      Object.keys(row.changes).length
-                        ? html`<details>
-                            <summary>Changes</summary>
-                            <pre>${JSON.stringify(row.changes, null, 2)}</pre>
-                          </details>`
-                        : nothing
-                    }
-                  </td>
-                </tr>`,
-            )}
+            ${visible.map((row) => {
+              const purchase = row.key.startsWith("purchases:");
+              const action = !purchase
+                ? row.action
+                : row.needs_match
+                  ? "Choose Library match"
+                  : {
+                      new: "Add purchase to Library entry",
+                      merge: "Update purchase record",
+                      unchanged: "Purchase already imported",
+                      skip: "Skip purchase",
+                    }[row.action];
+              return html`<tr>
+                <td>
+                  <input
+                    type="checkbox"
+                    aria-label=${`Import ${row.title}`}
+                    .checked=${this.selected.has(row.key)}
+                    ?disabled=${blocked || !!row.needs_match || !["new", "merge"].includes(row.action)}
+                    @change=${(event: Event) => {
+                      if ((event.target as HTMLInputElement).checked)
+                        this.selected.add(row.key);
+                      else this.selected.delete(row.key);
+                      this.requestUpdate();
+                    }}
+                  />
+                </td>
+                <td>
+                  ${row.title}<small class="muted" title=${row.key}
+                    >${row.detail}</small
+                  ><small class="muted"
+                    >${purchase ? "Purchase history on Library entry" : row.table}</small
+                  >
+                </td>
+                <td>${action}</td>
+                <td>
+                  ${row.reason || Object.keys(row.changes).join(", ") || "No missing data"}
+                  ${row.needs_match ? html`<small class="warning">No Library match selected</small>` : nothing}
+                  ${
+                    row.can_match
+                      ? html`<button
+                          ?disabled=${blocked || !!this.matching || !!this.scope?.tracking_enabled}
+                          @click=${() => this.openMatch(row)}
+                        >
+                          Match title…
+                        </button>`
+                      : nothing
+                  }
+                  ${row.conflicts.length ? html`<small class="muted">Existing ${purchase ? "purchase " : ""}values kept: ${row.conflicts.join(", ")}</small>` : nothing}
+                  ${
+                    Object.keys(row.changes).length
+                      ? html`<details>
+                          <summary>
+                            ${purchase ? (row.action === "new" ? "Purchase record to add" : "Purchase record changes") : "Changes"}
+                          </summary>
+                          <pre>${JSON.stringify(row.changes, null, 2)}</pre>
+                        </details>`
+                      : nothing
+                  }
+                </td>
+              </tr>`;
+            })}
           </tbody>
         </table>
       </div>

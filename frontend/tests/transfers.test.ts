@@ -167,6 +167,55 @@ it("leaves purchase records unchecked until their suggested links are approved",
   ]);
 });
 
+it("distinguishes incoming purchase records from existing Library entries", async () => {
+  const value = review();
+  value.rows[0] = {
+    ...value.rows[0],
+    key: "purchases:new-invoice",
+    title: "Store wording",
+    detail: "2020-01-02 · Selected Library movie: Catalog wording · 1998",
+    selected_by_default: false,
+    changes: {
+      title: { before: null, after: "<img src=x onerror=alert(1)>" },
+      purchased_on: { before: null, after: "2020-01-02" },
+    },
+  };
+  value.rows[1] = {
+    ...value.rows[1],
+    key: "purchases:existing-invoice",
+  };
+  value.rows[2] = {
+    ...value.rows[2],
+    key: "purchases:merge-invoice",
+    changes: { purchase_price: { before: null, after: "$12.99" } },
+  };
+  await preview(value);
+  expect(text()).toContain("not a new movie");
+  const rows = root().querySelectorAll("tbody tr");
+  expect(rows[0].textContent).toContain(
+    "Selected Library movie: Catalog wording",
+  );
+  expect(rows[0].textContent).toContain("Add purchase to Library entry");
+  expect(rows[0].querySelector("summary")!.textContent).toContain(
+    "Purchase record to add",
+  );
+  expect(JSON.parse(rows[0].querySelector("pre")!.textContent!)).toEqual(
+    value.rows[0].changes,
+  );
+  expect(rows[0].textContent).not.toContain("Purchase title");
+  expect(rows[0].querySelector("img")).toBeNull();
+  expect(rows[0].querySelector<HTMLInputElement>("input")!.checked).toBe(false);
+  expect(rows[1].textContent).toContain("Purchase already imported");
+  expect(rows[2].textContent).toContain("Update purchase record");
+  expect(JSON.parse(rows[2].querySelector("pre")!.textContent!)).toEqual({
+    purchase_price: { before: null, after: "$12.99" },
+  });
+  expect(value.rows[0].changes.title).toEqual({
+    before: null,
+    after: "<img src=x onerror=alert(1)>",
+  });
+});
+
 it("reviews before writes, permits explicit deselection, and reports new/merged counts", async () => {
   const apply = vi.spyOn(element.client!, "applyImport").mockResolvedValue({
     imported_count: 0,

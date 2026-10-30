@@ -95,6 +95,13 @@ parsed as passive text; no link is fetched. The release year must match a known
 year in that source group when the link supplies one. A group's populated
 version metadata can supply the year for sparse versions.
 
+The review distinguishes purchase records from Library entries: **Add purchase
+to Library entry** attaches a new invoice to the matched existing movie;
+**Update purchase record** fills missing fields on an already imported invoice.
+**Purchase record to add** shows the original field keys and before/after values
+for that invoice, including `title`. The matched Library title appears
+separately in the entry details; adding an invoice preserves that Library title.
+
 Only a single source/group can become a proposal. Conflicting title hints,
 different explicit sequel numbers, unknown/conflicting release years and
 multiple candidates remain unresolved. Existing stored links and exact entry IDs
