@@ -454,6 +454,32 @@ must satisfy the matching evidence; unknown exact IDs require manual matching.
 - Keep library synchronization read-only. Playback requires an explicit user
   action, a configured player, a supported operation, and server-side permission
   checks. Do not expose raw protocol or general HA service forwarding.
+- The
+  [standalone playback harness](playback-controls.md#standalone-protocol-proof-of-concept)
+  is an explicit operator tool, with no HA action/API registration or database
+  writes. It uses literal private LAN IPs on port 10000 and verifies the
+  directly connected serial/movie-zone capability before controls. It bounds
+  frames to 4 KiB, each response to 128 KiB/256 messages, metadata to 128 rows,
+  each connection/request to 5 seconds and observation to 10 seconds. It
+  validates checksums, escaping, address/sequence correlation and returned
+  metadata handles. Partial frames, wrong-device events and acknowledgements
+  alone cannot confirm title playback. Possible sends are never automatically
+  replayed; cancellation closes the socket. No discovery, wake or prefix
+  fallback runs implicitly. Reports go to the operator's stdout without raw
+  protocol logging. They contain private device/movie data and must not enter
+  fixtures, Git or public logs. Operations serialize per client instance; the
+  proof of concept has no cross-process lock or durable receipt. It is not a
+  production HA control path.
+- Future HA discovery/control opt-ins must be separate from Library sync. TCP
+  connections require LAN validation, pinned destinations, verified serials and
+  bounded framing/read budgets. Device replies and cached handles are untrusted;
+  user-supplied commands/addresses are never a launch interface. Initial launch
+  access remains administrator-only with HA entity control permission checks.
+  Serialize per player, confirm interruption/wake intent and retain durable
+  request outcomes; never replay uncertain sends. Discovery and catalog sync
+  must not wake players or issue playback commands. The plain TCP interface must
+  stay on the trusted LAN, without Internet exposure; HA authorization does not
+  protect a device from another host with direct network access.
 - Store necessary device credentials in HA config entries and redact them from
   errors, diagnostics, logs, and exports. Do not assume config-entry storage is
   encrypted or inaccessible to other HA code.

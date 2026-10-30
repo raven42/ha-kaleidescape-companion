@@ -164,6 +164,12 @@ APIs remain a release validation task. The default VS Code **Check all** calls
 the same `dev/dev.sh check` entry point as terminal development so the local
 check sequence stays consistent.
 
+The
+[standalone playback protocol harness](playback-controls.md#standalone-protocol-proof-of-concept)
+accepts explicit IP/serial and probe/PLAY/STOP operands without starting HA.
+Handle launch is experimental. Normal checks use fictional loopback emulation;
+real device tests are operator actions, separate from build/test tasks.
+
 ## Integration framework
 
 Integration release versions remain `0.0.0`; API and database schema versions

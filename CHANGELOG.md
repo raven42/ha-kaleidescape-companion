@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased — Standalone playback protocol proof of concept
+
+- Add a standard-library TCP client and operator CLI with IP/serial operands,
+  read-only preflight, PLAY/STOP and experimental exact-handle PLAY_MOVIE.
+- Validate framing, checksums, player identity and movie metadata; preserve
+  uncertain outcomes without retries, wake commands or guessed namespaces.
+- Add dry runs, structured results and fictional emulator regressions; leave
+  native HA controls and discovery for subsequent work.
+- Record operator-reported selected-title launch/stop success on one player;
+  retain exact-edition, resume and broader compatibility validation gates.
+
 ## Unreleased — Build and test diagnostics
 
 - Reset cover state before rendering and skip unchanged panel busy-state updates

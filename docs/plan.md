@@ -1,6 +1,6 @@
 # Product plan
 
-Updated: 2026-10-29
+Updated: 2026-10-30
 
 Kaleidescape Companion maintains a shared household movie journal inside Home
 Assistant. Recording and browsing must work without a library import, external
@@ -144,6 +144,23 @@ choosing FTS, virtualization, WAL, or broad cache warming; these are not
 measured guarantees.
 
 ## Then: explicit playback controls
+
+The [selected-title playback design](playback-controls.md) records the October
+30 protocol/client research and implementation sequence. Begin with separately
+opted-in read-only player enumeration, a native HA default-player selector and
+verified exact-version handle enrichment. Library scans already retain browser
+handles; no replacement TCP catalog scan is planned. A small native adapter is
+proposed for missing public client operations, without private HA/runtime hooks
+or conflicting dependency pins. Experimental `PLAY_MOVIE` launch remains
+separately gated until operator validation; this research adds no runtime HA
+controls or schema changes. A standalone standard-library protocol proof of
+concept and `dev/playback_control.py` implement explicit probe/PLAY/STOP and
+experimental handle launch for operator testing. Emulator checks cover identity,
+framing and uncertain writes. Operator output from October 30 establishes one
+successful selected-title launch/stop sequence; see the
+[validation scope](playback-controls.md#operator-validation--2026-10-30).
+Broader compatibility, discovery/settings, persistent handle enrichment and
+durable HA control receipts remain future work.
 
 Add a small set of capability-gated play/pause/stop buttons for convenience only
 when useful, calling the existing player's public HA actions with caller context

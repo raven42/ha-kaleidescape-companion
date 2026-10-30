@@ -319,8 +319,12 @@ Use public HA actions and caller context for explicit, permission-checked,
 capability-gated controls. Validate fresh identity/expected player revision and
 observe the resulting state. Do not retry uncertain/toggle commands blindly.
 Selected-title launch/resume/start-over each require proven interfaces; see
-[research limitations](research.md). Library synchronization never sends
-controls.
+[research limitations](research.md) and the proposed
+[selected-title adapter](playback-controls.md). The latter specifies documented
+player discovery, exact-version enrichment and an experimental launch boundary.
+A standalone protocol client/operator harness now exists; native HA control
+registration, discovery and enrichment remain unimplemented. Library
+synchronization never sends controls.
 
 Broader sharing and import extensions require explicit capability and retention
 contracts plus security regressions. Import validates size/schema/paths before

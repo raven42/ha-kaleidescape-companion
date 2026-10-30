@@ -117,6 +117,14 @@ The product name is **Kaleidescape Companion**. The HA domain
 
 ## Deferred
 
+A standalone
+[protocol proof of concept](playback-controls.md#standalone-protocol-proof-of-concept)
+now supports operator probe/PLAY/STOP and experimental movie-handle launch,
+without HA registration, discovery or database changes. Emulator tests pass; an
+operator reported successful selected-title playback and STOP on one player on
+October 30. Broader compatibility and exact-edition confirmation remain
+unverified. Native controls and settings remain deferred.
+
 Multi-player configuration, live subscriptions, validated position/progress,
 canonical work/edition identities, journal identity associations and historical
 artwork, per-user ownership/selective sharing, and playback controls remain

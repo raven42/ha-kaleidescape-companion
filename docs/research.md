@@ -10,8 +10,10 @@ No device test or deployment is authorized by this document.
 
 The source review used HA's built-in Kaleidescape component at
 [revision 9337c039ca18](https://github.com/home-assistant/core/tree/9337c039ca181612aa14354f068ea9b42758d8d1/homeassistant/components/kaleidescape)
-and its required Python client
+and an upstream Python client snapshot
 [pykaleidescape 1.2.0](https://github.com/SteveEasley/pykaleidescape/tree/50df2869349667d1e68d429b9b619e32ede9879b).
+The installed HA 2026.10.4 manifest/runtime checked on October 30 instead uses
+pykaleidescape 1.1.6; do not treat an upstream snapshot as HA's dependency pin.
 Read-only browser-interface observations from October 20–22 used firmware assets
 identified as `26.1.2-27147`. Those observations describe one source interface,
 not a guarantee for other firmware or password-protected configurations.
@@ -23,7 +25,15 @@ The
 and pinned source establish available interfaces; they do not establish that an
 operator's installed integration exposes identical behavior. The journal
 observes HA entities. The optional [library connector](library.md) now
-implements restricted read-only browser GETs; player controls remain absent.
+implements restricted read-only browser GETs. Integrated player controls remain
+absent; the
+[standalone protocol harness](playback-controls.md#standalone-protocol-proof-of-concept)
+now permits explicit operator playback tests, without HA registration or
+database changes. Local tests establish emulator behavior, not live-device
+compatibility. Separately, operator-supplied output from October 30 establishes
+one successful selected-title launch and STOP sequence; its
+[scope and remaining limits](playback-controls.md#operator-validation--2026-10-30)
+do not establish exact-edition or general firmware compatibility.
 
 ## Existing HA entities
 
@@ -106,9 +116,12 @@ and
 provide transport/navigation and content details. Pause uses toggle-style
 semantics, so fresh state, serialization, and no blind retry are required for a
 future UI. No general public movie-by-handle launch, independent dated-history
-API, or saved movie-offset query was identified in that review. This finding
-does not rule out vendor/partner interfaces; it limits what the project can
-promise today.
+API, or saved movie-offset query was identified in that review. The October 30
+[selected-title playback investigation](playback-controls.md) adds concrete
+third-party evidence for an undocumented `PLAY_MOVIE` command and documented
+player enumeration. This changes launch from an unidentified interface to an
+experimental implementation candidate; it does not establish vendor support,
+target-firmware compatibility, saved resume, or exact-edition confirmation.
 
 | Desired capability                | Required evidence before implementation                                          |
 | --------------------------------- | -------------------------------------------------------------------------------- |
