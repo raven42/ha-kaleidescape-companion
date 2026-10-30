@@ -4,8 +4,12 @@ import hashlib
 import importlib.util
 import json
 import sqlite3
+import subprocess
+import sys
+import tempfile
 import unittest
 from contextlib import closing, redirect_stdout
+from html import escape
 from io import StringIO
 from pathlib import Path
 from uuid import uuid4
@@ -19,6 +23,7 @@ from custom_components.kaleidescape_companion.ui.preferences import validate
 from dev.purchase_history import (
     DATE_BINDING,
     parse_history,
+    parse_purchases,
 )
 
 
@@ -41,7 +46,202 @@ def invoice(
     </th></tr></table></div></div></div>"""
 
 
+def purchased_invoice(*, href="/movie-store/movie/fictional-voyage", bundled=False):
+    """Fictional rendered fields, including prices hidden by the store's UI."""
+    body = invoice("Fictional &amp; Zoë").replace(
+        '<div class="title">',
+        '<div class="title"><span data-bind="text: customer_invoice_number">'
+        "ORDER-DEMO-123</span>",
+    )
+    return body.replace(
+        '<span data-bind="text: full_title">Fictional &amp; Zoë</span>',
+        f'<a href="{escape(href, quote=True)}">'
+        '<span data-bind="text: full_title">Fictional &amp; Zoë</span></a>'
+        '<span class="retail-price" data-bind="visible: movie_purchased, html: amount" '
+        f'style="{"display:none" if bundled else ""}">$19.99</span>'
+        '<span class="original_price" '
+        'data-bind="visible: is_discount, html: original_amount" '
+        'style="display:none">$24.99</span>',
+    )
+
+
+def offline_helper():
+    spec = importlib.util.spec_from_file_location(
+        "offline_purchases",
+        Path(__file__).resolve().parents[1] / "dev/import_purchase_dates.py",
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def bundle_rows(amount="$10.00", *, count=3, name="Fictional bundle"):
+    """The saved page renders bundle headers before the included movie rows."""
+    return (
+        '<tbody><tr><th><a data-bind="attr: { href: collection_uri }">'
+        f'<span data-bind="text: title">{escape(name)}</span></a></th>'
+        f'<td><span data-bind="html: amount">{escape(amount)}</span></td>'
+        "</tr></tbody>"
+        + "".join(
+            "<tbody><tr><th>"
+            f'<span data-bind="text: full_title">Movie {index + 1}</span></th>'
+            '<td><span data-bind="visible: included_in_bundle">Included</span>'
+            '<span class="retail-price" style="display:none">$0.00</span>'
+            '<span class="original_price">$24.99</span></td></tr></tbody>'
+            for index in range(count)
+        )
+    )
+
+
+def invoice_with_rows(rows):
+    body = invoice()
+    start, end = body.index("<table>") + len("<table>"), body.index("</table>")
+    return body[:start] + rows + body[end:]
+
+
 class PurchaseParserTest(unittest.TestCase):
+    def test_bundle_cost_is_split_evenly_with_exact_cent_totals(self):
+        for total, expected in (
+            ("$10.00", ["$3.34", "$3.33", "$3.33"]),
+            ("$0.01", ["$0.01", "$0.00", "$0.00"]),
+            ("$0.00", ["$0.00"] * 3),
+            ("$1,000.02", ["$333.34"] * 3),
+            ("£12.00", ["£4.00"] * 3),
+        ):
+            with self.subTest(total=total):
+                rows = parse_purchases(invoice_with_rows(bundle_rows(total)).encode())
+                self.assertEqual([r["purchase_price"] for r in rows], expected)
+                self.assertEqual([r["retail_price"] for r in rows], ["$24.99"] * 3)
+
+    def test_bundle_allocation_is_local_to_invoice_and_skips_unmarked_titles(self):
+        standalone = (
+            '<tr><th><span data-bind="text: full_title">Standalone</span></th>'
+            '<td><span class="retail-price">$14.99</span>'
+            '<span data-bind="visible: included_in_bundle" '
+            'style="display:none">Included</span></td></tr>'
+        )
+        body = invoice_with_rows(bundle_rows("$20.00", count=2) + standalone)
+        body += invoice_with_rows(bundle_rows("$9.00", count=2))
+        rows = parse_purchases(body.encode())
+        self.assertEqual(
+            [r["purchase_price"] for r in rows],
+            ["$10.00", "$10.00", "$14.99", "$4.50", "$4.50"],
+        )
+
+    def test_missing_or_unsupported_bundle_totals_leave_prices_unknown(self):
+        for amount in ("", "Unknown", "-$12.00", "$12,50", "$12.345"):
+            with self.subTest(amount=amount):
+                body = invoice_with_rows(bundle_rows(amount))
+                self.assertEqual(
+                    [r["purchase_price"] for r in parse_purchases(body.encode())],
+                    [None] * 3,
+                )
+        for replacement in ("<tr class=cancelled>", '<tr style="display:none">'):
+            body = invoice_with_rows(bundle_rows().replace("<tr>", replacement, 1))
+            self.assertEqual(
+                [r["purchase_price"] for r in parse_purchases(body.encode())],
+                [None] * 3,
+            )
+
+    def test_multiple_bundles_share_only_the_combined_bundle_cost(self):
+        first = bundle_rows("$10.00", count=3).split("</tbody>", 1)
+        second = bundle_rows("$8.00", count=2, name="Other bundle").split("</tbody>", 1)
+        # As on the captured page, all bundle headings precede all title rows.
+        body = invoice_with_rows(
+            first[0] + "</tbody>" + second[0] + "</tbody>" + first[1] + second[1]
+        )
+        rows = parse_purchases(body.encode())
+        self.assertEqual([r["purchase_price"] for r in rows], ["$3.60"] * 5)
+        for unsupported in ("", "€8.00"):
+            with self.subTest(amount=unsupported):
+                self.assertEqual(
+                    [
+                        r["purchase_price"]
+                        for r in parse_purchases(
+                            body.replace("$8.00", unsupported).encode()
+                        )
+                    ],
+                    [None] * 5,
+                )
+
+    def test_json_fields_repeat_purchases_and_missing_optional_values(self):
+        first = purchased_invoice()
+        second = first.replace("ORDER-DEMO-123", "ORDER-DEMO-456").replace(
+            "October 12, 2025", "May 2, 2020"
+        )
+        rows = parse_purchases((first + second + invoice()).encode())
+        self.assertEqual(
+            rows[0],
+            {
+                "title": "Fictional & Zoë",
+                "purchased_on": "2025-10-12",
+                "purchase_price": "$19.99",
+                "retail_price": "$24.99",
+                "order_id": "ORDER-DEMO-123",
+                "href": "/movie-store/movie/fictional-voyage",
+            },
+        )
+        self.assertEqual(rows[1]["order_id"], "ORDER-DEMO-456")
+        self.assertEqual(rows[1]["purchased_on"], "2020-05-02")
+        self.assertEqual(
+            rows[2],
+            {
+                "title": "Voyage to Europa",
+                "purchased_on": "2025-10-12",
+                "purchase_price": None,
+                "retail_price": None,
+                "order_id": None,
+                "href": None,
+            },
+        )
+        self.assertEqual(
+            parse_history((first + second).encode()),
+            [{"title": "Fictional & Zoë", "purchased_on": "2020-05-02"}],
+        )
+
+    def test_bundle_titles_exclusions_and_unavailable_individual_prices(self):
+        body = purchased_invoice(bundled=True).replace(
+            "<table>",
+            '<table><tr><td><span data-bind="text: title">Fictional bundle</span>'
+            '</td><td class="retail-price">$99.99</td></tr>',
+        )
+        body += invoice("Rental", rental=True)
+        body += invoice("Cancelled", cancelled=True)
+        body += invoice("Pending", pending=True)
+        body += invoice("Hidden").replace("<tr", '<tr style="display: none"')
+        rows = parse_purchases(body.encode())
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["title"], "Fictional & Zoë")
+        self.assertIsNone(rows[0]["purchase_price"])
+        self.assertEqual(rows[0]["retail_price"], "$24.99")
+
+    def test_links_are_copied_without_resolving_or_fetching(self):
+        for href in (
+            "/movie-store/movie/fictional-voyage",
+            "movie-store/movie/fictional-voyage?edition=hd&lang=en",
+            "https://store.example.invalid/movie-store/movie/fictional-voyage",
+        ):
+            with self.subTest(href=href):
+                self.assertEqual(
+                    parse_purchases(purchased_invoice(href=href).encode())[0]["href"],
+                    href,
+                )
+        for href in (
+            "",
+            "/movie-store",
+            "javascript:alert(1)",
+            "data:text/html,markup",
+            "file:///private/data",
+            "//store.example.invalid/movie",
+            "https://user:password@store.example.invalid/movie",
+            "https://[invalid/movie",
+            "/movie-store/movie/" + "a" * 2048,
+        ):
+            with self.subTest(href=href):
+                self.assertIsNone(
+                    parse_purchases(purchased_invoice(href=href).encode())[0]["href"]
+                )
+
     def test_multiple_pages_earliest_unicode_and_no_markup_execution(self):
         body = (
             invoice("Fictional &amp; Zoë", "May 2, 2020")
@@ -99,6 +299,71 @@ class PurchaseParserTest(unittest.TestCase):
         for value in (["bad\nname"], [1], "a" * 257, ["x"] * 201):
             with self.assertRaises(ValueError):
                 collection_names(value)
+
+
+class PurchaseJsonExportTest(unittest.TestCase):
+    def setUp(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        self.parent = Path(directory.name)
+        self.parent.chmod(0o755)
+        self.history = self.parent / "purchases.html"
+        self.history.write_text(purchased_invoice(), encoding="utf-8")
+        self.output = self.parent / "purchases.json"
+        self.helper = offline_helper()
+
+    def test_cli_export_needs_no_database_and_preserves_input_and_parent(self):
+        digest = hashlib.sha256(self.history.read_bytes()).hexdigest()
+        result = subprocess.run(
+            [
+                sys.executable,
+                self.helper.__file__,
+                "--format",
+                "json",
+                "--history",
+                str(self.history),
+                "--output",
+                str(self.output),
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        self.assertIn("Wrote 1 purchase record to", result.stdout)
+        self.assertNotIn("ORDER-DEMO", result.stdout + result.stderr)
+        self.assertEqual(
+            json.loads(self.output.read_bytes()),
+            parse_purchases(self.history.read_bytes()),
+        )
+        self.assertEqual(self.output.stat().st_mode & 0o777, 0o600)
+        self.assertEqual(self.parent.stat().st_mode & 0o777, 0o755)
+        self.assertEqual(hashlib.sha256(self.history.read_bytes()).hexdigest(), digest)
+
+    def test_refuse_overwrite_and_links_and_parse_before_creating_output(self):
+        self.output.write_text("Existing content")
+        with self.assertRaises(ValueError):
+            self.helper.export_json(self.history, self.output)
+        self.assertEqual(self.output.read_text(), "Existing content")
+        with self.assertRaises(ValueError):
+            self.helper.export_json(self.history, self.history)
+        self.output.unlink()
+        self.output.symlink_to(self.parent / "missing.json")
+        with self.assertRaises(ValueError):
+            self.helper.export_json(self.history, self.output)
+        self.assertTrue(self.output.is_symlink())
+        self.output.unlink()
+        linked = self.parent / "linked.html"
+        linked.symlink_to(self.history)
+        with self.assertRaises(ValueError):
+            self.helper.export_json(linked, self.output)
+        self.history.write_bytes(b"<html>Not a history page</html>")
+        with self.assertRaises(JournalError):
+            self.helper.export_json(self.history, self.output)
+        self.assertFalse(self.output.exists())
+        self.history.write_bytes(b" " * (8 * 1024 * 1024 + 1))
+        with self.assertRaises(ValueError):
+            self.helper.export_json(self.history, self.output)
+        self.assertFalse(self.output.exists())
 
 
 class PurchaseStorageTest(unittest.IsolatedAsyncioTestCase):
@@ -228,12 +493,7 @@ class PurchaseStorageTest(unittest.IsolatedAsyncioTestCase):
         history = self.path.parent / "history.html"
         history.write_text(invoice(library.ROWS[0]["title"]))
         output = self.path.parent / "private" / "corrected.sqlite"
-        spec = importlib.util.spec_from_file_location(
-            "offline_purchases",
-            Path(__file__).resolve().parents[1] / "dev/import_purchase_dates.py",
-        )
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        module = offline_helper()
         with redirect_stdout(StringIO()):
             await module.run(self.path, history, output)
         self.assertEqual(hashlib.sha256(self.path.read_bytes()).hexdigest(), digest)

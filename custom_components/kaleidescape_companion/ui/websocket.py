@@ -135,6 +135,20 @@ def async_register_commands(hass: HomeAssistant) -> None:
             p.Required("selected"): [str],
         },
         "database/mutate": {**mutations, p.Required("data"): dict},
+        "database/import/search": {
+            **scoped,
+            p.Required("plan_id"): str,
+            p.Required("revision"): int,
+            p.Required("purchase_key"): str,
+            p.Required("query"): str,
+        },
+        "database/import/match": {
+            **scoped,
+            p.Required("plan_id"): str,
+            p.Required("revision"): int,
+            p.Required("purchase_key"): str,
+            p.Required("title_id"): p.Any(str, None),
+        },
         "database/validate_query": {
             **scoped,
             p.Required("table"): str,
@@ -502,7 +516,11 @@ async def async_handle(
                         sort=msg.get("sort"),
                         descending=msg["descending"],
                     )
-                case "database/import":
+                case (
+                    "database/import"
+                    | "database/import/search"
+                    | "database/import/match"
+                ):
                     entry = hass.config_entries.async_get_entry(msg["entry_id"])
                     if runtime.observer is not None or (
                         entry.options or entry.data
@@ -510,13 +528,30 @@ async def async_handle(
                         raise JournalError(
                             "tracking_enabled", "Disable recording before importing"
                         )
-                    result = await repository.async_import_apply(
-                        msg["request_id"],
-                        msg["plan_id"],
-                        msg["revision"],
-                        msg["selected"],
-                        actor_id=user.id,
-                    )
+                    if operation == "database/import/search":
+                        result = await repository.async_import_match_search(
+                            msg["plan_id"],
+                            msg["revision"],
+                            msg["purchase_key"],
+                            msg["query"],
+                            user.id,
+                        )
+                    elif operation == "database/import/match":
+                        result = await repository.async_import_match(
+                            msg["plan_id"],
+                            msg["revision"],
+                            msg["purchase_key"],
+                            msg["title_id"],
+                            user.id,
+                        )
+                    else:
+                        result = await repository.async_import_apply(
+                            msg["request_id"],
+                            msg["plan_id"],
+                            msg["revision"],
+                            msg["selected"],
+                            actor_id=user.id,
+                        )
                 case "database/purge":
                     entry = hass.config_entries.async_get_entry(msg["entry_id"])
                     if runtime.observer is not None or (
@@ -595,6 +630,11 @@ async def async_handle(
             return
         if operation not in {"info", "settings/submit"} and not runtime.ready:
             raise JournalError("not_ready", "Journal integration unloaded")
+        if (
+            operation.startswith("database/import")
+            and get_runtime(hass, msg["entry_id"], msg["dataset_id"]) is not runtime
+        ):
+            raise JournalError("not_ready", "Journal integration reloaded")
         if (
             operation.startswith(("library/", "journal/metadata/"))
             or operation == "journal/create"

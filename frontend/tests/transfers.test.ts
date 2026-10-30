@@ -3,6 +3,7 @@ import "../src/ui/transfers";
 import type { KaleidescapeTransfers } from "../src/ui/transfers";
 import { ApiError, MAX_IMPORT_BYTES } from "../src/core/api";
 import type { ImportReview } from "../src/core/api";
+import type { KaleidescapeImportMatcher } from "../src/ui/import-matcher";
 import { FixtureTransport, info } from "./fixture";
 
 let element: KaleidescapeTransfers;
@@ -64,6 +65,111 @@ beforeEach(async () => {
   await flush();
 });
 afterEach(() => element.remove());
+
+it("puts unresolved purchases first and uses the revised token after choosing a known movie", async () => {
+  const value = review();
+  value.rows[1] = {
+    ...value.rows[1],
+    table: "library_purchases",
+    key: "library_purchases:unresolved",
+    needs_match: true,
+    can_match: true,
+    selected_by_default: false,
+  };
+  vi.spyOn(element.client!, "searchImportMatches").mockResolvedValue({
+    items: [
+      {
+        id: "b".repeat(64),
+        title: "Known remake",
+        year: 2026,
+        directors: ["Fictional Director"],
+        version_count: 2,
+        source_hint: "fictional",
+      },
+    ],
+    has_more: false,
+  });
+  const matched = {
+    ...value.rows[1],
+    needs_match: false,
+    action: "merge" as const,
+    detail: "Selected Library movie: Known remake · 2026",
+    changes: { source_group: { before: null, after: "known-group" } },
+  };
+  vi.spyOn(element.client!, "matchImportPurchase").mockResolvedValue({
+    plan_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    revision: 5,
+    expires_in: 590,
+    counts: { new: 1, merge: 2, unchanged: 0, skip: 0 },
+    row: matched,
+  });
+  const apply = vi.spyOn(element.client!, "applyImport").mockResolvedValue({
+    imported_count: 1,
+    updated_count: 2,
+    skipped_count: 0,
+    revision: 6,
+  });
+  await preview(value);
+  expect(root().querySelector("tbody tr")!.textContent).toContain(
+    "Fictional 1",
+  );
+  button("Match title…").click();
+  await flush();
+  const matcher = root().querySelector<KaleidescapeImportMatcher>(
+    "kaleidescape-import-matcher",
+  )!;
+  await matcher.updateComplete;
+  expect(button("Apply 2 selected changes").disabled).toBe(true);
+  expect(matcher.shadowRoot!.textContent).toContain("2026");
+  matcher
+    .shadowRoot!.querySelector<HTMLButtonElement>('[role="option"]')!
+    .click();
+  await flush();
+  expect(apply).not.toHaveBeenCalled();
+  expect(root().querySelector("kaleidescape-import-matcher")).toBeNull();
+  button("Apply 3 selected changes").click();
+  await flush();
+  expect(apply.mock.calls[0][0].message).toMatchObject({
+    plan_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    selected: [
+      "library_purchases:unresolved",
+      "library_titles:0",
+      "library_titles:2",
+    ],
+  });
+});
+
+it("leaves purchase records unchecked until their suggested links are approved", async () => {
+  const value = review(1);
+  value.rows[0] = {
+    ...value.rows[0],
+    table: "library_purchases",
+    key: "library_purchases:purchase",
+    selected_by_default: false,
+    detail: "Review Library group link: 2025 · 2 versions (exact name only)",
+  };
+  value.counts = { new: 1, merge: 0, unchanged: 0, skip: 0 };
+  const apply = vi.spyOn(element.client!, "applyImport").mockResolvedValue({
+    imported_count: 1,
+    updated_count: 0,
+    skipped_count: 0,
+    revision: 6,
+  });
+  await preview(value);
+  const check = root().querySelector<HTMLInputElement>(
+    'tbody input[type="checkbox"]',
+  )!;
+  expect(check.checked).toBe(false);
+  expect(apply).not.toHaveBeenCalled();
+  expect(text()).toContain("exact name only");
+  check.click();
+  await flush();
+  button("Apply 1 selected change").click();
+  await flush();
+  expect(apply.mock.calls[0][0].message.selected).toEqual([
+    "library_purchases:purchase",
+  ]);
+});
 
 it("reviews before writes, permits explicit deselection, and reports new/merged counts", async () => {
   const apply = vi.spyOn(element.client!, "applyImport").mockResolvedValue({

@@ -17,6 +17,13 @@ only the household-safe summary fields and have no edit/session controls.
 Administrator database size, recording/backup status and schema/revision appear
 in a compact footer instead of separate overview cards.
 
+Journal rows show the linked title, local calendar date and status on one
+compact line. Select a row for full times, watched/runtime values and other
+permitted details. Both Journal modes and Database use sticky header/search
+controls, independently scrollable lists and details, and a sticky
+status/pagination footer. Narrow screens stack the scroll areas without putting
+the whole list above the selected details.
+
 The household reader lets active users browse viewing summaries. The
 administrator UI manages journal records through the existing HA API. It
 provides title search, status filters, 25-record pages, manual entries,

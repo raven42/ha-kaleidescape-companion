@@ -331,6 +331,7 @@ class MaintenanceStorageTest(unittest.IsolatedAsyncioTestCase):
                 "library_collection_intents",
                 "library_memberships",
                 "library_collections",
+                "library_purchases",
                 "library_titles",
                 "library_artwork",
                 "library_sources",
@@ -351,7 +352,7 @@ class MaintenanceStorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             (await self.repository.async_get(record["id"]))["title"], record["title"]
         )
-        self.assertEqual((await self.repository.async_info())["schema_version"], 14)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 15)
         backup = next(self.path.parent.glob("journal.sqlite3.v3.*.bak"))
         self.assertEqual(backup.stat().st_mode & 0o777, 0o600)
         with closing(sqlite3.connect(backup)) as db:

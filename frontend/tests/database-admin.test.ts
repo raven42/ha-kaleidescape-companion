@@ -60,6 +60,21 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+it("keeps the database pager outside the list and provides separate keyboard scroll regions", async () => {
+  await mount();
+  await choose();
+  expect(
+    root().querySelector(".entries-header kaleidescape-database-search"),
+  ).not.toBeNull();
+  expect(root().querySelector('.entry-list[tabindex="0"]')).not.toBeNull();
+  expect(root().querySelector('.entries-detail[tabindex="0"]')).not.toBeNull();
+  expect(root().querySelector(".entries-list .pagination")).toBeNull();
+  expect(root().querySelector(".entries-footer .pagination")).not.toBeNull();
+  expect(root().querySelector(".entries-detail pre")?.textContent).toContain(
+    record().id,
+  );
+});
+
 it("shows raw details first and edits only supported fields after explicit confirmation", async () => {
   await mount();
   await choose();

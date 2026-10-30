@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from ..security import private_file
 
-SCHEMA_VERSION = 14
+SCHEMA_VERSION = 15
 
 MIGRATIONS = {
     1: (
@@ -291,6 +291,22 @@ MIGRATIONS[14] = (
         ('queued','checking','sending','created','matched','failed','uncertain','cancelled','skipped')),
         updated_at TEXT NOT NULL,PRIMARY KEY(request_id,viewing_id))""",
     "CREATE INDEX calendar_sync_pending ON calendar_sync_items(request_id,state)",
+)
+
+
+MIGRATIONS[15] = (
+    """CREATE TABLE library_purchases (
+        id TEXT PRIMARY KEY,title TEXT NOT NULL,title_search TEXT NOT NULL,
+        purchased_on TEXT NOT NULL,purchase_price TEXT,retail_price TEXT,
+        order_id TEXT,href TEXT,source_id TEXT REFERENCES library_sources(id),
+        source_group TEXT,imported_at TEXT NOT NULL,
+        CHECK((source_id IS NULL) = (source_group IS NULL)))""",
+    "CREATE INDEX library_purchase_groups ON library_purchases"
+    "(source_id,source_group,purchased_on)",
+    "CREATE INDEX library_purchase_names ON library_purchases"
+    "(title_search,purchased_on,id)",
+    "CREATE INDEX library_purchase_matches ON library_titles"
+    "(title_search,available,source_id,source_group)",
 )
 
 

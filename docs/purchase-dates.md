@@ -1,10 +1,61 @@
 # Purchase dates
 
-Purchase-history HTML processing was a one-time offline preparation step. The
-integration no longer exposes an HTML upload, Library purchase-import button, or
-purchase-specific API. The scripts remain in `dev/`; they are excluded from the
-runtime package. A corrected SQLite copy can be imported through the general
-[reviewed merge import](imports.md), without replacing the live database.
+Purchase-history HTML processing is an offline development tool. The integration
+has no HTML upload, Library purchase-import button, or purchase-specific API.
+The scripts remain in `dev/`; they are excluded from the runtime package. The
+helper can extract saved purchases as JSON or prepare a corrected SQLite copy.
+Both use the general [reviewed merge import](imports.md), without replacing the
+live database.
+
+## Extract purchase records as JSON
+
+From the repository root, with development dependencies installed:
+
+```sh
+.venv/bin/python dev/import_purchase_dates.py \
+  --format json \
+  --history purchases.html \
+  --output purchases.json
+```
+
+The output is a JSON array with one record per completed owned-title line item.
+Repeated purchases or editions with the same name remain separate records;
+invoice order and title order are preserved. Each record has these keys:
+
+| Key              | Value                                           |
+| ---------------- | ----------------------------------------------- |
+| `title`          | Rendered title name                             |
+| `purchased_on`   | Invoice date as `YYYY-MM-DD`                    |
+| `purchase_price` | Paid price or allocated bundle share, or `null` |
+| `retail_price`   | Captured original price, or `null`              |
+| `order_id`       | Displayed customer order number, or `null`      |
+| `href`           | Captured movie-store link, or `null`            |
+
+Prices retain currency text, such as `"$19.99"`. Bundle charges are divided
+evenly among the invoice's explicitly included movies. For multiple bundles on
+one invoice, the saved page exposes no movie-to-bundle mapping, so their
+combined total is divided across all included movies. These prices are allocated
+shares, not individual store charges. Integer-cent arithmetic preserves the
+exact total; any leftover cents go to the first included movies in source order.
+Individual retail prices remain unchanged. Missing, unsupported or
+mixed-currency bundle charges leave the allocation unknown (`null`). The helper
+does not infer currencies or treat credits as individual paid prices. Original
+prices are retained even when hidden by the page's discount display. Links
+retain their captured relative or HTTP(S) form without resolving or fetching
+them. Missing, generic store-root and unsupported links become `null`. Pending
+orders, cancelled rows, rentals and bundle headings are excluded; individual
+titles within bundles are retained.
+
+JSON mode needs no database and changes neither the saved HTML nor any database.
+It refuses existing outputs and creates the file with owner-only permissions,
+without changing an existing output directory's permissions. Root
+`purchases.json` is ignored by Git; keep outputs elsewhere private too. Import
+this array directly with **Database → Merge Import**, review the proposed
+movie-group links, then explicitly select the purchases to apply. Schema 15
+retains repeat orders and the six fields in a private `library_purchases` table.
+An ambiguous title remains unlinked rather than being attached to the wrong
+remake. See the
+[purchase import rules](imports.md#import-purchase-history-json).
 
 ## Import an existing corrected copy
 
@@ -27,12 +78,14 @@ private pre-upgrade backup. Subsequent catalog syncs preserve purchase columns.
 detection; grouped titles use their earliest known purchase date. Version
 details show purchase date and detection separately. Purchase dates are not
 download/viewing times. Importing them does not rewrite detection or journal
-facts. JSON format 3, SQLite exports and HA backups include the dates.
+facts. Schema 15 additionally derives dates from linked purchase history where
+an explicit version date is missing. JSON format 4, SQLite exports and HA
+backups include the dates and private purchase records.
 
-## Retained offline helper
+## Prepare another corrected SQLite copy
 
-If another saved history must be processed later, the helper creates a new
-private copy and a private match report:
+SQLite remains the helper's default output mode. To correct dates from another
+saved history, create a new private copy and a private match report:
 
 ```sh
 .venv/bin/python dev/import_purchase_dates.py \
@@ -50,8 +103,9 @@ or unmatched names in its report for manual investigation. Name matching is a
 preparation heuristic, not proof of edition ownership; the live merge uses exact
 version identities from the resulting copy.
 
-Keep HTML, reports and SQLite files private and out of Git/static roots. Do not
-replace a running HA database with an older corrected copy. The normal test
-suite uses fictional invoices to check exclusions, ambiguity, private copy
-creation and input preservation; merge tests separately cover legacy dates,
-identity validation, conflicting values, revisions, retries and access changes.
+Keep HTML, JSON, reports and SQLite files private and out of Git/static roots.
+Do not replace a running HA database with an older corrected copy. The normal
+test suite uses fictional invoices to check extracted fields, repeat purchases,
+exclusions, ambiguity, private output creation and input preservation; merge
+tests separately cover legacy dates, identity validation, conflicting values,
+revisions, retries and access changes.

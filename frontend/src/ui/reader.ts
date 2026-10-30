@@ -1,3 +1,4 @@
+import { counted } from "../core/text";
 /** Household journal/library browsing; no management or export requests. */
 import { LitElement, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
@@ -5,7 +6,7 @@ import { ApiError, JournalClient, errorCode, errorMessage } from "../core/api";
 import type { Hass, JournalInfo, ViewingSummary } from "../core/api";
 import { styles } from "./styles";
 import { entryLayoutStyles } from "./entry-layout.styles";
-import { journalStyles, viewingDetails } from "./journal-view";
+import { journalStyles, viewingDetails, viewingListRow } from "./journal-view";
 import { landingPage, rememberPage } from "./navigation";
 import "../library/library";
 import "./journal-options";
@@ -276,105 +277,107 @@ export class KaleidescapeReader extends LitElement {
                 }}
               ></kaleidescape-library>`
             : html`<section class="card journal" aria-label="Viewing history">
-                <div class="journal-toolbar">
-                  <button
-                    ?disabled=${this.loading || !this.api}
-                    @click=${this.refresh}
-                  >
-                    Refresh</button
-                  ><kaleidescape-journal-options
-                    .client=${this.api}
-                    .scope=${this.scope}
-                    .disabled=${this.loading}
-                    @journal-options=${(
-                      event: CustomEvent<{ fuzzy_search: boolean }>,
-                    ) => {
-                      const changed =
-                        this.fuzzySearch !== event.detail.fuzzy_search;
-                      this.fuzzySearch = event.detail.fuzzy_search;
-                      if (changed) {
-                        this.page = 1;
-                        this.history = [];
-                        void this.load();
-                      }
-                    }}
-                    @access-denied=${() => this.fail(new ApiError("unauthorized"))}
-                  ></kaleidescape-journal-options>
-                </div>
-                <form
-                  class="filters journal-filters"
-                  @submit=${(event: Event) => {
-                    event.preventDefault();
-                    this.query = this.searchText;
-                    this.status = this.filterStatus;
-                    this.history = [];
-                    this.page = 1;
-                    void this.load();
-                  }}
-                >
-                  <label
-                    >Search titles<input
-                      name="search"
-                      type="search"
-                      maxlength="500"
-                      .value=${this.searchText}
-                      ?disabled=${this.loading || !this.scope}
-                      @input=${(event: Event) => {
-                        this.searchText = (
-                          event.target as HTMLInputElement
-                        ).value;
-                      }}
-                  /></label>
-                  <label
-                    >Status<select
-                      name="filter_status"
-                      .value=${this.filterStatus}
-                      ?disabled=${this.loading || !this.scope}
-                      @change=${(event: Event) => {
-                        this.filterStatus = (
-                          event.target as HTMLSelectElement
-                        ).value;
-                      }}
+                <div class="entries-header">
+                  <div class="journal-toolbar">
+                    <button
+                      ?disabled=${this.loading || !this.api}
+                      @click=${this.refresh}
                     >
-                      <option value="">All</option>
-                      <option value="completed">Completed</option>
-                      <option value="partial">Partial</option>
-                    </select></label
-                  >
-                  <label
-                    >Sort by<select
-                      name="journal_sort"
-                      .value=${this.sort}
-                      ?disabled=${this.loading || !this.scope}
-                      @change=${(event: Event) => {
-                        this.sort = (event.target as HTMLSelectElement).value;
-                        this.page = 1;
-                        this.history = [];
-                        void this.load();
+                      Refresh</button
+                    ><kaleidescape-journal-options
+                      .client=${this.api}
+                      .scope=${this.scope}
+                      .disabled=${this.loading}
+                      @journal-options=${(
+                        event: CustomEvent<{ fuzzy_search: boolean }>,
+                      ) => {
+                        const changed =
+                          this.fuzzySearch !== event.detail.fuzzy_search;
+                        this.fuzzySearch = event.detail.fuzzy_search;
+                        if (changed) {
+                          this.page = 1;
+                          this.history = [];
+                          void this.load();
+                        }
                       }}
-                    >
-                      <option value="completed_at">
-                        Completed date · partial first
-                      </option>
-                      <option value="title">Title</option>
-                    </select></label
-                  >
-                  <button
-                    type="button"
-                    ?disabled=${this.loading || !this.scope}
-                    @click=${() => {
-                      this.descending = !this.descending;
-                      this.page = 1;
+                      @access-denied=${() => this.fail(new ApiError("unauthorized"))}
+                    ></kaleidescape-journal-options>
+                  </div>
+                  <form
+                    class="filters journal-filters"
+                    @submit=${(event: Event) => {
+                      event.preventDefault();
+                      this.query = this.searchText;
+                      this.status = this.filterStatus;
                       this.history = [];
+                      this.page = 1;
                       void this.load();
                     }}
                   >
-                    ${this.descending ? "Descending ↓" : "Ascending ↑"}
-                  </button>
-                  <button ?disabled=${this.loading || !this.scope}>
-                    Search
-                  </button>
-                </form>
+                    <label
+                      >Search titles<input
+                        name="search"
+                        type="search"
+                        maxlength="500"
+                        .value=${this.searchText}
+                        ?disabled=${this.loading || !this.scope}
+                        @input=${(event: Event) => {
+                          this.searchText = (
+                            event.target as HTMLInputElement
+                          ).value;
+                        }}
+                    /></label>
+                    <label
+                      >Status<select
+                        name="filter_status"
+                        .value=${this.filterStatus}
+                        ?disabled=${this.loading || !this.scope}
+                        @change=${(event: Event) => {
+                          this.filterStatus = (
+                            event.target as HTMLSelectElement
+                          ).value;
+                        }}
+                      >
+                        <option value="">All</option>
+                        <option value="completed">Completed</option>
+                        <option value="partial">Partial</option>
+                      </select></label
+                    >
+                    <label
+                      >Sort by<select
+                        name="journal_sort"
+                        .value=${this.sort}
+                        ?disabled=${this.loading || !this.scope}
+                        @change=${(event: Event) => {
+                          this.sort = (event.target as HTMLSelectElement).value;
+                          this.page = 1;
+                          this.history = [];
+                          void this.load();
+                        }}
+                      >
+                        <option value="completed_at">
+                          Completed date · partial first
+                        </option>
+                        <option value="title">Title</option>
+                      </select></label
+                    >
+                    <button
+                      type="button"
+                      ?disabled=${this.loading || !this.scope}
+                      @click=${() => {
+                        this.descending = !this.descending;
+                        this.page = 1;
+                        this.history = [];
+                        void this.load();
+                      }}
+                    >
+                      ${this.descending ? "Descending ↓" : "Ascending ↑"}
+                    </button>
+                    <button ?disabled=${this.loading || !this.scope}>
+                      Search
+                    </button>
+                  </form>
+                </div>
                 <div class="entries-layout">
                   <section class="entries-list" aria-label="Journal entries">
                     <div class="card-head">
@@ -391,71 +394,23 @@ export class KaleidescapeReader extends LitElement {
                               journal.
                             </p>`
                           : this.rows.length
-                            ? html`<ul class="entry-list">
-                                ${this.rows.map(
-                                  (row) =>
-                                    html`<li
-                                      class=${this.selected?.id === row.id ? "selected" : ""}
-                                    >
-                                      <div class="entry-name">
-                                        <button
-                                          class="link"
-                                          aria-current=${this.selected?.id === row.id ? "true" : nothing}
-                                          @click=${() => this.selectRecord(row.id)}
-                                        >
-                                          ${row.title}</button
-                                        ><small
-                                          >${this.date(row.started_at)} ·
-                                          ${row.status === "completed" ? "Completed" : "Partial"}</small
-                                        ><small
-                                          >${(row.watched_seconds / 60).toFixed(2)}
-                                          min watched</small
-                                        >
-                                      </div>
-                                    </li>`,
-                                )}
+                            ? html`<ul
+                                class="entry-list"
+                                tabindex="0"
+                                aria-label="Viewings"
+                              >
+                                ${this.rows.map((row) => viewingListRow(row, this.selected?.id, (id) => void this.selectRecord(id)))}
                               </ul>`
                             : html`<div class="empty">
                                 No viewings to display.
                               </div>`
                     }
-                    <div class="pagination">
-                      <small>Page ${this.page} · Up to 25 entries</small>
-                      <div class="actions">
-                        <button
-                          ?disabled=${this.loading || this.page === 1}
-                          @click=${() => {
-                            this.history = [];
-                            this.page = 1;
-                            void this.load();
-                          }}
-                        >
-                          First
-                        </button>
-                        <button
-                          ?disabled=${this.loading || !this.history.length}
-                          @click=${() => {
-                            this.page--;
-                            void this.load(this.history.pop());
-                          }}
-                        >
-                          Previous
-                        </button>
-                        <button
-                          ?disabled=${this.loading || !this.next}
-                          @click=${() => {
-                            this.history.push(this.cursor);
-                            if (this.history.length > 200) this.history.shift();
-                            this.page++;
-                            void this.load(this.next!);
-                          }}
-                        >
-                          Next
-                        </button>
-                      </div>
-                    </div>
                   </section>
-                  <section class="entries-detail" aria-label="Viewing details">
+                  <section
+                    class="entries-detail"
+                    aria-label="Viewing details"
+                    tabindex="0"
+                  >
                     <div class="card-head"><h2>Viewing details</h2></div>
                     ${
                       this.detailLoading
@@ -473,6 +428,47 @@ export class KaleidescapeReader extends LitElement {
                     }
                   </section>
                 </div>
+                <footer class="entries-footer journal-status">
+                  <span
+                    >${counted(this.scope?.viewing_count ?? 0, "viewing")} ·
+                    Revision ${this.scope?.revision ?? 0}</span
+                  >
+                  <div class="pagination">
+                    <small>Page ${this.page} · Up to 25 entries</small>
+                    <div class="actions">
+                      <button
+                        ?disabled=${this.loading || this.page === 1}
+                        @click=${() => {
+                          this.history = [];
+                          this.page = 1;
+                          void this.load();
+                        }}
+                      >
+                        First
+                      </button>
+                      <button
+                        ?disabled=${this.loading || !this.history.length}
+                        @click=${() => {
+                          this.page--;
+                          void this.load(this.history.pop());
+                        }}
+                      >
+                        Previous
+                      </button>
+                      <button
+                        ?disabled=${this.loading || !this.next}
+                        @click=${() => {
+                          this.history.push(this.cursor);
+                          if (this.history.length > 200) this.history.shift();
+                          this.page++;
+                          void this.load(this.next!);
+                        }}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                </footer>
               </section>`
         }
       </section>

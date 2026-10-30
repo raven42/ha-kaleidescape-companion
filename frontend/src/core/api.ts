@@ -265,9 +265,12 @@ export interface LibraryInfo {
   artwork_limit_bytes?: number;
 }
 export interface ImportReviewRow {
+  needs_match?: boolean;
+  can_match?: boolean;
   detail?: string;
   key: string;
-  table: "viewings" | "library_titles";
+  table: "viewings" | "library_titles" | "library_purchases";
+  selected_by_default?: boolean;
   title: string;
   action: "new" | "merge" | "unchanged" | "skip";
   changes: Record<string, { before: unknown; after: unknown }>;
@@ -281,6 +284,17 @@ export interface ImportReview {
   rows: ImportReviewRow[];
   counts: Record<ImportReviewRow["action"], number>;
 }
+export interface ImportMatchTitle {
+  id: string;
+  title: string;
+  year: number | null;
+  directors: string[];
+  version_count: number;
+  source_hint: string;
+}
+export type ImportMatchResult = Omit<ImportReview, "rows"> & {
+  row: ImportReviewRow;
+};
 export interface CollectionAddResult {
   status: "confirmed" | "uncertain" | "abandoned";
   request_id: string;
@@ -693,6 +707,36 @@ export class JournalClient {
     values: Record<string, unknown>,
   ): PreparedMutation {
     return this.prepareCommand(scope, "database/update", values);
+  }
+  searchImportMatches(
+    scope: Scope,
+    review: ImportReview,
+    key: string,
+    query: string,
+  ): Promise<{ items: ImportMatchTitle[]; has_more: boolean }> {
+    return this.call({
+      type: `${DOMAIN}/database/import/search`,
+      ...scopeFields(scope),
+      plan_id: review.plan_id,
+      revision: review.revision,
+      purchase_key: key,
+      query,
+    });
+  }
+  matchImportPurchase(
+    scope: Scope,
+    review: ImportReview,
+    key: string,
+    titleId: string | null,
+  ): Promise<ImportMatchResult> {
+    return this.call({
+      type: `${DOMAIN}/database/import/match`,
+      ...scopeFields(scope),
+      plan_id: review.plan_id,
+      revision: review.revision,
+      purchase_key: key,
+      title_id: titleId,
+    });
   }
   prepareImport(
     scope: Scope,

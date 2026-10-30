@@ -28,9 +28,8 @@ export const databaseStyles = css`
     margin-top: 20px;
   }
   .database-pagination {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 16px 0 0;
+    align-items: center;
+    flex-wrap: wrap;
   }
   .database-filters {
     padding: 20px;
@@ -80,6 +79,9 @@ export const databaseStyles = css`
   }
   .database-detail .editor {
     padding: 0;
+  }
+  .database .entry-list li {
+    padding: 6px 10px;
   }
   @media (max-width: 900px) {
     .database-toolbar kaleidescape-transfers {

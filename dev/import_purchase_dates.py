@@ -1,8 +1,9 @@
-"""Correct a private database COPY from saved invoices; never change the input."""
+"""Extract saved purchases as JSON or correct a private SQLite COPY offline."""
 
 import argparse
 import asyncio
 import json
+import os
 import sqlite3
 import sys
 from contextlib import closing
@@ -16,18 +17,48 @@ from custom_components.kaleidescape_companion.core.security import (  # noqa: E4
     private_directory,
     private_file,
 )
-from dev.purchase_history import MAX_BYTES, apply  # noqa: E402
+from dev.purchase_history import MAX_BYTES, apply, parse_purchases  # noqa: E402
 from dev.purchase_history import preview as preview_history
+
+
+def read_history(history):
+    if not history.is_file() or history.is_symlink():
+        raise ValueError("Provide a regular saved purchase HTML file")
+    with history.open("rb") as source:
+        body = source.read(MAX_BYTES + 1)
+    if len(body) > MAX_BYTES:
+        raise ValueError("Purchase history exceeds 8 MiB")
+    return body
+
+
+def export_json(history, output):
+    """Create a private JSON file; leave existing outputs and parent modes alone."""
+    if output.exists() or output.is_symlink():
+        raise ValueError("Output already exists; choose a new JSON output path")
+    records = parse_purchases(read_history(history))
+    output.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    descriptor = os.open(
+        output, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600
+    )
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as destination:
+            json.dump(records, destination, ensure_ascii=False, indent=2)
+            destination.write("\n")
+    except BaseException:
+        output.unlink(missing_ok=True)
+        raise
+    print(
+        f"Wrote {len(records)} purchase record{'' if len(records) == 1 else 's'} "
+        f"to {output}"
+    )
 
 
 async def run(database, history, output):
     if output.exists() or output.is_symlink():
         raise ValueError("Output already exists; choose a new private copy path")
-    if not database.is_file() or database.is_symlink() or not history.is_file():
+    if not database.is_file() or database.is_symlink():
         raise ValueError("Provide a regular database copy and saved purchase HTML")
-    if history.stat().st_size > MAX_BYTES:
-        raise ValueError("Purchase history exceeds 8 MiB")
-    body = history.read_bytes()
+    body = read_history(history)
     private_directory(output.parent)
     private_file(output, create=True)
     with closing(
@@ -84,11 +115,21 @@ async def run(database, history, output):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--database", required=True, type=Path)
+    parser.add_argument("--format", choices=("sqlite", "json"), default="sqlite")
+    parser.add_argument(
+        "--database", type=Path, help="Input database copy (SQLite mode only)"
+    )
     parser.add_argument("--history", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
-    asyncio.run(run(args.database, args.history, args.output))
+    if args.format == "json":
+        if args.database is not None:
+            parser.error("--database is only used with --format sqlite")
+        export_json(args.history, args.output)
+    else:
+        if args.database is None:
+            parser.error("--database is required with --format sqlite")
+        asyncio.run(run(args.database, args.history, args.output))
 
 
 if __name__ == "__main__":

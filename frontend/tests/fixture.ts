@@ -17,7 +17,7 @@ export const info: JournalInfo = {
   entry_id: "fixture-entry",
   dataset_id: "a323bd20-1b55-4562-87b0-9999944759f3",
   api_version: 1,
-  schema_version: 14,
+  schema_version: 15,
   library_enabled: false,
   revision: 5,
   viewing_count: 3,

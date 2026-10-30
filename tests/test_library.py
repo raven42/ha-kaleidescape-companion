@@ -491,6 +491,7 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
                 "library_collection_intents",
                 "library_memberships",
                 "library_collections",
+                "library_purchases",
                 "library_titles",
                 "library_artwork",
                 "library_sources",
@@ -514,7 +515,7 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
         self.repository = JournalRepository(self.path)
         self.addAsyncCleanup(self.repository.async_close)
         await self.repository.async_open()
-        self.assertEqual((await self.repository.async_info())["schema_version"], 14)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 15)
         self.assertEqual(
             await self.repository.async_get(created["viewing"]["id"]),
             created["viewing"],

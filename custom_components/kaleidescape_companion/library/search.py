@@ -6,6 +6,7 @@ from ..core.models import invalid
 from ..core.search import matches, normalized, score
 from .browse import (
     FAVORITE_SQL,
+    PURCHASE_SQL,
     RECENT_SQL,
     STATUS_SQL,
     bounded_page,
@@ -55,7 +56,8 @@ def search(db, source, query, excluded, fuzzy=True):
     for key in keys:
         row = db.execute(
             f"SELECT t.*,({STATUS_SQL}) watched_status,({FAVORITE_SQL}) "
-            f"is_favorite,({RECENT_SQL}) is_recently_added FROM library_titles t "
+            f"is_favorite,({RECENT_SQL}) is_recently_added,"
+            f"{PURCHASE_SQL} effective_purchased_on FROM library_titles t "
             f"JOIN library_sources s ON s.id=t.source_id WHERE t.id=? AND "
             f"t.source_id=?",
             (key, source),

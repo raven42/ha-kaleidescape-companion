@@ -25,6 +25,7 @@ const LABELS: Record<string, string> = {
   viewings: "Viewings",
   sessions: "Sessions",
   library_titles: "Library titles",
+  library_purchases: "Library purchases",
   library_collections: "Library collections",
   library_sources: "Library sources",
   library_artwork: "Library artwork",
@@ -230,6 +231,12 @@ export class KaleidescapeDatabase extends LitElement {
       if (generation === this.generation && request === this.request) {
         this.loading = false;
         this.requestUpdate();
+        await this.updateComplete;
+        if (generation === this.generation && request === this.request) {
+          const list =
+            this.renderRoot.querySelector<HTMLElement>(".entry-list");
+          if (list) list.scrollTop = 0;
+        }
       }
     }
   }
@@ -300,6 +307,12 @@ export class KaleidescapeDatabase extends LitElement {
   private showDetail(row: Row) {
     this.detail = row;
     this.requestUpdate();
+    void this.updateComplete.then(() => {
+      if (this.detail !== row) return;
+      const detail =
+        this.renderRoot.querySelector<HTMLElement>(".entries-detail");
+      if (detail) detail.scrollTop = 0;
+    });
   }
   private async open(id: string) {
     this.requestUpdate();
@@ -591,114 +604,116 @@ export class KaleidescapeDatabase extends LitElement {
     );
     const editable = (this.page?.schema ?? []).some((field) => field.editable);
     return html`<section class="card database" aria-label="Database management">
-      <div class="database-toolbar">
-        <div class="actions">
-          <button
-            class="primary"
-            ?disabled=${this.blocked || this.table !== "viewings"}
-            @click=${this.newEntry}
-          >
-            New Entry</button
+      <div class="entries-header">
+        <div class="database-toolbar">
+          <div class="actions">
+            <button
+              class="primary"
+              ?disabled=${this.blocked || this.table !== "viewings"}
+              @click=${this.newEntry}
+            >
+              New Entry</button
+            ><button
+              class="danger"
+              ?disabled=${this.blocked || !this.page?.deletable || !this.selectedRows().length}
+              @click=${this.deleteEntries}
+            >
+              ${`Delete ${this.selected.size > 1 ? "entries" : "entry"}${this.selected.size ? ` (${this.selected.size})` : ""}`}</button
+            ><button ?disabled=${this.blocked} @click=${() => this.load()}>
+              Refresh database
+            </button>
+          </div>
+          <kaleidescape-transfers
+            .client=${this.client}
+            .scope=${this.scope ? { ...this.scope, revision: this.page?.dataset_revision ?? this.scope.revision } : undefined}
+            .disabled=${this.blocked || !!this.operation}
+            @transfer-busy=${(event: CustomEvent<boolean>) => {
+              this.transferBusy = event.detail;
+              this.busy();
+            }}
+            @database-changed=${() => {
+              if (!this.pending) void this.load();
+            }}
+          ></kaleidescape-transfers
           ><button
-            class="danger"
-            ?disabled=${this.blocked || !this.page?.deletable || !this.selectedRows().length}
-            @click=${this.deleteEntries}
+            class="database-options-button"
+            ?disabled=${this.blocked}
+            @click=${() => this.open("database-options")}
           >
-            ${`Delete ${this.selected.size > 1 ? "entries" : "entry"}${this.selected.size ? ` (${this.selected.size})` : ""}`}</button
-          ><button ?disabled=${this.blocked} @click=${() => this.load()}>
-            Refresh database
+            Options
           </button>
         </div>
-        <kaleidescape-transfers
-          .client=${this.client}
-          .scope=${this.scope ? { ...this.scope, revision: this.page?.dataset_revision ?? this.scope.revision } : undefined}
-          .disabled=${this.blocked || !!this.operation}
-          @transfer-busy=${(event: CustomEvent<boolean>) => {
-            this.transferBusy = event.detail;
-            this.busy();
+        <div class="database-messages">
+          ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}${this.notice ? html`<p role="status">${this.notice}</p>` : nothing}${this.preferenceError ? html`<p class="warning">${this.preferenceError}<button @click=${() => this.preferences?.retry()}>Retry preferences</button></p>` : nothing}${this.retry()}
+        </div>
+        <div
+          class="page-tabs table-tabs"
+          role="tablist"
+          aria-label="Database tables"
+          @keydown=${(event: KeyboardEvent) => {
+            const index = tables.indexOf(this.table);
+            const next =
+              event.key === "ArrowRight"
+                ? (index + 1) % tables.length
+                : event.key === "ArrowLeft"
+                  ? (index + tables.length - 1) % tables.length
+                  : event.key === "Home"
+                    ? 0
+                    : event.key === "End"
+                      ? tables.length - 1
+                      : -1;
+            if (next >= 0 && !this.blocked) {
+              event.preventDefault();
+              this.changeTable(tables[next]);
+              void this.updateComplete.then(() =>
+                this.renderRoot
+                  .querySelector<HTMLButtonElement>(`#table-${this.table}`)
+                  ?.focus(),
+              );
+            }
           }}
-          @database-changed=${() => {
-            if (!this.pending) void this.load();
-          }}
-        ></kaleidescape-transfers
-        ><button
-          class="database-options-button"
-          ?disabled=${this.blocked}
-          @click=${() => this.open("database-options")}
         >
-          Options
-        </button>
-      </div>
-      <div class="database-messages">
-        ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}${this.notice ? html`<p role="status">${this.notice}</p>` : nothing}${this.preferenceError ? html`<p class="warning">${this.preferenceError}<button @click=${() => this.preferences?.retry()}>Retry preferences</button></p>` : nothing}${this.retry()}
-      </div>
-      <div
-        class="page-tabs table-tabs"
-        role="tablist"
-        aria-label="Database tables"
-        @keydown=${(event: KeyboardEvent) => {
-          const index = tables.indexOf(this.table);
-          const next =
-            event.key === "ArrowRight"
-              ? (index + 1) % tables.length
-              : event.key === "ArrowLeft"
-                ? (index + tables.length - 1) % tables.length
-                : event.key === "Home"
-                  ? 0
-                  : event.key === "End"
-                    ? tables.length - 1
-                    : -1;
-          if (next >= 0 && !this.blocked) {
-            event.preventDefault();
-            this.changeTable(tables[next]);
-            void this.updateComplete.then(() =>
-              this.renderRoot
-                .querySelector<HTMLButtonElement>(`#table-${this.table}`)
-                ?.focus(),
-            );
-          }
-        }}
-      >
-        ${tables.map((table) => html`<button role="tab" id=${`table-${table}`} aria-selected=${this.table === table} tabindex=${this.table === table ? 0 : -1} ?disabled=${this.blocked} @click=${() => this.changeTable(table)}>${LABELS[table] ?? table}${this.page ? ` (${this.page.tables[table]})` : ""}</button>`)}
-      </div>
-      <div class="database-filters filters">
-        <kaleidescape-database-search
-          .client=${this.client}
-          .scope=${this.scope}
-          .table=${this.table}
-          .value=${this.search}
-          .fields=${this.page?.query_fields ?? []}
-          .operators=${this.page?.operators ?? []}
-          .disabled=${this.blocked}
-          @query-change=${(event: CustomEvent<string>) => {
-            this.search = event.detail;
-          }}
-          @query-submit=${() => this.browse({ query: this.search })}
-          @access-denied=${() => this.fail({ code: "unauthorized" })}
-          ><button
-            slot="actions"
-            ?disabled=${this.blocked}
-            @click=${() => this.browse({ query: this.search })}
+          ${tables.map((table) => html`<button role="tab" id=${`table-${table}`} aria-selected=${this.table === table} tabindex=${this.table === table ? 0 : -1} ?disabled=${this.blocked} @click=${() => this.changeTable(table)}>${LABELS[table] ?? table}${this.page ? ` (${this.page.tables[table]})` : ""}</button>`)}
+        </div>
+        <div class="database-filters filters">
+          <kaleidescape-database-search
+            .client=${this.client}
+            .scope=${this.scope}
+            .table=${this.table}
+            .value=${this.search}
+            .fields=${this.page?.query_fields ?? []}
+            .operators=${this.page?.operators ?? []}
+            .disabled=${this.blocked}
+            @query-change=${(event: CustomEvent<string>) => {
+              this.search = event.detail;
+            }}
+            @query-submit=${() => this.browse({ query: this.search })}
+            @access-denied=${() => this.fail({ code: "unauthorized" })}
+            ><button
+              slot="actions"
+              ?disabled=${this.blocked}
+              @click=${() => this.browse({ query: this.search })}
+            >
+              Search
+            </button></kaleidescape-database-search
           >
-            Search
-          </button></kaleidescape-database-search
-        >
-        <label
-          >Sort by<select
-            name="database_sort"
-            .value=${this.filters.sort ?? ""}
-            @change=${(event: Event) => this.browse({ sort: (event.target as HTMLSelectElement).value })}
+          <label
+            >Sort by<select
+              name="database_sort"
+              .value=${this.filters.sort ?? ""}
+              @change=${(event: Event) => this.browse({ sort: (event.target as HTMLSelectElement).value })}
+            >
+              ${this.page?.columns.map((name) => html`<option value=${name}>${name}</option>`)}
+            </select></label
+          ><label
+            >Order<button
+              aria-label="Reverse database sort"
+              @click=${() => this.browse({ descending: !this.filters.descending })}
+            >
+              ${this.filters.descending ? "Descending ↓" : "Ascending ↑"}
+            </button></label
           >
-            ${this.page?.columns.map((name) => html`<option value=${name}>${name}</option>`)}
-          </select></label
-        ><label
-          >Order<button
-            aria-label="Reverse database sort"
-            @click=${() => this.browse({ descending: !this.filters.descending })}
-          >
-            ${this.filters.descending ? "Descending ↓" : "Ascending ↑"}
-          </button></label
-        >
+        </div>
       </div>
       <div class="entries-layout">
         <section
@@ -709,7 +724,7 @@ export class KaleidescapeDatabase extends LitElement {
             <h2>${LABELS[this.table] ?? this.table}</h2>
           </div>
           ${this.loading ? html`<p role="status">Loading database…</p>` : nothing}
-          <ul class="entry-list">
+          <ul class="entry-list" tabindex="0" aria-label="Database rows">
             ${this.page?.items.map(
               (row, index) =>
                 html`<li class=${this.detail === row ? "selected" : ""}>
@@ -738,40 +753,11 @@ export class KaleidescapeDatabase extends LitElement {
                 </li>`,
             )}
           </ul>
-          ${
-            this.page
-              ? html`<div class="pagination database-pagination">
-                  <small
-                    >${this.page.items.length === 1 ? "Row" : "Rows"}
-                    ${this.page.items.length ? this.page.offset + 1 : 0}–${this.page.offset + this.page.items.length}
-                    of ${this.page.total} · ${this.selected.size} selected
-                    (maximum 100)</small
-                  >
-                  <div class="actions">
-                    <button
-                      ?disabled=${this.blocked || !this.page.offset}
-                      @click=${() => this.load()}
-                    >
-                      First</button
-                    ><button
-                      ?disabled=${this.blocked || !this.page.offset}
-                      @click=${() => this.load(Math.max(0, this.page!.offset - this.page!.limit), this.page!.revision)}
-                    >
-                      Previous</button
-                    ><button
-                      ?disabled=${this.blocked || !this.page.has_more}
-                      @click=${() => this.load(this.page!.offset + this.page!.limit, this.page!.revision)}
-                    >
-                      Next
-                    </button>
-                  </div>
-                </div>`
-              : nothing
-          }
         </section>
         <section
           class="database-detail entries-detail"
           aria-label="Selected database entry"
+          tabindex="0"
         >
           <div class="card-head">
             <h2>Entry details</h2>
@@ -806,6 +792,42 @@ export class KaleidescapeDatabase extends LitElement {
           }
         </section>
       </div>
+      <footer class="entries-footer">
+        <span
+          >${LABELS[this.table] ?? this.table} · ${this.page?.total ?? 0} total
+          · Revision ${this.page?.dataset_revision ?? 0}</span
+        >
+        ${
+          this.page
+            ? html`<div class="pagination database-pagination">
+                <small
+                  >${this.page.items.length === 1 ? "Row" : "Rows"}
+                  ${this.page.items.length ? this.page.offset + 1 : 0}–${this.page.offset + this.page.items.length}
+                  of ${this.page.total} · ${this.selected.size} selected
+                  (maximum 100)</small
+                >
+                <div class="actions">
+                  <button
+                    ?disabled=${this.blocked || !this.page.offset}
+                    @click=${() => this.load()}
+                  >
+                    First</button
+                  ><button
+                    ?disabled=${this.blocked || !this.page.offset}
+                    @click=${() => this.load(Math.max(0, this.page!.offset - this.page!.limit), this.page!.revision)}
+                  >
+                    Previous</button
+                  ><button
+                    ?disabled=${this.blocked || !this.page.has_more}
+                    @click=${() => this.load(this.page!.offset + this.page!.limit, this.page!.revision)}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>`
+            : nothing
+        }
+      </footer>
       ${this.options()}
       <dialog
         id="database-edit"

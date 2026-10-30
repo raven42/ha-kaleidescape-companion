@@ -56,7 +56,7 @@ packages with no compatibility forwarding modules or development tools.
 | `playback/recording.py`, `playback/history.py`                                                                                                                                       | Worker-only session persistence, resume matching and bounded sensor summaries                                                    |
 | `library/config.py`, `library/parser.py`, `library/sync.py`                                                                                                                          | Opt-in configuration, bounded native HTML parsing and serialized catalog/device operations                                       |
 | `library/browse.py`, `library/store.py`                                                                                                                                              | Local queries/projections, exact-version persistence and private artwork files                                                   |
-| `library/collections.py`, `library/importing.py`                                                                                                                                     | Validated collection intents/read-back and portable title validation                                                             |
+| `library/collections.py`, `library/importing.py`, `library/purchases.py`                                                                                                             | Validated collection intents/read-back, portable titles and private purchase history/reviewed associations                       |
 | `ui/websocket.py`, `ui/http.py`                                                                                                                                                      | HA-authenticated commands/downloads/uploads and positive reader projections                                                      |
 | `ui/settings.py`, `ui/preferences.py`, `ui/panel.py`                                                                                                                                 | Native-options adapter, UI value validation and compiled-panel registration                                                      |
 | `ui/assets/panel.js`, strings/translations                                                                                                                                           | Deployed browser module and HA text metadata                                                                                     |
@@ -115,8 +115,8 @@ and
 
 The [backend guide](backend.md) defines the implemented schema, API, timing
 defaults, resource limits, and restore procedure. Release/API/schema/export
-versions are independent: integration `0.0.0`, API `1`, SQLite `8`, JSON export
-`2`.
+versions are independent: integration `0.0.0`, API `1`, SQLite `15`, JSON export
+`4`.
 
 - Store durable history in `<HA config>/kaleidescape_companion/journal.sqlite3`,
   separate from Recorder and static web roots. Keep history unless explicitly
@@ -264,7 +264,7 @@ private content-keyed object URLs with a 1000-image/128 MiB compressed-byte LRU,
 offscreen-first eviction and full Library/account cleanup. Completed images
 survive scrolling and view/page changes. Options owns live database-backed
 layout toggles; cover format selection and exclusive status/independent Favorite
-indicators live in `library/badges.ts`. Metadata uses schema 14 on the existing
+indicators live in `library/badges.ts`. Metadata uses schema 15 on the existing
 worker; a 192 MiB library write ceiling preserves 64 MiB of journal growth.
 `ui/preferences.py` validates the native landing default and database UI values;
 `core/preferences.py` atomically patches actor-scoped/shared rows on the worker.

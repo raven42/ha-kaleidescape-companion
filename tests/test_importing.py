@@ -211,7 +211,7 @@ class ImportStorageTest(unittest.IsolatedAsyncioTestCase):
         async with self.repository.async_export_snapshot("json") as path:
             data = path.read_bytes()
         document = json.loads(data)
-        self.assertEqual(document["metadata"]["format_version"], 3)
+        self.assertEqual(document["metadata"]["format_version"], 4)
         self.assertTrue(document["library_titles"])
         self.assertNotIn(library.ORIGIN, data.decode())
         for row in document["library_titles"]:

@@ -4,7 +4,7 @@ import json
 import re
 
 from ..core.preferences import excluded
-from ..library.browse import PUBLIC_FIELDS, group_metadata
+from ..library.browse import PUBLIC_FIELDS, PURCHASE_SQL, group_metadata
 from ..library.config import excluded_collections
 
 
@@ -23,6 +23,9 @@ def snapshot(db, row):
         **{key: value for key, value in data.items() if value not in (None, "", [])},
     }
     hidden = excluded_collections(excluded(db))
+    purchased = db.execute(
+        f"SELECT {PURCHASE_SQL} FROM library_titles t WHERE t.id=?", (row["id"],)
+    ).fetchone()[0]
     for key, value in data.items():
         if isinstance(value, list):
             data[key] = [metadata_text(item, 100) for item in value[:20]]
@@ -42,7 +45,7 @@ def snapshot(db, row):
             if item[0].casefold() not in hidden
         ],
         "artwork_key": row["artwork_key"],
-        "purchase_date": row["purchased_on"],
+        "purchase_date": purchased,
         "added_on": row["first_seen"],
     }
 

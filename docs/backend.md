@@ -1,8 +1,8 @@
 # Journal backend
 
 The backend records manual journal entries and observed playback from one
-selected HA player. API version is `1`; SQLite schema is `14` and JSON export
-format is `3`. The household reader and administrator [management panel](ui.md)
+selected HA player. API version is `1`; SQLite schema is `15` and JSON export
+format is `4`. The household reader and administrator [management panel](ui.md)
 use this API. Live subscriptions and controls remain planned;
 [optional library sync](library.md) is implemented. A compact read-only Now
 Playing card uses the existing snapshot API and HA artwork. The
@@ -55,11 +55,11 @@ SQLite snapshots and remains outside ordinary journal responses and diagnostics.
 Schema 4 adds `maintenance_audit`: actor, purge operation/request UUID, count,
 dataset revision, and time, without viewing identities or content. Upgrading an
 existing schema retains the usual private migration backup; purging never
-removes that separate copy. JSON format 3 carries viewing/session snapshots and
-portable Library titles, excluding the audit tables. SQLite exports include all
-tables. Schema 5 adds a minimal `import_audit` record with authenticated actor,
-request UUID, imported/skipped counts, dataset revision, and time, without
-imported content or file names.
+removes that separate copy. JSON format 4 carries viewing/session snapshots,
+portable Library titles and private purchases, excluding the audit tables.
+SQLite exports include all tables. Schema 5 adds a minimal `import_audit` record
+with authenticated actor, request UUID, imported/skipped counts, dataset
+revision, and time, without imported content or file names.
 
 Schema 6 adds source-scoped library titles, collections/memberships, and artwork
 indexes. Image bytes use a private bounded file cache outside SQLite. Library
@@ -73,6 +73,13 @@ removes both purchase-only tables. Schema 8 collection-add intents remain
 separate because they enforce a durable external-write recovery barrier. See
 [purchase dates](purchase-dates.md) and [reviewed imports](imports.md). `info`
 exposes only the validated native landing-page default to active users.
+
+Schema 15 adds private `library_purchases` invoice records, preserving repeated
+orders independently of scanned title formats. Reviewed imports can suggest
+unambiguous cached movie-group links; prices and order IDs stay
+administrator-only. The earliest linked date fills Library date projections
+without rewriting explicit title-version dates. See
+[purchase imports](imports.md#import-purchase-history-json).
 
 Schema 10 adds the bounded last-addition title snapshot/count/time to
 `library_sources`, committed with the catalog. Existing catalogs establish the
@@ -513,12 +520,12 @@ disconnect/error paths. Owned snapshots left by a crash are removed on the next
 storage open. JSON contains format metadata, viewing records and
 field-correction markers, and sessions, including tombstones. SQLite includes
 the full database, including request deduplication and manual audit metadata.
-JSON format 3 additionally contains portable Library title metadata and purchase
-dates, without origins, fetch paths or cache keys. It does not include audit
-tables. Reviewed viewing/Library merge imports are supported through Database;
-full SQLite restore remains an offline operation. All exports and migration
-backups are private, including retained tombstones; visible deletion does not
-erase data. See the
+JSON format 4 additionally contains portable Library title metadata, purchase
+dates and private invoice history, without device origins, fetch paths or cache
+keys. It does not include audit tables. Reviewed viewing/Library merge imports
+are supported through Database; full SQLite restore remains an offline
+operation. All exports and migration backups are private, including retained
+tombstones; visible deletion does not erase data. See the
 [retention procedures](security.md#backup-restore-retention-and-capacity).
 
 HA's backup hooks drain accepted writes and pause new writes while its backup

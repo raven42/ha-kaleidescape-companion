@@ -9,7 +9,9 @@ from .config import excluded_collections
 
 MAX_PAGE_SIZE = 1000
 MAX_PAGE_BYTES = 8 * 1024 * 1024
-PURCHASE_SQL = "t.purchased_on"
+PURCHASE_SQL = """coalesce(t.purchased_on,(SELECT min(p.purchased_on)
+    FROM library_purchases p WHERE p.source_id=t.source_id
+    AND p.source_group=t.source_group))"""
 
 FAVORITE_SQL = """EXISTS (SELECT 1 FROM library_titles ft JOIN library_memberships fm
     ON fm.title_id=ft.id WHERE ft.source_id=t.source_id
@@ -127,7 +129,7 @@ def public_title(row, memberships, shared=None):
         "is_recently_added": bool(row["is_recently_added"]),
         "formats": formats(data),
         "collections": memberships,
-        "purchased_on": row["purchased_on"],
+        "purchased_on": row["effective_purchased_on"],
     }
 
 
@@ -384,7 +386,8 @@ def library_list(db, source, filters, excluded=""):
     ]
     order = sorts[sort] + (" DESC" if descending else " ASC")
     rows = db.execute(
-        f"""SELECT t.*,({STATUS_SQL}) watched_status,{PURCHASE_SQL} purchased_on,
+        f"""SELECT t.*,({STATUS_SQL}) watched_status,
+            {PURCHASE_SQL} effective_purchased_on,
             ({FAVORITE_SQL}) is_favorite,({RECENT_SQL}) is_recently_added
         FROM {join} WHERE {where}
         ORDER BY {order},t.id LIMIT ? OFFSET ?""",
@@ -516,7 +519,7 @@ def grouped_page(
     ), versions AS (
         SELECT t.*,({STATUS_SQL}) watched_status,{collection_sql} collection_sort,
         ({FAVORITE_SQL}) is_favorite,({RECENT_SQL}) is_recently_added,
-        {PURCHASE_SQL} purchased_on
+        {PURCHASE_SQL} effective_purchased_on
         FROM {join} WHERE t.source_id=? AND t.available=1
     ) SELECT source_group,min(title_search) title_search,min(id) id,
         min(title) title,count(*) version_count,
@@ -525,7 +528,7 @@ def grouped_page(
         min(json_extract(data,'$.duration_seconds')) duration_seconds,
         max(json_extract(data,'$.duration_seconds')) maximum_duration_seconds,
         min(first_seen) first_seen,max(last_seen) last_seen,
-        min(purchased_on) purchased_on,
+        min(effective_purchased_on) purchased_on,
         min(collection_sort COLLATE NOCASE) collection_sort,
         min(CASE watched_status WHEN 'in_progress' THEN 0 WHEN 'watched' THEN 1
             WHEN 'unknown' THEN 2 ELSE 3 END) status_rank
@@ -682,7 +685,8 @@ def library_versions(db, source, title, offset=0, revision=None, excluded=""):
         (source, group),
     ).fetchone()[0]
     rows = db.execute(
-        f"""SELECT t.*,({STATUS_SQL}) watched_status,{PURCHASE_SQL} purchased_on,
+        f"""SELECT t.*,({STATUS_SQL}) watched_status,
+            {PURCHASE_SQL} effective_purchased_on,
             ({FAVORITE_SQL}) is_favorite,({RECENT_SQL}) is_recently_added
         FROM library_titles t
         JOIN library_sources s ON s.id=t.source_id WHERE t.source_id=?

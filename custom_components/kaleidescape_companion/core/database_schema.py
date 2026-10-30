@@ -4,6 +4,7 @@ TABLE_KEYS = {
     "viewings": "id",
     "sessions": "id",
     "library_titles": "id",
+    "library_purchases": "id",
     "library_collections": "source_id,name",
     "library_sources": "id",
     "library_artwork": "cache_key",
@@ -36,6 +37,7 @@ EDITABLE = {
         "notes",
     },
     "sessions": {"title", "duration_seconds", "watched_seconds"},
+    "library_purchases": {"purchase_price", "retail_price"},
     "library_titles": {
         "title",
         "data",
@@ -110,6 +112,12 @@ def references(db, table):
     logical = {
         "viewings": [("library_titles", {"id": "library_title_id"})],
         "library_titles": [("library_artwork", {"cache_key": "artwork_key"})],
+        "library_purchases": [
+            (
+                "library_titles",
+                {"source_id": "source_id", "source_group": "source_group"},
+            )
+        ],
         "calendar_publications": [("viewings", {"id": "viewing_id"})],
         "calendar_sync_items": [("viewings", {"id": "viewing_id"})],
     }

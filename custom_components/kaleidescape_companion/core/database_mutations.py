@@ -271,6 +271,10 @@ def validated_patch(db, table, row, patch, now):
                 else None,
             )
         return result
+    if table == "library_purchases":
+        from ..library.purchases import price
+
+        return {key: price(value) for key, value in patch.items()}
     if table == "library_titles":
         from ..library.importing import title_record
 
@@ -397,6 +401,11 @@ def delete_row(db, table, row):
             "SELECT 1 FROM library_collection_intents WHERE source_id=?", (row["id"],)
         ).fetchone():
             raise JournalError("conflict", "Device-write receipts protect this source")
+        db.execute(
+            "UPDATE library_purchases SET source_id=NULL,source_group=NULL "
+            "WHERE source_id=?",
+            (row["id"],),
+        )
         db.execute("DELETE FROM library_memberships WHERE source_id=?", (row["id"],))
         db.execute("DELETE FROM library_collections WHERE source_id=?", (row["id"],))
         db.execute("DELETE FROM library_titles WHERE source_id=?", (row["id"],))

@@ -8,9 +8,12 @@ import type {
   JournalInfo,
   PreparedMutation,
   ImportReview,
+  ImportReviewRow,
 } from "../core/api";
 import { styles } from "./styles";
 import { dismissBackdrop } from "./dialog";
+import "./import-matcher";
+import type { KaleidescapeImportMatcher } from "./import-matcher";
 
 export class KaleidescapeTransfers extends LitElement {
   static properties = {
@@ -74,6 +77,7 @@ export class KaleidescapeTransfers extends LitElement {
   private file?: File;
   private pending?: PreparedMutation;
   private review?: ImportReview;
+  private matching?: ImportReviewRow;
   private selected = new Set<string>();
   private query = "";
   private changesOnly = false;
@@ -102,6 +106,7 @@ export class KaleidescapeTransfers extends LitElement {
     this.controller = undefined;
     this.file = undefined;
     this.review = undefined;
+    this.matching = undefined;
     this.selected.clear();
     const input =
       this.renderRoot.querySelector<HTMLInputElement>('input[type="file"]');
@@ -134,6 +139,7 @@ export class KaleidescapeTransfers extends LitElement {
     this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.showModal();
   }
   private hideDialog() {
+    this.matching = undefined;
     this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.close();
     this.dialog = null;
   }
@@ -144,6 +150,7 @@ export class KaleidescapeTransfers extends LitElement {
     this.hideDialog();
     this.file = undefined;
     this.review = undefined;
+    this.matching = undefined;
     this.selected.clear();
     const input =
       this.renderRoot.querySelector<HTMLInputElement>('input[type="file"]');
@@ -235,6 +242,7 @@ export class KaleidescapeTransfers extends LitElement {
     this.working = true;
     this.error = this.notice = "";
     this.review = undefined;
+    this.matching = undefined;
     this.selected.clear();
     this.busy();
     this.requestUpdate();
@@ -248,7 +256,11 @@ export class KaleidescapeTransfers extends LitElement {
       this.review = review;
       this.selected = new Set(
         review.rows
-          .filter((row) => ["new", "merge"].includes(row.action))
+          .filter(
+            (row) =>
+              ["new", "merge"].includes(row.action) &&
+              row.selected_by_default !== false,
+          )
           .map((row) => row.key),
       );
       this.page = 0;
@@ -271,6 +283,7 @@ export class KaleidescapeTransfers extends LitElement {
       !this.client ||
       !this.scope ||
       !this.review ||
+      this.matching ||
       this.working ||
       this.disabled ||
       this.scope.tracking_enabled
@@ -289,6 +302,7 @@ export class KaleidescapeTransfers extends LitElement {
       if (generation !== this.generation) return;
       this.pending = undefined;
       this.review = undefined;
+      this.matching = undefined;
       this.file = undefined;
       this.selected.clear();
       this.notice = `Imported ${counted(result.imported_count, "new entry", "new entries")}; filled missing data in ${result.updated_count}; left ${result.skipped_count} unchanged or unselected.`;
@@ -309,8 +323,72 @@ export class KaleidescapeTransfers extends LitElement {
       ) {
         this.pending = undefined;
         this.review = undefined;
+        this.matching = undefined;
         this.selected.clear();
       }
+      this.fail(error);
+    } finally {
+      if (generation === this.generation) {
+        this.working = false;
+        this.busy();
+        this.requestUpdate();
+      }
+    }
+  }
+  private async openMatch(row: ImportReviewRow) {
+    if (this.scope?.tracking_enabled) return;
+    this.matching = row;
+    this.requestUpdate();
+    await this.updateComplete;
+    if (this.matching === row)
+      await this.renderRoot
+        .querySelector<KaleidescapeImportMatcher>("kaleidescape-import-matcher")
+        ?.focusSearch();
+  }
+  private async chooseMatch(titleId: string | null) {
+    if (
+      !this.client ||
+      !this.scope ||
+      !this.review ||
+      !this.matching ||
+      this.scope.tracking_enabled ||
+      this.working ||
+      this.pending ||
+      this.disabled
+    )
+      return;
+    const generation = this.generation,
+      key = this.matching.key;
+    this.working = true;
+    this.error = "";
+    this.busy();
+    this.requestUpdate();
+    try {
+      const result = await this.client.matchImportPurchase(
+        this.scope,
+        this.review,
+        key,
+        titleId,
+      );
+      if (generation !== this.generation) return;
+      const { row: matchedRow, ...metadata } = result;
+      this.review = {
+        ...this.review,
+        ...metadata,
+        rows: this.review.rows.map((row) =>
+          row.key === key ? matchedRow : row,
+        ),
+      };
+      this.matching = undefined;
+      if (["new", "merge"].includes(result.row.action)) this.selected.add(key);
+      else this.selected.delete(key);
+      this.page = 0;
+    } catch (error) {
+      if (generation !== this.generation) return;
+      // A lost response may have rotated the review token. Require fresh review.
+      this.review = undefined;
+      this.matching = undefined;
+      this.selected.clear();
       this.fail(error);
     } finally {
       if (generation === this.generation) {
@@ -324,23 +402,48 @@ export class KaleidescapeTransfers extends LitElement {
     if (!this.review) return nothing;
     const review = this.review;
     const query = this.query.trim().toLocaleLowerCase();
-    const rows = review.rows.filter(
-      (row) =>
-        (!this.changesOnly || ["new", "merge"].includes(row.action)) &&
-        `${row.title} ${row.detail ?? ""} ${row.table} ${Object.keys(row.changes).join(" ")}`
-          .toLocaleLowerCase()
-          .includes(query),
-    );
+    const rows = review.rows
+      .filter(
+        (row) =>
+          (!this.changesOnly ||
+            row.needs_match ||
+            ["new", "merge"].includes(row.action)) &&
+          `${row.title} ${row.detail ?? ""} ${row.table} ${Object.keys(row.changes).join(" ")}`
+            .toLocaleLowerCase()
+            .includes(query),
+      )
+      .sort(
+        (left, right) =>
+          Number(!!right.needs_match) - Number(!!left.needs_match),
+      );
     const lastPage = Math.max(0, Math.ceil(rows.length / this.pageSize) - 1);
     const page = Math.min(this.page, lastPage);
     const visible = rows.slice(
       page * this.pageSize,
       (page + 1) * this.pageSize,
     );
-    return html`<p role="status">
+    return html`${
+        this.matching
+          ? html`<kaleidescape-import-matcher
+              .client=${this.client}
+              .scope=${this.scope}
+              .review=${review}
+              .row=${this.matching}
+              .disabled=${blocked}
+              @match-choice=${(event: CustomEvent<string | null>) => this.chooseMatch(event.detail)}
+              @match-cancel=${() => {
+                this.matching = undefined;
+                this.requestUpdate();
+              }}
+              @access-denied=${() => this.fail({ code: "unauthorized" })}
+            ></kaleidescape-import-matcher>`
+          : nothing
+      }
+      <p role="status">
         ${review.counts.new} new · ${review.counts.merge} mergeable ·
         ${review.counts.unchanged} unchanged · ${review.counts.skip} skipped.
         ${this.selected.size} selected.
+        ${review.rows.some((row) => row.needs_match) ? html`${counted(review.rows.filter((row) => row.needs_match).length, "unlinked purchase")} shown first.` : nothing}
       </p>
       <div class="actions">
         <label
@@ -425,6 +528,17 @@ export class KaleidescapeTransfers extends LitElement {
                   <td>${row.action}</td>
                   <td>
                     ${row.reason || Object.keys(row.changes).join(", ") || "No missing data"}
+                    ${row.needs_match ? html`<small class="warning">No Library match selected</small>` : nothing}
+                    ${
+                      row.can_match
+                        ? html`<button
+                            ?disabled=${blocked || !!this.matching || !!this.scope?.tracking_enabled}
+                            @click=${() => this.openMatch(row)}
+                          >
+                            Match title…
+                          </button>`
+                        : nothing
+                    }
                     ${row.conflicts.length ? html`<small class="muted">Existing values kept: ${row.conflicts.join(", ")}</small>` : nothing}
                     ${
                       Object.keys(row.changes).length
@@ -486,17 +600,21 @@ export class KaleidescapeTransfers extends LitElement {
         inactive until a server sync verifies them. Session evidence, collection
         membership, artwork files, audit and retry state are not restored.
         Maximum 32 MiB / 10,000 records. Review expires after 10 minutes or any
-        database change.
+        database change. Purchase JSON keeps separate orders and proposes
+        exact-name Library group links for review. Ambiguous names stay
+        unlinked. Purchase rows start unchecked; select the purchases and links
+        you approve.
       </p>
       ${this.scope?.tracking_enabled ? html`<p class="warning">Disable automatic tracking in Settings before importing.</p>` : nothing}
       <label
-        >JSON or SQLite export<input
+        >JSON or SQLite file<input
           type="file"
           accept=".json,.sqlite,.sqlite3,.db"
           ?disabled=${blocked || !!this.scope?.tracking_enabled}
           @change=${(event: Event) => {
             this.file = (event.target as HTMLInputElement).files?.[0];
             this.review = undefined;
+            this.matching = undefined;
             this.selected.clear();
             this.error = this.notice = "";
             this.requestUpdate();
@@ -529,6 +647,7 @@ export class KaleidescapeTransfers extends LitElement {
                     ) {
                       this.pending = undefined;
                       this.review = undefined;
+                      this.matching = undefined;
                       this.file = undefined;
                       this.selected.clear();
                       this.hideDialog();
@@ -612,7 +731,7 @@ export class KaleidescapeTransfers extends LitElement {
             @click=${this.closeDialog}
           >
             Cancel</button
-          >${this.dialog === "import" && this.review ? html`<button class="primary" ?disabled=${blocked || !this.selected.size} @click=${this.importData}>Apply ${counted(this.selected.size, "selected change")}</button>` : nothing}
+          >${this.dialog === "import" && this.review ? html`<button class="primary" ?disabled=${blocked || !!this.matching || !this.selected.size} @click=${this.importData}>Apply ${counted(this.selected.size, "selected change")}</button>` : nothing}
         </div>
       </dialog>`;
   }

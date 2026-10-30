@@ -27,6 +27,27 @@ afterEach(() => {
   reader.remove();
 });
 
+it("keeps rows compact and exposes timing only in the independent detail region", async () => {
+  const root = reader.shadowRoot!;
+  const row = root.querySelector(".entry-list li")!;
+  expect(row.querySelector("time")?.textContent).not.toContain(":");
+  expect(row.textContent).not.toContain("min watched");
+  expect(row.querySelector(".journal-row-status")?.textContent).toBe(
+    "Completed",
+  );
+  expect(root.querySelector(".entries-header form")).not.toBeNull();
+  expect(root.querySelector(".entries-list .pagination")).toBeNull();
+  expect(root.querySelector(".entries-footer .pagination")).not.toBeNull();
+  expect(root.querySelector('.entries-detail[tabindex="0"]')).not.toBeNull();
+  button("The Lantern Voyage").click();
+  await vi.waitFor(() =>
+    expect(root.querySelector(".entries-detail")?.textContent).toContain(
+      "Watched",
+    ),
+  );
+  expect(row.textContent).not.toContain("Watched");
+});
+
 it("renders titles and timing as text without management controls or private metadata", async () => {
   expect(content()).toContain("Read-only household journal");
   expect(content()).not.toContain("fictional viewing for interface testing");

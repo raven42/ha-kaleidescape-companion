@@ -258,11 +258,12 @@ Python does not decode images.
 
 HA backups pause sync and drain accepted worker/file writes before copying
 storage. SQLite exports include library metadata and cache indexes, but not
-artwork files. JSON format 3 includes portable title metadata and purchase
-dates. Missing cover files are reconciled when storage opens and can be fetched
-again. [Reviewed imports](imports.md) can merge title metadata/dates but do not
-restore source configuration, memberships/status, fetch/cache paths, or artwork
-files. A full trusted database restore is still the offline
+artwork files. JSON format 4 includes portable title metadata, purchase dates
+and private purchase-history records. Missing cover files are reconciled when
+storage opens and can be fetched again. [Reviewed imports](imports.md) can merge
+title metadata/dates but do not restore source configuration,
+memberships/status, fetch/cache paths, or artwork files. A full trusted database
+restore is still the offline
 [restore procedure](backend.md#export-backup-and-restore).
 
 Disabling sync retains cached library records and covers; it stops network work

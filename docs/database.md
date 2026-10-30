@@ -14,6 +14,13 @@ keys are omitted. JSON metadata uses a JSON text editor. Nullable fields have an
 explicit NULL checkbox so empty text and a missing value remain distinct. Review
 the changes and check the save confirmation before applying them.
 
+The header/search controls and footer stay visible while browsing. The row list
+and selected details have separate, keyboard-focusable scroll areas; scrolling
+hundreds of rows no longer pushes details below the list. Pagination, row counts
+and selection counts live in the sticky footer. Narrow screens stack the two
+scroll regions. Changing page resets the list position; selecting another entry
+starts its details at the top.
+
 **Options** saves rows per page (10/25/100/500), system-table visibility, the
 selected table and each table's sort field/order as personal database
 preferences. These use a separate settings row from Library preferences and
@@ -114,9 +121,13 @@ the 8 MiB response limit and revision-bound pagination.
 
 Merge Import and Export retain their existing authenticated review/download
 contracts; see [imports](imports.md). SQLite exports/backups contain private
-preferences, source identities, audit actors and retry state. JSON format 3
-remains portable viewing/Library metadata and excludes UI/audit operational
-rows.
+preferences, source identities, audit actors and retry state. JSON format 4
+contains portable viewing/Library metadata and private purchase history; it
+excludes UI/audit operational rows. Purchase JSON arrays can be uploaded
+directly for reviewed import. Enable **Show system tables** to inspect Library
+purchases; prices are editable, while invoice identity fields and Library
+associations are protected. See the
+[purchase import rules](imports.md#import-purchase-history-json).
 
 Run `bash dev/dev.sh preview` and open
 `http://127.0.0.1:5173/review.html?library=1&companion_page=database` for

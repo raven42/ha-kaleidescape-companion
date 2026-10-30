@@ -174,6 +174,8 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
         await self.scan(collections={})
         await self.repository.async_close()
         with closing(sqlite3.connect(self.path)) as db:
+            db.execute("DROP TABLE library_purchases")
+            db.execute("DROP INDEX library_purchase_matches")
             for column in (
                 "recently_added_count",
                 "recently_added_movies",

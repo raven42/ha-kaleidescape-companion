@@ -17,6 +17,7 @@ from ..library import browse as library_browse
 from ..library import collections as library_collections
 from ..library import store as library_store
 from ..library.importing import portable_titles
+from ..library.purchases import portable_purchases
 from ..library.summary import library_summary
 from ..playback.history import history_summary
 from ..playback.recording import save_session
@@ -604,6 +605,31 @@ class JournalRepository:
         )
         return self._import_plan["public"]
 
+    async def async_import_match_search(self, plan_id, revision, key, query, actor_id):
+        return await self._call(
+            self._import_review_action,
+            import_merge.search_matches,
+            identifier(plan_id),
+            revision,
+            key,
+            query,
+            self._actor(actor_id),
+        )
+
+    async def async_import_match(self, plan_id, revision, key, title_id, actor_id):
+        return await self._call(
+            self._import_review_action,
+            import_merge.match_purchase,
+            identifier(plan_id),
+            revision,
+            key,
+            title_id,
+            self._actor(actor_id),
+        )
+
+    def _import_review_action(self, operation, *args):
+        return operation(self._db(), self._import_plan, *args)
+
     async def async_import_apply(
         self, request_id, plan_id, revision, selected, *, actor_id=None
     ):
@@ -1006,7 +1032,7 @@ class JournalRepository:
                 finally:
                     destination.close()
             else:
-                metadata = {"format_version": 3, **self._info()}
+                metadata = {"format_version": 4, **self._info()}
                 with path.open("w", encoding="utf-8") as output:
                     output.write(
                         '{"metadata": ' + json.dumps(metadata) + ', "viewings": ['
@@ -1040,6 +1066,14 @@ class JournalRepository:
                     output.write('], "library_titles": [')
                     first = True
                     for row in portable_titles(db):
+                        if not first:
+                            output.write(",")
+                        json.dump(row, output, allow_nan=False)
+                        first = False
+                        self._check_export(started, output.tell())
+                    output.write('], "library_purchases": [')
+                    first = True
+                    for row in portable_purchases(db):
                         if not first:
                             output.write(",")
                         json.dump(row, output, allow_nan=False)

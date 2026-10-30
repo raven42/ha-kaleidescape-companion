@@ -199,6 +199,7 @@ class RepositorySecurityTest(unittest.IsolatedAsyncioTestCase):
                 "library_collection_intents",
                 "library_memberships",
                 "library_collections",
+                "library_purchases",
                 "library_titles",
                 "library_artwork",
                 "library_sources",

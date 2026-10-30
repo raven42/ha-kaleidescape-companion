@@ -2,12 +2,14 @@
 
 import hashlib
 import json
+import re
 import time
 from datetime import UTC, datetime
 from uuid import uuid4
 
+from ..library.purchases import PURCHASE_FIELDS, propose_link
 from .importing import parse_bundle
-from .models import JournalError, invalid, validate_times
+from .models import JournalError, invalid, text, validate_times
 
 REVIEW_SECONDS = 600
 MAX_REVIEW_BYTES = 8 * 1024 * 1024
@@ -26,7 +28,7 @@ def review(db, payload, import_format, actor):
     bundle = parse_bundle(payload, import_format)
     revision = db.execute("SELECT revision FROM schema_metadata").fetchone()[0]
     sources = {row[0] for row in db.execute("SELECT id FROM library_sources")}
-    rows, operations = [], {}
+    rows, operations, purchase_matches = [], {}, {}
     deadline = time.monotonic() + 30
     for table, records in bundle.items():
         for record in records:
@@ -36,6 +38,14 @@ def review(db, payload, import_format, actor):
             old = db.execute(
                 f"SELECT * FROM {table} WHERE id=?", (record["id"],)
             ).fetchone()
+            purchase_detail = ""
+            if table == "library_purchases":
+                purchase_detail = propose_link(db, record, old)
+                if record["source_id"] is None:
+                    purchase_matches[key] = {
+                        "record": dict(record),
+                        "old": dict(old) if old else None,
+                    }
             changes, conflicts, reason = {}, [], ""
             if table == "library_titles" and record["source_id"] not in sources:
                 reason = "Unknown source; sync this Library source before importing"
@@ -45,6 +55,13 @@ def review(db, payload, import_format, actor):
                     for k, v in record.items()
                     if k not in {"id", "title_search"} and v not in EMPTY
                 }
+            elif table == "library_purchases":
+                for field in PURCHASE_FIELDS:
+                    value = record[field]
+                    if old[field] in EMPTY and value not in EMPTY:
+                        changes[field] = {"before": old[field], "after": value}
+                    elif value not in EMPTY and old[field] != value:
+                        conflicts.append(field)
             elif table == "viewings":
                 if old["deleted_at"] is not None:
                     reason = "Existing deletion is preserved"
@@ -117,6 +134,8 @@ def review(db, payload, import_format, actor):
                     )
                     if value not in EMPTY
                 )
+            elif table == "library_purchases":
+                detail = f"{record['purchased_on']} · {purchase_detail}"
             else:
                 detail = record["started_at"]
             rows.append(
@@ -129,6 +148,9 @@ def review(db, payload, import_format, actor):
                     "changes": changes,
                     "conflicts": conflicts,
                     "reason": reason,
+                    "selected_by_default": table != "library_purchases",
+                    "needs_match": key in purchase_matches,
+                    "can_match": key in purchase_matches,
                 }
             )
             if action in {"new", "merge"}:
@@ -138,6 +160,7 @@ def review(db, payload, import_format, actor):
                     "action": action,
                     "changes": changes,
                 }
+    rows.sort(key=lambda row: not row["needs_match"])
     public = {
         "plan_id": str(uuid4()),
         "revision": revision,
@@ -155,9 +178,147 @@ def review(db, payload, import_format, actor):
     return {
         "public": public,
         "operations": operations,
+        "purchase_matches": purchase_matches,
         "actor": actor,
         "expires": time.monotonic() + REVIEW_SECONDS,
     }
+
+
+def checked_review(db, plan, plan_id, revision, actor):
+    """Review searches/edits confer no database-write or actor selection ability."""
+    if (
+        not plan
+        or plan["public"]["plan_id"] != plan_id
+        or plan["actor"] != actor
+        or plan["expires"] < time.monotonic()
+    ):
+        raise JournalError(
+            "conflict", "Import review expired or changed; review the file again"
+        )
+    if type(revision) is not int or revision != plan["public"]["revision"]:
+        raise invalid("Invalid import review revision")
+    if db.execute("SELECT revision FROM schema_metadata").fetchone()[0] != revision:
+        raise JournalError("conflict", "Database changed; review the file again")
+
+
+def search_matches(db, plan, plan_id, revision, key, query, actor):
+    checked_review(db, plan, plan_id, revision, actor)
+    if (
+        not isinstance(key, str)
+        or len(key) > 100
+        or key not in plan["purchase_matches"]
+    ):
+        raise invalid("Choose an unresolved purchase in this review")
+    query = text(query, 100, empty=True)
+    if "\x00" in query:
+        raise invalid("Title search is limited to 100 characters")
+    if not query.strip():
+        return {"items": [], "has_more": False}
+    deadline = time.monotonic() + 2
+    db.set_progress_handler(lambda: int(time.monotonic() > deadline), 1000)
+    try:
+        rows = db.execute(
+            "SELECT min(id) id,min(title) title,min(json_extract(data,'$.year')) year,"
+            "max(json_extract(data,'$.directors')) directors,count(*) version_count,"
+            "source_id FROM library_titles WHERE available=1 "
+            "AND instr(title_search,?)>0 GROUP BY source_id,source_group "
+            "ORDER BY min(title_search),source_id,source_group LIMIT 21",
+            (query.strip().casefold(),),
+        ).fetchall()
+    finally:
+        db.set_progress_handler(None, 0)
+    return {
+        "items": [
+            {
+                "id": row["id"],
+                "title": row["title"],
+                "year": row["year"],
+                "directors": json.loads(row["directors"] or "[]"),
+                "version_count": row["version_count"],
+                "source_hint": row["source_id"][-8:],
+            }
+            for row in rows[:20]
+        ],
+        "has_more": len(rows) > 20,
+    }
+
+
+def match_purchase(db, plan, plan_id, revision, key, title_id, actor):
+    """Revise an ephemeral proposal; a fresh token protects the final approval."""
+    checked_review(db, plan, plan_id, revision, actor)
+    if (
+        not isinstance(key, str)
+        or len(key) > 100
+        or key not in plan["purchase_matches"]
+    ):
+        raise invalid("Only unresolved purchase links can be chosen")
+    context = plan["purchase_matches"][key]
+    record, old = dict(context["record"]), context["old"]
+    detail = "No Library link selected"
+    if title_id is not None:
+        if not isinstance(title_id, str) or not re.fullmatch(r"[a-f0-9]{64}", title_id):
+            raise invalid("Choose an available Library title")
+        target = db.execute(
+            "SELECT source_id,source_group,title,json_extract(data,'$.year') year "
+            "FROM library_titles WHERE id=? AND available=1",
+            (title_id,),
+        ).fetchone()
+        if target is None:
+            raise JournalError("not_found", "Selected Library title is unavailable")
+        record.update(
+            source_id=target["source_id"], source_group=target["source_group"]
+        )
+        detail = (
+            f"Selected Library movie: {target['title']} · "
+            f"{target['year'] or 'year unknown'}"
+        )
+    changes, conflicts = {}, []
+    fields = [key for key in record if key != "id"] if old is None else PURCHASE_FIELDS
+    for field in fields:
+        value = record[field]
+        previous = old[field] if old else None
+        if previous in EMPTY and value not in EMPTY:
+            changes[field] = {"before": previous, "after": value}
+        elif value not in EMPTY and previous != value:
+            conflicts.append(field)
+    action = "new" if old is None else "merge" if changes else "unchanged"
+    row = next(row for row in plan["public"]["rows"] if row["key"] == key)
+    row = {
+        **row,
+        "changes": changes,
+        "conflicts": conflicts,
+        "action": action,
+        "detail": f"{record['purchased_on']} · {detail}",
+        "needs_match": title_id is None,
+    }
+    rows = [row if item["key"] == key else item for item in plan["public"]["rows"]]
+    rows.sort(key=lambda item: not item["needs_match"])
+    public = {
+        **plan["public"],
+        "plan_id": str(uuid4()),
+        "rows": rows,
+        "expires_in": max(0, int(plan["expires"] - time.monotonic())),
+        "counts": {
+            kind: sum(item["action"] == kind for item in rows)
+            for kind in ("new", "merge", "unchanged", "skip")
+        },
+    }
+    if len(json.dumps(public, ensure_ascii=True).encode()) > MAX_REVIEW_BYTES:
+        raise invalid("Import review exceeds 8 MiB")
+    operations = dict(plan["operations"])
+    if action in {"new", "merge"}:
+        operations[key] = {
+            "table": "library_purchases",
+            "record": record,
+            "action": action,
+            "changes": changes,
+        }
+    else:
+        operations.pop(key, None)
+    plan.update(public=public, operations=operations)
+    return {
+        key: public[key] for key in ("plan_id", "revision", "expires_in", "counts")
+    } | {"row": row}
 
 
 def apply(db, plan, request_id, plan_id, revision, selected, actor):
@@ -216,6 +377,11 @@ def apply(db, plan, request_id, plan_id, revision, selected, actor):
                         available=0,
                         purchase_imported_at=now if record["purchased_on"] else None,
                     )
+                elif table == "library_purchases":
+                    values.update(
+                        title_search=record["title"].casefold(),
+                        imported_at=now,
+                    )
                 columns = ",".join(values)
                 placeholders = ",".join("?" for _ in values)
                 db.execute(
@@ -223,6 +389,13 @@ def apply(db, plan, request_id, plan_id, revision, selected, actor):
                     tuple(values.values()),
                 )
                 imported += 1
+            elif table == "library_purchases":
+                assignment = ",".join(f"{column}=?" for column in patch)
+                db.execute(
+                    f"UPDATE library_purchases SET {assignment} WHERE id=?",
+                    (*patch.values(), record["id"]),
+                )
+                updated += 1
             elif table == "viewings":
                 patch.update(updated_at=now)
                 assignment = ",".join(f"{column}=?" for column in patch)
@@ -251,7 +424,7 @@ def apply(db, plan, request_id, plan_id, revision, selected, actor):
                     ),
                 )
                 updated += 1
-            if table == "library_titles":
+            if table in {"library_titles", "library_purchases"} and record["source_id"]:
                 sources.add(record["source_id"])
         for source in sources:
             db.execute(

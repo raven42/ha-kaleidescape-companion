@@ -1,6 +1,33 @@
 /** Shared presentation of the household-safe viewing fields. */
-import { css, html } from "lit";
+import { css, html, nothing } from "lit";
 import type { ViewingSummary } from "../core/api";
+
+export function viewingListRow(
+  row: ViewingSummary,
+  selected: string | undefined,
+  select: (id: string) => void,
+  disabled = false,
+) {
+  const date = new Date(row.started_at);
+  const day = Number.isNaN(date.getTime()) ? "—" : date.toLocaleDateString();
+  return html`<li
+    class=${selected === row.id ? "journal-row selected" : "journal-row"}
+  >
+    <button
+      class="link entry-name"
+      title=${row.title}
+      aria-current=${selected === row.id ? "true" : nothing}
+      ?disabled=${disabled}
+      @click=${() => select(row.id)}
+    >
+      ${row.title}
+    </button>
+    <time datetime=${row.started_at}>${day}</time
+    ><span class="journal-row-status"
+      >${row.status === "completed" ? "Completed" : "Partial"}</span
+    >
+  </li>`;
+}
 
 export function viewingDetails(
   row: ViewingSummary,
@@ -61,10 +88,23 @@ export const journalStyles = css`
     margin-bottom: 16px;
     flex-wrap: wrap;
   }
-  .journal .pagination {
-    padding: 16px 0 0;
-    flex-wrap: wrap;
-    gap: 12px;
+  .journal .journal-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 10px;
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+  .journal-row .entry-name {
+    min-height: 32px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .journal-row time,
+  .journal-row-status {
+    white-space: nowrap;
+    color: var(--muted);
   }
   .journal-status {
     padding: 12px 20px;

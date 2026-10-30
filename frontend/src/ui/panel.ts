@@ -16,7 +16,7 @@ import { manualDraft, manualData } from "./manual-viewing";
 import type { ManualDraft } from "./manual-viewing";
 import { styles } from "./styles";
 import { entryLayoutStyles } from "./entry-layout.styles";
-import { journalStyles, viewingDetails } from "./journal-view";
+import { journalStyles, viewingDetails, viewingListRow } from "./journal-view";
 import { dismissBackdrop } from "./dialog";
 import { landingPage, rememberPage } from "./navigation";
 import "./reader";
@@ -725,107 +725,109 @@ export class KaleidescapePanel extends LitElement {
             </div>`
         : nothing;
     return html`<section class="card journal" aria-label="Journal">
-        <div class="journal-toolbar">
-          <button
-            class="primary"
-            ?disabled=${blocked || !this.journalReady}
-            @click=${this.newRecord}
-          >
-            ＋ Add viewing
-          </button>
-          <button ?disabled=${blocked} @click=${() => this.refresh()}>
-            Refresh
-          </button>
-          <kaleidescape-journal-options
-            .client=${this.api}
-            .scope=${this.info}
-            .disabled=${blocked}
-            @access-denied=${() => this.fail(new ApiError("unauthorized"))}
-            @journal-options=${(
-              event: CustomEvent<{
-                fuzzy_search: boolean;
-              }>,
-            ) => {
-              this.journalReady = true;
-              const changed = this.fuzzySearch !== event.detail.fuzzy_search;
-              this.fuzzySearch = event.detail.fuzzy_search;
-              if (changed) {
-                this.history = [];
-                this.page = 1;
-                void this.loadList();
-              }
-              this.requestUpdate();
-            }}
-          ></kaleidescape-journal-options>
-        </div>
-        <form
-          class="filters journal-filters"
-          @submit=${(event: Event) => {
-            event.preventDefault();
-            this.query = this.searchText;
-            this.status = this.filterStatus;
-            this.page = 1;
-            this.history = [];
-            void this.loadList();
-          }}
-        >
-          <label
-            >Search titles<input
-              name="search"
-              type="search"
-              maxlength="500"
-              .value=${this.searchText}
-              ?disabled=${blocked}
-              @input=${(event: Event) => {
-                this.searchText = (event.target as HTMLInputElement).value;
-              }}
-          /></label>
-          <label
-            >Status<select
-              name="filter_status"
-              .value=${this.filterStatus}
-              ?disabled=${blocked}
-              @change=${(event: Event) => {
-                this.filterStatus = (event.target as HTMLSelectElement).value;
-              }}
+        <div class="entries-header">
+          <div class="journal-toolbar">
+            <button
+              class="primary"
+              ?disabled=${blocked || !this.journalReady}
+              @click=${this.newRecord}
             >
-              <option value="">All</option>
-              <option value="partial">Partial</option>
-              <option value="completed">Completed</option>
-            </select></label
-          >
-          <label
-            >Sort by<select
-              name="journal_sort"
-              .value=${this.sort}
-              ?disabled=${blocked}
-              @change=${(event: Event) => {
-                this.sort = (event.target as HTMLSelectElement).value;
-                this.page = 1;
-                this.history = [];
-                void this.loadList();
+              ＋ Add viewing
+            </button>
+            <button ?disabled=${blocked} @click=${() => this.refresh()}>
+              Refresh
+            </button>
+            <kaleidescape-journal-options
+              .client=${this.api}
+              .scope=${this.info}
+              .disabled=${blocked}
+              @access-denied=${() => this.fail(new ApiError("unauthorized"))}
+              @journal-options=${(
+                event: CustomEvent<{
+                  fuzzy_search: boolean;
+                }>,
+              ) => {
+                this.journalReady = true;
+                const changed = this.fuzzySearch !== event.detail.fuzzy_search;
+                this.fuzzySearch = event.detail.fuzzy_search;
+                if (changed) {
+                  this.history = [];
+                  this.page = 1;
+                  void this.loadList();
+                }
+                this.requestUpdate();
               }}
-            >
-              <option value="completed_at">
-                Completed date · partial first
-              </option>
-              <option value="title">Title</option>
-            </select></label
-          >
-          <button
-            type="button"
-            ?disabled=${blocked}
-            @click=${() => {
-              this.descending = !this.descending;
+            ></kaleidescape-journal-options>
+          </div>
+          <form
+            class="filters journal-filters"
+            @submit=${(event: Event) => {
+              event.preventDefault();
+              this.query = this.searchText;
+              this.status = this.filterStatus;
               this.page = 1;
               this.history = [];
               void this.loadList();
             }}
           >
-            ${this.descending ? "Descending ↓" : "Ascending ↑"}
-          </button>
-          <button ?disabled=${blocked}>Search</button>
-        </form>
+            <label
+              >Search titles<input
+                name="search"
+                type="search"
+                maxlength="500"
+                .value=${this.searchText}
+                ?disabled=${blocked}
+                @input=${(event: Event) => {
+                  this.searchText = (event.target as HTMLInputElement).value;
+                }}
+            /></label>
+            <label
+              >Status<select
+                name="filter_status"
+                .value=${this.filterStatus}
+                ?disabled=${blocked}
+                @change=${(event: Event) => {
+                  this.filterStatus = (event.target as HTMLSelectElement).value;
+                }}
+              >
+                <option value="">All</option>
+                <option value="partial">Partial</option>
+                <option value="completed">Completed</option>
+              </select></label
+            >
+            <label
+              >Sort by<select
+                name="journal_sort"
+                .value=${this.sort}
+                ?disabled=${blocked}
+                @change=${(event: Event) => {
+                  this.sort = (event.target as HTMLSelectElement).value;
+                  this.page = 1;
+                  this.history = [];
+                  void this.loadList();
+                }}
+              >
+                <option value="completed_at">
+                  Completed date · partial first
+                </option>
+                <option value="title">Title</option>
+              </select></label
+            >
+            <button
+              type="button"
+              ?disabled=${blocked}
+              @click=${() => {
+                this.descending = !this.descending;
+                this.page = 1;
+                this.history = [];
+                void this.loadList();
+              }}
+            >
+              ${this.descending ? "Descending ↓" : "Ascending ↑"}
+            </button>
+            <button ?disabled=${blocked}>Search</button>
+          </form>
+        </div>
         <div class="entries-layout">
           <section class="entries-list" aria-label="Journal entries">
             <div class="card-head">
@@ -835,33 +837,12 @@ export class KaleidescapePanel extends LitElement {
               this.loading
                 ? html`<div class="empty" role="status">Loading viewings…</div>`
                 : this.rows.length
-                  ? html`<ul class="entry-list">
-                      ${this.rows.map(
-                        (record) =>
-                          html`<li
-                            class=${this.selected?.id === record.id ? "selected" : ""}
-                          >
-                            <div class="entry-name">
-                              <button
-                                class="link"
-                                aria-current=${this.selected?.id === record.id ? "true" : nothing}
-                                ?disabled=${this.saving || !!this.pending}
-                                @click=${() => this.selectRecord(record.id)}
-                              >
-                                ${record.title}
-                              </button>
-                              <small
-                                >${this.date(record.started_at)} ·
-                                ${record.status === "completed" ? "Completed" : "Partial"}</small
-                              >
-                              <small
-                                >${(record.watched_seconds / 60).toFixed(2)} min
-                                watched ·
-                                ${record.origin === "observed" ? "Recorded" : "Manual"}</small
-                              >
-                            </div>
-                          </li>`,
-                      )}
+                  ? html`<ul
+                      class="entry-list"
+                      tabindex="0"
+                      aria-label="Viewings"
+                    >
+                      ${this.rows.map((record) => viewingListRow(record, this.selected?.id, (id) => void this.selectRecord(id), this.saving || !!this.pending))}
                     </ul>`
                   : html`<div class="empty">
                       <strong
@@ -872,43 +853,12 @@ export class KaleidescapePanel extends LitElement {
                       </p>
                     </div>`
             }
-            <div class="pagination">
-              <small>Page ${this.page} · Up to 25 entries</small>
-              <div class="actions">
-                <button
-                  ?disabled=${blocked || this.page === 1}
-                  @click=${() => {
-                    this.page = 1;
-                    this.history = [];
-                    void this.loadList();
-                  }}
-                >
-                  First
-                </button>
-                <button
-                  ?disabled=${blocked || !this.history.length}
-                  @click=${() => {
-                    this.page--;
-                    void this.loadList(this.history.pop());
-                  }}
-                >
-                  Previous
-                </button>
-                <button
-                  ?disabled=${blocked || !this.nextCursor}
-                  @click=${() => {
-                    this.history.push(this.cursor);
-                    if (this.history.length > 200) this.history.shift();
-                    this.page++;
-                    void this.loadList(this.nextCursor!);
-                  }}
-                >
-                  Next
-                </button>
-              </div>
-            </div>
           </section>
-          <section class="entries-detail" aria-label="Viewing details">
+          <section
+            class="entries-detail"
+            aria-label="Viewing details"
+            tabindex="0"
+          >
             <div class="card-head">
               <h2>Viewing details</h2>
               ${this.selected ? html`<button ?disabled=${blocked} @click=${this.editRecord}>Edit viewing</button><button class="danger" ?disabled=${blocked} @click=${this.openDelete}>Delete entry</button>` : nothing}
@@ -932,13 +882,52 @@ export class KaleidescapePanel extends LitElement {
             }
           </section>
         </div>
-        <footer class="journal-status">
-          ${counted(this.info?.viewing_count ?? 0, "entry", "entries")} ·
-          ${this.bytes(this.info?.database_bytes ?? 0)} /
-          ${this.bytes(this.info?.database_limit_bytes ?? 0)} database ·
-          Recording: ${this.info?.tracking_enabled ? "Enabled" : "Manual only"}
-          · ${this.info?.backup_in_progress ? "Backing up" : "Storage ready"} ·
-          Schema ${this.info?.schema_version} · Revision ${this.info?.revision}
+        <footer class="entries-footer journal-status">
+          <span>
+            ${counted(this.info?.viewing_count ?? 0, "entry", "entries")} ·
+            ${this.bytes(this.info?.database_bytes ?? 0)} /
+            ${this.bytes(this.info?.database_limit_bytes ?? 0)} database ·
+            Recording:
+            ${this.info?.tracking_enabled ? "Enabled" : "Manual only"} ·
+            ${this.info?.backup_in_progress ? "Backing up" : "Storage ready"} ·
+            Schema ${this.info?.schema_version} · Revision
+            ${this.info?.revision}
+          </span>
+          <div class="pagination">
+            <small>Page ${this.page} · Up to 25 entries</small>
+            <div class="actions">
+              <button
+                ?disabled=${blocked || this.page === 1}
+                @click=${() => {
+                  this.page = 1;
+                  this.history = [];
+                  void this.loadList();
+                }}
+              >
+                First
+              </button>
+              <button
+                ?disabled=${blocked || !this.history.length}
+                @click=${() => {
+                  this.page--;
+                  void this.loadList(this.history.pop());
+                }}
+              >
+                Previous
+              </button>
+              <button
+                ?disabled=${blocked || !this.nextCursor}
+                @click=${() => {
+                  this.history.push(this.cursor);
+                  if (this.history.length > 200) this.history.shift();
+                  this.page++;
+                  void this.loadList(this.nextCursor!);
+                }}
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </footer>
       </section>
       <dialog

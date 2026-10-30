@@ -7,6 +7,7 @@ from contextlib import closing
 from datetime import UTC, datetime
 
 from ..library.importing import TITLE_COLUMNS, purchase_date, title_record
+from ..library.purchases import PURCHASE_COLUMNS, purchase_record
 from .models import (
     VIEWING_FIELDS,
     fields,
@@ -53,6 +54,7 @@ def _sqlite_bundle(payload: bytes, deadline: float) -> dict:
     allowed = {
         "viewings": IMPORT_COLUMNS,
         "library_titles": TITLE_COLUMNS,
+        "library_purchases": PURCHASE_COLUMNS,
         "library_purchase_dates": {"title_id", "purchased_on"},
     }
     with closing(sqlite3.connect(":memory:")) as db:
@@ -74,20 +76,23 @@ def _sqlite_bundle(payload: bytes, deadline: float) -> dict:
             if tables[name] != "table":
                 raise invalid("Import requires regular tables")
             names = {row[1] for row in db.execute(f"PRAGMA table_info({name})")}
-            required = (
-                {"id", "title", "started_at"}
-                if name == "viewings"
-                else (
-                    {"id", "title", "source_id", "source_handle", "source_group"}
-                    if name == "library_titles"
-                    else {"title_id", "purchased_on"}
-                )
-            )
+            required = {
+                "viewings": {"id", "title", "started_at"},
+                "library_titles": {
+                    "id",
+                    "title",
+                    "source_id",
+                    "source_handle",
+                    "source_group",
+                },
+                "library_purchases": {"id", "title", "purchased_on"},
+                "library_purchase_dates": {"title_id", "purchased_on"},
+            }[name]
             if not required <= names:
                 raise invalid("Import is missing required columns")
             columns[name] = sorted(names & keys)
-        if not ({"viewings", "library_titles"} & columns.keys()):
-            raise invalid("Import requires viewings or library_titles")
+        if not ({"viewings", "library_titles", "library_purchases"} & columns.keys()):
+            raise invalid("Import requires viewing, Library title or purchase records")
         db.set_authorizer(
             lambda action, table, _column, _database, _source: (
                 sqlite3.SQLITE_OK
@@ -185,17 +190,24 @@ def parse_bundle(payload: bytes, import_format: str) -> dict:
             else decode_json(payload.decode("utf-8-sig"))
         )
         if isinstance(document, list):
-            document = {"viewings": document}
+            purchases = bool(document) and all(
+                isinstance(row, dict)
+                and {"title", "purchased_on"} <= row.keys()
+                and "started_at" not in row
+                for row in document
+            )
+            document = {"library_purchases" if purchases else "viewings": document}
         if (
             not isinstance(document, dict)
-            or not {"viewings", "library_titles"} & document.keys()
+            or not {"viewings", "library_titles", "library_purchases"} & document.keys()
         ):
-            raise invalid("Import requires viewings or library_titles")
+            raise invalid("Import requires viewing, Library title or purchase records")
         now = datetime.now(UTC).isoformat(timespec="microseconds")
         result = {}
         for table, normalize in (
             ("viewings", lambda row: _record(row, now)),
             ("library_titles", lambda row: title_record(row, now, decode_json)),
+            ("library_purchases", purchase_record),
         ):
             rows = document.get(table, [])
             if not isinstance(rows, list) or len(rows) > MAX_IMPORT_ROWS:
