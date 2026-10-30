@@ -1,4 +1,5 @@
 /** Read-only context for the configured player, using HA's existing artwork route. */
+import { counted } from "../core/text";
 import { LitElement, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
 import { errorCode, JournalClient } from "../core/api";
@@ -158,7 +159,7 @@ export class KaleidescapeNowPlaying extends LitElement {
     if (player.recording_paused) return "Recording paused for backup.";
     if (!player.available) return "Recording waiting for source entities.";
     if (active && player.recording_exclusion === "below_minimum_runtime")
-      return `Not recording: runtime is below the minimum of ${player.minimum_runtime_minutes} minutes.`;
+      return `Not recording: runtime is below the minimum of ${counted(player.minimum_runtime_minutes!, "minute")}.`;
     if (active && player.recording_exclusion === "runtime_unknown")
       return "Waiting for a known runtime before recording.";
     return "Recording enabled.";
@@ -225,13 +226,13 @@ export class KaleidescapeNowPlaying extends LitElement {
                           <small
                             >Pauses and scans are excluded.
                             ${player.session.credits_confirmed ? "Credits confirmed; journal completion also requires the configured watch threshold." : "Credits not yet confirmed."}
-                            ${player.session.gap_count ? html` ${player.session.gap_count} timing gap(s).` : nothing}</small
+                            ${player.session.gap_count ? html` ${counted(player.session.gap_count, "timing gap")}.` : nothing}</small
                           >`
                       : nothing
                   }
                   <p role="status">
                     ${this.recordingStatus(player, Boolean(active))}
-                    ${player.buffered_observations ? html` ${player.buffered_observations} update(s) buffered.` : nothing}
+                    ${player.buffered_observations ? html` ${counted(player.buffered_observations, "update")} buffered.` : nothing}
                   </p>
                   <small
                     >Live snapshot refreshes about every 5 seconds while

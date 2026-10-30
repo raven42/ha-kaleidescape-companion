@@ -32,7 +32,9 @@ export const libraryStyles = css`
   .view-options {
     display: flex;
     gap: 24px;
-    border: 1px solid var(--line);
+    border: 0;
+    padding: 0;
+    margin: 0;
   }
   .view-options .check {
     margin: 0;
@@ -288,12 +290,27 @@ export const libraryStyles = css`
   .facet-groups {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
-    gap: 16px;
+    gap: 20px;
     margin-top: 20px;
   }
   .facet-groups fieldset {
     min-width: 0;
-    border: 1px solid var(--line);
+    border: 0;
+    padding: 16px;
+    border-radius: 10px;
+    background: var(--secondary-background-color, #f7f9f8);
+  }
+  .facet-groups legend,
+  .people-filters legend {
+    font-weight: 600;
+    float: left;
+    width: 100%;
+    margin: 0 0 10px;
+    padding: 0;
+  }
+  .facet-groups legend + *,
+  .people-filters legend + * {
+    clear: both;
   }
   .facet-options {
     max-height: 220px;
@@ -321,6 +338,9 @@ export const libraryStyles = css`
     min-width: min(180px, 100%);
   }
   .library-status {
+    display: flex;
+    gap: 10px;
+    align-items: center;
     position: sticky;
     bottom: 0;
     z-index: 7;
@@ -333,6 +353,33 @@ export const libraryStyles = css`
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  .library-status > span {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .library-status button {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+  .library-toolbar > label {
+    min-width: 110px;
+  }
+  .detail-link {
+    font: inherit;
+    display: inline;
+    min-height: 0;
+    padding: 2px;
+    border-radius: 3px;
+    vertical-align: baseline;
+  }
+  .detail-badges button {
+    min-height: 28px;
+  }
+  .detail-link:hover:not(:disabled) {
+    text-decoration: underline;
   }
   .detail-badges {
     display: flex;
@@ -397,7 +444,10 @@ export const libraryStyles = css`
   }
   .people-filters fieldset {
     min-width: 0;
-    border: 1px solid var(--line);
+    border: 0;
+    padding: 16px;
+    border-radius: 10px;
+    background: var(--secondary-background-color, #f7f9f8);
   }
   .selected-people {
     display: flex;

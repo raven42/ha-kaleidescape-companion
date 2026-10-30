@@ -169,6 +169,15 @@ responsibilities and documents future extension points. Runtime resources belong
 to typed config entries; sensors use a shared HA update coordinator, and
 database work stays on its dedicated worker.
 
+Manual additions select cached Library versions with known runtime; the worker
+derives identity/runtime/end. New entries default to completed; Partial asks for
+watched minutes. Journal date/title sorts retain revision-bound paging. Opt-in
+[calendar publishing](calendar.md) uses a fixed writable HA calendar and flat
+title/description placeholders. Schema 14 retains protected display snapshots
+and outbox receipts, adding confirmed historical Journal export with bounded
+remote matching. No automatic history/import backfill occurs. Automated tests
+use simulated calendar actions; provider/browser review stays an operator step.
+
 The [backend guide](backend.md) documents storage, role-scoped API access,
 manual testing, backup/export, restore, and retention. Automatic observation,
 session timing, entity setup, household reading, administrator

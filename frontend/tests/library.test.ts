@@ -526,7 +526,7 @@ it("keeps same-name remakes separate in both views and opens only the selected w
   const titles = root().querySelectorAll<HTMLButtonElement>("tbody .link");
   titles[0].click();
   await flush();
-  expect(root().querySelectorAll(".version-tabs button")).toHaveLength(1);
+  expect(root().querySelectorAll(".version-tabs button")).toHaveLength(0);
   expect(root().querySelector("#title-dialog")!.textContent).toContain(
     "Original Director",
   );
@@ -624,4 +624,182 @@ it("refreshes cached labels when display preferences change without a source rev
     transport.calls.filter((call) => call.type.endsWith("/library/list"))
       .length,
   ).toBe(before + 1);
+});
+
+it("replaces all criteria when clicking people, years, genres, collections, status, formats or ratings", async () => {
+  const movie = libraryTitle({
+    title: "Clickable movie",
+    actors: ["Fictional Shared Name"],
+    directors: ["Fictional Director"],
+    genres: ["Adventure"],
+    collections: ["Favorites"],
+    year: 2025,
+    rating: "PG",
+    edition: "4K HDR10",
+    formats: ["4K HDR10"],
+    watched_status: "watched",
+  });
+  transport.libraryTitles = [
+    movie,
+    libraryTitle({
+      id: "d".repeat(64),
+      title: "Another movie",
+      actors: [],
+      directors: ["Fictional Shared Name"],
+      year: 2001,
+    }),
+  ];
+  button("Refresh cached data").click();
+  await flush();
+  const cases = [
+    ["Fictional Shared Name", "query", "Fictional Shared Name"],
+    ["Fictional Director", "query", "Fictional Director"],
+    ["2025", "year", ["2025"]],
+    ["Adventure", "genre", ["Adventure"]],
+    ["Favorites", "collection", ["Favorites"]],
+    ["Watched", "status", ["watched"]],
+    ["4K", "format", ["4K"]],
+    ["HDR10", "format", ["HDR10"]],
+    ["PG", "rating", ["PG"]],
+  ] as const;
+  for (const [label, key, value] of cases) {
+    // Remount with unrelated filters that still include this movie; every click
+    // must replace them, persist, reset pagination, and close the detail popup.
+    element.remove();
+    transport.uiPreferences = {
+      ...transport.uiPreferences,
+      query: "Clickable",
+      collection: ["Favorites"],
+      genre: ["Adventure"],
+      year: ["2025"],
+      format: ["4K"],
+      rating: ["PG"],
+      status: ["watched"],
+      actor: [],
+      director: [],
+    };
+    element = document.createElement(
+      "kaleidescape-library",
+    ) as KaleidescapeLibrary;
+    element.client = transport.client();
+    element.scope = { ...info, library_enabled: true };
+    document.body.append(element);
+    await vi.waitFor(() => expect(title("Clickable movie")).toBeTruthy());
+    title("Clickable movie").click();
+    await flush();
+    const clickable = [
+      ...root().querySelectorAll<HTMLButtonElement>("#title-dialog button"),
+    ].find((node) => node.textContent?.trim() === label)!;
+    expect(clickable, label).toBeTruthy();
+    clickable.click();
+    await flush();
+    const filters = transport.calls
+      .filter((call) => call.type.endsWith("library/list"))
+      .at(-1)!.filters as Record<string, unknown>;
+    expect(filters).toMatchObject({
+      query: key === "query" ? value : "",
+      offset: 0,
+      [key]: value,
+    });
+    for (const other of [
+      "collection",
+      "genre",
+      "year",
+      "format",
+      "rating",
+      "status",
+      "actor",
+      "director",
+    ].filter((other) => other !== key))
+      expect(filters[other] ?? []).toEqual([]);
+    expect(root().querySelector<HTMLDialogElement>("#title-dialog")!.open).toBe(
+      false,
+    );
+    expect(
+      root().querySelector<HTMLInputElement>('[name="library_query"]')!.value,
+    ).toBe(key === "query" ? value : "");
+    expect(transport.uiPreferences[key]).toEqual(value);
+    if (label === "Fictional Shared Name")
+      expect(root().querySelectorAll("tbody tr")).toHaveLength(2);
+  }
+});
+
+it("offers persisted genre/year/format filters and hides the tablist for one version", async () => {
+  transport.libraryTitles = [
+    libraryTitle({
+      genres: ["Adventure"],
+      formats: ["4K HDR10"],
+      edition: "4K HDR10",
+    }),
+  ];
+  button("Refresh cached data").click();
+  await flush();
+  button("Filters").click();
+  await flush();
+  check("genre", "Adventure");
+  check("year", "2025");
+  check("format", "HDR10");
+  button("Apply filters").click();
+  await flush();
+  expect(transport.uiPreferences).toMatchObject({
+    genre: ["Adventure"],
+    year: ["2025"],
+    format: ["HDR10"],
+  });
+  expect(root().querySelector(".pagination")?.textContent).toContain(
+    "1 matching title",
+  );
+  expect(root().querySelector(".library-status")?.textContent).toContain(
+    "1 title",
+  );
+  title("Voyage to Europa").click();
+  await flush();
+  expect(root().querySelector("#title-dialog [role=tablist]")).toBeNull();
+  expect(
+    root()
+      .querySelector("#title-dialog [role=region]")
+      ?.getAttribute("aria-label"),
+  ).toBe("Version details");
+  expect(root().querySelector("#title-dialog")!.textContent).toContain(
+    "1 version",
+  );
+  expect(root().querySelector("#title-dialog")!.textContent).not.toContain(
+    "version(s)",
+  );
+});
+
+it("lets household readers browse from cover details without administrator or device actions", async () => {
+  transport.uiPreferences.view = "covers";
+  element.scope = {
+    ...info,
+    library_enabled: true,
+    permissions: { read: true, edit: false, export: false },
+  };
+  await vi.waitFor(() =>
+    expect(root().querySelector(".cover-tile")).toBeTruthy(),
+  );
+  root().querySelector<HTMLButtonElement>(".cover-tile")!.click();
+  await flush();
+  expect(
+    root().querySelector("kaleidescape-library-collection-add"),
+  ).toBeNull();
+  const director = [
+    ...root().querySelectorAll<HTMLButtonElement>("#title-dialog button"),
+  ].find((node) => node.textContent?.trim() === "Fictional Director")!;
+  director.click();
+  await flush();
+  expect(
+    root().querySelector<HTMLInputElement>('[name="library_query"]')!.value,
+  ).toBe("Fictional Director");
+  expect(
+    transport.calls.filter((call) => call.type.endsWith("library/list")).at(-1)!
+      .filters,
+  ).toMatchObject({ query: "Fictional Director", offset: 0 });
+  expect(
+    transport.calls.some((call) =>
+      /collections\/(add|targets)|journal\/(create|update|delete)|library\/sync$/.test(
+        call.type,
+      ),
+    ),
+  ).toBe(false);
 });

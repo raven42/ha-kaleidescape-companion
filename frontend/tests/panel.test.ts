@@ -5,6 +5,7 @@ import { ApiError } from "../src/core/api";
 import type { ApiMessage, Hass, Viewing } from "../src/core/api";
 import { draftData, draftFrom } from "../src/ui/editor";
 import { FixtureTransport, info, record } from "./fixture";
+import { selectManual } from "./manual-helpers";
 
 let panel: KaleidescapePanel;
 let transport: FixtureTransport;
@@ -75,7 +76,7 @@ describe("journal management", () => {
   it("creates a manual entry and requires explicit deletion confirmation", async () => {
     button("＋ Add viewing").click();
     await settle();
-    input("title", "A fictional new entry");
+    await selectManual(panel.shadowRoot!, transport, "A fictional new entry");
     await save();
     await waitFor("Entry saved.");
     expect(transport.records).toHaveLength(4);
@@ -139,7 +140,7 @@ describe("journal management", () => {
   it("reports missing secure randomness when saving without mislabeling the form values", async () => {
     button("＋ Add viewing").click();
     await settle();
-    input("title", "Valid fictional entry");
+    await selectManual(panel.shadowRoot!, transport, "Valid fictional entry");
     vi.stubGlobal("crypto", undefined);
     try {
       await save();
@@ -222,7 +223,7 @@ describe("journal management", () => {
       );
       button("＋ Add viewing").click();
       await settle();
-      input("title", "Saved once");
+      await selectManual(panel.shadowRoot!, transport, "Saved once");
       await save();
       await waitFor("Retry same change");
       expect(
@@ -611,7 +612,7 @@ it("does not release a completed export after switching connections", async () =
 it("requires confirmation to abandon an uncertain retry and inspect existing records", async () => {
   button("＋ Add viewing").click();
   await settle();
-  input("title", "Unconfirmed entry");
+  await selectManual(panel.shadowRoot!, transport, "Unconfirmed entry");
   transport.failure = "busy";
   await save();
   await waitFor("Retry same change");
@@ -646,4 +647,50 @@ it("enables the Library tab after opting in and clears its content on navigation
   page("journal");
   await settle();
   expect(panel.shadowRoot!.querySelector("kaleidescape-library")).toBeNull();
+});
+
+it("applies the Journal fuzzy toggle to search and an already-open New entry picker", async () => {
+  const options = panel.shadowRoot!.querySelector(
+    "kaleidescape-journal-options",
+  )!;
+  await (options as unknown as { updateComplete: Promise<unknown> })
+    .updateComplete;
+  await vi.waitFor(() => expect(button("＋ Add viewing").disabled).toBe(false));
+  button("＋ Add viewing").click();
+  await settle();
+  const manual = panel.shadowRoot!.querySelector(
+    "kaleidescape-manual-viewing",
+  )!;
+  await (manual as unknown as { updateComplete: Promise<unknown> })
+    .updateComplete;
+  const movie = manual.shadowRoot!.querySelector<HTMLInputElement>(
+    '[name="library_movie"]',
+  )!;
+  movie.value = "Vyoage";
+  movie.dispatchEvent(new Event("input"));
+  await vi.waitFor(() =>
+    expect(manual.shadowRoot!.querySelector('[role="option"]')).toBeTruthy(),
+  );
+  options.shadowRoot!.querySelector<HTMLInputElement>("input")!.click();
+  await settle();
+  await vi.waitFor(() =>
+    expect(
+      transport.calls
+        .filter((call) => call.type.endsWith("library/search"))
+        .at(-1),
+    ).toMatchObject({ query: "Vyoage", fuzzy: false }),
+  );
+  await vi.waitFor(() =>
+    expect(manual.shadowRoot!.querySelector('[role="option"]')).toBeNull(),
+  );
+  movie.value = "voyage";
+  movie.dispatchEvent(new Event("input"));
+  await vi.waitFor(() =>
+    expect(manual.shadowRoot!.querySelector('[role="option"]')).toBeTruthy(),
+  );
+  expect(transport.journalPreferences.fuzzy_search).toBe(false);
+  expect(
+    transport.calls.filter((call) => call.type.endsWith("journal/list")).at(-1)
+      ?.fuzzy,
+  ).toBe(false);
 });

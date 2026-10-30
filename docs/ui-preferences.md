@@ -7,15 +7,18 @@ user within this dataset. Other household users keep their own choices.
 
 ## What is stored
 
-| Scope                        | Values                                                                                                                                                                                                                 |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Personal Library preferences | List/Covers, entries per page, cover size, title overlay, format/library/rating badge toggles, column widths, applied title search, selected collection/actor/director/rating/status filters, sort field and direction |
-| Shared UI preferences        | Hidden collection names, edited by administrators in Settings using known-name checkboxes and custom values                                                                                                            |
-| Native HA options            | Default landing page, playback sources and recording rules, Library connection/sync/artwork options and collection-add opt-in                                                                                          |
+| Scope                         | Values                                                                                                                                                                                                                                                 |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Personal Library preferences  | List/Covers, fuzzy search, entries per page, cover size, title overlay, format/library/rating badge toggles, column widths, applied title search, selected collection/actor/director/rating/status/genre/year/format filters, sort field and direction |
+| Personal Journal preferences  | Independent fuzzy search for Journal and its manual title picker                                                                                                                                                                                       |
+| Personal Database preferences | Table, row count, system-table visibility and per-table sort/order                                                                                                                                                                                     |
+| Shared UI preferences         | Hidden collection names, edited by administrators in Settings using known-name checkboxes and custom values                                                                                                                                            |
+| Native HA options             | Default landing page, playback sources and recording rules, Library connection/sync/artwork options and collection-add opt-in                                                                                                                          |
 
 Open **Options** beside Filters/Clear Filter for view type, entries per page,
 cover-art size (in Cover mode), title overlays, format/library/rating badge
-toggles, and sort/order. Choices save immediately and the popup stays open while
+toggles. Sort/order controls are in the main sticky Library toolbar and save to
+the same personal row. Choices save immediately and the popup stays open while
 adjusting them; Done, Escape or a backdrop click closes it without rolling back
 accepted changes. Titles, format and library badges start enabled. Titles
 controls the cover overlay; list titles always remain available. Format and
@@ -40,12 +43,15 @@ is not a virtualization feature.
 View, page size, sort and applied filters save on use. Search saves after its
 300 ms input debounce or immediately on Search/Enter; filter drafts save on
 Apply filters. Clear Filter saves an empty search and empty facet selections
-while preserving view, sort and page size. Cover size saves when its slider
-change finishes; column widths save after resizing. Closing a filter draft does
-not persist it. A failed save leaves the local choice visible with an explicit
-retry message. Reopening Library or reloading restores accepted settings.
-Another open tab loads them when remounted; this does not add live cross-tab
-subscriptions.
+while preserving view, sort and page size. Clickable detail values replace the
+current criteria: names become a fresh title/actor/director search; year, genre,
+collection, watched status, rating and format become one exact facet with an
+empty search. Both save immediately and reset pagination. Cover size saves when
+its slider change finishes; column widths save after resizing. Closing a filter
+draft does not persist it. A failed save leaves the local choice visible with an
+explicit retry message. Reopening Library or reloading restores accepted
+settings. Another open tab loads them when remounted; this does not add live
+cross-tab subscriptions.
 
 On upgrade to schema 11, old HA Library defaults seed a household initial
 snapshot once. A legacy count rounds up to the next offered numeric size (for
@@ -155,3 +161,25 @@ updates without an integration reload, and visible save failures/retry. On
 isolated HA, scroll back through downloaded covers and check that retained
 images need no second network request; then leave Library or change accounts and
 verify cleanup. Automated DOM tests do not replace this user browser review.
+
+## Journal search options
+
+Journal has an **Options** button for both administrators and household readers.
+Its fuzzy-search toggle saves immediately to a separate per-user `journal`
+settings row. It defaults to enabled and governs Journal title search plus the
+administrator's New entry / Movie from Library completion. The Library has its
+own independent toggle in Library Options, covering its main search and
+filter/completion fields. Both accept literal case-insensitive partial text when
+disabled, with no typo or word-order expansion. Changing mode resets result
+pagination; saved choices survive reload without an HA options change or schema
+migration. Database query syntax/search remains literal and is not controlled by
+these toggles. Database's separate manual-viewing picker retains its default
+fuzzy completion.
+
+These booleans use the existing active-user `ui/preferences/get` and `/update`
+commands with `area=journal` or `area=library`, derived user ownership, strict
+boolean validation, exact actor/area-bound retries and scope checks. Journal
+display settings expose no household management capability. New fields inherit
+enabled defaults without rewriting existing rows. Shared settings are still
+limited to the Library area; regular users cannot inspect another user's
+preferences.

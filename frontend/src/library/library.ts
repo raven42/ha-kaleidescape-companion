@@ -1,4 +1,6 @@
 /** Read-only, locally cached library browsing; networking to devices stays in HA. */
+import { matches } from "../core/search";
+import { counted } from "../core/text";
 import { LitElement, html, nothing } from "lit";
 import { live } from "lit/directives/live.js";
 import type { PropertyValues } from "lit";
@@ -31,6 +33,9 @@ const FILTERS = [
   ["actor", "Actor", "actors"],
   ["director", "Director", "directors"],
   ["rating", "Rating", "rating"],
+  ["genre", "Genre", "genres"],
+  ["year", "Year", "year"],
+  ["format", "Viewing format", "format"],
 ] as const;
 const SORTS = [
   ["name", "Title"],
@@ -96,6 +101,7 @@ export class KaleidescapeLibrary extends LitElement {
   private notice = "";
   private timer?: ReturnType<typeof setTimeout>;
   private covers = new CoverQueue();
+  private fuzzySearch = true;
   private mode: "list" | "covers" = "list";
   private coverSize = 150;
   private display = {
@@ -179,6 +185,7 @@ export class KaleidescapeLibrary extends LitElement {
     try {
       const values = await this.preferences.load();
       if (generation !== this.generation) return;
+      this.fuzzySearch = values.fuzzy_search as boolean;
       this.mode = values.view as "list" | "covers";
       this.entriesPerPage = values.page_size as number | "all";
       this.coverSize = values.cover_size as number;
@@ -241,6 +248,7 @@ export class KaleidescapeLibrary extends LitElement {
       dialog.close();
     this.covers.cache.dispose();
     this.covers = new CoverQueue();
+    this.fuzzySearch = true;
     this.display = {
       show_titles: true,
       show_format: true,
@@ -398,12 +406,13 @@ export class KaleidescapeLibrary extends LitElement {
         this.entriesPerPage === "all"
           ? await this.client.libraryAll(
               this.scope,
-              { ...this.applied },
+              { ...this.applied, fuzzy: this.fuzzySearch },
               () =>
                 generation === this.generation && request === this.listRequest,
             )
           : await this.client.libraryList(this.scope, {
               ...this.applied,
+              fuzzy: this.fuzzySearch,
               grouped: true,
               limit,
               offset,
@@ -673,6 +682,38 @@ export class KaleidescapeLibrary extends LitElement {
     this.saveFilters();
     void this.load();
   }
+  private fromDetails(key: string, value: string) {
+    if (this.collectionLocked || this.checkingCollection) return;
+    clearTimeout(this.searchTimer);
+    this.clearPeople();
+    this.filters = {
+      query: key === "query" ? value : "",
+      sort: this.applied.sort,
+      descending: this.applied.descending,
+      ...(key === "query" ? {} : { [key]: [value] }),
+    };
+    this.applied = structuredClone(this.filters);
+    this.draft = {};
+    this.facetSearch = "";
+    this.saveFilters();
+    this.closeDialog("title-dialog");
+    void this.load();
+    void this.updateComplete.then(() =>
+      this.renderRoot
+        .querySelector<HTMLInputElement>('[name="library_query"]')
+        ?.focus(),
+    );
+  }
+  private detailLink(key: string, value: string, label = value) {
+    return html`<button
+      type="button"
+      class="link detail-link"
+      ?disabled=${this.collectionLocked || this.checkingCollection}
+      @click=${() => this.fromDetails(key, value)}
+    >
+      ${label}
+    </button>`;
+  }
   private clearPeople() {
     for (const timer of Object.values(this.peopleTimers)) clearTimeout(timer);
     this.peopleTimers = {};
@@ -694,6 +735,7 @@ export class KaleidescapeLibrary extends LitElement {
           this.scope!,
           key,
           query,
+          this.fuzzySearch,
         );
         if (
           generation === this.generation &&
@@ -727,11 +769,14 @@ export class KaleidescapeLibrary extends LitElement {
     return [
       ...new Set([...values, ...((this.draft[key] ?? []) as string[])]),
     ].filter((value) =>
-      (key === "collection" ? collectionLabel(value) : value)
-        .toLocaleLowerCase()
-        .includes(this.facetSearch.toLocaleLowerCase()),
+      matches(
+        key === "collection" ? collectionLabel(value) : value,
+        this.facetSearch,
+        this.fuzzySearch,
+      ),
     );
   }
+
   private cover(row: LibrarySummary) {
     return html`<kaleidescape-library-cover
       .client=${this.client}
@@ -801,6 +846,27 @@ export class KaleidescapeLibrary extends LitElement {
       </div>
       <p class="muted">Changes save automatically for your HA user.</p>
       <div class="options-fields">
+        <label class="check"
+          ><input
+            type="checkbox"
+            name="library_fuzzy_search"
+            .checked=${this.fuzzySearch}
+            @change=${(event: Event) => {
+              this.fuzzySearch = (event.target as HTMLInputElement).checked;
+              this.clearPeople();
+              clearTimeout(this.searchTimer);
+              this.applied = { ...this.applied, query: this.filters.query };
+              this.preferences?.set({
+                fuzzy_search: this.fuzzySearch,
+                query: this.applied.query,
+              });
+              void this.load();
+            }}
+          />Fuzzy search</label
+        ><small
+          >Off matches literal text, ignoring case. On also tolerates small
+          spelling mistakes and word order differences.</small
+        >
         <fieldset class="view-options">
           <legend>View type</legend>
           ${(["list", "covers"] as const).map((mode) => html`<label class="check"><input type="radio" name="library_view" value=${mode} .checked=${this.mode === mode} @change=${() => this.setMode(mode)} />${mode === "list" ? "List" : "Cover"}</label>`)}
@@ -851,26 +917,15 @@ export class KaleidescapeLibrary extends LitElement {
               />${label}</label
             >`,
         )}
-        <label
-          >Sort by<select
-            name="library_sort"
-            .value=${String(this.applied.sort)}
-            @change=${(event: Event) => this.sort((event.target as HTMLSelectElement).value)}
-          >
-            ${SORTS.map(([key, label]) => html`<option value=${key}>${label}</option>`)}
-          </select></label
-        >
-        <button @click=${() => this.sort(String(this.applied.sort))}>
-          ${this.applied.descending ? "Descending ↓" : "Ascending ↑"}
-        </button>
       </div>
       ${
         this.info
           ? html`<details>
               <summary>Library details</summary>
               <p>
-                ${this.info.group_count} movies · ${this.info.title_count}
-                individual versions · ${this.info.collection_count} collections.
+                ${counted(this.info.group_count, "movie")} ·
+                ${counted(this.info.title_count, "individual version")} ·
+                ${counted(this.info.collection_count, "collection")}.
               </p>
               <p>
                 Catalog synced: ${this.date(this.info.last_synced_at)}<br />Collections
@@ -893,15 +948,12 @@ export class KaleidescapeLibrary extends LitElement {
     >
       <div class="card-head">
         <h2 id="filters-title">Library filters</h2>
-        <button @click=${() => this.closeDialog("filter-dialog")}>
-          Cancel
-        </button>
       </div>
       <p>
         Match any checked value within a category and all selected categories.
       </p>
       <label
-        >Find collections or ratings<input
+        >Find filter values<input
           name="facet_search"
           type="search"
           .value=${this.facetSearch}
@@ -912,43 +964,44 @@ export class KaleidescapeLibrary extends LitElement {
       /></label>
       ${this.page?.truncated_facets.length ? html`<p class="muted">Each category shows up to 500 known names.</p>` : nothing}
       <div class="facet-groups">
-        ${[["status", "Watched status", "status"], FILTERS[0], FILTERS[3]].map(
-          ([key, label, facet]) => {
-            const selected = (this.draft[key] ?? []) as string[];
-            const choices = this.choices(key, facet);
-            return html`<fieldset>
-              <legend>${label}</legend>
-              <div class="facet-options">
-                ${
-                  choices.length
-                    ? choices.map(
-                        (value) =>
-                          html`<label class="check"
-                            ><input
-                              type="checkbox"
-                              name=${key}
-                              .value=${value}
-                              .checked=${selected.includes(value)}
-                              ?disabled=${selected.length >= 100 && !selected.includes(value)}
-                              @change=${(event: Event) => {
-                                this.draft = {
-                                  ...this.draft,
-                                  [key]: (event.target as HTMLInputElement)
-                                    .checked
-                                    ? [...selected, value]
-                                    : selected.filter((item) => item !== value),
-                                };
-                                this.requestUpdate();
-                              }}
-                            />${key === "status" ? STATUS[value] : key === "rating" ? renderRatingBadge(value) : key === "collection" ? collectionLabel(value) : value}</label
-                          >`,
-                      )
-                    : html`<p class="muted">No matching options</p>`
-                }
-              </div>
-            </fieldset>`;
-          },
-        )}
+        ${[
+          ["status", "Watched status", "status"],
+          ...FILTERS.filter(([key]) => key !== "actor" && key !== "director"),
+        ].map(([key, label, facet]) => {
+          const selected = (this.draft[key] ?? []) as string[];
+          const choices = this.choices(key, facet);
+          return html`<fieldset>
+            <legend>${label}</legend>
+            <div class="facet-options">
+              ${
+                choices.length
+                  ? choices.map(
+                      (value) =>
+                        html`<label class="check"
+                          ><input
+                            type="checkbox"
+                            name=${key}
+                            .value=${value}
+                            .checked=${selected.includes(value)}
+                            ?disabled=${selected.length >= 100 && !selected.includes(value)}
+                            @change=${(event: Event) => {
+                              this.draft = {
+                                ...this.draft,
+                                [key]: (event.target as HTMLInputElement)
+                                  .checked
+                                  ? [...selected, value]
+                                  : selected.filter((item) => item !== value),
+                              };
+                              this.requestUpdate();
+                            }}
+                          />${key === "status" ? STATUS[value] : key === "rating" ? renderRatingBadge(value) : key === "collection" ? collectionLabel(value) : value}</label
+                        >`,
+                    )
+                  : html`<p class="muted">No matching options</p>`
+              }
+            </div>
+          </fieldset>`;
+        })}
       </div>
       <div class="people-filters">
         ${[
@@ -961,9 +1014,7 @@ export class KaleidescapeLibrary extends LitElement {
           const choices = (
             this.peopleChoices[key] ??
             (this.page?.facets[facet] ?? []).filter((name) =>
-              name
-                .toLocaleLowerCase()
-                .includes((this.peopleSearch[key] ?? "").toLocaleLowerCase()),
+              matches(name, this.peopleSearch[key] ?? "", this.fuzzySearch),
             )
           ).slice(0, 20);
           return html`<fieldset>
@@ -1030,6 +1081,8 @@ export class KaleidescapeLibrary extends LitElement {
           }}
         >
           Clear filters</button
+        ><span class="grow"></span>
+        <button @click=${() => this.closeDialog("filter-dialog")}>Cancel</button
         ><button
           class="primary"
           @click=${() => {
@@ -1069,7 +1122,7 @@ export class KaleidescapeLibrary extends LitElement {
         group
           ? html`<div class="card-head">
                 <h2 id="library-title">
-                  ${group.title}${group.year ? ` (${group.year})` : ""}
+                  ${this.detailLink("query", group.title)}${group.year ? html` (${this.detailLink("year", String(group.year))})` : nothing}
                 </h2>
                 <button
                   ?disabled=${this.collectionLocked}
@@ -1078,9 +1131,10 @@ export class KaleidescapeLibrary extends LitElement {
                   Close
                 </button>
               </div>
-              <p>${group.version_count ?? 1} version(s)</p>
+              <p>${counted(group.version_count ?? 1, "version")}</p>
               <div class="detail-badges">
-                ${renderFormatBadges(group)} ${renderRatingBadge(group.rating)}
+                ${renderFormatBadges(group, false, (value) => this.fromDetails("format", value), this.collectionLocked || this.checkingCollection)}
+                ${renderRatingBadge(group.rating, (value) => this.fromDetails("rating", value), this.collectionLocked || this.checkingCollection)}
               </div>
               ${this.versionsLoading ? html`<p role="status">Loading individual versions…</p>` : nothing}
               ${
@@ -1097,7 +1151,7 @@ export class KaleidescapeLibrary extends LitElement {
                   : nothing
               }
               ${
-                this.versions
+                this.versions && this.versions.total > 1
                   ? html`<div
                         class="page-tabs version-tabs"
                         role="tablist"
@@ -1118,9 +1172,7 @@ export class KaleidescapeLibrary extends LitElement {
                                 this.requestUpdate();
                               }}
                             >
-                              ${renderFormatBadges(item)} ·
-                              ${item.year ?? "Year unknown"} · Version
-                              ${this.versions!.offset + index + 1}
+                              Version ${this.versions!.offset + index + 1}
                             </button>`,
                         )}
                       </div>
@@ -1132,33 +1184,35 @@ export class KaleidescapeLibrary extends LitElement {
                   ? html`<div
                       class="playback-layout"
                       id="version-details"
-                      role="tabpanel"
-                      aria-labelledby=${`version-${this.versions?.items.findIndex((item) => item.id === row.id) ?? 0}`}
+                      role=${(this.versions?.total ?? 1) > 1 ? "tabpanel" : "region"}
+                      aria-label=${(this.versions?.total ?? 1) === 1 ? "Version details" : nothing}
+                      aria-labelledby=${(this.versions?.total ?? 1) > 1 ? `version-${this.versions?.items.findIndex((item) => item.id === row.id) ?? 0}` : nothing}
                     >
                       <div class="cover">${this.cover(row)}</div>
                       <div>
                         <p>${row.synopsis || "No synopsis available."}</p>
                         <div class="detail-badges">
-                          ${renderFormatBadges(row)}
-                          ${renderRatingBadge(row.rating || "Unrated")}
+                          ${renderFormatBadges(row, false, (value) => this.fromDetails("format", value), this.collectionLocked || this.checkingCollection)}
+                          ${renderRatingBadge(row.rating || "Unrated", (value) => this.fromDetails("rating", value), this.collectionLocked || this.checkingCollection)}
                         </div>
                         <p>
-                          ${row.year ?? "Year unknown"} ·
-                          ${STATUS[row.watched_status]}
+                          ${row.year ? this.detailLink("year", String(row.year)) : "Year unknown"}
+                          ·
+                          ${this.detailLink("status", row.watched_status, STATUS[row.watched_status])}
                         </p>
                         <p>
                           ${row.duration_seconds === null ? "Runtime unknown" : `${(row.duration_seconds / 60).toFixed(2)} min`}
                         </p>
                         ${[
-                          ["Collections", row.collections],
-                          ["Cast", row.actors],
-                          ["Directors", row.directors],
-                          ["Genres", row.genres],
-                        ].map(([label, values]) =>
+                          ["Collections", row.collections, "collection"],
+                          ["Cast", row.actors, "query"],
+                          ["Directors", row.directors, "query"],
+                          ["Genres", row.genres, "genre"],
+                        ].map(([label, values, key]) =>
                           (values as string[]).length
                             ? html`<p>
                                 <strong>${label}:</strong>
-                                ${(label === "Collections" ? (values as string[]).map(collectionLabel) : (values as string[])).join(", ")}
+                                ${(values as string[]).map((value, index) => html`${index ? ", " : ""}${this.detailLink(key as string, value, label === "Collections" ? collectionLabel(value) : value)}`)}
                               </p>`
                             : nothing,
                         )}
@@ -1237,21 +1291,6 @@ export class KaleidescapeLibrary extends LitElement {
       }}
     >
       ${this.preferenceError ? html`<p class="warning" role="alert">Library preferences could not be saved: ${this.preferenceError} <button @click=${() => this.preferences?.retry()}>Retry saving preferences</button></p>` : nothing}
-      <div class="section-head">
-        <h2>Library</h2>
-        <div class="actions">
-          <button
-            ?disabled=${this.loading}
-            @click=${() => {
-              void this.load();
-              void this.refreshStatus();
-            }}
-          >
-            Refresh cached data
-          </button>
-          ${admin ? html`<button class="primary" ?disabled=${this.requesting || (!!this.info?.phase && this.info.phase !== "idle")} @click=${this.sync}>Sync now</button>` : nothing}
-        </div>
-      </div>
       ${admin && this.info?.phase && this.info.phase !== "idle" ? html`<p role="status">Syncing… ${this.info.processed ?? 0}/${this.info.total ?? "?"}</p>` : nothing}
       ${admin && this.info?.error ? html`<p class="warning" role="status">${errorMessage(new ApiError(this.info.error))}</p>` : nothing}
       ${this.error ? html`<p class="error" role="alert">${this.error}<button @click=${() => this.load()}>Refresh results</button></p>` : nothing}
@@ -1307,6 +1346,18 @@ export class KaleidescapeLibrary extends LitElement {
           </button>
           <button ?disabled=${this.loading} @click=${this.clearFilters}>
             Clear Filter
+          </button>
+          <label
+            >Sort by<select
+              name="library_sort"
+              .value=${String(this.applied.sort)}
+              @change=${(event: Event) => this.sort((event.target as HTMLSelectElement).value)}
+            >
+              ${SORTS.map(([key, label]) => html`<option value=${key}>${label}</option>`)}
+            </select></label
+          >
+          <button @click=${() => this.sort(String(this.applied.sort))}>
+            ${this.applied.descending ? "Descending ↓" : "Ascending ↑"}
           </button>
           <button
             aria-haspopup="dialog"
@@ -1423,7 +1474,7 @@ export class KaleidescapeLibrary extends LitElement {
                               ${this.display.show_badges ? renderStatusBadges(item) : nothing}
                               ${this.display.show_format ? renderFormatBadges(item) : nothing}
                               ${this.display.show_format && !formatBadges(item).length ? html`<small>${this.format(item)}</small>` : nothing}
-                              ${(item.version_count ?? 1) > 1 ? html`<small>${item.version_count} versions</small>` : nothing}
+                              ${(item.version_count ?? 1) > 1 ? html`<small>${counted(item.version_count!, "version")}</small>` : nothing}
                             </div>
                           </td>
                           <td title=${this.years(item)}>${this.years(item)}</td>
@@ -1450,9 +1501,9 @@ export class KaleidescapeLibrary extends LitElement {
         ${!this.page?.items.length ? html`<p class="empty" role="status">${this.loading ? "Loading library…" : "No cached titles match. Adjust your filters or wait for a library sync."}</p>` : nothing}
         <div class="pagination">
           <small
-            >${this.page?.total ?? 0} matching titles ·
+            >${counted(this.page?.total ?? 0, "matching title")} ·
             ${this.entriesPerPage === "all" ? "All" : this.pageSize} per
-            page${this.mode === "covers" ? ` · ${this.coverColumns} covers per row` : ""}</small
+            page${this.mode === "covers" ? ` · ${counted(this.coverColumns, "cover")} per row` : ""}</small
           >
           <div class="actions">
             <button
@@ -1476,7 +1527,29 @@ export class KaleidescapeLibrary extends LitElement {
           </div>
         </div>
       </section>
-      ${this.info ? html`<footer class="library-status" role="status"><span>${this.info.group_count} titles · ${this.info.collection_count} collections ${admin && this.info.artwork_enabled ? `· Artwork ${((this.info.artwork_bytes ?? 0) / 1048576).toFixed(1)}/${((this.info.artwork_limit_bytes ?? 0) / 1048576).toFixed(0)} MiB` : ""} · Synced ${this.date(this.info.last_synced_at)}</span></footer>` : nothing}
+      ${
+        this.info
+          ? html`<footer class="library-status" role="status">
+              <span
+                >${counted(this.info.group_count, "title")} ·
+                ${counted(this.info.collection_count, "collection")}
+                ${admin && this.info.artwork_enabled ? `· Artwork ${((this.info.artwork_bytes ?? 0) / 1048576).toFixed(1)}/${((this.info.artwork_limit_bytes ?? 0) / 1048576).toFixed(0)} MiB` : ""}
+                · Synced ${this.date(this.info.last_synced_at)}</span
+              >
+              <div class="actions">
+                <button
+                  ?disabled=${this.loading}
+                  @click=${() => {
+                    void this.load();
+                    void this.refreshStatus();
+                  }}
+                >
+                  Refresh cached data</button
+                >${admin ? html`<button ?disabled=${this.requesting || (!!this.info?.phase && this.info.phase !== "idle")} @click=${this.sync}>Sync now</button>` : nothing}
+              </div>
+            </footer>`
+          : nothing
+      }
       ${this.renderOptionsDialog()} ${this.renderFilterDialog()}
       ${this.renderTitleDialog()}
     </section>`;

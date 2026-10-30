@@ -7,6 +7,7 @@ from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
 
+from .calendar.publisher import CalendarPublisher
 from .const import DOMAIN, NAME
 from .core.migrations import UnsupportedSchemaError
 from .core.models import JournalError
@@ -27,6 +28,8 @@ async def _async_close_runtime(
 ) -> None:
     runtime.ready = False
     try:
+        if runtime.calendar:
+            await runtime.calendar.async_stop()
         if runtime.library:
             await runtime.library.async_stop()
         if runtime.observer:
@@ -83,6 +86,10 @@ async def async_setup_entry(
             hass.http.register_view(LibraryArtworkView())
             hass.data[f"{DOMAIN}.api_registered"] = True
         config = dict(entry.options or entry.data)
+        runtime.calendar = CalendarPublisher(
+            hass, repository, entry, runtime.dataset_id
+        )
+        await runtime.calendar.async_start()
         if config.get("tracking_enabled"):
             runtime.observer = PlaybackObserver(hass, repository, config)
             await runtime.observer.async_start()

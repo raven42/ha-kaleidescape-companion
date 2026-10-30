@@ -420,6 +420,9 @@ it("orders primary filters before people and completes people names from the ful
     "Watched status",
     "Collection",
     "Rating",
+    "Genre",
+    "Year",
+    "Viewing format",
     "Actor",
     "Director",
   ]);
@@ -458,9 +461,84 @@ it("keeps Unicode casefold matches returned by people completion", async () => {
       root.querySelector<HTMLInputElement>('input[name="actor"]')?.value,
     ).toBe("Fictional Straße"),
   );
-  expect(suggest).toHaveBeenCalledWith(element!.scope, "actor", "STRASSE");
+  expect(suggest).toHaveBeenCalledWith(
+    element!.scope,
+    "actor",
+    "STRASSE",
+    true,
+  );
   suggest.mockResolvedValue({ items: [], has_more: false });
   change(root, "actor_search", "Other");
   await flush();
   expect(root.querySelector('input[name="actor"]')).toBeNull();
+});
+
+it("applies the Library fuzzy toggle to main search, people completion and local facet search", async () => {
+  const transport = new FixtureTransport();
+  const root = await mount(transport);
+  const field = root.querySelector<HTMLInputElement>('[name="library_query"]')!;
+  field.value = "Vyoage";
+  field.dispatchEvent(new Event("input"));
+  await vi.waitFor(() =>
+    expect(
+      transport.calls
+        .filter((call) => call.type.endsWith("library/list"))
+        .at(-1)?.filters,
+    ).toMatchObject({ query: "Vyoage", fuzzy: true }),
+  );
+  root
+    .querySelector<HTMLInputElement>('[name="library_fuzzy_search"]')!
+    .click();
+  await flush();
+  await vi.waitFor(() =>
+    expect(transport.uiPreferences.fuzzy_search).toBe(false),
+  );
+  expect(root.querySelectorAll("tbody tr")).toHaveLength(0);
+  expect(
+    transport.calls.filter((call) => call.type.endsWith("library/list")).at(-1)
+      ?.filters,
+  ).toMatchObject({ query: "Vyoage", fuzzy: false });
+  button(root, "Clear Filter").click();
+  await flush();
+  button(root, "Filters").click();
+  await flush();
+  const actor = root.querySelector<HTMLInputElement>('[name="actor_search"]')!;
+  actor.value = "Actro";
+  actor.dispatchEvent(new Event("input"));
+  await vi.waitFor(() =>
+    expect(
+      transport.calls
+        .filter((call) => call.type.endsWith("library/suggest"))
+        .at(-1),
+    ).toMatchObject({ query: "Actro", fuzzy: false }),
+  );
+  button(root, "Cancel").click();
+  await flush();
+  root
+    .querySelector<HTMLInputElement>('[name="library_fuzzy_search"]')!
+    .click();
+  await flush();
+  button(root, "Filters").click();
+  await flush();
+  const find = root.querySelector<HTMLInputElement>('[name="facet_search"]')!;
+  find.value = "Scince Fiction";
+  find.dispatchEvent(new Event("input"));
+  await flush();
+  expect(
+    root.querySelector<HTMLInputElement>(
+      '[name="collection"][value="Science Fiction"]',
+    ),
+  ).toBeTruthy();
+  const nextActor = root.querySelector<HTMLInputElement>(
+    '[name="actor_search"]',
+  )!;
+  nextActor.value = "Actro";
+  nextActor.dispatchEvent(new Event("input"));
+  await vi.waitFor(() =>
+    expect(
+      transport.calls
+        .filter((call) => call.type.endsWith("library/suggest"))
+        .at(-1),
+    ).toMatchObject({ query: "Actro", fuzzy: true }),
+  );
 });

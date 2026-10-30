@@ -1,7 +1,7 @@
 # Journal backend
 
 The backend records manual journal entries and observed playback from one
-selected HA player. API version is `1`; SQLite schema is `12` and JSON export
+selected HA player. API version is `1`; SQLite schema is `14` and JSON export
 format is `3`. The household reader and administrator [management panel](ui.md)
 use this API. Live subscriptions and controls remain planned;
 [optional library sync](library.md) is implemented. A compact read-only Now
@@ -93,9 +93,17 @@ ambiguous; ordinary preference edits still leave content revisions unchanged.
 Database writes validate supported fields, row tokens and the inspected content
 revision, and preserve protected identities/receipts.
 
+Schema 13 adds protected manual-viewing Library references/display snapshots and
+the completion-calendar outbox. [Calendar publishing](calendar.md) is a
+separate, off-by-default HA setting using only the selected calendar's create
+action. Completion and queue insertion are transactional; sending/uncertain
+receipts prevent blind retries. No automatic historical/import backfill occurs.
+Schema 14 adds confirmed, bounded Journal export and protected per-item job
+receipts; see the calendar guide.
+
 ### Table responsibilities
 
-There are fifteen tables; a title version is stored once. Separate tables
+There are eighteen tables; a title version is stored once. Separate tables
 represent one-to-many/many-to-many relationships or transactional recovery, not
 separate copies of the same movie.
 
@@ -103,6 +111,8 @@ separate copies of the same movie.
 | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `settings`                                          | Personal browsing values, shared hidden names and one-time inherited UI defaults; independently revisioned        |
 | `database_audit`                                    | Administrator database edit/delete attribution and affected field names/counts, without row content               |
+| `calendar_sync_jobs`, `calendar_sync_items`         | Explicit historical export attribution/progress and replay barriers, without copied event content                 |
+| `calendar_publications`                             | Durable one-attempt completion publishing state, target and configuration fingerprint; no copied event content    |
 | `library_titles`                                    | One row per source/version; descriptive metadata JSON, detection/freshness, artwork reference and purchase date   |
 | `library_sources`                                   | Source namespace, catalog/collection freshness and revision                                                       |
 | `library_collections`, `library_memberships`        | Collections, including empty collections, and many-to-many title membership                                       |
@@ -277,7 +287,7 @@ the loaded entry and dataset. All journal commands require both `entry_id` and
 | `journal/get`      | `viewing_id`                                                                    | One visible viewing                                                                                                        |
 | `journal/sessions` | `viewing_id`                                                                    | Latest 100 sessions and `has_more`                                                                                         |
 | `now_playing`      | None beyond scope                                                               | Read-only `players` snapshot and recording health                                                                          |
-| `journal/list`     | Optional `query`, `status`, `limit`, `cursor`                                   | `items`, `next_cursor`, dataset ID and revision                                                                            |
+| `journal/list`     | Optional `query`, `status`, `limit`, `cursor`, `sort`, `descending`, `fuzzy`    | `items`, `next_cursor`, dataset ID and revision                                                                            |
 | `journal/update`   | `request_id`, `viewing_id`, `expected_revision`, `patch`                        | Committed `viewing` and dataset `revision`                                                                                 |
 | `journal/delete`   | `request_id`, `viewing_id`, `expected_revision`                                 | Tombstoned `viewing` and dataset `revision`                                                                                |
 | `settings/start`   | None beyond scope                                                               | Native HA options form: `flow_id`, `fields`, `errors`                                                                      |
@@ -302,25 +312,43 @@ mutation. Stale corrections return `conflict`. A delete hides the record from
 get/list; it retains a tombstone, original content, and retry history in storage
 and exports. It is not a permanent privacy purge.
 
-Lists sort by `started_at` descending, then viewing UUID descending. Search is a
-literal, Unicode case-folded title substring; `status` is `partial` or
-`completed`. The default page size is 50 and the maximum is 100. Cursors bind to
-the dataset, revision, and filters. Any intervening mutation or filter change
-returns `refresh_required`; restart from the first page. Do not parse or alter
-cursors.
+Lists default to `sort: completed_at`, `descending: true`, using end/completion
+time with start time as fallback and UUID as a deterministic tie-breaker.
+Partial entries always precede completed entries for this sort, in either
+direction. `sort: title` uses the stored Unicode case-folded title, in either
+direction, without the partial-first grouping. Search is a literal, Unicode
+case-folded title substring unless `fuzzy=true` enables bounded word/typo
+matching; `status` is `partial` or `completed`. The default page size is 50 and
+the maximum is 100. Cursors bind to the dataset, revision, filters and sort. Any
+intervening mutation or filter/sort change returns `refresh_required`; restart
+from the first page. Do not parse or alter cursors.
 
 ### Record fields
 
-| Field                                      | Rules/default                                                 |
-| ------------------------------------------ | ------------------------------------------------------------- |
-| `title`                                    | Required, nonblank text, at most 500 characters               |
-| `started_at`                               | Required ISO timestamp with timezone; stored as UTC           |
-| `ended_at`                                 | Optional timestamp with timezone; cannot precede start        |
-| `duration_seconds`                         | Optional nonnegative number, otherwise `null`                 |
-| `watched_seconds`                          | Nonnegative number, default `0`; independent of seek position |
-| `status`                                   | `partial` (default) or explicitly `completed`                 |
-| `source_id`, `player_id`, `raw_content_id` | Optional opaque nonblank strings, at most 255 characters      |
-| `notes`                                    | Text, at most 10,000 characters, default empty                |
+`journal/create` now requires enabled cached Library access. Its `data` accepts
+only `library_title_id` (an exact available version in the configured source),
+`started_at`, optional `status` (default `completed`), `notes`, and
+`watched_seconds` for `partial` only. A positive known version runtime is
+required. The worker supplies title/runtime/source identity, records a protected
+display snapshot, sets completed watched time to runtime, and infers end time
+from start plus watched time. Partial time must be positive and no greater than
+runtime. Free-text creates or caller-supplied title/runtime/end/metadata are
+rejected. Existing correction and reviewed import paths retain their own
+validation.
+
+| Field                                      | Rules/default                                                  |
+| ------------------------------------------ | -------------------------------------------------------------- |
+| `title`                                    | Required, nonblank text, at most 500 characters                |
+| `started_at`                               | Required ISO timestamp with timezone; stored as UTC            |
+| `ended_at`                                 | Optional timestamp with timezone; cannot precede start         |
+| `duration_seconds`                         | Optional nonnegative number, otherwise `null`                  |
+| `watched_seconds`                          | Nonnegative number, default `0`; independent of seek position  |
+| `status`                                   | `partial` or `completed`; Library creates default to completed |
+| `source_id`, `player_id`, `raw_content_id` | Optional opaque nonblank strings, at most 255 characters       |
+| `notes`                                    | Text, at most 10,000 characters, default empty                 |
+
+The table describes stored/correctable fields and lower-level import defaults;
+new Library-based additions derive the fields described above.
 
 Seconds must be finite and at most 1,000,000,000. Booleans are not numbers.
 Unknown fields and empty patches are rejected. All fields above can be corrected
@@ -336,7 +364,7 @@ cannot resurrect it.
 
 The [Database guide](database.md) defines raw-first inspection, personal view
 options, condition search/completion, supported per-table fields, confirmations,
-references and concurrency behavior. Inspection accepts only fifteen trusted
+references and concurrency behavior. Inspection accepts only eighteen trusted
 tables, 10/25/100/500-row pages, validated sort columns, a bounded
 2000-character predicate/literal search, revision-bound pagination and an 8 MiB
 result budget. The predicate parser binds values and resolves field/JSON aliases
@@ -344,16 +372,17 @@ from trusted schema; it never executes caller SQL. Inspection has a two-second
 SQL budget.
 
 `database/inspect` now also returns `dataset_revision`, row snapshot tokens,
-field descriptions/edit permissions, query field/operator names, main-table
-names and deletion policy. `database/validate_query` compiles a condition for
-position-based validation without running it. `database/mutate` accepts a
-cryptographic `request_id` plus `data` containing `table`, `operation` (edit or
-delete), 1–100 selected `rows` with `key`/`token`, an edit `patch` (one row),
-`expected_revision` and confirmation SAVE/DELETE. Active administrator and
-entry/dataset/readiness checks run before/after awaited work. The worker commits
-changes, content revision, receipt and database audit atomically; retries bind
-actor/payload. Open playback rows, system identities, paths, audit and device
-write barriers stay protected. Library cache mutations never edit a device.
+field descriptions/edit permissions, query field/operator names, approved
+related-row key mappings, main-table names and deletion policy.
+`database/validate_query` compiles a condition for position-based validation
+without running it. `database/mutate` accepts a cryptographic `request_id` plus
+`data` containing `table`, `operation` (edit or delete), 1–100 selected `rows`
+with `key`/`token`, an edit `patch` (one row), `expected_revision` and
+confirmation SAVE/DELETE. Active administrator and entry/dataset/readiness
+checks run before/after awaited work. The worker commits changes, content
+revision, receipt and database audit atomically; retries bind actor/payload.
+Open playback rows, system identities, paths, audit and device write barriers
+stay protected. Library cache mutations never edit a device.
 
 Recording and sync may remain enabled for these targeted operations. A changed
 dataset/row returns conflict; no unreviewed partial changes are applied. Active
@@ -380,14 +409,22 @@ const scope = {
   dataset_id: entries[0].dataset_id,
 };
 const requestId = crypto.randomUUID();
+// Requires a fictional cached Library with runtime metadata on an isolated HA.
+const library = await hass.callWS({
+  type: "kaleidescape_companion/library/list",
+  ...scope,
+  filters: { query: "Development example", limit: 10, grouped: false },
+});
+const movie = library.items.find((item) => item.duration_seconds > 0);
+if (!movie)
+  throw new Error("Sync a fictional Library title with known runtime first");
 const created = await hass.callWS({
   type: "kaleidescape_companion/journal/create",
   ...scope,
   request_id: requestId,
   data: {
-    title: "Development example",
+    library_title_id: movie.id,
     started_at: new Date().toISOString(),
-    watched_seconds: 120,
     notes: "Manual backend test",
   },
 });
@@ -403,7 +440,7 @@ const updated = await hass.callWS({
   request_id: crypto.randomUUID(),
   viewing_id: created.viewing.id,
   expected_revision: created.viewing.revision,
-  patch: { status: "completed", watched_seconds: 600 },
+  patch: { notes: "A corrected development note" },
 });
 await hass.callWS({
   type: "kaleidescape_companion/journal/delete",
@@ -415,7 +452,10 @@ await hass.callWS({
 ```
 
 These calls write one explicit development entry and then tombstone it. They do
-not contact a player or send controls. Use a development instance for examples.
+not contact a player or send controls. Keep calendar publishing disabled during
+this round trip; a completed create otherwise queues its selected calendar
+action. Use an isolated development instance and fictional cached data for
+examples.
 
 Public error codes include `invalid_request`, `unauthorized`, `not_found`,
 `not_ready`, `conflict`, `refresh_required`, `backup_in_progress`, `busy`,
@@ -489,3 +529,23 @@ schema, a SQLite backup is kept beside it with a versioned `.bak` name. Failed
 migrations roll back, and newer or unrecognized schemas are rejected without
 deleting data. Diagnostics expose versions, counts, revision, backup state, and
 queue depth, without journal content or filesystem paths.
+
+Search APIs accept a boolean `fuzzy` flag. Journal `list` and Library
+`list`/people `suggest` default to literal matching when omitted, preserving API
+compatibility; Library title `search` retains its previous fuzzy default.
+Journal cursors bind the search mode as well as query/status/sort/revision.
+Browser options explicitly send the user's mode. Literal mode matches
+continuous, case-insensitive text, including punctuation and SQL wildcard
+characters as ordinary text. Literal mode preserves punctuation and word order.
+Fuzzy mode also supports normalized words, diacritics and small word
+edits/swaps; approximate matching is limited to twelve query words and
+100-character words. Longer general searches retain literal matching. A manual
+title-completion request still has its 100-character/twelve-word fuzzy bound and
+ten-result limit. Empty literal title completion offers no movie until text is
+entered.
+
+Journal/Library list and people suggestion reads have a two-second SQLite
+budget; an exceeded budget returns `query_limit` rather than partial results.
+Title completion retains its one-second scoring/10,000-name bound and reports
+truncation. No arbitrary regex, wildcard execution, SQL or new remote access is
+added.

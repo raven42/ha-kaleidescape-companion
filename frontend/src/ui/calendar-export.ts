@@ -1,0 +1,270 @@
+/** Explicit historical export; UUID retries never resubmit a second job. */
+import { counted } from "../core/text";
+import { LitElement, css, html, nothing } from "lit";
+import type { PropertyValues } from "lit";
+import type {
+  JournalClient,
+  Scope,
+  CalendarStatus,
+  PreparedMutation,
+} from "../core/api";
+import { errorCode, errorMessage } from "../core/api";
+import { styles } from "./styles";
+import { dismissBackdrop } from "./dialog";
+
+export class CalendarExport extends LitElement {
+  static properties = {
+    client: { attribute: false },
+    scope: { attribute: false },
+    disabled: { type: Boolean },
+  };
+  static styles = [
+    styles,
+    css`
+      /* This compact confirmation scrolls as one surface, without a painted footer. */
+      .dialog-footer {
+        position: static;
+        padding: 0;
+        background: transparent;
+      }
+    `,
+  ];
+  client?: JournalClient;
+  scope?: Scope;
+  disabled = false;
+  private status?: CalendarStatus;
+  private pending?: PreparedMutation;
+  private working = false;
+  private error = "";
+  private generation = 0;
+  private bound = "";
+  private boundClient?: JournalClient;
+  private timer?: ReturnType<typeof setTimeout>;
+  protected willUpdate(changed: PropertyValues) {
+    if (!changed.has("client") && !changed.has("scope")) return;
+    const key = `${this.scope?.entry_id}:${this.scope?.dataset_id}`;
+    if (key === this.bound && this.boundClient === this.client) return;
+    this.clear();
+    this.bound = key;
+    this.boundClient = this.client;
+    void this.refresh();
+  }
+  connectedCallback() {
+    super.connectedCallback();
+    this.requestUpdate("client");
+  }
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.clear();
+    this.bound = "";
+    this.boundClient = undefined;
+  }
+  private clear() {
+    this.generation++;
+    clearTimeout(this.timer);
+    this.status = undefined;
+    this.pending = undefined;
+    this.working = false;
+    this.error = "";
+    this.renderRoot.querySelector("dialog")?.close();
+  }
+  confirmNavigation() {
+    return !this.working && !this.pending;
+  }
+  private fail(error: unknown) {
+    if (errorCode(error) === "unauthorized") {
+      this.clear();
+      this.dispatchEvent(
+        new CustomEvent("access-denied", { bubbles: true, composed: true }),
+      );
+    } else this.error = errorMessage(error);
+    this.requestUpdate();
+  }
+  private async refresh() {
+    if (!this.client || !this.scope) return;
+    const generation = this.generation;
+    clearTimeout(this.timer);
+    try {
+      const status = await this.client.calendarStatus(this.scope);
+      if (generation !== this.generation) return;
+      this.status = status;
+      if (status.active || (status.job && !status.job.finished))
+        this.timer = setTimeout(() => void this.refresh(), 2000);
+      this.requestUpdate();
+    } catch (error) {
+      if (generation === this.generation) this.fail(error);
+    }
+  }
+  private async open() {
+    await this.refresh();
+    if (this.disabled || !this.status?.ready || this.status.active) return;
+    await this.updateComplete;
+    this.renderRoot.querySelector("dialog")?.showModal();
+  }
+  private close(event?: Event) {
+    event?.preventDefault();
+    if (!this.confirmNavigation()) return;
+    this.renderRoot.querySelector("dialog")?.close();
+  }
+  private async start() {
+    if (
+      !this.client ||
+      !this.scope ||
+      this.working ||
+      this.disabled ||
+      !this.status?.ready
+    )
+      return;
+    const generation = this.generation;
+    this.pending ??= this.client.prepareCalendarSync(
+      this.scope,
+      this.status.fingerprint,
+    );
+    this.working = true;
+    this.error = "";
+    this.requestUpdate();
+    try {
+      await this.client.calendarSync(this.pending);
+      if (generation !== this.generation) return;
+      this.pending = undefined;
+      this.renderRoot.querySelector("dialog")?.close();
+      await this.refresh();
+    } catch (error) {
+      if (generation !== this.generation) return;
+      if (
+        [
+          "unauthorized",
+          "invalid_request",
+          "conflict",
+          "busy",
+          "not_ready",
+        ].includes(errorCode(error))
+      )
+        this.pending = undefined;
+      this.fail(error);
+    } finally {
+      if (generation === this.generation) {
+        this.working = false;
+        this.requestUpdate();
+      }
+    }
+  }
+  private async cancel() {
+    if (!this.client || !this.scope || !this.status?.job || this.working)
+      return;
+    const generation = this.generation;
+    this.working = true;
+    this.requestUpdate();
+    try {
+      await this.client.calendarCancel(this.scope, this.status.job.job_id);
+      if (generation === this.generation) await this.refresh();
+    } catch (error) {
+      if (generation === this.generation) this.fail(error);
+    } finally {
+      if (generation === this.generation) {
+        this.working = false;
+        this.requestUpdate();
+      }
+    }
+  }
+  protected render() {
+    const job = this.status?.job;
+    return html`<section aria-label="Journal calendar export">
+      <h4>Export Journal to calendar</h4>
+      <p class="muted">
+        Uses the saved calendar settings. Save any changes before exporting.
+        Only completed Journal viewings are included.
+      </p>
+      <div class="actions">
+        <button
+          type="button"
+          ?disabled=${this.disabled || this.working || !this.status?.ready || this.status.active}
+          @click=${this.open}
+        >
+          Sync all watched movies to calendar</button
+        ><button type="button" ?disabled=${this.working} @click=${this.refresh}>
+          Refresh export status</button
+        >${this.status?.active ? html`<button type="button" ?disabled=${this.working} @click=${this.cancel}>Cancel export</button>` : nothing}
+      </div>
+      ${
+        job
+          ? html`<p role="status">
+              ${job.finished ? "Export finished" : "Export in progress"} ·
+              ${counted(job.total, "viewing")} ·
+              ${Object.entries(job.counts)
+                .map(([state, count]) => `${count} ${state}`)
+                .join(" · ")}
+            </p>`
+          : nothing
+      }
+      ${this.error ? html`<p role="alert" class="error">${this.error}</p>` : nothing}
+      <dialog
+        class="database-dialog"
+        aria-labelledby="calendar-export-title"
+        aria-describedby="calendar-export-summary"
+        @click=${dismissBackdrop}
+        @cancel=${this.close}
+      >
+        <h2 id="calendar-export-title">Export Journal to calendar</h2>
+        <p id="calendar-export-summary">
+          Create events for up to
+          ${counted(this.status?.completed_viewings ?? 0, "completed viewing")}
+          using the saved calendar and templates?
+        </p>
+        <p>
+          Existing events with the same title and start/end times are skipped.
+          Changing the title format may result in duplicate events. Descriptions
+          on existing events are not updated.
+        </p>
+        <p class="warning">
+          Movie/session details will be shared with the calendar provider and
+          anyone who can read the calendar. Failed or uncertain writes require
+          review. Cancelling stops unstarted items; created events remain.
+        </p>
+        ${
+          this.pending
+            ? html`<p role="alert">
+                  The start result is unconfirmed. Retry the same request to
+                  inspect or resume that job.
+                </p>
+                <button
+                  type="button"
+                  ?disabled=${this.working}
+                  @click=${async () => {
+                    if (
+                      window.confirm(
+                        "Discard this retry and inspect export status? The job may already be running.",
+                      )
+                    ) {
+                      this.pending = undefined;
+                      this.close();
+                      await this.refresh();
+                    }
+                  }}
+                >
+                  Discard retry & inspect
+                </button>`
+            : nothing
+        }
+        <div class="dialog-footer">
+          <button
+            type="button"
+            ?disabled=${this.working || !!this.pending}
+            @click=${this.close}
+          >
+            Cancel</button
+          ><button
+            class="primary"
+            type="button"
+            ?disabled=${this.disabled || this.working || !this.status?.ready}
+            @click=${this.start}
+          >
+            ${this.working ? "Starting…" : this.pending ? "Retry same export" : "Export Journal"}
+          </button>
+        </div>
+      </dialog>
+    </section>`;
+  }
+}
+if (!customElements.get("kaleidescape-calendar-export"))
+  customElements.define("kaleidescape-calendar-export", CalendarExport);

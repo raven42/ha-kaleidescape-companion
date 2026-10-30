@@ -11,12 +11,45 @@ from uuid import uuid4
 import test_backend as backend
 import test_library as library
 
+from custom_components.kaleidescape_companion.core.repository import JournalRepository
 from custom_components.kaleidescape_companion.ui.preferences import validate_library
 
 
 class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = library.LibraryStorageTest.asyncSetUp
     assert_error = library.LibraryStorageTest.assert_error
+
+    async def test_new_detail_filters_default_and_persist_per_user_without_migration(
+        self,
+    ):
+        values = (await self.repository.async_ui_preferences("a"))["values"]
+        for field in ("genre", "year", "format"):
+            self.assertEqual(values[field], [])
+        await self.repository.async_ui_preferences_update(
+            "a",
+            False,
+            str(uuid4()),
+            0,
+            {"query": "", "genre": ["Adventure"], "year": ["2025"], "format": ["4K"]},
+        )
+        await self.repository.async_close()
+        self.repository = JournalRepository(self.path)
+        await self.repository.async_open()
+        self.addAsyncCleanup(self.repository.async_close)
+        self.assertEqual(
+            (await self.repository.async_ui_preferences("a"))["values"]["format"],
+            ["4K"],
+        )
+        self.assertEqual(
+            (await self.repository.async_ui_preferences("b"))["values"]["format"], []
+        )
+        for field in ("genre", "year", "format"):
+            with self.assert_error("invalid_request"):
+                await self.repository.async_ui_preferences_update(
+                    "a", False, str(uuid4()), 0, {field: ["x"] * 101}
+                )
+        with self.assert_error("invalid_request"):
+            validate_library({"year": ["2025 OR 1=1"]})
 
     async def test_legacy_seed_runs_once_and_users_have_independent_sticky_values(self):
         await self.repository.async_seed_ui_preferences(
@@ -344,4 +377,36 @@ class UISettingsApiTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             await self.entry.runtime_data.repository.async_hidden_collections(),
             ["Extras"],
+        )
+
+    async def test_reader_journal_search_preference_is_personal_and_scope_checked(self):
+        reader = SimpleNamespace(id="journal-reader", is_active=True, is_admin=False)
+        result = await self.call(
+            "ui/preferences/update",
+            user=reader,
+            **self.scope,
+            area="journal",
+            request_id=str(uuid4()),
+            revision=0,
+            patch={"fuzzy_search": False},
+        )
+        self.assertTrue(result["success"])
+        own = (
+            await self.call(
+                "ui/preferences/get", user=reader, **self.scope, area="journal"
+            )
+        )["result"]
+        self.assertFalse(own["values"]["fuzzy_search"])
+        admin = (await self.call("ui/preferences/get", **self.scope, area="journal"))[
+            "result"
+        ]
+        self.assertTrue(admin["values"]["fuzzy_search"])
+        reader.is_active = False
+        self.assertEqual(
+            (
+                await self.call(
+                    "ui/preferences/get", user=reader, **self.scope, area="journal"
+                )
+            )["code"],
+            "unauthorized",
         )

@@ -5,7 +5,7 @@ import json
 from datetime import UTC, datetime
 
 from .database_query import OPERATORS, compile_query
-from .database_schema import DELETABLE, MAIN_TABLES, TABLE_KEYS, schema
+from .database_schema import DELETABLE, MAIN_TABLES, TABLE_KEYS, references, schema
 from .models import JournalError, invalid
 
 PAGE_SIZES = (10, 25, 100, 500)
@@ -106,6 +106,7 @@ def inspect_database(
         "dataset_revision": meta["revision"],
         "main_tables": MAIN_TABLES,
         "schema": descriptions,
+        "references": references(db, table),
         "query_fields": [
             {key: value for key, value in item.items() if key != "expression"}
             for item in fields.values()

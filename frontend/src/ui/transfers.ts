@@ -1,4 +1,5 @@
 /** Database toolbar transfers with private, bounded import/export dialogs. */
+import { counted } from "../core/text";
 import { LitElement, css, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
 import { errorCode, errorMessage } from "../core/api";
@@ -290,7 +291,7 @@ export class KaleidescapeTransfers extends LitElement {
       this.review = undefined;
       this.file = undefined;
       this.selected.clear();
-      this.notice = `Imported ${result.imported_count} new entries; filled missing data in ${result.updated_count}; left ${result.skipped_count} unchanged or unselected.`;
+      this.notice = `Imported ${counted(result.imported_count, "new entry", "new entries")}; filled missing data in ${result.updated_count}; left ${result.skipped_count} unchanged or unselected.`;
       this.hideDialog();
       this.dispatchEvent(
         new CustomEvent("database-changed", { bubbles: true, composed: true }),
@@ -440,7 +441,7 @@ export class KaleidescapeTransfers extends LitElement {
         </table>
       </div>
       <p class="muted">
-        Rows
+        ${visible.length === 1 ? "Row" : "Rows"}
         ${rows.length ? page * this.pageSize + 1 : 0}–${Math.min((page + 1) * this.pageSize, rows.length)}
         of ${rows.length}. Selection covers all review pages.
       </p>
@@ -475,13 +476,6 @@ export class KaleidescapeTransfers extends LitElement {
             ${[25, 100, 500].map((count) => html`<option value=${count}>${count}</option>`)}
           </select></label
         >
-        <button
-          class="primary"
-          ?disabled=${blocked || !this.selected.size}
-          @click=${this.importData}
-        >
-          Apply ${this.selected.size} selected changes
-        </button>
       </div>`;
   }
   private renderImport(blocked: boolean) {
@@ -617,8 +611,8 @@ export class KaleidescapeTransfers extends LitElement {
             ?disabled=${this.working || !!this.pending}
             @click=${this.closeDialog}
           >
-            Cancel
-          </button>
+            Cancel</button
+          >${this.dialog === "import" && this.review ? html`<button class="primary" ?disabled=${blocked || !this.selected.size} @click=${this.importData}>Apply ${counted(this.selected.size, "selected change")}</button>` : nothing}
         </div>
       </dialog>`;
   }

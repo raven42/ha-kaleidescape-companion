@@ -67,7 +67,10 @@ async def run(database, history, output):
         report = output.with_suffix(".review.json")
         private_file(report, create=True)
         report.write_text(json.dumps(preview, ensure_ascii=False, indent=2))
-        print(f"Updated {len(updates)} explicitly matched versions in the output copy.")
+        print(
+            f"Updated {len(updates)} explicitly matched "
+            f"version{'' if len(updates) == 1 else 's'} in the output copy."
+        )
         print(
             f"Unmatched names: {sum(not row['versions'] for row in preview['rows'])}; "
             f"ambiguous names: {sum(row['ambiguous'] for row in preview['rows'])}."

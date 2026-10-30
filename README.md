@@ -118,6 +118,13 @@ deletion, and import/export. Library adds sticky search/status bars, partial
 title/people search, and reusable format/rating badges. Recording must still be
 disabled before merge imports and legacy bulk purge operations.
 
+Manual additions select an exact cached Library movie, default to Completed and
+infer runtime/end time; Partial exposes watched minutes. Journal can sort by
+completion date (partials first) or title in either direction. Optional
+[calendar publishing](docs/calendar.md), disabled by default, adds new
+completions to one writable HA calendar with configurable title/description
+templates and bounded metadata.
+
 ## Release status
 
 This is a development integration. Operator browser, real-source, backup and HA
@@ -125,3 +132,7 @@ compatibility validation remain. Repository ownership/URLs, a license, supported
 HA releases and the documented
 [dependency release blocker](docs/security.md#known-dependency-findings-2026-10-25)
 must be resolved before publication. HACS metadata is preparatory.
+
+Historical completed Journal viewings can be explicitly exported from Settings
+to the configured calendar, with matching/progress and a warning about
+title-format duplicates. See [calendar procedures](docs/calendar.md).

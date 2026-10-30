@@ -51,7 +51,8 @@ async def run(titles: int, samples: int) -> None:
             await repository.async_open()
             await repository.async_library_catalog(origin, rows, collections)
             print(
-                f"Fictional catalog: {titles} names, {len(rows)} versions; no network"
+                f"Fictional catalog: {titles} name{'' if titles == 1 else 's'}, "
+                f"{len(rows)} version{'' if len(rows) == 1 else 's'}; no network"
             )
             print("Entries | Median ms | Maximum ms | JSON KiB")
             for limit in (50, 250, 500, 1000):

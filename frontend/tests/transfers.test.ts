@@ -82,7 +82,7 @@ it("reviews before writes, permits explicit deselection, and reports new/merged 
   expect(checks[1].disabled).toBe(true);
   checks[0].click();
   await flush();
-  button("Apply 1 selected changes").click();
+  button("Apply 1 selected change").click();
   await flush();
   expect(apply.mock.calls[0][0].message.selected).toEqual(["library_titles:2"]);
   expect(text()).toContain("filled missing data in 1");

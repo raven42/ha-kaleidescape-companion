@@ -11,13 +11,14 @@ Playing card adds live source/session context. The opt-in [Library](library.md)
 provides shared cached browsing with a resizable cover grid, sortable list, and
 filter/title-detail popups. **Clear Filter** resets the search and all facet
 selections without changing the view, sort, or page size. Source-group editions
-share a row/cover; same-name remakes stay separate, with individual
-format/year/version tabs in the popup. List widths stay fixed across sorts and
-can be resized by dragging dividers or using Left/Right/Home on a focused
-divider. Entries per page offers 25, 100 (initial), 1000 and All. Personal
-browsing preferences save immediately in the database through **Options**. The
-popup groups view, count, cover size, title overlay, format/library badge
-switches and sort/order. Covers show an exclusive top-left Watched/In progress/
+share a row/cover; same-name remakes stay separate, with simple Version
+1/Version 2 tabs when multiple versions exist. A single version omits the tab
+row. List widths stay fixed across sorts and can be resized by dragging dividers
+or using Left/Right/Home on a focused divider. Entries per page offers 25, 100
+(initial), 1000 and All. Personal browsing preferences save immediately in the
+database through **Options**. The popup groups view, count, cover size, title
+overlay, format/library badge switches and fuzzy search. Sort/order remains in
+the main Library toolbar. Covers show an exclusive top-left Watched/In progress/
 New marker and an independent top-right Favorite bookmark, plus only the highest
 known video format. Lists retain all explicit format chips and summary badges.
 Cover pages round the target to complete rows for the measured grid, adapting to
@@ -234,9 +235,10 @@ snapshots rather than overwriting concurrent changes.
 
 **Options** persists rows per page (10/25/100/500), system-table visibility,
 selected table and per-table sort/order in the user's Database settings row. The
-six main tables show initially; the toggle exposes all fifteen. The query
-balloon suggests trusted fields/operators. Enter searches; Tab accepts a
-completion. Plain text remains literal search; conditions include
+three main tables (viewings, sessions and Library titles) show initially; the
+toggle exposes all eighteen. Collections, artwork and sources are system tables.
+The query balloon suggests trusted fields/operators. Enter searches; Tab accepts
+a completion. Plain text remains literal search; conditions include
 `purchased_on IS NULL`, `actors CONTAINS 'name'`, and `title LIKE 'Star%'`.
 Syntax feedback includes positions and does not execute SQL. See the
 [full Database contract and browser review](database.md).
@@ -299,3 +301,78 @@ For browser review, use the fictional Vite fixture with Library enabled, opt in
 through Settings, open an individual title/version and inspect target choice,
 submission, Cancel/backdrop and narrow layouts. The fixture simulates device
 behavior; real firmware add/read-back requires an isolated operator test.
+
+## Manual viewings and calendar publishing
+
+Journal's administrator Add viewing form requires selection of an exact
+available cached Library version with known runtime. Free-text movie creation is
+rejected by the backend. The autocomplete lists title/year/formats/runtime and
+populates the selected version's data. Start uses a local date plus a text time
+accepting `19:30`, `1930` or `7:30 PM`. Completed is the default; end time and
+runtime are inferred. Partial reveals watched minutes and derives end from start
+plus watched time. Storage retains its full timing precision; displayed time
+omits milliseconds and minutes use at most two decimals. Existing viewing
+corrections remain supported separately.
+
+Journal sorting supports completion date and title in either direction. Partial
+viewings stay first when sorting by completion date. Settings offers an
+independent, off-by-default HA calendar publishing option with one selected
+writable calendar, title/description templates and documented flat movie/session
+placeholders. Automatic publishing applies to new completions. The explicit
+Journal export has confirmation, duplicate-format warning, progress,
+cancellation and uncertain-result handling. It matches rendered title/start/end
+before creating historical events and never updates/deletes remote events.
+Templates append opaque version/artwork references for future calendar views.
+Provider sharing, boundaries, recovery and real-provider validation are
+documented in [calendar procedures](calendar.md).
+
+## Dialog actions and detail browsing
+
+Settings has a sticky top action bar with adjacent Save/Cancel; native runtime
+settings still save through HA. Dialogs share consistent action footers with
+padding below buttons. Library filter panes have padded headings and content.
+Database search/sort are aligned together, with Options at the toolbar's far
+right. Database raw details remain read-only until Edit opens a separate modal.
+Typing into a NULL field clears its NULL selection; protected IDs/links/receipts
+remain unchanged. Existing artwork routes provide cached previews when Library
+is enabled, and related-row links switch table and select the exact target,
+including composite collection keys. Missing/evicted data is reported without
+inventing it.
+
+Movie details expose buttons for title/cast/director names, years, genres,
+collections, watched status, formats and ratings. Names clear facets and replace
+the main search across title/cast/directors. Other clicks clear search and
+previous facets, applying only the chosen exact criterion. The popup closes to
+page one while view/count/sort stay unchanged, and criteria save personally.
+Genre/year/viewing-format filters include source labels and positive badge
+categories. Format/rating badges stay above tabs and in version content; tabs
+read only Version 1, Version 2 and so on. Single-version details use a labelled
+region without a tab row. Dynamic numeric count labels use singular for one and
+plural otherwise, including entry/entries.
+
+## Search options
+
+Journal offers **Options → Fuzzy search** to administrators and household
+readers, saved in a personal Journal settings row. It governs Journal title
+search and the administrator's New entry / Movie from Library completion.
+Library Options has an independent toggle for its main text search,
+filter-values search and actor/director autocomplete. Both default enabled. Off
+uses literal case-insensitive partial strings; on also tolerates bounded
+misspellings, transpositions, diacritics and word-order differences. Selected
+facets and Database query syntax remain exact. Database's separate
+manual-viewing picker retains its default fuzzy completion.
+
+Modes save immediately without an HA reload, reset pagination and invalidate
+older suggestions. Changing mode while a manual picker is open preserves its
+text and reruns completion. Empty literal title completion offers no selection
+until text is entered. Search reads are bounded and may require a more specific
+query; see [backend limits](backend.md) and
+[personal preferences](ui-preferences.md).
+
+For browser review, run `bash dev/dev.sh preview` and open
+`http://127.0.0.1:5173/review.html?library=1&companion_page=journal`. Review
+Journal/Library options, live and restored search modes, exact/fuzzy title
+completion, filter heading padding, sticky footer clearance and Database's
+default/system tabs. Automated DOM tests do not verify browser geometry; this
+operator review remains pending. Real-provider/device validation requires an
+isolated operator test, not the fictional preview.

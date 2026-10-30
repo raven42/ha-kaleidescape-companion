@@ -1,4 +1,5 @@
 /** Admin journal management, shared by the HA panel and isolated Vite preview. */
+import { counted } from "../core/text";
 import { LitElement, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
 import { ApiError, JournalClient, errorCode, errorMessage } from "../core/api";
@@ -11,9 +12,12 @@ import type {
 } from "../core/api";
 import { draftData, draftFrom, renderDraftFields } from "./editor";
 import type { Draft } from "./editor";
+import { manualDraft, manualData } from "./manual-viewing";
+import type { ManualDraft } from "./manual-viewing";
 import { styles } from "./styles";
 import { landingPage, rememberPage } from "./navigation";
 import "./reader";
+import "./journal-options";
 import "../playback/now-playing";
 import "./settings";
 import "./database";
@@ -74,6 +78,12 @@ export class KaleidescapePanel extends LitElement {
   private selected: Viewing | null = null;
   private draft: Draft | null = null;
   private initial: Draft | null = null;
+  private manual: ManualDraft | null = null;
+  private manualInitial = "";
+  private sort = "completed_at";
+  private descending = true;
+  private fuzzySearch = true;
+  private journalReady = false;
   private sessions: SessionPage | null = null;
   private sessionError = "";
   private query = "";
@@ -130,6 +140,10 @@ export class KaleidescapePanel extends LitElement {
     this.bind(null);
   }
   private clearPrivate() {
+    this.manual = null;
+    this.manualInitial = "";
+    this.sort = "completed_at";
+    this.descending = true;
     this.generation++;
     this.info = null;
     this.rows = [];
@@ -155,6 +169,8 @@ export class KaleidescapePanel extends LitElement {
     this.activePage = "journal";
     this.navigationReady = false;
     this.settingsBusy = this.maintenanceBusy = false;
+    this.fuzzySearch = true;
+    this.journalReady = false;
   }
   private bind(api: JournalClient | null) {
     if (this.api === api) return;
@@ -171,9 +187,10 @@ export class KaleidescapePanel extends LitElement {
     this.requestUpdate();
   }
   private dirty() {
-    return (
-      this.draft && JSON.stringify(this.draft) !== JSON.stringify(this.initial)
-    );
+    return this.manual
+      ? JSON.stringify(this.manual) !== this.manualInitial
+      : this.draft &&
+          JSON.stringify(this.draft) !== JSON.stringify(this.initial);
   }
   private discard() {
     return (
@@ -307,7 +324,15 @@ export class KaleidescapePanel extends LitElement {
     this.error = "";
     this.requestUpdate();
     try {
-      const result = await api.list(scope, this.query, this.status, cursor);
+      const result = await api.list(
+        scope,
+        this.query,
+        this.status,
+        cursor,
+        this.sort,
+        this.descending,
+        this.fuzzySearch,
+      );
       if (generation !== this.generation || request !== this.listRequest)
         return;
       this.rows = result.items;
@@ -368,6 +393,8 @@ export class KaleidescapePanel extends LitElement {
     }
   }
   private closeEditor() {
+    this.manual = null;
+    this.manualInitial = "";
     this.detailRequest++;
     this.selected = null;
     this.draft = null;
@@ -382,12 +409,18 @@ export class KaleidescapePanel extends LitElement {
     this.closeEditor();
     this.draft = draftFrom();
     this.initial = { ...this.draft };
+    this.manual = manualDraft();
+    this.manualInitial = JSON.stringify(this.manual);
     this.error = "";
     this.notice = "";
     this.requestUpdate();
-    void this.updateComplete.then(() =>
-      this.renderRoot.querySelector<HTMLInputElement>("#title")?.focus(),
-    );
+    void this.updateComplete.then(async () => {
+      const picker = this.renderRoot.querySelector<LitElement>(
+        "kaleidescape-manual-viewing",
+      );
+      await picker?.updateComplete;
+      picker?.shadowRoot?.querySelector<HTMLInputElement>("input")?.focus();
+    });
   }
   private input(field: keyof Draft, event: Event) {
     if (!this.draft) return;
@@ -404,16 +437,20 @@ export class KaleidescapePanel extends LitElement {
     const form = event.target as HTMLFormElement;
     if (!form.reportValidity()) return;
     try {
-      const data = draftData(
-        this.draft,
-        this.selected ? this.initial! : undefined,
-      );
+      const data = this.manual
+        ? manualData(this.manual)
+        : draftData(this.draft, this.selected ? this.initial! : undefined);
       if (this.selected && !Object.keys(data).length) {
         this.notice = "There are no changes to save.";
         this.requestUpdate();
         return;
       }
-      if (data.ended_at && data.started_at && data.ended_at < data.started_at) {
+      if (
+        "ended_at" in data &&
+        data.ended_at &&
+        data.started_at &&
+        data.ended_at < data.started_at
+      ) {
         this.error = "The end time must be after the start time.";
         this.requestUpdate();
         return;
@@ -433,7 +470,10 @@ export class KaleidescapePanel extends LitElement {
     } catch (error) {
       if (errorCode(error) === "request_id_unavailable") this.fail(error);
       else {
-        this.error = "Check the dates and numeric fields before saving.";
+        this.error =
+          this.manual && error instanceof Error
+            ? error.message
+            : "Check the dates and numeric fields before saving.";
         this.requestUpdate();
       }
     }
@@ -470,6 +510,7 @@ export class KaleidescapePanel extends LitElement {
         : "Entry saved.";
       if (!result.viewing.deleted_at) {
         this.selected = result.viewing;
+        this.manual = null;
         this.draft = draftFrom(result.viewing);
         this.initial = { ...this.draft };
       }
@@ -552,7 +593,24 @@ export class KaleidescapePanel extends LitElement {
       </div>`;
     return html`<form class="editor" @submit=${this.save}>
       <fieldset ?disabled=${this.saving || !!this.pending}>
-        ${renderDraftFields(this.draft, (key, event) => this.input(key, event))}
+        ${
+          this.manual
+            ? html`<kaleidescape-manual-viewing
+                .client=${this.api}
+                .scope=${this.info}
+                .draft=${this.manual}
+                .fuzzySearch=${this.fuzzySearch}
+                .disabled=${this.saving || !!this.pending}
+                @draft-change=${(event: CustomEvent<ManualDraft>) => {
+                  this.manual = event.detail;
+                  this.requestUpdate();
+                }}
+                @access-denied=${() => this.fail(new ApiError("unauthorized"))}
+              ></kaleidescape-manual-viewing>`
+            : renderDraftFields(this.draft, (key, event) =>
+                this.input(key, event),
+              )
+        }
         ${this.selected?.origin === "observed" ? html`<small>Only fields you change are marked as manual corrections. Session evidence is retained.</small>` : nothing}
         <div class="actions">
           <button type="submit" class="primary">
@@ -629,7 +687,7 @@ export class KaleidescapePanel extends LitElement {
                   ? html`<p>${this.sessionError}</p>`
                   : this.sessions
                     ? this.sessions.items.length
-                      ? html` ${this.sessions.items.map((session) => html`<div class="session">${this.date(session.started_at)}<br />${(session.watched_seconds / 60).toFixed(2)} min watched · ${session.credits_confirmed ? "Credits confirmed" : "Credits unconfirmed"} · ${session.gap_count} timing gaps<br />${session.end_reason ?? "Open session"}</div>`)}
+                      ? html` ${this.sessions.items.map((session) => html`<div class="session">${this.date(session.started_at)}<br />${(session.watched_seconds / 60).toFixed(2)} min watched · ${session.credits_confirmed ? "Credits confirmed" : "Credits unconfirmed"} · ${counted(session.gap_count, "timing gap")}<br />${session.end_reason ?? "Open session"}</div>`)}
                         ${this.sessions.has_more ? html`<small>Showing the latest 100 sessions.</small>` : nothing}`
                       : html`<p class="muted">
                           No recorded sessions for this entry.
@@ -770,20 +828,48 @@ export class KaleidescapePanel extends LitElement {
                             ></kaleidescape-now-playing>`
                           : html`<div class="section-head">
                                 <h2>Journal</h2>
-                                <button
-                                  class="primary"
-                                  ?disabled=${blocked}
-                                  @click=${() => this.newRecord()}
-                                >
-                                  ＋ Add viewing
-                                </button>
+                                <div class="actions">
+                                  <button
+                                    class="primary"
+                                    ?disabled=${blocked || !this.journalReady}
+                                    @click=${() => this.newRecord()}
+                                  >
+                                    ＋ Add viewing
+                                  </button>
+                                  <kaleidescape-journal-options
+                                    .client=${this.api}
+                                    .scope=${this.info}
+                                    .disabled=${blocked}
+                                    @access-denied=${() => this.fail(new ApiError("unauthorized"))}
+                                    @journal-options=${(
+                                      event: CustomEvent<{
+                                        fuzzy_search: boolean;
+                                      }>,
+                                    ) => {
+                                      this.journalReady = true;
+                                      const changed =
+                                        this.fuzzySearch !==
+                                        event.detail.fuzzy_search;
+                                      this.fuzzySearch =
+                                        event.detail.fuzzy_search;
+                                      if (changed) {
+                                        this.history = [];
+                                        this.page = 1;
+                                        void this.loadList();
+                                      }
+                                      this.requestUpdate();
+                                    }}
+                                  ></kaleidescape-journal-options>
+                                </div>
                               </div>
                               <section
                                 class="metrics"
                                 aria-label="Database overview"
                               >
                                 <div class="metric">
-                                  <small>Journal entries</small
+                                  <small
+                                    >Journal
+                                    ${this.info.viewing_count === 1 ? "entry" : "entries"}</small
                                   ><strong>${this.info.viewing_count}</strong>
                                 </div>
                                 <div class="metric">
@@ -867,6 +953,38 @@ export class KaleidescapePanel extends LitElement {
                                         </option>
                                       </select></label
                                     >
+                                    <label
+                                      >Sort by<select
+                                        name="journal_sort"
+                                        .value=${this.sort}
+                                        ?disabled=${blocked}
+                                        @change=${(event: Event) => {
+                                          this.sort = (
+                                            event.target as HTMLSelectElement
+                                          ).value;
+                                          this.page = 1;
+                                          this.history = [];
+                                          void this.loadList();
+                                        }}
+                                      >
+                                        <option value="completed_at">
+                                          Completed date · partial first
+                                        </option>
+                                        <option value="title">Title</option>
+                                      </select></label
+                                    >
+                                    <button
+                                      type="button"
+                                      ?disabled=${blocked}
+                                      @click=${() => {
+                                        this.descending = !this.descending;
+                                        this.page = 1;
+                                        this.history = [];
+                                        void this.loadList();
+                                      }}
+                                    >
+                                      ${this.descending ? "Descending ↓" : "Ascending ↑"}
+                                    </button>
                                     <button ?disabled=${blocked}>Search</button>
                                   </form>
                                   ${

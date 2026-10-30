@@ -10,6 +10,8 @@ import type {
 } from "../core/api";
 import { styles } from "./styles";
 import { collectionLabel } from "../library/badges";
+import "./calendar-export";
+import { CalendarExport } from "./calendar-export";
 import { PreferenceStore } from "./preference-store";
 
 const fields = [
@@ -62,11 +64,16 @@ const libraryChecks = [
   ["library_sync_artwork", "Sync artwork"],
 ];
 const booleanFields = new Set([
+  "calendar_enabled",
   "tracking_enabled",
   "library_enabled",
   ...libraryChecks.map(([key]) => key),
 ]);
 const validation: Record<string, string> = {
+  invalid_calendar:
+    "Choose an existing calendar that supports creating events.",
+  invalid_calendar_template:
+    "Use only the listed brace fields, without attributes or format specifiers.",
   invalid_display_options: "Choose a valid default landing page.",
   missing_entities: "Select all three source entities to enable tracking.",
   invalid_entities: "Choose existing media_player and sensor entity IDs.",
@@ -230,7 +237,11 @@ export class KaleidescapeSettings extends LitElement {
     }
   }
   confirmNavigation() {
-    if (this.saving) return false;
+    const exporting = this.renderRoot.querySelector<CalendarExport>(
+      "kaleidescape-calendar-export",
+    );
+    if (this.saving || (exporting && !exporting.confirmNavigation()))
+      return false;
     if (this.uncertain)
       return window.confirm(
         "The settings save may already have committed. Leave this view and inspect saved values before making another change?",
@@ -282,6 +293,7 @@ export class KaleidescapeSettings extends LitElement {
       if (type === "number") data[key] = Number(data[key]);
     }
     data.library_host = String(data.library_host ?? "");
+    if (!data.calendar_entity) delete data.calendar_entity;
     try {
       const result = await this.client.settings(this.scope, "submit", {
         flow_id: this.flow.flow_id,
@@ -326,11 +338,27 @@ export class KaleidescapeSettings extends LitElement {
       class="card settings-page"
       aria-labelledby="settings-title"
     >
-      <div class="card-head">
+      <div class="settings-actions">
         <h2 id="settings-title">Companion settings</h2>
         <button ?disabled=${this.saving || this.loading} @click=${this.reload}>
           Reload settings
         </button>
+        <div class="actions">
+          <button
+            type="button"
+            ?disabled=${this.saving || this.loading}
+            @click=${this.reload}
+          >
+            Cancel changes</button
+          ><button
+            class="primary"
+            type="button"
+            @click=${() => this.renderRoot.querySelector<HTMLFormElement>("#companion-settings-form")?.requestSubmit()}
+            ?disabled=${this.saving || this.loading || this.uncertain || this.flow?.type !== "form"}
+          >
+            ${this.saving ? "Saving…" : "Save settings"}
+          </button>
+        </div>
       </div>
       <p>
         HA runtime settings use the integration’s Configure options and reload
@@ -343,7 +371,12 @@ export class KaleidescapeSettings extends LitElement {
         this.loading
           ? html`<p role="status">Loading settings…</p>`
           : this.flow?.type === "form"
-            ? html`<form @submit=${this.save}>
+            ? html`<form
+                  id="companion-settings-form"
+                  @submit=${this.save}
+                  @input=${() => this.requestUpdate()}
+                  @change=${() => this.requestUpdate()}
+                >
                   <fieldset ?disabled=${this.saving || this.uncertain}>
                     <label class="check"
                       ><input
@@ -389,6 +422,99 @@ export class KaleidescapeSettings extends LitElement {
                       metadata. Completion uses watched time and confirmed
                       credits.
                     </p>
+                    <h3>Watched movies calendar</h3>
+                    <label class="check"
+                      ><input
+                        type="checkbox"
+                        name="calendar_enabled"
+                        .checked=${!!this.draft.calendar_enabled}
+                        @change=${(event: Event) => {
+                          this.draft = {
+                            ...this.draft,
+                            calendar_enabled: (event.target as HTMLInputElement)
+                              .checked,
+                          };
+                          this.requestUpdate();
+                        }}
+                      />Add watched movies to calendar</label
+                    >
+                    <p class="muted">
+                      Publishes new movie completions automatically. Use the
+                      explicit Journal export below to sync existing completed
+                      viewings. Movie metadata is shared with the calendar
+                      provider and anyone who can read that calendar.
+                    </p>
+                    ${
+                      this.draft.calendar_enabled
+                        ? html`<div class="grid settings-grid">
+                              <label class="full"
+                                >HA calendar<input
+                                  name="calendar_entity"
+                                  list="calendar-choices"
+                                  type="text"
+                                  placeholder="calendar.movies"
+                                  maxlength="255"
+                                  required
+                                  .value=${String(this.draft.calendar_entity ?? "")}
+                                  @input=${(event: Event) => {
+                                    this.draft = {
+                                      ...this.draft,
+                                      calendar_entity: (
+                                        event.target as HTMLInputElement
+                                      ).value,
+                                    };
+                                  }} /></label
+                              ><label class="full"
+                                >Event title<input
+                                  name="calendar_title"
+                                  type="text"
+                                  maxlength="500"
+                                  required
+                                  .value=${String(this.draft.calendar_title ?? "Watched: {title}")}
+                                  @input=${(event: Event) => {
+                                    this.draft = {
+                                      ...this.draft,
+                                      calendar_title: (
+                                        event.target as HTMLInputElement
+                                      ).value,
+                                    };
+                                  }} /></label
+                              ><label class="full"
+                                >Event description<textarea
+                                  name="calendar_description"
+                                  maxlength="5000"
+                                  .value=${String(this.draft.calendar_description ?? "")}
+                                  @input=${(event: Event) => {
+                                    this.draft = {
+                                      ...this.draft,
+                                      calendar_description: (
+                                        event.target as HTMLTextAreaElement
+                                      ).value,
+                                    };
+                                  }}
+                                ></textarea>
+                              </label>
+                            </div>
+                            <p class="muted">
+                              <datalist id="calendar-choices">
+                                ${(this.flow.calendar_choices ?? []).map((choice) => html`<option value=${choice.value}>${choice.label}</option>`)}
+                              </datalist>
+                              Allowed fields: {title}, {year}, {collection},
+                              {cast}, {director}, {writer}, {studio}, {genre},
+                              {duration}, {rating}, {artwork}, {format},
+                              {edition}, {synopsis}, {purchase_date},
+                              {added_on}, {status}, {started_at}, {ended_at},
+                              {watched}. Duration and watched time are minutes;
+                              missing values are blank. Use double braces for
+                              literal braces.
+                            </p>`
+                        : nothing
+                    }
+                    <kaleidescape-calendar-export
+                      .client=${this.client}
+                      .scope=${this.scope}
+                      .disabled=${this.saving || this.uncertain || JSON.stringify(this.draft) !== JSON.stringify(this.initial)}
+                    ></kaleidescape-calendar-export>
                     <h3>Library sync</h3>
                     <label class="check"
                       ><input
@@ -510,17 +636,7 @@ export class KaleidescapeSettings extends LitElement {
                       size, filters and sort save automatically for your HA user
                       while browsing.
                     </p>
-                    <button class="primary" type="submit">
-                      ${this.saving ? "Saving…" : "Save settings"}
-                    </button>
                   </fieldset>
-                  <button
-                    type="button"
-                    ?disabled=${this.saving || this.loading}
-                    @click=${this.reload}
-                  >
-                    Cancel changes
-                  </button>
                 </form>
                 <h3>Shared Library display settings</h3>
                 <p>Saved to the database as you change them; no HA reload.</p>
@@ -565,7 +681,7 @@ export class KaleidescapeSettings extends LitElement {
             >`,
         )}
       </div>
-      <div class="actions">
+      <div class="actions field-actions">
         <label
           >Custom collection name<input
             name="custom_collection"

@@ -35,6 +35,12 @@ The product name is **Kaleidescape Companion**. The HA domain
   confirmed edits/deletions, personal view options, schema-aware query
   completion and transactional stale-snapshot protection. Schema 12 adds
   operation audit and a monotonic settings counter.
+- Library-based manual additions with exact version selection, text local time,
+  inferred runtime/end and completion-date/title Journal sorting. Schema 13 adds
+  protected manual display snapshots and opt-in
+  [calendar publishing](calendar.md) with durable one-attempt receipts. Schema
+  14 adds configurable descriptions and explicit, matched historical Journal
+  export. Monthly calendar views and an HA card remain planned.
 - Schema 9 stores [purchase dates](purchase-dates.md) on title versions and
   consolidates import audit. [Reviewed merge imports](imports.md) add new
   records and fill missing viewing/Library metadata by exact ID, with selectable

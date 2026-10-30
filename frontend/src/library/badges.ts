@@ -50,16 +50,34 @@ export function highestVideoFormat(row: LibrarySummary) {
     .map((key) => badges.find((badge) => badge.key === key))
     .find(Boolean);
 }
-export function renderFormatBadges(row: LibrarySummary, cover = false) {
+export function renderFormatBadges(
+  row: LibrarySummary,
+  cover = false,
+  select?: (value: string) => void,
+  disabled = false,
+) {
   const best = cover ? highestVideoFormat(row) : undefined;
-  return (cover ? (best ? [best] : []) : formatBadges(row)).map(
-    (badge) =>
-      html`<span
-        class="format-badge format-${badge.key}"
-        aria-label=${badge.label}
-        >${badge.key === "cinematic" ? html`<b>4K</b><span class="cinematic-label">Cinematic</span>` : badge.label}</span
-      >`,
-  );
+  return (cover ? (best ? [best] : []) : formatBadges(row)).map((badge) => {
+    const content =
+      badge.key === "cinematic"
+        ? html`<b>4K</b><span class="cinematic-label">Cinematic</span>`
+        : badge.label;
+    return select
+      ? html`<button
+          type="button"
+          class=${`format-badge format-${badge.key}`}
+          aria-label=${`Filter by format: ${badge.label}`}
+          ?disabled=${disabled}
+          @click=${() => select(badge.label)}
+        >
+          ${content}
+        </button>`
+      : html`<span
+          class=${`format-badge format-${badge.key}`}
+          aria-label=${badge.label}
+          >${content}</span
+        >`;
+  });
 }
 export function renderStatusBadges(row: LibrarySummary, flags = false) {
   return statusBadges(row).map(
@@ -76,7 +94,11 @@ export function renderStatusBadges(row: LibrarySummary, flags = false) {
   );
 }
 
-export function renderRatingBadge(value: string | null | undefined) {
+export function renderRatingBadge(
+  value: string | null | undefined,
+  select?: (value: string) => void,
+  disabled = false,
+) {
   if (!value?.trim()) return nothing;
   const rating = value.trim();
   const normalized = rating.toUpperCase().replaceAll(" ", "");
@@ -92,6 +114,16 @@ export function renderRatingBadge(value: string | null | undefined) {
         NC17: "adult",
       } as Record<string, string>
     )[normalized] ?? "unrated";
+  if (select)
+    return html`<button
+      type="button"
+      class=${`rating-badge rating-${kind}`}
+      aria-label=${`Filter by rating: ${rating}`}
+      ?disabled=${disabled}
+      @click=${() => select(rating)}
+    >
+      ${rating}
+    </button>`;
   return html`<span
     class=${`rating-badge rating-${kind}`}
     title=${`Rating: ${rating}`}

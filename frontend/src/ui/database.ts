@@ -1,7 +1,8 @@
 /** Schema-guided administrator inspection with confirmed, revision-bound writes. */
+import { counted } from "../core/text";
 import { LitElement, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
-import { errorCode, errorMessage } from "../core/api";
+import { ApiError, errorCode, errorMessage } from "../core/api";
 import type {
   DatabasePage,
   DatabaseQuery,
@@ -13,10 +14,11 @@ import { styles } from "./styles";
 import { databaseStyles } from "./database.styles";
 import { PreferenceStore } from "./preference-store";
 import { dismissBackdrop } from "./dialog";
-import { draftFrom, draftData, renderDraftFields } from "./editor";
-import type { Draft } from "./editor";
+import { manualDraft, manualData } from "./manual-viewing";
 import "./database-query";
 import "./transfers";
+import "../library/cover";
+import { CoverQueue } from "../library/cover";
 
 const LABELS: Record<string, string> = {
   viewings: "Viewings",
@@ -34,15 +36,11 @@ const LABELS: Record<string, string> = {
   import_audit: "Import audit",
   database_audit: "Database audit",
   library_collection_intents: "Collection add receipts",
+  calendar_publications: "Calendar publications",
+  calendar_sync_jobs: "Calendar exports",
+  calendar_sync_items: "Calendar export items",
 };
-const MAIN = [
-  "viewings",
-  "sessions",
-  "library_titles",
-  "library_collections",
-  "library_sources",
-  "library_artwork",
-];
+const MAIN = ["viewings", "sessions", "library_titles"];
 type Row = Record<string, unknown>;
 export class KaleidescapeDatabase extends LitElement {
   static properties = {
@@ -76,10 +74,11 @@ export class KaleidescapeDatabase extends LitElement {
   private draft: Record<string, string> = {};
   private nulls = new Set<string>();
   private original = "";
-  private createDraft: Draft = draftFrom();
+  private createDraft = manualDraft();
   private confirmed = false;
   private deleteWord = "";
   private pending?: PreparedMutation;
+  private covers = new CoverQueue();
   protected willUpdate(changed: PropertyValues) {
     if (!changed.has("client") && !changed.has("scope")) return;
     const key = `${this.scope?.entry_id}:${this.scope?.dataset_id}:${this.scope?.permissions.edit}`;
@@ -101,6 +100,8 @@ export class KaleidescapeDatabase extends LitElement {
     this.bound = "";
   }
   private clear() {
+    this.covers.cache.dispose();
+    this.covers = new CoverQueue();
     this.generation++;
     this.request++;
     this.preferences?.dispose();
@@ -231,6 +232,49 @@ export class KaleidescapeDatabase extends LitElement {
       }
     }
   }
+  private async follow(
+    reference: NonNullable<DatabasePage["references"]>[number],
+  ) {
+    if (
+      this.blocked ||
+      !this.detail ||
+      !this.page?.tables ||
+      !(reference.table in this.page.tables)
+    )
+      return;
+    const clauses = [];
+    for (const [field, local] of Object.entries(reference.key)) {
+      const value = this.detail[local];
+      if (
+        value == null ||
+        !/^[a-z_]+$/.test(field) ||
+        !["string", "number"].includes(typeof value)
+      )
+        return;
+      clauses.push(
+        `${field} = ${typeof value === "number" ? value : `'${String(value).replaceAll("'", "''")}'`}`,
+      );
+    }
+    if (!MAIN.includes(reference.table)) {
+      this.showSystem = true;
+      this.preferences?.set({ show_system: true });
+    }
+    this.table = reference.table;
+    this.search = `WHERE ${clauses.join(" AND ")}`;
+    this.filters = {
+      limit: this.filters.limit,
+      query: this.search,
+      ...this.sorts[this.table],
+    };
+    this.preferences?.set({ table: this.table });
+    const generation = this.generation;
+    const table = this.table;
+    await this.load();
+    if (generation !== this.generation || table !== this.table) return;
+    if (this.page?.items[0]) this.showDetail(this.page.items[0]);
+    else this.notice = "The referenced entry no longer exists.";
+    this.requestUpdate();
+  }
   private rowKey(row: Row) {
     return Object.fromEntries(
       (this.page?.schema ?? [])
@@ -285,7 +329,7 @@ export class KaleidescapeDatabase extends LitElement {
   private newEntry() {
     if (this.blocked || this.table !== "viewings") return;
     this.operation = "new";
-    this.createDraft = draftFrom();
+    this.createDraft = manualDraft();
     this.original = JSON.stringify(this.createDraft);
     this.confirmed = false;
     void this.open("database-edit");
@@ -335,7 +379,7 @@ export class KaleidescapeDatabase extends LitElement {
         if (this.operation !== "delete" && !this.confirmed) return;
         if (this.operation === "new")
           this.pending = this.client.prepare(this.scope, "create", {
-            data: draftData(this.createDraft),
+            data: manualData(this.createDraft),
           });
         else {
           const patch: Row = {};
@@ -529,20 +573,7 @@ export class KaleidescapeDatabase extends LitElement {
               this.requestUpdate();
             }}
           />Show system tables</label
-        ><label
-          >Sort by<select
-            name="database_sort"
-            .value=${this.filters.sort ?? ""}
-            @change=${(event: Event) => this.browse({ sort: (event.target as HTMLSelectElement).value })}
-          >
-            ${this.page?.columns.map((name) => html`<option value=${name}>${name}</option>`)}
-          </select></label
-        ><button
-          aria-label="Reverse database sort"
-          @click=${() => this.browse({ descending: !this.filters.descending })}
         >
-          ${this.filters.descending ? "Descending ↓" : "Ascending ↑"}
-        </button>
       </fieldset>
       <p class="muted">
         IDs, relationship keys, managed paths, audit history, dataset metadata
@@ -572,14 +603,9 @@ export class KaleidescapeDatabase extends LitElement {
             ?disabled=${this.blocked || !this.page?.deletable || !this.selectedRows().length}
             @click=${this.deleteEntries}
           >
-            Delete entry${this.selected.size ? ` (${this.selected.size})` : ""}</button
+            ${`Delete ${this.selected.size > 1 ? "entries" : "entry"}${this.selected.size ? ` (${this.selected.size})` : ""}`}</button
           ><button ?disabled=${this.blocked} @click=${() => this.load()}>
-            Refresh database</button
-          ><button
-            ?disabled=${this.blocked}
-            @click=${() => this.open("database-options")}
-          >
-            Options
+            Refresh database
           </button>
         </div>
         <kaleidescape-transfers
@@ -593,7 +619,14 @@ export class KaleidescapeDatabase extends LitElement {
           @database-changed=${() => {
             if (!this.pending) void this.load();
           }}
-        ></kaleidescape-transfers>
+        ></kaleidescape-transfers
+        ><button
+          class="database-options-button"
+          ?disabled=${this.blocked}
+          @click=${() => this.open("database-options")}
+        >
+          Options
+        </button>
       </div>
       <div class="database-messages">
         ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}${this.notice ? html`<p role="status">${this.notice}</p>` : nothing}${this.preferenceError ? html`<p class="warning">${this.preferenceError}<button @click=${() => this.preferences?.retry()}>Retry preferences</button></p>` : nothing}${this.retry()}
@@ -641,13 +674,30 @@ export class KaleidescapeDatabase extends LitElement {
           }}
           @query-submit=${() => this.browse({ query: this.search })}
           @access-denied=${() => this.fail({ code: "unauthorized" })}
-        ></kaleidescape-database-search
-        ><button
-          ?disabled=${this.blocked}
-          @click=${() => this.browse({ query: this.search })}
+          ><button
+            slot="actions"
+            ?disabled=${this.blocked}
+            @click=${() => this.browse({ query: this.search })}
+          >
+            Search
+          </button></kaleidescape-database-search
         >
-          Search
-        </button>
+        <label
+          >Sort by<select
+            name="database_sort"
+            .value=${this.filters.sort ?? ""}
+            @change=${(event: Event) => this.browse({ sort: (event.target as HTMLSelectElement).value })}
+          >
+            ${this.page?.columns.map((name) => html`<option value=${name}>${name}</option>`)}
+          </select></label
+        ><label
+          >Order<button
+            aria-label="Reverse database sort"
+            @click=${() => this.browse({ descending: !this.filters.descending })}
+          >
+            ${this.filters.descending ? "Descending ↓" : "Ascending ↑"}
+          </button></label
+        >
       </div>
       <div class="database-layout">
         <section class="database-entries" aria-label="Database entries">
@@ -688,7 +738,7 @@ export class KaleidescapeDatabase extends LitElement {
             this.page
               ? html`<div class="pagination database-pagination">
                   <small
-                    >Rows
+                    >${this.page.items.length === 1 ? "Row" : "Rows"}
                     ${this.page.items.length ? this.page.offset + 1 : 0}–${this.page.offset + this.page.items.length}
                     of ${this.page.total} · ${this.selected.size} selected
                     (maximum 100)</small
@@ -722,7 +772,26 @@ export class KaleidescapeDatabase extends LitElement {
           </div>
           ${
             this.detail
-              ? html`<pre>${JSON.stringify(this.detail, null, 2)}</pre>
+              ? html`${
+                    (this.table === "library_artwork" ||
+                      this.table === "library_titles") &&
+                    (this.detail.cache_key || this.detail.artwork_key)
+                      ? html`<div class="database-preview">
+                            <kaleidescape-library-cover
+                              .client=${this.client}
+                              .scope=${this.scope}
+                              .queue=${this.covers}
+                              .artworkKey=${String(this.detail.cache_key ?? this.detail.artwork_key)}
+                              .title=${String(this.detail.title ?? "Database artwork")}
+                            ></kaleidescape-library-cover>
+                          </div>
+                          ${!this.scope?.library_enabled ? html`<small>Enable Library to preview cached artwork.</small>` : nothing}`
+                      : nothing
+                  }
+                  <div class="database-references">
+                    ${(this.page?.references ?? []).filter((ref) => Object.values(ref.key).every((key) => this.detail?.[key] != null)).map((ref) => html`<button class="link" ?disabled=${this.blocked} @click=${() => this.follow(ref)}>Open ${LABELS[ref.table] ?? ref.table} · ${Object.values(ref.key).join(", ")}</button>`)}
+                  </div>
+                  <pre>${JSON.stringify(this.detail, null, 2)}</pre>
                   ${!editable ? html`<p class="muted">This table protects system integrity; stored values are read-only.</p>` : nothing}`
               : html`<p class="empty">
                   Select an entry to inspect raw values.
@@ -753,13 +822,17 @@ export class KaleidescapeDatabase extends LitElement {
           <fieldset ?disabled=${this.saving || !!this.pending}>
             ${
               this.operation === "new"
-                ? renderDraftFields(this.createDraft, (key, event) => {
-                    this.createDraft = {
-                      ...this.createDraft,
-                      [key]: (event.target as HTMLInputElement).value,
-                    };
-                    this.requestUpdate();
-                  })
+                ? html`<kaleidescape-manual-viewing
+                    .client=${this.client}
+                    .scope=${this.scope}
+                    .draft=${this.createDraft}
+                    .disabled=${this.saving || !!this.pending}
+                    @draft-change=${(event: CustomEvent) => {
+                      this.createDraft = event.detail;
+                      this.requestUpdate();
+                    }}
+                    @access-denied=${() => this.fail(new ApiError("unauthorized"))}
+                  ></kaleidescape-manual-viewing>`
                 : (this.page?.schema ?? [])
                     .filter((field) => field.editable)
                     .map(
@@ -770,9 +843,11 @@ export class KaleidescapeDatabase extends LitElement {
                               field.type === "json" || field.name === "notes"
                                 ? html`<textarea
                                     name=${field.name}
-                                    .value=${this.draft[field.name] ?? ""}
-                                    ?disabled=${this.nulls.has(field.name)}
+                                    .value=${this.nulls.has(field.name) ? "" : (this.draft[field.name] ?? "")}
+                                    placeholder=${this.nulls.has(field.name) ? "NULL · type to set a value" : ""}
                                     @input=${(event: Event) => {
+                                      this.nulls.delete(field.name);
+                                      this.requestUpdate();
                                       this.draft = {
                                         ...this.draft,
                                         [field.name]: (
@@ -785,9 +860,11 @@ export class KaleidescapeDatabase extends LitElement {
                                     name=${field.name}
                                     type=${field.type === "number" ? "number" : "text"}
                                     step="any"
-                                    .value=${this.draft[field.name] ?? ""}
-                                    ?disabled=${this.nulls.has(field.name)}
+                                    .value=${this.nulls.has(field.name) ? "" : (this.draft[field.name] ?? "")}
+                                    placeholder=${this.nulls.has(field.name) ? "NULL · type to set a value" : ""}
                                     @input=${(event: Event) => {
+                                      this.nulls.delete(field.name);
+                                      this.requestUpdate();
                                       this.draft = {
                                         ...this.draft,
                                         [field.name]: (
@@ -829,17 +906,23 @@ export class KaleidescapeDatabase extends LitElement {
                   this.requestUpdate();
                 }}
               />I reviewed these changes and confirm saving.</label
-            ><button type="submit" class="primary" ?disabled=${!this.confirmed}>
+            >
+          </fieldset>
+          <div class="dialog-footer">
+            <button
+              type="button"
+              ?disabled=${this.saving || !!this.pending}
+              @click=${this.close}
+            >
+              Cancel edit</button
+            ><button
+              type="submit"
+              class="primary"
+              ?disabled=${!this.confirmed || this.saving || !!this.pending}
+            >
               Save changes
             </button>
-          </fieldset>
-          <button
-            type="button"
-            ?disabled=${this.saving || !!this.pending}
-            @click=${this.close}
-          >
-            Cancel edit
-          </button>
+          </div>
         </form>
       </dialog>
       <dialog
@@ -848,7 +931,10 @@ export class KaleidescapeDatabase extends LitElement {
         @click=${dismissBackdrop}
         @cancel=${this.close}
       >
-        <h2>Permanently delete ${this.selectedRows().length} entries?</h2>
+        <h2>
+          Permanently delete
+          ${counted(this.selectedRows().length, "entry", "entries")}?
+        </h2>
         <p>
           Database deletion is permanent. Associated memberships/session
           references may also be removed, and artwork references cleared. Source
@@ -863,19 +949,22 @@ export class KaleidescapeDatabase extends LitElement {
             @input=${(event: Event) => {
               this.deleteWord = (event.target as HTMLInputElement).value;
               this.requestUpdate();
-            }} /></label
-        ><button
-          class="danger"
-          ?disabled=${this.deleteWord !== "DELETE" || this.saving || !!this.pending}
-          @click=${() => this.save()}
-        >
-          Confirm delete</button
-        ><button
-          ?disabled=${this.saving || !!this.pending}
-          @click=${this.close}
-        >
-          Cancel delete
-        </button>
+            }}
+        /></label>
+        <div class="dialog-footer">
+          <button
+            class="danger"
+            ?disabled=${this.deleteWord !== "DELETE" || this.saving || !!this.pending}
+            @click=${() => this.save()}
+          >
+            Confirm delete</button
+          ><button
+            ?disabled=${this.saving || !!this.pending}
+            @click=${this.close}
+          >
+            Cancel delete
+          </button>
+        </div>
       </dialog>
     </section>`;
   }

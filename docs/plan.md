@@ -164,14 +164,22 @@ window and must account for the operator's existing theater automation.
 
 ## Planned investigations
 
-- Explore calendar integration for viewing dates with movie titles and artwork.
-  Investigate HA calendar support and external calendar publishing later.
+- Implemented opt-in [HA calendar publishing](calendar.md) on new completion,
+  with configurable flat title placeholders and versioned artwork/viewing
+  references in event descriptions. Schema 14 includes editable description
+  templates and explicit historical Journal export with matching, progress and
+  protected delivery/job receipts.
+- Next: a monthly Journal calendar with title/artwork, then an HA dashboard card
+  for that view. Design authenticated artwork resolution, paging, timezone and
+  missing-cache behavior; do not require external calendar access just to browse
+  the local journal. Investigate explicit calendar reconciliation/republishing
+  before allowing uncertain writes to be retried.
 - Explore optional Gmail integration for publishing when movies were watched.
   Determine the intended workflow, authorization, and sharing details during
   design.
 
-These are rough follow-up tasks only; no calendar or Gmail connector is
-implemented.
+Calendar views/cards and Gmail are follow-up tasks only. Publishing currently
+uses the configured HA calendar provider; no direct Gmail connector exists.
 
 The development/runtime organization pass is implemented: root `dev/` tools,
 feature packages in `core/`, `library/`, `playback/` and `ui/`, frontend feature

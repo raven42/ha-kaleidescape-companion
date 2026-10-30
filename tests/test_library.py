@@ -503,12 +503,18 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
 
             db.execute(MIGRATIONS[5][0])
             db.execute("ALTER TABLE schema_metadata DROP COLUMN settings_revision")
+            db.execute("DROP TABLE calendar_sync_items")
+            db.execute("DROP TABLE calendar_sync_jobs")
+            db.execute("DROP TABLE calendar_publications")
+            db.execute("DROP INDEX viewings_completed")
+            db.execute("ALTER TABLE viewings DROP COLUMN library_title_id")
+            db.execute("ALTER TABLE viewings DROP COLUMN library_metadata")
             db.execute("PRAGMA user_version=5")
             db.commit()
         self.repository = JournalRepository(self.path)
         self.addAsyncCleanup(self.repository.async_close)
         await self.repository.async_open()
-        self.assertEqual((await self.repository.async_info())["schema_version"], 12)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 14)
         self.assertEqual(
             await self.repository.async_get(created["viewing"]["id"]),
             created["viewing"],

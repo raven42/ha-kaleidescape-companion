@@ -229,9 +229,6 @@ export class LibraryCollectionAdd extends LitElement {
       >
         <div class="card-head">
           <h2 id="collection-add-title">Add to Collection</h2>
-          <button ?disabled=${this.busy || !!this.pending} @click=${this.close}>
-            Cancel
-          </button>
         </div>
         <p>
           <strong>${this.version.title}</strong> ·
@@ -267,15 +264,13 @@ export class LibraryCollectionAdd extends LitElement {
                     ${this.choices.map((name) => html`<option value=${name}>${name}</option>`)}
                   </select></label
                 >
-                ${!this.loading && !this.choices.length && !this.error ? html`<p>No offered, visible collection targets are available. Sync or check the server’s collections.</p>` : nothing}
-                <button
-                  class="primary"
-                  ?disabled=${this.loading || !this.selected}
-                  @click=${this.submit}
-                >
-                  Add selected version
-                </button>`
+                ${!this.loading && !this.choices.length && !this.error ? html`<p>No offered, visible collection targets are available. Sync or check the server’s collections.</p>` : nothing} `
         }
+        <div class="dialog-footer">
+          <button ?disabled=${this.busy || !!this.pending} @click=${this.close}>
+            Cancel</button
+          >${!this.pending ? html`<button class="primary" ?disabled=${this.loading || !this.selected} @click=${this.submit}>Add selected version</button>` : nothing}
+        </div>
       </dialog>`;
   }
 }

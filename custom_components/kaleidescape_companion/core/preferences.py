@@ -6,8 +6,10 @@ from datetime import UTC, datetime
 
 from ..ui.preferences import (
     DATABASE_DEFAULTS,
+    JOURNAL_DEFAULTS,
     LIBRARY_DEFAULTS,
     validate_database,
+    validate_journal,
     validate_library,
     validate_shared,
 )
@@ -40,7 +42,7 @@ def seed(db, legacy):
 
 
 def get(db, actor, shared=False, area="library"):
-    if area not in ("library", "database") or (shared and area != "library"):
+    if area not in ("library", "database", "journal") or (shared and area != "library"):
         raise JournalError("invalid_request", "Unknown UI preference area")
     owner, key = ("household", "library_shared") if shared else (f"user:{actor}", area)
     row = db.execute(
@@ -50,6 +52,8 @@ def get(db, actor, shared=False, area="library"):
         values = json.loads(row["value"])
     elif area == "database":
         values = DATABASE_DEFAULTS
+    elif area == "journal":
+        values = JOURNAL_DEFAULTS
     elif shared:
         values = {"hidden_collections": []}
     else:
@@ -60,9 +64,13 @@ def get(db, actor, shared=False, area="library"):
         values = json.loads(defaults[0]) if defaults else LIBRARY_DEFAULTS
     # Add new UI defaults at read time without rewriting existing personal rows.
     if not shared:
-        values = (validate_database if area == "database" else validate_library)(
-            {}, values
-        )
+        values = (
+            validate_database
+            if area == "database"
+            else validate_journal
+            if area == "journal"
+            else validate_library
+        )({}, values)
     return {"values": values, "revision": row["revision"] if row else 0}
 
 
@@ -100,6 +108,8 @@ def update(db, actor, shared, request, revision, patch, area="library"):
         if shared
         else validate_database
         if area == "database"
+        else validate_journal
+        if area == "journal"
         else validate_library
     )(patch, current["values"])
     owner, key = ("household", "library_shared") if shared else (f"user:{actor}", area)

@@ -19,6 +19,9 @@ it("takes only entry/dataset identifiers from metadata and freezes retry input",
     dataset_id: info.dataset_id,
     query: "",
     limit: 25,
+    sort: "completed_at",
+    descending: true,
+    fuzzy: false,
   });
   const data = { title: "Initial title" };
   const request = client.prepare(info, "create", {

@@ -7,16 +7,16 @@ baseline, not a claim of independent security certification.
 
 ## Trust boundaries
 
-| Boundary                                 | Policy and limitation                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Browser → integration API                | Active authenticated HA users may read the shared household viewing summary and enabled cached Library metadata/artwork. Journal/catalog mutations, notes/source/session details, Now Playing, exports and shared UI preferences require an active administrator. Active users may read/write only their own browsing preferences. Now Playing also checks read permission on the configured source entities. Dataset IDs select data; they are not credentials. |
-| Integration → HA                         | Custom integrations execute in Core's process with Core's filesystem, entity, credential, and network access. Entity selection is application behavior, not a sandbox. Other code running as HA can read this database.                                                                                                                                                                                                                                          |
-| HA users → one another                   | All active users share one household journal; there is no personal watch history or per-user journal ownership. Personal browsing preferences are scoped to authenticated HA user IDs, with shared hidden collection names managed by administrators. A positive field allowlist limits regular-user API responses. HA roles are not strong isolation between hostile authenticated users.                                                                       |
-| Journal/Library → HA entity states       | History/Library sensor states and attributes deliberately expose movie titles, times, counts and storage sizes through HA entity access. Recorder, dashboards, automations, and backups can retain these values outside the private database. Notes, source identities, sessions, and audit actors must never enter sensors.                                                                                                                                     |
-| HA → devices and services                | Observation reads selected HA states. Optional library sync makes bounded GET-only requests to the configured private LAN browser origin, using validated/pinned DNS results. Sync is disabled by default. A separate off-by-default administrator action can add one selected version to an existing verified collection. Now Playing artwork uses HA's existing image proxy.                                                                                   |
-| Device/imported data → storage and UI    | Treat metadata, notes, HTML, image references, and imported files as untrusted, including data from local devices. Validate before storing or using it, and render text without executing markup.                                                                                                                                                                                                                                                                |
-| Storage → filesystem and exports         | Journal contents, source identifiers, audit actors, UI searches/preferences/user IDs, backups, and retry responses are private household data. Keep them outside static web roots and access them through the authenticated API.                                                                                                                                                                                                                                 |
-| Development machine → test HA deployment | Deployment is an explicit privileged SSH operation. Verify the host key and target, send only the runtime package, and configure restart through fixed HA OS/Container commands. Normal checks must never connect to or modify the target.                                                                                                                                                                                                                       |
+| Boundary                                 | Policy and limitation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Browser → integration API                | Active authenticated HA users may read the shared household viewing summary and enabled cached Library metadata/artwork. Journal/catalog mutations, notes/source/session details, Now Playing, exports and shared UI preferences require an active administrator. Active users may read/write only their own browsing preferences. Now Playing also checks read permission on the configured source entities. Dataset IDs select data; they are not credentials.                                       |
+| Integration → HA                         | Custom integrations execute in Core's process with Core's filesystem, entity, credential, and network access. Entity selection is application behavior, not a sandbox. Other code running as HA can read this database.                                                                                                                                                                                                                                                                                |
+| HA users → one another                   | All active users share one household journal; there is no personal watch history or per-user journal ownership. Personal browsing preferences are scoped to authenticated HA user IDs, with shared hidden collection names managed by administrators. A positive field allowlist limits regular-user API responses. HA roles are not strong isolation between hostile authenticated users.                                                                                                             |
+| Journal/Library → HA entity states       | History/Library sensor states and attributes deliberately expose movie titles, times, counts and storage sizes through HA entity access. Recorder, dashboards, automations, and backups can retain these values outside the private database. Notes, source identities, sessions, and audit actors must never enter sensors.                                                                                                                                                                           |
+| HA → devices and services                | Observation reads selected HA states. Optional library sync makes bounded GET-only requests to the configured private LAN browser origin, using validated/pinned DNS results. Sync is disabled by default. A separate off-by-default administrator action can add one selected version to an existing verified collection. Now Playing artwork uses HA's existing image proxy. A separate calendar opt-in permits fixed create/lookup actions on one selected HA calendar; its provider may be remote. |
+| Device/imported data → storage and UI    | Treat metadata, notes, HTML, image references, and imported files as untrusted, including data from local devices. Validate before storing or using it, and render text without executing markup.                                                                                                                                                                                                                                                                                                      |
+| Storage → filesystem and exports         | Journal contents, source identifiers, audit actors, UI searches/preferences/user IDs, backups, and retry responses are private household data. Keep them outside static web roots and access them through the authenticated API.                                                                                                                                                                                                                                                                       |
+| Development machine → test HA deployment | Deployment is an explicit privileged SSH operation. Verify the host key and target, send only the runtime package, and configure restart through fixed HA OS/Container commands. Normal checks must never connect to or modify the target.                                                                                                                                                                                                                                                             |
 
 The integration does not add its own web server, database listener, identity
 system, or general-purpose HA action/SQL/file proxy. Compiled panel assets may
@@ -259,7 +259,7 @@ blindly replaying it.
 
 Database inspection and the new query/administration commands require an active
 administrator, before storage work and again after awaited results. The
-[Database contract](database.md) allows fifteen fixed tables, known column/JSON
+[Database contract](database.md) allows eighteen fixed tables, known column/JSON
 aliases, 10/25/100/500-row pages and 8 MiB result pages. Column identifiers come
 only from the local migrated schema; values use parameters. The condition parser
 supports comparisons, NULL tests, literal CONTAINS, LIKE and boolean grouping.
@@ -438,9 +438,9 @@ Only `/movies`, its encoded collection query, `/details` with an encoded source
 handle, and validated `/webcovers/` or `/webcoverslarge/` raster paths are
 fetched. No browser-supplied URL/path/SQL or metadata-supplied external
 destination is used. HTML parsing uses the native structural parser without
-evaluating scripts. Cached search uses literal Unicode-folded
-title/actor/director substrings. `library/suggest` exposes at most 20 cached
-actor/director names per bounded query, under the same
+evaluating scripts. Cached search uses Unicode-folded title/actor/director
+substrings, with an optional bounded native fuzzy matcher. `library/suggest`
+exposes at most 20 cached actor/director names per bounded query, under the same
 active-user/enabled-source scope and access checks. It adds no device request.
 Complete group/count/identity checks protect catalog availability;
 missing/unrecognized or partial collection navigation preserves old memberships
@@ -797,3 +797,148 @@ commands are administrator-only. Backdrop/Escape and version switching cannot
 discard an in-flight or unconfirmed browser request. See the operator guide for
 the remaining real-device validation; no live POST was used to implement or test
 this change.
+
+## Exact Library admission and calendar publishing
+
+Schema 13 changes administrator `journal/create` to require an exact available
+version in the enabled configured Library. Only the version ID, start time,
+optional status/notes and partial watched time are accepted. The worker derives
+title/runtime/end/source data and a bounded display snapshot. Invented titles,
+runtime overrides and caller-supplied metadata are rejected; existing imports
+and corrections remain separately validated. Library readiness/opt-out and
+user/entry/dataset checks apply before and after awaited work. Actor-bound exact
+retries survive source metadata changes. Private manual snapshots contain
+positive public metadata, bounded text/lists, no device
+origins/paths/credentials, and stay outside household journal projections and
+portable imports/exports. Journal sort expressions are fixed and cursors bind
+sort, filters and mode; callers supply no SQL.
+
+Calendar publishing is a separate native HA opt-in, false by default. It permits
+one fixed `calendar.create_event` action on the selected writable calendar, not
+an arbitrary service/entity proxy. Registered targets follow renames without
+rebinding deleted identities. Opt-in/configuration, availability and capability
+are rechecked immediately before calling HA. Configuration changes stop
+unstarted calls; accepted calls can finish. HA owns provider credentials and
+networking; Companion adds no direct provider connection, arbitrary destination,
+token or Vite route. Providers and readers sharing the calendar can see titles,
+bounded metadata/times and opaque viewing/version/artwork references. Settings
+and the export confirmation disclose this sharing.
+
+Flat title/description brace substitution accepts only listed fields, never
+attribute/index access, format specifiers, conversions or executable/Jinja
+templates. Title templates are capped at 500 characters, description templates
+at 5000, rendered titles at 1024 and complete descriptions at 32 KiB. List/text
+substitutions are bounded. The human description is followed by a versioned
+plain JSON marker for future local calendar views. Artwork is an opaque
+reference, not a URL or image bytes. Notes, raw handles, origins, paths and
+credentials never enter events. No external image fetch/decoder is added.
+
+Completion and a content-free `calendar_publications` receipt commit atomically.
+One queued viewing per ten-second tick is claimed as sending before the external
+action. A timeout, provider failure or crash recovery becomes uncertain, without
+automatic retry. A failed final receipt write can leave sending; the attempt
+barrier remains. Protected receipts retain viewing IDs, selected entities,
+fingerprints and times without copied event content or a viewing foreign key, so
+purging a viewing cannot silently permit another attempt. Imports and existing
+history are not automatically backfilled. Backup/unload drains accepted work
+before storage suspension/close. Provider exceptions are logged without private
+response text. Normal checks use simulated providers only.
+
+## Confirmed historical Journal export
+
+Schema 14 adds protected `calendar_sync_jobs` and `calendar_sync_items`
+progress/attribution receipts. `calendar/status`, `calendar/sync` and
+`calendar/cancel` require active administrator, current entry/dataset and
+readiness checks. Start uses a cryptographic UUID bound to the actor and saved
+configuration fingerprint plus explicit confirmation. It selects at most 10,000
+completed nondeleted Journal viewings. Library collection membership is not a
+dated viewing history. No regular-user capability, HTTP route or Vite proxy
+route is added.
+
+Only the configured calendar's fixed `get_events` and `create_event` actions are
+used. Remote reads cover one UTC month plus seven days, at most 10,000 events /
+8 MiB per response, retaining one window in memory. Viewing spans over seven
+days are rejected; calls time out after 30 seconds. Failed/malformed lookup
+stops unstarted work and cannot cause blind creates. Matching uses the rendered
+title and UTC start/end instants to whole seconds. Existing event descriptions
+are not rewritten. Title-format changes can produce duplicates; confirmation
+discloses that risk.
+
+The worker persists per-item intent before writes and compares the current
+viewing revision before creating an event. Originating-user
+activity/administrator authority, selected configuration and availability are
+checked across waits. Automatic publishing and explicit export share a lock.
+Uncertain prior attempts with unchanged configuration may be resolved by a
+remote match, but absence of a match never authorizes a blind retry.
+Created/matched items suppress pending automatic publication for that
+configuration. Content-free jobs/receipts retain actor, target/fingerprint,
+viewing IDs, times and states; no event titles or provider responses are copied.
+They are not automatically purged and count toward storage capacity.
+
+Cancel stops unstarted work and drains accepted calls. Navigation/disconnect
+does not cancel an accepted job while its originating user remains authorized.
+Backup pauses between items, drains accepted calls and resumes afterward.
+Restart/reload cancels pending/checking items and preserves sending as
+uncertain, without automatically resuming historical jobs. A failed final
+receipt can leave sending and block another export; inspect the calendar and
+reload to recover it as uncertain. Concurrent external writers, changed
+configuration and stale restored databases can still produce duplicates. Local
+deletion/correction/opt-out cannot recall external copies. This is not
+cross-provider exactly-once delivery. See [calendar procedures](calendar.md).
+
+## Detail navigation and private artwork previews
+
+Detail clicks use the existing active-user/enabled-Library read boundary. They
+replace personal search/facet values without device mutation, service call, path
+or HTTP route. Untrusted metadata remains Lit text with fixed callback keys,
+never markup/executable navigation. Pending collection operations disable detail
+navigation. Single-version details use a labelled region without a dangling tab
+reference.
+
+Library filtering/preferences include genre, year and format selections with the
+existing 100-value/500-character bounds. Years accept one to four ASCII digits.
+Each category binds one JSON array, staying below 999 SQLite variables even with
+200 hidden collection names. The fixed native format classifier returns positive
+badge categories and known source labels using constant patterns; it evaluates
+no user expressions. Facets are capped at 500 suggestions and responses retain
+the 8 MiB limit. Scope/activity/source/opt-out checks across awaits and portable
+export projections remain unchanged.
+
+Database related-row links derive from approved local relationships, including
+composite keys. They use the existing validated, parameter-bound predicate
+grammar, never arbitrary SQL. Missing targets are reported, not recreated; IDs
+and relationship fields remain protected. Artwork previews reuse
+enabled/current-source Library authorization, private object-URL retention and
+response limits; unavailable/evicted/unreferenced artwork shows a placeholder.
+NULL input and dialog layout changes add no write capability. Main tables are
+viewings, sessions and Library titles; sources, collections and artwork require
+the system-table toggle without changing their field/edit/delete policy.
+
+## Search preferences and bounded fuzzy reads
+
+Personal Journal preferences use `area=journal` and one strictly boolean
+`fuzzy_search` field. Library preferences have an independent boolean. Both
+default enabled in the UI. Existing active-user ownership, dataset/readiness
+checks, actor/area-bound UUID receipts and post-await revocation checks apply.
+Shared preferences remain Library-only. Journal options grant no management
+rights, use the existing settings table and need no schema migration.
+Administrators can inspect/edit only the known Journal preference row through
+the protected Database settings editor.
+
+Read-only `journal/list`, `library/list`, `library/search` and `library/suggest`
+accept a validated boolean fuzzy flag. Journal cursors bind it to prevent
+mixed-mode pagination. Literal mode uses case-insensitive continuous strings
+without SQL/regex/wildcard interpretation. Approximate matching uses fixed
+normalization and a narrow edit-distance band, at most twelve query words and
+100 characters per approximate word; longer general searches retain literal
+matches. Lists/people completion use a two-second SQLite progress budget,
+removed after success/failure. Manual title completion retains its
+ten-result/10,000-name/one-second bounds. Exact facet selection, Database
+predicates and exact Library-version admission are unchanged.
+
+Browser scope/client changes and unmount clear settings/suggestions and ignore
+late results; mode changes invalidate pending completions. Ordinary Journal
+revision refreshes preserve the manual picker query. Personal booleans inherit
+defaults without rewriting existing rows. No device networking, arbitrary
+expression or direct provider access is added by search. SQL and filesystem
+access remain on the established worker and managed paths.

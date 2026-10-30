@@ -5,6 +5,7 @@ import json
 
 import probatio as p
 from homeassistant import data_entry_flow
+from homeassistant.components.calendar import CalendarEntityFeature
 from homeassistant.helpers import config_validation as cv
 
 from ..core.models import JournalError, invalid, text
@@ -23,6 +24,7 @@ OPTION_FIELDS = frozenset(
     }
     | LIBRARY_DEFAULTS.keys()
     | UI_DEFAULTS.keys()
+    | {"calendar_enabled", "calendar_entity", "calendar_title", "calendar_description"}
 )
 
 
@@ -83,6 +85,12 @@ async def options_request(
             "type": "form",
             "flow_id": result["flow_id"],
             "errors": result.get("errors", {}),
+            "calendar_choices": [
+                {"value": state.entity_id, "label": state.name}
+                for state in hass.states.async_all("calendar")
+                if int(state.attributes.get("supported_features", 0))
+                & CalendarEntityFeature.CREATE_EVENT
+            ][:100],
             "fields": p.to_field_list(
                 result["data_schema"], custom_serializer=cv.custom_serializer
             ),

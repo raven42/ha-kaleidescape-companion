@@ -16,8 +16,15 @@ TABLE_KEYS = {
     "database_audit": "request_id",
     "schema_metadata": "singleton",
     "library_collection_intents": "request_id",
+    "calendar_publications": "viewing_id",
+    "calendar_sync_jobs": "request_id",
+    "calendar_sync_items": "request_id,viewing_id",
 }
-MAIN_TABLES = tuple(list(TABLE_KEYS)[:6])
+MAIN_TABLES = (
+    "viewings",
+    "sessions",
+    "library_titles",
+)
 EDITABLE = {
     "viewings": {
         "title",
@@ -90,3 +97,23 @@ def schema(db, table):
         }
         fields[f"data.{name}"] = {**fields[name], "name": f"data.{name}"}
     return columns, fields
+
+
+def references(db, table):
+    """Expose only relationships between approved local tables, never HA paths."""
+    groups = {}
+    for item in db.execute(f'PRAGMA foreign_key_list("{table}")'):
+        if item[2] in TABLE_KEYS:
+            group = groups.setdefault(item[0], {"table": item[2], "key": {}})
+            group["key"][item[4]] = item[3]
+    result = list(groups.values())
+    logical = {
+        "viewings": [("library_titles", {"id": "library_title_id"})],
+        "library_titles": [("library_artwork", {"cache_key": "artwork_key"})],
+        "calendar_publications": [("viewings", {"id": "viewing_id"})],
+        "calendar_sync_items": [("viewings", {"id": "viewing_id"})],
+    }
+    result += [
+        {"table": target, "key": keys} for target, keys in logical.get(table, [])
+    ]
+    return result

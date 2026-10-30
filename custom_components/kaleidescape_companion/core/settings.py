@@ -8,6 +8,9 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import selector
 
+from ..calendar.config import DEFAULTS as CALENDAR_DEFAULTS
+from ..calendar.config import target as calendar_target
+from ..calendar.config import validate as validate_calendar
 from ..const import DEFAULT_MINIMUM_RUNTIME_MINUTES
 from ..library.config import DEFAULTS as LIBRARY_DEFAULTS
 from ..library.config import validate as validate_library
@@ -107,6 +110,34 @@ def form(hass: HomeAssistant, config: dict) -> p.Schema:
                     min=1, max=1000, step=1, mode=selector.NumberSelectorMode.BOX
                 )
             )
+    properties[
+        p.Required("calendar_enabled", default=config.get("calendar_enabled", False))
+    ] = selector.BooleanSelector()
+    selected = calendar_target(hass, config)
+    properties[
+        p.Optional("calendar_entity", **({"default": selected} if selected else {}))
+    ] = selector.EntitySelector(
+        selector.EntitySelectorConfig(
+            filter=selector.EntityFilterSelectorConfig(
+                domain="calendar",
+                supported_features=["calendar.CalendarEntityFeature.CREATE_EVENT"],
+            ),
+        )
+    )
+    properties[
+        p.Required(
+            "calendar_title",
+            default=config.get("calendar_title", CALENDAR_DEFAULTS["calendar_title"]),
+        )
+    ] = selector.TextSelector()
+    properties[
+        p.Required(
+            "calendar_description",
+            default=config.get(
+                "calendar_description", CALENDAR_DEFAULTS["calendar_description"]
+            ),
+        )
+    ] = selector.TextSelector(selector.TextSelectorConfig(multiline=True))
     return p.Schema(properties)
 
 
@@ -116,6 +147,7 @@ def validate(hass: HomeAssistant, user_input: dict[str, Any], previous: dict) ->
         **previous,
         **validate_library(user_input, previous),
         **validate_ui(user_input, previous),
+        **validate_calendar(hass, user_input, previous),
         "tracking_enabled": user_input.get("tracking_enabled", False),
     }
     for key, default, minimum, maximum in (

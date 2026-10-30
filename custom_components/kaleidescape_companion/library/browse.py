@@ -205,10 +205,14 @@ def library_list(db, source, filters, excluded=""):
     """Query local SQLite with parameters and fixed sort expressions."""
     allowed = {
         "query",
+        "fuzzy",
         "collection",
         "actor",
         "director",
         "rating",
+        "genre",
+        "year",
+        "format",
         "status",
         "sort",
         "descending",
@@ -273,22 +277,34 @@ def library_list(db, source, filters, excluded=""):
     query = filters.get("query", "")
     if not isinstance(query, str) or len(query) > 500 or "\x00" in query:
         raise invalid("Invalid library search")
+    fuzzy = filters.get("fuzzy", False)
+    if type(fuzzy) is not bool:
+        raise invalid("Invalid fuzzy search option")
     if query:
         term = query.casefold()
-        clauses.append("""(instr(t.title_search,?)>0 OR EXISTS (
+        clauses.append("""(companion_matches(t.title,?,?) OR EXISTS (
             SELECT 1 FROM library_titles credits,
             json_each(credits.data,'$.actors') person
             WHERE credits.source_id=t.source_id AND credits.source_group=t.source_group
-            AND credits.available=1 AND instr(companion_casefold(person.value),?)>0)
+            AND credits.available=1 AND companion_matches(person.value,?,?))
             OR EXISTS (SELECT 1 FROM library_titles credits,
             json_each(credits.data,'$.directors') person
             WHERE credits.source_id=t.source_id AND credits.source_group=t.source_group
             AND credits.available=1
-            AND instr(companion_casefold(person.value),?)>0))""")
-        values.extend((term, term, term))
+            AND companion_matches(person.value,?,?)))""")
+        values.extend((term, fuzzy, term, fuzzy, term, fuzzy))
     # Match any selected value within a facet, and all populated facets together.
     # Keep single strings compatible with existing API clients.
-    for key in ("collection", "actor", "director", "rating", "status"):
+    for key in (
+        "collection",
+        "actor",
+        "director",
+        "rating",
+        "genre",
+        "year",
+        "format",
+        "status",
+    ):
         selected = filters.get(key, [])
         if isinstance(selected, str):
             selected = [selected] if selected else []
@@ -312,25 +328,41 @@ def library_list(db, source, filters, excluded=""):
             if not selected:
                 clauses.append("0")
                 continue
-        placeholders = ",".join("?" for _ in selected)
+        # One bound JSON array per facet keeps the expanded filters below
+        # older SQLite builds' 999-variable limit, including hidden names.
+        placeholders = "SELECT value FROM json_each(?)"
         if key == "collection":
             clauses.append(
                 "EXISTS (SELECT 1 FROM library_memberships m "
                 f"WHERE m.title_id=t.id AND m.collection IN ({placeholders}))"
             )
-        elif key in {"actor", "director"}:
-            path = {"actor": "actors", "director": "directors"}[key]
+        elif key in {"actor", "director", "genre"}:
+            path = {"actor": "actors", "director": "directors", "genre": "genres"}[key]
             clauses.append(
                 f"EXISTS (SELECT 1 FROM json_each(t.data,'$.{path}') "
                 f"WHERE value IN ({placeholders}))"
             )
         elif key == "rating":
-            clauses.append(f"json_extract(t.data,'$.rating') IN ({placeholders})")
+            clauses.append(
+                "coalesce(nullif(json_extract(t.data,'$.rating'),''),'Unrated') "
+                f"IN ({placeholders})"
+            )
+        elif key == "year":
+            if any(not re.fullmatch(r"[0-9]{1,4}", value) for value in selected):
+                raise invalid("Invalid library year")
+            clauses.append(
+                f"CAST(json_extract(t.data,'$.year') AS TEXT) IN ({placeholders})"
+            )
+        elif key == "format":
+            clauses.append(
+                "EXISTS (SELECT 1 FROM json_each(companion_formats(t.data)) "
+                f"WHERE value IN ({placeholders}))"
+            )
         else:
             if set(selected) - {"watched", "unwatched", "in_progress", "unknown"}:
                 raise invalid("Invalid library status")
             clauses.append(f"({STATUS_SQL}) IN ({placeholders})")
-        values.extend(selected)
+        values.append(json.dumps(selected))
     where = " AND ".join(clauses)
     join = "library_titles t JOIN library_sources s ON s.id=t.source_id"
     if grouped:
@@ -393,7 +425,7 @@ def library_list(db, source, filters, excluded=""):
 def library_facets(db, source, hidden):
     facets = {}
     truncated = []
-    for key in ("actors", "directors"):
+    for key in ("actors", "directors", "genres"):
         options = [
             row[0]
             for row in db.execute(
@@ -408,12 +440,35 @@ def library_facets(db, source, hidden):
     facets["rating"] = [
         row[0]
         for row in db.execute(
-            """SELECT DISTINCT json_extract(data,'$.rating') FROM library_titles
-                WHERE source_id=? AND available=1 AND
-                json_extract(data,'$.rating')!='' ORDER BY 1 LIMIT 500""",
+            "SELECT DISTINCT "
+            "coalesce(nullif(json_extract(data,'$.rating'),''),'Unrated') "
+            "FROM library_titles WHERE source_id=? AND available=1 "
+            "ORDER BY 1 LIMIT 500",
             (source,),
         )
     ]
+    facets["year"] = [
+        str(row[0])
+        for row in db.execute(
+            "SELECT DISTINCT json_extract(data,'$.year') FROM library_titles "
+            "WHERE source_id=? AND available=1 "
+            "AND json_extract(data,'$.year') IS NOT NULL "
+            "ORDER BY 1 DESC LIMIT 500",
+            (source,),
+        )
+    ]
+    options = [
+        row[0]
+        for row in db.execute(
+            "SELECT DISTINCT value FROM library_titles t,"
+            "json_each(companion_formats(t.data)) "
+            "WHERE source_id=? AND available=1 ORDER BY value LIMIT 501",
+            (source,),
+        )
+    ]
+    facets["format"] = options[:500]
+    if len(options) > 500:
+        truncated.append("format")
     facets["collections"] = [
         row[0]
         for row in db.execute(
@@ -659,10 +714,11 @@ def library_versions(db, source, title, offset=0, revision=None, excluded=""):
     )
 
 
-def suggestions(db, source, field, query):
+def suggestions(db, source, field, query, fuzzy=False):
     """Bounded people-name completion over the full current cached catalog."""
     if (
-        field not in ("actor", "director")
+        type(fuzzy) is not bool
+        or field not in ("actor", "director")
         or not isinstance(query, str)
         or len(query) > 100
         or "\x00" in query
@@ -675,9 +731,9 @@ def suggestions(db, source, field, query):
             "SELECT DISTINCT person.value FROM library_titles t,"
             "json_each(t.data,?) person "
             "WHERE t.source_id=? AND t.available=1 AND person.type='text' "
-            "AND instr(companion_casefold(person.value),?)>0 "
+            "AND companion_matches(person.value,?,?) "
             "ORDER BY companion_casefold(person.value),person.value LIMIT 21",
-            (path, source, query.casefold()),
+            (path, source, query.casefold(), fuzzy),
         )
     ]
     return {"items": rows[:20], "has_more": len(rows) > 20}

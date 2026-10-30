@@ -44,7 +44,9 @@ it("renders titles and timing as text without management controls or private met
   expect(
     transport.calls.every(
       (call) =>
-        call.type.endsWith("/info") || call.type.endsWith("/journal/list"),
+        call.type.endsWith("/info") ||
+        call.type.endsWith("/journal/list") ||
+        (call.type.endsWith("/ui/preferences/get") && call.area === "journal"),
     ),
   ).toBe(true);
 });

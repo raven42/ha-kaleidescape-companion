@@ -98,12 +98,27 @@ export interface MutationResult {
   revision: number;
 }
 export interface OptionsForm {
+  calendar_choices?: { value: string; label: string }[];
   type: "form" | "create_entry" | "abort";
   flow_id?: string;
   errors?: Record<string, string>;
   fields?: { name: string; default?: string | number | boolean }[];
 }
+export interface CalendarStatus {
+  enabled: boolean;
+  ready: boolean;
+  fingerprint: string;
+  active: boolean;
+  completed_viewings: number;
+  job: null | {
+    job_id: string;
+    total: number;
+    finished: boolean;
+    counts: Record<string, number>;
+  };
+}
 export interface DatabasePage {
+  references?: { table: string; key: Record<string, string> }[];
   dataset_revision?: number;
   schema?: {
     name: string;
@@ -387,7 +402,7 @@ export function errorMessage(error: unknown): string {
     library_changed:
       "The library changed during sync. Previous collection data was retained; try again later.",
     query_limit:
-      "This query exceeded its execution budget. Simplify the conditions and try again.",
+      "This search exceeded its execution budget. Refine the text or simplify the conditions and try again.",
     query_syntax:
       "Check the field names, operators and quoted values in the condition.",
     database_page_too_large:
@@ -470,12 +485,18 @@ export class JournalClient {
     query = "",
     status = "",
     cursor?: string,
+    sort = "completed_at",
+    descending = true,
+    fuzzy = false,
   ): Promise<JournalPage> {
     return this.call({
       type: `${DOMAIN}/journal/list`,
       ...scopeFields(scope),
       query,
       limit: 25,
+      sort,
+      descending,
+      fuzzy,
       ...(status ? { status } : {}),
       ...(cursor ? { cursor } : {}),
     });
@@ -740,12 +761,50 @@ export class JournalClient {
     scope: Scope,
     field: string,
     query: string,
+    fuzzy = false,
   ): Promise<{ items: string[]; has_more: boolean }> {
     return this.call({
       type: `${DOMAIN}/library/suggest`,
       ...scopeFields(scope),
       field,
       query,
+      fuzzy,
+    });
+  }
+  librarySearch(
+    scope: Scope,
+    query: string,
+    fuzzy = true,
+  ): Promise<{ items: LibraryTitle[]; has_more: boolean }> {
+    return this.call({
+      type: `${DOMAIN}/library/search`,
+      ...scopeFields(scope),
+      query,
+      fuzzy,
+    });
+  }
+  calendarStatus(scope: Scope): Promise<CalendarStatus> {
+    return this.call({
+      type: `${DOMAIN}/calendar/status`,
+      ...scopeFields(scope),
+    });
+  }
+  prepareCalendarSync(scope: Scope, fingerprint: string) {
+    return this.prepareCommand(scope, "calendar/sync", {
+      fingerprint,
+      confirmation: "EXPORT JOURNAL",
+    });
+  }
+  calendarSync(
+    pending: PreparedMutation,
+  ): Promise<{ job_id: string; total: number }> {
+    return this.call({ ...pending.message });
+  }
+  calendarCancel(scope: Scope, job_id: string): Promise<CalendarStatus> {
+    return this.call({
+      type: `${DOMAIN}/calendar/cancel`,
+      ...scopeFields(scope),
+      job_id,
     });
   }
   validateDatabaseQuery(

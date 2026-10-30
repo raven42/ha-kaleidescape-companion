@@ -9,7 +9,11 @@ from .tracker import RULE_VERSION
 
 
 def save_session(
-    db: sqlite3.Connection, snapshot: dict, minimum_seconds: float, resume_hours: float
+    db: sqlite3.Connection,
+    snapshot: dict,
+    minimum_seconds: float,
+    resume_hours: float,
+    calendar: dict | None = None,
 ) -> str:
     """Commit a checkpoint and its derived viewing atomically and idempotently."""
     previous = db.execute(
@@ -124,5 +128,9 @@ def save_session(
                 f"UPDATE viewings SET {assignments} WHERE id = ?",
                 (*changes.values(), viewing_id),
             )
+            if changes.get("status") == "completed":
+                from ..calendar.store import enqueue
+
+                enqueue(db, viewing_id, calendar)
         db.execute("UPDATE schema_metadata SET revision = revision + 1")
     return viewing_id

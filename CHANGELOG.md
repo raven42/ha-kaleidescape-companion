@@ -1,5 +1,49 @@
 # Changelog
 
+## Search options and spacing
+
+- Add independent, sticky Journal and Library fuzzy-search options covering
+  their searches and completion dialogs; preserve literal partial matching when
+  disabled.
+- Align Library filter headings and add space beneath sticky dialog actions.
+- Move Library collections and artwork under Database system tables.
+
+## Detail-driven Library browsing
+
+- Make detail names and metadata apply fresh searches or exact filters, with
+  sticky genre/year/format selections.
+- Hide single-version tabs and use correct singular/plural count labels
+  throughout the UI and development count messages.
+
+## Calendar export and UI consistency
+
+- Keep the calendar export confirmation compact and themed, with an unpainted
+  action row instead of a separate footer block.
+- Add an editable event description template and confirmed historical Journal
+  export with remote matching, progress, cancellation and durable
+  uncertain-write protection (schema 14).
+- Fix manual-viewing title completion and add bounded fuzzy matching.
+- Align search/sort controls, make Settings actions sticky, unify dialog
+  actions, and allow typing into NULL database fields.
+- Move Library sources under system tables, preview cached artwork and follow
+  related rows; simplify Library version tabs.
+
+## Unreleased — Library-based manual entries and calendar publishing
+
+- Require an exact cached Library version for new manual viewings, populate
+  runtime/source metadata, accept text local times, default to Completed and
+  infer end time; show watched minutes only for Partial.
+- Add completion-date/title Journal sorting in either direction, keeping
+  partials first for date sorting and binding pagination to the sort.
+- Move Library sort controls to the sticky toolbar and refresh/sync to compact
+  footer controls; remove the redundant heading and view-type border.
+- Add opt-in HA calendar publishing with a writable entity selector, flat
+  configurable title fields, bounded artwork/viewing description references,
+  durable one-attempt receipts, opt-out/reload/backup protection and no
+  backfill.
+- Schema 13 adds protected manual Library snapshots and calendar receipts;
+  monthly calendar and HA card work remain planned.
+
 ## Unreleased — Library browsing and protected Database administration
 
 - Add sticky Library search/status bars, debounced title/actor/director search,

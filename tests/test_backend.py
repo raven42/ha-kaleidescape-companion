@@ -106,13 +106,47 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
         return await asyncio.wait_for(connection.result, 2)
 
     async def create(self):
+        from custom_components.kaleidescape_companion.library.store import (
+            source_id,
+            title_id,
+        )
+
+        origin = "http://fictional.local"
+        repository = self.entry.runtime_data.repository
+        if self.entry.runtime_data.library is None:
+            await repository.async_library_catalog(
+                origin,
+                [
+                    {
+                        "source_handle": "fictional",
+                        "source_group": "fictional",
+                        "title": "Fictional Film",
+                        "duration_seconds": 7200,
+                    }
+                ],
+            )
+            self.entry.runtime_data.library = SimpleNamespace(
+                source=source_id(origin),
+                origin=origin,
+                error=None,
+                async_stop=AsyncMock(),
+                async_pause=AsyncMock(),
+                async_resume=AsyncMock(),
+            )
+            object.__setattr__(
+                self.entry,
+                "data",
+                {**self.entry.data, "library_enabled": True, "library_host": origin},
+            )
         return await self.call(
             "journal/create",
             **self.scope,
             request_id=str(uuid4()),
             data={
-                "title": "Fictional Film",
+                "library_title_id": title_id(source_id(origin), "fictional"),
                 "started_at": "2026-10-23T00:00:00Z",
+                "status": "partial",
+                "watched_seconds": 3600,
                 "notes": "Private note",
             },
         )
@@ -197,7 +231,7 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
             request_id=str(uuid4()),
             data={"title": "Missing time"},
         )
-        self.assertEqual(result["code"], "invalid_request")
+        self.assertEqual(result["code"], "library_disabled")
         _, schema = self.hass.data["websocket_api"][f"{DOMAIN}/journal/list"]
         with self.assertRaises(probatio.Invalid):
             schema(
@@ -215,7 +249,11 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.call("info"))["result"], {"entries": []})
         result = await self.call("journal/list", **self.scope)
         self.assertEqual(result["code"], "not_ready")
-        await async_setup_entry(self.hass, self.entry)
+        with patch(
+            "custom_components.kaleidescape_companion.library.sync.LibrarySync.async_start",
+            new_callable=AsyncMock,
+        ):
+            await async_setup_entry(self.hass, self.entry)
         self.addAsyncCleanup(self.entry.runtime_data.repository.async_close)
         self.assertEqual(self.entry.runtime_data.dataset_id, self.scope["dataset_id"])
         result = await self.call(

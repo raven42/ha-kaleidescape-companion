@@ -74,10 +74,11 @@ returns to browsing without a separate details pane. Both views show one entry
 per source's `source_group`, scoped to that source. Same-name remakes with
 different group keys stay separate, while editions in the same group share a row
 or cover. Cover captions and detail headings include the known year. The popup
-lists each original version using format/year tabs and full individual metadata.
-Version tabs support Left/Right and Home/End; large groups use 50-version pages.
-A source group remains a browsing identity, not permission to edit every version
-together.
+lists each original version with full metadata. Multiple versions use simple
+Version 1, Version 2 and subsequent tabs; a single version has no tab row. Count
+labels use singular for one version. Version tabs support Left/Right and
+Home/End; large groups use 50-version pages. A source group remains a browsing
+identity, not permission to edit every version together.
 
 When a version lacks year, rating, synopsis, cast, directors, writers, studios,
 or genres, its displayed/API metadata fills only empty fields from available
@@ -90,23 +91,24 @@ cannot supply fallback metadata. No title-text or guessed year/director matching
 merges works.
 
 Search titles, actor names or director names using partial text. Input debounces
-for 300 ms; Search/Enter applies immediately. Matches are literal and use
-Unicode case folding, including credits from another available version in the
+for 300 ms; Search/Enter applies immediately. Literal mode uses Unicode case
+folding; the independent fuzzy-search option additionally tolerates bounded
+word/typo differences, including credits from another available version in the
 same exact source group. Open **Filters** to select collection, actor, director,
-rating, and watched-status checkboxes. Multiple checked values match **any**
-value within that category; different categories must **all** match on the
-**same version**. A matching group still opens all its versions, including those
-that did not match. An unchecked category is unrestricted. Filter-option search
-narrows collection/rating choices, not the titles. Primary filters appear as
-Watched status, Collection, Rating; actor/director fields below use typed
-suggestions (up to 20 from the full cached source) and removable selected-name
-chips. Rating choices reuse the same badges as title details. **Apply filters**
-applies the draft and returns to page one; Cancel discards it. The toolbar
-**Clear Filter** clears search and all checkbox filters, including unsubmitted
-search text, and returns to page one. It preserves view, sort and page size.
-Each category offers up to 500 known names (collections up to 200), with at most
-100 selections per category. Writer and studio filters are omitted because the
-observed source supplies neither field.
+rating, genre, year, viewing-format and watched-status checkboxes. Multiple
+checked values match **any** value within that category; different categories
+must **all** match on the **same version**. A matching group still opens all its
+versions, including those that did not match. An unchecked category is
+unrestricted. Filter-option search narrows available filter values, not the
+titles. Primary filters appear as Watched status, Collection, Rating;
+actor/director fields below use typed suggestions (up to 20 from the full cached
+source) and removable selected-name chips. Rating choices reuse the same badges
+as title details. **Apply filters** applies the draft and returns to page one;
+Cancel discards it. The toolbar **Clear Filter** clears search and all checkbox
+filters, including unsubmitted search text, and returns to page one. It
+preserves view, sort and page size. Each category offers up to 500 known names
+(collections up to 200), with at most 100 selections per category. Writer and
+studio filters are omitted because the observed source supplies neither field.
 
 List columns are title/formats, year(s), collection, length, watched status, and
 Added on. Fixed-layout columns keep their widths when sorting or filtering. Drag
@@ -184,11 +186,19 @@ individual-version counts. Source Played is displayed as **Watched** in browsing
 labels; Options explains the mapping while API/device collection names remain
 unchanged.
 
+The redundant Library heading is omitted. Sort method/direction remain directly
+available in the search toolbar; refresh/sync are compact footer controls.
+Options contains the other presentation settings, with a borderless view-type
+radio group. Manual Journal additions select an exact cached version with known
+runtime; see the [viewing form](ui.md#open-in-home-assistant).
+
 ### Cached API
 
 The scoped `kaleidescape_companion/library/info` and `library/list` WebSocket
 commands, `library/versions`, `library/suggest` (actor/director query ≤100
-characters; at most 20 results), and query-free
+characters; at most 20 results), `library/search` (partial/fuzzy title
+completion, at most ten exact versions from up to 10,000 names with a one-second
+scoring budget), and query-free
 `/api/kaleidescape_companion/{entry_id}/{dataset_id}/library/artwork/{cache_key}`
 GET require an active HA user and enabled Library. `library/sync` requires an
 administrator. Regular-user info contains only counts, revision, and sync times;
@@ -197,30 +207,31 @@ administrator-only. List results expose display metadata and opaque keys,
 without raw source IDs, origins, or paths. Access, role, scope/readiness, and
 opt-out are checked again after awaited work.
 
-List `filters` accepts `query`, `collection`, `actor`, `director`, `rating`,
-`status`, `sort`, `descending`, `offset`, optional `revision`, `grouped`, and
-`limit`. `limit` must be an integer from 1 to 1000 (default 50); list responses
-echo it. `grouped=true` is used by the UI; omitted/false preserves the original
-version-list API. Grouped responses contain compact display summaries; full
-synopses/credits are fetched only through `library/versions`. Group summaries
-include `version_count`, `formats` (up to 100 with a truncation flag), `years`
-(up to 100), and maximum known runtime. A group's opaque ID is a representative
-current version key; it is not a permanent film identity. `library/versions`
-accepts `title_id`, `offset`, and optional source `revision`, returning at most
-50 positively projected versions sharing the selected source group. Regular-user
-info also includes the name count and an opaque `preferences_key`. List pages
-include that key; subsequent pages can send it to reject stale display
-preferences without changing the source revision. Visible Library polling uses
-it to refresh hidden labels after an external shared-preference change. Facets
-take arrays of at most 100 strings; a single string is retained for existing
-clients. `status` values are `watched`, `unwatched`, `in_progress`, and
-`unknown`. `sort` is one of `name`, `year`, `collection`, `length`, `watched`,
-or `added`. List pages use source/preference revisions, a 1000-entry ceiling,
-and an 8 MiB conservative serialized JSON payload budget (including facets).
-Oversized pages fail with `library_page_too_large`; reduce the target and retry.
-Internal lookup batches stay below 999 SQLite parameters. Individual-version
-pages share the byte budget and remain capped at 50. Fixed sort expressions and
-bound values accept no client SQL or paths.
+List `filters` accepts `query`, `fuzzy`, `collection`, `actor`, `director`,
+`rating`, `genre`, `year`, `format`, `status`, `sort`, `descending`, `offset`,
+optional `revision`, `grouped`, and `limit`. `limit` must be an integer from 1
+to 1000 (default 50); list responses echo it. `grouped=true` is used by the UI;
+omitted/false preserves the original version-list API. Grouped responses contain
+compact display summaries; full synopses/credits are fetched only through
+`library/versions`. Group summaries include `version_count`, `formats` (up to
+100 with a truncation flag), `years` (up to 100), and maximum known runtime. A
+group's opaque ID is a representative current version key; it is not a permanent
+film identity. `library/versions` accepts `title_id`, `offset`, and optional
+source `revision`, returning at most 50 positively projected versions sharing
+the selected source group. Regular-user info also includes the name count and an
+opaque `preferences_key`. List pages include that key; subsequent pages can send
+it to reject stale display preferences without changing the source revision.
+Visible Library polling uses it to refresh hidden labels after an external
+shared-preference change. Facets take arrays of at most 100 strings; a single
+string is retained for existing clients. `status` values are `watched`,
+`unwatched`, `in_progress`, and `unknown`. `sort` is one of `name`, `year`,
+`collection`, `length`, `watched`, or `added`. List pages use source/preference
+revisions, a 1000-entry ceiling, and an 8 MiB conservative serialized JSON
+payload budget (including facets). Oversized pages fail with
+`library_page_too_large`; reduce the target and retry. Internal lookup batches
+stay below 999 SQLite parameters. Individual-version pages share the byte budget
+and remain capped at 50. Fixed sort expressions and bound values accept no
+client SQL or paths.
 
 ## Storage, artwork, and recovery
 
@@ -305,3 +316,52 @@ it contains no artwork and never connects to HA or a device. Check list/cover
 paging at 25, 100, 1000 and All, resize the window, and change cover size.
 Ordinary cover pages should have complete rows; the final page shows only the
 actual remainder.
+
+## Browse from movie details
+
+Title, cast and director names in details are buttons. Clicking a name closes
+the popup, clears all selected facets and replaces the search text with that
+name. The title/actor/director search finds both acting and directing
+associations, including partial matches. Clicking a known year, genre, visible
+collection, watched status, rating or format badge instead clears search and
+every previous facet, then applies just that exact filter. It returns to the
+first results page while preserving view, page size and sort, and saves the
+criteria to the current HA user's preferences. These actions are available to
+household readers as well as administrators and do not contact the device.
+Pending collection writes block detail navigation until resolved.
+
+Filters now offer genre, known year and viewing format alongside status,
+collection and rating. Names retain actor/director completion. Each category
+matches any selected value, with all populated categories required on the same
+matching version; grouped results still show every version of a matching work.
+Format options include source labels and positive badge categories: SD, HD, 4K,
+4K Cinematic, SDR, HDR10, Dolby Vision and Dolby Atmos when present. The 4K
+category represents non-Cinematic 4K metadata; Cinematic has its own category.
+HDR, Cinematic and audio badges require their own positive metadata; resolution
+alone does not supply them. Blank/missing ratings appear as Unrated. Years are
+string values such as `2025` in API filters and preferences. Unknown years are
+not linked or fabricated.
+
+All facet selections, including clicked criteria, retain the existing
+100-value/500-character bounds. SQL uses one bound JSON array per selected
+category, keeping queries below older SQLite's 999-variable limit even with 200
+hidden collections. Source/preference revision and payload limits still apply.
+New preference fields inherit empty defaults without a schema migration or HA
+reload.
+
+## Fuzzy search option
+
+**Library → Options → Fuzzy search** saves immediately to the signed-in user's
+Library preferences. It starts enabled in the UI and applies to the main
+title/cast/director search, the filter-values search, and actor/director
+autocomplete. Turning it off requires the entered text to occur continuously,
+ignoring case; literal partial matches still work, and punctuation/wildcard
+characters remain ordinary text. Turning it on also tolerates small word
+misspellings/transpositions, word-order differences and diacritics. Selected
+facet values remain exact in either mode. Mode changes invalidate pending
+suggestions and refresh results from page one, including All/Covers views. Other
+users and the separate Journal option are unaffected. Direct list/suggestion API
+calls retain a literal default when `fuzzy` is omitted.
+
+The filter panes use consistent inner heading padding, and their sticky action
+footer has extra space below the buttons.

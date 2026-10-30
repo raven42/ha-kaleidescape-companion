@@ -62,6 +62,7 @@ class JournalRepository:
         self._import_plan: dict | None = None
         self._export_directory = path.with_name(f".{path.name}.exports")
         self._artwork_directory = path.parent / "artwork"
+        self._calendar: dict | None = None
 
     @property
     def pending(self) -> int:
@@ -123,6 +124,14 @@ class JournalRepository:
             lambda value: str(value or "").casefold(),
             deterministic=True,
         )
+        from .search import matches
+
+        connection.create_function("companion_matches", 3, matches, deterministic=True)
+        from ..library.formats import labels as format_labels
+
+        connection.create_function(
+            "companion_formats", 1, format_labels, deterministic=True
+        )
         try:
             migrate(connection, self.path)
             connection.execute("PRAGMA foreign_keys = ON")
@@ -157,7 +166,7 @@ class JournalRepository:
         self, source: str, filters: dict, excluded: str = ""
     ) -> dict:
         return await self._call(
-            library_browse.library_list, self._db(), source, filters, excluded
+            self._search_read, library_browse.library_list, source, filters, excluded
         )
 
     async def async_library_versions(
@@ -393,10 +402,12 @@ class JournalRepository:
     async def async_hidden_collections(self):
         return await self._call(preferences.excluded, self._db())
 
-    async def async_library_suggest(self, source, field, query):
+    async def async_library_suggest(self, source, field, query, fuzzy=False):
         from ..library.browse import suggestions
 
-        return await self._call(suggestions, self._db(), source, field, query)
+        return await self._call(
+            self._search_read, suggestions, source, field, query, fuzzy
+        )
 
     async def async_library_summary(self, source: str | None) -> dict:
         """Read a bounded sensor projection; never resolve a host or request a scan."""
@@ -423,6 +434,27 @@ class JournalRepository:
         return await self._call(
             self._inspect, table, offset, revision, limit, query, sort, descending
         )
+
+    def _search_read(self, function, *args):
+        db = self._db()
+        deadline = time.monotonic() + 2
+        db.set_progress_handler(lambda: int(time.monotonic() > deadline), 1000)
+        try:
+            return function(db, *args)
+        except sqlite3.OperationalError as error:
+            if getattr(error, "sqlite_errorcode", None) == sqlite3.SQLITE_INTERRUPT:
+                raise JournalError(
+                    "query_limit",
+                    "Refine the search; its two-second budget was exceeded",
+                ) from error
+            raise
+        finally:
+            db.set_progress_handler(None, 0)
+
+    async def async_library_search(self, source, query, excluded, fuzzy=True):
+        from ..library.search import search
+
+        return await self._call(search, self._db(), source, query, excluded, fuzzy)
 
     def _inspect(self, table, offset, revision, limit, query, sort, descending) -> dict:
         db = self._db()
@@ -479,7 +511,9 @@ class JournalRepository:
             return self._library_write(
                 mutation, self._artwork_directory, request, actor, data
             )
-        return mutation(self._db(), self._artwork_directory, request, actor, data)
+        return mutation(
+            self._db(), self._artwork_directory, request, actor, data, self._calendar
+        )
 
     async def async_purge(
         self,
@@ -618,6 +652,87 @@ class JournalRepository:
             self._actor(actor_id),
         )
 
+    async def async_create_from_library(self, request_id, source, data, *, actor_id):
+        """Only the scoped API uses this admission path; imports stay separate."""
+        if not isinstance(data, dict):
+            raise invalid("Select a Library title")
+        return await self._call(
+            self._create_library,
+            identifier(request_id),
+            source,
+            data,
+            self._actor(actor_id),
+        )
+
+    def _create_library(self, request, source, data, actor):
+        from ..playback.manual import prepare
+
+        db = self._db()
+        # Resolve retries before checking a changed/deleted source version.
+        receipt = {"library_source": source, "data": data}
+        cached = db.execute(
+            "SELECT 1 FROM requests WHERE request_id=?", (request,)
+        ).fetchone()
+        return journal_store.mutate(
+            db,
+            "create",
+            request,
+            {} if cached else prepare(db, source, data),
+            actor,
+            self._paused,
+            self._calendar,
+            receipt,
+        )
+
+    async def async_calendar_configure(self, config):
+        await self._call(self._configure_calendar, config)
+
+    def _configure_calendar(self, config):
+        from ..calendar.store import configure
+
+        configure(self._db(), config)
+        self._calendar = config
+
+    async def async_calendar_claim(self):
+        return await self._call(self._claim_calendar)
+
+    def _claim_calendar(self):
+        from ..calendar.store import claim
+
+        if (
+            self._paused
+            or self._export_active
+            or self._import_active
+            or not self._calendar
+        ):
+            return None
+        return claim(self._db(), self._calendar)
+
+    async def async_calendar_finish(self, viewing_id, state):
+        from ..calendar.store import finish
+
+        await self._call(finish, self._db(), viewing_id, state)
+
+    async def async_calendar_sync(self, operation, *args):
+        return await self._call(self._calendar_sync, operation, *args)
+
+    def _calendar_sync(self, operation, *args):
+        from ..calendar import sync_store
+
+        if operation not in {"begin", "status", "claim", "ready", "finish", "cancel"}:
+            raise invalid("Invalid calendar operation")
+        if operation in {"begin", "claim", "ready"} and (
+            self._paused or self._export_active or self._import_active
+        ):
+            raise JournalError("busy", "Wait for the active backup/transfer")
+        if operation in {"begin", "claim"}:
+            if not self._calendar:
+                raise JournalError("not_ready", "Calendar publishing is disabled")
+            args = (*args, self._calendar)
+        if operation == "begin":
+            args = (identifier(args[0]), text(args[1], 128), args[2])
+        return getattr(sync_store, operation)(self._db(), *args)
+
     async def async_update(
         self,
         request_id: str,
@@ -676,7 +791,13 @@ class JournalRepository:
 
     def _mutate(self, operation, request_id, data, actor_id) -> dict:
         return journal_store.mutate(
-            self._db(), operation, request_id, data, actor_id, self._paused
+            self._db(),
+            operation,
+            request_id,
+            data,
+            actor_id,
+            self._paused,
+            self._calendar,
         )
 
     async def async_get(self, viewing_id: str) -> dict:
@@ -699,7 +820,9 @@ class JournalRepository:
     ) -> str:
         if self._paused:
             raise JournalError("backup_in_progress", "Journal writes paused for backup")
-        return save_session(self._db(), snapshot, minimum_seconds, resume_hours)
+        return save_session(
+            self._db(), snapshot, minimum_seconds, resume_hours, self._calendar
+        )
 
     async def async_open_session(self, player_id: str) -> dict | None:
         """Recover an existing session, including one whose viewing was tombstoned."""
@@ -740,6 +863,9 @@ class JournalRepository:
         viewing_status: str | None = None,
         limit: int = 50,
         cursor: str | None = None,
+        sort: str = "completed_at",
+        descending: bool = True,
+        fuzzy: bool = False,
     ) -> dict:
         """Return a bounded page bound to dataset revision and filters."""
         text(query, 500, empty=True)
@@ -749,13 +875,42 @@ class JournalRepository:
             raise invalid("limit must be between 1 and 100")
         if cursor is not None:
             text(cursor, 4096)
+        if (
+            sort not in {"completed_at", "title"}
+            or type(descending) is not bool
+            or type(fuzzy) is not bool
+        ):
+            raise invalid("Invalid journal sort")
         return await self._call(
-            self._list, query.casefold(), viewing_status, limit, cursor
+            self._list,
+            query.casefold(),
+            viewing_status,
+            limit,
+            cursor,
+            sort,
+            descending,
+            fuzzy,
         )
 
-    def _list(self, query, viewing_status, limit, cursor) -> dict:
-        return journal_store.list_viewings(
-            self._db(), query, viewing_status, limit, cursor
+    def _list(
+        self,
+        query,
+        viewing_status,
+        limit,
+        cursor,
+        sort="completed_at",
+        descending=True,
+        fuzzy=False,
+    ) -> dict:
+        return self._search_read(
+            journal_store.list_viewings,
+            query,
+            viewing_status,
+            limit,
+            cursor,
+            sort,
+            descending,
+            fuzzy,
         )
 
     async def async_export(self, export_format: str) -> Path:

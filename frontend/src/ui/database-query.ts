@@ -24,6 +24,18 @@ export class DatabaseSearch extends LitElement {
       display: grid;
       gap: 6px;
       font: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .control-row {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+    }
+    .control-row input {
+      flex: 1;
+      min-width: 0;
     }
     input {
       font: inherit;
@@ -196,8 +208,10 @@ export class DatabaseSearch extends LitElement {
   protected render() {
     const { options: choices } = this.completion();
     return html`<div class="search">
-        <label
-          >Search rows / conditions<input
+        <label for="database-query">Search rows / conditions</label>
+        <div class="control-row">
+          <input
+            id="database-query"
             name="database_query"
             role="combobox"
             aria-autocomplete="list"
@@ -263,8 +277,10 @@ export class DatabaseSearch extends LitElement {
                 );
                 this.requestUpdate();
               }
-            }} /></label
-        >${this.open && choices.length ? html`<div class="suggestions" id="query-suggestions" role="listbox">${choices.map((choice, index) => html`<button type="button" role="option" id=${`query-option-${index}`} aria-selected=${this.active === index} tabindex="-1" @mousedown=${(event: MouseEvent) => event.preventDefault()} @click=${() => this.choose(choice)}>${choice}</button>`)}</div>` : nothing}
+            }}
+          /><slot name="actions"></slot>
+        </div>
+        ${this.open && choices.length ? html`<div class="suggestions" id="query-suggestions" role="listbox">${choices.map((choice, index) => html`<button type="button" role="option" id=${`query-option-${index}`} aria-selected=${this.active === index} tabindex="-1" @mousedown=${(event: MouseEvent) => event.preventDefault()} @click=${() => this.choose(choice)}>${choice}</button>`)}</div>` : nothing}
       </div>
       <small id="query-help" class=${this.invalid ? "error" : ""} role="status"
         >${this.message || "Text searches every column. Conditions: purchased_on IS NULL · actors CONTAINS 'name' · title LIKE 'Star%'. Tab accepts a suggestion; Enter searches."}</small

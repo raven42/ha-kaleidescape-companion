@@ -173,6 +173,36 @@ export const styles = css`
     flex: 1;
     min-width: 150px;
   }
+  .manual-picker {
+    position: relative;
+    margin-bottom: 16px;
+  }
+  .movie-suggestions {
+    position: absolute;
+    top: 100%;
+    inset-inline: 0;
+    z-index: 20;
+    display: grid;
+    max-height: 260px;
+    overflow: auto;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    box-shadow: 0 4px 12px #0004;
+  }
+  .movie-suggestions button {
+    text-align: left;
+    border-radius: 0;
+    white-space: normal;
+  }
+  .movie-suggestions [aria-selected="true"] {
+    background: var(--line);
+  }
+  .manual-metadata {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
   label {
     display: flex;
     flex-direction: column;
@@ -371,13 +401,8 @@ export const styles = css`
   .settings-page {
     padding: 20px;
     max-width: 900px;
+    overflow: visible;
     margin-top: 24px;
-  }
-  .settings-page .card-head {
-    padding: 0;
-  }
-  .settings-page form > button {
-    margin-top: 12px;
   }
   .database-dialog {
     width: min(560px, calc(100% - 32px));
@@ -397,6 +422,46 @@ export const styles = css`
   }
   .dialog-footer {
     margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 0 12px;
+    position: sticky;
+    bottom: -12px;
+    background: var(--surface);
+    z-index: 12;
+  }
+  .dialog-footer button {
+    white-space: nowrap;
+  }
+  .dialog-footer .primary,
+  .dialog-footer .danger {
+    order: 1;
+  }
+  .field-actions {
+    align-items: end;
+  }
+  .settings-actions {
+    position: sticky;
+    top: var(--companion-sticky-top, 0px);
+    z-index: 15;
+    background: var(--surface);
+    padding: 12px 0;
+    margin-bottom: 18px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--line);
+  }
+  .settings-actions h2 {
+    margin: 0;
+    flex: 1;
+  }
+  .settings-actions .actions {
+    flex-wrap: nowrap;
   }
   pre {
     white-space: pre-wrap;

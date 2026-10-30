@@ -19,7 +19,7 @@ from .models import (
 from .security import private_file
 
 
-def mutation(db, directory, request, actor, data):
+def mutation(db, directory, request, actor, data, calendar=None):
     if not isinstance(data, dict) or set(data) - {
         "table",
         "operation",
@@ -156,6 +156,14 @@ def mutation(db, directory, request, actor, data):
                     + f" WHERE {where}",
                     (*changes.values(), *values),
                 )
+                if (
+                    table == "viewings"
+                    and row["status"] != "completed"
+                    and changes.get("status") == "completed"
+                ):
+                    from ..calendar.store import enqueue
+
+                    enqueue(db, row["id"], calendar)
             else:
                 delete_row(db, table, row)
                 db.execute(f'DELETE FROM "{table}" WHERE {where}', values)
@@ -305,6 +313,7 @@ def validated_patch(db, table, row, patch, now):
     elif table == "settings":
         from ..ui.preferences import (
             validate_database,
+            validate_journal,
             validate_library,
             validate_shared,
         )
@@ -320,6 +329,8 @@ def validated_patch(db, table, row, patch, now):
         validator = (
             validate_database
             if row["key"] == "database"
+            else validate_journal
+            if row["key"] == "journal"
             else validate_shared
             if row["key"] == "library_shared"
             else validate_library

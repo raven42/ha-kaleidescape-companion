@@ -24,6 +24,7 @@ USER_OPERATIONS = frozenset(
         "library/list",
         "library/versions",
         "library/suggest",
+        "library/search",
         "ui/preferences/get",
         "ui/preferences/update",
     }
@@ -87,6 +88,12 @@ def async_register_commands(hass: HomeAssistant) -> None:
             **scoped,
             p.Required("field"): str,
             p.Optional("query", default=""): str,
+            p.Optional("fuzzy", default=False): bool,
+        },
+        "library/search": {
+            **scoped,
+            p.Optional("query", default=""): str,
+            p.Optional("fuzzy", default=True): bool,
         },
         "ui/preferences/get": {**scoped, p.Optional("area", default="library"): str},
         "ui/shared/get": scoped,
@@ -102,6 +109,13 @@ def async_register_commands(hass: HomeAssistant) -> None:
             p.Required("patch"): dict,
         },
         "settings/start": scoped,
+        "calendar/status": scoped,
+        "calendar/sync": {
+            **mutations,
+            p.Required("fingerprint"): str,
+            p.Required("confirmation"): str,
+        },
+        "calendar/cancel": {**scoped, p.Required("job_id"): str},
         "settings/submit": {
             **scoped,
             p.Required("flow_id"): str,
@@ -149,6 +163,9 @@ def async_register_commands(hass: HomeAssistant) -> None:
             p.Optional("status"): str,
             p.Optional("limit"): int,
             p.Optional("cursor"): str,
+            p.Optional("sort"): str,
+            p.Optional("descending"): bool,
+            p.Optional("fuzzy"): bool,
         },
         "journal/update": {
             **mutations,
@@ -247,6 +264,7 @@ async def async_handle(
                     | "library/sync"
                     | "library/versions"
                     | "library/suggest"
+                    | "library/search"
                     | "library/collections/targets"
                     | "library/collections/add"
                     | "library/collections/check"
@@ -366,9 +384,13 @@ async def async_handle(
                                 )
                             }
                         )
+                    elif operation == "library/search":
+                        result = await repository.async_library_search(
+                            library.source, msg["query"], excluded, msg["fuzzy"]
+                        )
                     elif operation == "library/suggest":
                         result = await repository.async_library_suggest(
-                            library.source, msg["field"], msg["query"]
+                            library.source, msg["field"], msg["query"], msg["fuzzy"]
                         )
                     elif operation == "library/versions":
                         result = await repository.async_library_versions(
@@ -398,9 +420,44 @@ async def async_handle(
                         msg.get("area", "library"),
                     )
                 case "journal/create":
-                    result = await repository.async_create(
-                        msg["request_id"], msg["data"], actor_id=user.id
+                    library = get_library(hass, msg["entry_id"], runtime)
+                    result = await repository.async_create_from_library(
+                        msg["request_id"], library.source, msg["data"], actor_id=user.id
                     )
+                case "calendar/status" | "calendar/sync" | "calendar/cancel":
+                    if runtime.calendar is None:
+                        raise JournalError(
+                            "not_ready", "Calendar publisher is not loaded"
+                        )
+                    history = runtime.calendar.history
+                    if operation == "calendar/status":
+                        result = await history.status()
+                    elif operation == "calendar/sync":
+                        if msg["confirmation"] != "EXPORT JOURNAL":
+                            raise JournalError(
+                                "invalid_request", "Confirm the calendar export"
+                            )
+
+                        def authorized():
+                            return (
+                                is_active_admin(user)
+                                and runtime.ready
+                                and getattr(
+                                    hass.config_entries.async_get_entry(
+                                        msg["entry_id"]
+                                    ),
+                                    "runtime_data",
+                                    None,
+                                )
+                                is runtime
+                            )
+
+                        result = await history.start(
+                            msg["request_id"], user.id, msg["fingerprint"], authorized
+                        )
+                    else:
+                        await history.cancel(msg["job_id"])
+                        result = await history.status()
                 case "settings/start" | "settings/submit" | "settings/cancel":
                     result = await options_request(
                         hass,
@@ -485,6 +542,9 @@ async def async_handle(
                         viewing_status=msg.get("status"),
                         limit=msg.get("limit", 50),
                         cursor=msg.get("cursor"),
+                        sort=msg.get("sort", "completed_at"),
+                        descending=msg.get("descending", True),
+                        fuzzy=msg.get("fuzzy", False),
                     )
                     if not admin:
                         result["items"] = [
@@ -518,9 +578,8 @@ async def async_handle(
         if operation not in {"info", "settings/submit"} and not runtime.ready:
             raise JournalError("not_ready", "Journal integration unloaded")
         if (
-            operation.startswith("library/")
-            and get_library(hass, msg["entry_id"], runtime) is not library
-        ):
+            operation.startswith("library/") or operation == "journal/create"
+        ) and get_library(hass, msg["entry_id"], runtime) is not library:
             raise JournalError("not_ready", "Library integration reloaded")
         connection.send_result(msg["id"], result)
     except JournalError as error:

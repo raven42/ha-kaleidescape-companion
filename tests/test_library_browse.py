@@ -27,6 +27,106 @@ class GroupedLibraryTest(unittest.IsolatedAsyncioTestCase):
     page = library_tests.LibraryStorageTest.page
     assert_error = library_tests.LibraryStorageTest.assert_error
 
+    async def test_year_genre_formats_and_unrated_filters_use_exact_positive_metadata(
+        self,
+    ):
+        rows = [
+            {
+                **ROWS[0],
+                "edition": "4K HDR10 Dolby Atmos",
+                "formats": ["4K HDR10 Dolby Atmos"],
+            },
+            {**ROWS[1], "rating": "", "edition": "SD", "formats": ["SD"]},
+            {
+                **ROWS[2],
+                "edition": "4K Cinematic Dolby Vision",
+                "formats": ["4K Cinematic Dolby Vision"],
+            },
+        ]
+        await self.repository.async_library_catalog(ORIGIN, rows, {})
+        for filters, versions, groups in [
+            ({"year": ["2025"]}, 2, 1),
+            ({"genre": ["Adventure", "Missing"]}, 2, 1),
+            ({"format": ["4K"]}, 1, 1),
+            ({"format": ["4K Cinematic"]}, 1, 1),
+            ({"format": ["HDR10"]}, 1, 1),
+            ({"format": ["Dolby Vision"]}, 1, 1),
+            ({"format": ["Dolby Atmos"]}, 1, 1),
+            ({"format": ["SD"]}, 1, 1),
+            ({"format": ["SD", "4K Cinematic"]}, 2, 2),
+            ({"format": ["4K HDR10 Dolby Atmos"]}, 1, 1),
+            ({"format": ["4K"], "genre": ["Drama"]}, 0, 0),
+            (
+                {"genre": ["Adventure"], "year": ["2025"], "format": ["Dolby Vision"]},
+                1,
+                1,
+            ),
+            ({"rating": ["Unrated"]}, 1, 1),
+            ({"format": ["' OR 1=1 --"]}, 0, 0),
+            ({"genre": ["' OR 1=1 --"]}, 0, 0),
+        ]:
+            with self.subTest(filters=filters):
+                self.assertEqual((await self.page(**filters))["total"], versions)
+                page = await self.page(grouped=True, **filters)
+                self.assertEqual(page["total"], groups)
+                if page["items"] and "2025" in filters.get("year", []):
+                    self.assertEqual(page["items"][0]["version_count"], 2)
+        facets = (await self.page())["facets"]
+        self.assertEqual(facets["year"], ["2025", "2024"])
+        self.assertEqual(facets["genres"], ["Adventure", "Drama"])
+        self.assertIn("HDR10", facets["format"])
+        self.assertIn("4K Cinematic", facets["format"])
+        self.assertIn("Unrated", facets["rating"])
+        for filters in [
+            {"year": ["2025 OR 1=1"]},
+            {"year": [2025]},
+            {"format": [True]},
+            {"genre": ["x"] * 101},
+        ]:
+            with self.assert_error("invalid_request"):
+                await self.page(**filters)
+
+    async def test_expanded_filters_stay_below_legacy_sqlite_parameter_limit(self):
+        await self.seed()
+
+        # Exercise the actual 999-variable ceiling rather than relying on the
+        # development interpreter's much larger default limit.
+        def constrain():
+            return self.repository._db().setlimit(
+                sqlite3.SQLITE_LIMIT_VARIABLE_NUMBER, 999
+            )
+
+        previous = await self.repository._call(constrain)
+        self.addAsyncCleanup(
+            self.repository._call,
+            lambda: self.repository._db().setlimit(
+                sqlite3.SQLITE_LIMIT_VARIABLE_NUMBER, previous
+            ),
+        )
+        filters = {
+            key: [str(index) for index in range(100)]
+            for key in [
+                "collection",
+                "actor",
+                "director",
+                "rating",
+                "genre",
+                "year",
+                "format",
+            ]
+        }
+        filters["status"] = ["watched", "unwatched", "unknown", "in_progress"]
+        # Hidden names are loaded from real cached collections, not user SQL.
+        hidden = [f"Hidden {index}" for index in range(200)]
+        await self.repository.async_library_catalog(
+            ORIGIN, ROWS, {name: [] for name in hidden}
+        )
+        page = await self.repository.async_library_list(
+            SOURCE, {**filters, "grouped": True, "sort": "collection"}, hidden
+        )
+        self.assertEqual(page["total"], 0)
+        self.assertEqual((await self.page())["total"], 3)
+
     async def test_grouping_preserves_versions_and_expands_all_formats(self):
         await self.seed()
         page = await self.page(grouped=True)

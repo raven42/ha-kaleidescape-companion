@@ -62,6 +62,15 @@ def validate() -> None:
             ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     validate_runtime_imports()
 
+    # Guard the contributor/security guides against accidental cross-file edits;
+    # valid links alone cannot detect one guide replacing another's contents.
+    for relative, heading in {
+        "docs/security.md": "# Security policy and hardening",
+        "docs/ui.md": "# Household journal and management UI",
+    }.items():
+        if (ROOT / relative).read_text(encoding="utf-8").splitlines()[0] != heading:
+            raise ValueError(f"Unexpected documentation title: {relative}")
+
     manifest = read_json(INTEGRATION / "manifest.json")
     project = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]
     frontend = read_json(ROOT / "frontend" / "package.json")

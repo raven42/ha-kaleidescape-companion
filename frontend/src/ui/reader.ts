@@ -6,6 +6,7 @@ import type { Hass, JournalInfo, ViewingSummary } from "../core/api";
 import { styles } from "./styles";
 import { landingPage, rememberPage } from "./navigation";
 import "../library/library";
+import "./journal-options";
 
 export class KaleidescapeReader extends LitElement {
   static properties = {
@@ -29,6 +30,9 @@ export class KaleidescapeReader extends LitElement {
   private status = "";
   private searchText = "";
   private filterStatus = "";
+  private sort = "completed_at";
+  private descending = true;
+  private fuzzySearch = true;
   private next: string | null = null;
   private cursor?: string;
   private history: (string | undefined)[] = [];
@@ -77,6 +81,9 @@ export class KaleidescapeReader extends LitElement {
     this.history = [];
     this.page = 1;
     this.query = this.status = this.searchText = this.filterStatus = "";
+    this.sort = "completed_at";
+    this.descending = true;
+    this.fuzzySearch = true;
     this.loading = false;
     this.error = "";
   }
@@ -146,6 +153,9 @@ export class KaleidescapeReader extends LitElement {
         this.query,
         this.status,
         cursor,
+        this.sort,
+        this.descending,
+        this.fuzzySearch,
       );
       if (generation !== this.generation) return;
       this.rows = result.items;
@@ -234,8 +244,25 @@ export class KaleidescapeReader extends LitElement {
                     ?disabled=${this.loading || !this.api}
                     @click=${this.refresh}
                   >
-                    Refresh
-                  </button>
+                    Refresh</button
+                  ><kaleidescape-journal-options
+                    .client=${this.api}
+                    .scope=${this.scope}
+                    .disabled=${this.loading}
+                    @journal-options=${(
+                      event: CustomEvent<{ fuzzy_search: boolean }>,
+                    ) => {
+                      const changed =
+                        this.fuzzySearch !== event.detail.fuzzy_search;
+                      this.fuzzySearch = event.detail.fuzzy_search;
+                      if (changed) {
+                        this.page = 1;
+                        this.history = [];
+                        void this.load();
+                      }
+                    }}
+                    @access-denied=${() => this.fail(new ApiError("unauthorized"))}
+                  ></kaleidescape-journal-options>
                 </div>
                 <form
                   class="filters"
@@ -277,6 +304,36 @@ export class KaleidescapeReader extends LitElement {
                       <option value="partial">Partial</option>
                     </select></label
                   >
+                  <label
+                    >Sort by<select
+                      name="journal_sort"
+                      .value=${this.sort}
+                      ?disabled=${this.loading || !this.scope}
+                      @change=${(event: Event) => {
+                        this.sort = (event.target as HTMLSelectElement).value;
+                        this.page = 1;
+                        this.history = [];
+                        void this.load();
+                      }}
+                    >
+                      <option value="completed_at">
+                        Completed date · partial first
+                      </option>
+                      <option value="title">Title</option>
+                    </select></label
+                  >
+                  <button
+                    type="button"
+                    ?disabled=${this.loading || !this.scope}
+                    @click=${() => {
+                      this.descending = !this.descending;
+                      this.page = 1;
+                      this.history = [];
+                      void this.load();
+                    }}
+                  >
+                    ${this.descending ? "Descending ↓" : "Ascending ↑"}
+                  </button>
                   <button ?disabled=${this.loading || !this.scope}>
                     Search
                   </button>

@@ -205,6 +205,12 @@ class RepositorySecurityTest(unittest.IsolatedAsyncioTestCase):
             ):
                 db.execute(f"DROP TABLE {table}")
             db.execute("ALTER TABLE schema_metadata DROP COLUMN settings_revision")
+            db.execute("DROP TABLE calendar_sync_items")
+            db.execute("DROP TABLE calendar_sync_jobs")
+            db.execute("DROP TABLE calendar_publications")
+            db.execute("DROP INDEX viewings_completed")
+            db.execute("ALTER TABLE viewings DROP COLUMN library_title_id")
+            db.execute("ALTER TABLE viewings DROP COLUMN library_metadata")
             db.execute("PRAGMA user_version = 2")
             db.commit()
         reopened = JournalRepository(self.path)

@@ -38,6 +38,31 @@ export const databaseStyles = css`
   .database-filters {
     padding: 20px;
     border-bottom: 1px solid var(--line);
+    align-items: start;
+  }
+  .database-edit-field {
+    display: grid;
+    gap: 8px;
+    padding: 8px 4px;
+    margin-bottom: 12px;
+  }
+  .database-edit-field .check {
+    margin: 0;
+  }
+  .database-preview {
+    display: block;
+    width: 160px;
+    height: 240px;
+    margin: 16px 0;
+  }
+  .database-references {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 16px 0;
+  }
+  .database-options-button {
+    margin-left: 0;
   }
   .database-filters select {
     width: auto;

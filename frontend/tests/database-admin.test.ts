@@ -4,6 +4,7 @@ import type { KaleidescapeDatabase } from "../src/ui/database";
 import type { DatabaseSearch } from "../src/ui/database-query";
 import { ApiError } from "../src/core/api";
 import { FixtureTransport, info, record } from "./fixture";
+import { selectManual } from "./manual-helpers";
 let element: KaleidescapeDatabase;
 let transport: FixtureTransport;
 const root = () => element.shadowRoot!;
@@ -160,7 +161,7 @@ it("retains an edited draft on conflicts and blocks implicit dirty-modal dismiss
 });
 it("stores database row counts, per-table sorts and system visibility separately from Library preferences", async () => {
   await mount();
-  expect(root().querySelectorAll('[role="tab"]')).toHaveLength(6);
+  expect(root().querySelectorAll('[role="tab"]')).toHaveLength(3);
   button("Options").click();
   await flush();
   const limit = root().querySelector<HTMLSelectElement>(
@@ -179,7 +180,7 @@ it("stores database row counts, per-table sorts and system visibility separately
   await flush();
   root().querySelector<HTMLInputElement>('[name="show_system"]')!.click();
   await flush();
-  expect(root().querySelectorAll('[role="tab"]')).toHaveLength(15);
+  expect(root().querySelectorAll('[role="tab"]')).toHaveLength(18);
   expect(transport.databasePreferences).toMatchObject({
     limit: 100,
     show_system: true,
@@ -191,7 +192,7 @@ it("stores database row counts, per-table sorts and system visibility separately
   expect(
     root().querySelector<HTMLSelectElement>('[name="database_limit"]')!.value,
   ).toBe("100");
-  expect(root().querySelectorAll('[role="tab"]')).toHaveLength(15);
+  expect(root().querySelectorAll('[role="tab"]')).toHaveLength(18);
   root().querySelector<HTMLButtonElement>("#table-requests")!.click();
   await flush();
   expect(button("New Entry").disabled).toBe(true);
@@ -273,8 +274,7 @@ it("creates manual viewings through the existing journal API with confirmed fiel
   await mount();
   button("New Entry").click();
   await flush();
-  input("title", "A new fictional entry");
-  input("started_at", "2026-10-29T12:00:00");
+  await selectManual(root(), transport, "A new fictional entry");
   await confirm();
   await vi.waitFor(() =>
     expect(
@@ -284,4 +284,85 @@ it("creates manual viewings through the existing journal API with confirmed fiel
   expect(
     transport.calls.some((call) => call.type.endsWith("/journal/create")),
   ).toBe(true);
+});
+
+it("lets typing replace NULL values and keeps save/cancel together", async () => {
+  transport.records[0].duration_seconds = null;
+  await mount();
+  await edit();
+  const duration = root().querySelector<HTMLInputElement>(
+    '[name="duration_seconds"]',
+  )!;
+  const nullToggle = root().querySelector<HTMLInputElement>(
+    '[aria-label="Set duration_seconds to NULL"]',
+  )!;
+  expect(duration.disabled).toBe(false);
+  expect(nullToggle.checked).toBe(true);
+  input("duration_seconds", "7200");
+  await flush();
+  expect(nullToggle.checked).toBe(false);
+  expect(button("Save changes").parentElement).toBe(
+    button("Cancel edit").parentElement,
+  );
+  await confirm();
+  expect(transport.records[0].duration_seconds).toBe(7200);
+});
+
+it("follows composite references and selects the referenced row without accepting executable SQL", async () => {
+  const original = transport.client();
+  const target = { source_id: "fictional-source", name: "Director's picks" };
+  const inspect = vi
+    .spyOn(original, "inspect")
+    .mockImplementation(async (_scope, table) => ({
+      dataset_revision: 1,
+      sort: "id",
+      descending: false,
+      query: "",
+      main_tables: [],
+      table,
+      tables: { viewings: 1, library_collections: 1 },
+      schema: [],
+      query_fields: [],
+      operators: [],
+      deletable: false,
+      row_tokens: [],
+      items: table === "viewings" ? [{ id: "viewing", ...target }] : [target],
+      references:
+        table === "viewings"
+          ? [
+              {
+                table: "library_collections",
+                key: { source_id: "source_id", name: "name" },
+              },
+            ]
+          : [],
+      columns: Object.keys(target),
+      revision: 1,
+      offset: 0,
+      limit: 25,
+      total: 1,
+      has_more: false,
+    }));
+  element = document.createElement(
+    "kaleidescape-database",
+  ) as KaleidescapeDatabase;
+  element.client = original;
+  element.scope = info;
+  document.body.append(element);
+  await vi.waitFor(() =>
+    expect(root().querySelector(".entry-name")).toBeTruthy(),
+  );
+  root().querySelector<HTMLButtonElement>(".entry-name")!.click();
+  await flush();
+  root()
+    .querySelector<HTMLButtonElement>(".database-references button")!
+    .click();
+  await flush();
+  expect(inspect.mock.calls.at(-1)?.at(-1)).toMatchObject({
+    query:
+      "WHERE source_id = 'fictional-source' AND name = 'Director''s picks'",
+  });
+  expect(root().querySelector(".database-detail pre")?.textContent).toContain(
+    "Director's picks",
+  );
 });

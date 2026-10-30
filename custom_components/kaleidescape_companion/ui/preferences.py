@@ -19,6 +19,7 @@ LIBRARY_DEFAULTS = {
     "view": "list",
     "page_size": 100,
     "cover_size": 150,
+    "fuzzy_search": True,
     "show_titles": True,
     "show_format": True,
     "show_badges": True,
@@ -31,6 +32,9 @@ LIBRARY_DEFAULTS = {
     "actor": [],
     "director": [],
     "rating": [],
+    "genre": [],
+    "year": [],
+    "format": [],
     "status": [],
 }
 SORTS = {"name", "year", "collection", "length", "watched", "added"}
@@ -67,7 +71,13 @@ def validate_library(patch, previous=None):
         raise invalid("Invalid sort order")
     if any(
         type(values[key]) is not bool
-        for key in ("show_titles", "show_format", "show_badges", "show_rating")
+        for key in (
+            "show_titles",
+            "show_format",
+            "show_badges",
+            "show_rating",
+            "fuzzy_search",
+        )
     ):
         raise invalid("Invalid display toggle")
     if type(values["cover_size"]) is not int or not 90 <= values["cover_size"] <= 300:
@@ -80,7 +90,16 @@ def validate_library(patch, previous=None):
     ):
         raise invalid("Invalid column widths")
     values["query"] = text(values["query"], 500, empty=True)
-    for key in ("collection", "actor", "director", "rating", "status"):
+    for key in (
+        "collection",
+        "actor",
+        "director",
+        "rating",
+        "genre",
+        "year",
+        "format",
+        "status",
+    ):
         items = values[key]
         if (
             not isinstance(items, list)
@@ -89,6 +108,11 @@ def validate_library(patch, previous=None):
         ):
             raise invalid("Invalid Library filter selection")
         values[key] = list(dict.fromkeys(text(item, 500) for item in items))
+    if any(
+        not value.isascii() or not value.isdigit() or len(value) > 4
+        for value in values["year"]
+    ):
+        raise invalid("Invalid year filter")
     if set(values["status"]) - {"watched", "unwatched", "in_progress", "unknown"}:
         raise invalid("Invalid watched filter")
     if len(json.dumps(values).encode()) > 16384:
@@ -146,4 +170,16 @@ def validate_database(patch, previous=None):
             or type(item["descending"]) is not bool
         ):
             raise invalid("Invalid Database sort")
+    return values
+
+
+JOURNAL_DEFAULTS = {"fuzzy_search": True}
+
+
+def validate_journal(patch, previous=None):
+    if not isinstance(patch, dict) or set(patch) - JOURNAL_DEFAULTS.keys():
+        raise invalid("Unknown Journal preferences")
+    values = {**JOURNAL_DEFAULTS, **(previous or {}), **patch}
+    if type(values["fuzzy_search"]) is not bool:
+        raise invalid("Invalid fuzzy search option")
     return values

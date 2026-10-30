@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from ..security import private_file
 
-SCHEMA_VERSION = 12
+SCHEMA_VERSION = 14
 
 MIGRATIONS = {
     1: (
@@ -261,6 +261,36 @@ MIGRATIONS[12] = (
         affected_count INTEGER NOT NULL,
         field_names TEXT NOT NULL, dataset_revision INTEGER NOT NULL,
         occurred_at TEXT NOT NULL)""",
+)
+
+
+MIGRATIONS[13] = (
+    "ALTER TABLE viewings ADD COLUMN library_title_id TEXT",
+    "ALTER TABLE viewings ADD COLUMN library_metadata TEXT NOT NULL DEFAULT '{}'",
+    """CREATE TABLE calendar_publications (
+        viewing_id TEXT PRIMARY KEY, target TEXT NOT NULL,
+        config_hash TEXT NOT NULL, state TEXT NOT NULL CHECK(state IN
+            ('queued','sending','sent','uncertain','cancelled')),
+        created_at TEXT NOT NULL, updated_at TEXT NOT NULL)""",
+    "CREATE INDEX calendar_queue ON calendar_publications(state,created_at)",
+    """CREATE INDEX viewings_completed ON viewings
+        (status,coalesce(ended_at,completed_at,started_at),id)
+        WHERE deleted_at IS NULL""",
+)
+
+
+MIGRATIONS[14] = (
+    """CREATE TABLE calendar_sync_jobs (
+        request_id TEXT PRIMARY KEY REFERENCES requests(request_id),
+        actor_id TEXT NOT NULL,
+        target TEXT NOT NULL,config_hash TEXT NOT NULL,
+        created_at TEXT NOT NULL,finished_at TEXT)""",
+    """CREATE TABLE calendar_sync_items (
+        request_id TEXT NOT NULL REFERENCES calendar_sync_jobs(request_id),
+        viewing_id TEXT NOT NULL,state TEXT NOT NULL CHECK(state IN
+        ('queued','checking','sending','created','matched','failed','uncertain','cancelled','skipped')),
+        updated_at TEXT NOT NULL,PRIMARY KEY(request_id,viewing_id))""",
+    "CREATE INDEX calendar_sync_pending ON calendar_sync_items(request_id,state)",
 )
 
 

@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
+from ..calendar.publisher import CalendarPublisher
 from ..const import DOMAIN
 from ..library.sync import LibrarySync
 from ..playback.observer import PlaybackObserver
@@ -21,6 +22,7 @@ class KaleidescapeRuntime:
     ready: bool = True
     observer: PlaybackObserver | None = None
     library: LibrarySync | None = None
+    calendar: CalendarPublisher | None = None
 
 
 type KaleidescapeConfigEntry = ConfigEntry[KaleidescapeRuntime]

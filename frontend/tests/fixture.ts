@@ -1,4 +1,6 @@
 /** Fictional in-memory transport for UI tests and the explicit review page only. */
+import { matches } from "../src/core/search";
+import { formatBadges } from "../src/library/badges";
 import { ApiError, JournalClient } from "../src/core/api";
 import type {
   ApiMessage,
@@ -15,7 +17,7 @@ export const info: JournalInfo = {
   entry_id: "fixture-entry",
   dataset_id: "a323bd20-1b55-4562-87b0-9999944759f3",
   api_version: 1,
-  schema_version: 12,
+  schema_version: 14,
   library_enabled: false,
   revision: 5,
   viewing_count: 3,
@@ -148,10 +150,19 @@ export class FixtureTransport implements Transport {
     title: string;
     collection: string;
   }[] = [];
+  calendarJob: {
+    job_id: string;
+    total: number;
+    finished: boolean;
+    counts: Record<string, number>;
+  } | null = null;
   collectionResults = new Map<string, { status: string; request_id: string }>();
   trackingEnabled = true;
   deletedRecords: Viewing[] = [];
   options: Record<string, string | number | boolean | string[]> = {
+    calendar_enabled: false,
+    calendar_title: "Watched: {title}",
+    calendar_description: "Watched {title} · {watched} minutes",
     tracking_enabled: true,
     media_player: "media_player.example",
     play_status: "sensor.example_status",
@@ -178,6 +189,7 @@ export class FixtureTransport implements Transport {
   retryResults = new Map<string, MutationResult>();
   uiPreferences: Record<string, unknown> = {
     view: "list",
+    fuzzy_search: true,
     page_size: 100,
     cover_size: 150,
     show_titles: true,
@@ -192,9 +204,13 @@ export class FixtureTransport implements Transport {
     actor: [],
     director: [],
     rating: [],
+    genre: [],
+    year: [],
+    format: [],
     status: [],
   };
   sharedPreferences: Record<string, unknown> = { hidden_collections: [] };
+  journalPreferences: Record<string, unknown> = { fuzzy_search: true };
   databasePreferences: Record<string, unknown> = {
     limit: 25,
     show_system: false,
@@ -214,7 +230,9 @@ export class FixtureTransport implements Transport {
         ? this.sharedPreferences
         : message.area === "database"
           ? this.databasePreferences
-          : this.uiPreferences;
+          : message.area === "journal"
+            ? this.journalPreferences
+            : this.uiPreferences;
       if (operation.endsWith("/get"))
         result = { values, revision: this.uiRevision };
       else {
@@ -338,14 +356,53 @@ export class FixtureTransport implements Transport {
         };
         this.importResults.set(request, result as ImportResult);
       }
-    } else if (operation === "library/sync") result = { accepted: true };
+    } else if (
+      operation === "calendar/status" ||
+      operation === "calendar/cancel"
+    )
+      result = {
+        enabled: !!this.options.calendar_enabled,
+        ready:
+          !!this.options.calendar_enabled && !!this.options.calendar_entity,
+        fingerprint: "fictional",
+        active: false,
+        completed_viewings: this.records.filter(
+          (row) => row.status === "completed",
+        ).length,
+        job: this.calendarJob,
+      };
+    else if (operation === "calendar/sync") {
+      const total = this.records.filter(
+        (row) => row.status === "completed",
+      ).length;
+      this.calendarJob = {
+        job_id: String(message.request_id),
+        total,
+        finished: true,
+        counts: { created: total },
+      };
+      result = { job_id: message.request_id, total };
+    } else if (operation === "library/search")
+      result = {
+        items: this.libraryTitles
+          .filter((row) =>
+            matches(
+              row.title,
+              String(message.query ?? ""),
+              message.fuzzy !== false,
+            ),
+          )
+          .slice(0, 10),
+        has_more: false,
+      };
+    else if (operation === "library/sync") result = { accepted: true };
     else if (operation === "library/list") {
       const filters = (message.filters ?? {}) as Record<
         string,
         string | string[] | number | boolean
       >;
       const facets = Object.fromEntries(
-        ["actors", "directors", "collections"].map((key) => [
+        ["actors", "directors", "collections", "genres"].map((key) => [
           key,
           [
             ...new Set(
@@ -357,12 +414,27 @@ export class FixtureTransport implements Transport {
         ]),
       );
       facets.rating = [...new Set(this.libraryTitles.map((row) => row.rating))];
+      facets.year = [
+        ...new Set(
+          this.libraryTitles.flatMap((row) =>
+            row.year == null ? [] : [String(row.year)],
+          ),
+        ),
+      ];
+      facets.format = [
+        ...new Set(
+          this.libraryTitles.flatMap((row) => [
+            ...(row.formats ?? [row.edition]),
+            ...formatBadges(row).map((badge) => badge.label),
+          ]),
+        ),
+      ];
       let rows = this.libraryTitles.filter(
         (row) =>
           (!filters.query ||
-            row.title
-              .toLowerCase()
-              .includes(String(filters.query).toLowerCase())) &&
+            [row.title, ...row.actors, ...row.directors].some((value) =>
+              matches(value, String(filters.query), !!filters.fuzzy),
+            )) &&
           (!filters.status ||
             !(filters.status as string[]).length ||
             (filters.status as string[]).includes(row.watched_status)),
@@ -371,6 +443,7 @@ export class FixtureTransport implements Transport {
         ["actor", "actors"],
         ["director", "directors"],
         ["collection", "collections"],
+        ["genre", "genres"],
       ]) {
         const selected = filters[filter] as string[] | undefined;
         if (selected?.length)
@@ -380,6 +453,19 @@ export class FixtureTransport implements Transport {
             ),
           );
       }
+      if ((filters.year as string[] | undefined)?.length)
+        rows = rows.filter((row) =>
+          (filters.year as string[]).includes(String(row.year)),
+        );
+      if ((filters.format as string[] | undefined)?.length)
+        rows = rows.filter((row) =>
+          (filters.format as string[]).some((value) =>
+            [
+              ...(row.formats ?? [row.edition]),
+              ...formatBadges(row).map((badge) => badge.label),
+            ].includes(value),
+          ),
+        );
       if ((filters.rating as string[] | undefined)?.length)
         rows = rows.filter((row) =>
           (filters.rating as string[]).includes(row.rating),
@@ -490,9 +576,7 @@ export class FixtureTransport implements Transport {
         ...new Set(this.libraryTitles.flatMap((row) => row[field])),
       ]
         .filter((name) =>
-          name
-            .toLowerCase()
-            .includes(String(message.query ?? "").toLowerCase()),
+          matches(name, String(message.query ?? ""), !!message.fuzzy),
         )
         .sort();
       result = { items: names.slice(0, 20), has_more: names.length > 20 };
@@ -546,6 +630,9 @@ export class FixtureTransport implements Transport {
           },
         ],
         library_collection_intents: [],
+        calendar_publications: [],
+        calendar_sync_jobs: [],
+        calendar_sync_items: [],
         viewings: [...this.records, ...this.deletedRecords].map((row) => ({
           ...row,
         })),
@@ -600,14 +687,7 @@ export class FixtureTransport implements Transport {
             : [];
       result = {
         dataset_revision: this.revision,
-        main_tables: [
-          "viewings",
-          "sessions",
-          "library_titles",
-          "library_collections",
-          "library_sources",
-          "library_artwork",
-        ],
+        main_tables: ["viewings", "sessions", "library_titles"],
         schema: columns.map((name) => ({
           name,
           type: ["duration_seconds", "watched_seconds", "revision"].includes(
@@ -676,9 +756,11 @@ export class FixtureTransport implements Transport {
       result = {
         items: this.records.filter(
           (row) =>
-            row.title
-              .toLowerCase()
-              .includes(String(message.query ?? "").toLowerCase()) &&
+            matches(
+              row.title,
+              String(message.query ?? ""),
+              message.fuzzy !== false,
+            ) &&
             (!message.status || row.status === message.status),
         ),
         revision: this.revision,
@@ -716,8 +798,31 @@ export class FixtureTransport implements Transport {
         throw new ApiError("conflict");
       let saved: Viewing;
       if (operation === "journal/create") {
+        const data = message.data as {
+          library_title_id: string;
+          started_at: string;
+          status: string;
+          watched_seconds?: number;
+          notes: string;
+        };
+        const movie = this.libraryTitles.find(
+          (row) => row.id === data.library_title_id,
+        );
+        if (!movie?.duration_seconds) throw new ApiError("invalid_request");
+        const watched =
+          data.status === "partial"
+            ? data.watched_seconds!
+            : movie.duration_seconds;
         saved = record({
-          ...(message.data as Partial<Viewing>),
+          title: movie.title,
+          started_at: data.started_at,
+          status: data.status as Viewing["status"],
+          notes: data.notes,
+          ended_at: new Date(
+            new Date(data.started_at).getTime() + watched * 1000,
+          ).toISOString(),
+          duration_seconds: movie.duration_seconds,
+          watched_seconds: watched,
           id: crypto.randomUUID(),
           revision: 1,
           origin: "manual",

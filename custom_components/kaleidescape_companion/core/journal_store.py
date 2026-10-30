@@ -1,4 +1,4 @@
-"""Worker-only viewing CRUD, literal search and revision-bound pagination.
+"""Worker-only viewing CRUD, bounded text search and revision-bound pagination.
 
 The repository owns the connection, admission and backup/transfer barriers.
 These functions run on that worker and preserve receipts and audit atomically.
@@ -20,6 +20,8 @@ def record(row: sqlite3.Row) -> dict:
     result = dict(row)
     result.pop("title_search")
     result.pop("manual_fields", None)
+    result.pop("library_metadata", None)
+    result.pop("library_title_id", None)
     return result
 
 
@@ -35,12 +37,42 @@ def get_viewing(db, viewing_id: str, include_deleted: bool = False) -> dict:
 
 
 def list_viewings(
-    db, query: str, viewing_status: str | None, limit: int, cursor: str | None
+    db,
+    query: str,
+    viewing_status: str | None,
+    limit: int,
+    cursor: str | None,
+    sort: str = "completed_at",
+    descending: bool = True,
+    fuzzy: bool = False,
 ) -> dict:
-    """Bind keyset pagination to this dataset, revision and literal filters."""
+    """Bind keyset pagination to this dataset, revision, filters and search mode."""
     meta = db.execute("SELECT dataset_id, revision FROM schema_metadata").fetchone()
-    binding = [meta["dataset_id"], meta["revision"], query, viewing_status]
-    predicates = ["deleted_at IS NULL", "instr(title_search, ?) > 0"]
+    binding = [
+        meta["dataset_id"],
+        meta["revision"],
+        query,
+        viewing_status,
+        sort,
+        descending,
+        fuzzy,
+    ]
+    key = (
+        "coalesce(ended_at,completed_at,started_at)"
+        if sort == "completed_at"
+        else "title_search"
+    )
+    priority = "CASE WHEN status='partial' THEN 0 ELSE 1 END"
+    direction, comparison = ("DESC", "<") if descending else ("ASC", ">")
+    order = (
+        priority + " ASC," if sort == "completed_at" else ""
+    ) + f"{key} {direction},id {direction}"
+    predicates = [
+        "deleted_at IS NULL",
+        "companion_matches(title, ?, 1)"
+        if fuzzy and query
+        else "instr(title_search, ?) > 0",
+    ]
     values: list[Any] = [query]
     if viewing_status:
         predicates.append("status = ?")
@@ -55,23 +87,35 @@ def list_viewings(
                 "after",
             }:
                 raise ValueError
-            after = decoded["after"]
-            if not isinstance(after, list) or len(after) != 2:
-                raise ValueError
-            # Validate before passing values to SQLite, including nested values.
-            timestamp_key = text(after[0], 64)
-            record_key = identifier(after[1])
             if decoded["binding"] != binding:
                 raise JournalError(
                     "refresh_required", "Journal changed; restart pagination"
                 )
+            after = decoded["after"]
+            if not isinstance(after, list) or len(after) != (
+                3 if sort == "completed_at" else 2
+            ):
+                raise ValueError
+            # Validate before passing values to SQLite, including nested values.
+            sort_key = text(after[-2], 500)
+            record_key = identifier(after[-1])
+            if sort == "completed_at" and (
+                type(after[0]) is not int or after[0] not in (0, 1)
+            ):
+                raise ValueError
         except (ValueError, TypeError, KeyError, UnicodeError) as error:
             raise invalid("Invalid pagination cursor") from error
-        predicates.append("(started_at, id) < (?, ?)")
-        values.extend((timestamp_key, record_key))
+        if sort == "completed_at":
+            predicates.append(
+                f"({priority}>? OR ({priority}=? AND ({key},id) {comparison} (?,?)))"
+            )
+            values.extend((after[0], after[0], sort_key, record_key))
+        else:
+            predicates.append(f"({key},id) {comparison} (?,?)")
+            values.extend((sort_key, record_key))
     rows = db.execute(
         f"SELECT * FROM viewings WHERE {' AND '.join(predicates)} "
-        "ORDER BY started_at DESC, id DESC LIMIT ?",
+        f"ORDER BY {order} LIMIT ?",
         (*values, limit + 1),
     ).fetchall()
     next_cursor = None
@@ -81,7 +125,17 @@ def list_viewings(
             json.dumps(
                 {
                     "binding": binding,
-                    "after": [last["started_at"], last["id"]],
+                    "after": (
+                        [
+                            0 if last["status"] == "partial" else 1,
+                            last["ended_at"]
+                            or last["completed_at"]
+                            or last["started_at"],
+                        ]
+                        if sort == "completed_at"
+                        else [last["title_search"]]
+                    )
+                    + [last["id"]],
                 }
             ).encode()
         ).decode()
@@ -100,10 +154,16 @@ def mutate(
     data: dict,
     actor_id: str | None,
     paused: bool = False,
+    calendar: dict | None = None,
+    receipt_data: dict | None = None,
 ) -> dict:
     """Apply or replay a viewing change with actor checks and one transaction."""
     fingerprint = hashlib.sha256(
-        json.dumps([operation, data], sort_keys=True, allow_nan=False).encode()
+        json.dumps(
+            [operation, receipt_data if receipt_data is not None else data],
+            sort_keys=True,
+            allow_nan=False,
+        ).encode()
     ).hexdigest()
     if cached := db.execute(
         "SELECT requests.fingerprint, requests.response, manual_audit.request_id "
@@ -128,6 +188,7 @@ def mutate(
     now = datetime.now(UTC).isoformat(timespec="microseconds")
     with db:
         if operation == "create":
+            was_completed = False
             record = {
                 "id": str(uuid4()),
                 **data,
@@ -158,6 +219,7 @@ def mutate(
             if record["revision"] != data["expected_revision"]:
                 raise JournalError("conflict", "Viewing was changed; reload it first")
             patch = data.get("patch", {})
+            was_completed = record["status"] == "completed"
             record.update(patch)
             if "status" in patch:
                 record["completion_reason"] = (
@@ -191,7 +253,13 @@ def mutate(
                     record["id"],
                 ),
             )
+        from ..calendar.store import enqueue
+
+        if operation != "delete" and not was_completed:
+            enqueue(db, record["id"], calendar)
         db.execute("UPDATE schema_metadata SET revision = revision + 1")
+        record.pop("library_metadata", None)
+        record.pop("library_title_id", None)
         result = {
             "viewing": record,
             "revision": db.execute("SELECT revision FROM schema_metadata").fetchone()[
