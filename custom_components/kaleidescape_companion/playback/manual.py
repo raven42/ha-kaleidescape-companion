@@ -5,48 +5,7 @@ import re
 from datetime import datetime, timedelta
 
 from ..core.models import fields, invalid, seconds, timestamp
-from ..core.preferences import excluded
-from ..library.browse import PUBLIC_FIELDS, group_metadata
-from ..library.config import excluded_collections
-
-
-def metadata_text(value, limit=1024):
-    """Bound a display snapshot in UTF-8 bytes without splitting a character."""
-    return str(value).encode("utf-8", "replace")[:limit].decode("utf-8", "ignore")
-
-
-def snapshot(db, row):
-    data = json.loads(row["data"])
-    shared = group_metadata(db, row["source_id"], [row["source_group"]]).get(
-        row["source_group"], {}
-    )
-    data = {
-        **shared,
-        **{key: value for key, value in data.items() if value not in (None, "", [])},
-    }
-    hidden = excluded_collections(excluded(db))
-    for key, value in data.items():
-        if isinstance(value, list):
-            data[key] = [metadata_text(item, 100) for item in value[:20]]
-        elif isinstance(value, str):
-            data[key] = metadata_text(value)
-    # Snapshot only display metadata, never origin, handles, paths or credentials.
-    return {
-        "title": row["title"],
-        **{key: data.get(key) for key in PUBLIC_FIELDS},
-        "collection": [
-            "Watched" if item[0].casefold() == "played" else metadata_text(item[0], 100)
-            for item in db.execute(
-                "SELECT collection FROM library_memberships WHERE title_id=? "
-                "ORDER BY collection LIMIT 20",
-                (row["id"],),
-            )
-            if item[0].casefold() not in hidden
-        ],
-        "artwork_key": row["artwork_key"],
-        "purchase_date": row["purchased_on"],
-        "added_on": row["first_seen"],
-    }
+from .metadata import snapshot
 
 
 def prepare(db, source, data):

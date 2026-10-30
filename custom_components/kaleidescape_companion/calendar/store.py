@@ -80,20 +80,12 @@ def claim(db, config):
 
 
 def projection(db, row, config):
-    result = dict(row)
-    result["metadata"] = json.loads(row["library_metadata"])
-    if not result["metadata"] and row["raw_content_id"]:
-        from ..playback.manual import snapshot
+    from ..playback.metadata import missing_changes
 
-        # Exact current-source handle only. Never guess from a title name.
-        matches = db.execute(
-            "SELECT * FROM library_titles WHERE source_id=? AND source_handle=? "
-            "AND available=1 LIMIT 2",
-            (config.get("source"), row["raw_content_id"]),
-        ).fetchall()
-        if len(matches) == 1:
-            result["metadata"] = snapshot(db, matches[0])
-            result["library_title_id"] = matches[0]["id"]
+    result = dict(row)
+    # Older journals can be rendered before an explicit persistent repair.
+    result.update(missing_changes(db, row, config.get("source")))
+    result["metadata"] = json.loads(result["library_metadata"])
     return result
 
 

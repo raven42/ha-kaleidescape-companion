@@ -343,6 +343,22 @@ export class FixtureTransport implements Transport {
         status: "uncertain",
         request_id: request,
       };
+    } else if (operation === "journal/metadata/preview") {
+      result = {
+        token: "a".repeat(64),
+        updated_count: 3,
+        unchanged_count: 2,
+        unmatched_count: 1,
+        active_count: 0,
+      };
+    } else if (operation === "journal/metadata/repair") {
+      result = {
+        updated_count: 3,
+        unchanged_count: 2,
+        unmatched_count: 1,
+        active_count: 0,
+        revision: ++this.revision,
+      };
     } else if (operation === "database/import") {
       const request = String(message.request_id);
       if (this.importResults.has(request))

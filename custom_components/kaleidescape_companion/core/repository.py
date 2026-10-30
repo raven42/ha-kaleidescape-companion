@@ -63,6 +63,7 @@ class JournalRepository:
         self._export_directory = path.with_name(f".{path.name}.exports")
         self._artwork_directory = path.parent / "artwork"
         self._calendar: dict | None = None
+        self._recording_library_source: str | None = None
 
     @property
     def pending(self) -> int:
@@ -815,13 +816,52 @@ class JournalRepository:
             self._save_session, snapshot, minimum_seconds, resume_hours
         )
 
+    async def async_recording_library(self, source: str | None) -> None:
+        """Select the native configured Library independently of calendar opt-in."""
+        await self._call(self._set_recording_library, source)
+
+    def _set_recording_library(self, source):
+        self._recording_library_source = source
+
+    async def async_metadata_preview(self, source):
+        from ..playback.repair import preview
+
+        return await self._call(preview, self._db(), source)
+
+    async def async_metadata_repair(self, source, request, actor, token):
+        return await self._call(
+            self._metadata_repair,
+            source,
+            identifier(request),
+            self._actor(actor),
+            token,
+        )
+
+    def _metadata_repair(self, source, request, actor, token):
+        from ..playback.repair import apply
+
+        return apply(
+            self._db(),
+            source,
+            request,
+            actor,
+            token,
+            paused=self._paused,
+            busy=self._export_active or self._import_active,
+        )
+
     def _save_session(
         self, snapshot: dict, minimum_seconds: float, resume_hours: float
     ) -> str:
         if self._paused:
             raise JournalError("backup_in_progress", "Journal writes paused for backup")
         return save_session(
-            self._db(), snapshot, minimum_seconds, resume_hours, self._calendar
+            self._db(),
+            snapshot,
+            minimum_seconds,
+            resume_hours,
+            self._calendar,
+            self._recording_library_source,
         )
 
     async def async_open_session(self, player_id: str) -> dict | None:

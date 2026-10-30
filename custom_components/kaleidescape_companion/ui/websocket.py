@@ -58,6 +58,12 @@ def async_register_commands(hass: HomeAssistant) -> None:
         "journal/create": {**mutations, p.Required("data"): dict},
         "journal/get": {**scoped, p.Required("viewing_id"): str},
         "journal/sessions": {**scoped, p.Required("viewing_id"): str},
+        "journal/metadata/preview": scoped,
+        "journal/metadata/repair": {
+            **mutations,
+            p.Required("token"): str,
+            p.Required("confirmation"): str,
+        },
         "now_playing": scoped,
         "library/info": scoped,
         "library/list": {**scoped, p.Optional("filters", default={}): dict},
@@ -424,6 +430,18 @@ async def async_handle(
                     result = await repository.async_create_from_library(
                         msg["request_id"], library.source, msg["data"], actor_id=user.id
                     )
+                case "journal/metadata/preview" | "journal/metadata/repair":
+                    library = get_library(hass, msg["entry_id"], runtime)
+                    if operation == "journal/metadata/preview":
+                        result = await repository.async_metadata_preview(library.source)
+                    else:
+                        if msg["confirmation"] != "REPAIR METADATA":
+                            raise JournalError(
+                                "invalid_request", "Confirm the metadata repair"
+                            )
+                        result = await repository.async_metadata_repair(
+                            library.source, msg["request_id"], user.id, msg["token"]
+                        )
                 case "calendar/status" | "calendar/sync" | "calendar/cancel":
                     if runtime.calendar is None:
                         raise JournalError(
@@ -578,7 +596,8 @@ async def async_handle(
         if operation not in {"info", "settings/submit"} and not runtime.ready:
             raise JournalError("not_ready", "Journal integration unloaded")
         if (
-            operation.startswith("library/") or operation == "journal/create"
+            operation.startswith(("library/", "journal/metadata/"))
+            or operation == "journal/create"
         ) and get_library(hass, msg["entry_id"], runtime) is not library:
             raise JournalError("not_ready", "Library integration reloaded")
         connection.send_result(msg["id"], result)

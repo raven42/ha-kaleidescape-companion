@@ -101,6 +101,17 @@ receipts prevent blind retries. No automatic historical/import backfill occurs.
 Schema 14 adds confirmed, bounded Journal export and protected per-item job
 receipts; see the calendar guide.
 
+Observed and manual viewings now share worker-only Library snapshots and exact
+version resolution. Observed snapshots are saved before completion enqueue,
+without depending on calendar opt-in. Administrator commands
+`journal/metadata/preview` (scoped read) and `journal/metadata/repair` (request
+UUID, review `token`, and `confirmation: "REPAIR METADATA"`) repair missing
+fields from the configured Library cache. Recomputed review tokens reject stale
+candidates; active sessions/tombstones are skipped, existing values stay intact,
+and writes are atomic, bounded, audited and actor-idempotent. No schema
+migration or calendar write is required. See
+[repair procedures and limits](calendar.md#repair-existing-journal-metadata).
+
 ### Table responsibilities
 
 There are eighteen tables; a title version is stored once. Separate tables

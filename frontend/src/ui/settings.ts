@@ -12,6 +12,8 @@ import { styles } from "./styles";
 import { collectionLabel } from "../library/badges";
 import "./calendar-export";
 import { CalendarExport } from "./calendar-export";
+import "./metadata-repair";
+import type { MetadataRepair } from "./metadata-repair";
 import { PreferenceStore } from "./preference-store";
 
 const fields = [
@@ -240,7 +242,14 @@ export class KaleidescapeSettings extends LitElement {
     const exporting = this.renderRoot.querySelector<CalendarExport>(
       "kaleidescape-calendar-export",
     );
-    if (this.saving || (exporting && !exporting.confirmNavigation()))
+    const repairing = this.renderRoot.querySelector<MetadataRepair>(
+      "kaleidescape-metadata-repair",
+    );
+    if (
+      this.saving ||
+      (exporting && !exporting.confirmNavigation()) ||
+      (repairing && !repairing.confirmNavigation())
+    )
       return false;
     if (this.uncertain)
       return window.confirm(
@@ -597,6 +606,15 @@ export class KaleidescapeSettings extends LitElement {
                               not purchased or downloaded.
                             </p>
                             ${this.draft.library_sync_artwork ? html`<p class="warning">Artwork uses additional disk space in a separate private cache, up to ${String(this.draft.library_artwork_cache_mb)} MiB plus one incoming image (up to 5 MiB). The journal database retains its 256 MiB limit. Increase the cache limit for a large library; older covers may be evicted and fetched again. HA backups can include these files.</p>` : nothing}`
+                        : nothing
+                    }
+                    ${
+                      this.initial.library_enabled
+                        ? html`<kaleidescape-metadata-repair
+                            .client=${this.client}
+                            .scope=${this.scope}
+                            .disabled=${this.saving || this.uncertain || JSON.stringify(this.draft) !== JSON.stringify(this.initial)}
+                          ></kaleidescape-metadata-repair>`
                         : nothing
                     }
                     <h3>Landing page</h3>

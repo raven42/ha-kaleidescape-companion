@@ -1,18 +1,18 @@
-function y(r, e, t = `${e}s`) {
-  return `${r} ${r === 1 ? e : t}`;
+function y(n, e, t = `${e}s`) {
+  return `${n} ${n === 1 ? e : t}`;
 }
-const G = globalThis, Le = G.ShadowRoot && (G.ShadyCSS === void 0 || G.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, Pe = /* @__PURE__ */ Symbol(), Me = /* @__PURE__ */ new WeakMap();
-let rt = class {
+const G = globalThis, De = G.ShadowRoot && (G.ShadyCSS === void 0 || G.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, Oe = /* @__PURE__ */ Symbol(), Be = /* @__PURE__ */ new WeakMap();
+let ot = class {
   constructor(e, t, i) {
-    if (this._$cssResult$ = !0, i !== Pe) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
+    if (this._$cssResult$ = !0, i !== Oe) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
     this.cssText = e, this.t = t;
   }
   get styleSheet() {
     let e = this.o;
     const t = this.t;
-    if (Le && e === void 0) {
+    if (De && e === void 0) {
       const i = t !== void 0 && t.length === 1;
-      i && (e = Me.get(t)), e === void 0 && ((this.o = e = new CSSStyleSheet()).replaceSync(this.cssText), i && Me.set(t, e));
+      i && (e = Be.get(t)), e === void 0 && ((this.o = e = new CSSStyleSheet()).replaceSync(this.cssText), i && Be.set(t, e));
     }
     return e;
   }
@@ -20,54 +20,54 @@ let rt = class {
     return this.cssText;
   }
 };
-const bt = (r) => new rt(typeof r == "string" ? r : r + "", void 0, Pe), z = (r, ...e) => {
-  const t = r.length === 1 ? r[0] : e.reduce((i, s, a) => i + ((o) => {
+const yt = (n) => new ot(typeof n == "string" ? n : n + "", void 0, Oe), R = (n, ...e) => {
+  const t = n.length === 1 ? n[0] : e.reduce((i, s, a) => i + ((o) => {
     if (o._$cssResult$ === !0) return o.cssText;
     if (typeof o == "number") return o;
     throw Error("Value passed to 'css' function must be a 'css' function result: " + o + ". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.");
-  })(s) + r[a + 1], r[0]);
-  return new rt(t, r, Pe);
-}, mt = (r, e) => {
-  if (Le) r.adoptedStyleSheets = e.map((t) => t instanceof CSSStyleSheet ? t : t.styleSheet);
+  })(s) + n[a + 1], n[0]);
+  return new ot(t, n, Oe);
+}, vt = (n, e) => {
+  if (De) n.adoptedStyleSheets = e.map((t) => t instanceof CSSStyleSheet ? t : t.styleSheet);
   else for (const t of e) {
     const i = document.createElement("style"), s = G.litNonce;
-    s !== void 0 && i.setAttribute("nonce", s), i.textContent = t.cssText, r.appendChild(i);
+    s !== void 0 && i.setAttribute("nonce", s), i.textContent = t.cssText, n.appendChild(i);
   }
-}, Ie = Le ? (r) => r : (r) => r instanceof CSSStyleSheet ? ((e) => {
+}, He = De ? (n) => n : (n) => n instanceof CSSStyleSheet ? ((e) => {
   let t = "";
   for (const i of e.cssRules) t += i.cssText;
-  return bt(t);
-})(r) : r;
-const { is: yt, defineProperty: vt, getOwnPropertyDescriptor: $t, getOwnPropertyNames: wt, getOwnPropertySymbols: xt, getPrototypeOf: _t } = Object, ge = globalThis, Be = ge.trustedTypes, kt = Be ? Be.emptyScript : "", St = ge.reactiveElementPolyfillSupport, N = (r, e) => r, $e = { toAttribute(r, e) {
+  return yt(t);
+})(n) : n;
+const { is: $t, defineProperty: wt, getOwnPropertyDescriptor: kt, getOwnPropertyNames: xt, getOwnPropertySymbols: _t, getPrototypeOf: St } = Object, fe = globalThis, Fe = fe.trustedTypes, qt = Fe ? Fe.emptyScript : "", Ct = fe.reactiveElementPolyfillSupport, j = (n, e) => n, we = { toAttribute(n, e) {
   switch (e) {
     case Boolean:
-      r = r ? kt : null;
+      n = n ? qt : null;
       break;
     case Object:
     case Array:
-      r = r == null ? r : JSON.stringify(r);
+      n = n == null ? n : JSON.stringify(n);
   }
-  return r;
-}, fromAttribute(r, e) {
-  let t = r;
+  return n;
+}, fromAttribute(n, e) {
+  let t = n;
   switch (e) {
     case Boolean:
-      t = r !== null;
+      t = n !== null;
       break;
     case Number:
-      t = r === null ? null : Number(r);
+      t = n === null ? null : Number(n);
       break;
     case Object:
     case Array:
       try {
-        t = JSON.parse(r);
+        t = JSON.parse(n);
       } catch {
         t = null;
       }
   }
   return t;
-} }, nt = (r, e) => !yt(r, e), He = { attribute: !0, type: String, converter: $e, reflect: !1, useDefault: !1, hasChanged: nt };
-Symbol.metadata ??= /* @__PURE__ */ Symbol("metadata"), ge.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
+} }, lt = (n, e) => !$t(n, e), We = { attribute: !0, type: String, converter: we, reflect: !1, useDefault: !1, hasChanged: lt };
+Symbol.metadata ??= /* @__PURE__ */ Symbol("metadata"), fe.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
 let A = class extends HTMLElement {
   static addInitializer(e) {
     this._$Ei(), (this.l ??= []).push(e);
@@ -75,14 +75,14 @@ let A = class extends HTMLElement {
   static get observedAttributes() {
     return this.finalize(), this._$Eh && [...this._$Eh.keys()];
   }
-  static createProperty(e, t = He) {
+  static createProperty(e, t = We) {
     if (t.state && (t.attribute = !1), this._$Ei(), this.prototype.hasOwnProperty(e) && ((t = Object.create(t)).wrapped = !0), this.elementProperties.set(e, t), !t.noAccessor) {
       const i = /* @__PURE__ */ Symbol(), s = this.getPropertyDescriptor(e, i, t);
-      s !== void 0 && vt(this.prototype, e, s);
+      s !== void 0 && wt(this.prototype, e, s);
     }
   }
   static getPropertyDescriptor(e, t, i) {
-    const { get: s, set: a } = $t(this.prototype, e) ?? { get() {
+    const { get: s, set: a } = kt(this.prototype, e) ?? { get() {
       return this[t];
     }, set(o) {
       this[t] = o;
@@ -93,17 +93,17 @@ let A = class extends HTMLElement {
     }, configurable: !0, enumerable: !0 };
   }
   static getPropertyOptions(e) {
-    return this.elementProperties.get(e) ?? He;
+    return this.elementProperties.get(e) ?? We;
   }
   static _$Ei() {
-    if (this.hasOwnProperty(N("elementProperties"))) return;
-    const e = _t(this);
+    if (this.hasOwnProperty(j("elementProperties"))) return;
+    const e = St(this);
     e.finalize(), e.l !== void 0 && (this.l = [...e.l]), this.elementProperties = new Map(e.elementProperties);
   }
   static finalize() {
-    if (this.hasOwnProperty(N("finalized"))) return;
-    if (this.finalized = !0, this._$Ei(), this.hasOwnProperty(N("properties"))) {
-      const t = this.properties, i = [...wt(t), ...xt(t)];
+    if (this.hasOwnProperty(j("finalized"))) return;
+    if (this.finalized = !0, this._$Ei(), this.hasOwnProperty(j("properties"))) {
+      const t = this.properties, i = [...xt(t), ..._t(t)];
       for (const s of i) this.createProperty(s, t[s]);
     }
     const e = this[Symbol.metadata];
@@ -122,8 +122,8 @@ let A = class extends HTMLElement {
     const t = [];
     if (Array.isArray(e)) {
       const i = new Set(e.flat(1 / 0).reverse());
-      for (const s of i) t.unshift(Ie(s));
-    } else e !== void 0 && t.push(Ie(e));
+      for (const s of i) t.unshift(He(s));
+    } else e !== void 0 && t.push(He(e));
     return t;
   }
   static _$Eu(e, t) {
@@ -149,7 +149,7 @@ let A = class extends HTMLElement {
   }
   createRenderRoot() {
     const e = this.shadowRoot ?? this.attachShadow(this.constructor.shadowRootOptions);
-    return mt(e, this.constructor.elementStyles), e;
+    return vt(e, this.constructor.elementStyles), e;
   }
   connectedCallback() {
     this.renderRoot ??= this.createRenderRoot(), this.enableUpdating(!0), this._$EO?.forEach((e) => e.hostConnected?.());
@@ -165,14 +165,14 @@ let A = class extends HTMLElement {
   _$ET(e, t) {
     const i = this.constructor.elementProperties.get(e), s = this.constructor._$Eu(e, i);
     if (s !== void 0 && i.reflect === !0) {
-      const a = (i.converter?.toAttribute !== void 0 ? i.converter : $e).toAttribute(t, i.type);
+      const a = (i.converter?.toAttribute !== void 0 ? i.converter : we).toAttribute(t, i.type);
       this._$Em = e, a == null ? this.removeAttribute(s) : this.setAttribute(s, a), this._$Em = null;
     }
   }
   _$AK(e, t) {
     const i = this.constructor, s = i._$Eh.get(e);
     if (s !== void 0 && this._$Em !== s) {
-      const a = i.getPropertyOptions(s), o = typeof a.converter == "function" ? { fromAttribute: a.converter } : a.converter?.fromAttribute !== void 0 ? a.converter : $e;
+      const a = i.getPropertyOptions(s), o = typeof a.converter == "function" ? { fromAttribute: a.converter } : a.converter?.fromAttribute !== void 0 ? a.converter : we;
       this._$Em = s;
       const l = o.fromAttribute(t, a.type);
       this[s] = l ?? this._$Ej?.get(s) ?? l, this._$Em = null;
@@ -181,7 +181,7 @@ let A = class extends HTMLElement {
   requestUpdate(e, t, i, s = !1, a) {
     if (e !== void 0) {
       const o = this.constructor;
-      if (s === !1 && (a = this[e]), i ??= o.getPropertyOptions(e), !((i.hasChanged ?? nt)(a, t) || i.useDefault && i.reflect && a === this._$Ej?.get(e) && !this.hasAttribute(o._$Eu(e, i)))) return;
+      if (s === !1 && (a = this[e]), i ??= o.getPropertyOptions(e), !((i.hasChanged ?? lt)(a, t) || i.useDefault && i.reflect && a === this._$Ej?.get(e) && !this.hasAttribute(o._$Eu(e, i)))) return;
       this.C(e, t, i);
     }
     this.isUpdatePending === !1 && (this._$ES = this._$EP());
@@ -249,54 +249,54 @@ let A = class extends HTMLElement {
   firstUpdated(e) {
   }
 };
-A.elementStyles = [], A.shadowRootOptions = { mode: "open" }, A[N("elementProperties")] = /* @__PURE__ */ new Map(), A[N("finalized")] = /* @__PURE__ */ new Map(), St?.({ ReactiveElement: A }), (ge.reactiveElementVersions ??= []).push("2.1.2");
-const De = globalThis, Fe = (r) => r, X = De.trustedTypes, We = X ? X.createPolicy("lit-html", { createHTML: (r) => r }) : void 0, ot = "$lit$", q = `lit$${Math.random().toFixed(9).slice(2)}$`, lt = "?" + q, qt = `<${lt}>`, U = document, I = () => U.createComment(""), B = (r) => r === null || typeof r != "object" && typeof r != "function", Oe = Array.isArray, Ct = (r) => Oe(r) || typeof r?.[Symbol.iterator] == "function", me = `[ 	
-\f\r]`, P = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, Je = /-->/g, Ve = />/g, C = RegExp(`>|${me}(?:([^\\s"'>=/]+)(${me}*=${me}*(?:[^ 	
-\f\r"'\`<>=]|("|')|))|$)`, "g"), Ke = /'/g, Ye = /"/g, ht = /^(?:script|style|textarea|title)$/i, Et = (r) => (e, ...t) => ({ _$litType$: r, strings: e, values: t }), n = Et(1), x = /* @__PURE__ */ Symbol.for("lit-noChange"), h = /* @__PURE__ */ Symbol.for("lit-nothing"), Ge = /* @__PURE__ */ new WeakMap(), E = U.createTreeWalker(U, 129);
-function dt(r, e) {
-  if (!Oe(r) || !r.hasOwnProperty("raw")) throw Error("invalid template strings array");
-  return We !== void 0 ? We.createHTML(e) : e;
+A.elementStyles = [], A.shadowRootOptions = { mode: "open" }, A[j("elementProperties")] = /* @__PURE__ */ new Map(), A[j("finalized")] = /* @__PURE__ */ new Map(), Ct?.({ ReactiveElement: A }), (fe.reactiveElementVersions ??= []).push("2.1.2");
+const Ne = globalThis, Je = (n) => n, X = Ne.trustedTypes, Ve = X ? X.createPolicy("lit-html", { createHTML: (n) => n }) : void 0, ht = "$lit$", q = `lit$${Math.random().toFixed(9).slice(2)}$`, dt = "?" + q, Et = `<${dt}>`, U = document, I = () => U.createComment(""), B = (n) => n === null || typeof n != "object" && typeof n != "function", je = Array.isArray, Ut = (n) => je(n) || typeof n?.[Symbol.iterator] == "function", ye = `[ 	
+\f\r]`, P = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, Ke = /-->/g, Ye = />/g, C = RegExp(`>|${ye}(?:([^\\s"'>=/]+)(${ye}*=${ye}*(?:[^ 	
+\f\r"'\`<>=]|("|')|))|$)`, "g"), Ge = /'/g, Xe = /"/g, ct = /^(?:script|style|textarea|title)$/i, Rt = (n) => (e, ...t) => ({ _$litType$: n, strings: e, values: t }), r = Rt(1), x = /* @__PURE__ */ Symbol.for("lit-noChange"), h = /* @__PURE__ */ Symbol.for("lit-nothing"), Qe = /* @__PURE__ */ new WeakMap(), E = U.createTreeWalker(U, 129);
+function ut(n, e) {
+  if (!je(n) || !n.hasOwnProperty("raw")) throw Error("invalid template strings array");
+  return Ve !== void 0 ? Ve.createHTML(e) : e;
 }
-const Ut = (r, e) => {
-  const t = r.length - 1, i = [];
+const zt = (n, e) => {
+  const t = n.length - 1, i = [];
   let s, a = e === 2 ? "<svg>" : e === 3 ? "<math>" : "", o = P;
   for (let l = 0; l < t; l++) {
-    const d = r[l];
-    let c, g, f = -1, k = 0;
-    for (; k < d.length && (o.lastIndex = k, g = o.exec(d), g !== null); ) k = o.lastIndex, o === P ? g[1] === "!--" ? o = Je : g[1] !== void 0 ? o = Ve : g[2] !== void 0 ? (ht.test(g[2]) && (s = RegExp("</" + g[2], "g")), o = C) : g[3] !== void 0 && (o = C) : o === C ? g[0] === ">" ? (o = s ?? P, f = -1) : g[1] === void 0 ? f = -2 : (f = o.lastIndex - g[2].length, c = g[1], o = g[3] === void 0 ? C : g[3] === '"' ? Ye : Ke) : o === Ye || o === Ke ? o = C : o === Je || o === Ve ? o = P : (o = C, s = void 0);
-    const S = o === C && r[l + 1].startsWith("/>") ? " " : "";
-    a += o === P ? d + qt : f >= 0 ? (i.push(c), d.slice(0, f) + ot + d.slice(f) + q + S) : d + q + (f === -2 ? l : S);
+    const d = n[l];
+    let u, g, b = -1, _ = 0;
+    for (; _ < d.length && (o.lastIndex = _, g = o.exec(d), g !== null); ) _ = o.lastIndex, o === P ? g[1] === "!--" ? o = Ke : g[1] !== void 0 ? o = Ye : g[2] !== void 0 ? (ct.test(g[2]) && (s = RegExp("</" + g[2], "g")), o = C) : g[3] !== void 0 && (o = C) : o === C ? g[0] === ">" ? (o = s ?? P, b = -1) : g[1] === void 0 ? b = -2 : (b = o.lastIndex - g[2].length, u = g[1], o = g[3] === void 0 ? C : g[3] === '"' ? Xe : Ge) : o === Xe || o === Ge ? o = C : o === Ke || o === Ye ? o = P : (o = C, s = void 0);
+    const S = o === C && n[l + 1].startsWith("/>") ? " " : "";
+    a += o === P ? d + Et : b >= 0 ? (i.push(u), d.slice(0, b) + ht + d.slice(b) + q + S) : d + q + (b === -2 ? l : S);
   }
-  return [dt(r, a + (r[t] || "<?>") + (e === 2 ? "</svg>" : e === 3 ? "</math>" : "")), i];
+  return [ut(n, a + (n[t] || "<?>") + (e === 2 ? "</svg>" : e === 3 ? "</math>" : "")), i];
 };
 class H {
   constructor({ strings: e, _$litType$: t }, i) {
     let s;
     this.parts = [];
     let a = 0, o = 0;
-    const l = e.length - 1, d = this.parts, [c, g] = Ut(e, t);
-    if (this.el = H.createElement(c, i), E.currentNode = this.el.content, t === 2 || t === 3) {
-      const f = this.el.content.firstChild;
-      f.replaceWith(...f.childNodes);
+    const l = e.length - 1, d = this.parts, [u, g] = zt(e, t);
+    if (this.el = H.createElement(u, i), E.currentNode = this.el.content, t === 2 || t === 3) {
+      const b = this.el.content.firstChild;
+      b.replaceWith(...b.childNodes);
     }
     for (; (s = E.nextNode()) !== null && d.length < l; ) {
       if (s.nodeType === 1) {
-        if (s.hasAttributes()) for (const f of s.getAttributeNames()) if (f.endsWith(ot)) {
-          const k = g[o++], S = s.getAttribute(f).split(q), W = /([.?@])?(.*)/.exec(k);
-          d.push({ type: 1, index: a, name: W[2], strings: S, ctor: W[1] === "." ? Rt : W[1] === "?" ? At : W[1] === "@" ? Tt : fe }), s.removeAttribute(f);
-        } else f.startsWith(q) && (d.push({ type: 6, index: a }), s.removeAttribute(f));
-        if (ht.test(s.tagName)) {
-          const f = s.textContent.split(q), k = f.length - 1;
-          if (k > 0) {
+        if (s.hasAttributes()) for (const b of s.getAttributeNames()) if (b.endsWith(ht)) {
+          const _ = g[o++], S = s.getAttribute(b).split(q), W = /([.?@])?(.*)/.exec(_);
+          d.push({ type: 1, index: a, name: W[2], strings: S, ctor: W[1] === "." ? Tt : W[1] === "?" ? Lt : W[1] === "@" ? Pt : be }), s.removeAttribute(b);
+        } else b.startsWith(q) && (d.push({ type: 6, index: a }), s.removeAttribute(b));
+        if (ct.test(s.tagName)) {
+          const b = s.textContent.split(q), _ = b.length - 1;
+          if (_ > 0) {
             s.textContent = X ? X.emptyScript : "";
-            for (let S = 0; S < k; S++) s.append(f[S], I()), E.nextNode(), d.push({ type: 2, index: ++a });
-            s.append(f[k], I());
+            for (let S = 0; S < _; S++) s.append(b[S], I()), E.nextNode(), d.push({ type: 2, index: ++a });
+            s.append(b[_], I());
           }
         }
-      } else if (s.nodeType === 8) if (s.data === lt) d.push({ type: 2, index: a });
+      } else if (s.nodeType === 8) if (s.data === dt) d.push({ type: 2, index: a });
       else {
-        let f = -1;
-        for (; (f = s.data.indexOf(q, f + 1)) !== -1; ) d.push({ type: 7, index: a }), f += q.length - 1;
+        let b = -1;
+        for (; (b = s.data.indexOf(q, b + 1)) !== -1; ) d.push({ type: 7, index: a }), b += q.length - 1;
       }
       a++;
     }
@@ -306,13 +306,13 @@ class H {
     return i.innerHTML = e, i;
   }
 }
-function L(r, e, t = r, i) {
+function L(n, e, t = n, i) {
   if (e === x) return e;
   let s = i !== void 0 ? t._$Co?.[i] : t._$Cl;
   const a = B(e) ? void 0 : e._$litDirective$;
-  return s?.constructor !== a && (s?._$AO?.(!1), a === void 0 ? s = void 0 : (s = new a(r), s._$AT(r, t, i)), i !== void 0 ? (t._$Co ??= [])[i] = s : t._$Cl = s), s !== void 0 && (e = L(r, s._$AS(r, e.values), s, i)), e;
+  return s?.constructor !== a && (s?._$AO?.(!1), a === void 0 ? s = void 0 : (s = new a(n), s._$AT(n, t, i)), i !== void 0 ? (t._$Co ??= [])[i] = s : t._$Cl = s), s !== void 0 && (e = L(n, s._$AS(n, e.values), s, i)), e;
 }
-class zt {
+class At {
   constructor(e, t) {
     this._$AV = [], this._$AN = void 0, this._$AD = e, this._$AM = t;
   }
@@ -328,8 +328,8 @@ class zt {
     let a = E.nextNode(), o = 0, l = 0, d = i[0];
     for (; d !== void 0; ) {
       if (o === d.index) {
-        let c;
-        d.type === 2 ? c = new F(a, a.nextSibling, this, e) : d.type === 1 ? c = new d.ctor(a, d.name, d.strings, this, e) : d.type === 6 && (c = new Lt(a, this, e)), this._$AV.push(c), d = i[++l];
+        let u;
+        d.type === 2 ? u = new F(a, a.nextSibling, this, e) : d.type === 1 ? u = new d.ctor(a, d.name, d.strings, this, e) : d.type === 6 && (u = new Dt(a, this, e)), this._$AV.push(u), d = i[++l];
       }
       o !== d?.index && (a = E.nextNode(), o++);
     }
@@ -359,7 +359,7 @@ class F {
     return this._$AB;
   }
   _$AI(e, t = this) {
-    e = L(this, e, t), B(e) ? e === h || e == null || e === "" ? (this._$AH !== h && this._$AR(), this._$AH = h) : e !== this._$AH && e !== x && this._(e) : e._$litType$ !== void 0 ? this.$(e) : e.nodeType !== void 0 ? this.T(e) : Ct(e) ? this.k(e) : this._(e);
+    e = L(this, e, t), B(e) ? e === h || e == null || e === "" ? (this._$AH !== h && this._$AR(), this._$AH = h) : e !== this._$AH && e !== x && this._(e) : e._$litType$ !== void 0 ? this.$(e) : e.nodeType !== void 0 ? this.T(e) : Ut(e) ? this.k(e) : this._(e);
   }
   O(e) {
     return this._$AA.parentNode.insertBefore(e, this._$AB);
@@ -371,19 +371,19 @@ class F {
     this._$AH !== h && B(this._$AH) ? this._$AA.nextSibling.data = e : this.T(U.createTextNode(e)), this._$AH = e;
   }
   $(e) {
-    const { values: t, _$litType$: i } = e, s = typeof i == "number" ? this._$AC(e) : (i.el === void 0 && (i.el = H.createElement(dt(i.h, i.h[0]), this.options)), i);
+    const { values: t, _$litType$: i } = e, s = typeof i == "number" ? this._$AC(e) : (i.el === void 0 && (i.el = H.createElement(ut(i.h, i.h[0]), this.options)), i);
     if (this._$AH?._$AD === s) this._$AH.p(t);
     else {
-      const a = new zt(s, this), o = a.u(this.options);
+      const a = new At(s, this), o = a.u(this.options);
       a.p(t), this.T(o), this._$AH = a;
     }
   }
   _$AC(e) {
-    let t = Ge.get(e.strings);
-    return t === void 0 && Ge.set(e.strings, t = new H(e)), t;
+    let t = Qe.get(e.strings);
+    return t === void 0 && Qe.set(e.strings, t = new H(e)), t;
   }
   k(e) {
-    Oe(this._$AH) || (this._$AH = [], this._$AR());
+    je(this._$AH) || (this._$AH = [], this._$AR());
     const t = this._$AH;
     let i, s = 0;
     for (const a of e) s === t.length ? t.push(i = new F(this.O(I()), this.O(I()), this, this.options)) : i = t[s], i._$AI(a), s++;
@@ -391,15 +391,15 @@ class F {
   }
   _$AR(e = this._$AA.nextSibling, t) {
     for (this._$AP?.(!1, !0, t); e !== this._$AB; ) {
-      const i = Fe(e).nextSibling;
-      Fe(e).remove(), e = i;
+      const i = Je(e).nextSibling;
+      Je(e).remove(), e = i;
     }
   }
   setConnected(e) {
     this._$AM === void 0 && (this._$Cv = e, this._$AP?.(e));
   }
 }
-class fe {
+class be {
   get tagName() {
     return this.element.tagName;
   }
@@ -415,8 +415,8 @@ class fe {
     if (a === void 0) e = L(this, e, t, 0), o = !B(e) || e !== this._$AH && e !== x, o && (this._$AH = e);
     else {
       const l = e;
-      let d, c;
-      for (e = a[0], d = 0; d < a.length - 1; d++) c = L(this, l[i + d], t, d), c === x && (c = this._$AH[d]), o ||= !B(c) || c !== this._$AH[d], c === h ? e = h : e !== h && (e += (c ?? "") + a[d + 1]), this._$AH[d] = c;
+      let d, u;
+      for (e = a[0], d = 0; d < a.length - 1; d++) u = L(this, l[i + d], t, d), u === x && (u = this._$AH[d]), o ||= !B(u) || u !== this._$AH[d], u === h ? e = h : e !== h && (e += (u ?? "") + a[d + 1]), this._$AH[d] = u;
     }
     o && !s && this.j(e);
   }
@@ -424,7 +424,7 @@ class fe {
     e === h ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, e ?? "");
   }
 }
-class Rt extends fe {
+class Tt extends be {
   constructor() {
     super(...arguments), this.type = 3;
   }
@@ -432,7 +432,7 @@ class Rt extends fe {
     this.element[this.name] = e === h ? void 0 : e;
   }
 }
-class At extends fe {
+class Lt extends be {
   constructor() {
     super(...arguments), this.type = 4;
   }
@@ -440,7 +440,7 @@ class At extends fe {
     this.element.toggleAttribute(this.name, !!e && e !== h);
   }
 }
-class Tt extends fe {
+class Pt extends be {
   constructor(e, t, i, s, a) {
     super(e, t, i, s, a), this.type = 5;
   }
@@ -453,7 +453,7 @@ class Tt extends fe {
     typeof this._$AH == "function" ? this._$AH.call(this.options?.host ?? this.element, e) : this._$AH.handleEvent(e);
   }
 }
-class Lt {
+class Dt {
   constructor(e, t, i) {
     this.element = e, this.type = 6, this._$AN = void 0, this._$AM = t, this.options = i;
   }
@@ -464,18 +464,18 @@ class Lt {
     L(this, e);
   }
 }
-const Pt = De.litHtmlPolyfillSupport;
-Pt?.(H, F), (De.litHtmlVersions ??= []).push("3.3.3");
-const Dt = (r, e, t) => {
+const Ot = Ne.litHtmlPolyfillSupport;
+Ot?.(H, F), (Ne.litHtmlVersions ??= []).push("3.3.3");
+const Nt = (n, e, t) => {
   const i = t?.renderBefore ?? e;
   let s = i._$litPart$;
   if (s === void 0) {
     const a = t?.renderBefore ?? null;
     i._$litPart$ = s = new F(e.insertBefore(I(), a), a, void 0, t ?? {});
   }
-  return s._$AI(r), s;
+  return s._$AI(n), s;
 };
-const je = globalThis;
+const Me = globalThis;
 let v = class extends A {
   constructor() {
     super(...arguments), this.renderOptions = { host: this }, this._$Do = void 0;
@@ -486,7 +486,7 @@ let v = class extends A {
   }
   update(e) {
     const t = this.render();
-    this.hasUpdated || (this.renderOptions.isConnected = this.isConnected), super.update(e), this._$Do = Dt(t, this.renderRoot, this.renderOptions);
+    this.hasUpdated || (this.renderOptions.isConnected = this.isConnected), super.update(e), this._$Do = Nt(t, this.renderRoot, this.renderOptions);
   }
   connectedCallback() {
     super.connectedCallback(), this._$Do?.setConnected(!0);
@@ -498,25 +498,25 @@ let v = class extends A {
     return x;
   }
 };
-v._$litElement$ = !0, v.finalized = !0, je.litElementHydrateSupport?.({ LitElement: v });
-const Ot = je.litElementPolyfillSupport;
-Ot?.({ LitElement: v });
-(je.litElementVersions ??= []).push("4.2.2");
-class u extends Error {
+v._$litElement$ = !0, v.finalized = !0, Me.litElementHydrateSupport?.({ LitElement: v });
+const jt = Me.litElementPolyfillSupport;
+jt?.({ LitElement: v });
+(Me.litElementVersions ??= []).push("4.2.2");
+class p extends Error {
   constructor(e) {
     super(e), this.code = e;
   }
 }
-const b = "kaleidescape_companion", jt = 15e3, m = ({ entry_id: r, dataset_id: e }) => ({
-  entry_id: r,
+const f = "kaleidescape_companion", Mt = 15e3, m = ({ entry_id: n, dataset_id: e }) => ({
+  entry_id: n,
   dataset_id: e
-}), Nt = 256 * 1024 * 1024, Xe = 5 * 1024 * 1024, Mt = 32 * 1024 * 1024;
-function It() {
-  const r = globalThis.crypto;
-  if (typeof r?.randomUUID == "function") return r.randomUUID();
-  if (typeof r?.getRandomValues != "function")
-    throw new u("request_id_unavailable");
-  const e = r.getRandomValues(new Uint8Array(16));
+}), It = 256 * 1024 * 1024, Ze = 5 * 1024 * 1024, Bt = 32 * 1024 * 1024;
+function Ht() {
+  const n = globalThis.crypto;
+  if (typeof n?.randomUUID == "function") return n.randomUUID();
+  if (typeof n?.getRandomValues != "function")
+    throw new p("request_id_unavailable");
+  const e = n.getRandomValues(new Uint8Array(16));
   e[6] = e[6] & 15 | 64, e[8] = e[8] & 63 | 128;
   const t = Array.from(
     e,
@@ -524,16 +524,16 @@ function It() {
   ).join("");
   return `${t.slice(0, 8)}-${t.slice(8, 12)}-${t.slice(12, 16)}-${t.slice(16, 20)}-${t.slice(20)}`;
 }
-async function J(r, e, t) {
-  const i = r.body?.getReader();
-  if (!i) throw new u("storage_error");
+async function J(n, e, t) {
+  const i = n.body?.getReader();
+  if (!i) throw new p("storage_error");
   const s = [];
   let a = 0;
   try {
     for (; ; ) {
       const { value: o, done: l } = await i.read();
       if (l) break;
-      if (a += o.byteLength, a > e) throw new u("export_too_large");
+      if (a += o.byteLength, a > e) throw new p("export_too_large");
       s.push(new Uint8Array(o));
     }
     return new Blob(s, { type: t });
@@ -542,10 +542,10 @@ async function J(r, e, t) {
     }), i.releaseLock();
   }
 }
-function p(r) {
-  return typeof r == "object" && r !== null && "code" in r && typeof r.code == "string" ? r.code : "connection_lost";
+function c(n) {
+  return typeof n == "object" && n !== null && "code" in n && typeof n.code == "string" ? n.code : "connection_lost";
 }
-function $(r) {
+function $(n) {
   return {
     unauthorized: "Access to this operation is denied. Your journal has been cleared from this view.",
     not_ready: "The integration is not loaded. Reload the connection after it starts.",
@@ -570,6 +570,7 @@ function $(r) {
     library_response: "The library returned an unsupported response. Cached data is retained.",
     library_changed: "The library changed during sync. Previous collection data was retained; try again later.",
     query_limit: "This search exceeded its execution budget. Refine the text or simplify the conditions and try again.",
+    repair_limit: "Metadata repair exceeded its 10,000-entry or execution limit. No changes were saved.",
     query_syntax: "Check the field names, operators and quoted values in the condition.",
     database_page_too_large: "The database page is too large. Choose fewer rows per page.",
     library_page_too_large: "This library page is too large. Reduce entries per page and try again.",
@@ -579,17 +580,17 @@ function $(r) {
     collection_limit: "Collection request history reached its storage limit.",
     library_too_large: "A library response exceeded its safety limit. Cached data is retained.",
     library_artwork: "Some artwork could not be cached. Previous artwork is retained when available."
-  }[p(r)] ?? "The connection was interrupted. The result could not be confirmed.";
+  }[c(n)] ?? "The connection was interrupted. The result could not be confirmed.";
 }
-async function Bt(r) {
+async function Ft(n) {
   let e;
   try {
     return await Promise.race([
-      r,
+      n,
       new Promise((t, i) => {
         e = setTimeout(
-          () => i(new u("connection_lost")),
-          jt
+          () => i(new p("connection_lost")),
+          Mt
         );
       })
     ]);
@@ -597,16 +598,31 @@ async function Bt(r) {
     clearTimeout(e);
   }
 }
-class ct {
+class pt {
   constructor(e) {
     this.transport = e;
   }
   call(e) {
-    return Bt(this.transport.callWS(e));
+    return Ft(this.transport.callWS(e));
+  }
+  metadataPreview(e) {
+    return this.call({
+      type: `${f}/journal/metadata/preview`,
+      ...m(e)
+    });
+  }
+  prepareMetadataRepair(e, t) {
+    return this.prepareCommand(e, "journal/metadata/repair", {
+      token: t,
+      confirmation: "REPAIR METADATA"
+    });
+  }
+  repairMetadata(e) {
+    return this.call({ ...e.message });
   }
   uiPreferences(e, t = !1, i = "library") {
     return this.call({
-      type: `${b}/ui/${t ? "shared" : "preferences"}/get`,
+      type: `${f}/ui/${t ? "shared" : "preferences"}/get`,
       ...i !== "library" ? { area: i } : {},
       ...m(e)
     });
@@ -622,11 +638,11 @@ class ct {
     return this.call({ ...e.message });
   }
   info() {
-    return this.call({ type: `${b}/info` });
+    return this.call({ type: `${f}/info` });
   }
   list(e, t = "", i = "", s, a = "completed_at", o = !0, l = !1) {
     return this.call({
-      type: `${b}/journal/list`,
+      type: `${f}/journal/list`,
       ...m(e),
       query: t,
       limit: 25,
@@ -639,34 +655,34 @@ class ct {
   }
   get(e, t) {
     return this.call({
-      type: `${b}/journal/get`,
+      type: `${f}/journal/get`,
       ...m(e),
       viewing_id: t
     });
   }
   sessions(e, t) {
     return this.call({
-      type: `${b}/journal/sessions`,
+      type: `${f}/journal/sessions`,
       ...m(e),
       viewing_id: t
     });
   }
   nowPlaying(e) {
-    return this.call({ type: `${b}/now_playing`, ...m(e) });
+    return this.call({ type: `${f}/now_playing`, ...m(e) });
   }
   libraryInfo(e) {
-    return this.call({ type: `${b}/library/info`, ...m(e) });
+    return this.call({ type: `${f}/library/info`, ...m(e) });
   }
   libraryList(e, t = {}) {
     return this.call({
-      type: `${b}/library/list`,
+      type: `${f}/library/list`,
       ...m(e),
       filters: t
     });
   }
   libraryVersions(e, t, i = 0, s) {
     return this.call({
-      type: `${b}/library/versions`,
+      type: `${f}/library/versions`,
       ...m(e),
       title_id: t,
       offset: i,
@@ -674,11 +690,11 @@ class ct {
     });
   }
   librarySync(e) {
-    return this.call({ type: `${b}/library/sync`, ...m(e) });
+    return this.call({ type: `${f}/library/sync`, ...m(e) });
   }
   collectionTargets(e, t, i) {
     return this.call({
-      type: `${b}/library/collections/targets`,
+      type: `${f}/library/collections/targets`,
       ...m(e),
       title_id: t,
       revision: i
@@ -696,23 +712,23 @@ class ct {
   }
   collectionCheck(e, t) {
     return this.call({
-      type: `${b}/library/collections/check`,
+      type: `${f}/library/collections/check`,
       ...m(e),
       request_id: t
     });
   }
   collectionAcknowledge(e, t) {
     return this.call({
-      type: `${b}/library/collections/acknowledge`,
+      type: `${f}/library/collections/acknowledge`,
       ...m(e),
       request_id: t,
       confirmation: "ACKNOWLEDGE"
     });
   }
   async libraryArtwork(e, t, i) {
-    if (!/^[a-f0-9]{64}$/.test(t)) throw new u("invalid_request");
+    if (!/^[a-f0-9]{64}$/.test(t)) throw new p("invalid_request");
     const s = await this.transport.fetchWithAuth(
-      `/api/${b}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/library/artwork/${t}`,
+      `/api/${f}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/library/artwork/${t}`,
       {
         signal: i,
         cache: "no-store",
@@ -720,24 +736,24 @@ class ct {
       }
     );
     if (!s.ok)
-      throw await s.body?.cancel(), new u(
+      throw await s.body?.cancel(), new p(
         [401, 403].includes(s.status) ? "unauthorized" : "not_found"
       );
     const a = s.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase();
     if (!a || !["image/jpeg", "image/png", "image/webp"].includes(a))
-      throw await s.body?.cancel(), new u("invalid_request");
-    return J(s, Xe, a);
+      throw await s.body?.cancel(), new p("invalid_request");
+    return J(s, Ze, a);
   }
   settings(e, t, i = {}) {
     return this.call({
       ...i,
       ...m(e),
-      type: `${b}/settings/${t}`
+      type: `${f}/settings/${t}`
     });
   }
   inspect(e, t, i = 0, s, a) {
     return this.call({
-      type: `${b}/database/inspect`,
+      type: `${f}/database/inspect`,
       ...m(e),
       table: t,
       offset: i,
@@ -763,11 +779,11 @@ class ct {
   }
   async previewImport(e, t, i) {
     const s = /\.(sqlite|sqlite3|db)$/i.test(t.name) ? "sqlite" : /\.json$/i.test(t.name) ? "json" : null;
-    if (!s) throw new u("invalid_request");
-    if (!t.size || t.size > Mt)
-      throw new u("import_too_large");
+    if (!s) throw new p("invalid_request");
+    if (!t.size || t.size > Bt)
+      throw new p("import_too_large");
     const a = await this.transport.fetchWithAuth(
-      `/api/${b}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/import/preview?format=${s}`,
+      `/api/${f}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/import/preview?format=${s}`,
       {
         method: "POST",
         body: t,
@@ -784,9 +800,9 @@ class ct {
         413: "import_too_large",
         404: "not_found"
       };
-      if (l[a.status]) throw new u(l[a.status]);
+      if (l[a.status]) throw new p(l[a.status]);
       const d = await a.json().catch(() => null);
-      throw new u(d?.code ?? "connection_lost");
+      throw new p(d?.code ?? "connection_lost");
     }
     const o = await J(
       a,
@@ -800,7 +816,7 @@ class ct {
   }
   async artwork(e, t) {
     if (!/^media_player\.[a-z0-9_]{1,255}$/.test(e))
-      throw new u("invalid_request");
+      throw new p("invalid_request");
     const i = await this.transport.fetchWithAuth(
       `/api/media_player_proxy/${e}`,
       {
@@ -811,16 +827,16 @@ class ct {
     );
     if (!i.ok) {
       if (await i.body?.cancel(), i.status === 404) return null;
-      throw new u(
+      throw new p(
         [401, 403].includes(i.status) ? "unauthorized" : "not_ready"
       );
     }
     const s = i.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase();
-    return !s || !["image/jpeg", "image/png", "image/webp"].includes(s) ? (await i.body?.cancel(), null) : J(i, Xe, s);
+    return !s || !["image/jpeg", "image/png", "image/webp"].includes(s) ? (await i.body?.cancel(), null) : J(i, Ze, s);
   }
   librarySuggestions(e, t, i, s = !1) {
     return this.call({
-      type: `${b}/library/suggest`,
+      type: `${f}/library/suggest`,
       ...m(e),
       field: t,
       query: i,
@@ -829,7 +845,7 @@ class ct {
   }
   librarySearch(e, t, i = !0) {
     return this.call({
-      type: `${b}/library/search`,
+      type: `${f}/library/search`,
       ...m(e),
       query: t,
       fuzzy: i
@@ -837,7 +853,7 @@ class ct {
   }
   calendarStatus(e) {
     return this.call({
-      type: `${b}/calendar/status`,
+      type: `${f}/calendar/status`,
       ...m(e)
     });
   }
@@ -852,14 +868,14 @@ class ct {
   }
   calendarCancel(e, t) {
     return this.call({
-      type: `${b}/calendar/cancel`,
+      type: `${f}/calendar/cancel`,
       ...m(e),
       job_id: t
     });
   }
   validateDatabaseQuery(e, t, i) {
     return this.call({
-      type: `${b}/database/validate_query`,
+      type: `${f}/database/validate_query`,
       ...m(e),
       table: t,
       query: i
@@ -883,11 +899,11 @@ class ct {
         offset: a.length,
         ...s ? { revision: s.revision, preferences_key: s.preferences_key } : {}
       });
-      if (!i()) throw new u("not_ready");
+      if (!i()) throw new p("not_ready");
       if (s && (l.revision !== s.revision || l.preferences_key !== s.preferences_key))
-        throw new u("refresh_required");
+        throw new p("refresh_required");
       if (o += new TextEncoder().encode(JSON.stringify(l.items)).byteLength, a.length + l.items.length > 1e4 || o > 32 * 1024 * 1024)
-        throw new u("library_page_too_large");
+        throw new p("library_page_too_large");
       if (a.push(...l.items), s = l, !l.has_more)
         return {
           ...l,
@@ -896,9 +912,9 @@ class ct {
           limit: a.length,
           has_more: !1
         };
-      if (!l.items.length) throw new u("refresh_required");
+      if (!l.items.length) throw new p("refresh_required");
     }
-    throw new u("not_ready");
+    throw new p("not_ready");
   }
   prepare(e, t, i) {
     return this.prepareCommand(e, `journal/${t}`, i);
@@ -907,8 +923,8 @@ class ct {
     const s = structuredClone({
       ...i,
       ...m(e),
-      type: `${b}/${t}`,
-      request_id: It()
+      type: `${f}/${t}`,
+      request_id: Ht()
     });
     return { scope: m(e), message: Object.freeze(s) };
   }
@@ -916,7 +932,7 @@ class ct {
     return this.call({ ...e.message });
   }
   async download(e, t, i) {
-    const s = `/api/${b}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/export?format=${t}`, a = await this.transport.fetchWithAuth(s, {
+    const s = `/api/${f}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/export?format=${t}`, a = await this.transport.fetchWithAuth(s, {
       signal: i,
       cache: "no-store",
       redirect: "error"
@@ -929,47 +945,47 @@ class ct {
         413: "export_too_large",
         503: "busy"
       };
-      throw new u(o[a.status] ?? "storage_error");
+      throw new p(o[a.status] ?? "storage_error");
     }
     return J(
       a,
-      Nt,
+      It,
       t === "json" ? "application/json" : "application/vnd.sqlite3"
     );
   }
 }
-function Q(r) {
-  const e = new Date(r);
+function Q(n) {
+  const e = new Date(n);
   return new Date(e.getTime() - e.getTimezoneOffset() * 6e4).toISOString().slice(0, 19);
 }
-function ye(r) {
+function ve(n) {
   return {
-    title: r?.title ?? "",
-    started_at: Q(r?.started_at ?? (/* @__PURE__ */ new Date()).toISOString()),
-    ended_at: r?.ended_at ? Q(r.ended_at) : "",
-    duration_seconds: r?.duration_seconds == null ? "" : (r.duration_seconds / 60).toFixed(2),
-    watched_seconds: ((r?.watched_seconds ?? 0) / 60).toFixed(2),
-    status: r?.status ?? "partial",
-    notes: r?.notes ?? "",
-    source_id: r?.source_id ?? "",
-    player_id: r?.player_id ?? "",
-    raw_content_id: r?.raw_content_id ?? ""
+    title: n?.title ?? "",
+    started_at: Q(n?.started_at ?? (/* @__PURE__ */ new Date()).toISOString()),
+    ended_at: n?.ended_at ? Q(n.ended_at) : "",
+    duration_seconds: n?.duration_seconds == null ? "" : (n.duration_seconds / 60).toFixed(2),
+    watched_seconds: ((n?.watched_seconds ?? 0) / 60).toFixed(2),
+    status: n?.status ?? "partial",
+    notes: n?.notes ?? "",
+    source_id: n?.source_id ?? "",
+    player_id: n?.player_id ?? "",
+    raw_content_id: n?.raw_content_id ?? ""
   };
 }
-function Ht(r, e) {
+function Wt(n, e) {
   const t = {};
-  for (const [i, s] of Object.entries(r))
+  for (const [i, s] of Object.entries(n))
     e && s === e[i] || (i === "started_at" || i === "ended_at" ? t[i] = s ? new Date(s).toISOString() : null : i === "duration_seconds" || i === "watched_seconds" ? t[i] = s === "" ? null : Number(s) * 60 : ["source_id", "player_id", "raw_content_id"].includes(i) ? t[i] = s === "" ? null : s : t[i] = s);
   return t;
 }
-function Ft(r, e) {
+function Jt(n, e) {
   function t(i, s, a = "text", o = !1, l) {
-    return n`<label
+    return r`<label
       >${s}<input
         id=${i === "title" ? "title" : i}
         name=${i}
         type=${a}
-        .value=${r[i]}
+        .value=${n[i]}
         ?required=${o}
         maxlength=${l ?? h}
         min=${a === "number" ? "0" : h}
@@ -978,7 +994,7 @@ function Ft(r, e) {
         @input=${(d) => e(i, d)}
     /></label>`;
   }
-  return n`
+  return r`
     <div class="grid">
       <div class="full">${t("title", "Title", "text", !0, 500)}</div>
       ${t("started_at", "Started · local time", "datetime-local", !0)}
@@ -988,7 +1004,7 @@ function Ft(r, e) {
       <label
         >Status<select
           name="record_status"
-          .value=${r.status}
+          .value=${n.status}
           @change=${(i) => e("status", i)}
         >
           <option value="partial">Partial</option>
@@ -999,7 +1015,7 @@ function Ft(r, e) {
         >Notes<textarea
           name="notes"
           maxlength="10000"
-          .value=${r.notes}
+          .value=${n.notes}
           @input=${(i) => e("notes", i)}
         ></textarea>
       </label>
@@ -1020,7 +1036,7 @@ function Ft(r, e) {
     </details>
   `;
 }
-const w = z`
+const w = R`
   :host {
     display: block;
     min-height: 0;
@@ -1605,7 +1621,7 @@ const w = z`
       padding-right: 16px;
     }
   }
-`, ut = z`
+`, gt = R`
   .library-page {
     margin-top: 24px;
   }
@@ -2089,30 +2105,30 @@ const w = z`
     text-overflow: ellipsis;
   }
 `;
-function Wt(r) {
-  const e = r.watched_status === "in_progress" ? { key: "progress", label: "In progress", symbol: "◔" } : r.watched_status === "watched" ? { key: "watched", label: "Watched", symbol: "✓" } : r.is_recently_added ? { key: "recent", label: "Recently added", symbol: "NEW" } : void 0;
+function Vt(n) {
+  const e = n.watched_status === "in_progress" ? { key: "progress", label: "In progress", symbol: "◔" } : n.watched_status === "watched" ? { key: "watched", label: "Watched", symbol: "✓" } : n.is_recently_added ? { key: "recent", label: "Recently added", symbol: "NEW" } : void 0;
   return [
     ...e ? [e] : [],
-    ...r.is_favorite ? [{ key: "favorite", label: "Favorite", symbol: "★" }] : []
+    ...n.is_favorite ? [{ key: "favorite", label: "Favorite", symbol: "★" }] : []
   ];
 }
-function Ne(r) {
-  const e = (r.formats?.length ? r.formats : [r.edition ?? ""]).map(
+function Ie(n) {
+  const e = (n.formats?.length ? n.formats : [n.edition ?? ""]).map(
     (s) => s.toLowerCase()
   ), t = (s) => e.some((a) => s.test(a)), i = [];
   return e.some(
     (s) => /\b4k\b/.test(s) && !/\bcinematic\b/.test(s)
   ) && i.push({ key: "four-k", label: "4K" }), e.some((s) => /\b4k\b/.test(s) && /\bcinematic\b/.test(s)) && i.push({ key: "cinematic", label: "4K Cinematic" }), t(/\bhd\b|\b1080p\b/) && i.push({ key: "hd", label: "HD" }), t(/\bsd\b|\b(?:480|576)[pi]\b/) && i.push({ key: "sd", label: "SD" }), t(/\bsdr\b/) && i.push({ key: "sdr", label: "SDR" }), t(/\bhdr10\b/) && i.push({ key: "hdr10", label: "HDR10" }), t(/\bdolby\s*vision\b/) && i.push({ key: "vision", label: "Dolby Vision" }), t(/\bdolby\s*atmos\b/) && i.push({ key: "atmos", label: "Dolby Atmos" }), i;
 }
-function Jt(r) {
-  const e = Ne(r);
+function Kt(n) {
+  const e = Ie(n);
   return ["cinematic", "four-k", "hd", "sd"].map((t) => e.find((i) => i.key === t)).find(Boolean);
 }
-function O(r, e = !1, t, i = !1) {
-  const s = e ? Jt(r) : void 0;
-  return (e ? s ? [s] : [] : Ne(r)).map((a) => {
-    const o = a.key === "cinematic" ? n`<b>4K</b><span class="cinematic-label">Cinematic</span>` : a.label;
-    return t ? n`<button
+function O(n, e = !1, t, i = !1) {
+  const s = e ? Kt(n) : void 0;
+  return (e ? s ? [s] : [] : Ie(n)).map((a) => {
+    const o = a.key === "cinematic" ? r`<b>4K</b><span class="cinematic-label">Cinematic</span>` : a.label;
+    return t ? r`<button
           type="button"
           class=${`format-badge format-${a.key}`}
           aria-label=${`Filter by format: ${a.label}`}
@@ -2120,16 +2136,16 @@ function O(r, e = !1, t, i = !1) {
           @click=${() => t(a.label)}
         >
           ${o}
-        </button>` : n`<span
+        </button>` : r`<span
           class=${`format-badge format-${a.key}`}
           aria-label=${a.label}
           >${o}</span
         >`;
   });
 }
-function Qe(r, e = !1) {
-  return Wt(r).map(
-    (t) => n`<span
+function et(n, e = !1) {
+  return Vt(n).map(
+    (t) => r`<span
         class=${e ? `cover-flag flag-${t.key}` : `status-badge flag-${t.key}`}
         title=${t.label}
         aria-label=${t.label}
@@ -2140,9 +2156,9 @@ function Qe(r, e = !1) {
       >`
   );
 }
-function j(r, e, t = !1) {
-  if (!r?.trim()) return h;
-  const i = r.trim(), s = i.toUpperCase().replaceAll(" ", ""), a = {
+function N(n, e, t = !1) {
+  if (!n?.trim()) return h;
+  const i = n.trim(), s = i.toUpperCase().replaceAll(" ", ""), a = {
     G: "general",
     PG: "parental",
     "PG-13": "teen",
@@ -2151,7 +2167,7 @@ function j(r, e, t = !1) {
     "NC-17": "adult",
     NC17: "adult"
   }[s] ?? "unrated";
-  return e ? n`<button
+  return e ? r`<button
       type="button"
       class=${`rating-badge rating-${a}`}
       aria-label=${`Filter by rating: ${i}`}
@@ -2159,51 +2175,51 @@ function j(r, e, t = !1) {
       @click=${() => e(i)}
     >
       ${i}
-    </button>` : n`<span
+    </button>` : r`<span
     class=${`rating-badge rating-${a}`}
     title=${`Rating: ${i}`}
     >${i}</span
   >`;
 }
-function T(r) {
-  return r.toLocaleLowerCase() === "played" ? "Watched" : r;
+function T(n) {
+  return n.toLocaleLowerCase() === "played" ? "Watched" : n;
 }
 function Z() {
-  const r = Q((/* @__PURE__ */ new Date()).toISOString());
+  const n = Q((/* @__PURE__ */ new Date()).toISOString());
   return {
     library_title_id: "",
-    date: r.slice(0, 10),
-    time: r.slice(11, 16),
+    date: n.slice(0, 10),
+    time: n.slice(11, 16),
     status: "completed",
     watched_minutes: "",
     notes: ""
   };
 }
-function pt(r) {
-  if (!/^[a-f0-9]{64}$/.test(r.library_title_id))
+function ft(n) {
+  if (!/^[a-f0-9]{64}$/.test(n.library_title_id))
     throw new Error("Select a Library movie from the suggestions.");
-  const e = r.time.trim().match(/^(\d{1,2})(?::?(\d{2}))?\s*(am|pm)?$/i);
-  if (!e || !/^\d{4}-\d{2}-\d{2}$/.test(r.date))
+  const e = n.time.trim().match(/^(\d{1,2})(?::?(\d{2}))?\s*(am|pm)?$/i);
+  if (!e || !/^\d{4}-\d{2}-\d{2}$/.test(n.date))
     throw new Error("Enter a date and time such as 19:30 or 7:30 PM.");
   let t = Number(e[1]);
   const i = Number(e[2] ?? 0), s = e[3]?.toLowerCase();
   if (i > 59 || t > (s ? 12 : 23) || s && t < 1)
     throw new Error("Enter a valid local time.");
   s && (t = t % 12 + (s === "pm" ? 12 : 0));
-  const a = `${r.date}T${String(t).padStart(2, "0")}:${String(i).padStart(2, "0")}:00`, o = new Date(a);
+  const a = `${n.date}T${String(t).padStart(2, "0")}:${String(i).padStart(2, "0")}:00`, o = new Date(a);
   if (!Number.isFinite(o.getTime()) || Q(o.toISOString()) !== a)
     throw new Error(
       "That local date/time does not exist. Check the date or daylight-saving transition."
     );
-  const l = Number(r.watched_minutes) * 60;
-  if (r.status === "partial" && (!r.watched_minutes.trim() || !Number.isFinite(l) || l <= 0))
+  const l = Number(n.watched_minutes) * 60;
+  if (n.status === "partial" && (!n.watched_minutes.trim() || !Number.isFinite(l) || l <= 0))
     throw new Error("Enter positive watched minutes for a partial viewing.");
   return {
-    library_title_id: r.library_title_id,
+    library_title_id: n.library_title_id,
     started_at: o.toISOString(),
-    status: r.status,
-    notes: r.notes,
-    ...r.status === "partial" ? { watched_seconds: l } : {}
+    status: n.status,
+    notes: n.notes,
+    ...n.status === "partial" ? { watched_seconds: l } : {}
   };
 }
 const te = class te extends v {
@@ -2244,7 +2260,7 @@ const te = class te extends v {
         );
         t === this.request && this.isConnected && (this.items = i.items, this.requestUpdate());
       } catch (i) {
-        t === this.request && (this.error = $(i), this.requestUpdate(), p(i) === "unauthorized" && this.dispatchEvent(
+        t === this.request && (this.error = $(i), this.requestUpdate(), c(i) === "unauthorized" && this.dispatchEvent(
           new CustomEvent("access-denied", {
             bubbles: !0,
             composed: !0
@@ -2257,7 +2273,7 @@ const te = class te extends v {
     this.disabled || !e.duration_seconds || (this.selected = e, this.query = e.title, this.open = !1, this.items = [], this.change({ library_title_id: e.id }), this.requestUpdate());
   }
   render() {
-    return n`<fieldset ?disabled=${this.disabled}>
+    return r`<fieldset ?disabled=${this.disabled}>
       <div class="manual-picker">
         <label
           >Movie from Library<input
@@ -2282,10 +2298,10 @@ const te = class te extends v {
       e.key === "Escape" ? (this.open = !1, this.requestUpdate()) : ["ArrowDown", "ArrowUp"].includes(e.key) && this.items.length ? (e.preventDefault(), this.active = (this.active + (e.key === "ArrowDown" ? 1 : -1) + this.items.length) % this.items.length, this.open = !0, this.requestUpdate()) : ["Enter", "Tab"].includes(e.key) && this.open && this.items[this.active] && (e.preventDefault(), this.choose(this.items[this.active]));
     }}
         /></label>
-        ${this.open ? n`<div class="movie-suggestions" id="movie-suggestions" role="listbox">${this.items.map((e, t) => n`<button type="button" role="option" id=${`movie-option-${t}`} aria-selected=${this.active === t} ?disabled=${!e.duration_seconds} @mousedown=${(i) => i.preventDefault()} @click=${() => this.choose(e)}><strong>${e.title}</strong> · ${e.year ?? "Year unknown"} · ${(e.formats ?? []).join(", ")} · ${e.duration_seconds ? `${(e.duration_seconds / 60).toFixed(2)} min` : "Runtime missing—sync details"}</button>`)}${this.items.length ? h : n`<small>Type a title; only cached Library movies can be selected.</small>`}</div>` : h}
+        ${this.open ? r`<div class="movie-suggestions" id="movie-suggestions" role="listbox">${this.items.map((e, t) => r`<button type="button" role="option" id=${`movie-option-${t}`} aria-selected=${this.active === t} ?disabled=${!e.duration_seconds} @mousedown=${(i) => i.preventDefault()} @click=${() => this.choose(e)}><strong>${e.title}</strong> · ${e.year ?? "Year unknown"} · ${(e.formats ?? []).join(", ")} · ${e.duration_seconds ? `${(e.duration_seconds / 60).toFixed(2)} min` : "Runtime missing—sync details"}</button>`)}${this.items.length ? h : r`<small>Type a title; only cached Library movies can be selected.</small>`}</div>` : h}
       </div>
-      ${this.error ? n`<p class="error" role="alert">${this.error}</p>` : h}
-      ${this.selected ? n`<p class="manual-metadata">${this.selected.year ?? ""} ${O(this.selected)} ${j(this.selected.rating)} · ${((this.selected.duration_seconds ?? 0) / 60).toFixed(2)} min</p>` : h}
+      ${this.error ? r`<p class="error" role="alert">${this.error}</p>` : h}
+      ${this.selected ? r`<p class="manual-metadata">${this.selected.year ?? ""} ${O(this.selected)} ${N(this.selected.rating)} · ${((this.selected.duration_seconds ?? 0) / 60).toFixed(2)} min</p>` : h}
       <div class="grid">
         <label
           >Started · local date<input
@@ -2313,7 +2329,7 @@ const te = class te extends v {
             <option value="partial">Partial</option>
           </select></label
         >
-        ${this.draft.status === "partial" ? n`<label>Watched minutes<input name="watched_minutes" type="number" min="0.01" step="0.01" max=${(this.selected?.duration_seconds ?? 1e9) / 60} .value=${this.draft.watched_minutes} @input=${(e) => this.change({ watched_minutes: e.target.value })} /></label>` : h}
+        ${this.draft.status === "partial" ? r`<label>Watched minutes<input name="watched_minutes" type="number" min="0.01" step="0.01" max=${(this.selected?.duration_seconds ?? 1e9) / 60} .value=${this.draft.watched_minutes} @input=${(e) => this.change({ watched_minutes: e.target.value })} /></label>` : h}
         <label class="full"
           >Notes<textarea
             name="notes"
@@ -2336,62 +2352,62 @@ te.properties = {
   draft: { attribute: !1 },
   disabled: { type: Boolean },
   fuzzySearch: { attribute: !1 }
-}, te.styles = [w, ut];
-let we = te;
-customElements.get("kaleidescape-manual-viewing") || customElements.define("kaleidescape-manual-viewing", we);
-const Vt = [
+}, te.styles = [w, gt];
+let ke = te;
+customElements.get("kaleidescape-manual-viewing") || customElements.define("kaleidescape-manual-viewing", ke);
+const Yt = [
   "now-playing",
   "library",
   "journal",
   "database",
   "settings"
 ];
-function gt(r, e, t) {
-  const i = (a) => Vt.includes(a) && (e || a === "journal" || a === "library") && (a !== "library" || t), s = new URL(location.href).searchParams.get("companion_page");
-  return i(s) ? s : i(r) ? r : "journal";
+function bt(n, e, t) {
+  const i = (a) => Yt.includes(a) && (e || a === "journal" || a === "library") && (a !== "library" || t), s = new URL(location.href).searchParams.get("companion_page");
+  return i(s) ? s : i(n) ? n : "journal";
 }
-function M(r) {
+function M(n) {
   const e = new URL(location.href);
-  e.searchParams.set("companion_page", r), history.replaceState(history.state, "", e);
+  e.searchParams.set("companion_page", n), history.replaceState(history.state, "", e);
 }
-function Ze(r) {
-  return r.toLocaleLowerCase().normalize("NFKD").replace(new RegExp("\\p{M}", "gu"), "").match(/[\p{L}\p{N}_]+/gu)?.join(" ") ?? "";
+function tt(n) {
+  return n.toLocaleLowerCase().normalize("NFKD").replace(new RegExp("\\p{M}", "gu"), "").match(/[\p{L}\p{N}_]+/gu)?.join(" ") ?? "";
 }
-function Kt(r, e) {
-  const t = Math.min(2, Math.max(1, Math.ceil(r.length / 4)));
-  if (r.length < 3 || Math.max(r.length, e.length) > 100 || Math.abs(r.length - e.length) > t)
+function Gt(n, e) {
+  const t = Math.min(2, Math.max(1, Math.ceil(n.length / 4)));
+  if (n.length < 3 || Math.max(n.length, e.length) > 100 || Math.abs(n.length - e.length) > t)
     return !1;
   let i = Array.from({ length: e.length + 1 }, (a, o) => o), s = i;
-  for (let a = 1; a <= r.length; a++) {
+  for (let a = 1; a <= n.length; a++) {
     const o = Array(e.length + 1).fill(t + 1);
     o[0] = a;
     for (let l = Math.max(1, a - t); l <= Math.min(e.length, a + t); l++) {
       let d = Math.min(
         i[l] + 1,
         o[l - 1] + 1,
-        i[l - 1] + +(r[a - 1] !== e[l - 1])
+        i[l - 1] + +(n[a - 1] !== e[l - 1])
       );
-      a > 1 && l > 1 && r[a - 1] === e[l - 2] && r[a - 2] === e[l - 1] && (d = Math.min(d, s[l - 2] + 1)), o[l] = d;
+      a > 1 && l > 1 && n[a - 1] === e[l - 2] && n[a - 2] === e[l - 1] && (d = Math.min(d, s[l - 2] + 1)), o[l] = d;
     }
     if (Math.min(...o) > t) return !1;
     s = i, i = o;
   }
   return i[e.length] <= t;
 }
-function et(r, e, t = !1) {
-  if (r.toLocaleLowerCase().includes(e.toLocaleLowerCase()))
+function it(n, e, t = !1) {
+  if (n.toLocaleLowerCase().includes(e.toLocaleLowerCase()))
     return !0;
   if (!t) return !1;
-  const i = Ze(e), s = Ze(r);
+  const i = tt(e), s = tt(n);
   if (!i) return !1;
   if (s.includes(i)) return !0;
   const a = i.split(" "), o = s.split(" ");
   return a.length <= 12 && a.every(
-    (l) => o.some((d) => d.includes(l) || Kt(l, d))
+    (l) => o.some((d) => d.includes(l) || Gt(l, d))
   );
 }
-const R = { ATTRIBUTE: 1, PROPERTY: 3, BOOLEAN_ATTRIBUTE: 4 }, Yt = (r) => (...e) => ({ _$litDirective$: r, values: e });
-class Gt {
+const z = { ATTRIBUTE: 1, PROPERTY: 3, BOOLEAN_ATTRIBUTE: 4 }, Xt = (n) => (...e) => ({ _$litDirective$: n, values: e });
+class Qt {
   constructor(e) {
   }
   get _$AU() {
@@ -2407,33 +2423,33 @@ class Gt {
     return this.render(...t);
   }
 }
-const Xt = (r) => r.strings === void 0, Qt = {}, Zt = (r, e = Qt) => r._$AH = e;
-const ei = Yt(class extends Gt {
-  constructor(r) {
-    if (super(r), r.type !== R.PROPERTY && r.type !== R.ATTRIBUTE && r.type !== R.BOOLEAN_ATTRIBUTE) throw Error("The `live` directive is not allowed on child or event bindings");
-    if (!Xt(r)) throw Error("`live` bindings can only contain a single expression");
+const Zt = (n) => n.strings === void 0, ei = {}, ti = (n, e = ei) => n._$AH = e;
+const ii = Xt(class extends Qt {
+  constructor(n) {
+    if (super(n), n.type !== z.PROPERTY && n.type !== z.ATTRIBUTE && n.type !== z.BOOLEAN_ATTRIBUTE) throw Error("The `live` directive is not allowed on child or event bindings");
+    if (!Zt(n)) throw Error("`live` bindings can only contain a single expression");
   }
-  render(r) {
-    return r;
+  render(n) {
+    return n;
   }
-  update(r, [e]) {
+  update(n, [e]) {
     if (e === x || e === h) return e;
-    const t = r.element, i = r.name;
-    if (r.type === R.PROPERTY) {
+    const t = n.element, i = n.name;
+    if (n.type === z.PROPERTY) {
       if (e === t[i]) return x;
-    } else if (r.type === R.BOOLEAN_ATTRIBUTE) {
+    } else if (n.type === z.BOOLEAN_ATTRIBUTE) {
       if (!!e === t.hasAttribute(i)) return x;
-    } else if (r.type === R.ATTRIBUTE && t.getAttribute(i) === e + "") return x;
-    return Zt(r), e;
+    } else if (n.type === z.ATTRIBUTE && t.getAttribute(i) === e + "") return x;
+    return ti(n), e;
   }
 });
-function _(r) {
-  const e = r.currentTarget;
-  if (r.target !== e) return;
+function k(n) {
+  const e = n.currentTarget;
+  if (n.target !== e) return;
   const t = e.getBoundingClientRect();
-  r.clientX >= t.left && r.clientX <= t.right && r.clientY >= t.top && r.clientY <= t.bottom || e.dispatchEvent(new Event("cancel", { cancelable: !0 })) && e.close();
+  n.clientX >= t.left && n.clientX <= t.right && n.clientY >= t.top && n.clientY <= t.bottom || e.dispatchEvent(new Event("cancel", { cancelable: !0 })) && e.close();
 }
-class ti {
+class si {
   constructor(e = 128 * 1024 * 1024, t = 1e3) {
     this.maxBytes = e, this.maxEntries = t, this.entries = /* @__PURE__ */ new Map(), this.readers = /* @__PURE__ */ new Map(), this.bytes = 0, this.closed = !1;
   }
@@ -2480,7 +2496,7 @@ class ti {
 }
 class ee {
   constructor() {
-    this.cache = new ti(), this.active = 0, this.waiting = [];
+    this.cache = new si(), this.active = 0, this.waiting = [];
   }
   acquire(e) {
     return new Promise((t, i) => {
@@ -2560,7 +2576,7 @@ const ie = class ie extends v {
         return;
       this.url = this.queue.cache.put(this.cacheKey, l), this.requestUpdate();
     } catch (o) {
-      t === this.generation && p(o) === "unauthorized" && this.dispatchEvent(
+      t === this.generation && c(o) === "unauthorized" && this.dispatchEvent(
         new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
       );
     } finally {
@@ -2568,11 +2584,11 @@ const ie = class ie extends v {
     }
   }
   render() {
-    return this.url ? n`<img
+    return this.url ? r`<img
           src=${this.url}
           alt=${`Cover for ${this.title}`}
           @error=${() => this.queue?.cache.drop(this.cacheKey)}
-        />` : n`<span>No cached artwork</span>`;
+        />` : r`<span>No cached artwork</span>`;
   }
 };
 ie.properties = {
@@ -2581,7 +2597,7 @@ ie.properties = {
   queue: { attribute: !1 },
   artworkKey: { attribute: !1 },
   title: { type: String }
-}, ie.styles = z`
+}, ie.styles = R`
     :host {
       display: grid;
       width: 100%;
@@ -2603,7 +2619,7 @@ ie.properties = {
   `;
 let xe = ie;
 customElements.get("kaleidescape-library-cover") || customElements.define("kaleidescape-library-cover", xe);
-class be {
+class me {
   constructor(e, t, i, s, a = "library") {
     this.client = e, this.scope = t, this.shared = i, this.error = s, this.area = a, this.values = {}, this.revision = 0, this.active = !0, this.sequence = 0, this.versions = /* @__PURE__ */ new Map(), this.failed = {};
   }
@@ -2682,9 +2698,9 @@ const se = class se extends v {
     e?.preventDefault(), this.confirmNavigation() && (this.generation++, this.loading = !1, this.renderRoot.querySelector("dialog")?.close(), this.requestUpdate());
   }
   fail(e) {
-    this.error = $(e), ["unauthorized", "library_disabled"].includes(p(e)) && (this.clear(), this.dispatchEvent(
+    this.error = $(e), ["unauthorized", "library_disabled"].includes(c(e)) && (this.clear(), this.dispatchEvent(
       new CustomEvent(
-        p(e) === "unauthorized" ? "access-denied" : "library-disabled",
+        c(e) === "unauthorized" ? "access-denied" : "library-disabled",
         { bubbles: !0, composed: !0 }
       )
     ));
@@ -2757,22 +2773,22 @@ const se = class se extends v {
       );
       e === this.generation && this.complete(t);
     } catch (t) {
-      e === this.generation && (p(t) === "not_found" ? (this.pending = void 0, this.error = "No accepted add request was found. Refresh title details before starting another add.") : this.fail(t));
+      e === this.generation && (c(t) === "not_found" ? (this.pending = void 0, this.error = "No accepted add request was found. Refresh title details before starting another add.") : this.fail(t));
     } finally {
       e === this.generation && (this.busy = !1, this.requestUpdate());
     }
   }
   render() {
-    return !this.scope?.permissions.edit || !this.version || !this.enabled ? h : n`<button
+    return !this.scope?.permissions.edit || !this.version || !this.enabled ? h : r`<button
         ?disabled=${this.blocked || this.busy}
         @click=${this.open}
       >
         Add to Collection…
       </button>
-      ${this.notice ? n`<p role="status">${this.notice}</p>` : h}
+      ${this.notice ? r`<p role="status">${this.notice}</p>` : h}
       <dialog
         class="database-dialog"
-        @click=${_}
+        @click=${k}
         @cancel=${this.close}
         aria-labelledby="collection-add-title"
       >
@@ -2789,14 +2805,14 @@ const se = class se extends v {
           Kaleidescape. Other memberships are preserved. Removal is not
           supported.
         </p>
-        ${this.loading ? n`<p role="status">Reading available collections from the device…</p>` : h}
-        ${this.error ? n`<p role="alert" class="error">${this.error}</p>` : h}
-        ${this.pending ? n`<p class="warning">
+        ${this.loading ? r`<p role="status">Reading available collections from the device…</p>` : h}
+        ${this.error ? r`<p role="alert" class="error">${this.error}</p>` : h}
+        ${this.pending ? r`<p class="warning">
                   ${this.busy ? "Waiting for the device and read-back verification…" : "The result is unconfirmed. Check its status without sending another add."}
                 </p>
                 <button ?disabled=${this.busy} @click=${this.check}>
                   Check add result
-                </button>` : n`<label
+                </button>` : r`<label
                   >Collection<select
                     name="add_collection"
                     ?disabled=${this.loading}
@@ -2806,14 +2822,14 @@ const se = class se extends v {
     }}
                   >
                     <option value="">Choose a collection</option>
-                    ${this.choices.map((e) => n`<option value=${e}>${e}</option>`)}
+                    ${this.choices.map((e) => r`<option value=${e}>${e}</option>`)}
                   </select></label
                 >
-                ${!this.loading && !this.choices.length && !this.error ? n`<p>No offered, visible collection targets are available. Sync or check the server’s collections.</p>` : h} `}
+                ${!this.loading && !this.choices.length && !this.error ? r`<p>No offered, visible collection targets are available. Sync or check the server’s collections.</p>` : h} `}
         <div class="dialog-footer">
           <button ?disabled=${this.busy || !!this.pending} @click=${this.close}>
             Cancel</button
-          >${this.pending ? h : n`<button class="primary" ?disabled=${this.loading || !this.selected} @click=${this.submit}>Add selected version</button>`}
+          >${this.pending ? h : r`<button class="primary" ?disabled=${this.loading || !this.selected} @click=${this.submit}>Add selected version</button>`}
         </div>
       </dialog>`;
   }
@@ -2839,14 +2855,14 @@ const D = [
   ["genre", "Genre", "genres"],
   ["year", "Year", "year"],
   ["format", "Viewing format", "format"]
-], tt = [
+], st = [
   ["name", "Title"],
   ["year", "Year"],
   ["collection", "Collection"],
   ["length", "Length"],
   ["watched", "Status"],
   ["added", "Added on"]
-], it = [
+], at = [
   ["show_titles", "Show titles on covers"],
   ["show_format", "Show format"],
   ["show_badges", "Show library badges"],
@@ -2888,19 +2904,19 @@ const D = [
   async initializePreferences() {
     if (!this.client || !this.scope) return;
     const e = this.generation;
-    this.preferences = new be(
+    this.preferences = new me(
       this.client,
       this.scope,
       !1,
       (t) => {
-        e === this.generation && (t && p(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? $(t) : "", this.requestUpdate()));
+        e === this.generation && (t && c(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? $(t) : "", this.requestUpdate()));
       }
     );
     try {
       const t = await this.preferences.load();
       if (e !== this.generation) return;
       this.fuzzySearch = t.fuzzy_search, this.mode = t.view, this.entriesPerPage = t.page_size, this.coverSize = t.cover_size, this.display = Object.fromEntries(
-        it.map(([i]) => [i, t[i]])
+        at.map(([i]) => [i, t[i]])
       ), this.widths = [...t.widths], this.applied = Object.fromEntries(
         [
           "query",
@@ -2991,7 +3007,7 @@ const D = [
     i !== "all" && ![25, 100, 1e3].includes(i) || (this.entriesPerPage = i, this.preferences?.set({ page_size: i }), this.requestUpdate(), this.scheduleLayoutPage());
   }
   fail(e) {
-    const t = p(e);
+    const t = c(e);
     (t === "unauthorized" || t === "library_disabled") && (this.clear(), this.dispatchEvent(
       new CustomEvent(
         t === "unauthorized" ? "access-denied" : "library-disabled",
@@ -3041,7 +3057,7 @@ const D = [
         return;
       this.info = s, this.page && (this.page.revision !== s.revision || this.page.preferences_key !== s.preferences_key) && !this.loading && this.load();
     } catch (s) {
-      i = p(s) === "unauthorized", e === this.generation && t === this.statusRequest && this.fail(s);
+      i = c(s) === "unauthorized", e === this.generation && t === this.statusRequest && this.fail(s);
     } finally {
       e === this.generation && t === this.statusRequest && this.isConnected && !i && !document.hidden && (this.timer = setTimeout(
         () => {
@@ -3092,7 +3108,7 @@ const D = [
         return;
       this.versions = a, this.activeVersion = a.items.find((o) => o.id === s) ?? a.items[0];
     } catch (a) {
-      t === this.generation && i === this.versionRequest && (["unauthorized", "library_disabled"].includes(p(a)) ? this.fail(a) : this.versionsError = $(a));
+      t === this.generation && i === this.versionRequest && (["unauthorized", "library_disabled"].includes(c(a)) ? this.fail(a) : this.versionsError = $(a));
     } finally {
       t === this.generation && i === this.versionRequest && (this.versionsLoading = !1, this.requestUpdate());
     }
@@ -3160,7 +3176,7 @@ const D = [
     ));
   }
   detailLink(e, t, i = t) {
-    return n`<button
+    return r`<button
       type="button"
       class="link detail-link"
       ?disabled=${this.collectionLocked || this.checkingCollection}
@@ -3202,7 +3218,7 @@ const D = [
     return [
       .../* @__PURE__ */ new Set([...i, ...this.draft[e] ?? []])
     ].filter(
-      (s) => et(
+      (s) => it(
         e === "collection" ? T(s) : s,
         this.facetSearch,
         this.fuzzySearch
@@ -3210,7 +3226,7 @@ const D = [
     );
   }
   cover(e) {
-    return n`<kaleidescape-library-cover
+    return r`<kaleidescape-library-cover
       .client=${this.client}
       .scope=${this.scope}
       .queue=${this.covers}
@@ -3244,11 +3260,11 @@ const D = [
     }
   }
   renderOptionsDialog() {
-    return n`<dialog
+    return r`<dialog
       id="library-options"
       class="database-dialog library-options"
       aria-labelledby="library-options-title"
-      @click=${_}
+      @click=${k}
     >
       <div class="card-head">
         <h2 id="library-options-title">Library options</h2>
@@ -3276,7 +3292,7 @@ const D = [
         >
         <fieldset class="view-options">
           <legend>View type</legend>
-          ${["list", "covers"].map((e) => n`<label class="check"><input type="radio" name="library_view" value=${e} .checked=${this.mode === e} @change=${() => this.setMode(e)} />${e === "list" ? "List" : "Cover"}</label>`)}
+          ${["list", "covers"].map((e) => r`<label class="check"><input type="radio" name="library_view" value=${e} .checked=${this.mode === e} @change=${() => this.setMode(e)} />${e === "list" ? "List" : "Cover"}</label>`)}
         </fieldset>
         <label
           >Entries per page<select
@@ -3284,10 +3300,10 @@ const D = [
             .value=${String(this.entriesPerPage)}
             @change=${this.changePageSize}
           >
-            ${[25, 100, 1e3, "all"].map((e) => n`<option value=${e} ?selected=${e === this.entriesPerPage}>${e === "all" ? "All" : e}</option>`)}
+            ${[25, 100, 1e3, "all"].map((e) => r`<option value=${e} ?selected=${e === this.entriesPerPage}>${e === "all" ? "All" : e}</option>`)}
           </select></label
         >
-        ${this.mode === "covers" ? n`<label
+        ${this.mode === "covers" ? r`<label
                 >Cover-art size<input
                   type="range"
                   name="cover_size"
@@ -3302,8 +3318,8 @@ const D = [
       ), this.fitGrid(this.gridWidth), this.requestUpdate();
     }}
               /></label>` : h}
-        ${it.map(
-      ([e, t]) => n`<label class="check"
+        ${at.map(
+      ([e, t]) => r`<label class="check"
               ><input
                 type="checkbox"
                 name=${e}
@@ -3316,7 +3332,7 @@ const D = [
             >`
     )}
       </div>
-      ${this.info ? n`<details>
+      ${this.info ? r`<details>
               <summary>Library details</summary>
               <p>
                 ${y(this.info.group_count, "movie")} ·
@@ -3334,9 +3350,9 @@ const D = [
     </dialog>`;
   }
   renderFilterDialog() {
-    return n`<dialog
+    return r`<dialog
       id="filter-dialog"
-      @click=${_}
+      @click=${k}
       class="database-dialog library-dialog"
       aria-labelledby="filters-title"
     >
@@ -3355,18 +3371,18 @@ const D = [
       this.facetSearch = e.target.value, this.requestUpdate();
     }}
       /></label>
-      ${this.page?.truncated_facets.length ? n`<p class="muted">Each category shows up to 500 known names.</p>` : h}
+      ${this.page?.truncated_facets.length ? r`<p class="muted">Each category shows up to 500 known names.</p>` : h}
       <div class="facet-groups">
         ${[
       ["status", "Watched status", "status"],
       ...D.filter(([e]) => e !== "actor" && e !== "director")
     ].map(([e, t, i]) => {
       const s = this.draft[e] ?? [], a = this.choices(e, i);
-      return n`<fieldset>
+      return r`<fieldset>
             <legend>${t}</legend>
             <div class="facet-options">
               ${a.length ? a.map(
-        (o) => n`<label class="check"
+        (o) => r`<label class="check"
                           ><input
                             type="checkbox"
                             name=${e}
@@ -3379,9 +3395,9 @@ const D = [
             [e]: l.target.checked ? [...s, o] : s.filter((d) => d !== o)
           }, this.requestUpdate();
         }}
-                          />${e === "status" ? V[o] : e === "rating" ? j(o) : e === "collection" ? T(o) : o}</label
+                          />${e === "status" ? V[o] : e === "rating" ? N(o) : e === "collection" ? T(o) : o}</label
                         >`
-      ) : n`<p class="muted">No matching options</p>`}
+      ) : r`<p class="muted">No matching options</p>`}
             </div>
           </fieldset>`;
     })}
@@ -3392,9 +3408,9 @@ const D = [
       ["director", "Director", "directors"]
     ].map(([e, t, i]) => {
       const s = this.draft[e] ?? [], a = (this.peopleChoices[e] ?? (this.page?.facets[i] ?? []).filter(
-        (o) => et(o, this.peopleSearch[e] ?? "", this.fuzzySearch)
+        (o) => it(o, this.peopleSearch[e] ?? "", this.fuzzySearch)
       )).slice(0, 20);
-      return n`<fieldset>
+      return r`<fieldset>
             <legend>${t}</legend>
             <label
               >Find ${t.toLowerCase()}<input
@@ -3407,7 +3423,7 @@ const D = [
             /></label>
             <div class="selected-people">
               ${s.map(
-        (o) => n`<button
+        (o) => r`<button
                     type="button"
                     class="person-chip"
                     aria-label=${`Remove ${o}`}
@@ -3424,7 +3440,7 @@ const D = [
             </div>
             <div class="facet-options" aria-label=${`${t} suggestions`}>
               ${a.map(
-        (o) => n`<label class="check"
+        (o) => r`<label class="check"
                     ><input
                       type="checkbox"
                       name=${e}
@@ -3469,21 +3485,21 @@ const D = [
   }
   renderTitleDialog() {
     const e = this.selected, t = this.activeVersion, i = this.scope?.permissions.edit;
-    return n`<dialog
+    return r`<dialog
       id="title-dialog"
       @cancel=${(s) => {
       this.collectionLocked && s.preventDefault();
     }}
-      @click=${_}
+      @click=${k}
       class="database-dialog library-dialog"
       aria-labelledby="library-title"
       @close=${() => {
       this.selected = void 0, this.clearVersions(), this.requestUpdate();
     }}
     >
-      ${e ? n`<div class="card-head">
+      ${e ? r`<div class="card-head">
                 <h2 id="library-title">
-                  ${this.detailLink("query", e.title)}${e.year ? n` (${this.detailLink("year", String(e.year))})` : h}
+                  ${this.detailLink("query", e.title)}${e.year ? r` (${this.detailLink("year", String(e.year))})` : h}
                 </h2>
                 <button
                   ?disabled=${this.collectionLocked}
@@ -3495,10 +3511,10 @@ const D = [
               <p>${y(e.version_count ?? 1, "version")}</p>
               <div class="detail-badges">
                 ${O(e, !1, (s) => this.fromDetails("format", s), this.collectionLocked || this.checkingCollection)}
-                ${j(e.rating, (s) => this.fromDetails("rating", s), this.collectionLocked || this.checkingCollection)}
+                ${N(e.rating, (s) => this.fromDetails("rating", s), this.collectionLocked || this.checkingCollection)}
               </div>
-              ${this.versionsLoading ? n`<p role="status">Loading individual versions…</p>` : h}
-              ${this.versionsError ? n`<p class="error" role="alert">${this.versionsError}</p>
+              ${this.versionsLoading ? r`<p role="status">Loading individual versions…</p>` : h}
+              ${this.versionsError ? r`<p class="error" role="alert">${this.versionsError}</p>
                       <button
                         @click=${async () => {
       await this.load(), this.loadVersions();
@@ -3506,14 +3522,14 @@ const D = [
                       >
                         Refresh title details
                       </button>` : h}
-              ${this.versions && this.versions.total > 1 ? n`<div
+              ${this.versions && this.versions.total > 1 ? r`<div
                         class="page-tabs version-tabs"
                         role="tablist"
                         aria-label="Title versions"
                         @keydown=${this.versionKey}
                       >
                         ${this.versions.items.map(
-      (s, a) => n`<button
+      (s, a) => r`<button
                               ?disabled=${this.collectionLocked}
                               role="tab"
                               id=${`version-${a}`}
@@ -3528,8 +3544,8 @@ const D = [
                             </button>`
     )}
                       </div>
-                      ${this.versions.total > 50 ? n`<div class="actions"><button ?disabled=${!this.versions.offset || this.versionsLoading} @click=${() => this.loadVersions(Math.max(0, this.versions.offset - 50))}>Previous versions</button><button ?disabled=${!this.versions.has_more || this.versionsLoading} @click=${() => this.loadVersions(this.versions.offset + 50)}>Next versions</button></div>` : h}` : h}
-              ${t ? n`<div
+                      ${this.versions.total > 50 ? r`<div class="actions"><button ?disabled=${!this.versions.offset || this.versionsLoading} @click=${() => this.loadVersions(Math.max(0, this.versions.offset - 50))}>Previous versions</button><button ?disabled=${!this.versions.has_more || this.versionsLoading} @click=${() => this.loadVersions(this.versions.offset + 50)}>Next versions</button></div>` : h}` : h}
+              ${t ? r`<div
                       class="playback-layout"
                       id="version-details"
                       role=${(this.versions?.total ?? 1) > 1 ? "tabpanel" : "region"}
@@ -3541,7 +3557,7 @@ const D = [
                         <p>${t.synopsis || "No synopsis available."}</p>
                         <div class="detail-badges">
                           ${O(t, !1, (s) => this.fromDetails("format", s), this.collectionLocked || this.checkingCollection)}
-                          ${j(t.rating || "Unrated", (s) => this.fromDetails("rating", s), this.collectionLocked || this.checkingCollection)}
+                          ${N(t.rating || "Unrated", (s) => this.fromDetails("rating", s), this.collectionLocked || this.checkingCollection)}
                         </div>
                         <p>
                           ${t.year ? this.detailLink("year", String(t.year)) : "Year unknown"}
@@ -3557,16 +3573,16 @@ const D = [
       ["Directors", t.directors, "query"],
       ["Genres", t.genres, "genre"]
     ].map(
-      ([s, a, o]) => a.length ? n`<p>
+      ([s, a, o]) => a.length ? r`<p>
                                 <strong>${s}:</strong>
-                                ${a.map((l, d) => n`${d ? ", " : ""}${this.detailLink(o, l, s === "Collections" ? T(l) : l)}`)}
+                                ${a.map((l, d) => r`${d ? ", " : ""}${this.detailLink(o, l, s === "Collections" ? T(l) : l)}`)}
                               </p>` : h
     )}
                         <p class="muted">
-                          ${t.purchased_on ? n`Purchased ${this.date(t.purchased_on)}<br />` : h}
+                          ${t.purchased_on ? r`Purchased ${this.date(t.purchased_on)}<br />` : h}
                           First detected ${this.date(t.first_seen)}.
                         </p>
-                        ${i ? n`<kaleidescape-library-collection-add
+                        ${i ? r`<kaleidescape-library-collection-add
                                 .client=${this.client}
                                 .scope=${this.scope}
                                 .version=${t}
@@ -3586,10 +3602,10 @@ const D = [
   }
   render() {
     if (!this.preferencesReady)
-      return n`<p role="status">
+      return r`<p role="status">
           ${this.error || "Loading Library preferences…"}
         </p>
-        ${this.error ? n`<button @click=${this.initializePreferences}>Retry Library</button>` : h}`;
+        ${this.error ? r`<button @click=${this.initializePreferences}>Retry Library</button>` : h}`;
     const e = this.page?.limit ?? this.requestLimit, t = this.loading || !!this.layoutTimer, i = this.page?.items ?? [], s = this.mode === "covers" && this.page?.has_more && i.length >= this.coverColumns ? i.slice(
       0,
       i.length - i.length % this.coverColumns
@@ -3597,19 +3613,19 @@ const D = [
       (l, d) => l + (this.applied[d]?.length ?? 0),
       0
     );
-    return n`<section
+    return r`<section
       class="library-page"
       @access-denied=${(l) => {
-      l.stopPropagation(), this.fail(new u("unauthorized"));
+      l.stopPropagation(), this.fail(new p("unauthorized"));
     }}
     >
-      ${this.preferenceError ? n`<p class="warning" role="alert">Library preferences could not be saved: ${this.preferenceError} <button @click=${() => this.preferences?.retry()}>Retry saving preferences</button></p>` : h}
-      ${a && this.info?.phase && this.info.phase !== "idle" ? n`<p role="status">Syncing… ${this.info.processed ?? 0}/${this.info.total ?? "?"}</p>` : h}
-      ${a && this.info?.error ? n`<p class="warning" role="status">${$(new u(this.info.error))}</p>` : h}
-      ${this.error ? n`<p class="error" role="alert">${this.error}<button @click=${() => this.load()}>Refresh results</button></p>` : h}
-      ${this.notice ? n`<p class="notice" role="status">${this.notice}</p>` : h}
+      ${this.preferenceError ? r`<p class="warning" role="alert">Library preferences could not be saved: ${this.preferenceError} <button @click=${() => this.preferences?.retry()}>Retry saving preferences</button></p>` : h}
+      ${a && this.info?.phase && this.info.phase !== "idle" ? r`<p role="status">Syncing… ${this.info.processed ?? 0}/${this.info.total ?? "?"}</p>` : h}
+      ${a && this.info?.error ? r`<p class="warning" role="status">${$(new p(this.info.error))}</p>` : h}
+      ${this.error ? r`<p class="error" role="alert">${this.error}<button @click=${() => this.load()}>Refresh results</button></p>` : h}
+      ${this.notice ? r`<p class="notice" role="status">${this.notice}</p>` : h}
       ${a ? (this.info?.pending_adds ?? []).map(
-      (l) => n`<div class="warning" role="status">
+      (l) => r`<div class="warning" role="status">
                   Unconfirmed collection add: <strong>${l.title}</strong> →
                   ${l.collection}. Checking never sends another add.
                   <div class="actions">
@@ -3639,7 +3655,7 @@ const D = [
                 name="library_query"
                 type="search"
                 maxlength="500"
-                .value=${ei(String(this.filters.query ?? ""))}
+                .value=${ii(String(this.filters.query ?? ""))}
                 @input=${(l) => {
       this.filters.query = l.target.value, clearTimeout(this.searchTimer), this.searchTimer = setTimeout(() => this.applySearch(), 300);
     }}
@@ -3658,7 +3674,7 @@ const D = [
               .value=${String(this.applied.sort)}
               @change=${(l) => this.sort(l.target.value)}
             >
-              ${tt.map(([l, d]) => n`<option value=${l}>${d}</option>`)}
+              ${st.map(([l, d]) => r`<option value=${l}>${d}</option>`)}
             </select></label
           >
           <button @click=${() => this.sort(String(this.applied.sort))}>
@@ -3672,36 +3688,36 @@ const D = [
             Options
           </button>
         </div>
-        ${this.mode === "covers" ? n`<div
+        ${this.mode === "covers" ? r`<div
                 class="cover-grid"
                 style=${`--cover-size: ${this.coverSize}px; --cover-columns: ${this.coverColumns}`}
               >
                 ${s.map(
-      (l) => n`<button
+      (l) => r`<button
                       class=${`cover-tile${this.display.show_titles ? " has-title" : ""}${this.display.show_rating && l.rating ? " has-rating" : ""}`}
                       title=${`${l.title}${l.year ? ` (${l.year})` : ""}`}
                       aria-label=${`Details for ${l.title}${l.year ? ` (${l.year})` : ""}`}
                       @click=${() => this.select(l)}
                     >
                       <div class="cover-image">${this.cover(l)}</div>
-                      ${this.display.show_badges ? n`<div class="cover-flags">${Qe(l, !0)}</div>` : h}
-                      ${this.display.show_format ? n`<div class="cover-formats">${O(l, !0)}</div>` : h}
-                      ${this.display.show_rating ? n`<div class="cover-rating">${j(l.rating)}</div>` : h}
-                      ${this.display.show_titles ? n`<span class="cover-caption">${l.title}${l.year ? ` (${l.year})` : ""}</span>` : h}
+                      ${this.display.show_badges ? r`<div class="cover-flags">${et(l, !0)}</div>` : h}
+                      ${this.display.show_format ? r`<div class="cover-formats">${O(l, !0)}</div>` : h}
+                      ${this.display.show_rating ? r`<div class="cover-rating">${N(l.rating)}</div>` : h}
+                      ${this.display.show_titles ? r`<span class="cover-caption">${l.title}${l.year ? ` (${l.year})` : ""}</span>` : h}
                     </button>`
     )}
-              </div>` : n`<div class="table-wrap">
+              </div>` : r`<div class="table-wrap">
                 <table
                   class="library-table"
                   style=${`--library-width: ${this.widths.reduce((l, d) => l + d, 0)}px`}
                 >
                   <colgroup>
-                    ${this.widths.map((l) => n`<col style=${`width: ${l}px`} />`)}
+                    ${this.widths.map((l) => r`<col style=${`width: ${l}px`} />`)}
                   </colgroup>
                   <thead>
                     <tr>
-                      ${tt.map(
-      ([l, d], c) => n`<th
+                      ${st.map(
+      ([l, d], u) => r`<th
                             aria-sort=${this.applied.sort === l ? this.applied.descending ? "descending" : "ascending" : "none"}
                           >
                             <button
@@ -3720,19 +3736,19 @@ const D = [
                               aria-orientation="vertical"
                               aria-valuemin="80"
                               aria-valuemax="800"
-                              aria-valuenow=${this.widths[c]}
+                              aria-valuenow=${this.widths[u]}
                               tabindex="0"
                               title="Drag or use Left/Right to resize; Home resets"
-                              @keydown=${(g) => this.resizeColumn(g, c)}
+                              @keydown=${(g) => this.resizeColumn(g, u)}
                               @pointerdown=${(g) => {
         g.preventDefault(), this.resize = {
-          index: c,
+          index: u,
           start: g.clientX,
-          width: this.widths[c]
+          width: this.widths[u]
         }, g.currentTarget.setPointerCapture(g.pointerId);
       }}
                               @pointermove=${(g) => {
-        this.resize?.index === c && (this.widths[c] = Math.max(
+        this.resize?.index === u && (this.widths[u] = Math.max(
           80,
           Math.min(
             800,
@@ -3750,7 +3766,7 @@ const D = [
                   </thead>
                   <tbody>
                     ${(this.page?.items ?? []).map(
-      (l) => n`<tr>
+      (l) => r`<tr>
                           <td>
                             <button
                               class="link"
@@ -3762,10 +3778,10 @@ const D = [
                               class="library-summary-line"
                               title=${this.format(l)}
                             >
-                              ${this.display.show_badges ? Qe(l) : h}
+                              ${this.display.show_badges ? et(l) : h}
                               ${this.display.show_format ? O(l) : h}
-                              ${this.display.show_format && !Ne(l).length ? n`<small>${this.format(l)}</small>` : h}
-                              ${(l.version_count ?? 1) > 1 ? n`<small>${y(l.version_count, "version")}</small>` : h}
+                              ${this.display.show_format && !Ie(l).length ? r`<small>${this.format(l)}</small>` : h}
+                              ${(l.version_count ?? 1) > 1 ? r`<small>${y(l.version_count, "version")}</small>` : h}
                             </div>
                           </td>
                           <td title=${this.years(l)}>${this.years(l)}</td>
@@ -3788,7 +3804,7 @@ const D = [
                   </tbody>
                 </table>
               </div>`}
-        ${this.page?.items.length ? h : n`<p class="empty" role="status">${this.loading ? "Loading library…" : "No cached titles match. Adjust your filters or wait for a library sync."}</p>`}
+        ${this.page?.items.length ? h : r`<p class="empty" role="status">${this.loading ? "Loading library…" : "No cached titles match. Adjust your filters or wait for a library sync."}</p>`}
         <div class="pagination">
           <small
             >${y(this.page?.total ?? 0, "matching title")} ·
@@ -3817,7 +3833,7 @@ const D = [
           </div>
         </div>
       </section>
-      ${this.info ? n`<footer class="library-status" role="status">
+      ${this.info ? r`<footer class="library-status" role="status">
               <span
                 >${y(this.info.group_count, "title")} ·
                 ${y(this.info.collection_count, "collection")}
@@ -3832,7 +3848,7 @@ const D = [
     }}
                 >
                   Refresh cached data</button
-                >${a ? n`<button ?disabled=${this.requesting || !!this.info?.phase && this.info.phase !== "idle"} @click=${this.sync}>Sync now</button>` : h}
+                >${a ? r`<button ?disabled=${this.requesting || !!this.info?.phase && this.info.phase !== "idle"} @click=${this.sync}>Sync now</button>` : h}
               </div>
             </footer>` : h}
       ${this.renderOptionsDialog()} ${this.renderFilterDialog()}
@@ -3843,9 +3859,9 @@ const D = [
 ae.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 }
-}, ae.styles = [w, ut];
-let ke = ae;
-customElements.get("kaleidescape-library") || customElements.define("kaleidescape-library", ke);
+}, ae.styles = [w, gt];
+let Se = ae;
+customElements.get("kaleidescape-library") || customElements.define("kaleidescape-library", Se);
 const re = class re extends v {
   constructor() {
     super(...arguments), this.disabled = !1, this.bound = "", this.generation = 0, this.ready = !1, this.fuzzy = !0, this.error = "";
@@ -3874,14 +3890,14 @@ const re = class re extends v {
     );
   }
   fail(e) {
-    this.error = $(e), p(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
+    this.error = $(e), c(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     )), this.requestUpdate();
   }
   async load() {
     if (!this.client || !this.scope) return;
     const e = ++this.generation;
-    this.store?.dispose(), this.store = new be(
+    this.store?.dispose(), this.store = new me(
       this.client,
       this.scope,
       !1,
@@ -3899,17 +3915,17 @@ const re = class re extends v {
     }
   }
   render() {
-    return n`<button
+    return r`<button
         ?disabled=${!this.ready || this.disabled}
         @click=${() => this.renderRoot.querySelector("dialog")?.showModal()}
       >
         Options
       </button>
-      ${this.error ? n`<span class="error" role="alert">${this.error}<button @click=${() => this.ready ? this.store?.retry() : this.load()}>Retry Journal options</button></span>` : h}
+      ${this.error ? r`<span class="error" role="alert">${this.error}<button @click=${() => this.ready ? this.store?.retry() : this.load()}>Retry Journal options</button></span>` : h}
       <dialog
         class="database-dialog"
         aria-labelledby="journal-options-title"
-        @click=${_}
+        @click=${k}
       >
         <h2 id="journal-options-title">Journal options</h2>
         <p>Changes save automatically for your HA user.</p>
@@ -3943,8 +3959,8 @@ re.properties = {
   scope: { attribute: !1 },
   disabled: { type: Boolean }
 }, re.styles = w;
-let Se = re;
-customElements.get("kaleidescape-journal-options") || customElements.define("kaleidescape-journal-options", Se);
+let qe = re;
+customElements.get("kaleidescape-journal-options") || customElements.define("kaleidescape-journal-options", qe);
 const ne = class ne extends v {
   constructor() {
     super(...arguments), this.narrow = !1, this.api = null, this.userKey = "", this.generation = 0, this.scope = null, this.rows = [], this.loading = !1, this.error = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.next = null, this.history = [], this.page = 1, this.activePage = "journal", this.navigationReady = !1;
@@ -3954,7 +3970,7 @@ const ne = class ne extends v {
       if (this.hass) {
         const t = `${this.hass.user?.id}:${this.hass.user?.is_admin}`;
         !this.hass.user || !this.hass.connection.connected ? this.bind(null) : (this.connection !== this.hass.connection || this.userKey !== t || !this.api) && (this.connection = this.hass.connection, this.userKey = t, this.bind(
-          new ct({
+          new pt({
             callWS: (i) => this.hass.callWS(i),
             fetchWithAuth: (i, s) => this.hass.fetchWithAuth(i, s)
           })
@@ -3974,7 +3990,7 @@ const ne = class ne extends v {
     e !== this.api && (this.clear(), this.api = e, this.requestUpdate(), e && this.refresh());
   }
   fail(e) {
-    p(e) === "unauthorized" && this.clear(), this.error = $(e), this.requestUpdate();
+    c(e) === "unauthorized" && this.clear(), this.error = $(e), this.requestUpdate();
   }
   async refresh() {
     if (!this.api) return;
@@ -3984,12 +4000,12 @@ const ne = class ne extends v {
       const { entries: t } = await this.api.info();
       if (e !== this.generation) return;
       if (!t[0]?.permissions.read || t[0].api_version !== 1)
-        throw new u("not_ready");
+        throw new p("not_ready");
       if (this.scope = {
         ...t[0],
         permissions: { read: !0, edit: !1, export: !1 }
       }, !this.navigationReady) {
-        const i = gt(
+        const i = bt(
           this.scope.ui_defaults?.default_landing_page,
           !1,
           !!this.scope.library_enabled
@@ -4042,37 +4058,37 @@ const ne = class ne extends v {
     );
   }
   render() {
-    return n`<main>
+    return r`<main>
       <header>
-        ${this.hass && this.narrow ? n`<button aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: !0, composed: !0 }))}>☰</button>` : h}
+        ${this.hass && this.narrow ? r`<button aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: !0, composed: !0 }))}>☰</button>` : h}
         <div>
           <span class="eyebrow">Kaleidescape Companion</span>
           <h1>Viewing history</h1>
           <p>Read-only household journal</p>
         </div>
       </header>
-      ${this.error ? n`<p role="alert" class="error">${this.error}</p>` : h}
+      ${this.error ? r`<p role="alert" class="error">${this.error}</p>` : h}
       <nav
         class="page-tabs"
         role="tablist"
         aria-label="Companion pages"
         @keydown=${this.tabKey}
       >
-        ${["library", "journal"].map((e) => n`<button id=${`reader-${e}`} role="tab" aria-controls="reader-content" aria-selected=${this.activePage === e} tabindex=${this.activePage === e ? 0 : -1} ?disabled=${e === "library" && !this.scope?.library_enabled} @click=${() => this.selectPage(e)}>${e === "journal" ? "Journal" : "Library"}</button>`)}
+        ${["library", "journal"].map((e) => r`<button id=${`reader-${e}`} role="tab" aria-controls="reader-content" aria-selected=${this.activePage === e} tabindex=${this.activePage === e ? 0 : -1} ?disabled=${e === "library" && !this.scope?.library_enabled} @click=${() => this.selectPage(e)}>${e === "journal" ? "Journal" : "Library"}</button>`)}
       </nav>
       <section
         id="reader-content"
         role="tabpanel"
         aria-labelledby=${`reader-${this.activePage}`}
       >
-        ${this.activePage === "library" && this.scope ? n`<kaleidescape-library
+        ${this.activePage === "library" && this.scope ? r`<kaleidescape-library
                 .client=${this.api ?? void 0}
                 .scope=${this.scope}
-                @access-denied=${() => this.fail(new u("unauthorized"))}
+                @access-denied=${() => this.fail(new p("unauthorized"))}
                 @library-disabled=${() => {
       this.activePage = "journal", this.refresh();
     }}
-              ></kaleidescape-library>` : n`<section class="card" aria-label="Viewing history">
+              ></kaleidescape-library>` : r`<section class="card" aria-label="Viewing history">
                 <div class="card-head">
                   <h2>Viewings</h2>
                   <button
@@ -4088,7 +4104,7 @@ const ne = class ne extends v {
       const t = this.fuzzySearch !== e.detail.fuzzy_search;
       this.fuzzySearch = e.detail.fuzzy_search, t && (this.page = 1, this.history = [], this.load());
     }}
-                    @access-denied=${() => this.fail(new u("unauthorized"))}
+                    @access-denied=${() => this.fail(new p("unauthorized"))}
                   ></kaleidescape-journal-options>
                 </div>
                 <form
@@ -4150,7 +4166,7 @@ const ne = class ne extends v {
                     Search
                   </button>
                 </form>
-                ${this.loading ? n`<p role="status">Loading viewings…</p>` : this.api ? this.rows.length ? n`<div class="table-wrap">
+                ${this.loading ? r`<p role="status">Loading viewings…</p>` : this.api ? this.rows.length ? r`<div class="table-wrap">
                             <table>
                               <thead>
                                 <tr>
@@ -4162,7 +4178,7 @@ const ne = class ne extends v {
                               </thead>
                               <tbody>
                                 ${this.rows.map(
-      (e) => n`<tr>
+      (e) => r`<tr>
                                       <td>
                                         <strong>${e.title}</strong
                                         ><small
@@ -4185,7 +4201,7 @@ const ne = class ne extends v {
     )}
                               </tbody>
                             </table>
-                          </div>` : n`<p>No viewings to display.</p>` : n`<p>
+                          </div>` : r`<p>No viewings to display.</p>` : r`<p>
                           Sign in to Home Assistant to view the household
                           journal.
                         </p>`}
@@ -4228,16 +4244,16 @@ ne.properties = {
   client: { attribute: !1 },
   narrow: { type: Boolean }
 }, ne.styles = w;
-let qe = ne;
-customElements.get("kaleidescape-reader") || customElements.define("kaleidescape-reader", qe);
-const ii = {
+let Ce = ne;
+customElements.get("kaleidescape-reader") || customElements.define("kaleidescape-reader", Ce);
+const ai = {
   playing: "Playing",
   paused: "Paused",
   forward: "Scanning forward",
   reverse: "Scanning backward",
   stopped: "Stopped",
   none: "Stopped"
-}, si = {
+}, ri = {
   content: "Main content",
   credits: "Credits",
   intermission: "Intermission",
@@ -4280,20 +4296,20 @@ const ii = {
       if (o !== this.imageKey && (this.clearImage(), this.imageKey = o, this.requestUpdate(), o)) {
         const l = this.abort = new AbortController(), d = setTimeout(() => l.abort(), 5e3);
         try {
-          const c = await e.artwork(
+          const u = await e.artwork(
             a.entity_id,
             l.signal
           );
-          i === this.generation && c && (this.image = URL.createObjectURL(c));
-        } catch (c) {
-          if (p(c) === "unauthorized") throw c;
+          i === this.generation && u && (this.image = URL.createObjectURL(u));
+        } catch (u) {
+          if (c(u) === "unauthorized") throw u;
         } finally {
           clearTimeout(d), this.abort === l && (this.abort = void 0);
         }
       }
     } catch (s) {
       if (i !== this.generation) return;
-      this.player = null, this.clearImage(), this.denied = p(s) === "unauthorized", this.error = this.denied ? "Now Playing access is unavailable. Check your account and source permissions." : "Now Playing could not refresh. Check the connection or refresh again.";
+      this.player = null, this.clearImage(), this.denied = c(s) === "unauthorized", this.error = this.denied ? "Now Playing access is unavailable. Check your account and source permissions." : "Now Playing could not refresh. Check the connection or refresh again.";
     } finally {
       i === this.generation && (this.loading = !1, this.requestUpdate(), !this.denied && this.isConnected && !document.hidden && (this.timer = setTimeout(() => {
         this.refresh();
@@ -4305,7 +4321,7 @@ const ii = {
   }
   render() {
     const e = this.player, t = e?.available && !["stopped", "none"].includes(e.play_status);
-    return n`<section class="card now-playing" aria-label="Now Playing">
+    return r`<section class="card now-playing" aria-label="Now Playing">
       <div class="card-head">
         <h2>Now Playing</h2>
         <button
@@ -4317,25 +4333,25 @@ const ii = {
           Refresh playback
         </button>
       </div>
-      ${this.error ? n`<p class="playback-message" role="alert">${this.error}</p>` : e ? n`<div class="playback-layout">
+      ${this.error ? r`<p class="playback-message" role="alert">${this.error}</p>` : e ? r`<div class="playback-layout">
                 <div class="cover">
-                  ${this.image ? n`<img
+                  ${this.image ? r`<img
                           src=${this.image}
                           alt="Current movie cover"
                           @error=${() => {
       const i = this.imageKey;
       this.clearImage(), this.imageKey = i, this.requestUpdate();
     }}
-                        />` : n`<span>No artwork available</span>`}
+                        />` : r`<span>No artwork available</span>`}
                 </div>
                 <div class="playback-detail">
                   <small>${e.name ?? "Configured player"}</small>
                   <h3>
                     ${e.available ? t ? e.title ?? "Unknown title" : "No movie playing" : "Player unavailable"}
                   </h3>
-                  ${e.available ? n`<p>${ii[e.play_status] ?? "Unknown playback state"} · ${si[e.location] ?? "Unknown location"}</p>` : h}
-                  ${t && e.duration_seconds != null ? n`<p>Runtime · ${(e.duration_seconds / 60).toFixed(2)} min</p>` : h}
-                  ${t && e.session ? n`<p>
+                  ${e.available ? r`<p>${ai[e.play_status] ?? "Unknown playback state"} · ${ri[e.location] ?? "Unknown location"}</p>` : h}
+                  ${t && e.duration_seconds != null ? r`<p>Runtime · ${(e.duration_seconds / 60).toFixed(2)} min</p>` : h}
+                  ${t && e.session ? r`<p>
                             This session ·
                             ${(e.session.watched_seconds / 60).toFixed(2)}
                             min counted
@@ -4343,18 +4359,18 @@ const ii = {
                           <small
                             >Pauses and scans are excluded.
                             ${e.session.credits_confirmed ? "Credits confirmed; journal completion also requires the configured watch threshold." : "Credits not yet confirmed."}
-                            ${e.session.gap_count ? n` ${y(e.session.gap_count, "timing gap")}.` : h}</small
+                            ${e.session.gap_count ? r` ${y(e.session.gap_count, "timing gap")}.` : h}</small
                           >` : h}
                   <p role="status">
                     ${this.recordingStatus(e, !!t)}
-                    ${e.buffered_observations ? n` ${y(e.buffered_observations, "update")} buffered.` : h}
+                    ${e.buffered_observations ? r` ${y(e.buffered_observations, "update")} buffered.` : h}
                   </p>
                   <small
                     >Live snapshot refreshes about every 5 seconds while
                     visible.</small
                   >
                 </div>
-              </div>` : n`<p class="playback-message" role="status">
+              </div>` : r`<p class="playback-message" role="status">
                 ${this.loading ? "Loading playback…" : "Automatic tracking is off. Configure a player in the integration options to show Now Playing."}
               </p>`}
     </section>`;
@@ -4364,8 +4380,8 @@ oe.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 }
 }, oe.styles = w;
-let Ce = oe;
-customElements.get("kaleidescape-now-playing") || customElements.define("kaleidescape-now-playing", Ce);
+let Ee = oe;
+customElements.get("kaleidescape-now-playing") || customElements.define("kaleidescape-now-playing", Ee);
 const le = class le extends v {
   constructor() {
     super(...arguments), this.disabled = !1, this.working = !1, this.error = "", this.generation = 0, this.bound = "";
@@ -4388,7 +4404,7 @@ const le = class le extends v {
     return !this.working && !this.pending;
   }
   fail(e) {
-    p(e) === "unauthorized" ? (this.clear(), this.dispatchEvent(
+    c(e) === "unauthorized" ? (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     )) : this.error = $(e), this.requestUpdate();
   }
@@ -4431,7 +4447,7 @@ const le = class le extends v {
         "conflict",
         "busy",
         "not_ready"
-      ].includes(p(t)) && (this.pending = void 0), this.fail(t);
+      ].includes(c(t)) && (this.pending = void 0), this.fail(t);
     } finally {
       e === this.generation && (this.working = !1, this.requestUpdate());
     }
@@ -4451,7 +4467,7 @@ const le = class le extends v {
   }
   render() {
     const e = this.status?.job;
-    return n`<section aria-label="Journal calendar export">
+    return r`<section aria-label="Journal calendar export">
       <h4>Export Journal to calendar</h4>
       <p class="muted">
         Uses the saved calendar settings. Save any changes before exporting.
@@ -4466,19 +4482,19 @@ const le = class le extends v {
           Sync all watched movies to calendar</button
         ><button type="button" ?disabled=${this.working} @click=${this.refresh}>
           Refresh export status</button
-        >${this.status?.active ? n`<button type="button" ?disabled=${this.working} @click=${this.cancel}>Cancel export</button>` : h}
+        >${this.status?.active ? r`<button type="button" ?disabled=${this.working} @click=${this.cancel}>Cancel export</button>` : h}
       </div>
-      ${e ? n`<p role="status">
+      ${e ? r`<p role="status">
               ${e.finished ? "Export finished" : "Export in progress"} ·
               ${y(e.total, "viewing")} ·
               ${Object.entries(e.counts).map(([t, i]) => `${i} ${t}`).join(" · ")}
             </p>` : h}
-      ${this.error ? n`<p role="alert" class="error">${this.error}</p>` : h}
+      ${this.error ? r`<p role="alert" class="error">${this.error}</p>` : h}
       <dialog
         class="database-dialog"
         aria-labelledby="calendar-export-title"
         aria-describedby="calendar-export-summary"
-        @click=${_}
+        @click=${k}
         @cancel=${this.close}
       >
         <h2 id="calendar-export-title">Export Journal to calendar</h2>
@@ -4497,7 +4513,7 @@ const le = class le extends v {
           anyone who can read the calendar. Failed or uncertain writes require
           review. Cancelling stops unstarted items; created events remain.
         </p>
-        ${this.pending ? n`<p role="alert">
+        ${this.pending ? r`<p role="alert">
                   The start result is unconfirmed. Retry the same request to
                   inspect or resume that job.
                 </p>
@@ -4538,7 +4554,7 @@ le.properties = {
   disabled: { type: Boolean }
 }, le.styles = [
   w,
-  z`
+  R`
       /* This compact confirmation scrolls as one surface, without a painted footer. */
       .dialog-footer {
         position: static;
@@ -4547,9 +4563,160 @@ le.properties = {
       }
     `
 ];
-let Ee = le;
-customElements.get("kaleidescape-calendar-export") || customElements.define("kaleidescape-calendar-export", Ee);
-const st = [
+let Ue = le;
+customElements.get("kaleidescape-calendar-export") || customElements.define("kaleidescape-calendar-export", Ue);
+const he = class he extends v {
+  constructor() {
+    super(...arguments), this.disabled = !1, this.working = !1, this.error = "", this.generation = 0, this.bound = "";
+  }
+  willUpdate(e) {
+    if (!e.has("scope") && !e.has("client")) return;
+    const t = `${this.scope?.entry_id}:${this.scope?.dataset_id}`;
+    t === this.bound && this.boundClient === this.client || (this.clear(), this.bound = t, this.boundClient = this.client);
+  }
+  disconnectedCallback() {
+    super.disconnectedCallback(), this.clear();
+  }
+  clear() {
+    this.generation++, this.review = this.result = this.pending = void 0, this.working = !1, this.error = "", this.renderRoot.querySelector("dialog")?.close();
+  }
+  confirmNavigation() {
+    return !this.working && !this.pending;
+  }
+  close(e) {
+    e?.preventDefault(), this.confirmNavigation() && this.renderRoot.querySelector("dialog")?.close();
+  }
+  fail(e) {
+    c(e) === "unauthorized" ? (this.clear(), this.dispatchEvent(
+      new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
+    )) : this.error = $(e), this.requestUpdate();
+  }
+  async open() {
+    if (!this.client || !this.scope || this.disabled || this.working) return;
+    if (this.pending) {
+      this.renderRoot.querySelector("dialog")?.showModal();
+      return;
+    }
+    const e = this.generation;
+    this.working = !0, this.error = "", this.requestUpdate();
+    try {
+      const t = await this.client.metadataPreview(this.scope);
+      if (e !== this.generation) return;
+      this.review = t, this.requestUpdate(), await this.updateComplete, e === this.generation && this.renderRoot.querySelector("dialog")?.showModal();
+    } catch (t) {
+      e === this.generation && this.fail(t);
+    } finally {
+      e === this.generation && (this.working = !1, this.requestUpdate());
+    }
+  }
+  async repair() {
+    if (!this.client || !this.scope || !this.review || this.disabled || this.working)
+      return;
+    const e = this.generation;
+    this.working = !0, this.error = "", this.requestUpdate();
+    try {
+      this.pending ??= this.client.prepareMetadataRepair(
+        this.scope,
+        this.review.token
+      );
+      const t = await this.client.repairMetadata(this.pending);
+      if (e !== this.generation) return;
+      this.result = t, this.pending = void 0, this.renderRoot.querySelector("dialog")?.close();
+    } catch (t) {
+      if (e !== this.generation) return;
+      [
+        "conflict",
+        "invalid_request",
+        "busy",
+        "not_ready",
+        "backup_in_progress",
+        "library_disabled",
+        "repair_limit"
+      ].includes(c(t)) && (this.pending = void 0, this.review = void 0), this.fail(t);
+    } finally {
+      e === this.generation && (this.working = !1, this.requestUpdate());
+    }
+  }
+  render() {
+    const e = this.review;
+    return r`<section aria-label="Journal metadata repair">
+      <h4>Journal Library metadata</h4>
+      <p class="muted">
+        Fill missing movie details in existing Journal entries from the saved
+        Library cache. Existing values, viewing times and calendar events stay
+        unchanged.
+      </p>
+      <button
+        type="button"
+        ?disabled=${this.disabled || this.working}
+        @click=${this.open}
+      >
+        ${this.working ? "Checking…" : "Repair Journal Library metadata"}
+      </button>
+      ${this.result ? r`<p role="status">Updated ${y(this.result.updated_count, "entry", "entries")} · ${this.result.unmatched_count} unmatched · ${this.result.active_count} active and skipped.</p>` : h}
+      ${this.error ? r`<p role="alert" class="error">${this.error}</p>` : h}
+      <dialog
+        class="database-dialog"
+        aria-labelledby="metadata-repair-title"
+        @click=${k}
+        @cancel=${this.close}
+      >
+        <h2 id="metadata-repair-title">Repair Journal Library metadata</h2>
+        ${e ? r`<p>${y(e.updated_count, "entry", "entries")} with missing details can be updated. ${e.unchanged_count} already up to date · ${e.unmatched_count} unmatched · ${e.active_count} active and skipped.</p>` : h}
+        <p>
+          Matches use version identifiers in the configured Library, including
+          recognized playback handles. Movie names are never guessed. Existing
+          metadata is preserved. Entries with open sessions are skipped.
+        </p>
+        <p>
+          Existing calendar events are not edited or recreated. Sync the Library
+          first if its details need refreshing.
+        </p>
+        ${this.error ? r`<p role="alert" class="error">${this.error}</p>` : h}
+        ${this.pending ? r`<p role="alert">
+                  The result is unconfirmed. Retry the same repair to retrieve
+                  its result.
+                </p>
+                <button
+                  type="button"
+                  ?disabled=${this.working}
+                  @click=${() => {
+      window.confirm(
+        "Discard this retry? The repair may already have committed. Review again to check current metadata."
+      ) && (this.pending = void 0, this.close(), this.requestUpdate());
+    }}
+                >
+                  Discard retry & review again
+                </button>` : h}
+        <div class="dialog-footer">
+          <button
+            type="button"
+            ?disabled=${!this.confirmNavigation()}
+            @click=${this.close}
+          >
+            Cancel
+          </button>
+          <button
+            class="primary"
+            type="button"
+            ?disabled=${this.disabled || this.working || !e?.updated_count}
+            @click=${this.repair}
+          >
+            ${this.working ? "Repairing…" : this.pending ? "Retry same repair" : "Repair missing metadata"}
+          </button>
+        </div>
+      </dialog>
+    </section>`;
+  }
+};
+he.properties = {
+  client: { attribute: !1 },
+  scope: { attribute: !1 },
+  disabled: { type: Boolean }
+}, he.styles = w;
+let Re = he;
+customElements.get("kaleidescape-metadata-repair") || customElements.define("kaleidescape-metadata-repair", Re);
+const rt = [
   ["media_player", "Kaleidescape media player", "text", "", ""],
   ["play_status", "Exact play-status sensor", "text", "", ""],
   ["media_location", "Media-location sensor", "text", "", ""],
@@ -4574,7 +4741,7 @@ const st = [
     "0",
     "168"
   ]
-], at = [
+], nt = [
   [
     "library_host",
     "Library hostname · blank uses my-kaleidescape.local",
@@ -4590,17 +4757,17 @@ const st = [
     "32",
     "4096"
   ]
-], ft = [
+], mt = [
   ["library_allow_collection_add", "Allow Add to Collection on the device"],
   ["library_sync_collections", "Sync collections and watched status"],
   ["library_sync_details", "Sync title details and credits"],
   ["library_sync_artwork", "Sync artwork"]
-], ai = /* @__PURE__ */ new Set([
+], ni = /* @__PURE__ */ new Set([
   "calendar_enabled",
   "tracking_enabled",
   "library_enabled",
-  ...ft.map(([r]) => r)
-]), ri = {
+  ...mt.map(([n]) => n)
+]), oi = {
   invalid_calendar: "Choose an existing calendar that supports creating events.",
   invalid_calendar_template: "Use only the listed brace fields, without attributes or format specifiers.",
   invalid_display_options: "Choose a valid default landing page.",
@@ -4610,7 +4777,7 @@ const st = [
   invalid_rules: "Check the runtime, completion, and partial-resume values.",
   invalid_library_host: "Enter a hostname or private LAN HTTP(S) origin without a path, credentials, or query.",
   invalid_library_options: "Choose a sync interval of 1–168 hours and an artwork cache limit of 32–4096 MiB."
-}, he = class he extends v {
+}, de = class de extends v {
   constructor() {
     super(...arguments), this.generation = 0, this.draft = {}, this.initial = {}, this.collectionChoices = [], this.hiddenCollections = [], this.sharedReady = !1, this.sharedError = "", this.customCollection = "", this.loading = !1, this.saving = !1, this.uncertain = !1, this.error = "", this.bound = "";
   }
@@ -4636,7 +4803,7 @@ const st = [
     });
   }
   fail(e) {
-    this.error = $(e), p(e) === "unauthorized" && (this.sharedPreferences?.dispose(), this.sharedPreferences = void 0, this.sharedReady = !1, this.hiddenCollections = [], this.flow = void 0, this.draft = {}, this.initial = {}, this.dispatchEvent(
+    this.error = $(e), c(e) === "unauthorized" && (this.sharedPreferences?.dispose(), this.sharedPreferences = void 0, this.sharedReady = !1, this.hiddenCollections = [], this.flow = void 0, this.draft = {}, this.initial = {}, this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     )), this.requestUpdate();
   }
@@ -4653,14 +4820,14 @@ const st = [
       this.flow = s, this.draft = Object.fromEntries(
         (s.fields ?? []).map((o) => [
           o.name,
-          ai.has(o.name) ? !!o.default : String(o.default ?? "")
+          ni.has(o.name) ? !!o.default : String(o.default ?? "")
         ])
-      ), this.initial = { ...this.draft }, this.sharedPreferences = new be(
+      ), this.initial = { ...this.draft }, this.sharedPreferences = new me(
         e,
         t,
         !0,
         (o) => {
-          i === this.generation && (o && p(o) === "unauthorized" ? this.fail(o) : (this.sharedError = o ? $(o) : "", this.requestUpdate()));
+          i === this.generation && (o && c(o) === "unauthorized" ? this.fail(o) : (this.sharedError = o ? $(o) : "", this.requestUpdate()));
         }
       );
       const a = await this.sharedPreferences.load();
@@ -4678,8 +4845,10 @@ const st = [
   confirmNavigation() {
     const e = this.renderRoot.querySelector(
       "kaleidescape-calendar-export"
+    ), t = this.renderRoot.querySelector(
+      "kaleidescape-metadata-repair"
     );
-    return this.saving || e && !e.confirmNavigation() ? !1 : this.uncertain ? window.confirm(
+    return this.saving || e && !e.confirmNavigation() || t && !t.confirmNavigation() ? !1 : this.uncertain ? window.confirm(
       "The settings save may already have committed. Leave this view and inspect saved values before making another change?"
     ) : JSON.stringify(this.draft) === JSON.stringify(this.initial) || window.confirm("Discard your unsaved settings changes?");
   }
@@ -4700,9 +4869,9 @@ const st = [
     const t = this.generation;
     this.saving = !0, this.busy(), this.error = "", this.requestUpdate();
     const i = { ...this.draft };
-    for (const [s, , a] of st)
+    for (const [s, , a] of rt)
       a === "number" ? i[s] = Number(i[s]) : i[s] || delete i[s];
-    for (const [s, , a] of at)
+    for (const [s, , a] of nt)
       a === "number" && (i[s] = Number(i[s]));
     i.library_host = String(i.library_host ?? ""), i.calendar_entity || delete i.calendar_entity;
     try {
@@ -4714,20 +4883,20 @@ const st = [
       this.flow = s, s.type === "create_entry" ? (this.initial = { ...this.draft }, this.saving = !1, this.busy(), this.dispatchEvent(
         new CustomEvent("settings-saved", { bubbles: !0, composed: !0 })
       )) : s.type === "form" ? this.error = Object.values(s.errors ?? {}).map(
-        (a) => ri[a] ?? "Check the settings and try again."
+        (a) => oi[a] ?? "Check the settings and try again."
       ).join(" ") : this.error = "The settings flow ended. Reload settings to continue.";
     } catch (s) {
       t === this.generation && (this.fail(s), this.uncertain = ![
         "unauthorized",
         "invalid_request",
         "conflict"
-      ].includes(p(s)));
+      ].includes(c(s)));
     } finally {
       t === this.generation && (this.saving = !1, this.busy(), this.requestUpdate());
     }
   }
   render() {
-    return n`<section
+    return r`<section
       class="card settings-page"
       aria-labelledby="settings-title"
     >
@@ -4758,9 +4927,9 @@ const st = [
         when saved. Shared Library display settings save immediately to the
         database.
       </p>
-      ${this.error ? n`<p class="error" role="alert">${this.error}</p>` : h}
-      ${this.uncertain ? n`<p class="warning">The save result is unconfirmed. Reload settings to inspect the saved values before making another change.</p>` : h}
-      ${this.loading ? n`<p role="status">Loading settings…</p>` : this.flow?.type === "form" ? n`<form
+      ${this.error ? r`<p class="error" role="alert">${this.error}</p>` : h}
+      ${this.uncertain ? r`<p class="warning">The save result is unconfirmed. Reload settings to inspect the saved values before making another change.</p>` : h}
+      ${this.loading ? r`<p role="status">Loading settings…</p>` : this.flow?.type === "form" ? r`<form
                   id="companion-settings-form"
                   @submit=${this.save}
                   @input=${() => this.requestUpdate()}
@@ -4781,8 +4950,8 @@ const st = [
                       />Automatically record playback</label
                     >
                     <div class="grid settings-grid">
-                      ${st.map(
-      ([e, t, i, s, a]) => n`<label class=${i === "text" ? "full" : ""}
+                      ${rt.map(
+      ([e, t, i, s, a]) => r`<label class=${i === "text" ? "full" : ""}
                             >${t}<input
                               name=${e}
                               type=${i}
@@ -4827,7 +4996,7 @@ const st = [
                       viewings. Movie metadata is shared with the calendar
                       provider and anyone who can read that calendar.
                     </p>
-                    ${this.draft.calendar_enabled ? n`<div class="grid settings-grid">
+                    ${this.draft.calendar_enabled ? r`<div class="grid settings-grid">
                               <label class="full"
                                 >HA calendar<input
                                   name="calendar_entity"
@@ -4872,7 +5041,7 @@ const st = [
                             </div>
                             <p class="muted">
                               <datalist id="calendar-choices">
-                                ${(this.flow.calendar_choices ?? []).map((e) => n`<option value=${e.value}>${e.label}</option>`)}
+                                ${(this.flow.calendar_choices ?? []).map((e) => r`<option value=${e.value}>${e.label}</option>`)}
                               </datalist>
                               Allowed fields: {title}, {year}, {collection},
                               {cast}, {director}, {writer}, {studio}, {genre},
@@ -4907,9 +5076,9 @@ const st = [
                       library. Disabled by default; no library discovery or
                       device requests occur while disabled.
                     </p>
-                    ${this.draft.library_enabled ? n`<div class="grid settings-grid">
-                              ${at.map(
-      ([e, t, i, s, a]) => n`<label
+                    ${this.draft.library_enabled ? r`<div class="grid settings-grid">
+                              ${nt.map(
+      ([e, t, i, s, a]) => r`<label
                                     class=${i === "text" ? "full" : ""}
                                     >${t}<input
                                       name=${e}
@@ -4928,8 +5097,8 @@ const st = [
       }}
                                   /></label>`
     )}
-                              ${ft.map(
-      ([e, t]) => n`<label class="check full"
+                              ${mt.map(
+      ([e, t]) => r`<label class="check full"
                                     ><input
                                       name=${e}
                                       type="checkbox"
@@ -4957,7 +5126,12 @@ const st = [
                               source metadata. “Added on” means first detected,
                               not purchased or downloaded.
                             </p>
-                            ${this.draft.library_sync_artwork ? n`<p class="warning">Artwork uses additional disk space in a separate private cache, up to ${String(this.draft.library_artwork_cache_mb)} MiB plus one incoming image (up to 5 MiB). The journal database retains its 256 MiB limit. Increase the cache limit for a large library; older covers may be evicted and fetched again. HA backups can include these files.</p>` : h}` : h}
+                            ${this.draft.library_sync_artwork ? r`<p class="warning">Artwork uses additional disk space in a separate private cache, up to ${String(this.draft.library_artwork_cache_mb)} MiB plus one incoming image (up to 5 MiB). The journal database retains its 256 MiB limit. Increase the cache limit for a large library; older covers may be evicted and fetched again. HA backups can include these files.</p>` : h}` : h}
+                    ${this.initial.library_enabled ? r`<kaleidescape-metadata-repair
+                            .client=${this.client}
+                            .scope=${this.scope}
+                            .disabled=${this.saving || this.uncertain || JSON.stringify(this.draft) !== JSON.stringify(this.initial)}
+                          ></kaleidescape-metadata-repair>` : h}
                     <h3>Landing page</h3>
                     <label
                       >Default landing page<select
@@ -4977,7 +5151,7 @@ const st = [
       ["database", "Database"],
       ["settings", "Settings"]
     ].map(
-      ([e, t]) => n`<option
+      ([e, t]) => r`<option
                               value=${e}
                               ?selected=${e === this.draft.default_landing_page}
                             >
@@ -5000,18 +5174,18 @@ const st = [
   }
   renderCollections() {
     if (!this.sharedReady)
-      return n`<p>
+      return r`<p>
         Shared display settings could not be loaded. Reload settings to retry.
       </p>`;
     const e = this.hiddenCollections, t = [.../* @__PURE__ */ new Set([...this.collectionChoices, ...e])].sort(
       (i, s) => i.localeCompare(s)
     );
-    return n`<fieldset class="full">
+    return r`<fieldset class="full">
       <legend>Hidden collection names</legend>
-      ${this.sharedError ? n`<p class="error" role="alert">${this.sharedError}<button type="button" @click=${() => this.sharedPreferences?.retry()}>Retry UI settings</button></p>` : h}
+      ${this.sharedError ? r`<p class="error" role="alert">${this.sharedError}<button type="button" @click=${() => this.sharedPreferences?.retry()}>Retry UI settings</button></p>` : h}
       <div class="facet-options">
         ${t.map(
-      (i) => n`<label class="check"
+      (i) => r`<label class="check"
               ><input
                 name="library_excluded_collections"
                 type="checkbox"
@@ -5058,13 +5232,13 @@ const st = [
     </fieldset>`;
   }
 };
-he.properties = {
+de.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 }
-}, he.styles = w;
-let Ue = he;
-customElements.get("kaleidescape-settings") || customElements.define("kaleidescape-settings", Ue);
-const ni = z`
+}, de.styles = w;
+let ze = de;
+customElements.get("kaleidescape-settings") || customElements.define("kaleidescape-settings", ze);
+const li = R`
   .database-entries {
     padding: 20px;
   }
@@ -5194,7 +5368,7 @@ const ni = z`
       margin-left: 0;
     }
   }
-`, de = class de extends v {
+`, ce = class ce extends v {
   constructor() {
     super(...arguments), this.table = "viewings", this.value = "", this.fields = [], this.operators = [], this.disabled = !1, this.open = !1, this.active = 0, this.cursor = 0, this.message = "", this.invalid = !1, this.generation = 0;
   }
@@ -5246,7 +5420,7 @@ const ni = z`
         ), e === this.generation && (this.message = "", this.invalid = !1);
       } catch (t) {
         if (e !== this.generation) return;
-        this.invalid = !0, this.message = p(t) === "query_syntax" && typeof t.message == "string" ? t.message : $(t), p(t) === "unauthorized" && this.dispatchEvent(
+        this.invalid = !0, this.message = c(t) === "query_syntax" && typeof t.message == "string" ? t.message : $(t), c(t) === "unauthorized" && this.dispatchEvent(
           new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
         );
       } finally {
@@ -5263,7 +5437,7 @@ const ni = z`
   }
   render() {
     const { options: e } = this.completion();
-    return n`<div class="search">
+    return r`<div class="search">
         <label for="database-query">Search rows / conditions</label>
         <div class="control-row">
           <input
@@ -5303,14 +5477,14 @@ const ni = z`
     }}
           /><slot name="actions"></slot>
         </div>
-        ${this.open && e.length ? n`<div class="suggestions" id="query-suggestions" role="listbox">${e.map((t, i) => n`<button type="button" role="option" id=${`query-option-${i}`} aria-selected=${this.active === i} tabindex="-1" @mousedown=${(s) => s.preventDefault()} @click=${() => this.choose(t)}>${t}</button>`)}</div>` : h}
+        ${this.open && e.length ? r`<div class="suggestions" id="query-suggestions" role="listbox">${e.map((t, i) => r`<button type="button" role="option" id=${`query-option-${i}`} aria-selected=${this.active === i} tabindex="-1" @mousedown=${(s) => s.preventDefault()} @click=${() => this.choose(t)}>${t}</button>`)}</div>` : h}
       </div>
       <small id="query-help" class=${this.invalid ? "error" : ""} role="status"
         >${this.message || "Text searches every column. Conditions: purchased_on IS NULL · actors CONTAINS 'name' · title LIKE 'Star%'. Tab accepts a suggestion; Enter searches."}</small
       >`;
   }
 };
-de.properties = {
+ce.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   table: {},
@@ -5318,7 +5492,7 @@ de.properties = {
   fields: { attribute: !1 },
   operators: { attribute: !1 },
   disabled: { type: Boolean }
-}, de.styles = z`
+}, ce.styles = R`
     :host {
       display: block;
       min-width: 0;
@@ -5386,9 +5560,9 @@ de.properties = {
       color: var(--error-color, #b3261e);
     }
   `;
-let ze = de;
-customElements.get("kaleidescape-database-search") || customElements.define("kaleidescape-database-search", ze);
-const ce = class ce extends v {
+let Ae = ce;
+customElements.get("kaleidescape-database-search") || customElements.define("kaleidescape-database-search", Ae);
+const ue = class ue extends v {
   constructor() {
     super(...arguments), this.disabled = !1, this.bound = "", this.generation = 0, this.selected = /* @__PURE__ */ new Set(), this.query = "", this.changesOnly = !1, this.page = 0, this.pageSize = 100, this.working = !1, this.error = "", this.notice = "", this.dialog = null;
   }
@@ -5438,7 +5612,7 @@ const ce = class ce extends v {
     );
   }
   fail(e) {
-    p(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
+    c(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     )), this.error = $(e), this.requestUpdate();
   }
@@ -5510,7 +5684,7 @@ const ce = class ce extends v {
         "conflict",
         "not_found",
         "tracking_enabled"
-      ].includes(p(t)) && (this.pending = void 0, this.review = void 0, this.selected.clear()), this.fail(t);
+      ].includes(c(t)) && (this.pending = void 0, this.review = void 0, this.selected.clear()), this.fail(t);
     } finally {
       e === this.generation && (this.working = !1, this.busy(), this.requestUpdate());
     }
@@ -5523,7 +5697,7 @@ const ce = class ce extends v {
       o * this.pageSize,
       (o + 1) * this.pageSize
     );
-    return n`<p role="status">
+    return r`<p role="status">
         ${t.counts.new} new · ${t.counts.merge} mergeable ·
         ${t.counts.unchanged} unchanged · ${t.counts.skip} skipped.
         ${this.selected.size} selected.
@@ -5579,15 +5753,15 @@ const ce = class ce extends v {
           </thead>
           <tbody>
             ${l.map(
-      (d) => n`<tr>
+      (d) => r`<tr>
                   <td>
                     <input
                       type="checkbox"
                       aria-label=${`Import ${d.title}`}
                       .checked=${this.selected.has(d.key)}
                       ?disabled=${e || !["new", "merge"].includes(d.action)}
-                      @change=${(c) => {
-        c.target.checked ? this.selected.add(d.key) : this.selected.delete(d.key), this.requestUpdate();
+                      @change=${(u) => {
+        u.target.checked ? this.selected.add(d.key) : this.selected.delete(d.key), this.requestUpdate();
       }}
                     />
                   </td>
@@ -5599,8 +5773,8 @@ const ce = class ce extends v {
                   <td>${d.action}</td>
                   <td>
                     ${d.reason || Object.keys(d.changes).join(", ") || "No missing data"}
-                    ${d.conflicts.length ? n`<small class="muted">Existing values kept: ${d.conflicts.join(", ")}</small>` : h}
-                    ${Object.keys(d.changes).length ? n`<details>
+                    ${d.conflicts.length ? r`<small class="muted">Existing values kept: ${d.conflicts.join(", ")}</small>` : h}
+                    ${Object.keys(d.changes).length ? r`<details>
                             <summary>Changes</summary>
                             <pre>${JSON.stringify(d.changes, null, 2)}</pre>
                           </details>` : h}
@@ -5639,13 +5813,13 @@ const ce = class ce extends v {
       this.pageSize = Number(d.target.value), this.page = 0, this.requestUpdate();
     }}
           >
-            ${[25, 100, 500].map((d) => n`<option value=${d}>${d}</option>`)}
+            ${[25, 100, 500].map((d) => r`<option value=${d}>${d}</option>`)}
           </select></label
         >
       </div>`;
   }
   renderImport(e) {
-    return n`<p>
+    return r`<p>
         Add new IDs and fill missing data in existing viewings and Library
         versions. Populated values, manual corrections and deletion status are
         kept. Only known Library sources match. Newly imported versions stay
@@ -5654,7 +5828,7 @@ const ce = class ce extends v {
         Maximum 32 MiB / 10,000 records. Review expires after 10 minutes or any
         database change.
       </p>
-      ${this.scope?.tracking_enabled ? n`<p class="warning">Disable automatic tracking in Settings before importing.</p>` : h}
+      ${this.scope?.tracking_enabled ? r`<p class="warning">Disable automatic tracking in Settings before importing.</p>` : h}
       <label
         >JSON or SQLite export<input
           type="file"
@@ -5664,7 +5838,7 @@ const ce = class ce extends v {
       this.file = t.target.files?.[0], this.review = void 0, this.selected.clear(), this.error = this.notice = "", this.requestUpdate();
     }}
       /></label>
-      ${this.file ? n`<p>${this.file.name} · ${(this.file.size / 1024).toFixed(1)} KiB</p>` : h}
+      ${this.file ? r`<p>${this.file.name} · ${(this.file.size / 1024).toFixed(1)} KiB</p>` : h}
       <div class="actions">
         <button
           ?disabled=${e || !this.file || !!this.scope?.tracking_enabled}
@@ -5674,7 +5848,7 @@ const ce = class ce extends v {
         </button>
       </div>
       ${this.renderReview(e)}
-      ${this.pending ? n`<div class="warning">
+      ${this.pending ? r`<div class="warning">
               ${this.working ? "Importing…" : "The import result is unconfirmed. Retry the same selection and request to confirm it."}
               <div class="actions">
                 <button ?disabled=${this.working} @click=${this.importData}>
@@ -5699,7 +5873,7 @@ const ce = class ce extends v {
   }
   render() {
     const e = this.disabled || this.working || !!this.pending;
-    return n`<div class="actions" aria-label="Import and export">
+    return r`<div class="actions" aria-label="Import and export">
         <button
           data-transfer="import"
           ?disabled=${e}
@@ -5715,11 +5889,11 @@ const ce = class ce extends v {
           Export
         </button>
       </div>
-      ${!this.dialog && this.error ? n`<p class="error" role="alert">${this.error}</p>` : h}
-      ${!this.dialog && this.notice ? n`<p class="notice" role="status">${this.notice}</p>` : h}
+      ${!this.dialog && this.error ? r`<p class="error" role="alert">${this.error}</p>` : h}
+      ${!this.dialog && this.notice ? r`<p class="notice" role="status">${this.notice}</p>` : h}
       <dialog
         class="database-dialog"
-        @click=${_}
+        @click=${k}
         aria-labelledby="transfer-title"
         @cancel=${this.closeDialog}
       >
@@ -5728,8 +5902,8 @@ const ce = class ce extends v {
             ${this.dialog === "export" ? "Export database" : "Merge Import"}
           </h2>
         </div>
-        ${this.error && this.dialog ? n`<p class="error" role="alert">${this.error}</p>` : h}
-        ${this.dialog === "export" ? n`<p>
+        ${this.error && this.dialog ? r`<p class="error" role="alert">${this.error}</p>` : h}
+        ${this.dialog === "export" ? r`<p>
                   Exports include private history and deleted records. SQLite
                   also includes catalog and source metadata. Store downloads
                   securely.
@@ -5753,18 +5927,18 @@ const ce = class ce extends v {
             @click=${this.closeDialog}
           >
             Cancel</button
-          >${this.dialog === "import" && this.review ? n`<button class="primary" ?disabled=${e || !this.selected.size} @click=${this.importData}>Apply ${y(this.selected.size, "selected change")}</button>` : h}
+          >${this.dialog === "import" && this.review ? r`<button class="primary" ?disabled=${e || !this.selected.size} @click=${this.importData}>Apply ${y(this.selected.size, "selected change")}</button>` : h}
         </div>
       </dialog>`;
   }
 };
-ce.properties = {
+ue.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, ce.styles = [
+}, ue.styles = [
   w,
-  z`
+  R`
       .database-dialog {
         width: min(1100px, calc(100% - 32px));
       }
@@ -5808,8 +5982,8 @@ ce.properties = {
       }
     `
 ];
-let Re = ce;
-customElements.get("kaleidescape-transfers") || customElements.define("kaleidescape-transfers", Re);
+let Te = ue;
+customElements.get("kaleidescape-transfers") || customElements.define("kaleidescape-transfers", Te);
 const K = {
   viewings: "Viewings",
   sessions: "Sessions",
@@ -5829,7 +6003,7 @@ const K = {
   calendar_publications: "Calendar publications",
   calendar_sync_jobs: "Calendar exports",
   calendar_sync_items: "Calendar export items"
-}, Y = ["viewings", "sessions", "library_titles"], ue = class ue extends v {
+}, Y = ["viewings", "sessions", "library_titles"], pe = class pe extends v {
   constructor() {
     super(...arguments), this.bound = "", this.generation = 0, this.request = 0, this.table = "viewings", this.filters = { limit: 25, query: "", descending: !1 }, this.showSystem = !1, this.sorts = {}, this.ready = !1, this.preferenceError = "", this.loading = !1, this.saving = !1, this.transferBusy = !1, this.error = "", this.notice = "", this.search = "", this.selected = /* @__PURE__ */ new Set(), this.operation = null, this.draft = {}, this.nulls = /* @__PURE__ */ new Set(), this.original = "", this.createDraft = Z(), this.confirmed = !1, this.deleteWord = "", this.covers = new ee();
   }
@@ -5852,12 +6026,12 @@ const K = {
   }
   async initialize() {
     const e = ++this.generation;
-    this.preferences?.dispose(), this.preferences = new be(
+    this.preferences?.dispose(), this.preferences = new me(
       this.client,
       this.scope,
       !1,
       (t) => {
-        e === this.generation && (t && p(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? $(t) : "", this.requestUpdate()));
+        e === this.generation && (t && c(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? $(t) : "", this.requestUpdate()));
       },
       "database"
     );
@@ -5893,10 +6067,10 @@ const K = {
     );
   }
   fail(e) {
-    p(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
+    c(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     ));
-    const t = p(e), i = e?.message;
+    const t = c(e), i = e?.message;
     this.error = ["query_syntax", "conflict", "invalid_request", "busy"].includes(t) && typeof i == "string" && i !== t ? i : $(e), this.requestUpdate();
   }
   async load(e = 0, t) {
@@ -5997,7 +6171,7 @@ const K = {
           if (!this.operation || !this.page || this.operation === "delete" && this.deleteWord !== "DELETE" || this.operation !== "delete" && !this.confirmed) return;
           if (this.operation === "new")
             this.pending = this.client.prepare(this.scope, "create", {
-              data: pt(this.createDraft)
+              data: ft(this.createDraft)
             });
           else {
             const i = {};
@@ -6051,7 +6225,7 @@ const K = {
             "busy",
             "backup_in_progress",
             "library_storage_limit"
-          ].includes(p(i)) && (this.pending = void 0), this.fail(i);
+          ].includes(c(i)) && (this.pending = void 0), this.fail(i);
         } finally {
           t === this.generation && (this.saving = !1, this.busy(), this.requestUpdate());
         }
@@ -6077,7 +6251,7 @@ const K = {
     }, this.preferences?.set({ sorts: this.sorts })), this.load());
   }
   retry() {
-    return this.pending ? n`<div class="warning" role="alert">
+    return this.pending ? r`<div class="warning" role="alert">
           ${this.saving ? "Saving…" : "Result unconfirmed. Retry this exact request."}<button
             ?disabled=${this.saving}
             @click=${() => this.save()}
@@ -6101,10 +6275,10 @@ const K = {
         </div>` : h;
   }
   options() {
-    return n`<dialog
+    return r`<dialog
       id="database-options"
       class="database-dialog"
-      @click=${_}
+      @click=${k}
     >
       <div class="card-head">
         <h2>Database options</h2>
@@ -6122,7 +6296,7 @@ const K = {
             .value=${String(this.filters.limit)}
             @change=${(e) => this.browse({ limit: Number(e.target.value) })}
           >
-            ${[10, 25, 100, 500].map((e) => n`<option value=${e}>${e}</option>`)}
+            ${[10, 25, 100, 500].map((e) => r`<option value=${e}>${e}</option>`)}
           </select></label
         ><label class="check"
           ><input
@@ -6143,12 +6317,12 @@ const K = {
   }
   render() {
     if (!this.ready)
-      return n`<p>${this.error || "Loading database preferences…"}</p>
-        ${this.error ? n`<button @click=${() => this.initialize()}>Retry loading database</button>` : h}`;
+      return r`<p>${this.error || "Loading database preferences…"}</p>
+        ${this.error ? r`<button @click=${() => this.initialize()}>Retry loading database</button>` : h}`;
     const e = Object.keys(this.page?.tables ?? K).filter(
       (i) => this.showSystem || Y.includes(i)
     ), t = (this.page?.schema ?? []).some((i) => i.editable);
-    return n`<section class="card database" aria-label="Database management">
+    return r`<section class="card database" aria-label="Database management">
       <div class="database-toolbar">
         <div class="actions">
           <button
@@ -6187,7 +6361,7 @@ const K = {
         </button>
       </div>
       <div class="database-messages">
-        ${this.error ? n`<p class="error" role="alert">${this.error}</p>` : h}${this.notice ? n`<p role="status">${this.notice}</p>` : h}${this.preferenceError ? n`<p class="warning">${this.preferenceError}<button @click=${() => this.preferences?.retry()}>Retry preferences</button></p>` : h}${this.retry()}
+        ${this.error ? r`<p class="error" role="alert">${this.error}</p>` : h}${this.notice ? r`<p role="status">${this.notice}</p>` : h}${this.preferenceError ? r`<p class="warning">${this.preferenceError}<button @click=${() => this.preferences?.retry()}>Retry preferences</button></p>` : h}${this.retry()}
       </div>
       <div
         class="page-tabs table-tabs"
@@ -6200,7 +6374,7 @@ const K = {
       ));
     }}
       >
-        ${e.map((i) => n`<button role="tab" id=${`table-${i}`} aria-selected=${this.table === i} tabindex=${this.table === i ? 0 : -1} ?disabled=${this.blocked} @click=${() => this.changeTable(i)}>${K[i] ?? i}${this.page ? ` (${this.page.tables[i]})` : ""}</button>`)}
+        ${e.map((i) => r`<button role="tab" id=${`table-${i}`} aria-selected=${this.table === i} tabindex=${this.table === i ? 0 : -1} ?disabled=${this.blocked} @click=${() => this.changeTable(i)}>${K[i] ?? i}${this.page ? ` (${this.page.tables[i]})` : ""}</button>`)}
       </div>
       <div class="database-filters filters">
         <kaleidescape-database-search
@@ -6230,7 +6404,7 @@ const K = {
             .value=${this.filters.sort ?? ""}
             @change=${(i) => this.browse({ sort: i.target.value })}
           >
-            ${this.page?.columns.map((i) => n`<option value=${i}>${i}</option>`)}
+            ${this.page?.columns.map((i) => r`<option value=${i}>${i}</option>`)}
           </select></label
         ><label
           >Order<button
@@ -6246,11 +6420,11 @@ const K = {
           <div class="card-head">
             <h2>${K[this.table] ?? this.table}</h2>
           </div>
-          ${this.loading ? n`<p role="status">Loading database…</p>` : h}
+          ${this.loading ? r`<p role="status">Loading database…</p>` : h}
           <ul class="entry-list">
             ${this.page?.items.map(
-      (i, s) => n`<li class=${this.detail === i ? "selected" : ""}>
-                  ${this.page?.deletable ? n`<input
+      (i, s) => r`<li class=${this.detail === i ? "selected" : ""}>
+                  ${this.page?.deletable ? r`<input
                           type="checkbox"
                           aria-label=${`Select ${String(i.title ?? i.name ?? i.id ?? i.cache_key ?? i.owner ?? "row")}`}
                           .checked=${this.selected.has(s)}
@@ -6268,7 +6442,7 @@ const K = {
                 </li>`
     )}
           </ul>
-          ${this.page ? n`<div class="pagination database-pagination">
+          ${this.page ? r`<div class="pagination database-pagination">
                   <small
                     >${this.page.items.length === 1 ? "Row" : "Rows"}
                     ${this.page.items.length ? this.page.offset + 1 : 0}–${this.page.offset + this.page.items.length}
@@ -6298,9 +6472,9 @@ const K = {
         <section class="database-detail" aria-label="Selected database entry">
           <div class="card-head">
             <h2>Entry details</h2>
-            ${this.detail ? n`<button ?disabled=${this.blocked || !t} @click=${this.edit}>Edit entry</button>` : h}
+            ${this.detail ? r`<button ?disabled=${this.blocked || !t} @click=${this.edit}>Edit entry</button>` : h}
           </div>
-          ${this.detail ? n`${(this.table === "library_artwork" || this.table === "library_titles") && (this.detail.cache_key || this.detail.artwork_key) ? n`<div class="database-preview">
+          ${this.detail ? r`${(this.table === "library_artwork" || this.table === "library_titles") && (this.detail.cache_key || this.detail.artwork_key) ? r`<div class="database-preview">
                             <kaleidescape-library-cover
                               .client=${this.client}
                               .scope=${this.scope}
@@ -6309,12 +6483,12 @@ const K = {
                               .title=${String(this.detail.title ?? "Database artwork")}
                             ></kaleidescape-library-cover>
                           </div>
-                          ${this.scope?.library_enabled ? h : n`<small>Enable Library to preview cached artwork.</small>`}` : h}
+                          ${this.scope?.library_enabled ? h : r`<small>Enable Library to preview cached artwork.</small>`}` : h}
                   <div class="database-references">
-                    ${(this.page?.references ?? []).filter((i) => Object.values(i.key).every((s) => this.detail?.[s] != null)).map((i) => n`<button class="link" ?disabled=${this.blocked} @click=${() => this.follow(i)}>Open ${K[i.table] ?? i.table} · ${Object.values(i.key).join(", ")}</button>`)}
+                    ${(this.page?.references ?? []).filter((i) => Object.values(i.key).every((s) => this.detail?.[s] != null)).map((i) => r`<button class="link" ?disabled=${this.blocked} @click=${() => this.follow(i)}>Open ${K[i.table] ?? i.table} · ${Object.values(i.key).join(", ")}</button>`)}
                   </div>
                   <pre>${JSON.stringify(this.detail, null, 2)}</pre>
-                  ${t ? h : n`<p class="muted">This table protects system integrity; stored values are read-only.</p>`}` : n`<p class="empty">
+                  ${t ? h : r`<p class="muted">This table protects system integrity; stored values are read-only.</p>`}` : r`<p class="empty">
                   Select an entry to inspect raw values.
                 </p>`}
         </section>
@@ -6323,7 +6497,7 @@ const K = {
       <dialog
         id="database-edit"
         class="database-dialog"
-        @click=${_}
+        @click=${k}
         @cancel=${this.close}
       >
         <div class="card-head">
@@ -6337,10 +6511,10 @@ const K = {
           until closed. Session corrections do not recalculate viewing
           summaries.
         </p>
-        ${this.error ? n`<p class="error">${this.error}</p>` : h}${this.retry()}
+        ${this.error ? r`<p class="error">${this.error}</p>` : h}${this.retry()}
         <form @submit=${this.save}>
           <fieldset ?disabled=${this.saving || !!this.pending}>
-            ${this.operation === "new" ? n`<kaleidescape-manual-viewing
+            ${this.operation === "new" ? r`<kaleidescape-manual-viewing
                     .client=${this.client}
                     .scope=${this.scope}
                     .draft=${this.createDraft}
@@ -6348,11 +6522,11 @@ const K = {
                     @draft-change=${(i) => {
       this.createDraft = i.detail, this.requestUpdate();
     }}
-                    @access-denied=${() => this.fail(new u("unauthorized"))}
+                    @access-denied=${() => this.fail(new p("unauthorized"))}
                   ></kaleidescape-manual-viewing>` : (this.page?.schema ?? []).filter((i) => i.editable).map(
-      (i) => n`<div class="database-edit-field">
+      (i) => r`<div class="database-edit-field">
                           <label
-                            >${i.name}${i.type === "json" || i.name === "notes" ? n`<textarea
+                            >${i.name}${i.type === "json" || i.name === "notes" ? r`<textarea
                                     name=${i.name}
                                     .value=${this.nulls.has(i.name) ? "" : this.draft[i.name] ?? ""}
                                     placeholder=${this.nulls.has(i.name) ? "NULL · type to set a value" : ""}
@@ -6362,7 +6536,7 @@ const K = {
           [i.name]: s.target.value
         };
       }}
-                                  ></textarea>` : n`<input
+                                  ></textarea>` : r`<input
                                     name=${i.name}
                                     type=${i.type === "number" ? "number" : "text"}
                                     step="any"
@@ -6375,7 +6549,7 @@ const K = {
         };
       }}
                                   />`}</label
-                          >${i.nullable ? n`<label class="check"
+                          >${i.nullable ? r`<label class="check"
                                   ><input
                                     type="checkbox"
                                     aria-label=${`Set ${i.name} to NULL`}
@@ -6417,7 +6591,7 @@ const K = {
       <dialog
         id="database-delete"
         class="database-dialog"
-        @click=${_}
+        @click=${k}
         @cancel=${this.close}
       >
         <h2>
@@ -6430,7 +6604,7 @@ const K = {
           sync may recreate cached library records. Existing exports and backups
           remain.
         </p>
-        ${this.error ? n`<p class="error">${this.error}</p>` : h}${this.retry()}<label
+        ${this.error ? r`<p class="error">${this.error}</p>` : h}${this.retry()}<label
           >Type DELETE to confirm<input
             name="delete_confirmation"
             .value=${this.deleteWord}
@@ -6457,13 +6631,13 @@ const K = {
     </section>`;
   }
 };
-ue.properties = {
+pe.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 }
-}, ue.styles = [w, ni];
-let Ae = ue;
-customElements.get("kaleidescape-database") || customElements.define("kaleidescape-database", Ae);
-const ve = [
+}, pe.styles = [w, li];
+let Le = pe;
+customElements.get("kaleidescape-database") || customElements.define("kaleidescape-database", Le);
+const $e = [
   {
     id: "now-playing",
     label: "Now Playing",
@@ -6489,7 +6663,7 @@ const ve = [
     label: "Settings",
     description: "Configure playback recording and journal rules."
   }
-], pe = class pe extends v {
+], ge = class ge extends v {
   constructor() {
     super(...arguments), this.narrow = !1, this.api = null, this.generation = 0, this.listRequest = 0, this.detailRequest = 0, this.info = null, this.rows = [], this.selected = null, this.draft = null, this.initial = null, this.manual = null, this.manualInitial = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalReady = !1, this.sessions = null, this.sessionError = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.nextCursor = null, this.history = [], this.page = 1, this.loading = !1, this.detailLoading = !1, this.saving = !1, this.pending = null, this.confirmDelete = !1, this.error = "", this.lastError = "", this.notice = "", this.activePage = "journal", this.navigationReady = !1, this.settingsBusy = !1, this.maintenanceBusy = !1;
   }
@@ -6500,7 +6674,7 @@ const ve = [
           this.bind(null);
           return;
         }
-        (this.haConnection !== this.hass.connection || this.haUser !== this.hass.user.id) && (this.haConnection = this.hass.connection, this.haUser = this.hass.user.id, this.haClient = new ct({
+        (this.haConnection !== this.hass.connection || this.haUser !== this.hass.user.id) && (this.haConnection = this.hass.connection, this.haUser = this.hass.user.id, this.haClient = new pt({
           callWS: (t) => this.hass.callWS(t),
           fetchWithAuth: (t, i) => this.hass.fetchWithAuth(t, i)
         })), this.bind(this.haClient);
@@ -6520,7 +6694,7 @@ const ve = [
     this.api !== e && (this.clearPrivate(), this.api = e, this.error = "", this.requestUpdate(), e && this.refresh());
   }
   fail(e) {
-    p(e) === "unauthorized" && this.clearPrivate(), this.lastError = p(e), this.error = $(e), this.requestUpdate();
+    c(e) === "unauthorized" && this.clearPrivate(), this.lastError = c(e), this.error = $(e), this.requestUpdate();
   }
   dirty() {
     return this.manual ? JSON.stringify(this.manual) !== this.manualInitial : this.draft && JSON.stringify(this.draft) !== JSON.stringify(this.initial);
@@ -6532,7 +6706,7 @@ const ve = [
     e === "library" && !this.info?.library_enabled || e === this.activePage || this.loading || this.saving || this.pending || this.maintenanceBusy || this.settingsBusy || !this.discard() || (this.closeEditor(), this.activePage = e, M(e), this.error = this.notice = "", this.requestUpdate(), e === "journal" && (this.page = 1, this.history = [], await this.loadList()));
   }
   pageKey(e) {
-    const t = ve.filter(
+    const t = $e.filter(
       (o) => o.id !== "library" || this.info?.library_enabled
     ), i = t.findIndex((o) => o.id === this.activePage), s = e.key === "ArrowRight" ? (i + 1) % t.length : e.key === "ArrowLeft" ? (i + t.length - 1) % t.length : e.key === "Home" ? 0 : e.key === "End" ? t.length - 1 : -1;
     if (s < 0) return;
@@ -6551,10 +6725,10 @@ const ve = [
         ({ entries: s } = await t.info());
       }
       if (i !== this.generation) return;
-      if (!s.length) throw new u("not_ready");
-      if (s[0].api_version !== 1) throw new u("not_ready");
+      if (!s.length) throw new p("not_ready");
+      if (s[0].api_version !== 1) throw new p("not_ready");
       if (this.info = s[0], !this.info.permissions.edit) return;
-      this.navigationReady || (this.activePage = gt(
+      this.navigationReady || (this.activePage = bt(
         this.info.ui_defaults?.default_landing_page,
         !0,
         !!this.info.library_enabled
@@ -6597,12 +6771,12 @@ const ve = [
       const o = await t.get(i, e);
       if (s !== this.generation || a !== this.detailRequest)
         return;
-      this.selected = o, this.draft = ye(o), this.initial = { ...this.draft }, this.detailLoading = !1, this.requestUpdate();
+      this.selected = o, this.draft = ve(o), this.initial = { ...this.draft }, this.detailLoading = !1, this.requestUpdate();
       try {
         const l = await t.sessions(i, e);
         s === this.generation && a === this.detailRequest && (this.sessions = l);
       } catch (l) {
-        s === this.generation && a === this.detailRequest && (p(l) === "unauthorized" ? this.fail(l) : this.sessionError = "Session details could not be loaded.");
+        s === this.generation && a === this.detailRequest && (c(l) === "unauthorized" ? this.fail(l) : this.sessionError = "Session details could not be loaded.");
       }
     } catch (o) {
       s === this.generation && a === this.detailRequest && this.fail(o);
@@ -6614,7 +6788,7 @@ const ve = [
     this.manual = null, this.manualInitial = "", this.detailRequest++, this.selected = null, this.draft = null, this.initial = null, this.sessions = null, this.sessionError = "", this.confirmDelete = !1, this.detailLoading = !1;
   }
   newRecord() {
-    this.pending || !this.discard() || (this.closeEditor(), this.draft = ye(), this.initial = { ...this.draft }, this.manual = Z(), this.manualInitial = JSON.stringify(this.manual), this.error = "", this.notice = "", this.requestUpdate(), this.updateComplete.then(async () => {
+    this.pending || !this.discard() || (this.closeEditor(), this.draft = ve(), this.initial = { ...this.draft }, this.manual = Z(), this.manualInitial = JSON.stringify(this.manual), this.error = "", this.notice = "", this.requestUpdate(), this.updateComplete.then(async () => {
       const e = this.renderRoot.querySelector(
         "kaleidescape-manual-viewing"
       );
@@ -6630,7 +6804,7 @@ const ve = [
   async save(e) {
     if (e.preventDefault(), !(!this.api || !this.info || !this.draft || this.pending || this.saving || !e.target.reportValidity()))
       try {
-        const i = this.manual ? pt(this.manual) : Ht(this.draft, this.selected ? this.initial : void 0);
+        const i = this.manual ? ft(this.manual) : Wt(this.draft, this.selected ? this.initial : void 0);
         if (this.selected && !Object.keys(i).length) {
           this.notice = "There are no changes to save.", this.requestUpdate();
           return;
@@ -6649,7 +6823,7 @@ const ve = [
           } : { data: i }
         ), await this.commit();
       } catch (i) {
-        p(i) === "request_id_unavailable" ? this.fail(i) : (this.error = this.manual && i instanceof Error ? i.message : "Check the dates and numeric fields before saving.", this.requestUpdate());
+        c(i) === "request_id_unavailable" ? this.fail(i) : (this.error = this.manual && i instanceof Error ? i.message : "Check the dates and numeric fields before saving.", this.requestUpdate());
       }
   }
   async deleteRecord() {
@@ -6670,7 +6844,7 @@ const ve = [
     try {
       const s = await e.mutate(t);
       if (i !== this.generation) return;
-      this.pending = null, this.closeEditor(), this.notice = s.viewing.deleted_at ? "Entry removed from the journal. Stored history is retained." : "Entry saved.", s.viewing.deleted_at || (this.selected = s.viewing, this.manual = null, this.draft = ye(s.viewing), this.initial = { ...this.draft }), this.page = 1, this.history = [], await this.loadList();
+      this.pending = null, this.closeEditor(), this.notice = s.viewing.deleted_at ? "Entry removed from the journal. Stored history is retained." : "Entry saved.", s.viewing.deleted_at || (this.selected = s.viewing, this.manual = null, this.draft = ve(s.viewing), this.initial = { ...this.draft }), this.page = 1, this.history = [], await this.loadList();
       try {
         const { entries: a } = await e.info();
         i === this.generation && a[0]?.dataset_id === this.info?.dataset_id && (this.info = a[0]);
@@ -6680,7 +6854,7 @@ const ve = [
     } catch (s) {
       if (i !== this.generation) return;
       ["invalid_request", "conflict", "unauthorized"].includes(
-        p(s)
+        c(s)
       ) && (this.pending = null), this.fail(s);
     } finally {
       i === this.generation && (this.saving = !1, this.requestUpdate());
@@ -6711,9 +6885,9 @@ const ve = [
     }
   }
   renderEditor() {
-    return this.detailLoading ? n`<div class="empty" role="status">Loading entry…</div>` : this.draft ? n`<form class="editor" @submit=${this.save}>
+    return this.detailLoading ? r`<div class="empty" role="status">Loading entry…</div>` : this.draft ? r`<form class="editor" @submit=${this.save}>
       <fieldset ?disabled=${this.saving || !!this.pending}>
-        ${this.manual ? n`<kaleidescape-manual-viewing
+        ${this.manual ? r`<kaleidescape-manual-viewing
                 .client=${this.api}
                 .scope=${this.info}
                 .draft=${this.manual}
@@ -6722,12 +6896,12 @@ const ve = [
                 @draft-change=${(e) => {
       this.manual = e.detail, this.requestUpdate();
     }}
-                @access-denied=${() => this.fail(new u("unauthorized"))}
-              ></kaleidescape-manual-viewing>` : Ft(
+                @access-denied=${() => this.fail(new p("unauthorized"))}
+              ></kaleidescape-manual-viewing>` : Jt(
       this.draft,
       (e, t) => this.input(e, t)
     )}
-        ${this.selected?.origin === "observed" ? n`<small>Only fields you change are marked as manual corrections. Session evidence is retained.</small>` : h}
+        ${this.selected?.origin === "observed" ? r`<small>Only fields you change are marked as manual corrections. Session evidence is retained.</small>` : h}
         <div class="actions">
           <button type="submit" class="primary">
             ${this.saving ? "Saving…" : this.selected ? "Save changes" : "Add entry"}
@@ -6740,7 +6914,7 @@ const ve = [
           >
             Cancel
           </button>
-          ${this.selected ? n`<span class="grow"></span
+          ${this.selected ? r`<span class="grow"></span
                   ><button
                     type="button"
                     class="danger"
@@ -6752,7 +6926,7 @@ const ve = [
                   </button>` : h}
         </div>
       </fieldset>
-      ${this.confirmDelete ? n`<div class="warning">
+      ${this.confirmDelete ? r`<div class="warning">
               <strong>Remove this entry from the journal?</strong>
               <p>
                 Stored history and backup copies are retained. This does not
@@ -6775,7 +6949,7 @@ const ve = [
                 </button>
               </div>
             </div>` : h}
-      ${this.selected ? n`<details>
+      ${this.selected ? r`<details>
               <summary>Record details & sessions</summary>
               <div class="metadata">
                 Record ${this.selected.id}<br />Origin: ${this.selected.origin}
@@ -6783,49 +6957,49 @@ const ve = [
                 ${this.date(this.selected.updated_at)}<br />Completion:
                 ${this.selected.completion_reason ?? "Not completed"}
               </div>
-              ${this.sessionError ? n`<p>${this.sessionError}</p>` : this.sessions ? this.sessions.items.length ? n` ${this.sessions.items.map((e) => n`<div class="session">${this.date(e.started_at)}<br />${(e.watched_seconds / 60).toFixed(2)} min watched · ${e.credits_confirmed ? "Credits confirmed" : "Credits unconfirmed"} · ${y(e.gap_count, "timing gap")}<br />${e.end_reason ?? "Open session"}</div>`)}
-                        ${this.sessions.has_more ? n`<small>Showing the latest 100 sessions.</small>` : h}` : n`<p class="muted">
+              ${this.sessionError ? r`<p>${this.sessionError}</p>` : this.sessions ? this.sessions.items.length ? r` ${this.sessions.items.map((e) => r`<div class="session">${this.date(e.started_at)}<br />${(e.watched_seconds / 60).toFixed(2)} min watched · ${e.credits_confirmed ? "Credits confirmed" : "Credits unconfirmed"} · ${y(e.gap_count, "timing gap")}<br />${e.end_reason ?? "Open session"}</div>`)}
+                        ${this.sessions.has_more ? r`<small>Showing the latest 100 sessions.</small>` : h}` : r`<p class="muted">
                           No recorded sessions for this entry.
-                        </p>` : n`<p class="muted">
+                        </p>` : r`<p class="muted">
                         Session details have not been loaded. Reopen the entry
                         to load them.
                       </p>`}
             </details>` : h}
-    </form>` : n`<div class="empty">
+    </form>` : r`<div class="empty">
         <strong>Select an entry</strong>
         <p>Review its details, make corrections, or add a manual viewing.</p>
       </div>`;
   }
   render() {
     if (this.hass?.user && !this.hass.user.is_admin || this.info && !this.info.permissions.edit)
-      return n`<kaleidescape-reader
+      return r`<kaleidescape-reader
         .hass=${this.hass}
         .client=${this.hass ? void 0 : this.client}
         .narrow=${this.narrow}
       ></kaleidescape-reader>`;
     const e = this.loading || this.saving || !!this.pending || this.maintenanceBusy || this.settingsBusy;
-    return n`<main>
+    return r`<main>
       <header>
-        ${this.hass && this.narrow ? n`<button class="menu" aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: !0, composed: !0 }))}>☰</button>` : h}
+        ${this.hass && this.narrow ? r`<button class="menu" aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: !0, composed: !0 }))}>☰</button>` : h}
         <div class="grow">
           <span class="eyebrow">Kaleidescape Companion · Administrator</span>
           <h1>Kaleidescape Companion</h1>
           <p>
-            ${ve.find((t) => t.id === this.activePage).description}
+            ${$e.find((t) => t.id === this.activePage).description}
           </p>
         </div>
       </header>
-      ${this.info?.permissions.edit ? n`<div
+      ${this.info?.permissions.edit ? r`<div
               class="page-tabs"
               role="tablist"
               aria-label="Companion pages"
               @keydown=${(t) => this.pageKey(t)}
             >
-              ${ve.map((t) => n`<button id=${`page-${t.id}`} role="tab" aria-selected=${this.activePage === t.id} aria-controls="companion-page" tabindex=${this.activePage === t.id ? "0" : "-1"} ?disabled=${e || t.id === "library" && !this.info?.library_enabled} title=${t.id === "library" && !this.info?.library_enabled ? "Enable library sync in Settings" : h} @click=${() => this.switchPage(t.id)}>${t.label}</button>`)}
+              ${$e.map((t) => r`<button id=${`page-${t.id}`} role="tab" aria-selected=${this.activePage === t.id} aria-controls="companion-page" tabindex=${this.activePage === t.id ? "0" : "-1"} ?disabled=${e || t.id === "library" && !this.info?.library_enabled} title=${t.id === "library" && !this.info?.library_enabled ? "Enable library sync in Settings" : h} @click=${() => this.switchPage(t.id)}>${t.label}</button>`)}
             </div>` : h}
-      ${this.error ? n`<div class="error" role="alert">${this.error}${this.lastError === "conflict" && this.selected ? n` <button ?disabled=${e} @click=${() => this.selectRecord(this.selected.id)}>Reload entry</button>` : h}</div>` : h}
-      ${this.notice ? n`<div class="notice" role="status">${this.notice}</div>` : h}
-      ${this.pending && !this.saving ? n`<div class="warning">
+      ${this.error ? r`<div class="error" role="alert">${this.error}${this.lastError === "conflict" && this.selected ? r` <button ?disabled=${e} @click=${() => this.selectRecord(this.selected.id)}>Reload entry</button>` : h}</div>` : h}
+      ${this.notice ? r`<div class="notice" role="status">${this.notice}</div>` : h}
+      ${this.pending && !this.saving ? r`<div class="warning">
               Retry the same change to confirm its result. The form is locked to
               prevent duplicate writes.
               <div class="actions">
@@ -6835,30 +7009,30 @@ const ve = [
                 </button>
               </div>
             </div>` : h}
-      ${this.api ? this.info ? n`<section
+      ${this.api ? this.info ? r`<section
                 id="companion-page"
                 role="tabpanel"
                 aria-labelledby=${`page-${this.activePage}`}
               >
-                ${this.activePage === "library" ? n`<kaleidescape-library
+                ${this.activePage === "library" ? r`<kaleidescape-library
                         .client=${this.api}
                         .scope=${this.info}
-                        @access-denied=${() => this.fail(new u("unauthorized"))}
+                        @access-denied=${() => this.fail(new p("unauthorized"))}
                         @library-disabled=${() => {
       this.activePage = "journal", this.refresh();
     }}
-                      ></kaleidescape-library>` : this.activePage === "database" ? n`<kaleidescape-database
+                      ></kaleidescape-library>` : this.activePage === "database" ? r`<kaleidescape-database
                           .client=${this.api}
                           .scope=${this.info}
-                          @access-denied=${() => this.fail(new u("unauthorized"))}
+                          @access-denied=${() => this.fail(new p("unauthorized"))}
                           @maintenance-busy=${(t) => {
       this.maintenanceBusy = t.detail, this.requestUpdate();
     }}
                           @database-changed=${() => this.refreshInfo()}
-                        ></kaleidescape-database>` : this.activePage === "settings" ? n`<kaleidescape-settings
+                        ></kaleidescape-database>` : this.activePage === "settings" ? r`<kaleidescape-settings
                             .client=${this.api}
                             .scope=${this.info}
-                            @access-denied=${() => this.fail(new u("unauthorized"))}
+                            @access-denied=${() => this.fail(new p("unauthorized"))}
                             @settings-busy=${(t) => {
       this.settingsBusy = t.detail, this.requestUpdate();
     }}
@@ -6869,10 +7043,10 @@ const ve = [
         this.api === t && this.info && (this.notice = "Settings saved.", this.requestUpdate());
       });
     }}
-                          ></kaleidescape-settings>` : this.activePage === "now-playing" ? n`<kaleidescape-now-playing
+                          ></kaleidescape-settings>` : this.activePage === "now-playing" ? r`<kaleidescape-now-playing
                               .client=${this.api}
                               .scope=${this.info}
-                            ></kaleidescape-now-playing>` : n`<div class="section-head">
+                            ></kaleidescape-now-playing>` : r`<div class="section-head">
                                 <h2>Journal</h2>
                                 <div class="actions">
                                   <button
@@ -6886,7 +7060,7 @@ const ve = [
                                     .client=${this.api}
                                     .scope=${this.info}
                                     .disabled=${e}
-                                    @access-denied=${() => this.fail(new u("unauthorized"))}
+                                    @access-denied=${() => this.fail(new p("unauthorized"))}
                                     @journal-options=${(t) => {
       this.journalReady = !0;
       const i = this.fuzzySearch !== t.detail.fuzzy_search;
@@ -7003,9 +7177,9 @@ const ve = [
                                     </button>
                                     <button ?disabled=${e}>Search</button>
                                   </form>
-                                  ${this.loading ? n`<div class="empty" role="status">
+                                  ${this.loading ? r`<div class="empty" role="status">
                                           Loading viewings…
-                                        </div>` : this.rows.length ? n`<div class="table-wrap">
+                                        </div>` : this.rows.length ? r`<div class="table-wrap">
                                             <table>
                                               <thead>
                                                 <tr>
@@ -7016,7 +7190,7 @@ const ve = [
                                               </thead>
                                               <tbody>
                                                 ${this.rows.map(
-      (t) => n` <tr
+      (t) => r` <tr
                                                       class=${this.selected?.id === t.id ? "selected" : ""}
                                                     >
                                                       <td>
@@ -7046,7 +7220,7 @@ const ve = [
     )}
                                               </tbody>
                                             </table>
-                                          </div>` : n`<div class="empty">
+                                          </div>` : r`<div class="empty">
                                             <strong
                                               >${this.query || this.status ? "No matching viewings" : "Your journal is empty"}</strong
                                             >
@@ -7097,16 +7271,16 @@ const ve = [
                                     <h2>
                                       ${this.selected ? "Edit viewing" : this.draft ? "New viewing" : "Viewing details"}
                                     </h2>
-                                    ${this.dirty() ? n`<span class="badge">Unsaved</span>` : h}
+                                    ${this.dirty() ? r`<span class="badge">Unsaved</span>` : h}
                                   </div>
                                   ${this.renderEditor()}
                                 </section>
                               </div> `}
-              </section>` : n`<div class="empty" role="status">
+              </section>` : r`<div class="empty" role="status">
                 <strong
                   >${this.loading ? "Connecting to the journal…" : "Journal unavailable"}</strong
-                >${this.loading ? h : n`<button @click=${() => this.refresh()}>Reload connection</button>`}
-              </div>` : n`<div class="empty">
+                >${this.loading ? h : r`<button @click=${() => this.refresh()}>Reload connection</button>`}
+              </div>` : r`<div class="empty">
               <strong>Connect through Home Assistant</strong>
               <p>
                 Open Kaleidescape Companion in HA with an administrator account,
@@ -7116,13 +7290,13 @@ const ve = [
     </main>`;
   }
 };
-pe.properties = {
+ge.properties = {
   hass: { attribute: !1 },
   client: { attribute: !1 },
   narrow: { type: Boolean }
-}, pe.styles = w;
-let Te = pe;
-customElements.get("kaleidescape-panel") || customElements.define("kaleidescape-panel", Te);
+}, ge.styles = w;
+let Pe = ge;
+customElements.get("kaleidescape-panel") || customElements.define("kaleidescape-panel", Pe);
 export {
-  Te as KaleidescapePanel
+  Pe as KaleidescapePanel
 };

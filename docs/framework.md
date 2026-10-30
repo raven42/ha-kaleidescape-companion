@@ -41,6 +41,10 @@ The product name is **Kaleidescape Companion**. The HA domain
   [calendar publishing](calendar.md) with durable one-attempt receipts. Schema
   14 adds configurable descriptions and explicit, matched historical Journal
   export. Monthly calendar views and an HA card remain planned.
+- Shared Library metadata snapshots for manual/observed viewings, persisted
+  before observed completion enqueue. Settings provides a reviewed, fill-only
+  repair for older Journal entries, preserving raw identities, existing values,
+  active sessions and calendar receipts without device/provider writes.
 - Schema 9 stores [purchase dates](purchase-dates.md) on title versions and
   consolidates import audit. [Reviewed merge imports](imports.md) add new
   records and fill missing viewing/Library metadata by exact ID, with selectable

@@ -1,5 +1,15 @@
 # Changelog
 
+## Observed viewing metadata and Journal repair
+
+- Save bounded Library metadata and exact version links for observed viewings,
+  independently of calendar publishing; recognize the observed playback/browser
+  handle spelling difference without changing raw IDs or guessing by title.
+- Add a reviewed Settings repair for missing Journal metadata, with fill-only
+  updates, active-session protection, durable retries and content-free audit.
+- Use the same matching and snapshot logic for manual viewings, recording and
+  calendar rendering. Existing calendar events are not rewritten.
+
 ## Search options and spacing
 
 - Add independent, sticky Journal and Library fuzzy-search options covering

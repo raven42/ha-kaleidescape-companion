@@ -403,6 +403,8 @@ export function errorMessage(error: unknown): string {
       "The library changed during sync. Previous collection data was retained; try again later.",
     query_limit:
       "This search exceeded its execution budget. Refine the text or simplify the conditions and try again.",
+    repair_limit:
+      "Metadata repair exceeded its 10,000-entry or execution limit. No changes were saved.",
     query_syntax:
       "Check the field names, operators and quoted values in the condition.",
     database_page_too_large:
@@ -444,11 +446,37 @@ export async function withRequestDeadline<T>(request: Promise<T>): Promise<T> {
   }
 }
 
+export interface MetadataRepairResult {
+  updated_count: number;
+  unchanged_count: number;
+  unmatched_count: number;
+  active_count: number;
+  revision: number;
+}
+export type MetadataReview = Omit<MetadataRepairResult, "revision"> & {
+  token: string;
+};
+
 export class JournalClient {
   constructor(private readonly transport: Transport) {}
 
   call<T>(message: ApiMessage): Promise<T> {
     return withRequestDeadline(this.transport.callWS<T>(message));
+  }
+  metadataPreview(scope: Scope): Promise<MetadataReview> {
+    return this.call({
+      type: `${DOMAIN}/journal/metadata/preview`,
+      ...scopeFields(scope),
+    });
+  }
+  prepareMetadataRepair(scope: Scope, token: string) {
+    return this.prepareCommand(scope, "journal/metadata/repair", {
+      token,
+      confirmation: "REPAIR METADATA",
+    });
+  }
+  repairMetadata(pending: PreparedMutation): Promise<MetadataRepairResult> {
+    return this.call({ ...pending.message });
   }
   uiPreferences(
     scope: Scope,

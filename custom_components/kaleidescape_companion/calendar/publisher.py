@@ -13,7 +13,7 @@ from ..core.models import JournalError
 from ..core.security import async_finish_cleanup
 from ..library.config import origin
 from ..library.store import source_id
-from ..playback.manual import metadata_text
+from ..playback.metadata import metadata_text
 from .config import DEFAULTS, FIELDS, fingerprint, target, template
 
 _LOGGER = logging.getLogger(__name__)

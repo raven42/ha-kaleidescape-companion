@@ -5,6 +5,7 @@ import sqlite3
 from datetime import datetime, timedelta
 from uuid import uuid4
 
+from .metadata import missing_changes
 from .tracker import RULE_VERSION
 
 
@@ -14,6 +15,7 @@ def save_session(
     minimum_seconds: float,
     resume_hours: float,
     calendar: dict | None = None,
+    library_source: str | None = None,
 ) -> str:
     """Commit a checkpoint and its derived viewing atomically and idempotently."""
     previous = db.execute(
@@ -95,6 +97,7 @@ def save_session(
             changes = {
                 "updated_at": snapshot["last_observed_at"],
                 "revision": viewing["revision"] + (0 if created else 1),
+                **missing_changes(db, viewing, library_source),
             }
             if "watched_seconds" not in corrected:
                 changes["watched_seconds"] = total

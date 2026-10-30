@@ -15,6 +15,47 @@ mark a Library title Watched, change collections, or control playback. Library
 sync need not be enabled for automatic viewing titles/times to publish; Library
 metadata is included when an exact cached version can be resolved.
 
+Manual and observed viewings save the same bounded Library snapshot and version
+reference. Recording fills missing snapshot fields at checkpoints, including
+completion before its calendar receipt is queued. This works with Library sync
+enabled even when calendar publishing is disabled. If no cached version matches,
+recording continues with viewing titles/times; it does not contact the device to
+look up details. Calendar rendering also attempts the same local resolution for
+older entries whose snapshots are missing or incomplete.
+
+## Repair existing Journal metadata
+
+After updating Companion, sync the Library's title details, save any Settings
+changes, then use **Settings → Journal Library metadata → Repair Journal Library
+metadata**. Review the counts and choose **Repair missing metadata**. This
+updates the live Journal through its worker; replacing or importing the database
+is unnecessary. Take a normal HA backup first if you want a restore point.
+
+The repair fills missing snapshot values and version references without
+overwriting existing values, viewing/session times, completion state or notes.
+It skips tombstones and open sessions, reports unmatched entries, and can be run
+again after a later Library sync. Matching is scoped to the configured source
+and uses exact version IDs/handles. The locally verified spelling bridge
+`26-N.0-S_<eight hex digits>` → `N-S_<same digits>` is also accepted; other
+spellings stay exact, and ambiguous handles are skipped. This bridge comes from
+saved playback/browser data, not a general vendor guarantee. Movie names, years
+and fuzzy searches are never used to guess a version. Descriptive fallback still
+follows the Library's exact source group, keeping remake metadata apart.
+
+The preview is checked again before an atomic repair. Changed candidates require
+another review. Recording/sync may stay enabled; active entries are left for
+their next checkpoint or a later repair. Backup and active import/export block
+new repairs. The action is bounded to 10,000 visible Journal entries and a
+ten-second application budget checked between rows; a limit rolls back the
+entire repair. Request UUIDs retain the original actor-bound result after a lost
+response. Revisions change only for updated viewings; a protected content-free
+`database_audit` receipt records the action.
+
+Repairing metadata does **not** queue calendar writes or change existing events.
+The ordinary Journal export skips matching title/start/end events and does not
+refresh their descriptions. Correct already-created events in the calendar
+provider if their details need updating.
+
 ## Templates and event metadata
 
 The default event title is `Watched: {title}`. The editable description starts
@@ -66,8 +107,9 @@ publication receipt, including across restarts, status changes and calendar
 configuration changes. Receipts contain target/state/timestamps and a config
 fingerprint, not copied titles, notes, templates or event descriptions. The two
 protected viewing columns hold an exact version reference and bounded public
-metadata snapshot for manual entries. They are not part of household viewing
-responses or portable JSON imports/exports; SQLite backups preserve them.
+metadata snapshot for manual and observed entries. They are not part of
+household viewing responses or portable JSON imports/exports; SQLite backups
+preserve them.
 
 The publisher checks for queued work every ten seconds, at most one event per
 tick. An unavailable calendar/service leaves work queued. Before an external

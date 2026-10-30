@@ -1,5 +1,13 @@
 # Household journal and management UI
 
+Existing Journal entries can recover missing cached movie details through
+**Settings → Journal Library metadata → Repair Journal Library metadata**. The
+compact confirmation previews updated/unchanged/unmatched/active counts and
+fills only missing fields. Open sessions are skipped; existing calendar events
+are untouched. Save native settings and sync Library details first. See
+[metadata repair](calendar.md#repair-existing-journal-metadata) for identity
+rules, retry behavior and limits.
+
 The household reader lets active users browse viewing summaries. The
 administrator UI manages journal records through the existing HA API. It
 provides title search, status filters, 25-record pages, manual entries,

@@ -807,11 +807,35 @@ title/runtime/end/source data and a bounded display snapshot. Invented titles,
 runtime overrides and caller-supplied metadata are rejected; existing imports
 and corrections remain separately validated. Library readiness/opt-out and
 user/entry/dataset checks apply before and after awaited work. Actor-bound exact
-retries survive source metadata changes. Private manual snapshots contain
+retries survive source metadata changes. Private viewing snapshots contain
 positive public metadata, bounded text/lists, no device
 origins/paths/credentials, and stay outside household journal projections and
 portable imports/exports. Journal sort expressions are fixed and cursors bind
 sort, filters and mode; callers supply no SQL.
+
+Observed checkpoints now persist the same bounded snapshot before completion
+enqueue, independently of calendar opt-in. Resolution is restricted to the
+native configured Library source and exact stored version IDs/handles. Only the
+locally verified `26-N.0-S_<eight hex digits>` → `N-S_<same digits>` spelling
+bridge is accepted in addition to exact handles. Raw IDs are preserved, case is
+not folded, unknown forms remain unmatched, and multiple matches are rejected.
+Names/year are never identity fallbacks. Work-level descriptive fallback remains
+restricted to an exact source group; version-specific runtime/format/artwork
+stay separate.
+
+Administrator-only `journal/metadata/preview` and `journal/metadata/repair`
+provide local fill-only repair with active-user/admin/entry/dataset/Library
+checks before and after awaited work. They add no network, SQL, file or HA
+action proxy. Preview returns counts and a hash of current candidates;
+confirmation recomputes it on the worker and rejects changed candidates. Open
+sessions and tombstones are skipped. Repairs preserve nonempty snapshot values,
+playback identity/timing/corrections and calendar receipts. Request UUIDs bind
+source, review token and actor; content-free `database_audit` and request
+receipts commit with the change. New writes respect backup/transfer barriers and
+roll back on failure, including a 10,000-entry or ten-second between-row
+execution limit. Existing actor-bound receipts can be retrieved while paused.
+Repair does not enqueue publication, retry uncertain events, or edit remote
+descriptions.
 
 Calendar publishing is a separate native HA opt-in, false by default. It permits
 one fixed `calendar.create_event` action on the selected writable calendar, not
