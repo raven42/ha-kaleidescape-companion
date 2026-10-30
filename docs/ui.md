@@ -379,15 +379,12 @@ plural otherwise, including entry/entries.
 
 ## Search options
 
-Journal offers **Options → Fuzzy search** to administrators and household
-readers, saved in a personal Journal settings row. It governs Journal title
-search and the administrator's New entry / Movie from Library completion.
-Library Options has an independent toggle for its main text search,
-filter-values search and actor/director autocomplete. Both default enabled. Off
-uses literal case-insensitive partial strings; on also tolerates bounded
-misspellings, transpositions, diacritics and word-order differences. Selected
-facets and Database query syntax remain exact. Database's separate
-manual-viewing picker retains its default fuzzy completion.
+Journal and Library both offer **Options → Fuzzy search** to control one
+personal search setting, saved in the `search` settings row. It governs searches
+and completion across both views and manual title pickers, including Database.
+It defaults enabled. Off uses literal case-insensitive partial strings; on also
+tolerates bounded misspellings, transpositions, diacritics and word-order
+differences. Selected facets and Database query syntax remain exact.
 
 Modes save immediately without an HA reload, reset pagination and invalidate
 older suggestions. Changing mode while a manual picker is open preserves its

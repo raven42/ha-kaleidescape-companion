@@ -1043,14 +1043,21 @@ system-table toggle without changing their field/edit/delete policy.
 
 ## Search preferences and bounded fuzzy reads
 
-Personal Journal preferences use `area=journal` and one strictly boolean
-`fuzzy_search` field. Library preferences have an independent boolean. Both
-default enabled in the UI. Existing active-user ownership, dataset/readiness
-checks, actor/area-bound UUID receipts and post-await revocation checks apply.
-Shared preferences remain Library-only. Journal options grant no management
-rights, use the existing settings table and need no schema migration.
-Administrators can inspect/edit only the known Journal preference row through
-the protected Database settings editor.
+Personal search preferences use `area=search` and one strictly boolean
+`fuzzy_search` field, enabled by default. Journal and Library controls read and
+write this same actor-owned row. Manual title pickers, including Database's,
+restore the same choice. Database query syntax and exact filters are unaffected.
+Active-user ownership, dataset/readiness checks, actor/area-bound UUID receipts
+and post-await revocation checks apply. Shared preferences remain Library-only.
+The protected Database settings editor validates the known search preference
+row.
+
+Startup consolidates legacy Journal/Library values using the most recently saved
+row, removes obsolete per-view keys and preserves other preferences. A saved
+search row takes precedence on repeated startup. Consolidation runs atomically
+on the repository worker and advances the settings revision; it neither imports
+settings nor changes household access or journal/catalog content revisions. No
+schema change is required.
 
 Read-only `journal/list`, `library/list`, `library/search` and `library/suggest`
 accept a validated boolean fuzzy flag. Journal cursors bind it to prevent

@@ -19,6 +19,59 @@ class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = library.LibraryStorageTest.asyncSetUp
     assert_error = library.LibraryStorageTest.assert_error
 
+    async def test_search_preferences_consolidate_latest_legacy_choice_once(self):
+        def legacy_rows(db):
+            with db:
+                for owner, key, values, stamp in (
+                    (
+                        "user:a",
+                        "library",
+                        {"view": "covers", "fuzzy_search": True},
+                        "2025-01-01",
+                    ),
+                    ("user:a", "journal", {"fuzzy_search": False}, "2025-02-01"),
+                    ("user:b", "journal", {"fuzzy_search": False}, "2025-01-01"),
+                    ("user:b", "library", {"fuzzy_search": True}, "2025-02-01"),
+                ):
+                    db.execute(
+                        "INSERT INTO settings VALUES (?,?,?,?,?)",
+                        (owner, key, json.dumps(values), 1, stamp),
+                    )
+
+        await self.repository._call(legacy_rows, self.repository._db())
+        await self.repository.async_seed_ui_preferences({})
+        a = await self.repository.async_ui_preferences("a", area="search")
+        b = await self.repository.async_ui_preferences("b", area="search")
+        self.assertFalse(a["values"]["fuzzy_search"])
+        self.assertTrue(b["values"]["fuzzy_search"])
+        personal = await self.repository.async_ui_preferences("a")
+        self.assertEqual(personal["values"]["view"], "covers")
+        self.assertNotIn("fuzzy_search", personal["values"])
+        self.assertEqual(
+            await self.repository._call(
+                lambda: (
+                    self.repository._db()
+                    .execute("SELECT count(*) FROM settings WHERE key='journal'")
+                    .fetchone()[0]
+                )
+            ),
+            0,
+        )
+        await self.repository.async_ui_preferences_update(
+            "a", False, str(uuid4()), a["revision"], {"fuzzy_search": True}, "search"
+        )
+        await self.repository.async_seed_ui_preferences({})
+        self.assertTrue(
+            (await self.repository.async_ui_preferences("a", area="search"))["values"][
+                "fuzzy_search"
+            ]
+        )
+        for area in ("journal", "library"):
+            with self.assert_error("invalid_request"):
+                await self.repository.async_ui_preferences_update(
+                    "a", False, str(uuid4()), 0, {"fuzzy_search": False}, area
+                )
+
     async def test_new_detail_filters_default_and_persist_per_user_without_migration(
         self,
     ):
@@ -385,7 +438,7 @@ class UISettingsApiTest(unittest.IsolatedAsyncioTestCase):
             "ui/preferences/update",
             user=reader,
             **self.scope,
-            area="journal",
+            area="search",
             request_id=str(uuid4()),
             revision=0,
             patch={"fuzzy_search": False},
@@ -393,11 +446,11 @@ class UISettingsApiTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(result["success"])
         own = (
             await self.call(
-                "ui/preferences/get", user=reader, **self.scope, area="journal"
+                "ui/preferences/get", user=reader, **self.scope, area="search"
             )
         )["result"]
         self.assertFalse(own["values"]["fuzzy_search"])
-        admin = (await self.call("ui/preferences/get", **self.scope, area="journal"))[
+        admin = (await self.call("ui/preferences/get", **self.scope, area="search"))[
             "result"
         ]
         self.assertTrue(admin["values"]["fuzzy_search"])
@@ -405,7 +458,7 @@ class UISettingsApiTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             (
                 await self.call(
-                    "ui/preferences/get", user=reader, **self.scope, area="journal"
+                    "ui/preferences/get", user=reader, **self.scope, area="search"
                 )
             )["code"],
             "unauthorized",

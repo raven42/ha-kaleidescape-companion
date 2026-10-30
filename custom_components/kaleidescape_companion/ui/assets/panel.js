@@ -1,7 +1,7 @@
 function y(n, e, t = `${e}s`) {
   return `${n} ${n === 1 ? e : t}`;
 }
-const G = globalThis, je = G.ShadowRoot && (G.ShadyCSS === void 0 || G.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, Oe = /* @__PURE__ */ Symbol(), Fe = /* @__PURE__ */ new WeakMap();
+const X = globalThis, je = X.ShadowRoot && (X.ShadyCSS === void 0 || X.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, Oe = /* @__PURE__ */ Symbol(), Fe = /* @__PURE__ */ new WeakMap();
 let dt = class {
   constructor(e, t, i) {
     if (this._$cssResult$ = !0, i !== Oe) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
@@ -30,7 +30,7 @@ const _t = (n) => new dt(typeof n == "string" ? n : n + "", void 0, Oe), _ = (n,
 }, qt = (n, e) => {
   if (je) n.adoptedStyleSheets = e.map((t) => t instanceof CSSStyleSheet ? t : t.styleSheet);
   else for (const t of e) {
-    const i = document.createElement("style"), s = G.litNonce;
+    const i = document.createElement("style"), s = X.litNonce;
     s !== void 0 && i.setAttribute("nonce", s), i.textContent = t.cssText, n.appendChild(i);
   }
 }, We = je ? (n) => n : (n) => n instanceof CSSStyleSheet ? ((e) => {
@@ -38,7 +38,7 @@ const _t = (n) => new dt(typeof n == "string" ? n : n + "", void 0, Oe), _ = (n,
   for (const i of e.cssRules) t += i.cssText;
   return _t(t);
 })(n) : n;
-const { is: St, defineProperty: Ct, getOwnPropertyDescriptor: Et, getOwnPropertyNames: Rt, getOwnPropertySymbols: Ut, getPrototypeOf: zt } = Object, be = globalThis, Je = be.trustedTypes, At = Je ? Je.emptyScript : "", Lt = be.reactiveElementPolyfillSupport, I = (n, e) => n, we = { toAttribute(n, e) {
+const { is: St, defineProperty: Ct, getOwnPropertyDescriptor: Et, getOwnPropertyNames: Rt, getOwnPropertySymbols: Ut, getPrototypeOf: zt } = Object, me = globalThis, Je = me.trustedTypes, At = Je ? Je.emptyScript : "", Lt = me.reactiveElementPolyfillSupport, I = (n, e) => n, we = { toAttribute(n, e) {
   switch (e) {
     case Boolean:
       n = n ? At : null;
@@ -67,7 +67,7 @@ const { is: St, defineProperty: Ct, getOwnPropertyDescriptor: Et, getOwnProperty
   }
   return t;
 } }, ct = (n, e) => !St(n, e), Ve = { attribute: !0, type: String, converter: we, reflect: !1, useDefault: !1, hasChanged: ct };
-Symbol.metadata ??= /* @__PURE__ */ Symbol("metadata"), be.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
+Symbol.metadata ??= /* @__PURE__ */ Symbol("metadata"), me.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
 let A = class extends HTMLElement {
   static addInitializer(e) {
     this._$Ei(), (this.l ??= []).push(e);
@@ -249,8 +249,8 @@ let A = class extends HTMLElement {
   firstUpdated(e) {
   }
 };
-A.elementStyles = [], A.shadowRootOptions = { mode: "open" }, A[I("elementProperties")] = /* @__PURE__ */ new Map(), A[I("finalized")] = /* @__PURE__ */ new Map(), Lt?.({ ReactiveElement: A }), (be.reactiveElementVersions ??= []).push("2.1.2");
-const Ne = globalThis, Ke = (n) => n, X = Ne.trustedTypes, Ye = X ? X.createPolicy("lit-html", { createHTML: (n) => n }) : void 0, ut = "$lit$", C = `lit$${Math.random().toFixed(9).slice(2)}$`, pt = "?" + C, Tt = `<${pt}>`, U = document, B = () => U.createComment(""), H = (n) => n === null || typeof n != "object" && typeof n != "function", Me = Array.isArray, Pt = (n) => Me(n) || typeof n?.[Symbol.iterator] == "function", ve = `[ 	
+A.elementStyles = [], A.shadowRootOptions = { mode: "open" }, A[I("elementProperties")] = /* @__PURE__ */ new Map(), A[I("finalized")] = /* @__PURE__ */ new Map(), Lt?.({ ReactiveElement: A }), (me.reactiveElementVersions ??= []).push("2.1.2");
+const Ne = globalThis, Ke = (n) => n, Q = Ne.trustedTypes, Ye = Q ? Q.createPolicy("lit-html", { createHTML: (n) => n }) : void 0, ut = "$lit$", C = `lit$${Math.random().toFixed(9).slice(2)}$`, pt = "?" + C, Tt = `<${pt}>`, U = document, B = () => U.createComment(""), H = (n) => n === null || typeof n != "object" && typeof n != "function", Me = Array.isArray, Pt = (n) => Me(n) || typeof n?.[Symbol.iterator] == "function", ve = `[ 	
 \f\r]`, D = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, Ge = /-->/g, Xe = />/g, E = RegExp(`>|${ve}(?:([^\\s"'>=/]+)(${ve}*=${ve}*(?:[^ 	
 \f\r"'\`<>=]|("|')|))|$)`, "g"), Qe = /'/g, Ze = /"/g, gt = /^(?:script|style|textarea|title)$/i, Dt = (n) => (e, ...t) => ({ _$litType$: n, strings: e, values: t }), r = Dt(1), x = /* @__PURE__ */ Symbol.for("lit-noChange"), l = /* @__PURE__ */ Symbol.for("lit-nothing"), et = /* @__PURE__ */ new WeakMap(), R = U.createTreeWalker(U, 129);
 function ft(n, e) {
@@ -282,13 +282,13 @@ class F {
     for (; (s = R.nextNode()) !== null && d.length < h; ) {
       if (s.nodeType === 1) {
         if (s.hasAttributes()) for (const b of s.getAttributeNames()) if (b.endsWith(ut)) {
-          const q = g[o++], S = s.getAttribute(b).split(C), J = /([.?@])?(.*)/.exec(q);
-          d.push({ type: 1, index: a, name: J[2], strings: S, ctor: J[1] === "." ? Nt : J[1] === "?" ? Mt : J[1] === "@" ? It : me }), s.removeAttribute(b);
+          const q = g[o++], S = s.getAttribute(b).split(C), V = /([.?@])?(.*)/.exec(q);
+          d.push({ type: 1, index: a, name: V[2], strings: S, ctor: V[1] === "." ? Nt : V[1] === "?" ? Mt : V[1] === "@" ? It : ye }), s.removeAttribute(b);
         } else b.startsWith(C) && (d.push({ type: 6, index: a }), s.removeAttribute(b));
         if (gt.test(s.tagName)) {
           const b = s.textContent.split(C), q = b.length - 1;
           if (q > 0) {
-            s.textContent = X ? X.emptyScript : "";
+            s.textContent = Q ? Q.emptyScript : "";
             for (let S = 0; S < q; S++) s.append(b[S], B()), R.nextNode(), d.push({ type: 2, index: ++a });
             s.append(b[q], B());
           }
@@ -329,7 +329,7 @@ class Ot {
     for (; d !== void 0; ) {
       if (o === d.index) {
         let c;
-        d.type === 2 ? c = new W(a, a.nextSibling, this, e) : d.type === 1 ? c = new d.ctor(a, d.name, d.strings, this, e) : d.type === 6 && (c = new Bt(a, this, e)), this._$AV.push(c), d = i[++h];
+        d.type === 2 ? c = new J(a, a.nextSibling, this, e) : d.type === 1 ? c = new d.ctor(a, d.name, d.strings, this, e) : d.type === 6 && (c = new Bt(a, this, e)), this._$AV.push(c), d = i[++h];
       }
       o !== d?.index && (a = R.nextNode(), o++);
     }
@@ -340,7 +340,7 @@ class Ot {
     for (const i of this._$AV) i !== void 0 && (i.strings !== void 0 ? (i._$AI(e, i, t), t += i.strings.length - 2) : i._$AI(e[t])), t++;
   }
 }
-class W {
+class J {
   get _$AU() {
     return this._$AM?._$AU ?? this._$Cv;
   }
@@ -386,7 +386,7 @@ class W {
     Me(this._$AH) || (this._$AH = [], this._$AR());
     const t = this._$AH;
     let i, s = 0;
-    for (const a of e) s === t.length ? t.push(i = new W(this.O(B()), this.O(B()), this, this.options)) : i = t[s], i._$AI(a), s++;
+    for (const a of e) s === t.length ? t.push(i = new J(this.O(B()), this.O(B()), this, this.options)) : i = t[s], i._$AI(a), s++;
     s < t.length && (this._$AR(i && i._$AB.nextSibling, s), t.length = s);
   }
   _$AR(e = this._$AA.nextSibling, t) {
@@ -399,7 +399,7 @@ class W {
     this._$AM === void 0 && (this._$Cv = e, this._$AP?.(e));
   }
 }
-class me {
+class ye {
   get tagName() {
     return this.element.tagName;
   }
@@ -424,7 +424,7 @@ class me {
     e === l ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, e ?? "");
   }
 }
-class Nt extends me {
+class Nt extends ye {
   constructor() {
     super(...arguments), this.type = 3;
   }
@@ -432,7 +432,7 @@ class Nt extends me {
     this.element[this.name] = e === l ? void 0 : e;
   }
 }
-class Mt extends me {
+class Mt extends ye {
   constructor() {
     super(...arguments), this.type = 4;
   }
@@ -440,7 +440,7 @@ class Mt extends me {
     this.element.toggleAttribute(this.name, !!e && e !== l);
   }
 }
-class It extends me {
+class It extends ye {
   constructor(e, t, i, s, a) {
     super(e, t, i, s, a), this.type = 5;
   }
@@ -465,18 +465,18 @@ class Bt {
   }
 }
 const Ht = Ne.litHtmlPolyfillSupport;
-Ht?.(F, W), (Ne.litHtmlVersions ??= []).push("3.3.3");
+Ht?.(F, J), (Ne.litHtmlVersions ??= []).push("3.3.3");
 const Ft = (n, e, t) => {
   const i = t?.renderBefore ?? e;
   let s = i._$litPart$;
   if (s === void 0) {
     const a = t?.renderBefore ?? null;
-    i._$litPart$ = s = new W(e.insertBefore(B(), a), a, void 0, t ?? {});
+    i._$litPart$ = s = new J(e.insertBefore(B(), a), a, void 0, t ?? {});
   }
   return s._$AI(n), s;
 };
 const Ie = globalThis;
-let v = class extends A {
+let $ = class extends A {
   constructor() {
     super(...arguments), this.renderOptions = { host: this }, this._$Do = void 0;
   }
@@ -498,9 +498,9 @@ let v = class extends A {
     return x;
   }
 };
-v._$litElement$ = !0, v.finalized = !0, Ie.litElementHydrateSupport?.({ LitElement: v });
+$._$litElement$ = !0, $.finalized = !0, Ie.litElementHydrateSupport?.({ LitElement: $ });
 const Wt = Ie.litElementPolyfillSupport;
-Wt?.({ LitElement: v });
+Wt?.({ LitElement: $ });
 (Ie.litElementVersions ??= []).push("4.2.2");
 class p extends Error {
   constructor(e) {
@@ -524,7 +524,7 @@ function Yt() {
   ).join("");
   return `${t.slice(0, 8)}-${t.slice(8, 12)}-${t.slice(12, 16)}-${t.slice(16, 20)}-${t.slice(20)}`;
 }
-async function V(n, e, t) {
+async function K(n, e, t) {
   const i = n.body?.getReader();
   if (!i) throw new p("storage_error");
   const s = [];
@@ -545,7 +545,7 @@ async function V(n, e, t) {
 function u(n) {
   return typeof n == "object" && n !== null && "code" in n && typeof n.code == "string" ? n.code : "connection_lost";
 }
-function $(n) {
+function v(n) {
   return {
     unauthorized: "Access to this operation is denied. Your journal has been cleared from this view.",
     not_ready: "The integration is not loaded. Reload the connection after it starts.",
@@ -742,7 +742,7 @@ class bt {
     const a = s.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase();
     if (!a || !["image/jpeg", "image/png", "image/webp"].includes(a))
       throw await s.body?.cancel(), new p("invalid_request");
-    return V(s, tt, a);
+    return K(s, tt, a);
   }
   settings(e, t, i = {}) {
     return this.call({
@@ -824,7 +824,7 @@ class bt {
       const d = await a.json().catch(() => null);
       throw new p(d?.code ?? "connection_lost");
     }
-    const o = await V(
+    const o = await K(
       a,
       8 * 1024 * 1024,
       "application/json"
@@ -852,7 +852,7 @@ class bt {
       );
     }
     const s = i.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase();
-    return !s || !["image/jpeg", "image/png", "image/webp"].includes(s) ? (await i.body?.cancel(), null) : V(i, tt, s);
+    return !s || !["image/jpeg", "image/png", "image/webp"].includes(s) ? (await i.body?.cancel(), null) : K(i, tt, s);
   }
   librarySuggestions(e, t, i, s = !1) {
     return this.call({
@@ -967,22 +967,22 @@ class bt {
       };
       throw new p(o[a.status] ?? "storage_error");
     }
-    return V(
+    return K(
       a,
       Vt,
       t === "json" ? "application/json" : "application/vnd.sqlite3"
     );
   }
 }
-function Q(n) {
+function Z(n) {
   const e = new Date(n);
   return new Date(e.getTime() - e.getTimezoneOffset() * 6e4).toISOString().slice(0, 19);
 }
 function it(n) {
   return {
     title: n?.title ?? "",
-    started_at: Q(n?.started_at ?? (/* @__PURE__ */ new Date()).toISOString()),
-    ended_at: n?.ended_at ? Q(n.ended_at) : "",
+    started_at: Z(n?.started_at ?? (/* @__PURE__ */ new Date()).toISOString()),
+    ended_at: n?.ended_at ? Z(n.ended_at) : "",
     duration_seconds: n?.duration_seconds == null ? "" : (n.duration_seconds / 60).toFixed(2),
     watched_seconds: ((n?.watched_seconds ?? 0) / 60).toFixed(2),
     status: n?.status ?? "partial",
@@ -2149,8 +2149,8 @@ function M(n, e, t = !1) {
 function L(n) {
   return n.toLocaleLowerCase() === "played" ? "Watched" : n;
 }
-function Z() {
-  const n = Q((/* @__PURE__ */ new Date()).toISOString());
+function ee() {
+  const n = Z((/* @__PURE__ */ new Date()).toISOString());
   return {
     library_title_id: "",
     date: n.slice(0, 10),
@@ -2172,7 +2172,7 @@ function yt(n) {
     throw new Error("Enter a valid local time.");
   s && (t = t % 12 + (s === "pm" ? 12 : 0));
   const a = `${n.date}T${String(t).padStart(2, "0")}:${String(i).padStart(2, "0")}:00`, o = new Date(a);
-  if (!Number.isFinite(o.getTime()) || Q(o.toISOString()) !== a)
+  if (!Number.isFinite(o.getTime()) || Z(o.toISOString()) !== a)
     throw new Error(
       "That local date/time does not exist. Check the date or daylight-saving transition."
     );
@@ -2187,9 +2187,9 @@ function yt(n) {
     ...n.status === "partial" ? { watched_seconds: h } : {}
   };
 }
-const te = class te extends v {
+const ie = class ie extends $ {
   constructor() {
-    super(...arguments), this.draft = Z(), this.disabled = !1, this.fuzzySearch = !0, this.query = "", this.items = [], this.open = !1, this.active = 0, this.error = "", this.request = 0, this.bound = "";
+    super(...arguments), this.draft = ee(), this.disabled = !1, this.fuzzySearch = !0, this.query = "", this.items = [], this.open = !1, this.active = 0, this.error = "", this.request = 0, this.bound = "";
   }
   willUpdate(e) {
     if (e.has("client") || e.has("scope")) {
@@ -2225,7 +2225,7 @@ const te = class te extends v {
         );
         t === this.request && this.isConnected && (this.items = i.items, this.requestUpdate());
       } catch (i) {
-        t === this.request && (this.error = $(i), this.requestUpdate(), u(i) === "unauthorized" && this.dispatchEvent(
+        t === this.request && (this.error = v(i), this.requestUpdate(), u(i) === "unauthorized" && this.dispatchEvent(
           new CustomEvent("access-denied", {
             bubbles: !0,
             composed: !0
@@ -2311,14 +2311,14 @@ const te = class te extends v {
     </fieldset>`;
   }
 };
-te.properties = {
+ie.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   draft: { attribute: !1 },
   disabled: { type: Boolean },
   fuzzySearch: { attribute: !1 }
-}, te.styles = [k, mt];
-let ke = te;
+}, ie.styles = [k, mt];
+let ke = ie;
 customElements.get("kaleidescape-manual-viewing") || customElements.define("kaleidescape-manual-viewing", ke);
 const He = _`
   .entries-header {
@@ -2695,7 +2695,7 @@ class hi {
     this.readers.clear();
   }
 }
-class ee {
+class te {
   constructor() {
     this.cache = new hi(), this.active = 0, this.waiting = [];
   }
@@ -2715,7 +2715,7 @@ class ee {
     });
   }
 }
-const ie = class ie extends v {
+const se = class se extends $ {
   constructor() {
     super(...arguments), this.title = "", this.visible = !1, this.generation = 0, this.visibility = () => {
       document.hidden ? this.cancelLoad() : this.load();
@@ -2792,13 +2792,13 @@ const ie = class ie extends v {
         />` : r`<span>No cached artwork</span>`;
   }
 };
-ie.properties = {
+se.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   queue: { attribute: !1 },
   artworkKey: { attribute: !1 },
   title: { type: String }
-}, ie.styles = _`
+}, se.styles = _`
     :host {
       display: grid;
       width: 100%;
@@ -2818,9 +2818,9 @@ ie.properties = {
       font: inherit;
     }
   `;
-let xe = ie;
+let xe = se;
 customElements.get("kaleidescape-library-cover") || customElements.define("kaleidescape-library-cover", xe);
-class ye {
+class W {
   constructor(e, t, i, s, a = "library") {
     this.client = e, this.scope = t, this.shared = i, this.error = s, this.area = a, this.values = {}, this.revision = 0, this.active = !0, this.sequence = 0, this.versions = /* @__PURE__ */ new Map(), this.failed = {};
   }
@@ -2870,7 +2870,7 @@ class ye {
     this.active = !1, this.values = {}, this.failed = {}, this.versions.clear();
   }
 }
-const se = class se extends v {
+const ae = class ae extends $ {
   constructor() {
     super(...arguments), this.revision = 0, this.enabled = !1, this.blocked = !1, this.generation = 0, this.choices = [], this.selected = "", this.loading = !1, this.busy = !1, this.error = "", this.notice = "";
   }
@@ -2899,7 +2899,7 @@ const se = class se extends v {
     e?.preventDefault(), this.confirmNavigation() && (this.generation++, this.loading = !1, this.renderRoot.querySelector("dialog")?.close(), this.requestUpdate());
   }
   fail(e) {
-    this.error = $(e), ["unauthorized", "library_disabled"].includes(u(e)) && (this.clear(), this.dispatchEvent(
+    this.error = v(e), ["unauthorized", "library_disabled"].includes(u(e)) && (this.clear(), this.dispatchEvent(
       new CustomEvent(
         u(e) === "unauthorized" ? "access-denied" : "library-disabled",
         { bubbles: !0, composed: !0 }
@@ -3035,15 +3035,15 @@ const se = class se extends v {
       </dialog>`;
   }
 };
-se.properties = {
+ae.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   version: { attribute: !1 },
   revision: { type: Number },
   enabled: { type: Boolean },
   blocked: { type: Boolean }
-}, se.styles = k;
-let _e = se;
+}, ae.styles = k;
+let _e = ae;
 customElements.get("kaleidescape-library-collection-add") || customElements.define(
   "kaleidescape-library-collection-add",
   _e
@@ -3068,18 +3068,18 @@ const j = [
   ["show_format", "Show format"],
   ["show_badges", "Show library badges"],
   ["show_rating", "Show rating on covers"]
-], K = {
+], Y = {
   watched: "Watched",
   unwatched: "Unwatched",
   in_progress: "In progress",
   unknown: "Unknown"
-}, ae = class ae extends v {
+}, re = class re extends $ {
   constructor() {
     super(...arguments), this.bound = "", this.generation = 0, this.listRequest = 0, this.statusRequest = 0, this.versionRequest = 0, this.versionsLoading = !1, this.versionsError = "", this.widths = [360, 90, 260, 150, 140, 210], this.collectionLocked = !1, this.checkingCollection = !1, this.filters = {
       query: "",
       sort: "name",
       descending: !1
-    }, this.applied = { ...this.filters }, this.loading = !1, this.requesting = !1, this.error = "", this.notice = "", this.covers = new ee(), this.fuzzySearch = !0, this.mode = "list", this.coverSize = 150, this.display = {
+    }, this.applied = { ...this.filters }, this.loading = !1, this.requesting = !1, this.error = "", this.notice = "", this.covers = new te(), this.fuzzySearch = !0, this.mode = "list", this.coverSize = 150, this.display = {
       show_titles: !0,
       show_format: !0,
       show_badges: !0,
@@ -3105,27 +3105,38 @@ const j = [
   async initializePreferences() {
     if (!this.client || !this.scope) return;
     const e = this.generation;
-    this.preferences = new ye(
+    this.preferences = new W(
       this.client,
       this.scope,
       !1,
       (t) => {
-        e === this.generation && (t && u(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? $(t) : "", this.requestUpdate()));
+        e === this.generation && (t && u(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? v(t) : "", this.requestUpdate()));
       }
+    ), this.searchPreferences = new W(
+      this.client,
+      this.scope,
+      !1,
+      (t) => {
+        e === this.generation && (t && u(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? v(t) : "", this.requestUpdate()));
+      },
+      "search"
     );
     try {
-      const t = await this.preferences.load();
+      const [t, i] = await Promise.all([
+        this.preferences.load(),
+        this.searchPreferences.load()
+      ]);
       if (e !== this.generation) return;
-      this.fuzzySearch = t.fuzzy_search, this.mode = t.view, this.entriesPerPage = t.page_size, this.coverSize = t.cover_size, this.display = Object.fromEntries(
-        ot.map(([i]) => [i, t[i]])
+      this.fuzzySearch = i.fuzzy_search, this.mode = t.view, this.entriesPerPage = t.page_size, this.coverSize = t.cover_size, this.display = Object.fromEntries(
+        ot.map(([s]) => [s, t[s]])
       ), this.widths = [...t.widths], this.applied = Object.fromEntries(
         [
           "query",
           "sort",
           "descending",
-          ...j.map(([i]) => i),
+          ...j.map(([s]) => s),
           "status"
-        ].map((i) => [i, t[i]])
+        ].map((s) => [s, t[s]])
       ), this.filters = structuredClone(this.applied), this.preferencesReady = !0, await this.load();
     } catch (t) {
       e === this.generation && this.fail(t);
@@ -3145,10 +3156,10 @@ const j = [
     this.resize && (this.resize = void 0, this.preferences?.set({ widths: [...this.widths] }));
   }
   clear() {
-    clearTimeout(this.searchTimer), this.clearPeople(), this.preferences?.dispose(), this.preferences = void 0, this.preferencesReady = !1, this.preferenceError = "", this.generation++, this.listRequest++, clearTimeout(this.timer), clearTimeout(this.layoutTimer), this.layoutTimer = void 0, this.pendingLimit = void 0, this.gridObserver?.disconnect(), this.gridObserver = void 0, this.grid = void 0, this.gridWidth = 0, this.coverColumns = 1, this.entriesPerPage = this.requestLimit = 100, this.requestedOffset = 0;
+    clearTimeout(this.searchTimer), this.clearPeople(), this.preferences?.dispose(), this.preferences = void 0, this.searchPreferences?.dispose(), this.searchPreferences = void 0, this.preferencesReady = !1, this.preferenceError = "", this.generation++, this.listRequest++, clearTimeout(this.timer), clearTimeout(this.layoutTimer), this.layoutTimer = void 0, this.pendingLimit = void 0, this.gridObserver?.disconnect(), this.gridObserver = void 0, this.grid = void 0, this.gridWidth = 0, this.coverColumns = 1, this.entriesPerPage = this.requestLimit = 100, this.requestedOffset = 0;
     for (const e of this.renderRoot.querySelectorAll("dialog"))
       e.close();
-    this.covers.cache.dispose(), this.covers = new ee(), this.fuzzySearch = !0, this.display = {
+    this.covers.cache.dispose(), this.covers = new te(), this.fuzzySearch = !0, this.display = {
       show_titles: !0,
       show_format: !0,
       show_badges: !0,
@@ -3214,7 +3225,7 @@ const j = [
         t === "unauthorized" ? "access-denied" : "library-disabled",
         { bubbles: !0, composed: !0 }
       )
-    )), this.error = $(e), this.requestUpdate();
+    )), this.error = v(e), this.requestUpdate();
   }
   async load(e = 0, t = !1) {
     if (this.collectionLocked || !this.client || !this.scope?.library_enabled) return;
@@ -3309,7 +3320,7 @@ const j = [
         return;
       this.versions = a, this.activeVersion = a.items.find((o) => o.id === s) ?? a.items[0];
     } catch (a) {
-      t === this.generation && i === this.versionRequest && (["unauthorized", "library_disabled"].includes(u(a)) ? this.fail(a) : this.versionsError = $(a));
+      t === this.generation && i === this.versionRequest && (["unauthorized", "library_disabled"].includes(u(a)) ? this.fail(a) : this.versionsError = v(a));
     } finally {
       t === this.generation && i === this.versionRequest && (this.versionsLoading = !1, this.requestUpdate());
     }
@@ -3415,7 +3426,7 @@ const j = [
     clearTimeout(this.searchTimer), this.applied = { ...this.applied, query: this.filters.query }, this.preferences?.set({ query: this.applied.query }), this.load();
   }
   choices(e, t) {
-    const i = e === "status" ? Object.keys(K) : this.page?.facets[t] ?? [];
+    const i = e === "status" ? Object.keys(Y) : this.page?.facets[t] ?? [];
     return [
       .../* @__PURE__ */ new Set([...i, ...this.draft[e] ?? []])
     ].filter(
@@ -3481,15 +3492,13 @@ const j = [
             name="library_fuzzy_search"
             .checked=${this.fuzzySearch}
             @change=${(e) => {
-      this.fuzzySearch = e.target.checked, this.clearPeople(), clearTimeout(this.searchTimer), this.applied = { ...this.applied, query: this.filters.query }, this.preferences?.set({
-        fuzzy_search: this.fuzzySearch,
-        query: this.applied.query
-      }), this.load();
+      this.fuzzySearch = e.target.checked, this.clearPeople(), clearTimeout(this.searchTimer), this.applied = { ...this.applied, query: this.filters.query }, this.searchPreferences?.set({ fuzzy_search: this.fuzzySearch }), this.preferences?.set({ query: this.applied.query }), this.load();
     }}
           />Fuzzy search</label
         ><small
-          >Off matches literal text, ignoring case. On also tolerates small
-          spelling mistakes and word order differences.</small
+          >Applies across all views for your HA user. Off matches literal text,
+          ignoring case. On also tolerates small spelling mistakes and word
+          order differences.</small
         >
         <fieldset class="view-options">
           <legend>View type</legend>
@@ -3596,7 +3605,7 @@ const j = [
             [e]: h.target.checked ? [...s, o] : s.filter((d) => d !== o)
           }, this.requestUpdate();
         }}
-                          />${e === "status" ? K[o] : e === "rating" ? M(o) : e === "collection" ? L(o) : o}</label
+                          />${e === "status" ? Y[o] : e === "rating" ? M(o) : e === "collection" ? L(o) : o}</label
                         >`
       ) : r`<p class="muted">No matching options</p>`}
             </div>
@@ -3763,7 +3772,7 @@ const j = [
                         <p>
                           ${t.year ? this.detailLink("year", String(t.year)) : "Year unknown"}
                           ·
-                          ${this.detailLink("status", t.watched_status, K[t.watched_status])}
+                          ${this.detailLink("status", t.watched_status, Y[t.watched_status])}
                         </p>
                         <p>
                           ${t.duration_seconds === null ? "Runtime unknown" : `${(t.duration_seconds / 60).toFixed(2)} min`}
@@ -3837,9 +3846,18 @@ const j = [
       h.stopPropagation(), this.fail(new p("unauthorized"));
     }}
     >
-      ${this.preferenceError ? r`<p class="warning" role="alert">Library preferences could not be saved: ${this.preferenceError} <button @click=${() => this.preferences?.retry()}>Retry saving preferences</button></p>` : l}
+      ${this.preferenceError ? r`<p class="warning" role="alert">
+              Library preferences could not be saved: ${this.preferenceError}
+              <button
+                @click=${() => {
+      this.preferences?.retry(), this.searchPreferences?.retry();
+    }}
+              >
+                Retry saving preferences
+              </button>
+            </p>` : l}
       ${a && this.info?.phase && this.info.phase !== "idle" ? r`<p role="status">Syncing… ${this.info.processed ?? 0}/${this.info.total ?? "?"}</p>` : l}
-      ${a && this.info?.error ? r`<p class="warning" role="status">${$(new p(this.info.error))}</p>` : l}
+      ${a && this.info?.error ? r`<p class="warning" role="status">${v(new p(this.info.error))}</p>` : l}
       ${this.error ? r`<p class="error" role="alert">${this.error}<button @click=${() => this.load()}>Refresh results</button></p>` : l}
       ${this.notice ? r`<p class="notice" role="status">${this.notice}</p>` : l}
       ${a ? (this.info?.pending_adds ?? []).map(
@@ -4011,7 +4029,7 @@ const j = [
                             >
                           </td>
                           <td>${this.runtime(h)}</td>
-                          <td>${K[h.watched_status]}</td>
+                          <td>${Y[h.watched_status]}</td>
                           <td
                             title=${h.purchased_on ? "Imported purchase date" : "First detected by Companion"}
                           >
@@ -4074,13 +4092,13 @@ const j = [
     </section>`;
   }
 };
-ae.properties = {
+re.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 }
-}, ae.styles = [k, mt];
-let qe = ae;
+}, re.styles = [k, mt];
+let qe = re;
 customElements.get("kaleidescape-library") || customElements.define("kaleidescape-library", qe);
-const re = class re extends v {
+const ne = class ne extends $ {
   constructor() {
     super(...arguments), this.disabled = !1, this.bound = "", this.generation = 0, this.ready = !1, this.fuzzy = !0, this.error = "";
   }
@@ -4108,21 +4126,21 @@ const re = class re extends v {
     );
   }
   fail(e) {
-    this.error = $(e), u(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
+    this.error = v(e), u(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     )), this.requestUpdate();
   }
   async load() {
     if (!this.client || !this.scope) return;
     const e = ++this.generation;
-    this.store?.dispose(), this.store = new ye(
+    this.store?.dispose(), this.store = new W(
       this.client,
       this.scope,
       !1,
       (t) => {
         e === this.generation && (t ? this.fail(t) : (this.error = "", this.requestUpdate()));
       },
-      "journal"
+      "search"
     );
     try {
       const t = await this.store.load();
@@ -4158,9 +4176,10 @@ const re = class re extends v {
           />Fuzzy search</label
         >
         <p class="muted">
-          Applies to Journal search and Movie from Library completion. Off
-          matches literal text, ignoring case. On also tolerates small spelling
-          mistakes and word order differences.
+          Applies across all views for your HA user, including Library search
+          and Movie from Library completion. Off matches literal text, ignoring
+          case. On also tolerates small spelling mistakes and word order
+          differences.
         </p>
         <div class="dialog-footer">
           <button
@@ -4172,14 +4191,14 @@ const re = class re extends v {
       </dialog>`;
   }
 };
-re.properties = {
+ne.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, re.styles = k;
-let Se = re;
+}, ne.styles = k;
+let Se = ne;
 customElements.get("kaleidescape-journal-options") || customElements.define("kaleidescape-journal-options", Se);
-const ne = class ne extends v {
+const oe = class oe extends $ {
   constructor() {
     super(...arguments), this.narrow = !1, this.api = null, this.userKey = "", this.generation = 0, this.scope = null, this.rows = [], this.selected = null, this.detailLoading = !1, this.detailRequest = 0, this.loading = !1, this.error = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.next = null, this.history = [], this.page = 1, this.activePage = "journal", this.navigationReady = !1;
   }
@@ -4208,7 +4227,7 @@ const ne = class ne extends v {
     e !== this.api && (this.clear(), this.api = e, this.requestUpdate(), e && this.refresh());
   }
   fail(e) {
-    u(e) === "unauthorized" && this.clear(), this.error = $(e), this.requestUpdate();
+    u(e) === "unauthorized" && this.clear(), this.error = v(e), this.requestUpdate();
   }
   async refresh() {
     if (!this.api) return;
@@ -4477,12 +4496,12 @@ const ne = class ne extends v {
     </main>`;
   }
 };
-ne.properties = {
+oe.properties = {
   hass: { attribute: !1 },
   client: { attribute: !1 },
   narrow: { type: Boolean }
-}, ne.styles = [k, He, wt];
-let Ce = ne;
+}, oe.styles = [k, He, wt];
+let Ce = oe;
 customElements.get("kaleidescape-reader") || customElements.define("kaleidescape-reader", Ce);
 const di = {
   playing: "Playing",
@@ -4497,7 +4516,7 @@ const di = {
   intermission: "Intermission",
   disc_menu: "Disc menu",
   none: "No active content"
-}, oe = class oe extends v {
+}, le = class le extends $ {
   constructor() {
     super(...arguments), this.boundScope = "", this.generation = 0, this.player = null, this.loading = !1, this.denied = !1, this.error = "", this.image = "", this.imageKey = "", this.visibility = () => {
       this.reset(), document.hidden || this.refresh();
@@ -4614,13 +4633,13 @@ const di = {
     </section>`;
   }
 };
-oe.properties = {
+le.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 }
-}, oe.styles = k;
-let Ee = oe;
+}, le.styles = k;
+let Ee = le;
 customElements.get("kaleidescape-now-playing") || customElements.define("kaleidescape-now-playing", Ee);
-const le = class le extends v {
+const he = class he extends $ {
   constructor() {
     super(...arguments), this.disabled = !1, this.working = !1, this.error = "", this.generation = 0, this.bound = "";
   }
@@ -4644,7 +4663,7 @@ const le = class le extends v {
   fail(e) {
     u(e) === "unauthorized" ? (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
-    )) : this.error = $(e), this.requestUpdate();
+    )) : this.error = v(e), this.requestUpdate();
   }
   async refresh() {
     if (!this.client || !this.scope) return;
@@ -4786,11 +4805,11 @@ const le = class le extends v {
     </section>`;
   }
 };
-le.properties = {
+he.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, le.styles = [
+}, he.styles = [
   k,
   _`
       /* This compact confirmation scrolls as one surface, without a painted footer. */
@@ -4801,9 +4820,9 @@ le.properties = {
       }
     `
 ];
-let Re = le;
+let Re = he;
 customElements.get("kaleidescape-calendar-export") || customElements.define("kaleidescape-calendar-export", Re);
-const he = class he extends v {
+const de = class de extends $ {
   constructor() {
     super(...arguments), this.disabled = !1, this.working = !1, this.error = "", this.generation = 0, this.bound = "";
   }
@@ -4827,7 +4846,7 @@ const he = class he extends v {
   fail(e) {
     u(e) === "unauthorized" ? (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
-    )) : this.error = $(e), this.requestUpdate();
+    )) : this.error = v(e), this.requestUpdate();
   }
   async open() {
     if (!this.client || !this.scope || this.disabled || this.working) return;
@@ -4947,12 +4966,12 @@ const he = class he extends v {
     </section>`;
   }
 };
-he.properties = {
+de.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, he.styles = k;
-let Ue = he;
+}, de.styles = k;
+let Ue = de;
 customElements.get("kaleidescape-metadata-repair") || customElements.define("kaleidescape-metadata-repair", Ue);
 const lt = [
   ["media_player", "Kaleidescape media player", "text", "", ""],
@@ -5015,7 +5034,7 @@ const lt = [
   invalid_rules: "Check the runtime, completion, and partial-resume values.",
   invalid_library_host: "Enter a hostname or private LAN HTTP(S) origin without a path, credentials, or query.",
   invalid_library_options: "Choose a sync interval of 1–168 hours and an artwork cache limit of 32–4096 MiB."
-}, de = class de extends v {
+}, ce = class ce extends $ {
   constructor() {
     super(...arguments), this.generation = 0, this.draft = {}, this.initial = {}, this.collectionChoices = [], this.hiddenCollections = [], this.sharedReady = !1, this.sharedError = "", this.customCollection = "", this.loading = !1, this.saving = !1, this.uncertain = !1, this.error = "", this.bound = "";
   }
@@ -5041,7 +5060,7 @@ const lt = [
     });
   }
   fail(e) {
-    this.error = $(e), u(e) === "unauthorized" && (this.sharedPreferences?.dispose(), this.sharedPreferences = void 0, this.sharedReady = !1, this.hiddenCollections = [], this.flow = void 0, this.draft = {}, this.initial = {}, this.dispatchEvent(
+    this.error = v(e), u(e) === "unauthorized" && (this.sharedPreferences?.dispose(), this.sharedPreferences = void 0, this.sharedReady = !1, this.hiddenCollections = [], this.flow = void 0, this.draft = {}, this.initial = {}, this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     )), this.requestUpdate();
   }
@@ -5060,12 +5079,12 @@ const lt = [
           o.name,
           ui.has(o.name) ? !!o.default : String(o.default ?? "")
         ])
-      ), this.initial = { ...this.draft }, this.sharedPreferences = new ye(
+      ), this.initial = { ...this.draft }, this.sharedPreferences = new W(
         e,
         t,
         !0,
         (o) => {
-          i === this.generation && (o && u(o) === "unauthorized" ? this.fail(o) : (this.sharedError = o ? $(o) : "", this.requestUpdate()));
+          i === this.generation && (o && u(o) === "unauthorized" ? this.fail(o) : (this.sharedError = o ? v(o) : "", this.requestUpdate()));
         }
       );
       const a = await this.sharedPreferences.load();
@@ -5469,11 +5488,11 @@ const lt = [
     </fieldset>`;
   }
 };
-de.properties = {
+ce.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 }
-}, de.styles = k;
-let ze = de;
+}, ce.styles = k;
+let ze = ce;
 customElements.get("kaleidescape-settings") || customElements.define("kaleidescape-settings", ze);
 const gi = _`
   .database {
@@ -5562,7 +5581,7 @@ const gi = _`
       margin-left: 0;
     }
   }
-`, ce = class ce extends v {
+`, ue = class ue extends $ {
   constructor() {
     super(...arguments), this.table = "viewings", this.value = "", this.fields = [], this.operators = [], this.disabled = !1, this.open = !1, this.active = 0, this.cursor = 0, this.message = "", this.invalid = !1, this.generation = 0;
   }
@@ -5614,7 +5633,7 @@ const gi = _`
         ), e === this.generation && (this.message = "", this.invalid = !1);
       } catch (t) {
         if (e !== this.generation) return;
-        this.invalid = !0, this.message = u(t) === "query_syntax" && typeof t.message == "string" ? t.message : $(t), u(t) === "unauthorized" && this.dispatchEvent(
+        this.invalid = !0, this.message = u(t) === "query_syntax" && typeof t.message == "string" ? t.message : v(t), u(t) === "unauthorized" && this.dispatchEvent(
           new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
         );
       } finally {
@@ -5678,7 +5697,7 @@ const gi = _`
       >`;
   }
 };
-ce.properties = {
+ue.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   table: {},
@@ -5686,7 +5705,7 @@ ce.properties = {
   fields: { attribute: !1 },
   operators: { attribute: !1 },
   disabled: { type: Boolean }
-}, ce.styles = _`
+}, ue.styles = _`
     :host {
       display: block;
       min-width: 0;
@@ -5754,9 +5773,9 @@ ce.properties = {
       color: var(--error-color, #b3261e);
     }
   `;
-let Ae = ce;
+let Ae = ue;
 customElements.get("kaleidescape-database-search") || customElements.define("kaleidescape-database-search", Ae);
-const ue = class ue extends v {
+const pe = class pe extends $ {
   constructor() {
     super(...arguments), this.disabled = !1, this.bound = "", this.request = 0, this.query = "", this.items = [], this.active = -1, this.loading = !1, this.more = !1, this.error = "";
   }
@@ -5789,7 +5808,7 @@ const ue = class ue extends v {
       this.items = t.items, this.more = t.has_more;
     } catch (t) {
       if (e !== this.request || !this.isConnected) return;
-      this.error = $(t), u(t) === "unauthorized" && this.dispatchEvent(
+      this.error = v(t), u(t) === "unauthorized" && this.dispatchEvent(
         new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
       );
     } finally {
@@ -5875,13 +5894,13 @@ const ue = class ue extends v {
       </div>`;
   }
 };
-ue.properties = {
+pe.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   review: { attribute: !1 },
   row: { attribute: !1 },
   disabled: { type: Boolean }
-}, ue.styles = [
+}, pe.styles = [
   k,
   _`
       :host {
@@ -5917,12 +5936,12 @@ ue.properties = {
       }
     `
 ];
-let Le = ue;
+let Le = pe;
 customElements.get("kaleidescape-import-matcher") || customElements.define(
   "kaleidescape-import-matcher",
   Le
 );
-const pe = class pe extends v {
+const ge = class ge extends $ {
   constructor() {
     super(...arguments), this.disabled = !1, this.bound = "", this.generation = 0, this.selected = /* @__PURE__ */ new Set(), this.query = "", this.changesOnly = !1, this.page = 0, this.pageSize = 100, this.working = !1, this.error = "", this.notice = "", this.dialog = null;
   }
@@ -5974,7 +5993,7 @@ const pe = class pe extends v {
   fail(e) {
     u(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
-    )), this.error = $(e), this.requestUpdate();
+    )), this.error = v(e), this.requestUpdate();
   }
   async exportData(e) {
     if (!this.client || !this.scope || this.working || this.pending || this.disabled)
@@ -6368,11 +6387,11 @@ const pe = class pe extends v {
       </dialog>`;
   }
 };
-pe.properties = {
+ge.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, pe.styles = [
+}, ge.styles = [
   k,
   _`
       .database-dialog {
@@ -6418,7 +6437,7 @@ pe.properties = {
       }
     `
 ];
-let Te = pe;
+let Te = ge;
 customElements.get("kaleidescape-transfers") || customElements.define("kaleidescape-transfers", Te);
 const O = {
   viewings: "Viewings",
@@ -6439,9 +6458,9 @@ const O = {
   calendar_publications: "Calendar publications",
   calendar_sync_jobs: "Calendar exports",
   calendar_sync_items: "Calendar export items"
-}, Y = ["viewings", "sessions", "library"], ge = class ge extends v {
+}, G = ["viewings", "sessions", "library"], fe = class fe extends $ {
   constructor() {
-    super(...arguments), this.bound = "", this.generation = 0, this.request = 0, this.table = "viewings", this.filters = { limit: 25, query: "", descending: !1 }, this.showSystem = !1, this.sorts = {}, this.ready = !1, this.preferenceError = "", this.loading = !1, this.saving = !1, this.transferBusy = !1, this.error = "", this.notice = "", this.search = "", this.selected = /* @__PURE__ */ new Set(), this.operation = null, this.draft = {}, this.nulls = /* @__PURE__ */ new Set(), this.original = "", this.createDraft = Z(), this.confirmed = !1, this.deleteWord = "", this.covers = new ee();
+    super(...arguments), this.bound = "", this.generation = 0, this.request = 0, this.table = "viewings", this.filters = { limit: 25, query: "", descending: !1 }, this.showSystem = !1, this.sorts = {}, this.fuzzySearch = !0, this.ready = !1, this.preferenceError = "", this.loading = !1, this.saving = !1, this.transferBusy = !1, this.error = "", this.notice = "", this.search = "", this.selected = /* @__PURE__ */ new Set(), this.operation = null, this.draft = {}, this.nulls = /* @__PURE__ */ new Set(), this.original = "", this.createDraft = ee(), this.confirmed = !1, this.deleteWord = "", this.covers = new te();
   }
   willUpdate(e) {
     if (!e.has("client") && !e.has("scope")) return;
@@ -6455,26 +6474,29 @@ const O = {
     super.disconnectedCallback(), this.clear(), this.boundClient = void 0, this.bound = "";
   }
   clear() {
-    this.covers.cache.dispose(), this.covers = new ee(), this.generation++, this.request++, this.preferences?.dispose(), this.preferences = void 0, this.ready = !1, this.page = void 0, this.table = "viewings", this.filters = { limit: 25, query: "", descending: !1 }, this.showSystem = !1, this.sorts = {}, this.detail = void 0, this.selected.clear(), this.pending = void 0, this.operation = null, this.draft = {}, this.original = "", this.search = "", this.confirmed = !1, this.deleteWord = "", this.loading = this.saving = this.transferBusy = !1, this.error = this.notice = this.preferenceError = "";
+    this.covers.cache.dispose(), this.covers = new te(), this.generation++, this.request++, this.preferences?.dispose(), this.preferences = void 0, this.fuzzySearch = !0, this.ready = !1, this.page = void 0, this.table = "viewings", this.filters = { limit: 25, query: "", descending: !1 }, this.showSystem = !1, this.sorts = {}, this.detail = void 0, this.selected.clear(), this.pending = void 0, this.operation = null, this.draft = {}, this.original = "", this.search = "", this.confirmed = !1, this.deleteWord = "", this.loading = this.saving = this.transferBusy = !1, this.error = this.notice = this.preferenceError = "";
     for (const e of this.renderRoot.querySelectorAll("dialog"))
       e.close();
     this.busy(), this.requestUpdate();
   }
   async initialize() {
     const e = ++this.generation;
-    this.preferences?.dispose(), this.preferences = new ye(
+    this.preferences?.dispose(), this.preferences = new W(
       this.client,
       this.scope,
       !1,
       (t) => {
-        e === this.generation && (t && u(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? $(t) : "", this.requestUpdate()));
+        e === this.generation && (t && u(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? v(t) : "", this.requestUpdate()));
       },
       "database"
     );
     try {
-      const t = await this.preferences.load();
+      const [t, i] = await Promise.all([
+        this.preferences.load(),
+        this.client.uiPreferences(this.scope, !1, "search")
+      ]);
       if (e !== this.generation) return;
-      this.filters.limit = t.limit, this.showSystem = t.show_system, this.sorts = t.sorts ?? {}, this.table = String(t.table ?? "viewings"), !this.showSystem && !Y.includes(this.table) && (this.table = "viewings"), this.filters = { ...this.filters, ...this.sorts[this.table] }, this.ready = !0, await this.load();
+      this.fuzzySearch = i.values.fuzzy_search, this.filters.limit = t.limit, this.showSystem = t.show_system, this.sorts = t.sorts ?? {}, this.table = String(t.table ?? "viewings"), !this.showSystem && !G.includes(this.table) && (this.table = "viewings"), this.filters = { ...this.filters, ...this.sorts[this.table] }, this.ready = !0, await this.load();
     } catch (t) {
       e === this.generation && this.fail(t);
     }
@@ -6507,7 +6529,7 @@ const O = {
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     ));
     const t = u(e), i = e?.message;
-    this.error = ["query_syntax", "conflict", "invalid_request", "busy"].includes(t) && typeof i == "string" && i !== t ? i : $(e), this.requestUpdate();
+    this.error = ["query_syntax", "conflict", "invalid_request", "busy"].includes(t) && typeof i == "string" && i !== t ? i : v(e), this.requestUpdate();
   }
   async load(e = 0, t) {
     if (!this.client || !this.scope || !this.ready || this.pending) return;
@@ -6544,7 +6566,7 @@ const O = {
         `${a} = ${typeof h == "number" ? h : `'${String(h).replaceAll("'", "''")}'`}`
       );
     }
-    Y.includes(e.table) || (this.showSystem = !0, this.preferences?.set({ show_system: !0 })), this.table = e.table, this.search = `WHERE ${t.join(" AND ")}`, this.filters = {
+    G.includes(e.table) || (this.showSystem = !0, this.preferences?.set({ show_system: !0 })), this.table = e.table, this.search = `WHERE ${t.join(" AND ")}`, this.filters = {
       limit: this.filters.limit,
       query: this.search,
       ...this.sorts[this.table]
@@ -6589,7 +6611,7 @@ const O = {
     }
   }
   newEntry() {
-    this.blocked || this.table !== "viewings" || (this.operation = "new", this.createDraft = Z(), this.original = JSON.stringify(this.createDraft), this.confirmed = !1, this.open("database-edit"));
+    this.blocked || this.table !== "viewings" || (this.operation = "new", this.createDraft = ee(), this.original = JSON.stringify(this.createDraft), this.confirmed = !1, this.open("database-edit"));
   }
   deleteEntries() {
     this.blocked || !this.page?.deletable || !this.selectedRows().length || (this.operation = "delete", this.deleteWord = "", this.open("database-delete"));
@@ -6747,7 +6769,7 @@ const O = {
             type="checkbox"
             .checked=${this.showSystem}
             @change=${(e) => {
-      this.showSystem = e.target.checked, this.preferences?.set({ show_system: this.showSystem }), !this.showSystem && !Y.includes(this.table) && this.changeTable("viewings"), this.requestUpdate();
+      this.showSystem = e.target.checked, this.preferences?.set({ show_system: this.showSystem }), !this.showSystem && !G.includes(this.table) && this.changeTable("viewings"), this.requestUpdate();
     }}
           />Show system tables</label
         >
@@ -6763,7 +6785,7 @@ const O = {
       return r`<p>${this.error || "Loading database preferences…"}</p>
         ${this.error ? r`<button @click=${() => this.initialize()}>Retry loading database</button>` : l}`;
     const e = Object.keys(this.page?.tables ?? O).filter(
-      (i) => this.showSystem || Y.includes(i)
+      (i) => this.showSystem || G.includes(i)
     ), t = (this.page?.schema ?? []).some((i) => i.editable);
     return r`<section class="card database" aria-label="Database management">
       <div class="entries-header">
@@ -6973,6 +6995,7 @@ const O = {
         <form @submit=${this.save}>
           <fieldset ?disabled=${this.saving || !!this.pending}>
             ${this.operation === "new" ? r`<kaleidescape-manual-viewing
+                    .fuzzySearch=${this.fuzzySearch}
                     .client=${this.client}
                     .scope=${this.scope}
                     .draft=${this.createDraft}
@@ -7089,11 +7112,11 @@ const O = {
     </section>`;
   }
 };
-ge.properties = {
+fe.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 }
-}, ge.styles = [k, He, gi];
-let Pe = ge;
+}, fe.styles = [k, He, gi];
+let Pe = fe;
 customElements.get("kaleidescape-database") || customElements.define("kaleidescape-database", Pe);
 const $e = [
   {
@@ -7121,7 +7144,7 @@ const $e = [
     label: "Settings",
     description: "Configure playback recording and journal rules."
   }
-], fe = class fe extends v {
+], be = class be extends $ {
   constructor() {
     super(...arguments), this.narrow = !1, this.api = null, this.generation = 0, this.listRequest = 0, this.detailRequest = 0, this.info = null, this.rows = [], this.selected = null, this.draft = null, this.initial = null, this.manual = null, this.manualInitial = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalReady = !1, this.sessions = null, this.sessionError = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.nextCursor = null, this.history = [], this.page = 1, this.loading = !1, this.detailLoading = !1, this.saving = !1, this.pending = null, this.confirmDelete = !1, this.error = "", this.lastError = "", this.notice = "", this.activePage = "journal", this.navigationReady = !1, this.settingsBusy = !1, this.maintenanceBusy = !1;
   }
@@ -7152,7 +7175,7 @@ const $e = [
     this.api !== e && (this.clearPrivate(), this.api = e, this.error = "", this.requestUpdate(), e && this.refresh());
   }
   fail(e) {
-    u(e) === "unauthorized" && this.clearPrivate(), this.lastError = u(e), this.error = $(e), this.requestUpdate();
+    u(e) === "unauthorized" && this.clearPrivate(), this.lastError = u(e), this.error = v(e), this.requestUpdate();
   }
   dirty() {
     return this.manual ? JSON.stringify(this.manual) !== this.manualInitial : this.draft && JSON.stringify(this.draft) !== JSON.stringify(this.initial);
@@ -7246,7 +7269,7 @@ const $e = [
     this.renderRoot.querySelectorAll("dialog").forEach((e) => e.close()), this.manual = null, this.manualInitial = "", this.detailRequest++, this.selected = null, this.draft = null, this.initial = null, this.sessions = null, this.sessionError = "", this.confirmDelete = !1, this.detailLoading = !1;
   }
   newRecord() {
-    this.pending || !this.discard() || (this.closeEditor(), this.draft = it(), this.initial = { ...this.draft }, this.manual = Z(), this.manualInitial = JSON.stringify(this.manual), this.error = "", this.notice = "", this.requestUpdate(), this.updateComplete.then(async () => {
+    this.pending || !this.discard() || (this.closeEditor(), this.draft = it(), this.initial = { ...this.draft }, this.manual = ee(), this.manualInitial = JSON.stringify(this.manual), this.error = "", this.notice = "", this.requestUpdate(), this.updateComplete.then(async () => {
       this.renderRoot.querySelector("#journal-editor")?.showModal();
       const e = this.renderRoot.querySelector(
         "kaleidescape-manual-viewing"
@@ -7716,12 +7739,12 @@ const $e = [
     </main>`;
   }
 };
-fe.properties = {
+be.properties = {
   hass: { attribute: !1 },
   client: { attribute: !1 },
   narrow: { type: Boolean }
-}, fe.styles = [k, He, wt];
-let De = fe;
+}, be.styles = [k, He, wt];
+let De = be;
 customElements.get("kaleidescape-panel") || customElements.define("kaleidescape-panel", De);
 export {
   De as KaleidescapePanel

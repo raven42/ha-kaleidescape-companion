@@ -747,7 +747,7 @@ it("applies the Journal fuzzy toggle to search and an already-open New entry pic
   await vi.waitFor(() =>
     expect(manual.shadowRoot!.querySelector('[role="option"]')).toBeTruthy(),
   );
-  expect(transport.journalPreferences.fuzzy_search).toBe(false);
+  expect(transport.searchPreferences.fuzzy_search).toBe(false);
   expect(
     transport.calls.filter((call) => call.type.endsWith("journal/list")).at(-1)
       ?.fuzzy,

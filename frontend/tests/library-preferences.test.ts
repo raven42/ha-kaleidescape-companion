@@ -491,7 +491,7 @@ it("applies the Library fuzzy toggle to main search, people completion and local
     .click();
   await flush();
   await vi.waitFor(() =>
-    expect(transport.uiPreferences.fuzzy_search).toBe(false),
+    expect(transport.searchPreferences.fuzzy_search).toBe(false),
   );
   expect(root.querySelectorAll("tbody tr")).toHaveLength(0);
   expect(

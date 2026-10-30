@@ -92,7 +92,7 @@ merges works.
 
 Search titles, actor names or director names using partial text. Input debounces
 for 300 ms; Search/Enter applies immediately. Literal mode uses Unicode case
-folding; the independent fuzzy-search option additionally tolerates bounded
+folding; the global personal fuzzy-search option additionally tolerates bounded
 word/typo differences, including credits from another available version in the
 same exact source group. Open **Filters** to select collection, actor, director,
 rating, genre, year, viewing-format and watched-status checkboxes. Multiple
@@ -353,16 +353,17 @@ reload.
 ## Fuzzy search option
 
 **Library → Options → Fuzzy search** saves immediately to the signed-in user's
-Library preferences. It starts enabled in the UI and applies to the main
-title/cast/director search, the filter-values search, and actor/director
-autocomplete. Turning it off requires the entered text to occur continuously,
-ignoring case; literal partial matches still work, and punctuation/wildcard
-characters remain ordinary text. Turning it on also tolerates small word
-misspellings/transpositions, word-order differences and diacritics. Selected
-facet values remain exact in either mode. Mode changes invalidate pending
-suggestions and refresh results from page one, including All/Covers views. Other
-users and the separate Journal option are unaffected. Direct list/suggestion API
-calls retain a literal default when `fuzzy` is omitted.
+global search preferences. The same option appears in Journal Options. It starts
+enabled in the UI and applies to the main title/cast/director search, the
+filter-values search, and actor/director autocomplete. Turning it off requires
+the entered text to occur continuously, ignoring case; literal partial matches
+still work, and punctuation/wildcard characters remain ordinary text. Turning it
+on also tolerates small word misspellings/transpositions, word-order differences
+and diacritics. Selected facet values remain exact in either mode. Mode changes
+invalidate pending suggestions and refresh results from page one, including
+All/Covers views. Other users are unaffected; Journal and manual-viewing pickers
+use the same saved mode. Direct list/suggestion API calls retain a literal
+default when `fuzzy` is omitted.
 
 The filter panes use consistent inner heading padding, and their sticky action
 footer has extra space below the buttons.

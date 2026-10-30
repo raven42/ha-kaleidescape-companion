@@ -6,11 +6,11 @@ from datetime import UTC, datetime
 
 from ..ui.preferences import (
     DATABASE_DEFAULTS,
-    JOURNAL_DEFAULTS,
     LIBRARY_DEFAULTS,
+    SEARCH_DEFAULTS,
     validate_database,
-    validate_journal,
     validate_library,
+    validate_search,
     validate_shared,
 )
 from .models import JournalError
@@ -30,6 +30,7 @@ def seed(db, legacy):
         {"hidden_collections": legacy.get("library_excluded_collections", [])}
     )
     with db:
+        migrate_search(db)
         for key, value in (("library_defaults", defaults), ("library_shared", shared)):
             changed = db.execute(
                 "INSERT OR IGNORE INTO settings VALUES (?,?,?,?,?)",
@@ -41,8 +42,43 @@ def seed(db, legacy):
                 )
 
 
+def migrate_search(db):
+    """Consolidate legacy per-view choices once, keeping the newest saved row."""
+    rows = db.execute(
+        "SELECT * FROM settings WHERE key IN ('journal','library','library_defaults') "
+        "ORDER BY updated_at, key"
+    ).fetchall()
+    choices = {}
+    for row in rows:
+        value = json.loads(row["value"]).get("fuzzy_search")
+        if row["owner"].startswith("user:") and type(value) is bool:
+            choices[row["owner"]] = (value, row["updated_at"])
+    for owner, (value, stamp) in choices.items():
+        # Existing global choices win on repeated startup or subsequent upgrades.
+        db.execute(
+            "INSERT OR IGNORE INTO settings VALUES (?,?,?,?,?)",
+            (owner, "search", json.dumps({"fuzzy_search": value}), 1, stamp),
+        )
+    for row in rows:
+        values = json.loads(row["value"])
+        if row["key"] == "journal":
+            db.execute(
+                "DELETE FROM settings WHERE owner=? AND key='journal'", (row["owner"],)
+            )
+        elif "fuzzy_search" in values:
+            del values["fuzzy_search"]
+            db.execute(
+                "UPDATE settings SET value=?,revision=revision+1 "
+                "WHERE owner=? AND key=?",
+                (json.dumps(values), row["owner"], row["key"]),
+            )
+        else:
+            continue
+        db.execute("UPDATE schema_metadata SET settings_revision=settings_revision+1")
+
+
 def get(db, actor, shared=False, area="library"):
-    if area not in ("library", "database", "journal") or (shared and area != "library"):
+    if area not in ("library", "database", "search") or (shared and area != "library"):
         raise JournalError("invalid_request", "Unknown UI preference area")
     owner, key = ("household", "library_shared") if shared else (f"user:{actor}", area)
     row = db.execute(
@@ -52,8 +88,8 @@ def get(db, actor, shared=False, area="library"):
         values = json.loads(row["value"])
     elif area == "database":
         values = DATABASE_DEFAULTS
-    elif area == "journal":
-        values = JOURNAL_DEFAULTS
+    elif area == "search":
+        values = SEARCH_DEFAULTS
     elif shared:
         values = {"hidden_collections": []}
     else:
@@ -67,8 +103,8 @@ def get(db, actor, shared=False, area="library"):
         values = (
             validate_database
             if area == "database"
-            else validate_journal
-            if area == "journal"
+            else validate_search
+            if area == "search"
             else validate_library
         )({}, values)
     return {"values": values, "revision": row["revision"] if row else 0}
@@ -108,8 +144,8 @@ def update(db, actor, shared, request, revision, patch, area="library"):
         if shared
         else validate_database
         if area == "database"
-        else validate_journal
-        if area == "journal"
+        else validate_search
+        if area == "search"
         else validate_library
     )(patch, current["values"])
     owner, key = ("household", "library_shared") if shared else (f"user:{actor}", area)

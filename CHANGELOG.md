@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — Global personal fuzzy search
+
+- Use one per-user search preference across views, editable from both Journal
+  and Library Options; include Database's manual-viewing title picker.
+- Consolidate legacy choices from the most recently saved preference row,
+  preserving other Library preferences and existing global choices.
+
 ## Unreleased — Clear purchase import review
 
 - Distinguish purchase additions/updates from Library entries in import review

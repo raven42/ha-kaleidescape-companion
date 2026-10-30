@@ -324,8 +324,8 @@ def validated_patch(db, table, row, patch, now):
     elif table == "settings":
         from ..ui.preferences import (
             validate_database,
-            validate_journal,
             validate_library,
+            validate_search,
             validate_shared,
         )
 
@@ -340,8 +340,8 @@ def validated_patch(db, table, row, patch, now):
         validator = (
             validate_database
             if row["key"] == "database"
-            else validate_journal
-            if row["key"] == "journal"
+            else validate_search
+            if row["key"] == "search"
             else validate_shared
             if row["key"] == "library_shared"
             else validate_library

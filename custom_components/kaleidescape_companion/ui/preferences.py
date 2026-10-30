@@ -19,7 +19,6 @@ LIBRARY_DEFAULTS = {
     "view": "list",
     "page_size": 100,
     "cover_size": 150,
-    "fuzzy_search": True,
     "show_titles": True,
     "show_format": True,
     "show_badges": True,
@@ -76,7 +75,6 @@ def validate_library(patch, previous=None):
             "show_format",
             "show_badges",
             "show_rating",
-            "fuzzy_search",
         )
     ):
         raise invalid("Invalid display toggle")
@@ -173,13 +171,13 @@ def validate_database(patch, previous=None):
     return values
 
 
-JOURNAL_DEFAULTS = {"fuzzy_search": True}
+SEARCH_DEFAULTS = {"fuzzy_search": True}
 
 
-def validate_journal(patch, previous=None):
-    if not isinstance(patch, dict) or set(patch) - JOURNAL_DEFAULTS.keys():
-        raise invalid("Unknown Journal preferences")
-    values = {**JOURNAL_DEFAULTS, **(previous or {}), **patch}
+def validate_search(patch, previous=None):
+    if not isinstance(patch, dict) or set(patch) - SEARCH_DEFAULTS.keys():
+        raise invalid("Unknown search preferences")
+    values = {**SEARCH_DEFAULTS, **(previous or {}), **patch}
     if type(values["fuzzy_search"]) is not bool:
         raise invalid("Invalid fuzzy search option")
     return values

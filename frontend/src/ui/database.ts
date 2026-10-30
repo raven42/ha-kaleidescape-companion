@@ -61,6 +61,7 @@ export class KaleidescapeDatabase extends LitElement {
   private showSystem = false;
   private sorts: Record<string, { sort: string; descending: boolean }> = {};
   private preferences?: PreferenceStore;
+  private fuzzySearch = true;
   private ready = false;
   private preferenceError = "";
   private loading = false;
@@ -107,6 +108,7 @@ export class KaleidescapeDatabase extends LitElement {
     this.request++;
     this.preferences?.dispose();
     this.preferences = undefined;
+    this.fuzzySearch = true;
     this.ready = false;
     this.page = undefined;
     this.table = "viewings";
@@ -147,8 +149,12 @@ export class KaleidescapeDatabase extends LitElement {
       "database",
     );
     try {
-      const values = await this.preferences.load();
+      const [values, search] = await Promise.all([
+        this.preferences.load(),
+        this.client!.uiPreferences(this.scope!, false, "search"),
+      ]);
       if (generation !== this.generation) return;
+      this.fuzzySearch = search.values.fuzzy_search as boolean;
       this.filters.limit = values.limit as number;
       this.showSystem = values.show_system as boolean;
       this.sorts = (values.sorts ?? {}) as typeof this.sorts;
@@ -851,6 +857,7 @@ export class KaleidescapeDatabase extends LitElement {
             ${
               this.operation === "new"
                 ? html`<kaleidescape-manual-viewing
+                    .fuzzySearch=${this.fuzzySearch}
                     .client=${this.client}
                     .scope=${this.scope}
                     .draft=${this.createDraft}

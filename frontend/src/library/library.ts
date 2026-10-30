@@ -112,6 +112,7 @@ export class KaleidescapeLibrary extends LitElement {
   };
   private entriesPerPage: number | "all" = 100;
   private preferences?: PreferenceStore;
+  private searchPreferences?: PreferenceStore;
   private preferencesReady = false;
   private preferenceError = "";
   private searchTimer?: ReturnType<typeof setTimeout>;
@@ -182,10 +183,27 @@ export class KaleidescapeLibrary extends LitElement {
         }
       },
     );
+    this.searchPreferences = new PreferenceStore(
+      this.client,
+      this.scope,
+      false,
+      (error) => {
+        if (generation !== this.generation) return;
+        if (error && errorCode(error) === "unauthorized") this.fail(error);
+        else {
+          this.preferenceError = error ? errorMessage(error) : "";
+          this.requestUpdate();
+        }
+      },
+      "search",
+    );
     try {
-      const values = await this.preferences.load();
+      const [values, search] = await Promise.all([
+        this.preferences.load(),
+        this.searchPreferences.load(),
+      ]);
       if (generation !== this.generation) return;
-      this.fuzzySearch = values.fuzzy_search as boolean;
+      this.fuzzySearch = search.fuzzy_search as boolean;
       this.mode = values.view as "list" | "covers";
       this.entriesPerPage = values.page_size as number | "all";
       this.coverSize = values.cover_size as number;
@@ -229,6 +247,8 @@ export class KaleidescapeLibrary extends LitElement {
     this.clearPeople();
     this.preferences?.dispose();
     this.preferences = undefined;
+    this.searchPreferences?.dispose();
+    this.searchPreferences = undefined;
     this.preferencesReady = false;
     this.preferenceError = "";
     this.generation++;
@@ -856,16 +876,15 @@ export class KaleidescapeLibrary extends LitElement {
               this.clearPeople();
               clearTimeout(this.searchTimer);
               this.applied = { ...this.applied, query: this.filters.query };
-              this.preferences?.set({
-                fuzzy_search: this.fuzzySearch,
-                query: this.applied.query,
-              });
+              this.searchPreferences?.set({ fuzzy_search: this.fuzzySearch });
+              this.preferences?.set({ query: this.applied.query });
               void this.load();
             }}
           />Fuzzy search</label
         ><small
-          >Off matches literal text, ignoring case. On also tolerates small
-          spelling mistakes and word order differences.</small
+          >Applies across all views for your HA user. Off matches literal text,
+          ignoring case. On also tolerates small spelling mistakes and word
+          order differences.</small
         >
         <fieldset class="view-options">
           <legend>View type</legend>
@@ -1312,7 +1331,21 @@ export class KaleidescapeLibrary extends LitElement {
         this.fail(new ApiError("unauthorized"));
       }}
     >
-      ${this.preferenceError ? html`<p class="warning" role="alert">Library preferences could not be saved: ${this.preferenceError} <button @click=${() => this.preferences?.retry()}>Retry saving preferences</button></p>` : nothing}
+      ${
+        this.preferenceError
+          ? html`<p class="warning" role="alert">
+              Library preferences could not be saved: ${this.preferenceError}
+              <button
+                @click=${() => {
+                  this.preferences?.retry();
+                  this.searchPreferences?.retry();
+                }}
+              >
+                Retry saving preferences
+              </button>
+            </p>`
+          : nothing
+      }
       ${admin && this.info?.phase && this.info.phase !== "idle" ? html`<p role="status">Syncing… ${this.info.processed ?? 0}/${this.info.total ?? "?"}</p>` : nothing}
       ${admin && this.info?.error ? html`<p class="warning" role="status">${errorMessage(new ApiError(this.info.error))}</p>` : nothing}
       ${this.error ? html`<p class="error" role="alert">${this.error}<button @click=${() => this.load()}>Refresh results</button></p>` : nothing}

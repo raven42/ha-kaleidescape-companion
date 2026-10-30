@@ -189,7 +189,6 @@ export class FixtureTransport implements Transport {
   retryResults = new Map<string, MutationResult>();
   uiPreferences: Record<string, unknown> = {
     view: "list",
-    fuzzy_search: true,
     page_size: 100,
     cover_size: 150,
     show_titles: true,
@@ -210,7 +209,7 @@ export class FixtureTransport implements Transport {
     status: [],
   };
   sharedPreferences: Record<string, unknown> = { hidden_collections: [] };
-  journalPreferences: Record<string, unknown> = { fuzzy_search: true };
+  searchPreferences: Record<string, unknown> = { fuzzy_search: true };
   databasePreferences: Record<string, unknown> = {
     limit: 25,
     show_system: false,
@@ -230,8 +229,8 @@ export class FixtureTransport implements Transport {
         ? this.sharedPreferences
         : message.area === "database"
           ? this.databasePreferences
-          : message.area === "journal"
-            ? this.journalPreferences
+          : message.area === "search"
+            ? this.searchPreferences
             : this.uiPreferences;
       if (operation.endsWith("/get"))
         result = { values, revision: this.uiRevision };

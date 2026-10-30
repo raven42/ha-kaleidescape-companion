@@ -87,7 +87,7 @@ export class JournalOptions extends LitElement {
           this.requestUpdate();
         }
       },
-      "journal",
+      "search",
     );
     try {
       const values = await this.store.load();
@@ -130,9 +130,10 @@ export class JournalOptions extends LitElement {
           />Fuzzy search</label
         >
         <p class="muted">
-          Applies to Journal search and Movie from Library completion. Off
-          matches literal text, ignoring case. On also tolerates small spelling
-          mistakes and word order differences.
+          Applies across all views for your HA user, including Library search
+          and Movie from Library completion. Off matches literal text, ignoring
+          case. On also tolerates small spelling mistakes and word order
+          differences.
         </p>
         <div class="dialog-footer">
           <button

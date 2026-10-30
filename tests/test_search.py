@@ -118,23 +118,21 @@ class SearchTest(unittest.IsolatedAsyncioTestCase):
         with self.assert_error("invalid_request"):
             await self.repository.async_list(fuzzy="false")
 
-    async def test_personal_search_options_are_separate_and_survive_restart(self):
-        for area in ["journal", "library"]:
-            self.assertTrue(
-                (await self.repository.async_ui_preferences("a", area=area))["values"][
-                    "fuzzy_search"
-                ]
-            )
-        await self.repository.async_ui_preferences_update(
-            "a", False, str(uuid4()), 0, {"fuzzy_search": False}, "journal"
-        )
+    async def test_global_personal_search_option_survives_restart(self):
         self.assertTrue(
-            (await self.repository.async_ui_preferences("a", area="library"))["values"][
+            (await self.repository.async_ui_preferences("a", area="search"))["values"][
                 "fuzzy_search"
             ]
         )
+        await self.repository.async_ui_preferences_update(
+            "a", False, str(uuid4()), 0, {"fuzzy_search": False}, "search"
+        )
+        self.assertNotIn(
+            "fuzzy_search",
+            (await self.repository.async_ui_preferences("a", area="library"))["values"],
+        )
         self.assertTrue(
-            (await self.repository.async_ui_preferences("b", area="journal"))["values"][
+            (await self.repository.async_ui_preferences("b", area="search"))["values"][
                 "fuzzy_search"
             ]
         )
@@ -143,16 +141,15 @@ class SearchTest(unittest.IsolatedAsyncioTestCase):
         await self.repository.async_open()
         self.addAsyncCleanup(self.repository.async_close)
         self.assertFalse(
-            (await self.repository.async_ui_preferences("a", area="journal"))["values"][
+            (await self.repository.async_ui_preferences("a", area="search"))["values"][
                 "fuzzy_search"
             ]
         )
-        for area in ["journal", "library"]:
-            with self.assert_error("invalid_request"):
-                await self.repository.async_ui_preferences_update(
-                    "a", False, str(uuid4()), 0, {"fuzzy_search": 1}, area
-                )
         with self.assert_error("invalid_request"):
             await self.repository.async_ui_preferences_update(
-                "a", True, str(uuid4()), 0, {"fuzzy_search": False}, "journal"
+                "a", False, str(uuid4()), 0, {"fuzzy_search": 1}, "search"
+            )
+        with self.assert_error("invalid_request"):
+            await self.repository.async_ui_preferences_update(
+                "a", True, str(uuid4()), 0, {"fuzzy_search": False}, "search"
             )
