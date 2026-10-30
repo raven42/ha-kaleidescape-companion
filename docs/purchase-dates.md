@@ -22,14 +22,20 @@ The output is a JSON array with one record per completed owned-title line item.
 Repeated purchases or editions with the same name remain separate records;
 invoice order and title order are preserved. Each record has these keys:
 
-| Key              | Value                                           |
-| ---------------- | ----------------------------------------------- |
-| `title`          | Rendered title name                             |
-| `purchased_on`   | Invoice date as `YYYY-MM-DD`                    |
-| `purchase_price` | Paid price or allocated bundle share, or `null` |
-| `retail_price`   | Captured original price, or `null`              |
-| `order_id`       | Displayed customer order number, or `null`      |
-| `href`           | Captured movie-store link, or `null`            |
+| Key              | Value                                                |
+| ---------------- | ---------------------------------------------------- |
+| `title`          | Rendered title name                                  |
+| `year`           | Release year inferred from the store link, or `null` |
+| `purchased_on`   | Invoice date as `YYYY-MM-DD`                         |
+| `purchase_price` | Paid price or allocated bundle share, or `null`      |
+| `retail_price`   | Captured original price, or `null`                   |
+| `order_id`       | Displayed customer order number, or `null`           |
+| `href`           | Captured movie-store link, or `null`                 |
+
+`year` is an integer when the movie-store URL contains a recognized release
+year. It is independent of the invoice date; missing or unrecognized release
+years remain `null`. The helper reuses the importer's passive store-link parser
+and never fetches the linked page.
 
 Prices retain currency text, such as `"$19.99"`. Bundle charges are divided
 evenly among the invoice's explicitly included movies. For multiple bundles on
@@ -52,10 +58,12 @@ without changing an existing output directory's permissions. Root
 `purchases.json` is ignored by Git; keep outputs elsewhere private too. Import
 this array directly with **Database → Merge Import**, review the proposed
 Library matches, then explicitly select the purchases to apply. Schema 16 stores
-all six fields and repeat orders in the matched Library entry's private
-`purchase_history`, with flat summary columns for its earliest invoice.
-Ambiguous or unmatched names require a known-title choice before import; they
-cannot be stored as disconnected purchases. See the
+the invoice fields and repeat orders in the matched Library entry's private
+`purchase_history`, with flat summary columns for its earliest invoice. The
+exported `year` is a matching hint derived from `href`, rather than an
+additional invoice field stored in `purchase_history`. Ambiguous or unmatched
+names require a known-title choice before import; they cannot be stored as
+disconnected purchases. See the
 [purchase import rules](imports.md#import-purchase-history-json).
 
 ## Import an existing corrected copy

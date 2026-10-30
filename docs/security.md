@@ -812,12 +812,14 @@ Purchase-history preparation is an offline development helper only. There is no
 purchase HTML upload, Library purchase button or purchase-specific apply API.
 Its JSON mode extracts bounded rendered fields without executing scripts or
 fetching links. Only HTTP(S) links without credentials and store-relative movie
-links are copied; unsupported links become null. Bundle allocations use bounded
-captured charges and explicit Included markers, with integer-cent arithmetic;
-multi-bundle invoices share their combined total because the saved page exposes
-no membership mapping. Missing/unsupported/mixed-currency charges are not
-guessed. Price strings and order numbers remain private administrator data. JSON
-output is created owner-only, refuses existing files/links, and leaves existing
+links are copied; unsupported links become null. A separate release-year field
+is parsed from recognized movie-store paths without fetching them; absent or
+unrecognized years remain null. Bundle allocations use bounded captured charges
+and explicit Included markers, with integer-cent arithmetic; multi-bundle
+invoices share their combined total because the saved page exposes no membership
+mapping. Missing/unsupported/mixed-currency charges are not guessed. Price
+strings and order numbers remain private administrator data. JSON output is
+created owner-only, refuses existing files/links, and leaves existing
 parent-directory permissions alone. Root `purchases.json` is ignored by Git.
 Keep saved HTML/JSON/reports/corrected copies private and excluded from
 runtime/Git/static roots. Schema 9 stores purchase dates on title versions and

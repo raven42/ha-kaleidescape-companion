@@ -174,6 +174,7 @@ class PurchaseParserTest(unittest.TestCase):
             rows[0],
             {
                 "title": "Fictional & Zoë",
+                "year": None,
                 "purchased_on": "2025-10-12",
                 "purchase_price": "$19.99",
                 "retail_price": "$24.99",
@@ -187,6 +188,7 @@ class PurchaseParserTest(unittest.TestCase):
             rows[2],
             {
                 "title": "Voyage to Europa",
+                "year": None,
                 "purchased_on": "2025-10-12",
                 "purchase_price": None,
                 "retail_price": None,
@@ -198,6 +200,27 @@ class PurchaseParserTest(unittest.TestCase):
             parse_history((first + second).encode()),
             [{"title": "Fictional & Zoë", "purchased_on": "2020-05-02"}],
         )
+
+    def test_release_year_comes_from_the_store_link_not_the_invoice_date(self):
+        for href, year in (
+            ("/movie-store/movie/fictional-voyage-1998", 1998),
+            (
+                "https://store.example.invalid/movie-store/movie/"
+                "fictional-voyage-2024-extended-edition?format=4k",
+                2024,
+            ),
+            ("movie-store/movie/2001-a-distant-shore-1968", 1968),
+            ("/movie-store/movie/2001-a-distant-shore", None),
+            ("/movie-store/movie/fictional-voyage", None),
+            ("https://store.example.invalid/other/fictional-voyage-1998", None),
+            ("javascript:fictional-voyage-1998", None),
+        ):
+            with self.subTest(href=href):
+                row = parse_purchases(purchased_invoice(href=href).encode())[0]
+                self.assertEqual(row["year"], year)
+                if year is not None:
+                    self.assertIs(type(row["year"]), int)
+                self.assertEqual(row["purchased_on"], "2025-10-12")
 
     def test_bundle_titles_exclusions_and_unavailable_individual_prices(self):
         body = purchased_invoice(bundled=True).replace(
@@ -308,7 +331,10 @@ class PurchaseJsonExportTest(unittest.TestCase):
         self.parent = Path(directory.name)
         self.parent.chmod(0o755)
         self.history = self.parent / "purchases.html"
-        self.history.write_text(purchased_invoice(), encoding="utf-8")
+        self.history.write_text(
+            purchased_invoice(href="/movie-store/movie/fictional-voyage-1998"),
+            encoding="utf-8",
+        )
         self.output = self.parent / "purchases.json"
         self.helper = offline_helper()
 
@@ -335,6 +361,7 @@ class PurchaseJsonExportTest(unittest.TestCase):
             json.loads(self.output.read_bytes()),
             parse_purchases(self.history.read_bytes()),
         )
+        self.assertEqual(json.loads(self.output.read_bytes())[0]["year"], 1998)
         self.assertEqual(self.output.stat().st_mode & 0o777, 0o600)
         self.assertEqual(self.parent.stat().st_mode & 0o777, 0o755)
         self.assertEqual(hashlib.sha256(self.history.read_bytes()).hexdigest(), digest)

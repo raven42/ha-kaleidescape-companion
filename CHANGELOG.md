@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — Purchase export release year
+
+- Include a separate integer `year` in purchase JSON, inferred from the
+  movie-store link using the shared title parser; use `null` when unknown.
+- Preserve existing invoice fields, bundle allocations and import compatibility.
+
 ## Unreleased — Reusable title matching
 
 - Rename the engine to `library/title_matching.py` with format-independent

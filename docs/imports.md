@@ -67,11 +67,15 @@ HTML is no longer needed by the integration. See
 
 ## Import purchase-history JSON
 
-Select `purchases.json` using **Database → Merge Import**. The six-field array
-from the offline helper is accepted directly. Purchases are merged into the
-existing **Library** table, not a separate purchase table. Every imported
+Select `purchases.json` using **Database → Merge Import**. The purchase-record
+array from the offline helper is accepted directly. Purchases are merged into
+the existing **Library** table, not a separate purchase table. Every imported
 purchase must belong to an existing scanned Library entry; Library entries
 without purchases remain valid.
+
+The helper also exports a separate release `year` inferred from `href`, or
+`null` when unknown. The importer derives the same year from the link; the
+additional field does not change invoice identity or the stored invoice fields.
 
 Each Library row has `purchase_history`, containing the title, purchase date,
 paid/retail prices, order ID, store reference and stable invoice identity for

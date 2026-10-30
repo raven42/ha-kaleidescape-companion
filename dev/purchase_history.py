@@ -15,6 +15,7 @@ from custom_components.kaleidescape_companion.library.browse import bounded_page
 from custom_components.kaleidescape_companion.library.importing import purchase_date
 from custom_components.kaleidescape_companion.library.parser import Tree, clean
 from custom_components.kaleidescape_companion.library.store import changed
+from custom_components.kaleidescape_companion.library.title_matching import store_title
 
 MAX_BYTES = 8 * 1024 * 1024
 MONTHS = (
@@ -232,14 +233,16 @@ def parse_purchases(body):
                 text = clean(title.text())
                 if not text:
                     raise invalid("A purchased title is missing")
+                href = movie_href(row, title)
                 found.append(
                     {
                         "title": text,
+                        "year": store_title(href)[1],
                         "purchased_on": day,
                         "purchase_price": price(row),
                         "retail_price": price(row, retail=True),
                         "order_id": order_id,
-                        "href": movie_href(row, title),
+                        "href": href,
                     }
                 )
                 records[id(row)] = found[-1]
