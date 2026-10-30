@@ -93,6 +93,11 @@ export interface JournalPage {
   revision: number;
   next_cursor: string | null;
 }
+export interface ViewingLibraryLink {
+  title_id: string;
+  title: string;
+  artwork_key: string | null;
+}
 export interface MutationResult {
   viewing: Viewing;
   revision: number;
@@ -540,9 +545,11 @@ export class JournalClient {
     sort = "completed_at",
     descending = true,
     fuzzy = false,
+    libraryTitleId?: string,
   ): Promise<JournalPage> {
     return this.call({
-      type: `${DOMAIN}/journal/list`,
+      type: `${DOMAIN}/${libraryTitleId ? "library/viewings" : "journal/list"}`,
+      ...(libraryTitleId ? { title_id: libraryTitleId } : {}),
       ...scopeFields(scope),
       query,
       limit: 25,
@@ -556,6 +563,16 @@ export class JournalClient {
   get(scope: Scope, viewing_id: string): Promise<Viewing> {
     return this.call({
       type: `${DOMAIN}/journal/get`,
+      ...scopeFields(scope),
+      viewing_id,
+    });
+  }
+  viewingLibrary(
+    scope: Scope,
+    viewing_id: string,
+  ): Promise<{ library: ViewingLibraryLink | null }> {
+    return this.call({
+      type: `${DOMAIN}/library/viewing`,
       ...scopeFields(scope),
       viewing_id,
     });

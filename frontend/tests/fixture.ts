@@ -17,7 +17,7 @@ export const info: JournalInfo = {
   entry_id: "fixture-entry",
   dataset_id: "a323bd20-1b55-4562-87b0-9999944759f3",
   api_version: 1,
-  schema_version: 16,
+  schema_version: 17,
   library_enabled: false,
   revision: 5,
   viewing_count: 3,
@@ -217,6 +217,7 @@ export class FixtureTransport implements Transport {
     sorts: {},
   };
   databaseResults = new Map<string, unknown>();
+  viewingLinks = new Map<string, string>();
   private uiRevision = 0;
   async callWS<T>(message: ApiMessage): Promise<T> {
     this.calls.push(structuredClone(message));
@@ -285,7 +286,20 @@ export class FixtureTransport implements Transport {
         artwork_limit_bytes:
           Number(this.options.library_artwork_cache_mb) * 1048576,
       };
-    else if (operation === "library/versions") {
+    else if (operation === "library/viewing") {
+      const title = this.libraryTitles.find(
+        (row) => row.id === this.viewingLinks.get(String(message.viewing_id)),
+      );
+      result = {
+        library: title
+          ? {
+              title_id: title.id,
+              title: title.title,
+              artwork_key: title.artwork_key,
+            }
+          : null,
+      };
+    } else if (operation === "library/versions") {
       const title = this.libraryTitles.find(
         (row) => row.id === message.title_id,
       );
@@ -767,7 +781,7 @@ export class FixtureTransport implements Transport {
       };
       this.purgeResults.set(request, receipt);
       result = receipt;
-    } else if (operation === "journal/list")
+    } else if (operation === "journal/list" || operation === "library/viewings")
       result = {
         items: this.records.filter(
           (row) =>
@@ -776,7 +790,9 @@ export class FixtureTransport implements Transport {
               String(message.query ?? ""),
               message.fuzzy !== false,
             ) &&
-            (!message.status || row.status === message.status),
+            (!message.status || row.status === message.status) &&
+            (operation !== "library/viewings" ||
+              this.viewingLinks.get(row.id) === message.title_id),
         ),
         revision: this.revision,
         next_cursor: null,

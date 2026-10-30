@@ -1088,3 +1088,24 @@ schema/time checks. Reports omit notes, prices, order IDs and raw URLs. Optional
 reports are new `0600` files and refuse existing paths/links. Input hashes
 detect changed files. The tool adds no HA endpoint or live name-based import
 permission.
+
+## Journal and Library reference reads
+
+`library/viewing` and `library/viewings` are active-user Library reads gated by
+the enabled current Library source, dataset and post-await access checks. The
+forward link exposes only `title_id`, display title and an opaque cached artwork
+key. Reverse lookups use the existing exact version reference, bounded
+source/group SQL and revision/filter-bound Journal pagination. Household rows
+use the existing positive Journal field allowlist; notes, invoice fields,
+playback handles and metadata snapshots remain administrator/private storage
+fields. Queries do not mutate records or follow stored URLs.
+
+Schema 17 adds a partial viewing-reference index and transactionally backfills
+only missing exact links, with a private pre-upgrade backup. It neither guesses
+by title/year nor moves existing references. Legacy observed rows without a
+browser-source identity require exactly one cached source. Open sessions and
+deleted rows are left alone. No calendar events or device writes occur. Library
+removal does not delete viewing history; absent targets yield no navigable link.
+Browser linkage state and cached image URLs are cleared on scope/account changes
+and unmount; stale responses cannot restore old content. No record identities or
+filters are added to URLs or persistent browser storage.

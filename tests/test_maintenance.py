@@ -341,6 +341,7 @@ class MaintenanceStorageTest(unittest.IsolatedAsyncioTestCase):
             db.execute("DROP TABLE calendar_sync_jobs")
             db.execute("DROP TABLE calendar_publications")
             db.execute("DROP INDEX viewings_completed")
+            db.execute("DROP INDEX viewings_library_title")
             db.execute("ALTER TABLE viewings DROP COLUMN library_title_id")
             db.execute("ALTER TABLE viewings DROP COLUMN library_metadata")
             db.execute("PRAGMA user_version = 3")
@@ -351,7 +352,7 @@ class MaintenanceStorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             (await self.repository.async_get(record["id"]))["title"], record["title"]
         )
-        self.assertEqual((await self.repository.async_info())["schema_version"], 16)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 17)
         backup = next(self.path.parent.glob("journal.sqlite3.v3.*.bak"))
         self.assertEqual(backup.stat().st_mode & 0o777, 0o600)
         with closing(sqlite3.connect(backup)) as db:

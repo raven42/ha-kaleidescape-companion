@@ -1,3 +1,4 @@
+import "./viewing-library";
 import { counted } from "../core/text";
 /** Household journal/library browsing; no management or export requests. */
 import { LitElement, html, nothing } from "lit";
@@ -39,6 +40,8 @@ export class KaleidescapeReader extends LitElement {
   private sort = "completed_at";
   private descending = true;
   private fuzzySearch = true;
+  private journalMovie?: { id: string; title: string };
+  private libraryTitleId?: string;
   private next: string | null = null;
   private cursor?: string;
   private history: (string | undefined)[] = [];
@@ -93,6 +96,8 @@ export class KaleidescapeReader extends LitElement {
     this.sort = "completed_at";
     this.descending = true;
     this.fuzzySearch = true;
+    this.journalMovie = undefined;
+    this.libraryTitleId = undefined;
     this.loading = false;
     this.error = "";
   }
@@ -171,6 +176,7 @@ export class KaleidescapeReader extends LitElement {
         this.sort,
         this.descending,
         this.fuzzySearch,
+        this.journalMovie?.id,
       );
       if (generation !== this.generation) return;
       this.rows = result.items;
@@ -214,12 +220,23 @@ export class KaleidescapeReader extends LitElement {
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
   }
-  private selectPage(page: "journal" | "library") {
+  private selectPage(
+    page: "journal" | "library",
+    target?: { movie?: { id: string; title: string }; libraryTitleId?: string },
+  ) {
     if (page === "library" && !this.scope?.library_enabled) return;
     this.selected = null;
     this.detailLoading = false;
     this.detailRequest++;
+    this.libraryTitleId = target?.libraryTitleId;
     this.activePage = page;
+    if (page === "journal") {
+      this.journalMovie = target?.movie;
+      this.query = this.searchText = this.status = this.filterStatus = "";
+      this.page = 1;
+      this.history = [];
+      void this.load();
+    }
     rememberPage(page);
     this.requestUpdate();
   }
@@ -270,6 +287,8 @@ export class KaleidescapeReader extends LitElement {
             ? html`<kaleidescape-library
                 .client=${this.api ?? undefined}
                 .scope=${this.scope}
+                .openTitleId=${this.libraryTitleId}
+                @open-title-journal=${(event: CustomEvent<{ id: string; title: string }>) => this.selectPage("journal", { movie: event.detail })}
                 @access-denied=${() => this.fail(new ApiError("unauthorized"))}
                 @library-disabled=${() => {
                   this.activePage = "journal";
@@ -303,6 +322,7 @@ export class KaleidescapeReader extends LitElement {
                       @access-denied=${() => this.fail(new ApiError("unauthorized"))}
                     ></kaleidescape-journal-options>
                   </div>
+                  ${this.journalMovie ? html`<p class="journal-movie-filter">Viewings for ${this.journalMovie.title} <button @click=${() => this.selectPage("journal")}>Show all viewings</button></p>` : nothing}
                   <form
                     class="filters journal-filters"
                     @submit=${(event: Event) => {
@@ -418,9 +438,14 @@ export class KaleidescapeReader extends LitElement {
                             Loading entry…
                           </div>`
                         : this.selected
-                          ? viewingDetails(this.selected, (value) =>
-                              this.date(value),
-                            )
+                          ? html`${viewingDetails(this.selected, (value) => this.date(value))}
+                              <kaleidescape-viewing-library
+                                .client=${this.api ?? undefined}
+                                .scope=${this.scope ?? undefined}
+                                .viewingId=${this.selected.id}
+                                @access-denied=${() => this.fail(new ApiError("unauthorized"))}
+                                @open-library-title=${(event: CustomEvent<string>) => this.selectPage("library", { libraryTitleId: event.detail })}
+                              ></kaleidescape-viewing-library>`
                           : html`<div class="empty">
                               <strong>Select an entry</strong>
                               <p>View its watching history and duration.</p>

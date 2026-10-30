@@ -209,6 +209,7 @@ class RepositorySecurityTest(unittest.IsolatedAsyncioTestCase):
             db.execute("DROP TABLE calendar_sync_jobs")
             db.execute("DROP TABLE calendar_publications")
             db.execute("DROP INDEX viewings_completed")
+            db.execute("DROP INDEX viewings_library_title")
             db.execute("ALTER TABLE viewings DROP COLUMN library_title_id")
             db.execute("ALTER TABLE viewings DROP COLUMN library_metadata")
             db.execute("PRAGMA user_version = 2")

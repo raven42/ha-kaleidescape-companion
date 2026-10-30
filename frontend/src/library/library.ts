@@ -63,10 +63,12 @@ export class KaleidescapeLibrary extends LitElement {
   static properties = {
     client: { attribute: false },
     scope: { attribute: false },
+    openTitleId: { attribute: false },
   };
   static styles = [styles, libraryStyles];
   client?: JournalClient;
   scope?: JournalInfo;
+  openTitleId?: string;
   private boundClient?: JournalClient;
   private bound = "";
   private generation = 0;
@@ -156,6 +158,8 @@ export class KaleidescapeLibrary extends LitElement {
     this.bound = "";
   }
   protected willUpdate(changed: PropertyValues) {
+    if (changed.has("openTitleId") && this.openTitleId && this.preferencesReady)
+      void this.openLinkedTitle(this.openTitleId);
     if (!changed.has("client") && !changed.has("scope")) return;
     const key = `${this.scope?.entry_id}:${this.scope?.dataset_id}:${this.scope?.library_enabled}:${this.scope?.permissions.edit}`;
     if (this.boundClient === this.client && this.bound === key) return;
@@ -223,6 +227,8 @@ export class KaleidescapeLibrary extends LitElement {
       this.filters = structuredClone(this.applied);
       this.preferencesReady = true;
       await this.load();
+      if (this.openTitleId && generation === this.generation)
+        void this.openLinkedTitle(this.openTitleId);
     } catch (error) {
       if (generation === this.generation) this.fail(error);
     }
@@ -555,6 +561,27 @@ export class KaleidescapeLibrary extends LitElement {
       this.clearVersions();
     }
     this.requestUpdate();
+  }
+  private async openLinkedTitle(id: string) {
+    if (!this.client || !this.scope?.library_enabled) return;
+    const generation = this.generation,
+      request = ++this.versionRequest;
+    try {
+      const result = await this.client.libraryVersions(this.scope, id);
+      if (generation !== this.generation || request !== this.versionRequest)
+        return;
+      const row =
+        result.items.find((item) => item.id === id) ?? result.items[0];
+      if (!row) return;
+      this.selected = row;
+      this.versions = result;
+      this.activeVersion = row;
+      this.requestUpdate();
+      await this.openDialog("title-dialog");
+    } catch (error) {
+      if (generation === this.generation && request === this.versionRequest)
+        this.fail(error);
+    }
   }
   private select(row: LibrarySummary) {
     this.clearVersions();
@@ -1238,6 +1265,22 @@ export class KaleidescapeLibrary extends LitElement {
                         <p class="muted">
                           ${row.purchased_on ? html`Purchased ${this.date(row.purchased_on)}<br />` : nothing}
                           First detected ${this.date(row.first_seen)}.
+                        </p>
+                        <p>
+                          <button
+                            class="link"
+                            ?disabled=${this.collectionLocked}
+                            @click=${() =>
+                              this.dispatchEvent(
+                                new CustomEvent("open-title-journal", {
+                                  detail: { id: row.id, title: row.title },
+                                  bubbles: true,
+                                  composed: true,
+                                }),
+                              )}
+                          >
+                            View journal entries for this movie
+                          </button>
                         </p>
                         ${
                           admin && row.purchase_history?.length

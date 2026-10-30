@@ -7,6 +7,7 @@ These functions run on that worker and preserve receipts and audit atomically.
 import base64
 import hashlib
 import json
+import re
 import sqlite3
 from datetime import UTC, datetime
 from typing import Any
@@ -36,6 +37,20 @@ def get_viewing(db, viewing_id: str, include_deleted: bool = False) -> dict:
     return record(row)
 
 
+def viewing_library(db, source, viewing_id):
+    """Expose only a currently available, source-scoped Library display link."""
+    row = db.execute(
+        "SELECT t.id title_id,t.title,t.artwork_key FROM viewings v "
+        "LEFT JOIN library t ON t.id=v.library_title_id AND t.source_id=? "
+        "AND t.available=1 AND t.purchase_match_pending=0 "
+        "WHERE v.id=? AND v.deleted_at IS NULL",
+        (source, viewing_id),
+    ).fetchone()
+    if row is None:
+        raise JournalError("not_found", "Viewing does not exist")
+    return {"library": dict(row) if row["title_id"] else None}
+
+
 def list_viewings(
     db,
     query: str,
@@ -45,6 +60,7 @@ def list_viewings(
     sort: str = "completed_at",
     descending: bool = True,
     fuzzy: bool = False,
+    library_scope: tuple[str, str] | None = None,
 ) -> dict:
     """Bind keyset pagination to this dataset, revision, filters and search mode."""
     meta = db.execute("SELECT dataset_id, revision FROM schema_metadata").fetchone()
@@ -57,6 +73,19 @@ def list_viewings(
         descending,
         fuzzy,
     ]
+    group = None
+    if library_scope:
+        source, title_id = library_scope
+        if not isinstance(title_id, str) or not re.fullmatch(r"[a-f0-9]{64}", title_id):
+            raise invalid("Invalid Library entry")
+        group = db.execute(
+            "SELECT source_group FROM library WHERE id=? AND source_id=? "
+            "AND available=1 AND purchase_match_pending=0",
+            (title_id, source),
+        ).fetchone()
+        if group is None:
+            raise JournalError("not_found", "Library entry is unavailable")
+        binding.append(list(library_scope))
     key = (
         "coalesce(ended_at,completed_at,started_at)"
         if sort == "completed_at"
@@ -74,6 +103,12 @@ def list_viewings(
         else "instr(title_search, ?) > 0",
     ]
     values: list[Any] = [query]
+    if group is not None:
+        predicates.append(
+            "library_title_id IN (SELECT id FROM library "
+            "WHERE source_id=? AND source_group=? AND purchase_match_pending=0)"
+        )
+        values.extend((library_scope[0], group[0]))
     if viewing_status:
         predicates.append("status = ?")
         values.append(viewing_status)

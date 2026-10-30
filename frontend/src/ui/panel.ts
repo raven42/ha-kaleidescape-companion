@@ -1,3 +1,4 @@
+import "./viewing-library";
 /** Admin journal management, shared by the HA panel and isolated Vite preview. */
 import { counted } from "../core/text";
 import { LitElement, html, nothing } from "lit";
@@ -86,6 +87,8 @@ export class KaleidescapePanel extends LitElement {
   private sort = "completed_at";
   private descending = true;
   private fuzzySearch = true;
+  private journalMovie?: { id: string; title: string };
+  private libraryTitleId?: string;
   private journalReady = false;
   private sessions: SessionPage | null = null;
   private sessionError = "";
@@ -173,6 +176,8 @@ export class KaleidescapePanel extends LitElement {
     this.navigationReady = false;
     this.settingsBusy = this.maintenanceBusy = false;
     this.fuzzySearch = true;
+    this.journalMovie = undefined;
+    this.libraryTitleId = undefined;
     this.journalReady = false;
   }
   private bind(api: JournalClient | null) {
@@ -215,10 +220,14 @@ export class KaleidescapePanel extends LitElement {
           true))
     );
   }
-  private async switchPage(page: Page) {
+  private async switchPage(
+    page: Page,
+    target?: { movie?: { id: string; title: string }; libraryTitleId?: string },
+  ) {
     if (
       (page === "library" && !this.info?.library_enabled) ||
-      page === this.activePage ||
+      (page === this.activePage &&
+        !(page === "journal" && this.journalMovie)) ||
       this.loading ||
       this.saving ||
       this.pending ||
@@ -228,6 +237,12 @@ export class KaleidescapePanel extends LitElement {
     )
       return;
     this.closeEditor();
+    this.libraryTitleId = target?.libraryTitleId;
+    if (page === "journal") {
+      this.journalMovie = target?.movie;
+      this.query = this.searchText = "";
+      this.status = this.filterStatus = "";
+    }
     this.activePage = page;
     rememberPage(page);
     this.error = this.notice = "";
@@ -335,6 +350,7 @@ export class KaleidescapePanel extends LitElement {
         this.sort,
         this.descending,
         this.fuzzySearch,
+        this.journalMovie?.id,
       );
       if (generation !== this.generation || request !== this.listRequest)
         return;
@@ -759,6 +775,7 @@ export class KaleidescapePanel extends LitElement {
               }}
             ></kaleidescape-journal-options>
           </div>
+          ${this.journalMovie ? html`<p class="journal-movie-filter">Viewings for ${this.journalMovie.title} <button ?disabled=${blocked} @click=${() => this.switchPage("journal")}>Show all viewings</button></p>` : nothing}
           <form
             class="filters journal-filters"
             @submit=${(event: Event) => {
@@ -868,13 +885,23 @@ export class KaleidescapePanel extends LitElement {
                 ? html`<div class="empty" role="status">Loading entry…</div>`
                 : this.selected
                   ? html`${viewingDetails(this.selected, (value) => this.date(value))}
-                    ${
-                      this.selected.notes
-                        ? html`<h3>Notes</h3>
-                            <p class="journal-notes">${this.selected.notes}</p>`
-                        : nothing
-                    }
-                    ${this.renderEvidence()}`
+                      <kaleidescape-viewing-library
+                        .client=${this.api}
+                        .scope=${this.info}
+                        .viewingId=${this.selected.id}
+                        .disabled=${blocked}
+                        @access-denied=${() => this.fail(new ApiError("unauthorized"))}
+                        @open-library-title=${(event: CustomEvent<string>) => this.switchPage("library", { libraryTitleId: event.detail })}
+                      ></kaleidescape-viewing-library>
+                      ${
+                        this.selected.notes
+                          ? html`<h3>Notes</h3>
+                              <p class="journal-notes">
+                                ${this.selected.notes}
+                              </p>`
+                          : nothing
+                      }
+                      ${this.renderEvidence()}`
                   : html`<div class="empty">
                       <strong>Select an entry</strong>
                       <p>Review its details or add a manual viewing.</p>
@@ -1042,6 +1069,8 @@ export class KaleidescapePanel extends LitElement {
                     ? html`<kaleidescape-library
                         .client=${this.api}
                         .scope=${this.info}
+                        .openTitleId=${this.libraryTitleId}
+                        @open-title-journal=${(event: CustomEvent<{ id: string; title: string }>) => this.switchPage("journal", { movie: event.detail })}
                         @access-denied=${() => this.fail(new ApiError("unauthorized"))}
                         @library-disabled=${() => {
                           this.activePage = "journal";

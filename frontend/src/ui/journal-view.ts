@@ -95,6 +95,9 @@ export const journalStyles = css`
     padding: 4px 8px;
     font-size: 12px;
   }
+  .journal-movie-filter {
+    padding-inline: 20px;
+  }
   .journal-row .entry-name {
     min-height: 32px;
     overflow: hidden;

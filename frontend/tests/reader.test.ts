@@ -207,7 +207,56 @@ it("offers enabled Library browsing to readers without sync/settings and unmount
   button("Journal").click();
   await reader.updateComplete;
   expect(reader.shadowRoot!.querySelector("kaleidescape-library")).toBeNull();
-  expect(content()).toContain("The Lantern Voyage");
+  await waitFor("The Lantern Voyage");
+});
+
+it("follows exact Library links and related viewings for a household reader", async () => {
+  transport.options.library_enabled = true;
+  const title = transport.libraryTitles[0];
+  transport.viewingLinks.set(transport.records[0].id, title.id);
+  button("Refresh").click();
+  await waitFor("The Lantern Voyage");
+  await vi.waitFor(() => expect(button("Library").disabled).toBe(false));
+  button("The Lantern Voyage").click();
+  await vi.waitFor(() =>
+    expect(
+      reader.shadowRoot!.querySelector("kaleidescape-viewing-library"),
+    ).not.toBeNull(),
+  );
+  const link = reader.shadowRoot!.querySelector(
+    "kaleidescape-viewing-library",
+  )!;
+  await vi.waitFor(() =>
+    expect(link.shadowRoot!.querySelector("button")).not.toBeNull(),
+  );
+  link.shadowRoot!.querySelector<HTMLButtonElement>("button")!.click();
+  await reader.updateComplete;
+  const library = reader.shadowRoot!.querySelector("kaleidescape-library")!;
+  await vi.waitFor(() =>
+    expect(
+      library.shadowRoot!.querySelector<HTMLDialogElement>("#title-dialog")
+        ?.open,
+    ).toBe(true),
+  );
+  [...library.shadowRoot!.querySelectorAll("button")]
+    .find(
+      (button) =>
+        button.textContent?.trim() === "View journal entries for this movie",
+    )!
+    .click();
+  await vi.waitFor(() =>
+    expect(
+      transport.calls.some(
+        (call) =>
+          call.type.endsWith("library/viewings") && call.title_id === title.id,
+      ),
+    ).toBe(true),
+  );
+  await waitFor(`Viewings for ${title.title}`);
+  expect(button("＋ Add viewing")).toBeUndefined();
+  button("Show all viewings").click();
+  await waitFor("The Lantern Voyage");
+  expect(content()).not.toContain(`Viewings for ${title.title}`);
 });
 
 it("orders reader tabs Library then Journal and follows that order with Home and End", async () => {

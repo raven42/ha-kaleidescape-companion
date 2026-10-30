@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased — Linked Journal and Library details
+
+- Show cached artwork and an exact Library detail link in Journal entries for
+  administrators and household readers.
+- Link Library movies to paginated viewing history across versions in the same
+  source/group, with an explicit option to show all viewings again.
+- Add schema 17's viewing-reference index and conservative exact-ID backfill;
+  preserve ambiguous/unmatched history, active sessions and viewing facts.
+
 ## Unreleased — Global personal fuzzy search
 
 - Use one per-user search preference across views, editable from both Journal

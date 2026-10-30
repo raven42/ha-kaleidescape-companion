@@ -1,7 +1,7 @@
 # Journal backend
 
 The backend records manual journal entries and observed playback from one
-selected HA player. API version is `1`; SQLite schema is `16` and JSON export
+selected HA player. API version is `1`; SQLite schema is `17` and JSON export
 format is `5`. The household reader and administrator [management panel](ui.md)
 use this API. Live subscriptions and controls remain planned;
 [optional library sync](library.md) is implemented. A compact read-only Now
@@ -573,3 +573,33 @@ budget; an exceeded budget returns `query_limit` rather than partial results.
 Title completion retains its one-second scoring/10,000-name bound and reports
 truncation. No arbitrary regex, wildcard execution, SQL or new remote access is
 added.
+
+## Journal and Library display links
+
+A viewing's existing `library_title_id` identifies the exact scanned version.
+Schema 17 indexes that reference on non-deleted viewings; no duplicate reverse
+reference array or additional table is needed. A source/group lookup resolves
+all versions of the movie and uses the viewing index for paginated history.
+Same-name remakes and movies on different sources remain separate.
+
+Active authenticated users may call the source-scoped Library read commands:
+
+- `library/viewing` takes `viewing_id` and returns `library: null` or a positive
+  display projection containing `title_id`, `title` and `artwork_key`.
+- `library/viewings` takes `title_id` and the Journal list's search, status,
+  sort, order, limit and cursor fields. It returns the normal Journal page,
+  restricted to that source/group. Household users receive only public viewing
+  fields. Cursors bind the exact Library filter as well as content revision.
+
+Both require enabled Library access and recheck authorization after awaiting
+storage. The artwork bytes use the existing authenticated, current-source cache
+route, not a stored external URL or a metadata snapshot.
+
+The schema upgrade keeps a private pre-upgrade backup and backfills missing
+references only for exact device handles, including the recognized playback /
+browser spelling bridge. Legacy `home_assistant` rows require a single cached
+source; other rows require their stored source. Existing links, active sessions,
+deleted viewings, ambiguous matches and unmatched names remain unchanged. The
+upgrade increments changed viewing revisions and the content revision, without
+altering viewing facts or publishing calendar events. The reviewed metadata
+repair remains available for entries that could not be linked automatically.

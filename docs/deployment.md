@@ -126,15 +126,15 @@ started successfully. Remote error messages remain visible; the local failure
 summary reports the SSH exit status or timeout without printing the entire
 remote script. After a timeout, inspect the target state before retrying.
 
-The current database schema is 16 (eighteen tables, including private UI
+The current database schema is 17 (eighteen tables, including private UI
 preferences, import audit, Library metadata, purchase dates, collection-add
 receipts, completion-calendar outbox, purchase history and exact-group
-addition-batch markers). Deploy the Python code and compiled frontend together,
-then explicitly restart HA for the new commands. Its first open upgrades an
-older journal and creates a private pre-migration backup. Code supporting only
-earlier schemas cannot read it; code rollback alone is insufficient. A matching
-database restore must be done with HA stopped and may lose changes made since
-that backup.
+addition-batch markers, plus indexed Journal/Library references). Deploy the
+Python code and compiled frontend together, then explicitly restart HA for the
+new commands. Its first open upgrades an older journal and creates a private
+pre-migration backup. Code supporting only earlier schemas cannot read it; code
+rollback alone is insufficient. A matching database restore must be done with HA
+stopped and may lose changes made since that backup.
 
 ## Review the installed integration
 

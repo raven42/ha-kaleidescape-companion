@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from ..security import private_file
 
-SCHEMA_VERSION = 16
+SCHEMA_VERSION = 17
 
 MIGRATIONS = {
     1: (
@@ -322,6 +322,12 @@ MIGRATIONS[16] = (
 )
 
 
+MIGRATIONS[17] = (
+    "CREATE INDEX viewings_library_title ON viewings(library_title_id) "
+    "WHERE deleted_at IS NULL",
+)
+
+
 def migrate(connection: sqlite3.Connection, path: Path) -> None:
     """Upgrade atomically; retain a consistent copy before existing DB upgrades."""
     version = connection.execute("PRAGMA user_version").fetchone()[0]
@@ -348,6 +354,10 @@ def migrate(connection: sqlite3.Connection, path: Path) -> None:
                 from .library import consolidate
 
                 consolidate(connection)
+            if target == 17:
+                from .journal import link_viewings
+
+                link_viewings(connection)
             if target == 1:
                 connection.execute(
                     "INSERT INTO schema_metadata VALUES (1, ?, ?, 0)",

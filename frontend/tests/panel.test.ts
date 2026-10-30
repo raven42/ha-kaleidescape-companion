@@ -689,6 +689,50 @@ it("requires confirmation to abandon an uncertain retry and inspect existing rec
   expect(button("＋ Add viewing").disabled).toBe(false);
 });
 
+it("navigates between Journal artwork and exact grouped Library viewing history", async () => {
+  transport.options.library_enabled = true;
+  const title = transport.libraryTitles[0];
+  transport.viewingLinks.set(transport.records[0].id, title.id);
+  button("Refresh").click();
+  await settle();
+  await selectViewing("The Lantern Voyage", false);
+  const link = panel.shadowRoot!.querySelector("kaleidescape-viewing-library")!;
+  await vi.waitFor(() =>
+    expect(link.shadowRoot!.querySelector("button")).not.toBeNull(),
+  );
+  link.shadowRoot!.querySelector<HTMLButtonElement>("button")!.click();
+  await settle();
+  const library = panel.shadowRoot!.querySelector("kaleidescape-library")!;
+  await vi.waitFor(() =>
+    expect(
+      library.shadowRoot!.querySelector<HTMLDialogElement>("#title-dialog")
+        ?.open,
+    ).toBe(true),
+  );
+  const history = [...library.shadowRoot!.querySelectorAll("button")].find(
+    (button) =>
+      button.textContent?.trim() === "View journal entries for this movie",
+  )!;
+  history.click();
+  await settle();
+  await vi.waitFor(() =>
+    expect(
+      transport.calls.some(
+        (call) =>
+          call.type.endsWith("library/viewings") && call.title_id === title.id,
+      ),
+    ).toBe(true),
+  );
+  expect(panel.shadowRoot!.textContent).toContain(
+    `Viewings for ${title.title}`,
+  );
+  button("Show all viewings").click();
+  await settle();
+  expect(panel.shadowRoot!.textContent).not.toContain(
+    `Viewings for ${title.title}`,
+  );
+});
+
 it("enables the Library tab after opting in and clears its content on navigation", async () => {
   transport.options.library_enabled = true;
   button("Refresh").click();

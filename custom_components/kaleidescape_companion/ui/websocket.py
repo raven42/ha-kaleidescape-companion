@@ -25,6 +25,8 @@ USER_OPERATIONS = frozenset(
         "library/versions",
         "library/suggest",
         "library/search",
+        "library/viewing",
+        "library/viewings",
         "ui/preferences/get",
         "ui/preferences/update",
     }
@@ -89,6 +91,18 @@ def async_register_commands(hass: HomeAssistant) -> None:
             p.Required("title_id"): str,
             p.Optional("offset", default=0): int,
             p.Optional("revision"): int,
+        },
+        "library/viewing": {**scoped, p.Required("viewing_id"): str},
+        "library/viewings": {
+            **scoped,
+            p.Required("title_id"): str,
+            p.Optional("query", default=""): str,
+            p.Optional("status"): str,
+            p.Optional("limit", default=25): int,
+            p.Optional("cursor"): str,
+            p.Optional("sort", default="completed_at"): str,
+            p.Optional("descending", default=True): bool,
+            p.Optional("fuzzy", default=False): bool,
         },
         "library/suggest": {
             **scoped,
@@ -285,6 +299,8 @@ async def async_handle(
                     | "library/versions"
                     | "library/suggest"
                     | "library/search"
+                    | "library/viewing"
+                    | "library/viewings"
                     | "library/collections/targets"
                     | "library/collections/add"
                     | "library/collections/check"
@@ -404,6 +420,25 @@ async def async_handle(
                                 )
                             }
                         )
+                    elif operation == "library/viewing":
+                        result = await repository.async_viewing_library(
+                            library.source, msg["viewing_id"]
+                        )
+                    elif operation == "library/viewings":
+                        result = await repository.async_list(
+                            query=msg["query"],
+                            viewing_status=msg.get("status"),
+                            limit=msg["limit"],
+                            cursor=msg.get("cursor"),
+                            sort=msg["sort"],
+                            descending=msg["descending"],
+                            fuzzy=msg["fuzzy"],
+                            library_scope=(library.source, msg["title_id"]),
+                        )
+                        if not admin:
+                            result["items"] = [
+                                public_viewing(row) for row in result["items"]
+                            ]
                     elif operation == "library/search":
                         result = await repository.async_library_search(
                             library.source, msg["query"], excluded, msg["fuzzy"]

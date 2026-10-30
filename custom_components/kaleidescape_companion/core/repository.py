@@ -924,6 +924,11 @@ class JournalRepository:
         )
         return {"items": [dict(row) for row in rows[:100]], "has_more": len(rows) > 100}
 
+    async def async_viewing_library(self, source, viewing_id):
+        return await self._call(
+            journal_store.viewing_library, self._db(), source, identifier(viewing_id)
+        )
+
     async def async_list(
         self,
         *,
@@ -934,6 +939,7 @@ class JournalRepository:
         sort: str = "completed_at",
         descending: bool = True,
         fuzzy: bool = False,
+        library_scope: tuple[str, str] | None = None,
     ) -> dict:
         """Return a bounded page bound to dataset revision and filters."""
         text(query, 500, empty=True)
@@ -958,6 +964,7 @@ class JournalRepository:
             sort,
             descending,
             fuzzy,
+            library_scope,
         )
 
     def _list(
@@ -969,6 +976,7 @@ class JournalRepository:
         sort="completed_at",
         descending=True,
         fuzzy=False,
+        library_scope=None,
     ) -> dict:
         return self._search_read(
             journal_store.list_viewings,
@@ -979,6 +987,7 @@ class JournalRepository:
             sort,
             descending,
             fuzzy,
+            library_scope,
         )
 
     async def async_export(self, export_format: str) -> Path:

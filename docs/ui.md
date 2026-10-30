@@ -400,3 +400,19 @@ completion, filter heading padding, sticky footer clearance and Database's
 default/system tabs. Automated DOM tests do not verify browser geometry; this
 operator review remains pending. Real-provider/device validation requires an
 isolated operator test, not the fictional preview.
+
+## Journal and Library navigation
+
+With Library enabled, Journal details show locally cached artwork and a **View
+in Library** link for the saved exact version. Library title details provide
+**View journal entries for this movie**, opening the Journal filtered by
+source/group across all formats and rewatches. **Show all viewings** clears that
+movie filter. These links work for administrators and household readers; readers
+retain their existing read-only permissions.
+
+Record navigation and movie filters remain in scoped component memory. Only the
+existing main-tab parameter is written to the URL. Linked Library details open
+independently of saved browsing filters, which remain unchanged. Missing,
+deleted or unavailable Library entries show a graceful no-link message; disabled
+Library access makes no link/artwork request. Missing artwork uses the existing
+placeholder. No title-name search guesses the association.
