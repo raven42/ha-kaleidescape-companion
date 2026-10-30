@@ -510,12 +510,11 @@ export class KaleidescapeSettings extends LitElement {
                               </datalist>
                               Allowed fields: {title}, {year}, {collection},
                               {cast}, {director}, {writer}, {studio}, {genre},
-                              {duration}, {rating}, {format},
-                              {edition}, {synopsis}, {purchase_date},
-                              {added_on}, {status}, {started_at}, {ended_at},
-                              {watched}. Duration and watched time are minutes;
-                              missing values are blank. Use double braces for
-                              literal braces.
+                              {duration}, {rating}, {format}, {edition},
+                              {synopsis}, {purchase_date}, {added_on}, {status},
+                              {started_at}, {ended_at}, {watched}. Duration and
+                              watched time are minutes; missing values are
+                              blank. Use double braces for literal braces.
                             </p>`
                         : nothing
                     }
