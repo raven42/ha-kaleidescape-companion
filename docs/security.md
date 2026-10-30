@@ -376,14 +376,32 @@ including zero, order IDs to 256 characters, passive HTTP(S)/store-relative
 links to 2048 without credentials/control characters, and each history to 1000
 records / 2 MiB. Links are never fetched or used as origins.
 
-Purchase imports must target an existing scanned Library entry. A unique exact
-case-insensitive name suggests a source group and its stable representative
-entry; ambiguous/missing targets cannot be applied. Explicit review can match a
-store alias to an exact available entry. Stored associations cannot move through
-reimport. Invoice merges fill missing values only, preserve conflicts and commit
-atomically with revisions/audit/receipts; sync leaves history untouched. Upgrade
-only: old unmatched invoices become unavailable pending Library rows, excluded
-from browse/sensor projections, until reviewed matching moves their history and
+The reusable `library/title_matching.py` engine accepts a validated `TitleQuery`
+with title, optional alternate title/year and paired source/group scope. It does
+not read invoice fields or choose import writes. Adapters validate their format
+and supply evidence; `library/purchases.py` extracts passive movie-store hints
+and preserves purchase identity. Optional preferred entry IDs are
+caller-controlled internal context, not a browser parameter. All matches target
+scanned Library entries and remain suggestions. Purchase imports require
+explicit selection.
+
+A per-review worker index compares normalized display/search titles and supplied
+title/year hints. Fixed text transformations handle punctuation/accents,
+articles, edition suffixes, numeric spellings and bounded franchise ordinals; no
+user regex, SQL expression, network fetch or executable parser is introduced.
+Catalog loading is capped at 20,000 available versions and uses the review
+deadline. Conflicting title/sequel evidence, nonmatching/unknown release years
+and multiple source groups remain unresolved. Supplied years must appear in the
+group's cached metadata.
+
+Suggestions still require explicit administrator selection/approval. Exact entry
+IDs and stored associations retain their integrity rules; a matching statistic
+is proposal coverage, not proof of identity. Manual review can select an exact
+entry for an alias. Stored associations cannot move through reimport. Invoice
+merges fill missing values only, preserve conflicts and commit atomically with
+revisions/audit/receipts; sync leaves history untouched. Upgrade only: old
+unmatched invoices become unavailable pending Library rows, excluded from
+browse/sensor projections, until reviewed matching moves their history and
 removes the emptied pending row. Migration retains a private backup.
 
 Purchase prices/order IDs/links/history are omitted by positive public
@@ -417,8 +435,8 @@ requires fresh review. Final apply commits the chosen association with selected
 records under the existing atomic audit/receipt contract. Scope changes,
 disconnect and unmount clear pending completion text and ignore late responses.
 No new origin, filesystem, SQL, device-write or regular-user capability is
-added. Portable imports still verify supplied group/name pairs; restoring alias
-links into another dataset can require explicit matching again.
+added. Legacy supplied source/group links remain scoped to that cached group and
+must satisfy the matching evidence; unknown exact IDs require manual matching.
 
 ## Future connectors, controls, and sharing
 
@@ -1043,3 +1061,15 @@ revision refreshes preserve the manual picker query. Personal booleans inherit
 defaults without rewriting existing rows. No device networking, arbitrary
 expression or direct provider access is added by search. SQL and filesystem
 access remain on the established worker and managed paths.
+
+## Offline title comparison tools
+
+`dev/benchmark_title_matching.py` is excluded from runtime packages and accepts
+bounded Companion JSON/SQLite exports or an explicit title-only JSON manifest.
+Manifests use the same validated title evidence, reject unknown fields and
+retain the 32 MiB/10,000-row limits. SQLite inputs retain defensive, query-only
+regular table validation; the reference export is also opened read-only with
+schema/time checks. Reports omit notes, prices, order IDs and raw URLs. Optional
+reports are new `0600` files and refuse existing paths/links. Input hashes
+detect changed files. The tool adds no HA endpoint or live name-based import
+permission.

@@ -53,7 +53,10 @@ The product name is **Kaleidescape Companion**. The HA domain
 - Schema 16 renames the scanned table to **Library** and embeds repeated
   purchase history on its owning entry, removing the separate purchase table.
   Purchase JSON reviews require matched scanned targets, with a known-title
-  picker for ambiguity; administrator-only prices/orders stay outside household
+  picker for ambiguity. A shared `TitleMatcher`/`TitleQuery` contract accepts
+  title/year evidence from import adapters; the purchase adapter supplies
+  passive store-link hints. Suggestions preserve remake/sequel/source
+  boundaries. Administrator-only prices/orders stay outside household
   projections. JSON format 5 includes the embedded history and reads older
   exports.
 - Native landing-page defaults and URL tab restoration; schema 11
@@ -140,3 +143,8 @@ production-ready release.
 Resolve the
 [known dependency release blocker](security.md#known-dependency-findings-2026-10-25)
 and rerun dependency audits before publication.
+
+Reusable import matching and its offline JSON/SQLite/title-manifest evaluator
+are documented in [title matching](title-matching.md). Adding another import
+adapter still requires validated identities, scoped authorization and reviewed
+writes.

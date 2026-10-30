@@ -83,14 +83,27 @@ Invoice import times are retained as private provenance. Compatible flat Library
 exports with purchase columns are also accepted; supplied summary values must
 agree with embedded history when both are present.
 
-Purchase rows start unchecked. A case-insensitive exact name must identify one
-available source/group across the cached Library to suggest a target. Remakes or
-multiple sources require an explicit match. Unmatched purchases appear first and
-cannot be selected/applied. Choose **Match title…**, search a partial name, then
-choose the intended movie using its year, director and version count. This also
-handles different store spellings. **Clear match** returns the purchase to the
-unresolved state; leave it unchecked to skip it. **Select all changes** includes
-only eligible matched rows. No new Library row is created by a purchase import.
+Purchase rows start unchecked. Auto-matching compares the purchase title, cached
+`title_search`/display titles and the title/year inferred from the movie-store
+`href`. Normalized keys handle punctuation, accents, articles, common edition
+suffixes, written numbers and numbered franchise subtitles. Store paths are
+parsed as passive text; no link is fetched. The release year must match a known
+year in that source group when the link supplies one. A group's populated
+version metadata can supply the year for sparse versions.
+
+Only a single source/group can become a proposal. Conflicting title hints,
+different explicit sequel numbers, unknown/conflicting release years and
+multiple candidates remain unresolved. Existing stored links and exact entry IDs
+retain their prior identity rules. A match rate counts proposals, not
+independently verified accuracy; review before applying. Matching builds one
+index per review, bounded to 20,000 available versions and the existing review
+time budget.
+
+Unmatched purchases appear first and cannot be selected/applied. Choose **Match
+title…**, search a partial name, then choose the intended movie using its year,
+director and version count. **Clear match** returns it to unresolved; leave it
+unchecked to skip it. **Select all changes** includes only eligible matched
+rows. No new Library row is created by a purchase import.
 
 Match choices only revise the review. Each issues a fresh approval token without
 extending expiry; a lost response requires reviewing again. **Apply selected
@@ -189,3 +202,18 @@ Use the [offline restore procedure](backend.md#downloads-and-offline-restore)
 for a complete trusted recovery, including sessions and retry/audit state.
 Automated tests use fictional data. Review the compact dialog in your own
 browser before production use.
+
+## Shared title matching for import adapters
+
+`library/title_matching.py` exposes `TitleQuery`, `TitleMatcher` and
+`TitleMatch`. The engine accepts title/year/alternate-title evidence and
+optional source scope, without invoice fields or file-format assumptions. Format
+adapters supply that evidence and own identity validation, review and writes.
+The purchase adapter is in `library/purchases.py`; other import tools can reuse
+the same engine.
+
+The development evaluator accepts existing JSON/SQLite exports or a title-only
+manifest. It suggests candidates without writing or changing the live import
+rules. Viewing imports still match UUIDs and Library metadata imports still use
+exact version IDs. See [reusable title matching](title-matching.md) for the API,
+manifest format and commands.

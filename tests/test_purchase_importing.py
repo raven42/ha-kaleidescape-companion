@@ -221,6 +221,35 @@ class PurchaseImportTest(unittest.IsolatedAsyncioTestCase):
             0,
         )
 
+    async def test_store_year_and_edition_suggest_exact_owner_without_writing_review(
+        self,
+    ):
+        await self.seed_library()
+        remake = {
+            **library.ROWS[0],
+            "source_handle": "earlier-film",
+            "source_group": "earlier-film",
+            "year": 1990,
+        }
+        await self.repository.async_library_catalog(
+            library.ORIGIN, [*library.ROWS, remake], {}
+        )
+        row = purchase(
+            title="A VOYAGE TO EUROPA - Extended Edition",
+            href="/movie-store/movie/a-voyage-to-europa-2025-deadbeef",
+        )
+        plan = await self.preview(payload(row))
+        self.assertFalse(plan["rows"][0]["needs_match"])
+        self.assertIn("release year", plan["rows"][0]["detail"])
+        self.assertFalse(plan["rows"][0]["selected_by_default"])
+        self.assertEqual(await self.invoices(), [])
+        await self.apply(plan)
+        owner, saved = (await self.invoices())[0]
+        self.assertEqual(owner["source_group"], "group-a")
+        self.assertEqual(saved["title"], row["title"])
+        self.assertEqual(saved["href"], row["href"])
+        self.assertEqual((await self.preview(payload(row)))["counts"]["new"], 0)
+
     async def test_fill_only_prices_private_export_and_legacy_title_dates(self):
         target = await self.seed_library()
         await self.apply(await self.preview(payload(purchase(purchase_price=None))))

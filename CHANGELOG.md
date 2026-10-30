@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased — Reusable title matching
+
+- Rename the engine to `library/title_matching.py` with format-independent
+  `TitleQuery`, `TitleMatcher` and `TitleMatch` interfaces. Keep invoice parsing
+  and target ownership preferences in the purchase import adapter.
+- Rename the evaluator to `dev/benchmark_title_matching.py`; accept Companion
+  JSON/SQLite exports and bounded title-only JSON manifests through `--input`.
+- Preserve reviewed purchase matching and existing exact-ID live import rules.
+
+## Unreleased — Purchase title and release-year matching
+
+- Suggest Library owners using cached search/display titles and movie-store slug
+  titles/years, with fixed normalization for editions, punctuation, articles,
+  written numbers and franchise subtitles.
+- Keep conflicting years/titles/sequel numbers and ambiguous source groups in
+  manual review; preserve stored invoice identity and existing Library links.
+- Add a read-only development evaluator with aggregate coverage and optional
+  private reports; production imports retain explicit selection and approval.
+
 ## Unreleased — Purchases owned by Library entries
 
 - Rename the scanned database table to `library` and its Database tab to

@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from ..library import purchases
+from ..library.title_matching import TitleMatcher
 from .importing import parse_bundle
 from .models import JournalError, invalid, text, validate_times
 
@@ -31,6 +32,17 @@ def review(db, payload, import_format, actor):
     rows, operations, purchase_matches = [], {}, {}
     purchase_index = purchases.index(db)
     deadline = time.monotonic() + 30
+    matcher = (
+        TitleMatcher(
+            db,
+            deadline,
+            preferred_ids=(
+                link["owner"] for link in purchase_index.values() if not link["pending"]
+            ),
+        )
+        if bundle["purchases"]
+        else None
+    )
     for table, records in bundle.items():
         for record in records:
             if time.monotonic() > deadline:
@@ -38,7 +50,7 @@ def review(db, payload, import_format, actor):
             key = f"{table}:{record['id']}"
             if table == "purchases":
                 old = purchase_index.get(record["id"])
-                target, detail = purchases.propose_link(db, record, old)
+                target, detail = purchases.propose_link(db, record, old, matcher)
                 row, operation = purchase_proposal(key, record, old, target, detail)
                 rows.append(row)
                 if operation:

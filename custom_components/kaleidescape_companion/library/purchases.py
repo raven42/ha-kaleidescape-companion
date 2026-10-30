@@ -7,6 +7,7 @@ from urllib.parse import urlsplit
 
 from ..core.models import invalid, text, timestamp
 from .importing import purchase_date
+from .title_matching import TitleMatcher, TitleQuery, store_title
 
 PURCHASE_COLUMNS = {
     "id",
@@ -177,8 +178,20 @@ def index(db):
     return result
 
 
-def propose_link(db, record, old):
-    """Use an exact entry or unique source group; never guess between remakes."""
+def title_query(record) -> TitleQuery:
+    """Adapt invoice fields to reusable title evidence without changing identity."""
+    alternate, year = store_title(record.get("href"))
+    return TitleQuery(
+        title=record["title"],
+        alternate_title=alternate,
+        year=year,
+        source_id=record.get("source_id"),
+        source_group=record.get("source_group"),
+    )
+
+
+def propose_link(db, record, old, matcher=None):
+    """Preserve stored identities; other names/years only suggest a reviewed owner."""
     if old and not old["pending"]:
         target = old["owner"]
         reason = "Existing Library entry preserved"
@@ -193,21 +206,17 @@ def propose_link(db, record, old):
             ).fetchone()
             target = row[0] if row else None
         else:
-            params = [record["title"].casefold()]
-            scope = ""
-            if record.get("source_id"):
-                scope = " AND source_id=? AND source_group=?"
-                params += [record["source_id"], record["source_group"]]
-            rows = db.execute(
-                "SELECT coalesce(min(CASE WHEN purchase_history!='[]' THEN id END),"
-                "min(id)) id FROM library WHERE available=1 AND "
-                "purchase_match_pending=0 AND title_search=?"
-                + scope
-                + " GROUP BY source_id,source_group LIMIT 2",
-                params,
-            ).fetchall()
-            target = rows[0][0] if len(rows) == 1 else None
-            reason = "Review unique exact-name Library match"
+            if matcher is None:
+                matcher = TitleMatcher(
+                    db,
+                    preferred_ids=(
+                        link["owner"]
+                        for link in index(db).values()
+                        if not link["pending"]
+                    ),
+                )
+            match = matcher.match(title_query(record))
+            return match.target, match.detail
     if not target:
         return None, "Choose a Library entry before importing this purchase"
     row = db.execute(

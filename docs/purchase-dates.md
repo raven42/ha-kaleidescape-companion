@@ -111,3 +111,29 @@ test suite uses fictional invoices to check extracted fields, repeat purchases,
 exclusions, ambiguity, private output creation and input preservation; merge
 tests separately cover legacy dates, identity validation, conflicting values,
 revisions, retries and access changes.
+
+## Measure matching against a current export
+
+Use the read-only evaluator with a schema-16-or-newer SQLite export and purchase
+JSON. It reports aggregate exact-title and normalized title/store-year coverage:
+
+```sh
+.venv/bin/python dev/benchmark_title_matching.py \
+  --database .ha-dev/kaleidescape-journal.sqlite \
+  --input .ha-dev/purchases.json \
+  --report .ha-dev/new-purchase-match-review.json
+```
+
+The optional report includes title/year proposals and unresolved rows first,
+with no prices, order IDs or raw links. It is private household data, created
+`0600`, and existing outputs are refused. Existing invoice links are ignored
+when measuring fresh matching. Inputs open read-only and their hashes are
+checked for changes; no import, migration, HA process, device or remote request
+is started. Proposal coverage is not independently verified accuracy. Review
+unresolved rows and the proposed matches through **Database → Merge Import**
+before applying them.
+
+The evaluator and matching engine are shared infrastructure. Purchase inputs use
+an adapter to extract title/year hints from the store link. Library/Journal
+exports and title-only manifests use the same matcher; see
+[reusable title matching](title-matching.md).
