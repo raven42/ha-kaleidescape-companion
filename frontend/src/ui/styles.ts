@@ -365,21 +365,41 @@ export const styles = css`
     overflow: visible;
     margin-top: 24px;
   }
-  .database-dialog {
+  dialog {
+    --dialog-background: var(--surface);
     width: min(560px, calc(100% - 32px));
     max-height: calc(100dvh - 48px);
     overflow: auto;
     padding: 24px;
     border: 1px solid var(--line);
     border-radius: 12px;
-    background: var(--surface);
+    background: var(--dialog-background);
     color: inherit;
   }
-  .database-dialog::backdrop {
+  dialog::backdrop {
     background: rgb(0 0 0 / 60%);
   }
-  .database-dialog .card-head {
+  dialog .card-head {
     padding: 0;
+    align-items: flex-start;
+  }
+  dialog .card-head h2 {
+    margin: 0;
+  }
+  .dialog-close {
+    display: grid;
+    place-items: center;
+    flex: 0 0 36px;
+    width: 36px;
+    min-height: 36px;
+    padding: 6px;
+    background: transparent;
+    border: 0;
+    color: var(--muted);
+  }
+  .dialog-close svg {
+    width: 24px;
+    height: 24px;
   }
   .dialog-footer {
     margin-top: 20px;
@@ -391,7 +411,7 @@ export const styles = css`
     padding: 16px 0 12px;
     position: sticky;
     bottom: -12px;
-    background: var(--surface);
+    background: var(--dialog-background, var(--surface));
     z-index: 12;
   }
   .dialog-footer button {

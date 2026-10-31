@@ -55,10 +55,10 @@ manage the journal using your signed-in administrator account. For Vite, use a
 memory-only token from that local development account as described in the
 [UI guide](ui.md). Existing entries can enable automatic tracking through
 **Configure**. Select one player and its two sensors as described in the
-[tracking guide](backend.md#automatic-tracking). Seven [HA sensors](sensors.md)
-are created. Regular HA users see the read-only household journal and the
-enabled cached Library. Keep analytics off if you do not want development
-telemetry.
+[tracking guide](backend.md#automatic-tracking). Fourteen
+[HA sensors](sensors.md) are created. Regular HA users see the read-only
+household journal and the enabled cached Library. Keep analytics off if you do
+not want development telemetry.
 
 HA uses `.ha-dev/`, including credentials, logs, and storage. That directory,
 `.venv/`, npm dependencies, and build intermediates are ignored by Git. The
@@ -112,6 +112,8 @@ Browser view. The tasks use the default ports 5173 and 8123.
 With the virtual environment activated:
 
 ```sh
+python dev/vendor_scrapers.py --check
+PYTHONPATH=lib/scrapers/src python -m unittest discover -s lib/scrapers/tests
 python -m unittest discover -s tests -v
 python dev/check_project.py
 ruff check .
@@ -206,11 +208,11 @@ operator. See the [month view guide](calendar.md#journal-month-view).
 The [backend guide](backend.md) documents storage, role-scoped API access,
 manual testing, backup/export, restore, and retention. Automatic observation,
 session timing, entity setup, household reading, administrator
-[management](ui.md), and [HA sensors](sensors.md) are implemented. The
-administrator Now Playing card reuses HA artwork and source states with
-visible-only snapshot refresh. Administrator Settings reuses the native HA
-options flow. Database uses a shared toolbar and table tabs for fixed-table
-inspection, raw-first details, validated supported-field corrections, permanent
+[management](ui.md), and [HA sensors](sensors.md) are implemented. The shared
+Now Playing display reuses HA artwork and source states with visible-only
+snapshot refresh. Administrator Settings reuses the native HA options flow.
+Database uses a shared toolbar and table tabs for fixed-table inspection,
+raw-first details, validated supported-field corrections, permanent
 selected-entry deletion, and compatible JSON/SQLite merge imports. Personal
 Options persist pagination, sort and system-table visibility. Schema 12 adds
 content-free database-operation audit and monotonic settings revisions.
@@ -318,3 +320,16 @@ assessment.
 Use the general [reviewed merge import](imports.md) to bring a corrected copy
 into live storage. The HTML parser and helper stay under `dev/`; the runtime has
 no purchase-specific upload or apply hook.
+
+### Provider development
+
+Canonical reusable provider code is under
+`lib/scrapers/src/kaleidescape_scrapers/`.
+`Providers.metadata(provider, MovieQuery(...))` is the shared API; `providers/`
+owns individual provider adapters/parsers, and `transport.py` owns the shared
+limiter. HA opt-ins, network allowlists and storage stay in the integration's
+`enrichment/` adapter. Regenerate its runtime subset with
+`python dev/vendor_scrapers.py`; full checks verify equality and run its offline
+tests without installing it. Do not use a household movie/page or real API
+credential as a fixture. Metadata setup and remaining operator validation are
+documented in [enrichment](enrichment.md).

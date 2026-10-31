@@ -29,6 +29,18 @@ REQUIRED = {
     "translations/en.json",
     "ui/assets/panel.js",
     "_vendor/__init__.py",
+    "_vendor/kaleidescape_scrapers/__init__.py",
+    "_vendor/kaleidescape_scrapers/client.py",
+    "_vendor/kaleidescape_scrapers/models.py",
+    "_vendor/kaleidescape_scrapers/transport.py",
+    "_vendor/kaleidescape_scrapers/providers/__init__.py",
+    "_vendor/kaleidescape_scrapers/providers/store.py",
+    "_vendor/kaleidescape_scrapers/providers/tmdb.py",
+    "enrichment/__init__.py",
+    "enrichment/config.py",
+    "enrichment/store.py",
+    "enrichment/sync.py",
+    "playback/now_playing.py",
 }
 
 # Only a locally constructed runtime archive is ever sent to this script.

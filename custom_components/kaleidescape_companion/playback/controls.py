@@ -209,17 +209,47 @@ class PlaybackControls:
             host(self.config, self.config.get("library_host", ""))
         )
 
-    async def _state(self, client, target, operation=""):
+    async def _power(self, client, target):
+        """Documented power/idle queries; no wake is implied by a read."""
+        reply = await client.query("GET_DEVICE_POWER_STATE", target=target)
+        value = reply.values["power_state"]
+        if value not in {"0", "1"} or any(
+            zone not in {"0", "1"} for zone in reply.extra_fields
+        ):
+            raise ProtocolError("Invalid device power state")
+        if value == "0":
+            return {"power_state": "standby", "readiness": "idle", "ready": False}
         try:
-            return await client.status(target)
+            idle = await client.query("GET_SYSTEM_READINESS_STATE", target=target)
+            readiness = {"0": "ready", "1": "starting", "2": "idle"}.get(
+                idle.values["state"]
+            )
+            if readiness is None:
+                raise ProtocolError("Invalid system readiness")
         except Rejected as error:
-            # Only an explicit power action may proceed from verified standby.
-            if (
-                operation in {"power_on", "power_off"}
-                and error.status == Status.STANDBY
-            ):
-                return PlaybackState("", -1, 0, 0)
-            raise
+            if error.status != Status.INVALID_REQUEST:
+                raise
+            # Premiere players lack the newer idle command. Playback is also
+            # queried before treating an on-state legacy player as usable.
+            readiness = "ready"
+        zone_ready = not reply.extra_fields or reply.extra_fields[0] == "1"
+        return {
+            "power_state": "on",
+            "readiness": "starting"
+            if readiness == "ready" and not zone_ready
+            else readiness,
+            "ready": readiness == "ready" and zone_ready,
+        }
+
+    async def _state(self, client, target, operation=""):
+        power = await self._power(client, target)
+        if not power["ready"]:
+            if operation not in {"power_on", "power_off", "status"}:
+                raise JournalError(
+                    "control_not_ready", "Power on and wait for readiness"
+                )
+            return power, PlaybackState("", -1, 0, 0)
+        return power, await client.status(target)
 
     @asynccontextmanager
     async def _player(self, authorize, *, ip=None, serial=None):
@@ -301,9 +331,11 @@ class PlaybackControls:
             async with self._player(
                 authorize, serial=self._selected_serial(player_id)
             ) as (client, target, _ip):
+                power, state = await self._state(client, target, "status")
                 return {
                     "player_id": self.player_id(target.device[1:]),
-                    "state": asdict(await client.status(target)),
+                    **power,
+                    "state": asdict(state),
                 }
 
         return await self._read(status, authorize)
@@ -353,7 +385,7 @@ class PlaybackControls:
             async with self._player(
                 authorize, serial=self._selected_serial(player_id)
             ) as (client, target, ip):
-                before = await self._state(client, target, operation)
+                power, before = await self._state(client, target, operation)
                 movie, library_key = (
                     await self._movie(client, target, title_id, authorize)
                     if title_id
@@ -372,7 +404,7 @@ class PlaybackControls:
                     "operation": operation,
                     "serial": target.device[1:],
                     "ip": ip,
-                    "state": state_key(before),
+                    "state": digest([state_key(before), power]),
                     "title_id": title_id,
                     "library_key": library_key,
                     "expires": time.monotonic() + 60,
@@ -431,8 +463,10 @@ class PlaybackControls:
                 async with self._player(
                     authorize, ip=review["ip"], serial=review["serial"]
                 ) as (client, target, _ip):
-                    before = await self._state(client, target, review["operation"])
-                    if state_key(before) != review["state"]:
+                    power, before = await self._state(
+                        client, target, review["operation"]
+                    )
+                    if digest([state_key(before), power]) != review["state"]:
                         raise JournalError(
                             "refresh_required", "Player changed since review"
                         )
@@ -468,7 +502,15 @@ class PlaybackControls:
                         )
                     result.update(outcome="acknowledged", acknowledged=True)
                     # One bounded observation; acceptance cannot prove exact edition.
-                    after = await client.status(target)
+                    after_power, after = await self._state(client, target, "status")
+                    if review["operation"] in {"power_on", "power_off"}:
+                        if (
+                            review["operation"] == "power_on" and after_power["ready"]
+                        ) or (
+                            review["operation"] == "power_off"
+                            and after_power["power_state"] == "standby"
+                        ):
+                            result["outcome"] = "state_observed"
                     desired = {
                         "stop": 0,
                         "pause": 1,

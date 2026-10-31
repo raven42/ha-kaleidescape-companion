@@ -41,6 +41,7 @@ class LibrarySync:
         self.address = None
         self.operation_lock = asyncio.Lock()
         self.collection_task = None
+        self.after_sync = None
 
     async def async_start(self):
         self.session = async_create_clientsession(
@@ -48,6 +49,7 @@ class LibrarySync:
             cookie_jar=DummyCookieJar(),
             trust_env=False,
             auto_decompress=False,
+            auto_cleanup=False,
             headers={"Accept-Encoding": "identity"},
         )
         self.request_sync()
@@ -82,6 +84,9 @@ class LibrarySync:
         self.stopped = True
         await self._cancel()
         await self._drain_collection()
+        if self.session:
+            self.session.detach()
+            self.session = None
 
     async def async_pause(self):
         self.paused = True
@@ -452,6 +457,12 @@ class LibrarySync:
             async with asyncio.timeout(1800):
                 async with self.operation_lock:
                     await self._sync()
+                    if self.after_sync:
+                        try:
+                            self.after_sync()
+                        except JournalError:
+                            # Optional provider readiness must not fail a device scan.
+                            pass
         except asyncio.CancelledError:
             raise
         except JournalError as error:

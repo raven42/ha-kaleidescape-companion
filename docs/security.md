@@ -16,7 +16,7 @@ diagnostics.
 
 | Boundary                                 | Policy and limitation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Browser → integration API                | Active authenticated HA users may read the shared household viewing summary and enabled cached Library metadata/artwork. Journal/catalog mutations, notes/source/session details, Now Playing observation snapshots, exports and shared UI preferences require an active administrator. Active users may read/write only their own browsing preferences. Now Playing also checks read permission on the configured source entities. Dataset IDs select data; they are not credentials.                                                                                                                                                          |
+| Browser → integration API                | Active authenticated HA users may read the shared household viewing summary and enabled cached Library metadata/artwork. Journal/catalog mutations, notes/source/session details, exports and shared UI preferences require an active administrator. Active users may read/write only their own browsing preferences. Now Playing also checks read permission on the configured source entities. Dataset IDs select data; they are not credentials.                                                                                                                                                                                             |
 | Integration → HA                         | Custom integrations execute in Core's process with Core's filesystem, entity, credential, and network access. Entity selection is application behavior, not a sandbox. Other code running as HA can read this database.                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | HA users → one another                   | All active users share one household journal; there is no personal watch history or per-user journal ownership. Personal browsing preferences are scoped to authenticated HA user IDs, with shared hidden collection names managed by administrators. A positive field allowlist limits regular-user API responses. HA roles are not strong isolation between hostile authenticated users.                                                                                                                                                                                                                                                      |
 | Journal/Library → HA entity states       | History/Library sensor states and attributes deliberately expose movie titles, times, counts and storage sizes through HA entity access. Recorder, dashboards, automations, and backups can retain these values outside the private database. Notes, source identities, sessions, and audit actors must never enter sensors.                                                                                                                                                                                                                                                                                                                    |
@@ -137,7 +137,7 @@ data and is excluded from the packaged panel.
 | Shared sidebar journal, search/filter/pagination                                    | Allowed                              | Allowed                              |
 | Viewing title, start/end times, runtime, watched time, status, origin               | Allowed                              | Allowed                              |
 | Notes, raw source/player/content identifiers, session evidence, storage health      | Denied by the integration API        | Allowed                              |
-| Create/correct/delete, Now Playing observation snapshots, JSON/SQLite export        | Denied                               | Allowed                              |
+| Create/correct/delete, JSON/SQLite export                                           | Denied                               | Allowed                              |
 | Integration settings, raw-table inspection, confirmed Database edit/delete          | Denied                               | Allowed                              |
 | Reviewed viewing/Library JSON/SQLite merge imports and Database viewing corrections | Denied                               | Allowed                              |
 | Cached Library metadata/artwork and counts/revision/sync timestamps                 | Allowed when library sync is enabled | Allowed when library sync is enabled |
@@ -197,14 +197,17 @@ active-user/enabled-Library paginated API for complete lists.
 
 ## Now Playing and current artwork
 
-The compact Now Playing card preserves administrator-only snapshot access and
-checks HA entity `POLICY_READ` for all resolved configured source entities
-before reading their live state. No journal ownership/sharing capability
-changes. Responses include session timing/credits/gaps and health, not image
-URLs or proxy tokens. The artwork change key is an opaque hash of the HA-local
-picture reference, kept in memory only. External, malformed, and unrelated
-picture references do not enable the cover request. Current-session context must
-match the source content ID.
+Now Playing allows active authenticated users and checks HA entity `POLICY_READ`
+for each resolved source before reading live state. Household responses use a
+positive allowlist of title, friendly name, entity ID, duration,
+playback/location, availability, observation time, opaque artwork/content keys
+and power state. Only administrators receive raw source IDs, session evidence
+and recording health. Opaque player selection resolves only a known control
+target to the built-in integration's registered media-player identity; a missing
+mapping returns no player, never another player's artwork. Without an explicit
+selection, the configured observer or control default provides the source. This
+reads HA states only. URLs/query tokens are never returned; artwork keys hash
+only a validated HA-local picture reference.
 
 The browser builds an exact, query-free HA media-player proxy path from a
 validated entity ID and fetches it using HA authentication, with redirects
@@ -228,9 +231,9 @@ data, abort image work, revoke object URLs, and invalidate late results. Denied
 access clears the card and stops automatic retries until explicit refresh, page
 return, or rebind. This observational snapshot sends no controls or HA action
 calls. A separate opt-in household control card uses the API boundary described
-below. Source metadata is text, never executable markup. Future user sharing,
-subscriptions, additional controls, remote URLs, or historical artwork require
-another boundary review and regression tests.
+below. Source metadata is text, never executable markup. Future subscriptions,
+additional controls, remote URLs, or historical artwork require another boundary
+review and regression tests.
 
 The automatic runtime-admission rule validates its numeric configuration and
 normalized source duration; it adds no fetches or control operations. It
@@ -270,7 +273,7 @@ blindly replaying it.
 
 Database inspection and the new query/administration commands require an active
 administrator, before storage work and again after awaited results. The
-[Database contract](database.md) allows eighteen fixed tables, known column/JSON
+[Database contract](database.md) allows nineteen fixed tables, known column/JSON
 aliases, 10/25/100/500-row pages and 8 MiB result pages. Column identifiers come
 only from the local migrated schema; values use parameters. The condition parser
 supports comparisons, NULL tests, literal CONTAINS, LIKE and boolean grouping.
@@ -1327,9 +1330,11 @@ Unknown IDs, raw serials/addresses and server-only components are rejected
 before connecting. Every preflight resolves the selected serial through the
 configured seed, then independently verifies the direct serial and movie zone.
 DNS rejects public, loopback, link-local, mixed private/public and empty
-answers; TCP 10000 connections pin private literals. No polling, event
-registration, auto-wake or write occurs on load/discovery. The plain protocol
-must remain on a trusted LAN.
+answers; TCP 10000 connections pin private literals. Enabled control views read
+power/readiness on load and target changes, without event registration,
+auto-wake or writes. After explicit wake, bounded read-only polling checks
+readiness for up to two minutes; TCP resets wait 30 seconds before another read.
+Discovery remains explicit. The plain protocol must remain on a trusted LAN.
 
 The browser supplies only a fixed operation, optional opaque Library version and
 known player ID, random preflight token and UUID. It cannot supply raw wire,
@@ -1368,3 +1373,55 @@ revocation, uncertainty and lifecycle behavior. The operator has reported the
 initial interface working; this redesign and broader access still require user
 browser review. That report does not certify every command/model, standby,
 format selection or exact editions. See [controls](playback-controls.md).
+
+## External metadata providers
+
+Store and TMDB enrichment require separate administrator opt-ins plus enabled
+Library sync. Both default false. Only administrators can configure credentials
+or call scoped `metadata/status` and `metadata/sync`; cached positive Library
+projections remain readable by active users. Current configuration/activity is
+checked across waits and before worker writes. Backup/unload cancels fetches,
+drains accepted worker operations and closes the dedicated HTTP session.
+
+Reusable providers live in `lib/scrapers/`; the runtime has a generated copy. A
+common `Providers.metadata` API dispatches immutable movie queries to separate
+provider adapters. Their injected transport shares rate/body limits; adding an
+adapter cannot extend the HA destination allowlist or enable access by itself.
+The HA adapter allows only fixed HTTPS store/movie/robots and TMDB v3 movie
+routes, rejects redirects and non-public/mixed DNS answers, pins a public
+literal with the original Host/TLS server name, verifies TLS, ignores
+environment proxies, uses no cookies and caps bodies at 4 MiB with a 20-second
+request budget. Credentials go only to TMDB. Response types/encoding are
+checked; HTML scripts are decoded as data, never evaluated. Store robots
+directives and one shared 0.1–10 requests/second limiter apply. Errors,
+including HTTP 429, stop the pass without automatic retries. A later scan or
+manual request can start a new pass. The one-hour/10,000-version budgets bound
+work; successful cache entries are reused for seven days. A configuration change
+cannot recall already sent queries.
+
+Providers receive title/year or the validated public store reference, never
+viewings, notes or invoice fields. Provider responses project only bounded
+credits, source IDs and source-specific scores. Matching requires a unique
+normalized title/year; ambiguous data is skipped. Schema 19 adds a protected
+Library `enrichment` column, preserving raw source facts and purchase privacy.
+Writes serialize on the existing worker with source/group/year stale checks and
+the Library storage limit. Private SQLite/HA backups can contain this cache;
+portable JSON/imports exclude it. Existing cached reads remain after opt-out.
+
+TMDB secrets use HA's native configuration storage, with a blank password
+selector, explicit removal and no prefilled credential in either settings UI.
+They stay outside journal storage, public responses, diagnostics, exports,
+fixtures and logs. Full HA backups can contain them. HTTP exceptions/URLs,
+headers and provider/account bootstrap bodies must never be logged. The locally
+bundled approved TMDB logo and notice add no remote browser image request.
+Public interfaces and API terms can change; unsupported responses fail closed.
+See the [provider guide](enrichment.md) for research and operator validation.
+
+## Modal dismissal consistency
+
+Application modals share an accessible header X and right-aligned commit footer.
+Changing presentation does not bypass dirty-draft review, authorization,
+confirmation fields, stale-row checks or unresolved-write dismissal barriers.
+The Remote has no empty action footer. Collection removal remains unavailable:
+the official TCP command catalog exposes navigation, not movie membership
+writes; the existing explicit HTTP addition boundary remains unchanged.

@@ -1,3 +1,4 @@
+import { metadataDetails } from "../enrichment/details";
 /** Read-only, locally cached library browsing; networking to devices stays in HA. */
 import { matches } from "../core/search";
 import { counted } from "../core/text";
@@ -17,7 +18,7 @@ import type {
 } from "../core/api";
 import { styles } from "../ui/styles";
 import { libraryStyles } from "./styles";
-import { dismissBackdrop } from "../ui/dialog";
+import { closeButton, dismissBackdrop } from "../ui/dialog";
 import "../playback/controls";
 import { CoverQueue } from "./cover";
 import { PreferenceStore } from "../ui/preference-store";
@@ -1029,9 +1030,7 @@ export class KaleidescapeLibrary extends LitElement {
     >
       <div class="card-head">
         <h2 id="library-options-title">Library options</h2>
-        <button @click=${() => this.closeDialog("library-options")}>
-          Done
-        </button>
+        ${closeButton(() => this.closeDialog("library-options"))}
       </div>
       <p class="muted">Changes save automatically for your HA user.</p>
       <div class="options-fields">
@@ -1142,6 +1141,7 @@ export class KaleidescapeLibrary extends LitElement {
     >
       <div class="card-head">
         <h2 id="filters-title">Library filters</h2>
+        ${closeButton(() => this.closeDialog("filter-dialog"))}
       </div>
       <p>
         Match any checked value within a category and all selected categories.
@@ -1276,8 +1276,7 @@ export class KaleidescapeLibrary extends LitElement {
         >
           Clear filters</button
         ><span class="grow"></span>
-        <button @click=${() => this.closeDialog("filter-dialog")}>Cancel</button
-        ><button
+        <button
           class="primary"
           @click=${() => {
             const next = { ...this.applied };
@@ -1354,24 +1353,7 @@ export class KaleidescapeLibrary extends LitElement {
                 <h2 id="library-title">
                   ${this.detailLink("query", group.title)}
                 </h2>
-                <button
-                  class="movie-close"
-                  aria-label="Close"
-                  title="Close"
-                  ?disabled=${this.detailsLocked}
-                  @click=${() => this.closeDialog("title-dialog")}
-                >
-                  <span class="visually-hidden">Close</span
-                  ><svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path
-                      d="m6 6 12 12M18 6 6 18"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                    />
-                  </svg>
-                </button>
+                ${closeButton(() => this.closeDialog("title-dialog"), this.detailsLocked)}
               </div>
               <p class="movie-summary">
                 ${(row?.year ?? group.year) ? this.detailLink("year", String(row?.year ?? group.year)) : "Year unknown"}
@@ -1408,9 +1390,7 @@ export class KaleidescapeLibrary extends LitElement {
                     >`
                   : nothing
               }
-              <p class="movie-version-count muted">
-                ${counted(group.version_count ?? 1, "version")}
-              </p>
+              ${(group.version_count ?? 1) > 1 ? html`<p class="movie-version-count muted">${counted(group.version_count!, "version")}</p>` : nothing}
               ${this.versionsLoading ? html`<p role="status">Loading individual versions…</p>` : nothing}
               ${
                 this.versionsError
@@ -1465,43 +1445,8 @@ export class KaleidescapeLibrary extends LitElement {
                       aria-label=${(this.versions?.total ?? 1) === 1 ? "Version details" : nothing}
                       aria-labelledby=${(this.versions?.total ?? 1) > 1 ? `version-${this.versions?.items.findIndex((item) => item.id === row.id) ?? 0}` : nothing}
                     >
-                      <div class="cover movie-poster">${this.cover(row)}</div>
-                      <div class="movie-description">
-                        <h3>Synopsis</h3>
-                        <p class="movie-synopsis">
-                          ${row.synopsis || "No synopsis available."}
-                        </p>
-                        <div class="detail-badges">
-                          ${renderFormatBadges(row, false, (value) => this.fromDetails("format", value), locked)}
-                          ${renderRatingBadge(row.rating || "Unrated", (value) => this.fromDetails("rating", value), locked)}
-                        </div>
-                        <hr />
-                        <dl class="movie-credits">
-                          ${[
-                            ["Directors", row.directors, "query"],
-                            ["Cast", row.actors, "query"],
-                            ["Genres", row.genres, "genre"],
-                            ["Collections", row.collections, "collection"],
-                          ].map(([label, values, key]) =>
-                            (values as string[]).length
-                              ? html`<div>
-                                  <dt>${label}</dt>
-                                  <dd>
-                                    ${(values as string[]).map((value, index) => html`${index ? ", " : ""}${this.detailLink(key as string, value, label === "Collections" ? collectionLabel(value) : value)}`)}
-                                  </dd>
-                                </div>`
-                              : nothing,
-                          )}
-                        </dl>
-                        <p>
-                          <button
-                            class="link"
-                            ?disabled=${this.detailsLocked}
-                            @click=${() => this.dispatchEvent(new CustomEvent("open-title-journal", { detail: { id: row.id, title: row.title }, bubbles: true, composed: true }))}
-                          >
-                            View journal entries for this movie
-                          </button>
-                        </p>
+                      <div class="movie-aside">
+                        <div class="cover movie-poster">${this.cover(row)}</div>
                         <details class="movie-record-details">
                           <summary>Library details</summary>
                           <p class="muted">
@@ -1519,6 +1464,44 @@ export class KaleidescapeLibrary extends LitElement {
                               : nothing
                           }
                         </details>
+                      </div>
+                      <div class="movie-description">
+                        <h3>Synopsis</h3>
+                        <p class="movie-synopsis">
+                          ${row.synopsis || "No synopsis available."}
+                        </p>
+                        <div class="detail-badges">
+                          ${renderFormatBadges(row, false, (value) => this.fromDetails("format", value), locked)}
+                          ${renderRatingBadge(row.rating || "Unrated", (value) => this.fromDetails("rating", value), locked)}
+                        </div>
+                        <hr />
+                        <dl class="movie-credits">
+                          ${[
+                            ["Directors", row.directors, "query"],
+                            ["Cast", row.actors.slice(0, 8), "query"],
+                            ["Genres", row.genres, "genre"],
+                            ["Collections", row.collections, "collection"],
+                          ].map(([label, values, key]) =>
+                            (values as string[]).length
+                              ? html`<div>
+                                  <dt>${label}</dt>
+                                  <dd>
+                                    ${(values as string[]).map((value, index) => html`${index ? ", " : ""}${this.detailLink(key as string, value, label === "Collections" ? collectionLabel(value) : value)}`)}
+                                  </dd>
+                                </div>`
+                              : nothing,
+                          )}
+                        </dl>
+                        ${metadataDetails(row, (name) => this.detailLink("query", name))}
+                        <p>
+                          <button
+                            class="link"
+                            ?disabled=${this.detailsLocked}
+                            @click=${() => this.dispatchEvent(new CustomEvent("open-title-journal", { detail: { id: row.id, title: row.title }, bubbles: true, composed: true }))}
+                          >
+                            View journal entries for this movie
+                          </button>
+                        </p>
                       </div>
                     </div>`
                   : nothing

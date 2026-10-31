@@ -1,3 +1,4 @@
+import { modalClose } from "./dialog-helpers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import "../src/ui/panel";
 import type { KaleidescapePanel } from "../src/ui/panel";
@@ -95,7 +96,7 @@ describe("journal management", () => {
     expect(root.querySelector<HTMLDialogElement>("#journal-editor")!.open).toBe(
       true,
     );
-    button("Cancel").click();
+    modalClose(panel.shadowRoot!).click();
     await settle();
     expect(
       root.querySelector(".entries-detail .journal-title")?.textContent,

@@ -38,7 +38,7 @@ def batches(values):
         yield values[start : start + 500]
 
 
-ARRAY_FIELDS = ("actors", "directors", "writers", "studios", "genres")
+ARRAY_FIELDS = ("actors", "directors", "writers", "producers", "studios", "genres")
 PUBLIC_FIELDS = (
     *ARRAY_FIELDS,
     "rating",
@@ -87,17 +87,23 @@ def group_metadata(db, source, groups):
     Resolve at read time so a later source correction replaces inherited values;
     the raw source rows and independent versions are never rewritten or merged.
     """
+    from ..enrichment.store import public as public_enrichment
+
     result = {}
     fields = ",".join(f"json_extract(data,'$.{key}') {key}" for key in SHARED_FIELDS)
     for batch in batches(list(dict.fromkeys(groups))):
         for row in db.execute(
-            f"SELECT source_group,{fields} FROM library "
+            f"SELECT source_group,enrichment,{fields} FROM library "
             "WHERE source_id=? AND available=1 AND source_group IN ("
             + ",".join("?" for _ in batch)
             + ") ORDER BY metadata_synced_at IS NOT NULL DESC,length(data) DESC,id",
             (source, *batch),
         ):
             main = result.setdefault(row["source_group"], {})
+            for provider, metadata in public_enrichment(
+                json.loads(row["enrichment"])
+            ).items():
+                main.setdefault("_providers", {}).setdefault(provider, metadata)
             for key in SHARED_FIELDS:
                 value = row[key]
                 if key in ARRAY_FIELDS and value is not None:
@@ -108,12 +114,20 @@ def group_metadata(db, source, groups):
 
 
 def public_title(row, memberships, shared=None):
-    data = json.loads(row["data"])
+    from ..enrichment.store import effective
+    from ..enrichment.store import public as public_enrichment
+
+    enrichment = {
+        **(shared or {}).get("_providers", {}),
+        **json.loads(row["enrichment"]),
+    }
+    data = json.loads(effective(row["data"], enrichment))
     for key, value in (shared or {}).items():
         if data.get(key) in (None, "", []):
             data[key] = value
     return {
         **{key: data.get(key) for key in PUBLIC_FIELDS},
+        "enrichment": public_enrichment(enrichment),
         **{
             key: row[key]
             for key in (
@@ -297,15 +311,13 @@ def library_list(db, source, filters, excluded=""):
         term = query.casefold()
         clauses.append("""(companion_matches(t.title,?,?) OR EXISTS (
             SELECT 1 FROM library credits,
-            json_each(credits.data,'$.actors') person
-            WHERE credits.source_id=t.source_id AND credits.source_group=t.source_group
-            AND credits.available=1 AND companion_matches(person.value,?,?))
-            OR EXISTS (SELECT 1 FROM library credits,
-            json_each(credits.data,'$.directors') person
-            WHERE credits.source_id=t.source_id AND credits.source_group=t.source_group
-            AND credits.available=1
-            AND companion_matches(person.value,?,?)))""")
-        values.extend((term, fuzzy, term, fuzzy, term, fuzzy))
+            json_each(companion_metadata(credits.data,credits.enrichment)) roles,
+            json_each(CASE WHEN roles.type='array'
+                THEN roles.value ELSE '[]' END) person
+            WHERE roles.key IN ('actors','directors','writers','producers','studios')
+            AND credits.source_id=t.source_id AND credits.source_group=t.source_group
+            AND credits.available=1 AND companion_matches(person.value,?,?)))""")
+        values.extend((term, fuzzy, term, fuzzy))
     # Match any selected value within a facet, and all populated facets together.
     # Keep single strings compatible with existing API clients.
     for key in (
@@ -352,7 +364,8 @@ def library_list(db, source, filters, excluded=""):
         elif key in {"actor", "director", "genre"}:
             path = {"actor": "actors", "director": "directors", "genre": "genres"}[key]
             clauses.append(
-                f"EXISTS (SELECT 1 FROM json_each(t.data,'$.{path}') "
+                "EXISTS (SELECT 1 FROM "
+                f"json_each(companion_metadata(t.data,t.enrichment),'$.{path}') "
                 f"WHERE value IN ({placeholders}))"
             )
         elif key == "rating":
@@ -447,7 +460,8 @@ def library_facets(db, source, hidden):
         options = [
             row[0]
             for row in db.execute(
-                """SELECT DISTINCT value FROM library t,json_each(t.data,?)
+                """SELECT DISTINCT value FROM library t,
+                    json_each(companion_metadata(t.data,t.enrichment),?)
                     WHERE source_id=? AND available=1 ORDER BY value LIMIT 501""",
                 (f"$.{key}", source),
             )
@@ -765,7 +779,7 @@ def suggestions(db, source, field, query, fuzzy=False):
         row[0]
         for row in db.execute(
             "SELECT DISTINCT person.value FROM library t,"
-            "json_each(t.data,?) person "
+            "json_each(companion_metadata(t.data,t.enrichment),?) person "
             "WHERE t.source_id=? AND t.available=1 AND person.type='text' "
             "AND companion_matches(person.value,?,?) "
             "ORDER BY companion_casefold(person.value),person.value LIMIT 21",

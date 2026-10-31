@@ -1,3 +1,4 @@
+import { modalClose } from "./dialog-helpers";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../src/ui/journal-calendar";
 import "../src/ui/panel";
@@ -121,9 +122,7 @@ it("opens compact combined movie and viewing details for the chosen poster witho
     /Purchase|Detected|First detected|fictional viewing for interface testing|fictional-source/,
   );
   expect(dialog.querySelector("textarea, input, form")).toBeNull();
-  [...dialog.querySelectorAll<HTMLButtonElement>("button")]
-    .find((node) => node.textContent?.trim() === "Close")!
-    .click();
+  modalClose(dialog).click();
   await calendar.updateComplete;
   expect(dialog.open).toBe(false);
   expect(dialog.textContent).not.toContain("Fictional Actor");

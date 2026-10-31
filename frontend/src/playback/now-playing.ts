@@ -1,6 +1,6 @@
 /** Read-only context for the configured player, using HA's existing artwork route. */
 import { counted } from "../core/text";
-import { LitElement, html, nothing } from "lit";
+import { LitElement, css, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
 import { errorCode, JournalClient } from "../core/api";
 import type { JournalInfo, NowPlayingPlayer } from "../core/api";
@@ -27,10 +27,52 @@ export class KaleidescapeNowPlaying extends LitElement {
   static properties = {
     client: { attribute: false },
     scope: { attribute: false },
+    playerId: {},
   };
-  static styles = styles;
+  static styles = [
+    styles,
+    css`
+      .now-playing {
+        min-height: min(65vh, 680px);
+      }
+      .playback-layout {
+        grid-template-columns: minmax(160px, 30%) minmax(0, 1fr);
+        align-items: center;
+        gap: clamp(24px, 4vw, 64px);
+        padding: 24px;
+      }
+      .cover {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 2 / 3;
+        max-height: 62vh;
+        background: var(--secondary-background-color, #222);
+      }
+      .cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      .playback-detail h3 {
+        font-size: clamp(28px, 4vw, 64px);
+        line-height: 1.15;
+        margin: 16px 0;
+      }
+      .playback-detail > p {
+        font-size: clamp(16px, 1.6vw, 24px);
+      }
+      @media (max-width: 560px) {
+        .playback-layout {
+          grid-template-columns: minmax(90px, 32%) minmax(0, 1fr);
+          gap: 18px;
+          padding: 16px;
+        }
+      }
+    `,
+  ];
   client?: JournalClient;
   scope?: JournalInfo;
+  playerId = "";
   private boundClient?: JournalClient;
   private boundScope = "";
   private generation = 0;
@@ -58,9 +100,10 @@ export class KaleidescapeNowPlaying extends LitElement {
     this.reset();
   }
   protected willUpdate(changed: PropertyValues) {
-    if (!changed.has("client") && !changed.has("scope")) return;
-    const key = this.scope?.permissions.edit
-      ? `${this.scope.entry_id}:${this.scope.dataset_id}`
+    if (!["client", "scope", "playerId"].some((name) => changed.has(name)))
+      return;
+    const key = this.scope?.permissions.read
+      ? `${this.scope.entry_id}:${this.scope.dataset_id}:${!!this.scope.permissions.edit}:${this.playerId}`
       : "";
     if (this.boundClient !== this.client || this.boundScope !== key) {
       this.reset();
@@ -106,13 +149,16 @@ export class KaleidescapeNowPlaying extends LitElement {
     this.error = "";
     this.requestUpdate();
     try {
-      const { players } = await client.nowPlaying(scope);
+      const { players } = await client.nowPlaying(
+        scope,
+        this.playerId || undefined,
+      );
       if (generation !== this.generation) return;
       this.player = players[0] ?? null;
       const player = this.player;
       const key =
         player?.available && player.artwork_key && player.entity_id
-          ? `${player.entity_id}:${player.raw_content_id}:${player.artwork_key}`
+          ? `${player.entity_id}:${player.content_key ?? player.raw_content_id ?? ""}:${player.artwork_key}`
           : "";
       if (key !== this.imageKey) {
         this.clearImage();
@@ -218,7 +264,7 @@ export class KaleidescapeNowPlaying extends LitElement {
                     ${player.available ? html`<p>${PLAYBACK[player.play_status] ?? "Unknown playback state"} · ${LOCATION[player.location] ?? "Unknown location"}</p>` : nothing}
                     ${active && player.duration_seconds != null ? html`<p>Runtime · ${(player.duration_seconds / 60).toFixed(2)} min</p>` : nothing}
                     ${
-                      active && player.session
+                      this.scope?.permissions.edit && active && player.session
                         ? html`<p>
                               This session ·
                               ${(player.session.watched_seconds / 60).toFixed(2)}
@@ -231,10 +277,15 @@ export class KaleidescapeNowPlaying extends LitElement {
                             >`
                         : nothing
                     }
-                    <p role="status">
-                      ${this.recordingStatus(player, Boolean(active))}
-                      ${player.buffered_observations ? html` ${counted(player.buffered_observations, "update")} buffered.` : nothing}
-                    </p>
+                    ${
+                      this.scope?.permissions.edit &&
+                      player.recording_paused !== undefined
+                        ? html`<p role="status">
+                            ${this.recordingStatus(player, Boolean(active))}
+                            ${player.buffered_observations ? html` ${counted(player.buffered_observations, "update")} buffered.` : nothing}
+                          </p>`
+                        : nothing
+                    }
                     <small
                       >Live snapshot refreshes about every 5 seconds while
                       visible.</small
@@ -246,6 +297,10 @@ export class KaleidescapeNowPlaying extends LitElement {
       <kaleidescape-device-controls
         .client=${this.client}
         .scope=${this.scope}
+        .playerId=${this.playerId}
+        @player-changed=${(event: CustomEvent<string>) => {
+          this.playerId = event.detail;
+        }}
       ></kaleidescape-device-controls>`;
   }
 }

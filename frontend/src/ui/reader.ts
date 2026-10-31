@@ -11,7 +11,7 @@ import { entryLayoutStyles } from "./entry-layout.styles";
 import { journalStyles, viewingDetails, viewingListRow } from "./journal-view";
 import { landingPage, rememberPage } from "./navigation";
 import "../library/library";
-import "../playback/controls";
+import "../playback/now-playing";
 import "./journal-options";
 import type { JournalOptionsValue } from "./journal-options";
 import type { LibraryCriterion } from "../library/criteria";
@@ -54,6 +54,7 @@ export class KaleidescapeReader extends LitElement {
   private cursor?: string;
   private history: (string | undefined)[] = [];
   private page = 1;
+  private playbackPlayer = "";
   private activePage: "now-playing" | "journal" | "library" = "journal";
   private navigationReady = false;
 
@@ -90,6 +91,7 @@ export class KaleidescapeReader extends LitElement {
   private clear() {
     this.generation++;
     this.scope = null;
+    this.playbackPlayer = "";
     this.activePage = "journal";
     this.navigationReady = false;
     this.rows = [];
@@ -309,14 +311,19 @@ export class KaleidescapeReader extends LitElement {
         id="reader-content"
         role="tabpanel"
         aria-labelledby=${`reader-${this.activePage}`}
+        @playback-started=${(event: CustomEvent<string>) => {
+          this.playbackPlayer = event.detail;
+          this.selectPage("now-playing");
+        }}
       >
         ${
           this.activePage === "now-playing" && this.scope
-            ? html`<kaleidescape-device-controls
+            ? html`<kaleidescape-now-playing
+                .playerId=${this.playbackPlayer}
                 .client=${this.api ?? undefined}
                 .scope=${this.scope}
                 @access-denied=${() => this.fail(new ApiError("unauthorized"))}
-              ></kaleidescape-device-controls>`
+              ></kaleidescape-now-playing>`
             : this.activePage === "library" && this.scope
               ? html`<kaleidescape-library
                   .client=${this.api ?? undefined}

@@ -136,6 +136,11 @@ class JournalRepository:
         connection.create_function(
             "companion_formats", 1, format_labels, deterministic=True
         )
+        from ..enrichment.store import effective
+
+        connection.create_function(
+            "companion_metadata", 2, effective, deterministic=True
+        )
         try:
             migrate(connection, self.path)
             connection.execute("PRAGMA foreign_keys = ON")
@@ -204,6 +209,15 @@ class JournalRepository:
 
     async def async_library_candidates(self, source: str) -> list[dict]:
         return await self._call(library_store.detail_candidates, self._db(), source)
+
+    async def async_enrichment(self, operation, *args):
+        from ..enrichment import store
+
+        if operation == "candidates":
+            return await self._call(self._search_read, store.candidates, *args)
+        if operation == "save":
+            return await self._call(self._library_write, store.save, *args)
+        raise ValueError("Unknown metadata operation")
 
     async def async_control(self, operation, *args):
         from ..playback import control_store

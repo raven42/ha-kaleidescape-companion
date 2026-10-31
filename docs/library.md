@@ -69,16 +69,16 @@ The Library page queries local SQLite, so browsing works while the server is
 offline. Choose **List** or **Covers**; the cover-size slider resizes the grid,
 with two pixels between covers and title captions overlaid on the artwork.
 Covers use the opt-in artwork cache; missing images show placeholders. In either
-view, click a title to open its details in a modal popup. Close or Escape
-returns to browsing without a separate details pane. Both views show one entry
-per source's `source_group`, scoped to that source. Same-name remakes with
-different group keys stay separate, while editions in the same group share a row
-or cover. Cover captions and detail headings include the known year. The popup
-lists each original version with full metadata. Multiple versions use simple
-Version 1, Version 2 and subsequent tabs; a single version has no tab row. Count
-labels use singular for one version. Version tabs support Left/Right and
-Home/End; large groups use 50-version pages. A source group remains a browsing
-identity, not permission to edit every version together.
+view, click a title to open its details in a modal popup. X or Escape returns to
+browsing without a separate details pane. Both views show one entry per source's
+`source_group`, scoped to that source. Same-name remakes with different group
+keys stay separate, while editions in the same group share a row or cover. Cover
+captions and detail headings include the known year. The popup lists each
+original version with full metadata. Multiple versions use simple Version 1,
+Version 2 and subsequent tabs; a single version has no tab row. Count labels use
+singular for one version. Version tabs support Left/Right and Home/End; large
+groups use 50-version pages. A source group remains a browsing identity, not
+permission to edit every version together.
 
 When a version lacks year, rating, synopsis, cast, directors, writers, studios,
 or genres, its displayed/API metadata fills only empty fields from available
@@ -104,8 +104,8 @@ titles. Primary filters appear as Watched status, Collection, Rating;
 actor/director fields below use typed suggestions (up to 20 from the full cached
 source) and removable selected-name chips. Rating choices reuse the same badges
 as title details. **Apply filters** applies the draft and returns to page one;
-Cancel discards it. The toolbar **Clear Filter** clears search and all checkbox
-filters, including unsubmitted search text, and returns to page one. It
+Closing with X discards it. The toolbar **Clear Filter** clears search and all
+checkbox filters, including unsubmitted search text, and returns to page one. It
 preserves view, sort and page size. Each category offers up to 500 known names
 (collections up to 200), with at most 100 selections per category. Writer and
 studio filters are omitted because the observed source supplies neither field.
@@ -416,3 +416,10 @@ same currency; they can be negative. Unique transactions count distinct known
 order IDs, not title/version rows. Purchases without an order ID are reported
 separately rather than assigned invented transactions. These recorded totals do
 not estimate missing prices or currency conversions.
+
+## Optional external credits and ratings
+
+Separately enable store/TMDB enrichment to extend credits and add
+source-specific ratings. Source scan data, edition identities and financial
+privacy stay intact. See [external metadata](enrichment.md) for credentials,
+matching, caching and request limits.

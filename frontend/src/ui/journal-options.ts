@@ -5,7 +5,7 @@ import type { JournalClient, Scope } from "../core/api";
 import { errorCode, errorMessage } from "../core/api";
 import { PreferenceStore } from "./preference-store";
 import { styles } from "./styles";
-import { dismissBackdrop } from "./dialog";
+import { closeButton, dismissBackdrop } from "./dialog";
 
 export interface JournalOptionsValue {
   fuzzy_search: boolean;
@@ -161,7 +161,10 @@ export class JournalOptions extends LitElement {
         aria-labelledby="journal-options-title"
         @click=${dismissBackdrop}
       >
-        <h2 id="journal-options-title">Journal options</h2>
+        <div class="card-head">
+          <h2 id="journal-options-title">Journal options</h2>
+          ${closeButton(() => this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.close())}
+        </div>
         <p>Changes save automatically for your HA user.</p>
         <label class="check"
           ><input
@@ -246,13 +249,6 @@ export class JournalOptions extends LitElement {
               `
             : nothing
         }
-        <div class="dialog-footer">
-          <button
-            @click=${() => this.renderRoot.querySelector("dialog")?.close()}
-          >
-            Done
-          </button>
-        </div>
       </dialog>`;
   }
 }

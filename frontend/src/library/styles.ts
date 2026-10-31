@@ -305,7 +305,7 @@ export const libraryStyles = css`
     width: min(1080px, calc(100% - 32px));
     padding: clamp(18px, 3vw, 32px);
     border-radius: 22px;
-    background: var(--primary-background-color, #f5f7f6);
+    --dialog-background: var(--primary-background-color, #f5f7f6);
   }
   .movie-heading {
     display: flex;
@@ -324,20 +324,6 @@ export const libraryStyles = css`
     text-align: left;
     color: inherit;
     padding: 0;
-  }
-  .movie-close {
-    display: grid;
-    place-items: center;
-    flex: 0 0 36px;
-    min-height: 36px;
-    padding: 6px;
-    background: transparent;
-    border: 0;
-    color: var(--muted);
-  }
-  .movie-close svg {
-    width: 24px;
-    height: 24px;
   }
   .visually-hidden {
     position: absolute;
@@ -410,6 +396,7 @@ export const libraryStyles = css`
     line-height: 1.7;
   }
   .movie-record-details {
+    margin-top: 12px;
     font-size: 12px;
   }
   @media (max-width: 600px) {

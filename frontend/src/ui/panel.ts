@@ -20,7 +20,7 @@ import type { TitleSelection } from "./library-title-picker";
 import { styles } from "./styles";
 import { entryLayoutStyles } from "./entry-layout.styles";
 import { journalStyles, viewingDetails, viewingListRow } from "./journal-view";
-import { dismissBackdrop } from "./dialog";
+import { closeButton, dismissBackdrop } from "./dialog";
 import { landingPage, rememberPage } from "./navigation";
 import "./reader";
 import "./journal-options";
@@ -118,6 +118,7 @@ export class KaleidescapePanel extends LitElement {
   private error = "";
   private lastError = "";
   private notice = "";
+  private playbackPlayer = "";
   private activePage: Page = "journal";
   private navigationReady = false;
   private settingsBusy = false;
@@ -184,6 +185,7 @@ export class KaleidescapePanel extends LitElement {
     this.detailLoading = false;
     this.sessionError = "";
     this.notice = "";
+    this.playbackPlayer = "";
     this.activePage = "journal";
     this.navigationReady = false;
     this.settingsBusy = this.maintenanceBusy = false;
@@ -699,7 +701,6 @@ export class KaleidescapePanel extends LitElement {
         ${this.selected?.origin === "observed" ? html`<small>Only fields you change are marked as manual corrections. Session evidence is retained.</small>` : nothing}
         <div class="actions dialog-footer">
           ${this.selected && !this.manual ? html`<button type="button" class="danger delete-viewing" @click=${this.openDelete}>Delete entry</button>` : nothing}
-          <button type="button" @click=${this.cancelEdit}>Cancel</button>
           <button type="submit" class="primary">
             ${this.saving ? "Saving…" : this.selected ? "Save changes" : "Add entry"}
           </button>
@@ -1081,9 +1082,12 @@ export class KaleidescapePanel extends LitElement {
         @click=${dismissBackdrop}
         @cancel=${this.cancelEdit}
       >
-        <h2 id="journal-editor-title">
-          ${this.manual ? "New viewing" : "Edit viewing"}
-        </h2>
+        <div class="card-head">
+          <h2 id="journal-editor-title">
+            ${this.manual ? "New viewing" : "Edit viewing"}
+          </h2>
+          ${closeButton((event) => this.cancelEdit(event), this.saving || !!this.pending)}
+        </div>
         ${this.notice ? html`<p class="notice" role="status">${this.notice}</p>` : nothing}
         ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
         ${this.lastError === "conflict" && this.selected ? html`<button @click=${this.reloadSelected}>Reload entry</button>` : nothing}
@@ -1096,7 +1100,10 @@ export class KaleidescapePanel extends LitElement {
         @click=${dismissBackdrop}
         @cancel=${this.cancelDelete}
       >
-        <h2 id="journal-delete-title">Remove this entry from the journal?</h2>
+        <div class="card-head">
+          <h2 id="journal-delete-title">Remove this entry from the journal?</h2>
+          ${closeButton((event) => this.cancelDelete(event), this.saving || !!this.pending)}
+        </div>
         <p>${this.selected?.title}</p>
         <p>
           Stored history and backup copies are retained. This does not
@@ -1105,11 +1112,6 @@ export class KaleidescapePanel extends LitElement {
         ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}${this.confirmDelete ? retry : nothing}
         <div class="dialog-footer">
           <button
-            ?disabled=${this.saving || !!this.pending}
-            @click=${this.cancelDelete}
-          >
-            Keep entry</button
-          ><button
             class="danger"
             ?disabled=${this.saving || !!this.pending || !this.confirmDelete}
             @click=${this.deleteRecord}
@@ -1178,6 +1180,10 @@ export class KaleidescapePanel extends LitElement {
               </div>`
             : html`<section
                 id="companion-page"
+                @playback-started=${(event: CustomEvent<string>) => {
+                  this.playbackPlayer = event.detail;
+                  void this.switchPage("now-playing");
+                }}
                 role="tabpanel"
                 aria-labelledby=${`page-${this.activePage}`}
               >
@@ -1233,6 +1239,7 @@ export class KaleidescapePanel extends LitElement {
                           ></kaleidescape-settings>`
                         : this.activePage === "now-playing"
                           ? html`<kaleidescape-now-playing
+                              .playerId=${this.playbackPlayer}
                               .client=${this.api}
                               .scope=${this.info}
                             ></kaleidescape-now-playing>`

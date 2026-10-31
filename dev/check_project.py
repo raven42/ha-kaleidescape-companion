@@ -66,6 +66,12 @@ def validate() -> None:
         for path in directory.rglob("*.py"):
             ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     validate_runtime_imports()
+    synchronize(
+        check=True,
+        source=ROOT / "lib/scrapers/src/kaleidescape_scrapers",
+        target=INTEGRATION / "_vendor/kaleidescape_scrapers",
+        excluded=set(),
+    )
 
     # Guard the contributor/security guides against accidental cross-file edits;
     # valid links alone cannot detect one guide replacing another's contents.

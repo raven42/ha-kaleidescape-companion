@@ -10,7 +10,7 @@ import type {
   PreparedMutation,
 } from "../core/api";
 import { counted } from "../core/text";
-import { dismissBackdrop } from "./dialog";
+import { closeButton, dismissBackdrop } from "./dialog";
 import { styles } from "./styles";
 
 export class MetadataRepair extends LitElement {
@@ -166,7 +166,10 @@ export class MetadataRepair extends LitElement {
         @click=${dismissBackdrop}
         @cancel=${this.close}
       >
-        <h2 id="metadata-repair-title">Repair Journal Library metadata</h2>
+        <div class="card-head">
+          <h2 id="metadata-repair-title">Repair Journal Library metadata</h2>
+          ${closeButton((event) => this.close(event), !this.confirmNavigation())}
+        </div>
         ${review ? html`<p>${counted(review.updated_count, "entry", "entries")} with missing details can be updated. ${review.unchanged_count} already up to date · ${review.unmatched_count} unmatched · ${review.active_count} active and skipped.</p>` : nothing}
         <p>
           Matches use version identifiers in the configured Library, including
@@ -204,13 +207,6 @@ export class MetadataRepair extends LitElement {
             : nothing
         }
         <div class="dialog-footer">
-          <button
-            type="button"
-            ?disabled=${!this.confirmNavigation()}
-            @click=${this.close}
-          >
-            Cancel
-          </button>
           <button
             class="primary"
             type="button"

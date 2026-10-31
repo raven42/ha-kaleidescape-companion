@@ -10,8 +10,9 @@ Active HA users can browse the journal and enabled Library. Administrators can
 correct records, manage the database, configure tracking and sync, and
 explicitly add a version to a device collection. Library sync and collection
 additions, playback controls and experimental title launch are separate opt-in
-features, all disabled by default. See the [framework status](docs/framework.md)
-for delivered features and validation limits.
+features, all disabled by default. Optional store/TMDB metadata enrichment is
+also disabled by default. See the [framework status](docs/framework.md) for
+delivered features and validation limits.
 
 ## Documentation
 
@@ -26,6 +27,8 @@ for delivered features and validation limits.
   [purchase dates](docs/purchase-dates.md) and
   [reviewed merge imports](docs/imports.md)
 - [Independent Kaleidescape API library](https://pypi.org/project/kaleidescape-api/)
+- [External metadata enrichment](docs/enrichment.md) and
+  [provider package](lib/scrapers/README.md)
 - [Player discovery and controls](docs/playback-controls.md#companion-setup-and-use)
 - [Interface research](docs/research.md) and [changelog](CHANGELOG.md)
 
@@ -36,13 +39,16 @@ custom_components/kaleidescape_companion/
   core/       SQLite worker, migrations, journal operations, settings and security
   library/    Catalog sync, metadata, artwork, collections and title validation
   playback/   HA observation/recording, device discovery, controls and receipts
-  _vendor/    Generated runtime subset of the independent protocol API
+  enrichment/ Optional external metadata scheduling and cache storage
+  calendar/   Opt-in HA calendar publishing and durable delivery receipts
+  _vendor/    Generated runtime subset of the provider library
   ui/         Authenticated APIs, panel registration and compiled assets
   *.py        Required HA entry points and integration constants
 frontend/
-  src/        Typed UI source grouped into core, library, playback and ui
+  src/        Typed UI grouped into core, library, playback, enrichment and ui
   dev/        Preview shell, guarded local proxy and fictional review page
   tests/      Component and proxy security tests
+lib/scrapers/  Independent provider parsers/client, docs and offline tests
 dev/         Development, validation, packaging and deployment tools
 tests/       Python storage, API, lifecycle and deployment tests
 docs/        Product, architecture, security and operator guides
@@ -50,7 +56,8 @@ docs/        Product, architecture, security and operator guides
 
 The `dev/` tools, standalone API CLI/docs/tests and frontend development sources
 are excluded from integration deployment. Only the integration directory,
-including its generated API runtime, is installed into HA.
+including its generated provider runtime, is installed into HA. Home Assistant
+installs the pinned API package separately.
 
 ## Development setup
 
@@ -145,3 +152,8 @@ must be resolved before publication. HACS metadata is preparatory.
 Historical completed Journal viewings can be explicitly exported from Settings
 to the configured calendar, with matching/progress and a warning about
 title-format duplicates. See [calendar procedures](docs/calendar.md).
+
+External metadata setup, request limits and privacy are covered in the
+[enrichment guide](docs/enrichment.md). Now Playing and artwork are shared with
+active users who can read the selected HA source entities; recording internals
+remain administrator-only.

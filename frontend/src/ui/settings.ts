@@ -16,6 +16,7 @@ import "./metadata-repair";
 import type { MetadataRepair } from "./metadata-repair";
 import { PreferenceStore } from "./preference-store";
 import "../playback/controls";
+import "../enrichment/settings";
 
 const fields = [
   ["media_player", "Kaleidescape media player", "text", "", ""],
@@ -72,6 +73,9 @@ const booleanFields = new Set([
   "library_enabled",
   "control_enabled",
   "control_allow_launch",
+  "metadata_store_enabled",
+  "metadata_tmdb_enabled",
+  "metadata_clear_tmdb_key",
   ...libraryChecks.map(([key]) => key),
 ]);
 const validation: Record<string, string> = {
@@ -85,6 +89,8 @@ const validation: Record<string, string> = {
   duplicate_entities:
     "Choose different sensors for play status and media location.",
   invalid_rules: "Check the runtime, completion, and partial-resume values.",
+  invalid_metadata_options:
+    "Use a valid provider credential and a request rate from 0.1 to 10 per second.",
   invalid_control_options:
     "Use a private LAN control hostname/IP and a valid player serial number.",
   invalid_library_host:
@@ -692,6 +698,21 @@ export class KaleidescapeSettings extends LitElement {
                           ></kaleidescape-metadata-repair>`
                         : nothing
                     }
+                    <kaleidescape-enrichment-settings
+                      .client=${this.client}
+                      .scope=${this.scope}
+                      .draft=${this.draft}
+                      .disabled=${this.saving || this.uncertain}
+                      @metadata-settings=${(
+                        event: CustomEvent<Record<string, unknown>>,
+                      ) => {
+                        this.draft = {
+                          ...this.draft,
+                          ...event.detail,
+                        } as typeof this.draft;
+                        this.requestUpdate();
+                      }}
+                    ></kaleidescape-enrichment-settings>
                     <h3>Landing page</h3>
                     <label
                       >Default landing page<select

@@ -10,7 +10,7 @@ import type {
 } from "../core/api";
 import { errorCode, errorMessage } from "../core/api";
 import { styles } from "./styles";
-import { dismissBackdrop } from "./dialog";
+import { closeButton, dismissBackdrop } from "./dialog";
 
 export class CalendarExport extends LitElement {
   static properties = {
@@ -205,7 +205,10 @@ export class CalendarExport extends LitElement {
         @click=${dismissBackdrop}
         @cancel=${this.close}
       >
-        <h2 id="calendar-export-title">Export Journal to calendar</h2>
+        <div class="card-head">
+          <h2 id="calendar-export-title">Export Journal to calendar</h2>
+          ${closeButton((event) => this.close(event), this.working || !!this.pending)}
+        </div>
         <p id="calendar-export-summary">
           Create events for up to
           ${counted(this.status?.completed_viewings ?? 0, "completed viewing")}
@@ -248,12 +251,6 @@ export class CalendarExport extends LitElement {
         }
         <div class="dialog-footer">
           <button
-            type="button"
-            ?disabled=${this.working || !!this.pending}
-            @click=${this.close}
-          >
-            Cancel</button
-          ><button
             class="primary"
             type="button"
             ?disabled=${this.disabled || this.working || !this.status?.ready}

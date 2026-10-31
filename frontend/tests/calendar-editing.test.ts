@@ -1,3 +1,4 @@
+import { modalClose } from "./dialog-helpers";
 /** Calendar editing delegates to the same revisioned Journal mutation flow. */
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../src/ui/panel";
@@ -129,7 +130,7 @@ it("confirms a recoverable deletion from inside the shared editor and refreshes 
     "does not permanently erase",
   );
   expect(transport.records).toHaveLength(3);
-  button(deletion(), "Keep entry").click();
+  modalClose(deletion()).click();
   await vi.waitFor(() => expect(deletion().open).toBe(false));
   expect(editor().open).toBe(true);
   button(editor(), "Delete entry").click();

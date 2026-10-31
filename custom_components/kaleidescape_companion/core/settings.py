@@ -12,6 +12,8 @@ from ..calendar.config import DEFAULTS as CALENDAR_DEFAULTS
 from ..calendar.config import target as calendar_target
 from ..calendar.config import validate as validate_calendar
 from ..const import DEFAULT_MINIMUM_RUNTIME_MINUTES, DOMAIN
+from ..enrichment.config import DEFAULTS as METADATA_DEFAULTS
+from ..enrichment.config import validate as validate_metadata
 from ..library.config import DEFAULTS as LIBRARY_DEFAULTS
 from ..library.config import validate as validate_library
 from ..playback.control_config import DEFAULTS as CONTROL_DEFAULTS
@@ -165,6 +167,25 @@ def form(hass: HomeAssistant, config: dict) -> p.Schema:
             )
         else:
             properties[marker] = selector.TextSelector()
+    for key, default in METADATA_DEFAULTS.items():
+        # A stored credential is never prefilled into either settings surface.
+        value = "" if key == "metadata_tmdb_credential" else config.get(key, default)
+        marker = p.Optional(key, default=value)
+        if type(default) is bool:
+            properties[marker] = selector.BooleanSelector()
+        elif key == "metadata_tmdb_credential":
+            properties[marker] = selector.TextSelector(
+                selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
+            )
+        else:
+            properties[marker] = selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=0.1, max=10, step=0.1, mode=selector.NumberSelectorMode.BOX
+                )
+            )
+    properties[p.Optional("metadata_clear_tmdb_key", default=False)] = (
+        selector.BooleanSelector()
+    )
     return p.Schema(properties)
 
 
@@ -176,6 +197,7 @@ def validate(hass: HomeAssistant, user_input: dict[str, Any], previous: dict) ->
         **validate_ui(user_input, previous),
         **validate_calendar(hass, user_input, previous),
         **validate_controls(user_input, previous),
+        **validate_metadata(user_input, previous),
         "tracking_enabled": user_input.get("tracking_enabled", False),
     }
     for key, default, minimum, maximum in (

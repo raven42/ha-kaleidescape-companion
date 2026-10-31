@@ -80,6 +80,7 @@ def schema(db, table):
                 if (table, name)
                 in {
                     ("library", "data"),
+                    ("library", "enrichment"),
                     ("library", "purchase_history"),
                     ("settings", "value"),
                 }

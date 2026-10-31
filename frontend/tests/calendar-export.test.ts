@@ -1,3 +1,4 @@
+import { modalClose } from "./dialog-helpers";
 import { afterEach, expect, it, vi } from "vitest";
 import "../src/ui/calendar-export";
 import type { CalendarExport } from "../src/ui/calendar-export";
@@ -64,9 +65,10 @@ it("requires confirmation, describes matching and duplicate risk, and sends one 
     confirmation: "EXPORT JOURNAL",
   });
   expect(call.request_id).toMatch(/^[a-f0-9-]{36}$/);
-  expect(button(root, "Cancel").parentElement).toBe(
-    button(root, "Export Journal").parentElement,
-  );
+  expect(modalClose(root).closest(".card-head")).not.toBeNull();
+  expect(
+    button(root, "Export Journal").closest(".dialog-footer"),
+  ).not.toBeNull();
 });
 it("blocks dismissal and preserves the exact request after a lost response", async () => {
   const { root, client } = await mount();

@@ -25,7 +25,9 @@ const review: ControlReview = {
 };
 const button = (label: string) =>
   [...element.shadowRoot!.querySelectorAll<HTMLButtonElement>("button")].find(
-    (item) => item.textContent?.trim() === label,
+    (item) =>
+      item.textContent?.trim() === label ||
+      item.getAttribute("aria-label") === label,
   )!;
 const flush = async () => {
   await Promise.resolve();
@@ -35,6 +37,10 @@ const flush = async () => {
 };
 const mount = async (label: string) => {
   document.body.append(element);
+  if (label === "Pause") {
+    await vi.waitFor(() => expect(button("Remote")?.disabled).toBe(false));
+    button("Remote").click();
+  }
   await vi.waitFor(() => expect(button(label)?.disabled).toBe(false));
 };
 beforeEach(() => {
@@ -55,6 +61,14 @@ beforeEach(() => {
     const operation = message.type.split("/").slice(1).join("/");
     if (operation === "control/info" || operation === "control/discover")
       return data;
+    if (operation === "control/status")
+      return {
+        player_id: message.player_id || data.default_player,
+        power_state: "on",
+        readiness: "ready",
+        ready: true,
+        state: review.before,
+      };
     if (operation === "control/prepare")
       return { ...review, operation: message.operation };
     if (operation === "control/execute")
@@ -101,10 +115,11 @@ it("lets household users control playback without administrator endpoints", asyn
     element.shadowRoot!.querySelector('[name="control_player"]'),
   ).toBeNull();
 });
-it("loads only passive configuration until an explicit control click", async () => {
+it("reads readiness without waking or sending a command on load", async () => {
   await mount("Pause");
   expect(calls.map((call) => call.type)).toEqual([
     "kaleidescape_companion/control/info",
+    "kaleidescape_companion/control/status",
   ]);
   button("Pause").click();
   await vi.waitFor(() =>
@@ -159,7 +174,8 @@ it("chooses a player for this launch without changing household settings", async
     ),
   ].find((item) => item.textContent!.includes("Den"))!;
   den.click();
-  await flush();
+  await element.updateComplete;
+  await vi.waitFor(() => expect(button("Play Movie")?.disabled).toBe(false));
   button("Play Movie").click();
   await vi.waitFor(() =>
     expect(calls.some((call) => call.type.endsWith("/control/execute"))).toBe(
@@ -249,7 +265,12 @@ it("blocks uncertain writes only for their player and refreshes receipts", async
   const original = handler;
   handler = async (message) => {
     if (message.type.endsWith("/control/status"))
-      return { state: review.before };
+      return {
+        state: review.before,
+        power_state: "on",
+        readiness: "ready",
+        ready: true,
+      };
     return original(message);
   };
   data.pending[0].player_id = data.default_player;
@@ -294,4 +315,112 @@ it("discovers explicitly and offers players rather than servers as defaults", as
   );
   expect(values).toContain("1A2B");
   expect(values).not.toContain("2C3D");
+});
+
+it("hides redundant single-player controls and navigates only after accepted playback", async () => {
+  element.mode = "movie";
+  element.versionId = "b".repeat(64);
+  const started = vi.fn();
+  element.addEventListener("playback-started", started);
+  await mount("Play Movie");
+  expect(button("Choose Player").hidden).toBe(true);
+  expect(element.shadowRoot!.querySelector(".player-target")).toBeNull();
+  button("Play Movie").click();
+  await vi.waitFor(() => expect(started).toHaveBeenCalledTimes(1));
+  expect((started.mock.calls[0][0] as CustomEvent).detail).toBe(
+    data.default_player,
+  );
+});
+it("wakes once then waits for readiness before allowing an explicit movie launch", async () => {
+  element.mode = "movie";
+  element.versionId = "b".repeat(64);
+  const original = handler;
+  let ready = false;
+  handler = async (message) =>
+    message.type.endsWith("/control/status")
+      ? {
+          player_id: data.default_player,
+          power_state: ready ? "on" : "standby",
+          readiness: ready ? "ready" : "idle",
+          ready,
+          state: review.before,
+        }
+      : original(message);
+  const started = vi.fn();
+  element.addEventListener("playback-started", started);
+  await mount("Power On");
+  vi.useFakeTimers();
+  try {
+    button("Power On").click();
+    await vi.waitFor(() =>
+      expect(
+        calls.filter((call) => call.type.endsWith("/control/execute")),
+      ).toHaveLength(1),
+    );
+    await flush();
+    expect(element.shadowRoot!.textContent).toContain("Starting player");
+    expect(
+      element.shadowRoot!.querySelector<HTMLButtonElement>(".play-movie")!
+        .disabled,
+    ).toBe(true);
+    expect(
+      calls.find((call) => call.type.endsWith("/control/prepare")),
+    ).toMatchObject({ operation: "power_on" });
+    expect(
+      calls.find((call) => call.type.endsWith("/control/prepare")),
+    ).not.toHaveProperty("title_id");
+    expect(started).not.toHaveBeenCalled();
+    ready = true;
+    await vi.advanceTimersByTimeAsync(1000);
+    await flush();
+    expect(button("Play Movie").disabled).toBe(false);
+    expect(
+      calls.filter((call) => call.type.endsWith("/control/execute")),
+    ).toHaveLength(1);
+    button("Play Movie").click();
+    await vi.waitFor(() => expect(started).toHaveBeenCalledTimes(1));
+  } finally {
+    vi.useRealTimers();
+  }
+});
+it("keeps uncertain result recovery inside the portrait remote", async () => {
+  const original = handler;
+  handler = async (message) => {
+    if (message.type.endsWith("/control/execute"))
+      throw new ApiError("connection_lost");
+    return original(message);
+  };
+  await mount("Pause");
+  const dialog = element.shadowRoot!.querySelector("dialog")!;
+  expect(dialog.classList.contains("remote-dialog")).toBe(true);
+  expect(
+    dialog.querySelector('[aria-label="Directional controls"]'),
+  ).not.toBeNull();
+  button("Pause").click();
+  await vi.waitFor(() =>
+    expect(dialog.textContent).toContain("Check command result"),
+  );
+  expect(
+    dialog.querySelector("button.primary")?.getAttribute("aria-label"),
+  ).toBe("Play selection");
+});
+
+it("uses the shared header X for Remote without a redundant heading or footer", async () => {
+  await mount("Pause");
+  const dialog =
+    element.shadowRoot!.querySelector<HTMLDialogElement>("dialog")!;
+  expect(dialog.open).toBe(true);
+  expect(
+    [...dialog.querySelectorAll("h2")].map((node) => node.textContent?.trim()),
+  ).toEqual(["Theater Remote"]);
+  expect(dialog.querySelector(".dialog-footer")).toBeNull();
+  const close = dialog.querySelector<HTMLButtonElement>(
+    '.card-head [aria-label="Close"]',
+  )!;
+  expect(close.querySelector("svg")).not.toBeNull();
+  close.click();
+  expect(dialog.open).toBe(false);
+  expect(calls.some((call) => call.type.endsWith("/control/execute"))).toBe(
+    false,
+  );
 });

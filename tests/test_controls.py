@@ -45,6 +45,8 @@ class Peer:
         self.sent = asyncio.Event()
         self.hook = None
         self.standby = False
+        self.readiness = "0"
+        self.zone_power = ()
         self.metadata_title = "A Fictional Film"
         self.read_hold = None
         self.read_started = asyncio.Event()
@@ -106,6 +108,16 @@ class Peer:
                 return api.PlaybackState(peer.title, peer.mode, 7200, 100)
 
             async def query(self, command, **kwargs):
+                if command == "GET_DEVICE_POWER_STATE":
+                    return api.NamedResponse(
+                        "DEVICE_POWER_STATE",
+                        {"power_state": "0" if peer.standby else "1"},
+                        extra_fields=peer.zone_power,
+                    )
+                if command == "GET_SYSTEM_READINESS_STATE":
+                    return api.NamedResponse(
+                        "SYSTEM_READINESS_STATE", {"state": peer.readiness}
+                    )
                 assert command == "GET_HIGHLIGHTED_SELECTION"
                 return api.NamedResponse("HIGHLIGHTED_SELECTION", {"handle": HANDLE})
 
@@ -387,12 +399,12 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
         await self.configure()
         self.peer.standby = True
         response = await self.call("control/prepare", **self.scope, operation="pause")
-        self.assertEqual(response["code"], "control_unreachable")
+        self.assertEqual(response["code"], "control_not_ready")
         self.assertEqual(self.peer.commands, [])
         token = await self.prepare("power_on")
         self.assertEqual(self.peer.commands, [])
         response = await self.execute(token)
-        self.assertEqual(response["result"]["outcome"], "acknowledged")
+        self.assertEqual(response["result"]["outcome"], "state_observed")
         self.assertEqual([name for name, *_ in self.peer.commands], ["LEAVE_STANDBY"])
 
     async def test_another_actor_cannot_reuse_a_review_or_receipt(self):
@@ -539,6 +551,32 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
         )
         self.assertFalse(page["deletable"])
         self.assertTrue(all(not column["editable"] for column in page["schema"]))
+
+    async def test_idle_and_starting_are_readable_but_do_not_permit_launch(self):
+        await self.configure()
+        for value, label in (("1", "starting"), ("2", "idle")):
+            self.peer.readiness = value
+            response = await self.call("control/status", **self.scope)
+            self.assertEqual(response["result"]["readiness"], label)
+            self.assertFalse(response["result"]["ready"])
+            response = await self.call(
+                "control/prepare", **self.scope, operation="play"
+            )
+            self.assertEqual(response["code"], "control_not_ready")
+        self.assertEqual(self.peer.commands, [])
+
+    async def test_idle_with_unavailable_movie_zone_still_offers_explicit_wake(self):
+        await self.configure()
+        self.peer.zone_power = ("0",)
+        self.peer.readiness = "2"
+        status = (await self.call("control/status", **self.scope))["result"]
+        self.assertEqual(status["readiness"], "idle")
+        self.assertFalse(status["ready"])
+        await self.prepare("power_on")
+        self.peer.readiness = "0"
+        status = (await self.call("control/status", **self.scope))["result"]
+        self.assertEqual(status["readiness"], "starting")
+        self.assertEqual(self.peer.commands, [])
 
 
 class ConfigurationTest(unittest.TestCase):

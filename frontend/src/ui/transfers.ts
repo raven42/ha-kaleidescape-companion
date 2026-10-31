@@ -11,7 +11,7 @@ import type {
   ImportReviewRow,
 } from "../core/api";
 import { styles } from "./styles";
-import { dismissBackdrop } from "./dialog";
+import { closeButton, dismissBackdrop } from "./dialog";
 import "./import-matcher";
 import type { KaleidescapeImportMatcher } from "./import-matcher";
 
@@ -727,40 +727,26 @@ export class KaleidescapeTransfers extends LitElement {
           <h2 id="transfer-title">
             ${this.dialog === "export" ? "Export database" : "Merge Import"}
           </h2>
+          ${closeButton((event) => this.closeDialog(event), this.working || !!this.pending)}
         </div>
         ${this.error && this.dialog ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
         ${
           this.dialog === "export"
             ? html`<p>
-                  Exports include private history and deleted records. SQLite
-                  also includes catalog and source metadata. Store downloads
-                  securely.
-                </p>
-                <div class="actions">
-                  <button
-                    ?disabled=${blocked}
-                    @click=${() => this.exportData("json")}
-                  >
-                    Export JSON</button
-                  ><button
-                    ?disabled=${blocked}
-                    @click=${() => this.exportData("sqlite")}
-                  >
-                    Export SQLite
-                  </button>
-                </div>`
+                Exports include private history and deleted records. SQLite also
+                includes catalog and source metadata. Store downloads securely.
+              </p> `
             : this.dialog === "import"
               ? this.renderImport(blocked)
               : nothing
         }
-        <div class="actions dialog-footer">
-          <button
-            ?disabled=${this.working || !!this.pending}
-            @click=${this.closeDialog}
-          >
-            Cancel</button
-          >${this.dialog === "import" && this.review ? html`<button class="primary" ?disabled=${blocked || !!this.matching || !this.selected.size} @click=${this.importData}>Apply ${counted(this.selected.size, "selected change")}</button>` : nothing}
-        </div>
+        ${
+          this.dialog === "export" || (this.dialog === "import" && this.review)
+            ? html`<div class="actions dialog-footer">
+                ${this.dialog === "export" ? html`<button ?disabled=${blocked} @click=${() => this.exportData("json")}>Export JSON</button><button class="primary" ?disabled=${blocked} @click=${() => this.exportData("sqlite")}>Export SQLite</button>` : html`<button class="primary" ?disabled=${blocked || !!this.matching || !this.selected.size} @click=${this.importData}>Apply ${counted(this.selected.size, "selected change")}</button>`}
+              </div>`
+            : nothing
+        }
       </dialog>`;
   }
 }

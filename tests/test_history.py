@@ -109,7 +109,6 @@ class HouseholdReadTest(unittest.IsolatedAsyncioTestCase):
                     },
                 ),
                 ("journal/sessions", {"viewing_id": record["id"]}),
-                ("now_playing", {}),
             ):
                 self.assertEqual(
                     (await self.call(command, user=user, **self.scope, **data))["code"],

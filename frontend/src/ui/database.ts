@@ -14,7 +14,7 @@ import { styles } from "./styles";
 import { databaseStyles } from "./database.styles";
 import { entryLayoutStyles } from "./entry-layout.styles";
 import { PreferenceStore } from "./preference-store";
-import { dismissBackdrop } from "./dialog";
+import { closeButton, dismissBackdrop } from "./dialog";
 import { manualDraft, manualData } from "./manual-viewing";
 import "./database-query";
 import "./transfers";
@@ -563,11 +563,7 @@ export class KaleidescapeDatabase extends LitElement {
     >
       <div class="card-head">
         <h2>Database options</h2>
-        <button
-          @click=${() => this.renderRoot.querySelector<HTMLDialogElement>("#database-options")?.close()}
-        >
-          Done
-        </button>
+        ${closeButton(() => this.renderRoot.querySelector<HTMLDialogElement>("#database-options")?.close())}
       </div>
       <p>View choices save automatically for your HA user.</p>
       <fieldset ?disabled=${this.blocked}>
@@ -844,6 +840,7 @@ export class KaleidescapeDatabase extends LitElement {
           <h2>
             ${this.operation === "new" ? "New viewing" : "Edit database entry"}
           </h2>
+          ${closeButton((event) => this.close(event), this.saving || !!this.pending)}
         </div>
         <p class="warning">
           Only supported fields can change. Source metadata may be restored by a
@@ -945,12 +942,6 @@ export class KaleidescapeDatabase extends LitElement {
           </fieldset>
           <div class="dialog-footer">
             <button
-              type="button"
-              ?disabled=${this.saving || !!this.pending}
-              @click=${this.close}
-            >
-              Cancel edit</button
-            ><button
               type="submit"
               class="primary"
               ?disabled=${!this.confirmed || this.saving || !!this.pending}
@@ -966,10 +957,13 @@ export class KaleidescapeDatabase extends LitElement {
         @click=${dismissBackdrop}
         @cancel=${this.close}
       >
-        <h2>
-          Permanently delete
-          ${counted(this.selectedRows().length, "entry", "entries")}?
-        </h2>
+        <div class="card-head">
+          <h2>
+            Permanently delete
+            ${counted(this.selectedRows().length, "entry", "entries")}?
+          </h2>
+          ${closeButton((event) => this.close(event), this.saving || !!this.pending)}
+        </div>
         <p>
           Database deletion is permanent. Associated memberships/session
           references may also be removed, and artwork references cleared. Source
@@ -992,12 +986,7 @@ export class KaleidescapeDatabase extends LitElement {
             ?disabled=${this.deleteWord !== "DELETE" || this.saving || !!this.pending}
             @click=${() => this.save()}
           >
-            Confirm delete</button
-          ><button
-            ?disabled=${this.saving || !!this.pending}
-            @click=${this.close}
-          >
-            Cancel delete
+            Confirm delete
           </button>
         </div>
       </dialog>

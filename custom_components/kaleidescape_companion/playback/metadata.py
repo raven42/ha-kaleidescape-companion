@@ -22,6 +22,10 @@ def snapshot(db, row):
         **shared,
         **{key: value for key, value in data.items() if value not in (None, "", [])},
     }
+    from ..enrichment.store import effective
+
+    enrichment = {**shared.get("_providers", {}), **json.loads(row["enrichment"])}
+    data = json.loads(effective(data, enrichment))
     hidden = excluded_collections(excluded(db))
     purchased = db.execute(
         f"SELECT {PURCHASE_SQL} FROM library t WHERE t.id=?", (row["id"],)

@@ -9,6 +9,7 @@ from homeassistant.components.calendar import CalendarEntityFeature
 from homeassistant.helpers import config_validation as cv
 
 from ..core.models import JournalError, invalid, text
+from ..enrichment.config import DEFAULTS as METADATA_DEFAULTS
 from ..library.config import DEFAULTS as LIBRARY_DEFAULTS
 from ..playback.control_config import DEFAULTS as CONTROL_DEFAULTS
 from .preferences import DEFAULTS as UI_DEFAULTS
@@ -25,6 +26,8 @@ OPTION_FIELDS = frozenset(
     }
     | LIBRARY_DEFAULTS.keys()
     | CONTROL_DEFAULTS.keys()
+    | METADATA_DEFAULTS.keys()
+    | {"metadata_clear_tmdb_key"}
     | UI_DEFAULTS.keys()
     | {"calendar_enabled", "calendar_entity", "calendar_title", "calendar_description"}
 )

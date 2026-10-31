@@ -1,3 +1,4 @@
+import { modalClose } from "./dialog-helpers";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../src/library/library";
 import type { KaleidescapeLibrary } from "../src/library/library";
@@ -105,7 +106,7 @@ it("uses checkbox filters with multiple values, discards cancelled drafts, and r
   button("Filters (3)").click();
   await flush();
   button("Clear filters").click();
-  button("Cancel").click();
+  modalClose(root()).click();
   button("Filters (3)").click();
   await flush();
   expect(root().querySelectorAll("#filter-dialog input:checked")).toHaveLength(
@@ -153,7 +154,7 @@ it("clears applied and draft filters without changing sort, view or page size", 
   expect(root().querySelectorAll("#filter-dialog input:checked")).toHaveLength(
     0,
   );
-  button("Cancel").click();
+  modalClose(root()).click();
   await flush();
   field("library_query", "Unsubmitted search");
   button("Clear Filter").click();
@@ -188,7 +189,7 @@ it("adds sortable year/collection headings and opens details only in a popup", a
   );
   expect(text()).toContain("First detected");
   expect(root().querySelector(".library-title")).toBeNull();
-  button("Close").click();
+  modalClose(root()).click();
   await flush();
   expect(root().querySelector("#title-dialog .playback-layout")).toBeNull();
 });
@@ -217,9 +218,9 @@ it("combines a linked movie heading and actions with poster, synopsis and credit
   expect(
     dialog.querySelector(".movie-record-details summary")!.textContent,
   ).toBe("Library details");
-  expect(dialog.querySelector(".movie-close")!.getAttribute("aria-label")).toBe(
-    "Close",
-  );
+  expect(
+    dialog.querySelector(".dialog-close")!.getAttribute("aria-label"),
+  ).toBe("Close");
 });
 
 it("switches to tightly spaced resizable covers and opens the same title popup", async () => {
@@ -241,7 +242,7 @@ it("switches to tightly spaced resizable covers and opens the same title popup",
   expect(root().querySelector<HTMLDialogElement>("#title-dialog")!.open).toBe(
     true,
   );
-  button("Close").click();
+  modalClose(root()).click();
   root()
     .querySelector<HTMLInputElement>(
       'input[name="library_view"][value="list"]',
@@ -264,7 +265,7 @@ it("renders untrusted title/filter metadata as text", async () => {
   await flush();
   expect(text()).toContain("<script>attack()</script>");
   expect(root().querySelector("img,script")).toBeNull();
-  button("Close").click();
+  modalClose(root()).click();
   button("Filters").click();
   await flush();
   expect(root().querySelector("script")).toBeNull();
@@ -315,7 +316,7 @@ it("aborts late covers and revokes displayed URLs when closing details or changi
   title("Voyage to Europa").click();
   await flush();
   const signal = artwork.mock.calls[0][2];
-  button("Close").click();
+  modalClose(root()).click();
   await flush();
   expect(signal.aborted).toBe(true);
   resolve(new Blob(["fictional"], { type: "image/png" }));
@@ -520,7 +521,7 @@ it("groups source editions in list and covers, lists formats, and switches versi
   await flush();
   expect(text()).toContain("Other version synopsis");
   expect(text()).not.toContain("First version synopsis");
-  button("Close").click();
+  modalClose(root()).click();
   root()
     .querySelector<HTMLInputElement>(
       'input[name="library_view"][value="covers"]',
@@ -562,7 +563,7 @@ it("keeps same-name remakes separate in both views and opens only the selected w
   expect(root().querySelector("#title-dialog")!.textContent).not.toContain(
     "Remake Director",
   );
-  button("Close").click();
+  modalClose(root()).click();
   root()
     .querySelector<HTMLInputElement>(
       'input[name="library_view"][value="covers"]',
@@ -628,7 +629,7 @@ it("discards late version details after closing the popup or replacing the accou
   );
   title("Voyage to Europa").click();
   await flush();
-  button("Close").click();
+  modalClose(root()).click();
   await flush();
   resolve({
     items: [libraryTitle({ synopsis: "Stale version details" })],
@@ -789,7 +790,7 @@ it("offers persisted genre/year/format filters and hides the tablist for one ver
       .querySelector("#title-dialog [role=region]")
       ?.getAttribute("aria-label"),
   ).toBe("Version details");
-  expect(root().querySelector("#title-dialog")!.textContent).toContain(
+  expect(root().querySelector("#title-dialog")!.textContent).not.toContain(
     "1 version",
   );
   expect(root().querySelector("#title-dialog")!.textContent).not.toContain(

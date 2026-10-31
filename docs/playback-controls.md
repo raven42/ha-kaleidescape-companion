@@ -209,8 +209,9 @@ chapter, directional navigation, Select, Back, Kaleidescape menu, Movie covers,
 Power on and Standby. Controls verify direct serial identity and a movie zone
 before every operation. Older hardware, Co-Star and individual command support
 need operator validation; a rejected command is reported without fallback. There
-is no automatic wake, polling, retry, event subscription, HA service forwarding
-or generic raw-command endpoint. Existing HA entities/actions are preserved; no
+is no automatic wake, command retry, event subscription, HA service forwarding
+or generic raw-command endpoint. Enabled views read readiness on load and poll
+briefly after an explicit wake. Existing HA entities/actions are preserved; no
 replacement media player or new control service is registered.
 
 ## Library identity and launch limits
@@ -304,3 +305,28 @@ settings, read-only discovery/status and dialog/player-picker layout, then
 choose any live commands yourself; Play Movie sends without a prompt.
 Firmware/model compatibility, exact editions, standby responses and interactions
 with theater automation are not certified by passing emulator tests.
+
+## Power/readiness and household display
+
+Control status returns `power_state` (`on`/`standby`), `readiness`
+(`ready`/`starting`/`idle`) and `ready`, alongside playback state. It uses the
+[official protocol](https://www.kaleidescape.com/wp-content/uploads/Kaleidescape-System-Control-Protocol-Reference-Manual.pdf)
+`GET_DEVICE_POWER_STATE` and `GET_SYSTEM_READINESS_STATE`. Older Premiere
+players that reject the latter command use confirmed on-state plus a successful
+playback read. Device/zone identity is still verified before an explicit wake.
+Launch and transport preflight reject unready players; power operations and
+read-only status remain available. A readiness change invalidates a preflight.
+
+The Library action reads state on opening, offers Power On when standby/idle,
+then polls read-only readiness for at most two minutes. Connection resets defer
+another read for 30 seconds. It never retries a wake or automatically launches
+once ready. Play Movie requires a new click. Successful acknowledged/observed
+play, resume and movie launch navigate to Now Playing for the chosen player.
+Unknown/uncertain outcomes preserve recovery and never trigger navigation.
+
+The Now Playing snapshot itself only reads HA states. Both account roles get
+artwork/display context with source read permission; recorder internals remain
+administrator-only. The control widget now opens a portrait Remote dialog.
+Choose Player and its target label are hidden for one player. Review tablet
+geometry, standby/startup behavior and normal-user covers in a real browser;
+automated tests do not certify device/firmware behavior.

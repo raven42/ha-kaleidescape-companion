@@ -1,7 +1,7 @@
 # Journal backend
 
 The backend records manual journal entries and observed playback from one
-selected HA player. API version is `1`; SQLite schema is `18` and JSON export
+selected HA player. API version is `1`; SQLite schema is `19` and JSON export
 format is `5`. The household reader and administrator [management panel](ui.md)
 use this API. Live subscriptions remain planned; administrator discovery and
 [household device controls](playback-controls.md) are implemented;
@@ -263,16 +263,13 @@ resumed viewing's total, movie position, or a promise of durable completion. The
 snapshot timestamp records HA observation, not independently verified device
 freshness.
 
-The endpoint remains read-only/admin-only and checks HA `POLICY_READ` for every
-resolved configured source entity. Missing mappings/offline sources remain
-unavailable. With tracking disabled, `players` is empty. The compact
-administrator [Now Playing card](ui.md#now-playing) refreshes this snapshot
-while visible. It uses HA's existing authenticated media-player image route for
-current cover art; the API exposes no image URL, access token, or arbitrary
-fetch destination. No database schema/export version changes are needed.
-Progress remains planned; this snapshot never sends controls or opens device
-connections. A separate opted-in [control API](#device-control-api) supports the
-household Player controls card and Library launch.
+The endpoint is read-only and available to active users with HA `POLICY_READ`
+for all resolved configured sources. Household responses omit raw IDs, session
+and recording internals. An optional opaque `player_id` maps a known control
+target to its native HA media-player registry entry; without tracking, the
+configured control default can provide the display. Missing mappings return an
+empty player list. Both roles mount the [Now Playing card](ui.md#now-playing),
+which uses HA's authenticated image route without returning URLs/tokens.
 
 ## Authenticated API
 
@@ -703,3 +700,11 @@ After physical inspection, administrator `control/acknowledge` takes a receipt
 actively sending receipt. Startup converts interrupted reservations to
 uncertain. System records are outside editing/portable imports; SQLite backups
 retain them.
+
+## External metadata
+
+Schema 19 adds protected provider-cache JSON to Library. Scoped administrator
+`metadata/status` and `metadata/sync` operate only enabled providers. Cache
+credits augment Library detail/search projections without replacing source
+identities or raw metadata. See [enrichment](enrichment.md) and its security
+boundary for matching, request budgets, credential storage and opt-out behavior.

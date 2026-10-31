@@ -216,3 +216,34 @@ it("falls back to a placeholder for slow/broken artwork without hiding playback"
   expect(content()).toContain("The Lantern Voyage");
   expect(content()).toContain("No artwork available");
 });
+it("shows household artwork while withholding administrator recorder context", async () => {
+  element.scope = {
+    ...info,
+    permissions: { read: true, edit: false, export: false },
+  };
+  const artwork = vi
+    .spyOn(element.client!, "artwork")
+    .mockResolvedValue(new Blob(["fictional"], { type: "image/jpeg" }));
+  await mount(
+    playing({
+      artwork_key: "cover",
+      content_key: "opaque-content",
+      raw_content_id: undefined,
+    }),
+  );
+  await flush();
+  expect(artwork).toHaveBeenCalledOnce();
+  expect(element.shadowRoot!.querySelector("img")?.src).toBe(
+    "blob:fictional-cover",
+  );
+  expect(content()).toContain("The Lantern Voyage");
+  expect(content()).not.toContain("Recording enabled");
+  expect(content()).not.toContain("min counted");
+});
+it("binds snapshots and artwork to the selected player", async () => {
+  element.playerId = "opaque-player";
+  await mount(playing());
+  expect(
+    transport.calls.find((call) => call.type.endsWith("/now_playing")),
+  ).toMatchObject({ player_id: "opaque-player" });
+});

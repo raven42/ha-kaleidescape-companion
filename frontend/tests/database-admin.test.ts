@@ -1,3 +1,4 @@
+import { modalClose } from "./dialog-helpers";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../src/ui/database";
 import type { KaleidescapeDatabase } from "../src/ui/database";
@@ -161,7 +162,7 @@ it("retains an edited draft on conflicts and blocks implicit dirty-modal dismiss
   await edit();
   input("notes", "Keep this correction");
   window.confirm = vi.fn(() => false);
-  button("Cancel edit").click();
+  modalClose(root()).click();
   await flush();
   expect(root().querySelector<HTMLDialogElement>("#database-edit")!.open).toBe(
     true,
@@ -301,7 +302,7 @@ it("creates manual viewings through the existing journal API with confirmed fiel
   ).toBe(true);
 });
 
-it("lets typing replace NULL values and keeps save/cancel together", async () => {
+it("lets typing replace NULL values with a footer save and header close", async () => {
   transport.records[0].duration_seconds = null;
   await mount();
   await edit();
@@ -316,9 +317,10 @@ it("lets typing replace NULL values and keeps save/cancel together", async () =>
   input("duration_seconds", "7200");
   await flush();
   expect(nullToggle.checked).toBe(false);
-  expect(button("Save changes").parentElement).toBe(
-    button("Cancel edit").parentElement,
-  );
+  expect(
+    button("Save changes").parentElement!.classList.contains("dialog-footer"),
+  ).toBe(true);
+  expect(modalClose(root()).closest(".card-head")).not.toBeNull();
   await confirm();
   expect(transport.records[0].duration_seconds).toBe(7200);
 });

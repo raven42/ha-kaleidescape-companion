@@ -11,11 +11,11 @@ rules, retry behavior and limits.
 Both Journal roles use a single shared surface: toolbar/search/sort above a
 selectable entry list and readable details pane. On narrow screens the details
 stack beneath the list. Administrator Add/Edit opens a separate dialog with
-consistent Save/Cancel actions, guarded dismissal and retry handling; Journal
-Delete has its own confirmation and retains stored history. Regular users see
-only the household-safe summary fields and have no edit/session controls.
-Administrator database size, recording/backup status and schema/revision appear
-in a compact footer instead of separate overview cards.
+consistent header-close/footer-save actions, guarded dismissal and retry
+handling; Journal Delete has its own confirmation and retains stored history.
+Regular users see only the household-safe summary fields and have no
+edit/session controls. Administrator database size, recording/backup status and
+schema/revision appear in a compact footer instead of separate overview cards.
 
 Journal rows show the linked title, local calendar date and status on one
 compact line. Select a row for full times, watched/runtime values and other
@@ -126,11 +126,11 @@ the packaged panel. Its changes disappear when the page reloads.
 
 ## Now Playing
 
-Administrators see a compact card on the **Now Playing** tab. Enable automatic
-tracking and select the player/status/location entities in the integration's
-**Configure** options. Regular users retain their read-only journal view without
-this card. The snapshot API also checks read permission for the selected source
-entities.
+All active HA users see a larger **Now Playing** display with authenticated HA
+cover artwork. Source entity read permissions still apply. Configure the
+observer or a control default player with a matching built-in HA entity. Regular
+users receive display metadata; administrators additionally see session and
+recording context.
 
 **Configure → Minimum runtime to record (minutes; 0 disables)** defaults to 10.
 Shorter playback is visible in Now Playing but is not added to the automatic
@@ -326,8 +326,8 @@ recovery and firmware limits.
 
 For browser review, use the fictional Vite fixture with Library enabled, opt in
 through Settings, open an individual title/version and inspect target choice,
-submission, Cancel/backdrop and narrow layouts. The fixture simulates device
-behavior; real firmware add/read-back requires an isolated operator test.
+submission, X/backdrop dismissal and narrow layouts. The fixture simulates
+device behavior; real firmware add/read-back requires an isolated operator test.
 
 ## Manual viewings and calendar publishing
 
@@ -458,11 +458,12 @@ separate opt-in. Neither target setting changes Journal tracking.
 
 All active users now have **Now Playing | Library | Journal** tabs;
 administrators also have Database and Settings. The household Now Playing view
-contains player controls, not private observation/session evidence. Commands,
-including Stop and power changes, execute on their explicit click after
-automatic preflight, without a confirmation dialog. A status refresh is
-explicit; loading the view only reads passive configuration. Anonymous/inactive
-users have no access.
+contains cover artwork, safe playback context and player controls, without
+private observation/session evidence. Commands, including Stop and power
+changes, execute on their explicit click after automatic preflight, without a
+confirmation dialog. Enabled control views read power/readiness on load; the
+snapshot refreshes HA state while visible. Neither read sends a wake or playback
+command. Anonymous/inactive users have no access.
 
 Library movie details combine a large linked title, compact year/runtime/genre
 summary, existing format/rating/status/favorite/recent badges and an action row.
@@ -489,3 +490,37 @@ Check Now Playing and the administrator discovery/settings layout separately.
 Play Movie and remote controls send without a prompt, so choose live commands
 only in your intended operator test window. Automated checks use fictional
 players and do not verify browser layout or hardware behavior.
+
+## Power-aware playback and remote
+
+A single-player system hides **Choose Player** and the target label. Multiple
+players offer an opaque per-view selection without changing tracking or the
+shared default. Library actions first read documented power/readiness. **Power
+On** sends one explicit wake; the action shows startup progress while read-only
+checks wait for readiness. It never starts a movie automatically after waking.
+After a timeout, **Check player** permits another status check. **Play Movie**
+only becomes available when ready. Accepted play/resume/title-launch commands
+navigate to Now Playing for that target; rejected/uncertain results do not.
+
+Now Playing's **Remote** button opens a portrait dialog with power, Covers/Menu/
+Back, a circular direction/select pad, chapter and transport buttons. Commands
+have the existing exact-request recovery behavior, without ordinary confirmation
+prompts. Single-version details omit the version count/bar; Library details sit
+under the poster. External metadata and source credits appear in the existing
+Library details experience; see [enrichment](enrichment.md).
+
+## Modal presentation
+
+All application dialogs use an accessible X button in the upper right. It runs
+the same guarded dismissal path as Escape/backdrop: dirty drafts still need
+discard review, and active or unresolved writes remain protected. Save, Apply,
+Export and other commit actions sit in a right-aligned footer; automatically
+saved Options dialogs have no empty footer. Remote uses the same surface and
+border as other dialogs, without a Done box. Movie Play/Power On and Collection
+buttons share a 44 px minimum height and have space below the action row.
+
+Operator browser review: open a Library movie, Remote, filters, both Options
+popups, viewing/database editors, imports/exports and calendar export. Check the
+X placement, right-aligned commit actions, scrolling and tablet spacing. Verify
+that closing a dirty draft requests discard review and that pending writes still
+block dismissal. Automated DOM tests do not establish browser geometry.

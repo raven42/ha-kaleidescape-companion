@@ -165,3 +165,8 @@ Typing into an editable NULL field clears its NULL selection. Checking NULL
 explicitly clears the stored value on save. IDs and other integrity protections
 still apply. Edit/delete dialogs use a common action footer with adjacent Cancel
 and Save/Delete buttons and space for focus outlines.
+
+Provider enrichment is a protected JSON column on **Library** (schema 19). It is
+readable here but not manually editable/importable. The Library detail view
+augments source credits from that cache; raw Database fields continue to show
+their stored values. See [enrichment](enrichment.md).

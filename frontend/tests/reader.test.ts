@@ -278,10 +278,14 @@ it("orders reader tabs Now Playing, Library then Journal and follows that order 
   }
 });
 
-it("offers household player controls without requesting private observation snapshots", async () => {
+it("offers household playback snapshots and nested controls", async () => {
   button("Now Playing").click();
   await reader.updateComplete;
-  const controls = reader.shadowRoot!.querySelector(
+  const nowPlaying = reader.shadowRoot!.querySelector(
+    "kaleidescape-now-playing",
+  )!;
+  await vi.waitFor(() => expect(nowPlaying.shadowRoot).toBeTruthy());
+  const controls = nowPlaying.shadowRoot!.querySelector(
     "kaleidescape-device-controls",
   )!;
   await vi.waitFor(() =>
@@ -291,11 +295,7 @@ it("offers household player controls without requesting private observation snap
     transport.calls.some((call) => call.type.endsWith("/control/info")),
   ).toBe(true);
   expect(
-    transport.calls.some(
-      (call) =>
-        call.type.endsWith("/now_playing") ||
-        call.type.endsWith("/control/discover"),
-    ),
+    transport.calls.some((call) => call.type.endsWith("/control/discover")),
   ).toBe(false);
 });
 
@@ -314,4 +314,30 @@ it("keeps Library disabled without requests before opt-in and clears it on conne
   await reader.updateComplete;
   expect(reader.shadowRoot!.querySelector("kaleidescape-library")).toBeNull();
   expect(content()).not.toContain("Voyage to Europa");
+});
+it("moves accepted Library playback to Now Playing for the same target", async () => {
+  transport.options.library_enabled = true;
+  button("Refresh").click();
+  await vi.waitFor(() => expect(button("Library").disabled).toBe(false));
+  button("Library").click();
+  await reader.updateComplete;
+  const library = reader.shadowRoot!.querySelector("kaleidescape-library")!;
+  library.dispatchEvent(
+    new CustomEvent("playback-started", {
+      detail: "opaque-player",
+      bubbles: true,
+      composed: true,
+    }),
+  );
+  await reader.updateComplete;
+  expect(button("Now Playing").getAttribute("aria-selected")).toBe("true");
+  await vi.waitFor(() =>
+    expect(
+      transport.calls.some(
+        (call) =>
+          call.type.endsWith("/now_playing") &&
+          call.player_id === "opaque-player",
+      ),
+    ).toBe(true),
+  );
 });

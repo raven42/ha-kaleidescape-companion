@@ -65,28 +65,30 @@ export interface SessionPage {
   has_more: boolean;
 }
 export interface NowPlayingPlayer {
-  player_id: string;
+  player_id?: string;
+  content_key?: string | null;
+  power_state?: string;
   entity_id: string | null;
   name: string | null;
   title: string | null;
-  raw_content_id: string | null;
+  raw_content_id?: string | null;
   duration_seconds: number | null;
   play_status: string;
   location: string;
   available: boolean;
   observed_at: string;
   artwork_key: string | null;
-  session: {
+  session?: {
     watched_seconds: number;
     credits_confirmed: boolean;
     gap_count: number;
   } | null;
-  recording_paused: boolean;
-  minimum_runtime_minutes: number;
-  recording_exclusion: "runtime_unknown" | "below_minimum_runtime" | null;
-  recording_error: string | null;
-  overflow_count: number;
-  buffered_observations: number;
+  recording_paused?: boolean;
+  minimum_runtime_minutes?: number;
+  recording_exclusion?: "runtime_unknown" | "below_minimum_runtime" | null;
+  recording_error?: string | null;
+  overflow_count?: number;
+  buffered_observations?: number;
 }
 export interface JournalPage {
   items: ViewingSummary[];
@@ -145,6 +147,13 @@ export interface ControlInfo {
     operation: string;
     created_at: string;
   }[];
+}
+export interface ControlStatus {
+  player_id: string;
+  power_state: "on" | "standby";
+  readiness: "ready" | "starting" | "idle";
+  ready: boolean;
+  state: ControlReview["before"];
 }
 export interface ControlReview {
   token: string;
@@ -237,7 +246,34 @@ export interface LibraryPurchase {
   order_id: string | null;
   href: string | null;
 }
+export interface ProviderMetadata {
+  provider: string;
+  provider_id: string;
+  url: string;
+  fetched_at: string;
+  actors?: string[];
+  directors?: string[];
+  writers?: string[];
+  producers?: string[];
+  studios?: string[];
+  distributor?: string;
+  critic_score?: number | null;
+  audience_score?: number | null;
+  audience_rating?: number | null;
+  audience_votes?: number | null;
+}
+export interface MetadataStatus {
+  running: boolean;
+  processed: number;
+  updated: number;
+  skipped: number;
+  total: number;
+  error: string | null;
+  last_finished: string | null;
+}
 export interface LibraryTitle {
+  enrichment?: Record<string, ProviderMetadata>;
+  producers?: string[];
   purchase_history?: LibraryPurchase[];
   purchased_on?: string | null;
   is_favorite?: boolean;
@@ -581,10 +617,7 @@ export class JournalClient {
       70000,
     );
   }
-  controlStatus(
-    scope: Scope,
-    player_id?: string,
-  ): Promise<{ player_id: string; state: ControlReview["before"] }> {
+  controlStatus(scope: Scope, player_id?: string): Promise<ControlStatus> {
     return this.call({
       type: `${DOMAIN}/control/status`,
       ...scopeFields(scope),
@@ -622,6 +655,12 @@ export class JournalClient {
       ...scopeFields(scope),
       request_id,
       confirmation: "REVIEWED",
+    });
+  }
+  metadataStatus(scope: Scope, sync = false): Promise<MetadataStatus> {
+    return this.call({
+      type: `${DOMAIN}/metadata/${sync ? "sync" : "status"}`,
+      ...scopeFields(scope),
     });
   }
   metadataPreview(scope: Scope): Promise<MetadataReview> {
@@ -746,8 +785,15 @@ export class JournalClient {
       viewing_id,
     });
   }
-  nowPlaying(scope: Scope): Promise<{ players: NowPlayingPlayer[] }> {
-    return this.call({ type: `${DOMAIN}/now_playing`, ...scopeFields(scope) });
+  nowPlaying(
+    scope: Scope,
+    player_id?: string,
+  ): Promise<{ players: NowPlayingPlayer[] }> {
+    return this.call({
+      type: `${DOMAIN}/now_playing`,
+      ...scopeFields(scope),
+      ...(player_id ? { player_id } : {}),
+    });
   }
   libraryInfo(scope: Scope): Promise<LibraryInfo> {
     return this.call({ type: `${DOMAIN}/library/info`, ...scopeFields(scope) });

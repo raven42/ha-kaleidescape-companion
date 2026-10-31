@@ -16,7 +16,7 @@ import { libraryStyles } from "../library/styles";
 import type { LibraryCriterion } from "../library/criteria";
 import { styles } from "./styles";
 import { calendarStyles } from "./journal-calendar.styles";
-import { dismissBackdrop } from "./dialog";
+import { closeButton, dismissBackdrop } from "./dialog";
 
 export function dayKey(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -335,14 +335,10 @@ export class JournalCalendar extends LitElement {
         <h2 id="calendar-movie-title">
           ${viewing && movie ? this.detailLink("query", viewing.title) : (viewing?.title ?? "Viewing details")}
         </h2>
-        <button
-          @click=${() => {
-            this.closeDetails();
-            this.requestUpdate();
-          }}
-        >
-          Close
-        </button>
+        ${closeButton(() => {
+          this.closeDetails();
+          this.requestUpdate();
+        })}
       </div>
       ${
         viewing

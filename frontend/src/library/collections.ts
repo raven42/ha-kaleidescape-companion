@@ -10,7 +10,7 @@ import type {
   CollectionAddResult,
 } from "../core/api";
 import { styles } from "../ui/styles";
-import { dismissBackdrop } from "../ui/dialog";
+import { closeButton, dismissBackdrop } from "../ui/dialog";
 
 export class LibraryCollectionAdd extends LitElement {
   static properties = {
@@ -27,6 +27,8 @@ export class LibraryCollectionAdd extends LitElement {
       .collection-button {
         border-radius: 999px;
         padding: 10px 20px;
+        min-height: 44px;
+        line-height: 20px;
       }
     `,
   ];
@@ -238,6 +240,7 @@ export class LibraryCollectionAdd extends LitElement {
       >
         <div class="card-head">
           <h2 id="collection-add-title">Add to Collection</h2>
+          ${closeButton((event) => this.close(event), this.busy || !!this.pending)}
         </div>
         <p>
           <strong>${this.version.title}</strong> ·
@@ -275,11 +278,7 @@ export class LibraryCollectionAdd extends LitElement {
                 >
                 ${!this.loading && !this.choices.length && !this.error ? html`<p>No offered, visible collection targets are available. Sync or check the server’s collections.</p>` : nothing} `
         }
-        <div class="dialog-footer">
-          <button ?disabled=${this.busy || !!this.pending} @click=${this.close}>
-            Cancel</button
-          >${!this.pending ? html`<button class="primary" ?disabled=${this.loading || !this.selected} @click=${this.submit}>Add selected version</button>` : nothing}
-        </div>
+        ${!this.pending ? html`<div class="dialog-footer"><button class="primary" ?disabled=${this.loading || !this.selected} @click=${this.submit}>Add selected version</button></div>` : nothing}
       </dialog>`;
   }
 }

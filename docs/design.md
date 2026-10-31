@@ -183,10 +183,11 @@ command names are designed when implemented rather than promised here.
 
 All active users may browse the same household summary. Regular-user records and
 metadata use positive field allowlists. Administrators manage records and access
-notes, source/session details, health, Now Playing, and exports. Check access
-before storage and after awaits; changed roles withhold in-flight results.
-History sensors deliberately expose bounded titles/counts through HA entity
-permissions, with Recorder/automation retention outside the journal's control.
+notes, source/session details, health and exports. Now Playing display context
+is shared with source permissions. Check access before storage and after awaits;
+changed roles withhold in-flight results. History sensors deliberately expose
+bounded titles/counts through HA entity permissions, with Recorder/automation
+retention outside the journal's control.
 
 The administrator editor and household reader remain separate components so
 management data/forms cannot accidentally become the reader UI. Both render text
@@ -194,8 +195,8 @@ through Lit bindings. Account/connection changes clear cached data and
 invalidate late replies. Corrections send only changed fields. An uncertain
 write preserves its exact UUID/payload for explicit retry; reconnect does not
 replay it. Exports are bounded and aborted on connection changes. Journal lists
-refresh explicitly; the administrator Now Playing card polls its small snapshot
-while visible.
+refresh explicitly; the shared Now Playing card polls its small snapshot while
+visible.
 
 Vite uses a fixed loopback HA target, memory-only credentials, the official HA
 WebSocket client, and an export/artwork GET and scoped import POST proxy. Native
@@ -210,7 +211,8 @@ without a current benefit.
 
 The existing `now_playing` command reads selected HA states and in-memory
 tracker context, without database queries, device connections, or service calls.
-It checks administrator status and `POLICY_READ` on each resolved source entity.
+It checks active-user status and `POLICY_READ` on each resolved source entity.
+Regular users receive a display allowlist; recorder internals remain admin-only.
 Additive fields include a validated friendly name, snapshot receipt time,
 current session counted time/credits/gaps, backup pause state, configured
 minimum runtime and ignored/waiting reason, and an opaque artwork change key.
@@ -222,7 +224,7 @@ identity.
 no overlapping refreshes. Hiding/removing the card clears its data, aborts image
 work, and invalidates late replies. Authorization errors clear it and stop
 automatic retries until explicit refresh, page return, or rebind. Regular
-readers never mount the card.
+readers mount the same display without recorder details.
 
 Artwork uses authenticated GET
 `/api/media_player_proxy/media_player.<object_id>` through HA, with no URL/query
@@ -231,8 +233,7 @@ JPEG/PNG/WebP, caps accumulation at 5 MiB, budgets five seconds, and revokes
 object URLs on replacement/disconnect. Missing/slow art has a placeholder. Now
 Playing itself adds no Python image decoder or private artwork cache. HA owns
 upstream image fetching/caching and its native image authorization; see the
-security policy for the distinction from Companion's administrator-only snapshot
-API.
+security policy for source permissions and role-specific snapshot projections.
 
 The card deliberately has no transport buttons, seek bar, interpolated progress,
 catalog dependency, or separate navigation. Counts describe the current source
@@ -355,3 +356,11 @@ viewing-purge API retains its disabled-recording rule and maintenance receipts.
 Keep these contracts when extending retention; external copies are outside live
 deletion scope. Do not add unused tables, generic repository layers, or
 alternate authentication in anticipation of these features.
+
+### Optional metadata enrichment
+
+Independent parsers/client live in `lib/scrapers/`; HA scheduling/network
+enforcement and worker-only persistence live in `enrichment/`. Schema 19 keeps
+provider cache JSON on Library versions, shared within source groups, separate
+from raw scan data. Existing identities/relationships and private purchase
+projections remain authoritative. See [enrichment](enrichment.md).

@@ -516,7 +516,7 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
         self.repository = JournalRepository(self.path)
         self.addAsyncCleanup(self.repository.async_close)
         await self.repository.async_open()
-        self.assertEqual((await self.repository.async_info())["schema_version"], 18)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 19)
         self.assertEqual(
             await self.repository.async_get(created["viewing"]["id"]),
             created["viewing"],
@@ -868,6 +868,7 @@ class LibraryApiTest(unittest.IsolatedAsyncioTestCase):
             runtime = self.entry.runtime_data
             self.addAsyncCleanup(runtime.repository.async_close)
             self.assertIsNotNone(runtime.library.session)
+            session = runtime.library.session
             await async_pre_backup(self.hass)
             self.assertTrue(
                 (await runtime.repository.async_info())["backup_in_progress"]
@@ -878,6 +879,8 @@ class LibraryApiTest(unittest.IsolatedAsyncioTestCase):
             )
             await async_unload_entry(self.hass, self.entry)
             self.assertIsNone(runtime.library.task)
+            self.assertTrue(session.closed)
+            self.assertIsNone(runtime.library.session)
 
     async def test_library_replies_and_cached_artwork_are_withheld_on_access_loss(self):
         object.__setattr__(self.entry, "data", {"library_enabled": True})

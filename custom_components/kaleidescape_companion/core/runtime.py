@@ -7,6 +7,7 @@ from homeassistant.core import HomeAssistant
 
 from ..calendar.publisher import CalendarPublisher
 from ..const import DOMAIN
+from ..enrichment.sync import MetadataSync
 from ..library.sync import LibrarySync
 from ..playback.controls import PlaybackControls
 from ..playback.observer import PlaybackObserver
@@ -25,6 +26,7 @@ class KaleidescapeRuntime:
     library: LibrarySync | None = None
     calendar: CalendarPublisher | None = None
     controls: PlaybackControls | None = None
+    enrichment: MetadataSync | None = None
     preserve_panel_on_reload: bool = False
 
 

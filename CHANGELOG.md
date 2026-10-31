@@ -1,5 +1,29 @@
 # Changelog
 
+## Unreleased — Modal consistency and provider API organization
+
+- Add space below movie actions and align Play/Power On and Collection heights.
+- Use a shared upper-right X across application dialogs and keep commit actions
+  at the lower right. Remove Remote's duplicate heading and empty Done footer.
+- Move providers into `lib/scrapers/`, with one typed metadata API, separate
+  provider adapters and a shared throttled transport. Update vendoring,
+  packaging, checks and documentation.
+- Verify that the official TCP protocol has no movie collection membership
+  add/remove command. Keep verified HTTP addition; removal awaits its contract.
+
+## Unreleased — Shared Now Playing and optional metadata
+
+- Share permission-checked Now Playing artwork/display context with household
+  accounts; retain private recorder evidence for administrators.
+- Add readiness-gated Power On/Play Movie, automatic playback navigation,
+  single-player simplification and a portrait Remote popup. Move Library details
+  below artwork and omit single-version count text.
+- Add independent store/TMDB provider clients and parsers, disabled by default,
+  guarded HTTPS, shared throttling, write-only credential settings, source
+  credits and schema 19 provider caches on Library.
+- Expand offline regression checks and replace the stale test changelog copy
+  with a current suite guide. No deployment or live device testing performed.
+
 ## Unreleased — Household playback and combined movie details
 
 - Share opted-in playback with all active HA users and send commands directly

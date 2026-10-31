@@ -14,6 +14,8 @@ case "${1:-help}" in
     (cd frontend && npm ci)
     ;;
   check)
+    .venv/bin/python dev/vendor_scrapers.py --check
+    PYTHONPATH=lib/scrapers/src .venv/bin/python -m unittest discover -s lib/scrapers/tests
     .venv/bin/python -m unittest discover -s tests
     .venv/bin/python dev/check_project.py
     .venv/bin/ruff check .

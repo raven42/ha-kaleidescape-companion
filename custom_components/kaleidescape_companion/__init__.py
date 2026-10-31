@@ -13,6 +13,7 @@ from .core.migrations import UnsupportedSchemaError
 from .core.models import JournalError
 from .core.repository import JournalRepository
 from .core.runtime import KaleidescapeConfigEntry, KaleidescapeRuntime, loaded_runtimes
+from .enrichment.sync import MetadataSync
 from .library.config import origin
 from .library.store import source_id
 from .library.sync import LibrarySync
@@ -35,6 +36,8 @@ async def _async_close_runtime(
             await runtime.controls.async_stop()
         if runtime.calendar:
             await runtime.calendar.async_stop()
+        if runtime.enrichment:
+            await runtime.enrichment.async_stop()
         if runtime.library:
             await runtime.library.async_stop()
         if runtime.observer:
@@ -107,7 +110,13 @@ async def async_setup_entry(
         platforms_started = True
         await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
         if config.get("library_enabled", False):
+            if config.get("metadata_store_enabled") or config.get(
+                "metadata_tmdb_enabled"
+            ):
+                runtime.enrichment = MetadataSync(hass, repository, entry)
             runtime.library = LibrarySync(hass, repository, config)
+            if runtime.enrichment:
+                runtime.library.after_sync = runtime.enrichment.request_sync
             await runtime.library.async_start()
 
         async def async_stop(_event) -> None:

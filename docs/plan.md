@@ -12,10 +12,11 @@ integration remains the source of playback entities; this integration uses
 
 The working implementation includes a manual journal, optional automatic
 tracking of one selected player, administrator management, a regular-user
-reader, exports, seven history and seven Library/storage sensors, and a compact
-administrator Now Playing card. See [framework status](framework.md) for the
-complete implemented/deferred inventory and [technical design](design.md) for
-code boundaries. The [security policy](security.md) governs every phase.
+reader, exports, seven history and seven Library/storage sensors, and a shared
+Now Playing display with administrator recording context. See
+[framework status](framework.md) for the complete implemented/deferred inventory
+and [technical design](design.md) for code boundaries. The
+[security policy](security.md) governs every phase.
 
 | Phase                                | Current position                                                                                                                                                                                                                                | Remaining acceptance work                                                                                                                                                     |
 | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -40,7 +41,7 @@ Keep Journal the default view. Administrator navigation uses the ordered tabs
 Now Playing, Library, Journal, Database, and Settings. Library is disabled until
 explicitly enabled in Settings. Active users share cached reads through their
 Library/Journal tabs; configuration and manual sync remain administrator-only.
-The compact read-only Now Playing card is mounted only on its own tab. It
+The shared read-only Now Playing display is mounted only on its own tab. It
 combines the existing HA player's title, cover, runtime, exact playback/location
 states, and availability with counted session time, credits evidence, timing
 gaps, and recording health. It uses the configured player and HA's existing
@@ -73,10 +74,10 @@ snapshots, active-session checks and content-free durable retry barriers/audit.
 The compatibility bulk-purge API still requires recording disabled. Automatic
 retention remains later work; preserve external-copy limitations.
 
-Now Playing retains the current administrator boundary plus source-entity read
-checks. Regular users retain the household journal reader. Any broader live-data
-sharing needs an explicit policy change. Watched time is counted session time,
-not film position, percentage complete, or a saved resume point.
+Now Playing shares safe display fields across active accounts with source-entity
+read checks. Regular users retain the household journal reader. Any broader
+live-data sharing needs an explicit policy change. Watched time is counted
+session time, not film position, percentage complete, or a saved resume point.
 Progress/remaining time require separately validated source position and
 timestamp data. Previous viewings and direct journal links can follow when they
 add useful context; the current card does not query historical statistics or
@@ -125,12 +126,12 @@ collections. Source-scoped `source_group` browsing, individual-version details,
 fixed/resizable table columns, format expansion, and hidden collection names are
 implemented. Same-name remakes stay separate; sparse versions inherit missing
 work descriptions within their group without changing raw metadata or
-identities. Journal-history associations and canonical work identities remain
-future work. Add search/filter/sort only for available fields. A
-first-discovered date is an import observation, not a purchase/download date.
-Retain missing metadata and unavailable versions consistently. Keep parser
-fixtures small and fictional or sanitized. [Interface research](research.md)
-records evidence and unresolved claims.
+identities. Journal-history associations use exact Library references; broader
+canonical work identities remain future work. Add search/filter/sort only for
+available fields. A first-discovered date is an import observation, not a
+purchase/download date. Retain missing metadata and unavailable versions
+consistently. Keep parser fixtures small and fictional or sanitized.
+[Interface research](research.md) records evidence and unresolved claims.
 
 The separately opted-in [Add to Collection](library-collections.md) supports one
 explicit version and existing target, with durable read-back/recovery. Do not
@@ -246,3 +247,11 @@ source sync state, without another table. First catalog is a baseline; unchanged
 scans and new formats do not replace the batch. Full catalogs use the existing
 paginated Library API; a native Media Browser or dedicated catalog dashboard can
 be evaluated separately without a full-catalog sensor attribute.
+
+## External metadata and wall-panel controls
+
+Store/TMDB enrichment, power-aware Library launch, shared Now Playing artwork
+and a portrait Remote dialog are implemented. Providers remain opt-in with
+conservative title/year matching; live TMDB credential and operator layout tests
+remain acceptance work. Future enrichment providers should reuse `lib/scrapers/`
+and the existing guarded worker cache rather than adding a second catalog.

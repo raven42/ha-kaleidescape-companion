@@ -29,7 +29,12 @@
           "control_enabled": "Enable playback controls",
           "control_host": "Control hostname",
           "control_player": "Default player",
-          "control_allow_launch": "Allow experimental title playback"
+          "control_allow_launch": "Allow experimental title playback",
+          "metadata_store_enabled": "Enrich metadata from the public Kaleidescape store (experimental)",
+          "metadata_tmdb_enabled": "Enrich metadata from TMDB",
+          "metadata_requests_per_second": "External metadata requests per second (maximum 10)",
+          "metadata_tmdb_credential": "TMDB API key or API Read Access Token (blank keeps existing)",
+          "metadata_clear_tmdb_key": "Remove saved TMDB credential"
         },
         "data_description": {
           "minimum_runtime_minutes": "Ignore shorter playback, such as trailers. Default: 10 minutes. Wait for a known runtime unless disabled. This is separate from watched time required for credits completion.",
@@ -61,7 +66,8 @@
       "invalid_display_options": "Choose a valid default landing page.",
       "invalid_calendar": "Select an existing calendar that supports event creation.",
       "invalid_calendar_template": "Use only the listed brace fields, without attributes, conversions or format specifiers.",
-      "invalid_control_options": "Enter a valid private LAN control hostname and hexadecimal player serial."
+      "invalid_control_options": "Enter a valid private LAN control hostname and hexadecimal player serial.",
+      "invalid_metadata_options": "Choose valid metadata provider options and a rate between 0.1 and 10 requests per second."
     }
   },
   "options": {
@@ -93,7 +99,12 @@
           "control_enabled": "Enable playback controls",
           "control_host": "Control hostname",
           "control_player": "Default player",
-          "control_allow_launch": "Allow experimental title playback"
+          "control_allow_launch": "Allow experimental title playback",
+          "metadata_store_enabled": "Enrich metadata from the public Kaleidescape store (experimental)",
+          "metadata_tmdb_enabled": "Enrich metadata from TMDB",
+          "metadata_requests_per_second": "External metadata requests per second (maximum 10)",
+          "metadata_tmdb_credential": "TMDB API key or API Read Access Token (blank keeps existing)",
+          "metadata_clear_tmdb_key": "Remove saved TMDB credential"
         },
         "data_description": {
           "minimum_runtime_minutes": "Ignore shorter playback, such as trailers. Default: 10 minutes. Wait for a known runtime unless disabled. This is separate from watched time required for credits completion.",
@@ -122,7 +133,8 @@
       "invalid_display_options": "Choose a valid default landing page.",
       "invalid_calendar": "Select an existing calendar that supports event creation.",
       "invalid_calendar_template": "Use only the listed brace fields, without attributes, conversions or format specifiers.",
-      "invalid_control_options": "Enter a valid private LAN control hostname and hexadecimal player serial."
+      "invalid_control_options": "Enter a valid private LAN control hostname and hexadecimal player serial.",
+      "invalid_metadata_options": "Choose valid metadata provider options and a rate between 0.1 and 10 requests per second."
     }
   },
   "entity": {

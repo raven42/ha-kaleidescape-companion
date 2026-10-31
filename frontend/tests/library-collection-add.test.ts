@@ -1,3 +1,4 @@
+import { modalClose } from "./dialog-helpers";
 /** Fictional device adapter and simulated dialogs; no browser/device connection. */
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../src/library/collections";
@@ -144,7 +145,7 @@ it("ignores a cancelled target lookup and never mounts label markup", async () =
   );
   button("Collection").click();
   await flush();
-  button("Cancel").click();
+  modalClose(root()).click();
   await flush();
   done({ collections: ['<img src=x onerror="alert(1)">'], revision: 5 });
   await flush();

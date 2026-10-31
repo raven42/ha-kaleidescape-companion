@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from ..security import private_file
 
-SCHEMA_VERSION = 18
+SCHEMA_VERSION = 19
 
 MIGRATIONS = {
     1: (
@@ -338,6 +338,11 @@ MIGRATIONS[18] = (
     )""",
     """CREATE UNIQUE INDEX playback_controls_pending ON playback_controls(player_serial)
         WHERE status IN ('sending','uncertain')""",
+)
+
+
+MIGRATIONS[19] = (
+    "ALTER TABLE library ADD COLUMN enrichment TEXT NOT NULL DEFAULT '{}'",
 )
 
 

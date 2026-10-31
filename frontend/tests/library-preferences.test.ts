@@ -1,3 +1,4 @@
+import { modalClose } from "./dialog-helpers";
 import { afterEach, expect, it, vi } from "vitest";
 import "../src/library/library";
 import type { KaleidescapeLibrary } from "../src/library/library";
@@ -331,7 +332,7 @@ it("persists applied facets across remount, discards drafts, and saves Clear Fil
     .querySelector<HTMLInputElement>('input[name="status"][value="watched"]')!
     .click();
   await flush();
-  button(root, "Cancel").click();
+  modalClose(root).click();
   await flush();
   expect(transport.uiPreferences.status).toEqual([]);
   button(root, "Filters").click();
@@ -555,7 +556,7 @@ it("saves Options toggles immediately and restores them after remount", async ()
   expect(
     root.querySelector(".cover-tile")!.getAttribute("aria-label"),
   ).toContain("Details for");
-  button(root, "Done").click();
+  modalClose(root).click();
   await flush();
   expect(options.open).toBe(false);
   element!.remove();
@@ -725,7 +726,7 @@ it("applies the Library fuzzy toggle to main search, people completion and local
         .at(-1),
     ).toMatchObject({ query: "Actro", fuzzy: false }),
   );
-  button(root, "Cancel").click();
+  modalClose(root).click();
   await flush();
   root
     .querySelector<HTMLInputElement>('[name="library_fuzzy_search"]')!

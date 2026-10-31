@@ -3,7 +3,6 @@
 from typing import Any
 
 import probatio as p
-from homeassistant.auth.permissions.const import POLICY_READ
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 
@@ -13,6 +12,7 @@ from ..core.models import JournalError
 from ..core.runtime import get_library, get_runtime, loaded_runtimes
 from ..core.security import is_active_admin, is_active_user
 from ..library.config import origin
+from ..playback.now_playing import snapshot as now_playing_snapshot
 from .controls import control_request
 from .preferences import public_defaults
 from .settings import fingerprint, options_request
@@ -33,6 +33,7 @@ USER_OPERATIONS = frozenset(
         "library/viewings",
         "ui/preferences/get",
         "ui/preferences/update",
+        "now_playing",
         "control/info",
         "control/status",
         "control/prepare",
@@ -67,7 +68,7 @@ def async_register_commands(hass: HomeAssistant) -> None:
             p.Required("token"): str,
             p.Required("confirmation"): str,
         },
-        "now_playing": scoped,
+        "now_playing": {**scoped, p.Optional("player_id"): str},
         "control/info": scoped,
         "control/discover": scoped,
         "control/status": {**scoped, p.Optional("player_id"): str},
@@ -83,6 +84,8 @@ def async_register_commands(hass: HomeAssistant) -> None:
         },
         "control/acknowledge": {**mutations, p.Required("confirmation"): str},
         "library/info": scoped,
+        "metadata/status": scoped,
+        "metadata/sync": scoped,
         "library/list": {**scoped, p.Optional("filters", default={}): dict},
         "library/sync": scoped,
         "library/collections/targets": {
@@ -308,6 +311,16 @@ async def async_handle(
             runtime = get_runtime(hass, msg["entry_id"], msg["dataset_id"])
             repository = runtime.repository
             match operation:
+                case "metadata/status" | "metadata/sync":
+                    get_library(hass, msg["entry_id"], runtime)
+                    if runtime.enrichment is None:
+                        raise JournalError(
+                            "metadata_disabled",
+                            "Enable a metadata provider and save Settings first",
+                        )
+                    if operation == "metadata/sync":
+                        runtime.enrichment.request_sync(user, force=True)
+                    result = runtime.enrichment.status()
                 case (
                     "control/info"
                     | "control/discover"
@@ -663,19 +676,9 @@ async def async_handle(
                 case "journal/sessions":
                     result = await repository.async_sessions(msg["viewing_id"])
                 case "now_playing":
-                    if runtime.observer and any(
-                        not user.permissions.check_entity(entity_id, POLICY_READ)
-                        for entity_id in runtime.observer.entities.values()
-                        if entity_id
-                    ):
-                        raise JournalError(
-                            "unauthorized", "Source entity access denied"
-                        )
-                    result = {
-                        "players": [runtime.observer.live_state()]
-                        if runtime.observer
-                        else []
-                    }
+                    result = now_playing_snapshot(
+                        hass, user, runtime, msg.get("player_id")
+                    )
                 case "journal/list":
                     result = await repository.async_list(
                         query=msg.get("query", ""),

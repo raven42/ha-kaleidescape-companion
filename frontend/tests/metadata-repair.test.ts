@@ -1,3 +1,4 @@
+import { modalClose } from "./dialog-helpers";
 import { afterEach, expect, it, vi } from "vitest";
 import "../src/ui/metadata-repair";
 import type { MetadataRepair } from "../src/ui/metadata-repair";
@@ -90,7 +91,7 @@ it("requires another review after a stale plan", async () => {
     expect(button(root, "Repair missing metadata").disabled).toBe(true),
   );
   expect(element!.confirmNavigation()).toBe(true);
-  button(root, "Cancel").click();
+  modalClose(root).click();
   await review(root);
   expect(button(root, "Repair missing metadata").disabled).toBe(false);
 });

@@ -1,12 +1,10 @@
 """In-process HA entity observation with ordered, bounded playback buffering."""
 
 import asyncio
-import hashlib
 import logging
 from collections import deque
 from collections.abc import Callable
 from datetime import UTC, datetime
-from urllib.parse import urlsplit
 
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er
@@ -16,6 +14,7 @@ from ..const import DEFAULT_MINIMUM_RUNTIME_MINUTES
 from ..core.models import JournalError, seconds, text
 from ..core.repository import JournalRepository
 from ..core.settings import entity_ids
+from .now_playing import picture_key
 from .tracker import Observation, PlaybackTracker
 
 _LOGGER = logging.getLogger(__name__)
@@ -249,25 +248,13 @@ class PlaybackObserver:
             name = text(attributes.get("friendly_name"), 255)
         except JournalError:
             name = entity_id
-        artwork_key = None
-        picture = attributes.get("entity_picture")
-        # Inspect only HA's own image reference; never return or fetch its URL/token.
-        if (
+        artwork_key = picture_key(
+            entity_id,
+            attributes.get("entity_picture"),
             current.available
             and current.content_id
-            and current.play_status != "stopped"
-        ):
-            try:
-                picture = text(picture, 4096)
-                parsed = urlsplit(picture)
-                if (
-                    not parsed.scheme
-                    and not parsed.netloc
-                    and parsed.path == f"/api/media_player_proxy/{entity_id}"
-                ):
-                    artwork_key = hashlib.sha256(picture.encode()).hexdigest()[:16]
-            except JournalError, ValueError:
-                pass
+            and current.play_status != "stopped",
+        )
         session = self.tracker.session
         exclusion = self.tracker.runtime_exclusion(current.duration)
         matching_session = (

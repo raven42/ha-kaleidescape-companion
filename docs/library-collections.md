@@ -2,12 +2,22 @@
 
 Administrators can enable **Settings → Allow Add to Collection on the device**.
 It is off by default and also requires enabled Library and collection sync. Open
-a Library title, select its individual version tab, and choose **Add to
-Collection…**. The dialog reads the server's offered targets. Choose one
-existing collection and **Add selected version**. Viewing history and purchase
-dates are not changed. Removal, collection creation/renaming/deletion, and
-bulk/group edits remain outside this implementation. The operator is
-investigating removal.
+a Library title, select its individual version tab, and choose **Collection**.
+The dialog reads the server's offered targets. Choose one existing collection
+and **Add selected version**. Viewing history and purchase dates are not
+changed. Removal, collection creation/renaming/deletion, and bulk/group edits
+remain outside this implementation. The operator is investigating removal.
+
+## Protocol capability
+
+The
+[official control protocol, revision 17](https://www.kaleidescape.com/wp-content/uploads/Kaleidescape-System-Control-Protocol-Reference-Manual.pdf)
+was rechecked on 2026-10-31. `GO_MOVIE_COLLECTION` and `GO_MOVIE_COLLECTIONS`
+select onscreen views; they do not change membership. The command catalog has no
+movie collection membership add/remove command. The standalone TCP API therefore
+cannot replace the verified HTTP add path. Removal still needs an observed,
+verified web request contract and its own guarded mutation/recovery path; no
+guessed command or removal request is sent.
 
 ## Observed form and compatibility
 

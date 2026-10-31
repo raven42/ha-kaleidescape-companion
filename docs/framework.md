@@ -6,9 +6,9 @@ The product name is **Kaleidescape Companion**. The HA domain
 
 ## Present
 
-- Feature-organized runtime packages (`core/`, `library/`, `playback/`, `ui/`),
-  separate development tools, editor tasks, runtime-only packaging and version
-  metadata.
+- Feature-organized runtime packages (`core/`, `library/`, `playback/`, `ui/`,
+  `enrichment/`), separate development tools, editor tasks, runtime-only
+  packaging and version metadata.
 - Config flow and runtime lifecycle for one household journal, retaining data on
   unload/removal.
 - SQLite schema/migrations and a dedicated worker for transactional manual
@@ -94,10 +94,10 @@ The product name is **Kaleidescape Companion**. The HA domain
 - Household HA sidebar panel with administrator management and shared Vite UI
   for journal CRUD, filters, pagination, session evidence, database health, and
   JSON/SQLite downloads.
-- Compact administrator Now Playing card with HA cover artwork, exact
-  playback/location, runtime, counted session time, credits/gaps, and recording
-  health; visible-only refresh, source read checks, missing-art fallback, and
-  connection cleanup.
+- Shared large Now Playing display with administrator recording context, HA
+  cover artwork, exact playback/location, runtime, counted session time,
+  credits/gaps, and recording health; visible-only refresh, source read checks,
+  missing-art fallback, and connection cleanup.
 - Memory-only development connection, restricted local export/artwork/import
   proxy, component and proxy security tests, TypeScript checks,
   ESLint/Markdownlint, source/docs formatting, and packaged ES module.
@@ -166,3 +166,11 @@ Reusable import matching and its offline JSON/SQLite/title-manifest evaluator
 are documented in [title matching](title-matching.md). Adding another import
 adapter still requires validated identities, scoped authorization and reviewed
 writes.
+
+## External metadata
+
+Optional store/TMDB enrichment is implemented with independent reusable parsers,
+fixed HTTPS destinations, source-labelled ratings, a write-only TMDB credential,
+a shared request limiter and schema 19 Library cache. Both providers default
+off. Live TMDB-key testing and operator UI review remain pending; see
+[enrichment](enrichment.md).

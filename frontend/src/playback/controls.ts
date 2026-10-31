@@ -6,31 +6,14 @@ import type {
   JournalClient,
   JournalInfo,
   ControlInfo,
-  ControlReview,
+  ControlStatus,
   ControlResult,
   PreparedMutation,
 } from "../core/api";
 import { styles } from "../ui/styles";
-import { dismissBackdrop } from "../ui/dialog";
+import { remoteControls, remoteStyles } from "./remote";
+import { closeButton, dismissBackdrop } from "../ui/dialog";
 
-const COMMANDS = [
-  ["play", "Play selection"],
-  ["pause", "Pause"],
-  ["resume", "Resume"],
-  ["stop", "Stop"],
-  ["previous", "Previous chapter"],
-  ["next", "Next chapter"],
-  ["up", "Up"],
-  ["left", "Left"],
-  ["select", "Select"],
-  ["right", "Right"],
-  ["down", "Down"],
-  ["back", "Back"],
-  ["menu", "Menu"],
-  ["movies", "Movie covers"],
-  ["power_on", "Power on"],
-  ["power_off", "Standby"],
-];
 const OUTCOMES: Record<ControlResult["outcome"], string> = {
   state_observed: "The requested playback state was observed.",
   acknowledged:
@@ -48,18 +31,23 @@ export class DeviceControls extends LitElement {
     scope: { attribute: false },
     mode: {},
     versionId: {},
+    playerId: {},
     value: {},
     configured: { type: Boolean },
   };
   static styles = [
     styles,
+    remoteStyles,
     css`
+      [hidden] {
+        display: none !important;
+      }
       .control-card {
         margin-top: 20px;
         padding: 20px;
       }
       .control-card > .card-head {
-        padding: 0 0 16px;
+        padding: 0;
         flex-wrap: wrap;
       }
       .movie-actions {
@@ -67,15 +55,32 @@ export class DeviceControls extends LitElement {
         flex-wrap: wrap;
         gap: 10px;
         align-items: center;
+        margin-bottom: 12px;
       }
       .movie-actions button {
         border-radius: 999px;
         padding: 10px 20px;
+        min-height: 44px;
+        line-height: 20px;
       }
       .play-movie {
         display: inline-flex;
         align-items: center;
         gap: 10px;
+      }
+      .spinner {
+        display: inline-block;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .spinner {
+          animation: none;
+        }
       }
       .play-movie svg {
         width: 20px;
@@ -104,15 +109,22 @@ export class DeviceControls extends LitElement {
   scope?: JournalInfo;
   mode = "remote";
   versionId = "";
+  playerId = "";
   value = "";
   configured = true;
   private generation = 0;
   private key = "";
   private boundClient?: JournalClient;
   private info?: ControlInfo;
-  private state?: ControlReview["before"];
+  private status?: ControlStatus;
+  private waking = false;
+  private wakeTimer?: ReturnType<typeof setTimeout>;
+  private wakeDeadline = 0;
+  private started = "";
+  private lastOperation = "";
   private pending?: PreparedMutation;
   private selectedPlayer = "";
+  private dialog = "players";
   private acknowledge = "";
   private busy = false;
   private error = "";
@@ -120,10 +132,14 @@ export class DeviceControls extends LitElement {
   private locked = false;
 
   protected willUpdate(changed: PropertyValues) {
-    if (!["scope", "client", "versionId"].some((name) => changed.has(name)))
+    if (
+      !["scope", "client", "versionId", "playerId"].some((name) =>
+        changed.has(name),
+      )
+    )
       return;
     const key = this.scope?.permissions.read
-      ? `${this.scope.entry_id}:${this.scope.dataset_id}:${!!this.scope.permissions.edit}:${this.versionId}`
+      ? `${this.scope.entry_id}:${this.scope.dataset_id}:${!!this.scope.permissions.edit}:${this.versionId}:${this.playerId}`
       : "";
     if (key !== this.key || this.client !== this.boundClient) {
       // Changing the version invalidates its preflight, but retains the chosen player.
@@ -138,10 +154,17 @@ export class DeviceControls extends LitElement {
       this.generation++;
       this.key = key;
       this.boundClient = this.client;
-      this.info = this.state = this.pending = undefined;
+      this.info = this.status = this.pending = undefined;
+      this.stopWaking();
       this.busy = false;
-      this.acknowledge = this.error = this.notice = "";
-      if (key && this.client) void this.load();
+      this.acknowledge =
+        this.error =
+        this.notice =
+        this.started =
+        this.lastOperation =
+          "";
+      if (this.playerId) this.selectedPlayer = this.playerId;
+      if (key && this.client) void this.load(true);
     }
   }
   protected updated() {
@@ -159,6 +182,7 @@ export class DeviceControls extends LitElement {
   disconnectedCallback() {
     super.disconnectedCallback();
     this.generation++;
+    this.stopWaking();
     this.pending = this.info = undefined;
   }
   private fail(error: unknown) {
@@ -168,6 +192,8 @@ export class DeviceControls extends LitElement {
         "Playback controls are disabled. Ask an administrator to enable them.",
       control_player:
         "No player is configured. Ask an administrator to discover and select one.",
+      control_not_ready:
+        "The player is not ready. Power it on and wait for readiness before playing.",
       control_unreachable:
         "The player could not be reached. Inspect its connection and state.",
       control_identity:
@@ -186,21 +212,28 @@ export class DeviceControls extends LitElement {
     this.error = messages[code] ?? errorMessage(error);
     if (code === "unauthorized") {
       this.generation++;
-      this.info = this.pending = this.state = undefined;
+      this.info = this.pending = this.status = undefined;
       this.selectedPlayer = "";
       this.dispatchEvent(
         new CustomEvent("access-denied", { bubbles: true, composed: true }),
       );
     }
   }
-  private async load() {
+  private async load(readState = false) {
     const generation = this.generation;
     try {
       const info = await this.client!.controlInfo(this.scope!);
       if (generation !== this.generation) return;
       this.info = info;
       if (!info.players.some((player) => player.id === this.selectedPlayer))
-        this.selectedPlayer = info.default_player;
+        this.selectedPlayer = info.default_player || info.players[0]?.id || "";
+      if (
+        readState &&
+        info.enabled &&
+        this.selectedPlayer &&
+        this.mode !== "settings"
+      )
+        await this.readStatus();
     } catch (error) {
       if (generation === this.generation) this.fail(error);
     }
@@ -220,6 +253,18 @@ export class DeviceControls extends LitElement {
       if (generation === this.generation) {
         this.busy = false;
         this.requestUpdate();
+        await this.updateComplete;
+        if (this.started) {
+          const player = this.started;
+          this.started = "";
+          this.dispatchEvent(
+            new CustomEvent("playback-started", {
+              detail: player,
+              bubbles: true,
+              composed: true,
+            }),
+          );
+        }
       }
     }
   }
@@ -231,17 +276,50 @@ export class DeviceControls extends LitElement {
       if (generation === this.generation) this.info = info;
     });
   }
+  private stopWaking() {
+    clearTimeout(this.wakeTimer);
+    this.wakeTimer = undefined;
+    this.waking = false;
+  }
+  private async readStatus() {
+    const generation = this.generation,
+      player = this.selectedPlayer;
+    const result = await this.client!.controlStatus(
+      this.scope!,
+      player || undefined,
+    );
+    if (generation === this.generation && player === this.selectedPlayer) {
+      this.status = result;
+      if (result.ready) this.stopWaking();
+      else if (result.readiness === "starting" && !this.waking) {
+        this.waking = true;
+        this.wakeDeadline = Date.now() + 120000;
+        this.wakeTimer = setTimeout(() => void this.pollWake(), 2000);
+      }
+      this.requestUpdate();
+    }
+  }
+  private async pollWake() {
+    const generation = this.generation;
+    let delay = 2000;
+    try {
+      await this.readStatus();
+    } catch {
+      delay = 30000;
+    } // Standby transitions can reset TCP; never replay the wake.
+    if (generation !== this.generation || !this.waking || !this.isConnected)
+      return;
+    if (Date.now() >= this.wakeDeadline) {
+      this.stopWaking();
+      this.notice =
+        "The player is still starting or unavailable. Check its state before playing.";
+    } else this.wakeTimer = setTimeout(() => void this.pollWake(), delay);
+    this.requestUpdate();
+  }
   private async refresh() {
     await this.action(async () => {
-      const generation = this.generation;
-      const result = await this.client!.controlStatus(
-        this.scope!,
-        this.selectedPlayer || undefined,
-      );
-      if (generation === this.generation) {
-        this.state = result.state;
-        await this.load();
-      }
+      await this.readStatus();
+      await this.load();
     });
   }
   private async prepare(operation: string) {
@@ -251,11 +329,12 @@ export class DeviceControls extends LitElement {
       const review = await this.client!.controlPrepare(
         this.scope!,
         operation,
-        this.versionId || undefined,
+        operation === "launch" ? this.versionId || undefined : undefined,
         this.selectedPlayer || undefined,
       );
       if (generation !== this.generation) return;
       // Preflight is automatic; the explicit command click is the user's intent.
+      this.lastOperation = operation;
       this.pending = this.client!.prepareControl(this.scope!, review.token);
       await this.send();
     });
@@ -267,7 +346,23 @@ export class DeviceControls extends LitElement {
     if (generation !== this.generation) return;
     this.notice = OUTCOMES[result.outcome];
     this.pending = undefined;
+    const operation = this.lastOperation;
+    if (["state_observed", "acknowledged"].includes(result.outcome)) {
+      if (operation === "power_on") {
+        this.waking = true;
+        this.wakeDeadline = Date.now() + 120000;
+        this.wakeTimer = setTimeout(() => void this.pollWake(), 1000);
+      } else if (["launch", "play", "resume"].includes(operation))
+        this.started = this.selectedPlayer;
+    }
     await this.load();
+    if (operation !== "power_on") {
+      try {
+        await this.readStatus();
+      } catch {
+        this.status = undefined;
+      }
+    }
   }
   private close(event?: Event) {
     if (this.busy) {
@@ -276,11 +371,24 @@ export class DeviceControls extends LitElement {
     }
     this.acknowledge = "";
     this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.close();
+    this.dialog = "players";
+    this.requestUpdate();
+  }
+  private async openRemote() {
+    if (this.busy || this.pending) return;
+    const generation = this.generation;
+    this.dialog = "remote";
+    this.acknowledge = "";
+    this.requestUpdate();
+    await this.updateComplete;
+    if (generation === this.generation && this.isConnected)
+      this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.showModal();
   }
   private async choosePlayer() {
     if (this.busy || this.pending) return;
     const generation = this.generation;
     this.acknowledge = "";
+    this.dialog = "players";
     this.requestUpdate();
     await this.updateComplete;
     if (generation !== this.generation || !this.isConnected) return;
@@ -305,6 +413,26 @@ export class DeviceControls extends LitElement {
       await this.load();
     });
   }
+  private feedback() {
+    return html`
+      ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
+      ${
+        this.pending
+          ? html`<p class="warning">
+                The result is not confirmed. Check the same request; it will not
+                replay an accepted command.
+              </p>
+              <button
+                ?disabled=${this.busy}
+                @click=${() => this.action(() => this.send())}
+              >
+                Check command result
+              </button>`
+          : nothing
+      }
+      ${this.notice ? html`<p role="status">${this.notice}</p>` : nothing}
+    `;
+  }
   protected render() {
     if (
       !this.scope?.permissions.read ||
@@ -321,6 +449,7 @@ export class DeviceControls extends LitElement {
     const blocked = info?.blocked_players.includes(this.selectedPlayer);
     const disabled =
       this.busy ||
+      this.waking ||
       !info?.enabled ||
       !this.selectedPlayer ||
       !!this.pending ||
@@ -333,12 +462,20 @@ export class DeviceControls extends LitElement {
           ? html`<div class="card-head">
               <h2>Player controls</h2>
               <button
+                type="button"
+                ?disabled=${disabled}
+                @click=${this.openRemote}
+              >
+                Remote
+              </button>
+              <button
                 ?disabled=${this.busy || !info?.enabled || !this.selectedPlayer}
                 @click=${this.refresh}
               >
                 Refresh player state</button
               ><button
                 ?disabled=${this.busy || !info?.enabled || !!this.pending}
+                ?hidden=${(info?.players.length ?? 0) < 2}
                 @click=${this.choosePlayer}
               >
                 Choose Player
@@ -391,8 +528,9 @@ export class DeviceControls extends LitElement {
                     type="button"
                     class="primary play-movie"
                     ?disabled=${disabled}
+                    aria-busy=${this.waking || this.busy}
                     title=${`Play on ${player?.name || "the selected player"}`}
-                    @click=${() => this.prepare("launch")}
+                    @click=${() => (this.status && this.status.readiness !== "starting" ? this.prepare(this.status.ready ? "launch" : "power_on") : this.refresh())}
                   >
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                       <circle
@@ -404,56 +542,37 @@ export class DeviceControls extends LitElement {
                         stroke-width="2"
                       />
                       <path d="M10 7v10l7-5z" fill="currentColor" /></svg
-                    >Play Movie</button
+                    >${this.waking ? html`<span class="spinner" aria-hidden="true">◌</span> Starting player…` : !this.status || this.status.readiness === "starting" ? "Check player" : this.status.ready ? "Play Movie" : "Power On"}</button
                   ><button
                     type="button"
-                    ?disabled=${this.busy || !!this.pending}
+                    ?disabled=${this.busy || this.waking || !!this.pending}
+                    ?hidden=${(info?.players.length ?? 0) < 2}
                     @click=${this.choosePlayer}
                   >
                     Choose Player</button
                   ><slot name="collection"></slot>
                 </div>
-                <p class="muted player-target">
-                  ${player ? `On ${player.name}` : "Choose a player to start playback"}
-                </p>
+                ${(info?.players.length ?? 0) > 1 || !player ? html`<p class="muted player-target">${player ? `On ${player.name}` : "Choose a player to start playback"}</p>` : nothing}
               `
             : !info?.enabled
               ? html`<p class="muted">Playback controls are disabled.</p>`
               : html`
-                  <p>Target: ${player?.name || "No player selected"}</p>
-                  ${this.state ? html`<p>${this.state.title || "No movie playing"} · ${({ 0: "Stopped", 1: "Paused", 2: "Playing", 4: "Forward scan", 6: "Reverse scan" } as Record<number, string>)[this.state.mode] ?? "Unknown state"}</p>` : nothing}
-                  <div class="actions">
-                    ${COMMANDS.map(([operation, label]) => html`<button type="button" ?disabled=${disabled} @click=${() => this.prepare(operation)}>${label}</button>`)}
-                  </div>
+                  ${this.waking ? html`<span role="status">◌ Starting player…</span>` : nothing}
                 `
       }
-      ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
-      ${
-        this.pending
-          ? html`<p class="warning">
-                The result is not confirmed. Check the same request; it will not
-                replay an accepted command.
-              </p>
-              <button
-                ?disabled=${this.busy}
-                @click=${() => this.action(() => this.send())}
-              >
-                Check command result
-              </button>`
-          : nothing
-      }
-      ${this.notice ? html`<p role="status">${this.notice}</p>` : nothing}
+      ${this.dialog !== "remote" || this.acknowledge ? this.feedback() : nothing}
       ${blocked && !info?.can_manage ? html`<p class="warning">This player needs administrator review of an uncertain command before more commands can be sent.</p>` : nothing}
       ${info?.can_manage ? info.pending.map((item) => html`<p class="warning">Unconfirmed ${item.operation} for ${info.players.find((row) => row.id === item.player_id)?.name || "a previously selected player"}. <button type="button" ?disabled=${this.busy} @click=${() => this.reviewPending(item.request_id)}>I inspected the player…</button></p>`) : nothing}
       <dialog
-        class="database-dialog"
+        class=${this.dialog === "remote" && !this.acknowledge ? "database-dialog remote-dialog" : "database-dialog"}
         @click=${dismissBackdrop}
         @cancel=${this.close}
       >
         <div class="card-head">
           <h2>
-            ${this.acknowledge ? "Review unconfirmed command" : "Choose Player"}
+            ${this.acknowledge ? "Review unconfirmed command" : this.dialog === "remote" ? "Theater Remote" : "Choose Player"}
           </h2>
+          ${closeButton((event) => this.close(event), this.busy)}
         </div>
         ${
           this.acknowledge
@@ -461,37 +580,49 @@ export class DeviceControls extends LitElement {
                 Confirm you inspected the physical player. This permits new
                 commands and does not resend the earlier command.
               </p>`
-            : html`
-                <p class="muted">
-                  Choose where to play. This does not change the household
-                  default player or Journal tracking.
-                </p>
-                <div class="player-options">
-                  ${info?.players.map(
-                    (item) =>
-                      html`<button
-                        class="player-choice"
-                        type="button"
-                        aria-pressed=${item.id === this.selectedPlayer}
-                        @click=${() => {
-                          this.selectedPlayer = item.id;
-                          this.state = undefined;
-                          this.close();
-                          this.requestUpdate();
-                        }}
-                      >
-                        ${item.name}${item.model ? html`<small>${item.model}</small>` : nothing}${item.id === info.default_player ? html`<small>Household default</small>` : nothing}
-                      </button>`,
-                  )}
-                </div>
-                ${!info?.players.length ? html`<p>No players are available. Ask an administrator to discover devices in Settings.</p>` : nothing}
-              `
+            : this.dialog === "remote"
+              ? html`${remoteControls(
+                  player?.name || "Kaleidescape player",
+                  !!disabled,
+                  !!this.status?.ready,
+                  (operation) => void this.prepare(operation),
+                )}${this.feedback()}`
+              : html`
+                  <p class="muted">
+                    Choose where to play. This does not change the household
+                    default player or Journal tracking.
+                  </p>
+                  <div class="player-options">
+                    ${info?.players.map(
+                      (item) =>
+                        html`<button
+                          class="player-choice"
+                          type="button"
+                          aria-pressed=${item.id === this.selectedPlayer}
+                          @click=${() => {
+                            this.selectedPlayer = item.id;
+                            this.status = undefined;
+                            this.stopWaking();
+                            this.close();
+                            this.dispatchEvent(
+                              new CustomEvent("player-changed", {
+                                detail: item.id,
+                                bubbles: true,
+                                composed: true,
+                              }),
+                            );
+                            void this.refresh();
+                            this.requestUpdate();
+                          }}
+                        >
+                          ${item.name}${item.model ? html`<small>${item.model}</small>` : nothing}${item.id === info.default_player ? html`<small>Household default</small>` : nothing}
+                        </button>`,
+                    )}
+                  </div>
+                  ${!info?.players.length ? html`<p>No players are available. Ask an administrator to discover devices in Settings.</p>` : nothing}
+                `
         }
-        <div class="dialog-footer">
-          <button type="button" ?disabled=${this.busy} @click=${this.close}>
-            Done</button
-          >${this.acknowledge ? html`<button type="button" class="primary" ?disabled=${this.busy} @click=${this.confirmReview}>Acknowledge review</button>` : nothing}
-        </div>
+        ${this.acknowledge ? html`<div class="dialog-footer"><button type="button" class="primary" ?disabled=${this.busy} @click=${this.confirmReview}>Acknowledge review</button></div>` : nothing}
       </dialog>
     </section>`;
   }

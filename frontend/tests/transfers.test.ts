@@ -1,3 +1,4 @@
+import { modalClose } from "./dialog-helpers";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../src/ui/transfers";
 import type { KaleidescapeTransfers } from "../src/ui/transfers";
@@ -277,7 +278,7 @@ it("locks the exact selection and UUID for uncertain retries, even if the review
   await flush();
   expect(cancel.defaultPrevented).toBe(true);
   expect(dialog.open).toBe(true);
-  expect(button("Cancel").disabled).toBe(true);
+  expect(modalClose(root()).disabled).toBe(true);
   expect(
     root().querySelector<HTMLInputElement>('input[type="file"]')!.disabled,
   ).toBe(true);
@@ -319,7 +320,7 @@ it("rejects unsupported/oversized files before upload and requires disabled reco
 it("clears cancelled selection and opens export without starting a transfer", async () => {
   choose(new File(["{}"], "fictional-private.json"));
   await flush();
-  button("Cancel").click();
+  modalClose(root()).click();
   await flush();
   expect(text()).not.toContain("fictional-private");
   button("Export").click();

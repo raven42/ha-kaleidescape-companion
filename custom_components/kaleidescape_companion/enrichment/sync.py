@@ -1,0 +1,275 @@
+"""Optional fixed-origin HTTPS enrichment; all storage is delegated to the worker."""
+
+import asyncio
+import ipaddress
+import re
+import socket
+from datetime import UTC, datetime, timedelta
+from urllib.parse import urlsplit
+
+from aiohttp import ClientError, ClientTimeout, DummyCookieJar
+from homeassistant.helpers.aiohttp_client import (
+    DATA_RESOLVER,
+    async_create_clientsession,
+)
+from yarl import URL
+
+from .._vendor.kaleidescape_scrapers import MovieQuery, ProviderError, Providers
+from .._vendor.kaleidescape_scrapers.providers.store import movie_path
+from ..core.models import JournalError
+from ..core.security import is_active_admin
+from ..library.config import origin
+from ..library.store import source_id
+from .config import DEFAULTS
+
+
+class MetadataSync:
+    """No construction/networking when providers or Library are disabled.
+
+    Automatic passes follow successful catalog scans. Valid cache entries are
+    reused for seven days. A manual pass refreshes them; it never changes a
+    device or provider account. An HTTP failure stops the pass, including 429.
+    """
+
+    def __init__(self, hass, repository, entry):
+        self.hass, self.repository, self.entry = hass, repository, entry
+        self.config = {**DEFAULTS, **dict(entry.options or entry.data)}
+        self.source = source_id(origin(self.config.get("library_host", "")))
+        self.task = self.session = None
+        self.paused = self.stopped = False
+        self.processed = self.updated = self.skipped = self.total = 0
+        self.error = None
+        self.last_finished = None
+        self.actor = None
+        self.providers = Providers(
+            self._get,
+            requests_per_second=self.config["metadata_requests_per_second"],
+            tmdb_credential=self.config["metadata_tmdb_credential"],
+        )
+
+    def _ready(self):
+        current = {**DEFAULTS, **dict(self.entry.options or self.entry.data)}
+        if (
+            self.stopped
+            or self.paused
+            or not current.get("library_enabled")
+            or current != self.config
+            or (self.actor is not None and not is_active_admin(self.actor))
+        ):
+            raise JournalError("not_ready", "Metadata settings or access changed")
+
+    def request_sync(self, actor=None, *, force=False):
+        self._ready()
+        if self.task and not self.task.done():
+            return
+        self.actor = actor
+        self.task = self.hass.async_create_background_task(
+            self._run(force), "Companion metadata enrichment"
+        )
+
+    def status(self):
+        return {
+            "running": bool(self.task and not self.task.done()),
+            "processed": self.processed,
+            "updated": self.updated,
+            "skipped": self.skipped,
+            "total": self.total,
+            "error": self.error,
+            "last_finished": self.last_finished,
+        }
+
+    async def _get(self, url, headers):
+        self._ready()
+        parsed = urlsplit(url)
+        # Providers construct paths; never accept a URL from the browser or a response.
+        if (
+            parsed.scheme != "https"
+            or parsed.hostname not in {"www.kaleidescape.com", "api.themoviedb.org"}
+            or parsed.port not in (None, 443)
+            or parsed.username
+            or parsed.password
+            or parsed.fragment
+        ):
+            raise ProviderError("provider_destination")
+        if parsed.hostname == "www.kaleidescape.com":
+            if not self.config["metadata_store_enabled"]:
+                raise ProviderError("provider_disabled")
+            if (
+                parsed.query
+                or headers
+                or (parsed.path != "/robots.txt" and not movie_path(parsed.path))
+            ):
+                raise ProviderError("provider_destination")
+        else:
+            if not self.config["metadata_tmdb_enabled"]:
+                raise ProviderError("provider_disabled")
+            if not re.fullmatch(r"/3/(?:search/movie|movie/[1-9][0-9]*)", parsed.path):
+                raise ProviderError("provider_destination")
+        answers = await self.hass.data[DATA_RESOLVER].resolve(
+            parsed.hostname, 443, family=socket.AF_UNSPEC
+        )
+        addresses = [row["host"] for row in answers]
+        if not addresses or any(
+            not ipaddress.ip_address(ip).is_global for ip in addresses
+        ):
+            raise ProviderError("provider_destination")
+        self._ready()
+        base = URL(url)
+        address = min(addresses, key=lambda ip: ":" in ip)
+        async with self.session.get(
+            base.with_host(address),
+            headers={
+                **headers,
+                "Host": base.authority,
+                "User-Agent": "KaleidescapeCompanion/0.0.0",
+            },
+            server_hostname=base.host,
+            allow_redirects=False,
+            timeout=ClientTimeout(total=20, connect=5),
+        ) as response:
+            if response.status == 429:
+                raise ProviderError("provider_rate_limited")
+            if response.status in (401, 403):
+                raise ProviderError("provider_access_denied")
+            if response.status != 200:
+                raise ProviderError("provider_http_error")
+            if (
+                response.headers.get("Content-Encoding", "identity").lower()
+                != "identity"
+            ):
+                raise ProviderError("provider_encoding")
+            expected = (
+                {"text/plain"}
+                if parsed.path == "/robots.txt"
+                else {"text/html", "application/xhtml+xml"}
+                if parsed.hostname == "www.kaleidescape.com"
+                else {"application/json"}
+            )
+            if response.content_type not in expected:
+                raise ProviderError("provider_content_type")
+            if response.content_length and response.content_length > 4 * 1024 * 1024:
+                raise ProviderError("provider_response_too_large")
+            body = bytearray()
+            async for chunk in response.content.iter_chunked(65536):
+                self._ready()
+                body.extend(chunk)
+                if len(body) > 4 * 1024 * 1024:
+                    raise ProviderError("provider_response_too_large")
+        self._ready()
+        return bytes(body)
+
+    async def _run(self, force):
+        self.error = None
+        self.providers.robots = None
+        self.processed = self.updated = self.skipped = 0
+        try:
+            self.session = async_create_clientsession(
+                self.hass,
+                cookie_jar=DummyCookieJar(),
+                trust_env=False,
+                auto_decompress=False,
+                auto_cleanup=False,
+                headers={
+                    "User-Agent": "KaleidescapeCompanion/0.0.0",
+                    "Accept-Encoding": "identity",
+                },
+            )
+            rows = await self.repository.async_enrichment("candidates", self.source)
+            self.total = len(rows)
+            async with asyncio.timeout(3600):
+                for row in rows:
+                    self._ready()
+                    for provider, enabled in (
+                        ("kaleidescape", self.config["metadata_store_enabled"]),
+                        ("tmdb", self.config["metadata_tmdb_enabled"]),
+                    ):
+                        if not enabled:
+                            continue
+                        if type(row["year"]) is not int or not (
+                            row["href"]
+                            if provider == "kaleidescape"
+                            else self.config["metadata_tmdb_credential"]
+                        ):
+                            self.skipped += 1
+                            continue
+                        previous = row["enrichment"].get(provider, {}).get("fetched_at")
+                        if previous and not force:
+                            try:
+                                if datetime.fromisoformat(previous) > datetime.now(
+                                    UTC
+                                ) - timedelta(days=7):
+                                    continue
+                            except ValueError, TypeError:
+                                pass
+                        try:
+                            result = await self.providers.metadata(
+                                provider,
+                                MovieQuery(
+                                    row["title"], row["year"], row["href"] or ""
+                                ),
+                            )
+                        except ProviderError as error:
+                            if str(error) in {
+                                "invalid_store_link",
+                                "tmdb_not_found",
+                                "tmdb_ambiguous",
+                                "provider_identity_mismatch",
+                            }:
+                                self.skipped += 1
+                                continue
+                            raise
+                        self._ready()
+                        await self.repository.async_enrichment(
+                            "save",
+                            self.source,
+                            row["id"],
+                            provider,
+                            {
+                                **result,
+                                "matched_title": row["title"],
+                                "matched_group": row["source_group"],
+                            },
+                        )
+                        self.updated += 1
+                    self.processed += 1
+        except asyncio.CancelledError:
+            raise
+        except ProviderError as error:
+            self.error = str(error)
+        except JournalError as error:
+            self.error = error.code
+        except (
+            ClientError,
+            OSError,
+            TimeoutError,
+            ValueError,
+            TypeError,
+            KeyError,
+            RecursionError,
+        ):
+            # Never retain provider responses/URLs, DNS answers or credential text.
+            self.error = "metadata_unavailable"
+        except Exception:
+            self.error = "metadata_format"
+        finally:
+            if self.session:
+                self.session.detach()
+                self.session = None
+            self.last_finished = datetime.now(UTC).isoformat()
+            self.actor = None
+
+    async def async_pause(self):
+        self.paused = True
+        if self.task and not self.task.done():
+            self.task.cancel()
+            try:
+                await self.task
+            except asyncio.CancelledError:
+                pass
+
+    async def async_resume(self):
+        self.paused = False
+
+    async def async_stop(self):
+        self.stopped = True
+        await self.async_pause()
