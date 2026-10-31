@@ -21,6 +21,10 @@ DEFAULT_CONFIG = ROOT / ".vscode" / "ha-deploy.json"
 EXAMPLE_CONFIG = ROOT / ".vscode" / "ha-deploy.example.json"
 MAX_PACKAGE_BYTES = 32 * 1024 * 1024
 REQUIRED = {
+    "core/logbook.py",
+    "core/operations.py",
+    "core/settings_transfer.py",
+    "ui/settings_transfer.py",
     "__init__.py",
     "config_flow.py",
     "const.py",

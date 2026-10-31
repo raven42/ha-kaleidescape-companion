@@ -453,13 +453,14 @@ it("displays whole-second dates and two-decimal minutes without rewriting untouc
   expect(transport.records[0].watched_seconds).toBe(115.37234567);
 });
 
-it("has five top-level tabs with Library opt-in disabled and limits creation controls to their pages", async () => {
+it("has administrator logs alongside the main tabs with Library opt-in disabled and limits creation controls to their pages", async () => {
   const tabs = [...panel.shadowRoot!.querySelectorAll('[role="tab"]')];
   expect(tabs.map((tab) => tab.textContent!.trim())).toEqual([
     "Now Playing",
     "Library",
     "Journal",
     "Database",
+    "Logs",
     "Settings",
   ]);
   expect(panel.shadowRoot!.querySelector('input[type="radio"]')).toBeNull();

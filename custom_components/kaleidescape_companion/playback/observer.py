@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_state_change_event
+from kaleidescape_api.logging import Level, Operation, Outcome, Subsystem
 
 from ..const import DEFAULT_MINIMUM_RUNTIME_MINUTES
 from ..core.models import JournalError, seconds, text
@@ -149,6 +150,12 @@ class PlaybackObserver:
             self._queue.clear()
             self._queue.append(self.tracker.gap(observation))
             self.overflow_count += 1
+            self.repository.logger.emit(
+                Subsystem.OBSERVER,
+                Operation.RECORD,
+                Outcome.OVERFLOW,
+                level=Level.WARNING,
+            )
             _LOGGER.warning(
                 "Playback observation buffer overflow; a timing gap was recorded"
             )
@@ -177,6 +184,12 @@ class PlaybackObserver:
                             _LOGGER.error(
                                 "Playback persistence suspended: %s", error.code
                             )
+                        self.repository.logger.emit(
+                            Subsystem.OBSERVER,
+                            Operation.RECORD,
+                            Outcome.FAILED,
+                            level=Level.ERROR,
+                        )
                         self.last_error = error.code
                         return
                     self._outbox.popleft()

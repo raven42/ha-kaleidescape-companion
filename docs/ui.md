@@ -530,3 +530,60 @@ separate-calendar acknowledgement, display a bold deletion warning, constrain
 age to 1–12 months and offer a daily HA-local sweep time. Saved status provides
 Run Full Sync now and guarded inspection recovery. Journal's shared edit dialog
 moves end time by the start-time delta; end edits never move start.
+
+## Administrator logs and settings transfer
+
+The **Logs** tab provides subsystem/level filters, bounded paging, manual
+refresh and text/JSON export with a privacy banner. Compact rows show readable
+messages and file/line locations; **Details** expands labelled diagnostic
+fields. **Options** contains the live logging level and explicit movie-metadata
+value opt-in. Old records show **Not recorded** for missing source locations.
+Text exports use readable messages; JSON keeps structured fields. Clear logs
+hides rows through the displayed refresh; Include cleared logs reveals retained
+rows. Capacity eviction still removes the oldest records. Drop/storage/sink
+counters identify incomplete diagnostics.
+
+**Settings → Export / import settings** opens category checkboxes for runtime
+rules, personal browsing, shared hidden collections, logging, private
+connections and custom templates. Credentials never transfer. Review selected
+categories before applying; personal/shared/logging settings apply immediately
+and runtime changes are staged in the native Settings form for Save settings and
+validation. Imported Full Sync enablement requires a fresh dedicated-calendar
+acknowledgement. Protect files containing private categories.
+
+Operator browser review: check the Logs tab as an administrator, level/subsystem
+filters, a DEBUG change, export downloads and Clear/Include cleared behavior;
+verify a normal user cannot see the tab. Review settings category selection,
+import review, native Save validation and narrow-screen dialog actions.
+Automated component/API tests do not replace this browser review.
+
+## Settings categories and linked diagnostics
+
+Settings has five keyboard-accessible subtabs under the sticky Save/Cancel bar.
+Switching subtabs preserves unsaved integration changes. Saving reveals the
+subtab containing an invalid native form field before validation.
+
+| Subtab         | Contents and scope                                                                                                      |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Home Assistant | Playback source entities, calendar selection/templates and Full Sync status; shared integration configuration.          |
+| Companion      | Journal recording rules, shared landing page, immediately saved hidden collections, settings transfer and reload tools. |
+| Personal       | Global fuzzy search and guidance to per-view Options; saved immediately for the signed-in HA account.                   |
+| Kaleidescape   | Library sync/cache, collection-write opt-in, device discovery and playback controls; shared backend configuration.      |
+| Scrapers       | Separate opt-in providers, credentials, rate limits and enrichment controls; shared backend configuration.              |
+
+Each section labels its scope and save behavior. Personal/shared database
+preferences do not require Save settings or an integration reload. Settings
+remains administrator-only; household users retain their own browsing Options.
+Full Sync shows **Pending delete: N** and warns before a forced pass with
+pending deletes or unconfirmed writes. This does not bypass the existing
+safeguards.
+
+In Logs, keyed user, viewing, event and originating-request aliases link layers.
+Click an alias under **Details**, or paste it into **Linked resource /
+request**, to follow related events. Export retains the active alias filter.
+
+Operator browser review: check all five settings subtabs at desktop/tablet
+widths, sticky actions, draft preservation, native validation navigation,
+personal immediate saves, pending-delete status and cancelling/continuing the
+pending-work warning. Review an edit's linked logs across subsystems. Automated
+component tests do not replace this browser review.

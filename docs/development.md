@@ -333,3 +333,11 @@ limiter. HA opt-ins, network allowlists and storage stay in the integration's
 tests without installing it. Do not use a household movie/page or real API
 credential as a fixture. Metadata setup and remaining operator validation are
 documented in [enrichment](enrichment.md).
+
+## Adding operational events
+
+Follow the [structured logging contract](logging.md): catalogued labels, safe
+counts and keyed aliases only. Never log exception strings, request/response
+payloads, wire frames, SQL, paths or credential-bearing configuration.
+Independent API changes belong in the sibling API project; run its isolated
+logging/privacy tests as well as the full Companion checks.

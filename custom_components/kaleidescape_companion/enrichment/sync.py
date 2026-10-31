@@ -12,11 +12,20 @@ from homeassistant.helpers.aiohttp_client import (
     DATA_RESOLVER,
     async_create_clientsession,
 )
+from kaleidescape_api.logging import (
+    Failure,
+    Level,
+    Operation,
+    Outcome,
+    Resource,
+    Subsystem,
+)
 from yarl import URL
 
 from .._vendor.kaleidescape_scrapers import MovieQuery, ProviderError, Providers
 from .._vendor.kaleidescape_scrapers.providers.store import movie_path
 from ..core.models import JournalError
+from ..core.operations import traced
 from ..core.security import is_active_admin
 from ..library.config import origin
 from ..library.store import source_id
@@ -78,6 +87,7 @@ class MetadataSync:
             "last_finished": self.last_finished,
         }
 
+    @traced(Subsystem.METADATA, Operation.REQUEST, debug=True)
     async def _get(self, url, headers):
         self._ready()
         parsed = urlsplit(url)
@@ -127,6 +137,15 @@ class MetadataSync:
             allow_redirects=False,
             timeout=ClientTimeout(total=20, connect=5),
         ) as response:
+            self.repository.logger.emit(
+                Subsystem.METADATA,
+                Operation.REQUEST,
+                Outcome.SUCCEEDED if response.status == 200 else Outcome.REJECTED,
+                level=Level.DEBUG if response.status == 200 else Level.WARNING,
+                status=response.status,
+                resource=(Resource.REQUEST, url),
+                target=(Resource.PROVIDER, parsed.hostname),
+            )
             if response.status == 429:
                 raise ProviderError("provider_rate_limited")
             if response.status in (401, 403):
@@ -159,9 +178,13 @@ class MetadataSync:
         return bytes(body)
 
     async def _run(self, force):
+        self.repository.logger.emit(
+            Subsystem.METADATA, Operation.SCRAPE, Outcome.STARTED
+        )
         self.error = None
         self.providers.robots = None
         self.processed = self.updated = self.skipped = 0
+        failure, cancelled = None, False
         try:
             self.session = async_create_clientsession(
                 self.hass,
@@ -233,10 +256,13 @@ class MetadataSync:
                         self.updated += 1
                     self.processed += 1
         except asyncio.CancelledError:
+            cancelled = True
             raise
         except ProviderError as error:
+            failure = error
             self.error = str(error)
         except JournalError as error:
+            failure = error
             self.error = error.code
         except (
             ClientError,
@@ -246,12 +272,26 @@ class MetadataSync:
             TypeError,
             KeyError,
             RecursionError,
-        ):
+        ) as error:
             # Never retain provider responses/URLs, DNS answers or credential text.
+            failure = error
             self.error = "metadata_unavailable"
-        except Exception:
+        except Exception as error:
+            failure = error
             self.error = "metadata_format"
         finally:
+            if failure:
+                self.repository.logger.emit_failure(
+                    Subsystem.METADATA, Operation.SCRAPE, failure, count=self.processed
+                )
+            else:
+                self.repository.logger.emit(
+                    Subsystem.METADATA,
+                    Operation.SCRAPE,
+                    Outcome.SKIPPED if cancelled else Outcome.SUCCEEDED,
+                    failure=Failure.CANCELLED if cancelled else None,
+                    count=self.processed,
+                )
             if self.session:
                 self.session.detach()
                 self.session = None

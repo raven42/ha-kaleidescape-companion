@@ -160,3 +160,8 @@ External metadata setup, request limits and privacy are covered in the
 [enrichment guide](docs/enrichment.md). Now Playing and artwork are shared with
 active users who can read the selected HA source entities; recording internals
 remain administrator-only.
+
+Administrator [operational logs](docs/logging.md) provide private structured
+diagnostics, text/JSON downloads, live levels and bounded retention. Settings
+export/import supports reviewed category selection and always excludes
+credentials.

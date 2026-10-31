@@ -360,3 +360,48 @@ Planned: an HA dashboard card for the Journal month view. Dedicated-calendar
 reconciliation/edit/delete is implemented as Full Sync above. Gmail or other
 sharing connectors need a separate authorization and privacy design; they are
 not implemented by this feature.
+
+## Diagnosing unconfirmed Full Sync writes
+
+Open **Logs**, set DEBUG temporarily, then request one Full Sync pass. Filter on
+calendar. Create/update/delete and verification events share a request alias. A
+write is verified with up to three reads (immediate, after one second, then
+after three more seconds), using a one-minute boundary margin. No external write
+is retried by these reads. DEBUG comparisons report title/interval/description
+equality without their values; validation failures use owned check codes.
+Settings also shows the failed stage. Provider failures and ambiguous/absent
+results leave the durable uncertainty barrier intact. Inspect the actual
+calendar before acknowledgement; acknowledgement does not fix a provider that
+transforms or cannot confirm event content. Export the filtered logs for
+diagnosis.
+
+Full Sync create/update calls use HA's entity-contract `EVENT_START`/`EVENT_END`
+constants (`dtstart`/`dtend`) with datetime values. These differ from normalized
+comparison fields and the calendar service input names. The simulated calendar
+validates writes against HA's own event schema so a contract mismatch fails in
+tests. Earlier adapter versions sent `start`/`end`, which could cause an
+immediate missing-field failure and leave an unconfirmed receipt. Updating the
+adapter does not clear that receipt: inspect the provider calendar and
+acknowledge the existing pending write before another attempt if read-back
+cannot resolve it. The new diagnostics identify missing fields and the adapter
+source location without logging the event's title, dates or provider exception
+text.
+
+## Edits, replacements and pending deletion
+
+When the provider supports HA's `UPDATE_EVENT` capability, Full Sync locates the
+saved calendar UID and updates that event in place. Providers exposing only
+create/delete support use a verified replacement instead. The prior event then
+joins normal guarded cleanup; both events can remain visible during the grace
+period. The replacement is never followed by an immediate unguarded deletion. An
+unchanged pass after at least ten minutes can remove the prior event, subject to
+the window, completeness, concurrency and uncertainty safeguards.
+Journal/configuration/event changes restart quarantine.
+
+**Settings → Home Assistant → Full Sync** displays **Pending delete: N**
+alongside unconfirmed writes. A successful pass can still have pending deletes.
+**Run Full Sync now** refreshes status and warns before proceeding when either
+count is nonzero. Continuing rechecks pending work; it does not waive the grace
+period or acknowledge uncertain writes. Logs explain the provider strategy and
+link the journal revision, request, user and calendar event through private
+keyed aliases.

@@ -74,6 +74,89 @@ it("renders a settings page and saves the native integration options flow", asyn
   expect(saved).toHaveBeenCalledOnce();
 });
 
+it("organizes settings by scope, preserves drafts across tabs and saves personal search immediately", async () => {
+  await mount("kaleidescape-settings");
+  const labels = [...root().querySelectorAll('[role="tab"]')].map((tab) =>
+    tab.textContent?.trim(),
+  );
+  expect(labels).toEqual([
+    "Home Assistant",
+    "Companion",
+    "Personal",
+    "Kaleidescape",
+    "Scrapers",
+  ]);
+  const panel = (id: string) =>
+    root().querySelector<HTMLElement>(`#settings-${id}`)!;
+  expect(panel("home-assistant").hidden).toBe(false);
+  expect(panel("companion").hidden).toBe(true);
+  button("Companion").click();
+  await flush();
+  input("minimum_runtime_minutes", "25");
+  button("Scrapers").click();
+  await flush();
+  expect(panel("scrapers").hidden).toBe(false);
+  expect(
+    panel("ecosystem").querySelector("kaleidescape-enrichment-settings"),
+  ).toBeNull();
+  expect(
+    panel("scrapers").querySelector("kaleidescape-enrichment-settings"),
+  ).not.toBeNull();
+  button("Personal").click();
+  await vi.waitFor(() =>
+    expect(
+      root().querySelector<HTMLInputElement>('[name="personal_fuzzy_search"]')!
+        .disabled,
+    ).toBe(false),
+  );
+  root()
+    .querySelector<HTMLInputElement>('[name="personal_fuzzy_search"]')!
+    .click();
+  await flush();
+  expect(
+    transport.calls.some(
+      (call) =>
+        call.type.endsWith("/ui/preferences/update") && call.area === "search",
+    ),
+  ).toBe(true);
+  expect(
+    transport.calls.some((call) => call.type.endsWith("/settings/submit")),
+  ).toBe(false);
+  button("Companion").click();
+  await flush();
+  expect(
+    root().querySelector<HTMLInputElement>('[name="minimum_runtime_minutes"]')!
+      .value,
+  ).toBe("25");
+  button("Save settings").click();
+  await flush();
+  expect(
+    transport.calls.find((call) => call.type.endsWith("/settings/submit"))!
+      .data,
+  ).toMatchObject({ minimum_runtime_minutes: 25 });
+});
+
+it("reveals an invalid field's settings tab before native form validation", async () => {
+  transport.options.calendar_enabled = true;
+  transport.options.calendar_entity = "calendar.movies";
+  await mount("kaleidescape-settings");
+  root()
+    .querySelector<HTMLInputElement>('[name="calendar_full_sync"]')!
+    .click();
+  await flush();
+  input("calendar_full_sync_months", "13");
+  button("Kaleidescape").click();
+  await flush();
+  button("Save settings").click();
+  await flush();
+  expect(
+    root().querySelector('[aria-selected="true"]')?.textContent?.trim(),
+  ).toBe("Home Assistant");
+  expect(
+    transport.calls.some((call) => call.type.endsWith("/settings/submit")),
+  ).toBe(false);
+});
+
 it("keeps library sync opt-in and saves library controls through the native options flow", async () => {
   await mount("kaleidescape-settings");
   const enabled = root().querySelector<HTMLInputElement>(

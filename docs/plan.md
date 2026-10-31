@@ -1,6 +1,6 @@
 # Product plan
 
-Updated: 2026-10-30
+Updated: 2026-10-31
 
 Kaleidescape Companion maintains a shared household movie journal inside Home
 Assistant. Recording and browsing must work without a library import, external
@@ -257,3 +257,13 @@ and a portrait Remote dialog are implemented. Providers remain opt-in with
 conservative title/year matching; live TMDB credential and operator layout tests
 remain acceptance work. Future enrichment providers should reuse `lib/scrapers/`
 and the existing guarded worker cache rather than adding a second catalog.
+
+## Operational observability
+
+Implemented: schema 21 private log book with bounded retention, static event
+catalog, HMAC resource aliases, administrator Log view/export/hide controls,
+live levels across registered protocol clients, and reviewed category-based
+settings transfer. Future subsystems must follow the
+[logging policy](logging.md). Remaining acceptance: operator browser review and
+provider-specific Full Sync validation using content-free diagnostic exports. No
+live calendar or device actions are part of automated checks.

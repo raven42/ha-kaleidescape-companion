@@ -1,10 +1,20 @@
 """Household journal reads and administrator management through HA authentication."""
 
+from contextlib import ExitStack
 from typing import Any
+from uuid import uuid4
 
 import probatio as p
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
+from kaleidescape_api.logging import (
+    Operation,
+    Outcome,
+    Reason,
+    Resource,
+    Subsystem,
+    Trigger,
+)
 
 from ..const import DOMAIN
 from ..core.journal_store import public_viewing
@@ -16,6 +26,7 @@ from ..playback.now_playing import snapshot as now_playing_snapshot
 from .controls import control_request
 from .preferences import public_defaults
 from .settings import fingerprint, options_request
+from .settings_transfer import transfer as settings_transfer
 
 USER_OPERATIONS = frozenset(
     {
@@ -48,6 +59,17 @@ def async_register_commands(hass: HomeAssistant) -> None:
     scoped = {p.Required("entry_id"): str, p.Required("dataset_id"): str}
     mutations = {**scoped, p.Required("request_id"): str}
     schemas = {
+        "settings/transfer": {
+            **scoped,
+            p.Required("operation"): str,
+            p.Required("categories"): [str],
+            p.Optional("data", default={}): dict,
+            p.Optional("request_id", default=""): str,
+        },
+        "logs/list": {**scoped, p.Optional("filters", default={}): dict},
+        "logs/export": {**scoped, p.Optional("filters", default={}): dict},
+        "logs/configure": {**scoped, p.Required("data"): dict},
+        "logs/clear": {**scoped, p.Required("through"): int},
         "info": {},
         "journal/create": {**mutations, p.Required("data"): dict},
         "journal/get": {**scoped, p.Required("viewing_id"): str},
@@ -263,326 +285,352 @@ async def async_handle(
             msg["id"], "unauthorized", "Access to this journal operation is denied"
         )
         return
-    try:
-        if operation == "info":
-            entries = []
-            for entry_id, runtime in loaded_runtimes(hass):
-                metadata = await runtime.repository.async_info()
-                if not runtime.ready:
-                    continue
-                if not admin:
-                    metadata = {
-                        key: metadata[key]
-                        for key in ("dataset_id", "revision", "viewing_count")
-                    }
-                entry = hass.config_entries.async_get_entry(entry_id)
-                library_enabled = bool(
-                    runtime.library is not None
-                    and entry is not None
-                    and (entry.options or entry.data).get("library_enabled", False)
-                )
-                entries.append(
-                    {
-                        "entry_id": entry_id,
-                        **metadata,
-                        "api_version": 1,
-                        "library_enabled": library_enabled,
-                        "ui_defaults": public_defaults(
-                            dict(entry.options or entry.data) if entry else {}
-                        ),
-                        "permissions": {
-                            "read": True,
-                            "edit": admin,
-                            "export": admin,
-                        },
-                        **(
-                            {
-                                "tracking_enabled": runtime.observer is not None,
-                                "features": {
-                                    "manual_journal": True,
-                                    "automatic_tracking": True,
-                                    "now_playing": True,
-                                    "settings": True,
-                                    "database_maintenance": True,
-                                    "import": True,
-                                    "library": True,
-                                },
-                            }
-                            if admin
-                            else {}
-                        ),
-                    }
-                )
-            result = {"entries": entries}
-        else:
-            runtime = get_runtime(hass, msg["entry_id"], msg["dataset_id"])
-            repository = runtime.repository
-            match operation:
-                case "metadata/status" | "metadata/sync":
-                    get_library(hass, msg["entry_id"], runtime)
-                    if runtime.enrichment is None:
-                        raise JournalError(
-                            "metadata_disabled",
-                            "Enable a metadata provider and save Settings first",
-                        )
-                    if operation == "metadata/sync":
-                        runtime.enrichment.request_sync(user, force=True)
-                    result = runtime.enrichment.status()
-                case (
-                    "control/info"
-                    | "control/discover"
-                    | "control/status"
-                    | "control/prepare"
-                    | "control/execute"
-                    | "control/acknowledge"
-                ):
-                    result = await control_request(hass, user, runtime, operation, msg)
-                case (
-                    "library/info"
-                    | "library/list"
-                    | "library/sync"
-                    | "library/versions"
-                    | "library/suggest"
-                    | "library/search"
-                    | "library/viewing"
-                    | "library/viewings"
-                    | "library/purchases/summary"
-                    | "library/collections/targets"
-                    | "library/collections/add"
-                    | "library/collections/check"
-                    | "library/collections/acknowledge"
-                ):
-                    library = get_library(hass, msg["entry_id"], runtime)
-                    entry = hass.config_entries.async_get_entry(msg["entry_id"])
-                    excluded = await repository.async_hidden_collections()
-                    if operation.startswith("library/collections/"):
-                        config_key = fingerprint(entry)
-                        adding = operation in {
-                            "library/collections/add",
-                            "library/collections/targets",
+    with ExitStack() as diagnostics:
+        try:
+            if operation == "info":
+                entries = []
+                for entry_id, runtime in loaded_runtimes(hass):
+                    metadata = await runtime.repository.async_info()
+                    if not runtime.ready:
+                        continue
+                    if not admin:
+                        metadata = {
+                            key: metadata[key]
+                            for key in ("dataset_id", "revision", "viewing_count")
                         }
+                    entry = hass.config_entries.async_get_entry(entry_id)
+                    library_enabled = bool(
+                        runtime.library is not None
+                        and entry is not None
+                        and (entry.options or entry.data).get("library_enabled", False)
+                    )
+                    entries.append(
+                        {
+                            "entry_id": entry_id,
+                            **metadata,
+                            "api_version": 1,
+                            "library_enabled": library_enabled,
+                            "ui_defaults": public_defaults(
+                                dict(entry.options or entry.data) if entry else {}
+                            ),
+                            "permissions": {
+                                "read": True,
+                                "edit": admin,
+                                "export": admin,
+                            },
+                            **(
+                                {
+                                    "tracking_enabled": runtime.observer is not None,
+                                    "features": {
+                                        "manual_journal": True,
+                                        "automatic_tracking": True,
+                                        "now_playing": True,
+                                        "settings": True,
+                                        "database_maintenance": True,
+                                        "import": True,
+                                        "library": True,
+                                    },
+                                }
+                                if admin
+                                else {}
+                            ),
+                        }
+                    )
+                result = {"entries": entries}
+            else:
+                runtime = get_runtime(hass, msg["entry_id"], msg["dataset_id"])
+                repository = runtime.repository
+                event = mutation_event(operation, msg)
+                if event:
+                    identity = msg.get("viewing_id") or msg.get("title_id")
+                    kind = Resource.VIEWING if msg.get("viewing_id") else Resource.MOVIE
+                    diagnostics.enter_context(
+                        repository.logger.context(
+                            actor=(Resource.USER, user.id),
+                            trace=(
+                                Resource.REQUEST,
+                                msg.get("request_id") or str(uuid4()),
+                            ),
+                            resource=(kind, identity) if identity else None,
+                            related=(Resource.VIEWING, identity)
+                            if kind == Resource.VIEWING and identity
+                            else None,
+                            trigger=Trigger.USER_REQUEST,
+                        )
+                    )
+                    repository.logger.emit(
+                        *event, Outcome.STARTED, reason=Reason.USER_ACTION
+                    )
+                match operation:
+                    case "settings/transfer":
+                        entry = hass.config_entries.async_get_entry(msg["entry_id"])
+                        result = await settings_transfer(
+                            hass,
+                            entry,
+                            repository,
+                            user.id,
+                            msg["operation"],
+                            msg["categories"],
+                            msg["data"],
+                            msg["request_id"],
+                        )
+                    case "logs/list" | "logs/export" | "logs/configure" | "logs/clear":
+                        result = await repository.async_logs(
+                            operation.split("/")[1],
+                            msg.get("filters", {})
+                            if operation in {"logs/list", "logs/export"}
+                            else msg["data"]
+                            if operation == "logs/configure"
+                            else {"through": msg["through"]},
+                        )
+                    case "metadata/status" | "metadata/sync":
+                        get_library(hass, msg["entry_id"], runtime)
+                        if runtime.enrichment is None:
+                            raise JournalError(
+                                "metadata_disabled",
+                                "Enable a metadata provider and save Settings first",
+                            )
+                        if operation == "metadata/sync":
+                            runtime.enrichment.request_sync(user, force=True)
+                        result = runtime.enrichment.status()
+                    case (
+                        "control/info"
+                        | "control/discover"
+                        | "control/status"
+                        | "control/prepare"
+                        | "control/execute"
+                        | "control/acknowledge"
+                    ):
+                        result = await control_request(
+                            hass, user, runtime, operation, msg
+                        )
+                    case (
+                        "library/info"
+                        | "library/list"
+                        | "library/sync"
+                        | "library/versions"
+                        | "library/suggest"
+                        | "library/search"
+                        | "library/viewing"
+                        | "library/viewings"
+                        | "library/purchases/summary"
+                        | "library/collections/targets"
+                        | "library/collections/add"
+                        | "library/collections/check"
+                        | "library/collections/acknowledge"
+                    ):
+                        library = get_library(hass, msg["entry_id"], runtime)
+                        entry = hass.config_entries.async_get_entry(msg["entry_id"])
+                        excluded = await repository.async_hidden_collections()
+                        if operation.startswith("library/collections/"):
+                            config_key = fingerprint(entry)
+                            adding = operation in {
+                                "library/collections/add",
+                                "library/collections/targets",
+                            }
 
-                        def authorize():
-                            if not is_active_admin(user):
-                                raise JournalError(
-                                    "unauthorized", "Administrator access changed"
+                            def authorize():
+                                if not is_active_admin(user):
+                                    raise JournalError(
+                                        "unauthorized", "Administrator access changed"
+                                    )
+                                current = get_runtime(
+                                    hass, msg["entry_id"], msg["dataset_id"]
                                 )
-                            current = get_runtime(
-                                hass, msg["entry_id"], msg["dataset_id"]
-                            )
-                            if (
-                                current is not runtime
-                                or get_library(hass, msg["entry_id"], current)
-                                is not library
-                            ):
-                                raise JournalError("not_ready", "Library reloaded")
-                            config = hass.config_entries.async_get_entry(
-                                msg["entry_id"]
-                            )
-                            if fingerprint(config) != config_key:
-                                raise JournalError(
-                                    "not_ready", "Library settings changed"
+                                if (
+                                    current is not runtime
+                                    or get_library(hass, msg["entry_id"], current)
+                                    is not library
+                                ):
+                                    raise JournalError("not_ready", "Library reloaded")
+                                config = hass.config_entries.async_get_entry(
+                                    msg["entry_id"]
                                 )
-                            config = dict(config.options or config.data)
-                            if origin(config.get("library_host", "")) != library.origin:
-                                raise JournalError(
-                                    "not_ready", "Library origin changed"
-                                )
-                            if adding and not (
-                                config.get("library_allow_collection_add", False)
-                                and config.get("library_sync_collections", True)
-                            ):
-                                raise JournalError(
-                                    "collection_disabled",
-                                    "Enable collection additions and collection sync "
-                                    "in Settings",
-                                )
+                                if fingerprint(config) != config_key:
+                                    raise JournalError(
+                                        "not_ready", "Library settings changed"
+                                    )
+                                config = dict(config.options or config.data)
+                                if (
+                                    origin(config.get("library_host", ""))
+                                    != library.origin
+                                ):
+                                    raise JournalError(
+                                        "not_ready", "Library origin changed"
+                                    )
+                                if adding and not (
+                                    config.get("library_allow_collection_add", False)
+                                    and config.get("library_sync_collections", True)
+                                ):
+                                    raise JournalError(
+                                        "collection_disabled",
+                                        "Enable collection additions "
+                                        "and collection sync "
+                                        "in Settings",
+                                    )
 
-                        authorize()
-                        if operation == "library/collections/targets":
-                            result = await library.async_collection_targets(
-                                msg["title_id"], msg["revision"], excluded, authorize
+                            authorize()
+                            if operation == "library/collections/targets":
+                                result = await library.async_collection_targets(
+                                    msg["title_id"],
+                                    msg["revision"],
+                                    excluded,
+                                    authorize,
+                                )
+                            elif operation == "library/collections/add":
+                                result = await library.async_collection_add(
+                                    msg["request_id"],
+                                    msg["title_id"],
+                                    msg["collection"],
+                                    msg["revision"],
+                                    user.id,
+                                    excluded,
+                                    authorize,
+                                )
+                            else:
+                                acknowledge = None
+                                if operation.endswith("/acknowledge"):
+                                    if msg["confirmation"] != "ACKNOWLEDGE":
+                                        raise JournalError(
+                                            "invalid_request",
+                                            "Acknowledgment does not match",
+                                        )
+                                    acknowledge = user.id
+                                result = await library.async_collection_check(
+                                    msg["request_id"], authorize, acknowledge
+                                )
+                            authorize()
+                        elif operation == "library/sync":
+                            library.request_sync()
+                            result = {"accepted": True}
+                        elif operation == "library/info":
+                            metadata = await repository.async_library_info(
+                                library.source, excluded
                             )
-                        elif operation == "library/collections/add":
-                            result = await library.async_collection_add(
-                                msg["request_id"],
+                            result = (
+                                {
+                                    **metadata,
+                                    **library.status(),
+                                    "collection_add_enabled": bool(
+                                        (entry.options or entry.data).get(
+                                            "library_allow_collection_add", False
+                                        )
+                                        and (entry.options or entry.data).get(
+                                            "library_sync_collections", True
+                                        )
+                                    ),
+                                    "pending_adds": (
+                                        await repository.async_collection_snapshot(
+                                            library.source
+                                        )
+                                    )["pending"],
+                                }
+                                if admin
+                                else {
+                                    key: metadata[key]
+                                    for key in (
+                                        "title_count",
+                                        "group_count",
+                                        "name_count",
+                                        "preferences_key",
+                                        "collection_count",
+                                        "revision",
+                                        "last_synced_at",
+                                        "collections_synced_at",
+                                    )
+                                }
+                            )
+                        elif operation == "library/purchases/summary":
+                            result = await repository.async_purchase_totals(
+                                library.source
+                            )
+                        elif operation == "library/viewing":
+                            result = await repository.async_viewing_library(
+                                library.source, msg["viewing_id"]
+                            )
+                        elif operation == "library/viewings":
+                            result = await repository.async_list(
+                                query=msg["query"],
+                                viewing_status=msg.get("status"),
+                                limit=msg["limit"],
+                                cursor=msg.get("cursor"),
+                                sort=msg["sort"],
+                                descending=msg["descending"],
+                                fuzzy=msg["fuzzy"],
+                                library_scope=(library.source, msg["title_id"]),
+                            )
+                            if not admin:
+                                result["items"] = [
+                                    public_viewing(row) for row in result["items"]
+                                ]
+                        elif operation == "library/search":
+                            result = await repository.async_library_search(
+                                library.source, msg["query"], excluded, msg["fuzzy"]
+                            )
+                        elif operation == "library/suggest":
+                            result = await repository.async_library_suggest(
+                                library.source, msg["field"], msg["query"], msg["fuzzy"]
+                            )
+                        elif operation == "library/versions":
+                            result = await repository.async_library_versions(
+                                library.source,
                                 msg["title_id"],
-                                msg["collection"],
-                                msg["revision"],
-                                user.id,
+                                msg["offset"],
+                                msg.get("revision"),
                                 excluded,
-                                authorize,
+                                admin=admin,
                             )
                         else:
-                            acknowledge = None
-                            if operation.endswith("/acknowledge"):
-                                if msg["confirmation"] != "ACKNOWLEDGE":
-                                    raise JournalError(
-                                        "invalid_request",
-                                        "Acknowledgment does not match",
-                                    )
-                                acknowledge = user.id
-                            result = await library.async_collection_check(
-                                msg["request_id"], authorize, acknowledge
+                            result = await repository.async_library_list(
+                                library.source, msg["filters"], excluded
                             )
-                        authorize()
-                    elif operation == "library/sync":
-                        library.request_sync()
-                        result = {"accepted": True}
-                    elif operation == "library/info":
-                        metadata = await repository.async_library_info(
-                            library.source, excluded
+                    case "ui/preferences/get" | "ui/shared/get":
+                        result = await repository.async_ui_preferences(
+                            user.id,
+                            operation.startswith("ui/shared/"),
+                            msg.get("area", "library"),
                         )
-                        result = (
-                            {
-                                **metadata,
-                                **library.status(),
-                                "collection_add_enabled": bool(
-                                    (entry.options or entry.data).get(
-                                        "library_allow_collection_add", False
-                                    )
-                                    and (entry.options or entry.data).get(
-                                        "library_sync_collections", True
-                                    )
-                                ),
-                                "pending_adds": (
-                                    await repository.async_collection_snapshot(
-                                        library.source
-                                    )
-                                )["pending"],
-                            }
-                            if admin
-                            else {
-                                key: metadata[key]
-                                for key in (
-                                    "title_count",
-                                    "group_count",
-                                    "name_count",
-                                    "preferences_key",
-                                    "collection_count",
-                                    "revision",
-                                    "last_synced_at",
-                                    "collections_synced_at",
-                                )
-                            }
+                    case "ui/preferences/update" | "ui/shared/update":
+                        result = await repository.async_ui_preferences_update(
+                            user.id,
+                            operation.startswith("ui/shared/"),
+                            msg["request_id"],
+                            msg["revision"],
+                            msg["patch"],
+                            msg.get("area", "library"),
                         )
-                    elif operation == "library/purchases/summary":
-                        result = await repository.async_purchase_totals(library.source)
-                    elif operation == "library/viewing":
-                        result = await repository.async_viewing_library(
-                            library.source, msg["viewing_id"]
-                        )
-                    elif operation == "library/viewings":
-                        result = await repository.async_list(
-                            query=msg["query"],
-                            viewing_status=msg.get("status"),
-                            limit=msg["limit"],
-                            cursor=msg.get("cursor"),
-                            sort=msg["sort"],
-                            descending=msg["descending"],
-                            fuzzy=msg["fuzzy"],
-                            library_scope=(library.source, msg["title_id"]),
-                        )
-                        if not admin:
-                            result["items"] = [
-                                public_viewing(row) for row in result["items"]
-                            ]
-                    elif operation == "library/search":
-                        result = await repository.async_library_search(
-                            library.source, msg["query"], excluded, msg["fuzzy"]
-                        )
-                    elif operation == "library/suggest":
-                        result = await repository.async_library_suggest(
-                            library.source, msg["field"], msg["query"], msg["fuzzy"]
-                        )
-                    elif operation == "library/versions":
-                        result = await repository.async_library_versions(
+                    case "journal/create":
+                        library = get_library(hass, msg["entry_id"], runtime)
+                        result = await repository.async_create_from_library(
+                            msg["request_id"],
                             library.source,
-                            msg["title_id"],
-                            msg["offset"],
-                            msg.get("revision"),
-                            excluded,
-                            admin=admin,
+                            msg["data"],
+                            actor_id=user.id,
                         )
-                    else:
-                        result = await repository.async_library_list(
-                            library.source, msg["filters"], excluded
-                        )
-                case "ui/preferences/get" | "ui/shared/get":
-                    result = await repository.async_ui_preferences(
-                        user.id,
-                        operation.startswith("ui/shared/"),
-                        msg.get("area", "library"),
-                    )
-                case "ui/preferences/update" | "ui/shared/update":
-                    result = await repository.async_ui_preferences_update(
-                        user.id,
-                        operation.startswith("ui/shared/"),
-                        msg["request_id"],
-                        msg["revision"],
-                        msg["patch"],
-                        msg.get("area", "library"),
-                    )
-                case "journal/create":
-                    library = get_library(hass, msg["entry_id"], runtime)
-                    result = await repository.async_create_from_library(
-                        msg["request_id"], library.source, msg["data"], actor_id=user.id
-                    )
-                case "journal/metadata/preview" | "journal/metadata/repair":
-                    library = get_library(hass, msg["entry_id"], runtime)
-                    if operation == "journal/metadata/preview":
-                        result = await repository.async_metadata_preview(library.source)
-                    else:
-                        if msg["confirmation"] != "REPAIR METADATA":
-                            raise JournalError(
-                                "invalid_request", "Confirm the metadata repair"
+                    case "journal/metadata/preview" | "journal/metadata/repair":
+                        library = get_library(hass, msg["entry_id"], runtime)
+                        if operation == "journal/metadata/preview":
+                            result = await repository.async_metadata_preview(
+                                library.source
                             )
-                        result = await repository.async_metadata_repair(
-                            library.source, msg["request_id"], user.id, msg["token"]
-                        )
-                case "calendar/maintain":
-                    if runtime.calendar is None:
-                        raise JournalError("not_ready", "Calendar is not loaded")
-                    if (
-                        msg["action"] == "acknowledge"
-                        and msg["confirmation"] != "ACKNOWLEDGE"
-                    ):
-                        raise JournalError(
-                            "invalid_request",
-                            "Confirm calendar inspection before another attempt",
-                        )
-
-                    def authorized():
-                        return (
-                            is_active_admin(user)
-                            and runtime.ready
-                            and getattr(
-                                hass.config_entries.async_get_entry(msg["entry_id"]),
-                                "runtime_data",
-                                None,
+                        else:
+                            if msg["confirmation"] != "REPAIR METADATA":
+                                raise JournalError(
+                                    "invalid_request", "Confirm the metadata repair"
+                                )
+                            result = await repository.async_metadata_repair(
+                                library.source, msg["request_id"], user.id, msg["token"]
                             )
-                            is runtime
-                        )
-
-                    result = await runtime.calendar.maintenance.action(
-                        msg["action"],
-                        msg["fingerprint"],
-                        user.id,
-                        authorized,
-                        msg["review_token"],
-                    )
-                case "calendar/status" | "calendar/sync" | "calendar/cancel":
-                    if runtime.calendar is None:
-                        raise JournalError(
-                            "not_ready", "Calendar publisher is not loaded"
-                        )
-                    history = runtime.calendar.history
-                    if operation == "calendar/status":
-                        result = await history.status()
-                    elif operation == "calendar/sync":
-                        if msg["confirmation"] != "EXPORT JOURNAL":
+                    case "calendar/maintain":
+                        if runtime.calendar is None:
+                            raise JournalError("not_ready", "Calendar is not loaded")
+                        if (
+                            msg["action"] == "acknowledge"
+                            and msg["confirmation"] != "ACKNOWLEDGE"
+                        ):
                             raise JournalError(
-                                "invalid_request", "Confirm the calendar export"
+                                "invalid_request",
+                                "Confirm calendar inspection before another attempt",
                             )
 
                         def authorized():
@@ -599,192 +647,291 @@ async def async_handle(
                                 is runtime
                             )
 
-                        result = await history.start(
-                            msg["request_id"], user.id, msg["fingerprint"], authorized
-                        )
-                    else:
-                        await history.cancel(msg["job_id"])
-                        result = await history.status()
-                case "settings/start" | "settings/submit" | "settings/cancel":
-                    result = await options_request(
-                        hass,
-                        hass.config_entries.async_get_entry(msg["entry_id"]),
-                        user.id,
-                        operation,
-                        msg,
-                    )
-                case "database/mutate":
-                    result = await repository.async_database_mutate(
-                        msg["request_id"], msg["data"], user.id
-                    )
-                case "database/validate_query":
-                    result = await repository.async_database_validate_query(
-                        msg["table"], msg["query"]
-                    )
-                case "database/inspect":
-                    result = await repository.async_inspect(
-                        msg["table"],
-                        msg["offset"],
-                        msg.get("revision"),
-                        limit=msg["limit"],
-                        query=msg["query"],
-                        sort=msg.get("sort"),
-                        descending=msg["descending"],
-                    )
-                case (
-                    "database/import"
-                    | "database/import/search"
-                    | "database/import/match"
-                ):
-                    entry = hass.config_entries.async_get_entry(msg["entry_id"])
-                    if runtime.observer is not None or (
-                        entry.options or entry.data
-                    ).get("tracking_enabled"):
-                        raise JournalError(
-                            "tracking_enabled", "Disable recording before importing"
-                        )
-                    if operation == "database/import/search":
-                        result = await repository.async_import_match_search(
-                            msg["plan_id"],
-                            msg["revision"],
-                            msg["purchase_key"],
-                            msg["query"],
+                        result = await runtime.calendar.maintenance.action(
+                            msg["action"],
+                            msg["fingerprint"],
                             user.id,
+                            authorized,
+                            msg["review_token"],
                         )
-                    elif operation == "database/import/match":
-                        result = await repository.async_import_match(
-                            msg["plan_id"],
-                            msg["revision"],
-                            msg["purchase_key"],
-                            msg["title_id"],
+                    case "calendar/status" | "calendar/sync" | "calendar/cancel":
+                        if runtime.calendar is None:
+                            raise JournalError(
+                                "not_ready", "Calendar publisher is not loaded"
+                            )
+                        history = runtime.calendar.history
+                        if operation == "calendar/status":
+                            result = await history.status()
+                        elif operation == "calendar/sync":
+                            if msg["confirmation"] != "EXPORT JOURNAL":
+                                raise JournalError(
+                                    "invalid_request", "Confirm the calendar export"
+                                )
+
+                            def authorized():
+                                return (
+                                    is_active_admin(user)
+                                    and runtime.ready
+                                    and getattr(
+                                        hass.config_entries.async_get_entry(
+                                            msg["entry_id"]
+                                        ),
+                                        "runtime_data",
+                                        None,
+                                    )
+                                    is runtime
+                                )
+
+                            result = await history.start(
+                                msg["request_id"],
+                                user.id,
+                                msg["fingerprint"],
+                                authorized,
+                            )
+                        else:
+                            await history.cancel(msg["job_id"])
+                            result = await history.status()
+                    case "settings/start" | "settings/submit" | "settings/cancel":
+                        result = await options_request(
+                            hass,
+                            hass.config_entries.async_get_entry(msg["entry_id"]),
                             user.id,
+                            operation,
+                            msg,
                         )
-                    else:
-                        result = await repository.async_import_apply(
+                    case "database/mutate":
+                        result = await repository.async_database_mutate(
+                            msg["request_id"], msg["data"], user.id
+                        )
+                    case "database/validate_query":
+                        result = await repository.async_database_validate_query(
+                            msg["table"], msg["query"]
+                        )
+                    case "database/inspect":
+                        result = await repository.async_inspect(
+                            msg["table"],
+                            msg["offset"],
+                            msg.get("revision"),
+                            limit=msg["limit"],
+                            query=msg["query"],
+                            sort=msg.get("sort"),
+                            descending=msg["descending"],
+                        )
+                    case (
+                        "database/import"
+                        | "database/import/search"
+                        | "database/import/match"
+                    ):
+                        entry = hass.config_entries.async_get_entry(msg["entry_id"])
+                        if runtime.observer is not None or (
+                            entry.options or entry.data
+                        ).get("tracking_enabled"):
+                            raise JournalError(
+                                "tracking_enabled", "Disable recording before importing"
+                            )
+                        if operation == "database/import/search":
+                            result = await repository.async_import_match_search(
+                                msg["plan_id"],
+                                msg["revision"],
+                                msg["purchase_key"],
+                                msg["query"],
+                                user.id,
+                            )
+                        elif operation == "database/import/match":
+                            result = await repository.async_import_match(
+                                msg["plan_id"],
+                                msg["revision"],
+                                msg["purchase_key"],
+                                msg["title_id"],
+                                user.id,
+                            )
+                        else:
+                            result = await repository.async_import_apply(
+                                msg["request_id"],
+                                msg["plan_id"],
+                                msg["revision"],
+                                msg["selected"],
+                                actor_id=user.id,
+                            )
+                    case "database/purge":
+                        entry = hass.config_entries.async_get_entry(msg["entry_id"])
+                        if runtime.observer is not None or (
+                            entry.options or entry.data
+                        ).get("tracking_enabled"):
+                            raise JournalError(
+                                "tracking_enabled",
+                                "Disable automatic tracking before purging",
+                            )
+                        result = await repository.async_purge(
                             msg["request_id"],
-                            msg["plan_id"],
-                            msg["revision"],
-                            msg["selected"],
+                            msg["expected_revision"],
+                            msg["viewing_ids"],
+                            msg["all"],
+                            msg["confirmation"],
                             actor_id=user.id,
                         )
-                case "database/purge":
-                    entry = hass.config_entries.async_get_entry(msg["entry_id"])
-                    if runtime.observer is not None or (
-                        entry.options or entry.data
-                    ).get("tracking_enabled"):
-                        raise JournalError(
-                            "tracking_enabled",
-                            "Disable automatic tracking before purging",
+                    case "journal/calendar" | "journal/calendar/get":
+                        entry = hass.config_entries.async_get_entry(msg["entry_id"])
+                        enabled = entry is not None and (
+                            entry.options or entry.data
+                        ).get("library_enabled", False)
+                        library = (
+                            get_library(hass, msg["entry_id"], runtime)
+                            if enabled
+                            else None
                         )
-                    result = await repository.async_purge(
-                        msg["request_id"],
-                        msg["expected_revision"],
-                        msg["viewing_ids"],
-                        msg["all"],
-                        msg["confirmation"],
-                        actor_id=user.id,
-                    )
-                case "journal/calendar" | "journal/calendar/get":
-                    entry = hass.config_entries.async_get_entry(msg["entry_id"])
-                    enabled = entry is not None and (entry.options or entry.data).get(
-                        "library_enabled", False
-                    )
-                    library = (
-                        get_library(hass, msg["entry_id"], runtime) if enabled else None
-                    )
-                    source = library.source if library else None
-                    if operation.endswith("/get"):
-                        result = await repository.async_calendar_details(
-                            msg["viewing_id"], source
+                        source = library.source if library else None
+                        if operation.endswith("/get"):
+                            result = await repository.async_calendar_details(
+                                msg["viewing_id"], source
+                            )
+                        else:
+                            result = await repository.async_calendar_month(
+                                msg["start"],
+                                msg["end"],
+                                msg["query"],
+                                msg.get("status"),
+                                msg["fuzzy"],
+                                source,
+                                msg.get("title_id"),
+                            )
+                    case "journal/get":
+                        result = await repository.async_get(msg["viewing_id"])
+                        if not admin:
+                            result = public_viewing(result)
+                    case "journal/sessions":
+                        result = await repository.async_sessions(msg["viewing_id"])
+                    case "now_playing":
+                        result = now_playing_snapshot(
+                            hass, user, runtime, msg.get("player_id")
                         )
-                    else:
-                        result = await repository.async_calendar_month(
-                            msg["start"],
-                            msg["end"],
-                            msg["query"],
-                            msg.get("status"),
-                            msg["fuzzy"],
-                            source,
-                            msg.get("title_id"),
+                    case "journal/list":
+                        result = await repository.async_list(
+                            query=msg.get("query", ""),
+                            viewing_status=msg.get("status"),
+                            limit=msg.get("limit", 50),
+                            cursor=msg.get("cursor"),
+                            sort=msg.get("sort", "completed_at"),
+                            descending=msg.get("descending", True),
+                            fuzzy=msg.get("fuzzy", False),
                         )
-                case "journal/get":
-                    result = await repository.async_get(msg["viewing_id"])
-                    if not admin:
-                        result = public_viewing(result)
-                case "journal/sessions":
-                    result = await repository.async_sessions(msg["viewing_id"])
-                case "now_playing":
-                    result = now_playing_snapshot(
-                        hass, user, runtime, msg.get("player_id")
-                    )
-                case "journal/list":
-                    result = await repository.async_list(
-                        query=msg.get("query", ""),
-                        viewing_status=msg.get("status"),
-                        limit=msg.get("limit", 50),
-                        cursor=msg.get("cursor"),
-                        sort=msg.get("sort", "completed_at"),
-                        descending=msg.get("descending", True),
-                        fuzzy=msg.get("fuzzy", False),
-                    )
-                    if not admin:
-                        result["items"] = [
-                            public_viewing(row) for row in result["items"]
-                        ]
-                case "journal/update":
-                    library = None
-                    if "library_title_id" in msg["patch"]:
-                        library = get_library(hass, msg["entry_id"], runtime)
-                    result = await repository.async_correct_viewing(
-                        msg["request_id"],
-                        msg["viewing_id"],
-                        msg["expected_revision"],
-                        msg["patch"],
-                        actor_id=user.id,
-                        source=library.source if library else None,
-                    )
-                case "database/update":
-                    result = await repository.async_update(
-                        msg["request_id"],
-                        msg["viewing_id"],
-                        msg["expected_revision"],
-                        msg["patch"],
-                        actor_id=user.id,
-                        include_deleted=True,
-                    )
-                case "journal/delete":
-                    result = await repository.async_delete(
-                        msg["request_id"],
-                        msg["viewing_id"],
-                        msg["expected_revision"],
-                        actor_id=user.id,
-                    )
-                case _:
-                    raise JournalError("invalid_request", "Unknown journal command")
-        # Accepted writes still commit; do not disclose private results if access
-        # changed while the worker was running.
-        if not is_active_user(user) or is_active_admin(user) != admin:
-            connection.send_error(
-                msg["id"], "unauthorized", "Journal access changed during the request"
-            )
-            return
-        if operation not in {"info", "settings/submit"} and not runtime.ready:
-            raise JournalError("not_ready", "Journal integration unloaded")
-        if (
-            operation.startswith("database/import")
-            and get_runtime(hass, msg["entry_id"], msg["dataset_id"]) is not runtime
-        ):
-            raise JournalError("not_ready", "Journal integration reloaded")
-        if (
-            operation.startswith(("library/", "journal/metadata/"))
-            or operation == "journal/create"
-        ) and get_library(hass, msg["entry_id"], runtime) is not library:
-            raise JournalError("not_ready", "Library integration reloaded")
-        if (
-            operation.startswith("journal/calendar") or operation == "journal/update"
-        ) and library is not None:
-            if get_library(hass, msg["entry_id"], runtime) is not library:
+                        if not admin:
+                            result["items"] = [
+                                public_viewing(row) for row in result["items"]
+                            ]
+                    case "journal/update":
+                        library = None
+                        if "library_title_id" in msg["patch"]:
+                            library = get_library(hass, msg["entry_id"], runtime)
+                        result = await repository.async_correct_viewing(
+                            msg["request_id"],
+                            msg["viewing_id"],
+                            msg["expected_revision"],
+                            msg["patch"],
+                            actor_id=user.id,
+                            source=library.source if library else None,
+                        )
+                    case "database/update":
+                        result = await repository.async_update(
+                            msg["request_id"],
+                            msg["viewing_id"],
+                            msg["expected_revision"],
+                            msg["patch"],
+                            actor_id=user.id,
+                            include_deleted=True,
+                        )
+                    case "journal/delete":
+                        result = await repository.async_delete(
+                            msg["request_id"],
+                            msg["viewing_id"],
+                            msg["expected_revision"],
+                            actor_id=user.id,
+                        )
+                    case _:
+                        raise JournalError("invalid_request", "Unknown journal command")
+            # Accepted writes still commit; do not disclose private results if access
+            # changed while the worker was running.
+            if not is_active_user(user) or is_active_admin(user) != admin:
+                connection.send_error(
+                    msg["id"],
+                    "unauthorized",
+                    "Journal access changed during the request",
+                )
+                return
+            if operation not in {"info", "settings/submit"} and not runtime.ready:
+                raise JournalError("not_ready", "Journal integration unloaded")
+            if (
+                operation.startswith("database/import")
+                and get_runtime(hass, msg["entry_id"], msg["dataset_id"]) is not runtime
+            ):
+                raise JournalError("not_ready", "Journal integration reloaded")
+            if (
+                operation.startswith(("library/", "journal/metadata/"))
+                or operation == "journal/create"
+            ) and get_library(hass, msg["entry_id"], runtime) is not library:
                 raise JournalError("not_ready", "Library integration reloaded")
-        connection.send_result(msg["id"], result)
-    except JournalError as error:
-        connection.send_error(msg["id"], error.code, str(error))
+            if (
+                operation.startswith("journal/calendar")
+                or operation == "journal/update"
+            ) and library is not None:
+                if get_library(hass, msg["entry_id"], runtime) is not library:
+                    raise JournalError("not_ready", "Library integration reloaded")
+            event = mutation_event(operation, msg)
+            if event:
+                runtime.repository.logger.emit(
+                    event[0],
+                    event[1],
+                    Outcome.ACCEPTED
+                    if operation in BACKGROUND_REQUESTS
+                    else Outcome.SUCCEEDED,
+                    reason=Reason.REQUEST_ACCEPTED
+                    if operation in BACKGROUND_REQUESTS
+                    else None,
+                )
+            connection.send_result(msg["id"], result)
+        except JournalError as error:
+            event = mutation_event(operation, msg)
+            if event and "runtime" in locals():
+                runtime.repository.logger.emit_failure(event[0], event[1], error)
+            connection.send_error(msg["id"], error.code, str(error))
+
+
+MUTATIONS = {
+    "journal/create": (Subsystem.OBSERVER, Operation.CREATE),
+    "journal/update": (Subsystem.OBSERVER, Operation.UPDATE),
+    "journal/delete": (Subsystem.OBSERVER, Operation.DELETE),
+    "journal/metadata/repair": (Subsystem.OBSERVER, Operation.UPDATE),
+    "database/mutate": (Subsystem.DATABASE, Operation.UPDATE),
+    "database/update": (Subsystem.DATABASE, Operation.UPDATE),
+    "database/purge": (Subsystem.DATABASE, Operation.DELETE),
+    "database/import": (Subsystem.IMPORT, Operation.IMPORT),
+    "control/execute": (Subsystem.PLAYBACK, Operation.CONTROL),
+    "control/acknowledge": (Subsystem.PLAYBACK, Operation.ACKNOWLEDGE),
+    "library/sync": (Subsystem.LIBRARY, Operation.SCAN),
+    "library/collections/add": (Subsystem.LIBRARY, Operation.UPDATE),
+    "library/collections/acknowledge": (Subsystem.LIBRARY, Operation.ACKNOWLEDGE),
+    "metadata/sync": (Subsystem.METADATA, Operation.SCRAPE),
+    "calendar/maintain": (Subsystem.CALENDAR, Operation.SYNC),
+    "calendar/sync": (Subsystem.CALENDAR, Operation.EXPORT),
+    "calendar/cancel": (Subsystem.CALENDAR, Operation.PAUSE),
+    "settings/submit": (Subsystem.SETTINGS, Operation.CONFIGURE),
+    "ui/shared/update": (Subsystem.SETTINGS, Operation.CONFIGURE),
+    "ui/preferences/update": (Subsystem.SETTINGS, Operation.CONFIGURE),
+}
+
+
+def mutation_event(operation, message):
+    if operation == "settings/transfer":
+        return (
+            Subsystem.SETTINGS,
+            Operation.EXPORT if message["operation"] == "export" else Operation.IMPORT,
+        )
+    return MUTATIONS.get(operation)
+
+
+BACKGROUND_REQUESTS = {
+    "calendar/maintain",
+    "calendar/sync",
+    "library/sync",
+    "metadata/sync",
+}

@@ -182,3 +182,12 @@ fixed HTTPS destinations, source-labelled ratings, a write-only TMDB credential,
 a shared request limiter and schema 19 Library cache. Both providers default
 off. Live TMDB-key testing and operator UI review remain pending; see
 [enrichment](enrichment.md).
+
+## Operational diagnostics and transfer
+
+Schema 21 adds a bounded, administrator-only [log book](logging.md), private
+resource aliases, live levels shared with the independent protocol API, and
+privacy-safe instrumentation for external operations and database mutations.
+Calendar Full Sync retries verification reads without replaying writes and
+reports comparison bits/stages for diagnosis. Administrator settings files use
+selectable categories, credential exclusion and review before application.

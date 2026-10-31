@@ -817,7 +817,7 @@ class LibraryCompletionTest(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("library_sources", page["main_tables"])
         self.assertNotIn("library_collections", page["main_tables"])
         self.assertNotIn("library_artwork", page["main_tables"])
-        self.assertEqual(len(page["tables"]), 22)
+        self.assertEqual(len(page["tables"]), 23)
         titles = await self.repository.async_inspect("library")
         self.assertIn(
             {"table": "library_artwork", "key": {"cache_key": "artwork_key"}},

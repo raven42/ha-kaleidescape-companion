@@ -1,3 +1,23 @@
+export interface SettingsTransfer {
+  format: string;
+  version: number;
+  categories: Record<string, Record<string, unknown>>;
+  patch?: Record<string, string | number | boolean | string[]>;
+}
+export interface LogPage {
+  items: Record<string, unknown>[];
+  before: number | null;
+  through: number;
+  retained: number;
+  bytes: number;
+  limit_bytes: number;
+  banner: string;
+  loggers: string[];
+  config: { level: string; log_values: boolean; hidden_through: number };
+  dropped: number;
+  storage_failures: number;
+  sink_failures: number;
+}
 /** Typed journal API. All access control and database work stays in HA. */
 export type JournalStatus = "partial" | "completed";
 export interface Scope {
@@ -177,6 +197,7 @@ export interface ControlResult {
   exact_version_confirmed: false;
 }
 export interface CalendarMaintenanceStatus {
+  failure_stage?: string;
   enabled: boolean;
   ready: boolean;
   active: boolean;
@@ -921,6 +942,33 @@ export class JournalClient {
       throw new ApiError("invalid_request");
     }
     return boundedBlob(response, MAX_ARTWORK_BYTES, type);
+  }
+  logs(
+    scope: Scope,
+    operation: "list" | "export" | "configure" | "clear",
+    values: Record<string, unknown> = {},
+  ): Promise<LogPage> {
+    return this.call({
+      ...values,
+      ...scopeFields(scope),
+      type: `${DOMAIN}/logs/${operation}`,
+    });
+  }
+  settingsTransfer(
+    scope: Scope,
+    operation: "export" | "preview" | "apply",
+    categories: string[],
+    data: Record<string, unknown> = {},
+    request_id = "",
+  ): Promise<SettingsTransfer> {
+    return this.call({
+      ...scopeFields(scope),
+      type: `${DOMAIN}/settings/transfer`,
+      operation,
+      categories,
+      data,
+      request_id,
+    });
   }
   settings(
     scope: Scope,

@@ -1,5 +1,5 @@
 /** Administrator settings page backed by Companion's native HA options flow. */
-import { LitElement, html, nothing } from "lit";
+import { LitElement, css, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
 import { errorCode, errorMessage } from "../core/api";
 import type {
@@ -12,6 +12,7 @@ import { styles } from "./styles";
 import { collectionLabel } from "../library/badges";
 import { fullSyncSettings } from "./calendar-settings";
 import "./calendar-export";
+import "./settings-transfer";
 import { CalendarExport } from "./calendar-export";
 import "./metadata-repair";
 import type { MetadataRepair } from "./metadata-repair";
@@ -113,9 +114,51 @@ export class KaleidescapeSettings extends LitElement {
     client: { attribute: false },
     scope: { attribute: false },
   };
-  static styles = styles;
+  static styles = [
+    styles,
+    css`
+      [hidden] {
+        display: none !important;
+      }
+      .settings-tabs {
+        flex-basis: 100%;
+        display: flex;
+        overflow-x: auto;
+        border-bottom: 1px solid var(--line);
+      }
+      .settings-tabs button {
+        border: 0;
+        border-radius: 0;
+        border-bottom: 3px solid transparent;
+        background: transparent;
+        white-space: nowrap;
+      }
+      .settings-tabs button[aria-selected="true"] {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+      }
+      .settings-section {
+        padding: 8px 0 20px;
+      }
+      .settings-section > h3:first-child {
+        margin-top: 8px;
+      }
+      .settings-section + .settings-section {
+        border-top: 1px solid var(--line);
+      }
+      .settings-scope {
+        font-size: 13px;
+        color: var(--muted);
+        margin: 0 0 20px;
+      }
+    `,
+  ];
   client?: JournalClient;
   scope?: JournalInfo;
+  private tab = "home-assistant";
+  private personalPreferences?: PreferenceStore;
+  private personalReady = false;
+  private personalError = "";
   private generation = 0;
   private flow?: OptionsForm;
   private draft: Record<string, string | number | boolean | string[]> = {};
@@ -174,6 +217,10 @@ export class KaleidescapeSettings extends LitElement {
     if (landing && landing.value !== value) landing.value = value;
   }
   private cancelFlow() {
+    this.personalPreferences?.dispose();
+    this.personalPreferences = undefined;
+    this.personalReady = false;
+    this.personalError = "";
     this.sharedPreferences?.dispose();
     this.sharedPreferences = undefined;
     this.hiddenCollections = [];
@@ -188,6 +235,9 @@ export class KaleidescapeSettings extends LitElement {
   private fail(error: unknown) {
     this.error = errorMessage(error);
     if (errorCode(error) === "unauthorized") {
+      this.personalPreferences?.dispose();
+      this.personalPreferences = undefined;
+      this.personalReady = false;
       this.sharedPreferences?.dispose();
       this.sharedPreferences = undefined;
       this.sharedReady = false;
@@ -254,6 +304,7 @@ export class KaleidescapeSettings extends LitElement {
     } finally {
       if (generation === this.generation) {
         this.loading = false;
+        if (this.tab === "personal") void this.selectTab("personal");
         this.requestUpdate();
       }
     }
@@ -364,6 +415,115 @@ export class KaleidescapeSettings extends LitElement {
       }
     }
   }
+  private async selectTab(tab: string) {
+    this.tab = tab;
+    this.requestUpdate();
+    if (
+      tab !== "personal" ||
+      this.personalPreferences ||
+      !this.client ||
+      !this.scope
+    )
+      return;
+    const generation = this.generation;
+    this.personalPreferences = new PreferenceStore(
+      this.client,
+      this.scope,
+      false,
+      (error) => {
+        if (generation !== this.generation) return;
+        if (error && errorCode(error) === "unauthorized") this.fail(error);
+        else {
+          this.personalError = error ? errorMessage(error) : "";
+          this.requestUpdate();
+        }
+      },
+      "search",
+    );
+    try {
+      await this.personalPreferences.load();
+      if (generation !== this.generation) return;
+      this.personalReady = true;
+    } catch (error) {
+      if (generation !== this.generation) return;
+      this.personalError = errorMessage(error);
+      this.personalPreferences?.dispose();
+      this.personalPreferences = undefined;
+      if (errorCode(error) === "unauthorized") this.fail(error);
+    }
+    this.requestUpdate();
+  }
+  private tabKey(event: KeyboardEvent, current: string) {
+    const keys = [
+      "home-assistant",
+      "companion",
+      "personal",
+      "ecosystem",
+      "scrapers",
+    ];
+    const index = keys.indexOf(current);
+    const next =
+      event.key === "ArrowRight"
+        ? keys[(index + 1) % keys.length]
+        : event.key === "ArrowLeft"
+          ? keys[(index + keys.length - 1) % keys.length]
+          : event.key === "Home"
+            ? keys[0]
+            : event.key === "End"
+              ? keys.at(-1)
+              : undefined;
+    if (!next) return;
+    event.preventDefault();
+    void this.selectTab(next);
+    this.renderRoot
+      .querySelector<HTMLButtonElement>(`#settings-tab-${next}`)
+      ?.focus();
+  }
+  private async submitForm() {
+    const form = this.renderRoot.querySelector<HTMLFormElement>(
+      "#companion-settings-form",
+    );
+    if (!form) return;
+    const invalid = [
+      ...form.querySelectorAll<
+        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+      >("input, select, textarea"),
+    ].find((field) => field.willValidate && !field.validity.valid);
+    const tab = invalid?.closest<HTMLElement>("[data-settings-tab]")?.dataset
+      .settingsTab;
+    if (tab && tab !== this.tab) {
+      await this.selectTab(tab);
+      await this.updateComplete;
+    }
+    if (invalid) {
+      invalid.focus();
+      invalid.reportValidity();
+      return;
+    }
+    form.requestSubmit();
+  }
+  private renderSources() {
+    return html`<div class="grid settings-grid">
+      ${fields
+        .filter(([, , type]) => type === "text")
+        .map(
+          ([key, label]) =>
+            html` <label class="full"
+              >${label}<input
+                name=${key}
+                maxlength="255"
+                ?required=${!!this.draft.tracking_enabled}
+                .value=${String(this.draft[key] ?? "")}
+                @input=${(event: Event) => {
+                  this.draft = {
+                    ...this.draft,
+                    [key]: (event.target as HTMLInputElement).value,
+                  };
+                }}
+            /></label>`,
+        )}
+    </div>`;
+  }
   protected render() {
     return html`<section
       class="card settings-page"
@@ -371,9 +531,6 @@ export class KaleidescapeSettings extends LitElement {
     >
       <div class="settings-actions">
         <h2 id="settings-title">Companion settings</h2>
-        <button ?disabled=${this.saving || this.loading} @click=${this.reload}>
-          Reload settings
-        </button>
         <div class="actions">
           <button
             type="button"
@@ -384,17 +541,44 @@ export class KaleidescapeSettings extends LitElement {
           ><button
             class="primary"
             type="button"
-            @click=${() => this.renderRoot.querySelector<HTMLFormElement>("#companion-settings-form")?.requestSubmit()}
+            @click=${this.submitForm}
             ?disabled=${this.saving || this.loading || this.uncertain || this.flow?.type !== "form"}
           >
             ${this.saving ? "Saving…" : "Save settings"}
           </button>
         </div>
+        <nav
+          class="settings-tabs"
+          role="tablist"
+          aria-label="Settings categories"
+        >
+          ${[
+            ["home-assistant", "Home Assistant"],
+            ["companion", "Companion"],
+            ["personal", "Personal"],
+            ["ecosystem", "Kaleidescape"],
+            ["scrapers", "Scrapers"],
+          ].map(
+            ([key, label]) =>
+              html` <button
+                type="button"
+                role="tab"
+                id=${`settings-tab-${key}`}
+                aria-controls=${`settings-${key}`}
+                aria-selected=${this.tab === key}
+                tabindex=${this.tab === key ? 0 : -1}
+                @click=${() => this.selectTab(key)}
+                @keydown=${(event: KeyboardEvent) => this.tabKey(event, key)}
+              >
+                ${label}
+              </button>`,
+          )}
+        </nav>
       </div>
       <p>
-        HA runtime settings use the integration’s Configure options and reload
-        when saved. Shared Library display settings save immediately to the
-        database.
+        Integration configuration is shared and reloads when saved. Companion
+        database preferences save immediately. Each section identifies its
+        scope.
       </p>
       ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
       ${this.uncertain ? html`<p class="warning">The save result is unconfirmed. Reload settings to inspect the saved values before making another change.</p>` : nothing}
@@ -409,368 +593,512 @@ export class KaleidescapeSettings extends LitElement {
                   @change=${() => this.requestUpdate()}
                 >
                   <fieldset ?disabled=${this.saving || this.uncertain}>
-                    <label class="check"
-                      ><input
-                        name="tracking_enabled"
-                        type="checkbox"
-                        .checked=${!!this.draft.tracking_enabled}
-                        @change=${(event: Event) => {
-                          this.draft = {
-                            ...this.draft,
-                            tracking_enabled: (event.target as HTMLInputElement)
-                              .checked,
-                          };
-                          this.requestUpdate();
-                        }}
-                      />Automatically record playback</label
+                    <section
+                      class="settings-section"
+                      role="tabpanel"
+                      id="settings-home-assistant"
+                      aria-labelledby="settings-tab-home-assistant"
+                      data-settings-tab="home-assistant"
+                      ?hidden=${this.tab !== "home-assistant"}
                     >
-                    <div class="grid settings-grid">
-                      ${fields.map(
-                        ([key, label, type, min, max]) =>
-                          html`<label class=${type === "text" ? "full" : ""}
-                            >${label}<input
-                              name=${key}
-                              type=${type}
-                              min=${min || nothing}
-                              max=${max || nothing}
-                              step=${type === "number" ? "1" : nothing}
-                              maxlength=${type === "text" ? "255" : nothing}
-                              ?required=${type === "number" || !!this.draft.tracking_enabled}
-                              .value=${String(this.draft[key] ?? "")}
-                              @input=${(event: Event) => {
-                                this.draft = {
-                                  ...this.draft,
-                                  [key]: (event.target as HTMLInputElement)
-                                    .value,
-                                };
-                              }}
-                          /></label>`,
-                      )}
-                    </div>
-                    <p class="muted">
-                      Use HA entity IDs for the three sources. The runtime
-                      cutoff uses total duration; missing runtime waits for
-                      metadata. Completion uses watched time and confirmed
-                      credits.
-                    </p>
-                    <h3>Device discovery and controls</h3>
-                    <label class="check"
-                      ><input
-                        name="control_enabled"
-                        type="checkbox"
-                        .checked=${!!this.draft.control_enabled}
-                        @change=${(event: Event) => {
-                          this.draft = {
-                            ...this.draft,
-                            control_enabled: (event.target as HTMLInputElement)
-                              .checked,
-                          };
-                          this.requestUpdate();
-                        }}
-                      />Enable playback controls</label
+                      <p class="settings-scope">
+                        Home Assistant integration · shared · Save settings
+                        required
+                      </p>
+                      <h3>Playback source entities</h3>
+                      <p class="muted">
+                        Choose the HA entities used for automatic journal
+                        recording. Recording rules are under Companion.
+                      </p>
+                      ${this.renderSources()}
+                      <h3>Watched movies calendar</h3>
+                      <label class="check"
+                        ><input
+                          type="checkbox"
+                          name="calendar_enabled"
+                          .checked=${!!this.draft.calendar_enabled}
+                          @change=${(event: Event) => {
+                            this.draft = {
+                              ...this.draft,
+                              calendar_enabled: (
+                                event.target as HTMLInputElement
+                              ).checked,
+                            };
+                            this.requestUpdate();
+                          }}
+                        />Add watched movies to calendar</label
+                      >
+                      <p class="muted">
+                        Publishes new movie completions automatically. Use the
+                        explicit Journal export below to sync existing completed
+                        viewings. Movie metadata is shared with the calendar
+                        provider and anyone who can read that calendar.
+                      </p>
+                      ${
+                        this.draft.calendar_enabled
+                          ? html`<div class="grid settings-grid">
+                                <label class="full"
+                                  >HA calendar<input
+                                    name="calendar_entity"
+                                    list="calendar-choices"
+                                    type="text"
+                                    placeholder="calendar.movies"
+                                    maxlength="255"
+                                    required
+                                    .value=${String(this.draft.calendar_entity ?? "")}
+                                    @input=${(event: Event) => {
+                                      this.draft = {
+                                        ...this.draft,
+                                        calendar_entity: (
+                                          event.target as HTMLInputElement
+                                        ).value,
+                                        calendar_full_sync_dedicated: false,
+                                      };
+                                    }} /></label
+                                ><label class="full"
+                                  >Event title<input
+                                    name="calendar_title"
+                                    type="text"
+                                    maxlength="500"
+                                    required
+                                    .value=${String(this.draft.calendar_title ?? "Watched: {title}")}
+                                    @input=${(event: Event) => {
+                                      this.draft = {
+                                        ...this.draft,
+                                        calendar_title: (
+                                          event.target as HTMLInputElement
+                                        ).value,
+                                      };
+                                    }} /></label
+                                ><label class="full"
+                                  >Event description<textarea
+                                    name="calendar_description"
+                                    maxlength="5000"
+                                    .value=${String(this.draft.calendar_description ?? "")}
+                                    @input=${(event: Event) => {
+                                      this.draft = {
+                                        ...this.draft,
+                                        calendar_description: (
+                                          event.target as HTMLTextAreaElement
+                                        ).value,
+                                      };
+                                    }}
+                                  ></textarea>
+                                </label>
+                              </div>
+                              <p class="muted">
+                                <datalist id="calendar-choices">
+                                  ${(this.flow.calendar_choices ?? []).map((choice) => html`<option value=${choice.value}>${choice.label}</option>`)}
+                                </datalist>
+                                Allowed fields: {title}, {year}, {collection},
+                                {cast}, {director}, {writer}, {studio}, {genre},
+                                {duration}, {rating}, {format}, {edition},
+                                {synopsis}, {purchase_date}, {added_on},
+                                {status}, {started_at}, {ended_at}, {watched}.
+                                Duration and watched time are minutes; missing
+                                values are blank. Use double braces for literal
+                                braces.
+                              </p>
+                              ${fullSyncSettings(this.draft, (patch) => {
+                                this.draft = { ...this.draft, ...patch };
+                                this.requestUpdate();
+                              })}`
+                          : nothing
+                      }
+                      <kaleidescape-calendar-export
+                        .client=${this.client}
+                        .scope=${this.scope}
+                        .disabled=${this.saving || this.uncertain || JSON.stringify(this.draft) !== JSON.stringify(this.initial)}
+                      ></kaleidescape-calendar-export>
+                    </section>
+                    <section
+                      class="settings-section"
+                      role="tabpanel"
+                      id="settings-companion"
+                      aria-labelledby="settings-tab-companion"
+                      data-settings-tab="companion"
+                      ?hidden=${this.tab !== "companion"}
                     >
-                    <label
-                      >Control hostname · blank uses the Library host<input
-                        name="control_host"
-                        maxlength="255"
-                        .value=${String(this.draft.control_host ?? "")}
-                        @input=${(event: Event) => {
-                          this.draft = {
-                            ...this.draft,
-                            control_host: (event.target as HTMLInputElement)
-                              .value,
-                          };
-                          this.requestUpdate();
-                        }}
-                    /></label>
-                    <kaleidescape-device-controls
-                      mode="settings"
-                      .client=${this.client}
-                      .scope=${this.scope}
-                      .value=${String(this.draft.control_player ?? "")}
-                      .configured=${this.draft.control_enabled === this.initial.control_enabled && this.draft.control_host === this.initial.control_host}
-                      @player-selected=${(event: CustomEvent<string>) => {
-                        this.draft = {
-                          ...this.draft,
-                          control_player: event.detail,
-                        };
-                        this.requestUpdate();
-                      }}
-                    ></kaleidescape-device-controls>
-                    <label class="check"
-                      ><input
-                        name="control_allow_launch"
-                        type="checkbox"
-                        .checked=${!!this.draft.control_allow_launch}
-                        @change=${(event: Event) => {
-                          this.draft = {
-                            ...this.draft,
-                            control_allow_launch: (
-                              event.target as HTMLInputElement
-                            ).checked,
-                          };
-                          this.requestUpdate();
-                        }}
-                      />Allow experimental Library title playback</label
-                    >
-                    <p class="muted">
-                      Enabled controls are available to all active HA users and
-                      use TCP 10000. Commands run when clicked without
-                      confirmation. Discovery reads the configured system
-                      without waking players. Save enablement/host first,
-                      discover, select a movie player, then save again. The
-                      control target is separate from Journal tracking. Library
-                      playback uses the same catalog seed and verifies the
-                      selected title before launch; the player chooses its
-                      playable format.
-                    </p>
-                    <h3>Watched movies calendar</h3>
-                    <label class="check"
-                      ><input
-                        type="checkbox"
-                        name="calendar_enabled"
-                        .checked=${!!this.draft.calendar_enabled}
-                        @change=${(event: Event) => {
-                          this.draft = {
-                            ...this.draft,
-                            calendar_enabled: (event.target as HTMLInputElement)
-                              .checked,
-                          };
-                          this.requestUpdate();
-                        }}
-                      />Add watched movies to calendar</label
-                    >
-                    <p class="muted">
-                      Publishes new movie completions automatically. Use the
-                      explicit Journal export below to sync existing completed
-                      viewings. Movie metadata is shared with the calendar
-                      provider and anyone who can read that calendar.
-                    </p>
-                    ${
-                      this.draft.calendar_enabled
-                        ? html`<div class="grid settings-grid">
-                              <label class="full"
-                                >HA calendar<input
-                                  name="calendar_entity"
-                                  list="calendar-choices"
-                                  type="text"
-                                  placeholder="calendar.movies"
-                                  maxlength="255"
-                                  required
-                                  .value=${String(this.draft.calendar_entity ?? "")}
+                      <p class="settings-scope">
+                        Companion runtime behavior · shared · saved with the HA
+                        integration
+                      </p>
+                      <h3>Journal recording</h3>
+                      <label class="check"
+                        ><input
+                          name="tracking_enabled"
+                          type="checkbox"
+                          .checked=${!!this.draft.tracking_enabled}
+                          @change=${(event: Event) => {
+                            this.draft = {
+                              ...this.draft,
+                              tracking_enabled: (
+                                event.target as HTMLInputElement
+                              ).checked,
+                            };
+                            this.requestUpdate();
+                          }}
+                        />Automatically record playback</label
+                      >
+                      <div class="grid settings-grid">
+                        ${fields
+                          .filter(([, , type]) => type === "number")
+                          .map(
+                            ([key, label, type, min, max]) =>
+                              html`<label class=${type === "text" ? "full" : ""}
+                                >${label}<input
+                                  name=${key}
+                                  type=${type}
+                                  min=${min || nothing}
+                                  max=${max || nothing}
+                                  step=${type === "number" ? "1" : nothing}
+                                  maxlength=${type === "text" ? "255" : nothing}
+                                  ?required=${type === "number" || !!this.draft.tracking_enabled}
+                                  .value=${String(this.draft[key] ?? "")}
                                   @input=${(event: Event) => {
                                     this.draft = {
                                       ...this.draft,
-                                      calendar_entity: (
-                                        event.target as HTMLInputElement
-                                      ).value,
-                                      calendar_full_sync_dedicated: false,
-                                    };
-                                  }} /></label
-                              ><label class="full"
-                                >Event title<input
-                                  name="calendar_title"
-                                  type="text"
-                                  maxlength="500"
-                                  required
-                                  .value=${String(this.draft.calendar_title ?? "Watched: {title}")}
-                                  @input=${(event: Event) => {
-                                    this.draft = {
-                                      ...this.draft,
-                                      calendar_title: (
-                                        event.target as HTMLInputElement
-                                      ).value,
-                                    };
-                                  }} /></label
-                              ><label class="full"
-                                >Event description<textarea
-                                  name="calendar_description"
-                                  maxlength="5000"
-                                  .value=${String(this.draft.calendar_description ?? "")}
-                                  @input=${(event: Event) => {
-                                    this.draft = {
-                                      ...this.draft,
-                                      calendar_description: (
-                                        event.target as HTMLTextAreaElement
-                                      ).value,
+                                      [key]: (event.target as HTMLInputElement)
+                                        .value,
                                     };
                                   }}
-                                ></textarea>
-                              </label>
-                            </div>
-                            <p class="muted">
-                              <datalist id="calendar-choices">
-                                ${(this.flow.calendar_choices ?? []).map((choice) => html`<option value=${choice.value}>${choice.label}</option>`)}
-                              </datalist>
-                              Allowed fields: {title}, {year}, {collection},
-                              {cast}, {director}, {writer}, {studio}, {genre},
-                              {duration}, {rating}, {format}, {edition},
-                              {synopsis}, {purchase_date}, {added_on}, {status},
-                              {started_at}, {ended_at}, {watched}. Duration and
-                              watched time are minutes; missing values are
-                              blank. Use double braces for literal braces.
-                            </p>
-                            ${fullSyncSettings(this.draft, (patch) => {
-                              this.draft = { ...this.draft, ...patch };
-                              this.requestUpdate();
-                            })}`
-                        : nothing
-                    }
-                    <kaleidescape-calendar-export
-                      .client=${this.client}
-                      .scope=${this.scope}
-                      .disabled=${this.saving || this.uncertain || JSON.stringify(this.draft) !== JSON.stringify(this.initial)}
-                    ></kaleidescape-calendar-export>
-                    <h3>Library sync</h3>
-                    <label class="check"
-                      ><input
-                        name="library_enabled"
-                        type="checkbox"
-                        .checked=${!!this.draft.library_enabled}
-                        @change=${(event: Event) => {
-                          this.draft = {
-                            ...this.draft,
-                            library_enabled: (event.target as HTMLInputElement)
-                              .checked,
-                          };
-                          this.requestUpdate();
-                        }}
-                      />Enable library sync</label
-                    >
-                    <p class="muted">
-                      Optional synchronization with your local Kaleidescape
-                      library. Disabled by default; no library discovery or
-                      device requests occur while disabled.
-                    </p>
-                    ${
-                      this.draft.library_enabled
-                        ? html`<div class="grid settings-grid">
-                              ${libraryFields.map(
-                                ([key, label, type, min, max]) =>
-                                  html`<label
-                                    class=${type === "text" ? "full" : ""}
-                                    >${label}<input
-                                      name=${key}
-                                      type=${type}
-                                      min=${min || nothing}
-                                      max=${max || nothing}
-                                      step=${type === "number" ? "1" : nothing}
-                                      maxlength=${type === "text" ? "255" : nothing}
-                                      ?required=${type === "number"}
-                                      .value=${String(this.draft[key] ?? "")}
-                                      @input=${(event: Event) => {
-                                        this.draft = {
-                                          ...this.draft,
-                                          [key]: (
-                                            event.target as HTMLInputElement
-                                          ).value,
-                                        };
-                                        this.requestUpdate();
-                                      }}
-                                  /></label>`,
-                              )}
-                              ${libraryChecks.map(
-                                ([key, label]) =>
-                                  html`<label class="check full"
-                                    ><input
-                                      name=${key}
-                                      type="checkbox"
-                                      .checked=${!!this.draft[key]}
-                                      @change=${(event: Event) => {
-                                        this.draft = {
-                                          ...this.draft,
-                                          [key]: (
-                                            event.target as HTMLInputElement
-                                          ).checked,
-                                        };
-                                        this.requestUpdate();
-                                      }}
-                                    />${label}</label
-                                  >`,
-                              )}
-                            </div>
-                            <p class="muted">
-                              Add to Collection is separately disabled by
-                              default. Enabling it lets administrators add an
-                              explicitly selected version to an existing offered
-                              collection. It requires collection sync. Removal
-                              is not supported.
-                            </p>
-                            <p class="muted">
-                              Source collections determine watched status, with
-                              in-progress. Detail fields depend on available
-                              source metadata. “Added on” means first detected,
-                              not purchased or downloaded.
-                            </p>
-                            ${this.draft.library_sync_artwork ? html`<p class="warning">Artwork uses additional disk space in a separate private cache, up to ${String(this.draft.library_artwork_cache_mb)} MiB plus one incoming image (up to 5 MiB). The journal database retains its 256 MiB limit. Increase the cache limit for a large library; older covers may be evicted and fetched again. HA backups can include these files.</p>` : nothing}`
-                        : nothing
-                    }
-                    ${
-                      this.initial.library_enabled
-                        ? html`<kaleidescape-metadata-repair
-                            .client=${this.client}
-                            .scope=${this.scope}
-                            .disabled=${this.saving || this.uncertain || JSON.stringify(this.draft) !== JSON.stringify(this.initial)}
-                          ></kaleidescape-metadata-repair>`
-                        : nothing
-                    }
-                    <kaleidescape-enrichment-settings
-                      .client=${this.client}
-                      .scope=${this.scope}
-                      .draft=${this.draft}
-                      .disabled=${this.saving || this.uncertain}
-                      @metadata-settings=${(
-                        event: CustomEvent<Record<string, unknown>>,
-                      ) => {
-                        this.draft = {
-                          ...this.draft,
-                          ...event.detail,
-                        } as typeof this.draft;
-                        this.requestUpdate();
-                      }}
-                    ></kaleidescape-enrichment-settings>
-                    <h3>Landing page</h3>
-                    <label
-                      >Default landing page<select
-                        name="default_landing_page"
-                        .value=${String(this.draft.default_landing_page ?? "journal")}
-                        @change=${(event: Event) => {
-                          this.draft = {
-                            ...this.draft,
-                            default_landing_page: (
-                              event.target as HTMLSelectElement
-                            ).value,
-                          };
-                          this.requestUpdate();
-                        }}
+                              /></label>`,
+                          )}
+                      </div>
+                      <p class="muted">
+                        The runtime cutoff uses total duration; missing runtime
+                        waits for metadata. Completion uses watched time and
+                        confirmed credits. Select the HA source entities under
+                        Home Assistant.
+                      </p>
+                      <h3>Landing page</h3>
+                      <label
+                        >Default landing page<select
+                          name="default_landing_page"
+                          .value=${String(this.draft.default_landing_page ?? "journal")}
+                          @change=${(event: Event) => {
+                            this.draft = {
+                              ...this.draft,
+                              default_landing_page: (
+                                event.target as HTMLSelectElement
+                              ).value,
+                            };
+                            this.requestUpdate();
+                          }}
+                        >
+                          ${[
+                            ["now-playing", "Now Playing"],
+                            ["library", "Library"],
+                            ["journal", "Journal"],
+                            ["database", "Database"],
+                            ["settings", "Settings"],
+                          ].map(
+                            ([value, label]) =>
+                              html`<option
+                                value=${value}
+                                ?selected=${value === this.draft.default_landing_page}
+                              >
+                                ${label}
+                              </option>`,
+                          )}
+                        </select></label
                       >
-                        ${[
-                          ["now-playing", "Now Playing"],
-                          ["library", "Library"],
-                          ["journal", "Journal"],
-                          ["database", "Database"],
-                          ["settings", "Settings"],
-                        ].map(
-                          ([value, label]) =>
-                            html`<option
-                              value=${value}
-                              ?selected=${value === this.draft.default_landing_page}
-                            >
-                              ${label}
-                            </option>`,
-                        )}
-                      </select></label
+                      <p class="muted">
+                        The URL remembers your current tab. Library view, page
+                        size, filters and sort save automatically for your HA
+                        user while browsing.
+                      </p>
+                    </section>
+                    <section
+                      class="settings-section"
+                      role="tabpanel"
+                      id="settings-ecosystem"
+                      aria-labelledby="settings-tab-ecosystem"
+                      data-settings-tab="ecosystem"
+                      ?hidden=${this.tab !== "ecosystem"}
                     >
-                    <p class="muted">
-                      The URL remembers your current tab. Library view, page
-                      size, filters and sort save automatically for your HA user
-                      while browsing.
-                    </p>
+                      <p class="settings-scope">
+                        Kaleidescape devices and metadata providers · shared ·
+                        Save settings required
+                      </p>
+                      <h3>Library sync</h3>
+                      <label class="check"
+                        ><input
+                          name="library_enabled"
+                          type="checkbox"
+                          .checked=${!!this.draft.library_enabled}
+                          @change=${(event: Event) => {
+                            this.draft = {
+                              ...this.draft,
+                              library_enabled: (
+                                event.target as HTMLInputElement
+                              ).checked,
+                            };
+                            this.requestUpdate();
+                          }}
+                        />Enable library sync</label
+                      >
+                      <p class="muted">
+                        Optional synchronization with your local Kaleidescape
+                        library. Disabled by default; no library discovery or
+                        device requests occur while disabled.
+                      </p>
+                      ${
+                        this.draft.library_enabled
+                          ? html`<div class="grid settings-grid">
+                                ${libraryFields.map(
+                                  ([key, label, type, min, max]) =>
+                                    html`<label
+                                      class=${type === "text" ? "full" : ""}
+                                      >${label}<input
+                                        name=${key}
+                                        type=${type}
+                                        min=${min || nothing}
+                                        max=${max || nothing}
+                                        step=${type === "number" ? "1" : nothing}
+                                        maxlength=${type === "text" ? "255" : nothing}
+                                        ?required=${type === "number"}
+                                        .value=${String(this.draft[key] ?? "")}
+                                        @input=${(event: Event) => {
+                                          this.draft = {
+                                            ...this.draft,
+                                            [key]: (
+                                              event.target as HTMLInputElement
+                                            ).value,
+                                          };
+                                          this.requestUpdate();
+                                        }}
+                                    /></label>`,
+                                )}
+                                ${libraryChecks.map(
+                                  ([key, label]) =>
+                                    html`<label class="check full"
+                                      ><input
+                                        name=${key}
+                                        type="checkbox"
+                                        .checked=${!!this.draft[key]}
+                                        @change=${(event: Event) => {
+                                          this.draft = {
+                                            ...this.draft,
+                                            [key]: (
+                                              event.target as HTMLInputElement
+                                            ).checked,
+                                          };
+                                          this.requestUpdate();
+                                        }}
+                                      />${label}</label
+                                    >`,
+                                )}
+                              </div>
+                              <p class="muted">
+                                Add to Collection is separately disabled by
+                                default. Enabling it lets administrators add an
+                                explicitly selected version to an existing
+                                offered collection. It requires collection sync.
+                                Removal is not supported.
+                              </p>
+                              <p class="muted">
+                                Source collections determine watched status,
+                                with in-progress. Detail fields depend on
+                                available source metadata. “Added on” means
+                                first detected, not purchased or downloaded.
+                              </p>
+                              ${this.draft.library_sync_artwork ? html`<p class="warning">Artwork uses additional disk space in a separate private cache, up to ${String(this.draft.library_artwork_cache_mb)} MiB plus one incoming image (up to 5 MiB). The journal database retains its 256 MiB limit. Increase the cache limit for a large library; older covers may be evicted and fetched again. HA backups can include these files.</p>` : nothing}`
+                          : nothing
+                      }
+                      ${
+                        this.initial.library_enabled
+                          ? html`<kaleidescape-metadata-repair
+                              .client=${this.client}
+                              .scope=${this.scope}
+                              .disabled=${this.saving || this.uncertain || JSON.stringify(this.draft) !== JSON.stringify(this.initial)}
+                            ></kaleidescape-metadata-repair>`
+                          : nothing
+                      }
+                      <h3>Device discovery and controls</h3>
+                      <label class="check"
+                        ><input
+                          name="control_enabled"
+                          type="checkbox"
+                          .checked=${!!this.draft.control_enabled}
+                          @change=${(event: Event) => {
+                            this.draft = {
+                              ...this.draft,
+                              control_enabled: (
+                                event.target as HTMLInputElement
+                              ).checked,
+                            };
+                            this.requestUpdate();
+                          }}
+                        />Enable playback controls</label
+                      >
+                      <label
+                        >Control hostname · blank uses the Library host<input
+                          name="control_host"
+                          maxlength="255"
+                          .value=${String(this.draft.control_host ?? "")}
+                          @input=${(event: Event) => {
+                            this.draft = {
+                              ...this.draft,
+                              control_host: (event.target as HTMLInputElement)
+                                .value,
+                            };
+                            this.requestUpdate();
+                          }}
+                      /></label>
+                      <kaleidescape-device-controls
+                        mode="settings"
+                        .client=${this.client}
+                        .scope=${this.scope}
+                        .value=${String(this.draft.control_player ?? "")}
+                        .configured=${this.draft.control_enabled === this.initial.control_enabled && this.draft.control_host === this.initial.control_host}
+                        @player-selected=${(event: CustomEvent<string>) => {
+                          this.draft = {
+                            ...this.draft,
+                            control_player: event.detail,
+                          };
+                          this.requestUpdate();
+                        }}
+                      ></kaleidescape-device-controls>
+                      <label class="check"
+                        ><input
+                          name="control_allow_launch"
+                          type="checkbox"
+                          .checked=${!!this.draft.control_allow_launch}
+                          @change=${(event: Event) => {
+                            this.draft = {
+                              ...this.draft,
+                              control_allow_launch: (
+                                event.target as HTMLInputElement
+                              ).checked,
+                            };
+                            this.requestUpdate();
+                          }}
+                        />Allow experimental Library title playback</label
+                      >
+                      <p class="muted">
+                        Enabled controls are available to all active HA users
+                        and use TCP 10000. Commands run when clicked without
+                        confirmation. Discovery reads the configured system
+                        without waking players. Save enablement/host first,
+                        discover, select a movie player, then save again. The
+                        control target is separate from Journal tracking.
+                        Library playback uses the same catalog seed and verifies
+                        the selected title before launch; the player chooses its
+                        playable format.
+                      </p>
+                    </section>
+                    <section
+                      class="settings-section"
+                      role="tabpanel"
+                      id="settings-scrapers"
+                      aria-labelledby="settings-tab-scrapers"
+                      data-settings-tab="scrapers"
+                      ?hidden=${this.tab !== "scrapers"}
+                    >
+                      <p class="settings-scope">
+                        Metadata providers · shared backend behavior · Save
+                        settings required
+                      </p>
+                      <p class="muted">
+                        Optional provider requests are separate from the local
+                        Kaleidescape library scan. Each scraper requires
+                        administrator opt-in.
+                      </p>
+                      <kaleidescape-enrichment-settings
+                        .client=${this.client}
+                        .scope=${this.scope}
+                        .draft=${this.draft}
+                        .disabled=${this.saving || this.uncertain}
+                        @metadata-settings=${(
+                          event: CustomEvent<Record<string, unknown>>,
+                        ) => {
+                          this.draft = {
+                            ...this.draft,
+                            ...event.detail,
+                          } as typeof this.draft;
+                          this.requestUpdate();
+                        }}
+                      ></kaleidescape-enrichment-settings>
+                    </section>
                   </fieldset>
                 </form>
-                <h3>Shared Library display settings</h3>
-                <p>Saved to the database as you change them; no HA reload.</p>
-                ${this.renderCollections()}`
+                <section
+                  class="settings-section"
+                  ?hidden=${this.tab !== "companion"}
+                >
+                  <h3>Shared Library display settings</h3>
+                  <p class="settings-scope">
+                    Companion database · shared · saved immediately without an
+                    HA reload
+                  </p>
+                  ${this.renderCollections()}
+                  <h3>Settings transfer and maintenance</h3>
+                  <p class="muted">
+                    Export or review selected settings categories before import.
+                    Reload discards unsaved integration changes.
+                  </p>
+                  <div class="actions">
+                    <button
+                      ?disabled=${this.saving || this.loading}
+                      @click=${this.reload}
+                    >
+                      Reload settings
+                    </button>
+                    <kaleidescape-settings-transfer
+                      .client=${this.client}
+                      .scope=${this.scope}
+                      .disabled=${this.saving || this.loading}
+                      @settings-imported=${(
+                        event: CustomEvent<
+                          Record<string, string | number | boolean | string[]>
+                        >,
+                      ) => {
+                        this.draft = { ...this.draft, ...event.detail };
+                        this.requestUpdate();
+                      }}
+                    ></kaleidescape-settings-transfer>
+                  </div>
+                </section>
+                <section
+                  class="settings-section"
+                  role="tabpanel"
+                  id="settings-personal"
+                  aria-labelledby="settings-tab-personal"
+                  ?hidden=${this.tab !== "personal"}
+                >
+                  <p class="settings-scope">
+                    Companion database · your HA account only · saved
+                    immediately
+                  </p>
+                  <h3>Search behavior</h3>
+                  <label class="check"
+                    ><input
+                      type="checkbox"
+                      name="personal_fuzzy_search"
+                      .checked=${this.personalPreferences?.values.fuzzy_search !== false}
+                      ?disabled=${!this.personalReady}
+                      @change=${(event: Event) => {
+                        this.personalPreferences?.set({
+                          fuzzy_search: (event.target as HTMLInputElement)
+                            .checked,
+                        });
+                        this.requestUpdate();
+                      }}
+                    />Fuzzy search across all views</label
+                  >
+                  ${this.personalError ? html`<p class="error" role="alert">${this.personalError}<button type="button" @click=${() => this.personalPreferences?.retry()}>Retry personal settings</button></p>` : nothing}
+                  <h3>View preferences</h3>
+                  <p>
+                    Library, Journal and Database Options save view layouts,
+                    page sizes and display choices for your account as you
+                    browse. Library filters and sorting are personal too.
+                  </p>
+                  <p class="muted">
+                    The default landing page under Companion is shared. The URL
+                    remembers the current main view.
+                  </p>
+                </section>`
             : nothing
       }
     </section>`;

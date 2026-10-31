@@ -48,6 +48,19 @@ def dispatch(db, operation, config, *args):
                     (scope,),
                 )
             ),
+            # Functional audit records reconnect delayed work to its originating
+            # request after reload. These private IDs only reach keyed log aliases.
+            "causes": {
+                r["id"]: dict(r)
+                for r in db.execute(
+                    "SELECT v.id,v.revision,v.origin,a.request_id,a.actor_id "
+                    "FROM viewings v LEFT JOIN manual_audit a "
+                    "ON a.viewing_id=v.id AND a.viewing_revision=v.revision "
+                    "WHERE julianday(v.started_at)>=julianday(?) "
+                    "AND julianday(v.started_at)<julianday(?) LIMIT ?",
+                    (*args[0], LIMIT + 1),
+                )
+            },
         }
     if operation == "signature":
         return signature(rows(db, args[0], brief=True))

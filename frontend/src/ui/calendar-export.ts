@@ -77,7 +77,9 @@ export class CalendarExport extends LitElement {
     this.working = false;
     this.error = "";
     this.reviewToken = "";
-    this.renderRoot.querySelector("dialog")?.close();
+    this.renderRoot
+      .querySelectorAll("dialog")
+      .forEach((dialog) => dialog.close());
   }
   confirmNavigation() {
     return !this.working && !this.pending;
@@ -99,6 +101,7 @@ export class CalendarExport extends LitElement {
       const status = await this.client.calendarStatus(this.scope);
       if (generation !== this.generation) return;
       this.status = status;
+      this.error = "";
       if (
         status.active ||
         status.maintenance?.enabled ||
@@ -119,7 +122,9 @@ export class CalendarExport extends LitElement {
   private close(event?: Event) {
     event?.preventDefault();
     if (!this.confirmNavigation()) return;
-    this.renderRoot.querySelector("dialog")?.close();
+    this.renderRoot
+      .querySelectorAll("dialog")
+      .forEach((dialog) => dialog.close());
   }
   private async start() {
     if (
@@ -202,7 +207,9 @@ export class CalendarExport extends LitElement {
         this.reviewToken,
       );
       if (generation !== this.generation) return;
-      this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.close();
+      this.renderRoot
+        .querySelectorAll("dialog")
+        .forEach((dialog) => dialog.close());
       await this.refresh();
     } catch (error) {
       if (generation === this.generation) this.fail(error);
@@ -212,6 +219,26 @@ export class CalendarExport extends LitElement {
         this.requestUpdate();
       }
     }
+  }
+  private async requestMaintenance() {
+    if (this.disabled || this.working) return;
+    const generation = this.generation;
+    await this.refresh();
+    if (
+      generation !== this.generation ||
+      this.error ||
+      this.disabled ||
+      this.working
+    )
+      return;
+    const state = this.status?.maintenance;
+    if (!state?.ready || state.active) return;
+    if (state.quarantined || state.uncertain) {
+      await this.updateComplete;
+      this.renderRoot
+        .querySelector<HTMLDialogElement>("#maintenance-run")
+        ?.showModal();
+    } else await this.maintain("run");
   }
   private renderMaintenance() {
     const state = this.status!.maintenance!;
@@ -223,9 +250,10 @@ export class CalendarExport extends LitElement {
       </p>
       <p role="status">
         ${state.active ? "Syncing…" : "Last successful sync: " + (state.last_success ? new Date(state.last_success).toLocaleString() : "Not yet")}
-        · ${state.quarantined} awaiting deletion grace ·
+        · Pending delete: ${state.quarantined} ·
         ${counted(state.uncertain, "unconfirmed write")}
       </p>
+      ${state.quarantined ? html`<p class="muted">Replaced and unmatched events remain visible until two unchanged scans at least ten minutes apart confirm cleanup. Changes restart this grace period. A forced sync keeps these safeguards.</p>` : nothing}
       ${
         Object.keys(state.counts).length
           ? html`<p class="muted">
@@ -235,12 +263,12 @@ export class CalendarExport extends LitElement {
             </p>`
           : nothing
       }
-      ${state.error ? html`<p class="warning">${state.error}</p>` : nothing}
+      ${state.error ? html`<p class="warning">${state.error} ${state.failure_stage ? `Stage: ${state.failure_stage}. See Logs; enable DEBUG for content-free comparison details.` : ""}</p>` : nothing}
       ${!state.ready ? html`<p class="warning">The calendar must be available and support event reading, creation and deletion.</p>` : nothing}
       <div class="actions">
         <button
           ?disabled=${this.disabled || this.working || state.active || !state.ready}
-          @click=${() => this.maintain("run")}
+          @click=${this.requestMaintenance}
         >
           Run Full Sync now
         </button>
@@ -265,6 +293,7 @@ export class CalendarExport extends LitElement {
       </div>
       ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
       <dialog
+        id="maintenance-review"
         class="database-dialog"
         @click=${dismissBackdrop}
         @cancel=${this.close}
@@ -302,6 +331,40 @@ export class CalendarExport extends LitElement {
             @click=${() => this.maintain("acknowledge")}
           >
             I inspected the calendar · acknowledge
+          </button>
+        </div>
+      </dialog>
+      <dialog
+        id="maintenance-run"
+        class="database-dialog"
+        @click=${dismissBackdrop}
+        @cancel=${this.close}
+        aria-labelledby="maintenance-run-title"
+      >
+        <div class="card-head">
+          <h2 id="maintenance-run-title">
+            Run Full Sync with pending operations?
+          </h2>
+          ${closeButton((event) => this.close(event), this.working)}
+        </div>
+        <p>
+          Pending delete: ${state.quarantined} ·
+          ${counted(state.uncertain, "unconfirmed write")}
+        </p>
+        <p class="warning">
+          A forced sync rechecks pending operations. It does not bypass the
+          deletion grace period or acknowledge unconfirmed writes. Eligible
+          unmatched events on the dedicated calendar may be deleted.
+        </p>
+        <div class="dialog-footer">
+          <button type="button" @click=${() => this.close()}>Cancel</button>
+          <button
+            type="button"
+            class="primary"
+            ?disabled=${this.working || this.disabled || state.active || !state.ready}
+            @click=${() => this.maintain("run")}
+          >
+            Continue Full Sync
           </button>
         </div>
       </dialog>

@@ -12,10 +12,21 @@ import test_calendar as fixtures
 import test_library as library
 import test_repository as repository
 from homeassistant import bootstrap, loader
-from homeassistant.components.calendar import CalendarEntity, CalendarEvent
-from homeassistant.components.calendar.const import DATA_COMPONENT
+from homeassistant.components.calendar import (
+    WEBSOCKET_EVENT_SCHEMA,
+    CalendarEntity,
+    CalendarEvent,
+)
+from homeassistant.components.calendar.const import (
+    DATA_COMPONENT,
+    EVENT_END,
+    EVENT_START,
+)
 from homeassistant.config_entries import ConfigEntries
 from homeassistant.core import HomeAssistant
+from kaleidescape_api.logging import (
+    Resource,
+)
 
 from custom_components.kaleidescape_companion.calendar.config import (
     fingerprint,
@@ -53,10 +64,11 @@ class FictionalCalendar(CalendarEntity):
         )
 
     async def async_create_event(self, **data):
+        data = WEBSOCKET_EVENT_SCHEMA(data)
         uid = str(uuid4())
         self.events[uid] = CalendarEvent(
-            start=data["start"],
-            end=data["end"],
+            start=data[EVENT_START],
+            end=data[EVENT_END],
             summary=data["summary"],
             description=data["description"],
             uid=uid,
@@ -66,8 +78,14 @@ class FictionalCalendar(CalendarEntity):
             raise RuntimeError("private provider failure after commit")
 
     async def async_update_event(self, uid, event, **kwargs):
-        assert isinstance(event["start"], datetime)
-        self.events[uid] = CalendarEvent(**event, uid=uid)
+        event = WEBSOCKET_EVENT_SCHEMA(event)
+        self.events[uid] = CalendarEvent(
+            start=event[EVENT_START],
+            end=event[EVENT_END],
+            summary=event["summary"],
+            description=event.get("description"),
+            uid=uid,
+        )
         self.writes.append(("update", uid))
 
     async def async_delete_event(self, uid, **kwargs):
@@ -239,9 +257,56 @@ class MaintenanceTest(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(self.manager.error)
         self.assertEqual(len(self.entity.events), 2)
         self.assertEqual([op for op, _ in self.entity.writes], ["create", "create"])
+        logs = await self.repository.async_logs()
+        self.assertIn("update_unsupported", {r.get("reason") for r in logs["items"]})
+        self.assertIn("cleanup_deferred", {r.get("reason") for r in logs["items"]})
+        self.assertEqual((await self.manager.status())["quarantined"], 1)
         await self.run_sync(601)
         self.assertEqual(len(self.entity.events), 1)
         self.assertEqual(self.entity.writes[-1][0], "delete")
+
+    async def test_edit_trace_links_database_and_calendar_after_reload(self):
+        row = (await self.create())["viewing"]
+        await self.run_sync()
+        await self.repository.async_logs("configure", {"level": "DEBUG"})
+        request, actor = str(uuid4()), "private-user@example.invalid"
+        await self.repository.async_update(
+            request,
+            row["id"],
+            row["revision"],
+            {"started_at": "2026-10-12T19:00:00Z", "ended_at": "2026-10-12T21:00:00Z"},
+            actor_id=actor,
+        )
+        self.publisher = CalendarPublisher(self.hass, self.repository, self.entry)
+        self.manager = self.publisher.maintenance
+        self.manager.clock = lambda: self.now
+        await self.run_sync()
+        logger = self.repository.logger
+        logs = await self.repository.async_logs(
+            "list", {"reference": logger.alias(Resource.REQUEST, request)}
+        )
+        reasons = {r.get("reason") for r in logs["items"]}
+        self.assertTrue(
+            {
+                "journal_write",
+                "journal_saved",
+                "journal_queued",
+                "content_changed",
+                "preflight_read",
+                "read_back",
+                "link_saved",
+            }
+            <= reasons
+        )
+        related = logger.alias(Resource.VIEWING, row["id"])
+        actor_alias = logger.alias(Resource.USER, actor)
+        self.assertTrue(all(r.get("related") == related for r in logs["items"]))
+        self.assertTrue(all(r.get("actor") == actor_alias for r in logs["items"]))
+        self.assertTrue(all(r.get("line", 0) > 0 for r in logs["items"]))
+        self.assertNotIn(actor, str(logs))
+        self.assertNotIn(row["id"], str(logs))
+        self.assertNotIn(request, str(logs))
+        self.assertEqual(len(self.entity.events), 1)
 
     async def test_external_change_resets_orphan_quarantine(self):
         self.extra()
@@ -399,6 +464,83 @@ class MaintenanceTest(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(
                 schedule.call_args.kwargs, {"hour": 3, "minute": 0, "second": 0}
             )
+
+    async def test_delayed_visibility_reads_again_without_repeating_write(self):
+        await self.create()
+        original = self.entity.async_get_events
+        reads = 0
+
+        async def delayed(*args):
+            nonlocal reads
+            reads += 1
+            if self.entity.writes and reads == 2:
+                return []
+            return await original(*args)
+
+        self.entity.async_get_events = delayed
+        with patch(
+            "custom_components.kaleidescape_companion.calendar.maintenance.asyncio.sleep",
+            return_value=None,
+        ):
+            await self.run_sync()
+        self.assertEqual(len(self.entity.writes), 1)
+        self.assertEqual((await self.manager.status())["uncertain"], 0)
+        logs = await self.repository.async_logs()
+        self.assertTrue(
+            any(
+                r["operation"] == "verify" and r["outcome"] == "mismatch"
+                for r in logs["items"]
+            )
+        )
+
+    async def test_provider_normalization_diagnoses_mismatch_without_private_values(
+        self,
+    ):
+        await self.create()
+        await self.repository.async_logs("configure", {"level": "DEBUG"})
+        original = self.entity.async_create_event
+
+        async def normalized(**data):
+            data["description"] = "Provider discarded private description"
+            await original(**data)
+
+        self.entity.async_create_event = normalized
+        with patch(
+            "custom_components.kaleidescape_companion.calendar.maintenance.asyncio.sleep",
+            return_value=None,
+        ):
+            await self.run_sync()
+        state = await self.manager.status()
+        self.assertEqual(state["uncertain"], 1)
+        self.assertEqual(state["failure_stage"], "verification")
+        logs = await self.repository.async_logs()
+        mismatches = [r for r in logs["items"] if "description_match" in r]
+        self.assertTrue(mismatches)
+        self.assertFalse(mismatches[0]["description_match"])
+        self.assertTrue(mismatches[0]["title_match"])
+        self.assertNotIn("Provider discarded", str(logs))
+        await self.run_sync(301)
+        self.assertEqual(len(self.entity.writes), 1)
+
+    async def test_contract_failure_is_explained_without_provider_arguments(self):
+        await self.create()
+
+        async def missing(**data):
+            raise KeyError(EVENT_START)
+
+        self.entity.async_create_event = missing
+        await self.run_sync()
+        logs = await self.repository.async_logs()
+        failures = [
+            r
+            for r in logs["items"]
+            if r.get("failure") == "missing_field" and r["operation"] == "write"
+        ]
+        self.assertTrue(failures)
+        self.assertIn("required field is missing", failures[0]["message"])
+        self.assertTrue(failures[0]["file"].endswith("calendar/entity.py"))
+        self.assertGreater(failures[0]["line"], 0)
+        self.assertEqual((await self.manager.status())["uncertain"], 1)
 
 
 class MaintenanceAPITest(unittest.IsolatedAsyncioTestCase):

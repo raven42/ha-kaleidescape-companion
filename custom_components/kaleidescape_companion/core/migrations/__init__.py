@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from ..security import private_file
 
-SCHEMA_VERSION = 20
+SCHEMA_VERSION = 21
 
 MIGRATIONS = {
     1: (
@@ -360,6 +360,17 @@ MIGRATIONS[20] = (
         created_at TEXT NOT NULL,updated_at TEXT NOT NULL,reviewed_by TEXT)""",
     "CREATE INDEX calendar_reconcile_pending "
     "ON calendar_reconcile_intents(scope,state)",
+)
+
+
+MIGRATIONS[21] = (
+    "CREATE TABLE operation_logs (id INTEGER PRIMARY KEY AUTOINCREMENT,"
+    "timestamp TEXT NOT NULL,level TEXT NOT NULL,logger TEXT NOT NULL,"
+    "body TEXT NOT NULL,bytes INTEGER NOT NULL)",
+    "CREATE INDEX operation_logs_filter ON operation_logs(logger,level,id)",
+    "CREATE TABLE log_state (singleton INTEGER PRIMARY KEY CHECK(singleton=1),"
+    "alias_key TEXT NOT NULL,level TEXT NOT NULL,log_values INTEGER NOT NULL,"
+    "hidden_through INTEGER NOT NULL)",
 )
 
 

@@ -1469,3 +1469,28 @@ always appends its human-readable maintenance notice, without metadata IDs.
 Provider consistency/completeness cannot be proven through the generic API;
 external writers, restored snapshots or explicit acknowledgement of a still
 hidden event can still cause duplicates. Use only a dedicated calendar.
+
+## Private operational diagnostics
+
+The [operational logging policy](logging.md) applies to all future subsystems.
+Use positive structured event fields and keyed resource aliases before any
+buffering or sink callback. Never attach raw exceptions, SQL, payloads, device
+identities or credentials. Human-readable messages come only from static
+catalogued explanations. Bounded exception classification may inspect types and
+numeric HTTP status codes, never copy exception text, arguments or tracebacks.
+Source locations are derived from trusted module namespaces and line numbers;
+absolute filesystem paths and usernames are excluded. Untrusted callers use an
+`external` source label. Operational logging is administrator-only, bounded, and
+separate from functional audit/receipt storage. Optional movie metadata logging
+never enables credentials, account or network logging. Settings transfer
+requires category review and always excludes secrets.
+
+Cross-layer diagnostic context carries only keyed user/resource/request aliases,
+owned trigger codes and bounded revisions. Authenticate before binding a user;
+never put usernames, external IDs, payloads or free-form trigger text in events.
+Copy the safe context into worker calls and reset it for unrelated background
+work. Full Sync may consult the existing private mutation audit to recover an
+exact-revision cause after reload; this does not publish audit actors or request
+IDs. Alias filters are administrator-only, bounded, parameterized equality
+queries against positive log fields. Calendar pending-work warnings do not
+override quarantine, stale-data checks or unconfirmed-write barriers.

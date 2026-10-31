@@ -158,6 +158,26 @@ it("uses Full Sync controls and binds inspection acknowledgement to the reviewed
   expect(root.textContent).not.toContain("Sync all watched movies to calendar");
   button(root, "Run Full Sync now").click();
   await vi.waitFor(() =>
+    expect(
+      root.querySelector<HTMLDialogElement>("#maintenance-run")?.open,
+    ).toBe(true),
+  );
+  expect(root.textContent).toContain("Pending delete: 3");
+  expect(maintain).not.toHaveBeenCalled();
+  button(root, "Cancel").click();
+  await element!.updateComplete;
+  expect(maintain).not.toHaveBeenCalled();
+  expect(root.querySelector<HTMLDialogElement>("#maintenance-run")!.open).toBe(
+    false,
+  );
+  button(root, "Run Full Sync now").click();
+  await vi.waitFor(() =>
+    expect(
+      root.querySelector<HTMLDialogElement>("#maintenance-run")!.open,
+    ).toBe(true),
+  );
+  button(root, "Continue Full Sync").click();
+  await vi.waitFor(() =>
     expect(maintain).toHaveBeenCalledWith(info, "run", "full-fingerprint", ""),
   );
   await vi.waitFor(() =>
