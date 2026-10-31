@@ -40,7 +40,7 @@ custom_components/kaleidescape_companion/
   library/    Catalog sync, metadata, artwork, collections and title validation
   playback/   HA observation/recording, device discovery, controls and receipts
   enrichment/ Optional external metadata scheduling and cache storage
-  calendar/   Opt-in HA calendar publishing and durable delivery receipts
+  calendar/   Opt-in publishing, dedicated-calendar Full Sync and durable receipts
   _vendor/    Generated runtime subset of the provider library
   ui/         Authenticated APIs, panel registration and compiled assets
   *.py        Required HA entry points and integration constants
@@ -151,7 +151,10 @@ must be resolved before publication. HACS metadata is preparatory.
 
 Historical completed Journal viewings can be explicitly exported from Settings
 to the configured calendar, with matching/progress and a warning about
-title-format duplicates. See [calendar procedures](docs/calendar.md).
+title-format duplicates. Optional **Full Sync** maintains a separate dedicated
+calendar, including Journal edits and delayed deletion of unmatched events. It
+has a configurable 1–12 month window and daily sweep, with a required deletion
+warning/acknowledgement. See [calendar procedures](docs/calendar.md).
 
 External metadata setup, request limits and privacy are covered in the
 [enrichment guide](docs/enrichment.md). Now Playing and artwork are shared with

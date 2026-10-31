@@ -36,6 +36,7 @@ export class CalendarExport extends LitElement {
   private pending?: PreparedMutation;
   private working = false;
   private error = "";
+  private reviewToken = "";
   private generation = 0;
   private bound = "";
   private boundClient?: JournalClient;
@@ -48,6 +49,15 @@ export class CalendarExport extends LitElement {
     this.bound = key;
     this.boundClient = this.client;
     void this.refresh();
+  }
+  protected updated(changed: PropertyValues) {
+    // A saved options flow can reload HA without remounting this Settings view.
+    if (
+      changed.has("disabled") &&
+      changed.get("disabled") === true &&
+      !this.disabled
+    )
+      void this.refresh();
   }
   connectedCallback() {
     super.connectedCallback();
@@ -66,6 +76,7 @@ export class CalendarExport extends LitElement {
     this.pending = undefined;
     this.working = false;
     this.error = "";
+    this.reviewToken = "";
     this.renderRoot.querySelector("dialog")?.close();
   }
   confirmNavigation() {
@@ -88,7 +99,11 @@ export class CalendarExport extends LitElement {
       const status = await this.client.calendarStatus(this.scope);
       if (generation !== this.generation) return;
       this.status = status;
-      if (status.active || (status.job && !status.job.finished))
+      if (
+        status.active ||
+        status.maintenance?.enabled ||
+        (status.job && !status.job.finished)
+      )
         this.timer = setTimeout(() => void this.refresh(), 2000);
       this.requestUpdate();
     } catch (error) {
@@ -167,7 +182,133 @@ export class CalendarExport extends LitElement {
       }
     }
   }
+  private async maintain(action: "run" | "acknowledge") {
+    if (
+      !this.client ||
+      !this.scope ||
+      !this.status ||
+      this.disabled ||
+      this.working
+    )
+      return;
+    const generation = this.generation;
+    this.working = true;
+    this.requestUpdate();
+    try {
+      await this.client.calendarMaintain(
+        this.scope,
+        action,
+        this.status.fingerprint,
+        this.reviewToken,
+      );
+      if (generation !== this.generation) return;
+      this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.close();
+      await this.refresh();
+    } catch (error) {
+      if (generation === this.generation) this.fail(error);
+    } finally {
+      if (generation === this.generation) {
+        this.working = false;
+        this.requestUpdate();
+      }
+    }
+  }
+  private renderMaintenance() {
+    const state = this.status!.maintenance!;
+    return html`<section aria-label="Full calendar sync">
+      <h4>Full Sync</h4>
+      <p>
+        Uses the saved dedicated calendar and age window. Save settings before
+        syncing.
+      </p>
+      <p role="status">
+        ${state.active ? "Syncing…" : "Last successful sync: " + (state.last_success ? new Date(state.last_success).toLocaleString() : "Not yet")}
+        · ${state.quarantined} awaiting deletion grace ·
+        ${counted(state.uncertain, "unconfirmed write")}
+      </p>
+      ${
+        Object.keys(state.counts).length
+          ? html`<p class="muted">
+              ${Object.entries(state.counts)
+                .map(([name, count]) => `${count} ${name.replaceAll("_", " ")}`)
+                .join(" · ")}
+            </p>`
+          : nothing
+      }
+      ${state.error ? html`<p class="warning">${state.error}</p>` : nothing}
+      ${!state.ready ? html`<p class="warning">The calendar must be available and support event reading, creation and deletion.</p>` : nothing}
+      <div class="actions">
+        <button
+          ?disabled=${this.disabled || this.working || state.active || !state.ready}
+          @click=${() => this.maintain("run")}
+        >
+          Run Full Sync now
+        </button>
+        <button ?disabled=${this.working} @click=${this.refresh}>
+          Refresh sync status
+        </button>
+        ${
+          state.uncertain
+            ? html`<button
+                ?disabled=${this.disabled || this.working || state.active || !state.ready}
+                @click=${() => {
+                  this.reviewToken = state.review_token ?? "";
+                  this.renderRoot
+                    .querySelector<HTMLDialogElement>("dialog")
+                    ?.showModal();
+                }}
+              >
+                Review unconfirmed writes
+              </button>`
+            : nothing
+        }
+      </div>
+      ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
+      <dialog
+        class="database-dialog"
+        @click=${dismissBackdrop}
+        @cancel=${this.close}
+        aria-labelledby="maintenance-review-title"
+      >
+        <div class="card-head">
+          <h2 id="maintenance-review-title">
+            Review unconfirmed calendar writes
+          </h2>
+          ${closeButton((event) => this.close(event), this.working)}
+        </div>
+        <p>
+          Inspect the assigned calendar first. A write may already have
+          succeeded. Check again uses reads to recover confirmed results without
+          replaying them.
+        </p>
+        <p class="warning">
+          Only after inspecting the calendar, acknowledge these attempts to
+          permit new writes. A provider that still hides a successful event
+          could produce a duplicate. Unmatched events remain subject to Full
+          Sync deletion.
+        </p>
+        <div class="dialog-footer">
+          <button
+            ?disabled=${this.working}
+            @click=${() => {
+              this.close();
+              void this.maintain("run");
+            }}
+          >
+            Check again</button
+          ><button
+            class="primary"
+            ?disabled=${this.working}
+            @click=${() => this.maintain("acknowledge")}
+          >
+            I inspected the calendar · acknowledge
+          </button>
+        </div>
+      </dialog>
+    </section>`;
+  }
   protected render() {
+    if (this.status?.maintenance?.enabled) return this.renderMaintenance();
     const job = this.status?.job;
     return html`<section aria-label="Journal calendar export">
       <h4>Export Journal to calendar</h4>

@@ -14,16 +14,16 @@ diagnostics.
 
 ## Trust boundaries
 
-| Boundary                                 | Policy and limitation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Browser → integration API                | Active authenticated HA users may read the shared household viewing summary and enabled cached Library metadata/artwork. Journal/catalog mutations, notes/source/session details, exports and shared UI preferences require an active administrator. Active users may read/write only their own browsing preferences. Now Playing also checks read permission on the configured source entities. Dataset IDs select data; they are not credentials.                                                                                                                                                                                             |
-| Integration → HA                         | Custom integrations execute in Core's process with Core's filesystem, entity, credential, and network access. Entity selection is application behavior, not a sandbox. Other code running as HA can read this database.                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| HA users → one another                   | All active users share one household journal; there is no personal watch history or per-user journal ownership. Personal browsing preferences are scoped to authenticated HA user IDs, with shared hidden collection names managed by administrators. A positive field allowlist limits regular-user API responses. HA roles are not strong isolation between hostile authenticated users.                                                                                                                                                                                                                                                      |
-| Journal/Library → HA entity states       | History/Library sensor states and attributes deliberately expose movie titles, times, counts and storage sizes through HA entity access. Recorder, dashboards, automations, and backups can retain these values outside the private database. Notes, source identities, sessions, and audit actors must never enter sensors.                                                                                                                                                                                                                                                                                                                    |
-| HA → devices and services                | Observation reads selected HA states. Optional library sync makes bounded GET-only requests to the configured private LAN browser origin, using validated/pinned DNS results. Sync is disabled by default. A separate off-by-default administrator action can add one selected version to an existing verified collection. Now Playing artwork uses HA's existing image proxy. A separate calendar opt-in permits fixed create/lookup actions on one selected HA calendar; its provider may be remote. Separately enabled household device controls use validated private TCP 10000 sessions and fixed intents; Library sync remains read-only. |
-| Device/imported data → storage and UI    | Treat metadata, notes, HTML, image references, and imported files as untrusted, including data from local devices. Validate before storing or using it, and render text without executing markup.                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| Storage → filesystem and exports         | Journal contents, source identifiers, audit actors, UI searches/preferences/user IDs, backups, and retry responses are private household data. Keep them outside static web roots and access them through the authenticated API.                                                                                                                                                                                                                                                                                                                                                                                                                |
-| Development machine → test HA deployment | Deployment is an explicit privileged SSH operation. Verify the host key and target, send only the runtime package, and configure restart through fixed HA OS/Container commands. Normal checks must never connect to or modify the target.                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Boundary                                 | Policy and limitation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Browser → integration API                | Active authenticated HA users may read the shared household viewing summary and enabled cached Library metadata/artwork. Journal/catalog mutations, notes/source/session details, exports and shared UI preferences require an active administrator. Active users may read/write only their own browsing preferences. Now Playing also checks read permission on the configured source entities. Dataset IDs select data; they are not credentials.                                                                                                                                                                                                                                                                 |
+| Integration → HA                         | Custom integrations execute in Core's process with Core's filesystem, entity, credential, and network access. Entity selection is application behavior, not a sandbox. Other code running as HA can read this database.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| HA users → one another                   | All active users share one household journal; there is no personal watch history or per-user journal ownership. Personal browsing preferences are scoped to authenticated HA user IDs, with shared hidden collection names managed by administrators. A positive field allowlist limits regular-user API responses. HA roles are not strong isolation between hostile authenticated users.                                                                                                                                                                                                                                                                                                                          |
+| Journal/Library → HA entity states       | History/Library sensor states and attributes deliberately expose movie titles, times, counts and storage sizes through HA entity access. Recorder, dashboards, automations, and backups can retain these values outside the private database. Notes, source identities, sessions, and audit actors must never enter sensors.                                                                                                                                                                                                                                                                                                                                                                                        |
+| HA → devices and services                | Observation reads selected HA states. Optional library sync makes bounded GET-only requests to the configured private LAN browser origin, using validated/pinned DNS results. Sync is disabled by default. A separate off-by-default administrator action can add one selected version to an existing verified collection. Now Playing artwork uses HA's existing image proxy. A separate calendar opt-in permits fixed create/lookup actions; acknowledged Full Sync also updates/deletes within its age window on one dedicated HA calendar. Its provider may be remote. Separately enabled household device controls use validated private TCP 10000 sessions and fixed intents; Library sync remains read-only. |
+| Device/imported data → storage and UI    | Treat metadata, notes, HTML, image references, and imported files as untrusted, including data from local devices. Validate before storing or using it, and render text without executing markup.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| Storage → filesystem and exports         | Journal contents, source identifiers, audit actors, UI searches/preferences/user IDs, backups, and retry responses are private household data. Keep them outside static web roots and access them through the authenticated API.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Development machine → test HA deployment | Deployment is an explicit privileged SSH operation. Verify the host key and target, send only the runtime package, and configure restart through fixed HA OS/Container commands. Normal checks must never connect to or modify the target.                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 
 The integration does not add its own web server, database listener, identity
 system, or general-purpose HA action/SQL/file proxy. Compiled panel assets may
@@ -1024,15 +1024,16 @@ Repair does not enqueue publication, retry uncertain events, or edit remote
 descriptions.
 
 Calendar publishing is a separate native HA opt-in, false by default. It permits
-one fixed `calendar.create_event` action on the selected writable calendar, not
-an arbitrary service/entity proxy. Registered targets follow renames without
-rebinding deleted identities. Opt-in/configuration, availability and capability
-are rechecked immediately before calling HA. Configuration changes stop
-unstarted calls; accepted calls can finish. HA owns provider credentials and
-networking; Companion adds no direct provider connection, arbitrary destination,
-token or Vite route. Providers and readers sharing the calendar can see titles,
-bounded human-readable details and times from the chosen templates. Settings and
-the export confirmation disclose this sharing.
+the fixed `calendar.create_event` action by default, with separately opted-in
+Full Sync entity CRUD on its dedicated target (see below), not an arbitrary
+service/entity proxy. Registered targets follow renames without rebinding
+deleted identities. Opt-in/configuration, availability and capability are
+rechecked immediately before calling HA. Configuration changes stop unstarted
+calls; accepted calls can finish. HA owns provider credentials and networking;
+Companion adds no direct provider connection, arbitrary destination, token or
+Vite route. Providers and readers sharing the calendar can see titles, bounded
+human-readable details and times from the chosen templates. Settings and the
+export confirmation disclose this sharing.
 
 Flat title/description brace substitution accepts only listed fields, never
 attribute/index access, format specifiers, conversions or executable/Jinja
@@ -1042,9 +1043,9 @@ substitutions are bounded. Only the rendered title/description and interval
 enter provider events: no appended JSON, dataset/viewing/version IDs or
 artwork-cache references. Legacy `{artwork}` placeholders render blank. Notes,
 raw handles, origins, paths and credentials never enter events. Existing
-provider descriptions are not rewritten. The local Journal calendar and future
-dashboard card read the authenticated Journal/Library database instead of
-provider metadata. No external image fetch/decoder is added.
+provider descriptions are not rewritten in create-only mode. The local Journal
+calendar and future dashboard card read the authenticated Journal/Library
+database instead of provider metadata. No external image fetch/decoder is added.
 
 Completion and a content-free `calendar_publications` receipt commit atomically.
 One queued viewing per ten-second tick is claimed as sending before the external
@@ -1425,3 +1426,46 @@ confirmation fields, stale-row checks or unresolved-write dismissal barriers.
 The Remote has no empty action footer. Collection removal remains unavailable:
 the official TCP command catalog exposes navigation, not movie membership
 writes; the existing explicit HTTP addition boundary remains unchanged.
+
+## Dedicated calendar Full Sync
+
+Full Sync is a separate off-by-default administrator setting requiring explicit
+dedicated-calendar acknowledgement. The panel displays a bold warning that
+unmatched events in the rolling 1–12 calendar-month window will be permanently
+deleted. Default window is three months; the daily sweep defaults to 03:00 in HA
+local time. A startup pass and ten-second Journal-change checks keep edits
+current. Older/future events and recurring events are outside deletion scope.
+Create/delete capability and stable event UIDs are required; update-capable
+providers retain UIDs, others receive a verified replacement before old-event
+quarantine. Only the configured HA entity is accessed; there is no arbitrary
+entity/action/UID proxy, direct provider client or credential added.
+
+`calendar/maintain` is scoped, active-administrator-only and checks the saved
+configuration fingerprint. It accepts only run or confirmed acknowledgement;
+acknowledgement also needs the exact pending-set review token. Browser/API
+responses after revocation are withheld. Automatic maintenance continues under
+the administrator's saved opt-in, without depending on a browser session.
+
+Schema 20's managed UID links, quarantine hashes/times and durable intents are
+private, protected system tables. No copied titles/descriptions enter these
+receipts. Household API projections, sensors, portable imports and diagnostics
+do not expose them; private SQLite/HA backups retain them. Confirmed/reviewed
+receipts may be pruned at the 10,000 limit, never uncertain barriers.
+
+Malformed, oversized, missing/ambiguous-UID or failed reads abort; absence from
+a failed response is never permission to delete. Unmatched entries require two
+successful, unchanged observations and a ten-minute grace period. A changed
+Journal/configuration/event resets quarantine. Creates and updates require
+read-back before cleanup; each update/delete has a fresh narrow event check.
+Current Journal signature, options, availability and capability are rechecked
+before every external write. The publisher lock serializes all calendar work;
+backup/unload drains accepted operations. Calls have 30-second budgets, passes
+five minutes, reads 10,000 events/8 MiB, and snapshots 10,000 Journal rows.
+
+Persisted sending/uncertain intents block further mutations until remote reads
+confirm the outcome or an administrator inspects and acknowledges that exact
+pending set. No automatic replay occurs, including after restart. Full Sync
+always appends its human-readable maintenance notice, without metadata IDs.
+Provider consistency/completeness cannot be proven through the generic API;
+external writers, restored snapshots or explicit acknowledgement of a still
+hidden event can still cause duplicates. Use only a dedicated calendar.

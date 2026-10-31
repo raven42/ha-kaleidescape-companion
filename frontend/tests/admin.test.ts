@@ -171,3 +171,31 @@ it("cancels inline settings changes through the original HA options flow", async
       .value,
   ).toBe("10");
 });
+
+it("requires a dedicated-calendar acknowledgement for Full Sync and bounds its age window", async () => {
+  transport.options.calendar_enabled = true;
+  transport.options.calendar_entity = "calendar.movies";
+  await mount("kaleidescape-settings");
+  const full = root().querySelector<HTMLInputElement>(
+    '[name="calendar_full_sync"]',
+  )!;
+  full.click();
+  await flush();
+  expect(root().querySelector(".warning strong")?.textContent).toContain(
+    "permanently deleted",
+  );
+  const acknowledgement = root().querySelector<HTMLInputElement>(
+    '[name="calendar_full_sync_dedicated"]',
+  )!;
+  expect(acknowledgement.required).toBe(true);
+  expect(acknowledgement.checked).toBe(false);
+  const months = root().querySelector<HTMLInputElement>(
+    '[name="calendar_full_sync_months"]',
+  )!;
+  expect([months.min, months.max, months.value]).toEqual(["1", "12", "3"]);
+  acknowledgement.click();
+  await flush();
+  input("calendar_entity", "calendar.another");
+  await flush();
+  expect(acknowledgement.checked).toBe(false);
+});

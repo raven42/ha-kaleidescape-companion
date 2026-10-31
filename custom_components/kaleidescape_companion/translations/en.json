@@ -34,14 +34,18 @@
           "metadata_tmdb_enabled": "Enrich metadata from TMDB",
           "metadata_requests_per_second": "External metadata requests per second (maximum 10)",
           "metadata_tmdb_credential": "TMDB API key or API Read Access Token (blank keeps existing)",
-          "metadata_clear_tmdb_key": "Remove saved TMDB credential"
+          "metadata_clear_tmdb_key": "Remove saved TMDB credential",
+          "calendar_full_sync": "Full Sync (deletes unmatched events)",
+          "calendar_full_sync_dedicated": "I assigned a separate dedicated calendar; unmatched events will be deleted",
+          "calendar_full_sync_months": "Full Sync age window · months (1–12)",
+          "calendar_full_sync_time": "Daily Full Sync time · HA local time (HH:MM)"
         },
         "data_description": {
           "minimum_runtime_minutes": "Ignore shorter playback, such as trailers. Default: 10 minutes. Wait for a known runtime unless disabled. This is separate from watched time required for credits completion.",
           "library_host": "Leave blank to attempt discovery using my-kaleidescape.local. Enter a hostname or private LAN HTTP(S) origin if name resolution fails. Standard HTTP/HTTPS ports only.",
           "library_sync_artwork": "Artwork adds disk use in a separate private cache, not the 256 MiB journal database. HA backups can include cached covers. Older covers are evicted when the configured limit is reached.",
           "library_sync_details": "Fetch available cast, director, writer, studio, synopsis, and runtime metadata. Missing source fields remain unavailable.",
-          "library_artwork_cache_mb": "32\u20134096 MiB; default 512 MiB, plus up to one 5 MiB incoming image. Choose a larger limit for a large library.",
+          "library_artwork_cache_mb": "32–4096 MiB; default 512 MiB, plus up to one 5 MiB incoming image. Choose a larger limit for a large library.",
           "calendar_enabled": "Disabled by default. Publishes new completions only, including manual viewings. Calendar providers and people sharing the calendar can see movie metadata. Existing history and imports are not backfilled.",
           "calendar_entity": "Select a calendar that supports creating events.",
           "calendar_title": "Allowed fields: {title}, {year}, {collection}, {cast}, {director}, {writer}, {studio}, {genre}, {duration}, {watched}, {rating}, {format}, {edition}, {synopsis}, {purchase_date}, {added_on}, {status}, {started_at}, {ended_at}. Duration and watched time are minutes; missing metadata is blank. Use {{ and }} for literal braces.",
@@ -49,7 +53,9 @@
           "control_enabled": "Allow all active HA users to control playback. Disabled by default; configuration and discovery remain administrator-only. Commands run when clicked without a confirmation prompt.",
           "control_host": "Blank uses the Library hostname or my-kaleidescape.local. TCP port 10000; private LAN addresses only.",
           "control_player": "Discover devices on the Companion Settings page and save a default player. Users can choose another discovered movie player for playback without changing this default or Journal tracking.",
-          "control_allow_launch": "Separately opted-in unsupported movie launch. The selected title is verified against live metadata; exact edition is not guaranteed."
+          "control_allow_launch": "Separately opted-in unsupported movie launch. The selected title is verified against live metadata; exact edition is not guaranteed.",
+          "calendar_full_sync": "WARNING: Within the age window, events that do not match a completed Journal entry will be permanently deleted. Requires a separate dedicated calendar. Repeated complete scans and a 10-minute grace period precede deletion.",
+          "calendar_full_sync_time": "Edits are reconciled shortly after they are saved. This scheduled sweep also checks for external changes."
         }
       }
     },
@@ -62,12 +68,15 @@
       "duplicate_entities": "Choose different sensors for play status and media location.",
       "invalid_rules": "Choose valid runtime, completion, and partial-resume values.",
       "invalid_library_host": "Enter a valid hostname or private LAN HTTP(S) origin without credentials, a path, or query.",
-      "invalid_library_options": "Choose a sync interval of 1\u2013168 hours and an artwork cache limit of 32\u20134096 MiB.",
+      "invalid_library_options": "Choose a sync interval of 1–168 hours and an artwork cache limit of 32–4096 MiB.",
       "invalid_display_options": "Choose a valid default landing page.",
       "invalid_calendar": "Select an existing calendar that supports event creation.",
       "invalid_calendar_template": "Use only the listed brace fields, without attributes, conversions or format specifiers.",
       "invalid_control_options": "Enter a valid private LAN control hostname and hexadecimal player serial.",
-      "invalid_metadata_options": "Choose valid metadata provider options and a rate between 0.1 and 10 requests per second."
+      "invalid_metadata_options": "Choose valid metadata provider options and a rate between 0.1 and 10 requests per second.",
+      "invalid_calendar_full_sync": "Use an age of 1–12 whole months and a daily time in HH:MM format.",
+      "calendar_dedicated_required": "Full Sync requires a separate dedicated calendar and acknowledgement that unmatched events will be deleted.",
+      "calendar_full_sync_unsupported": "Full Sync requires a calendar that supports reading, creating and deleting events."
     }
   },
   "options": {
@@ -104,14 +113,18 @@
           "metadata_tmdb_enabled": "Enrich metadata from TMDB",
           "metadata_requests_per_second": "External metadata requests per second (maximum 10)",
           "metadata_tmdb_credential": "TMDB API key or API Read Access Token (blank keeps existing)",
-          "metadata_clear_tmdb_key": "Remove saved TMDB credential"
+          "metadata_clear_tmdb_key": "Remove saved TMDB credential",
+          "calendar_full_sync": "Full Sync (deletes unmatched events)",
+          "calendar_full_sync_dedicated": "I assigned a separate dedicated calendar; unmatched events will be deleted",
+          "calendar_full_sync_months": "Full Sync age window · months (1–12)",
+          "calendar_full_sync_time": "Daily Full Sync time · HA local time (HH:MM)"
         },
         "data_description": {
           "minimum_runtime_minutes": "Ignore shorter playback, such as trailers. Default: 10 minutes. Wait for a known runtime unless disabled. This is separate from watched time required for credits completion.",
           "library_host": "Leave blank to attempt discovery using my-kaleidescape.local. Enter a hostname or private LAN HTTP(S) origin if name resolution fails. Standard HTTP/HTTPS ports only.",
           "library_sync_artwork": "Artwork adds disk use in a separate private cache, not the 256 MiB journal database. HA backups can include cached covers. Older covers are evicted when the configured limit is reached.",
           "library_sync_details": "Fetch available cast, director, writer, studio, synopsis, and runtime metadata. Missing source fields remain unavailable.",
-          "library_artwork_cache_mb": "32\u20134096 MiB; default 512 MiB, plus up to one 5 MiB incoming image. Choose a larger limit for a large library.",
+          "library_artwork_cache_mb": "32–4096 MiB; default 512 MiB, plus up to one 5 MiB incoming image. Choose a larger limit for a large library.",
           "calendar_enabled": "Disabled by default. Publishes new completions only, including manual viewings. Calendar providers and people sharing the calendar can see movie metadata. Existing history and imports are not backfilled.",
           "calendar_entity": "Select a calendar that supports creating events.",
           "calendar_title": "Allowed fields: {title}, {year}, {collection}, {cast}, {director}, {writer}, {studio}, {genre}, {duration}, {watched}, {rating}, {format}, {edition}, {synopsis}, {purchase_date}, {added_on}, {status}, {started_at}, {ended_at}. Duration and watched time are minutes; missing metadata is blank. Use {{ and }} for literal braces.",
@@ -119,7 +132,9 @@
           "control_enabled": "Allow all active HA users to control playback. Disabled by default; configuration and discovery remain administrator-only. Commands run when clicked without a confirmation prompt.",
           "control_host": "Blank uses the Library hostname or my-kaleidescape.local. TCP port 10000; private LAN addresses only.",
           "control_player": "Discover devices on the Companion Settings page and save a default player. Users can choose another discovered movie player for playback without changing this default or Journal tracking.",
-          "control_allow_launch": "Separately opted-in unsupported movie launch. The selected title is verified against live metadata; exact edition is not guaranteed."
+          "control_allow_launch": "Separately opted-in unsupported movie launch. The selected title is verified against live metadata; exact edition is not guaranteed.",
+          "calendar_full_sync": "WARNING: Within the age window, events that do not match a completed Journal entry will be permanently deleted. Requires a separate dedicated calendar. Repeated complete scans and a 10-minute grace period precede deletion.",
+          "calendar_full_sync_time": "Edits are reconciled shortly after they are saved. This scheduled sweep also checks for external changes."
         }
       }
     },
@@ -129,12 +144,15 @@
       "duplicate_entities": "Choose different sensors for play status and media location.",
       "invalid_rules": "Choose valid runtime, completion, and partial-resume values.",
       "invalid_library_host": "Enter a valid hostname or private LAN HTTP(S) origin without credentials, a path, or query.",
-      "invalid_library_options": "Choose a sync interval of 1\u2013168 hours and an artwork cache limit of 32\u20134096 MiB.",
+      "invalid_library_options": "Choose a sync interval of 1–168 hours and an artwork cache limit of 32–4096 MiB.",
       "invalid_display_options": "Choose a valid default landing page.",
       "invalid_calendar": "Select an existing calendar that supports event creation.",
       "invalid_calendar_template": "Use only the listed brace fields, without attributes, conversions or format specifiers.",
       "invalid_control_options": "Enter a valid private LAN control hostname and hexadecimal player serial.",
-      "invalid_metadata_options": "Choose valid metadata provider options and a rate between 0.1 and 10 requests per second."
+      "invalid_metadata_options": "Choose valid metadata provider options and a rate between 0.1 and 10 requests per second.",
+      "invalid_calendar_full_sync": "Use an age of 1–12 whole months and a daily time in HH:MM format.",
+      "calendar_dedicated_required": "Full Sync requires a separate dedicated calendar and acknowledgement that unmatched events will be deleted.",
+      "calendar_full_sync_unsupported": "Full Sync requires a calendar that supports reading, creating and deleting events."
     }
   },
   "entity": {

@@ -1,7 +1,7 @@
 # Journal backend
 
 The backend records manual journal entries and observed playback from one
-selected HA player. API version is `1`; SQLite schema is `19` and JSON export
+selected HA player. API version is `1`; SQLite schema is `20` and JSON export
 format is `5`. The household reader and administrator [management panel](ui.md)
 use this API. Live subscriptions remain planned; administrator discovery and
 [household device controls](playback-controls.md) are implemented;
@@ -128,24 +128,25 @@ migration or calendar write is required. See
 
 ### Table responsibilities
 
-There are eighteen tables; a title version is stored once. Separate tables
-represent one-to-many/many-to-many relationships or transactional recovery, not
-separate copies of the same movie.
+A title version is stored once. Separate tables represent
+one-to-many/many-to-many relationships or transactional recovery, not separate
+copies of the same movie.
 
-| Tables                                              | Purpose                                                                                                           |
-| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `settings`                                          | Personal browsing values, shared hidden names and one-time inherited UI defaults; independently revisioned        |
-| `database_audit`                                    | Administrator database edit/delete attribution and affected field names/counts, without row content               |
-| `calendar_sync_jobs`, `calendar_sync_items`         | Explicit historical export attribution/progress and replay barriers, without copied event content                 |
-| `calendar_publications`                             | Durable one-attempt completion publishing state, target and configuration fingerprint; no copied event content    |
-| `library`                                           | One row per source/version; descriptive metadata JSON, detection/freshness, artwork reference and purchase date   |
-| `library_sources`                                   | Source namespace, catalog/collection freshness and revision                                                       |
-| `library_collections`, `library_memberships`        | Collections, including empty collections, and many-to-many title membership                                       |
-| `library_artwork`                                   | Deduplicated bounded file-cache index; image bytes live outside SQLite                                            |
-| `viewings`, `sessions`                              | Household viewing summaries and separate playback sessions/evidence; rewatches and resumptions are not title rows |
-| `schema_metadata`, `requests`                       | Dataset identity/revision and durable mutation deduplication                                                      |
-| `manual_audit`, `maintenance_audit`, `import_audit` | Distinct mutation attribution/retention rules; import counts cover both title and viewing merges                  |
-| `library_collection_intents`                        | Durable recovery for an external collection write with an uncertain result                                        |
+| Tables                                                                                   | Purpose                                                                                                           |
+| ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `settings`                                                                               | Personal browsing values, shared hidden names and one-time inherited UI defaults; independently revisioned        |
+| `database_audit`                                                                         | Administrator database edit/delete attribution and affected field names/counts, without row content               |
+| `calendar_sync_jobs`, `calendar_sync_items`                                              | Explicit historical export attribution/progress and replay barriers, without copied event content                 |
+| `calendar_managed_events`, `calendar_reconcile_candidates`, `calendar_reconcile_intents` | Dedicated-calendar UID links, delayed cleanup and durable Full Sync intents; no copied event content              |
+| `calendar_publications`                                                                  | Durable one-attempt completion publishing state, target and configuration fingerprint; no copied event content    |
+| `library`                                                                                | One row per source/version; descriptive metadata JSON, detection/freshness, artwork reference and purchase date   |
+| `library_sources`                                                                        | Source namespace, catalog/collection freshness and revision                                                       |
+| `library_collections`, `library_memberships`                                             | Collections, including empty collections, and many-to-many title membership                                       |
+| `library_artwork`                                                                        | Deduplicated bounded file-cache index; image bytes live outside SQLite                                            |
+| `viewings`, `sessions`                                                                   | Household viewing summaries and separate playback sessions/evidence; rewatches and resumptions are not title rows |
+| `schema_metadata`, `requests`                                                            | Dataset identity/revision and durable mutation deduplication                                                      |
+| `manual_audit`, `maintenance_audit`, `import_audit`                                      | Distinct mutation attribution/retention rules; import counts cover both title and viewing merges                  |
+| `library_collection_intents`                                                             | Durable recovery for an external collection write with an uncertain result                                        |
 
 Flattening memberships or sessions into title rows would duplicate titles or
 require rewriting shared arrays; combining receipts/cache state with movie
@@ -708,3 +709,11 @@ Schema 19 adds protected provider-cache JSON to Library. Scoped administrator
 credits augment Library detail/search projections without replacing source
 identities or raw metadata. See [enrichment](enrichment.md) and its security
 boundary for matching, request budgets, credential storage and opt-out behavior.
+
+Schema 20 adds opt-in
+[Full Sync](calendar.md#full-sync-for-a-dedicated-calendar). Administrator
+`calendar/status` includes maintenance state; `calendar/maintain` accepts
+`action: run|acknowledge`, saved `fingerprint`, and for acknowledgement
+`confirmation: ACKNOWLEDGE` plus `review_token` from status. Entity CRUD stays
+on the selected dedicated calendar, with age bounds, quarantine, stale-data
+checks, read-back and durable uncertainty barriers.

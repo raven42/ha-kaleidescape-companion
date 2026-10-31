@@ -38,6 +38,30 @@ export function draftFrom(record?: Viewing): Draft {
     raw_content_id: record?.raw_content_id ?? "",
   };
 }
+/** Move the end by the same elapsed interval; a manual end edit never moves start. */
+export function changeDraft(
+  draft: Draft,
+  field: keyof Draft,
+  value: string,
+  anchor: Pick<Draft, "started_at" | "ended_at"> = draft,
+): Draft {
+  const next = { ...draft, [field]: value };
+  if (field === "started_at") {
+    const start = new Date(value).getTime();
+    const oldStart = new Date(anchor.started_at).getTime();
+    const oldEnd = new Date(anchor.ended_at).getTime();
+    if (
+      value &&
+      anchor.ended_at &&
+      [start, oldStart, oldEnd].every(Number.isFinite)
+    )
+      next.ended_at = localDate(
+        new Date(start + oldEnd - oldStart).toISOString(),
+      );
+  }
+  return next;
+}
+
 export function draftData(
   draft: Draft,
   original?: Draft,

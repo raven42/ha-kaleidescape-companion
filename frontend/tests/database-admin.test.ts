@@ -196,7 +196,13 @@ it("stores database row counts, per-table sorts and system visibility separately
   await flush();
   root().querySelector<HTMLInputElement>('[name="show_system"]')!.click();
   await flush();
-  expect(root().querySelectorAll('[role="tab"]')).toHaveLength(18);
+  for (const table of [
+    "settings",
+    "calendar_managed_events",
+    "calendar_reconcile_candidates",
+    "calendar_reconcile_intents",
+  ])
+    expect(root().getElementById(`table-${table}`)).not.toBeNull();
   expect(transport.databasePreferences).toMatchObject({
     limit: 100,
     show_system: true,
@@ -208,7 +214,13 @@ it("stores database row counts, per-table sorts and system visibility separately
   expect(
     root().querySelector<HTMLSelectElement>('[name="database_limit"]')!.value,
   ).toBe("100");
-  expect(root().querySelectorAll('[role="tab"]')).toHaveLength(18);
+  for (const table of [
+    "settings",
+    "calendar_managed_events",
+    "calendar_reconcile_candidates",
+    "calendar_reconcile_intents",
+  ])
+    expect(root().getElementById(`table-${table}`)).not.toBeNull();
   root().querySelector<HTMLButtonElement>("#table-requests")!.click();
   await flush();
   expect(button("New Entry").disabled).toBe(true);

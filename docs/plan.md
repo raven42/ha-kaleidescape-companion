@@ -183,10 +183,12 @@ user/automation capability needs its own authorization contract.
   overlapping authenticated covers and compact movie/viewing details. Month
   reads are bounded and use exact Library links, independently of provider
   access. Next: an HA dashboard card using this local approach, with its own
-  scoped read/refresh lifecycle and operator layout review. Investigate explicit
-  provider reconciliation/republishing before allowing uncertain writes to be
-  retried; preserve household/admin boundaries without raw SQL or administrator
-  table access.
+  scoped read/refresh lifecycle and operator layout review.
+- Implemented: dedicated-calendar Full Sync with 1–12 month scope, daily
+  schedule, prompt Journal-change reconciliation, stable UID links, delayed
+  orphan cleanup, read-back and exact pending-set administrator recovery. Live
+  provider and browser validation remain operator work; keep uncertainty
+  barriers and age bounds when extending this feature.
 - Explore optional Gmail integration for publishing when movies were watched.
   Determine the intended workflow, authorization, and sharing details during
   design.

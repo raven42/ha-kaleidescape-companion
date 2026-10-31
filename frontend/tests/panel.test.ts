@@ -806,3 +806,23 @@ it("applies the Journal fuzzy toggle to search and an already-open New entry pic
       ?.fuzzy,
   ).toBe(false);
 });
+
+it("shifts the journal editor end when start changes and saves both atomically", async () => {
+  await selectViewing();
+  input("started_at", "2026-10-15T13:00:00");
+  input("ended_at", "2026-10-15T15:00:00");
+  input("started_at", "2026-10-12T19:00:00");
+  await settle();
+  expect(
+    panel.shadowRoot!.querySelector<HTMLInputElement>('[name="ended_at"]')!
+      .value,
+  ).toBe("2026-10-12T21:00");
+  await save();
+  const update = transport.calls.find((call) =>
+    call.type.endsWith("/journal/update"),
+  )!;
+  expect(update.patch).toMatchObject({
+    started_at: new Date("2026-10-12T19:00:00").toISOString(),
+    ended_at: new Date("2026-10-12T21:00:00").toISOString(),
+  });
+});

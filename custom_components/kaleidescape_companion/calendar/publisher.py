@@ -13,7 +13,7 @@ from ..core.security import async_finish_cleanup
 from ..library.config import origin
 from ..library.store import source_id
 from ..playback.metadata import metadata_text
-from .config import DEFAULTS, FIELDS, fingerprint, target, template
+from .config import DEFAULTS, FIELDS, fingerprint, scope, target, template
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -87,6 +87,9 @@ class CalendarPublisher:
         from .sync import JournalCalendarSync
 
         self.history = JournalCalendarSync(self)
+        from .maintenance import CalendarMaintenance
+
+        self.maintenance = CalendarMaintenance(self)
 
     async def async_start(self):
         enabled = self.config.get("calendar_enabled", False)
@@ -95,6 +98,8 @@ class CalendarPublisher:
         if enabled and selected:
             config = {
                 "target": selected,
+                "scope": scope(self.config),
+                "full_sync": self.maintenance.enabled,
                 "fingerprint": fingerprint(self.config),
                 "source": source_id(origin(self.config.get("library_host", "")))
                 if self.config.get("library_enabled")
@@ -102,6 +107,7 @@ class CalendarPublisher:
             }
         await self.repository.async_calendar_configure(config)
         if config:
+            self.maintenance.start()
             self.cancel = async_track_time_interval(
                 self.hass, self._tick, timedelta(seconds=10)
             )
@@ -136,6 +142,9 @@ class CalendarPublisher:
 
     async def _publish_one(self):
         if self.stopping or self.paused or not self.allowed():
+            return
+        if self.maintenance.enabled:
+            await self.maintenance.tick()
             return
         row = None
         state = "cancelled"
@@ -187,6 +196,7 @@ class CalendarPublisher:
 
     async def async_stop(self):
         self.stopping = True
+        self.maintenance.stop()
         if self.cancel:
             self.cancel()
         if self.running:

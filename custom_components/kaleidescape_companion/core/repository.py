@@ -760,6 +760,26 @@ class JournalRepository:
         configure(self._db(), config)
         self._calendar = config
 
+    async def async_calendar_maintenance(self, operation, *args):
+        return await self._call(self._calendar_maintenance, operation, *args)
+
+    def _calendar_maintenance(self, operation, *args):
+        from ..calendar.maintenance_store import dispatch
+
+        if operation not in {"status", "pending", "finish", "link"} and (
+            self._paused or self._export_active or self._import_active
+        ):
+            raise JournalError("busy", "Wait for the active backup/transfer")
+        if not self._calendar or not self._calendar.get("full_sync"):
+            raise JournalError("not_ready", "Full Sync is disabled")
+        db = self._db()
+        before = db.total_changes
+        result = dispatch(db, operation, self._calendar, *args)
+        if db.total_changes != before:
+            with db:
+                db.execute("UPDATE schema_metadata SET revision=revision+1")
+        return result
+
     async def async_calendar_claim(self):
         return await self._call(self._claim_calendar)
 

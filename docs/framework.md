@@ -167,6 +167,14 @@ are documented in [title matching](title-matching.md). Adding another import
 adapter still requires validated identities, scoped authorization and reviewed
 writes.
 
+## Dedicated calendar maintenance
+
+Optional Full Sync (schema 20) maintains a dedicated HA calendar, including
+Journal corrections and delayed deletion of unmatched entries. It has a 1–12
+month window, configurable daily time, UID links, read-back, two-pass cleanup
+and durable uncertainty recovery. See [calendar procedures](calendar.md).
+Automated entity tests pass; live provider/browser review remains pending.
+
 ## External metadata
 
 Optional store/TMDB enrichment is implemented with independent reusable parsers,

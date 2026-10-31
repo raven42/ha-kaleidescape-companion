@@ -60,10 +60,15 @@ class JournalCalendarSync:
             and p.hass.services.has_service("calendar", "get_events"),
             "fingerprint": fingerprint(p.config),
             "active": self.active,
+            "maintenance": await p.maintenance.status(),
         }
 
     async def start(self, request, actor, expected, authorized):
         p = self.publisher
+        if p.maintenance.enabled:
+            raise JournalError(
+                "not_ready", "Use Full Sync for the configured age window"
+            )
         if not authorized() or not p.allowed() or expected != fingerprint(p.config):
             raise JournalError(
                 "conflict", "Save/reload calendar settings before exporting"

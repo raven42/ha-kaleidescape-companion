@@ -176,7 +176,19 @@ export interface ControlResult {
   acknowledged: boolean;
   exact_version_confirmed: false;
 }
+export interface CalendarMaintenanceStatus {
+  enabled: boolean;
+  ready: boolean;
+  active: boolean;
+  uncertain: number;
+  quarantined: number;
+  review_token?: string;
+  last_success: string | null;
+  error: string;
+  counts: Record<string, number>;
+}
 export interface CalendarStatus {
+  maintenance?: CalendarMaintenanceStatus;
   enabled: boolean;
   ready: boolean;
   fingerprint: string;
@@ -1112,6 +1124,21 @@ export class JournalClient {
     pending: PreparedMutation,
   ): Promise<{ job_id: string; total: number }> {
     return this.call({ ...pending.message });
+  }
+  calendarMaintain(
+    scope: Scope,
+    action: "run" | "acknowledge",
+    fingerprint: string,
+    review_token = "",
+  ): Promise<CalendarMaintenanceStatus> {
+    return this.call({
+      type: `${DOMAIN}/calendar/maintain`,
+      ...scopeFields(scope),
+      action,
+      fingerprint,
+      review_token,
+      confirmation: action === "acknowledge" ? "ACKNOWLEDGE" : "",
+    });
   }
   calendarCancel(scope: Scope, job_id: string): Promise<CalendarStatus> {
     return this.call({

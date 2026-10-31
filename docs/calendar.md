@@ -36,13 +36,14 @@ exact version, distinguished by year/format. That selection updates the title,
 Library link and metadata together while preserving recorded timing, watched
 minutes and playback identifiers. Existing history can still receive timing or
 note corrections with Library disabled, but changing the movie requires Library
-access. **Delete entry** in that editor opens the normal confirmation; Keep
-entry returns to the editor. Confirming sets the viewing's deletion marker and
-hides it from Journal/calendar reads, retaining the stored row and session
-history for recovery. This action never permanently purges the record. Saving or
-deleting refreshes the current month. Household readers retain read-only
-details. Revision checks, unsaved-change guards and explicit retries after
-uncertain writes match the list editor.
+access. Changing start time shifts end time by the same elapsed interval;
+manually changing end time leaves start time alone. **Delete entry** opens the
+normal confirmation; its X returns to the editor. Confirming sets the viewing's
+deletion marker and hides it from Journal/calendar reads, retaining the stored
+row and session history for recovery. This action never permanently purges the
+record. Saving or deleting refreshes the current month. Household readers retain
+read-only details. Revision checks, unsaved-change guards and explicit retries
+after uncertain writes match the list editor.
 
 Title and person-name links open Library with a fresh search matching titles,
 actors and directors. Year, genre, rating and format links open Library with one
@@ -66,9 +67,9 @@ dismissal. Check the slider, Fit on five- and six-week months, and detail links
 replacing old Library criteria. Automated component tests do not establish
 rendered browser geometry.
 
-Also review Edit viewing, Cancel, Save, and Delete entry → Keep entry/Confirm
-deletion on fictional entries, including the nested confirmation and editor
-button alignment. Verify the removed viewing disappears from the month and that
+Also review Edit viewing, X, Save, and Delete entry → X/Confirm deletion on
+fictional entries, including the nested confirmation and editor button
+alignment. Verify the removed viewing disappears from the month and that
 household users have no edit action.
 
 ## Publish to an HA calendar
@@ -76,17 +77,20 @@ household users have no edit action.
 Enable **Add watched movies to calendar** in the integration's Configure options
 or Companion **Settings**. It is disabled by default. Select one existing HA
 calendar that supports creating events; read-only calendars cannot be used. The
-Companion Settings field suggests up to 100 currently writable calendar
-entities; the native HA form uses its calendar entity selector. Registered
-targets follow entity renames, without rebinding a deleted registry identity.
+default is create-only publishing. Full Sync, described below, additionally
+maintains completed Journal entries within a bounded age window. The Companion
+Settings field suggests up to 100 currently writable calendar entities; the
+native HA form uses its calendar entity selector. Registered targets follow
+entity renames, without rebinding a deleted registry identity.
 
-New completions, including manually added completed viewings and a partial
-viewing changed to completed, queue an event. Existing completed history,
-imports and ordinary corrections are not automatically backfilled. Use the
-explicit Journal export below for existing history. Calendar publishing does not
-mark a Library title Watched, change collections, or control playback. Library
-sync need not be enabled for automatic viewing titles/times to publish; Library
-metadata is included when an exact cached version can be resolved.
+In create-only mode, new completions, including manually added completed
+viewings and a partial viewing changed to completed, queue an event. Existing
+completed history, imports and ordinary corrections are not automatically
+backfilled. Use the explicit Journal export below for existing history. Calendar
+publishing does not mark a Library title Watched, change collections, or control
+playback. Library sync need not be enabled for automatic viewing titles/times to
+publish; Library metadata is included when an exact cached version can be
+resolved.
 
 Manual and observed viewings save the same bounded Library snapshot and version
 reference. Recording fills missing snapshot fields at checkpoints, including
@@ -124,10 +128,12 @@ entire repair. Request UUIDs retain the original actor-bound result after a lost
 response. Revisions change only for updated viewings; a protected content-free
 `database_audit` receipt records the action.
 
-Repairing metadata does **not** queue calendar writes or change existing events.
-The ordinary Journal export skips matching title/start/end events and does not
-refresh their descriptions. Correct already-created events in the calendar
-provider if their details need updating.
+Repairing metadata does **not** directly queue calendar writes. Full Sync will
+notice repaired Journal revisions and refresh managed descriptions. In
+create-only mode, existing events remain unchanged. The ordinary Journal export
+skips matching title/start/end events and does not refresh their descriptions.
+Correct already-created events in the calendar provider if their details need
+updating.
 
 ## Templates and event metadata
 
@@ -166,8 +172,8 @@ append JSON, dataset/viewing/version IDs, or artwork-cache references. Old
 templates containing `{artwork}` remain valid but that placeholder now renders
 blank. No credentials, signed image URLs, image bytes, notes, device origins,
 raw handles or filesystem paths are published. Descriptions are capped at 32
-KiB. Existing events are not rewritten; older exported descriptions may still
-contain the previous metadata block.
+KiB. In create-only mode, existing events are not rewritten; older descriptions
+may still contain the previous metadata block.
 
 The Journal month view reads the local database and exact linked Library
 version, using authenticated artwork access. A future dashboard card will use
@@ -204,22 +210,23 @@ it before retrying, even if an event exists.
 
 Changing/disabling calendar options cancels unsent receipts on reload. Deleted
 or no-longer-completed viewings are cancelled before dispatch. Already accepted
-external calls can finish after opt-out or a local edit/deletion. Local changes
-never update/delete an existing calendar event. Backup and unload drain accepted
-calendar work before closing/suspending storage; no service call is held open
-through a backup. These rules prefer avoiding duplicate writes over guaranteed
-delivery. Taking/reinstalling an older SQLite snapshot can lose newer receipts;
-review calendar contents before enabling publishing on a restored copy.
+external calls can finish after opt-out or a local edit/deletion. In create-only
+mode, local changes never update/delete an existing calendar event. Backup and
+unload drain accepted calendar work before closing/suspending storage; no
+service call is held open through a backup. These rules prefer avoiding
+duplicate writes over guaranteed delivery. Taking/reinstalling an older SQLite
+snapshot can lose newer receipts; review calendar contents before enabling
+publishing on a restored copy.
 
 ## Export existing Journal viewings
 
-Save the calendar settings first, then use **Settings → Export Journal to
-calendar → Sync all watched movies to calendar**. The confirmation displays the
-count and warns that changing the title format can produce duplicate events.
-Only completed, nondeleted Journal viewings are included; Library's Watched
-collection is not a substitute for session history. Imported completed viewings
-can be exported too. An unavailable calendar or missing event-lookup service
-prevents starting.
+With Full Sync disabled, save the calendar settings first, then use **Settings →
+Export Journal to calendar → Sync all watched movies to calendar**. The
+confirmation displays the count and warns that changing the title format can
+produce duplicate events. Only completed, nondeleted Journal viewings are
+included; Library's Watched collection is not a substitute for session history.
+Imported completed viewings can be exported too. An unavailable calendar or
+missing event-lookup service prevents starting.
 
 This administrator-only background job reads existing events with HA's fixed
 [calendar.get_events action](https://www.home-assistant.io/actions/calendar.get_events/).
@@ -259,6 +266,85 @@ purged automatically and count toward the database limit. A stale restored
 database or an external writer can still produce duplicates; this is not
 cross-provider exactly-once delivery.
 
+## Full Sync for a dedicated calendar
+
+Enable **Settings → Watched movies calendar → Full Sync** and acknowledge the
+dedicated-calendar warning, then save. Full Sync is disabled by default.
+**Assign its own separate calendar. Within the age window, events that do not
+match a completed, nondeleted database Journal entry will be permanently
+deleted.** Partial viewings are not calendar events. No live provider writes
+occur during development checks.
+
+Configure **Full Sync age window** to 1–12 whole months (default **3**) and
+**Daily sweep** in HA local time (default **03:00**). The rolling window uses
+calendar months, ending at the current instant. Older and future events stay
+outside maintenance. Recurring events are skipped, including their instances, to
+avoid deleting a series. The calendar must expose stable event UIDs and support
+reading, creation and deletion. When it also supports updating, edits keep the
+event UID; otherwise a verified replacement is created first and the old event
+enters normal deletion quarantine.
+
+A first pass runs after startup/reload. Completed Journal changes are checked
+about every ten seconds; the daily sweep also finds provider-side changes. **Run
+Full Sync now** requests another pass without changing the saved schedule. This
+mode replaces the create-only publisher/export for that target. Existing events
+are adopted by rendered title and UTC whole-second start/end instants; private
+UID links then identify them across title, interval and description edits.
+Changing a start in the shared Journal editor moves its end by the same elapsed
+interval. Manual end edits do not move the start.
+
+Descriptions always append **Maintained by Kaleidescape Companion via Home
+Assistant**, even with an empty description template. There are no appended
+internal IDs, metadata blocks or artwork references. Templates and sharing
+privacy otherwise follow the same rules as ordinary publishing.
+
+Unmatched events need **two successful scans** with the same
+Journal/configuration and unchanged event contents, at least **ten minutes**
+apart, before deletion. The grace period also triggers another scan without
+waiting for the daily sweep. Changed Journal data, changed event contents or
+settings restart the quarantine. Reads that fail, exceed bounds, lack UIDs or
+contain ambiguous IDs stop the pass; they are never treated as an empty
+calendar. Creates/updates must be read back before cleanup. A final narrow read
+checks each candidate before its UID is deleted, and
+Journal/settings/capabilities are rechecked before every write. Reads support at
+most 10,000 events / 8 MiB, the window at most 10,000 Journal rows, calls have
+30-second budgets and a pass five minutes. Viewing intervals over seven days
+stop the pass rather than authorizing cleanup.
+
+Schema **20** adds protected system tables: `calendar_managed_events` holds
+UID/viewing links, `calendar_reconcile_candidates` holds quarantine hashes and
+observation times, and `calendar_reconcile_intents` holds durable operation
+receipts. They contain no copied titles or event descriptions.
+Confirmed/reviewed receipts are pruned in batches when the 10,000-receipt limit
+is reached; unconfirmed intents are retained. These tables stay separate from
+Library and Journal facts and cannot be manually edited/deleted/imported.
+
+Before each external write, a `sending` intent commits. Timeout, failure,
+interruption or delayed read-back leaves an uncertain barrier; subsequent passes
+use reads to resolve it and never blindly replay it. No cleanup proceeds while
+uncertainty remains. Check **Full Sync status**, inspect the assigned calendar,
+then **Review unconfirmed writes → Check again**. Only after inspecting should
+an administrator choose **I inspected the calendar · acknowledge** to permit new
+attempts. That approval is bound to the exact pending set, so a stale dialog
+cannot acknowledge a newer failure. Provider visibility delays can still cause
+duplicates after explicit acknowledgement; quarantine subsequently handles
+unmatched duplicates. Generic HA APIs cannot prove that a provider never
+silently truncates results or guarantee cross-provider exactly-once delivery.
+
+Backup/unload stops new work and drains accepted writes before pausing SQLite.
+Disabling/changing options revokes unstarted writes; already accepted calls can
+finish. Errors use a five-minute retry delay and safe status text, without
+logging provider messages or event contents. The single publisher lock
+serializes maintenance and all other calendar work.
+
+Operator review: use a disposable dedicated calendar. Verify the bold warning,
+required acknowledgement, 1–12 month limits and schedule; create/edit/delete a
+fictional completed viewing, confirm its maintenance note, then add an unrelated
+event within the window and check it survives initial scans but disappears after
+the grace period. Verify older, future and recurring events remain. Check
+unavailable-calendar recovery and uncertainty review without a duplicate send.
+Automated tests use simulated HA entities; no live calendar has been modified.
+
 ## Verification and next steps
 
 Automated tests use temporary SQLite and a simulated HA calendar action, never a
@@ -270,7 +356,7 @@ fictional history twice and confirm the second run matches events; verify
 description templates and the format-change warning. This operator check is
 still needed; no live calendar was used to implement the feature.
 
-Planned: an HA dashboard card for the Journal month view and explicit provider
-event reconciliation/edit/delete workflows. Gmail or other sharing connectors
-need a separate authorization and privacy design; they are not implemented by
-this feature.
+Planned: an HA dashboard card for the Journal month view. Dedicated-calendar
+reconciliation/edit/delete is implemented as Full Sync above. Gmail or other
+sharing connectors need a separate authorization and privacy design; they are
+not implemented by this feature.

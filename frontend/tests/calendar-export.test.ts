@@ -119,3 +119,78 @@ it("ignores late status responses after account/scope changes", async () => {
   await element!.updateComplete;
   expect(root.textContent).not.toContain("999");
 });
+
+it("uses Full Sync controls and binds inspection acknowledgement to the reviewed attempts", async () => {
+  const { root, client, transport } = await mount();
+  vi.mocked(client.calendarStatus).mockResolvedValue({
+    enabled: true,
+    ready: true,
+    fingerprint: "full-fingerprint",
+    active: false,
+    completed_viewings: 42,
+    job: null,
+    maintenance: {
+      enabled: true,
+      ready: true,
+      active: false,
+      uncertain: 1,
+      quarantined: 3,
+      review_token: "pending-attempts",
+      last_success: null,
+      error: "Review the calendar",
+      counts: {},
+    },
+  });
+  const maintain = vi.spyOn(client, "calendarMaintain").mockResolvedValue({
+    enabled: true,
+    ready: true,
+    active: false,
+    uncertain: 0,
+    quarantined: 3,
+    last_success: null,
+    error: "",
+    counts: {},
+  });
+  button(root, "Refresh export status").click();
+  await vi.waitFor(() =>
+    expect(root.textContent).toContain("Run Full Sync now"),
+  );
+  expect(root.textContent).not.toContain("Sync all watched movies to calendar");
+  button(root, "Run Full Sync now").click();
+  await vi.waitFor(() =>
+    expect(maintain).toHaveBeenCalledWith(info, "run", "full-fingerprint", ""),
+  );
+  await vi.waitFor(() =>
+    expect(button(root, "Review unconfirmed writes").disabled).toBe(false),
+  );
+  button(root, "Review unconfirmed writes").click();
+  await element!.updateComplete;
+  expect(root.querySelector("dialog")!.open).toBe(true);
+  expect(root.querySelector('.card-head [aria-label="Close"]')).not.toBeNull();
+  button(root, "I inspected the calendar · acknowledge").click();
+  await vi.waitFor(() =>
+    expect(maintain).toHaveBeenCalledWith(
+      info,
+      "acknowledge",
+      "full-fingerprint",
+      "pending-attempts",
+    ),
+  );
+  expect(
+    transport.calls.some((call) => call.type.endsWith("calendar/sync")),
+  ).toBe(false);
+});
+
+it("reloads saved calendar mode after settings are saved without leaving the page", async () => {
+  const { client } = await mount();
+  const before = vi.mocked(client.calendarStatus).mock.calls.length;
+  element!.disabled = true;
+  await element!.updateComplete;
+  element!.disabled = false;
+  await element!.updateComplete;
+  await vi.waitFor(() =>
+    expect(vi.mocked(client.calendarStatus).mock.calls.length).toBeGreaterThan(
+      before,
+    ),
+  );
+});

@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 
 
 def enqueue(db, viewing_id, config):
-    if not config:
+    if not config or config.get("full_sync"):
         return
     db.execute(
         """INSERT OR IGNORE INTO calendar_publications

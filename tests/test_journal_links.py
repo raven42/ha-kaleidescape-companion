@@ -85,6 +85,9 @@ class JournalLinksTest(unittest.IsolatedAsyncioTestCase):
                 db.execute("DROP INDEX viewings_library_title")
                 db.execute("DROP TABLE playback_controls")
                 db.execute("ALTER TABLE library DROP COLUMN enrichment")
+                db.execute("DROP TABLE calendar_managed_events")
+                db.execute("DROP TABLE calendar_reconcile_candidates")
+                db.execute("DROP TABLE calendar_reconcile_intents")
                 db.execute("PRAGMA user_version=16")
 
         await self.repository._call(old_schema)

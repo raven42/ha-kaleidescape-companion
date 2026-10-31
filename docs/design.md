@@ -364,3 +364,10 @@ enforcement and worker-only persistence live in `enrichment/`. Schema 19 keeps
 provider cache JSON on Library versions, shared within source groups, separate
 from raw scan data. Existing identities/relationships and private purchase
 projections remain authoritative. See [enrichment](enrichment.md).
+
+Calendar Full Sync uses `calendar/maintenance.py` for bounded reconciliation,
+`calendar/entity.py` for the fixed HA entity contract, and
+`calendar/maintenance_store.py` for worker-only UID links, quarantine and
+intents. It shares the publisher lock/lifecycle; Journal facts remain
+authoritative. See [Full Sync](calendar.md#full-sync-for-a-dedicated-calendar)
+for age, schedule, read-back and recovery boundaries.

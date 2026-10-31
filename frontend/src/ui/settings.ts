@@ -10,6 +10,7 @@ import type {
 } from "../core/api";
 import { styles } from "./styles";
 import { collectionLabel } from "../library/badges";
+import { fullSyncSettings } from "./calendar-settings";
 import "./calendar-export";
 import { CalendarExport } from "./calendar-export";
 import "./metadata-repair";
@@ -69,6 +70,8 @@ const libraryChecks = [
 ];
 const booleanFields = new Set([
   "calendar_enabled",
+  "calendar_full_sync",
+  "calendar_full_sync_dedicated",
   "tracking_enabled",
   "library_enabled",
   "control_enabled",
@@ -79,6 +82,12 @@ const booleanFields = new Set([
   ...libraryChecks.map(([key]) => key),
 ]);
 const validation: Record<string, string> = {
+  invalid_calendar_full_sync:
+    "Use 1–12 whole months and a daily time in HH:MM format.",
+  calendar_dedicated_required:
+    "Acknowledge that Full Sync uses a separate calendar and deletes unmatched events.",
+  calendar_full_sync_unsupported:
+    "Full Sync requires a calendar with event creation and deletion support.",
   invalid_calendar:
     "Choose an existing calendar that supports creating events.",
   invalid_calendar_template:
@@ -313,6 +322,8 @@ export class KaleidescapeSettings extends LitElement {
       if (type === "number") data[key] = Number(data[key]);
     }
     data.library_host = String(data.library_host ?? "");
+    if (data.calendar_full_sync_months !== undefined)
+      data.calendar_full_sync_months = Number(data.calendar_full_sync_months);
     if (!data.calendar_entity) delete data.calendar_entity;
     try {
       const result = await this.client.settings(this.scope, "submit", {
@@ -553,6 +564,7 @@ export class KaleidescapeSettings extends LitElement {
                                       calendar_entity: (
                                         event.target as HTMLInputElement
                                       ).value,
+                                      calendar_full_sync_dedicated: false,
                                     };
                                   }} /></label
                               ><label class="full"
@@ -597,7 +609,11 @@ export class KaleidescapeSettings extends LitElement {
                               {started_at}, {ended_at}, {watched}. Duration and
                               watched time are minutes; missing values are
                               blank. Use double braces for literal braces.
-                            </p>`
+                            </p>
+                            ${fullSyncSettings(this.draft, (patch) => {
+                              this.draft = { ...this.draft, ...patch };
+                              this.requestUpdate();
+                            })}`
                         : nothing
                     }
                     <kaleidescape-calendar-export

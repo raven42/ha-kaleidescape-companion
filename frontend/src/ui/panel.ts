@@ -12,7 +12,7 @@ import type {
   SessionPage,
   Viewing,
 } from "../core/api";
-import { draftData, draftFrom, renderDraftFields } from "./editor";
+import { changeDraft, draftData, draftFrom, renderDraftFields } from "./editor";
 import type { Draft } from "./editor";
 import { manualDraft, manualData } from "./manual-viewing";
 import type { ManualDraft } from "./manual-viewing";
@@ -412,6 +412,7 @@ export class KaleidescapePanel extends LitElement {
         return;
       this.selected = record;
       this.draft = this.initial = null;
+      this.timingAnchor = undefined;
       this.detailLoading = false;
       this.requestUpdate();
       try {
@@ -435,6 +436,7 @@ export class KaleidescapePanel extends LitElement {
     }
   }
   private closeEditor() {
+    this.timingAnchor = undefined;
     this.renderRoot
       .querySelectorAll<HTMLDialogElement>("dialog")
       .forEach((dialog) => dialog.close());
@@ -476,12 +478,25 @@ export class KaleidescapePanel extends LitElement {
       picker?.shadowRoot?.querySelector<HTMLInputElement>("input")?.focus();
     });
   }
+  private timingAnchor?: Pick<Draft, "started_at" | "ended_at">;
   private input(field: keyof Draft, event: Event) {
     if (!this.draft) return;
-    this.draft = {
-      ...this.draft,
-      [field]: (event.target as HTMLInputElement).value,
-    };
+    this.draft = changeDraft(
+      this.draft,
+      field,
+      (event.target as HTMLInputElement).value,
+      this.timingAnchor ?? this.draft,
+    );
+    if (Number.isFinite(new Date(this.draft.started_at).getTime()))
+      this.timingAnchor = {
+        started_at: this.draft.started_at,
+        ended_at: this.draft.ended_at,
+      };
+    else if (field === "ended_at" && this.timingAnchor)
+      this.timingAnchor = {
+        ...this.timingAnchor,
+        ended_at: this.draft.ended_at,
+      };
     this.requestUpdate();
   }
   private async save(event: Event) {
@@ -736,6 +751,10 @@ export class KaleidescapePanel extends LitElement {
   private editRecord() {
     if (!this.selected || this.pending || this.saving) return;
     this.draft = draftFrom(this.selected);
+    this.timingAnchor = {
+      started_at: this.draft.started_at,
+      ended_at: this.draft.ended_at,
+    };
     this.editMovieId = null;
     this.editTitleTouched = false;
     this.initial = { ...this.draft };

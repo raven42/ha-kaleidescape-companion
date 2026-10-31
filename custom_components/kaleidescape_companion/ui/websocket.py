@@ -154,6 +154,13 @@ def async_register_commands(hass: HomeAssistant) -> None:
             p.Required("fingerprint"): str,
             p.Required("confirmation"): str,
         },
+        "calendar/maintain": {
+            **scoped,
+            p.Required("action"): p.In(["run", "acknowledge"]),
+            p.Required("fingerprint"): str,
+            p.Optional("confirmation", default=""): str,
+            p.Optional("review_token", default=""): str,
+        },
         "calendar/cancel": {**scoped, p.Required("job_id"): str},
         "settings/submit": {
             **scoped,
@@ -533,6 +540,37 @@ async def async_handle(
                         result = await repository.async_metadata_repair(
                             library.source, msg["request_id"], user.id, msg["token"]
                         )
+                case "calendar/maintain":
+                    if runtime.calendar is None:
+                        raise JournalError("not_ready", "Calendar is not loaded")
+                    if (
+                        msg["action"] == "acknowledge"
+                        and msg["confirmation"] != "ACKNOWLEDGE"
+                    ):
+                        raise JournalError(
+                            "invalid_request",
+                            "Confirm calendar inspection before another attempt",
+                        )
+
+                    def authorized():
+                        return (
+                            is_active_admin(user)
+                            and runtime.ready
+                            and getattr(
+                                hass.config_entries.async_get_entry(msg["entry_id"]),
+                                "runtime_data",
+                                None,
+                            )
+                            is runtime
+                        )
+
+                    result = await runtime.calendar.maintenance.action(
+                        msg["action"],
+                        msg["fingerprint"],
+                        user.id,
+                        authorized,
+                        msg["review_token"],
+                    )
                 case "calendar/status" | "calendar/sync" | "calendar/cancel":
                     if runtime.calendar is None:
                         raise JournalError(

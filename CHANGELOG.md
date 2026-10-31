@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased — Dedicated calendar Full Sync
+
+- Add disabled-by-default calendar maintenance with a required
+  dedicated-calendar acknowledgement, bold deletion warning, 1–12 month window
+  and daily schedule.
+- Reconcile Journal edits promptly; update linked events or verify a
+  replacement, then quarantine unmatched events before deletion. Add schema 20
+  UID links, hashes and durable write intents with explicit uncertainty
+  recovery.
+- Shift end time with Journal start-time edits while keeping end edits
+  independent.
+- Add fictional entity/API/UI regressions and operator procedures. No live
+  calendar writes or deployment performed.
+
 ## Unreleased — Modal consistency and provider API organization
 
 - Add space below movie actions and align Play/Power On and Collection heights.

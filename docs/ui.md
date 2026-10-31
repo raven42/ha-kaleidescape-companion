@@ -524,3 +524,9 @@ popups, viewing/database editors, imports/exports and calendar export. Check the
 X placement, right-aligned commit actions, scrolling and tablet spacing. Verify
 that closing a dirty draft requests discard review and that pending writes still
 block dismissal. Automated DOM tests do not establish browser geometry.
+
+Full Sync controls live in Settings beside calendar templates. They require a
+separate-calendar acknowledgement, display a bold deletion warning, constrain
+age to 1–12 months and offer a daily HA-local sweep time. Saved status provides
+Run Full Sync now and guarded inspection recovery. Journal's shared edit dialog
+moves end time by the start-time delta; end edits never move start.

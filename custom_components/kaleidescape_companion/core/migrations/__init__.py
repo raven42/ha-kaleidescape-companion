@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from ..security import private_file
 
-SCHEMA_VERSION = 19
+SCHEMA_VERSION = 20
 
 MIGRATIONS = {
     1: (
@@ -343,6 +343,23 @@ MIGRATIONS[18] = (
 
 MIGRATIONS[19] = (
     "ALTER TABLE library ADD COLUMN enrichment TEXT NOT NULL DEFAULT '{}'",
+)
+
+
+MIGRATIONS[20] = (
+    """CREATE TABLE calendar_managed_events (
+        scope TEXT NOT NULL,viewing_id TEXT NOT NULL,uid TEXT NOT NULL,
+        PRIMARY KEY(scope,viewing_id),UNIQUE(scope,uid))""",
+    """CREATE TABLE calendar_reconcile_candidates (
+        scope TEXT NOT NULL,uid TEXT NOT NULL,digest TEXT NOT NULL,
+        signature TEXT NOT NULL,first_seen TEXT NOT NULL,last_seen TEXT NOT NULL,
+        observations INTEGER NOT NULL,PRIMARY KEY(scope,uid))""",
+    """CREATE TABLE calendar_reconcile_intents (
+        request_id TEXT PRIMARY KEY,scope TEXT NOT NULL,operation TEXT NOT NULL,
+        viewing_id TEXT,uid TEXT,digest TEXT NOT NULL,state TEXT NOT NULL,
+        created_at TEXT NOT NULL,updated_at TEXT NOT NULL,reviewed_by TEXT)""",
+    "CREATE INDEX calendar_reconcile_pending "
+    "ON calendar_reconcile_intents(scope,state)",
 )
 
 

@@ -2,13 +2,22 @@
 
 import hashlib
 import json
+import re
 from string import Formatter
 
 from homeassistant.components.calendar import CalendarEntityFeature
 from homeassistant.helpers import entity_registry as er
 
+FULL_SYNC_FEATURES = (
+    CalendarEntityFeature.CREATE_EVENT | CalendarEntityFeature.DELETE_EVENT
+)
+
 DEFAULTS = {
     "calendar_enabled": False,
+    "calendar_full_sync": False,
+    "calendar_full_sync_dedicated": False,
+    "calendar_full_sync_months": 3,
+    "calendar_full_sync_time": "03:00",
     "calendar_title": "Watched: {title}",
     "calendar_description": (
         "Watched {title} ({year})\nStarted: {started_at}\nEnded: {ended_at}\n"
@@ -100,6 +109,32 @@ def validate(hass, values, previous):
             empty=True,
         ),
     }
+    for key in ("calendar_full_sync", "calendar_full_sync_dedicated"):
+        value = values.get(key, previous.get(key, DEFAULTS[key]))
+        if type(value) is not bool:
+            raise ValueError("invalid_calendar_full_sync")
+        result[key] = value
+    months = values.get(
+        "calendar_full_sync_months", previous.get("calendar_full_sync_months", 3)
+    )
+    clock = values.get(
+        "calendar_full_sync_time", previous.get("calendar_full_sync_time", "03:00")
+    )
+    if (
+        type(months) not in (int, float)
+        or not 1 <= months <= 12
+        or months != int(months)
+        or not isinstance(clock, str)
+        or not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", clock)
+    ):
+        raise ValueError("invalid_calendar_full_sync")
+    result.update(calendar_full_sync_months=int(months), calendar_full_sync_time=clock)
+    if (
+        enabled
+        and result["calendar_full_sync"]
+        and not result["calendar_full_sync_dedicated"]
+    ):
+        raise ValueError("calendar_dedicated_required")
     if "calendar_entity" in previous:
         result["calendar_entity"] = previous["calendar_entity"]
     selected = values.get("calendar_entity") or target(hass, previous)
@@ -118,6 +153,10 @@ def validate(hass, values, previous):
         )
     ):
         raise ValueError("invalid_calendar")
+    if enabled and result["calendar_full_sync"] and state:
+        features = int(state.attributes.get("supported_features", 0))
+        if features & FULL_SYNC_FEATURES != FULL_SYNC_FEATURES:
+            raise ValueError("calendar_full_sync_unsupported")
     result["calendar_entity"] = {
         "entity_id": selected,
         "registry_id": registered.id if registered else None,
@@ -132,3 +171,9 @@ def fingerprint(config):
             sort_keys=True,
         ).encode()
     ).hexdigest()
+
+
+def scope(config):
+    """Stable calendar identity across template changes and registry renames."""
+    ref = config.get("calendar_entity", {})
+    return ref.get("registry_id") or ref.get("entity_id")

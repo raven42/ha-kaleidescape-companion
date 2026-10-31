@@ -206,6 +206,9 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
             ):
                 db.execute(f"ALTER TABLE library_titles DROP COLUMN {column}")
             db.execute("DROP TABLE playback_controls")
+            db.execute("DROP TABLE calendar_managed_events")
+            db.execute("DROP TABLE calendar_reconcile_candidates")
+            db.execute("DROP TABLE calendar_reconcile_intents")
             db.execute("PRAGMA user_version=9")
             db.commit()
         self.repository = JournalRepository(self.path)

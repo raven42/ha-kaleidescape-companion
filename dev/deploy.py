@@ -41,6 +41,9 @@ REQUIRED = {
     "enrichment/store.py",
     "enrichment/sync.py",
     "playback/now_playing.py",
+    "calendar/entity.py",
+    "calendar/maintenance.py",
+    "calendar/maintenance_store.py",
 }
 
 # Only a locally constructed runtime archive is ever sent to this script.

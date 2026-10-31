@@ -142,6 +142,26 @@ def form(hass: HomeAssistant, config: dict) -> p.Schema:
             ),
         )
     ] = selector.TextSelector(selector.TextSelectorConfig(multiline=True))
+    for key in ("calendar_full_sync", "calendar_full_sync_dedicated"):
+        properties[p.Required(key, default=config.get(key, CALENDAR_DEFAULTS[key]))] = (
+            selector.BooleanSelector()
+        )
+    properties[
+        p.Required(
+            "calendar_full_sync_months",
+            default=config.get("calendar_full_sync_months", 3),
+        )
+    ] = selector.NumberSelector(
+        selector.NumberSelectorConfig(
+            min=1, max=12, step=1, mode=selector.NumberSelectorMode.BOX
+        )
+    )
+    properties[
+        p.Required(
+            "calendar_full_sync_time",
+            default=config.get("calendar_full_sync_time", "03:00"),
+        )
+    ] = selector.TextSelector()
     choices = {"": "No default player selected"}
     for entry in hass.config_entries.async_entries(DOMAIN):
         controls = getattr(getattr(entry, "runtime_data", None), "controls", None)

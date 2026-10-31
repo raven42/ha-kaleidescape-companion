@@ -49,3 +49,10 @@ window explicitly; deployment and device tests are not part of the check task.
 See the [development guide](../docs/development.md),
 [security policy](../docs/security.md), and
 [controls guide](../docs/playback-controls.md).
+
+`test_calendar_maintenance` uses fictional HA calendar entities for Full Sync,
+including UID-preserving edits, replacement before deletion, age/recurrence
+bounds, failed/malformed reads, quarantine, stale data, restart uncertainty,
+worker guards and administrator access. UI tests cover shared time shifting,
+dedicated-calendar warnings, saved mode refresh and pending-set review tokens.
+No provider calendars are read or changed by these checks.
