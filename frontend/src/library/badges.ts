@@ -80,19 +80,25 @@ export function renderFormatBadges(
         >`;
   });
 }
-export function renderStatusBadges(row: LibrarySummary, flags = false) {
-  return statusBadges(row).map(
-    (badge) =>
-      html`<span
-        class=${flags ? `cover-flag flag-${badge.key}` : `status-badge flag-${badge.key}`}
-        title=${badge.label}
-        aria-label=${badge.label}
-        role="img"
-        ><span class="badge-symbol" aria-hidden="true"
-          >${flags ? badge.symbol : badge.key === "recent" ? "✦" : badge.symbol}</span
-        >${flags ? "" : ` ${badge.label}`}</span
-      >`,
-  );
+export function renderStatusBadges(
+  row: LibrarySummary,
+  flags = false,
+  exclude: readonly string[] = [],
+) {
+  return statusBadges(row)
+    .filter((badge) => !exclude.includes(badge.key))
+    .map(
+      (badge) =>
+        html`<span
+          class=${flags ? `cover-flag flag-${badge.key}` : `status-badge flag-${badge.key}`}
+          title=${badge.label}
+          aria-label=${badge.label}
+          role="img"
+          ><span class="badge-symbol" aria-hidden="true"
+            >${flags ? badge.symbol : badge.key === "recent" ? "✦" : badge.symbol}</span
+          >${flags ? "" : ` ${badge.label}`}</span
+        >`,
+    );
 }
 
 export function renderRatingBadge(

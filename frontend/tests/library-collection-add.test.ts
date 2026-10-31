@@ -35,7 +35,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 async function choose() {
-  button("Add to Collection…").click();
+  button("Collection").click();
   await vi.waitFor(() =>
     expect(root().querySelectorAll("option")).toHaveLength(2),
   );
@@ -142,7 +142,7 @@ it("ignores a cancelled target lookup and never mounts label markup", async () =
       done = resolve;
     }),
   );
-  button("Add to Collection…").click();
+  button("Collection").click();
   await flush();
   button("Cancel").click();
   await flush();

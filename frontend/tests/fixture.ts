@@ -17,7 +17,7 @@ export const info: JournalInfo = {
   entry_id: "fixture-entry",
   dataset_id: "a323bd20-1b55-4562-87b0-9999944759f3",
   api_version: 1,
-  schema_version: 17,
+  schema_version: 18,
   library_enabled: false,
   revision: 5,
   viewing_count: 3,
@@ -160,6 +160,10 @@ export class FixtureTransport implements Transport {
   trackingEnabled = true;
   deletedRecords: Viewing[] = [];
   options: Record<string, string | number | boolean | string[]> = {
+    control_enabled: false,
+    control_allow_launch: false,
+    control_host: "",
+    control_player: "",
     calendar_enabled: false,
     calendar_title: "Watched: {title}",
     calendar_description: "Watched {title} · {watched} minutes",
@@ -277,6 +281,25 @@ export class FixtureTransport implements Transport {
             },
           },
         ],
+      };
+    else if (operation === "control/info")
+      result = {
+        enabled: !!this.options.control_enabled,
+        allow_launch: !!this.options.control_allow_launch,
+        default_player: this.options.control_player,
+        players: this.options.control_player
+          ? [
+              {
+                id: this.options.control_player,
+                name: "Example Cinema",
+                model: "Fictional player",
+              },
+            ]
+          : [],
+        can_manage: true,
+        blocked_players: [],
+        devices: [],
+        pending: [],
       };
     else if (operation === "library/purchases/summary")
       result = { ...this.purchaseTotals, revision: this.revision };

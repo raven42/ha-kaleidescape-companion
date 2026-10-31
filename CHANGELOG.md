@@ -1,5 +1,35 @@
 # Changelog
 
+## Unreleased — Household playback and combined movie details
+
+- Share opted-in playback with all active HA users and send commands directly
+  from their clicks, retaining automatic preflight and durable no-replay
+  receipts. Keep discovery, settings, purchase details and uncertain-command
+  recovery administrator-only; hide network inventory and other actors'
+  receipts.
+- Add a per-dialog/card player picker and private seed-bound discovery cache
+  restored without connecting to devices. Preserve the shared default and
+  Journal sources. Add Now Playing controls to the household reader.
+- Combine Library title/badge/actions and poster/synopsis/linked-credit details
+  in a responsive dialog, retaining version tabs and expandable record details.
+  Put Play Movie, Choose Player and administrator Collection actions together.
+- Add permission, privacy, target selection, cache and single-click regressions;
+  update the security policy and operator/browser review instructions.
+
+## Unreleased — Companion device discovery and controls
+
+- Bundle a generated runtime-only copy of the independent API, with freshness
+  checks and isolated deployment imports; keep its CLI and project independent.
+- Add off-by-default administrator discovery, a serial-based default player,
+  transport/navigation/power controls and separately enabled experimental
+  Library-version playback. Preserve the built-in HA entities and recorder.
+- Add live identity/content/state checks, explicit interruption review and
+  schema 18 actor-bound command receipts. Uncertain sends block further writes
+  until physical review; retries retrieve outcomes without replay.
+- Cover authorization, opt-outs, stale state, uncertainty/restart, standby,
+  backup and UI recovery with fictional peers. Real HA/browser/device review
+  remains operator work; no deployment or device commands run during checks.
+
 ## Unreleased — Official protocol library and experimental extensions
 
 - Audit the independent API's source/docs and add bugbear/async linting,

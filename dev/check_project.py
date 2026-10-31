@@ -9,6 +9,11 @@ import tomllib
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
+if __package__:
+    from .vendor_utils import synchronize
+else:
+    from vendor_utils import synchronize
+
 ROOT = Path(__file__).resolve().parents[1]
 DOMAIN = "kaleidescape_companion"
 NAME = "Kaleidescape Companion"

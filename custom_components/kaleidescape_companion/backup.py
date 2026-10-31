@@ -9,6 +9,8 @@ async def async_pre_backup(hass: HomeAssistant) -> None:
     """Drain accepted operations; later writes return backup_in_progress."""
     for _, runtime in loaded_runtimes(hass):
         try:
+            if runtime.controls:
+                await runtime.controls.async_pause()
             if runtime.calendar:
                 await runtime.calendar.async_pause()
             if runtime.library:
@@ -18,6 +20,8 @@ async def async_pre_backup(hass: HomeAssistant) -> None:
             await runtime.repository.async_pause()
         except BaseException:
             await runtime.repository.async_resume()
+            if runtime.controls:
+                await runtime.controls.async_resume()
             if runtime.observer:
                 await runtime.observer.async_resume()
             if runtime.library:
@@ -31,6 +35,8 @@ async def async_post_backup(hass: HomeAssistant) -> None:
     """Resume after HA completes or fails its backup."""
     for _, runtime in loaded_runtimes(hass):
         await runtime.repository.async_resume()
+        if runtime.controls:
+            await runtime.controls.async_resume()
         if runtime.observer:
             await runtime.observer.async_resume()
         if runtime.library:

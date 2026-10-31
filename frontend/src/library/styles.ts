@@ -301,6 +301,126 @@ export const libraryStyles = css`
   .library-dialog .playback-layout {
     padding: 24px 0 0;
   }
+  .movie-dialog {
+    width: min(1080px, calc(100% - 32px));
+    padding: clamp(18px, 3vw, 32px);
+    border-radius: 22px;
+    background: var(--primary-background-color, #f5f7f6);
+  }
+  .movie-heading {
+    display: flex;
+    align-items: start;
+    gap: 20px;
+  }
+  .movie-heading h2 {
+    flex: 1;
+    margin: 0;
+    font-size: clamp(25px, 3.2vw, 38px);
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+  }
+  .movie-heading .detail-link {
+    font: inherit;
+    text-align: left;
+    color: inherit;
+    padding: 0;
+  }
+  .movie-close {
+    display: grid;
+    place-items: center;
+    flex: 0 0 36px;
+    min-height: 36px;
+    padding: 6px;
+    background: transparent;
+    border: 0;
+    color: var(--muted);
+  }
+  .movie-close svg {
+    width: 24px;
+    height: 24px;
+  }
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .movie-summary {
+    margin: 12px 0 16px;
+    color: var(--muted);
+  }
+  .movie-heading-badges {
+    margin-bottom: 20px;
+  }
+  .movie-status {
+    border-radius: 999px;
+    min-height: 28px;
+    padding: 2px 12px;
+    background: var(--surface);
+  }
+  .movie-version-count {
+    margin: 14px 0;
+    font-size: 12px;
+  }
+  .movie-dialog .movie-body {
+    grid-template-columns: minmax(150px, 230px) minmax(0, 1fr);
+    align-items: start;
+    padding: clamp(16px, 2vw, 24px);
+    gap: clamp(18px, 3vw, 28px);
+    background: var(--surface);
+    border-radius: 18px;
+  }
+  .movie-poster {
+    width: 100%;
+    border-radius: 14px;
+  }
+  .movie-description {
+    min-width: 0;
+  }
+  .movie-description h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 550;
+  }
+  .movie-synopsis {
+    margin: 14px 0 18px;
+  }
+  .movie-description hr {
+    border: 0;
+    border-top: 1px solid var(--line);
+    margin: 24px 0;
+  }
+  .movie-credits {
+    margin: 0;
+    display: grid;
+    gap: 18px;
+  }
+  .movie-credits dt {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .movie-credits dd {
+    margin: 0;
+    line-height: 1.7;
+  }
+  .movie-record-details {
+    font-size: 12px;
+  }
+  @media (max-width: 600px) {
+    .movie-dialog .movie-body {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .movie-poster {
+      width: min(170px, 55%);
+      justify-self: center;
+    }
+  }
   .facet-groups {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));

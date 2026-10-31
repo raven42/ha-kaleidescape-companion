@@ -78,7 +78,7 @@ it("uses landing defaults only without an allowed URL tab and restricts reader/d
   expect(landingPage("library", true, true)).toBe("settings");
   expect(landingPage("database", false, true)).toBe("journal");
   rememberPage("library");
-  expect(landingPage("now-playing", false, false)).toBe("journal");
+  expect(landingPage("now-playing", false, false)).toBe("now-playing");
   history.replaceState(null, "", "/?companion_page=javascript:alert(1)");
   expect(landingPage("journal", true, true)).toBe("journal");
 });

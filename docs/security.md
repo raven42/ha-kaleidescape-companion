@@ -14,16 +14,16 @@ diagnostics.
 
 ## Trust boundaries
 
-| Boundary                                 | Policy and limitation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Browser → integration API                | Active authenticated HA users may read the shared household viewing summary and enabled cached Library metadata/artwork. Journal/catalog mutations, notes/source/session details, Now Playing, exports and shared UI preferences require an active administrator. Active users may read/write only their own browsing preferences. Now Playing also checks read permission on the configured source entities. Dataset IDs select data; they are not credentials.                                       |
-| Integration → HA                         | Custom integrations execute in Core's process with Core's filesystem, entity, credential, and network access. Entity selection is application behavior, not a sandbox. Other code running as HA can read this database.                                                                                                                                                                                                                                                                                |
-| HA users → one another                   | All active users share one household journal; there is no personal watch history or per-user journal ownership. Personal browsing preferences are scoped to authenticated HA user IDs, with shared hidden collection names managed by administrators. A positive field allowlist limits regular-user API responses. HA roles are not strong isolation between hostile authenticated users.                                                                                                             |
-| Journal/Library → HA entity states       | History/Library sensor states and attributes deliberately expose movie titles, times, counts and storage sizes through HA entity access. Recorder, dashboards, automations, and backups can retain these values outside the private database. Notes, source identities, sessions, and audit actors must never enter sensors.                                                                                                                                                                           |
-| HA → devices and services                | Observation reads selected HA states. Optional library sync makes bounded GET-only requests to the configured private LAN browser origin, using validated/pinned DNS results. Sync is disabled by default. A separate off-by-default administrator action can add one selected version to an existing verified collection. Now Playing artwork uses HA's existing image proxy. A separate calendar opt-in permits fixed create/lookup actions on one selected HA calendar; its provider may be remote. |
-| Device/imported data → storage and UI    | Treat metadata, notes, HTML, image references, and imported files as untrusted, including data from local devices. Validate before storing or using it, and render text without executing markup.                                                                                                                                                                                                                                                                                                      |
-| Storage → filesystem and exports         | Journal contents, source identifiers, audit actors, UI searches/preferences/user IDs, backups, and retry responses are private household data. Keep them outside static web roots and access them through the authenticated API.                                                                                                                                                                                                                                                                       |
-| Development machine → test HA deployment | Deployment is an explicit privileged SSH operation. Verify the host key and target, send only the runtime package, and configure restart through fixed HA OS/Container commands. Normal checks must never connect to or modify the target.                                                                                                                                                                                                                                                             |
+| Boundary                                 | Policy and limitation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Browser → integration API                | Active authenticated HA users may read the shared household viewing summary and enabled cached Library metadata/artwork. Journal/catalog mutations, notes/source/session details, Now Playing observation snapshots, exports and shared UI preferences require an active administrator. Active users may read/write only their own browsing preferences. Now Playing also checks read permission on the configured source entities. Dataset IDs select data; they are not credentials.                                                                                                                                                          |
+| Integration → HA                         | Custom integrations execute in Core's process with Core's filesystem, entity, credential, and network access. Entity selection is application behavior, not a sandbox. Other code running as HA can read this database.                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| HA users → one another                   | All active users share one household journal; there is no personal watch history or per-user journal ownership. Personal browsing preferences are scoped to authenticated HA user IDs, with shared hidden collection names managed by administrators. A positive field allowlist limits regular-user API responses. HA roles are not strong isolation between hostile authenticated users.                                                                                                                                                                                                                                                      |
+| Journal/Library → HA entity states       | History/Library sensor states and attributes deliberately expose movie titles, times, counts and storage sizes through HA entity access. Recorder, dashboards, automations, and backups can retain these values outside the private database. Notes, source identities, sessions, and audit actors must never enter sensors.                                                                                                                                                                                                                                                                                                                    |
+| HA → devices and services                | Observation reads selected HA states. Optional library sync makes bounded GET-only requests to the configured private LAN browser origin, using validated/pinned DNS results. Sync is disabled by default. A separate off-by-default administrator action can add one selected version to an existing verified collection. Now Playing artwork uses HA's existing image proxy. A separate calendar opt-in permits fixed create/lookup actions on one selected HA calendar; its provider may be remote. Separately enabled household device controls use validated private TCP 10000 sessions and fixed intents; Library sync remains read-only. |
+| Device/imported data → storage and UI    | Treat metadata, notes, HTML, image references, and imported files as untrusted, including data from local devices. Validate before storing or using it, and render text without executing markup.                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| Storage → filesystem and exports         | Journal contents, source identifiers, audit actors, UI searches/preferences/user IDs, backups, and retry responses are private household data. Keep them outside static web roots and access them through the authenticated API.                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Development machine → test HA deployment | Deployment is an explicit privileged SSH operation. Verify the host key and target, send only the runtime package, and configure restart through fixed HA OS/Container commands. Normal checks must never connect to or modify the target.                                                                                                                                                                                                                                                                                                                                                                                                      |
 
 The integration does not add its own web server, database listener, identity
 system, or general-purpose HA action/SQL/file proxy. Compiled panel assets may
@@ -137,12 +137,14 @@ data and is excluded from the packaged panel.
 | Shared sidebar journal, search/filter/pagination                                    | Allowed                              | Allowed                              |
 | Viewing title, start/end times, runtime, watched time, status, origin               | Allowed                              | Allowed                              |
 | Notes, raw source/player/content identifiers, session evidence, storage health      | Denied by the integration API        | Allowed                              |
-| Create/correct/delete, Now Playing, JSON/SQLite export                              | Denied                               | Allowed                              |
+| Create/correct/delete, Now Playing observation snapshots, JSON/SQLite export        | Denied                               | Allowed                              |
 | Integration settings, raw-table inspection, confirmed Database edit/delete          | Denied                               | Allowed                              |
 | Reviewed viewing/Library JSON/SQLite merge imports and Database viewing corrections | Denied                               | Allowed                              |
 | Cached Library metadata/artwork and counts/revision/sync timestamps                 | Allowed when library sync is enabled | Allowed when library sync is enabled |
 | Library sync progress/configuration/storage/error details and manual sync           | Denied                               | Allowed when library sync is enabled |
 | Personal Library view/count/search/filter/sort/sizing preferences                   | Own values only                      | Own values only                      |
+| Device status/controls and experimental title launch                                | Allowed only with explicit opt-ins   | Allowed only with explicit opt-ins   |
+| Device discovery/configuration and uncertain-command acknowledgement                | Denied                               | Allowed                              |
 | Shared hidden collection names                                                      | Denied                               | Allowed                              |
 
 Anonymous and inactive users are denied all journal and UI preference
@@ -224,10 +226,11 @@ The snapshot refreshes about every five seconds while the card/page is visible;
 requests do not overlap. Hiding/unmounting or account/connection changes clear
 data, abort image work, revoke object URLs, and invalidate late results. Denied
 access clears the card and stops automatic retries until explicit refresh, page
-return, or rebind. There are no controls or HA action calls. Source metadata is
-text, never executable markup. Future user sharing, subscriptions, controls,
-remote URLs, or historical artwork require another boundary review and
-regression tests.
+return, or rebind. This observational snapshot sends no controls or HA action
+calls. A separate opt-in household control card uses the API boundary described
+below. Source metadata is text, never executable markup. Future user sharing,
+subscriptions, additional controls, remote URLs, or historical artwork require
+another boundary review and regression tests.
 
 The automatic runtime-admission rule validates its numeric configuration and
 normalized source duration; it adds no fetches or control operations. It
@@ -459,20 +462,20 @@ must satisfy the matching evidence; unknown exact IDs require manual matching.
   extensions. Its own
   [security policy](https://pypi.org/project/kaleidescape-api/) describes the
   general library boundary. It has no HA/application dependencies, storage or
-  handler registration, and is excluded from the integration package until a
-  native adapter is implemented. Its public command API is a trusted
-  Python/operator interface, not an authorization boundary or HA service.
-  Importing the API opens no sockets. General clients require literal private
-  LAN destinations on port 10000. The CLI additionally verifies the connected
-  serial before operations; playback also verifies movie-zone capability and
-  exact handle metadata. Discovery routes queries through the seed and never
-  follows returned IPs. No automatic wake, namespace fallback, command replay,
-  event registration, syslog message or polling runs on connect. Standalone
-  regression checks also enforce typed public command members, unknown-field
-  preservation and malformed-input handling. CLI command framing, encoded length
-  and local-session routing are checked before connection/binary negotiation.
-  Distribution checks use fictional emulators in a clean local environment and
-  do not connect to devices.
+  handler registration. The integration imports the installed, pinned API
+  package; the standalone project is maintained separately. Its public command
+  API is a trusted Python/operator interface, not an authorization boundary or
+  HA service. Importing the API opens no sockets. General clients require
+  literal private LAN destinations on port 10000. The CLI additionally verifies
+  the connected serial before operations; playback also verifies movie-zone
+  capability and exact handle metadata. Discovery routes queries through the
+  seed and never follows returned IPs. No automatic wake, namespace fallback,
+  command replay, event registration, syslog message or polling runs on connect.
+  Standalone regression checks also enforce typed public command members,
+  unknown-field preservation and malformed-input handling. CLI command framing,
+  encoded length and local-session routing are checked before connection/binary
+  negotiation. Distribution checks use fictional emulators in a clean local
+  environment and do not connect to devices.
 - Sessions bound incoming frames to 4 KiB, correlated responses to 128 KiB/256
   messages, metadata to 128 rows, browse pages to 100 rows and discovery to 64
   components/60 seconds. Connection/request defaults are 5 seconds (configurable
@@ -493,19 +496,16 @@ must satisfy the matching evidence; unknown exact IDs require manual matching.
   There is no raw wire logging; structured reports contain private movie/device
   data and must remain outside Git/public logs. The implementation serializes
   per client, without cross-process locking or durable receipts. Native HA
-  permissions, capability gates and durable actor-bound outcomes remain future
-  integration work. The earlier launch/stop result does not certify expanded
-  commands, events or binary mode on hardware.
-- Future HA discovery/control opt-ins must be separate from Library sync. TCP
-  connections require LAN validation, pinned destinations, verified serials and
-  bounded framing/read budgets. Device replies and cached handles are untrusted;
-  user-supplied commands/addresses are never a launch interface. Initial launch
-  access remains administrator-only with HA entity control permission checks.
-  Serialize per player, confirm interruption/wake intent and retain durable
-  request outcomes; never replay uncertain sends. Discovery and catalog sync
-  must not wake players or issue playback commands. The plain TCP interface must
-  stay on the trusted LAN, without Internet exposure; HA authorization does not
-  protect a device from another host with direct network access.
+  permissions, capability gates and durable actor-bound outcomes are implemented
+  by Companion's separate fixed-intent adapter, not the general library/CLI. The
+  earlier launch/stop result does not certify expanded commands, events or
+  binary mode on hardware.
+- Companion discovery/control opt-ins are separate from Library sync. The
+  implementation below requires LAN validation, pinned destinations, verified
+  direct serials and bounded read/write budgets. No general dispatcher is
+  exposed. Discovery and catalog sync must not wake players or issue controls.
+  Keep plain TCP on the trusted LAN without Internet exposure; HA authorization
+  cannot protect a device from another host with direct network access.
 - Store necessary device credentials in HA config entries and redact them from
   errors, diagnostics, logs, and exports. Do not assume config-entry storage is
   encrypted or inaccessible to other HA code.
@@ -903,9 +903,10 @@ scoped, active administrator request with a cryptographic UUID may start an add.
 Targets are existing cached, visible names intersected with fresh form choices;
 protected system labels are rejected. One request selects one opaque version ID
 and one collection. Raw handles, hidden dropdown values and routes are
-backend-resolved. No removal, collection creation, general form/URL proxy or
-playback operation is registered. The Vite proxy gains no device route; commands
-use the existing HA WebSocket connection.
+backend-resolved. The collection interface registers no removal, collection
+creation, general form/URL proxy or playback operation. Separately opted-in
+playback uses the fixed control boundary below. The Vite proxy gains no device
+route; commands use the existing HA WebSocket connection.
 
 Authorization, native options fingerprint, source identity and readiness are
 rechecked across preflight/persistence awaits and immediately before POST. A
@@ -1282,3 +1283,88 @@ returned, not invoice/order identifiers or raw history. The personal toggle
 `show_library_cost` is a strictly validated boolean, default false, using
 existing ownership/retry protections. No schema migration, provider request,
 device access or financial inference is added.
+
+## Companion device discovery and control boundary
+
+Administrators enable device controls and experimental title launch separately;
+both remain false by default. Once enabled, all active authenticated HA users,
+including read-only household accounts, may call `control/info`,
+`control/status`, `control/prepare` and `control/execute`. Each command click
+runs preflight and sends the fixed intent without an interruption/launch/power
+confirmation prompt. This is an intentional shared-household capability: an
+active user can interrupt or power down a selected player. It does not grant
+journal edits, purchase details, settings, exports or raw device access.
+
+`control/discover` and `control/acknowledge` remain administrator-only. Only
+administrators configure the seed/default player or clear uncertain-write
+barriers after physically inspecting the player. The built-in HA integration,
+entity permissions and observations remain separate. Direct device operations
+are not HA entity actions and do not forward arbitrary services; household
+access is governed by the explicit Companion opt-ins. Future automation/entity
+surfaces require their own caller-context and permission design.
+
+Public control responses use a positive projection: enablement, friendly
+player/model labels, opaque source-scoped player IDs, default/blocked target
+IDs, live movie state and the caller's own pending receipts. They contain no IP,
+serial, raw handle, actor ID, seed, or another user's receipt UUID.
+Administrators additionally receive network inventory and pending receipts for
+recovery. Inactive/anonymous users are denied. Active status, scope, runtime and
+native configuration are checked before work, across awaits and before
+returning. Accepted writes cannot be recalled after revocation; results are
+withheld.
+
+Discovery remains explicit/read-only through a pinned private seed, bounded to
+64 components/65 seconds, without a subnet scan, auto-selection or following
+returned IPs. A private versioned HA Store caches administrator-discovered
+choices for reload/restart, bound to the configured seed hostname. Cache rows
+are bounded and validated on load; loading opens no TCP socket. A changed seed
+ignores old choices. This cache is a hint, never proof of reachability/identity,
+and is outside portable journal exports. Full HA backups may retain it.
+
+A user may choose another known movie-capable player by opaque ID for a dialog
+or control card. That selection does not change the shared default or recorder.
+Unknown IDs, raw serials/addresses and server-only components are rejected
+before connecting. Every preflight resolves the selected serial through the
+configured seed, then independently verifies the direct serial and movie zone.
+DNS rejects public, loopback, link-local, mixed private/public and empty
+answers; TCP 10000 connections pin private literals. No polling, event
+registration, auto-wake or write occurs on load/discovery. The plain protocol
+must remain on a trusted LAN.
+
+The browser supplies only a fixed operation, optional opaque Library version and
+known player ID, random preflight token and UUID. It cannot supply raw wire,
+handle, destination, bookmark or options. Title launch requires the same
+resolved catalog seed, an available scanned version, live handle/title/year
+checks and unchanged row/player state. Bare handles require a fresh observed
+namespace; no guessed prefix or fuzzy fallback is used. Exact playable edition
+is never claimed. Actor-bound preflight tokens expire in 60 seconds and are
+capped at 64. Preflight is automatic and is not evidence of a human confirmation
+dialog. Operations serialize in this runtime with bounded deadlines; another
+controller can still race identity/state checks.
+
+Schema 18 reserves content-free `playback_controls` and actor-bound request
+fingerprints on the SQLite worker before sending once. Matching actor/UUID/token
+returns the recorded result without replay. A possible send without ACK blocks
+further writes to that serial across users until administrator inspection and
+explicit acknowledgement; other players stay usable. Interrupted reservations
+become uncertain on restart, without reconnect/replay. Receipts retain actor,
+serial, fixed operation, outcome and timestamps, with at most 10,000 rows. Raw
+wire, titles, handles and addresses are not retained. System receipts cannot be
+edited/deleted/imported or exposed through sensors/diagnostics. Full private
+SQLite snapshots retain them.
+
+Backup/unload invalidates preflight tokens, blocks new operations, drains
+accepted writes, then pauses/closes storage. Unsent cancellation cannot fail
+backup. Pause/resume remain explicit-state commands. A standby reply permits
+only an explicit power intent after identity verification. The UI preserves its
+exact UUID/token after a lost response, locks conflicting actions, and offers
+result lookup rather than replay. Navigation can lose that token; the durable
+player barrier still requires review. Storage failures after a possible send
+require inspection/reload for recovery, never blind resend.
+
+Fictional API/component tests cover the shared permission boundary, protected
+inventory/receipts, target allowlist, no-confirmation clicks, cached discovery,
+revocation, uncertainty and lifecycle behavior. The operator has reported the
+initial interface working; this redesign and broader access still require user
+browser review. That report does not certify every command/model, standby,
+format selection or exact editions. See [controls](playback-controls.md).

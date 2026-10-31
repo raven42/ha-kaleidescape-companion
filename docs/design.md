@@ -1,6 +1,6 @@
 # Technical design
 
-Updated: 2026-10-29. This document describes implemented architecture and
+Updated: 2026-10-30. This document describes implemented architecture and
 explicit extension points. [Framework status](framework.md) tracks delivery;
 [product plan](plan.md) orders future work; [interface research](research.md)
 separates evidence from unverified capabilities. The
@@ -12,11 +12,12 @@ and rendering.
 One custom integration runs inside HA Core and owns one household config entry,
 one SQLite dataset, and one bundled Lit panel. Its domain is
 `kaleidescape_companion`; the built-in `kaleidescape` integration is preserved.
-There is no separate Flask/FastAPI/Django server, authentication system,
-database listener, or direct player control connection. The opt-in library
-connector reads a configured local browser origin; it never sends controls. HA
-supplies lifecycle, authentication, entity registries/events, WebSocket
-commands, HTTP views, and sensors.
+There is no separate Flask/FastAPI/Django server, authentication system, or
+database listener. A separately opted-in API adapter opens bounded private LAN
+TCP sessions for administrator discovery and household controls. The opt-in
+library connector reads a configured local browser origin; sync never sends
+controls. HA supplies lifecycle, authentication, entity registries/events,
+WebSocket commands, HTTP views, and sensors.
 
 ```mermaid
 flowchart LR
@@ -25,6 +26,9 @@ flowchart LR
     TRACK --> DB[SQLite worker]
     DB --> API[HA authenticated API]
     API --> PANEL[Household reader / administrator panel]
+    PANEL --> CTRL[Household control intents]
+    CTRL --> RECEIPT[Durable receipt / identity checks]
+    RECEIPT --> TCP[Independent API / private LAN player]
     DB --> COORD[History coordinator]
     COORD --> SENS[HA sensors]
 ```
@@ -53,6 +57,7 @@ packages with no compatibility forwarding modules or development tools.
 | `core/preferences.py`                                                                                                                                                                | Worker-only personal/shared UI settings, one-time legacy seed and atomic field-patch receipts                                    |
 | `playback/manual.py`, `playback/metadata.py`, `playback/repair.py`, `calendar/config.py`, `calendar/store.py`, `calendar/publisher.py`, `calendar/sync.py`, `calendar/sync_store.py` | Exact-version admission, shared observed/manual snapshots, reviewed metadata repair, fixed calendar actions and durable receipts |
 | `core/security.py`                                                                                                                                                                   | Shared authorization, private-file and cancellation-cleanup primitives                                                           |
+| `playback/controls.py`, `playback/control_config.py`, `playback/control_store.py`, `ui/controls.py`, `_vendor/`                                                                      | Fixed control intents, player verification, opt-ins, worker-owned receipts and generated protocol runtime                        |
 | `playback/observer.py`, `playback/tracker.py`                                                                                                                                        | Ordered HA state observation and deterministic monotonic session state machine                                                   |
 | `playback/recording.py`, `playback/history.py`                                                                                                                                       | Worker-only session persistence, resume matching and bounded sensor summaries                                                    |
 | `library/config.py`, `library/parser.py`, `library/sync.py`                                                                                                                          | Opt-in configuration, bounded native HTML parsing and serialized catalog/device operations                                       |
@@ -65,15 +70,16 @@ packages with no compatibility forwarding modules or development tools.
 The root `frontend/` Node workspace contains `src/core/` API transport,
 `src/ui/` application pages/shared form/dialog/styles, `src/library/` browsing
 and collection components, feature-owned Library/Database styles, and
-`src/playback/` Now Playing. Its `dev/` holds only the standalone connection
-shell, shared exact-route allowlist, local proxy, review fixture and bundle-copy
-tool. Tests remain in `frontend/tests/`.
+`src/playback/` Now Playing and device controls. Its `dev/` holds only the
+standalone connection shell, shared exact-route allowlist, local proxy, review
+fixture and bundle-copy tool. Tests remain in `frontend/tests/`.
 
 Root `dev/` contains the development launcher, project validator, runtime
-packager/deployer, synthetic benchmark and offline purchase-copy helper. Keeping
-Node-specific tools beside their workspace avoids custom dependency resolution.
-Neither development directory is part of the deployed integration. Runtime
-archives and Python package data include the nested compiled asset explicitly.
+packager/deployer, API runtime generator, synthetic benchmark and offline
+purchase-copy helper. Keeping Node-specific tools beside their workspace avoids
+custom dependency resolution. Neither development directory is part of the
+deployed integration. Runtime archives and Python package data include the
+nested compiled asset explicitly.
 
 Future control and richer library modules are added with their feature, tests,
 and policy changes. Empty reserved implementations and speculative database
@@ -231,7 +237,8 @@ API.
 The card deliberately has no transport buttons, seek bar, interpolated progress,
 catalog dependency, or separate navigation. Counts describe the current source
 session, not the combined viewing or a durable completion verdict. HA's existing
-media cards/actions remain available. Future controls reuse those actions.
+media cards/actions remain available. The separate API control card adds
+opted-in household transport controls without changing this observational API.
 
 ### Future live updates and multiple players
 
@@ -315,19 +322,28 @@ not implemented.
 
 ### Playback, import, and sharing
 
-Use public HA actions and caller context for explicit, permission-checked,
-capability-gated controls. Validate fresh identity/expected player revision and
-observe the resulting state. Do not retry uncertain/toggle commands blindly.
-Selected-title launch/resume/start-over each require proven interfaces; see
-[research limitations](research.md) and the proposed
-[selected-title adapter](playback-controls.md). The latter specifies documented
-player discovery, exact-version enrichment and an experimental launch boundary.
-The independent [Kaleidescape API project](https://pypi.org/project/kaleidescape-api/)
-provides persistent TCP, the current request catalog, events, discovery and the
-operator CLI. It has no application dependencies and is excluded from
-integration deployment; runtime HA code does not import it yet. Native HA
-control registration, discovery settings and persisted enrichment remain
-unimplemented. Library synchronization never sends controls.
+The [control adapter](playback-controls.md) consumes the generated runtime
+subset of the independent API and exposes fixed household intents through HA's
+authenticated WebSocket. Discovery/configuration and uncertain-write
+acknowledgement remain administrator-only; public responses hide addresses,
+serials and other users' receipts. No generic dispatcher or replacement
+media-player entity is registered. Configuration and Library launch are
+separately opted in. Discovery is read-only and targets a validated seed. Each
+command independently verifies the direct player's serial/movie zone and current
+state. Library launch additionally checks an available exact version, live
+namespace/content details, title/year and its unchanged row. Exact playable
+edition remains unconfirmed.
+
+An automatic actor-bound 60-second preflight precedes execution; command clicks
+send without a confirmation prompt. Schema 18 reserves a durable request before
+sending once; repeated UUID/token returns its stored outcome. Uncertain commands
+block that serial until explicit physical review. Startup turns interrupted
+reservations into uncertainty. Backup/unload drains accepted commands before
+storage closes. Session and DNS limits are inherited from the independent API
+and narrow adapter. Built-in HA observation/actions remain independent; no
+control changes the recorder's sources. Library synchronization never sends
+controls. Saved resume, seeking, event-driven state and additional command
+exposure need separate validation and policy review.
 
 Broader sharing and import extensions require explicit capability and retention
 contracts plus security regressions. Import validates size/schema/paths before

@@ -193,6 +193,35 @@ it("adds sortable year/collection headings and opens details only in a popup", a
   expect(root().querySelector("#title-dialog .playback-layout")).toBeNull();
 });
 
+it("combines a linked movie heading and actions with poster, synopsis and credits", async () => {
+  title("Voyage to Europa").click();
+  await flush();
+  const dialog = root().querySelector<HTMLDialogElement>("#title-dialog")!;
+  expect(dialog.classList.contains("movie-dialog")).toBe(true);
+  expect(
+    dialog.querySelector(".movie-heading h2 .detail-link")!.textContent,
+  ).toContain("Voyage to Europa");
+  expect(dialog.querySelector(".movie-summary")!.textContent).toContain("2h");
+  expect(
+    dialog.querySelector(".movie-poster kaleidescape-library-cover"),
+  ).not.toBeNull();
+  expect(dialog.querySelector(".movie-description h3")!.textContent).toBe(
+    "Synopsis",
+  );
+  expect(
+    dialog.querySelectorAll(".movie-credits .detail-link").length,
+  ).toBeGreaterThan(0);
+  expect(
+    dialog.querySelector("kaleidescape-device-controls[mode=movie]"),
+  ).not.toBeNull();
+  expect(
+    dialog.querySelector(".movie-record-details summary")!.textContent,
+  ).toBe("Library details");
+  expect(dialog.querySelector(".movie-close")!.getAttribute("aria-label")).toBe(
+    "Close",
+  );
+});
+
 it("switches to tightly spaced resizable covers and opens the same title popup", async () => {
   root()
     .querySelector<HTMLInputElement>(

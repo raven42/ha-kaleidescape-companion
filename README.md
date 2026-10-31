@@ -2,14 +2,16 @@
 
 A Home Assistant integration for a shared household watch journal, Now Playing,
 and an optional local movie library. It uses HA's built-in **Kaleidescape**
-integration for playback observations. Playback controls remain planned.
+integration for playback observations. Optional player controls use the
+standalone Kaleidescape API for all active HA users; administrators configure
+and discover devices.
 
 Active HA users can browse the journal and enabled Library. Administrators can
 correct records, manage the database, configure tracking and sync, and
 explicitly add a version to a device collection. Library sync and collection
-additions are separate opt-in features, both disabled by default. See the
-[framework status](docs/framework.md) for delivered features and validation
-limits.
+additions, playback controls and experimental title launch are separate opt-in
+features, all disabled by default. See the [framework status](docs/framework.md)
+for delivered features and validation limits.
 
 ## Documentation
 
@@ -24,6 +26,7 @@ limits.
   [purchase dates](docs/purchase-dates.md) and
   [reviewed merge imports](docs/imports.md)
 - [Independent Kaleidescape API library](https://pypi.org/project/kaleidescape-api/)
+- [Player discovery and controls](docs/playback-controls.md#companion-setup-and-use)
 - [Interface research](docs/research.md) and [changelog](CHANGELOG.md)
 
 ## Layout
@@ -32,7 +35,8 @@ limits.
 custom_components/kaleidescape_companion/
   core/       SQLite worker, migrations, journal operations, settings and security
   library/    Catalog sync, metadata, artwork, collections and title validation
-  playback/   HA observations, session tracking, recording and history summaries
+  playback/   HA observation/recording, device discovery, controls and receipts
+  _vendor/    Generated runtime subset of the independent protocol API
   ui/         Authenticated APIs, panel registration and compiled assets
   *.py        Required HA entry points and integration constants
 frontend/
@@ -44,9 +48,9 @@ tests/       Python storage, API, lifecycle and deployment tests
 docs/        Product, architecture, security and operator guides
 ```
 
-The `dev/` tools, independent API project and frontend development sources are
-excluded from integration deployment. Only the integration directory is
-installed into HA.
+The `dev/` tools, standalone API CLI/docs/tests and frontend development sources
+are excluded from integration deployment. Only the integration directory,
+including its generated API runtime, is installed into HA.
 
 ## Development setup
 

@@ -125,6 +125,48 @@ export interface OptionsForm {
   errors?: Record<string, string>;
   fields?: { name: string; default?: string | number | boolean }[];
 }
+export interface ControlInfo {
+  enabled: boolean;
+  allow_launch: boolean;
+  default_player: string;
+  players: { id: string; name: string; model: string }[];
+  can_manage: boolean;
+  blocked_players: string[];
+  devices?: {
+    serial: string;
+    name: string;
+    model: string;
+    ipaddress: string;
+    is_player: boolean;
+  }[];
+  pending: {
+    request_id: string;
+    player_id: string;
+    operation: string;
+    created_at: string;
+  }[];
+}
+export interface ControlReview {
+  token: string;
+  operation: string;
+  player_id: string;
+  title: string | null;
+  year: string | null;
+  before: {
+    title: string;
+    mode: number;
+    duration_seconds: number;
+    position_seconds: number;
+  };
+  exact_version_confirmed: false;
+}
+export interface ControlResult {
+  request_id: string;
+  outcome:
+    "unconfirmed" | "acknowledged" | "state_observed" | "rejected" | "not_sent";
+  acknowledged: boolean;
+  exact_version_confirmed: false;
+}
 export interface CalendarStatus {
   enabled: boolean;
   ready: boolean;
@@ -490,7 +532,10 @@ export function errorMessage(error: unknown): string {
   );
 }
 
-export async function withRequestDeadline<T>(request: Promise<T>): Promise<T> {
+export async function withRequestDeadline<T>(
+  request: Promise<T>,
+  timeout = REQUEST_TIMEOUT,
+): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([
@@ -498,7 +543,7 @@ export async function withRequestDeadline<T>(request: Promise<T>): Promise<T> {
       new Promise<never>((_, reject) => {
         timer = setTimeout(
           () => reject(new ApiError("connection_lost")),
-          REQUEST_TIMEOUT,
+          timeout,
         );
       }),
     ]);
@@ -523,6 +568,61 @@ export class JournalClient {
 
   call<T>(message: ApiMessage): Promise<T> {
     return withRequestDeadline(this.transport.callWS<T>(message));
+  }
+  controlInfo(scope: Scope): Promise<ControlInfo> {
+    return this.call({ type: `${DOMAIN}/control/info`, ...scopeFields(scope) });
+  }
+  controlDiscover(scope: Scope): Promise<ControlInfo> {
+    return withRequestDeadline(
+      this.transport.callWS<ControlInfo>({
+        type: `${DOMAIN}/control/discover`,
+        ...scopeFields(scope),
+      }),
+      70000,
+    );
+  }
+  controlStatus(
+    scope: Scope,
+    player_id?: string,
+  ): Promise<{ player_id: string; state: ControlReview["before"] }> {
+    return this.call({
+      type: `${DOMAIN}/control/status`,
+      ...scopeFields(scope),
+      ...(player_id ? { player_id } : {}),
+    });
+  }
+  controlPrepare(
+    scope: Scope,
+    operation: string,
+    title_id?: string,
+    player_id?: string,
+  ): Promise<ControlReview> {
+    return this.call({
+      type: `${DOMAIN}/control/prepare`,
+      ...scopeFields(scope),
+      operation,
+      ...(title_id ? { title_id } : {}),
+      ...(player_id ? { player_id } : {}),
+    });
+  }
+  prepareControl(scope: Scope, token: string): PreparedMutation {
+    return this.prepareCommand(scope, "control/execute", {
+      token,
+    });
+  }
+  controlExecute(pending: PreparedMutation): Promise<ControlResult> {
+    return this.call({ ...pending.message });
+  }
+  controlAcknowledge(
+    scope: Scope,
+    request_id: string,
+  ): Promise<{ pending_count: number }> {
+    return this.call({
+      type: `${DOMAIN}/control/acknowledge`,
+      ...scopeFields(scope),
+      request_id,
+      confirmation: "REVIEWED",
+    });
   }
   metadataPreview(scope: Scope): Promise<MetadataReview> {
     return this.call({

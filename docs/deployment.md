@@ -7,6 +7,10 @@ test build. Confirm the target HA version and review the
 [security findings](security.md#known-dependency-findings-2026-10-25) before a
 household rollout. Take a full HA backup before the first installation.
 
+Home Assistant installs the pinned `kaleidescape-api` requirement from its
+package index. The API release must be available to that installation before
+deployment. Controls stay disabled until explicitly configured in HA.
+
 ## Configure the target
 
 1. Set up an SSH host alias named `ha-test` in your SSH client configuration. It

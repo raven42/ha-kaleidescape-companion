@@ -1,13 +1,16 @@
 # Selected-title playback design
 
-Research date: 2026-10-30. A standalone experimental protocol client and
-operator harness are implemented. The [protocol libraries](protocol-library.md)
-now add documented command coverage, persistent sessions, events and discovery.
-HA controls, native settings and handle persistence below remain proposed.
-Implementation checks use a fictional emulator; the operator subsequently
-reported successful selected-title playback and STOP on one live player. No
-agent device connection or deployment was performed. Library sync remains
-read-only; Now Playing remains observational.
+Updated: 2026-10-30. Companion now consumes the
+[independent API](protocol-library.md) for opt-in device discovery, basic
+household controls and separately enabled experimental Library-title playback.
+The built-in HA integration still supplies recording observations. Library sync
+and the existing Now Playing snapshot remain read-only; the new control card is
+a separate interface.
+
+Checks use fictional peers and loopback emulators. The operator previously
+reported selected-title playback and STOP on one player using the CLI. The new
+HA interface, discovery and broader commands still require operator browser and
+device validation; no agent device connection or deployment was performed.
 
 ## Standalone protocol proof of concept
 
@@ -166,136 +169,138 @@ This is protocol research, not a ready-to-send command. The namespace,
 bookmark/options and resulting behavior must be verified for the selected
 system; the public manual supplies no contract for those fields.
 
-## Recommended integration boundary
+## Companion setup and use
 
-Keep public HA media-player actions for power, play/pause, stop and chapter
-navigation, with the caller's context, entity permissions and actual capability
-flags. Do not create replacement entities or patch the built-in integration.
+Controls are disabled by default. Administrators configure them in Companion's
+**Settings → Device discovery and controls**:
 
-Discovery and missing launch operations now live in the independent
-`lib/kaleidescape-api/` project; see the [library guide](protocol-library.md).
-Prefer an upstream public, typed launch/addressing API if one becomes available
-and matches HA's dependency version. Until then, a restricted native `asyncio`
-client is preferable to depending on private client internals. It must implement
-proper framing, escaping, response correlation and bounds; a TCP read is not
-necessarily a complete response line. The library is a trusted Python/operator
-API; HA must expose only fixed capability-gated intents. Do not expose generic
-dispatch through HA or introduce a conflicting pykaleidescape dependency pin.
+1. Enable playback controls and choose a trusted system seed hostname/private
+   LAN address. Blank uses the Library host or `my-kaleidescape.local`. The
+   control connection uses fixed TCP port 10000.
+2. Save, then choose **Discover devices**. This read-only query is bounded to 64
+   components/65 seconds and never scans the subnet or wakes a player.
+3. Select a movie-capable default player and save again. Discovery choices are
+   cached privately using HA storage, bound to the seed, and restored without
+   network access. A known offline default is retained rather than substituted.
+4. Optionally enable experimental Library-title playback separately.
 
-## Discovery and native HA settings
+Once enabled, **all active signed-in HA users** can use **Now Playing → Player
+controls** and Library **Play Movie**. A command click runs identity/state
+preflight and sends once, without a confirmation prompt. This can interrupt
+content, power down a player and trigger theater automations. Pause/resume use
+explicit state commands. There is no automatic wake or retry.
 
-Proposed settings, all administrator-managed through the existing options flow:
+In Library, the combined movie dialog has a title/metadata/badge header, **Play
+Movie** and **Choose Player**, followed by poster, synopsis and clickable
+credits/collections. Version tabs appear only for multiple versions. Discovery
+supplies the player picker; choosing another player affects this dialog/control
+card, not the shared default or Journal recording sources. Only administrators
+see Collection actions, discovery/configuration and purchase history. Library
+detection/purchase dates remain available under expandable **Library details**.
 
-- **Enable playback controls**, off by default.
-- **Control hostname**, defaulting to the configured Library hostname, or
-  `my-kaleidescape.local` when blank; fixed TCP port 10000.
-- **Discover players**, an explicit read-only action after opting in.
-- **Default player**, a dropdown of verified players with friendly name/model.
-  Save its serial number and associated HA registry identity, where available,
-  rather than a label, mutable entity name or position in the discovery list.
-- **Enable experimental title launch**, separately off by default until the
-  target firmware/handle contract has been validated.
+The native integration **Configure** flow exposes the same settings and cached
+player choices; a serial may also be entered there. Discovery stays on the
+Companion Settings page. Household responses expose friendly names/opaque IDs,
+not addresses, serials or another user's command receipts. Anonymous/inactive
+users cannot control devices. Multiple-player recording remains separate work.
 
-Enumeration uses `GET_AVAILABLE_DEVICES_BY_SERIAL_NUMBER`, followed by
-`GET_DEVICE_INFO`, `GET_NUM_ZONES`, `GET_DEVICE_TYPE_NAME` and
-`GET_FRIENDLY_NAME` addressed to each serial. Only components with movie zones
-are player candidates. Unpowered components may be missing; retain a configured
-offline default without silently selecting another player. HA's existing SSDP
-discovery/registry supplies already-configured candidates and entity
-association; it does not require a subnet scan or import of another
-integration's device object. Co-Star/older hardware needs separate compatibility
-validation.
+Available commands are Play selection, Pause, Resume, Stop, Previous/Next
+chapter, directional navigation, Select, Back, Kaleidescape menu, Movie covers,
+Power on and Standby. Controls verify direct serial identity and a movie zone
+before every operation. Older hardware, Co-Star and individual command support
+need operator validation; a rejected command is reported without fallback. There
+is no automatic wake, polling, retry, event subscription, HA service forwarding
+or generic raw-command endpoint. Existing HA entities/actions are preserved; no
+replacement media player or new control service is registered.
 
-Discovery is bounded and does not wake devices, start playback, or enable
-recurring controls. A strict read-only probe should not use `Device.connect()`
-unchanged: the reviewed client also sends module-identification syslog data.
-Configured and discovered addresses are untrusted, subject to the same LAN
-validation and pinned resolution policy as the Library connector. Prefer queries
-routed through the validated seed, then independently validate any direct-player
-connection and its serial identity.
+## Library identity and launch limits
 
-The playback target is distinct from the current single-player journal tracking
-mapping. Selecting it must not silently change the recorder's player/sensors.
-Initially, recommend the tracked player; recording launches on other players
-requires the separate multi-player recording work.
+No replacement TCP library scan is needed. Launch resolves the opaque exact
+Library-version ID on the backend and reads its retained `source_handle`.
+Purchase-only placeholders, unavailable versions, another source or disabled
+Library sync cannot launch. Control and Library hostnames must resolve to the
+same pinned seed address for title playback.
 
-## Library identifiers and scan changes
+The adapter admits the known numeric namespace/movie-handle spellings. Bare
+browser handles obtain their namespace from a fresh `GET_HIGHLIGHTED_SELECTION`
+response through the API extension; no namespace is guessed, persisted or tried
+as a fallback. If no qualified highlighted handle is available, highlight a
+movie on the player or use its native interface; Companion will refuse to send
+an unverified launch. Live movie details must identify the same handle and movie
+table, and match the cached title and known year. Missing live year when a
+cached year exists is also rejected.
 
-No additional full TCP library scan is proposed. Preserve the existing raw
-browser handle and source-scoped grouping. A group's formats can represent
-different playable versions; choosing the highest-quality badge must not choose
-a launch target implicitly.
+Fresh checks run at automatic preflight and immediately before sending. A change
+to the Library row or player title/mode/runtime invalidates preflight. Naturally
+advancing position does not. There is no fuzzy title fallback. Source groups and
+display format badges do not select a different asset.
 
-Some source rows also share one handle across several format labels, which our
-parser already consolidates. Badges alone cannot establish separately selectable
-assets. Offer edition selection only where the verified interface distinguishes
-them; otherwise disclose that the device chooses the playable format.
+The experimental profile is the same extension tested by the operator: a
+namespace-scoped NUL bookmark and `158-0=1` option. The device chooses a
+playable format; exact-edition selection, resume, seeking, audio selection and
+start-over semantics remain unverified. Responses always include
+`exact_version_confirmed: false`. Acknowledgement is separate from one bounded
+post-command state observation. A matching title alone cannot prove a fresh
+launch; position reset or a state/title change is also needed. Slow starts can
+remain acknowledged without observed confirmation. Launch never creates a
+completed viewing; the existing HA observer records actual playback.
 
-Add a read-only identity-enrichment step when controls are enabled. Resolve a
-qualified playback handle using observed protocol evidence and validate it
-against the chosen version using content details. A highlighted handle can
-provide a candidate namespace; it is not proof of the currently playing movie.
-Do not hard-code the voice project's namespace, derive one from a kOS version,
-or reverse the recorder's limited handle spelling conversion as a universal
-launch rule. If the mapping is ambiguous or unsupported, disable launch for that
-version and expose the reason.
+## Authorization, receipts and recovery
 
-Once verified, store the qualified handle, source/system scope, provenance and
-verification time alongside that exact Library row, through a migration. Keep
-`source_handle` unchanged. Invalidate/revalidate on system changes, invalid
-handles or stale identity evidence. Discovery state can stay in runtime/HA
-configuration. A separate durable command-receipt table is justified for
-external-write recovery; it is not another copy of the catalog. Final fields
-depend on operator protocol evidence, so this investigation adds no schema.
+The authenticated WebSocket API accepts only fixed intents, opaque Library/known
+player IDs, automatic preflight tokens and request UUIDs. It accepts no raw
+handle, destination, bookmark, wire command or options. The backend checks
+active user, dataset, current runtime/configuration, readiness, player serial
+and movie capability. It checks authorization again across awaited work and
+withholds responses after revocation. Accepted device writes cannot be recalled.
 
-## Launch and user interaction
+Preflight tokens are random, actor-bound, in-memory and expire after 60 seconds.
+Up to 64 preflight tokens are retained. One read/control operation runs at a
+time. Before sending, schema 18 commits a content-free `playback_controls`
+receipt and the actor-bound request fingerprint on the repository worker. The
+same UUID/token returns the recorded outcome without contacting the player
+again. Receipts are limited to 10,000; reaching that bound refuses new writes.
+They are private system records and cannot be edited, deleted or imported
+through Database tools.
 
-1. Library details offers **Play on…** for an explicitly selected version,
-   preselecting the configured default player. Initially restrict this to
-   administrators, preserving existing read-only household access.
-2. Resolve opaque Library/player IDs on the backend. Require controls enabled,
-   current actor/entity permissions, a verified source/version/player mapping,
-   current availability and an expected player-state token. Do not accept raw
-   handles, destinations, commands, bookmark strings or option strings from UI.
-3. Show the target player and current playback. Require confirmation before
-   interrupting/restarting content. Waking a player must be explicit because
-   theater automation may react to it. Do not promise resume, seeking or
-   start-over behavior before independent validation.
-4. Serialize commands per physical player and record an actor-bound request ID
-   before an external write. Limit queue length and command/read budgets.
-   Repeated IDs return their existing outcome, without resending. A timeout or
-   disconnect after a possible send is **unconfirmed**, never an automatic
-   retry.
-5. Use one shared handler for the UI and a proposed fixed HA action
-   `kaleidescape_companion.play_library_title`. Preserve HA caller context and
-   all authorization checks; expose no arbitrary HA-service forwarding.
-6. Distinguish requested, rejected, acknowledged, observed and unconfirmed
-   outcomes. A `000` reply or an already-playing title is not success. Confirm
-   fresh target-specific playback evidence against the requested version. If
-   only a title string is available, report the verification limitation rather
-   than claiming exact-edition success. Do not write a completed Journal entry
-   from a launch; the existing observer records actual viewing.
+A possible send without acknowledgement is **unconfirmed**, never retried.
+Further writes to that serial are blocked. If the UI loses its response, use
+**Check command result**, which retains the same request ID/token. Do not create
+a new intent to retry an uncertain command. After checking the physical player,
+choose **I inspected the player…** and confirm the acknowledgement to permit new
+commands. This records the reviewing administrator; it never resends anything. A
+receipt left in sending state by a crash becomes uncertain on reopen. If receipt
+storage fails after a possible send, reload to recover the barrier and inspect
+the player before acknowledging it.
 
-## Implementation and acceptance sequence
+Backup, unload and shutdown block new intents, invalidate preflight tokens,
+drain an accepted control, close sessions, then pause/close storage. Nothing is
+replayed on startup. Locks cover this Companion runtime, not the built-in
+integration, other controllers or another process. External changes between
+verification and sending cannot be eliminated by this protocol.
 
-1. Implemented: bounded protocol/parser, catalog, discovery and events with
-   fictional emulator tests. Next: opt-in native default-player settings and a
-   read-only identity report in HA. No playback commands in discovery or sync.
-2. Implement handle enrichment and its migration, with changed-system,
-   unavailable-version, same-name remake and edition-ambiguity tests. Do not
-   require a full catalog rescan for every launch.
-3. Validate the experimental command in an explicitly authorized operator window
-   on one player/version. First inspect read-only identity evidence, then test
-   idle launch, busy-player confirmation, wake handling, exact edition and
-   beginning/resume behavior separately. Check existing theater automations.
-4. Add the guarded launch action and Library/Now Playing UI with receipt,
-   authorization, stale-state, cancellation, duplicate-request and unload tests.
-   Test split/coalesced frames, escaped values, malformed/oversized replies and
-   accepted-but-no-effect outcomes without devices.
-5. Run normal checks/build without device access. Ask the operator to review the
-   real UI and perform the device matrix; expand firmware/player support only
-   from observed results.
+The plain TCP interface has no integration-level network authentication or
+encryption. Keep it on a trusted LAN; do not expose port 10000 to the Internet.
+Companion resolves only private LAN addresses, rejects mixed public/private DNS
+answers, pins connections and verifies direct player identity. HA authorization
+does not protect a device from another host that can reach its TCP port.
 
-The result is a viable experimental design for selecting a Library version and
-starting it on a configured player. Vendor-supported direct launch, saved resume
-bookmarks and exact playback-identity confirmation remain validation gates.
+## Packaging and validation
+
+The standalone project stays application-independent. The integration imports
+the pinned API package installed by Home Assistant. See the
+[protocol library guide](protocol-library.md) for package and validation
+details.
+
+Automated tests cover opt-outs, roles, seed discovery, direct identity, live
+movie checks, stale reviews, no-replay receipts, crash recovery, standby,
+backup/unload behavior and UI single-click/response recovery using fictional
+data. The standalone suite covers transport framing and malformed responses.
+Normal builds/checks contact no devices.
+
+Operator review remains required for real HA layout, discovery on the chosen
+system and explicit commands in a suitable playback window. Begin with saved
+settings, read-only discovery/status and dialog/player-picker layout, then
+choose any live commands yourself; Play Movie sends without a prompt.
+Firmware/model compatibility, exact editions, standby responses and interactions
+with theater automation are not certified by passing emulator tests.

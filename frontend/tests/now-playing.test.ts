@@ -51,7 +51,11 @@ it("shows source/session context as text without playback controls or invented p
   ).toBeNull();
   expect(element.shadowRoot!.querySelectorAll("button")).toHaveLength(1);
   expect(
-    transport.calls.every((call) => call.type.endsWith("/now_playing")),
+    transport.calls.every(
+      (call) =>
+        call.type.endsWith("/now_playing") ||
+        call.type.endsWith("/control/info"),
+    ),
   ).toBe(true);
 });
 it("handles unconfigured, idle, unavailable, and degraded recording snapshots", async () => {
@@ -108,20 +112,22 @@ it("explains ignored trailers and unknown runtime while leaving playback visible
 });
 it("polls only while attached and visible, then refreshes on return", async () => {
   await mount(playing());
-  expect(transport.calls).toHaveLength(1);
+  const observations = () =>
+    transport.calls.filter((call) => call.type.endsWith("/now_playing"));
+  expect(observations()).toHaveLength(1);
   await vi.advanceTimersByTimeAsync(5000);
-  expect(transport.calls).toHaveLength(2);
+  expect(observations()).toHaveLength(2);
   const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(true);
   document.dispatchEvent(new Event("visibilitychange"));
   await vi.advanceTimersByTimeAsync(20000);
-  expect(transport.calls).toHaveLength(2);
+  expect(observations()).toHaveLength(2);
   hidden.mockReturnValue(false);
   document.dispatchEvent(new Event("visibilitychange"));
   await flush();
-  expect(transport.calls).toHaveLength(3);
+  expect(observations()).toHaveLength(3);
   element.remove();
   await vi.advanceTimersByTimeAsync(20000);
-  expect(transport.calls).toHaveLength(3);
+  expect(observations()).toHaveLength(3);
 });
 it("ignores old snapshots after switching dataset/client", async () => {
   let resolve!: (value: { players: NowPlayingPlayer[] }) => void;

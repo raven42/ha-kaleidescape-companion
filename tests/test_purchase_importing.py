@@ -454,12 +454,13 @@ class PurchaseImportTest(unittest.IsolatedAsyncioTestCase):
                 ),
             )
             db.execute("DROP INDEX IF EXISTS viewings_library_title")
+            db.execute("DROP TABLE IF EXISTS playback_controls")
             db.execute("PRAGMA user_version=15")
             db.commit()
         self.repository = JournalRepository(self.path)
         self.addAsyncCleanup(self.repository.async_close)
         await self.repository.async_open()
-        self.assertEqual((await self.repository.async_info())["schema_version"], 17)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 18)
         invoices = await self.invoices()
         self.assertEqual(len(invoices), 2)
         pending = next(row for row, _ in invoices if row["purchase_match_pending"])
@@ -513,6 +514,7 @@ class PurchaseImportTest(unittest.IsolatedAsyncioTestCase):
                         (str(uuid4()),),
                     )
             db.execute("DROP INDEX IF EXISTS viewings_library_title")
+            db.execute("DROP TABLE IF EXISTS playback_controls")
             db.execute("PRAGMA user_version=15")
             db.commit()
             with patch(

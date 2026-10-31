@@ -28,6 +28,7 @@ REQUIRED = {
     "strings.json",
     "translations/en.json",
     "ui/assets/panel.js",
+    "_vendor/__init__.py",
 }
 
 # Only a locally constructed runtime archive is ever sent to this script.

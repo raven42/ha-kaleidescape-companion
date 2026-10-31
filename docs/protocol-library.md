@@ -33,15 +33,18 @@ see the [operator guide](playback-controls.md). The API project and CLI do not
 read the household database or register HA services. Normal tests use fictional
 loopback emulators and do not contact devices.
 
-## Future integration boundary
+## Companion integration boundary
 
-The API is excluded from the integration deployment package and has no runtime
-HA consumer yet. A future adapter must consume a versioned package, expose only
-fixed permission-checked intents, preserve the built-in integration and keep
-Library sync read-only. It must bind expected device identity/capabilities,
-serialize physical-player actions, track durable actor-bound outcomes, and
-handle uncertain writes without replay. The generic library's `execute()` is a
-trusted application API, not a route to expose directly through HA.
+Companion imports the installed API package pinned in its HA manifest and Python
+project metadata. The API distribution must be available to Home Assistant
+before deployment. The integration adapter exposes only fixed authenticated
+household intents and owns its configuration, serial/capability checks, durable
+receipts and UI. The standalone API still imports no application code and its
+generic `execute()` is never exposed through HA. See
+[Companion controls](playback-controls.md).
+
+Develop and test API changes in the separate project. Update the pinned package
+version and run Companion checks when adopting a release.
 
 Current emulator coverage does not certify every request on hardware. The
 [reported launch/STOP validation](playback-controls.md#operator-validation--2026-10-30)

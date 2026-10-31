@@ -18,6 +18,7 @@ import type {
 import { styles } from "../ui/styles";
 import { libraryStyles } from "./styles";
 import { dismissBackdrop } from "../ui/dialog";
+import "../playback/controls";
 import { CoverQueue } from "./cover";
 import { PreferenceStore } from "../ui/preference-store";
 import {
@@ -95,9 +96,13 @@ export class KaleidescapeLibrary extends LitElement {
   private widths = [360, 90, 260, 150, 140, 210];
   private resize?: { index: number; start: number; width: number };
   private collectionLocked = false;
+  private controlLocked = false;
+  private get detailsLocked() {
+    return this.collectionLocked || this.controlLocked;
+  }
   private checkingCollection = false;
   confirmNavigation() {
-    if (this.collectionLocked || this.checkingCollection) return false;
+    if (this.detailsLocked || this.checkingCollection) return false;
     return true;
   }
 
@@ -443,7 +448,7 @@ export class KaleidescapeLibrary extends LitElement {
     this.requestUpdate();
   }
   private async load(offset = 0, preserveSelection = false) {
-    if (this.collectionLocked) return;
+    if (this.detailsLocked) return;
     if (!this.client || !this.scope?.library_enabled) return;
     clearTimeout(this.layoutTimer);
     this.layoutTimer = undefined;
@@ -585,7 +590,7 @@ export class KaleidescapeLibrary extends LitElement {
   }
   private closeDialog(id: string) {
     if (id === "filter-dialog") this.clearPeople();
-    if (id === "title-dialog" && this.collectionLocked) return;
+    if (id === "title-dialog" && this.detailsLocked) return;
     this.renderRoot.querySelector<HTMLDialogElement>(`#${id}`)?.close();
     if (id === "title-dialog") {
       this.selected = undefined;
@@ -621,7 +626,7 @@ export class KaleidescapeLibrary extends LitElement {
     void this.loadVersions();
   }
   private clearVersions() {
-    this.collectionLocked = false;
+    this.controlLocked = this.collectionLocked = false;
     this.versionRequest++;
     this.versions = undefined;
     this.activeVersion = undefined;
@@ -629,7 +634,7 @@ export class KaleidescapeLibrary extends LitElement {
     this.versionsLoading = false;
   }
   private async loadVersions(offset = 0) {
-    if (this.collectionLocked) return;
+    if (this.detailsLocked) return;
     if (!this.client || !this.scope || !this.selected) return;
     const generation = this.generation,
       request = ++this.versionRequest,
@@ -703,7 +708,7 @@ export class KaleidescapeLibrary extends LitElement {
     this.requestUpdate();
   }
   private versionKey(event: KeyboardEvent) {
-    if (this.collectionLocked) return;
+    if (this.detailsLocked) return;
     if (
       !this.versions?.items.length ||
       !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)
@@ -781,7 +786,7 @@ export class KaleidescapeLibrary extends LitElement {
     void this.load();
   }
   private fromDetails(key: string, value: string) {
-    if (this.collectionLocked || this.checkingCollection) return;
+    if (this.detailsLocked || this.checkingCollection) return;
     clearTimeout(this.searchTimer);
     this.clearPeople();
     this.filters = {
@@ -807,7 +812,7 @@ export class KaleidescapeLibrary extends LitElement {
     return html`<button
       type="button"
       class="link detail-link"
-      ?disabled=${this.collectionLocked || this.checkingCollection}
+      ?disabled=${this.detailsLocked || this.checkingCollection}
       @click=${() => this.fromDetails(key, value)}
     >
       ${label}
@@ -1289,42 +1294,123 @@ export class KaleidescapeLibrary extends LitElement {
       </div>
     </dialog>`;
   }
+  private renderCollectionAction(row: LibraryTitle) {
+    if (!this.scope?.permissions.edit) return nothing;
+    return html`<kaleidescape-library-collection-add
+      slot="collection"
+      .client=${this.client}
+      .scope=${this.scope}
+      .version=${row}
+      .revision=${this.versions?.revision ?? 0}
+      .enabled=${!!this.info?.collection_add_enabled}
+      .blocked=${this.controlLocked || !!this.info?.pending_adds?.length}
+      @collection-lock=${(event: CustomEvent<boolean>) => {
+        if (event.detail !== this.collectionLocked) {
+          this.collectionLocked = event.detail;
+          this.requestUpdate();
+        }
+      }}
+      @collection-changed=${(event: CustomEvent<{ status: string }>) => {
+        this.collectionLocked = false;
+        this.notice =
+          event.detail.status === "confirmed"
+            ? "Collection membership confirmed on the device."
+            : "Check the pending collection add before making another change.";
+        void this.load();
+        void this.refreshStatus();
+      }}
+    ></kaleidescape-library-collection-add>`;
+  }
+  private compactRuntime(seconds: number | null | undefined) {
+    if (seconds == null) return "Runtime unknown";
+    const minutes = Math.round(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    return hours ? `${hours}h ${minutes % 60}m` : `${minutes}m`;
+  }
   private renderTitleDialog() {
     const group = this.selected;
     const row = this.activeVersion;
     const admin = this.scope?.permissions.edit;
+    const locked = this.detailsLocked || this.checkingCollection;
     return html`<dialog
       id="title-dialog"
       @cancel=${(event: Event) => {
-        if (this.collectionLocked) event.preventDefault();
+        if (this.detailsLocked) event.preventDefault();
       }}
       @click=${dismissBackdrop}
-      class="database-dialog library-dialog"
+      class="database-dialog library-dialog movie-dialog"
       aria-labelledby="library-title"
       @close=${() => {
         this.selected = undefined;
         this.clearVersions();
+        this.controlLocked = false;
         this.requestUpdate();
       }}
     >
       ${
         group
-          ? html`<div class="card-head">
+          ? html`
+              <div class="movie-heading">
                 <h2 id="library-title">
-                  ${this.detailLink("query", group.title)}${group.year ? html` (${this.detailLink("year", String(group.year))})` : nothing}
+                  ${this.detailLink("query", group.title)}
                 </h2>
                 <button
-                  ?disabled=${this.collectionLocked}
+                  class="movie-close"
+                  aria-label="Close"
+                  title="Close"
+                  ?disabled=${this.detailsLocked}
                   @click=${() => this.closeDialog("title-dialog")}
                 >
-                  Close
+                  <span class="visually-hidden">Close</span
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="m6 6 12 12M18 6 6 18"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    />
+                  </svg>
                 </button>
               </div>
-              <p>${counted(group.version_count ?? 1, "version")}</p>
-              <div class="detail-badges">
-                ${renderFormatBadges(group, false, (value) => this.fromDetails("format", value), this.collectionLocked || this.checkingCollection)}
-                ${renderRatingBadge(group.rating, (value) => this.fromDetails("rating", value), this.collectionLocked || this.checkingCollection)}
+              <p class="movie-summary">
+                ${(row?.year ?? group.year) ? this.detailLink("year", String(row?.year ?? group.year)) : "Year unknown"}
+                ·
+                ${this.compactRuntime(row?.duration_seconds ?? group.duration_seconds)}
+                ${row?.genres.length ? html` · ${row.genres.map((genre, index) => html`${index ? ", " : ""}${this.detailLink("genre", genre)}`)}` : nothing}
+              </p>
+              <div class="detail-badges movie-heading-badges">
+                ${renderFormatBadges(group, false, (value) => this.fromDetails("format", value), locked)}
+                ${renderRatingBadge(row?.rating ?? group.rating, (value) => this.fromDetails("rating", value), locked)}
+                <button
+                  class="movie-status"
+                  ?disabled=${locked}
+                  @click=${() => this.fromDetails("status", row?.watched_status ?? group.watched_status)}
+                >
+                  ${STATUS[row?.watched_status ?? group.watched_status]}
+                </button>
+                ${renderStatusBadges(group, false, ["watched", "progress"])}
               </div>
+              ${
+                row
+                  ? html`<kaleidescape-device-controls
+                      .client=${this.client}
+                      .scope=${this.scope}
+                      .versionId=${row.id}
+                      mode="movie"
+                      @control-lock=${(event: CustomEvent<boolean>) => {
+                        if (event.detail !== this.controlLocked) {
+                          this.controlLocked = event.detail;
+                          this.requestUpdate();
+                        }
+                      }}
+                      >${this.renderCollectionAction(row)}</kaleidescape-device-controls
+                    >`
+                  : nothing
+              }
+              <p class="movie-version-count muted">
+                ${counted(group.version_count ?? 1, "version")}
+              </p>
               ${this.versionsLoading ? html`<p role="status">Loading individual versions…</p>` : nothing}
               ${
                 this.versionsError
@@ -1341,7 +1427,8 @@ export class KaleidescapeLibrary extends LitElement {
               }
               ${
                 this.versions && this.versions.total > 1
-                  ? html`<div
+                  ? html`
+                      <div
                         class="page-tabs version-tabs"
                         role="tablist"
                         aria-label="Title versions"
@@ -1350,7 +1437,7 @@ export class KaleidescapeLibrary extends LitElement {
                         ${this.versions.items.map(
                           (item, index) =>
                             html`<button
-                              ?disabled=${this.collectionLocked}
+                              ?disabled=${this.detailsLocked}
                               role="tab"
                               id=${`version-${index}`}
                               aria-controls="version-details"
@@ -1365,123 +1452,78 @@ export class KaleidescapeLibrary extends LitElement {
                             </button>`,
                         )}
                       </div>
-                      ${this.versions.total > 50 ? html`<div class="actions"><button ?disabled=${!this.versions.offset || this.versionsLoading} @click=${() => this.loadVersions(Math.max(0, this.versions!.offset - 50))}>Previous versions</button><button ?disabled=${!this.versions.has_more || this.versionsLoading} @click=${() => this.loadVersions(this.versions!.offset + 50)}>Next versions</button></div>` : nothing}`
+                      ${this.versions.total > 50 ? html`<div class="actions"><button ?disabled=${!this.versions.offset || this.versionsLoading || this.detailsLocked} @click=${() => this.loadVersions(Math.max(0, this.versions!.offset - 50))}>Previous versions</button><button ?disabled=${!this.versions.has_more || this.versionsLoading || this.detailsLocked} @click=${() => this.loadVersions(this.versions!.offset + 50)}>Next versions</button></div>` : nothing}
+                    `
                   : nothing
               }
               ${
                 row
                   ? html`<div
-                      class="playback-layout"
+                      class="playback-layout movie-body"
                       id="version-details"
                       role=${(this.versions?.total ?? 1) > 1 ? "tabpanel" : "region"}
                       aria-label=${(this.versions?.total ?? 1) === 1 ? "Version details" : nothing}
                       aria-labelledby=${(this.versions?.total ?? 1) > 1 ? `version-${this.versions?.items.findIndex((item) => item.id === row.id) ?? 0}` : nothing}
                     >
-                      <div class="cover">${this.cover(row)}</div>
-                      <div>
-                        <p>${row.synopsis || "No synopsis available."}</p>
+                      <div class="cover movie-poster">${this.cover(row)}</div>
+                      <div class="movie-description">
+                        <h3>Synopsis</h3>
+                        <p class="movie-synopsis">
+                          ${row.synopsis || "No synopsis available."}
+                        </p>
                         <div class="detail-badges">
-                          ${renderFormatBadges(row, false, (value) => this.fromDetails("format", value), this.collectionLocked || this.checkingCollection)}
-                          ${renderRatingBadge(row.rating || "Unrated", (value) => this.fromDetails("rating", value), this.collectionLocked || this.checkingCollection)}
+                          ${renderFormatBadges(row, false, (value) => this.fromDetails("format", value), locked)}
+                          ${renderRatingBadge(row.rating || "Unrated", (value) => this.fromDetails("rating", value), locked)}
                         </div>
-                        <p>
-                          ${row.year ? this.detailLink("year", String(row.year)) : "Year unknown"}
-                          ·
-                          ${this.detailLink("status", row.watched_status, STATUS[row.watched_status])}
-                        </p>
-                        <p>
-                          ${row.duration_seconds === null ? "Runtime unknown" : `${(row.duration_seconds / 60).toFixed(2)} min`}
-                        </p>
-                        ${[
-                          ["Collections", row.collections, "collection"],
-                          ["Cast", row.actors, "query"],
-                          ["Directors", row.directors, "query"],
-                          ["Genres", row.genres, "genre"],
-                        ].map(([label, values, key]) =>
-                          (values as string[]).length
-                            ? html`<p>
-                                <strong>${label}:</strong>
-                                ${(values as string[]).map((value, index) => html`${index ? ", " : ""}${this.detailLink(key as string, value, label === "Collections" ? collectionLabel(value) : value)}`)}
-                              </p>`
-                            : nothing,
-                        )}
-                        <p class="muted">
-                          ${row.purchased_on ? html`Purchased ${this.date(row.purchased_on)}<br />` : nothing}
-                          First detected ${this.date(row.first_seen)}.
-                        </p>
+                        <hr />
+                        <dl class="movie-credits">
+                          ${[
+                            ["Directors", row.directors, "query"],
+                            ["Cast", row.actors, "query"],
+                            ["Genres", row.genres, "genre"],
+                            ["Collections", row.collections, "collection"],
+                          ].map(([label, values, key]) =>
+                            (values as string[]).length
+                              ? html`<div>
+                                  <dt>${label}</dt>
+                                  <dd>
+                                    ${(values as string[]).map((value, index) => html`${index ? ", " : ""}${this.detailLink(key as string, value, label === "Collections" ? collectionLabel(value) : value)}`)}
+                                  </dd>
+                                </div>`
+                              : nothing,
+                          )}
+                        </dl>
                         <p>
                           <button
                             class="link"
-                            ?disabled=${this.collectionLocked}
-                            @click=${() =>
-                              this.dispatchEvent(
-                                new CustomEvent("open-title-journal", {
-                                  detail: { id: row.id, title: row.title },
-                                  bubbles: true,
-                                  composed: true,
-                                }),
-                              )}
+                            ?disabled=${this.detailsLocked}
+                            @click=${() => this.dispatchEvent(new CustomEvent("open-title-journal", { detail: { id: row.id, title: row.title }, bubbles: true, composed: true }))}
                           >
                             View journal entries for this movie
                           </button>
                         </p>
-                        ${
-                          admin && row.purchase_history?.length
-                            ? html` <details>
-                                <summary>
-                                  Purchase history · Administrator
-                                </summary>
-                                ${row.purchase_history.map(
-                                  (purchase) =>
-                                    html`<p>
-                                      ${this.date(purchase.purchased_on)} ·
-                                      ${purchase.title}<br />
-                                      Paid:
-                                      ${purchase.purchase_price ?? "Unknown"} ·
-                                      Retail:
-                                      ${purchase.retail_price ?? "Unknown"}<br />
-                                      Order: ${purchase.order_id ?? "Unknown"}
-                                      ${purchase.href ? html`<br />Store reference: ${purchase.href}` : nothing}
-                                    </p>`,
-                                )}
-                              </details>`
-                            : nothing
-                        }
-                        ${
-                          admin
-                            ? html`<kaleidescape-library-collection-add
-                                .client=${this.client}
-                                .scope=${this.scope}
-                                .version=${row}
-                                .revision=${this.versions?.revision ?? 0}
-                                .enabled=${!!this.info?.collection_add_enabled}
-                                .blocked=${!!this.info?.pending_adds?.length}
-                                @collection-lock=${(
-                                  event: CustomEvent<boolean>,
-                                ) => {
-                                  if (event.detail !== this.collectionLocked) {
-                                    this.collectionLocked = event.detail;
-                                    this.requestUpdate();
-                                  }
-                                }}
-                                @collection-changed=${(
-                                  event: CustomEvent<{ status: string }>,
-                                ) => {
-                                  this.collectionLocked = false;
-                                  this.notice =
-                                    event.detail.status === "confirmed"
-                                      ? "Collection membership confirmed on the device."
-                                      : "Check the pending collection add before making another change.";
-                                  void this.load();
-                                  void this.refreshStatus();
-                                }}
-                              ></kaleidescape-library-collection-add>`
-                            : nothing
-                        }
+                        <details class="movie-record-details">
+                          <summary>Library details</summary>
+                          <p class="muted">
+                            ${row.purchased_on ? html`Purchased ${this.date(row.purchased_on)}<br />` : nothing}First
+                            detected ${this.date(row.first_seen)}.
+                          </p>
+                          ${
+                            admin && row.purchase_history?.length
+                              ? html`<details>
+                                  <summary>
+                                    Purchase history · Administrator
+                                  </summary>
+                                  ${row.purchase_history.map((purchase) => html`<p>${this.date(purchase.purchased_on)} · ${purchase.title}<br />Paid: ${purchase.purchase_price ?? "Unknown"} · Retail: ${purchase.retail_price ?? "Unknown"}<br />Order: ${purchase.order_id ?? "Unknown"}${purchase.href ? html`<br />Store reference: ${purchase.href}` : nothing}</p>`)}
+                                </details>`
+                              : nothing
+                          }
+                        </details>
                       </div>
                     </div>`
                   : nothing
-              }`
+              }
+            `
           : nothing
       }
     </dialog>`;

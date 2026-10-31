@@ -170,18 +170,9 @@ The
 accepts explicit IP/serial and probe/PLAY/STOP operands without starting HA.
 Handle launch is experimental. Normal checks use fictional loopback emulation;
 real device tests are operator actions, separate from build/test tasks. The
-[protocol library guide](protocol-library.md) explains the separate project and
-future integration boundary. Its own
-[README](https://pypi.org/project/kaleidescape-api/) covers Python 3.11+ setup,
-the public API, command catalog, examples and CLI. `dev/dev.sh check` also runs
-that project's independent checks. Use **Check Kaleidescape API** or
-`python ../kaleidescape-api/tools/check.py` to check only the library. Build its
-wheel/sdist with **Build Kaleidescape API** or
-`python -m build ../kaleidescape-api`. It is not included in HA deployment. The
-API's development extra includes Pyright; its checks use the existing Node.js
-installation. After building, run
-`python ../kaleidescape-api/tools/check_distribution.py` to verify source docs,
-examples and tests against a wheel installed in a clean temporary environment.
+[protocol library guide](protocol-library.md) explains the separate API project.
+Companion installs the pinned API distribution; API development, checks, and
+distribution builds run in the sibling `../kaleidescape-api` checkout.
 
 ## Integration framework
 
@@ -247,8 +238,10 @@ metadata, without guessing missing capabilities. Use
 `.venv/bin/python dev/benchmark_library.py` to time a fictional
 5000-name/10000-version cache without networking; this does not replace browser
 or target-HA timing. [Add to Collection](library-collections.md) is separately
-opt-in and administrator-only; removal remains deferred. Playback controls,
-progress, subscriptions, and selective per-user sharing remain deferred.
+opt-in and administrator-only; removal remains deferred.
+[Playback controls](playback-controls.md) now add separately opted-in discovery,
+a default player and a guarded control interface. Progress, subscriptions, and
+selective per-user sharing remain deferred.
 
 Library search/status bars are sticky, search includes partial actors/directors,
 and filters use bounded people suggestions. Database now has personal Options,

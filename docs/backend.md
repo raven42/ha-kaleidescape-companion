@@ -1,9 +1,10 @@
 # Journal backend
 
 The backend records manual journal entries and observed playback from one
-selected HA player. API version is `1`; SQLite schema is `17` and JSON export
+selected HA player. API version is `1`; SQLite schema is `18` and JSON export
 format is `5`. The household reader and administrator [management panel](ui.md)
-use this API. Live subscriptions and controls remain planned;
+use this API. Live subscriptions remain planned; administrator discovery and
+[household device controls](playback-controls.md) are implemented;
 [optional library sync](library.md) is implemented. A compact read-only Now
 Playing card uses the existing snapshot API and HA artwork. The
 [security policy](security.md) governs access, privacy, and resource limits.
@@ -269,8 +270,9 @@ administrator [Now Playing card](ui.md#now-playing) refreshes this snapshot
 while visible. It uses HA's existing authenticated media-player image route for
 current cover art; the API exposes no image URL, access token, or arbitrary
 fetch destination. No database schema/export version changes are needed.
-Progress and controls remain planned; the card never calls HA actions or opens
-device connections.
+Progress remains planned; this snapshot never sends controls or opens device
+connections. A separate opted-in [control API](#device-control-api) supports the
+household Player controls card and Library launch.
 
 ## Authenticated API
 
@@ -662,3 +664,42 @@ missing IDs do not create synthetic transactions. Savings require both prices in
 one currency. Reads have a two-second SQL/Python budget and a 100,000-record
 ceiling; exceeding either returns an error without partial totals. No schema,
 networking or device-write change is involved.
+
+## Device control API
+
+[Controls](playback-controls.md) use authenticated WebSocket entry/dataset
+scope. All active users may use `control/info`, `control/status`,
+`control/prepare` and `control/execute` when opted in. Discovery/configuration
+and uncertain-command acknowledgement remain administrator-only. There is no raw
+protocol/HA-action endpoint or new HA control service.
+
+`control/info` is passive and opens no socket. It returns enablement, launch
+opt-in, `default_player` (opaque ID), friendly `players`, `blocked_players`,
+`can_manage` and the caller's own `pending` receipts. Administrators receive all
+pending receipts and an additional `devices` inventory. Ordinary users receive
+no addresses/serials, actors or another user's receipt UUID. Discovery restores
+choices from a private, seed-bound HA Store; only an administrator's explicit
+`control/discover` refreshes that cache from the configured system.
+
+`control/status` and `control/prepare` optionally accept `player_id`, restricted
+to a known movie-capable target or configured default. Omission uses the
+default. Unknown IDs, raw serials and destinations are rejected. Status returns
+a safe live movie state. Prepare accepts a fixed `operation` and, for `launch`
+only, opaque `title_id`; it returns an actor-bound 60-second `token`, live
+context and `player_id`. The UI automatically preflights and sends on one
+command click. There is no human confirmation field or ordinary command
+confirmation dialog.
+
+`control/execute` takes `request_id` and `token`, rechecks
+identity/state/config, reserves a schema 18 receipt and sends once. Results
+distinguish `state_observed`, `acknowledged`, `rejected`, `not_sent` and
+`unconfirmed`; edition confirmation is always false. Retry the same
+actor/UUID/token to retrieve an accepted result without replay. Pending
+uncertainty blocks that serial across all users.
+
+After physical inspection, administrator `control/acknowledge` takes a receipt
+`request_id` and `confirmation: "REVIEWED"`, records the reviewer and returns
+`pending_count`. It never resends/removes the original result or clears an
+actively sending receipt. Startup converts interrupted reservations to
+uncertain. System records are outside editing/portable imports; SQLite backups
+retain them.

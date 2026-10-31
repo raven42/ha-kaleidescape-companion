@@ -19,6 +19,7 @@ TABLE_KEYS = {
     "calendar_publications": "viewing_id",
     "calendar_sync_jobs": "request_id",
     "calendar_sync_items": "request_id,viewing_id",
+    "playback_controls": "request_id",
 }
 MAIN_TABLES = (
     "viewings",

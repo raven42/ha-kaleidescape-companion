@@ -5,6 +5,7 @@ import type { PropertyValues } from "lit";
 import { errorCode, JournalClient } from "../core/api";
 import type { JournalInfo, NowPlayingPlayer } from "../core/api";
 import { styles } from "../ui/styles";
+import "./controls";
 
 const PLAYBACK: Record<string, string> = {
   playing: "Playing",
@@ -169,79 +170,83 @@ export class KaleidescapeNowPlaying extends LitElement {
     const active =
       player?.available && !["stopped", "none"].includes(player.play_status);
     return html`<section class="card now-playing" aria-label="Now Playing">
-      <div class="card-head">
-        <h2>Now Playing</h2>
-        <button
-          ?disabled=${this.loading || !this.boundScope}
-          @click=${() => {
-            this.imageKey = "";
-            void this.refresh();
-          }}
-        >
-          Refresh playback
-        </button>
-      </div>
-      ${
-        this.error
-          ? html`<p class="playback-message" role="alert">${this.error}</p>`
-          : !player
-            ? html`<p class="playback-message" role="status">
-                ${
-                  this.loading
-                    ? "Loading playback…"
-                    : "Automatic tracking is off. Configure a player in the integration options to show Now Playing."
-                }
-              </p>`
-            : html`<div class="playback-layout">
-                <div class="cover">
+        <div class="card-head">
+          <h2>Now Playing</h2>
+          <button
+            ?disabled=${this.loading || !this.boundScope}
+            @click=${() => {
+              this.imageKey = "";
+              void this.refresh();
+            }}
+          >
+            Refresh playback
+          </button>
+        </div>
+        ${
+          this.error
+            ? html`<p class="playback-message" role="alert">${this.error}</p>`
+            : !player
+              ? html`<p class="playback-message" role="status">
                   ${
-                    this.image
-                      ? html`<img
-                          src=${this.image}
-                          alt="Current movie cover"
-                          @error=${() => {
-                            const key = this.imageKey;
-                            this.clearImage();
-                            this.imageKey = key;
-                            this.requestUpdate();
-                          }}
-                        />`
-                      : html`<span>No artwork available</span>`
+                    this.loading
+                      ? "Loading playback…"
+                      : "Automatic tracking is off. Configure a player in the integration options to show Now Playing."
                   }
-                </div>
-                <div class="playback-detail">
-                  <small>${player.name ?? "Configured player"}</small>
-                  <h3>
-                    ${!player.available ? "Player unavailable" : active ? (player.title ?? "Unknown title") : "No movie playing"}
-                  </h3>
-                  ${player.available ? html`<p>${PLAYBACK[player.play_status] ?? "Unknown playback state"} · ${LOCATION[player.location] ?? "Unknown location"}</p>` : nothing}
-                  ${active && player.duration_seconds != null ? html`<p>Runtime · ${(player.duration_seconds / 60).toFixed(2)} min</p>` : nothing}
-                  ${
-                    active && player.session
-                      ? html`<p>
-                            This session ·
-                            ${(player.session.watched_seconds / 60).toFixed(2)}
-                            min counted
-                          </p>
-                          <small
-                            >Pauses and scans are excluded.
-                            ${player.session.credits_confirmed ? "Credits confirmed; journal completion also requires the configured watch threshold." : "Credits not yet confirmed."}
-                            ${player.session.gap_count ? html` ${counted(player.session.gap_count, "timing gap")}.` : nothing}</small
-                          >`
-                      : nothing
-                  }
-                  <p role="status">
-                    ${this.recordingStatus(player, Boolean(active))}
-                    ${player.buffered_observations ? html` ${counted(player.buffered_observations, "update")} buffered.` : nothing}
-                  </p>
-                  <small
-                    >Live snapshot refreshes about every 5 seconds while
-                    visible.</small
-                  >
-                </div>
-              </div>`
-      }
-    </section>`;
+                </p>`
+              : html`<div class="playback-layout">
+                  <div class="cover">
+                    ${
+                      this.image
+                        ? html`<img
+                            src=${this.image}
+                            alt="Current movie cover"
+                            @error=${() => {
+                              const key = this.imageKey;
+                              this.clearImage();
+                              this.imageKey = key;
+                              this.requestUpdate();
+                            }}
+                          />`
+                        : html`<span>No artwork available</span>`
+                    }
+                  </div>
+                  <div class="playback-detail">
+                    <small>${player.name ?? "Configured player"}</small>
+                    <h3>
+                      ${!player.available ? "Player unavailable" : active ? (player.title ?? "Unknown title") : "No movie playing"}
+                    </h3>
+                    ${player.available ? html`<p>${PLAYBACK[player.play_status] ?? "Unknown playback state"} · ${LOCATION[player.location] ?? "Unknown location"}</p>` : nothing}
+                    ${active && player.duration_seconds != null ? html`<p>Runtime · ${(player.duration_seconds / 60).toFixed(2)} min</p>` : nothing}
+                    ${
+                      active && player.session
+                        ? html`<p>
+                              This session ·
+                              ${(player.session.watched_seconds / 60).toFixed(2)}
+                              min counted
+                            </p>
+                            <small
+                              >Pauses and scans are excluded.
+                              ${player.session.credits_confirmed ? "Credits confirmed; journal completion also requires the configured watch threshold." : "Credits not yet confirmed."}
+                              ${player.session.gap_count ? html` ${counted(player.session.gap_count, "timing gap")}.` : nothing}</small
+                            >`
+                        : nothing
+                    }
+                    <p role="status">
+                      ${this.recordingStatus(player, Boolean(active))}
+                      ${player.buffered_observations ? html` ${counted(player.buffered_observations, "update")} buffered.` : nothing}
+                    </p>
+                    <small
+                      >Live snapshot refreshes about every 5 seconds while
+                      visible.</small
+                    >
+                  </div>
+                </div>`
+        }
+      </section>
+      <kaleidescape-device-controls
+        .client=${this.client}
+        .scope=${this.scope}
+      ></kaleidescape-device-controls>`;
   }
 }
 if (!customElements.get("kaleidescape-now-playing"))

@@ -175,9 +175,11 @@ account/access/scope change clears all retained covers. See
 [cover retention and layout options](ui-preferences.md). Regular users poll
 cached counts/revisions/timestamps every 30 seconds, without administrator sync
 progress, settings, errors, or storage details. Background scheduled sync
-continues independently when enabled. There are no playback controls. The
-separately opted-in [Add to Collection](library-collections.md) action is the
-only supported vendor edit.
+continues independently when enabled. Separately enabled household
+[Library playback](playback-controls.md) can launch an exact cached version
+through the protocol extension, with edition limitations. The separately
+opted-in [Add to Collection](library-collections.md) action is the only
+supported vendor edit.
 
 The search toolbar sticks to the top of the scrolling Library. A compact sticky
 footer holds title/collection counts, last catalog sync and administrator
@@ -397,7 +399,8 @@ and saved immediately in personal Library preferences. Administrators also have
 an expandable **Purchase details** section showing total library cost, total
 retail price, savings and unique transactions. Totals load only when that
 section opens or the footer option is enabled, then refresh with source revision
-changes. Household readers have neither control nor purchase totals.
+changes. Household readers have neither the purchase-display toggle nor purchase
+totals.
 
 These are totals of recorded purchase history for the configured Library source,
 including invoices owned by unavailable versions. Search/filters, page size and

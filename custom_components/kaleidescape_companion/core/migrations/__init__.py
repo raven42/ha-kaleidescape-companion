@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from ..security import private_file
 
-SCHEMA_VERSION = 17
+SCHEMA_VERSION = 18
 
 MIGRATIONS = {
     1: (
@@ -325,6 +325,19 @@ MIGRATIONS[16] = (
 MIGRATIONS[17] = (
     "CREATE INDEX viewings_library_title ON viewings(library_title_id) "
     "WHERE deleted_at IS NULL",
+)
+
+
+MIGRATIONS[18] = (
+    """CREATE TABLE playback_controls (
+        request_id TEXT PRIMARY KEY REFERENCES requests(request_id),
+        actor_id TEXT NOT NULL,player_serial TEXT NOT NULL,operation TEXT NOT NULL,
+        status TEXT NOT NULL CHECK(
+            status IN ('sending','finished','uncertain','reviewed')),
+        created_at TEXT NOT NULL,updated_at TEXT NOT NULL,reviewed_by TEXT
+    )""",
+    """CREATE UNIQUE INDEX playback_controls_pending ON playback_controls(player_serial)
+        WHERE status IN ('sending','uncertain')""",
 )
 
 

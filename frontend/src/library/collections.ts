@@ -1,5 +1,5 @@
 /** One explicit device addition; uncertain results are checked, never reposted. */
-import { LitElement, html, nothing } from "lit";
+import { LitElement, css, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
 import { errorCode, errorMessage } from "../core/api";
 import type {
@@ -21,7 +21,15 @@ export class LibraryCollectionAdd extends LitElement {
     enabled: { type: Boolean },
     blocked: { type: Boolean },
   };
-  static styles = styles;
+  static styles = [
+    styles,
+    css`
+      .collection-button {
+        border-radius: 999px;
+        padding: 10px 20px;
+      }
+    `,
+  ];
   client?: JournalClient;
   scope?: JournalInfo;
   version?: LibraryTitle;
@@ -215,10 +223,11 @@ export class LibraryCollectionAdd extends LitElement {
     if (!this.scope?.permissions.edit || !this.version || !this.enabled)
       return nothing;
     return html`<button
+        class="collection-button"
         ?disabled=${this.blocked || this.busy}
         @click=${this.open}
       >
-        Add to Collection…
+        Collection
       </button>
       ${this.notice ? html`<p role="status">${this.notice}</p>` : nothing}
       <dialog

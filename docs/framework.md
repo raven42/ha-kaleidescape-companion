@@ -115,29 +115,33 @@ The product name is **Kaleidescape Companion**. The HA domain
 - [Product plan](plan.md), [technical design](design.md), and
   [development guide](development.md).
 
-## Deferred
+## Device controls
 
-A standalone
-[protocol proof of concept](playback-controls.md#standalone-protocol-proof-of-concept)
-now supports operator probe/PLAY/STOP and experimental movie-handle launch,
-without HA registration or database changes. The
-[independent API project](https://pypi.org/project/kaleidescape-api/) now add
-documented commands, persistent sessions, discovery, bounded events, binary
-responses and multipart music browsing/content details. Emulator tests pass; an
-operator reported successful selected-title playback and STOP on one player on
-October 30. Broader compatibility and exact-edition confirmation remain
-unverified. Native controls and settings remain deferred.
+The [Companion API adapter](playback-controls.md) adds separately opted-in,
+administrator seed discovery, household player selection and fixed
+transport/navigation/power commands and experimental exact-Library-version
+launch. Schema 18 records durable actor-bound outcomes and blocks uncertain
+writes pending physical review. HA installs the pinned API package; the
+independent Python 3.11+ project, CLI and tests remain separate. Built-in HA
+entities and recorder sources are preserved.
+
+Fictional API/UI tests cover permission/identity/state checks and
+retry/lifecycle boundaries. The operator's earlier CLI launch/STOP sequence
+covers one player; the new HA interface and broader commands need operator
+browser/device review. Exact-edition confirmation remains unverified.
+
+## Deferred
 
 Multi-player configuration, live subscriptions, validated position/progress,
 canonical work/edition identities, journal identity associations and historical
-artwork, per-user ownership/selective sharing, and playback controls remain
-deferred. The basic management panel is registered in HA; broader product UI and
-real-browser compatibility/accessibility checks remain. Administrator
-[Add to Collection](library-collections.md) is implemented behind a separate
-off-by-default option. Removal remains planned; automatic sync stays GET-only.
-Reviewed viewing/Library JSON/SQLite merge imports are implemented; automatic
-retention remains deferred. Full SQLite restore is documented as an offline
-procedure.
+artwork, per-user ownership/selective sharing, saved resume and broader player
+compatibility remain deferred. The basic management panel is registered in HA;
+broader product UI and real-browser compatibility/accessibility checks remain.
+Administrator [Add to Collection](library-collections.md) is implemented behind
+a separate off-by-default option. Removal remains planned; automatic sync stays
+GET-only. Reviewed viewing/Library JSON/SQLite merge imports are implemented;
+automatic retention remains deferred. Full SQLite restore is documented as an
+offline procedure.
 
 See the [backend API](backend.md) for the implemented manual and observed
 journal behavior. The [design](design.md) distinguishes current source

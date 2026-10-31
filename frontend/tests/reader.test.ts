@@ -260,22 +260,43 @@ it("follows exact Library links and related viewings for a household reader", as
   expect(content()).not.toContain(`Viewings for ${title.title}`);
 });
 
-it("orders reader tabs Library then Journal and follows that order with Home and End", async () => {
+it("orders reader tabs Now Playing, Library then Journal and follows that order with Home and End", async () => {
   transport.options.library_enabled = true;
   button("Refresh").click();
   await vi.waitFor(() => expect(button("Library").disabled).toBe(false));
   const tabs = reader.shadowRoot!.querySelector('[role="tablist"]')!;
   expect(
     [...tabs.querySelectorAll("button")].map((tab) => tab.textContent!.trim()),
-  ).toEqual(["Library", "Journal"]);
+  ).toEqual(["Now Playing", "Library", "Journal"]);
   for (const [key, label] of [
-    ["Home", "Library"],
+    ["Home", "Now Playing"],
     ["End", "Journal"],
   ]) {
     tabs.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
     await reader.updateComplete;
     expect(button(label).getAttribute("aria-selected")).toBe("true");
   }
+});
+
+it("offers household player controls without requesting private observation snapshots", async () => {
+  button("Now Playing").click();
+  await reader.updateComplete;
+  const controls = reader.shadowRoot!.querySelector(
+    "kaleidescape-device-controls",
+  )!;
+  await vi.waitFor(() =>
+    expect(controls.shadowRoot!.textContent).toContain("Player controls"),
+  );
+  expect(
+    transport.calls.some((call) => call.type.endsWith("/control/info")),
+  ).toBe(true);
+  expect(
+    transport.calls.some(
+      (call) =>
+        call.type.endsWith("/now_playing") ||
+        call.type.endsWith("/control/discover"),
+    ),
+  ).toBe(false);
 });
 
 it("keeps Library disabled without requests before opt-in and clears it on connection loss", async () => {

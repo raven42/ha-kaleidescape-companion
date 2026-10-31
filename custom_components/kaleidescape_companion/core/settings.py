@@ -11,9 +11,11 @@ from homeassistant.helpers import selector
 from ..calendar.config import DEFAULTS as CALENDAR_DEFAULTS
 from ..calendar.config import target as calendar_target
 from ..calendar.config import validate as validate_calendar
-from ..const import DEFAULT_MINIMUM_RUNTIME_MINUTES
+from ..const import DEFAULT_MINIMUM_RUNTIME_MINUTES, DOMAIN
 from ..library.config import DEFAULTS as LIBRARY_DEFAULTS
 from ..library.config import validate as validate_library
+from ..playback.control_config import DEFAULTS as CONTROL_DEFAULTS
+from ..playback.control_config import validate as validate_controls
 from ..ui.preferences import CHOICES
 from ..ui.preferences import DEFAULTS as UI_DEFAULTS
 from ..ui.preferences import validate as validate_ui
@@ -138,6 +140,31 @@ def form(hass: HomeAssistant, config: dict) -> p.Schema:
             ),
         )
     ] = selector.TextSelector(selector.TextSelectorConfig(multiline=True))
+    choices = {"": "No default player selected"}
+    for entry in hass.config_entries.async_entries(DOMAIN):
+        controls = getattr(getattr(entry, "runtime_data", None), "controls", None)
+        for device in controls.devices if controls else []:
+            if device["is_player"]:
+                choices[device["serial"]] = f"{device['name']} ({device['serial']})"
+    selected = config.get("control_player", "")
+    if selected:
+        choices.setdefault(selected, f"Configured player ({selected})")
+    for key, default in CONTROL_DEFAULTS.items():
+        marker = p.Required(key, default=config.get(key, default))
+        if type(default) is bool:
+            properties[marker] = selector.BooleanSelector()
+        elif key == "control_player":
+            properties[marker] = selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    custom_value=True,
+                    options=[
+                        {"value": value, "label": label}
+                        for value, label in choices.items()
+                    ],
+                )
+            )
+        else:
+            properties[marker] = selector.TextSelector()
     return p.Schema(properties)
 
 
@@ -148,6 +175,7 @@ def validate(hass: HomeAssistant, user_input: dict[str, Any], previous: dict) ->
         **validate_library(user_input, previous),
         **validate_ui(user_input, previous),
         **validate_calendar(hass, user_input, previous),
+        **validate_controls(user_input, previous),
         "tracking_enabled": user_input.get("tracking_enabled", False),
     }
     for key, default, minimum, maximum in (

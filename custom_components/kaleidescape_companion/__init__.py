@@ -16,6 +16,7 @@ from .core.runtime import KaleidescapeConfigEntry, KaleidescapeRuntime, loaded_r
 from .library.config import origin
 from .library.store import source_id
 from .library.sync import LibrarySync
+from .playback.controls import PlaybackControls
 from .playback.observer import PlaybackObserver
 from .ui.http import JournalExportView, JournalImportView, LibraryArtworkView
 from .ui.panel import async_remove_panel, async_setup_panel
@@ -30,6 +31,8 @@ async def _async_close_runtime(
 ) -> None:
     runtime.ready = False
     try:
+        if runtime.controls:
+            await runtime.controls.async_stop()
         if runtime.calendar:
             await runtime.calendar.async_stop()
         if runtime.library:
@@ -88,6 +91,8 @@ async def async_setup_entry(
             hass.http.register_view(LibraryArtworkView())
             hass.data[f"{DOMAIN}.api_registered"] = True
         config = dict(entry.options or entry.data)
+        runtime.controls = PlaybackControls(hass, repository, config)
+        await runtime.controls.async_start()
         await repository.async_recording_library(
             source_id(origin(config.get("library_host", "")))
             if config.get("library_enabled", False)

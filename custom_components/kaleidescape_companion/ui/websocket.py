@@ -13,6 +13,7 @@ from ..core.models import JournalError
 from ..core.runtime import get_library, get_runtime, loaded_runtimes
 from ..core.security import is_active_admin, is_active_user
 from ..library.config import origin
+from .controls import control_request
 from .preferences import public_defaults
 from .settings import fingerprint, options_request
 
@@ -32,6 +33,10 @@ USER_OPERATIONS = frozenset(
         "library/viewings",
         "ui/preferences/get",
         "ui/preferences/update",
+        "control/info",
+        "control/status",
+        "control/prepare",
+        "control/execute",
     }
 )
 
@@ -63,6 +68,20 @@ def async_register_commands(hass: HomeAssistant) -> None:
             p.Required("confirmation"): str,
         },
         "now_playing": scoped,
+        "control/info": scoped,
+        "control/discover": scoped,
+        "control/status": {**scoped, p.Optional("player_id"): str},
+        "control/prepare": {
+            **scoped,
+            p.Required("operation"): str,
+            p.Optional("title_id"): str,
+            p.Optional("player_id"): str,
+        },
+        "control/execute": {
+            **mutations,
+            p.Required("token"): str,
+        },
+        "control/acknowledge": {**mutations, p.Required("confirmation"): str},
         "library/info": scoped,
         "library/list": {**scoped, p.Optional("filters", default={}): dict},
         "library/sync": scoped,
@@ -289,6 +308,15 @@ async def async_handle(
             runtime = get_runtime(hass, msg["entry_id"], msg["dataset_id"])
             repository = runtime.repository
             match operation:
+                case (
+                    "control/info"
+                    | "control/discover"
+                    | "control/status"
+                    | "control/prepare"
+                    | "control/execute"
+                    | "control/acknowledge"
+                ):
+                    result = await control_request(hass, user, runtime, operation, msg)
                 case (
                     "library/info"
                     | "library/list"

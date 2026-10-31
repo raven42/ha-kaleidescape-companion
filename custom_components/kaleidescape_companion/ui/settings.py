@@ -10,6 +10,7 @@ from homeassistant.helpers import config_validation as cv
 
 from ..core.models import JournalError, invalid, text
 from ..library.config import DEFAULTS as LIBRARY_DEFAULTS
+from ..playback.control_config import DEFAULTS as CONTROL_DEFAULTS
 from .preferences import DEFAULTS as UI_DEFAULTS
 
 OPTION_FIELDS = frozenset(
@@ -23,6 +24,7 @@ OPTION_FIELDS = frozenset(
         "resume_hours",
     }
     | LIBRARY_DEFAULTS.keys()
+    | CONTROL_DEFAULTS.keys()
     | UI_DEFAULTS.keys()
     | {"calendar_enabled", "calendar_entity", "calendar_title", "calendar_description"}
 )

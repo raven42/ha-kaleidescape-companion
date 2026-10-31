@@ -15,7 +15,10 @@ export function landingPage(
 ): Page {
   const allowed = (page: string | null | undefined): page is Page =>
     pages.includes(page as Page) &&
-    (admin || page === "journal" || page === "library") &&
+    (admin ||
+      page === "now-playing" ||
+      page === "journal" ||
+      page === "library") &&
     (page !== "library" || library);
   const requested = new URL(location.href).searchParams.get("companion_page");
   return allowed(requested)

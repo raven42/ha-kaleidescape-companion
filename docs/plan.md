@@ -22,7 +22,7 @@ code boundaries. The [security policy](security.md) governs every phase.
 | 1. Foundations                       | Config/options flow, worker-owned SQLite, migrations, authenticated APIs/panel, diagnostics, backup hooks, exports, and local deployment tooling implemented                                                                                    | Validate the supported HA releases, real config-flow/platform lifecycle, and full HA backup/restore; resolve dependency findings                                              |
 | 2. Journal and read-only Now Playing | One-player timing/recovery, partials/rewatches, corrections, reader/admin UI, sensors, and read-only Now Playing with HA cover artwork/session context implemented                                                                              | Operator browser review, real-source transition validation, and HA compatibility; subscriptions/progress remain optional follow-ups                                           |
 | 3. Library browser                   | Opt-in hostname discovery/override, scheduled GET-only sync, cached titles/collections/details/artwork, shared cover/list browsing, multi-select filters, sortable headings, detail popups, first detection, and version identities implemented | Operator full-sync/browser/firmware validation; canonical work identities, journal links, and collection removal remain; separately opted-in Add to Collection is implemented |
-| 4. Playback and controls             | Planned                                                                                                                                                                                                                                         | Permission/capability checks, explicit commands, state confirmation, and authorized device tests                                                                              |
+| 4. Playback and controls             | Opt-in API discovery/default player, household controls, experimental Library launch and durable no-replay receipts implemented                                                                                                                 | Permission/capability checks, explicit commands, state confirmation, and authorized device tests                                                                              |
 | 5. Polish and distribution           | Planned                                                                                                                                                                                                                                         | Accessibility/localization, measured performance, release compatibility, license/ownership/reporting setup, and HACS assessment                                               |
 
 These phases describe product delivery, not an HA quality-scale certification. A
@@ -143,44 +143,33 @@ Measure on representative HA hardware and synthetic large catalogs before
 choosing FTS, virtualization, WAL, or broad cache warming; these are not
 measured guarantees.
 
-## Then: explicit playback controls
+## Playback controls: implemented slice and next validation
 
-The [selected-title playback design](playback-controls.md) records the October
-30 protocol/client research and implementation sequence. Begin with separately
-opted-in read-only player enumeration, a native HA default-player selector and
-verified exact-version handle enrichment. Library scans already retain browser
-handles; no replacement TCP catalog scan is planned. A native adapter is
-implemented for missing public client operations, without private HA/runtime
-hooks or conflicting dependency pins. Experimental `PLAY_MOVIE` launch remains
-separately gated until operator validation; this research adds no runtime HA
-controls or schema changes. A standalone standard-library protocol proof of
-concept and `dev/playback_control.py` implement explicit probe/PLAY/STOP and
-experimental handle launch for operator testing. Emulator checks cover identity,
-framing and uncertain writes. Operator output from October 30 establishes one
-successful selected-title launch/stop sequence; see the
-[validation scope](playback-controls.md#operator-validation--2026-10-30). The
-[independent API project](https://pypi.org/project/kaleidescape-api/) now implement the
-documented request catalog, persistent sessions, explicit discovery/events and
-binary responses, with undocumented movie launch in its own adapter. Broader
-compatibility, HA discovery/settings, persistent handle enrichment and durable
-HA control receipts remain future work.
+The [Companion control adapter](playback-controls.md) now consumes the
+independent API through a generated runtime bundle. It adds opt-in, read-only
+seed discovery, a native default-player serial setting, an administrator Now
+Playing control card and separately enabled Library launch without confirmation
+prompts. Fixed transport/navigation/power intents use fresh direct
+identity/movie-zone/state checks; Library launch also resolves the exact cached
+version and validates live content metadata. Schema 18 persists actor-bound
+request outcomes and uncertainty barriers. It never replays a possible write.
+Recording continues from the existing HA entities; changing a control target
+does not change recording sources.
 
-Add a small set of capability-gated play/pause/stop buttons for convenience only
-when useful, calling the existing player's public HA actions with caller context
-and entity permissions. Reuse HA's media player; do not build a duplicate player
-integration or a generic remote-control replacement. Check fresh player identity
-and expected revision, serialize per-player requests, and distinguish an action
-acknowledgement from an observed result. Timeouts are unconfirmed outcomes, not
-instructions to resend a command. Toggle-style pause must not be blindly
-retried.
+The operator's October 30 CLI launch/STOP sequence validates one player only.
+The new integration UI and discovery need operator review, followed by explicit
+hardware tests in a suitable theater window. Broader firmware/model command
+support, standby, edition ambiguity and existing theater automation behavior
+remain acceptance gates. Normal build/test tasks use fictional peers and never
+connect to devices.
 
-Selected-library-title launch, edition selection, saved-title resume, seeking,
-and start-over each need independently verified semantics. Unsupported actions
-remain unavailable. Accumulated viewing time is not a saved resume point. Never
-substitute a navigation macro or guessed protocol/HTTP command for direct
-launch. An action that interrupts another title needs a clear
-target/interruption flow. Device tests require an explicitly authorized playback
-window and must account for the operator's existing theater automation.
+Next investigate persistent verified handle enrichment only if fresh namespace
+resolution is inadequate. Saved-title resume, seeking, start-over, exact edition
+selection, additional actions/services and live subscriptions need independently
+verified semantics. Never substitute a navigation macro or guessed namespace; no
+automatic wake or retry. The current fixed administrator interface preserves the
+built-in player rather than registering competing entities. Any broader
+user/automation capability needs its own authorization contract.
 
 ## Planned investigations
 

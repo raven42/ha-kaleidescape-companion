@@ -8,6 +8,7 @@ from homeassistant.core import HomeAssistant
 from ..calendar.publisher import CalendarPublisher
 from ..const import DOMAIN
 from ..library.sync import LibrarySync
+from ..playback.controls import PlaybackControls
 from ..playback.observer import PlaybackObserver
 from .models import JournalError
 from .repository import JournalRepository
@@ -23,6 +24,7 @@ class KaleidescapeRuntime:
     observer: PlaybackObserver | None = None
     library: LibrarySync | None = None
     calendar: CalendarPublisher | None = None
+    controls: PlaybackControls | None = None
     preserve_panel_on_reload: bool = False
 
 

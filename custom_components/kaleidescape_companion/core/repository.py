@@ -158,6 +158,9 @@ class JournalRepository:
             connection.close()
             raise
         self._connection = connection
+        from ..playback.control_store import recover
+
+        recover(connection)
         if self._artwork_directory.exists() or self._artwork_directory.is_symlink():
             library_store.cache_open(connection, self._artwork_directory)
 
@@ -201,6 +204,19 @@ class JournalRepository:
 
     async def async_library_candidates(self, source: str) -> list[dict]:
         return await self._call(library_store.detail_candidates, self._db(), source)
+
+    async def async_control(self, operation, *args):
+        from ..playback import control_store
+
+        return await self._call(
+            self._control_operation, getattr(control_store, operation), args
+        )
+
+    def _control_operation(self, operation, args):
+        if operation.__name__ in {"begin", "acknowledge"}:
+            if self._paused or self._import_active or self._export_active:
+                raise JournalError("busy", "Wait for the active backup or transfer")
+        return operation(self._db(), *args)
 
     async def async_collection_snapshot(self, source, title=None, excluded=""):
         return await self._call(

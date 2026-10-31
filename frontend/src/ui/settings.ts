@@ -15,6 +15,7 @@ import { CalendarExport } from "./calendar-export";
 import "./metadata-repair";
 import type { MetadataRepair } from "./metadata-repair";
 import { PreferenceStore } from "./preference-store";
+import "../playback/controls";
 
 const fields = [
   ["media_player", "Kaleidescape media player", "text", "", ""],
@@ -69,6 +70,8 @@ const booleanFields = new Set([
   "calendar_enabled",
   "tracking_enabled",
   "library_enabled",
+  "control_enabled",
+  "control_allow_launch",
   ...libraryChecks.map(([key]) => key),
 ]);
 const validation: Record<string, string> = {
@@ -82,6 +85,8 @@ const validation: Record<string, string> = {
   duplicate_entities:
     "Choose different sensors for play status and media location.",
   invalid_rules: "Check the runtime, completion, and partial-resume values.",
+  invalid_control_options:
+    "Use a private LAN control hostname/IP and a valid player serial number.",
   invalid_library_host:
     "Enter a hostname or private LAN HTTP(S) origin without a path, credentials, or query.",
   invalid_library_options:
@@ -430,6 +435,77 @@ export class KaleidescapeSettings extends LitElement {
                       cutoff uses total duration; missing runtime waits for
                       metadata. Completion uses watched time and confirmed
                       credits.
+                    </p>
+                    <h3>Device discovery and controls</h3>
+                    <label class="check"
+                      ><input
+                        name="control_enabled"
+                        type="checkbox"
+                        .checked=${!!this.draft.control_enabled}
+                        @change=${(event: Event) => {
+                          this.draft = {
+                            ...this.draft,
+                            control_enabled: (event.target as HTMLInputElement)
+                              .checked,
+                          };
+                          this.requestUpdate();
+                        }}
+                      />Enable playback controls</label
+                    >
+                    <label
+                      >Control hostname · blank uses the Library host<input
+                        name="control_host"
+                        maxlength="255"
+                        .value=${String(this.draft.control_host ?? "")}
+                        @input=${(event: Event) => {
+                          this.draft = {
+                            ...this.draft,
+                            control_host: (event.target as HTMLInputElement)
+                              .value,
+                          };
+                          this.requestUpdate();
+                        }}
+                    /></label>
+                    <kaleidescape-device-controls
+                      mode="settings"
+                      .client=${this.client}
+                      .scope=${this.scope}
+                      .value=${String(this.draft.control_player ?? "")}
+                      .configured=${this.draft.control_enabled === this.initial.control_enabled && this.draft.control_host === this.initial.control_host}
+                      @player-selected=${(event: CustomEvent<string>) => {
+                        this.draft = {
+                          ...this.draft,
+                          control_player: event.detail,
+                        };
+                        this.requestUpdate();
+                      }}
+                    ></kaleidescape-device-controls>
+                    <label class="check"
+                      ><input
+                        name="control_allow_launch"
+                        type="checkbox"
+                        .checked=${!!this.draft.control_allow_launch}
+                        @change=${(event: Event) => {
+                          this.draft = {
+                            ...this.draft,
+                            control_allow_launch: (
+                              event.target as HTMLInputElement
+                            ).checked,
+                          };
+                          this.requestUpdate();
+                        }}
+                      />Allow experimental Library title playback</label
+                    >
+                    <p class="muted">
+                      Enabled controls are available to all active HA users and
+                      use TCP 10000. Commands run when clicked without
+                      confirmation. Discovery reads the configured system
+                      without waking players. Save enablement/host first,
+                      discover, select a movie player, then save again. The
+                      control target is separate from Journal tracking. Library
+                      playback uses the same catalog seed and verifies the
+                      selected title before launch; the player chooses its
+                      playable format.
                     </p>
                     <h3>Watched movies calendar</h3>
                     <label class="check"

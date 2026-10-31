@@ -51,7 +51,8 @@ pages use compact summaries and visible-only artwork fetching, retaining
 completed covers in a private bounded Library-session cache; full metadata loads
 when opening a title. Settings can hide collection names without hiding movies
 or editing the device. Collection additions have a separate opt-in
-[contract](library-collections.md); progress and playback controls remain later
+[contract](library-collections.md). [Player controls](playback-controls.md) and
+experimental Library launch are separately opted in; progress remains later
 work.
 
 ## Open in Home Assistant
@@ -96,9 +97,10 @@ bash dev/dev.sh preview
    server.
 
 Use a regular development account to review the household reader and an
-administrator account to review editing, Now Playing, and exports. Regular-user
-API responses contain only titles, times, runtime, watched time, status, origin,
-and record IDs; notes, source IDs, and session evidence remain
+administrator account to review editing, observational Now Playing and exports.
+All active users can use the separately enabled household playback controls.
+Regular-user API responses contain only titles, times, runtime, watched time,
+status, origin, and record IDs; notes, source IDs, and session evidence remain
 administrator-only. All accounts see the same household journal, rather than
 separate personal watch histories.
 
@@ -161,8 +163,9 @@ fetch, without copying token-bearing picture URLs. JPEG/PNG/WebP downloads have
 a five-second budget and a 5 MiB browser limit; absent, unsupported, or failed
 artwork shows a placeholder. No library sync, extra server, or persistent
 artwork cache is needed. HA controls upstream retrieval; it is not a Companion
-cache. The card has no transport controls, seek/progress bar, or library
-navigation. Use HA's existing media controls for playback.
+cache. This observational card has no seek/progress bar. A separate household
+**Player controls** card uses the opted-in API adapter; HA's existing media
+controls remain available independently.
 
 For browser review, open the sidebar as an administrator (or the fictional
 `/review.html` Vite fixture), check desktop/narrow layout and safe title text,
@@ -444,3 +447,45 @@ independently of saved browsing filters, which remain unchanged. Missing,
 deleted or unavailable Library entries show a graceful no-link message; disabled
 Library access makes no link/artwork request. Missing artwork uses the existing
 placeholder. No title-name search guesses the association.
+
+## Device controls and movie details
+
+Administrators use **Settings → Device discovery and controls** to enable the
+feature, save the seed hostname, discover and select a default player, then save
+again. Known choices are privately cached across reload/restart without network
+access; source changes discard the cache. Experimental Library launch is a
+separate opt-in. Neither target setting changes Journal tracking.
+
+All active users now have **Now Playing | Library | Journal** tabs;
+administrators also have Database and Settings. The household Now Playing view
+contains player controls, not private observation/session evidence. Commands,
+including Stop and power changes, execute on their explicit click after
+automatic preflight, without a confirmation dialog. A status refresh is
+explicit; loading the view only reads passive configuration. Anonymous/inactive
+users have no access.
+
+Library movie details combine a large linked title, compact year/runtime/genre
+summary, existing format/rating/status/favorite/recent badges and an action row.
+**Play Movie** sends the selected version immediately. **Choose Player** opens a
+friendly-name picker for this dialog/card, leaving the household default and
+recorder unchanged. A poster and synopsis/linked credits form the body; narrow
+layouts stack the poster above the details. Metadata links continue to replace
+Library search/filters. Only multiple-version titles have version tabs.
+Detection and purchase dates live in expandable **Library details**; private
+purchase history and Collection device edits stay administrator-only.
+
+Playback opt-ins remain off by default and exact playable edition remains
+unverified. Public player choices contain opaque IDs and labels, never addresses
+or serials. Device discovery/settings and uncertain-write acknowledgement stay
+administrator-only. A lost response preserves the exact request/token behind
+**Check command result**, retrieving the stored outcome without replay.
+Uncertainty blocks that target for every user until administrator physical
+inspection and acknowledgement; other players remain usable.
+
+For browser review after deployment, open Library with a regular account and
+check the combined dialog at desktop/narrow widths, version tabs, poster,
+metadata links, Choose Player and absence of purchase/collection/admin controls.
+Check Now Playing and the administrator discovery/settings layout separately.
+Play Movie and remote controls send without a prompt, so choose live commands
+only in your intended operator test window. Automated checks use fictional
+players and do not verify browser layout or hardware behavior.
