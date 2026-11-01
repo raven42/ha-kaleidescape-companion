@@ -1153,10 +1153,11 @@ Month reads validate timezone-aware bounds and a positive span of at most 32
 days, limit to 1000 nondeleted viewings, bind all search values, and run on the
 single worker with the two-second SQLite budget. An exceeded row/time limit
 returns an error rather than a misleading partial month. Exact version links
-reuse existing indexes. The browser uses local start dates, text bindings and
-the existing visibility-loaded, bounded authenticated artwork cache. Account,
-scope and Library-enablement changes clear state/cache and invalidate pending
-month/detail replies. Dialog dismissal also invalidates pending details.
+reuse existing indexes. The browser uses local start and completion dates, text
+bindings and the existing visibility-loaded, bounded authenticated artwork
+cache. Account, scope and Library-enablement changes clear state/cache and
+invalidate pending month/detail replies. Dialog dismissal also invalidates
+pending details.
 
 Calendar details expose an Edit viewing action only in the administrator host
 with edit permission. It passes only the viewing UUID to the shared Journal
@@ -1396,17 +1397,18 @@ common `Providers.metadata` API dispatches immutable movie queries to separate
 provider adapters. Their injected transport shares rate/body limits; adding an
 adapter cannot extend the HA destination allowlist or enable access by itself.
 The HA adapter allows only fixed HTTPS store/movie/robots and TMDB v3 movie
-routes, plus `image.tmdb.org/t/p/w780/<alphanumeric>.jpg` for optional
-backdrops. It rejects redirects and non-public/mixed DNS answers, pins a public
-literal with the original Host/TLS server name, verifies TLS, ignores
-environment proxies, uses no cookies and caps bodies at 4 MiB with a 20-second
-request budget. Credentials go only to TMDB. Response types/encoding are
-checked; HTML scripts are decoded as data, never evaluated. Store robots
-directives and one shared 0.1–10 requests/second limiter apply. Errors,
-including HTTP 429, stop the pass without automatic retries. A later scan or
-manual request can start a new pass. The one-hour/10,000-version budgets bound
-work; successful cache entries are reused for seven days. A configuration change
-cannot recall already sent queries.
+routes, plus `image.tmdb.org/t/p/w780/<alphanumeric>.jpg` for optional backdrops
+and a fixed `w500` poster route when TMDB is the saved cover source. Both image
+capabilities require TMDB and artwork opt-ins. It rejects redirects and
+non-public/mixed DNS answers, pins a public literal with the original Host/TLS
+server name, verifies TLS, ignores environment proxies, uses no cookies and caps
+bodies at 4 MiB with a 20-second request budget. Credentials go only to TMDB.
+Response types/encoding are checked; HTML scripts are decoded as data, never
+evaluated. Store robots directives and one shared 0.1–10 requests/second limiter
+apply. Errors, including HTTP 429, stop the pass without automatic retries. A
+later scan or manual request can start a new pass. The one-hour/10,000-version
+budgets bound work; successful cache entries are reused for seven days. A
+configuration change cannot recall already sent queries.
 
 Providers receive title/year or the validated public store reference, never
 viewings, notes or invoice fields. Provider responses project only bounded
@@ -1425,12 +1427,14 @@ JPEG header must match its content type. Storage checks the matched
 source/group/provider identity and uses the existing private content-addressed
 file cache and budget. Public version metadata exposes only a validated hash
 key; the existing active-user, dataset/source-scoped artwork route serves bytes.
-Device covers remain independent. Eviction, missing-file recovery and manual
-cache deletion clear backdrop references too. No schema or credential export
-change is introduced; portable imports still exclude enrichment. Regression
-tests cover opt-ins, destination/credential rejection, body validation, stale
-identities, source isolation and cache cleanup. Real TMDB and browser review
-remain operator steps.
+Device covers remain independent. Preferred TMDB posters use the same scoped
+cache, identity checks, raster validation and cancellation, with `poster_key`
+references separate from source covers. Eviction, missing-file recovery and
+manual cache deletion clear both image references too. No schema or credential
+export change is introduced; portable imports still exclude enrichment.
+Regression tests cover opt-ins, destination/credential rejection, body
+validation, stale identities, source isolation and cache cleanup. Real TMDB and
+browser review remain operator steps.
 
 TMDB secrets use HA's native configuration storage, with a blank password
 selector, explicit removal and no prefilled credential in either settings UI.
@@ -1440,6 +1444,18 @@ headers and provider/account bootstrap bodies must never be logged. The locally
 bundled approved TMDB logo and notice add no remote browser image request.
 Public interfaces and API terms can change; unsupported responses fail closed.
 See the [provider guide](enrichment.md) for research and operator validation.
+
+Shared field-source preferences are fixed per-field enums saved through the
+administrator configuration flow. A protected household settings row mirrors
+only the validated policy for worker-owned SQL projections; it contains no
+credentials. Search, facets, details and artwork use the same policy, while raw
+scanned data remains unchanged. Policy changes advance Library revisions.
+Reviewed/manual overrides retain priority. Public rating projections use a
+positive field allowlist; null values cannot fall back to hidden provider scores
+in the UI. RT branding is bundled as inert image data URLs from the official
+guide, without executable SVG insertion or remote requests. Certification is not
+inferred. Settings transfers include source choices as rules, with the existing
+review and administrator boundaries.
 
 ## Reviewed title enrichment
 
@@ -1456,12 +1472,13 @@ The authenticated administrator-only thumbnail route
 `metadata/review/{plan_id}/image/{choice}` resolves an owned staged image,
 rechecks role/configuration/runtime after retrieval, refuses query strings and
 sends `no-store`/`nosniff` JPEG bytes. It cannot proxy a supplied URL. Review
-clients alone may use fixed TMDB `/3/movie/<id>/images` and
-`image.tmdb.org/t/p/{w300,w500,w780}/<alphanumeric>.jpg` paths; ordinary scans
-retain their existing routes. Both artwork and TMDB opt-ins are required for
-those images. Preview object URLs are transient and revoked on page/dialog or
-account changes. Vite forwards only this explicit scoped GET route to local HA,
-with its existing origin/method checks and caller authentication.
+clients alone may use fixed TMDB `/3/movie/<id>/images` and `w300` thumbnails.
+Reviewed images and ordinary scans use the fixed `w780` landscape route; `w500`
+posters require review or the saved TMDB cover preference. Both artwork and TMDB
+opt-ins are required for those images. Preview object URLs are transient and
+revoked on page/dialog or account changes. Vite forwards only this explicit
+scoped GET route to local HA, with its existing origin/method checks and caller
+authentication.
 
 Apply imports field names and image choice IDs, never caller values, identities,
 SQL or paths. The worker binds the actor/source/plan and checks the whole
@@ -1551,3 +1568,24 @@ exact-revision cause after reload; this does not publish audit actors or request
 IDs. Alias filters are administrator-only, bounded, parameterized equality
 queries against positive log fields. Calendar pending-work warnings do not
 override quarantine, stale-data checks or unconfirmed-write barriers.
+
+## Profile preferences and Library display corrections
+
+Personal preference API profile identifiers are the fixed `desktop`, `tablet`,
+`mobile` enum; they never replace server-derived actor/dataset ownership. Exact
+retry fingerprints include profile and area. Only the actor's random seed spans
+personal profiles. Settings files include the profiles and retain their private
+search/filter values; imports validate every area atomically, with a 256 KiB
+file limit and a consistent cross-profile shuffle seed.
+
+Library display edit/read/reset APIs require an active administrator before
+storage access and after awaited work. Their patches have an explicit field
+allowlist, bounded strings/lists and snapshot checks, plus actor/source-bound
+transactional retry receipts. Raw source identity and relationships are not
+rewritten. Restore requires `RESTORE SOURCE`, drops only descriptive/provider
+and artwork selection overrides plus sort titles, and stops background writes
+for that group until explicit reviewed enrichment. Private worker storage keeps
+a source-only marker; household metadata projections never expose it. Available
+scraper cache counts/progress are administrator-only; public ratings are
+positive, source-labelled display projections. No new network destinations,
+remote UI assets or device commands are added.

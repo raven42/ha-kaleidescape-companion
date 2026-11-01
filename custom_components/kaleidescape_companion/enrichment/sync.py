@@ -50,6 +50,7 @@ class MetadataSync:
         self.error = None
         self.last_finished = None
         self.actor = None
+        self.current_title = None
         self.reviews = None
         self.review_network = False
         self.providers = Providers(
@@ -99,7 +100,23 @@ class MetadataSync:
         )
 
     def status(self):
+        running = bool(self.task and not self.task.done())
+        jobs = list(self.reviews.jobs.values()) if self.reviews else []
+        active_titles = {
+            child.review_title for child in jobs if child.session is not None
+        }
+        waiting_titles = {
+            child.review_title for child in jobs if child.session is None
+        } - active_titles
+        active = int(running and self.current_title is not None)
+        if active:
+            active_titles.add(self.current_title)
         return {
+            "enabled": True,
+            "active": len(active_titles),
+            "queued": (max(0, self.total - self.processed - active) if running else 0)
+            + len(waiting_titles),
+            "failed": int(self.error is not None),
             "running": bool(self.task and not self.task.done()),
             "processed": self.processed,
             "updated": self.updated,
@@ -146,7 +163,12 @@ class MetadataSync:
                     r"/t/p/(?:w300|w500|w780)/[A-Za-z0-9]{1,128}\.jpg", parsed.path
                 )
                 or (
-                    not self.review_network and not parsed.path.startswith("/t/p/w780/")
+                    not self.review_network
+                    and not parsed.path.startswith("/t/p/w780/")
+                    and not (
+                        parsed.path.startswith("/t/p/w500/")
+                        and self.config.get("metadata_source_artwork") == "tmdb"
+                    )
                 )
             ):
                 raise ProviderError("provider_destination")
@@ -246,6 +268,7 @@ class MetadataSync:
             async with asyncio.timeout(3600):
                 for row in rows:
                     self._ready()
+                    self.current_title = row["id"]
                     for provider, enabled in (
                         ("kaleidescape", self.config["metadata_store_enabled"]),
                         ("tmdb", self.config["metadata_tmdb_enabled"]),
@@ -291,31 +314,73 @@ class MetadataSync:
                             "matched_title": row["title"],
                             "matched_group": row["source_group"],
                         }
-                        await self.repository.async_enrichment(
-                            "save",
-                            self.source,
-                            row["id"],
-                            provider,
-                            metadata,
-                        )
-                        if provider == "tmdb" and self.config.get(
-                            "library_sync_artwork"
+                        try:
+                            await self.repository.async_enrichment(
+                                "save",
+                                self.source,
+                                row["id"],
+                                provider,
+                                metadata,
+                            )
+                        except JournalError as error:
+                            if error.code != "refresh_required":
+                                raise
+                            # An administrator may restore source-only metadata
+                            # while a response is in flight. Do not restore it again.
+                            self.skipped += 1
+                            continue
+                        if (
+                            provider == "tmdb"
+                            and self.config.get("library_sync_artwork")
+                            and self.config.get("metadata_source_backdrop")
+                            != "original"
                         ):
                             image = await self.providers.artwork(provider, result)
                             self._ready()
                             if image is not None:
-                                await self.repository.async_enrichment(
-                                    "artwork",
-                                    self.source,
-                                    row["id"],
-                                    metadata,
-                                    image,
-                                    self.config.get("library_artwork_cache_mb", 512)
-                                    * 1024
-                                    * 1024,
-                                )
+                                try:
+                                    await self.repository.async_enrichment(
+                                        "artwork",
+                                        self.source,
+                                        row["id"],
+                                        metadata,
+                                        image,
+                                        self.config.get("library_artwork_cache_mb", 512)
+                                        * 1024
+                                        * 1024,
+                                    )
+                                except JournalError as error:
+                                    if error.code != "refresh_required":
+                                        raise
+                                    self.skipped += 1
+                                    continue
+                        if (
+                            provider == "tmdb"
+                            and self.config.get("library_sync_artwork")
+                            and self.config.get("metadata_source_artwork") == "tmdb"
+                        ):
+                            poster = await self.providers.poster(provider, result)
+                            self._ready()
+                            if poster is not None:
+                                try:
+                                    await self.repository.async_enrichment(
+                                        "poster",
+                                        self.source,
+                                        row["id"],
+                                        metadata,
+                                        poster,
+                                        self.config.get("library_artwork_cache_mb", 512)
+                                        * 1024
+                                        * 1024,
+                                    )
+                                except JournalError as error:
+                                    if error.code != "refresh_required":
+                                        raise
+                                    self.skipped += 1
+                                    continue
                         self.updated += 1
                     self.processed += 1
+                    self.current_title = None
         except asyncio.CancelledError:
             cancelled = True
             raise
@@ -341,6 +406,7 @@ class MetadataSync:
             failure = error
             self.error = "metadata_format"
         finally:
+            self.current_title = None
             if failure:
                 self.repository.logger.emit_failure(
                     Subsystem.METADATA, Operation.SCRAPE, failure, count=self.processed

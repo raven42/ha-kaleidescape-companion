@@ -80,6 +80,13 @@ singular for one version. Version tabs support Left/Right and Home/End; large
 groups use 50-version pages. A source group remains a browsing identity, not
 permission to edit every version together.
 
+Versions are ordered by video quality: **4K Cinematic, 4K, HD, SD**, then
+unknown formats. Within each quality tier, longer runtimes come first; stable
+record IDs break remaining ties. The first, highest-ranked version is selected
+on opening, even when a lower-quality version represented the Library search
+result. An explicit version selection remains selected during metadata
+refreshes.
+
 When a version lacks year, rating, synopsis, cast, directors, writers, studios,
 or genres, its displayed/API metadata fills only empty fields from available
 versions in the same source group. Detailed versions are preferred, followed by
@@ -183,10 +190,12 @@ supported vendor edit.
 
 The search toolbar sticks to the top of the scrolling Library. A compact sticky
 footer holds title/collection counts, last catalog sync and administrator
-artwork usage. Options contains detailed freshness timestamps and
-individual-version counts. Source Played is displayed as **Watched** in browsing
-labels; Options explains the mapping while API/device collection names remain
-unchanged.
+artwork usage, with compact administrator scraper progress. It is one shared
+status/navigation bar; First/Previous/Next are omitted when all matching titles
+fit on one page, including All. Options contains detailed freshness timestamps
+and individual-version counts. Source Played is displayed as **Watched** in
+browsing labels; Options explains the mapping while API/device collection names
+remain unchanged.
 
 The redundant Library heading is omitted. Sort method/direction remain directly
 available in the search toolbar; refresh/sync are compact footer controls.
@@ -389,16 +398,20 @@ shuffle. Random is available in both List and Cover views, without adding a
 spreadsheet column. Switching to another sort restores the usual direction
 control.
 
-The personal Library preferences retain the shuffle seed with the sort choice.
-Paging, filtering, switching layouts, cover resizing and reloads preserve that
-order until the next shuffle. Movie groups are shuffled as units, so alternate
-formats stay together. Normal content-revision checks still apply during paging.
+Library profiles retain their own sort choice and share one shuffle seed per HA
+user. Paging, filtering, switching layouts, cover resizing and reloads preserve
+that order until the next shuffle. Movie groups are shuffled as units, so
+alternate formats stay together. Normal content-revision checks still apply
+during paging.
 
-For the list API, `sort=random` uses `random_seed`, an empty default or a
-32-character lowercase hexadecimal string. The worker orders a deterministic
-SHA-256 rank of the seed and source group (exact version ID for ungrouped
-queries). Different pages and All use the same seed; `descending` has no effect
-in Random mode. The seed is a browsing preference, not a credential.
+For the authenticated list API, `sort=random` uses the signed-in user's shared
+seed. Set it through UI preferences with an empty value or a 32-character
+lowercase hexadecimal string. The response returns the canonical `random_seed`;
+later pages must retain it. The worker API also accepts an explicit seed for
+internal callers. The worker orders a deterministic SHA-256 rank of the seed and
+source group (exact version ID for ungrouped queries). Different pages and All
+use the same seed; `descending` has no effect in Random mode. The seed is a
+browsing preference, not a credential.
 
 ## Administrator purchase totals
 
@@ -431,3 +444,52 @@ Separately enable store/TMDB enrichment to extend credits and add
 source-specific ratings. Source scan data, edition identities and financial
 privacy stay intact. See [external metadata](enrichment.md) for credentials,
 matching, caching and request limits.
+
+## Movie details and administrator editing
+
+A downloaded landscape image spans the narrower desktop dialog with a dark
+gradient behind the heading ending at the version-tab divider; desktop keeps the
+portrait poster as well. On mobile, landscape artwork replaces the portrait.
+Without it, the compact poster layout remains. Dialogs retain the 15% viewport
+inset and reachable close control. Available TMDB viewer scores and separate
+Rotten Tomatoes critic and audience scores share the Play/Collection/Edit action
+row above version details. TMDB uses a percentage ring; RT uses its standard
+tomato/popcorn score icons. Tooltips and accessible labels identify each source
+and score scale. Missing scores are omitted, and Ratings and metadata sources
+remains expandable.
+
+Administrators can set shared, field-by-field provider preferences in **Settings
+→ Scrapers → Preferred metadata sources**. Cached values are projected without
+rewriting raw scan facts; explicit reviewed title edits win. See
+[source selection](enrichment.md#preferred-metadata-sources).
+
+An open details popup reads fresh versions independently of its Library list's
+older revision. Metadata changes refresh the selected movie without dropping its
+dialog or selected version. Version pagination still detects stale reads and
+restarts at the first version page. List pagination retains revision checks
+because metadata can legitimately change active filters and some sort fields.
+
+Administrators can select **Edit details**. It edits display title, sort title,
+year, rating, synopsis, cast, directors, writers, producers, studios and genres
+across the source group's available versions. Credits use one name per line.
+Source identity, runtime, formats, file/cache paths, memberships, purchases,
+watched state and viewing records cannot be edited here. Raw scan identity
+remains unchanged; display overrides survive future scans. Edits check the movie
+snapshot and preserve the exact request after an uncertain save.
+
+Schema 22 adds nullable `library.sort_title`. Alphabetical sorting uses this
+value, then the display title, then the scanned title. A blank sort title resets
+that override. It works in List/Covers and both sort directions. Portable
+Library exports include the sort title, and reviewed imports fill a missing sort
+title while preserving an existing one. Manual descriptive overrides stay in
+protected enrichment JSON and private SQLite backups.
+
+**Edit details → Restore original metadata…** is administrator-only and requires
+an explicit confirmation. It removes provider caches and reviewed
+display/artwork overrides, clears sort titles, and restores scanned metadata
+across all versions, including temporarily unavailable editions. It preserves
+source records, purchase history, collections and viewings. It does not delete
+cached image files shared by other entries; normal cache eviction handles unused
+bytes. Background enrichment is paused for this group, including responses
+already in flight. Explicitly scraping and applying new reviewed data reenables
+background enrichment.

@@ -43,6 +43,7 @@ EDITABLE = {
     "sessions": {"title", "duration_seconds", "watched_seconds"},
     "library": {
         "title",
+        "sort_title",
         "data",
         "purchased_on",
         "purchase_price",

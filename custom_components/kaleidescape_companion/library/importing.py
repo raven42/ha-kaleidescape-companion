@@ -14,6 +14,7 @@ TITLE_COLUMNS = {
     "source_handle",
     "source_group",
     "title",
+    "sort_title",
     "data",
     "first_seen",
     "last_seen",
@@ -78,6 +79,9 @@ def title_record(row, now, decode):
         "source_handle": handle,
         "source_group": group,
         "title": text(row.get("title"), 500),
+        "sort_title": text(row["sort_title"], 500, empty=True)
+        if row.get("sort_title") is not None
+        else None,
         "data": data,
         "first_seen": timestamp(row.get("first_seen", now)),
         "last_seen": timestamp(row.get("last_seen", now)),

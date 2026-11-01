@@ -17,7 +17,7 @@ export const info: JournalInfo = {
   entry_id: "fixture-entry",
   dataset_id: "a323bd20-1b55-4562-87b0-9999944759f3",
   api_version: 1,
-  schema_version: 21,
+  schema_version: 22,
   library_enabled: false,
   revision: 5,
   viewing_count: 3,
@@ -354,6 +354,8 @@ export class FixtureTransport implements Transport {
           : null,
       };
     } else if (operation === "library/versions") {
+      if (message.revision !== undefined && message.revision !== this.revision)
+        throw new ApiError("refresh_required");
       const title = this.libraryTitles.find(
         (row) => row.id === message.title_id,
       );
@@ -906,8 +908,13 @@ export class FixtureTransport implements Transport {
             .filter(
               (row) =>
                 !row.deleted_at &&
-                new Date(row.started_at) >= new Date(String(message.start)) &&
-                new Date(row.started_at) < new Date(String(message.end)) &&
+                ((new Date(row.started_at) >= new Date(String(message.start)) &&
+                  new Date(row.started_at) < new Date(String(message.end))) ||
+                  (row.status === "completed" &&
+                    row.ended_at &&
+                    new Date(row.ended_at) > new Date(row.started_at) &&
+                    new Date(row.ended_at) >= new Date(String(message.start)) &&
+                    new Date(row.ended_at) < new Date(String(message.end)))) &&
                 matches(
                   row.title,
                   String(message.query ?? ""),

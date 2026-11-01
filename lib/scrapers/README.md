@@ -14,7 +14,7 @@ lib/scrapers/
     models.py    MovieQuery, Metadata and bounded identity helpers
     providers/
       store.py   Experimental public store adapter/parser and robots policy
-      tmdb.py    Official TMDB search/details/credits and optional backdrop
+      tmdb.py    Official TMDB search/details/credits and optional images
   tests/         Offline fictional provider contracts
 ```
 
@@ -39,6 +39,8 @@ providers = Providers(
 metadata = await providers.metadata("tmdb", MovieQuery("Your Movie", 2025))
 # Optional widescreen raster; omitted when the matched movie has no backdrop.
 image = await providers.artwork("tmdb", metadata)
+# Optional preferred portrait poster, separate from the landscape image.
+poster = await providers.poster("tmdb", metadata)
 # Requires the exact, existing store reference for that same movie/year:
 metadata = await providers.metadata(
     "kaleidescape",
@@ -99,6 +101,14 @@ opted in. The host application must verify the raster signature/type, store
 bytes within its cache budget, and keep source IDs and references consistent.
 Adapters can implement the optional `ArtworkProvider.artwork(metadata)`
 capability without changing metadata-only providers.
+
+`Providers.poster(provider, metadata)` is an optional companion capability for
+the matched movie's default portrait image. TMDB validates `poster_path` using
+the same bounded JPEG rules and fetches a fixed `w500` image without
+credentials. Missing paths and adapters without `poster` return `None`; unknown
+providers still raise `unknown_provider`. Callers choose whether to retrieve it
+and must apply the same opt-in, raster validation and cache controls as
+landscape images.
 
 Matching requires one normalized title and release year. Ambiguous TMDB search
 results, missing years and mismatched store pages fail closed. No provider ID,

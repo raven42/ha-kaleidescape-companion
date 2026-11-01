@@ -71,6 +71,15 @@ scrollable filter/sort strip. Pagination and the Library status line share a
 compact sticky footer. Fixed-width Library columns and import-review tables
 scroll inside their own containers instead of widening the page.
 
+Library uses one footer surface for status, basic administrator scraper
+progress, refresh/sync and pagination. Single-page results, including All, omit
+the paging buttons. Detailed scraper counters remain in Settings. In movie
+details, ratings sit on the Play/Collection/Edit action row: a circular TMDB
+percentage and locally bundled standard RT icons. The desktop hero fade ends at
+the version-tab divider, with the heading/actions closer to the top of the
+image. Versions open in descending video quality (4K Cinematic/4K/HD/SD), longer
+runtimes first within each tier, with the highest-ranked selected initially.
+
 Journal and Database keep sticky controls and pagination around independently
 scrollable entries and details. Tablets retain side-by-side panes when there is
 room; phones stack them within the available height. Logs use a compact mobile
@@ -466,13 +475,14 @@ isolated operator test, not the fictional preview.
 ## Journal and Library navigation
 
 **Journal → Options → Calendar view** switches to a saved personal month layout
-with previous/next navigation. Local start dates place the posters; search and
-status filters still apply. Same-day covers overlap with about 15% exposed,
-bringing hovered/focused covers forward. Clicking opens compact movie and
-viewing details in one popup, without purchase/detection fields. Options
-provides a saved size slider and Fit month to screen. Detail names open fresh
-Library searches; year, genre, rating and format links replace Library filters.
-Turn Calendar view off to restore the split list/details layout. See
+with previous/next navigation. Local start and completion dates place the
+posters; search and status filters still apply. Same-day covers overlap with
+about 15% exposed, bringing hovered/focused covers forward. Clicking opens
+compact movie and viewing details in one popup, without purchase/detection
+fields. Options provides a saved size slider and Fit month to screen. Detail
+names open fresh Library searches; year, genre, rating and format links replace
+Library filters. Turn Calendar view off to restore the split list/details
+layout. See
 [calendar behavior and browser checks](calendar.md#journal-month-view).
 
 Administrators can open **Edit viewing** from calendar details. Both Journal

@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from ..security import private_file
 
-SCHEMA_VERSION = 21
+SCHEMA_VERSION = 22
 
 MIGRATIONS = {
     1: (
@@ -372,6 +372,9 @@ MIGRATIONS[21] = (
     "alias_key TEXT NOT NULL,level TEXT NOT NULL,log_values INTEGER NOT NULL,"
     "hidden_through INTEGER NOT NULL)",
 )
+
+
+MIGRATIONS[22] = ("ALTER TABLE library ADD COLUMN sort_title TEXT",)
 
 
 def migrate(connection: sqlite3.Connection, path: Path) -> None:

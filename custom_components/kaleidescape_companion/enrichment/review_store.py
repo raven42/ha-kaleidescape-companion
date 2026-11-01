@@ -18,7 +18,17 @@ def signature(rows):
             [
                 [
                     row[key]
-                    for key in ("id", "title", "data", "enrichment", "artwork_key")
+                    for key in (
+                        "id",
+                        "source_id",
+                        "source_group",
+                        "source_handle",
+                        "title",
+                        "data",
+                        "enrichment",
+                        "artwork_key",
+                        "sort_title",
+                    )
                 ]
                 for row in rows
             ],
@@ -67,8 +77,16 @@ def target(db, source, title):
         "source": source,
         "id": title,
         "group": selected["source_group"],
-        "title": current["title"],
-        "year": current["year"],
+        "title": selected["title"],
+        "year": json.loads(selected["data"]).get("year")
+        or next(
+            (
+                json.loads(row["data"]).get("year")
+                for row in rows
+                if json.loads(row["data"]).get("year")
+            ),
+            None,
+        ),
         "href": href,
         "snapshot": signature(rows),
         "current": {key: current.get(key) for key in REVIEW_FIELDS},
@@ -138,6 +156,13 @@ def apply(db, directory, source, actor, request, data, plan, images, budget):
     result = {"title_id": plan["target"]["id"], "updated_count": len(rows)}
 
     def commit(keys):
+        # An explicit reviewed apply reenables the complete group, including
+        # editions temporarily absent from the latest scan.
+        db.execute(
+            "UPDATE library SET enrichment=json_remove(enrichment,'$.source_only') "
+            "WHERE source_id=? AND source_group=?",
+            (source, plan["target"]["group"]),
+        )
         for row in rows:
             # Cache eviction may have cleared references inside this transaction.
             enrichment = json.loads(
@@ -145,6 +170,7 @@ def apply(db, directory, source, actor, request, data, plan, images, budget):
                     "SELECT enrichment FROM library WHERE id=?", (row["id"],)
                 ).fetchone()[0]
             )
+            enrichment.pop("source_only", None)
             reviewed = enrichment.setdefault("reviewed", {})
             reviewed.update({key: plan["metadata"][key] for key in data["fields"]})
             reviewed.update(

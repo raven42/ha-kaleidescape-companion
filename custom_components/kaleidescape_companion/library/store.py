@@ -201,11 +201,12 @@ def image_type(data: bytes) -> str | None:
 def unlink_artwork(db, key):
     """Clear every managed reference before evicting/deleting cached bytes."""
     db.execute("UPDATE library SET artwork_key=NULL WHERE artwork_key=?", (key,))
-    db.execute(
-        "UPDATE library SET enrichment=json_remove(enrichment,'$.tmdb.backdrop_key') "
-        "WHERE json_extract(enrichment,'$.tmdb.backdrop_key')=?",
-        (key,),
-    )
+    for field in ("poster_key", "backdrop_key"):
+        db.execute(
+            f"UPDATE library SET enrichment=json_remove(enrichment,'$.tmdb.{field}') "
+            f"WHERE json_extract(enrichment,'$.tmdb.{field}')=?",
+            (key,),
+        )
     for field in ("poster_key", "backdrop_key"):
         db.execute(
             f"UPDATE library SET enrichment=json_remove(enrichment,"
@@ -280,8 +281,12 @@ def save_artwork(
     _save_image(db, directory, source, data, content_type, budget, link)
 
 
-def save_backdrop(db, directory, source, id, metadata, data, budget):
+def save_backdrop(
+    db, directory, source, id, metadata, data, budget, *, kind="backdrop"
+):
     """Link TMDB artwork to the verified movie group, preserving edition covers."""
+    if kind not in {"poster", "backdrop"}:
+        raise JournalError("invalid_request", "Unsupported artwork kind")
     row = db.execute(
         "SELECT source_group,title,enrichment FROM library "
         "WHERE id=? AND source_id=? AND available=1",
@@ -303,7 +308,7 @@ def save_backdrop(db, directory, source, id, metadata, data, budget):
     def link(key):
         db.execute(
             "UPDATE library SET enrichment=json_set(enrichment,"
-            "'$.tmdb.backdrop_key',?) "
+            f"'$.tmdb.{kind}_key',?) "
             "WHERE source_id=? AND source_group=? AND available=1 "
             "AND json_extract(enrichment,'$.tmdb.provider_id')=?",
             (key, source, row["source_group"], provider_id),
@@ -396,6 +401,7 @@ def read_artwork(db, directory: Path, source: str, key: str):
             (SELECT 1 FROM library WHERE source_id=? AND
             (artwork_key=a.cache_key OR
             json_extract(enrichment,'$.tmdb.backdrop_key')=a.cache_key OR
+            json_extract(enrichment,'$.tmdb.poster_key')=a.cache_key OR
             json_extract(enrichment,'$.reviewed.poster_key')=a.cache_key OR
             json_extract(enrichment,'$.reviewed.backdrop_key')=a.cache_key))""",
         (key, source),

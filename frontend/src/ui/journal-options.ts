@@ -1,3 +1,4 @@
+import { responsivePreferences } from "./profile-controller";
 /** Personal Journal layout and global search options for both household roles. */
 import { LitElement, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
@@ -15,6 +16,22 @@ export interface JournalOptionsValue {
 }
 
 export class JournalOptions extends LitElement {
+  constructor() {
+    super();
+    responsivePreferences(this, () => {
+      if (
+        !this.ready ||
+        this.store?.unsettled ||
+        this.viewStore?.unsettled ||
+        this.disabled ||
+        this.renderRoot.querySelector("dialog[open]")
+      )
+        return false;
+      this.clear();
+      void this.load();
+      return true;
+    });
+  }
   static properties = {
     client: { attribute: false },
     scope: { attribute: false },
@@ -165,7 +182,10 @@ export class JournalOptions extends LitElement {
           <h2 id="journal-options-title">Journal options</h2>
           ${closeButton(() => this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.close())}
         </div>
-        <p>Changes save automatically for your HA user.</p>
+        <p>
+          Changes save automatically for your HA user’s
+          ${this.viewStore?.profile} layout.
+        </p>
         <label class="check"
           ><input
             name="journal_fuzzy_search"
@@ -201,8 +221,8 @@ export class JournalOptions extends LitElement {
           />Calendar view</label
         >
         <p class="muted">
-          Show a month of viewings on their local start dates. Off restores the
-          entry list.
+          Show local start and completion dates, with diagonally cut covers for
+          cross-day viewings. Off restores the entry list.
         </p>
         ${
           this.view === "calendar"

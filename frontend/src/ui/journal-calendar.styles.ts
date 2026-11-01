@@ -73,6 +73,24 @@ export const calendarStyles = css`
     overflow: hidden;
     transition: box-shadow 0.12s;
   }
+  .poster-art {
+    display: block;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  .poster-start .poster-art {
+    clip-path: polygon(0 0, 100% 0, 100% 67%, 0 100%);
+  }
+  .poster-completion .poster-art {
+    clip-path: polygon(0 33%, 100% 0, 100% 100%, 0 100%);
+  }
+  .poster-start,
+  .poster-completion {
+    background: transparent;
+    box-shadow: none;
+  }
   .poster:hover,
   .poster:focus-visible {
     z-index: 1100;

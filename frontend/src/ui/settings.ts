@@ -1,3 +1,4 @@
+import { responsivePreferences } from "./profile-controller";
 /** Administrator settings page backed by Companion's native HA options flow. */
 import { LitElement, css, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
@@ -110,6 +111,23 @@ const validation: Record<string, string> = {
 };
 
 export class KaleidescapeSettings extends LitElement {
+  constructor() {
+    super();
+    responsivePreferences(this, () => {
+      if (
+        this.loading ||
+        this.saving ||
+        this.uncertain ||
+        this.personalPreferences?.unsettled
+      )
+        return false;
+      this.personalPreferences?.dispose();
+      this.personalPreferences = undefined;
+      this.personalReady = false;
+      if (this.tab === "personal") void this.selectTab("personal");
+      return true;
+    });
+  }
   static properties = {
     client: { attribute: false },
     scope: { attribute: false },

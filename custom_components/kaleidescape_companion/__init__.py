@@ -63,6 +63,7 @@ async def async_setup_entry(
     try:
         await repository.async_open()
         await repository.async_seed_ui_preferences(dict(entry.options or entry.data))
+        await repository.async_metadata_sources(dict(entry.options or entry.data))
         ui_keys = {
             "library_default_view",
             "library_default_count",

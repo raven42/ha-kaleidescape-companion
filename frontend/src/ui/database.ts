@@ -1,3 +1,4 @@
+import { responsivePreferences } from "./profile-controller";
 /** Schema-guided administrator inspection with confirmed, revision-bound writes. */
 import { responsiveViewport } from "./viewport";
 import { counted } from "../core/text";
@@ -48,6 +49,19 @@ export class KaleidescapeDatabase extends LitElement {
   constructor() {
     super();
     responsiveViewport(this);
+    responsivePreferences(this, () => {
+      if (
+        !this.ready ||
+        this.preferences?.unsettled ||
+        this.blocked ||
+        this.operation ||
+        this.renderRoot.querySelector("dialog[open]")
+      )
+        return false;
+      this.clear();
+      void this.initialize();
+      return true;
+    });
   }
 
   static properties = {

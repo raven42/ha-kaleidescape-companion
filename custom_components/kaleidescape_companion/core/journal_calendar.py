@@ -42,8 +42,12 @@ def month(
         status(viewing_status)
     if type(fuzzy) is not bool:
         raise invalid("Invalid fuzzy search option")
-    predicates = ["v.deleted_at IS NULL", "v.started_at>=?", "v.started_at<?"]
-    values = [source, start, end]
+    predicates = [
+        "v.deleted_at IS NULL",
+        "((v.started_at>=? AND v.started_at<?) OR (v.status='completed' "
+        "AND v.ended_at>v.started_at AND v.ended_at>=? AND v.ended_at<?))",
+    ]
+    values = [source, start, end, start, end]
     if query:
         predicates.append("companion_matches(v.title,?,?)")
         values.extend((query, fuzzy))
@@ -61,7 +65,9 @@ def month(
         values.extend((source, group))
     columns = ",".join(f"v.{key}" for key in sorted(PUBLIC_FIELDS))
     rows = db.execute(
-        f"SELECT {columns},t.id library_title_id,t.artwork_key FROM viewings v "
+        f"SELECT {columns},t.id library_title_id,"
+        "companion_artwork(t.artwork_key,t.enrichment,'artwork') artwork_key "
+        "FROM viewings v "
         "LEFT JOIN library t ON t.id=v.library_title_id AND t.source_id=? "
         "AND t.available=1 AND t.purchase_match_pending=0 "
         f"WHERE {' AND '.join(predicates)} ORDER BY v.started_at,v.id LIMIT 1001",

@@ -64,7 +64,7 @@ export class SettingsTransferPanel extends LitElement {
     this.artifact = this.preview = undefined;
     this.error = "";
     try {
-      if (!file || file.size > 65536) throw new Error("Invalid settings file");
+      if (!file || file.size > 262144) throw new Error("Invalid settings file");
       const artifact: unknown = JSON.parse(await file.text());
       if (generation !== this.generation) return;
       if (!artifact || typeof artifact !== "object" || Array.isArray(artifact))
@@ -72,7 +72,7 @@ export class SettingsTransferPanel extends LitElement {
       this.artifact = artifact as Record<string, unknown>;
     } catch {
       if (generation === this.generation)
-        this.error = "Choose a settings JSON file, at most 64 KiB.";
+        this.error = "Choose a settings JSON file, at most 256 KiB.";
     }
     this.requestUpdate();
   }

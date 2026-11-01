@@ -85,6 +85,7 @@ class JournalLinksTest(unittest.IsolatedAsyncioTestCase):
                 db.execute("DROP INDEX viewings_library_title")
                 db.execute("DROP TABLE playback_controls")
                 db.execute("ALTER TABLE library DROP COLUMN enrichment")
+                db.execute("ALTER TABLE library DROP COLUMN sort_title")
                 db.execute("DROP TABLE calendar_managed_events")
                 db.execute("DROP TABLE calendar_reconcile_candidates")
                 db.execute("DROP TABLE calendar_reconcile_intents")

@@ -115,6 +115,19 @@ def async_register_commands(hass: HomeAssistant) -> None:
             p.Required("provider"): str,
         },
         "metadata/title/apply": {**mutations, p.Required("data"): dict},
+        "library/edit/reset": {
+            **mutations,
+            p.Required("title_id"): str,
+            p.Required("snapshot"): str,
+            p.Required("confirmation"): str,
+        },
+        "library/edit/get": {**scoped, p.Required("title_id"): str},
+        "library/edit/save": {
+            **mutations,
+            p.Required("title_id"): str,
+            p.Required("snapshot"): str,
+            p.Required("patch"): dict,
+        },
         "library/list": {**scoped, p.Optional("filters", default={}): dict},
         "library/sync": scoped,
         "library/collections/targets": {
@@ -163,10 +176,15 @@ def async_register_commands(hass: HomeAssistant) -> None:
             p.Optional("query", default=""): str,
             p.Optional("fuzzy", default=True): bool,
         },
-        "ui/preferences/get": {**scoped, p.Optional("area", default="library"): str},
+        "ui/preferences/get": {
+            **scoped,
+            p.Optional("area", default="library"): str,
+            p.Optional("profile"): p.In(["desktop", "tablet", "mobile"]),
+        },
         "ui/shared/get": scoped,
         "ui/preferences/update": {
             **mutations,
+            p.Optional("profile"): p.In(["desktop", "tablet", "mobile"]),
             p.Optional("area", default="library"): str,
             p.Required("revision"): int,
             p.Required("patch"): dict,
@@ -399,7 +417,12 @@ async def async_handle(
                             )
                         if operation == "metadata/sync":
                             runtime.enrichment.request_sync(user, force=True)
-                        result = runtime.enrichment.status()
+                        result = {
+                            **runtime.enrichment.status(),
+                            **await repository.async_enrichment(
+                                "statistics", runtime.enrichment.source
+                            ),
+                        }
                     case (
                         "metadata/title/options"
                         | "metadata/title/preview"
@@ -428,6 +451,38 @@ async def async_handle(
                             or get_library(hass, msg["entry_id"], runtime)
                             is not library
                         ):
+                            raise JournalError(
+                                "not_ready", "Library integration reloaded"
+                            )
+                    case (
+                        "library/edit/get" | "library/edit/save" | "library/edit/reset"
+                    ):
+                        library = get_library(hass, msg["entry_id"], runtime)
+                        if operation.endswith("reset"):
+                            if msg["confirmation"] != "RESTORE SOURCE":
+                                raise JournalError(
+                                    "invalid_request",
+                                    "Confirm restoring source metadata",
+                                )
+                            result = await repository.async_library_reset(
+                                library.source,
+                                msg["title_id"],
+                                user.id,
+                                msg["request_id"],
+                                msg["snapshot"],
+                            )
+                        else:
+                            result = await repository.async_library_edit(
+                                library.source,
+                                msg["title_id"],
+                                user.id,
+                                msg.get("request_id"),
+                                msg.get("snapshot"),
+                                msg.get("patch")
+                                if operation.endswith("save")
+                                else None,
+                            )
+                        if get_library(hass, msg["entry_id"], runtime) is not library:
                             raise JournalError(
                                 "not_ready", "Library integration reloaded"
                             )
@@ -549,6 +604,28 @@ async def async_handle(
                                 {
                                     **metadata,
                                     **library.status(),
+                                    "metadata": {
+                                        **await repository.async_enrichment(
+                                            "statistics", library.source
+                                        ),
+                                        **(
+                                            runtime.enrichment.status()
+                                            if runtime.enrichment
+                                            else {
+                                                "enabled": False,
+                                                "running": False,
+                                                "active": 0,
+                                                "queued": 0,
+                                                "processed": 0,
+                                                "total": 0,
+                                                "updated": 0,
+                                                "skipped": 0,
+                                                "failed": 0,
+                                                "error": None,
+                                                "last_finished": None,
+                                            }
+                                        ),
+                                    },
                                     "collection_add_enabled": bool(
                                         (entry.options or entry.data).get(
                                             "library_allow_collection_add", False
@@ -619,14 +696,33 @@ async def async_handle(
                                 admin=admin,
                             )
                         else:
+                            filters = dict(msg["filters"])
+                            if filters.get("sort") == "random":
+                                # Resolve the actor seed on every page read, including
+                                # profiles opened before another device shuffled.
+                                prefs = await repository.async_ui_preferences(user.id)
+                                seed = prefs["values"]["random_seed"]
+                                if (
+                                    filters.get("offset", 0)
+                                    and filters.get("random_seed") != seed
+                                ):
+                                    raise JournalError(
+                                        "refresh_required",
+                                        "Shuffle changed on another display; "
+                                        "refresh the first page",
+                                    )
+                                filters["random_seed"] = seed
                             result = await repository.async_library_list(
-                                library.source, msg["filters"], excluded
+                                library.source, filters, excluded
                             )
+                            if filters.get("sort") == "random":
+                                result["random_seed"] = seed
                     case "ui/preferences/get" | "ui/shared/get":
                         result = await repository.async_ui_preferences(
                             user.id,
                             operation.startswith("ui/shared/"),
                             msg.get("area", "library"),
+                            msg.get("profile"),
                         )
                     case "ui/preferences/update" | "ui/shared/update":
                         result = await repository.async_ui_preferences_update(
@@ -636,6 +732,7 @@ async def async_handle(
                             msg["revision"],
                             msg["patch"],
                             msg.get("area", "library"),
+                            msg.get("profile"),
                         )
                     case "journal/create":
                         library = get_library(hass, msg["entry_id"], runtime)
@@ -946,6 +1043,8 @@ MUTATIONS = {
     "control/execute": (Subsystem.PLAYBACK, Operation.CONTROL),
     "control/acknowledge": (Subsystem.PLAYBACK, Operation.ACKNOWLEDGE),
     "library/sync": (Subsystem.LIBRARY, Operation.SCAN),
+    "library/edit/save": (Subsystem.LIBRARY, Operation.UPDATE),
+    "library/edit/reset": (Subsystem.LIBRARY, Operation.UPDATE),
     "library/collections/add": (Subsystem.LIBRARY, Operation.UPDATE),
     "library/collections/acknowledge": (Subsystem.LIBRARY, Operation.ACKNOWLEDGE),
     "metadata/sync": (Subsystem.METADATA, Operation.SCRAPE),

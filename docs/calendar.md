@@ -405,3 +405,11 @@ count is nonzero. Continuing rechecks pending work; it does not waive the grace
 period or acknowledge uncertain writes. Logs explain the provider strategy and
 link the journal revision, request, user and calendar event through private
 keyed aliases.
+
+Cross-day completed viewings have two endpoint covers: the start-day cover has a
+diagonal lower-right cut, and the completion-day cover has a complementary
+upper-left cut. Both open the same viewing details/editor. Intermediate days are
+not filled. Same-day viewings and partial entries retain whole covers. Month
+reads include either endpoint, so a prior-month start still appears on its
+completion date. Local dates and half-open month bounds include timezone and DST
+changes.

@@ -305,15 +305,78 @@ export const libraryStyles = css`
     padding: 16px 0 0;
   }
   .movie-dialog {
-    width: min(1080px, calc(100% - 32px));
+    width: min(920px, calc(100% - 32px));
     --dialog-gutter: clamp(12px, 2vw, 24px);
     padding: var(--dialog-gutter);
     border-radius: 22px;
     --dialog-background: var(--primary-background-color, #f5f7f6);
     container: movie-modal / inline-size;
   }
+  .movie-intro {
+    position: relative;
+    isolation: isolate;
+  }
+  .has-backdrop .movie-intro {
+    padding-top: clamp(64px, 9cqw, 90px);
+  }
   .movie-hero {
-    display: none;
+    position: absolute;
+    inset: calc(-1 * var(--dialog-gutter)) calc(-1 * var(--dialog-gutter)) 0;
+    height: auto;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: -1;
+  }
+  .movie-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      #0001 20%,
+      #0007 50%,
+      var(--dialog-background) 100%
+    );
+  }
+  .movie-dialog.has-backdrop {
+    --dialog-background: #111416;
+    --surface: #1b2023;
+    --muted: #bec5c9;
+    --line: #ffffff25;
+    --primary-text-color: #f4f6f7;
+    color: #f4f6f7;
+    background: var(--dialog-background);
+  }
+  .movie-close {
+    position: sticky;
+    top: 0;
+    height: 0;
+    z-index: 30;
+    display: flex;
+    justify-content: flex-end;
+    overflow: visible;
+  }
+  .movie-close .dialog-close {
+    background: #111b;
+    color: white;
+    border-radius: 50%;
+  }
+  .has-backdrop .movie-intro > .movie-heading {
+    position: relative;
+    top: auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+  .has-backdrop .movie-heading,
+  .has-backdrop .movie-summary,
+  .has-backdrop .movie-heading-badges {
+    position: relative;
+    z-index: 1;
+  }
+  .has-backdrop .movie-heading {
+    color: var(--primary-text-color);
   }
   @media (max-width: 600px) {
     .movie-dialog {
@@ -348,6 +411,35 @@ export const libraryStyles = css`
     overflow: hidden;
     clip-path: inset(50%);
     white-space: nowrap;
+  }
+  .movie-ratings {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    margin-inline-start: auto;
+    padding-block: 2px;
+    color: inherit;
+  }
+  .score-chip {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .score-chip img {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+  }
+  .score-ring {
+    width: 44px;
+    height: 44px;
+  }
+  .score-ring text {
+    font-size: 13px;
+    font-weight: 700;
+    fill: white;
   }
   .movie-summary {
     margin: 10px 0 12px;
@@ -415,6 +507,24 @@ export const libraryStyles = css`
     font-size: 12px;
   }
   @container movie-modal (max-width: 600px) {
+    .movie-ratings {
+      gap: 5px;
+    }
+    .score-chip {
+      gap: 4px;
+      font-size: 12px;
+    }
+    .score-chip img {
+      width: 25px;
+      height: 25px;
+    }
+    .score-ring {
+      width: 38px;
+      height: 38px;
+    }
+    .has-backdrop .movie-intro {
+      padding-top: clamp(100px, 42cqw, 180px);
+    }
     .movie-heading {
       gap: 8px;
     }
@@ -423,9 +533,9 @@ export const libraryStyles = css`
     }
     .movie-hero {
       display: block;
-      height: clamp(100px, 40cqw, 180px);
-      margin: 0 0 10px;
-      border-radius: 12px;
+      height: clamp(150px, 56cqw, 240px);
+      inset-block-end: auto;
+      border-radius: 0;
       overflow: hidden;
     }
     .movie-dialog .movie-body {
@@ -561,47 +671,37 @@ export const libraryStyles = css`
   .library-toolbar form label {
     min-width: min(180px, 100%);
   }
-  .library-status {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    padding: 6px 12px;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    font-size: 12px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .library-status > span {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .library-status button {
-    padding: 4px 8px;
-    font-size: 11px;
-  }
   .library-footer {
     position: sticky;
     bottom: 0;
     z-index: 7;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    align-items: center;
+    padding: 7px 12px max(7px, env(safe-area-inset-bottom));
     margin-top: 8px;
-    padding-bottom: env(safe-area-inset-bottom);
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 8px;
+    font-size: 11px;
   }
-  .library-footer .pagination {
-    border: 0;
-    padding: 6px 12px;
+  .footer-summary {
+    flex: 1 1 360px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 12px;
+    color: var(--muted);
+    min-width: 0;
   }
-  .library-footer .library-status {
-    border: 0;
-    border-top: 1px solid var(--line);
-    border-radius: 0;
+  .footer-actions {
+    margin-inline-start: auto;
+    gap: 6px;
+  }
+  .library-footer button {
+    min-height: 34px;
+    padding: 4px 8px;
+    font-size: 11px;
   }
   .library-toolbar > label {
     min-width: 110px;
@@ -742,36 +842,29 @@ export const libraryStyles = css`
     .library-tools select {
       width: 140px;
     }
-    .library-footer .pagination {
-      gap: 6px;
+    .library-footer {
       padding-inline: 8px;
+      gap: 5px;
     }
-    .library-footer .pagination small {
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+    .footer-summary {
+      flex-basis: 100%;
+      font-size: 10px;
     }
     .library-footer .actions {
-      flex-wrap: nowrap;
+      flex-wrap: wrap;
       gap: 4px;
     }
     .library-footer button {
-      min-height: 40px;
-      padding: 6px 8px;
-      font-size: 12px;
-    }
-    .library-status {
-      gap: 6px;
+      min-height: 36px;
       padding: 4px 8px;
     }
-    .library-status [data-refresh] {
+    .library-footer [data-refresh] {
       font-size: 0;
-      width: 40px;
+      width: 36px;
     }
-    .library-status [data-refresh]::before {
+    .library-footer [data-refresh]::before {
       content: "↻";
-      font-size: 20px;
+      font-size: 18px;
     }
     .people-filters {
       grid-template-columns: 1fr;

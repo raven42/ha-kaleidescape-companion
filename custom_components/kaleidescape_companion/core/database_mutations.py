@@ -341,17 +341,18 @@ def validated_patch(db, table, row, patch, now):
                 value = json.loads(value)
             except ValueError as error:
                 raise invalid("Settings must be JSON") from error
+        area = row["key"].split(":", 1)[0]
         validator = (
             validate_database
-            if row["key"] == "database"
+            if area == "database"
             else validate_search
-            if row["key"] == "search"
+            if area == "search"
             else validate_journal
-            if row["key"] == "journal"
+            if area == "journal"
             else validate_shared
             if row["key"] == "library_shared"
             else validate_library
-            if row["key"] in {"library", "library_defaults"}
+            if area in {"library", "library_defaults"}
             else None
         )
         if validator is None:

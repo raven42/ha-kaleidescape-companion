@@ -14,6 +14,7 @@ from ..calendar.config import validate as validate_calendar
 from ..const import DEFAULT_MINIMUM_RUNTIME_MINUTES, DOMAIN
 from ..enrichment.config import DEFAULTS as METADATA_DEFAULTS
 from ..enrichment.config import validate as validate_metadata
+from ..enrichment.selection import OPTIONS as METADATA_SOURCES
 from ..library.config import DEFAULTS as LIBRARY_DEFAULTS
 from ..library.config import validate as validate_library
 from ..playback.control_config import DEFAULTS as CONTROL_DEFAULTS
@@ -193,6 +194,24 @@ def form(hass: HomeAssistant, config: dict) -> p.Schema:
         marker = p.Optional(key, default=value)
         if type(default) is bool:
             properties[marker] = selector.BooleanSelector()
+        elif key.startswith("metadata_source_"):
+            field = key.removeprefix("metadata_source_")
+            labels = {
+                "auto": "Automatic",
+                "original": "Original library data",
+                "kaleidescape": "Kaleidescape library"
+                if field == "artwork"
+                else "Kaleidescape store",
+                "tmdb": "TMDB",
+            }
+            properties[marker] = selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=[
+                        {"value": choice, "label": labels[choice]}
+                        for choice in METADATA_SOURCES[field]
+                    ]
+                )
+            )
         elif key == "metadata_tmdb_credential":
             properties[marker] = selector.TextSelector(
                 selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)

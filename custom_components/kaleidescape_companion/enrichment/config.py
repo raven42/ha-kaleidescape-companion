@@ -1,6 +1,10 @@
 """Administrator opt-ins, bounded request rate, and a write-only provider credential."""
 
+from .selection import DEFAULTS as SOURCE_DEFAULTS
+from .selection import configured
+
 DEFAULTS = {
+    **SOURCE_DEFAULTS,
     "metadata_store_enabled": False,
     "metadata_tmdb_enabled": False,
     "metadata_requests_per_second": 2,
@@ -13,6 +17,7 @@ def validate(values, previous):
         key: values.get(key, previous.get(key, default))
         for key, default in DEFAULTS.items()
     }
+    configured(result)
     for key in ("metadata_store_enabled", "metadata_tmdb_enabled"):
         if type(result[key]) is not bool:
             raise ValueError("invalid_metadata_options")

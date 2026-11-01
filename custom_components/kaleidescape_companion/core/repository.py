@@ -88,6 +88,7 @@ class JournalRepository:
         self._artwork_directory = path.parent / "artwork"
         self._calendar: dict | None = None
         self._recording_library_source: str | None = None
+        self._metadata_sources = {}
 
     def _queue_log(self, event):
         # Only sanitized DTOs created by SafeLogger/movie_value reach this queue.
@@ -275,14 +276,31 @@ class JournalRepository:
             "companion_shuffle", 2, library_browse.shuffle_key, deterministic=True
         )
         from ..library.formats import labels as format_labels
+        from ..library.formats import quality
 
         connection.create_function(
             "companion_formats", 1, format_labels, deterministic=True
         )
+        connection.create_function("companion_quality", 1, quality, deterministic=True)
         from ..enrichment.store import effective
 
         connection.create_function(
-            "companion_metadata", 2, effective, deterministic=True
+            "companion_metadata",
+            2,
+            lambda data, enrichment: effective(
+                data, enrichment, self._metadata_sources
+            ),
+            deterministic=True,
+        )
+        from ..enrichment.selection import image
+
+        connection.create_function(
+            "companion_artwork",
+            3,
+            lambda original, enrichment, kind: image(
+                original, enrichment, self._metadata_sources, kind
+            ),
+            deterministic=True,
         )
         try:
             migrate(connection, self.path)
@@ -306,6 +324,9 @@ class JournalRepository:
             connection.close()
             raise
         self._connection = connection
+        from ..enrichment.selection import read
+
+        self._metadata_sources = read(connection)
         self.logger = logbook.initialize(connection)
         self._log_values = logbook.settings(connection)["log_values"]
         self._unregister_log_sink = self.logger.register(
@@ -318,6 +339,30 @@ class JournalRepository:
         recover(connection)
         if self._artwork_directory.exists() or self._artwork_directory.is_symlink():
             library_store.cache_open(connection, self._artwork_directory)
+
+    async def async_metadata_sources(self, config):
+        from ..enrichment.selection import configured
+
+        sources = configured(config)
+        return await self._call(self._configure_metadata_sources, sources)
+
+    def _configure_metadata_sources(self, sources):
+        if sources == self._metadata_sources:
+            return
+        db = self._db()
+        with db:
+            db.execute(
+                "INSERT INTO settings VALUES ('household','metadata_sources',?,1,?) "
+                "ON CONFLICT(owner,key) DO UPDATE SET value=excluded.value,"
+                "revision=revision+1,updated_at=excluded.updated_at",
+                (json.dumps(sources), datetime.now(UTC).isoformat()),
+            )
+            db.execute("UPDATE library_sources SET revision=revision+1")
+            db.execute(
+                "UPDATE schema_metadata SET revision=revision+1,"
+                "settings_revision=settings_revision+1"
+            )
+        self._metadata_sources = sources
 
     async def async_library_info(self, source: str, excluded: str = "") -> dict:
         return await self._call(
@@ -357,16 +402,51 @@ class JournalRepository:
             admin,
         )
 
+    async def async_library_edit(
+        self, source, title, actor=None, request=None, snapshot=None, patch=None
+    ):
+        from ..library import editing
+
+        if patch is None:
+            return await self._call(self._search_read, editing.inspect, source, title)
+        return await self._call(
+            self._library_write,
+            editing.apply,
+            source,
+            self._actor(actor),
+            identifier(request),
+            title,
+            snapshot,
+            patch,
+        )
+
+    async def async_library_reset(self, source, title, actor, request, snapshot):
+        from ..library.editing import reset
+
+        return await self._call(
+            self._library_write,
+            reset,
+            source,
+            self._actor(actor),
+            identifier(request),
+            title,
+            snapshot,
+        )
+
     async def async_library_candidates(self, source: str) -> list[dict]:
         return await self._call(library_store.detail_candidates, self._db(), source)
 
     async def async_enrichment(self, operation, *args):
         from ..enrichment import review_store, store
 
+        if operation == "statistics":
+            return await self._call(self._search_read, store.statistics, *args)
         if operation == "candidates":
             return await self._call(self._search_read, store.candidates, *args)
         if operation == "save":
             return await self._call(self._library_write, store.save, *args)
+        if operation == "poster":
+            return await self._call(self._library_write, self._save_poster, *args)
         if operation == "artwork":
             return await self._call(self._library_write, self._save_backdrop, *args)
         if operation == "review_target":
@@ -383,6 +463,19 @@ class JournalRepository:
         from ..enrichment.review_store import apply
 
         return apply(db, self._artwork_directory, *args)
+
+    def _save_poster(self, db, source, id, metadata, data, budget):
+        private_directory(self._artwork_directory)
+        library_store.save_backdrop(
+            db,
+            self._artwork_directory,
+            source,
+            id,
+            metadata,
+            data,
+            budget,
+            kind="poster",
+        )
 
     def _save_backdrop(self, db, source, id, metadata, data, budget):
         private_directory(self._artwork_directory)
@@ -604,13 +697,15 @@ class JournalRepository:
     async def async_seed_ui_preferences(self, legacy):
         await self._call(preferences.seed, self._db(), legacy)
 
-    async def async_ui_preferences(self, actor, shared=False, area="library"):
+    async def async_ui_preferences(
+        self, actor, shared=False, area="library", profile=None
+    ):
         return await self._call(
-            preferences.get, self._db(), self._actor(actor), shared, area
+            preferences.get, self._db(), self._actor(actor), shared, area, profile
         )
 
     async def async_ui_preferences_update(
-        self, actor, shared, request, revision, patch, area="library"
+        self, actor, shared, request, revision, patch, area="library", profile=None
     ):
         return await self._call(
             self._ui_preferences_update,
@@ -620,15 +715,18 @@ class JournalRepository:
             revision,
             patch,
             area,
+            profile,
         )
 
-    def _ui_preferences_update(self, actor, shared, request, revision, patch, area):
+    def _ui_preferences_update(
+        self, actor, shared, request, revision, patch, area, profile
+    ):
         if self._paused:
             raise JournalError(
                 "backup_in_progress", "Settings writes paused for backup"
             )
         return preferences.update(
-            self._db(), actor, shared, request, revision, patch, area
+            self._db(), actor, shared, request, revision, patch, area, profile
         )
 
     async def async_hidden_collections(self):

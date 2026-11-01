@@ -72,7 +72,7 @@ afterEach(() => {
 
 it("uses checkbox filters with multiple values, discards cancelled drafts, and removes writer/studio filters", async () => {
   expect(text()).toContain("Voyage to Europa");
-  expect(root().querySelector(".library-status")!.textContent).not.toContain(
+  expect(root().querySelector(".library-footer")!.textContent).not.toContain(
     "Played",
   );
   expect(root().querySelector("[name=writer],[name=studio]")).toBeNull();
@@ -632,7 +632,7 @@ it("keeps same-name remakes separate in both views and opens only the selected w
   button("Refresh cached data").click();
   await flush();
   expect(root().querySelectorAll("tbody tr")).toHaveLength(2);
-  expect(text()).toContain("2 titles");
+  expect(text()).toContain("2 matching titles");
   expect(text()).toContain("3 individual versions");
   const titles = root().querySelectorAll<HTMLButtonElement>("tbody .link");
   titles[0].click();
@@ -857,11 +857,8 @@ it("offers persisted genre/year/format filters and hides the tablist for one ver
     year: ["2025"],
     format: ["HDR10"],
   });
-  expect(root().querySelector(".pagination")?.textContent).toContain(
+  expect(root().querySelector(".library-footer")?.textContent).toContain(
     "1 matching title",
-  );
-  expect(root().querySelector(".library-status")?.textContent).toContain(
-    "1 title",
   );
   title("Voyage to Europa").click();
   await flush();

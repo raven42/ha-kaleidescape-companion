@@ -87,19 +87,23 @@ def group_metadata(db, source, groups):
     Resolve at read time so a later source correction replaces inherited values;
     the raw source rows and independent versions are never rewritten or merged.
     """
+    from ..enrichment.selection import read as source_preferences
     from ..enrichment.store import public as public_enrichment
 
+    sources = source_preferences(db)
     result = {}
     fields = ",".join(f"json_extract(data,'$.{key}') {key}" for key in SHARED_FIELDS)
     for batch in batches(list(dict.fromkeys(groups))):
         for row in db.execute(
-            f"SELECT source_group,enrichment,{fields} FROM library "
+            f"SELECT source_group,enrichment,sort_title,{fields} FROM library "
             "WHERE source_id=? AND available=1 AND source_group IN ("
             + ",".join("?" for _ in batch)
             + ") ORDER BY metadata_synced_at IS NOT NULL DESC,length(data) DESC,id",
             (source, *batch),
         ):
-            main = result.setdefault(row["source_group"], {})
+            main = result.setdefault(row["source_group"], {"_sources": sources})
+            if row["sort_title"]:
+                main.setdefault("_sort_title", row["sort_title"])
             for provider, metadata in public_enrichment(
                 json.loads(row["enrichment"])
             ).items():
@@ -114,6 +118,7 @@ def group_metadata(db, source, groups):
 
 
 def public_title(row, memberships, shared=None):
+    from ..enrichment.selection import image as selected_image
     from ..enrichment.store import effective
     from ..enrichment.store import public as public_enrichment
 
@@ -121,7 +126,8 @@ def public_title(row, memberships, shared=None):
         **(shared or {}).get("_providers", {}),
         **json.loads(row["enrichment"]),
     }
-    data = json.loads(effective(row["data"], enrichment))
+    sources = (shared or {}).get("_sources", {})
+    data = json.loads(effective(row["data"], enrichment, sources))
     for key, value in (shared or {}).items():
         if data.get(key) in (None, "", []):
             data[key] = value
@@ -140,10 +146,19 @@ def public_title(row, memberships, shared=None):
                 "watched_status",
             )
         },
-        "artwork_key": enrichment.get("reviewed", {}).get("poster_key")
-        or row["artwork_key"],
-        "backdrop_key": enrichment.get("reviewed", {}).get("backdrop_key")
-        or enrichment.get("tmdb", {}).get("backdrop_key"),
+        "title": enrichment.get("reviewed", {}).get("title") or row["title"],
+        "sort_title": row["sort_title"] or (shared or {}).get("_sort_title"),
+        "artwork_key": selected_image(row["artwork_key"], enrichment, sources),
+        "backdrop_key": selected_image(None, enrichment, sources, "backdrop"),
+        "ratings": {
+            key: data.get(key)
+            for key in (
+                "critic_score",
+                "audience_score",
+                "audience_rating",
+                "audience_votes",
+            )
+        },
         "is_favorite": bool(row["is_favorite"]),
         "is_recently_added": bool(row["is_recently_added"]),
         "formats": formats(data),
@@ -281,10 +296,11 @@ def library_list(db, source, filters, excluded=""):
     if not isinstance(seed, str) or (seed and not re.fullmatch(r"[a-f0-9]{32}", seed)):
         raise invalid("Invalid Library shuffle seed")
     sorts = {
-        "name": "t.title_search",
+        "name": "coalesce(nullif(t.sort_title,''),"
+        "json_extract(t.enrichment,'$.reviewed.title'),t.title_search) COLLATE NOCASE",
         "length": "json_extract(t.data,'$.duration_seconds')",
         "watched": "watched_status",
-        "year": "json_extract(t.data,'$.year')",
+        "year": "json_extract(companion_metadata(t.data,t.enrichment),'$.year')",
         "collection": collection_sql,
         "added": f"coalesce({PURCHASE_SQL},t.first_seen)",
         "random": "companion_shuffle(t.id,?)",
@@ -313,7 +329,8 @@ def library_list(db, source, filters, excluded=""):
         raise invalid("Invalid fuzzy search option")
     if query:
         term = query.casefold()
-        clauses.append("""(companion_matches(t.title,?,?) OR EXISTS (
+        clauses.append("""(companion_matches(coalesce(
+            json_extract(t.enrichment,'$.reviewed.title'),t.title),?,?) OR EXISTS (
             SELECT 1 FROM library credits,
             json_each(companion_metadata(credits.data,credits.enrichment)) roles,
             json_each(CASE WHEN roles.type='array'
@@ -374,14 +391,16 @@ def library_list(db, source, filters, excluded=""):
             )
         elif key == "rating":
             clauses.append(
-                "coalesce(nullif(json_extract(t.data,'$.rating'),''),'Unrated') "
+                "coalesce(nullif(json_extract(companion_metadata(t.data,t.enrichment),"
+                "'$.rating'),''),'Unrated') "
                 f"IN ({placeholders})"
             )
         elif key == "year":
             if any(not re.fullmatch(r"[0-9]{1,4}", value) for value in selected):
                 raise invalid("Invalid library year")
             clauses.append(
-                f"CAST(json_extract(t.data,'$.year') AS TEXT) IN ({placeholders})"
+                "CAST(json_extract(companion_metadata(t.data,t.enrichment),"
+                f"'$.year') AS TEXT) IN ({placeholders})"
             )
         elif key == "format":
             clauses.append(
@@ -477,7 +496,8 @@ def library_facets(db, source, hidden):
         row[0]
         for row in db.execute(
             "SELECT DISTINCT "
-            "coalesce(nullif(json_extract(data,'$.rating'),''),'Unrated') "
+            "coalesce(nullif(json_extract(companion_metadata(data,enrichment),"
+            "'$.rating'),''),'Unrated') "
             "FROM library WHERE source_id=? AND available=1 "
             "ORDER BY 1 LIMIT 500",
             (source,),
@@ -486,9 +506,11 @@ def library_facets(db, source, hidden):
     facets["year"] = [
         str(row[0])
         for row in db.execute(
-            "SELECT DISTINCT json_extract(data,'$.year') FROM library "
+            "SELECT DISTINCT json_extract(companion_metadata(data,enrichment),"
+            "'$.year') FROM library "
             "WHERE source_id=? AND available=1 "
-            "AND json_extract(data,'$.year') IS NOT NULL "
+            "AND json_extract(companion_metadata(data,enrichment),"
+            "'$.year') IS NOT NULL "
             "ORDER BY 1 DESC LIMIT 500",
             (source,),
         )
@@ -539,7 +561,7 @@ def grouped_page(
         f"SELECT count(DISTINCT t.source_group) FROM {join} WHERE {where}", values
     ).fetchone()[0]
     sorts = {
-        "name": "title_search",
+        "name": "sort_title COLLATE NOCASE",
         "year": "year",
         "collection": "collection_sort COLLATE NOCASE",
         "length": "duration_seconds",
@@ -557,9 +579,13 @@ def grouped_page(
         {PURCHASE_SQL} effective_purchased_on
         FROM {join} WHERE t.source_id=? AND t.available=1
     ) SELECT source_group,min(title_search) title_search,min(id) id,
-        min(title) title,count(*) version_count,
+        min(coalesce(json_extract(enrichment,'$.reviewed.title'),title)) title,
+        coalesce(min(nullif(sort_title,'')),
+            min(json_extract(enrichment,'$.reviewed.title')),
+            min(title_search)) sort_title,
+        count(*) version_count,
         max(is_favorite) is_favorite,max(is_recently_added) is_recently_added,
-        min(json_extract(data,'$.year')) year,
+        min(json_extract(companion_metadata(data,enrichment),'$.year')) year,
         min(json_extract(data,'$.duration_seconds')) duration_seconds,
         max(json_extract(data,'$.duration_seconds')) maximum_duration_seconds,
         min(first_seen) first_seen,max(last_seen) last_seen,
@@ -589,9 +615,9 @@ def grouped_page(
         representatives = {}
         for batch in batches([row["id"] for row in page]):
             for row in db.execute(
-                "SELECT id,coalesce(json_extract(enrichment,'$.reviewed.poster_key'),"
-                "artwork_key) artwork_key,metadata_synced_at,"
-                "json_extract(data,'$.rating') rating,"
+                "SELECT id,companion_artwork(artwork_key,enrichment,'artwork') "
+                "artwork_key,metadata_synced_at,"
+                "json_extract(companion_metadata(data,enrichment),'$.rating') rating,"
                 "json_extract(data,'$.edition') edition "
                 "FROM library WHERE source_id=? AND id IN ("
                 + ",".join("?" for _ in batch)
@@ -603,13 +629,14 @@ def grouped_page(
         variants = {}
         for batch in batches(groups_on_page):
             for row in db.execute(
-                "SELECT id,source_group,coalesce(json_extract(enrichment,"
-                "'$.reviewed.poster_key'),artwork_key) artwork_key,"
+                "SELECT id,source_group,companion_artwork(artwork_key,enrichment,"
+                "'artwork') "
+                "artwork_key,"
                 "json_extract(enrichment,'$.reviewed.poster_key') reviewed_poster,"
                 "json_extract(data,'$.formats') formats,"
-                "json_extract(data,'$.rating') rating,"
+                "json_extract(companion_metadata(data,enrichment),'$.rating') rating,"
                 "json_extract(data,'$.edition') edition,"
-                "json_extract(data,'$.year') year "
+                "json_extract(companion_metadata(data,enrichment),'$.year') year "
                 "FROM library WHERE source_id=? AND available=1 "
                 "AND source_group IN ("
                 + ",".join("?" for _ in batch)
@@ -745,7 +772,7 @@ def library_versions(
         FROM library t
         JOIN library_sources s ON s.id=t.source_id WHERE t.source_id=?
         AND t.available=1 AND t.source_group=? ORDER BY
-        json_extract(data,'$.year'),json_extract(data,'$.edition'),t.id
+        companion_quality(data) DESC,json_extract(data,'$.duration_seconds') DESC,t.id
         LIMIT 51 OFFSET ?""",
         (source, group, offset),
     ).fetchall()

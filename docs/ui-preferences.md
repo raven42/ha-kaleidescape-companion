@@ -3,37 +3,40 @@
 Library presentation settings live in SQLite's `settings` table, separate from
 HA configuration. They save immediately when changed; no integration reload or
 Save settings action is needed. Browsing preferences belong to the signed-in HA
-user within this dataset. Other household users keep their own choices.
+user within this dataset. Other household users keep their own choices. Each
+user also has separate desktop, tablet and mobile profiles.
 
 ## What is stored
 
-| Scope                         | Values                                                                                                                                                                                                                                                                                          |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Personal Library preferences  | List/Covers, entries per page, cover size, title overlay, format/library/rating badge toggles, column widths, applied title search, selected collection/actor/director/rating/status/genre/year/format filters, sort field, direction, random shuffle seed and administrator footer-cost toggle |
-| Personal search preferences   | One fuzzy-search choice across Library, Journal and manual title pickers                                                                                                                                                                                                                        |
-| Personal Journal preferences  | Entry list or Calendar view, calendar day-row size and fit-to-screen toggle, set in Journal Options                                                                                                                                                                                             |
-| Personal Database preferences | Table, row count, system-table visibility and per-table sort/order                                                                                                                                                                                                                              |
-| Shared UI preferences         | Hidden collection names, edited by administrators in Settings using known-name checkboxes and custom values                                                                                                                                                                                     |
-| Native HA options             | Default landing page, playback sources and recording rules, Library connection/sync/artwork options, collection-add opt-in and device-control/player/launch settings                                                                                                                            |
+| Scope                         | Values                                                                                                                                                                                                                                                                     |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Personal Library preferences  | List/Covers, entries per page, cover size, title overlay, format/library/rating badge toggles, column widths, applied title search, selected collection/actor/director/rating/status/genre/year/format filters, sort field, direction and administrator footer-cost toggle |
+| Personal search preferences   | One fuzzy-search choice across Library, Journal and manual title pickers                                                                                                                                                                                                   |
+| Personal Journal preferences  | Entry list or Calendar view, calendar day-row size and fit-to-screen toggle, set in Journal Options                                                                                                                                                                        |
+| Personal Database preferences | Table, row count, system-table visibility and per-table sort/order                                                                                                                                                                                                         |
+| Shared UI preferences         | Hidden collection names, edited by administrators in Settings using known-name checkboxes and custom values                                                                                                                                                                |
+| Native HA options             | Default landing page, playback sources and recording rules, Library connection/sync/artwork options, collection-add opt-in and device-control/player/launch settings                                                                                                       |
 
 Open **Options** beside Filters/Clear Filter for view type, entries per page,
 cover-art size (in Cover mode), title overlays, format/library/rating badge
 toggles and visible cast count (1–30, initially 8). Cast uses provider billing
 order when known; the full cast remains available under More credits. Random
 sorting replaces the direction button with **Randomize**; the shuffle seed saves
-with the personal sort and remains stable across pages and reloads. Sort/order
-controls are in the main sticky Library toolbar and save to the same personal
-row. Choices save immediately and the popup stays open while adjusting them;
-Done, Escape or a backdrop click closes it without rolling back accepted
-changes. Titles, format and library badges start enabled. Titles controls the
-cover overlay; list titles always remain available. Format and library badge
-switches apply to both views. Existing preference rows receive new toggle
-defaults on read without changing saved choices or row revisions. Ratings always
-appear in details and rating filters; a lower-right cover rating is optional and
-initially disabled. Options contains detailed freshness/version counts, while
-the sticky footer shows compact counts, administrator artwork use and last
-catalog sync. Search stays sticky and debounces title/actor/director matching.
-The default landing page remains in native HA settings.
+per HA user, shared across display profiles, and remains stable across pages and
+reloads. Sort/order controls are in the main sticky Library toolbar and save to
+the same personal profile row. Choices save immediately and the popup stays open
+while adjusting them; Done, Escape or a backdrop click closes it without rolling
+back accepted changes. Titles, format and library badges start enabled. Titles
+controls the cover overlay; list titles always remain available. Format and
+library badge switches apply to both views. Existing preference rows receive new
+toggle defaults on read without changing saved choices or row revisions. Ratings
+always appear in details and rating filters; a lower-right cover rating is
+optional and initially disabled. Options contains detailed freshness/version
+counts, while one sticky footer shows compact counts, administrator artwork use,
+basic scraper progress and last catalog sync beside refresh/sync actions.
+Pagination buttons appear only when there is another result page. Search stays
+sticky and debounces title/actor/director matching. The default landing page
+remains in native HA settings.
 
 List and 100 entries are the initial browsing defaults. Page size offers **25,
 100, 1000, All**. Covers rounds numeric targets to a whole number of measured
@@ -213,3 +216,33 @@ and its open state is not persisted. Regular users receive no monetary data,
 even if their saved preferences contain the footer flag after a role change. See
 [purchase totals](library.md#administrator-purchase-totals) for calculation
 scope and missing-data behavior.
+
+## Display profiles
+
+Desktop (over 1024 CSS pixels), tablet (601–1024) and mobile (600 or less) keep
+independent Library, Journal, Database and cross-view search preferences. This
+includes cover/calendar sizes, display modes, page counts, filters, sort methods
+and directions. Width categories use no device fingerprint or cookie. Settings
+are still private to the authenticated HA user and dataset.
+
+The one personal cross-profile value is `library_random.random_seed`. Profiles
+independently choose Random; when both do, they use that shared seed. Randomize
+changes it for the user. New reads use the latest seed; if it changes during
+pagination, refresh the first page rather than mixing shuffles. Identical
+filters yield the same relative order, though different page sizes show
+different subsets. Existing rendered screens update on their next data read.
+
+Profile keys are `library:desktop`, `library:tablet`, `library:mobile` (and the
+same suffixes for `journal`, `database`, `search`). Unsaved profiles inherit the
+legacy user row or household defaults. The first accepted profile edit creates
+its independent row. The optional API `profile` is a fixed enum; ownership is
+always derived from HA authentication. Omitting it retains the legacy contract.
+Request receipts bind the profile too. Household hidden collections and native
+HA options remain shared as before.
+
+Crossing a width boundary reloads that format's preferences after active
+dialogs, content writes, and pending/failed preference saves settle. Opening a
+phone's keyboard alone does not create a new width profile. Resize-driven visual
+layout continues during a deferred switch. Settings export includes all
+profiles; older unprofiled settings files apply to all formats on import. The
+settings file limit is 256 KiB.

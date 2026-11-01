@@ -110,6 +110,7 @@ def parse(data, movie_id, title, year):
         if type(data.get("vote_count")) is int and data["vote_count"] >= 0
         else None,
         "backdrop_path": backdrop_path(data.get("backdrop_path")),
+        "poster_path": backdrop_path(data.get("poster_path")),
         "synopsis": label(data.get("overview"), 10000),
         "genres": names(
             [
@@ -137,6 +138,14 @@ class TMDBProvider:
         if metadata.get("provider") != "tmdb":
             raise ProviderError("provider_identity_mismatch")
         return await self.transport.get("https://image.tmdb.org/t/p/w780" + path)
+
+    async def poster(self, metadata: Metadata) -> bytes | None:
+        path = backdrop_path(metadata.get("poster_path"))
+        if not path:
+            return None
+        if metadata.get("provider") != "tmdb":
+            raise ProviderError("provider_identity_mismatch")
+        return await self.image({"kind": "poster", "path": path})
 
     async def images(self, metadata: Metadata) -> list[dict]:
         movie_id = metadata.get("provider_id", "")

@@ -22,10 +22,11 @@ def snapshot(db, row):
         **shared,
         **{key: value for key, value in data.items() if value not in (None, "", [])},
     }
+    from ..enrichment.selection import image
     from ..enrichment.store import effective
 
     enrichment = {**shared.get("_providers", {}), **json.loads(row["enrichment"])}
-    data = json.loads(effective(data, enrichment))
+    data = json.loads(effective(data, enrichment, shared.get("_sources", {})))
     hidden = excluded_collections(excluded(db))
     purchased = db.execute(
         f"SELECT {PURCHASE_SQL} FROM library t WHERE t.id=?", (row["id"],)
@@ -48,7 +49,9 @@ def snapshot(db, row):
             )
             if item[0].casefold() not in hidden
         ],
-        "artwork_key": row["artwork_key"],
+        "artwork_key": image(
+            row["artwork_key"], enrichment, shared.get("_sources", {})
+        ),
         "purchase_date": purchased,
         "added_on": row["first_seen"],
     }

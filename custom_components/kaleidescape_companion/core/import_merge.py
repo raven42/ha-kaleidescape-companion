@@ -108,10 +108,11 @@ def review(db, payload, import_format, actor):
                 for field, value in {
                     **record["data"],
                     "purchased_on": record["purchased_on"],
+                    "sort_title": record["sort_title"],
                 }.items():
                     previous = (
-                        old["purchased_on"]
-                        if field == "purchased_on"
+                        old[field]
+                        if field in {"purchased_on", "sort_title"}
                         else old_data.get(field)
                     )
                     if previous in EMPTY and value not in EMPTY:
@@ -420,19 +421,26 @@ def apply(db, plan, request_id, plan_id, revision, selected, actor):
                 updated += 1
             else:
                 old = db.execute(
-                    "SELECT data,purchased_on,purchase_imported_at "
+                    "SELECT data,purchased_on,purchase_imported_at,sort_title "
                     "FROM library WHERE id=?",
                     (record["id"],),
                 ).fetchone()
                 data = json.loads(old["data"])
-                data.update({k: v for k, v in patch.items() if k != "purchased_on"})
+                data.update(
+                    {
+                        k: v
+                        for k, v in patch.items()
+                        if k not in {"purchased_on", "sort_title"}
+                    }
+                )
                 db.execute(
-                    "UPDATE library SET data=?,purchased_on=?,"
+                    "UPDATE library SET data=?,purchased_on=?,sort_title=?,"
                     "purchase_imported_at=? "
                     "WHERE id=?",
                     (
                         json.dumps(data),
                         patch.get("purchased_on", old["purchased_on"]),
+                        patch.get("sort_title", old["sort_title"]),
                         now if "purchased_on" in patch else old["purchase_imported_at"],
                         record["id"],
                     ),

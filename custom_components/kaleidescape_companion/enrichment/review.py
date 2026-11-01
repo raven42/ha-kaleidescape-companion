@@ -91,6 +91,7 @@ class TitleReviews:
             tmdb_credential=child.config["metadata_tmdb_credential"],
             budget=self.parent.providers.transport.budget,
         )
+        child.review_title = title
         task = asyncio.current_task()
         self.jobs[task] = child
         try:

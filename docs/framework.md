@@ -52,6 +52,9 @@ The product name is **Kaleidescape Companion**. The HA domain
   records and fill missing viewing/Library metadata by exact ID, with selectable
   approval. Purchase-history HTML preparation remains an offline development
   helper.
+- Schema 22 adds administrator sort titles, protected display corrections/source
+  restoration, per-format preferences with a shared user shuffle, and scraper
+  progress in the Library footer.
 - Schema 17 indexes Journal/Library links and backfills exact legacy references.
 - Schema 16 renames the scanned table to **Library** and embeds repeated
   purchase history on its owning entry, removing the separate purchase table.

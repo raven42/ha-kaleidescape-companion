@@ -24,12 +24,38 @@ VALIDATORS = {
 
 def apply(db, operation, actor, request, categories):
     rows = []
-    for area, value in categories.get("browsing", {}).items():
-        if area not in VALIDATORS:
+    seeds = set()
+    for key, value in categories.get("browsing", {}).items():
+        if not isinstance(key, str):
             raise invalid("Invalid browsing settings area")
-        current = preferences.get(db, actor, area=area)
+        area, _, profile = key.partition(":")
+        if area not in VALIDATORS or (profile and profile not in preferences.PROFILES):
+            raise invalid("Invalid browsing settings area")
+        values = VALIDATORS[area](value)
+        if area == "library":
+            seeds.add(values["random_seed"])
+        # Older files apply to all formats, including existing saved profiles.
+        targets = (profile,) if profile else (None, *preferences.PROFILES)
+        for target in targets:
+            current = preferences.get(db, actor, area=area, profile=target)
+            saved = {
+                k: v
+                for k, v in values.items()
+                if not (area == "library" and target and k == "random_seed")
+            }
+            rows.append(
+                (
+                    f"user:{actor}",
+                    preferences.preference_key(area, target),
+                    saved,
+                    current["revision"] + 1,
+                )
+            )
+    if len(seeds) > 1:
+        raise invalid("Library profiles must use the same random seed")
+    if seeds:
         rows.append(
-            (f"user:{actor}", area, VALIDATORS[area](value), current["revision"] + 1)
+            (f"user:{actor}", "library_random", {"random_seed": seeds.pop()}, 1)
         )
     if "shared" in categories:
         current = preferences.get(db, actor, True)

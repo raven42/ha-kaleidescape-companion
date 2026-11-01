@@ -79,17 +79,50 @@ def migrate_search(db):
         db.execute("UPDATE schema_metadata SET settings_revision=settings_revision+1")
 
 
-def get(db, actor, shared=False, area="library"):
+PROFILES = ("desktop", "tablet", "mobile")
+
+
+def preference_key(area, profile):
+    if profile is not None and profile not in PROFILES:
+        raise JournalError("invalid_request", "Unknown display profile")
+    return f"{area}:{profile}" if profile else area
+
+
+def random_seed(db, actor):
+    """One shuffle per user, independent of the user's display profiles."""
+    row = db.execute(
+        "SELECT value FROM settings WHERE owner=? AND key='library_random'",
+        (f"user:{actor}",),
+    ).fetchone()
+    if row:
+        return json.loads(row[0])["random_seed"]
+    legacy = db.execute(
+        "SELECT value FROM settings WHERE owner=? AND key='library'",
+        (f"user:{actor}",),
+    ).fetchone()
+    return json.loads(legacy[0]).get("random_seed", "") if legacy else ""
+
+
+def get(db, actor, shared=False, area="library", profile=None):
     if area not in ("library", "database", "search", "journal") or (
         shared and area != "library"
     ):
         raise JournalError("invalid_request", "Unknown UI preference area")
-    owner, key = ("household", "library_shared") if shared else (f"user:{actor}", area)
+    owner, key = (
+        ("household", "library_shared")
+        if shared
+        else (f"user:{actor}", preference_key(area, profile))
+    )
     row = db.execute(
         "SELECT value,revision FROM settings WHERE owner=? AND key=?", (owner, key)
     ).fetchone()
-    if row:
-        values = json.loads(row["value"])
+    inherited = None
+    if not row and profile and not shared:
+        inherited = db.execute(
+            "SELECT value FROM settings WHERE owner=? AND key=?", (owner, area)
+        ).fetchone()
+    if row or inherited:
+        values = json.loads((row or inherited)["value"])
     elif area == "database":
         values = DATABASE_DEFAULTS
     elif area == "search":
@@ -115,10 +148,12 @@ def get(db, actor, shared=False, area="library"):
             if area == "journal"
             else validate_library
         )({}, values)
+    if not shared and area == "library":
+        values["random_seed"] = random_seed(db, actor)
     return {"values": values, "revision": row["revision"] if row else 0}
 
 
-def update(db, actor, shared, request, revision, patch, area="library"):
+def update(db, actor, shared, request, revision, patch, area="library", profile=None):
     fingerprint = hashlib.sha256(
         json.dumps(
             [
@@ -128,6 +163,7 @@ def update(db, actor, shared, request, revision, patch, area="library"):
                 revision,
                 patch,
                 *([area] if area != "library" else []),
+                *([profile] if profile is not None and not shared else []),
             ],
             sort_keys=True,
         ).encode()
@@ -141,7 +177,7 @@ def update(db, actor, shared, request, revision, patch, area="library"):
                 "conflict", "Request UUID belongs to different settings or actor"
             )
         return json.loads(cached["response"])
-    current = get(db, actor, shared, area)
+    current = get(db, actor, shared, area, profile)
     if type(revision) is not int or revision < 0:
         raise JournalError("invalid_request", "Invalid UI settings revision")
     # Preferences are reversible field setters, not journal corrections. Merge
@@ -158,9 +194,30 @@ def update(db, actor, shared, request, revision, patch, area="library"):
         if area == "journal"
         else validate_library
     )(patch, current["values"])
-    owner, key = ("household", "library_shared") if shared else (f"user:{actor}", area)
+    owner, key = (
+        ("household", "library_shared")
+        if shared
+        else (f"user:{actor}", preference_key(area, profile))
+    )
     result = {"revision": revision + 1}
     with db:
+        if not shared and area == "library":
+            if "random_seed" in patch:
+                db.execute(
+                    "INSERT INTO settings VALUES (?,?,?,?,?) "
+                    "ON CONFLICT(owner,key) DO UPDATE SET value=excluded.value,"
+                    "revision=revision+1,updated_at=excluded.updated_at",
+                    (
+                        owner,
+                        "library_random",
+                        json.dumps({"random_seed": values["random_seed"]}),
+                        1,
+                        datetime.now(UTC).isoformat(),
+                    ),
+                )
+            # Profile rows never own the cross-profile shuffle.
+            if profile:
+                values.pop("random_seed", None)
         db.execute(
             """INSERT INTO settings VALUES (?,?,?,?,?)
             ON CONFLICT(owner,key) DO UPDATE SET value=excluded.value,

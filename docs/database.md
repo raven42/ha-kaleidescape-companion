@@ -182,3 +182,14 @@ hiding. Neither table is imported; SQLite downloads clear both tables and
 compact their snapshot before delivery. JSON exports omit them. Full HA and
 migration backups retain private log state. The [logging policy](logging.md)
 describes the 5 MiB retention and privacy boundaries.
+
+## Library sort titles (schema 22)
+
+`library.sort_title` is a nullable display-order override, separate from raw
+scan identity. It is administrator-editable and included in portable Library
+exports and fill-missing merge imports. Manual display facts remain in the
+protected enrichment JSON. See
+[Library editing](library.md#movie-details-and-administrator-editing). Profile
+preferences reuse `settings`, with fixed format suffixes and one actor-owned
+`library_random` row; no device identifiers or new preference table are
+introduced.

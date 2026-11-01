@@ -410,6 +410,7 @@ class PurchaseImportTest(unittest.IsolatedAsyncioTestCase):
         with closing(sqlite3.connect(self.path)) as db:
             db.execute("ALTER TABLE library RENAME TO library_titles")
             for column in (
+                "sort_title",
                 "enrichment",
                 "purchase_history",
                 "purchase_price",
@@ -466,7 +467,7 @@ class PurchaseImportTest(unittest.IsolatedAsyncioTestCase):
         self.repository = JournalRepository(self.path)
         self.addAsyncCleanup(self.repository.async_close)
         await self.repository.async_open()
-        self.assertEqual((await self.repository.async_info())["schema_version"], 21)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 22)
         invoices = await self.invoices()
         self.assertEqual(len(invoices), 2)
         pending = next(row for row, _ in invoices if row["purchase_match_pending"])

@@ -46,7 +46,9 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
         await self.seed()
         first = await self.create(START)
         second = await self.create("2026-10-31T23:30:00-05:00")
-        await self.create("2026-10-01T04:59:59.999999Z")
+        await self.create(
+            "2026-10-01T04:59:59.999999Z", status="partial", watched_seconds=60
+        )
         await self.create(END)
         deleted = await self.create("2026-10-10T12:00:00Z")
         await self.repository.async_delete(
@@ -150,6 +152,46 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
                     viewing["id"], library.SOURCE
                 )
             )["movie"]
+        )
+
+    async def test_cross_month_completion_includes_both_endpoints_only(self):
+        await self.seed()
+        row = await self.create("2026-10-01T04:30:00Z")
+        # A start in the prior local month still appears on completion day.
+        october = await self.month(source=library.SOURCE)
+        self.assertEqual([item["id"] for item in october["items"]], [row["id"]])
+        september = await self.repository.async_calendar_month(
+            "2026-09-01T05:00:00Z", START
+        )
+        self.assertEqual([item["id"] for item in september["items"]], [row["id"]])
+        november = await self.repository.async_calendar_month(
+            END, "2026-12-01T06:00:00Z"
+        )
+        self.assertEqual(november["items"], [])
+
+        # A completed endpoint exactly on the upper bound belongs to next month.
+        def boundary():
+            with self.repository._db() as db:
+                db.execute(
+                    "UPDATE viewings SET started_at=?,ended_at=? WHERE id=?",
+                    (
+                        "2026-10-31T23:00:00+00:00",
+                        END.replace("Z", "+00:00"),
+                        row["id"],
+                    ),
+                )
+
+        await self.repository._call(boundary)
+        self.assertEqual(len((await self.month())["items"]), 1)
+        self.assertEqual(
+            len(
+                (
+                    await self.repository.async_calendar_month(
+                        END, "2026-12-01T06:00:00Z"
+                    )
+                )["items"]
+            ),
+            1,
         )
 
     async def test_invalid_ranges_and_month_limit_fail_without_partial_results(self):

@@ -340,6 +340,20 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
         context.__aenter__ = AsyncMock(return_value=response)
         context.__aexit__ = AsyncMock(return_value=False)
         self.assertEqual(await sync._get(url, {}), IMAGE)
+        poster = url.replace("w780", "w500")
+        with self.assertRaisesRegex(ProviderError, "destination"):
+            await sync._get(poster, {})
+        sync.entry.data["metadata_source_artwork"] = "tmdb"
+        sync.config["metadata_source_artwork"] = "tmdb"
+        self.assertEqual(await sync._get(poster, {}), IMAGE)
+        with self.assertRaisesRegex(ProviderError, "destination"):
+            await sync._get(url.replace("w780", "w300"), {})
+        sync.entry.data["library_sync_artwork"] = False
+        sync.config["library_sync_artwork"] = False
+        with self.assertRaisesRegex(ProviderError, "disabled"):
+            await sync._get(poster, {})
+        sync.entry.data["library_sync_artwork"] = True
+        sync.config["library_sync_artwork"] = True
         self.assertNotIn("Authorization", sync.session.get.call_args.kwargs["headers"])
         self.assertEqual(
             sync.session.get.call_args.kwargs["server_hostname"], "image.tmdb.org"

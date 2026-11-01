@@ -29,6 +29,23 @@ export function monthBounds(month: Date) {
   ];
 }
 
+/** Endpoint markers use local dates, including viewings crossing month boundaries. */
+export function calendarDays(
+  row: Pick<CalendarViewing, "started_at" | "ended_at" | "status">,
+) {
+  const start = dayKey(new Date(row.started_at));
+  const end = row.ended_at ? dayKey(new Date(row.ended_at)) : start;
+  return row.status === "completed" &&
+    end !== start &&
+    row.ended_at &&
+    new Date(row.ended_at) > new Date(row.started_at)
+    ? [
+        { day: start, phase: "start" },
+        { day: end, phase: "completion" },
+      ]
+    : [{ day: start, phase: "single" }];
+}
+
 export class JournalCalendar extends LitElement {
   static properties = {
     client: { attribute: false },
@@ -419,10 +436,10 @@ export class JournalCalendar extends LitElement {
       { length: count },
       (_, index) => new Date(year, month, index - first.getDay() + 1),
     );
-    const byDay = new Map<string, CalendarViewing[]>();
+    const byDay = new Map<string, { row: CalendarViewing; phase: string }[]>();
     for (const row of this.items) {
-      const key = dayKey(new Date(row.started_at));
-      byDay.set(key, [...(byDay.get(key) ?? []), row]);
+      for (const { day, phase } of calendarDays(row))
+        byDay.set(day, [...(byDay.get(day) ?? []), { row, phase }]);
     }
     return html`<div class="month-bar">
         <button
@@ -469,25 +486,27 @@ export class JournalCalendar extends LitElement {
                     >
                       ${repeat(
                         rows,
-                        (row) => row.id,
-                        (row, index) =>
+                        ({ row }) => row.id,
+                        ({ row, phase }, index) =>
                           html`<button
-                            class="poster"
+                            class=${`poster poster-${phase}`}
                             style=${`--index:${index};--layer:${index + 1}`}
-                            aria-label=${`${row.title} · ${row.status === "completed" ? "Completed" : "Partial"}`}
+                            aria-label=${`${row.title} · ${phase === "start" ? "Started; completed on another day" : phase === "completion" ? "Completed; started on another day" : row.status === "completed" ? "Completed" : "Partial"}`}
                             title=${row.title}
                             ?disabled=${this.disabled}
                             @click=${() => this.select(row, row.artwork_key)}
                           >
-                            <kaleidescape-library-cover
-                              .client=${this.client}
-                              .scope=${this.scope}
-                              .queue=${this.queue}
-                              .artworkKey=${row.artwork_key}
-                              .title=${row.title}
-                              @access-denied=${() => this.fail({ code: "unauthorized" })}
-                            ></kaleidescape-library-cover>
-                            ${!row.artwork_key ? html`<span class="poster-title">${row.title}</span>` : nothing}
+                            <span class="poster-art"
+                              ><kaleidescape-library-cover
+                                .client=${this.client}
+                                .scope=${this.scope}
+                                .queue=${this.queue}
+                                .artworkKey=${row.artwork_key}
+                                .title=${row.title}
+                                @access-denied=${() => this.fail({ code: "unauthorized" })}
+                              ></kaleidescape-library-cover>
+                              ${!row.artwork_key ? html`<span class="poster-title">${row.title}</span>` : nothing}</span
+                            >
                           </button>`,
                       )}
                     </div>`
@@ -498,7 +517,7 @@ export class JournalCalendar extends LitElement {
         </div>
       </div>
       <p class="month-status">
-        ${counted(this.items.length, "viewing")} · Local start
+        ${counted(this.items.length, "viewing")} · Local start and completion
         dates${!this.loading && !this.items.length && !this.error ? " · No viewings match this month" : ""}
       </p>
       ${this.renderDetails()}`;

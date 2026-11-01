@@ -196,6 +196,7 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
             db.execute("ALTER TABLE viewings DROP COLUMN library_metadata")
             db.execute("ALTER TABLE library RENAME TO library_titles")
             for column in (
+                "sort_title",
                 "enrichment",
                 "purchase_history",
                 "purchase_price",

@@ -11,3 +11,19 @@ is not project-owned artwork.
 The shared credits component bundles it inline so displaying attribution makes
 no browser request to a third party. Keep the required attribution notice and
 provider link with it. Do not recolor or distort the logo.
+
+`rt-critics-{positive,negative}.svg` and `rt-audience-{positive,negative}.svg`
+are Rotten Tomatoes' standard Fresh, Rotten, positive-audience and
+negative-audience icons. They were extracted on 2026-10-31 from the score-icon
+components used by its
+[official ratings guide](https://www.rottentomatoes.com/about), in that page's
+[public component bundle](https://www.rottentomatoes.com/assets/pizza-pie/javascripts/bundles/roma/default.45dc58bf8f0.js).
+Only static SVG markup is retained; geometry, colors and proportions are
+unchanged. These are third-party branding, not project-owned artwork. Use them
+with their labelled source scores; do not infer Certified Fresh or Verified Hot
+status from a percentage. The standard positive icons apply at 60% and above.
+
+The rating component embeds these assets as local image data URLs. They add no
+third-party browser request and contain no executable markup or external links.
+TMDB's circular percentage display is a CSS/SVG score visualization; the
+separate approved TMDB logo and attribution remain in the metadata credits.

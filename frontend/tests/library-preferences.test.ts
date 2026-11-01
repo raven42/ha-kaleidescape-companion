@@ -161,19 +161,19 @@ it("shows admin purchase details and persists the optional footer cost", async (
   expect(details.textContent).toContain("$20.00");
   expect(details.textContent).toContain("$7.66");
   expect([...details.querySelectorAll("dd")].at(-1)?.textContent).toBe("2");
-  expect(root.querySelector(".library-status")!.textContent).not.toContain(
+  expect(root.querySelector(".library-footer")!.textContent).not.toContain(
     "Library cost",
   );
   root.querySelector<HTMLInputElement>('[name="show_library_cost"]')!.click();
   await flush();
   expect(transport.uiPreferences.show_library_cost).toBe(true);
-  expect(root.querySelector(".library-status")!.textContent).toContain(
+  expect(root.querySelector(".library-footer")!.textContent).toContain(
     "Library cost $12.34",
   );
   element!.remove();
   root = await mount(transport);
   await vi.waitFor(() =>
-    expect(root.querySelector(".library-status")!.textContent).toContain(
+    expect(root.querySelector(".library-footer")!.textContent).toContain(
       "Library cost $12.34",
     ),
   );
@@ -199,7 +199,7 @@ it("never exposes or requests financial totals for readers, even with a saved fo
   const root = element.shadowRoot!;
   expect(root.querySelector('[name="show_library_cost"]')).toBeNull();
   expect(root.querySelector(".purchase-details")).toBeNull();
-  expect(root.querySelector(".library-status")!.textContent).not.toContain(
+  expect(root.querySelector(".library-footer")!.textContent).not.toContain(
     "Library cost",
   );
   expect(
@@ -320,7 +320,7 @@ it("All loads bounded revision-bound pages and keeps the entire final remainder"
     offset: 1000,
     revision: 5,
   });
-  expect((button(root, "Next") as HTMLButtonElement).disabled).toBe(true);
+  expect(button(root, "Next")).toBeUndefined();
   expect(transport.uiPreferences.page_size).toBe("all");
 });
 it("persists applied facets across remount, discards drafts, and saves Clear Filter", async () => {

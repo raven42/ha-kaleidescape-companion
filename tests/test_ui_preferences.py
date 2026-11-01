@@ -19,6 +19,84 @@ class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = library.LibraryStorageTest.asyncSetUp
     assert_error = library.LibraryStorageTest.assert_error
 
+    async def test_profiles_inherit_legacy_then_isolate_all_choices_except_shuffle(
+        self,
+    ):
+        seed = "a" * 32
+        await self.repository.async_ui_preferences_update(
+            "a",
+            False,
+            str(uuid4()),
+            0,
+            {"view": "covers", "cover_size": 200, "random_seed": seed},
+        )
+        for profile in ("desktop", "tablet", "mobile"):
+            values = (await self.repository.async_ui_preferences("a", profile=profile))[
+                "values"
+            ]
+            self.assertEqual(values["view"], "covers")
+            self.assertEqual(values["cover_size"], 200)
+            self.assertEqual(values["random_seed"], seed)
+        request = str(uuid4())
+        args = (
+            "a",
+            False,
+            request,
+            0,
+            {"cover_size": 120, "view": "list", "sort": "random"},
+            "library",
+            "mobile",
+        )
+        result = await self.repository.async_ui_preferences_update(*args)
+        self.assertEqual(
+            await self.repository.async_ui_preferences_update(*args), result
+        )
+        with self.assert_error("conflict"):
+            await self.repository.async_ui_preferences_update(*args[:-1], "desktop")
+        await self.repository.async_ui_preferences_update(
+            "a", False, str(uuid4()), 0, {"random_seed": "b" * 32}, profile="desktop"
+        )
+        mobile = (await self.repository.async_ui_preferences("a", profile="mobile"))[
+            "values"
+        ]
+        desktop = (await self.repository.async_ui_preferences("a", profile="desktop"))[
+            "values"
+        ]
+        self.assertEqual(mobile["cover_size"], 120)
+        self.assertEqual(desktop["cover_size"], 200)
+        self.assertEqual(mobile["view"], "list")
+        self.assertEqual(desktop["view"], "covers")
+        self.assertEqual(mobile["random_seed"], desktop["random_seed"])
+        self.assertEqual(mobile["random_seed"], "b" * 32)
+        self.assertEqual(
+            (await self.repository.async_ui_preferences("other", profile="mobile"))[
+                "values"
+            ]["random_seed"],
+            "",
+        )
+        for area, patch in (
+            ("journal", {"calendar_size": 90}),
+            ("database", {"limit": 500}),
+            ("search", {"fuzzy_search": False}),
+        ):
+            await self.repository.async_ui_preferences_update(
+                "a", False, str(uuid4()), 0, patch, area, "mobile"
+            )
+            self.assertNotEqual(
+                (
+                    await self.repository.async_ui_preferences(
+                        "a", area=area, profile="desktop"
+                    )
+                )["values"],
+                (
+                    await self.repository.async_ui_preferences(
+                        "a", area=area, profile="mobile"
+                    )
+                )["values"],
+            )
+        with self.assert_error("invalid_request"):
+            await self.repository.async_ui_preferences("a", profile="arbitrary-device")
+
     async def test_search_preferences_consolidate_latest_legacy_choice_once(self):
         def legacy_rows(db):
             with db:
@@ -305,6 +383,36 @@ class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
 class UISettingsApiTest(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = backend.BackendTest.asyncSetUp
     call = backend.BackendTest.call
+
+    async def test_random_pages_resolve_the_shared_user_seed_across_profiles(self):
+        await backend.BackendTest.create(self)
+        first = "a" * 32
+        saved = await self.call(
+            "ui/preferences/update",
+            **self.scope,
+            profile="desktop",
+            request_id=str(uuid4()),
+            revision=0,
+            patch={"sort": "random", "random_seed": first},
+        )
+        self.assertTrue(saved["success"])
+        page = await self.call(
+            "library/list",
+            **self.scope,
+            filters={"sort": "random", "random_seed": "b" * 32, "grouped": True},
+        )
+        self.assertTrue(page["success"])
+        self.assertEqual(page["result"]["random_seed"], first)
+        stale = await self.call(
+            "library/list",
+            **self.scope,
+            filters={"sort": "random", "random_seed": "b" * 32, "offset": 1},
+        )
+        self.assertEqual(stale["code"], "refresh_required")
+        self.admin.is_admin = False
+        mobile = await self.call("ui/preferences/get", **self.scope, profile="mobile")
+        self.assertEqual(mobile["result"]["values"]["random_seed"], first)
+        self.assertEqual(mobile["result"]["values"]["sort"], "name")
 
     async def test_setup_seeds_legacy_ui_options_and_removes_only_those_ha_fields(self):
         await backend.async_unload_entry(self.hass, self.entry)

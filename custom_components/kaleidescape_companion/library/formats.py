@@ -31,3 +31,15 @@ def labels(encoded):
         if any(pattern.search(value) for value in source):
             found.add(label)
     return json.dumps(sorted(found, key=str.casefold))
+
+
+def quality(encoded):
+    known = set(json.loads(labels(encoded)))
+    return next(
+        (
+            rank
+            for rank, label in ((4, "4K Cinematic"), (3, "4K"), (2, "HD"), (1, "SD"))
+            if label in known
+        ),
+        0,
+    )

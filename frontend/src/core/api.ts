@@ -1,3 +1,4 @@
+import { displayProfile } from "./display-profile";
 export interface SettingsTransfer {
   format: string;
   version: number;
@@ -315,6 +316,12 @@ export interface ScrapeReview {
   artwork_enabled: boolean;
 }
 export interface MetadataStatus {
+  enabled?: boolean;
+  active?: number;
+  queued?: number;
+  failed?: number;
+  cached_groups?: number;
+  by_provider?: Record<string, number>;
   running: boolean;
   processed: number;
   updated: number;
@@ -323,7 +330,17 @@ export interface MetadataStatus {
   error: string | null;
   last_finished: string | null;
 }
+export interface LibraryEdit {
+  snapshot: string;
+  values: Record<string, string | string[] | number | null>;
+  version_count: number;
+}
 export interface LibraryTitle {
+  ratings?: Pick<
+    ProviderMetadata,
+    "critic_score" | "audience_score" | "audience_rating" | "audience_votes"
+  >;
+  sort_title?: string | null;
   backdrop_key?: string | null;
   enrichment?: Record<string, ProviderMetadata>;
   producers?: string[];
@@ -379,6 +396,7 @@ export type LibrarySummary = Pick<
   | "duration_seconds"
 >;
 export interface LibraryPage {
+  random_seed?: string;
   limit?: number;
   preferences_key?: string;
   items: LibrarySummary[];
@@ -398,6 +416,7 @@ export interface LibraryVersionPage {
   revision: number;
 }
 export interface LibraryInfo {
+  metadata?: MetadataStatus;
   collection_add_enabled?: boolean;
   pending_adds?: {
     request_id: string;
@@ -795,14 +814,47 @@ export class JournalClient {
   repairMetadata(pending: PreparedMutation): Promise<MetadataRepairResult> {
     return this.call({ ...pending.message });
   }
+  prepareLibraryReset(scope: Scope, titleId: string, snapshot: string) {
+    return this.prepareCommand(scope, "library/edit/reset", {
+      title_id: titleId,
+      snapshot,
+      confirmation: "RESTORE SOURCE",
+    });
+  }
+  libraryEdit(scope: Scope, titleId: string): Promise<LibraryEdit> {
+    return this.call({
+      type: `${DOMAIN}/library/edit/get`,
+      ...scopeFields(scope),
+      title_id: titleId,
+    });
+  }
+  prepareLibraryEdit(
+    scope: Scope,
+    titleId: string,
+    snapshot: string,
+    patch: Record<string, unknown>,
+  ) {
+    return this.prepareCommand(scope, "library/edit/save", {
+      title_id: titleId,
+      snapshot,
+      patch,
+    });
+  }
+  saveLibraryEdit(
+    pending: PreparedMutation,
+  ): Promise<{ title_id: string; updated_count: number }> {
+    return this.call({ ...pending.message });
+  }
   uiPreferences(
     scope: Scope,
     shared = false,
     area = "library",
+    profile = displayProfile(),
   ): Promise<UISettings> {
     return this.call({
       type: `${DOMAIN}/ui/${shared ? "shared" : "preferences"}/get`,
       ...(area !== "library" ? { area } : {}),
+      ...(!shared ? { profile } : {}),
       ...scopeFields(scope),
     });
   }
@@ -812,11 +864,17 @@ export class JournalClient {
     revision: number,
     patch: Record<string, unknown>,
     area = "library",
+    profile = displayProfile(),
   ) {
     return this.prepareCommand(
       scope,
       `ui/${shared ? "shared" : "preferences"}/update`,
-      { revision, patch, ...(area !== "library" ? { area } : {}) },
+      {
+        revision,
+        patch,
+        ...(area !== "library" ? { area } : {}),
+        ...(!shared ? { profile } : {}),
+      },
     );
   }
   saveUIPreferences(pending: PreparedMutation): Promise<{ revision: number }> {
@@ -1319,7 +1377,13 @@ export class JournalClient {
         limit: 1000,
         offset: items.length,
         ...(page
-          ? { revision: page.revision, preferences_key: page.preferences_key }
+          ? {
+              revision: page.revision,
+              preferences_key: page.preferences_key,
+              ...(page.random_seed !== undefined
+                ? { random_seed: page.random_seed }
+                : {}),
+            }
           : {}),
       });
       if (!current()) throw new ApiError("not_ready");

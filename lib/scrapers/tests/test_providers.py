@@ -232,6 +232,31 @@ class ProviderClientTest(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(ProviderError, "unknown_provider"):
             await client.artwork("missing", metadata)
 
+    async def test_preferred_poster_is_optional_fixed_size_and_credential_free(self):
+        fetch = AsyncMock(return_value=b"\xff\xd8\xfffictional")
+        client = Providers(fetch, requests_per_second=10, tmdb_credential="fictional")
+        metadata = {"provider": "tmdb", "poster_path": "/FictionalPoster.jpg"}
+        self.assertEqual(
+            await client.poster("tmdb", metadata), b"\xff\xd8\xfffictional"
+        )
+        fetch.assert_awaited_once_with(
+            "https://image.tmdb.org/t/p/w500/FictionalPoster.jpg", {}
+        )
+        for path in (
+            None,
+            "https://evil.example/x.jpg",
+            "/../x.jpg",
+            "/x.svg",
+            "/x.jpg?key=private",
+        ):
+            self.assertIsNone(
+                await client.poster("tmdb", {**metadata, "poster_path": path})
+            )
+        self.assertIsNone(await client.poster("kaleidescape", metadata))
+        self.assertEqual(fetch.await_count, 1)
+        with self.assertRaisesRegex(ProviderError, "unknown_provider"):
+            await client.poster("missing", metadata)
+
     async def test_tmdb_supports_bearer_and_v3_key_without_returning_them(self):
         for credential in ("fictional-read-token", "a" * 32):
             calls = []

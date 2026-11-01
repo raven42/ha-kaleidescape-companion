@@ -5,6 +5,7 @@ import { errorMessage } from "../core/api";
 import type { JournalClient, JournalInfo, MetadataStatus } from "../core/api";
 import { counted } from "../core/text";
 import { styles } from "../ui/styles";
+import { SOURCE_FIELDS, SOURCE_LABELS } from "./sources";
 import { tmdbCredits } from "./credits";
 
 export class EnrichmentSettings extends LitElement {
@@ -133,6 +134,66 @@ export class EnrichmentSettings extends LitElement {
           @change=${(event: Event) => this.change("metadata_clear_tmdb_key", (event.target as HTMLInputElement).checked)}
         />Remove saved TMDB credential</label
       >
+      <details class="field-sources">
+        <summary>Preferred metadata sources</summary>
+        <p class="muted">
+          These shared choices apply to the whole Library after Save settings.
+          Missing provider values fall back to another cached source. Original
+          library data uses only the scanned field. Per-title edits and reviewed
+          selections take priority. Enabling a preference does not enable a
+          scraper.
+        </p>
+        <button
+          type="button"
+          ?disabled=${this.disabled || !this.draft.metadata_tmdb_enabled}
+          @click=${() => {
+            const patch = Object.fromEntries(
+              SOURCE_FIELDS.map(([field, , providers]) => [
+                "metadata_source_" + field,
+                field === "artwork" ||
+                field === "critic_score" ||
+                field === "audience_score" ||
+                field === "distributor"
+                  ? "kaleidescape"
+                  : providers.some((value) => value === "tmdb")
+                    ? "tmdb"
+                    : "auto",
+              ]),
+            );
+            this.dispatchEvent(
+              new CustomEvent("metadata-settings", {
+                detail: patch,
+                bubbles: true,
+                composed: true,
+              }),
+            );
+          }}
+        >
+          Prefer TMDB · keep Kaleidescape covers and RT scores
+        </button>
+        <div class="grid settings-grid">
+          ${SOURCE_FIELDS.map(([field, label, providers]) => {
+            const key = "metadata_source_" + field;
+            return html`<label
+              >${label}<select
+                name=${key}
+                .value=${String(this.draft[key] ?? "auto")}
+                ?disabled=${this.disabled}
+                @change=${(event: Event) => this.change(key, (event.target as HTMLSelectElement).value)}
+              >
+                ${["auto", "original", ...providers].map((value) => html`<option value=${value}>${field === "artwork" && value === "kaleidescape" ? "Kaleidescape library cover" : SOURCE_LABELS[value]}</option>`)}
+              </select></label
+            >`;
+          })}
+        </div>
+        <p class="muted">
+          Kaleidescape covers use the edition artwork already cached from your
+          player. TMDB covers download on the next metadata refresh when Sync
+          artwork is enabled. Landscape images currently come from TMDB.
+          Disabled scrapers make no requests; their existing cache can still be
+          used.
+        </p>
+      </details>
       <p class="muted">
         Successful scans enrich new or week-old metadata. Ambiguous matches are
         skipped. Provider errors stop the pass; no automatic HTTP retry. Refresh

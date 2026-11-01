@@ -71,6 +71,38 @@ class TitleReviewTest(unittest.IsolatedAsyncioTestCase):
             self.addCleanup(context.stop)
         return await self.manager.preview(self.admin, self.id, "tmdb")
 
+    async def test_explicit_review_apply_reenables_a_restored_source_only_group(self):
+        await self.setup_review()
+        target = await self.repo.async_library_edit(self.source, self.id)
+        await self.repo.async_library_reset(
+            self.source, self.id, self.admin.id, str(uuid4()), target["snapshot"]
+        )
+        self.assertNotIn(
+            self.id,
+            [
+                row["id"]
+                for row in await self.repo.async_enrichment("candidates", self.source)
+            ],
+        )
+        review = await self.manager.preview(self.admin, self.id, "tmdb")
+        await self.manager.apply(
+            self.admin,
+            str(uuid4()),
+            {"plan_id": review["plan_id"], "fields": ["actors"], "images": {}},
+        )
+        self.assertIn(
+            "Lead Example",
+            (await self.repo.async_library_versions(self.source, self.id))["items"][0][
+                "actors"
+            ],
+        )
+        self.assertTrue(
+            any(
+                row["source_group"] == "movie"
+                for row in await self.repo.async_enrichment("candidates", self.source)
+            )
+        )
+
     async def test_preview_is_read_only_and_apply_changes_only_selected_fields(self):
         review = await self.setup_review()
         versions = await self.repo.async_library_versions(self.source, self.id)

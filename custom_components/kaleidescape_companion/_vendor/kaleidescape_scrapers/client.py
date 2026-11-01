@@ -63,6 +63,14 @@ class Providers:
         fetch_artwork = getattr(adapter, "artwork", None)
         return await fetch_artwork(metadata) if fetch_artwork else None
 
+    async def poster(self, provider: str, metadata: Metadata) -> bytes | None:
+        """Optional portrait artwork from verified metadata, without URL input."""
+        adapter = self.adapters.get(provider)
+        if adapter is None:
+            raise ProviderError("unknown_provider")
+        fetch_poster = getattr(adapter, "poster", None)
+        return await fetch_poster(metadata) if fetch_poster else None
+
     async def images(self, provider: str, metadata: Metadata) -> list[dict]:
         """Optional bounded gallery; paths remain provider-owned, not arbitrary URLs."""
         adapter = self.adapters.get(provider)

@@ -27,6 +27,48 @@ class GroupedLibraryTest(unittest.IsolatedAsyncioTestCase):
     page = library_tests.LibraryStorageTest.page
     assert_error = library_tests.LibraryStorageTest.assert_error
 
+    async def test_versions_sort_quality_then_runtime_with_stable_pagination(self):
+        variants = [
+            ("sd", "SD", 10000),
+            ("hd", "HD", 9000),
+            ("4k-short", "4K Dolby Vision", 6000),
+            ("4k-long", "4K HDR10", 7000),
+            ("cinema", "4K Cinematic Dolby Vision", 5000),
+            ("unknown", "Unknown", None),
+        ]
+        await self.repository.async_library_catalog(
+            ORIGIN,
+            [
+                {
+                    **ROWS[0],
+                    "source_handle": handle,
+                    "source_group": "one-movie",
+                    "edition": edition,
+                    "formats": [edition],
+                    "duration_seconds": duration,
+                }
+                for handle, edition, duration in variants
+            ],
+        )
+        page = await self.repository.async_library_versions(
+            SOURCE, title_id(SOURCE, "sd")
+        )
+        self.assertEqual(
+            [row["id"] for row in page["items"]],
+            [
+                title_id(SOURCE, handle)
+                for handle in ("cinema", "4k-long", "4k-short", "hd", "sd", "unknown")
+            ],
+        )
+        self.assertEqual(
+            (
+                await self.repository.async_library_versions(
+                    SOURCE, title_id(SOURCE, "4k-short"), 0, page["revision"]
+                )
+            )["items"],
+            page["items"],
+        )
+
     async def test_seeded_random_sort_is_stable_across_pages_and_reshuffles(self):
         rows = [
             {

@@ -1,10 +1,16 @@
 /** Actor-scoped UI setters save immediately; no browsing data goes into URLs. */
+import { displayProfile } from "../core/display-profile";
 import type { JournalClient, Scope } from "../core/api";
 
 export class PreferenceStore {
   values: Record<string, unknown> = {};
   private revision = 0;
+  readonly profile = displayProfile();
   private active = true;
+  private inflight = 0;
+  get unsettled() {
+    return this.inflight > 0 || Object.keys(this.failed).length > 0;
+  }
   private sequence = 0;
   private versions = new Map<string, number>();
   private failed: Record<string, unknown> = {};
@@ -20,6 +26,7 @@ export class PreferenceStore {
       this.scope,
       this.shared,
       this.area,
+      this.profile,
     );
     if (this.active) {
       this.values = structuredClone(data.values);
@@ -44,11 +51,13 @@ export class PreferenceStore {
           this.revision,
           patch,
           this.area,
+          this.profile,
         ),
       );
     } catch (error) {
       operation = Promise.reject(error);
     }
+    this.inflight++;
     void operation
       .then((result) => {
         if (!this.active) return;
@@ -60,6 +69,9 @@ export class PreferenceStore {
         for (const [key, value] of Object.entries(patch))
           if (this.versions.get(key) === sequence) this.failed[key] = value;
         if (Object.keys(this.failed).length) this.error(error);
+      })
+      .finally(() => {
+        this.inflight--;
       });
   }
   retry() {

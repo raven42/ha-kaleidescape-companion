@@ -44,6 +44,41 @@ order IDs are sent. Store access is public, with no login/cookies. TMDB
 credentials stay in HA's native private entry configuration and can be included
 in a full HA backup; secure those backups accordingly.
 
+## Preferred metadata sources
+
+**Settings → Scrapers → Preferred metadata sources** provides shared defaults
+for cast, directors, writers, producers, studios, synopsis, genres, distributor,
+each supported rating, cover art and landscape images. Save settings to apply.
+The **Prefer TMDB · keep Kaleidescape covers and RT scores** preset selects TMDB
+for descriptive fields and landscapes, retaining the player cover and store RT
+scores. Individual dropdowns can then be adjusted independently. These are
+backend settings, not personal browsing preferences, and belong to the Rules
+category in settings transfer.
+
+- **Automatic** retains the existing merged-credit behavior and fills missing
+  descriptive facts from available cached providers.
+- **Original library data** uses only the scanned field, without provider
+  fallback. Choosing it for landscapes hides the provider image.
+- A named provider uses its populated value first, then another cached provider,
+  then scanned data. Explicit source selection replaces merged credit lists;
+  missing facts still fall back. Per-title manual/reviewed choices take priority
+  over these defaults, including image choices.
+
+Selection never enables a scraper or changes source identities. Switching
+between already cached values updates Library details, search and facets without
+a new scrape. Provider caches remain available after disabling future requests.
+Changing preferences invalidates old Library pages so filters are not combined
+across different projections.
+
+**Kaleidescape library cover** means the original edition-specific image cached
+from the player; the public store adapter has no image API. **TMDB** covers use
+a separate cached `w500` poster. To populate them, enable TMDB and Sync artwork,
+select TMDB for Cover artwork, save, then choose **Refresh metadata**. Normal
+seven-day provider caching still applies. Original covers are retained so the
+choice can be reversed. Landscapes currently come from TMDB and use `w780`.
+Selecting Original library data for landscapes also skips new background
+landscape downloads.
+
 ## Review a single title
 
 Administrators can open a Library title and choose **Scrape title**. The popup
@@ -108,24 +143,35 @@ artwork endpoint, never the remote image URL.
 
 Backdrops share the configured artwork budget with edition covers, so a large
 collection may need a larger cache. No new table or migration is needed:
-`enrichment.tmdb.backdrop_key` links the existing content-addressed cache index
-to the movie group. Eviction, missing-file reconciliation and administrator
-artwork deletion clear those references. Later scans preserve the enrichment
-cache; metadata refreshes retain a prior backdrop until a replacement succeeds.
-New formats can inherit the same group backdrop. Edition covers are preserved.
-Backdrops appear in compact Library details; without one, a small poster is
-used. Enable both options and use **Refresh metadata** to populate existing
-movies immediately; otherwise the normal seven-day metadata refresh applies.
+`enrichment.tmdb.backdrop_key` (or `poster_key` for a preferred TMDB cover)
+links the existing content-addressed cache index to the movie group. Eviction,
+missing-file reconciliation and administrator artwork deletion clear those
+references. Later scans preserve the enrichment cache; metadata refreshes retain
+a prior backdrop until a replacement succeeds. New formats can inherit the same
+group backdrop. Edition covers are preserved. Backdrops span Library details
+with a dark fade. Desktop also keeps its poster; mobile uses only the backdrop.
+Without one, the small-poster layout remains. Enable both options and use
+**Refresh metadata** to populate existing movies immediately; otherwise the
+normal seven-day metadata refresh applies.
 
-Details keep the first eight cast names visible; **More credits** reveals the
-full cast and additional credits. **Ratings and metadata sources** expands the
-source-specific scores and attribution. Details show expanded cast, directors,
-writers, producers and studios, plus source-labelled review scores. People
-search and actor/director facets include enriched credits. A
-distributor/licensor is labelled separately from a studio. Rotten Tomatoes
-critic/audience percentages from the store and TMDB's audience rating out of ten
-remain separate. Metadata credits include the approved, locally bundled TMDB
-logo and its required attribution for both account roles.
+Details initially keep the first eight cast names visible (configurable per
+display profile); **More credits** reveals the full cast and additional credits.
+**Ratings and metadata sources** expands the source-specific scores and
+attribution. Details show expanded cast, directors, writers, producers and
+studios, plus source-labelled review scores. People search and actor/director
+facets include enriched credits. A distributor/licensor is labelled separately
+from a studio. Rotten Tomatoes critic/audience percentages from the store and
+TMDB's audience rating out of ten remain separate. Metadata credits include the
+approved, locally bundled TMDB logo and its required attribution for both
+account roles.
+
+The compact score row shares the Play/Collection/Edit controls above version
+details. TMDB votes display as a circular percentage (with the original /10
+score in the accessible label). RT uses its locally bundled standard tomato and
+popcorn icons beside percentages, following the
+[official guide](https://www.rottentomatoes.com/about).
+Certification/verification is not inferred from score alone. Missing scores stay
+hidden; full provider attribution and scores remain expandable.
 
 The cache is read-only in Database administration. It is retained by private
 SQLite snapshots/HA backups; portable JSON imports/exports keep their existing
@@ -145,3 +191,22 @@ Operator testing remains: add a TMDB credential, enable one provider at a time,
 save settings, run a small metadata pass and inspect representative matches,
 credits, scores, throttling and failure status. Browser layout and firmware
 control testing are separate from these automated tests.
+
+## Library footer progress
+
+The administrator's single sticky Library footer shows compact **Scrapers**
+status: running/idle/off/error, processed groups during a pass, and distinct
+available movie groups with cached provider/reviewed scraper data. Detailed
+active/queued counts, provider updates and skips remain in Settings. A failed
+pass directs the operator to logs. A group scraped by both providers counts once
+in the cached total; provider updates/skips can exceed the number of titles.
+Cached counts survive restart; pass counters are in memory. A title preview
+counts as active work but only contributes to the cached total after Apply.
+Disabled scrapers retain the cached total. Regular-user responses omit all
+scraper status/count details.
+
+Active work polls every five seconds; idle Library status polls every thirty
+seconds. Reads do not start scraping. Restoring a movie's original metadata
+removes its cached contribution and pauses background enrichment for that group;
+an explicit title scrape and Apply reenables it. See the
+[administrator editor](library.md#movie-details-and-administrator-editing).

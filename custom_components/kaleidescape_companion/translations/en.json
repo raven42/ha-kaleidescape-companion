@@ -38,7 +38,20 @@
           "calendar_full_sync": "Full Sync (deletes unmatched events)",
           "calendar_full_sync_dedicated": "I assigned a separate dedicated calendar; unmatched events will be deleted",
           "calendar_full_sync_months": "Full Sync age window · months (1–12)",
-          "calendar_full_sync_time": "Daily Full Sync time · HA local time (HH:MM)"
+          "calendar_full_sync_time": "Daily Full Sync time · HA local time (HH:MM)",
+          "metadata_source_actors": "Preferred source: Cast",
+          "metadata_source_directors": "Preferred source: Directors",
+          "metadata_source_writers": "Preferred source: Writers",
+          "metadata_source_producers": "Preferred source: Producers",
+          "metadata_source_studios": "Preferred source: Studios",
+          "metadata_source_synopsis": "Preferred source: Synopsis",
+          "metadata_source_genres": "Preferred source: Genres",
+          "metadata_source_distributor": "Preferred source: Distributor",
+          "metadata_source_critic_score": "Preferred source: Rotten Tomatoes critics",
+          "metadata_source_audience_score": "Preferred source: Rotten Tomatoes audience",
+          "metadata_source_audience_rating": "Preferred source: TMDB viewer rating",
+          "metadata_source_artwork": "Preferred source: Cover artwork",
+          "metadata_source_backdrop": "Preferred source: Landscape image"
         },
         "data_description": {
           "minimum_runtime_minutes": "Ignore shorter playback, such as trailers. Default: 10 minutes. Wait for a known runtime unless disabled. This is separate from watched time required for credits completion.",
@@ -117,7 +130,20 @@
           "calendar_full_sync": "Full Sync (deletes unmatched events)",
           "calendar_full_sync_dedicated": "I assigned a separate dedicated calendar; unmatched events will be deleted",
           "calendar_full_sync_months": "Full Sync age window · months (1–12)",
-          "calendar_full_sync_time": "Daily Full Sync time · HA local time (HH:MM)"
+          "calendar_full_sync_time": "Daily Full Sync time · HA local time (HH:MM)",
+          "metadata_source_actors": "Preferred source: Cast",
+          "metadata_source_directors": "Preferred source: Directors",
+          "metadata_source_writers": "Preferred source: Writers",
+          "metadata_source_producers": "Preferred source: Producers",
+          "metadata_source_studios": "Preferred source: Studios",
+          "metadata_source_synopsis": "Preferred source: Synopsis",
+          "metadata_source_genres": "Preferred source: Genres",
+          "metadata_source_distributor": "Preferred source: Distributor",
+          "metadata_source_critic_score": "Preferred source: Rotten Tomatoes critics",
+          "metadata_source_audience_score": "Preferred source: Rotten Tomatoes audience",
+          "metadata_source_audience_rating": "Preferred source: TMDB viewer rating",
+          "metadata_source_artwork": "Preferred source: Cover artwork",
+          "metadata_source_backdrop": "Preferred source: Landscape image"
         },
         "data_description": {
           "minimum_runtime_minutes": "Ignore shorter playback, such as trailers. Default: 10 minutes. Wait for a known runtime unless disabled. This is separate from watched time required for credits completion.",

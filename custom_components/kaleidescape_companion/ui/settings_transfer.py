@@ -5,6 +5,7 @@ import json
 from ..calendar.config import target
 from ..core.models import invalid
 from ..core.settings import entity_ids
+from ..enrichment.selection import DEFAULTS as SOURCE_DEFAULTS
 
 CATEGORIES = {
     # Positive list: new native options never become exportable automatically.
@@ -25,6 +26,7 @@ CATEGORIES = {
         "metadata_store_enabled",
         "metadata_tmdb_enabled",
         "metadata_requests_per_second",
+        *SOURCE_DEFAULTS,
         "default_landing_page",
         "calendar_enabled",
         "calendar_full_sync",
@@ -41,7 +43,17 @@ CATEGORIES = {
         "calendar_entity",
     ],
     "templates": ["calendar_title", "calendar_description"],
-    "browsing": ["library", "journal", "database", "search"],
+    "browsing": [
+        *[
+            f"{area}:{profile}"
+            for area in ("library", "journal", "database", "search")
+            for profile in ("desktop", "tablet", "mobile")
+        ],
+        "library",
+        "journal",
+        "database",
+        "search",
+    ],
     "shared": ["hidden_collections"],
     "logging": ["level", "log_values"],
 }
@@ -69,8 +81,13 @@ async def transfer(hass, entry, repo, actor, operation, selected, data, request)
         }
         if "browsing" in selected:
             categories["browsing"] = {
-                area: (await repo.async_ui_preferences(actor, area=area))["values"]
-                for area in CATEGORIES["browsing"]
+                key: (
+                    await repo.async_ui_preferences(
+                        actor, area=key.split(":")[0], profile=key.split(":")[1]
+                    )
+                )["values"]
+                for key in CATEGORIES["browsing"]
+                if ":" in key
             }
         if "shared" in selected:
             categories["shared"] = (
@@ -94,9 +111,9 @@ async def transfer(hass, entry, repo, actor, operation, selected, data, request)
         or data["version"] != 1
         or not isinstance(data["categories"], dict)
         or set(data["categories"]) - CATEGORIES.keys()
-        or size > 65536
+        or size > 262144
     ):
-        raise invalid("Invalid settings file; expected version 1, at most 64 KiB")
+        raise invalid("Invalid settings file; expected version 1, at most 256 KiB")
     categories = {}
     for name in selected:
         values = data["categories"].get(name)
