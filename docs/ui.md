@@ -8,14 +8,24 @@ are untouched. Save native settings and sync Library details first. See
 [metadata repair](calendar.md#repair-existing-journal-metadata) for identity
 rules, retry behavior and limits.
 
-Both Journal roles use a single shared surface: toolbar/search/sort above a
-selectable entry list and readable details pane. On narrow screens the details
-stack beneath the list. Administrator Add/Edit opens a separate dialog with
-consistent header-close/footer-save actions, guarded dismissal and retry
-handling; Journal Delete has its own confirmation and retains stored history.
-Regular users see only the household-safe summary fields and have no
-edit/session controls. Administrator database size, recording/backup status and
-schema/revision appear in a compact footer instead of separate overview cards.
+Both Journal roles use a single shared surface: one sticky toolbar with search,
+sort, Refresh, Options and administrator Add viewing above a selectable entry
+list and readable details pane. On narrow screens the details stack beneath the
+list. Administrator Add/Edit opens a separate dialog with consistent
+header-close/footer-save actions, guarded dismissal and retry handling; Journal
+Delete has its own confirmation and retains stored history. Regular users see
+only the household-safe summary fields and have no edit/session controls.
+Administrator database size, recording/backup status and schema/revision appear
+in the same compact footer in Advanced mode. Basic mode shows only Total
+Viewings, the month count, and watched time split into all-time and month
+totals. List mode uses the current month in the Home Assistant time zone.
+Calendar mode uses the selected browser-local month, independently of
+search/status filters. Totals exclude deleted entries and attribute each viewing
+and its whole watched time to its completion date (start date for a partial
+viewing). All calendar loading, empty and retry/error messages live in the
+sticky Journal footer. Status filtering lives in Journal Options and applies
+immediately. Calendar navigation remembers its selected month as
+`companion_month=YYYY-MM` in the URL, including across reloads.
 
 Journal rows show the linked title, local calendar date and status on one
 compact line. Select a row for full times, watched/runtime values and other
@@ -328,15 +338,16 @@ remains a tombstone. Open playback records are protected. Targeted operations
 can run while recording/sync are enabled but reject stale revisions and
 snapshots rather than overwriting concurrent changes.
 
-**Options** persists rows per page (10/25/100/500), system-table visibility,
-selected table and per-table sort/order in the user's Database settings row. The
-three main tables (viewings, sessions and Library) show initially; the toggle
-exposes the full inspection allowlist. Collections, artwork and sources are
-system tables. The query balloon suggests trusted fields/operators. Enter
-searches; Tab accepts a completion. Plain text remains literal search;
-conditions include `purchased_on IS NULL`, `actors CONTAINS 'name'`, and
-`title LIKE 'Star%'`. Syntax feedback includes positions and does not execute
-SQL. See the [full Database contract and browser review](database.md).
+**Options** persists rows per page (default **Fit to screen**, or
+10/25/100/500), system-table visibility, selected table and per-table sort/order
+in the user's Database settings row. The three main tables (viewings, sessions
+and Library) show initially; the toggle exposes the full inspection allowlist.
+Collections, artwork and sources are system tables. The query balloon suggests
+trusted fields/operators. Enter searches; Tab accepts a completion. Plain text
+remains literal search; conditions include `purchased_on IS NULL`,
+`actors CONTAINS 'name'`, and `title LIKE 'Star%'`. Syntax feedback includes
+positions and does not execute SQL. See the
+[full Database contract and browser review](database.md).
 
 Merge Import and Export remain on the Database toolbar, with reviewed
 missing-data merges and guarded dialogs. Source files are never modified;

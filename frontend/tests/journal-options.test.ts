@@ -187,3 +187,14 @@ it("shares the saved mode in both directions when moving between views", async (
   expect(updates).toHaveLength(2);
   expect(updates.every((call) => call.area === "search")).toBe(true);
 });
+
+it("offers the status filter inside Options and notifies its host immediately", async () => {
+  const root = await mount(new FixtureTransport());
+  const change = vi.fn();
+  element.addEventListener("journal-status", change);
+  const field = root.querySelector<HTMLSelectElement>("[name=filter_status]")!;
+  expect(field.closest("dialog")).not.toBeNull();
+  field.value = "partial";
+  field.dispatchEvent(new Event("change"));
+  expect(change.mock.calls[0][0].detail).toBe("partial");
+});

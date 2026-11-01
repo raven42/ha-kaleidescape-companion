@@ -212,7 +212,25 @@ def library_info(db, source, excluded=""):
         (source,),
     ).fetchone()
     hidden = hidden_names(db, source, excluded)
+    statuses = dict(
+        db.execute(
+            f"""SELECT status,count(*) FROM (
+            SELECT CASE min(CASE ({STATUS_SQL})
+                WHEN 'in_progress' THEN 0 WHEN 'watched' THEN 1
+                WHEN 'unknown' THEN 2 ELSE 3 END)
+                WHEN 0 THEN 'in_progress' WHEN 1 THEN 'watched'
+                WHEN 2 THEN 'unknown' ELSE 'unwatched' END status
+            FROM library t JOIN library_sources s ON s.id=t.source_id
+            WHERE t.source_id=? AND t.available=1 GROUP BY t.source_group)
+            GROUP BY status""",
+            (source,),
+        )
+    )
     return {
+        "status_counts": {
+            key: statuses.get(key, 0)
+            for key in ("unwatched", "watched", "in_progress", "unknown")
+        },
         "preferences_key": hashlib.sha256(
             json.dumps(hidden, ensure_ascii=False).encode()
         ).hexdigest(),

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../src/ui/panel";
+import type { JournalOptions } from "../src/ui/journal-options";
 import type { KaleidescapeReader } from "../src/ui/reader";
 import type { KaleidescapePanel } from "../src/ui/panel";
 import type { ApiMessage, Hass } from "../src/core/api";
@@ -78,9 +79,17 @@ it("filters titles and status and sends bounded page requests", async () => {
   )!;
   input.value = "Quiet";
   input.dispatchEvent(new Event("input"));
-  const select = reader.shadowRoot!.querySelector<HTMLSelectElement>("select")!;
+  const options = reader.shadowRoot!.querySelector<JournalOptions>(
+    "kaleidescape-journal-options",
+  )!;
+  const select = options.shadowRoot!.querySelector<HTMLSelectElement>(
+    "[name=filter_status]",
+  )!;
   select.value = "partial";
   select.dispatchEvent(new Event("change"));
+  await vi.waitFor(() =>
+    expect(transport.calls.at(-1)).toMatchObject({ status: "partial" }),
+  );
   reader
     .shadowRoot!.querySelector("form")!
     .dispatchEvent(new Event("submit", { cancelable: true }));
@@ -340,4 +349,18 @@ it("moves accepted Library playback to Now Playing for the same target", async (
       ),
     ).toBe(true),
   );
+});
+
+it("shows one compact basic footer without database health information", async () => {
+  const root = reader.shadowRoot!;
+  expect(root.querySelectorAll("footer")).toHaveLength(1);
+  const text = root.querySelector("footer")!.textContent!;
+  expect(text).toContain("Total Viewings");
+  expect(text).toContain("This Month");
+  expect(text.replace(/\s+/g, " ")).toContain("Watched Time: Total");
+  expect(text).not.toMatch(/Revision|Schema|Recording|Storage ready|database/);
+  expect(
+    root.querySelector(".journal-filters kaleidescape-journal-options"),
+  ).not.toBeNull();
+  expect(root.querySelector("[name=filter_status]")).toBeNull();
 });

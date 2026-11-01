@@ -30,6 +30,9 @@ export interface JournalInfo extends Scope {
   schema_version?: number;
   revision: number;
   viewing_count: number;
+  watched_seconds?: number;
+  month_viewing_count?: number;
+  month_watched_seconds?: number;
   database_bytes?: number;
   database_limit_bytes?: number;
   backup_in_progress?: boolean;
@@ -452,6 +455,7 @@ export interface LibraryVersionPage {
   revision: number;
 }
 export interface LibraryInfo {
+  status_counts?: Record<string, number>;
   metadata?: MetadataStatus;
   collection_add_enabled?: boolean;
   pending_adds?: {
@@ -994,7 +998,11 @@ export class JournalClient {
     status = "",
     fuzzy = false,
     titleId?: string,
-  ): Promise<{ items: CalendarViewing[]; revision: number }> {
+  ): Promise<{
+    items: CalendarViewing[];
+    revision: number;
+    summary: { viewing_count: number; watched_seconds: number };
+  }> {
     return this.call({
       type: `${DOMAIN}/journal/calendar`,
       ...scopeFields(scope),

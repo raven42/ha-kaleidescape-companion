@@ -137,7 +137,12 @@ it("recomputes complete rows for cover-size and page-size changes, capped at 100
   );
   await flush();
   expect(root().querySelectorAll(".cover-tile")).toHaveLength(988);
-  expect(root().textContent).toContain("13 covers per row");
+  expect(root().querySelector(".cover-grid")?.getAttribute("style")).toContain(
+    "13",
+  );
+  expect(root().querySelector(".library-footer")?.textContent).not.toContain(
+    "covers per row",
+  );
   root()
     .querySelector<HTMLInputElement>(
       'input[name="library_view"][value="list"]',

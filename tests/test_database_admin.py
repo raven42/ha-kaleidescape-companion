@@ -181,6 +181,20 @@ class DatabaseStorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.page())["total"], 1)
         self.assertEqual((await self.page("database_audit"))["total"], 0)
 
+    async def test_fit_page_accepts_bounded_dynamic_sizes(self):
+        await self.seed()
+        for limit in (1, 7, 499, 500):
+            page = await self.page("library", limit=limit)
+            self.assertEqual(page["limit"], limit)
+            self.assertLessEqual(len(page["items"]), limit)
+        for limit in (0, 501, True, "fit"):
+            with self.assert_error("invalid_request"):
+                await self.page(limit=limit)
+        value = await self.repository.async_ui_preferences(
+            "fit-reader", area="database"
+        )
+        self.assertEqual(value["values"]["limit"], "fit")
+
     async def test_personal_database_preferences_and_settings_deletion_revision(self):
         await self.repository.async_ui_preferences_update(
             "a",
@@ -200,7 +214,7 @@ class DatabaseStorageTest(unittest.IsolatedAsyncioTestCase):
             (await self.repository.async_ui_preferences("b", area="database"))[
                 "values"
             ]["limit"],
-            25,
+            "fit",
         )
         self.assertEqual((await self.repository.async_info())["revision"], 0)
         page = await self.page("settings")
@@ -210,7 +224,7 @@ class DatabaseStorageTest(unittest.IsolatedAsyncioTestCase):
             (await self.repository.async_ui_preferences("a", area="database"))[
                 "values"
             ]["limit"],
-            25,
+            "fit",
         )
 
     async def test_search_matches_partial_people_in_the_current_source(

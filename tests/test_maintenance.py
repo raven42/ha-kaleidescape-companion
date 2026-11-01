@@ -271,7 +271,7 @@ class MaintenanceStorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(literal["total"], 1)
         self.assertEqual(literal["items"][0]["title"], "Literal 100%_ marker")
         for arguments in (
-            {"limit": 26},
+            {"limit": 501},
             {"limit": True},
             {"limit": "500"},
             {"limit": None},

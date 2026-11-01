@@ -3,6 +3,9 @@ import { responsiveViewport } from "./viewport";
 import "./viewing-library";
 /** Admin journal management, shared by the HA panel and isolated Vite preview. */
 import { counted } from "../core/text";
+import type { JournalCalendar } from "./journal-calendar";
+import type { CalendarStatus } from "./journal-view";
+import { calendarNotice, journalTotals } from "./journal-view";
 import { LitElement, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
 import { ApiError, JournalClient, errorCode, errorMessage } from "../core/api";
@@ -137,6 +140,7 @@ export class KaleidescapePanel extends LitElement {
   private journalView: "list" | "calendar" = "list";
   private calendarSize = 180;
   private calendarFit = false;
+  private calendarStatus?: CalendarStatus;
   private journalMovie?: { id: string; title: string };
   private libraryTitleId?: string;
   private libraryCriterion?: LibraryCriterion;
@@ -319,6 +323,7 @@ export class KaleidescapePanel extends LitElement {
     this.journalView = "list";
     this.calendarSize = 180;
     this.calendarFit = false;
+    this.calendarStatus = undefined;
     this.journalMovie = undefined;
     this.libraryTitleId = undefined;
     this.libraryCriterion = undefined;
@@ -1008,38 +1013,6 @@ export class KaleidescapePanel extends LitElement {
         : nothing;
     return html`<section class="card journal" aria-label="Journal">
         <div class="entries-header">
-          <div class="journal-toolbar">
-            <button
-              class="primary"
-              ?disabled=${blocked || !this.journalReady}
-              @click=${this.newRecord}
-            >
-              ＋ Add viewing
-            </button>
-            <button ?disabled=${blocked} @click=${() => this.refresh()}>
-              Refresh
-            </button>
-            <kaleidescape-journal-options
-              .client=${this.api}
-              .scope=${this.info}
-              .disabled=${blocked}
-              @access-denied=${() => this.fail(new ApiError("unauthorized"))}
-              @journal-options=${(event: CustomEvent<JournalOptionsValue>) => {
-                this.journalReady = true;
-                this.journalView = event.detail.view;
-                this.calendarSize = event.detail.calendar_size;
-                this.calendarFit = event.detail.calendar_fit;
-                const changed = this.fuzzySearch !== event.detail.fuzzy_search;
-                this.fuzzySearch = event.detail.fuzzy_search;
-                if (changed) {
-                  this.history = [];
-                  this.page = 1;
-                  void this.loadList();
-                }
-                this.requestUpdate();
-              }}
-            ></kaleidescape-journal-options>
-          </div>
           ${this.journalMovie ? html`<p class="journal-movie-filter">Viewings for ${this.journalMovie.title} <button ?disabled=${blocked} @click=${() => this.switchPage("journal")}>Show all viewings</button></p>` : nothing}
           <form
             class="filters journal-filters"
@@ -1064,22 +1037,6 @@ export class KaleidescapePanel extends LitElement {
                 }}
             /></label>
             <div class="journal-filter-tools">
-              <label
-                >Status<select
-                  name="filter_status"
-                  .value=${this.filterStatus}
-                  ?disabled=${blocked}
-                  @change=${(event: Event) => {
-                    this.filterStatus = (
-                      event.target as HTMLSelectElement
-                    ).value;
-                  }}
-                >
-                  <option value="">All</option>
-                  <option value="partial">Partial</option>
-                  <option value="completed">Completed</option>
-                </select></label
-              >
               <label ?hidden=${this.journalView === "calendar"}
                 >Sort by<select
                   name="journal_sort"
@@ -1112,12 +1069,66 @@ export class KaleidescapePanel extends LitElement {
                 ${this.descending ? "Descending ↓" : "Ascending ↑"}
               </button>
             </div>
-            <button ?disabled=${blocked}>Search</button>
+            <button class="journal-search-button" ?disabled=${blocked}>
+              Search
+            </button>
+            <div class="journal-toolbar">
+              <button
+                type="button"
+                class="primary"
+                ?disabled=${blocked || !this.journalReady}
+                @click=${this.newRecord}
+              >
+                ＋ Add viewing
+              </button>
+              <button
+                type="button"
+                ?disabled=${blocked}
+                @click=${() => this.refresh()}
+              >
+                Refresh
+              </button>
+              <kaleidescape-journal-options
+                .status=${this.status}
+                @journal-status=${(event: CustomEvent<string>) => {
+                  this.status = this.filterStatus = event.detail;
+                  this.page = 1;
+                  this.history = [];
+                  void this.loadList();
+                  this.requestUpdate();
+                }}
+                .client=${this.api}
+                .scope=${this.info}
+                .disabled=${blocked}
+                @access-denied=${() => this.fail(new ApiError("unauthorized"))}
+                @journal-options=${(
+                  event: CustomEvent<JournalOptionsValue>,
+                ) => {
+                  this.journalReady = true;
+                  this.journalView = event.detail.view;
+                  this.calendarSize = event.detail.calendar_size;
+                  this.calendarFit = event.detail.calendar_fit;
+                  const changed =
+                    this.fuzzySearch !== event.detail.fuzzy_search;
+                  this.fuzzySearch = event.detail.fuzzy_search;
+                  if (changed) {
+                    this.history = [];
+                    this.page = 1;
+                    void this.loadList();
+                  }
+                  this.requestUpdate();
+                }}
+              ></kaleidescape-journal-options>
+            </div>
           </form>
         </div>
         ${
           this.journalView === "calendar"
             ? html`<kaleidescape-journal-calendar
+                @calendar-status=${(event: CustomEvent<CalendarStatus>) => {
+                  this.calendarStatus = event.detail;
+                  this.requestUpdate();
+                }}
                 .client=${this.api ?? undefined}
                 .scope=${this.info ?? undefined}
                 .query=${this.query}
@@ -1205,15 +1216,26 @@ export class KaleidescapePanel extends LitElement {
         }
         <footer class="entries-footer journal-status">
           <span>
-            ${counted(this.info?.viewing_count ?? 0, "entry", "entries")} ·
-            ${this.bytes(this.info?.database_bytes ?? 0)} /
+            ${journalTotals(this.info, this.journalView === "calendar" ? this.calendarStatus : undefined)}
+            · ${this.bytes(this.info?.database_bytes ?? 0)} /
             ${this.bytes(this.info?.database_limit_bytes ?? 0)} database ·
             Recording:
             ${this.info?.tracking_enabled ? "Enabled" : "Manual only"} ·
             ${this.info?.backup_in_progress ? "Backing up" : "Storage ready"} ·
             Schema ${this.info?.schema_version} · Revision
-            ${this.info?.revision}
-          </span>
+            ${this.info?.revision} </span
+          >${
+            this.journalView === "calendar"
+              ? calendarNotice(this.calendarStatus, () => {
+                  void this.renderRoot
+                    .querySelector<JournalCalendar>(
+                      "kaleidescape-journal-calendar",
+                    )
+                    ?.refresh();
+                })
+              : nothing
+          }
+
           <div class="pagination" ?hidden=${this.journalView === "calendar"}>
             <small>Page ${this.page} · Up to 25 entries</small>
             <div class="actions">

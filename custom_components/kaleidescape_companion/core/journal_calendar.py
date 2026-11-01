@@ -20,6 +20,26 @@ MOVIE_FIELDS = (
 )
 
 
+def month_totals(db, start, end):
+    """Count once by completion (partial: start); filters never alter totals.
+
+    Attribute the entire recorded watched time to that month, without prorating
+    overnight sessions. julianday tolerates both stored timestamp precisions.
+    Callers validate/construct the bounded interval before entering this worker.
+    """
+    date = (
+        "CASE WHEN status='completed' THEN coalesce(ended_at,started_at) "
+        "ELSE started_at END"
+    )
+    row = db.execute(
+        "SELECT count(*),coalesce(sum(watched_seconds),0) FROM viewings "
+        f"WHERE deleted_at IS NULL AND julianday({date})>=julianday(?) "
+        f"AND julianday({date})<julianday(?)",
+        (start, end),
+    ).fetchone()
+    return {"viewing_count": row[0], "watched_seconds": row[1]}
+
+
 def month(
     db,
     start,
@@ -78,7 +98,9 @@ def month(
             "calendar_limit",
             "More than 1000 viewings in this month; narrow the search or status filter",
         )
+    totals = month_totals(db, start, end)
     return {
+        "summary": totals,
         "items": [
             {
                 **public_viewing(row),

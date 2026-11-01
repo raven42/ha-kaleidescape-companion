@@ -6,6 +6,16 @@ export const databaseStyles = css`
     overflow: visible;
     margin-top: 24px;
   }
+  .database .entry-list li {
+    height: 64px;
+    box-sizing: border-box;
+    padding: 8px 12px;
+  }
+  .database .entry-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .database-toolbar {
     display: flex;
     flex-wrap: wrap;

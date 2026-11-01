@@ -603,6 +603,7 @@ export class KaleidescapeLibrary extends LitElement {
         : {
             title_count: info.title_count,
             group_count: info.group_count,
+            status_counts: info.status_counts,
             collection_count: info.collection_count,
             name_count: info.name_count,
             revision: info.revision,
@@ -2009,12 +2010,14 @@ export class KaleidescapeLibrary extends LitElement {
       </section>
       <footer class="library-footer" aria-label="Library status and navigation">
         <div class="footer-summary" role="status">
-          <span
-            >${counted(this.page?.total ?? 0, "matching title")} ·
-            ${this.entriesPerPage === "all" ? "All" : this.pageSize} per
-            page${this.mode === "covers" ? ` · ${counted(this.coverColumns, "cover")} per row` : ""}</span
-          >
-          ${this.info ? html`<span>${counted(this.info.collection_count, "collection")}${admin && this.info.artwork_enabled ? ` · Artwork ${((this.info.artwork_bytes ?? 0) / 1048576).toFixed(1)} MiB` : ""}${admin && this.display.show_library_cost ? ` · Library cost ${this.purchaseAmount("library_cost")}` : ""} · Synced ${this.date(this.info.last_synced_at)}</span>` : nothing}
+          <span>
+            ${String(this.applied.query ?? "").trim() || activeFilters ? html`<strong class="match-count">Matches ${this.page?.total ?? 0}</strong> · ` : nothing}
+            Total ${this.info?.group_count ?? 0} · Unwatched
+            ${this.info?.status_counts?.unwatched ?? 0} · Watched
+            ${this.info?.status_counts?.watched ?? 0} · Paused
+            ${this.info?.status_counts?.in_progress ?? 0}
+          </span>
+          ${admin && this.info ? html`<span>${counted(this.info.collection_count, "collection")}${this.info.artwork_enabled ? ` · Artwork ${((this.info.artwork_bytes ?? 0) / 1048576).toFixed(1)} MiB` : ""}${this.display.show_library_cost ? ` · Library cost ${this.purchaseAmount("library_cost")}` : ""} · Synced ${this.date(this.info.last_synced_at)}</span>` : nothing}
           ${admin && this.info?.metadata ? html`<span class="scraper-status">${this.scraperSummary()}</span>` : nothing}
         </div>
         <div class="footer-actions actions">

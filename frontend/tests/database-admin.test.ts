@@ -59,6 +59,7 @@ beforeEach(() => {
 afterEach(() => {
   element?.remove();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 it("keeps the database pager outside the list and provides separate keyboard scroll regions", async () => {
@@ -398,5 +399,135 @@ it("follows composite references and selects the referenced row without acceptin
   });
   expect(root().querySelector(".database-detail pre")?.textContent).toContain(
     "Director's picks",
+  );
+});
+
+it("fits rows to the list viewport and keeps the selected entry on its new page after resize", async () => {
+  transport.databasePreferences.limit = "fit";
+  transport.records = Array.from({ length: 40 }, (_, index) =>
+    record({
+      id: String(index).padStart(3, "0"),
+      title: index === 0 ? "The Lantern Voyage" : `Viewing ${index}`,
+    }),
+  );
+  let height = 328;
+  vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockImplementation(
+    function (this: HTMLElement) {
+      return this.classList.contains("entry-list") ? height : 0;
+    },
+  );
+  const rect = HTMLElement.prototype.getBoundingClientRect;
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+    function (this: HTMLElement) {
+      return this.tagName === "LI"
+        ? ({ height: 64 } as DOMRect)
+        : rect.call(this);
+    },
+  );
+  await mount();
+  await vi.waitFor(() =>
+    expect(root().querySelectorAll(".entry-list li")).toHaveLength(5),
+  );
+  button("Next").click();
+  await vi.waitFor(() =>
+    expect(root().querySelector(".entry-name")?.textContent).toContain(
+      "Viewing 5",
+    ),
+  );
+  const selected = root().querySelectorAll<HTMLButtonElement>(".entry-name")[3];
+  const title = selected.textContent!.trim();
+  selected.click();
+  await flush();
+  height = 200; // Three rows; ordinal eight now belongs to offset six.
+  window.dispatchEvent(new Event("resize"));
+  await vi.waitFor(() =>
+    expect(root().querySelectorAll(".entry-list li")).toHaveLength(3),
+  );
+  expect(root().querySelector("li.selected")?.textContent).toContain(title);
+  expect(root().querySelector(".entries-detail pre")?.textContent).toContain(
+    title,
+  );
+  expect(
+    transport.calls
+      .filter((call) => call.type.endsWith("database/inspect"))
+      .at(-1),
+  ).toMatchObject({ offset: 6, limit: 3 });
+  height = 520;
+  window.dispatchEvent(new Event("resize"));
+  await vi.waitFor(() =>
+    expect(root().querySelectorAll(".entry-list li")).toHaveLength(8),
+  );
+  expect(root().querySelector("li.selected")?.textContent).toContain(title);
+  expect(transport.databasePreferences.limit).toBe("fit");
+  const nextWidth = window.innerWidth > 600 ? 390 : 1280;
+  vi.stubGlobal("innerWidth", nextWidth);
+  window.dispatchEvent(new Event("resize"));
+  await vi.waitFor(() =>
+    expect(
+      transport.calls.some(
+        (call) =>
+          call.type.endsWith("ui/preferences/get") &&
+          call.area === "database" &&
+          call.profile === (nextWidth === 390 ? "mobile" : "desktop"),
+      ),
+    ).toBe(true),
+  );
+  await vi.waitFor(() =>
+    expect(root().querySelector("li.selected")?.textContent).toContain(title),
+  );
+  expect(root().querySelector(".entries-detail pre")?.textContent).toContain(
+    title,
+  );
+});
+
+it("recalculates Fit after window height changes and a reload at the smaller size", async () => {
+  vi.stubGlobal("innerHeight", 1000);
+  vi.stubGlobal("visualViewport", undefined);
+  transport.databasePreferences.limit = "fit";
+  transport.records = Array.from({ length: 40 }, (_, i) =>
+    record({
+      id: String(i).padStart(3, "0"),
+      title: i ? `Viewing ${i}` : "The Lantern Voyage",
+    }),
+  );
+  vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockImplementation(
+    function (this: HTMLElement) {
+      if (!this.classList.contains("entry-list")) return 0;
+      const db = this.getRootNode() as ShadowRoot;
+      return Math.max(
+        0,
+        parseFloat(
+          (db.host as HTMLElement).style.getPropertyValue("--entries-height"),
+        ) - 80,
+      );
+    },
+  );
+  const original = HTMLElement.prototype.getBoundingClientRect;
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+    function (this: HTMLElement) {
+      if (this.tagName === "LI") return { height: 64 } as DOMRect;
+      if (this.classList.contains("entries-layout"))
+        return { top: 220, height: 600 } as DOMRect;
+      if (this.classList.contains("entries-header"))
+        return { height: 100 } as DOMRect;
+      if (this.classList.contains("entries-footer"))
+        return { height: 60 } as DOMRect;
+      return original.call(this);
+    },
+  );
+  await mount();
+  await vi.waitFor(() =>
+    expect(root().querySelectorAll(".entry-list li")).toHaveLength(9),
+  );
+  vi.stubGlobal("innerHeight", 650);
+  window.dispatchEvent(new Event("resize"));
+  await vi.waitFor(() =>
+    expect(root().querySelectorAll(".entry-list li")).toHaveLength(4),
+  );
+  expect(transport.databasePreferences.limit).toBe("fit");
+  element.remove();
+  await mount();
+  await vi.waitFor(() =>
+    expect(root().querySelectorAll(".entry-list li")).toHaveLength(4),
   );
 });

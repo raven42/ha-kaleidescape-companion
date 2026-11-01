@@ -168,6 +168,19 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
             END, "2026-12-01T06:00:00Z"
         )
         self.assertEqual(november["items"], [])
+        self.assertEqual(
+            october["summary"],
+            {"viewing_count": 1, "watched_seconds": row["watched_seconds"]},
+        )
+        self.assertEqual(
+            september["summary"], {"viewing_count": 0, "watched_seconds": 0}
+        )
+        self.assertEqual(
+            november["summary"], {"viewing_count": 0, "watched_seconds": 0}
+        )
+        filtered = await self.month(query="Nothing matches this title")
+        self.assertEqual(filtered["items"], [])
+        self.assertEqual(filtered["summary"], october["summary"])
 
         # A completed endpoint exactly on the upper bound belongs to next month.
         def boundary():

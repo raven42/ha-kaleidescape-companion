@@ -632,7 +632,7 @@ it("keeps same-name remakes separate in both views and opens only the selected w
   button("Refresh cached data").click();
   await flush();
   expect(root().querySelectorAll("tbody tr")).toHaveLength(2);
-  expect(text()).toContain("2 matching titles");
+  expect(text()).toContain("Total 2");
   expect(text()).toContain("3 individual versions");
   const titles = root().querySelectorAll<HTMLButtonElement>("tbody .link");
   titles[0].click();
@@ -860,7 +860,7 @@ it("offers persisted genre/year/format filters and hides the tablist for one ver
     format: ["HDR10"],
   });
   expect(root().querySelector(".library-footer")?.textContent).toContain(
-    "1 matching title",
+    "Matches 1",
   );
   title("Voyage to Europa").click();
   await flush();
@@ -987,4 +987,48 @@ it("hides conflict overlays and system-button options from standard users", asyn
   button("Options").click();
   await flush();
   expect(root().querySelector('[name="show_system_buttons"]')).toBeNull();
+});
+
+it("limits the Basic footer to global counts and shows a highlighted match count only for active criteria", async () => {
+  const client = element.client!;
+  vi.spyOn(client, "libraryInfo").mockResolvedValue({
+    title_count: 7,
+    group_count: 5,
+    collection_count: 3,
+    status_counts: { unwatched: 2, watched: 2, in_progress: 1 },
+    revision: 1,
+    last_synced_at: "2026-10-01T00:00:00Z",
+    collections_synced_at: null,
+  });
+  element.scope = {
+    ...info,
+    library_enabled: true,
+    permissions: { read: true, edit: false, export: false },
+  };
+  await flush();
+  await vi.waitFor(() =>
+    expect(root().querySelector("footer")?.textContent).toContain("Total 5"),
+  );
+  const footer = () => root().querySelector("footer")!;
+  expect(footer().textContent).toMatch(
+    /Unwatched\s+2.*Watched\s+2.*Paused\s+1/s,
+  );
+  expect(footer().textContent).not.toMatch(
+    /Artwork|Synced|scraped|per page|covers per row/,
+  );
+  expect(footer().querySelector(".match-count")).toBeNull();
+  const search =
+    root().querySelector<HTMLInputElement>("[name=library_search]") ??
+    root().querySelector<HTMLInputElement>("input[type=search]")!;
+  search.value = "Voyage";
+  search.dispatchEvent(new Event("input"));
+  root()
+    .querySelector("form")!
+    .dispatchEvent(new Event("submit", { cancelable: true }));
+  await vi.waitFor(() =>
+    expect(footer().querySelector("strong.match-count")?.textContent).toContain(
+      "Matches",
+    ),
+  );
+  expect(footer().textContent).toContain("Total 5");
 });

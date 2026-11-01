@@ -1,6 +1,48 @@
 /** Shared presentation of the household-safe viewing fields. */
 import { css, html, nothing } from "lit";
-import type { ViewingSummary } from "../core/api";
+import type { JournalInfo, ViewingSummary } from "../core/api";
+
+export interface CalendarStatus {
+  month: string;
+  count?: number;
+  watchedSeconds?: number;
+  loading: boolean;
+  error: string;
+  empty: boolean;
+}
+function watchedTime(seconds = 0) {
+  const minutes = Math.floor(seconds / 60);
+  return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+}
+export function journalTotals(
+  info?: JournalInfo | null,
+  calendar?: CalendarStatus,
+) {
+  const count = calendar ? calendar.count : info?.month_viewing_count;
+  const seconds = calendar
+    ? calendar.watchedSeconds
+    : info?.month_watched_seconds;
+  return html`Total Viewings ${info?.viewing_count ?? 0} ·
+  ${calendar ? calendar.month : "This Month"} ${count ?? "—"} · Watched Time:
+  Total ${watchedTime(info?.watched_seconds)} ·
+  ${calendar ? "Selected Month" : "This Month"}
+  ${seconds === undefined && calendar ? "—" : watchedTime(seconds)}`;
+}
+export function calendarNotice(
+  state: CalendarStatus | undefined,
+  retry: () => void,
+) {
+  if (!state) return nothing;
+  return state.error
+    ? html`<span class="error" role="alert"
+        >${state.error} <button @click=${retry}>Retry month</button></span
+      >`
+    : state.loading
+      ? html`<span role="status">Loading month…</span>`
+      : state.empty
+        ? html`<span role="status">No viewings match this month</span>`
+        : nothing;
+}
 
 export function viewingListRow(
   row: ViewingSummary,
@@ -85,6 +127,15 @@ export const journalStyles = css`
   .journal-filters {
     padding: 12px 16px;
     border-block: 1px solid var(--line);
+    align-items: end;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .journal-filters .journal-toolbar {
+    display: contents;
+  }
+  .journal-filters kaleidescape-journal-options {
+    margin-left: auto;
   }
   .journal-filter-tools {
     display: contents;
@@ -174,17 +225,17 @@ export const journalStyles = css`
     }
     .journal-filters {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-columns: minmax(0, 1fr) auto auto;
       gap: 8px;
       padding: 8px 10px;
     }
     .journal-filters > label:first-child {
       min-width: 0;
-      grid-column: 1;
+      grid-column: 1 / 3;
       grid-row: 1;
     }
-    .journal-filters > button:last-child {
-      grid-column: 2;
+    .journal-filters > .journal-search-button {
+      grid-column: 3;
       grid-row: 1;
     }
     .journal-filter-tools {

@@ -36,11 +36,13 @@ export class JournalOptions extends LitElement {
     client: { attribute: false },
     scope: { attribute: false },
     disabled: { type: Boolean },
+    status: { type: String },
   };
   static styles = styles;
   client?: JournalClient;
   scope?: Scope;
   disabled = false;
+  status = "";
   private store?: PreferenceStore;
   private viewStore?: PreferenceStore;
   private view: "list" | "calendar" = "list";
@@ -186,6 +188,26 @@ export class JournalOptions extends LitElement {
           Changes save automatically for your HA user’s
           ${this.viewStore?.profile} layout.
         </p>
+        <label
+          >Status<select
+            name="filter_status"
+            .value=${this.status}
+            @change=${(event: Event) => {
+              this.status = (event.target as HTMLSelectElement).value;
+              this.dispatchEvent(
+                new CustomEvent("journal-status", {
+                  detail: this.status,
+                  bubbles: true,
+                  composed: true,
+                }),
+              );
+            }}
+          >
+            <option value="">All</option>
+            <option value="partial">Partial</option>
+            <option value="completed">Completed</option>
+          </select></label
+        >
         <label class="check"
           ><input
             name="journal_fuzzy_search"

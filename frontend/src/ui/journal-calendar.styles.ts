@@ -124,12 +124,6 @@ export const calendarStyles = css`
     white-space: nowrap;
     text-overflow: ellipsis;
   }
-  .month-status {
-    color: var(--muted);
-    padding: 12px 20px;
-    margin: 0;
-    font-size: 12px;
-  }
   .calendar-dialog {
     width: min(760px, calc(100% - 32px));
   }

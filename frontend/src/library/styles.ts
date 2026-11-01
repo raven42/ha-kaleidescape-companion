@@ -2,6 +2,10 @@
 import { css } from "lit";
 
 export const libraryStyles = css`
+  .match-count {
+    color: var(--primary-color, #03a9f4);
+    font-weight: 700;
+  }
   .library-page {
     margin-top: 24px;
   }

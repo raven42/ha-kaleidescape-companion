@@ -4,9 +4,10 @@
 
 Open **Journal → Options → Calendar view** to switch between the entry list and
 a monthly calendar. This choice saves immediately for your HA user. Previous and
-next arrows move one month; reopening starts at the current month. This view
-reads the local Journal and needs no HA calendar entity or publishing opt-in.
-Administrator and household readers share the same calendar.
+next arrows move one month; the selected `companion_month=YYYY-MM` stays in the
+URL across reloads and reopening. Invalid/missing months start at the current
+month. This view reads the local Journal and needs no HA calendar entity or
+publishing opt-in. Administrator and household readers share the same calendar.
 
 With Calendar view enabled, Options also offers **Calendar size** (60–320 px day
 rows, initially 180 px) and **Fit month to screen**. Dragging the slider updates
@@ -23,6 +24,14 @@ viewing has a poster; same-day posters overlap diagonally with about 15% of each
 rear cover exposed. Hover or keyboard focus brings that poster forward. Poster
 stacks fill the day vertically with 5 px top/bottom insets. The date sits above
 the artwork as a small readable overlay instead of reserving a separate row.
+
+The single sticky Journal footer shows all-time totals and the selected month's
+viewing count and watched time. Month totals ignore search/status filters and
+count each viewing once by completion date (partial: start date), assigning its
+whole watched time to that month rather than splitting it across days. A viewing
+spanning two months can have posters in both while contributing totals only
+once. Loading, no-matches and error/retry messages also live in that footer; the
+calendar has no separate status labels above or below the grid.
 
 Click a poster to open compact viewing/movie details: artwork, rating, cast,
 directors, genres, runtime, year, format/version badges, watched minutes and

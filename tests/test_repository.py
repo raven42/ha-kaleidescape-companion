@@ -8,9 +8,11 @@ import tempfile
 import threading
 import unittest
 from contextlib import closing
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 from uuid import uuid4
+from zoneinfo import ZoneInfo
 
 from custom_components.kaleidescape_companion.core import migrations
 from custom_components.kaleidescape_companion.core.models import JournalError
@@ -43,6 +45,37 @@ class RepositoryTest(unittest.IsolatedAsyncioTestCase):
     def assert_error(self, code):
         """Check public error codes without depending on prose."""
         return ErrorContext(self, code)
+
+    async def test_footer_totals_use_ha_month_boundaries_and_exclude_deleted(self):
+        for started, ended in (
+            ("2026-10-31T23:00:00Z", "2026-11-01T01:00:00Z"),
+            ("2026-11-01T06:00:00Z", "2026-11-01T07:00:00Z"),
+        ):
+            await self.repository.async_create(
+                request_id(),
+                viewing(
+                    started_at=started,
+                    ended_at=ended,
+                    watched_seconds=3600,
+                    status="completed",
+                ),
+            )
+        removed = await self.repository.async_create(
+            request_id(),
+            viewing(started_at="2026-11-02T08:00:00Z", watched_seconds=600),
+        )
+        await self.repository.async_delete(request_id(), removed["viewing"]["id"], 1)
+        with patch(
+            "custom_components.kaleidescape_companion.core.repository.datetime"
+        ) as clock:
+            clock.now.return_value = datetime(
+                2026, 11, 5, tzinfo=ZoneInfo("America/Chicago")
+            )
+            result = await self.repository.async_info(timezone="America/Chicago")
+        self.assertEqual(result["viewing_count"], 2)
+        self.assertEqual(result["month_viewing_count"], 1)
+        self.assertEqual(result["month_watched_seconds"], 3600)
+        self.assertEqual(result["watched_seconds"], 7200)
 
     async def test_persistence_and_retry_survive_restart(self):
         request = request_id()

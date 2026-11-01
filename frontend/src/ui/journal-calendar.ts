@@ -9,17 +9,29 @@ import type {
   ViewingSummary,
 } from "../core/api";
 import { errorCode, errorMessage } from "../core/api";
-import { counted } from "../core/text";
 import { CoverQueue } from "../library/cover";
 import { renderFormatBadges, renderRatingBadge } from "../library/badges";
 import { libraryStyles } from "../library/styles";
 import type { LibraryCriterion } from "../library/criteria";
 import { styles } from "./styles";
+import type { CalendarStatus } from "./journal-view";
 import { calendarStyles } from "./journal-calendar.styles";
 import { closeButton, dismissBackdrop } from "./dialog";
 
 export function dayKey(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+export function calendarMonth(
+  search = location.search,
+  now = new Date(),
+): Date {
+  const value = new URLSearchParams(search).get("companion_month") ?? "";
+  if (/^\d{4}-(0[1-9]|1[0-2])$/.test(value)) {
+    const [year, month] = value.split("-").map(Number);
+    if (year >= 100 && year <= 9998) return new Date(year, month - 1, 1);
+  }
+  return new Date(now.getFullYear(), now.getMonth(), 1);
 }
 
 export function monthBounds(month: Date) {
@@ -74,8 +86,9 @@ export class JournalCalendar extends LitElement {
   private fittedSize = 180;
   private resizeObserver?: ResizeObserver;
   private layoutFrame?: number;
-  private month = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  private month = calendarMonth();
   private items: CalendarViewing[] = [];
+  private totals?: { viewing_count: number; watched_seconds: number };
   private loading = false;
   private error = "";
   private generation = 0;
@@ -93,6 +106,7 @@ export class JournalCalendar extends LitElement {
     super.connectedCallback();
     window.addEventListener("resize", this.scheduleLayout);
     window.visualViewport?.addEventListener("resize", this.scheduleLayout);
+    this.rememberMonth();
     this.requestUpdate();
   }
   protected updated() {
@@ -127,10 +141,6 @@ export class JournalCalendar extends LitElement {
             height +
             (this.renderRoot.querySelector(selector)?.getBoundingClientRect()
               .height ?? 0),
-          0,
-        ) +
-        [...this.renderRoot.querySelectorAll(".month-status")].reduce(
-          (height, node) => height + node.getBoundingClientRect().height,
           0,
         ) +
         (this.nextElementSibling?.getBoundingClientRect().height ?? 0) +
@@ -211,8 +221,10 @@ export class JournalCalendar extends LitElement {
     const generation = ++this.generation;
     this.closeDetails();
     this.items = [];
+    this.totals = undefined;
     this.loading = true;
     this.error = "";
+    this.notifyStatus();
     this.requestUpdate();
     try {
       const [start, end] = monthBounds(this.month);
@@ -225,15 +237,44 @@ export class JournalCalendar extends LitElement {
         this.fuzzy,
         this.libraryTitleId,
       );
-      if (generation === this.generation) this.items = result.items;
+      if (generation === this.generation) {
+        this.items = result.items;
+        this.totals = result.summary;
+      }
     } catch (error) {
       if (generation === this.generation) this.fail(error);
     } finally {
       if (generation === this.generation) {
         this.loading = false;
+        this.notifyStatus();
         this.requestUpdate();
       }
     }
+  }
+  /** Footer status is owned by the enclosing Journal, not a second calendar bar. */
+  private notifyStatus() {
+    if (!this.isConnected) return;
+    const detail: CalendarStatus = {
+      month: this.month.toLocaleDateString(undefined, {
+        month: "long",
+        year: "numeric",
+      }),
+      count: this.totals?.viewing_count,
+      watchedSeconds: this.totals?.watched_seconds,
+      loading: this.loading,
+      error: this.error,
+      empty: !this.items.length,
+    };
+    this.dispatchEvent(
+      new CustomEvent("calendar-status", {
+        detail,
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+  refresh() {
+    return this.load();
   }
   private move(delta: number) {
     this.month = new Date(
@@ -241,7 +282,16 @@ export class JournalCalendar extends LitElement {
       this.month.getMonth() + delta,
       1,
     );
+    this.rememberMonth();
     this.requestUpdate();
+  }
+  private rememberMonth() {
+    const url = new URL(location.href);
+    url.searchParams.set(
+      "companion_month",
+      `${String(this.month.getFullYear()).padStart(4, "0")}-${String(this.month.getMonth() + 1).padStart(2, "0")}`,
+    );
+    history.replaceState(history.state, "", url);
   }
   private closeDetails() {
     this.detailRequest++;
@@ -460,8 +510,6 @@ export class JournalCalendar extends LitElement {
           →
         </button>
       </div>
-      ${this.error ? html`<p class="error" role="alert">${this.error} <button @click=${this.load}>Retry month</button></p>` : nothing}
-      ${this.loading ? html`<p class="month-status" role="status">Loading month…</p>` : nothing}
       <div class="calendar-scroll">
         <div
           class="month-grid"
@@ -516,10 +564,6 @@ export class JournalCalendar extends LitElement {
           })}
         </div>
       </div>
-      <p class="month-status">
-        ${counted(this.items.length, "viewing")} · Local start and completion
-        dates${!this.loading && !this.items.length && !this.error ? " · No viewings match this month" : ""}
-      </p>
       ${this.renderDetails()}`;
   }
 }

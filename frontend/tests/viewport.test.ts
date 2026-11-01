@@ -13,7 +13,7 @@ class ViewportFixture extends LitElement {
   render() {
     return this.entries
       ? html`<div class="entries-header">Search controls</div>
-          <div>Fictional entries</div>
+          <div class="entries-layout">Fictional entries</div>
           <div class="entries-footer">Pagination</div>`
       : nothing;
   }
@@ -89,7 +89,9 @@ afterEach(() => {
 it("fits split panes around wrapped sticky controls and tracks view changes", async () => {
   await mount();
   const observer = LayoutObserver.instances[0];
-  expect(observer.targets.size).toBe(2);
+  expect(
+    observer.targets.has(element.shadowRoot!.querySelector(".entries-header")!),
+  ).toBe(true);
   expect(value("--entries-height")).toBe("656px");
   // More toolbar lines take space from the content, not from reachable actions.
   heights.set(element.shadowRoot!.querySelector(".entries-header")!, 210);
@@ -102,10 +104,12 @@ it("fits split panes around wrapped sticky controls and tracks view changes", as
   element.entries = false;
   await element.updateComplete;
   frame();
-  expect(observer.targets.size).toBe(0);
+  expect(observer.targets.has(element)).toBe(true);
   element.entries = true;
   await element.updateComplete;
-  expect(observer.targets.size).toBe(2);
+  expect(
+    observer.targets.has(element.shadowRoot!.querySelector(".entries-header")!),
+  ).toBe(true);
 });
 
 it("uses the visible area and offsets while a mobile keyboard opens or pans", async () => {
@@ -143,5 +147,39 @@ it("falls back to window sizing and releases listeners and frames on disconnect"
   await element.updateComplete;
   frame();
   expect(value("--companion-viewport-height")).toBe("1400px");
-  expect(value("--entries-height")).toBe("820px");
+  expect(value("--entries-height")).toBe("1156px");
+});
+
+it("remeasures HA container space without a window event and distrusts a stale visual viewport", async () => {
+  await mount();
+
+  let bottom = 780;
+  const wrapper = document.createElement("div");
+  wrapper.style.overflowY = "auto";
+  document.body.append(wrapper);
+  wrapper.append(element);
+  await element.updateComplete;
+  const layout = element.shadowRoot!.querySelector(".entries-layout")!;
+  heights.set(element.shadowRoot!.querySelector(".entries-header")!, 120);
+  heights.set(element.shadowRoot!.querySelector(".entries-footer")!, 60);
+  vi.mocked(Element.prototype.getBoundingClientRect).mockImplementation(
+    function (this: Element) {
+      if (this === layout) return { top: 300 } as DOMRect;
+      if (this === wrapper) return { height: bottom, bottom } as DOMRect;
+      return { height: heights.get(this) ?? 0 } as DOMRect;
+    },
+  );
+  LayoutObserver.instances.at(-1)!.resize();
+  frame();
+  expect(value("--entries-height")).toBe("404px");
+  bottom = 580;
+  LayoutObserver.instances.at(-1)!.resize();
+  frame();
+  expect(value("--entries-height")).toBe("204px");
+  vi.stubGlobal("innerHeight", 500);
+  window.dispatchEvent(new Event("resize"));
+  frame();
+  expect(value("--companion-viewport-height")).toBe("500px");
+  expect(value("--entries-height")).toBe("180px");
+  wrapper.remove();
 });

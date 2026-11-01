@@ -1,4 +1,4 @@
-/** URL contains only an allowlisted tab, never records, queries, or credentials. */
+/** URL contains an allowlisted tab and calendar month, never records, queries, or credentials. */
 export type Page =
   "now-playing" | "journal" | "library" | "database" | "logs" | "settings";
 const pages: Page[] = [

@@ -204,13 +204,14 @@ opted-in [Add to Collection](library-collections.md) action is the only
 supported vendor edit.
 
 The search toolbar sticks to the top of the scrolling Library. A compact sticky
-footer holds title/collection counts, last catalog sync and administrator
-artwork usage, with compact administrator scraper progress. It is one shared
-status/navigation bar; First/Previous/Next are omitted when all matching titles
-fit on one page, including All. Options contains detailed freshness timestamps
-and individual-version counts. Source Played is displayed as **Watched** in
-browsing labels; Options explains the mapping while API/device collection names
-remain unchanged.
+footer holds global movie/status totals, with a blue match count for active
+search/filter criteria. Advanced mode adds collection counts, last catalog sync,
+artwork usage and compact scraper progress. It is one shared status/navigation
+bar; First/Previous/Next are omitted when all matching titles fit on one page,
+including All. Options contains detailed freshness timestamps and
+individual-version counts. Source Played is displayed as **Watched** in browsing
+labels; Options explains the mapping while API/device collection names remain
+unchanged.
 
 The redundant Library heading is omitted. Sort method/direction remain directly
 available in the search toolbar; refresh/sync are compact footer controls.
@@ -526,3 +527,14 @@ cached image files shared by other entries; normal cache eviction handles unused
 bytes. Background enrichment is paused for this group, including responses
 already in flight. Explicitly scraping and applying new reviewed data reenables
 background enrichment.
+
+## Compact footer
+
+Basic mode shows global movie-group totals: Total, Unwatched, Watched and
+Paused. A bold blue Matches count appears only while search or filters are
+active; global totals remain unchanged. Multiple versions count as one movie and
+follow the same Paused-before-Watched precedence as the Library list. Unknown
+statuses are included in Total. Per-page and covers-per-row labels are omitted.
+Collection, artwork-cache, sync, scraper and enabled purchase-cost details
+remain visible only in Advanced mode. Navigation and refresh stay on the same
+sticky footer.

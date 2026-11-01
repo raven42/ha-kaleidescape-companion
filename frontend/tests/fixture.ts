@@ -282,6 +282,10 @@ export class FixtureTransport implements Transport {
           {
             ...info,
             viewing_count: this.records.length,
+            watched_seconds: this.records.reduce(
+              (sum, row) => sum + row.watched_seconds,
+              0,
+            ),
             revision: this.revision,
             tracking_enabled: this.trackingEnabled,
             library_enabled: !!this.options.library_enabled,
@@ -908,8 +912,23 @@ export class FixtureTransport implements Transport {
               }
             : null,
         };
-      } else
+      } else {
+        const monthRows = this.records.filter(
+          (row) =>
+            !row.deleted_at &&
+            new Date(row.ended_at ?? row.started_at) >=
+              new Date(String(message.start)) &&
+            new Date(row.ended_at ?? row.started_at) <
+              new Date(String(message.end)),
+        );
         result = {
+          summary: {
+            viewing_count: monthRows.length,
+            watched_seconds: monthRows.reduce(
+              (total, row) => total + row.watched_seconds,
+              0,
+            ),
+          },
           items: this.records
             .filter(
               (row) =>
@@ -937,6 +956,7 @@ export class FixtureTransport implements Transport {
             })),
           revision: this.revision,
         };
+      }
     } else if (operation === "journal/list" || operation === "library/viewings")
       result = {
         items: this.records.filter(

@@ -780,6 +780,7 @@ class LibraryApiTest(unittest.IsolatedAsyncioTestCase):
             {
                 "title_count",
                 "group_count",
+                "status_counts",
                 "name_count",
                 "preferences_key",
                 "collection_count",

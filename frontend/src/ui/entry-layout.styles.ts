@@ -12,7 +12,7 @@ export const entryLayoutStyles = css`
   .entries-layout {
     display: grid;
     grid-template-columns: minmax(230px, 0.8fr) minmax(0, 1.2fr);
-    height: var(--entries-height, clamp(240px, calc(100dvh - 240px), 820px));
+    height: var(--entries-height, max(180px, calc(100dvh - 240px)));
     min-height: 0;
   }
   .entries-list,
@@ -112,7 +112,10 @@ export const entryLayoutStyles = css`
     .entries-footer > span {
       grid-column: 1 / -1;
     }
-    .entries-footer > span,
+    .entries-footer > span {
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
     .entries-footer small {
       min-width: 0;
       overflow: hidden;

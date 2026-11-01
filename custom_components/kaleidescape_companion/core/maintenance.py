@@ -8,7 +8,6 @@ from .database_query import OPERATORS, compile_query
 from .database_schema import DELETABLE, MAIN_TABLES, TABLE_KEYS, references, schema
 from .models import JournalError, invalid
 
-PAGE_SIZES = (10, 25, 100, 500)
 MAX_PAGE_BYTES = 8 * 1024 * 1024
 
 
@@ -29,7 +28,7 @@ def inspect_database(
         or type(offset) is not int
         or not 0 <= offset <= 10_000_000
         or type(limit) is not int
-        or limit not in PAGE_SIZES
+        or not 1 <= limit <= 500
         or not isinstance(query, str)
         or len(query) > 2000
         or "\x00" in query

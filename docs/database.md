@@ -21,13 +21,26 @@ and selection counts live in the sticky footer. Narrow screens stack the two
 scroll regions. Changing page resets the list position; selecting another entry
 starts its details at the top.
 
-**Options** saves rows per page (10/25/100/500), system-table visibility, the
-selected table and each table's sort field/order as personal database
-preferences. These use a separate settings row from Library preferences and
-require no HA reload. Initially the three main tables are visible: viewings,
-sessions and Library. Collections, artwork and sources are system tables. **Show
-system tables** exposes the full trusted inspection allowlist; private log
-configuration/alias keys are excluded. It does not remove write protections.
+**Options** saves rows per page (default **Fit to screen**, or 10/25/100/500),
+system-table visibility, the selected table and each table's sort field/order as
+personal database preferences. These use a separate settings row from Library
+preferences and require no HA reload. Initially the three main tables are
+visible: viewings, sessions and Library. Collections, artwork and sources are
+system tables. **Show system tables** exposes the full trusted inspection
+allowlist; private log configuration/alias keys are excluded. It does not remove
+write protections.
+
+Fit to screen measures the rendered list area and row height, recalculates on
+viewport/list resize, and requests between 1 and 500 rows. The pane uses its
+actual position inside HA and observes enclosing containers across shadow roots,
+including layout changes without window events. It takes the smaller visible
+viewport/window height and no longer caps pane height at 820 px. Reloading
+remeasures the current space; only the `fit` choice is saved, never the
+calculated row count. Resizing preserves the selected detail row and moves to
+the page containing it; ordinary pagination still clears details. Existing fixed
+page-size choices remain unchanged. Resize requests use the current snapshot
+revision, so concurrent database changes can require a refresh instead of
+silently selecting a different row.
 
 | Table                                                                          | Supported editing/deletion                                                                                                                                                           |
 | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |

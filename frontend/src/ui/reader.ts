@@ -1,7 +1,9 @@
 import "./journal-calendar";
 import { responsiveViewport } from "./viewport";
 import "./viewing-library";
-import { counted } from "../core/text";
+import type { JournalCalendar } from "./journal-calendar";
+import type { CalendarStatus } from "./journal-view";
+import { calendarNotice, journalTotals } from "./journal-view";
 /** Household journal/library browsing; no management or export requests. */
 import { LitElement, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
@@ -54,6 +56,7 @@ export class KaleidescapeReader extends LitElement {
   private journalView: "list" | "calendar" = "list";
   private calendarSize = 180;
   private calendarFit = false;
+  private calendarStatus?: CalendarStatus;
   private journalMovie?: { id: string; title: string };
   private libraryTitleId?: string;
   private libraryCriterion?: LibraryCriterion;
@@ -137,6 +140,7 @@ export class KaleidescapeReader extends LitElement {
     this.journalView = "list";
     this.calendarSize = 180;
     this.calendarFit = false;
+    this.calendarStatus = undefined;
     this.journalMovie = undefined;
     this.libraryTitleId = undefined;
     this.libraryCriterion = undefined;
@@ -381,35 +385,6 @@ export class KaleidescapeReader extends LitElement {
                 ></kaleidescape-library>`
               : html`<section class="card journal" aria-label="Viewing history">
                   <div class="entries-header">
-                    <div class="journal-toolbar">
-                      <button
-                        ?disabled=${this.loading || !this.api}
-                        @click=${this.refresh}
-                      >
-                        Refresh</button
-                      ><kaleidescape-journal-options
-                        .client=${this.api}
-                        .scope=${this.scope}
-                        .disabled=${this.loading}
-                        @journal-options=${(
-                          event: CustomEvent<JournalOptionsValue>,
-                        ) => {
-                          this.journalView = event.detail.view;
-                          this.calendarSize = event.detail.calendar_size;
-                          this.calendarFit = event.detail.calendar_fit;
-                          this.requestUpdate();
-                          const changed =
-                            this.fuzzySearch !== event.detail.fuzzy_search;
-                          this.fuzzySearch = event.detail.fuzzy_search;
-                          if (changed) {
-                            this.page = 1;
-                            this.history = [];
-                            void this.load();
-                          }
-                        }}
-                        @access-denied=${() => this.fail(new ApiError("unauthorized"))}
-                      ></kaleidescape-journal-options>
-                    </div>
                     ${this.journalMovie ? html`<p class="journal-movie-filter">Viewings for ${this.journalMovie.title} <button @click=${() => this.selectPage("journal")}>Show all viewings</button></p>` : nothing}
                     <form
                       class="filters journal-filters"
@@ -436,22 +411,6 @@ export class KaleidescapeReader extends LitElement {
                           }}
                       /></label>
                       <div class="journal-filter-tools">
-                        <label
-                          >Status<select
-                            name="filter_status"
-                            .value=${this.filterStatus}
-                            ?disabled=${this.loading || !this.scope}
-                            @change=${(event: Event) => {
-                              this.filterStatus = (
-                                event.target as HTMLSelectElement
-                              ).value;
-                            }}
-                          >
-                            <option value="">All</option>
-                            <option value="completed">Completed</option>
-                            <option value="partial">Partial</option>
-                          </select></label
-                        >
                         <label ?hidden=${this.journalView === "calendar"}
                           >Sort by<select
                             name="journal_sort"
@@ -486,14 +445,61 @@ export class KaleidescapeReader extends LitElement {
                           ${this.descending ? "Descending ↓" : "Ascending ↑"}
                         </button>
                       </div>
-                      <button ?disabled=${this.loading || !this.scope}>
+                      <button
+                        class="journal-search-button"
+                        ?disabled=${this.loading || !this.scope}
+                      >
                         Search
                       </button>
+                      <div class="journal-toolbar">
+                        <button
+                          type="button"
+                          ?disabled=${this.loading || !this.api}
+                          @click=${this.refresh}
+                        >
+                          Refresh</button
+                        ><kaleidescape-journal-options
+                          .status=${this.status}
+                          @journal-status=${(event: CustomEvent<string>) => {
+                            this.status = this.filterStatus = event.detail;
+                            this.page = 1;
+                            this.history = [];
+                            void this.load();
+                            this.requestUpdate();
+                          }}
+                          .client=${this.api}
+                          .scope=${this.scope}
+                          .disabled=${this.loading}
+                          @journal-options=${(
+                            event: CustomEvent<JournalOptionsValue>,
+                          ) => {
+                            this.journalView = event.detail.view;
+                            this.calendarSize = event.detail.calendar_size;
+                            this.calendarFit = event.detail.calendar_fit;
+                            this.requestUpdate();
+                            const changed =
+                              this.fuzzySearch !== event.detail.fuzzy_search;
+                            this.fuzzySearch = event.detail.fuzzy_search;
+                            if (changed) {
+                              this.page = 1;
+                              this.history = [];
+                              void this.load();
+                            }
+                          }}
+                          @access-denied=${() => this.fail(new ApiError("unauthorized"))}
+                        ></kaleidescape-journal-options>
+                      </div>
                     </form>
                   </div>
                   ${
                     this.journalView === "calendar"
                       ? html`<kaleidescape-journal-calendar
+                          @calendar-status=${(
+                            event: CustomEvent<CalendarStatus>,
+                          ) => {
+                            this.calendarStatus = event.detail;
+                            this.requestUpdate();
+                          }}
                           .client=${this.api ?? undefined}
                           .scope=${this.scope ?? undefined}
                           .query=${this.query}
@@ -575,9 +581,19 @@ export class KaleidescapeReader extends LitElement {
                   }
                   <footer class="entries-footer journal-status">
                     <span
-                      >${counted(this.scope?.viewing_count ?? 0, "viewing")} ·
-                      Revision ${this.scope?.revision ?? 0}</span
-                    >
+                      >${journalTotals(this.scope, this.journalView === "calendar" ? this.calendarStatus : undefined)}</span
+                    >${
+                      this.journalView === "calendar"
+                        ? calendarNotice(this.calendarStatus, () => {
+                            void this.renderRoot
+                              .querySelector<JournalCalendar>(
+                                "kaleidescape-journal-calendar",
+                              )
+                              ?.refresh();
+                          })
+                        : nothing
+                    }
+
                     <div
                       class="pagination"
                       ?hidden=${this.journalView === "calendar"}

@@ -15,6 +15,7 @@ from datetime import UTC, datetime, timedelta
 from functools import partial
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from kaleidescape_api.logging import (
     Level,
@@ -695,21 +696,34 @@ class JournalRepository:
             Outcome.SUCCEEDED,
         )
 
-    async def async_info(self) -> dict:
+    async def async_info(self, timezone="UTC") -> dict:
         """Return non-content metadata for health and dataset selection."""
-        return await self._call(self._info)
+        return await self._call(self._info, timezone)
 
-    def _info(self) -> dict:
+    def _info(self, timezone="UTC") -> dict:
         db = self._db()
         metadata = dict(db.execute("SELECT * FROM schema_metadata").fetchone())
+        now = datetime.now(ZoneInfo(timezone))
+        start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        end = (start.replace(day=28) + timedelta(days=4)).replace(day=1)
+        from .journal_calendar import month_totals
+
+        current = month_totals(
+            db, timestamp(start.isoformat()), timestamp(end.isoformat())
+        )
+        totals = db.execute(
+            "SELECT count(*),coalesce(sum(watched_seconds),0) "
+            "FROM viewings WHERE deleted_at IS NULL"
+        ).fetchone()
         return {
             "dataset_id": metadata["dataset_id"],
             "schema_version": SCHEMA_VERSION,
             "revision": metadata["revision"],
             "created_at": metadata["created_at"],
-            "viewing_count": db.execute(
-                "SELECT count(*) FROM viewings WHERE deleted_at IS NULL"
-            ).fetchone()[0],
+            "viewing_count": totals[0],
+            "watched_seconds": totals[1],
+            "month_viewing_count": current["viewing_count"],
+            "month_watched_seconds": current["watched_seconds"],
             "backup_in_progress": self._paused,
             "database_bytes": self.path.stat().st_size,
             "database_limit_bytes": MAX_DATABASE_BYTES,

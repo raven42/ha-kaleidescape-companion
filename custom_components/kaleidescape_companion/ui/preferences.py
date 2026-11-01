@@ -152,7 +152,7 @@ def validate_shared(patch, previous=None):
 
 
 DATABASE_DEFAULTS = {
-    "limit": 25,
+    "limit": "fit",
     "show_system": False,
     "table": "viewings",
     "sorts": {},
@@ -166,10 +166,12 @@ def validate_database(patch, previous=None):
         raise invalid("Unknown Database preferences")
     values = {**DATABASE_DEFAULTS, **(previous or {}), **patch}
     if (
-        type(values["limit"]) is not int
-        or values["limit"] not in (10, 25, 100, 500)
-        or type(values["show_system"]) is not bool
-    ):
+        values["limit"] != "fit"
+        and (
+            type(values["limit"]) is not int
+            or values["limit"] not in (10, 25, 100, 500)
+        )
+    ) or type(values["show_system"]) is not bool:
         raise invalid("Invalid Database view options")
     if not isinstance(values["table"], str) or values["table"] not in TABLE_KEYS:
         raise invalid("Invalid Database table")

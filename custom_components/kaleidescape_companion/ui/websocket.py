@@ -324,13 +324,22 @@ async def async_handle(
             if operation == "info":
                 entries = []
                 for entry_id, runtime in loaded_runtimes(hass):
-                    metadata = await runtime.repository.async_info()
+                    metadata = await runtime.repository.async_info(
+                        timezone=getattr(hass.config, "time_zone", "UTC")
+                    )
                     if not runtime.ready:
                         continue
                     if not admin:
                         metadata = {
                             key: metadata[key]
-                            for key in ("dataset_id", "revision", "viewing_count")
+                            for key in (
+                                "dataset_id",
+                                "revision",
+                                "viewing_count",
+                                "watched_seconds",
+                                "month_viewing_count",
+                                "month_watched_seconds",
+                            )
                         }
                     entry = hass.config_entries.async_get_entry(entry_id)
                     library_enabled = bool(
@@ -674,6 +683,7 @@ async def async_handle(
                                     for key in (
                                         "title_count",
                                         "group_count",
+                                        "status_counts",
                                         "name_count",
                                         "preferences_key",
                                         "collection_count",

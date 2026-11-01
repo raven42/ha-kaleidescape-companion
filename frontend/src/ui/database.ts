@@ -45,10 +45,17 @@ const LABELS: Record<string, string> = {
 };
 const MAIN = ["viewings", "sessions", "library"];
 type Row = Record<string, unknown>;
+interface ResizeAnchor {
+  row: Row;
+  index: number;
+  table: string;
+  filters: DatabaseQuery;
+  revision: number;
+}
 export class KaleidescapeDatabase extends LitElement {
   constructor() {
     super();
-    responsiveViewport(this);
+    responsiveViewport(this, () => this.scheduleFit());
     responsivePreferences(this, () => {
       if (
         !this.ready ||
@@ -58,8 +65,18 @@ export class KaleidescapeDatabase extends LitElement {
         this.renderRoot.querySelector("dialog[open]")
       )
         return false;
+      const anchor =
+        this.detail && this.page
+          ? {
+              row: this.detail,
+              index: this.page.offset + this.page.items.indexOf(this.detail),
+              table: this.table,
+              filters: { ...this.filters },
+              revision: this.page.revision,
+            }
+          : undefined;
       this.clear();
-      void this.initialize();
+      void this.initialize(anchor);
       return true;
     });
   }
@@ -78,6 +95,10 @@ export class KaleidescapeDatabase extends LitElement {
   private page?: DatabasePage;
   private table = "viewings";
   private filters: DatabaseQuery = { limit: 25, query: "", descending: false };
+  private fitPage = true;
+  private fitObserver?: ResizeObserver;
+  private fitList?: Element;
+  private fitTimer?: ReturnType<typeof setTimeout>;
   private showSystem = false;
   private sorts: Record<string, { sort: string; descending: boolean }> = {};
   private preferences?: PreferenceStore;
@@ -112,11 +133,19 @@ export class KaleidescapeDatabase extends LitElement {
   }
   connectedCallback() {
     super.connectedCallback();
+    window.addEventListener("resize", this.scheduleFit);
+    window.visualViewport?.addEventListener("resize", this.scheduleFit);
     this.requestUpdate("client");
     this.requestUpdate("scope");
   }
   disconnectedCallback() {
     super.disconnectedCallback();
+    window.removeEventListener("resize", this.scheduleFit);
+    window.visualViewport?.removeEventListener("resize", this.scheduleFit);
+    this.fitObserver?.disconnect();
+    this.fitObserver = undefined;
+    this.fitList = undefined;
+    clearTimeout(this.fitTimer);
     this.clear();
     this.boundClient = undefined;
     this.bound = "";
@@ -132,6 +161,7 @@ export class KaleidescapeDatabase extends LitElement {
     this.ready = false;
     this.page = undefined;
     this.table = "viewings";
+    this.fitPage = true;
     this.filters = { limit: 25, query: "", descending: false };
     this.showSystem = false;
     this.sorts = {};
@@ -151,7 +181,7 @@ export class KaleidescapeDatabase extends LitElement {
     this.busy();
     this.requestUpdate();
   }
-  private async initialize() {
+  private async initialize(anchor?: ResizeAnchor) {
     const generation = ++this.generation;
     this.preferences?.dispose();
     this.preferences = new PreferenceStore(
@@ -175,22 +205,43 @@ export class KaleidescapeDatabase extends LitElement {
       ]);
       if (generation !== this.generation) return;
       this.fuzzySearch = search.values.fuzzy_search as boolean;
-      this.filters.limit = values.limit as number;
+      this.fitPage = values.limit === "fit" || values.limit === undefined;
+      this.filters.limit = this.fitPage ? 25 : (values.limit as number);
       this.showSystem = values.show_system as boolean;
       this.sorts = (values.sorts ?? {}) as typeof this.sorts;
       this.table = String(values.table ?? "viewings");
       if (!this.showSystem && !MAIN.includes(this.table))
         this.table = "viewings";
       this.filters = { ...this.filters, ...this.sorts[this.table] };
+      if (anchor) {
+        this.table = anchor.table;
+        this.showSystem ||= !MAIN.includes(this.table);
+        this.filters = { ...anchor.filters, limit: this.filters.limit };
+        this.search = this.filters.query;
+      }
       this.ready = true;
-      await this.load();
+      await this.load(
+        anchor
+          ? Math.floor(anchor.index / this.filters.limit) * this.filters.limit
+          : 0,
+        anchor?.revision,
+        anchor?.row,
+      );
     } catch (error) {
       if (generation === this.generation) this.fail(error);
     }
   }
   protected updated() {
+    const list = this.renderRoot.querySelector(".entry-list");
+    if (list !== this.fitList) {
+      this.fitObserver?.disconnect();
+      this.fitList = list ?? undefined;
+      this.fitObserver ??= new ResizeObserver(this.scheduleFit);
+      if (list) this.fitObserver.observe(list);
+    }
+    this.scheduleFit();
     for (const [name, value] of [
-      ["database_limit", String(this.filters.limit)],
+      ["database_limit", this.fitPage ? "fit" : String(this.filters.limit)],
       ["database_sort", this.filters.sort ?? this.page?.columns[0] ?? ""],
     ]) {
       const input = this.renderRoot.querySelector<HTMLSelectElement>(
@@ -198,6 +249,42 @@ export class KaleidescapeDatabase extends LitElement {
       );
       if (input && input.value !== value) input.value = value;
     }
+  }
+  private scheduleFit = () => {
+    clearTimeout(this.fitTimer);
+    if (
+      !this.fitPage ||
+      !this.ready ||
+      !this.page ||
+      this.blocked ||
+      this.operation
+    )
+      return;
+    this.fitTimer = setTimeout(() => this.resizePage(), 120);
+  };
+  private resizePage() {
+    if (!this.fitPage || this.blocked || this.operation || !this.page) return;
+    const list = this.renderRoot.querySelector<HTMLElement>(".entry-list");
+    if (!list || list.clientHeight <= 0) return;
+    const heights = [...list.querySelectorAll("li")]
+      .map((row) => row.getBoundingClientRect().height)
+      .filter((height) => height > 0);
+    if (!heights.length) return;
+    // Use the tallest rendered row so wrapped labels also fit without clipping.
+    const limit = Math.max(
+      1,
+      Math.min(500, Math.floor((list.clientHeight - 8) / Math.max(...heights))),
+    );
+    if (limit === this.filters.limit) return;
+    const index = this.detail ? this.page.items.indexOf(this.detail) : -1;
+    const anchor = this.page.offset + Math.max(0, index);
+    const detail = this.detail;
+    this.filters.limit = limit;
+    void this.load(
+      Math.floor(anchor / limit) * limit,
+      this.page.revision,
+      detail,
+    );
   }
   private get blocked() {
     return this.loading || this.saving || !!this.pending || this.transferBusy;
@@ -228,14 +315,14 @@ export class KaleidescapeDatabase extends LitElement {
         : errorMessage(error);
     this.requestUpdate();
   }
-  private async load(offset = 0, revision?: number) {
+  private async load(offset = 0, revision?: number, preserve?: Row) {
     if (!this.client || !this.scope || !this.ready || this.pending) return;
     const generation = this.generation,
       request = ++this.request;
     this.loading = true;
     if (this.page?.table !== this.table) this.page = undefined;
     this.error = "";
-    this.detail = undefined;
+    if (!preserve) this.detail = undefined;
     this.selected.clear();
     this.requestUpdate();
     try {
@@ -248,6 +335,17 @@ export class KaleidescapeDatabase extends LitElement {
       );
       if (generation !== this.generation || request !== this.request) return;
       this.page = page;
+      if (preserve) {
+        const keys =
+          page.schema
+            ?.filter((field) => field.primary)
+            .map((field) => field.name) ?? [];
+        this.detail = page.items.find((row) =>
+          keys.length
+            ? keys.every((key) => row[key] === preserve[key])
+            : JSON.stringify(row) === JSON.stringify(preserve),
+        );
+      }
       this.filters.sort = page.sort;
     } catch (error) {
       if (generation === this.generation && request === this.request)
@@ -261,6 +359,15 @@ export class KaleidescapeDatabase extends LitElement {
           const list =
             this.renderRoot.querySelector<HTMLElement>(".entry-list");
           if (list) list.scrollTop = 0;
+          const row = this.renderRoot.querySelector<HTMLElement>("li.selected");
+          if (preserve && row && list)
+            list.scrollTop = Math.max(
+              0,
+              row.offsetTop -
+                list.offsetTop +
+                row.offsetHeight -
+                list.clientHeight,
+            );
         }
       }
     }
@@ -590,9 +697,20 @@ export class KaleidescapeDatabase extends LitElement {
         <label
           >Rows per page<select
             name="database_limit"
-            .value=${String(this.filters.limit)}
-            @change=${(event: Event) => this.browse({ limit: Number((event.target as HTMLSelectElement).value) })}
+            .value=${this.fitPage ? "fit" : String(this.filters.limit)}
+            @change=${(event: Event) => {
+              const value = (event.target as HTMLSelectElement).value;
+              this.fitPage = value === "fit";
+              this.preferences?.set({
+                limit: this.fitPage ? "fit" : Number(value),
+              });
+              if (this.fitPage) {
+                this.scheduleFit();
+                this.requestUpdate();
+              } else this.browse({ limit: Number(value) });
+            }}
           >
+            <option value="fit">Fit to screen</option>
             ${[10, 25, 100, 500].map((count) => html`<option value=${count}>${count}</option>`)}
           </select></label
         ><label class="check"
@@ -766,6 +884,7 @@ export class KaleidescapeDatabase extends LitElement {
                       : nothing
                   }<button
                     class="link entry-name"
+                    title=${String(row.title ?? row.name ?? row.id ?? "Database entry")}
                     ?disabled=${this.blocked}
                     @click=${() => this.showDetail(row)}
                   >

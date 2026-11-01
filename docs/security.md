@@ -156,21 +156,23 @@ layout tests do not prove that every browser keeps actions visible.
 
 Anonymous and inactive users are denied all journal and UI preference
 operations. Regular-user `info` returns only API version, scope, revision,
-visible-record count, Library enablement, and permissions. Regular-user
-`library/info` uses a separate positive allowlist of
-version/group/name/collection counts, source revision, an opaque
-collection-preference key, and catalog/collection timestamps. `library/list`
-uses the same explicit cached-title projection for both roles: known display
-metadata including rating badges, opaque title/artwork keys, memberships/status,
-group favorite/recent booleans, and detection/freshness times. It excludes
-origin, raw source handles/groups, file paths, and private journal/session/audit
-fields. Administrator-only version details additionally include private invoice
-history. `journal/list` and `journal/get` use a positive record-field allowlist;
-adding a database column must not implicitly expose it. Deletion tombstones are
-excluded from these reads. Mutation authorization is enforced on the server;
-hiding editor/export controls is not authorization. Known user/connection/role
-changes clear the browser's old data and ignore late responses. Browser
-downloads and data already observed cannot be recalled when access changes.
+visible-record count, aggregate watched time/current-month count and watched
+time, Library enablement, and permissions. The month aggregate uses the
+configured HA time zone and excludes tombstones. Regular-user `library/info`
+uses a separate positive allowlist of version/group/name/collection and grouped
+watched-status counts, source revision, an opaque collection-preference key, and
+catalog/collection timestamps. `library/list` uses the same explicit
+cached-title projection for both roles: known display metadata including rating
+badges, opaque title/artwork keys, memberships/status, group favorite/recent
+booleans, and detection/freshness times. It excludes origin, raw source
+handles/groups, file paths, and private journal/session/audit fields.
+Administrator-only version details additionally include private invoice history.
+`journal/list` and `journal/get` use a positive record-field allowlist; adding a
+database column must not implicitly expose it. Deletion tombstones are excluded
+from these reads. Mutation authorization is enforced on the server; hiding
+editor/export controls is not authorization. Known user/connection/role changes
+clear the browser's old data and ignore late responses. Browser downloads and
+data already observed cannot be recalled when access changes.
 
 The administrator Basic/Advanced switch is a presentation preference, stored in
 the actor/profile-owned `interface` settings row as a strictly validated
@@ -1701,3 +1703,17 @@ a source-only marker; household metadata projections never expose it. Available
 scraper cache counts/progress are administrator-only; public ratings are
 positive, source-labelled display projections. No new network destinations,
 remote UI assets or device commands are added.
+
+Database Fit to screen requests integer page sizes from 1 through 500, retaining
+the existing 8 MiB response bound, query budget, allowlisted schema and revision
+checks. The preference stores the literal `fit`, never client geometry or device
+identifiers. Calendar URLs may contain a validated `companion_month=YYYY-MM`
+alongside the allowlisted page; they contain no viewing, movie, query or user
+identifiers.
+
+Journal calendar month responses include only numeric aggregate counts/watched
+seconds in addition to the existing public rows/revision. These aggregates
+ignore search/status filters, exclude tombstones, and use the validated bounded
+local month interval. They expose no notes, source identities or session
+evidence. Viewport sizing observes enclosing HA containers in memory, without
+storing or exporting their geometry or identifiers.

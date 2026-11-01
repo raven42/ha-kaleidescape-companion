@@ -3,7 +3,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../src/ui/journal-calendar";
 import "../src/ui/panel";
 import type { JournalCalendar } from "../src/ui/journal-calendar";
-import { dayKey, monthBounds } from "../src/ui/journal-calendar";
+import { calendarMonth, dayKey, monthBounds } from "../src/ui/journal-calendar";
 import type { JournalOptions } from "../src/ui/journal-options";
 import type { KaleidescapeLibrary } from "../src/library/library";
 import type { KaleidescapePanel } from "../src/ui/panel";
@@ -15,6 +15,7 @@ import { FixtureTransport, info, record } from "./fixture";
 let calendar: JournalCalendar;
 let parent: KaleidescapePanel | KaleidescapeReader | undefined;
 beforeEach(() => {
+  history.replaceState(null, "", "/");
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date(2026, 9, 30, 12));
   vi.stubGlobal(
@@ -26,6 +27,7 @@ beforeEach(() => {
   );
 });
 afterEach(() => {
+  history.replaceState(null, "", "/");
   calendar?.remove();
   parent?.remove();
   parent = undefined;
@@ -73,7 +75,7 @@ it("browses complete local months, applies filters, and stacks same-day viewings
   button("Next month").click();
   await vi.waitFor(() => expect(root().textContent).toContain("November 2026"));
   await vi.waitFor(() => expect(posters()).toHaveLength(0));
-  expect(root().textContent).toContain("No viewings match this month");
+  expect(root().textContent).not.toContain("No viewings match this month");
   button("Previous month").click();
   await vi.waitFor(() => expect(posters()).toHaveLength(3));
   calendar.status = "partial";
@@ -191,6 +193,7 @@ it("withholds late month/detail responses after navigation, dismissal and scope 
   calendar.scope = { ...info, dataset_id: "different", library_enabled: false };
   await calendar.updateComplete;
   releaseMonth({
+    summary: { viewing_count: 1, watched_seconds: 3600 },
     items: [
       {
         ...record({ title: "Late private month" }),
@@ -392,5 +395,96 @@ it.each(["kaleidescape-panel", "kaleidescape-reader"])(
         /library\/sync$|journal\/create$/.test(call.type),
       ),
     ).toBe(false);
+  },
+);
+
+it("restores a valid month from the URL, preserves other parameters and rejects invalid months", async () => {
+  expect(
+    calendarMonth("?companion_month=2026-00", new Date(2026, 9, 1)).getMonth(),
+  ).toBe(9);
+  expect(
+    calendarMonth(
+      "?companion_month=0001-01",
+      new Date(2026, 9, 1),
+    ).getFullYear(),
+  ).toBe(2026);
+  history.replaceState(
+    null,
+    "",
+    "/?companion_page=journal&companion_month=2026-08",
+  );
+  await mount();
+  expect(root().textContent).toContain("August 2026");
+  button("Next month").click();
+  await calendar.updateComplete;
+  expect(new URL(location.href).searchParams.get("companion_month")).toBe(
+    "2026-09",
+  );
+  expect(new URL(location.href).searchParams.get("companion_page")).toBe(
+    "journal",
+  );
+  calendar.remove();
+  await mount();
+  expect(root().textContent).toContain("September 2026");
+});
+
+it.each(["kaleidescape-panel", "kaleidescape-reader"])(
+  "keeps selected-month totals and every calendar status message in the sticky footer in %s",
+  async (tag) => {
+    const transport = new FixtureTransport();
+    transport.journalPreferences.view = "calendar";
+    parent = document.createElement(tag) as
+      KaleidescapePanel | KaleidescapeReader;
+    parent.client = transport.client();
+    document.body.append(parent);
+    await vi.waitFor(() =>
+      expect(
+        parent!.shadowRoot!.querySelector("kaleidescape-journal-calendar"),
+      ).not.toBeNull(),
+    );
+    calendar = parent.shadowRoot!.querySelector(
+      "kaleidescape-journal-calendar",
+    ) as JournalCalendar;
+    const footer = () => parent!.shadowRoot!.querySelector("footer")!;
+    await vi.waitFor(() =>
+      expect(footer().textContent?.replace(/\s+/g, " ")).toContain(
+        "October 2026 3",
+      ),
+    );
+    expect(footer().textContent?.replace(/\s+/g, " ")).toContain(
+      "Selected Month 3h 48m",
+    );
+    button("Next month").click();
+    await vi.waitFor(() =>
+      expect(footer().textContent?.replace(/\s+/g, " ")).toContain(
+        "November 2026 0",
+      ),
+    );
+    expect(footer().textContent?.replace(/\s+/g, " ")).toContain(
+      "Selected Month 0h 0m",
+    );
+    expect(footer().textContent).toContain("No viewings match this month");
+    expect(
+      root().querySelector(
+        ".month-status, p.error, [role=status], [role=alert]",
+      ),
+    ).toBeNull();
+    const client = calendar.client!;
+    vi.spyOn(client, "calendarMonth").mockRejectedValueOnce(
+      new ApiError("not_ready"),
+    );
+    button("Next month").click();
+    await vi.waitFor(() =>
+      expect(footer().querySelector("[role=alert]")).not.toBeNull(),
+    );
+    expect(
+      root().querySelector("p.error, [role=alert], [role=status]"),
+    ).toBeNull();
+    [...footer().querySelectorAll<HTMLButtonElement>("button")]
+      .find((node) => node.textContent?.trim() === "Retry month")!
+      .click();
+    await vi.waitFor(() =>
+      expect(footer().querySelector("[role=alert]")).toBeNull(),
+    );
   },
 );

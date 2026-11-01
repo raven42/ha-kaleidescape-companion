@@ -335,8 +335,8 @@ class APISecurityTest(unittest.IsolatedAsyncioTestCase):
         repository = self.entry.runtime_data.repository
         info = repository.async_info
 
-        async def revoke():
-            result = await info()
+        async def revoke(**kwargs):
+            result = await info(**kwargs)
             self.admin.is_admin = False
             return result
 
