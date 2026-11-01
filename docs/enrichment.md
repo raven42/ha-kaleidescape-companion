@@ -44,15 +44,78 @@ order IDs are sent. Store access is public, with no login/cookies. TMDB
 credentials stay in HA's native private entry configuration and can be included
 in a full HA backup; secure those backups accordingly.
 
+## Review a single title
+
+Administrators can open a Library title and choose **Scrape title**. The popup
+lists only enabled scrapers; missing release years, store links or TMDB
+credentials make a provider unavailable. Choose a scraper, retrieve its data,
+then review the field checkboxes. Available fields include full cast, directors,
+writers, producers, studios, genres, synopsis and provider-specific scores.
+**Compare values** shows current and incoming data. No Library data changes
+until **Apply selected data**.
+
+TMDB also supplies a paged selection of posters and landscape images through its
+[images API](https://developer.themoviedb.org/reference/movie-images). Artwork
+sync must be enabled. Each image category starts at **Keep current image**;
+select one image per category to replace it. Only visible thumbnails are
+retrieved, through an authenticated administrator preview route. The store
+provider currently offers metadata only. Unavailable image/field categories are
+not invented.
+
+Selected facts and images apply across the movie's source-group versions.
+Unselected fields remain unchanged; IDs, title/year identity, runtime, formats,
+collections, purchases and viewings are preserved. Reviewed choices live in the
+protected `enrichment.reviewed` JSON alongside provider caches. They take
+precedence over later automatic scans, including source cover refreshes. New
+versions can inherit those choices. No new table or schema migration is needed.
+Private SQLite snapshots/backups retain them; portable JSON exports continue to
+exclude enrichment and artwork files.
+
+TMDB cast is sorted by explicit billing order before import. The full bounded
+cast is retained (up to 500 distinct names); providers without verified billing
+order retain source order. **Library → Options → Visible cast members** saves a
+personal display limit of 1–30, initially 8. **More credits** shows the full
+cast.
+
+Reviews expire after 20 minutes; only the latest eight are retained. Each review
+supports up to 100 scanned versions of the same movie group. A changed movie
+group requires a fresh review. Metadata and selected cached images commit with
+an actor-bound request receipt on the database worker. An uncertain Apply keeps
+the exact selection/UUID for retry, without importing twice. Backup, unload and
+access/configuration changes cancel or reject unfinished requests.
+
 ## Stored and displayed data
 
 Schema **19** adds an `enrichment` JSON column to the existing **Library**
 table. It stores provider identity/provenance, fetch time, credits and available
 ratings. Results are linked through the existing source/group identity and
 shared across available versions of that movie. Source identities, edition,
-runtime, artwork, watched status, purchases and raw scan metadata are preserved.
-Later device scans retain the provider cache. No new metadata table or sensor is
-required. Cache writes share the Library's storage budget and SQLite worker.
+runtime, edition covers, watched status, purchases and raw scan metadata are
+preserved. Later device scans retain the provider cache. No new metadata table
+or sensor is required. Cache writes share the Library's storage budget and
+SQLite worker.
+
+When **TMDB** and **Sync artwork** are both enabled, enrichment also retrieves
+the matched movie's widescreen backdrop. TMDB supplies the image reference in
+its
+[movie response](https://developer.themoviedb.org/docs/search-and-query-for-details);
+the adapter uses the documented
+[image service](https://developer.themoviedb.org/docs/image-basics) at the fixed
+`w780` size. These requests share the metadata rate limit and use no credential.
+The HA server downloads the raster into the existing private artwork cache;
+browsers receive only an opaque cache key through the authenticated Library
+artwork endpoint, never the remote image URL.
+
+Backdrops share the configured artwork budget with edition covers, so a large
+collection may need a larger cache. No new table or migration is needed:
+`enrichment.tmdb.backdrop_key` links the existing content-addressed cache index
+to the movie group. Eviction, missing-file reconciliation and administrator
+artwork deletion clear those references. Later scans preserve the enrichment
+cache; metadata refreshes retain a prior backdrop until a replacement succeeds.
+New formats can inherit the same group backdrop. Edition covers are preserved.
+Backdrops appear in compact Library details; without one, a small poster is
+used. Enable both options and use **Refresh metadata** to populate existing
+movies immediately; otherwise the normal seven-day metadata refresh applies.
 
 Details keep the first eight cast names visible; **More credits** reveals the
 full cast and additional credits. **Ratings and metadata sources** expands the

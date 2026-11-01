@@ -108,6 +108,13 @@ def async_register_commands(hass: HomeAssistant) -> None:
         "library/info": scoped,
         "metadata/status": scoped,
         "metadata/sync": scoped,
+        "metadata/title/options": {**scoped, p.Required("title_id"): str},
+        "metadata/title/preview": {
+            **scoped,
+            p.Required("title_id"): str,
+            p.Required("provider"): str,
+        },
+        "metadata/title/apply": {**mutations, p.Required("data"): dict},
         "library/list": {**scoped, p.Optional("filters", default={}): dict},
         "library/sync": scoped,
         "library/collections/targets": {
@@ -393,6 +400,37 @@ async def async_handle(
                         if operation == "metadata/sync":
                             runtime.enrichment.request_sync(user, force=True)
                         result = runtime.enrichment.status()
+                    case (
+                        "metadata/title/options"
+                        | "metadata/title/preview"
+                        | "metadata/title/apply"
+                    ):
+                        library = get_library(hass, msg["entry_id"], runtime)
+                        if runtime.enrichment is None:
+                            raise JournalError(
+                                "metadata_disabled",
+                                "Enable and configure a scraper in Settings first",
+                            )
+                        manager = runtime.enrichment.title_reviews()
+                        if operation.endswith("options"):
+                            result = await manager.options(user, msg["title_id"])
+                        elif operation.endswith("preview"):
+                            result = await manager.preview(
+                                user, msg["title_id"], msg["provider"]
+                            )
+                        else:
+                            result = await manager.apply(
+                                user, msg["request_id"], msg["data"]
+                            )
+                        if (
+                            get_runtime(hass, msg["entry_id"], msg["dataset_id"])
+                            is not runtime
+                            or get_library(hass, msg["entry_id"], runtime)
+                            is not library
+                        ):
+                            raise JournalError(
+                                "not_ready", "Library integration reloaded"
+                            )
                     case (
                         "control/info"
                         | "control/discover"
@@ -911,6 +949,8 @@ MUTATIONS = {
     "library/collections/add": (Subsystem.LIBRARY, Operation.UPDATE),
     "library/collections/acknowledge": (Subsystem.LIBRARY, Operation.ACKNOWLEDGE),
     "metadata/sync": (Subsystem.METADATA, Operation.SCRAPE),
+    "metadata/title/preview": (Subsystem.METADATA, Operation.SCRAPE),
+    "metadata/title/apply": (Subsystem.METADATA, Operation.UPDATE),
     "calendar/maintain": (Subsystem.CALENDAR, Operation.SYNC),
     "calendar/sync": (Subsystem.CALENDAR, Operation.EXPORT),
     "calendar/cancel": (Subsystem.CALENDAR, Operation.PAUSE),

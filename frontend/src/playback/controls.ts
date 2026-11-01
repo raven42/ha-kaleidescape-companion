@@ -103,6 +103,19 @@ export class DeviceControls extends LitElement {
         margin: 8px 0 0;
         font-size: 12px;
       }
+      @media (max-width: 600px) {
+        .control-card {
+          margin-top: 12px;
+          padding: 12px;
+        }
+        .movie-actions {
+          gap: 8px;
+        }
+        .movie-actions button {
+          padding-inline: 12px;
+          font-size: 13px;
+        }
+      }
     `,
   ];
   client?: JournalClient;

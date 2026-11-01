@@ -294,6 +294,25 @@ export interface ProviderMetadata {
   audience_score?: number | null;
   audience_rating?: number | null;
   audience_votes?: number | null;
+  backdrop_key?: string;
+  poster_key?: string;
+  providers?: string[];
+}
+export interface ScrapeOptions {
+  providers: { id: string; label: string; available: boolean }[];
+  artwork_enabled: boolean;
+}
+export interface ScrapeReview {
+  plan_id: string;
+  title: string;
+  fields: Record<string, { before: unknown; after: unknown }>;
+  images: {
+    id: string;
+    kind: "poster" | "backdrop";
+    width: number | null;
+    height: number | null;
+  }[];
+  artwork_enabled: boolean;
 }
 export interface MetadataStatus {
   running: boolean;
@@ -305,6 +324,7 @@ export interface MetadataStatus {
   last_finished: string | null;
 }
 export interface LibraryTitle {
+  backdrop_key?: string | null;
   enrichment?: Record<string, ProviderMetadata>;
   producers?: string[];
   purchase_history?: LibraryPurchase[];
@@ -594,6 +614,18 @@ export function errorMessage(error: unknown): string {
       "A library response exceeded its safety limit. Cached data is retained.",
     library_artwork:
       "Some artwork could not be cached. Previous artwork is retained when available.",
+    metadata_disabled: "Enable and configure a scraper in Settings first.",
+    metadata_unavailable:
+      "Metadata retrieval failed. Check the operation logs and try again.",
+    provider_identity_mismatch:
+      "The provider could not verify this movie's title and release year.",
+    tmdb_not_found: "TMDB did not find a matching title and release year.",
+    tmdb_ambiguous:
+      "TMDB returned more than one matching movie. No data was imported.",
+    provider_rate_limited:
+      "The provider rate limit was reached. Wait before trying again.",
+    provider_artwork_unavailable:
+      "This provider does not have that image available.",
   };
   return (
     messages[errorCode(error)] ??
@@ -695,6 +727,58 @@ export class JournalClient {
       type: `${DOMAIN}/metadata/${sync ? "sync" : "status"}`,
       ...scopeFields(scope),
     });
+  }
+  titleScrapeOptions(scope: Scope, title_id: string): Promise<ScrapeOptions> {
+    return this.call({
+      type: `${DOMAIN}/metadata/title/options`,
+      ...scopeFields(scope),
+      title_id,
+    });
+  }
+  titleScrapePreview(
+    scope: Scope,
+    title_id: string,
+    provider: string,
+  ): Promise<ScrapeReview> {
+    return withRequestDeadline(
+      this.transport.callWS({
+        type: `${DOMAIN}/metadata/title/preview`,
+        ...scopeFields(scope),
+        title_id,
+        provider,
+      }),
+      80000,
+    );
+  }
+  prepareTitleScrape(
+    scope: Scope,
+    data: { plan_id: string; fields: string[]; images: Record<string, string> },
+  ) {
+    return this.prepareCommand(scope, "metadata/title/apply", { data });
+  }
+  applyTitleScrape(
+    pending: PreparedMutation,
+  ): Promise<{ title_id: string; updated_count: number }> {
+    return withRequestDeadline(
+      this.transport.callWS({ ...pending.message }),
+      80000,
+    );
+  }
+  async titleScrapeImage(
+    scope: Scope,
+    plan: string,
+    choice: string,
+    signal: AbortSignal,
+  ): Promise<Blob> {
+    if (
+      !/^[a-f0-9-]{36}$/.test(plan) ||
+      !/^(poster|backdrop)-[0-9]{1,3}$/.test(choice)
+    )
+      throw new ApiError("invalid_request");
+    return this.raster(
+      `/api/${DOMAIN}/${encodeURIComponent(scope.entry_id)}/${encodeURIComponent(scope.dataset_id)}/metadata/review/${plan}/image/${choice}`,
+      signal,
+    );
   }
   metadataPreview(scope: Scope): Promise<MetadataReview> {
     return this.call({
@@ -918,14 +1002,17 @@ export class JournalClient {
     signal: AbortSignal,
   ): Promise<Blob> {
     if (!/^[a-f0-9]{64}$/.test(key)) throw new ApiError("invalid_request");
-    const response = await this.transport.fetchWithAuth(
+    return this.raster(
       `/api/${DOMAIN}/${encodeURIComponent(scope.entry_id)}/${encodeURIComponent(scope.dataset_id)}/library/artwork/${key}`,
-      {
-        signal,
-        cache: "no-store",
-        redirect: "error",
-      },
+      signal,
     );
+  }
+  private async raster(path: string, signal: AbortSignal): Promise<Blob> {
+    const response = await this.transport.fetchWithAuth(path, {
+      signal,
+      cache: "no-store",
+      redirect: "error",
+    });
     if (!response.ok) {
       await response.body?.cancel();
       throw new ApiError(

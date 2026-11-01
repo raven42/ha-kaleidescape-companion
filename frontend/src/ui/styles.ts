@@ -4,6 +4,7 @@ export const styles = css`
   :host {
     display: block;
     min-height: 0;
+    min-width: 0;
     color: var(--primary-text-color, #20302c);
     background: transparent;
     font-family: var(--paper-font-body1_-_font-family, system-ui, sans-serif);
@@ -23,13 +24,13 @@ export const styles = css`
   main {
     max-width: 1400px;
     margin: auto;
-    padding: 24px clamp(16px, 4vw, 48px) 48px;
+    padding: 16px clamp(10px, 3vw, 40px) max(16px, env(safe-area-inset-bottom));
   }
   header {
     display: flex;
     align-items: center;
     gap: 16px;
-    padding-bottom: 24px;
+    padding-bottom: 14px;
     border-bottom: 1px solid var(--line);
     flex-wrap: wrap;
   }
@@ -128,10 +129,13 @@ export const styles = css`
     display: flex;
     align-items: center;
     gap: 10px;
+    min-width: 0;
   }
   .card-head h2 {
     margin: 0;
     flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
   .filters {
     padding: 0 20px 20px;
@@ -154,8 +158,12 @@ export const styles = css`
     inset-inline: 0;
     z-index: 20;
     display: grid;
-    max-height: 260px;
+    max-height: min(
+      260px,
+      calc(var(--companion-viewport-height, 100dvh) * 0.35)
+    );
     overflow: auto;
+    overscroll-behavior: contain;
     background: var(--surface);
     border: 1px solid var(--line);
     box-shadow: 0 4px 12px #0004;
@@ -164,6 +172,7 @@ export const styles = css`
     text-align: left;
     border-radius: 0;
     white-space: normal;
+    overflow-wrap: anywhere;
   }
   .movie-suggestions [aria-selected="true"] {
     background: var(--line);
@@ -259,6 +268,7 @@ export const styles = css`
     gap: 8px;
     padding: 16px 20px;
     border-top: 1px solid var(--line);
+    min-width: 0;
   }
   .actions {
     display: flex;
@@ -344,7 +354,7 @@ export const styles = css`
     gap: 4px;
     overflow-x: auto;
     border-bottom: 1px solid var(--line);
-    margin: 20px 0;
+    margin: 12px 0;
     padding: 4px 0 0;
   }
   .page-tabs button {
@@ -367,20 +377,60 @@ export const styles = css`
   }
   dialog {
     --dialog-background: var(--surface);
-    width: min(560px, calc(100% - 32px));
-    max-height: calc(100dvh - 48px);
+    --dialog-gutter: clamp(12px, 2vw, 20px);
+    width: min(560px, calc(100% - 24px));
+    max-width: calc(100% - 16px);
+    max-height: calc(
+      var(--companion-viewport-height, 100dvh) -
+        24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+    );
     overflow: auto;
-    padding: 24px;
+    overscroll-behavior: contain;
+    scroll-padding-block: 68px;
+    padding: var(--dialog-gutter);
     border: 1px solid var(--line);
     border-radius: 12px;
     background: var(--dialog-background);
     color: inherit;
   }
+  dialog:modal {
+    inset-block-start: var(--companion-viewport-top, 0px);
+    inset-block-end: var(--companion-viewport-bottom, 0px);
+  }
+  dialog.inset-dialog {
+    --dialog-top-gap: max(
+      calc(var(--companion-viewport-height, 100dvh) * 0.15),
+      calc(env(safe-area-inset-top) + 8px)
+    );
+    max-height: calc(
+      var(--companion-viewport-height, 100dvh) - var(--dialog-top-gap) - env(
+          safe-area-inset-bottom
+        ) -
+        12px
+    );
+  }
+  dialog.inset-dialog:modal {
+    inset-block-start: calc(
+      var(--companion-viewport-top, 0px) + var(--dialog-top-gap)
+    );
+    inset-block-end: auto;
+    margin-block: 0;
+  }
+  dialog > .card-head,
+  dialog > .movie-heading {
+    position: sticky;
+    top: calc(0px - var(--dialog-gutter));
+    z-index: 25;
+    margin: calc(0px - var(--dialog-gutter)) calc(0px - var(--dialog-gutter))
+      14px;
+    padding: 10px var(--dialog-gutter);
+    background: var(--dialog-background);
+    border-bottom: 1px solid var(--line);
+  }
   dialog::backdrop {
     background: rgb(0 0 0 / 60%);
   }
   dialog .card-head {
-    padding: 0;
     align-items: flex-start;
   }
   dialog .card-head h2 {
@@ -402,20 +452,22 @@ export const styles = css`
     height: 24px;
   }
   .dialog-footer {
-    margin-top: 20px;
+    margin: 14px calc(0px - var(--dialog-gutter))
+      calc(0px - var(--dialog-gutter));
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: flex-end;
     gap: 10px;
-    padding: 16px 0 12px;
+    padding: 8px var(--dialog-gutter) max(8px, env(safe-area-inset-bottom));
     position: sticky;
-    bottom: -12px;
+    bottom: calc(0px - var(--dialog-gutter));
     background: var(--dialog-background, var(--surface));
     z-index: 12;
   }
   .dialog-footer button {
-    white-space: nowrap;
+    white-space: normal;
+    max-width: 100%;
   }
   .dialog-footer .primary,
   .dialog-footer .danger {
@@ -429,8 +481,8 @@ export const styles = css`
     top: var(--companion-sticky-top, 0px);
     z-index: 15;
     background: var(--surface);
-    padding: 12px 0;
-    margin-bottom: 18px;
+    padding: 8px 0;
+    margin-bottom: 12px;
     display: flex;
     gap: 10px;
     align-items: center;
@@ -526,6 +578,93 @@ export const styles = css`
     }
   }
   @media (max-width: 600px) {
+    button,
+    input,
+    select {
+      min-height: 44px;
+    }
+    input,
+    select,
+    textarea {
+      font-size: 16px;
+    }
+    input[type="checkbox"],
+    input[type="radio"] {
+      min-height: 20px;
+    }
+    .check {
+      min-height: 44px;
+      margin: 4px 0;
+    }
+    .dialog-close {
+      flex-basis: 44px;
+      width: 44px;
+      min-height: 44px;
+    }
+    dialog {
+      width: min(560px, calc(100% - 16px));
+      max-height: calc(
+        var(--companion-viewport-height, 100dvh) -
+          16px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+      );
+    }
+    dialog h2 {
+      font-size: 17px;
+      line-height: 1.3;
+      align-self: center;
+    }
+    .dialog-footer {
+      gap: 8px;
+    }
+    .dialog-footer button {
+      padding-inline: 10px;
+      min-width: 0;
+      font-size: 13px;
+    }
+    .notice,
+    .warning,
+    .error {
+      padding: 10px 12px;
+      margin-block: 12px;
+      line-height: 1.45;
+    }
+    .page-tabs {
+      margin: 8px 0;
+      gap: 0;
+    }
+    .page-tabs button {
+      padding: 8px 10px;
+    }
+    header .eyebrow,
+    header p {
+      display: none;
+    }
+    h1 {
+      font-size: 21px;
+      letter-spacing: -0.025em;
+    }
+    header {
+      gap: 8px;
+      padding-bottom: 8px;
+    }
+    .settings-page {
+      padding: 12px;
+      margin-top: 12px;
+    }
+    .settings-actions h2 {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
+    .settings-actions .actions {
+      flex: 1;
+      justify-content: flex-end;
+    }
+    .settings-actions {
+      gap: 6px;
+    }
     .playback-layout {
       grid-template-columns: 80px minmax(0, 1fr);
       gap: 12px;
@@ -533,7 +672,7 @@ export const styles = css`
       padding-right: 16px;
     }
     main {
-      padding-top: 16px;
+      padding-top: 8px;
     }
     header {
       flex-wrap: wrap;
@@ -544,10 +683,22 @@ export const styles = css`
     .grid {
       grid-template-columns: minmax(0, 1fr);
     }
-    .card-head,
+    .card-head:not(dialog > .card-head),
     .editor {
-      padding-left: 16px;
-      padding-right: 16px;
+      padding: 12px;
+    }
+  }
+  @media (max-height: 540px) {
+    dialog {
+      --dialog-gutter: 12px;
+    }
+    dialog > .card-head,
+    dialog > .movie-heading {
+      padding-block: 6px;
+    }
+    .dialog-footer {
+      margin-top: 10px;
+      padding-block: 6px;
     }
   }
 `;

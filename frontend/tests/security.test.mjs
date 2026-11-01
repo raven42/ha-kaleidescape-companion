@@ -275,6 +275,30 @@ test("API proxy accepts only local-origin export/artwork GETs and never supplies
     );
     assert.equal((await get(port, cover, headers, "POST")).status, 405);
     assert.equal(received.length, 5);
+    const reviewImage = path.replace(
+      /export\?format=json$/,
+      "metadata/review/12345678-1234-4234-9234-123456789abc/image/poster-0",
+    );
+    assert.equal((await get(port, reviewImage, headers)).status, 200);
+    assert.equal(received[5].authorization, "Bearer fictional");
+    for (const invalid of [
+      reviewImage + "?url=https://untrusted.example",
+      reviewImage.replace("poster-0", "../settings"),
+      reviewImage + "/extra",
+    ]) {
+      assert.equal((await get(port, invalid, headers)).status, 404);
+    }
+    assert.equal(
+      (
+        await get(port, reviewImage, {
+          ...headers,
+          Origin: "https://untrusted.example",
+        })
+      ).status,
+      403,
+    );
+    assert.equal((await get(port, reviewImage, headers, "POST")).status, 405);
+    assert.equal(received.length, 6);
     const removed = path.replace(
       /export\?format=json$/,
       "library/purchases/preview",
@@ -285,7 +309,7 @@ test("API proxy accepts only local-origin export/artwork GETs and never supplies
         .status,
       404,
     );
-    assert.equal(received.length, 5);
+    assert.equal(received.length, 6);
   } finally {
     await server?.close();
     await new Promise((resolve) => backend.close(resolve));

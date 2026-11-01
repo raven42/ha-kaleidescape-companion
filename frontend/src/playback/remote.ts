@@ -4,20 +4,23 @@ import { css, html } from "lit";
 export const remoteStyles = css`
   .remote-dialog {
     width: min(390px, calc(100% - 24px));
-    padding: 22px;
+    --dialog-gutter: 16px;
+    padding: var(--dialog-gutter);
     border-radius: 24px;
   }
   .remote-top {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding-bottom: 18px;
+    padding-bottom: 10px;
     border-bottom: 1px solid var(--line);
   }
   .remote-player {
     margin: 0;
     flex: 1;
     color: var(--muted);
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
   .remote-round {
     border-radius: 50%;
@@ -30,7 +33,7 @@ export const remoteStyles = css`
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
-    margin: 22px 0;
+    margin: 12px 0;
   }
   .remote-navigation button,
   .remote-resume {
@@ -39,10 +42,17 @@ export const remoteStyles = css`
   }
   .remote-pad {
     position: relative;
-    width: min(100%, 290px);
+    width: min(
+      100%,
+      clamp(
+        176px,
+        calc(var(--companion-viewport-height, 100dvh) - 390px),
+        260px
+      )
+    );
     aspect-ratio: 1;
     border-radius: 50%;
-    margin: 24px auto;
+    margin: 12px auto;
     background: var(--secondary-background-color, #e0e6ec);
     border: 2px solid var(--line);
   }
@@ -91,11 +101,24 @@ export const remoteStyles = css`
     display: flex;
     justify-content: space-between;
     gap: 8px;
-    padding: 22px 0 16px;
+    padding: 12px 0;
     border-top: 1px solid var(--line);
+    flex-wrap: wrap;
   }
   .remote-resume {
     width: 100%;
+  }
+  @media (max-width: 380px) {
+    .remote-dialog {
+      --dialog-gutter: 12px;
+      width: calc(100% - 16px);
+    }
+    .remote-navigation button {
+      font-size: 13px;
+    }
+    .remote-transport {
+      gap: 4px;
+    }
   }
 `;
 

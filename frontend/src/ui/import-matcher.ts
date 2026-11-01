@@ -36,13 +36,18 @@ export class KaleidescapeImportMatcher extends LitElement {
         list-style: none;
         padding: 0;
         margin: 8px 0;
-        max-height: 240px;
+        max-height: min(
+          240px,
+          calc(var(--companion-viewport-height, 100dvh) * 0.35)
+        );
         overflow: auto;
+        overscroll-behavior: contain;
       }
       .suggestions button {
         width: 100%;
         text-align: left;
         margin-block: 2px;
+        overflow-wrap: anywhere;
       }
       .suggestions button[aria-selected="true"] {
         border-color: var(--accent);
@@ -52,6 +57,12 @@ export class KaleidescapeImportMatcher extends LitElement {
       }
       .actions {
         justify-content: flex-end;
+      }
+      @media (max-width: 600px) {
+        :host {
+          padding: 10px;
+          margin-block: 10px;
+        }
       }
     `,
   ];

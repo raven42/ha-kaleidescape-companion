@@ -9,9 +9,9 @@ export const databaseStyles = css`
   .database-toolbar {
     display: flex;
     flex-wrap: wrap;
-    align-items: start;
-    gap: 12px;
-    padding: 20px;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
   }
   .database-toolbar kaleidescape-transfers {
     margin-left: auto;
@@ -32,7 +32,7 @@ export const databaseStyles = css`
     flex-wrap: wrap;
   }
   .database-filters {
-    padding: 20px;
+    padding: 12px 16px;
     border-bottom: 1px solid var(--line);
     align-items: start;
   }
@@ -75,7 +75,7 @@ export const databaseStyles = css`
   }
   .table-tabs {
     margin: 0;
-    padding: 4px 20px 0;
+    padding: 2px 12px 0;
   }
   .database-detail .editor {
     padding: 0;
@@ -86,6 +86,51 @@ export const databaseStyles = css`
   @media (max-width: 900px) {
     .database-toolbar kaleidescape-transfers {
       margin-left: 0;
+    }
+  }
+  @media (max-width: 700px) {
+    .database {
+      margin-top: 12px;
+    }
+    .database-toolbar {
+      flex-wrap: nowrap;
+      padding: 8px 10px;
+      overflow-x: auto;
+    }
+    .database-toolbar > *,
+    .database-toolbar .actions {
+      flex-shrink: 0;
+      flex-wrap: nowrap;
+    }
+    .database-toolbar button {
+      padding-inline: 8px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .database-filters {
+      padding: 8px 10px;
+      gap: 8px;
+    }
+    .database-filters kaleidescape-database-search {
+      flex-basis: 100%;
+    }
+    .database-filters > label {
+      flex: 1;
+      min-width: 0;
+    }
+    .database-filters select {
+      width: 100%;
+    }
+    .table-tabs {
+      padding-inline: 8px;
+    }
+    .database-options-button {
+      position: sticky;
+      right: 0;
+      margin-left: auto;
+      background: var(--surface);
+      z-index: 1;
+      box-shadow: -8px 0 8px var(--surface);
     }
   }
 `;

@@ -1,4 +1,5 @@
 /** Administrator diagnostics; the server supplies already sanitized structured events. */
+import { responsiveViewport } from "./viewport";
 import { LitElement, css, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
 import { live } from "lit/directives/live.js";
@@ -9,6 +10,11 @@ import { closeButton, dismissBackdrop } from "./dialog";
 import { logMessage, logSource, logDetails, logText } from "./log-format";
 
 export class KaleidescapeLogs extends LitElement {
+  constructor() {
+    super();
+    responsiveViewport(this);
+  }
+
   static properties = {
     client: { attribute: false },
     scope: { attribute: false },
@@ -19,6 +25,22 @@ export class KaleidescapeLogs extends LitElement {
       .log-body {
         padding: 0 20px 20px;
       }
+      section.card {
+        overflow: visible;
+      }
+      .log-header {
+        position: sticky;
+        top: var(--companion-sticky-top, 0px);
+        z-index: 15;
+        background: var(--surface);
+        border-radius: 12px 12px 0 0;
+      }
+      .log-header .log-body {
+        padding-bottom: 0;
+      }
+      .log-inline-source {
+        display: none;
+      }
       th {
         position: sticky;
         top: 0;
@@ -26,7 +48,8 @@ export class KaleidescapeLogs extends LitElement {
       }
       .log-scroll {
         overflow: auto;
-        max-height: 65vh;
+        max-height: var(--entries-height, 65dvh);
+        overscroll-behavior: contain;
       }
       .log-body .filters {
         padding: 0 0 12px;
@@ -51,6 +74,7 @@ export class KaleidescapeLogs extends LitElement {
       .log-message {
         min-width: 250px;
         line-height: 1.45;
+        overflow-wrap: anywhere;
       }
       .log-detail {
         margin-top: 4px;
@@ -97,6 +121,92 @@ export class KaleidescapeLogs extends LitElement {
       .log-status {
         font-size: 12px;
         margin: 12px 0;
+      }
+      .log-footer {
+        position: sticky;
+        bottom: 0;
+        z-index: 14;
+        background: var(--surface);
+        padding-block: 6px max(6px, env(safe-area-inset-bottom));
+        border-top: 1px solid var(--line);
+      }
+      .log-footer .actions {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 2px;
+      }
+      .log-footer button {
+        flex-shrink: 0;
+      }
+      .log-footer .log-status {
+        margin: 0 0 6px;
+      }
+      @media (max-width: 600px) {
+        .log-body {
+          padding-inline: 10px;
+          padding-bottom: 10px;
+        }
+        .log-body .filters {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+          gap: 6px 10px;
+        }
+        .log-body .filters > label:first-child,
+        .log-body .filters > .check {
+          grid-column: 1 / -1;
+          min-width: 0;
+        }
+        .log-body .filters > .check {
+          margin-block: 0;
+          min-height: 32px;
+        }
+        table {
+          table-layout: fixed;
+        }
+        td,
+        th {
+          padding: 8px 5px;
+        }
+        th:first-child,
+        td:first-child {
+          min-width: 0;
+          width: 76px;
+          max-width: none;
+        }
+        th:nth-child(2) {
+          width: 56px;
+        }
+        .log-component,
+        .log-component-heading,
+        .log-source,
+        .log-source-heading {
+          display: none;
+        }
+        .log-message {
+          min-width: 0;
+          font-size: 12px;
+        }
+        .log-time {
+          white-space: normal;
+          font-size: 11px;
+        }
+        .log-inline-source {
+          display: block;
+          font-size: 11px;
+          margin-top: 4px;
+          overflow-wrap: anywhere;
+        }
+        .log-detail dl {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 4px;
+        }
+        .log-detail dd {
+          margin-bottom: 6px;
+        }
+        .log-footer button {
+          font-size: 12px;
+          padding-inline: 10px;
+        }
       }
     `,
   ];
@@ -257,93 +367,99 @@ export class KaleidescapeLogs extends LitElement {
   protected render() {
     if (!this.scope?.permissions.edit) return nothing;
     return html`<section class="card">
-        <div class="card-head">
-          <h2>Operational logs</h2>
-          <button
-            ?disabled=${this.busy}
-            @click=${() => {
-              this.cursors = [];
-              void this.load();
-            }}
-          >
-            Refresh
-          </button>
-          <button
-            ?disabled=${this.busy}
-            @click=${() => this.renderRoot.querySelector<HTMLDialogElement>("#log-options")?.showModal()}
-          >
-            Options
-          </button>
+        <div class="entries-header log-header">
+          <div class="card-head">
+            <h2>Operational logs</h2>
+            <button
+              ?disabled=${this.busy}
+              @click=${() => {
+                this.cursors = [];
+                void this.load();
+              }}
+            >
+              Refresh
+            </button>
+            <button
+              ?disabled=${this.busy}
+              @click=${() => this.renderRoot.querySelector<HTMLDialogElement>("#log-options")?.showModal()}
+            >
+              Options
+            </button>
+          </div>
+          <div class="log-body">
+            ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
+            <div class="filters">
+              <label
+                >Linked resource / request<input
+                  name="filter-reference"
+                  maxlength="64"
+                  placeholder="Paste an alias from Details"
+                  .value=${this.reference}
+                  ?disabled=${this.busy}
+                  @change=${(e: Event) => {
+                    this.reference = (
+                      e.target as HTMLInputElement
+                    ).value.trim();
+                    this.cursors = [];
+                    void this.load();
+                  }}
+              /></label>
+              <label
+                >Level<select
+                  name="filter-level"
+                  .value=${this.level}
+                  ?disabled=${this.busy}
+                  @change=${(e: Event) => {
+                    this.level = (e.target as HTMLSelectElement).value;
+                    this.cursors = [];
+                    void this.load();
+                  }}
+                >
+                  <option value="">All</option>
+                  ${["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"].map((l) => html`<option>${l}</option>`)}
+                </select></label
+              >
+              <label
+                >Subsystem<select
+                  name="filter-logger"
+                  .value=${this.logger}
+                  ?disabled=${this.busy}
+                  @change=${(e: Event) => {
+                    this.logger = (e.target as HTMLSelectElement).value;
+                    this.cursors = [];
+                    void this.load();
+                  }}
+                >
+                  <option value="">All</option>
+                  ${this.page?.loggers.map((l) => html`<option>${l}</option>`)}
+                </select></label
+              >
+              <label class="check"
+                ><input
+                  name="show-hidden"
+                  type="checkbox"
+                  .checked=${this.includeHidden}
+                  ?disabled=${this.busy}
+                  @change=${(e: Event) => {
+                    this.includeHidden = (e.target as HTMLInputElement).checked;
+                    this.cursors = [];
+                    void this.load();
+                  }}
+                />Include cleared logs</label
+              >
+            </div>
+          </div>
         </div>
         <div class="log-body">
-          ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
-          <div class="filters">
-            <label
-              >Linked resource / request<input
-                name="filter-reference"
-                maxlength="64"
-                placeholder="Paste an alias from Details"
-                .value=${this.reference}
-                ?disabled=${this.busy}
-                @change=${(e: Event) => {
-                  this.reference = (e.target as HTMLInputElement).value.trim();
-                  this.cursors = [];
-                  void this.load();
-                }}
-            /></label>
-            <label
-              >Level<select
-                name="filter-level"
-                .value=${this.level}
-                ?disabled=${this.busy}
-                @change=${(e: Event) => {
-                  this.level = (e.target as HTMLSelectElement).value;
-                  this.cursors = [];
-                  void this.load();
-                }}
-              >
-                <option value="">All</option>
-                ${["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"].map((l) => html`<option>${l}</option>`)}
-              </select></label
-            >
-            <label
-              >Subsystem<select
-                name="filter-logger"
-                .value=${this.logger}
-                ?disabled=${this.busy}
-                @change=${(e: Event) => {
-                  this.logger = (e.target as HTMLSelectElement).value;
-                  this.cursors = [];
-                  void this.load();
-                }}
-              >
-                <option value="">All</option>
-                ${this.page?.loggers.map((l) => html`<option>${l}</option>`)}
-              </select></label
-            >
-            <label class="check"
-              ><input
-                name="show-hidden"
-                type="checkbox"
-                .checked=${this.includeHidden}
-                ?disabled=${this.busy}
-                @change=${(e: Event) => {
-                  this.includeHidden = (e.target as HTMLInputElement).checked;
-                  this.cursors = [];
-                  void this.load();
-                }}
-              />Include cleared logs</label
-            >
-          </div>
           <div class="log-scroll">
             <table>
               <thead>
                 <tr>
                   <th>Time</th>
                   <th>Level</th>
-                  <th>Subsystem</th>
+                  <th class="log-component-heading">Subsystem</th>
                   <th>Message</th>
-                  <th>Source</th>
+                  <th class="log-source-heading">Source</th>
                 </tr>
               </thead>
               <tbody>
@@ -362,6 +478,11 @@ export class KaleidescapeLogs extends LitElement {
                       </td>
                       <td class="log-message">
                         ${logMessage(row)}
+                        <small
+                          class="log-inline-source"
+                          title=${logSource(row, true)}
+                          >${logSource(row)}</small
+                        >
                         ${
                           logDetails(row).length
                             ? html`<details class="log-detail">
@@ -404,44 +525,46 @@ export class KaleidescapeLogs extends LitElement {
               </tbody>
             </table>
           </div>
-          <p class="muted log-status">
-            ${this.page?.retained ?? 0} retained ·
-            ${((this.page?.bytes ?? 0) / 1048576).toFixed(2)} / 5 MiB · Dropped:
-            ${this.page?.dropped ?? 0} · Storage/sink failures:
-            ${(this.page?.storage_failures ?? 0) + (this.page?.sink_failures ?? 0)}
-          </p>
+          <footer class="entries-footer log-footer">
+            <p class="muted log-status">
+              ${this.page?.retained ?? 0} retained ·
+              ${((this.page?.bytes ?? 0) / 1048576).toFixed(2)} / 5 MiB ·
+              Dropped: ${this.page?.dropped ?? 0} · Storage/sink failures:
+              ${(this.page?.storage_failures ?? 0) + (this.page?.sink_failures ?? 0)}
+            </p>
 
-          <div class="actions">
-            <button
-              ?disabled=${this.busy || !this.cursors.length}
-              @click=${() => this.load(this.cursors.pop())}
-            >
-              Previous</button
-            ><button
-              ?disabled=${this.busy || !this.page?.before}
-              @click=${() => {
-                this.cursors.push(this.beforeId);
-                void this.load(this.page!.before!);
-              }}
-            >
-              Next</button
-            ><button
-              ?disabled=${this.busy || !this.page}
-              @click=${() => this.download("text")}
-            >
-              Export text</button
-            ><button
-              ?disabled=${this.busy || !this.page}
-              @click=${() => this.download("json")}
-            >
-              Export JSON</button
-            ><button
-              ?disabled=${this.busy || !this.page}
-              @click=${() => this.renderRoot.querySelector<HTMLDialogElement>("#log-clear")?.showModal()}
-            >
-              Clear logs
-            </button>
-          </div>
+            <div class="actions">
+              <button
+                ?disabled=${this.busy || !this.cursors.length}
+                @click=${() => this.load(this.cursors.pop())}
+              >
+                Previous</button
+              ><button
+                ?disabled=${this.busy || !this.page?.before}
+                @click=${() => {
+                  this.cursors.push(this.beforeId);
+                  void this.load(this.page!.before!);
+                }}
+              >
+                Next</button
+              ><button
+                ?disabled=${this.busy || !this.page}
+                @click=${() => this.download("text")}
+              >
+                Export text</button
+              ><button
+                ?disabled=${this.busy || !this.page}
+                @click=${() => this.download("json")}
+              >
+                Export JSON</button
+              ><button
+                ?disabled=${this.busy || !this.page}
+                @click=${() => this.renderRoot.querySelector<HTMLDialogElement>("#log-clear")?.showModal()}
+              >
+                Clear logs
+              </button>
+            </div>
+          </footer>
         </div>
       </section>
       <dialog id="log-clear" class="database-dialog" @click=${dismissBackdrop}>

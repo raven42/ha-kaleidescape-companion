@@ -140,6 +140,10 @@ def public_title(row, memberships, shared=None):
                 "watched_status",
             )
         },
+        "artwork_key": enrichment.get("reviewed", {}).get("poster_key")
+        or row["artwork_key"],
+        "backdrop_key": enrichment.get("reviewed", {}).get("backdrop_key")
+        or enrichment.get("tmdb", {}).get("backdrop_key"),
         "is_favorite": bool(row["is_favorite"]),
         "is_recently_added": bool(row["is_recently_added"]),
         "formats": formats(data),
@@ -585,7 +589,8 @@ def grouped_page(
         representatives = {}
         for batch in batches([row["id"] for row in page]):
             for row in db.execute(
-                "SELECT id,artwork_key,metadata_synced_at,"
+                "SELECT id,coalesce(json_extract(enrichment,'$.reviewed.poster_key'),"
+                "artwork_key) artwork_key,metadata_synced_at,"
                 "json_extract(data,'$.rating') rating,"
                 "json_extract(data,'$.edition') edition "
                 "FROM library WHERE source_id=? AND id IN ("
@@ -598,7 +603,9 @@ def grouped_page(
         variants = {}
         for batch in batches(groups_on_page):
             for row in db.execute(
-                "SELECT id,source_group,artwork_key,"
+                "SELECT id,source_group,coalesce(json_extract(enrichment,"
+                "'$.reviewed.poster_key'),artwork_key) artwork_key,"
+                "json_extract(enrichment,'$.reviewed.poster_key') reviewed_poster,"
                 "json_extract(data,'$.formats') formats,"
                 "json_extract(data,'$.rating') rating,"
                 "json_extract(data,'$.edition') edition,"
@@ -662,7 +669,15 @@ def grouped_page(
                     "years": sorted(
                         {row["year"] for row in rows if row["year"] is not None}
                     )[:100],
-                    "artwork_key": representative["artwork_key"]
+                    "artwork_key": next(
+                        (
+                            row["reviewed_poster"]
+                            for row in rows
+                            if row["reviewed_poster"]
+                        ),
+                        None,
+                    )
+                    or representative["artwork_key"]
                     or next(
                         (row["artwork_key"] for row in rows if row["artwork_key"]), None
                     ),

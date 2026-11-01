@@ -1,4 +1,5 @@
 import { metadataDetails } from "../enrichment/details";
+import "../enrichment/title-scrape";
 /** Read-only, locally cached library browsing; networking to devices stays in HA. */
 import { matches } from "../core/search";
 import { counted } from "../core/text";
@@ -98,8 +99,10 @@ export class KaleidescapeLibrary extends LitElement {
   private resize?: { index: number; start: number; width: number };
   private collectionLocked = false;
   private controlLocked = false;
+  private scrapeLocked = false;
+  private castLimit = 8;
   private get detailsLocked() {
-    return this.collectionLocked || this.controlLocked;
+    return this.collectionLocked || this.controlLocked || this.scrapeLocked;
   }
   private checkingCollection = false;
   confirmNavigation() {
@@ -233,6 +236,9 @@ export class KaleidescapeLibrary extends LitElement {
       this.mode = values.view as "list" | "covers";
       this.entriesPerPage = values.page_size as number | "all";
       this.coverSize = values.cover_size as number;
+      this.castLimit = Number.isInteger(values.cast_limit)
+        ? (values.cast_limit as number)
+        : 8;
       this.display = Object.fromEntries(
         DISPLAY_OPTIONS.map(([key]) => [key, values[key]]),
       ) as typeof this.display;
@@ -309,6 +315,7 @@ export class KaleidescapeLibrary extends LitElement {
     this.covers.cache.dispose();
     this.covers = new CoverQueue();
     this.fuzzySearch = true;
+    this.castLimit = 8;
     this.display = {
       show_titles: true,
       show_format: true,
@@ -627,7 +634,7 @@ export class KaleidescapeLibrary extends LitElement {
     void this.loadVersions();
   }
   private clearVersions() {
-    this.controlLocked = this.collectionLocked = false;
+    this.controlLocked = this.collectionLocked = this.scrapeLocked = false;
     this.versionRequest++;
     this.versions = undefined;
     this.activeVersion = undefined;
@@ -882,12 +889,12 @@ export class KaleidescapeLibrary extends LitElement {
     );
   }
 
-  private cover(row: LibrarySummary) {
+  private cover(row: LibrarySummary, artworkKey = row.artwork_key) {
     return html`<kaleidescape-library-cover
       .client=${this.client}
       .scope=${this.scope}
       .queue=${this.covers}
-      .artworkKey=${row.artwork_key}
+      .artworkKey=${artworkKey}
       .title=${row.title}
     ></kaleidescape-library-cover>`;
   }
@@ -1058,6 +1065,26 @@ export class KaleidescapeLibrary extends LitElement {
           <legend>View type</legend>
           ${(["list", "covers"] as const).map((mode) => html`<label class="check"><input type="radio" name="library_view" value=${mode} .checked=${this.mode === mode} @change=${() => this.setMode(mode)} />${mode === "list" ? "List" : "Cover"}</label>`)}
         </fieldset>
+        <label
+          >Visible cast members<input
+            type="number"
+            name="cast_limit"
+            min="1"
+            max="30"
+            step="1"
+            .value=${String(this.castLimit)}
+            @change=${(event: Event) => {
+              const value = Number((event.target as HTMLInputElement).value);
+              if (Number.isInteger(value) && value >= 1 && value <= 30) {
+                this.castLimit = value;
+                this.preferences?.set({ cast_limit: value });
+                this.requestUpdate();
+              }
+            }} /></label
+        ><small
+          >Billing order, when available. The full cast remains under More
+          credits.</small
+        >
         <label
           >Entries per page<select
             name="library_page_size"
@@ -1302,7 +1329,7 @@ export class KaleidescapeLibrary extends LitElement {
       .version=${row}
       .revision=${this.versions?.revision ?? 0}
       .enabled=${!!this.info?.collection_add_enabled}
-      .blocked=${this.controlLocked || !!this.info?.pending_adds?.length}
+      .blocked=${this.controlLocked || this.scrapeLocked || !!this.info?.pending_adds?.length}
       @collection-lock=${(event: CustomEvent<boolean>) => {
         if (event.detail !== this.collectionLocked) {
           this.collectionLocked = event.detail;
@@ -1331,13 +1358,14 @@ export class KaleidescapeLibrary extends LitElement {
     const row = this.activeVersion;
     const admin = this.scope?.permissions.edit;
     const locked = this.detailsLocked || this.checkingCollection;
+    const backdrop = row?.backdrop_key ?? row?.enrichment?.tmdb?.backdrop_key;
     return html`<dialog
       id="title-dialog"
       @cancel=${(event: Event) => {
         if (this.detailsLocked) event.preventDefault();
       }}
       @click=${dismissBackdrop}
-      class="database-dialog library-dialog movie-dialog"
+      class=${`database-dialog library-dialog movie-dialog inset-dialog${backdrop ? " has-backdrop" : ""}`}
       aria-labelledby="library-title"
       @close=${() => {
         this.selected = undefined;
@@ -1355,6 +1383,7 @@ export class KaleidescapeLibrary extends LitElement {
                 </h2>
                 ${closeButton(() => this.closeDialog("title-dialog"), this.detailsLocked)}
               </div>
+              ${backdrop && row ? html`<div class="movie-hero" aria-hidden="true">${this.cover(row, backdrop)}</div>` : nothing}
               <p class="movie-summary">
                 ${(row?.year ?? group.year) ? this.detailLink("year", String(row?.year ?? group.year)) : "Year unknown"}
                 ·
@@ -1386,7 +1415,30 @@ export class KaleidescapeLibrary extends LitElement {
                           this.requestUpdate();
                         }
                       }}
-                      >${this.renderCollectionAction(row)}</kaleidescape-device-controls
+                      >${this.renderCollectionAction(row)}${
+                        admin
+                          ? html`<kaleidescape-title-scrape
+                              slot="collection"
+                              .client=${this.client}
+                              .scope=${this.scope}
+                              .versionId=${row.id}
+                              .blocked=${this.controlLocked || this.collectionLocked}
+                              @scrape-lock=${(event: CustomEvent<boolean>) => {
+                                if (event.detail !== this.scrapeLocked) {
+                                  this.scrapeLocked = event.detail;
+                                  this.requestUpdate();
+                                }
+                              }}
+                              @metadata-changed=${async () => {
+                                this.scrapeLocked = false;
+                                this.versions = undefined;
+                                await this.load(this.page?.offset ?? 0, true);
+                                await this.loadVersions();
+                                void this.refreshStatus();
+                              }}
+                            ></kaleidescape-title-scrape>`
+                          : nothing
+                      }</kaleidescape-device-controls
                     >`
                   : nothing
               }
@@ -1478,7 +1530,11 @@ export class KaleidescapeLibrary extends LitElement {
                         <dl class="movie-credits">
                           ${[
                             ["Directors", row.directors, "query"],
-                            ["Cast", row.actors.slice(0, 8), "query"],
+                            [
+                              "Cast",
+                              row.actors.slice(0, this.castLimit),
+                              "query",
+                            ],
                             ["Genres", row.genres, "genre"],
                             ["Collections", row.collections, "collection"],
                           ].map(([label, values, key]) =>
@@ -1492,7 +1548,7 @@ export class KaleidescapeLibrary extends LitElement {
                               : nothing,
                           )}
                         </dl>
-                        ${metadataDetails(row, (name) => this.detailLink("query", name))}
+                        ${metadataDetails(row, (name) => this.detailLink("query", name), this.castLimit)}
                         <p>
                           <button
                             class="link"
@@ -1607,24 +1663,26 @@ export class KaleidescapeLibrary extends LitElement {
             /></label>
             <button type="submit" ?disabled=${this.loading}>Search</button>
           </form>
-          <button @click=${this.openFilters}>
-            Filters${activeFilters ? ` (${activeFilters})` : ""}
-          </button>
-          <button ?disabled=${this.loading} @click=${this.clearFilters}>
-            Clear Filter
-          </button>
-          <label
-            >Sort by<select
-              name="library_sort"
-              .value=${String(this.applied.sort)}
-              @change=${(event: Event) => this.sort((event.target as HTMLSelectElement).value)}
+          <div class="library-tools">
+            <button @click=${this.openFilters}>
+              Filters${activeFilters ? ` (${activeFilters})` : ""}
+            </button>
+            <button ?disabled=${this.loading} @click=${this.clearFilters}>
+              Clear Filter
+            </button>
+            <label
+              >Sort by<select
+                name="library_sort"
+                .value=${String(this.applied.sort)}
+                @change=${(event: Event) => this.sort((event.target as HTMLSelectElement).value)}
+              >
+                ${SORTS.map(([key, label]) => html`<option value=${key}>${label}</option>`)}
+              </select></label
             >
-              ${SORTS.map(([key, label]) => html`<option value=${key}>${label}</option>`)}
-            </select></label
-          >
-          <button @click=${() => this.sort(String(this.applied.sort))}>
-            ${this.applied.sort === "random" ? "Randomize" : this.applied.descending ? "Descending ↓" : "Ascending ↑"}
-          </button>
+            <button @click=${() => this.sort(String(this.applied.sort))}>
+              ${this.applied.sort === "random" ? "Randomize" : this.applied.descending ? "Descending ↓" : "Ascending ↑"}
+            </button>
+          </div>
           <button
             aria-haspopup="dialog"
             aria-controls="library-options"
@@ -1765,6 +1823,8 @@ export class KaleidescapeLibrary extends LitElement {
               </div>`
         }
         ${!this.page?.items.length ? html`<p class="empty" role="status">${this.loading ? "Loading library…" : "No cached titles match. Adjust your filters or wait for a library sync."}</p>` : nothing}
+      </section>
+      <footer class="library-footer">
         <div class="pagination">
           <small
             >${counted(this.page?.total ?? 0, "matching title")} ·
@@ -1792,31 +1852,34 @@ export class KaleidescapeLibrary extends LitElement {
             </button>
           </div>
         </div>
-      </section>
-      ${
-        this.info
-          ? html`<footer class="library-status" role="status">
-              <span
-                >${counted(this.info.group_count, "title")} ·
-                ${counted(this.info.collection_count, "collection")}
-                ${admin && this.info.artwork_enabled ? `· Artwork ${((this.info.artwork_bytes ?? 0) / 1048576).toFixed(1)}/${((this.info.artwork_limit_bytes ?? 0) / 1048576).toFixed(0)} MiB` : ""}
-                ${admin && this.display.show_library_cost ? `· Library cost ${this.purchaseAmount("library_cost")}` : ""}
-                · Synced ${this.date(this.info.last_synced_at)}</span
-              >
-              <div class="actions">
-                <button
-                  ?disabled=${this.loading}
-                  @click=${() => {
-                    void this.load();
-                    void this.refreshStatus();
-                  }}
+        ${
+          this.info
+            ? html`<div class="library-status" role="status">
+                <span
+                  >${counted(this.info.group_count, "title")} ·
+                  ${counted(this.info.collection_count, "collection")}
+                  ${admin && this.info.artwork_enabled ? `· Artwork ${((this.info.artwork_bytes ?? 0) / 1048576).toFixed(1)}/${((this.info.artwork_limit_bytes ?? 0) / 1048576).toFixed(0)} MiB` : ""}
+                  ${admin && this.display.show_library_cost ? `· Library cost ${this.purchaseAmount("library_cost")}` : ""}
+                  · Synced ${this.date(this.info.last_synced_at)}</span
                 >
-                  Refresh cached data</button
-                >${admin ? html`<button ?disabled=${this.requesting || (!!this.info?.phase && this.info.phase !== "idle")} @click=${this.sync}>Sync now</button>` : nothing}
-              </div>
-            </footer>`
-          : nothing
-      }
+                <div class="actions">
+                  <button
+                    data-refresh
+                    aria-label="Refresh cached data"
+                    title="Refresh cached data"
+                    ?disabled=${this.loading}
+                    @click=${() => {
+                      void this.load();
+                      void this.refreshStatus();
+                    }}
+                  >
+                    Refresh cached data</button
+                  >${admin ? html`<button ?disabled=${this.requesting || (!!this.info?.phase && this.info.phase !== "idle")} @click=${this.sync}>Sync now</button>` : nothing}
+                </div>
+              </div>`
+            : nothing
+        }
+      </footer>
       ${this.renderOptionsDialog()} ${this.renderFilterDialog()}
       ${this.renderTitleDialog()}
     </section>`;

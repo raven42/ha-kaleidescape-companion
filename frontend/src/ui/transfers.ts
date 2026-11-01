@@ -29,6 +29,7 @@ export class KaleidescapeTransfers extends LitElement {
       }
       table {
         table-layout: fixed;
+        min-width: 620px;
       }
       th:first-child {
         width: 56px;
@@ -58,12 +59,24 @@ export class KaleidescapeTransfers extends LitElement {
         margin-top: 4px;
       }
       .table-wrap {
-        max-height: 55dvh;
+        max-height: min(
+          55dvh,
+          max(120px, calc(var(--companion-viewport-height, 100dvh) - 260px))
+        );
         overflow: auto;
+        overscroll-behavior: contain;
       }
       th {
         position: sticky;
         top: 0;
+      }
+      @media (max-width: 600px) {
+        .database-dialog {
+          width: calc(100% - 16px);
+        }
+        .actions {
+          gap: 6px;
+        }
       }
     `,
   ];

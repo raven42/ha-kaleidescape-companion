@@ -105,7 +105,6 @@ export const calendarStyles = css`
     width: min(760px, calc(100% - 32px));
   }
   .calendar-dialog .card-head {
-    padding: 0;
     align-items: start;
     gap: 16px;
   }
@@ -126,12 +125,31 @@ export const calendarStyles = css`
     overflow-wrap: anywhere;
   }
   @media (max-width: 600px) {
+    .month-grid {
+      min-width: 0;
+    }
+    .weekday,
+    .day {
+      padding-inline: 3px;
+    }
+    .weekday {
+      font-size: 11px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
     .movie-detail {
-      grid-template-columns: 100px minmax(0, 1fr);
-      gap: 12px;
+      display: flow-root;
+      margin-top: 12px;
+      font-size: 13px;
+    }
+    .movie-detail > div {
+      display: contents;
     }
     .movie-detail > kaleidescape-library-cover {
+      float: left;
+      width: 100px;
       height: 150px;
+      margin: 0 12px 10px 0;
     }
     .month-bar {
       gap: 6px;
@@ -139,6 +157,13 @@ export const calendarStyles = css`
     }
     .month-bar h2 {
       font-size: 16px;
+    }
+  }
+  @media (max-width: 380px) {
+    .movie-detail > kaleidescape-library-cover {
+      width: 72px;
+      height: 108px;
+      margin-inline-end: 10px;
     }
   }
 `;

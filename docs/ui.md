@@ -55,6 +55,65 @@ or editing the device. Collection additions have a separate opt-in
 experimental Library launch are separately opted in; progress remains later
 work.
 
+Administrators also have **Scrape title** in Library movie details. It opens an
+enabled-provider chooser, a field comparison/review and paged poster/landscape
+image choices. Apply saves only the selected data; uncertain responses retain an
+exact retry. Normal users have no scrape action or preview access. Library
+Options saves the personal visible-cast count; full cast remains under More
+credits. See the [single-title workflow](enrichment.md#review-a-single-title).
+
+## Responsive layouts and review
+
+The same views serve desktop, tablet and phone screens. Narrow layouts reduce
+decorative headings and padding while retaining the existing actions and
+permissions. Library search and Options stay together above a horizontally
+scrollable filter/sort strip. Pagination and the Library status line share a
+compact sticky footer. Fixed-width Library columns and import-review tables
+scroll inside their own containers instead of widening the page.
+
+Journal and Database keep sticky controls and pagination around independently
+scrollable entries and details. Tablets retain side-by-side panes when there is
+room; phones stack them within the available height. Logs use a compact mobile
+table with source information inside the message and full fields under Details.
+Settings keep Save/Cancel and section tabs together in the sticky header.
+
+Dialogs have a sticky close header and, where applicable, sticky bottom actions.
+Their height follows the visible viewport, including on-screen keyboard changes
+where the browser exposes them. Phone inputs use a readable size, toolbars avoid
+tall button stacks, movie posters shrink beside the text, and the remote's
+direction pad scales to the available height. Long content still scrolls; review
+tables intentionally retain horizontal scrolling. Calendar month columns fit the
+phone width; the existing calendar size/Fit screen controls remain available.
+
+Library title dialogs are anchored 15% below the visible viewport top, leaving
+room for device status bars and safe areas, and scroll within the remaining
+height. Their compact layout follows the dialog width rather than only the
+browser width. On small screens it uses a cached TMDB backdrop when available,
+or a small poster beside the synopsis, then full-width linked credit rows.
+Repeated version badges are omitted from the body on that layout; Library and
+purchase details remain collapsed below the main content. Widescreen artwork
+requires both TMDB metadata and artwork sync; see [setup](enrichment.md).
+
+Automated component tests cover viewport measurements, resize/disconnect
+cleanup, touch suggestion selection, paging, dialog actions and access controls.
+They do not establish rendered browser compatibility. Operator review should
+include phone widths around 360–390 pixels, tablet portrait/landscape around
+768–1024 pixels, and a desktop window, with both HA account roles:
+
+- Scroll Library covers and lists; check sticky search, filter/sort controls,
+  pagination, title details, filters, Options and collection/player dialogs.
+- Check Journal list and calendar, add/edit/delete dialogs and autocomplete with
+  the on-screen keyboard open. Confirm list/detail panes remain usable.
+- As an administrator, review Database search, wide tables, edit/delete and
+  import/export/matching dialogs, then Settings, calendar-sync/transfer dialogs
+  and Logs with long messages and expanded details.
+- Check Now Playing and the remote in portrait and short landscape windows.
+  Verify close/save actions remain reachable, including near device safe areas.
+
+Use the HA sidebar panel or the isolated Vite review page described below. Live
+device and calendar actions require a deliberate operator test; layout review
+does not require sending those actions.
+
 ## Open in Home Assistant
 
 Build the frontend with `npm --prefix frontend run build`, restart HA, and add

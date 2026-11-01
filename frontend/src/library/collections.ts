@@ -30,6 +30,12 @@ export class LibraryCollectionAdd extends LitElement {
         min-height: 44px;
         line-height: 20px;
       }
+      @media (max-width: 600px) {
+        .collection-button {
+          padding-inline: 12px;
+          font-size: 13px;
+        }
+      }
     `,
   ];
   client?: JournalClient;

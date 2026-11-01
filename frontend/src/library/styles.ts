@@ -13,7 +13,10 @@ export const libraryStyles = css`
     gap: 12px;
   }
   .library-toolbar {
-    padding: 20px;
+    padding: 12px 16px;
+  }
+  .library-tools {
+    display: contents;
   }
   .library-toolbar form {
     flex: 1;
@@ -299,13 +302,25 @@ export const libraryStyles = css`
     overflow-wrap: anywhere;
   }
   .library-dialog .playback-layout {
-    padding: 24px 0 0;
+    padding: 16px 0 0;
   }
   .movie-dialog {
     width: min(1080px, calc(100% - 32px));
-    padding: clamp(18px, 3vw, 32px);
+    --dialog-gutter: clamp(12px, 2vw, 24px);
+    padding: var(--dialog-gutter);
     border-radius: 22px;
     --dialog-background: var(--primary-background-color, #f5f7f6);
+    container: movie-modal / inline-size;
+  }
+  .movie-hero {
+    display: none;
+  }
+  @media (max-width: 600px) {
+    .movie-dialog {
+      width: calc(100% - 16px);
+      --dialog-gutter: 12px;
+      border-radius: 16px;
+    }
   }
   .movie-heading {
     display: flex;
@@ -315,7 +330,7 @@ export const libraryStyles = css`
   .movie-heading h2 {
     flex: 1;
     margin: 0;
-    font-size: clamp(25px, 3.2vw, 38px);
+    font-size: clamp(22px, 2.6vw, 32px);
     line-height: 1.2;
     letter-spacing: -0.025em;
   }
@@ -335,11 +350,11 @@ export const libraryStyles = css`
     white-space: nowrap;
   }
   .movie-summary {
-    margin: 12px 0 16px;
+    margin: 10px 0 12px;
     color: var(--muted);
   }
   .movie-heading-badges {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
   }
   .movie-status {
     border-radius: 999px;
@@ -352,10 +367,10 @@ export const libraryStyles = css`
     font-size: 12px;
   }
   .movie-dialog .movie-body {
-    grid-template-columns: minmax(150px, 230px) minmax(0, 1fr);
+    grid-template-columns: minmax(130px, 190px) minmax(0, 1fr);
     align-items: start;
-    padding: clamp(16px, 2vw, 24px);
-    gap: clamp(18px, 3vw, 28px);
+    padding: clamp(12px, 2vw, 20px);
+    gap: clamp(12px, 2vw, 24px);
     background: var(--surface);
     border-radius: 18px;
   }
@@ -372,17 +387,17 @@ export const libraryStyles = css`
     font-weight: 550;
   }
   .movie-synopsis {
-    margin: 14px 0 18px;
+    margin: 10px 0 12px;
   }
   .movie-description hr {
     border: 0;
     border-top: 1px solid var(--line);
-    margin: 24px 0;
+    margin: 16px 0;
   }
   .movie-credits {
     margin: 0;
     display: grid;
-    gap: 18px;
+    gap: 12px;
   }
   .movie-credits dt {
     color: var(--muted);
@@ -399,13 +414,101 @@ export const libraryStyles = css`
     margin-top: 12px;
     font-size: 12px;
   }
-  @media (max-width: 600px) {
+  @container movie-modal (max-width: 600px) {
+    .movie-heading {
+      gap: 8px;
+    }
+    .movie-heading h2 {
+      font-size: 22px;
+    }
+    .movie-hero {
+      display: block;
+      height: clamp(100px, 40cqw, 180px);
+      margin: 0 0 10px;
+      border-radius: 12px;
+      overflow: hidden;
+    }
     .movie-dialog .movie-body {
-      grid-template-columns: minmax(0, 1fr);
+      display: grid;
+      grid-template-columns: 76px minmax(0, 1fr);
+      gap: 8px 12px;
+      padding: 0;
+      background: transparent;
+    }
+    .movie-aside {
+      display: contents;
+    }
+    .movie-description {
+      display: contents;
+    }
+    .movie-description > * {
+      grid-column: 1 / -1;
     }
     .movie-poster {
-      width: min(170px, 55%);
-      justify-self: center;
+      grid-column: 1;
+      grid-row: 1 / span 2;
+      width: 76px;
+      height: 114px;
+      border-radius: 8px;
+    }
+    .movie-description h3 {
+      font-size: 16px;
+      grid-column: 2;
+      grid-row: 1;
+    }
+    .movie-synopsis {
+      grid-column: 2;
+      grid-row: 2;
+      margin: 0 0 4px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .has-backdrop .movie-poster {
+      display: none;
+    }
+    .has-backdrop .movie-description h3,
+    .has-backdrop .movie-synopsis {
+      grid-column: 1 / -1;
+    }
+    .movie-description > .detail-badges {
+      display: none;
+    }
+    .movie-record-details {
+      grid-column: 1 / -1;
+      order: 10;
+      margin-top: 0;
+      border-top: 1px solid var(--line);
+      padding-top: 8px;
+    }
+    .movie-credits {
+      gap: 10px;
+    }
+    .movie-credits > div {
+      display: grid;
+      grid-template-columns: 76px minmax(0, 1fr);
+      gap: 8px;
+    }
+    .movie-credits dt {
+      margin: 0;
+      font-size: 10px;
+      line-height: 1.5;
+    }
+    .movie-summary,
+    .movie-description,
+    .movie-record-details {
+      font-size: 13px;
+    }
+    .movie-credits dd {
+      line-height: 1.5;
+      font-size: 13px;
+    }
+    .movie-summary {
+      margin-block: 8px;
+      line-height: 1.4;
+    }
+    .movie-heading-badges {
+      gap: 6px;
+      margin-bottom: 10px;
     }
   }
   .facet-groups {
@@ -462,11 +565,7 @@ export const libraryStyles = css`
     display: flex;
     gap: 10px;
     align-items: center;
-    position: sticky;
-    bottom: 0;
-    z-index: 7;
-    margin-top: 12px;
-    padding: 9px 14px;
+    padding: 6px 12px;
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 6px;
@@ -484,6 +583,25 @@ export const libraryStyles = css`
   .library-status button {
     padding: 4px 8px;
     font-size: 11px;
+  }
+  .library-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 7;
+    margin-top: 8px;
+    padding-bottom: env(safe-area-inset-bottom);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  .library-footer .pagination {
+    border: 0;
+    padding: 6px 12px;
+  }
+  .library-footer .library-status {
+    border: 0;
+    border-top: 1px solid var(--line);
+    border-radius: 0;
   }
   .library-toolbar > label {
     min-width: 110px;
@@ -582,15 +700,93 @@ export const libraryStyles = css`
     font-size: 12px;
   }
   @media (max-width: 700px) {
-    .library-toolbar form {
-      flex-basis: 100%;
+    .library-page {
+      margin-top: 12px;
     }
-    .library-toolbar > button {
-      flex: 1;
+    .library-toolbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      padding: 8px 10px;
+    }
+    .library-toolbar form {
+      grid-column: 1;
+      grid-row: 1;
+      flex-wrap: nowrap;
+      gap: 6px;
+      min-width: 0;
+    }
+    .library-toolbar form label {
+      min-width: 0;
+    }
+    .library-toolbar > button:last-child {
+      grid-column: 2;
+      grid-row: 1;
+    }
+    .library-toolbar button {
       padding-inline: 8px;
+      white-space: nowrap;
+      font-size: 12px;
+    }
+    .library-tools {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: end;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+    .library-tools > * {
+      flex: 0 0 auto;
+    }
+    .library-tools select {
+      width: 140px;
+    }
+    .library-footer .pagination {
+      gap: 6px;
+      padding-inline: 8px;
+    }
+    .library-footer .pagination small {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .library-footer .actions {
+      flex-wrap: nowrap;
+      gap: 4px;
+    }
+    .library-footer button {
+      min-height: 40px;
+      padding: 6px 8px;
+      font-size: 12px;
+    }
+    .library-status {
+      gap: 6px;
+      padding: 4px 8px;
+    }
+    .library-status [data-refresh] {
+      font-size: 0;
+      width: 40px;
+    }
+    .library-status [data-refresh]::before {
+      content: "↻";
+      font-size: 20px;
     }
     .people-filters {
       grid-template-columns: 1fr;
+    }
+    .facet-groups {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .facet-groups fieldset,
+    .people-filters fieldset {
+      padding: 10px;
+    }
+    .facet-options {
+      max-height: min(180px, 30dvh);
     }
   }
   .has-rating .cover-formats {

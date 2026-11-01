@@ -199,6 +199,7 @@ it("combines a linked movie heading and actions with poster, synopsis and credit
   await flush();
   const dialog = root().querySelector<HTMLDialogElement>("#title-dialog")!;
   expect(dialog.classList.contains("movie-dialog")).toBe(true);
+  expect(dialog.querySelector(".movie-hero")).toBeNull();
   expect(
     dialog.querySelector(".movie-heading h2 .detail-link")!.textContent,
   ).toContain("Voyage to Europa");
@@ -222,6 +223,86 @@ it("combines a linked movie heading and actions with poster, synopsis and credit
     dialog.querySelector(".dialog-close")!.getAttribute("aria-label"),
   ).toBe("Close");
 });
+
+it("persists the visible cast limit while keeping the complete billed cast available", async () => {
+  transport.libraryTitles[0].actors = Array.from(
+    { length: 12 },
+    (_, index) => `Billed performer ${index + 1}`,
+  );
+  const input = root().querySelector<HTMLInputElement>('[name="cast_limit"]')!;
+  input.value = "4";
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+  await flush();
+  expect(transport.uiPreferences.cast_limit).toBe(4);
+  title("Voyage to Europa").click();
+  await flush();
+  const credits = root().querySelector(".movie-description > .movie-credits")!;
+  const cast = [...credits.querySelectorAll("div")].find(
+    (row) => row.querySelector("dt")?.textContent === "Cast",
+  )!;
+  expect(cast.querySelectorAll(".detail-link")).toHaveLength(4);
+  expect(cast.textContent).toContain("Billed performer 1");
+  expect(cast.textContent).not.toContain("Billed performer 5");
+  expect(root().querySelector(".extra-credits")!.textContent).toContain(
+    "Billed performer 12",
+  );
+  expect(root().querySelector("kaleidescape-title-scrape")).not.toBeNull();
+  element.scope = {
+    ...info,
+    library_enabled: true,
+    permissions: { read: true, edit: false, export: false },
+  };
+  await flush();
+  title("Voyage to Europa").click();
+  await flush();
+  expect(root().querySelector("kaleidescape-title-scrape")).toBeNull();
+});
+
+it.each([true, false])(
+  "loads a private cached backdrop in title details for administrator=%s",
+  async (admin) => {
+    const key = "b".repeat(64);
+    transport.libraryTitles[0].enrichment = {
+      tmdb: {
+        provider: "tmdb",
+        provider_id: "42",
+        url: "https://www.themoviedb.org/movie/42",
+        fetched_at: "2025-01-01T00:00:00Z",
+        backdrop_key: key,
+      },
+    };
+    element.scope = {
+      ...info,
+      library_enabled: true,
+      permissions: { read: true, edit: admin, export: admin },
+    };
+    const artwork = vi
+      .spyOn(element.client!, "libraryArtwork")
+      .mockResolvedValue(new Blob(["fictional"], { type: "image/jpeg" }));
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:fictional-backdrop");
+    await flush();
+    title("Voyage to Europa").click();
+    await flush();
+    const dialog = root().querySelector<HTMLDialogElement>("#title-dialog")!;
+    expect(dialog.open).toBe(true);
+    const hero = dialog.querySelector(".movie-hero")!;
+    expect(hero.getAttribute("aria-hidden")).toBe("true");
+    expect(artwork.mock.calls.some((call) => call[1] === key)).toBe(true);
+    expect(
+      hero
+        .querySelector("kaleidescape-library-cover")!
+        .shadowRoot!.querySelector("img")!.src,
+    ).toBe("blob:fictional-backdrop");
+    expect(
+      dialog.querySelector<HTMLDetailsElement>(".movie-record-details")!.open,
+    ).toBe(false);
+    // Provider image URLs never enter the browser; only scoped cached bytes do.
+    expect(dialog.querySelector('[src^="https://"]')).toBeNull();
+    modalClose(root()).click();
+    await flush();
+    expect(dialog.querySelector(".movie-hero")).toBeNull();
+  },
+);
 
 it("switches to tightly spaced resizable covers and opens the same title popup", async () => {
   root()

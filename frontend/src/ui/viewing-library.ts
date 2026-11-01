@@ -28,11 +28,26 @@ export class ViewingLibrary extends LitElement {
         gap: 16px;
         margin-block: 16px;
       }
+      .linked-movie > div {
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
       kaleidescape-library-cover {
         width: 110px;
         height: 165px;
         flex: 0 0 110px;
         border-radius: 6px;
+      }
+      @media (max-width: 600px) {
+        .linked-movie {
+          gap: 10px;
+          margin-block: 10px;
+        }
+        kaleidescape-library-cover {
+          width: 72px;
+          height: 108px;
+          flex-basis: 72px;
+        }
       }
     `,
   ];

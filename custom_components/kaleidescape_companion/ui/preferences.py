@@ -25,6 +25,7 @@ LIBRARY_DEFAULTS = {
     "show_badges": True,
     "show_rating": False,
     "show_library_cost": False,
+    "cast_limit": 8,
     "widths": [360, 90, 260, 150, 140, 210],
     "query": "",
     "sort": "name",
@@ -87,6 +88,8 @@ def validate_library(patch, previous=None):
         raise invalid("Invalid display toggle")
     if type(values["cover_size"]) is not int or not 90 <= values["cover_size"] <= 300:
         raise invalid("Invalid cover size")
+    if type(values["cast_limit"]) is not int or not 1 <= values["cast_limit"] <= 30:
+        raise invalid("Choose 1–30 visible cast members")
     widths = values["widths"]
     if (
         not isinstance(widths, list)

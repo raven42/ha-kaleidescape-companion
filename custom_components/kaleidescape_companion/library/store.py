@@ -198,6 +198,23 @@ def image_type(data: bytes) -> str | None:
     return None
 
 
+def unlink_artwork(db, key):
+    """Clear every managed reference before evicting/deleting cached bytes."""
+    db.execute("UPDATE library SET artwork_key=NULL WHERE artwork_key=?", (key,))
+    db.execute(
+        "UPDATE library SET enrichment=json_remove(enrichment,'$.tmdb.backdrop_key') "
+        "WHERE json_extract(enrichment,'$.tmdb.backdrop_key')=?",
+        (key,),
+    )
+    for field in ("poster_key", "backdrop_key"):
+        db.execute(
+            f"UPDATE library SET enrichment=json_remove(enrichment,"
+            f"'$.reviewed.{field}') WHERE "
+            f"json_extract(enrichment,'$.reviewed.{field}')=?",
+            (key,),
+        )
+
+
 def cache_open(db, directory: Path):
     """Tighten managed files and remove only recognized orphan/temp names."""
     private_directory(directory)
@@ -210,10 +227,7 @@ def cache_open(db, directory: Path):
     with db:
         for key in keys:
             if not (directory / f"{key}.img").exists():
-                db.execute(
-                    "UPDATE library SET artwork_key=NULL WHERE artwork_key=?",
-                    (key,),
-                )
+                unlink_artwork(db, key)
                 db.execute("DELETE FROM library_artwork WHERE cache_key=?", (key,))
                 db.execute("UPDATE library_sources SET revision=revision+1")
                 db.execute("UPDATE schema_metadata SET revision=revision+1")
@@ -229,12 +243,12 @@ def cache_trim(db, directory: Path, budget: int, incoming=0, keep=None):
     ).fetchall():
         if total + incoming <= budget:
             break
-        if row[0] == keep:
+        if row[0] in (keep if isinstance(keep, set) else {keep}):
             continue
         path = directory / f"{row[0]}.img"
         private_file(path)
         evicted.append(path)
-        db.execute("UPDATE library SET artwork_key=NULL WHERE artwork_key=?", (row[0],))
+        unlink_artwork(db, row[0])
         db.execute("DELETE FROM library_artwork WHERE cache_key=?", (row[0],))
         total -= row[1]
     return evicted
@@ -249,8 +263,6 @@ def save_artwork(
     content_type: str,
     budget: int,
 ):
-    if len(data) > MAX_ARTWORK_BYTES or image_type(data) != content_type:
-        raise JournalError("library_artwork", "Cover image was rejected")
     if (
         db.execute(
             "SELECT 1 FROM library WHERE id=? AND source_id=?", (id, source)
@@ -258,19 +270,98 @@ def save_artwork(
         is None
     ):
         raise JournalError("not_found", "Library title is no longer available")
-    key = hashlib.sha256(data).hexdigest()
-    path, temporary = directory / f"{key}.img", directory / f"{uuid4().hex}.tmp"
-    private_file(path)
-    file_existed = path.exists()
+
+    def link(key):
+        db.execute(
+            "UPDATE library SET artwork_key=? WHERE id=? AND source_id=?",
+            (key, id, source),
+        )
+
+    _save_image(db, directory, source, data, content_type, budget, link)
+
+
+def save_backdrop(db, directory, source, id, metadata, data, budget):
+    """Link TMDB artwork to the verified movie group, preserving edition covers."""
+    row = db.execute(
+        "SELECT source_group,title,enrichment FROM library "
+        "WHERE id=? AND source_id=? AND available=1",
+        (id, source),
+    ).fetchone()
+    provider_id = metadata.get("provider_id")
+    if (
+        row is None
+        or not isinstance(provider_id, str)
+        or not re.fullmatch(r"[1-9][0-9]{0,9}", provider_id)
+        or row["title"] != metadata.get("matched_title")
+        or row["source_group"] != metadata.get("matched_group")
+        or metadata.get("provider") != "tmdb"
+        or json.loads(row["enrichment"]).get("tmdb", {}).get("provider_id")
+        != provider_id
+    ):
+        raise JournalError("refresh_required", "Library changed during artwork sync")
+
+    def link(key):
+        db.execute(
+            "UPDATE library SET enrichment=json_set(enrichment,"
+            "'$.tmdb.backdrop_key',?) "
+            "WHERE source_id=? AND source_group=? AND available=1 "
+            "AND json_extract(enrichment,'$.tmdb.provider_id')=?",
+            (key, source, row["source_group"], provider_id),
+        )
+
+    _save_image(db, directory, source, data, image_type(data), budget, link)
+
+
+def _save_image(db, directory, source, data, content_type, budget, link):
+    """Write one content-addressed raster and its references on the worker."""
+    save_images(
+        db,
+        directory,
+        source,
+        [(data, content_type)],
+        budget,
+        lambda keys: link(keys[0]),
+    )
+
+
+def save_images(db, directory, source, images, budget, link):
+    """Commit images, links and an optional receipt atomically; roll back files too."""
+    if not 0 <= len(images) <= 2:
+        raise invalid("Select at most two images")
+    values, created, temporary = {}, set(), None
+    keys = []
+    for data, content_type in images:
+        if (
+            len(data) > MAX_ARTWORK_BYTES
+            or not content_type
+            or image_type(data) != content_type
+        ):
+            raise JournalError("library_artwork", "Cached image was rejected")
+        key = hashlib.sha256(data).hexdigest()
+        values[key] = (data, content_type)
+        keys.append(key)
+    if sum(len(value[0]) for value in values.values()) > budget:
+        raise JournalError("library_artwork", "Selected images exceed the cache budget")
     try:
         with db:
-            existing = db.execute(
-                "SELECT 1 FROM library_artwork WHERE cache_key=?", (key,)
-            ).fetchone()
-            evicted = cache_trim(
-                db, directory, budget, 0 if existing else len(data), keep=key
+            incoming = sum(
+                len(data)
+                for key, (data, _) in values.items()
+                if not db.execute(
+                    "SELECT 1 FROM library_artwork WHERE cache_key=?", (key,)
+                ).fetchone()
             )
-            try:
+            evicted = (
+                cache_trim(db, directory, budget, incoming, keep=set(keys))
+                if images
+                else []
+            )
+            for key, (data, content_type) in values.items():
+                path = directory / f"{key}.img"
+                private_file(path)
+                if not path.exists():
+                    created.add(path)
+                temporary = directory / f"{uuid4().hex}.tmp"
                 descriptor = os.open(
                     temporary,
                     os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
@@ -283,15 +374,14 @@ def save_artwork(
                     "INSERT OR IGNORE INTO library_artwork VALUES (?,?,?,?)",
                     (key, content_type, len(data), now()),
                 )
-                db.execute(
-                    "UPDATE library SET artwork_key=? WHERE id=? AND source_id=?",
-                    (key, id, source),
-                )
-                changed(db, source)
-            finally:
                 temporary.unlink(missing_ok=True)
+                temporary = None
+            link(keys)
+            changed(db, source)
     except BaseException:
-        if not file_existed:
+        if temporary:
+            temporary.unlink(missing_ok=True)
+        for path in created:
             path.unlink(missing_ok=True)
         raise
     for old_path in evicted:
@@ -304,7 +394,10 @@ def read_artwork(db, directory: Path, source: str, key: str):
     row = db.execute(
         """SELECT content_type FROM library_artwork a WHERE cache_key=? AND EXISTS
             (SELECT 1 FROM library WHERE source_id=? AND
-            artwork_key=a.cache_key)""",
+            (artwork_key=a.cache_key OR
+            json_extract(enrichment,'$.tmdb.backdrop_key')=a.cache_key OR
+            json_extract(enrichment,'$.reviewed.poster_key')=a.cache_key OR
+            json_extract(enrichment,'$.reviewed.backdrop_key')=a.cache_key))""",
         (key, source),
     ).fetchone()
     if row is None:

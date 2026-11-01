@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import re
 from urllib.parse import urlencode
 
 from ..models import (
@@ -16,6 +17,15 @@ from ..models import (
 from ..transport import Transport
 
 HOST = "https://api.themoviedb.org"
+
+
+def backdrop_path(value):
+    """Accept a single raster filename, never a URL, directory or query."""
+    return (
+        value
+        if isinstance(value, str) and re.fullmatch(r"/[A-Za-z0-9]{1,128}\.jpg", value)
+        else None
+    )
 
 
 def match(data, title, year):
@@ -75,7 +85,16 @@ def parse(data, movie_id, title, year):
         "url": f"https://www.themoviedb.org/movie/{movie_id}",
         "title": label(data.get("title")),
         "year": actual_year,
-        "actors": people(cast),
+        "actors": people(
+            sorted(
+                [person for person in cast[:2000] if isinstance(person, dict)],
+                key=lambda person: (
+                    person["order"]
+                    if type(person.get("order")) is int and person["order"] >= 0
+                    else 100000
+                ),
+            )
+        ),
         "directors": people(crew, {"Director"}),
         "writers": people(
             crew, {"Writer", "Screenplay", "Story", "Novel", "Characters"}
@@ -90,6 +109,17 @@ def parse(data, movie_id, title, year):
         "audience_votes": data.get("vote_count")
         if type(data.get("vote_count")) is int and data["vote_count"] >= 0
         else None,
+        "backdrop_path": backdrop_path(data.get("backdrop_path")),
+        "synopsis": label(data.get("overview"), 10000),
+        "genres": names(
+            [
+                item.get("name")
+                for item in data.get("genres", [])
+                if isinstance(item, dict)
+            ]
+        )
+        if isinstance(data.get("genres", []), list)
+        else [],
     }
 
 
@@ -98,6 +128,64 @@ class TMDBProvider:
 
     def __init__(self, transport: Transport, credential: str = ""):
         self.transport, self.credential = transport, credential
+
+    async def artwork(self, metadata: Metadata) -> bytes | None:
+        """A bounded w780 backdrop using the shared limiter and no credentials."""
+        path = backdrop_path(metadata.get("backdrop_path"))
+        if not path:
+            return None
+        if metadata.get("provider") != "tmdb":
+            raise ProviderError("provider_identity_mismatch")
+        return await self.transport.get("https://image.tmdb.org/t/p/w780" + path)
+
+    async def images(self, metadata: Metadata) -> list[dict]:
+        movie_id = metadata.get("provider_id", "")
+        if metadata.get("provider") != "tmdb" or not re.fullmatch(
+            r"[1-9][0-9]{0,9}", movie_id
+        ):
+            raise ProviderError("provider_identity_mismatch")
+        data = await self._get(
+            f"/3/movie/{movie_id}/images", {"include_image_language": "en,null"}
+        )
+        if not isinstance(data, dict) or str(data.get("id")) != movie_id:
+            raise ProviderError("provider_identity_mismatch")
+        result = []
+        for field, kind in (("posters", "poster"), ("backdrops", "backdrop")):
+            items = data.get(field, [])
+            if not isinstance(items, list):
+                raise ProviderError("tmdb_format_changed")
+            seen = set()
+            for item in items[:500]:
+                if (
+                    not isinstance(item, dict)
+                    or not (path := backdrop_path(item.get("file_path")))
+                    or path in seen
+                ):
+                    continue
+                seen.add(path)
+                result.append(
+                    {
+                        "kind": kind,
+                        "path": path,
+                        "width": item.get("width")
+                        if type(item.get("width")) is int
+                        else None,
+                        "height": item.get("height")
+                        if type(item.get("height")) is int
+                        else None,
+                    }
+                )
+                if len(seen) == 100:
+                    break
+        return result
+
+    async def image(self, choice: dict, *, thumbnail=False) -> bytes:
+        path = backdrop_path(choice.get("path"))
+        kind = choice.get("kind")
+        if not path or kind not in ("poster", "backdrop"):
+            raise ProviderError("provider_artwork_unavailable")
+        size = "w300" if thumbnail else "w500" if kind == "poster" else "w780"
+        return await self.transport.get(f"https://image.tmdb.org/t/p/{size}" + path)
 
     async def _get(self, path: str, params: dict) -> dict:
         if not self.credential:

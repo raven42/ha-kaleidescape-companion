@@ -704,6 +704,22 @@ retain them.
 
 ## External metadata
 
+Administrator `metadata/title/options` and `metadata/title/preview` accept an
+exact scanned title ID and, for preview, an enabled provider name. Preview is
+read-only and returns an actor-bound review token, allowlisted before/after
+fields and opaque image choices. `metadata/title/apply` accepts a request UUID
+and `{plan_id, fields, images}` selection, never incoming values or URLs. The
+worker validates the group snapshot and commits reviewed overrides, image links
+and an exact-retry receipt atomically. No new schema/table is required.
+
+`GET /api/kaleidescape_companion/{entry_id}/{dataset_id}/metadata/review/{plan_id}/image/{choice}`
+is an administrator-only, no-store thumbnail route. It resolves a staged
+provider choice for the same actor, checks current opt-ins and rejects queries
+and arbitrary paths. The selected provider's fixed destination policy, shared
+request budget and raster limits still apply. These temporary images are not
+exposed by the household artwork endpoint until selected and committed. See
+[review behavior and limits](enrichment.md#review-a-single-title).
+
 Schema 19 adds protected provider-cache JSON to Library. Scoped administrator
 `metadata/status` and `metadata/sync` operate only enabled providers. Cache
 credits augment Library detail/search projections without replacing source

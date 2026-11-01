@@ -1,4 +1,5 @@
 /** Schema-guided administrator inspection with confirmed, revision-bound writes. */
+import { responsiveViewport } from "./viewport";
 import { counted } from "../core/text";
 import { LitElement, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
@@ -44,6 +45,11 @@ const LABELS: Record<string, string> = {
 const MAIN = ["viewings", "sessions", "library"];
 type Row = Record<string, unknown>;
 export class KaleidescapeDatabase extends LitElement {
+  constructor() {
+    super();
+    responsiveViewport(this);
+  }
+
   static properties = {
     client: { attribute: false },
     scope: { attribute: false },

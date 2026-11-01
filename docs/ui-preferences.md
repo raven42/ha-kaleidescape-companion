@@ -18,20 +18,22 @@ user within this dataset. Other household users keep their own choices.
 
 Open **Options** beside Filters/Clear Filter for view type, entries per page,
 cover-art size (in Cover mode), title overlays, format/library/rating badge
-toggles. Random sorting replaces the direction button with **Randomize**; the
-shuffle seed saves with the personal sort and remains stable across pages and
-reloads. Sort/order controls are in the main sticky Library toolbar and save to
-the same personal row. Choices save immediately and the popup stays open while
-adjusting them; Done, Escape or a backdrop click closes it without rolling back
-accepted changes. Titles, format and library badges start enabled. Titles
-controls the cover overlay; list titles always remain available. Format and
-library badge switches apply to both views. Existing preference rows receive new
-toggle defaults on read without changing saved choices or row revisions. Ratings
-always appear in details and rating filters; a lower-right cover rating is
-optional and initially disabled. Options contains detailed freshness/version
-counts, while the sticky footer shows compact counts, administrator artwork use
-and last catalog sync. Search stays sticky and debounces title/actor/director
-matching. The default landing page remains in native HA settings.
+toggles and visible cast count (1–30, initially 8). Cast uses provider billing
+order when known; the full cast remains available under More credits. Random
+sorting replaces the direction button with **Randomize**; the shuffle seed saves
+with the personal sort and remains stable across pages and reloads. Sort/order
+controls are in the main sticky Library toolbar and save to the same personal
+row. Choices save immediately and the popup stays open while adjusting them;
+Done, Escape or a backdrop click closes it without rolling back accepted
+changes. Titles, format and library badges start enabled. Titles controls the
+cover overlay; list titles always remain available. Format and library badge
+switches apply to both views. Existing preference rows receive new toggle
+defaults on read without changing saved choices or row revisions. Ratings always
+appear in details and rating filters; a lower-right cover rating is optional and
+initially disabled. Options contains detailed freshness/version counts, while
+the sticky footer shows compact counts, administrator artwork use and last
+catalog sync. Search stays sticky and debounces title/actor/director matching.
+The default landing page remains in native HA settings.
 
 List and 100 entries are the initial browsing defaults. Page size offers **25,
 100, 1000, All**. Covers rounds numeric targets to a whole number of measured

@@ -6,6 +6,9 @@ const reads = [
   new RegExp(`^${scope}/export\\?format=(json|sqlite)$`),
   /^\/api\/media_player_proxy\/media_player\.[a-z0-9_]{1,255}$/,
   new RegExp(`^${scope}/library/artwork/[a-f0-9]{64}$`),
+  new RegExp(
+    `^${scope}/metadata/review/[a-f0-9-]{36}/image/(poster|backdrop)-[0-9]{1,3}$`,
+  ),
 ];
 const writes = [new RegExp(`^${scope}/import/preview\\?format=(json|sqlite)$`)];
 

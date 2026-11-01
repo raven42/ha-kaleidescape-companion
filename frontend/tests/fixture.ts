@@ -199,6 +199,7 @@ export class FixtureTransport implements Transport {
     view: "list",
     page_size: 100,
     cover_size: 150,
+    cast_limit: 8,
     show_titles: true,
     show_format: true,
     show_badges: true,

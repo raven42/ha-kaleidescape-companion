@@ -46,6 +46,9 @@ class Metadata(TypedDict, total=False):
     audience_score: float | None
     audience_rating: float | None
     audience_votes: int | None
+    backdrop_path: str | None
+    synopsis: str
+    genres: list[str]
 
 
 def label(value, maximum=1000):

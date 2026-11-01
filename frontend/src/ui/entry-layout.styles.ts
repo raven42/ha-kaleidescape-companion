@@ -12,12 +12,12 @@ export const entryLayoutStyles = css`
   .entries-layout {
     display: grid;
     grid-template-columns: minmax(230px, 0.8fr) minmax(0, 1.2fr);
-    height: clamp(340px, calc(100dvh - 300px), 820px);
+    height: var(--entries-height, clamp(240px, calc(100dvh - 240px), 820px));
     min-height: 0;
   }
   .entries-list,
   .entries-detail {
-    padding: 20px;
+    padding: clamp(10px, 2vw, 20px);
     min-width: 0;
     min-height: 0;
   }
@@ -75,7 +75,7 @@ export const entryLayoutStyles = css`
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 10px 16px;
-    padding: 12px 20px;
+    padding: 8px 14px max(8px, env(safe-area-inset-bottom));
     background: var(--surface);
     border-top: 1px solid var(--line);
     border-radius: 0 0 12px 12px;
@@ -91,15 +91,48 @@ export const entryLayoutStyles = css`
   .entries-footer .pagination .actions {
     flex-wrap: nowrap;
   }
-  @media (max-width: 900px) {
+  @media (max-width: 700px) {
     .entries-layout {
       grid-template-columns: minmax(0, 1fr);
-      grid-template-rows: minmax(150px, 0.8fr) minmax(180px, 1.2fr);
-      height: clamp(380px, 76dvh, 820px);
+      grid-template-rows: minmax(80px, 0.85fr) minmax(100px, 1.15fr);
     }
     .entries-detail {
       border-left: 0;
       border-top: 1px solid var(--line);
+    }
+    .entries-header {
+      border-radius: 8px 8px 0 0;
+    }
+    .entries-footer {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 4px 8px;
+      padding-inline: 10px;
+    }
+    .entries-footer > span {
+      grid-column: 1 / -1;
+    }
+    .entries-footer > span,
+    .entries-footer small {
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      font-size: 11px;
+    }
+    .entries-footer .pagination {
+      display: contents;
+    }
+    .entries-footer .actions {
+      gap: 4px;
+    }
+    .entries-footer button {
+      padding-inline: 8px;
+      font-size: 12px;
+    }
+    .entry-list li {
+      gap: 8px;
+      padding: 8px;
     }
   }
 `;

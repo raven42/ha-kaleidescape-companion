@@ -1,9 +1,11 @@
 """Fictional provider enrichment: storage, permissions, credentials and HTTPS gates."""
 
+import hashlib
 import json
 import unittest
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
+from uuid import uuid4
 
 import test_backend as backend
 from homeassistant.helpers.aiohttp_client import DATA_RESOLVER
@@ -18,6 +20,7 @@ from custom_components.kaleidescape_companion.enrichment.sync import MetadataSyn
 from custom_components.kaleidescape_companion.library.store import title_id
 
 ORIGIN = "http://fictional.local"
+IMAGE = b"\xff\xd8\xfffictional-backdrop"
 
 
 class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
@@ -152,6 +155,116 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
             )
         self.assertEqual(error.exception.code, "backup_in_progress")
 
+    async def test_backdrops_share_private_cache_preserve_posters_and_clear_on_eviction(
+        self,
+    ):
+        await self.seed()
+        poster = b"\xff\xd8\xfffictional-poster"
+        await self.repo.async_library_artwork_save(
+            self.source, self.id, poster, "image/jpeg", 1048576
+        )
+        await self.repo.async_enrichment(
+            "save", self.source, self.id, "tmdb", self.data
+        )
+        await self.repo.async_enrichment(
+            "artwork", self.source, self.id, self.data, IMAGE, 1048576
+        )
+        key = hashlib.sha256(IMAGE).hexdigest()
+        page = await self.repo.async_library_versions(self.source, self.id)
+        self.assertEqual(
+            {row["enrichment"]["tmdb"]["backdrop_key"] for row in page["items"]}, {key}
+        )
+        self.assertEqual(
+            next(row for row in page["items"] if row["id"] == self.id)["artwork_key"],
+            hashlib.sha256(poster).hexdigest(),
+        )
+        self.assertEqual(
+            await self.repo.async_library_artwork(self.source, key),
+            (IMAGE, "image/jpeg"),
+        )
+        with self.assertRaises(JournalError):
+            await self.repo.async_library_artwork("another-source", key)
+        # A metadata refresh retains a usable backdrop until a replacement succeeds.
+        await self.repo.async_enrichment(
+            "save", self.source, self.id, "tmdb", self.data
+        )
+        self.assertEqual(
+            await self.repo.async_library_artwork(self.source, key),
+            (IMAGE, "image/jpeg"),
+        )
+        await self.repo.async_library_trim(0)
+        page = await self.repo.async_library_versions(self.source, self.id)
+        self.assertTrue(
+            all(
+                "backdrop_key" not in row["enrichment"]["tmdb"] for row in page["items"]
+            )
+        )
+        with self.assertRaises(JournalError):
+            await self.repo.async_library_artwork(self.source, key)
+
+    async def test_backdrop_rejects_stale_groups_and_non_raster_bytes(self):
+        await self.seed()
+        await self.repo.async_enrichment(
+            "save", self.source, self.id, "tmdb", self.data
+        )
+        for change in (
+            {"matched_group": "remake"},
+            {"provider_id": "43"},
+            {"matched_title": "Another film"},
+        ):
+            with self.assertRaises(JournalError) as error:
+                await self.repo.async_enrichment(
+                    "artwork",
+                    self.source,
+                    self.id,
+                    {**self.data, **change},
+                    IMAGE,
+                    1048576,
+                )
+            self.assertEqual(error.exception.code, "refresh_required")
+        with self.assertRaises(JournalError) as error:
+            await self.repo.async_enrichment(
+                "artwork",
+                self.source,
+                self.id,
+                self.data,
+                b"<svg>unsafe</svg>",
+                1048576,
+            )
+        self.assertEqual(error.exception.code, "library_artwork")
+        self.assertEqual((await self.repo.async_inspect("library_artwork"))["total"], 0)
+
+    async def test_administrator_cache_deletion_clears_group_backdrop_links(self):
+        await self.seed()
+        await self.repo.async_enrichment(
+            "save", self.source, self.id, "tmdb", self.data
+        )
+        await self.repo.async_enrichment(
+            "artwork", self.source, self.id, self.data, IMAGE, 1048576
+        )
+        page = await self.repo.async_inspect("library_artwork")
+        key = page["items"][0]["cache_key"]
+        await self.repo.async_database_mutate(
+            str(uuid4()),
+            {
+                "table": "library_artwork",
+                "operation": "delete",
+                "rows": [{"key": {"cache_key": key}, "token": page["row_tokens"][0]}],
+                "patch": {},
+                "expected_revision": page["dataset_revision"],
+                "confirmation": "DELETE",
+            },
+            self.admin.id,
+        )
+        versions = await self.repo.async_library_versions(self.source, self.id)
+        self.assertTrue(
+            all(
+                "backdrop_key" not in row["enrichment"]["tmdb"]
+                for row in versions["items"]
+            )
+        )
+        self.assertFalse((self.repo._artwork_directory / (key + ".img")).exists())
+
     async def test_admin_opt_in_status_and_credential_are_isolated(self):
         user = SimpleNamespace(id="reader", is_active=True, is_admin=False)
         for op in ("metadata/status", "metadata/sync"):
@@ -175,16 +288,107 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(ValueError):
                 config.validate({"metadata_requests_per_second": value}, {})
 
-    def sync(self):
+    def sync(self, **options):
         entry = SimpleNamespace(
             data={
                 "library_enabled": True,
                 "metadata_tmdb_enabled": True,
                 "metadata_tmdb_credential": "fictional-key",
+                **options,
             },
             options={},
         )
         return MetadataSync(self.hass, self.entry.runtime_data.repository, entry)
+
+    async def test_backdrop_https_gates_credentials_routes_and_bodies(
+        self,
+    ):
+        url = "https://image.tmdb.org/t/p/w780/FictionalBackdrop.jpg"
+        sync = self.sync()
+        sync.session = Mock()
+        with self.assertRaisesRegex(ProviderError, "disabled"):
+            await sync._get(url, {})
+        sync.session.get.assert_not_called()
+        sync = self.sync(library_sync_artwork=True)
+        sync.session = Mock()
+        for path, headers in (
+            (url + "?x=1", {}),
+            (url.replace("w780", "original"), {}),
+            (url, {"Authorization": "Bearer fictional"}),
+            (url.replace(".jpg", ".svg"), {}),
+        ):
+            with self.assertRaisesRegex(ProviderError, "destination"):
+                await sync._get(path, headers)
+        sync.session.get.assert_not_called()
+        self.hass.data[DATA_RESOLVER] = SimpleNamespace(
+            resolve=AsyncMock(return_value=[{"host": "1.1.1.1"}])
+        )
+        self.hass.data[DATA_RESOLVER].resolve.return_value = [{"host": "127.0.0.1"}]
+        with self.assertRaisesRegex(ProviderError, "destination"):
+            await sync._get(url, {})
+        sync.session.get.assert_not_called()
+        self.hass.data[DATA_RESOLVER].resolve.return_value = [{"host": "1.1.1.1"}]
+        response = SimpleNamespace(
+            status=200, content_type="image/jpeg", content_length=None, headers={}
+        )
+
+        async def chunks(size):
+            yield IMAGE
+
+        response.content = SimpleNamespace(iter_chunked=chunks)
+        context = sync.session.get.return_value
+        context.__aenter__ = AsyncMock(return_value=response)
+        context.__aexit__ = AsyncMock(return_value=False)
+        self.assertEqual(await sync._get(url, {}), IMAGE)
+        self.assertNotIn("Authorization", sync.session.get.call_args.kwargs["headers"])
+        self.assertEqual(
+            sync.session.get.call_args.kwargs["server_hostname"], "image.tmdb.org"
+        )
+        response.content_type = "text/html"
+        with self.assertRaisesRegex(ProviderError, "content_type"):
+            await sync._get(url, {})
+        response.content_type = "image/jpeg"
+
+        async def invalid(size):
+            yield b"<svg>unsafe</svg>"
+
+        response.content.iter_chunked = invalid
+        with self.assertRaisesRegex(ProviderError, "content_type"):
+            await sync._get(url, {})
+
+    async def test_sync_fetches_backdrops_only_when_artwork_enabled(self):
+        await self.seed()
+        for artwork in (False, True):
+            sync = self.sync(library_sync_artwork=artwork)
+            row = {
+                "id": "fictional-id",
+                "source_group": "movie",
+                "title": "Fictional Film",
+                "year": 2025,
+                "href": None,
+                "enrichment": {},
+            }
+            repository = SimpleNamespace(
+                logger=self.repo.logger,
+                async_enrichment=AsyncMock(
+                    side_effect=[[row], None, None] if artwork else [[row], None]
+                ),
+            )
+            sync.repository = repository
+            sync.providers.metadata = AsyncMock(return_value=self.data)
+            sync.providers.artwork = AsyncMock(return_value=IMAGE)
+            session = SimpleNamespace(detach=Mock())
+            with patch(
+                "custom_components.kaleidescape_companion.enrichment.sync.async_create_clientsession",
+                return_value=session,
+            ):
+                await sync._run(True)
+            self.assertIsNone(sync.error)
+            self.assertEqual(sync.providers.artwork.await_count, int(artwork))
+            if artwork:
+                self.assertEqual(
+                    repository.async_enrichment.call_args.args[0], "artwork"
+                )
 
     async def test_fixed_https_pins_dns_and_refuses_private_or_redirected_responses(
         self,

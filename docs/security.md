@@ -130,6 +130,13 @@ files remain the operator's responsibility. The [UI guide](ui.md) documents
 behavior and test limitations. The explicit layout review fixture uses fictional
 data and is excluded from the packaged panel.
 
+Responsive toolbars, split panes and dialogs preserve those same actions,
+confirmations and retry protections. Their viewport measurements are transient
+CSS values; they add no storage, identifiers or network requests. Compact mobile
+logs retain structured details and exports behind the existing administrator
+checks. Rendered phone/tablet geometry still requires operator review; simulated
+layout tests do not prove that every browser keeps actions visible.
+
 ## Household read access and sensors
 
 | Capability                                                                          | Active regular/read-only HA user     | Active administrator                 |
@@ -1389,7 +1396,8 @@ common `Providers.metadata` API dispatches immutable movie queries to separate
 provider adapters. Their injected transport shares rate/body limits; adding an
 adapter cannot extend the HA destination allowlist or enable access by itself.
 The HA adapter allows only fixed HTTPS store/movie/robots and TMDB v3 movie
-routes, rejects redirects and non-public/mixed DNS answers, pins a public
+routes, plus `image.tmdb.org/t/p/w780/<alphanumeric>.jpg` for optional
+backdrops. It rejects redirects and non-public/mixed DNS answers, pins a public
 literal with the original Host/TLS server name, verifies TLS, ignores
 environment proxies, uses no cookies and caps bodies at 4 MiB with a 20-second
 request budget. Credentials go only to TMDB. Response types/encoding are
@@ -1409,6 +1417,21 @@ Writes serialize on the existing worker with source/group/year stale checks and
 the Library storage limit. Private SQLite/HA backups can contain this cache;
 portable JSON/imports exclude it. Existing cached reads remain after opt-out.
 
+Backdrop retrieval requires both the TMDB and artwork opt-ins. Its fixed-size
+HTTPS image route allows only a bounded JPEG filename, no query, redirect,
+credential header or arbitrary provider URL. The same public DNS pinning, shared
+rate limiter, cancellation/readiness checks and 4 MiB response limit apply; the
+JPEG header must match its content type. Storage checks the matched
+source/group/provider identity and uses the existing private content-addressed
+file cache and budget. Public version metadata exposes only a validated hash
+key; the existing active-user, dataset/source-scoped artwork route serves bytes.
+Device covers remain independent. Eviction, missing-file recovery and manual
+cache deletion clear backdrop references too. No schema or credential export
+change is introduced; portable imports still exclude enrichment. Regression
+tests cover opt-ins, destination/credential rejection, body validation, stale
+identities, source isolation and cache cleanup. Real TMDB and browser review
+remain operator steps.
+
 TMDB secrets use HA's native configuration storage, with a blank password
 selector, explicit removal and no prefilled credential in either settings UI.
 They stay outside journal storage, public responses, diagnostics, exports,
@@ -1417,6 +1440,40 @@ headers and provider/account bootstrap bodies must never be logged. The locally
 bundled approved TMDB logo and notice add no remote browser image request.
 Public interfaces and API terms can change; unsupported responses fail closed.
 See the [provider guide](enrichment.md) for research and operator validation.
+
+## Reviewed title enrichment
+
+Single-title scraping adds administrator-only `metadata/title/options`,
+`metadata/title/preview` and `metadata/title/apply` operations. Previews change
+no Library data and expose only known fields and opaque gallery choices. At most
+eight actor-bound reviews remain in memory for 20 minutes, each covering at most
+100 movie versions. Up to twelve bounded requests may wait for three worker
+slots; those clients and automatic scans share the same provider rate budget. No
+credentials, purchase/viewing data or network addresses are sent as movie
+metadata.
+
+The authenticated administrator-only thumbnail route
+`metadata/review/{plan_id}/image/{choice}` resolves an owned staged image,
+rechecks role/configuration/runtime after retrieval, refuses query strings and
+sends `no-store`/`nosniff` JPEG bytes. It cannot proxy a supplied URL. Review
+clients alone may use fixed TMDB `/3/movie/<id>/images` and
+`image.tmdb.org/t/p/{w300,w500,w780}/<alphanumeric>.jpg` paths; ordinary scans
+retain their existing routes. Both artwork and TMDB opt-ins are required for
+those images. Preview object URLs are transient and revoked on page/dialog or
+account changes. Vite forwards only this explicit scoped GET route to local HA,
+with its existing origin/method checks and caller authentication.
+
+Apply imports field names and image choice IDs, never caller values, identities,
+SQL or paths. The worker binds the actor/source/plan and checks the whole
+movie-group snapshot, preserving concurrent changes. Selected fields live in
+protected reviewed-enrichment JSON, leaving raw scan facts and purchase/viewing
+records untouched. Image files, links, metadata and the actor/payload-bound UUID
+receipt commit together with rollback cleanup. Exact retries can read a durable
+receipt after review expiry/reload. Cache eviction/deletion clears reviewed
+image references. Backup/unload cancels review networking and drops transient
+plans; uncertain UI writes retain a guarded retry. Tests use fictional providers
+and verify denial, revocation, stale reviews, selected-only imports, atomic
+failure, cached-image isolation, billing order and preview-route restrictions.
 
 ## Modal dismissal consistency
 

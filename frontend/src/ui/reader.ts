@@ -1,4 +1,5 @@
 import "./journal-calendar";
+import { responsiveViewport } from "./viewport";
 import "./viewing-library";
 import { counted } from "../core/text";
 /** Household journal/library browsing; no management or export requests. */
@@ -17,6 +18,11 @@ import type { JournalOptionsValue } from "./journal-options";
 import type { LibraryCriterion } from "../library/criteria";
 
 export class KaleidescapeReader extends LitElement {
+  constructor() {
+    super();
+    responsiveViewport(this);
+  }
+
   static properties = {
     hass: { attribute: false },
     client: { attribute: false },
@@ -393,55 +399,57 @@ export class KaleidescapeReader extends LitElement {
                             ).value;
                           }}
                       /></label>
-                      <label
-                        >Status<select
-                          name="filter_status"
-                          .value=${this.filterStatus}
-                          ?disabled=${this.loading || !this.scope}
-                          @change=${(event: Event) => {
-                            this.filterStatus = (
-                              event.target as HTMLSelectElement
-                            ).value;
-                          }}
+                      <div class="journal-filter-tools">
+                        <label
+                          >Status<select
+                            name="filter_status"
+                            .value=${this.filterStatus}
+                            ?disabled=${this.loading || !this.scope}
+                            @change=${(event: Event) => {
+                              this.filterStatus = (
+                                event.target as HTMLSelectElement
+                              ).value;
+                            }}
+                          >
+                            <option value="">All</option>
+                            <option value="completed">Completed</option>
+                            <option value="partial">Partial</option>
+                          </select></label
                         >
-                          <option value="">All</option>
-                          <option value="completed">Completed</option>
-                          <option value="partial">Partial</option>
-                        </select></label
-                      >
-                      <label ?hidden=${this.journalView === "calendar"}
-                        >Sort by<select
-                          name="journal_sort"
-                          .value=${this.sort}
+                        <label ?hidden=${this.journalView === "calendar"}
+                          >Sort by<select
+                            name="journal_sort"
+                            .value=${this.sort}
+                            ?disabled=${this.loading || !this.scope}
+                            @change=${(event: Event) => {
+                              this.sort = (
+                                event.target as HTMLSelectElement
+                              ).value;
+                              this.page = 1;
+                              this.history = [];
+                              void this.load();
+                            }}
+                          >
+                            <option value="completed_at">
+                              Completed date · partial first
+                            </option>
+                            <option value="title">Title</option>
+                          </select></label
+                        >
+                        <button
+                          type="button"
+                          ?hidden=${this.journalView === "calendar"}
                           ?disabled=${this.loading || !this.scope}
-                          @change=${(event: Event) => {
-                            this.sort = (
-                              event.target as HTMLSelectElement
-                            ).value;
+                          @click=${() => {
+                            this.descending = !this.descending;
                             this.page = 1;
                             this.history = [];
                             void this.load();
                           }}
                         >
-                          <option value="completed_at">
-                            Completed date · partial first
-                          </option>
-                          <option value="title">Title</option>
-                        </select></label
-                      >
-                      <button
-                        type="button"
-                        ?hidden=${this.journalView === "calendar"}
-                        ?disabled=${this.loading || !this.scope}
-                        @click=${() => {
-                          this.descending = !this.descending;
-                          this.page = 1;
-                          this.history = [];
-                          void this.load();
-                        }}
-                      >
-                        ${this.descending ? "Descending ↓" : "Ascending ↑"}
-                      </button>
+                          ${this.descending ? "Descending ↓" : "Ascending ↑"}
+                        </button>
+                      </div>
                       <button ?disabled=${this.loading || !this.scope}>
                         Search
                       </button>

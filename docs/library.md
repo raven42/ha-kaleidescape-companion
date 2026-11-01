@@ -258,6 +258,14 @@ authenticated active-user endpoint with opaque keys; never through `www` or
 directly from metadata URLs. Only JPEG/PNG/WebP magic/type pairs are accepted.
 Python does not decode images.
 
+Opt-in [TMDB enrichment](enrichment.md) can add widescreen backdrops when Sync
+artwork is enabled. They share this budget and authenticated endpoint, using a
+protected reference in each movie group's enrichment JSON. They do not replace
+edition covers. Mobile title dialogs start 15% below the visible screen top,
+with a compact backdrop or small-poster fallback, linked credit rows and
+collapsed Library/purchase details. The top offset includes device safe areas;
+long content scrolls within the remaining height.
+
 HA backups pause sync and drain accepted worker/file writes before copying
 storage. SQLite exports include library metadata and cache indexes, but not
 artwork files. JSON format 5 includes portable title metadata, purchase dates

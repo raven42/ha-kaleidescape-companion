@@ -1,6 +1,7 @@
 """Worker-owned provider cache and exact source-group links."""
 
 import json
+import re
 from datetime import UTC, datetime
 
 from ..core.models import JournalError
@@ -8,6 +9,16 @@ from ..library.store import changed
 
 PROVIDERS = {"kaleidescape", "tmdb"}
 CREDITS = ("actors", "directors", "writers", "producers", "studios")
+REVIEW_FIELDS = (
+    *CREDITS,
+    "synopsis",
+    "genres",
+    "distributor",
+    "critic_score",
+    "audience_score",
+    "audience_rating",
+    "audience_votes",
+)
 FIELDS = (
     "provider",
     "provider_id",
@@ -21,15 +32,36 @@ FIELDS = (
     "audience_rating",
     "audience_votes",
     "fetched_at",
+    "synopsis",
+    "genres",
 )
 
 
 def public(value):
     """Never project arbitrary imported/system JSON keys into household responses."""
     return {
-        provider: {key: item[key] for key in FIELDS if key in item}
+        provider: {
+            **{key: item[key] for key in FIELDS if key in item},
+            **(
+                {
+                    key: item[key]
+                    for key in ("poster_key", "backdrop_key")
+                    if isinstance(item.get(key), str)
+                    and re.fullmatch(r"[a-f0-9]{64}", item[key])
+                }
+            ),
+            **(
+                {
+                    "providers": [
+                        name for name in item.get("providers", []) if name in PROVIDERS
+                    ]
+                }
+                if provider == "reviewed"
+                else {}
+            ),
+        }
         for provider, item in value.items()
-        if provider in PROVIDERS and isinstance(item, dict)
+        if provider in PROVIDERS | {"reviewed"} and isinstance(item, dict)
     }
 
 
@@ -42,8 +74,15 @@ def effective(data, enrichment):
     for provider in ("kaleidescape", "tmdb"):
         item = enrichment.get(provider, {})
         for key in CREDITS:
-            values = [*(data.get(key) or []), *(item.get(key) or [])]
+            values = (
+                [*(item.get(key) or []), *(data.get(key) or [])]
+                if provider == "tmdb" and key == "actors"
+                else [*(data.get(key) or []), *(item.get(key) or [])]
+            )
             data[key] = list(dict.fromkeys(values))[:500]
+    for key in REVIEW_FIELDS:
+        if key in enrichment.get("reviewed", {}):
+            data[key] = enrichment["reviewed"][key]
     return json.dumps(data)
 
 
@@ -115,7 +154,14 @@ def save(db, source, title_id, provider, metadata):
             (source, row["source_group"]),
         ).fetchall():
             value = json.loads(member["enrichment"])
+            previous = value.get(provider, {})
             value[provider] = json.loads(encoded)
+            if (
+                provider == "tmdb"
+                and previous.get("provider_id") == metadata.get("provider_id")
+                and previous.get("backdrop_key")
+            ):
+                value[provider]["backdrop_key"] = previous["backdrop_key"]
             db.execute(
                 "UPDATE library SET enrichment=? WHERE id=?",
                 (json.dumps(value), member["id"]),

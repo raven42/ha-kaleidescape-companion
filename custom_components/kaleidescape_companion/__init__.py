@@ -13,6 +13,7 @@ from .core.migrations import UnsupportedSchemaError
 from .core.models import JournalError
 from .core.repository import JournalRepository
 from .core.runtime import KaleidescapeConfigEntry, KaleidescapeRuntime, loaded_runtimes
+from .enrichment.http import MetadataImageView
 from .enrichment.sync import MetadataSync
 from .library.config import origin
 from .library.store import source_id
@@ -92,6 +93,7 @@ async def async_setup_entry(
             hass.http.register_view(JournalExportView())
             hass.http.register_view(JournalImportView())
             hass.http.register_view(LibraryArtworkView())
+            hass.http.register_view(MetadataImageView())
             hass.data[f"{DOMAIN}.api_registered"] = True
         config = dict(entry.options or entry.data)
         runtime.controls = PlaybackControls(hass, repository, config)

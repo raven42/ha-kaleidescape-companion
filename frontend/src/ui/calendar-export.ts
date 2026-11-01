@@ -1,6 +1,6 @@
 /** Explicit historical export; UUID retries never resubmit a second job. */
 import { counted } from "../core/text";
-import { LitElement, css, html, nothing } from "lit";
+import { LitElement, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
 import type {
   JournalClient,
@@ -18,17 +18,7 @@ export class CalendarExport extends LitElement {
     scope: { attribute: false },
     disabled: { type: Boolean },
   };
-  static styles = [
-    styles,
-    css`
-      /* This compact confirmation scrolls as one surface, without a painted footer. */
-      .dialog-footer {
-        position: static;
-        padding: 0;
-        background: transparent;
-      }
-    `,
-  ];
+  static styles = styles;
   client?: JournalClient;
   scope?: Scope;
   disabled = false;

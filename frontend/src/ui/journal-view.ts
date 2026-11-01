@@ -77,14 +77,17 @@ export const journalStyles = css`
     align-items: center;
     flex-wrap: wrap;
     gap: 10px;
-    padding: 20px;
+    padding: 12px 16px;
   }
   .journal-toolbar kaleidescape-journal-options {
     margin-left: auto;
   }
   .journal-filters {
-    padding: 20px;
+    padding: 12px 16px;
     border-block: 1px solid var(--line);
+  }
+  .journal-filter-tools {
+    display: contents;
   }
   .journal .card-head {
     padding: 0;
@@ -153,7 +156,53 @@ export const journalStyles = css`
   }
   @media (max-width: 600px) {
     .journal-summary {
-      grid-template-columns: minmax(0, 1fr);
+      gap: 10px;
+      margin-block: 12px;
+    }
+    .journal {
+      margin-top: 12px;
+    }
+    .journal-toolbar {
+      padding: 8px 10px;
+      gap: 8px;
+      flex-wrap: nowrap;
+    }
+    .journal-toolbar button {
+      padding-inline: 10px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .journal-filters {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      padding: 8px 10px;
+    }
+    .journal-filters > label:first-child {
+      min-width: 0;
+      grid-column: 1;
+      grid-row: 1;
+    }
+    .journal-filters > button:last-child {
+      grid-column: 2;
+      grid-row: 1;
+    }
+    .journal-filter-tools {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: end;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+    .journal-filter-tools > * {
+      flex: 0 0 auto;
+    }
+    .journal-filter-tools select {
+      max-width: 170px;
+    }
+    .journal-title {
+      font-size: 18px;
     }
   }
 `;

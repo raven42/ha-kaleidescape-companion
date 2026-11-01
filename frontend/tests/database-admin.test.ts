@@ -253,13 +253,18 @@ it("uses scoped schema completion, validation feedback and literal/structured se
     field.dispatchEvent(new Event("input"));
     await search.updateComplete;
     expect(search.shadowRoot!.textContent).toContain("IS NOT NULL");
-    [
+    const suggestion = [
       ...search.shadowRoot!.querySelectorAll<HTMLButtonElement>(
         '[role="option"]',
       ),
-    ]
-      .find((option) => option.textContent === "IS NOT NULL")!
-      .click();
+    ].find((option) => option.textContent === "IS NOT NULL")!;
+    const touch = new PointerEvent("pointerdown", {
+      pointerType: "touch",
+      cancelable: true,
+    });
+    suggestion.dispatchEvent(touch);
+    expect(touch.defaultPrevented).toBe(true);
+    suggestion.click();
     await search.updateComplete;
     expect(field.value).toBe("title IS NOT NULL ");
   }

@@ -55,8 +55,12 @@ export class DatabaseSearch extends LitElement {
       z-index: 20;
       inset-inline: 0;
       top: 100%;
-      max-height: 220px;
+      max-height: min(
+        220px,
+        calc(var(--companion-viewport-height, 100dvh) * 0.35)
+      );
       overflow: auto;
+      overscroll-behavior: contain;
       background: var(--surface);
       border: 1px solid var(--line);
       box-shadow: 0 4px 12px #0004;
@@ -72,6 +76,31 @@ export class DatabaseSearch extends LitElement {
     }
     button[aria-selected="true"] {
       background: var(--line);
+    }
+    .query-guide {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .query-guide summary {
+      cursor: pointer;
+      width: fit-content;
+      min-height: 24px;
+    }
+    .query-guide small {
+      display: block;
+      line-height: 1.5;
+      margin-top: 6px;
+    }
+    @media (max-width: 600px) {
+      input {
+        font-size: 16px;
+        min-height: 44px;
+      }
+      .suggestions button {
+        min-height: 44px;
+        overflow-wrap: anywhere;
+      }
     }
     small {
       display: block;
@@ -219,7 +248,7 @@ export class DatabaseSearch extends LitElement {
             aria-controls="query-suggestions"
             aria-activedescendant=${this.open && choices.length ? `query-option-${this.active}` : nothing}
             aria-invalid=${this.invalid}
-            aria-describedby="query-help"
+            aria-describedby=${this.message ? "query-result query-help" : "query-help"}
             maxlength="2000"
             autocomplete="off"
             .value=${this.value}
@@ -280,11 +309,17 @@ export class DatabaseSearch extends LitElement {
             }}
           /><slot name="actions"></slot>
         </div>
-        ${this.open && choices.length ? html`<div class="suggestions" id="query-suggestions" role="listbox">${choices.map((choice, index) => html`<button type="button" role="option" id=${`query-option-${index}`} aria-selected=${this.active === index} tabindex="-1" @mousedown=${(event: MouseEvent) => event.preventDefault()} @click=${() => this.choose(choice)}>${choice}</button>`)}</div>` : nothing}
+        ${this.open && choices.length ? html`<div class="suggestions" id="query-suggestions" role="listbox">${choices.map((choice, index) => html`<button type="button" role="option" id=${`query-option-${index}`} aria-selected=${this.active === index} tabindex="-1" @pointerdown=${(event: PointerEvent) => event.preventDefault()} @click=${() => this.choose(choice)}>${choice}</button>`)}</div>` : nothing}
       </div>
-      <small id="query-help" class=${this.invalid ? "error" : ""} role="status"
-        >${this.message || "Text searches every column. Conditions: purchased_on IS NULL · actors CONTAINS 'name' · title LIKE 'Star%'. Tab accepts a suggestion; Enter searches."}</small
-      >`;
+      ${this.message ? html`<small id="query-result" class=${this.invalid ? "error" : ""} role="status">${this.message}</small>` : nothing}
+      <details class="query-guide">
+        <summary>Query help</summary>
+        <small id="query-help"
+          >Text searches every column. Conditions: purchased_on IS NULL · actors
+          CONTAINS 'name' · title LIKE 'Star%'. Tab accepts a suggestion; Enter
+          searches.</small
+        >
+      </details>`;
   }
 }
 if (!customElements.get("kaleidescape-database-search"))

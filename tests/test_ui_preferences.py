@@ -103,6 +103,10 @@ class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
                 )
         with self.assert_error("invalid_request"):
             validate_library({"year": ["2025 OR 1=1"]})
+        for value in (0, 31, True, "8"):
+            with self.assert_error("invalid_request"):
+                validate_library({"cast_limit": value})
+        self.assertEqual(validate_library({"cast_limit": 10})["cast_limit"], 10)
 
     async def test_legacy_seed_runs_once_and_users_have_independent_sticky_values(self):
         await self.repository.async_seed_ui_preferences(

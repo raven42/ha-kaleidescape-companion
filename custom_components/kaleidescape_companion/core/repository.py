@@ -361,13 +361,34 @@ class JournalRepository:
         return await self._call(library_store.detail_candidates, self._db(), source)
 
     async def async_enrichment(self, operation, *args):
-        from ..enrichment import store
+        from ..enrichment import review_store, store
 
         if operation == "candidates":
             return await self._call(self._search_read, store.candidates, *args)
         if operation == "save":
             return await self._call(self._library_write, store.save, *args)
+        if operation == "artwork":
+            return await self._call(self._library_write, self._save_backdrop, *args)
+        if operation == "review_target":
+            return await self._call(self._search_read, review_store.target, *args)
+        if operation == "review_lookup":
+            return await self._call(self._search_read, review_store.lookup, *args)
+        if operation == "review_apply":
+            return await self._call(
+                self._library_write, self._apply_metadata_review, *args
+            )
         raise ValueError("Unknown metadata operation")
+
+    def _apply_metadata_review(self, db, *args):
+        from ..enrichment.review_store import apply
+
+        return apply(db, self._artwork_directory, *args)
+
+    def _save_backdrop(self, db, source, id, metadata, data, budget):
+        private_directory(self._artwork_directory)
+        library_store.save_backdrop(
+            db, self._artwork_directory, source, id, metadata, data, budget
+        )
 
     async def async_control(self, operation, *args):
         from ..playback import control_store

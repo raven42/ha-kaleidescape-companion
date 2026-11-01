@@ -213,3 +213,30 @@ it("fetches library covers only from the scoped opaque-key endpoint", async () =
   ).rejects.toMatchObject({ code: "invalid_request" });
   expect(download).toHaveBeenCalledTimes(1);
 });
+
+it("fetches review images through an authenticated actor-bound route without URL inputs", async () => {
+  const transport = new FixtureTransport(),
+    client = transport.client();
+  const fetch = vi.spyOn(transport, "fetchWithAuth").mockResolvedValue(
+    new Response(new Uint8Array([255, 216, 255]), {
+      headers: { "Content-Type": "image/jpeg" },
+    }),
+  );
+  const signal = new AbortController().signal,
+    plan = "12345678-1234-4234-9234-123456789abc";
+  expect(
+    (await client.titleScrapeImage(info, plan, "poster-1", signal)).type,
+  ).toBe("image/jpeg");
+  expect(fetch.mock.calls[0][0]).toContain(
+    `/metadata/review/${plan}/image/poster-1`,
+  );
+  await expect(
+    client.titleScrapeImage(
+      info,
+      plan,
+      "https://untrusted.example/image.jpg",
+      signal,
+    ),
+  ).rejects.toMatchObject({ code: "invalid_request" });
+  expect(fetch).toHaveBeenCalledTimes(1);
+});

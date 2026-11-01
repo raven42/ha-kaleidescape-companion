@@ -141,8 +141,11 @@ def mutation(db, directory, request, actor, data, calendar=None):
                 sources.update(
                     item[0]
                     for item in db.execute(
-                        "SELECT DISTINCT source_id FROM library WHERE artwork_key=?",
-                        (row["cache_key"],),
+                        "SELECT DISTINCT source_id FROM library WHERE artwork_key=? "
+                        "OR json_extract(enrichment,'$.tmdb.backdrop_key')=? "
+                        "OR json_extract(enrichment,'$.reviewed.poster_key')=? "
+                        "OR json_extract(enrichment,'$.reviewed.backdrop_key')=?",
+                        (row["cache_key"],) * 4,
                     )
                 )
             rows.append((row, where, values))
@@ -420,7 +423,6 @@ def delete_row(db, table, row):
             (row["source_id"], row["name"]),
         )
     elif table == "library_artwork":
-        db.execute(
-            "UPDATE library SET artwork_key=NULL WHERE artwork_key=?",
-            (row["cache_key"],),
-        )
+        from ..library.store import unlink_artwork
+
+        unlink_artwork(db, row["cache_key"])

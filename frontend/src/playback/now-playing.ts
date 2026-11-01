@@ -33,7 +33,7 @@ export class KaleidescapeNowPlaying extends LitElement {
     styles,
     css`
       .now-playing {
-        min-height: min(65vh, 680px);
+        min-height: min(60dvh, 640px);
       }
       .playback-layout {
         grid-template-columns: minmax(160px, 30%) minmax(0, 1fr);
@@ -45,7 +45,7 @@ export class KaleidescapeNowPlaying extends LitElement {
         width: 100%;
         height: auto;
         aspect-ratio: 2 / 3;
-        max-height: 62vh;
+        max-height: min(56dvh, 560px);
         background: var(--secondary-background-color, #222);
       }
       .cover img {
@@ -62,10 +62,36 @@ export class KaleidescapeNowPlaying extends LitElement {
         font-size: clamp(16px, 1.6vw, 24px);
       }
       @media (max-width: 560px) {
+        .now-playing {
+          min-height: 0;
+          margin-top: 12px;
+        }
         .playback-layout {
-          grid-template-columns: minmax(90px, 32%) minmax(0, 1fr);
-          gap: 18px;
-          padding: 16px;
+          grid-template-columns: minmax(76px, 28%) minmax(0, 1fr);
+          gap: 12px;
+          padding: 12px;
+        }
+        .playback-detail h3 {
+          font-size: clamp(21px, 5vw, 28px);
+          margin-block: 8px;
+        }
+        .playback-detail > p {
+          font-size: 14px;
+        }
+      }
+      @media (max-height: 540px) {
+        .now-playing {
+          min-height: 0;
+        }
+        .cover {
+          max-height: 52dvh;
+        }
+        .playback-layout {
+          padding: 12px;
+          gap: 20px;
+        }
+        .playback-detail h3 {
+          font-size: 26px;
         }
       }
     `,

@@ -1,4 +1,5 @@
 import "./journal-calendar";
+import { responsiveViewport } from "./viewport";
 import "./viewing-library";
 /** Admin journal management, shared by the HA panel and isolated Vite preview. */
 import { counted } from "../core/text";
@@ -71,6 +72,11 @@ const PAGES = [
 type Page = (typeof PAGES)[number]["id"];
 
 export class KaleidescapePanel extends LitElement {
+  constructor() {
+    super();
+    responsiveViewport(this);
+  }
+
   static properties = {
     hass: { attribute: false },
     client: { attribute: false },
@@ -916,51 +922,55 @@ export class KaleidescapePanel extends LitElement {
                   this.searchText = (event.target as HTMLInputElement).value;
                 }}
             /></label>
-            <label
-              >Status<select
-                name="filter_status"
-                .value=${this.filterStatus}
-                ?disabled=${blocked}
-                @change=${(event: Event) => {
-                  this.filterStatus = (event.target as HTMLSelectElement).value;
-                }}
+            <div class="journal-filter-tools">
+              <label
+                >Status<select
+                  name="filter_status"
+                  .value=${this.filterStatus}
+                  ?disabled=${blocked}
+                  @change=${(event: Event) => {
+                    this.filterStatus = (
+                      event.target as HTMLSelectElement
+                    ).value;
+                  }}
+                >
+                  <option value="">All</option>
+                  <option value="partial">Partial</option>
+                  <option value="completed">Completed</option>
+                </select></label
               >
-                <option value="">All</option>
-                <option value="partial">Partial</option>
-                <option value="completed">Completed</option>
-              </select></label
-            >
-            <label ?hidden=${this.journalView === "calendar"}
-              >Sort by<select
-                name="journal_sort"
-                .value=${this.sort}
+              <label ?hidden=${this.journalView === "calendar"}
+                >Sort by<select
+                  name="journal_sort"
+                  .value=${this.sort}
+                  ?disabled=${blocked}
+                  @change=${(event: Event) => {
+                    this.sort = (event.target as HTMLSelectElement).value;
+                    this.page = 1;
+                    this.history = [];
+                    void this.loadList();
+                  }}
+                >
+                  <option value="completed_at">
+                    Completed date · partial first
+                  </option>
+                  <option value="title">Title</option>
+                </select></label
+              >
+              <button
+                type="button"
+                ?hidden=${this.journalView === "calendar"}
                 ?disabled=${blocked}
-                @change=${(event: Event) => {
-                  this.sort = (event.target as HTMLSelectElement).value;
+                @click=${() => {
+                  this.descending = !this.descending;
                   this.page = 1;
                   this.history = [];
                   void this.loadList();
                 }}
               >
-                <option value="completed_at">
-                  Completed date · partial first
-                </option>
-                <option value="title">Title</option>
-              </select></label
-            >
-            <button
-              type="button"
-              ?hidden=${this.journalView === "calendar"}
-              ?disabled=${blocked}
-              @click=${() => {
-                this.descending = !this.descending;
-                this.page = 1;
-                this.history = [];
-                void this.loadList();
-              }}
-            >
-              ${this.descending ? "Descending ↓" : "Ascending ↑"}
-            </button>
+                ${this.descending ? "Descending ↓" : "Ascending ↑"}
+              </button>
+            </div>
             <button ?disabled=${blocked}>Search</button>
           </form>
         </div>

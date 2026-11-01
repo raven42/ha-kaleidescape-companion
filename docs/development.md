@@ -296,6 +296,14 @@ intended for recording; tests use fictional states and send no controls. Project
 validation and frontend checks remain part of the default VS Code **Check all**
 task and CI.
 
+Shared dialog and split-pane sizing lives in `frontend/src/ui/styles.ts`,
+`entry-layout.styles.ts` and `viewport.ts`. The viewport controller measures
+sticky controls and the visible viewport without persisting layout state or
+requesting data. Simulated geometry and touch-selection regressions accompany
+the existing paging/dialog tests. Follow the
+[responsive review checklist](ui.md#responsive-layouts-and-review) for real
+phone/tablet rendering; automated DOM tests do not replace that review.
+
 ## Working practices
 
 The [security policy](security.md) applies to every development phase. Review

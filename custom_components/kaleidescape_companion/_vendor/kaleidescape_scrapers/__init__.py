@@ -1,6 +1,13 @@
 """Reusable, transport-injected movie metadata API and provider adapters."""
 
-from .client import MetadataProvider, Providers
+from .client import ArtworkProvider, MetadataProvider, Providers
 from .models import Metadata, MovieQuery, ProviderError
 
-__all__ = ["Metadata", "MetadataProvider", "MovieQuery", "ProviderError", "Providers"]
+__all__ = [
+    "ArtworkProvider",
+    "Metadata",
+    "MetadataProvider",
+    "MovieQuery",
+    "ProviderError",
+    "Providers",
+]

@@ -114,7 +114,17 @@ it.each(["list", "calendar"])(
       ...picker.querySelectorAll<HTMLButtonElement>('[role="option"]'),
     ];
     expect(suggestions).toHaveLength(2);
-    suggestions.find((option) => option.textContent?.includes("2026"))!.click();
+    const suggestion = suggestions.find((option) =>
+      option.textContent?.includes("2026"),
+    )!;
+    const touch = new PointerEvent("pointerdown", {
+      pointerType: "touch",
+      cancelable: true,
+    });
+    suggestion.dispatchEvent(touch);
+    // Keep the picker open until selection, including touch/pen focus changes.
+    expect(touch.defaultPrevented).toBe(true);
+    suggestion.click();
     save();
     await vi.waitFor(() => expect(root.textContent).toContain("Entry saved."));
     const update = transport.calls.find((call) =>

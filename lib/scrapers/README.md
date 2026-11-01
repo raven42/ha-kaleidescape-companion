@@ -9,12 +9,12 @@ and persistence in the calling application.
 lib/scrapers/
   pyproject.toml
   src/kaleidescape_scrapers/
-    client.py    Common Providers.metadata API and MetadataProvider protocol
+    client.py    Common metadata/artwork API and adapter protocols
     transport.py Injected fetch, shared rate limit and cancellation
     models.py    MovieQuery, Metadata and bounded identity helpers
     providers/
       store.py   Experimental public store adapter/parser and robots policy
-      tmdb.py    Official TMDB search/details/credits adapter/parser
+      tmdb.py    Official TMDB search/details/credits and optional backdrop
   tests/         Offline fictional provider contracts
 ```
 
@@ -37,6 +37,8 @@ providers = Providers(
     tmdb_credential=credential_from_your_secret_store,
 )
 metadata = await providers.metadata("tmdb", MovieQuery("Your Movie", 2025))
+# Optional widescreen raster; omitted when the matched movie has no backdrop.
+image = await providers.artwork("tmdb", metadata)
 # Requires the exact, existing store reference for that same movie/year:
 metadata = await providers.metadata(
     "kaleidescape",
@@ -68,6 +70,36 @@ Bearer header; v3 keys use TMDB's documented query parameter. Do not log request
 URLs, headers, exceptions containing HTTP requests, or credentials. Returned
 metadata never contains authentication fields.
 
+For an explicit image-selection workflow, call
+`choices = await providers.images("tmdb", metadata)` after matching a movie. The
+gallery uses TMDB's fixed `/3/movie/<id>/images` route and returns up to 100
+validated JPEG paths per poster/backdrop category with optional dimensions.
+`await providers.image("tmdb", choice, thumbnail=True)` fetches a `w300`
+preview; the default fetch uses `w500` for posters and `w780` for backdrops. All
+image requests are credential-free and use the shared limiter. Providers without
+a gallery return an empty list; the store currently has no image adapter.
+Applications must bind choices to the matched movie/actor and never accept
+caller-supplied paths as choices.
+
+TMDB cast names are sorted by the explicit `order` field, then deduplicated,
+retaining up to 500 names. Unknown order keeps source order after billed names.
+Display limits belong to the calling application, not the provider parser.
+`Providers(..., budget=other_client.transport.budget)` lets independently owned
+sessions share one rate budget, including stricter robots delays and cancelled
+waits, without sharing credentials or HTTP session state.
+
+The optional `Providers.artwork(provider, metadata)` API returns raster bytes or
+`None` for an unsupported/missing image. TMDB's bounded `backdrop_path` comes
+from its matched movie details. The adapter constructs only
+`https://image.tmdb.org/t/p/w780/<alphanumeric>.jpg`, shares the same request
+limiter, and sends no credential to the image service. It rejects URLs,
+directories, queries and non-JPEG extensions instead of fetching them. Allow
+that fixed HTTPS destination in the injected transport only when artwork is
+opted in. The host application must verify the raster signature/type, store
+bytes within its cache budget, and keep source IDs and references consistent.
+Adapters can implement the optional `ArtworkProvider.artwork(metadata)`
+capability without changing metadata-only providers.
+
 Matching requires one normalized title and release year. Ambiguous TMDB search
 results, missing years and mismatched store pages fail closed. No provider ID,
 poster, price, title or edition replaces the caller's existing identity. Results
@@ -90,6 +122,7 @@ TMDB uses its
 [movie search](https://developer.themoviedb.org/reference/search-movie),
 [movie details](https://developer.themoviedb.org/reference/movie-details), and
 [credits](https://developer.themoviedb.org/reference/movie-credits). Follow its
+[image construction guide](https://developer.themoviedb.org/docs/image-basics),
 [authentication](https://developer.themoviedb.org/docs/authentication-application),
 [rate limits](https://developer.themoviedb.org/docs/rate-limiting), and
 [attribution requirements](https://developer.themoviedb.org/docs/faq). Provider

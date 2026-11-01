@@ -41,6 +41,35 @@ def page(movie=None):
 
 
 class ParsersTest(unittest.TestCase):
+    def test_tmdb_cast_uses_billing_order_and_limits_untrusted_fields(self):
+        data = tmdb.parse(
+            {
+                "id": 42,
+                "title": TITLE,
+                "release_date": "2025-01-01",
+                "credits": {
+                    "cast": [
+                        {"name": "Supporting Example", "order": 9},
+                        {"name": "Lead Example", "order": 0},
+                        {"name": "Second Example", "order": 1},
+                        {"name": "Unknown billing"},
+                    ],
+                    "crew": [],
+                },
+                "genres": [{"name": "Adventure"}],
+                "overview": "Fictional synopsis",
+            },
+            42,
+            TITLE,
+            YEAR,
+        )
+        self.assertEqual(
+            data["actors"],
+            ["Lead Example", "Second Example", "Supporting Example", "Unknown billing"],
+        )
+        self.assertEqual(data["genres"], ["Adventure"])
+        self.assertEqual(data["synopsis"], "Fictional synopsis")
+
     def test_store_extracts_credits_and_scores_without_account_bootstrap(self):
         data = store.parse(page(), PATH, TITLE, YEAR)
         self.assertEqual(data["actors"], ["Avery Example"])
@@ -109,6 +138,7 @@ class ParsersTest(unittest.TestCase):
                 },
                 "vote_average": 8.2,
                 "vote_count": 123,
+                "backdrop_path": "/FictionalBackdrop.jpg",
             },
             42,
             TITLE,
@@ -117,9 +147,91 @@ class ParsersTest(unittest.TestCase):
         self.assertEqual(data["audience_rating"], 8.2)
         self.assertNotIn("critic_score", data)
         self.assertEqual(data["writers"], ["A Writer"])
+        self.assertEqual(data["backdrop_path"], "/FictionalBackdrop.jpg")
 
 
 class ProviderClientTest(unittest.IsolatedAsyncioTestCase):
+    async def test_gallery_keeps_fixed_paths_and_distinguishes_image_sizes(self):
+        async def fetch(url, headers):
+            if "/images?" in url:
+                return json.dumps(
+                    {
+                        "id": 42,
+                        "posters": [
+                            {
+                                "file_path": "/PosterExample.jpg",
+                                "width": 500,
+                                "height": 750,
+                            },
+                            {"file_path": "https://evil.example/image.jpg"},
+                            {"file_path": "/PosterExample.jpg"},
+                        ],
+                        "backdrops": [{"file_path": "/HeroExample.jpg"}],
+                    }
+                ).encode()
+            return b"\xff\xd8\xfffictional"
+
+        fetch = AsyncMock(side_effect=fetch)
+        client = Providers(fetch, requests_per_second=10, tmdb_credential="fictional")
+        metadata = {"provider": "tmdb", "provider_id": "42"}
+        images = await client.images("tmdb", metadata)
+        self.assertEqual([item["kind"] for item in images], ["poster", "backdrop"])
+        for image in images:
+            await client.image("tmdb", image, thumbnail=True)
+            self.assertIn("/w300/", fetch.call_args.args[0])
+            self.assertEqual(fetch.call_args.args[1], {})
+            await client.image("tmdb", image)
+            self.assertIn(
+                "/w500/" if image["kind"] == "poster" else "/w780/",
+                fetch.call_args.args[0],
+            )
+        self.assertEqual(await client.images("kaleidescape", metadata), [])
+
+    async def test_multiple_clients_share_one_rate_budget(self):
+        times = []
+
+        async def fetch(url, headers):
+            times.append(asyncio.get_running_loop().time())
+            return b"{}"
+
+        first = Providers(fetch, requests_per_second=10)
+        second = Providers(fetch, requests_per_second=10, budget=first.transport.budget)
+        await asyncio.gather(
+            first.transport.get("one"),
+            second.transport.get("two"),
+            first.transport.get("three"),
+        )
+        self.assertGreaterEqual(times[1] - times[0], 0.09)
+        self.assertGreaterEqual(times[2] - times[1], 0.09)
+
+    async def test_backdrop_uses_fixed_raster_path_shared_transport_and_no_secret(self):
+        fetch = AsyncMock(return_value=b"\xff\xd8\xfffictional")
+        client = Providers(
+            fetch, requests_per_second=10, tmdb_credential="fictional-secret"
+        )
+        metadata = {"provider": "tmdb", "backdrop_path": "/FictionalBackdrop.jpg"}
+        self.assertEqual(
+            await client.artwork("tmdb", metadata), b"\xff\xd8\xfffictional"
+        )
+        fetch.assert_awaited_once_with(
+            "https://image.tmdb.org/t/p/w780/FictionalBackdrop.jpg", {}
+        )
+        for path in (
+            None,
+            "https://evil.example/image.jpg",
+            "/../image.jpg",
+            "/image.svg",
+            "/image.jpg?key=private",
+            "/%2fimage.jpg",
+        ):
+            self.assertIsNone(
+                await client.artwork("tmdb", {**metadata, "backdrop_path": path})
+            )
+        self.assertIsNone(await client.artwork("kaleidescape", metadata))
+        self.assertEqual(fetch.await_count, 1)
+        with self.assertRaisesRegex(ProviderError, "unknown_provider"):
+            await client.artwork("missing", metadata)
+
     async def test_tmdb_supports_bearer_and_v3_key_without_returning_them(self):
         for credential in ("fictional-read-token", "a" * 32):
             calls = []
