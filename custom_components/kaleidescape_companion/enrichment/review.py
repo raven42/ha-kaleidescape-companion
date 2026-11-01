@@ -13,6 +13,7 @@ from .._vendor.kaleidescape_scrapers import MovieQuery, ProviderError, Providers
 from ..core.models import JournalError, invalid
 from ..core.security import is_active_admin
 from ..library.store import image_type
+from .matching import REASONS, reference
 from .review_store import REVIEW_FIELDS, selection
 
 REVIEW_SECONDS = 20 * 60
@@ -52,14 +53,7 @@ class TitleReviews:
                 {
                     "id": provider,
                     "label": label,
-                    "available": bool(
-                        target["year"]
-                        and (
-                            target["href"]
-                            if provider == "kaleidescape"
-                            else self.parent.config.get("metadata_tmdb_credential")
-                        )
-                    ),
+                    "available": self.enabled(provider),
                 }
                 for provider, label in (
                     ("kaleidescape", "Kaleidescape store"),
@@ -72,6 +66,7 @@ class TitleReviews:
                 )
             ],
             "artwork_enabled": bool(self.parent.config.get("library_sync_artwork")),
+            "title": target["title"],
         }
 
     @asynccontextmanager
@@ -95,7 +90,7 @@ class TitleReviews:
         task = asyncio.current_task()
         self.jobs[task] = child
         try:
-            async with asyncio.timeout(75), self.slots:
+            async with asyncio.timeout(180), self.slots:
                 self.ready(actor)
                 child.session = child.create_session()
                 with self.parent.repository.logger.context(
@@ -142,27 +137,7 @@ class TitleReviews:
             )
         return plan
 
-    async def preview(self, actor, title, provider):
-        self.ready(actor)
-        if not self.enabled(provider):
-            raise JournalError(
-                "metadata_disabled", "Enable and configure this provider first"
-            )
-        target = await self.parent.repository.async_enrichment(
-            "review_target", self.parent.source, title
-        )
-        async with self.worker(actor, title) as client:
-            result = await client.providers.metadata(
-                provider,
-                MovieQuery(target["title"], target["year"], target["href"] or ""),
-            )
-            images = (
-                await client.providers.images(provider, result)
-                if self.parent.config.get("library_sync_artwork")
-                else []
-            )
-        if len(json.dumps(result).encode()) > 128 * 1024:
-            raise JournalError("metadata_limit", "Provider metadata is too large")
+    def remember(self, actor, target, provider, **values):
         self.plans = {
             key: value
             for key, value in self.plans.items()
@@ -171,18 +146,82 @@ class TitleReviews:
         if len(self.plans) >= 8:
             del self.plans[next(iter(self.plans))]
         token = str(uuid4())
-        choices = {
-            f"{image['kind']}-{index}": image for index, image in enumerate(images)
-        }
         self.plans[token] = {
             "id": token,
             "actor": actor.id,
             "expires": time.monotonic() + REVIEW_SECONDS,
             "target": target,
             "provider": provider,
-            "metadata": result,
-            "images": choices,
+            **values,
         }
+        return token
+
+    async def search(self, actor, title, provider, query):
+        from .review_matches import search
+
+        return await search(self, actor, title, provider, query)
+
+    async def preview(self, actor, title, provider, search_id="", choice=""):
+        self.ready(actor)
+        if not self.enabled(provider):
+            raise JournalError(
+                "metadata_disabled", "Enable and configure this provider first"
+            )
+        target = await self.parent.repository.async_enrichment(
+            "review_target", self.parent.source, title
+        )
+        result = None
+        reason = "provider_identity_mismatch"
+        if search_id or choice:
+            from .review_matches import selected
+
+            staged, result = selected(self, actor, title, provider, search_id, choice)
+            if target["snapshot"] != staged["snapshot"]:
+                raise JournalError("refresh_required", "Movie changed; search again")
+        async with self.worker(actor, title) as client:
+            if result is None:
+                try:
+                    saved = target["matches"].get(provider)
+                    result = (
+                        await client.providers.resolve(provider, saved)
+                        if saved
+                        else await client.providers.metadata(
+                            provider,
+                            MovieQuery(
+                                target["title"], target["year"], target["href"] or ""
+                            ),
+                        )
+                    )
+                except ProviderError as error:
+                    reason = str(error)
+                    if reason not in REASONS:
+                        raise
+                    result = None
+            if result is None:
+                images = []
+            else:
+                images = (
+                    await client.providers.images(provider, result)
+                    if self.parent.config.get("library_sync_artwork")
+                    else []
+                )
+        if result is None:
+            await self.parent.mark_conflict(target, provider, reason)
+            return await self.search(actor, title, provider, target["title"][:200])
+        if len(json.dumps(result).encode()) > 128 * 1024:
+            raise JournalError("metadata_limit", "Provider metadata is too large")
+        choices = {
+            f"{image['kind']}-{index}": image for index, image in enumerate(images)
+        }
+        token = self.remember(
+            actor,
+            target,
+            provider,
+            kind="review",
+            metadata=result,
+            images=choices,
+            match=reference(result),
+        )
         fields = {
             key: {"before": target["current"].get(key), "after": result[key]}
             for key in REVIEW_FIELDS
@@ -191,6 +230,7 @@ class TitleReviews:
         return {
             "plan_id": token,
             "title": target["title"],
+            "matched": {"title": result["title"], "year": result["year"]},
             "fields": fields,
             "images": [
                 {
@@ -225,6 +265,8 @@ class TitleReviews:
         if cached is not None:
             return cached
         plan = self.plan(actor, data["plan_id"])
+        if plan.get("kind") != "review":
+            raise invalid("Select a match and review its data first")
         images = {}
         if data["images"]:
             if not self.parent.config.get("library_sync_artwork"):

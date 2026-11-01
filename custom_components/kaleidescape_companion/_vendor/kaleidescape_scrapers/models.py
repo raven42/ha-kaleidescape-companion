@@ -48,6 +48,7 @@ class Metadata(TypedDict, total=False):
     audience_votes: int | None
     backdrop_path: str | None
     poster_path: str | None
+    poster_url: str | None
     synopsis: str
     genres: list[str]
 

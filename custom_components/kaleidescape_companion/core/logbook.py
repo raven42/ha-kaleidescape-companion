@@ -139,10 +139,16 @@ def query(db, filters):
         if filters.get(key) is not None:
             sql.append(f"id{sign}?")
             args.append(filters[key])
-    for key, value in (("level", level), ("logger", logger)):
-        if value:
-            sql.append(f"{key}=?")
-            args.append(value)
+    if level:
+        # The enum is ordered from DEBUG through CRITICAL. Use a fixed list,
+        # rather than lexical ordering of the stored level names.
+        levels = [v.value for v in Level]
+        selected = levels[levels.index(level) :]
+        sql.append("level IN (" + ",".join("?" for _ in selected) + ")")
+        args.extend(selected)
+    if logger:
+        sql.append("logger=?")
+        args.append(logger)
     rows = db.execute(
         "SELECT id,body FROM operation_logs WHERE "
         + " AND ".join(sql)

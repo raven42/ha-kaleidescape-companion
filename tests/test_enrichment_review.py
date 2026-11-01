@@ -129,7 +129,14 @@ class TitleReviewTest(unittest.IsolatedAsyncioTestCase):
             self.source,
             self.id,
             "tmdb",
-            {**self.data, "actors": ["Later automatic credit"]},
+            {
+                **self.data,
+                "actors": ["Later automatic credit"],
+                "matched_reference": {
+                    key: self.data[key]
+                    for key in ("provider_id", "title", "year", "url")
+                },
+            },
         )
         versions = await self.repo.async_library_versions(self.source, self.id)
         self.assertEqual(versions["items"][0]["actors"], self.data["actors"])

@@ -28,6 +28,29 @@ from custom_components.kaleidescape_companion.core.models import JournalError
 class LogbookTest(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = repository.RepositoryTest.asyncSetUp
 
+    async def test_minimum_severity_applies_to_pages_and_exports(self):
+        await self.repository.async_logs("configure", {"level": "DEBUG"})
+        for level in Level:
+            self.repository.logger.emit(
+                Subsystem.TRANSPORT, Operation.READ, Outcome.SUCCEEDED, level=level
+            )
+        levels = list(Level)
+        for index, level in enumerate(levels):
+            filters = {"level": level.value, "logger": Subsystem.TRANSPORT.value}
+            first = await self.repository.async_logs("list", {**filters, "limit": 2})
+            items = list(first["items"])
+            before = first["before"]
+            while before is not None:
+                page = await self.repository.async_logs(
+                    "list", {**filters, "before": before, "limit": 2}
+                )
+                items.extend(page["items"])
+                before = page["before"]
+            exported = await self.repository.async_logs("export", filters)
+            expected = [v.value for v in reversed(levels[index:])]
+            self.assertEqual([r["level"] for r in items], expected)
+            self.assertEqual(exported["items"], items)
+
     async def test_request_context_crosses_worker_and_reference_filters_relations(self):
         logger = self.repository.logger
         with logger.context(

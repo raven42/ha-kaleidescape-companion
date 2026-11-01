@@ -25,8 +25,9 @@ The
 and pinned source establish available interfaces; they do not establish that an
 operator's installed integration exposes identical behavior. The journal
 observes HA entities. The optional [library connector](library.md) now
-implements restricted read-only browser GETs. Integrated player controls remain
-absent; the
+implements restricted read-only browser GETs. The separately opted-in
+[Companion controls](playback-controls.md#companion-setup-and-use) now consume
+the independent API; the
 [standalone protocol harness](playback-controls.md#standalone-protocol-proof-of-concept)
 now permits explicit operator playback tests, without HA registration or
 database changes. Local tests establish emulator behavior, not live-device
@@ -35,7 +36,7 @@ one successful selected-title launch and STOP sequence; its
 [scope and remaining limits](playback-controls.md#operator-validation--2026-10-30)
 do not establish exact-edition or general firmware compatibility. The
 [independent API project](https://pypi.org/project/kaleidescape-api/) now
-implement the current Rev 17 request catalog and isolated experimental launch.
+implements the current Rev 17 request catalog and isolated experimental launch.
 Expanded discovery, events, binary and music/disc capabilities are
 emulator-tested; hardware validation remains separate.
 
@@ -118,9 +119,9 @@ The reviewed
 and
 [message parser](https://github.com/SteveEasley/pykaleidescape/blob/50df2869349667d1e68d429b9b619e32ede9879b/kaleidescape/message.py)
 provide transport/navigation and content details. Pause uses toggle-style
-semantics, so fresh state, serialization, and no blind retry are required for a
-future UI. No general public movie-by-handle launch, independent dated-history
-API, or saved movie-offset query was identified in that review. The October 30
+semantics, so the control UI requires fresh state, serialization, and no blind
+retry. No general public movie-by-handle launch, independent dated-history API,
+or saved movie-offset query was identified in that review. The October 30
 [selected-title playback investigation](playback-controls.md) adds concrete
 third-party evidence for an undocumented `PLAY_MOVIE` command and documented
 player enumeration. This changes launch from an unidentified interface to an

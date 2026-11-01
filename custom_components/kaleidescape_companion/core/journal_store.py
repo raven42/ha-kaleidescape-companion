@@ -121,11 +121,9 @@ def list_viewings(
     ) + f"{key} {direction},id {direction}"
     predicates = [
         "deleted_at IS NULL",
-        "companion_matches(title, ?, 1)"
-        if fuzzy and query
-        else "instr(title_search, ?) > 0",
+        "companion_matches(title, ?, ?)",
     ]
-    values: list[Any] = [query]
+    values: list[Any] = [query, fuzzy]
     if group is not None:
         predicates.append(
             "library_title_id IN (SELECT id FROM library "

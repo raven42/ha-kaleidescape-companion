@@ -84,6 +84,27 @@ export const libraryStyles = css`
     text-overflow: ellipsis;
     padding: 3px 2px;
   }
+  .scraper-conflict-icon {
+    color: #f5bb35;
+    text-shadow: 0 1px 3px #000;
+    margin-inline-start: 5px;
+  }
+  .cover-tile > .scraper-conflict-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 4;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    margin: 0;
+    border-radius: 50%;
+    background: #101316dd;
+    font-size: 32px;
+    pointer-events: none;
+  }
   .cover-image {
     aspect-ratio: 2 / 3;
   }
@@ -506,6 +527,9 @@ export const libraryStyles = css`
     margin-top: 12px;
     font-size: 12px;
   }
+  .version-format-badges {
+    margin-top: 10px;
+  }
   @container movie-modal (max-width: 600px) {
     .movie-ratings {
       gap: 5px;
@@ -589,6 +613,10 @@ export const libraryStyles = css`
       margin-top: 0;
       border-top: 1px solid var(--line);
       padding-top: 8px;
+    }
+    .version-format-badges {
+      grid-column: 1 / -1;
+      order: 9;
     }
     .movie-credits {
       gap: 10px;

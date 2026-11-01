@@ -48,6 +48,24 @@ function closeWord(left: string, right: string) {
   return previous[right.length] <= allowance;
 }
 export function matches(value: string, query: string, fuzzy = false) {
+  const trimmed = query.trim();
+  if (trimmed.length >= 2 && trimmed.startsWith('"') && trimmed.endsWith('"')) {
+    let phrase: string;
+    try {
+      phrase = (JSON.parse(trimmed) as string).trim();
+    } catch {
+      phrase = trimmed.slice(1, -1).trim();
+    }
+    if (!phrase) return false;
+    const words = phrase
+      .toLocaleLowerCase()
+      .split(/\s+/)
+      .map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    return new RegExp(
+      "(?<![\\p{L}\\p{N}_])" + words.join("\\s+") + "(?![\\p{L}\\p{N}_])",
+      "u",
+    ).test(value.toLocaleLowerCase());
+  }
   if (value.toLocaleLowerCase().includes(query.toLocaleLowerCase()))
     return true;
   if (!fuzzy) return false;

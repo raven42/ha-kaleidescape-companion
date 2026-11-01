@@ -37,6 +37,12 @@ providers = Providers(
     tmdb_credential=credential_from_your_secret_store,
 )
 metadata = await providers.metadata("tmdb", MovieQuery("Your Movie", 2025))
+# Manual resolution when conservative automatic matching is ambiguous or empty:
+candidates = await providers.search("tmdb", "Your Movie")
+# Present candidates to the user and persist only their approved reference.
+chosen = candidates[user_selected_index]
+reference = {key: chosen[key] for key in ("provider_id", "title", "year", "url")}
+metadata = await providers.resolve("tmdb", reference)
 # Optional widescreen raster; omitted when the matched movie has no backdrop.
 image = await providers.artwork("tmdb", metadata)
 # Optional preferred portrait poster, separate from the landscape image.
@@ -79,8 +85,8 @@ validated JPEG paths per poster/backdrop category with optional dimensions.
 `await providers.image("tmdb", choice, thumbnail=True)` fetches a `w300`
 preview; the default fetch uses `w500` for posters and `w780` for backdrops. All
 image requests are credential-free and use the shared limiter. Providers without
-a gallery return an empty list; the store currently has no image adapter.
-Applications must bind choices to the matched movie/actor and never accept
+a gallery return an empty list; the store supports candidate cover previews
+only. Applications must bind choices to the matched movie/actor and never accept
 caller-supplied paths as choices.
 
 TMDB cast names are sorted by the explicit `order` field, then deduplicated,
@@ -115,6 +121,41 @@ results, missing years and mismatched store pages fail closed. No provider ID,
 poster, price, title or edition replaces the caller's existing identity. Results
 contain bounded credits, provider reference and source-specific scores; TMDB
 audience votes are not Rotten Tomatoes percentages.
+
+`Providers.search(provider, query, year=None)` is a separate, explicit manual
+workflow. It accepts 1–200 characters and returns up to eight detailed movie
+records from the first search page, with available cast/directors/genres and
+validated poster references. It never chooses a match or modifies a caller's
+library. Offer title/year, a short cast list, genres and optional cover
+previews, then persist the approved reference after review.
+`resolve(provider, reference)` revisits its fixed TMDB movie ID or store edition
+URL without searching titles; the adapter still validates provider identity.
+Reference changes and caller snapshot/retry protection belong to the
+application. These are optional adapter capabilities; unknown providers and
+unsupported searches fail with owned codes.
+
+Store search reads the public `/movie-store/search?text=...` page to obtain its
+bounded public application version, then calls the anonymous
+`/movie-store/rest/packages/search` route with the two public
+`X-Kaleidescape-Application-{Id,Version}` headers. It fixes country US and
+display limit 15, honors the store's robots policy, and projects only
+matching-movie groups. It follows at most eight validated movie routes to
+retrieve credits and genres; related-person groups, prices, accounts and
+ownership are ignored. Missing/unfamiliar version/response shapes fail closed.
+Country-specific catalogs are not currently configurable.
+
+Store candidates may include a validated `poster_url` from the public
+`images0[1-8].kaleidescape.com` CDN. Only fixed `132x189s`/`264x378s`
+transformed JPEG cover routes are allowed.
+`Providers.image("kaleidescape", choice, thumbnail=True)` accepts that
+provider-owned staged poster choice for previews; full image import/gallery is
+unsupported. TMDB candidates instead use the existing `poster_path` and `w300`
+preview API. Callers must opt into images, enforce public DNS/TLS/body/redirect
+controls on these additional routes, and serve previews through their
+authenticated interface rather than expose arbitrary URLs. All requests share
+the limiter and carry no account cookies or image credentials. Refining the
+query replaces pagination beyond the first eight candidates; low configured
+rates can require a longer application timeout.
 
 ## Research and limitations
 

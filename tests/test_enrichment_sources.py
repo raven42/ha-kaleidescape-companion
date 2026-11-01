@@ -149,7 +149,9 @@ class SourcePreferencesTest(unittest.IsolatedAsyncioTestCase):
     def test_config_validates_source_enums_without_enabling_network(self):
         value = config.validate({"metadata_source_artwork": "tmdb"}, {})
         self.assertFalse(value["metadata_tmdb_enabled"])
-        self.assertEqual(selection.configured(value), {"artwork": "tmdb"})
+        self.assertEqual(
+            selection.configured(value), {"artwork": "tmdb", "_enabled": []}
+        )
         for field, source in (
             ("actors", "bad"),
             ("critic_score", "tmdb"),

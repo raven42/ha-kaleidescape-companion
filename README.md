@@ -61,8 +61,8 @@ installs the pinned API package separately.
 
 ## Development setup
 
-Requires Python **3.14.2+**, Node.js **22.13+ (22.x) or 24+**, and npm. From the
-repository root:
+Requires Python **3.14.2+** with SQLite **3.35+**, Node.js **22.13+ (22.x) or
+24+**, and npm. From the repository root:
 
 ```sh
 python3 -m venv .venv

@@ -60,6 +60,22 @@ STATUS_SQL = """CASE WHEN s.collections_synced_at IS NULL
     ELSE 'unwatched' END"""
 
 
+def scalar_sql(field, prefix=""):
+    """Read version facts without merging unrelated provider credits.
+
+    Year/rating are original facts unless explicitly reviewed. JSON null is an
+    intentional override, so COALESCE would incorrectly restore the old value.
+    Keep this fixed allowlist aligned with enrichment.store.effective.
+    """
+    if field not in {"year", "rating"} or prefix not in {"", "t."}:
+        raise ValueError("Unsupported display scalar")
+    return (
+        f"CASE WHEN json_type({prefix}enrichment,'$.reviewed.{field}') IS NOT NULL "
+        f"THEN json_extract({prefix}enrichment,'$.reviewed.{field}') "
+        f"ELSE json_extract({prefix}data,'$.{field}') END"
+    )
+
+
 def hidden_names(db, source, excluded):
     names = excluded_collections(excluded)
     return tuple(
@@ -118,6 +134,7 @@ def group_metadata(db, source, groups):
 
 
 def public_title(row, memberships, shared=None):
+    from ..enrichment.matching import has_conflict
     from ..enrichment.selection import image as selected_image
     from ..enrichment.store import effective
     from ..enrichment.store import public as public_enrichment
@@ -159,6 +176,7 @@ def public_title(row, memberships, shared=None):
                 "audience_votes",
             )
         },
+        "scraper_conflict": has_conflict(json.loads(row["enrichment"]), sources),
         "is_favorite": bool(row["is_favorite"]),
         "is_recently_added": bool(row["is_recently_added"]),
         "formats": formats(data),
@@ -242,10 +260,44 @@ def shuffle_key(value, seed):
     return hashlib.sha256(f"{seed}:{value}".encode()).digest()
 
 
-def library_list(db, source, filters, excluded=""):
+def matching_people(db, source, query, fuzzy):
+    """Search each distinct credit once, then resolve its source-defined groups.
+
+    Materialize before matching: otherwise SQLite may push the Python matcher
+    into the version/person join, repeating fuzzy comparisons for every edition
+    and again for the count and page reads. No title identities are inferred.
+    """
+    return json.dumps(
+        [
+            row[0]
+            for row in db.execute(
+                """WITH people AS MATERIALIZED (
+                    SELECT credits.source_group,person.value name
+                    FROM library credits,
+                    json_each(companion_metadata(
+                        credits.data,credits.enrichment)) roles,
+                    json_each(CASE WHEN roles.type='array'
+                        THEN roles.value ELSE '[]' END) person
+                    WHERE credits.source_id=? AND credits.available=1
+                    AND roles.key IN
+                        ('actors','directors','writers','producers','studios')
+                    AND person.type='text'
+                ), names AS MATERIALIZED (SELECT DISTINCT name FROM people),
+                matches AS MATERIALIZED (
+                    SELECT name FROM names WHERE companion_matches(name,?,?)
+                ) SELECT DISTINCT source_group FROM people
+                    WHERE name IN (SELECT name FROM matches)""",
+                (source, query, fuzzy),
+            )
+        ]
+    )
+
+
+def library_list(db, source, filters, excluded="", cache=None):
     """Query local SQLite with parameters and fixed sort expressions."""
     allowed = {
         "query",
+        "scraper_conflict",
         "fuzzy",
         "collection",
         "actor",
@@ -300,7 +352,7 @@ def library_list(db, source, filters, excluded=""):
         "json_extract(t.enrichment,'$.reviewed.title'),t.title_search) COLLATE NOCASE",
         "length": "json_extract(t.data,'$.duration_seconds')",
         "watched": "watched_status",
-        "year": "json_extract(companion_metadata(t.data,t.enrichment),'$.year')",
+        "year": scalar_sql("year", "t."),
         "collection": collection_sql,
         "added": f"coalesce({PURCHASE_SQL},t.first_seen)",
         "random": "companion_shuffle(t.id,?)",
@@ -322,23 +374,24 @@ def library_list(db, source, filters, excluded=""):
         )
     clauses, values = ["t.source_id=?", "t.available=1"], [source]
     query = filters.get("query", "")
+    conflict = filters.get("scraper_conflict", False)
+    if type(conflict) is not bool:
+        raise invalid("Invalid scraper conflict filter")
+    if conflict:
+        clauses.append("companion_conflict(t.enrichment)")
     if not isinstance(query, str) or len(query) > 500 or "\x00" in query:
         raise invalid("Invalid library search")
     fuzzy = filters.get("fuzzy", False)
     if type(fuzzy) is not bool:
         raise invalid("Invalid fuzzy search option")
+    people_parameter = None
     if query:
         term = query.casefold()
         clauses.append("""(companion_matches(coalesce(
-            json_extract(t.enrichment,'$.reviewed.title'),t.title),?,?) OR EXISTS (
-            SELECT 1 FROM library credits,
-            json_each(companion_metadata(credits.data,credits.enrichment)) roles,
-            json_each(CASE WHEN roles.type='array'
-                THEN roles.value ELSE '[]' END) person
-            WHERE roles.key IN ('actors','directors','writers','producers','studios')
-            AND credits.source_id=t.source_id AND credits.source_group=t.source_group
-            AND credits.available=1 AND companion_matches(person.value,?,?)))""")
-        values.extend((term, fuzzy, term, fuzzy))
+            json_extract(t.enrichment,'$.reviewed.title'),t.title),?,?)
+            OR t.source_group IN (SELECT value FROM json_each(?)))""")
+        values.extend((term, fuzzy, None))
+        people_parameter = len(values) - 1
     # Match any selected value within a facet, and all populated facets together.
     # Keep single strings compatible with existing API clients.
     for key in (
@@ -391,16 +444,14 @@ def library_list(db, source, filters, excluded=""):
             )
         elif key == "rating":
             clauses.append(
-                "coalesce(nullif(json_extract(companion_metadata(t.data,t.enrichment),"
-                "'$.rating'),''),'Unrated') "
+                f"coalesce(nullif(({scalar_sql('rating', 't.')}),''),'Unrated') "
                 f"IN ({placeholders})"
             )
         elif key == "year":
             if any(not re.fullmatch(r"[0-9]{1,4}", value) for value in selected):
                 raise invalid("Invalid library year")
             clauses.append(
-                "CAST(json_extract(companion_metadata(t.data,t.enrichment),"
-                f"'$.year') AS TEXT) IN ({placeholders})"
+                f"CAST(({scalar_sql('year', 't.')}) AS TEXT) IN ({placeholders})"
             )
         elif key == "format":
             clauses.append(
@@ -412,6 +463,9 @@ def library_list(db, source, filters, excluded=""):
                 raise invalid("Invalid library status")
             clauses.append(f"({STATUS_SQL}) IN ({placeholders})")
         values.append(json.dumps(selected))
+    # Validate all facets before doing the full-catalog people search.
+    if people_parameter is not None:
+        values[people_parameter] = matching_people(db, source, query.casefold(), fuzzy)
     where = " AND ".join(clauses)
     join = "library t JOIN library_sources s ON s.id=t.source_id"
     if grouped:
@@ -428,6 +482,7 @@ def library_list(db, source, filters, excluded=""):
             info,
             limit,
             seed,
+            cache,
         )
     total = db.execute(f"SELECT count(*) FROM {join} WHERE {where}", values).fetchone()[
         0
@@ -460,7 +515,7 @@ def library_list(db, source, filters, excluded=""):
                 "library_page_too_large", "Reduce the library entries per page"
             )
         items.append(item)
-    facets, truncated = library_facets(db, source, hidden)
+    facets, truncated = facets_for(db, source, hidden, info["revision"], cache)
     return bounded_page(
         {
             "items": items,
@@ -476,45 +531,46 @@ def library_list(db, source, filters, excluded=""):
     )
 
 
-def library_facets(db, source, hidden):
-    facets = {}
-    truncated = []
-    for key in ("actors", "directors", "genres"):
-        options = [
-            row[0]
-            for row in db.execute(
-                """SELECT DISTINCT value FROM library t,
-                    json_each(companion_metadata(t.data,t.enrichment),?)
-                    WHERE source_id=? AND available=1 ORDER BY value LIMIT 501""",
-                (f"$.{key}", source),
-            )
-        ]
-        if len(options) > 500:
-            truncated.append(key)
-        facets[key] = options[:500]
-    facets["rating"] = [
-        row[0]
-        for row in db.execute(
-            "SELECT DISTINCT "
-            "coalesce(nullif(json_extract(companion_metadata(data,enrichment),"
-            "'$.rating'),''),'Unrated') "
-            "FROM library WHERE source_id=? AND available=1 "
-            "ORDER BY 1 LIMIT 500",
-            (source,),
-        )
+def facets_for(db, source, hidden, revision, cache):
+    if cache is None:
+        return library_facets(db, source, hidden)
+    return cache.facets.call(library_facets, db, source, hidden, revision)
+
+
+def library_facets(db, source, hidden, _revision=None):
+    # _revision is part of the memoization key. Every catalog/collection/metadata
+    # mutation advances it; changes to hidden labels additionally change hidden.
+    # Resolve each version once even when the catalog is larger than the memory
+    # cache. Separate per-facet passes would repeatedly remerge provider credits.
+    facets = {key: [] for key in ("actors", "directors", "genres", "rating", "year")}
+    for row in db.execute(
+        """WITH metadata AS MATERIALIZED (
+            SELECT companion_metadata(data,enrichment) data FROM library
+            WHERE source_id=? AND available=1
+        ), options AS (
+            SELECT roles.key field,person.value value FROM metadata,
+                json_each(metadata.data) roles,
+                json_each(CASE WHEN roles.type='array'
+                    THEN roles.value ELSE '[]' END) person
+                WHERE roles.key IN ('actors','directors','genres')
+                AND person.type='text'
+            UNION SELECT 'rating',coalesce(nullif(json_extract(data,'$.rating'),''),
+                'Unrated') FROM metadata
+            UNION SELECT 'year',json_extract(data,'$.year') FROM metadata
+                WHERE json_extract(data,'$.year') IS NOT NULL
+        ), ranked AS (
+            SELECT field,value,row_number() OVER (PARTITION BY field ORDER BY
+                CASE WHEN field='year' THEN value END DESC,value) position
+            FROM options
+        ) SELECT field,value FROM ranked WHERE position<=501
+            ORDER BY field,position""",
+        (source,),
+    ):
+        facets[row[0]].append(str(row[1]) if row[0] == "year" else row[1])
+    truncated = [
+        key for key in ("actors", "directors", "genres") if len(facets[key]) > 500
     ]
-    facets["year"] = [
-        str(row[0])
-        for row in db.execute(
-            "SELECT DISTINCT json_extract(companion_metadata(data,enrichment),"
-            "'$.year') FROM library "
-            "WHERE source_id=? AND available=1 "
-            "AND json_extract(companion_metadata(data,enrichment),"
-            "'$.year') IS NOT NULL "
-            "ORDER BY 1 DESC LIMIT 500",
-            (source,),
-        )
-    ]
+    facets = {key: options[:500] for key, options in facets.items()}
     options = [
         row[0]
         for row in db.execute(
@@ -554,6 +610,7 @@ def grouped_page(
     info,
     limit,
     seed="",
+    cache=None,
 ):
     """Filter per version, group before pagination, and summarize all versions."""
     join = "library t JOIN library_sources s ON s.id=t.source_id"
@@ -584,8 +641,9 @@ def grouped_page(
             min(json_extract(enrichment,'$.reviewed.title')),
             min(title_search)) sort_title,
         count(*) version_count,
+        max(companion_conflict(enrichment)) scraper_conflict,
         max(is_favorite) is_favorite,max(is_recently_added) is_recently_added,
-        min(json_extract(companion_metadata(data,enrichment),'$.year')) year,
+        min({scalar_sql("year")}) year,
         min(json_extract(data,'$.duration_seconds')) duration_seconds,
         max(json_extract(data,'$.duration_seconds')) maximum_duration_seconds,
         min(first_seen) first_seen,max(last_seen) last_seen,
@@ -617,7 +675,7 @@ def grouped_page(
             for row in db.execute(
                 "SELECT id,companion_artwork(artwork_key,enrichment,'artwork') "
                 "artwork_key,metadata_synced_at,"
-                "json_extract(companion_metadata(data,enrichment),'$.rating') rating,"
+                f"({scalar_sql('rating')}) rating,"
                 "json_extract(data,'$.edition') edition "
                 "FROM library WHERE source_id=? AND id IN ("
                 + ",".join("?" for _ in batch)
@@ -634,9 +692,9 @@ def grouped_page(
                 "artwork_key,"
                 "json_extract(enrichment,'$.reviewed.poster_key') reviewed_poster,"
                 "json_extract(data,'$.formats') formats,"
-                "json_extract(companion_metadata(data,enrichment),'$.rating') rating,"
+                f"({scalar_sql('rating')}) rating,"
                 "json_extract(data,'$.edition') edition,"
-                "json_extract(companion_metadata(data,enrichment),'$.year') year "
+                f"({scalar_sql('year')}) year "
                 "FROM library WHERE source_id=? AND available=1 "
                 "AND source_group IN ("
                 + ",".join("?" for _ in batch)
@@ -673,6 +731,7 @@ def grouped_page(
                     "collections": collections,
                     "is_favorite": bool(group["is_favorite"]),
                     "is_recently_added": bool(group["is_recently_added"]),
+                    "scraper_conflict": bool(group["scraper_conflict"]),
                     "year": group["year"],
                     "edition": representative["edition"],
                     "rating": representative["rating"]
@@ -721,7 +780,7 @@ def grouped_page(
                 raise JournalError(
                     "library_page_too_large", "Reduce the library entries per page"
                 )
-    facets, truncated = library_facets(db, source, hidden)
+    facets, truncated = facets_for(db, source, hidden, info["revision"], cache)
     return bounded_page(
         {
             "items": items,
@@ -820,11 +879,12 @@ def suggestions(db, source, field, query, fuzzy=False):
     rows = [
         row[0]
         for row in db.execute(
-            "SELECT DISTINCT person.value FROM library t,"
+            "WITH names AS MATERIALIZED ("
+            "SELECT DISTINCT person.value name FROM library t,"
             "json_each(companion_metadata(t.data,t.enrichment),?) person "
             "WHERE t.source_id=? AND t.available=1 AND person.type='text' "
-            "AND companion_matches(person.value,?,?) "
-            "ORDER BY companion_casefold(person.value),person.value LIMIT 21",
+            ") SELECT name FROM names WHERE companion_matches(name,?,?) "
+            "ORDER BY companion_casefold(name),name LIMIT 21",
             (path, source, query.casefold(), fuzzy),
         )
     ]

@@ -325,7 +325,7 @@ export class JournalCalendar extends LitElement {
     return html`<button
       type="button"
       class="link detail-link"
-      @click=${() => this.browse(key, value)}
+      @click=${() => this.browse(key, key === "query" ? JSON.stringify(value) : value)}
     >
       ${value}
     </button>`;

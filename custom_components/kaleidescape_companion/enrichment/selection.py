@@ -42,6 +42,15 @@ def configured(config):
             raise ValueError("invalid_metadata_options")
         if value != "auto":
             values[field] = value
+    if "metadata_store_enabled" in config or "metadata_tmdb_enabled" in config:
+        values["_enabled"] = [
+            provider
+            for provider, key in (
+                ("kaleidescape", "metadata_store_enabled"),
+                ("tmdb", "metadata_tmdb_enabled"),
+            )
+            if config.get(key)
+        ]
     return values
 
 

@@ -23,13 +23,14 @@ from kaleidescape_api.logging import (
 from yarl import URL
 
 from .._vendor.kaleidescape_scrapers import MovieQuery, ProviderError, Providers
-from .._vendor.kaleidescape_scrapers.providers.store import movie_path
 from ..core.models import JournalError
 from ..core.operations import traced
 from ..core.security import is_active_admin
 from ..library.config import origin
 from ..library.store import image_type, source_id
 from .config import DEFAULTS
+from .destinations import store_image, store_request
+from .matching import REASONS
 
 
 class MetadataSync:
@@ -130,11 +131,15 @@ class MetadataSync:
     async def _get(self, url, headers):
         self._ready()
         parsed = urlsplit(url)
+        store_cover = store_image(url)
         # Providers construct paths; never accept a URL from the browser or a response.
         if (
             parsed.scheme != "https"
-            or parsed.hostname
-            not in {"www.kaleidescape.com", "api.themoviedb.org", "image.tmdb.org"}
+            or (
+                parsed.hostname
+                not in {"www.kaleidescape.com", "api.themoviedb.org", "image.tmdb.org"}
+                and not store_cover
+            )
             or parsed.port not in (None, 443)
             or parsed.username
             or parsed.password
@@ -144,11 +149,16 @@ class MetadataSync:
         if parsed.hostname == "www.kaleidescape.com":
             if not self.config["metadata_store_enabled"]:
                 raise ProviderError("provider_disabled")
-            if (
-                parsed.query
-                or headers
-                or (parsed.path != "/robots.txt" and not movie_path(parsed.path))
+            if not store_request(parsed, headers, self.review_network):
+                raise ProviderError("provider_destination")
+        elif store_cover:
+            if not (
+                self.review_network
+                and self.config["metadata_store_enabled"]
+                and self.config.get("library_sync_artwork")
             ):
+                raise ProviderError("provider_disabled")
+            if headers:
                 raise ProviderError("provider_destination")
         elif parsed.hostname == "image.tmdb.org":
             if not (
@@ -206,6 +216,15 @@ class MetadataSync:
             allow_redirects=False,
             timeout=ClientTimeout(total=20, connect=5),
         ) as response:
+            if response.status == 404:
+                if parsed.hostname == "www.kaleidescape.com" and parsed.path.startswith(
+                    "/movie-store/movie/"
+                ):
+                    raise ProviderError("store_not_found")
+                if parsed.hostname == "api.themoviedb.org" and re.fullmatch(
+                    r"/3/movie/[1-9][0-9]*", parsed.path
+                ):
+                    raise ProviderError("tmdb_not_found")
             self.repository.logger.emit(
                 Subsystem.METADATA,
                 Operation.REQUEST,
@@ -226,15 +245,17 @@ class MetadataSync:
                 != "identity"
             ):
                 raise ProviderError("provider_encoding")
-            expected = (
-                {"text/plain"}
-                if parsed.path == "/robots.txt"
-                else {"text/html", "application/xhtml+xml"}
-                if parsed.hostname == "www.kaleidescape.com"
-                else {"image/jpeg"}
-                if parsed.hostname == "image.tmdb.org"
-                else {"application/json"}
-            )
+            if parsed.path == "/robots.txt":
+                expected = {"text/plain"}
+            elif parsed.hostname == "image.tmdb.org" or store_cover:
+                expected = {"image/jpeg"}
+            elif (
+                parsed.hostname == "www.kaleidescape.com"
+                and parsed.path != "/movie-store/rest/packages/search"
+            ):
+                expected = {"text/html", "application/xhtml+xml"}
+            else:
+                expected = {"application/json"}
             if response.content_type not in expected:
                 raise ProviderError("provider_content_type")
             if response.content_length and response.content_length > 4 * 1024 * 1024:
@@ -245,13 +266,22 @@ class MetadataSync:
                 body.extend(chunk)
                 if len(body) > 4 * 1024 * 1024:
                     raise ProviderError("provider_response_too_large")
-            if (
-                parsed.hostname == "image.tmdb.org"
-                and image_type(body) != response.content_type
-            ):
+            if (parsed.hostname == "image.tmdb.org" or store_cover) and image_type(
+                body
+            ) != response.content_type:
                 raise ProviderError("provider_content_type")
         self._ready()
         return bytes(body)
+
+    async def mark_conflict(self, target, provider, reason):
+        self._ready()
+        try:
+            await self.repository.async_enrichment(
+                "conflict", self.source, target["id"], provider, reason, target
+            )
+        except JournalError as error:
+            if error.code != "refresh_required":
+                raise
 
     async def _run(self, force):
         self.repository.logger.emit(
@@ -275,11 +305,24 @@ class MetadataSync:
                     ):
                         if not enabled:
                             continue
-                        if type(row["year"]) is not int or not (
-                            row["href"]
-                            if provider == "kaleidescape"
-                            else self.config["metadata_tmdb_credential"]
+                        reference = row.get("matches", {}).get(provider)
+                        if (
+                            provider == "tmdb"
+                            and not self.config["metadata_tmdb_credential"]
                         ):
+                            self.skipped += 1
+                            continue
+                        if not reference and (
+                            type(row["year"]) is not int
+                            or (provider == "kaleidescape" and not row["href"])
+                        ):
+                            await self.mark_conflict(
+                                row,
+                                provider,
+                                "missing_year"
+                                if type(row["year"]) is not int
+                                else "invalid_store_link",
+                            )
                             self.skipped += 1
                             continue
                         previous = row["enrichment"].get(provider, {}).get("fetched_at")
@@ -292,19 +335,19 @@ class MetadataSync:
                             except ValueError, TypeError:
                                 pass
                         try:
-                            result = await self.providers.metadata(
-                                provider,
-                                MovieQuery(
-                                    row["title"], row["year"], row["href"] or ""
-                                ),
+                            result = (
+                                await self.providers.resolve(provider, reference)
+                                if reference
+                                else await self.providers.metadata(
+                                    provider,
+                                    MovieQuery(
+                                        row["title"], row["year"], row["href"] or ""
+                                    ),
+                                )
                             )
                         except ProviderError as error:
-                            if str(error) in {
-                                "invalid_store_link",
-                                "tmdb_not_found",
-                                "tmdb_ambiguous",
-                                "provider_identity_mismatch",
-                            }:
+                            if str(error) in REASONS:
+                                await self.mark_conflict(row, provider, str(error))
                                 self.skipped += 1
                                 continue
                             raise
@@ -313,6 +356,7 @@ class MetadataSync:
                             **result,
                             "matched_title": row["title"],
                             "matched_group": row["source_group"],
+                            "matched_reference": reference,
                         }
                         try:
                             await self.repository.async_enrichment(

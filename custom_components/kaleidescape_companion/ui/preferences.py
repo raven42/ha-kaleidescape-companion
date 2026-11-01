@@ -39,6 +39,7 @@ LIBRARY_DEFAULTS = {
     "year": [],
     "format": [],
     "status": [],
+    "scraper_conflict": False,
 }
 SORTS = {"name", "year", "collection", "length", "watched", "added", "random"}
 
@@ -83,6 +84,7 @@ def validate_library(patch, previous=None):
             "show_badges",
             "show_rating",
             "show_library_cost",
+            "scraper_conflict",
         )
     ):
         raise invalid("Invalid display toggle")

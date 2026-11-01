@@ -4,6 +4,7 @@ import math
 import re
 
 from .models import JournalError
+from .search import quoted
 
 TOKEN = re.compile(
     r"\s*(?:(?P<string>'(?:[^']|'')*')|(?P<number>-?\d+(?:\.\d+)?)|(?P<word>[A-Za-z_][A-Za-z_0-9.]*)|(?P<op><=|>=|!=|<>|[=<>])|(?P<paren>[()]))"
@@ -43,6 +44,12 @@ def compile_query(query, fields):
         )
     )
     if not structured:
+        if quoted(query):
+            names = [name for name in fields if "." not in name]
+            return "(" + " OR ".join(
+                f"companion_matches(CAST({fields[name]['expression']} AS TEXT),?,0)"
+                for name in names
+            ) + ")", (query,) * len(names)
         value = (
             "%"
             + query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")

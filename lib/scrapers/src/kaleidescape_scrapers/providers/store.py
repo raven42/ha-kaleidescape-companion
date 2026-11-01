@@ -57,7 +57,7 @@ class _Scripts(HTMLParser):
             self.parts.append(value)
 
 
-def parse(page, href, title, year):
+def movie_data(page, href):
     if not isinstance(page, str) or len(page.encode()) > 4 * 1024 * 1024:
         raise ProviderError("store_response_too_large")
     path = movie_path(href)
@@ -81,7 +81,12 @@ def parse(page, href, title, year):
             found.append(movie)
     if len(found) != 1:
         raise ProviderError("store_format_changed")
-    movie = found[0]
+    return found[0]
+
+
+def parse(page, href, title, year):
+    path = movie_path(href)
+    movie = movie_data(page, href)
     if not same_movie(
         title, year, [{"title": movie.get("title"), "year": movie.get("release_year")}]
     ):
@@ -121,6 +126,14 @@ def parse(page, href, title, year):
         "url": HOST + path,
         "title": label(movie.get("title")),
         "year": year,
+        "genres": names(
+            [
+                item.get("name") if isinstance(item, dict) else item
+                for item in movie.get("genres", [])
+            ]
+        )
+        if isinstance(movie.get("genres"), list)
+        else [],
         **credits,
         "studios": studios,
         "distributor": label(movie.get("licensor_name")),
@@ -152,8 +165,7 @@ class StoreProvider:
         self.robots: RobotFileParser | None = None
         self.policy_lock = asyncio.Lock()
 
-    async def metadata(self, movie: MovieQuery) -> Metadata:
-        path = movie_path(movie.href)
+    async def permitted(self, path):
         async with self.policy_lock:
             if self.robots is None:
                 body = await self.transport.get(HOST + "/robots.txt")
@@ -168,6 +180,10 @@ class StoreProvider:
                 self.robots = robots
         if not self.robots.can_fetch("KaleidescapeCompanion", HOST + path):
             raise ProviderError("store_robots_denied")
+
+    async def metadata(self, movie: MovieQuery) -> Metadata:
+        path = movie_path(movie.href)
+        await self.permitted(path)
         page = await self.transport.get(HOST + path)
         try:
             return await asyncio.to_thread(
@@ -175,3 +191,27 @@ class StoreProvider:
             )
         except UnicodeError as error:
             raise ProviderError("store_format_changed") from error
+
+    async def search(self, query, year=None):
+        from .store_search import search
+
+        return await search(self, query, year)
+
+    async def resolve(self, reference):
+        result = await self.metadata(
+            MovieQuery(
+                reference.get("title"), reference.get("year"), reference.get("url", "")
+            )
+        )
+        if result["provider_id"] != reference.get("provider_id"):
+            raise ProviderError("provider_identity_mismatch")
+        return result
+
+    async def image(self, choice, *, thumbnail=False):
+        from .store_search import cover_url
+
+        url = cover_url(choice.get("path"))
+        if not thumbnail or not url or choice.get("kind") != "poster":
+            raise ProviderError("provider_artwork_unavailable")
+        # Preview-only cover routes have no login and receive no credentials.
+        return await self.transport.get(url)

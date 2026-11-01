@@ -52,6 +52,12 @@ retry tables remain private functional records; they are not copied into
 operational logs. Generic journal exports exclude operational logs and the
 private alias key.
 
+The viewer's **Minimum level** filter includes the selected severity and all
+higher levels: **WARNING** includes WARNING, ERROR and CRITICAL. **All** and
+**DEBUG** include every retained severity. Paging and text/JSON exports use the
+same filter. This only selects retained entries; it does not change the live
+logging threshold or recover events that were never recorded.
+
 The optional Log database values setting permits bounded movie metadata fields
 only (title, cast, directors, writers, producers, studios, genres, rating,
 formats). Suspicious values are suppressed in full by a second sensitive-pattern

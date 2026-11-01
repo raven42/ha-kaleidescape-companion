@@ -35,6 +35,17 @@ def read_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=unique_object)
 
 
+def read_constants(path: Path) -> dict:
+    """Read literal module metadata without importing HA or executing source."""
+    values = {}
+    for node in ast.parse(path.read_text(encoding="utf-8")).body:
+        if isinstance(node, ast.Assign) and isinstance(node.value, ast.Constant):
+            for target in node.targets:
+                if isinstance(target, ast.Name):
+                    values[target.id] = node.value.value
+    return values
+
+
 def validate_runtime_imports() -> None:
     """Catch stale module paths after feature moves without importing HA or devices."""
     prefix = f"custom_components.{DOMAIN}"
@@ -104,13 +115,7 @@ def validate() -> None:
     if project["name"] != "kaleidescape" or frontend["name"] != "kaleidescape":
         raise ValueError("Package names must be kaleidescape")
 
-    constants: dict[str, object] = {}
-    tree = ast.parse((INTEGRATION / "const.py").read_text())
-    for node in tree.body:
-        if isinstance(node, ast.Assign) and isinstance(node.value, ast.Constant):
-            for target in node.targets:
-                if isinstance(target, ast.Name):
-                    constants[target.id] = node.value.value
+    constants = read_constants(INTEGRATION / "const.py")
     if constants.get("DOMAIN") != DOMAIN or constants.get("NAME") != NAME:
         raise ValueError("Framework constants must match the manifest")
     if (
@@ -127,6 +132,13 @@ def validate() -> None:
         raise ValueError("Project, integration, and frontend versions must match")
     if strings != translation:
         raise ValueError("English setup translation must match strings.json")
+
+    schema = read_constants(INTEGRATION / "core/migrations/__init__.py")[
+        "SCHEMA_VERSION"
+    ]
+    backend_guide = (ROOT / "docs/backend.md").read_text(encoding="utf-8")
+    if f"SQLite schema is `{schema}`" not in backend_guide:
+        raise ValueError("Backend guide must document the current SQLite schema")
 
     lock = read_json(ROOT / "frontend" / "package-lock.json")
     if lock["name"] != frontend["name"] or lock["version"] != frontend["version"]:

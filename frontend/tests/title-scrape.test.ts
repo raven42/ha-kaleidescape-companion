@@ -180,3 +180,67 @@ it("shows only enabled providers and makes unavailable providers unselectable", 
       .disabled,
   ).toBe(true);
 });
+
+it("offers detailed candidates, permits a replacement title search, and saves the chosen match", async () => {
+  const choices = {
+    search_id: "12345678-1234-4234-9234-123456789abc",
+    title: "Fictional Voyage",
+    query: "Voyage",
+    candidates: [
+      {
+        id: "match-0",
+        title: "Fictional Voyage",
+        year: 2025,
+        actors: ["Lead Example", "Second Example", "Third Example"],
+        directors: ["Director Example"],
+        genres: ["Adventure"],
+        has_artwork: true,
+      },
+    ],
+  };
+  vi.mocked(element.client!.titleScrapePreview)
+    .mockResolvedValueOnce(choices)
+    .mockResolvedValue({
+      ...review,
+      matched: { title: "Fictional Voyage", year: 2025 },
+    });
+  const search = vi
+    .spyOn(element.client!, "titleScrapeSearch")
+    .mockResolvedValueOnce({ ...choices, candidates: [] })
+    .mockResolvedValue(choices);
+  const apply = vi
+    .spyOn(element.client!, "applyTitleScrape")
+    .mockResolvedValue({ title_id: element.versionId, updated_count: 1 });
+  await scrape();
+  expect(root().querySelectorAll(".match-card")).toHaveLength(1);
+  expect(root().textContent).toContain("Director Example");
+  expect(root().textContent).toContain("Third Example");
+  expect(root().textContent).toContain("Adventure");
+  expect(root().querySelector("kaleidescape-scrape-image")).toBeTruthy();
+  const input = root().querySelector<HTMLInputElement>(
+    '[name="scraper_query"]',
+  )!;
+  input.value = "Alternate title";
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  button("Search titles").click();
+  await flush();
+  expect(search.mock.calls[0].at(-1)).toBe("Alternate title");
+  expect(root().textContent).toContain("No matching movies found");
+  button("Search titles").click();
+  await flush();
+  button("Use this match").click();
+  await flush();
+  expect(
+    vi.mocked(element.client!.titleScrapePreview).mock.calls.at(-1)!.slice(-2),
+  ).toEqual([choices.search_id, "match-0"]);
+  expect(root().textContent).toContain("This source choice will be saved");
+  button("Clear fields").click();
+  await flush();
+  button("Save match").click();
+  await flush();
+  expect(apply.mock.calls[0][0].message.data).toMatchObject({
+    fields: [],
+    images: {},
+    save_match: true,
+  });
+});

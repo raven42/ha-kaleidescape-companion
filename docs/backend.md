@@ -1,7 +1,7 @@
 # Journal backend
 
 The backend records manual journal entries and observed playback from one
-selected HA player. API version is `1`; SQLite schema is `20` and JSON export
+selected HA player. API version is `1`; SQLite schema is `22` and JSON export
 format is `5`. The household reader and administrator [management panel](ui.md)
 use this API. Live subscriptions remain planned; administrator discovery and
 [household device controls](playback-controls.md) are implemented;
@@ -31,8 +31,9 @@ closes the connection on its owning worker.
 
 The schema contains dataset metadata, viewing snapshots, durable playback
 sessions, field-correction markers, request deduplication, and manual audit
-metadata. Raw source IDs are preserved exactly. No title matching, content-ID
-normalization, or catalog identity merging is performed. Schema 1 databases
+metadata. Raw source IDs are preserved exactly. Recording never merges catalog
+identities by title. Reviewed imports can suggest title/year matches, with
+explicit ambiguity review and scoped Library references. Schema 1 databases
 migrate automatically, keeping manual records and retry responses and creating a
 pre-migration SQLite backup.
 
@@ -58,7 +59,8 @@ dataset revision, and time, without viewing identities or content. Upgrading an
 existing schema retains the usual private migration backup; purging never
 removes that separate copy. JSON format 5 carries viewing/session snapshots,
 portable Library entries with private embedded purchase history, excluding the
-audit tables. SQLite exports include all tables. Schema 5 adds a minimal
+audit tables. SQLite exports include the schema and retained private records,
+but clear operational logs and their private alias key. Schema 5 adds a minimal
 `import_audit` record with authenticated actor, request UUID, imported/skipped
 counts, dataset revision, and time, without imported content or file names.
 
@@ -147,6 +149,8 @@ copies of the same movie.
 | `schema_metadata`, `requests`                                                            | Dataset identity/revision and durable mutation deduplication                                                      |
 | `manual_audit`, `maintenance_audit`, `import_audit`                                      | Distinct mutation attribution/retention rules; import counts cover both title and viewing merges                  |
 | `library_collection_intents`                                                             | Durable recovery for an external collection write with an uncertain result                                        |
+| `playback_controls`                                                                      | Durable actor-bound device-command outcomes and uncertain-write barriers                                          |
+| `operation_logs`, `log_state`                                                            | Bounded private operational diagnostics, live thresholds and installation-keyed aliases                           |
 
 Flattening memberships or sessions into title rows would duplicate titles or
 require rewriting shared arrays; combining receipts/cache state with movie
@@ -404,8 +408,8 @@ cannot resurrect it.
 
 The [Database guide](database.md) defines raw-first inspection, personal view
 options, condition search/completion, supported per-table fields, confirmations,
-references and concurrency behavior. Inspection accepts only eighteen trusted
-tables, 10/25/100/500-row pages, validated sort columns, a bounded
+references and concurrency behavior. Inspection accepts only the fixed trusted
+table allowlist, 10/25/100/500-row pages, validated sort columns, a bounded
 2000-character predicate/literal search, revision-bound pagination and an 8 MiB
 result budget. The predicate parser binds values and resolves field/JSON aliases
 from trusted schema; it never executes caller SQL. Inspection has a two-second

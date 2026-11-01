@@ -148,6 +148,13 @@ it("defaults to the first quality-ranked version rather than the summary row and
   expect(root.querySelector(".movie-synopsis")?.textContent).toContain(
     "Lower-quality",
   );
+  expect(root.querySelector(".movie-description .detail-badges")).toBeNull();
+  expect(root.querySelector(".movie-heading-badges .format-badge")).toBeNull();
+  expect(root.querySelector(".version-format-badges .format-hd")).toBeTruthy();
+  expect(root.querySelector(".version-format-badges .rating-badge")).toBeNull();
+  expect(
+    root.querySelector(".movie-heading-badges .rating-badge"),
+  ).toBeTruthy();
   root
     .querySelector("kaleidescape-title-edit")!
     .dispatchEvent(new CustomEvent("metadata-changed"));

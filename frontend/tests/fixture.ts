@@ -218,6 +218,7 @@ export class FixtureTransport implements Transport {
     year: [],
     format: [],
     status: [],
+    scraper_conflict: false,
   };
   sharedPreferences: Record<string, unknown> = { hidden_collections: [] };
   searchPreferences: Record<string, unknown> = { fuzzy_search: true };
@@ -528,6 +529,7 @@ export class FixtureTransport implements Transport {
       ];
       let rows = this.libraryTitles.filter(
         (row) =>
+          (!filters.scraper_conflict || !!row.scraper_conflict) &&
           (!filters.query ||
             [row.title, ...row.actors, ...row.directors].some((value) =>
               matches(value, String(filters.query), !!filters.fuzzy),
@@ -771,9 +773,7 @@ export class FixtureTransport implements Transport {
       const sort = String(message.sort ?? columns[0]);
       if (query)
         rows = rows.filter((row) =>
-          Object.values(row).some((value) =>
-            String(value).toLowerCase().includes(query.toLowerCase()),
-          ),
+          Object.values(row).some((value) => matches(String(value), query)),
         );
       rows.sort(
         (a, b) =>

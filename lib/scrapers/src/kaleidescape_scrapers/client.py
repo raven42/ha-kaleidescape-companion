@@ -55,6 +55,39 @@ class Providers:
             raise ProviderError("unknown_provider")
         return await adapter.metadata(movie)
 
+    async def search(
+        self, provider: str, query: str, year: int | None = None
+    ) -> list[Metadata]:
+        """Return up to eight detailed candidates for explicit application selection."""
+        adapter = self.adapters.get(provider)
+        if adapter is None:
+            raise ProviderError("unknown_provider")
+        if (
+            not isinstance(query, str)
+            or not query.strip()
+            or len(query) > 200
+            or "\x00" in query
+        ):
+            raise ProviderError("invalid_provider_search")
+        if year is not None and (type(year) is not int or not 1800 <= year <= 2200):
+            raise ProviderError("invalid_provider_search")
+        search = getattr(adapter, "search", None)
+        if not search:
+            raise ProviderError("provider_search_unavailable")
+        return await search(query.strip(), year)
+
+    async def resolve(self, provider: str, reference: dict) -> Metadata:
+        """Revisit an application-approved provider identity without title searching."""
+        adapter = self.adapters.get(provider)
+        if adapter is None:
+            raise ProviderError("unknown_provider")
+        if not isinstance(reference, dict):
+            raise ProviderError("provider_identity_mismatch")
+        resolve = getattr(adapter, "resolve", None)
+        if not resolve:
+            raise ProviderError("provider_search_unavailable")
+        return await resolve(reference)
+
     async def artwork(self, provider: str, metadata: Metadata) -> bytes | None:
         """Fetch optional provider artwork; never accept an arbitrary image URL."""
         adapter = self.adapters.get(provider)

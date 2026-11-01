@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 
 from ..core.models import JournalError
 from ..library.store import changed
+from .matching import bindings, reference
 
 PROVIDERS = {"kaleidescape", "tmdb"}
 CREDITS = ("actors", "directors", "writers", "producers", "studios")
@@ -107,7 +108,8 @@ def candidates(db, source):
                 FROM json_each(purchase_history)
                 WHERE json_extract(value,'$.href') IS NOT NULL LIMIT 1)) href,
             json_extract(enrichment,'$.kaleidescape.fetched_at') store_fetched,
-            json_extract(enrichment,'$.tmdb.fetched_at') tmdb_fetched
+            json_extract(enrichment,'$.tmdb.fetched_at') tmdb_fetched,
+            json_extract(enrichment,'$.matches') matched_refs
         FROM library WHERE source_id=? AND available=1
         AND purchase_match_pending=0
         AND NOT EXISTS (SELECT 1 FROM library locked
@@ -133,10 +135,12 @@ def candidates(db, source):
                 "year": row["year"],
                 "href": None,
                 "enrichment": {},
+                "matches": {},
             },
         )
         if not entry["year"]:
             entry["year"] = row["year"]
+        entry["matches"].update(json.loads(row["matched_refs"] or "{}"))
         entry["href"] = entry["href"] or row["href"]
         for provider, field in (
             ("kaleidescape", "store_fetched"),
@@ -168,7 +172,16 @@ def save(db, source, title_id, provider, metadata):
         is not None
         or row["title"] != metadata.get("matched_title")
         or row["source_group"] != metadata.get("matched_group")
-        or (json.loads(row["data"]).get("year") not in (None, metadata.get("year")))
+        or bindings(db, source, row["source_group"]).get(provider)
+        != metadata.get("matched_reference")
+        or (
+            metadata.get("matched_reference") is not None
+            and reference(metadata) != metadata["matched_reference"]
+        )
+        or (
+            metadata.get("matched_reference") is None
+            and json.loads(row["data"]).get("year") not in (None, metadata.get("year"))
+        )
     ):
         raise JournalError("refresh_required", "Library changed during enrichment")
     with db:
@@ -178,6 +191,11 @@ def save(db, source, title_id, provider, metadata):
             (source, row["source_group"]),
         ).fetchall():
             value = json.loads(member["enrichment"])
+            if metadata.get("matched_reference"):
+                value.setdefault("matches", {})[provider] = metadata[
+                    "matched_reference"
+                ]
+            value.setdefault("conflicts", {}).pop(provider, None)
             previous = value.get(provider, {})
             value[provider] = json.loads(encoded)
             if provider == "tmdb" and previous.get("provider_id") == metadata.get(

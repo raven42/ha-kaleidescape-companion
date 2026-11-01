@@ -136,15 +136,16 @@ browser/device review. Exact-edition confirmation remains unverified.
 ## Deferred
 
 Multi-player configuration, live subscriptions, validated position/progress,
-canonical work/edition identities, journal identity associations and historical
-artwork, per-user ownership/selective sharing, saved resume and broader player
-compatibility remain deferred. The basic management panel is registered in HA;
-broader product UI and real-browser compatibility/accessibility checks remain.
-Administrator [Add to Collection](library-collections.md) is implemented behind
-a separate off-by-default option. Removal remains planned; automatic sync stays
-GET-only. Reviewed viewing/Library JSON/SQLite merge imports are implemented;
-automatic retention remains deferred. Full SQLite restore is documented as an
-offline procedure.
+canonical work/edition identities, broader journal identity inference and
+historical artwork, per-user ownership/selective sharing, saved resume and
+broader player compatibility remain deferred. The basic management panel is
+registered in HA; broader product UI and real-browser
+compatibility/accessibility checks remain. Administrator
+[Add to Collection](library-collections.md) is implemented behind a separate
+off-by-default option. Removal remains planned; automatic sync stays GET-only.
+Reviewed viewing/Library JSON/SQLite merge imports are implemented; automatic
+retention remains deferred. Full SQLite restore is documented as an offline
+procedure.
 
 See the [backend API](backend.md) for the implemented manual and observed
 journal behavior. The [design](design.md) distinguishes current source
@@ -185,6 +186,21 @@ fixed HTTPS destinations, source-labelled ratings, a write-only TMDB credential,
 a shared request limiter and schema 19 Library cache. Both providers default
 off. Live TMDB-key testing and operator UI review remain pending; see
 [enrichment](enrichment.md).
+
+Manual scraping supports explicit candidate search/selection with bounded
+credits and optional thumbnail previews. Approved provider bindings and match
+conflict codes live in protected Library enrichment JSON, with stale review and
+in-flight write checks. Automatic refreshes reuse approved identities. Library
+projects a conflict boolean and supports a persistent conflict filter; no new
+table/schema migration is required. Shared whole-word quoted search applies
+across Library/Journal, pickers, import review and plain Database searches.
+
+Library queries evaluate distinct credits before fuzzy matching and reuse
+bounded worker-only metadata/facet projections. Input/revision keys preserve
+freshness and source-policy changes invalidate cached projections. Both roles
+retain the same search budget and positive response fields; see
+[search behavior](library.md#browsing) and the fictional enriched benchmark in
+[development](development.md#library-performance).
 
 ## Operational diagnostics and transfer
 

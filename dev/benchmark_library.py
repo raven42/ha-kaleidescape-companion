@@ -17,7 +17,38 @@ from custom_components.kaleidescape_companion.core.repository import (  # noqa: 
 from custom_components.kaleidescape_companion.library.store import source_id  # noqa: E402
 
 
-async def run(titles: int, samples: int) -> None:
+def enrich(repository):
+    """Seed only this disposable benchmark, on its owning repository worker."""
+    db = repository._db()
+    rows = db.execute("SELECT id FROM library ORDER BY id").fetchall()
+    with db:
+        db.executemany(
+            "UPDATE library SET enrichment=? WHERE id=?",
+            [
+                (
+                    json.dumps(
+                        {
+                            "tmdb": {
+                                "actors": [
+                                    f"Credited Person {(index // 2 + actor) % 5000}"
+                                    for actor in range(80)
+                                ],
+                                "writers": [f"Fictional Writer {index % 100}"],
+                                "producers": ["Fictional Producer"],
+                                "studios": ["Fictional Studio"],
+                                "synopsis": "Fictional provider metadata. " * 20,
+                            }
+                        }
+                    ),
+                    row["id"],
+                )
+                for index, row in enumerate(rows)
+            ],
+        )
+        db.execute("UPDATE library_sources SET revision=revision+1")
+
+
+async def run(titles: int, samples: int, enriched=False) -> None:
     origin = "http://fictional-library.invalid"
     source = source_id(origin)
     rows = [
@@ -50,6 +81,8 @@ async def run(titles: int, samples: int) -> None:
         try:
             await repository.async_open()
             await repository.async_library_catalog(origin, rows, collections)
+            if enriched:
+                await repository._call(enrich, repository)
             print(
                 f"Fictional catalog: {titles} name{'' if titles == 1 else 's'}, "
                 f"{len(rows)} version{'' if len(rows) == 1 else 's'}; no network"
@@ -68,6 +101,29 @@ async def run(titles: int, samples: int) -> None:
                     f"{limit:7} | {statistics.median(timings):9.2f} | "
                     f"{max(timings):10.2f} | {size:8.1f}"
                 )
+            print("Search mode | Median ms | Maximum ms | Matches")
+            for mode, query, fuzzy in (
+                ("Literal", "Fictional actor 1", False),
+                ("Fuzzy", "Fictional actro 1", True),
+                ("Quoted", '"Fictional actor 1"', True),
+            ):
+                timings = []
+                for _ in range(samples):
+                    start = time.perf_counter()
+                    page = await repository.async_library_list(
+                        source,
+                        {
+                            "grouped": True,
+                            "limit": 1000,
+                            "query": query,
+                            "fuzzy": fuzzy,
+                        },
+                    )
+                    timings.append((time.perf_counter() - start) * 1000)
+                print(
+                    f"{mode:11} | {statistics.median(timings):9.2f} | "
+                    f"{max(timings):10.2f} | {page['total']:7}"
+                )
         finally:
             await repository.async_close()
 
@@ -76,10 +132,15 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--titles", type=int, default=5000)
     parser.add_argument("--samples", type=int, default=5)
+    parser.add_argument(
+        "--enriched",
+        action="store_true",
+        help="Include 80 billed cast and other provider credits per version",
+    )
     args = parser.parse_args()
     if not 1 <= args.titles <= 5000 or not 1 <= args.samples <= 20:
         parser.error("titles must be 1–5000 and samples 1–20")
-    asyncio.run(run(args.titles, args.samples))
+    asyncio.run(run(args.titles, args.samples, args.enriched))
 
 
 if __name__ == "__main__":

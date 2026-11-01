@@ -1,3 +1,4 @@
+import { matches } from "../core/search";
 /** Database toolbar transfers with private, bounded import/export dialogs. */
 import { counted } from "../core/text";
 import { LitElement, css, html, nothing } from "lit";
@@ -422,9 +423,10 @@ export class KaleidescapeTransfers extends LitElement {
           (!this.changesOnly ||
             row.needs_match ||
             (!row.needs_match && ["new", "merge"].includes(row.action))) &&
-          `${row.title} ${row.detail ?? ""} ${row.table} ${Object.keys(row.changes).join(" ")}`
-            .toLocaleLowerCase()
-            .includes(query),
+          matches(
+            `${row.title} ${row.detail ?? ""} ${row.table} ${Object.keys(row.changes).join(" ")}`,
+            query,
+          ),
       )
       .sort(
         (left, right) =>

@@ -9,6 +9,7 @@ from ..core.models import JournalError, identifier, invalid
 from ..core.security import private_directory
 from ..library.browse import library_versions
 from ..library.store import image_type, save_images
+from .matching import bindings
 from .store import REVIEW_FIELDS
 
 
@@ -88,13 +89,19 @@ def target(db, source, title):
             None,
         ),
         "href": href,
+        "matches": bindings(db, source, selected["source_group"]),
         "snapshot": signature(rows),
         "current": {key: current.get(key) for key in REVIEW_FIELDS},
     }
 
 
 def selection(data):
-    if not isinstance(data, dict) or set(data) != {"plan_id", "fields", "images"}:
+    if (
+        not isinstance(data, dict)
+        or set(data) - {"plan_id", "fields", "images", "save_match"}
+        or not {"plan_id", "fields", "images"} <= data.keys()
+        or type(data.get("save_match", False)) is not bool
+    ):
         raise invalid("Invalid scrape selection")
     plan = identifier(data["plan_id"])
     fields, images = data["fields"], data["images"]
@@ -113,9 +120,14 @@ def selection(data):
         )
     ):
         raise invalid("Choose supported images")
-    if not fields and not images:
+    if not fields and not images and not data.get("save_match"):
         raise invalid("Select data to apply")
-    return {"plan_id": plan, "fields": sorted(fields), "images": images}
+    return {
+        "plan_id": plan,
+        "fields": sorted(fields),
+        "images": images,
+        **({"save_match": True} if data.get("save_match") else {}),
+    }
 
 
 def fingerprint(actor, data):
@@ -171,6 +183,11 @@ def apply(db, directory, source, actor, request, data, plan, images, budget):
                 ).fetchone()[0]
             )
             enrichment.pop("source_only", None)
+            if plan.get("match"):
+                if enrichment.get("matches", {}).get(plan["provider"]) != plan["match"]:
+                    enrichment.get(plan["provider"], {}).pop("fetched_at", None)
+                enrichment.setdefault("matches", {})[plan["provider"]] = plan["match"]
+                enrichment.setdefault("conflicts", {}).pop(plan["provider"], None)
             reviewed = enrichment.setdefault("reviewed", {})
             reviewed.update({key: plan["metadata"][key] for key in data["fields"]})
             reviewed.update(

@@ -300,10 +300,12 @@ export interface ProviderMetadata {
   providers?: string[];
 }
 export interface ScrapeOptions {
+  title?: string;
   providers: { id: string; label: string; available: boolean }[];
   artwork_enabled: boolean;
 }
 export interface ScrapeReview {
+  matched?: { title: string; year: number };
   plan_id: string;
   title: string;
   fields: Record<string, { before: unknown; after: unknown }>;
@@ -314,6 +316,20 @@ export interface ScrapeReview {
     height: number | null;
   }[];
   artwork_enabled: boolean;
+}
+export interface ScrapeMatches {
+  search_id: string;
+  title: string;
+  query: string;
+  candidates: {
+    id: string;
+    title: string;
+    year: number;
+    actors: string[];
+    directors: string[];
+    genres: string[];
+    has_artwork: boolean;
+  }[];
 }
 export interface MetadataStatus {
   enabled?: boolean;
@@ -336,6 +352,7 @@ export interface LibraryEdit {
   version_count: number;
 }
 export interface LibraryTitle {
+  scraper_conflict?: boolean;
   ratings?: Pick<
     ProviderMetadata,
     "critic_score" | "audience_score" | "audience_rating" | "audience_votes"
@@ -377,6 +394,7 @@ export type LibrarySummary = Pick<
   | "id"
   | "is_favorite"
   | "is_recently_added"
+  | "scraper_conflict"
   | "rating"
   | "purchased_on"
   | "title"
@@ -758,20 +776,46 @@ export class JournalClient {
     scope: Scope,
     title_id: string,
     provider: string,
-  ): Promise<ScrapeReview> {
+    search_id = "",
+    choice = "",
+  ): Promise<ScrapeReview | ScrapeMatches> {
     return withRequestDeadline(
       this.transport.callWS({
         type: `${DOMAIN}/metadata/title/preview`,
         ...scopeFields(scope),
         title_id,
         provider,
+        search_id,
+        choice,
       }),
-      80000,
+      185000,
+    );
+  }
+  titleScrapeSearch(
+    scope: Scope,
+    title_id: string,
+    provider: string,
+    query: string,
+  ): Promise<ScrapeMatches> {
+    return withRequestDeadline(
+      this.transport.callWS({
+        type: `${DOMAIN}/metadata/title/search`,
+        ...scopeFields(scope),
+        title_id,
+        provider,
+        query,
+      }),
+      185000,
     );
   }
   prepareTitleScrape(
     scope: Scope,
-    data: { plan_id: string; fields: string[]; images: Record<string, string> },
+    data: {
+      plan_id: string;
+      fields: string[];
+      images: Record<string, string>;
+      save_match?: boolean;
+    },
   ) {
     return this.prepareCommand(scope, "metadata/title/apply", { data });
   }
@@ -791,7 +835,7 @@ export class JournalClient {
   ): Promise<Blob> {
     if (
       !/^[a-f0-9-]{36}$/.test(plan) ||
-      !/^(poster|backdrop)-[0-9]{1,3}$/.test(choice)
+      !/^(poster|backdrop|match)-[0-9]{1,3}$/.test(choice)
     )
       throw new ApiError("invalid_request");
     return this.raster(

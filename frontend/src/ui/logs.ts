@@ -405,7 +405,7 @@ export class KaleidescapeLogs extends LitElement {
                   }}
               /></label>
               <label
-                >Level<select
+                >Minimum level<select
                   name="filter-level"
                   .value=${this.level}
                   ?disabled=${this.busy}

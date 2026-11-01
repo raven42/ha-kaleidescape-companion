@@ -278,6 +278,7 @@ test("API proxy accepts only local-origin export/artwork GETs and never supplies
     const reviewImage = path.replace(
       /export\?format=json$/,
       "metadata/review/12345678-1234-4234-9234-123456789abc/image/poster-0",
+      "metadata/review/12345678-1234-4234-9234-123456789abc/image/match-0",
     );
     assert.equal((await get(port, reviewImage, headers)).status, 200);
     assert.equal(received[5].authorization, "Bearer fictional");

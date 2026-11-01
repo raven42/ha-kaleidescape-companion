@@ -30,13 +30,16 @@ guessing. TMDB uses its official API. See the independent
    configuration. **Check metadata status** shows progress, updates, skipped
    matches and an owned error code. Repeated clicks coalesce into one pass.
 
-Store enrichment needs an existing Library purchase `href`; it never invents
-store slugs. TMDB needs the Library title and a known release year. Matching is
-conservative: ambiguous or mismatched movies are skipped. Skipped totals are
-provider attempts, so one movie can contribute twice. A pass stops after one
-hour; successfully cached results remain available. It supports up to 10,000
-scanned versions and processes one movie group at a time. Unknown years and
-missing credentials/links are skipped without requesting a movie.
+Automatic store enrichment initially needs an existing Library purchase `href`;
+it never invents store slugs. TMDB initially needs the Library title and a known
+release year. An administrator-approved match can supply the provider identity
+instead, including for a movie without a store link or scanned year. Matching is
+conservative: unresolved ambiguous or mismatched movies are skipped and marked
+for review. Skipped totals are provider attempts, so one movie can contribute
+twice. A pass stops after one hour; successfully cached results remain
+available. It supports up to 10,000 scanned versions and processes one movie
+group at a time. Unknown years and missing credentials/links are skipped without
+requesting a movie.
 
 These are internet lookups: the provider can see the request, movie identity and
 the HA host's network address. No watch history, notes, invoices, prices or
@@ -71,7 +74,7 @@ Changing preferences invalidates old Library pages so filters are not combined
 across different projections.
 
 **Kaleidescape library cover** means the original edition-specific image cached
-from the player; the public store adapter has no image API. **TMDB** covers use
+from the player; store search thumbnails do not replace it. **TMDB** covers use
 a separate cached `w500` poster. To populate them, enable TMDB and Sync artwork,
 select TMDB for Cover artwork, save, then choose **Refresh metadata**. Normal
 seven-day provider caching still applies. Original covers are retained so the
@@ -82,20 +85,64 @@ landscape downloads.
 ## Review a single title
 
 Administrators can open a Library title and choose **Scrape title**. The popup
-lists only enabled scrapers; missing release years, store links or TMDB
-credentials make a provider unavailable. Choose a scraper, retrieve its data,
-then review the field checkboxes. Available fields include full cast, directors,
-writers, producers, studios, genres, synopsis and provider-specific scores.
-**Compare values** shows current and incoming data. No Library data changes
-until **Apply selected data**.
+lists only enabled scrapers; TMDB requires a configured credential. Missing
+Library years or store links can be resolved through manual title search. Choose
+a scraper, retrieve its data, then review the field checkboxes. Available fields
+include full cast, directors, writers, producers, studios, genres, synopsis and
+provider-specific scores. **Compare values** shows current and incoming data. No
+Library data changes until **Apply selected data**.
+
+If automatic matching finds no unique movie, the popup offers up to **eight**
+candidate movies. **Title search** also accepts a different title at any time.
+Results show title/year, director, up to five cast members, genres and an
+optional cover preview. Cover previews require **Sync artwork**. Select **Use
+this match** to review that movie's data and image choices. A no-result search
+stays open so the title can be refined; it never silently chooses another movie.
+
+Applying the review saves that provider's identity/location for the entire
+Library source group, alongside the selected metadata. **Clear fields → Save
+match** saves only the binding. Future manual and automatic scrapes revisit the
+saved TMDB ID or store URL instead of searching the scanned title again. A new
+binding invalidates the old provider cache's freshness so the next pass can
+fetch it. **Change match / scraper** returns to search; original-source
+restoration also clears bindings. Scanned IDs, title/year, purchase links and
+viewings are preserved even if the explicitly chosen provider title/year
+differs.
+
+The private `enrichment.matches` and `enrichment.conflicts` objects use the
+existing Library table; no schema migration or separate table is required.
+SQLite backups retain them; portable Library JSON does not transfer provider
+caches/bindings. Match/search plans share the existing eight-review,
+twenty-minute limit. Each search allows at most eight detailed candidates and
+512 KiB of staged metadata. Requests have a three-minute budget, including the
+shared limiter and worker-slot wait; low configured rates may take longer to
+display results.
+
+No-match, ambiguous identity, missing scanned year/link and missing saved movie
+pages create a **scraper conflict**. These are recorded when a new scrape is
+attempted; older skipped attempts cannot be reconstructed. Transient network,
+credential, rate-limit and provider-format errors remain operational failures,
+without declaring a false identity conflict. A successful refresh or approved
+match clears that provider's conflict. The Library shows a centered warning
+overlay on affected covers, independently of badge toggles, and a warning in
+List view. **Filters → Scraper conflicts only** is a sticky personal filter. The
+indicator considers enabled providers needed by current field-source
+preferences; disabling a provider hides its unresolved indicator without erasing
+its record.
+
+Store title search uses its anonymous public search page and the public
+application headers needed by that page's JSON search route. It does not log in
+or send account data. Results exclude related-person groups, prices and
+ownership; fixed-size cover previews use the store's public image CDN. This
+interface is experimental and may change independently of movie-page parsing.
 
 TMDB also supplies a paged selection of posters and landscape images through its
 [images API](https://developer.themoviedb.org/reference/movie-images). Artwork
 sync must be enabled. Each image category starts at **Keep current image**;
 select one image per category to replace it. Only visible thumbnails are
 retrieved, through an authenticated administrator preview route. The store
-provider currently offers metadata only. Unavailable image/field categories are
-not invented.
+provider currently imports metadata only; candidate covers are preview-only.
+Unavailable image/field categories are not invented.
 
 Selected facts and images apply across the movie's source-group versions.
 Unselected fields remain unchanged; IDs, title/year identity, runtime, formats,

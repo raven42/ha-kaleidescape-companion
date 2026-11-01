@@ -262,7 +262,7 @@ def search_matches(db, plan, plan_id, revision, key, query, actor):
             "min(id)) id,min(title) title,min(json_extract(data,'$.year')) year,"
             "max(json_extract(data,'$.directors')) directors,count(*) version_count,"
             "source_id FROM library WHERE available=1 AND purchase_match_pending=0 "
-            "AND instr(title_search,?)>0 GROUP BY source_id,source_group "
+            "AND companion_matches(title_search,?,0) GROUP BY source_id,source_group "
             "ORDER BY min(title_search),source_id,source_group LIMIT 21",
             (query.strip().casefold(),),
         ).fetchall()

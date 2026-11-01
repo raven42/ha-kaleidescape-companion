@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased — Library search and log filtering
+
+- Treat log filters as minimum severity, including higher levels in paging and
+  exports.
+- Evaluate distinct credits once per Library search, prepare matchers once per
+  request, and reuse bounded private metadata/facet projections. Preserve
+  source-policy invalidation, household projections and execution limits.
+- Share bounded query execution with Database inspection; add fictional
+  enriched-catalog benchmarks and regressions for role parity, cache bounds,
+  invalidation and interrupted-read cleanup.
+- Correct stale schema/export versions, table counts and feature-status text in
+  operator/developer guides; validate the documented current schema in checks.
+
 ## Unreleased — Dedicated calendar Full Sync
 
 - Add disabled-by-default calendar maintenance with a required

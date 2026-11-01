@@ -320,7 +320,10 @@ it.each([
       ...root().querySelectorAll<HTMLButtonElement>("dialog button"),
     ].find((node) => node.textContent?.trim() === label)!;
     link.click();
-    expect(navigate.mock.calls[0][0].detail).toEqual({ key, value });
+    expect(navigate.mock.calls[0][0].detail).toEqual({
+      key,
+      value: key === "query" ? JSON.stringify(value) : value,
+    });
     expect(root().querySelector("dialog")!.open).toBe(false);
   },
 );

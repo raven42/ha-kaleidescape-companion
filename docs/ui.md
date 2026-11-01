@@ -331,12 +331,12 @@ snapshots rather than overwriting concurrent changes.
 **Options** persists rows per page (10/25/100/500), system-table visibility,
 selected table and per-table sort/order in the user's Database settings row. The
 three main tables (viewings, sessions and Library) show initially; the toggle
-exposes all eighteen. Collections, artwork and sources are system tables. The
-query balloon suggests trusted fields/operators. Enter searches; Tab accepts a
-completion. Plain text remains literal search; conditions include
-`purchased_on IS NULL`, `actors CONTAINS 'name'`, and `title LIKE 'Star%'`.
-Syntax feedback includes positions and does not execute SQL. See the
-[full Database contract and browser review](database.md).
+exposes the full inspection allowlist. Collections, artwork and sources are
+system tables. The query balloon suggests trusted fields/operators. Enter
+searches; Tab accepts a completion. Plain text remains literal search;
+conditions include `purchased_on IS NULL`, `actors CONTAINS 'name'`, and
+`title LIKE 'Star%'`. Syntax feedback includes positions and does not execute
+SQL. See the [full Database contract and browser review](database.md).
 
 Merge Import and Export remain on the Database toolbar, with reviewed
 missing-data merges and guarded dialogs. Source files are never modified;
@@ -443,10 +443,25 @@ the main search across title/cast/directors. Other clicks clear search and
 previous facets, applying only the chosen exact criterion. The popup closes to
 page one while view/count/sort stay unchanged, and criteria save personally.
 Genre/year/viewing-format filters include source labels and positive badge
-categories. Format/rating badges stay above tabs and in version content; tabs
+categories. Badges are no longer repeated below the synopsis. A single-version
+movie keeps its format and rating badges above the action row. Multiple-version
+movies show selected-version format badges below the poster and above Library
+details; the rating remains in the heading rather than below the poster. Tabs
 read only Version 1, Version 2 and so on. Single-version details use a labelled
 region without a tab row. Dynamic numeric count labels use singular for one and
 plural otherwise, including entry/entries.
+
+People links insert a double-quoted whole-word search, replacing existing
+criteria. Quoted searches override fuzzy mode throughout the UI, including
+suggestions, Journal pickers and plain Database search. See
+[search behavior](library.md#fuzzy-search-option).
+
+Administrator title scraping offers a bounded result picker when matching is
+ambiguous or empty, plus a replacement-title search. Each result shows basic
+credits, year, genres and an opt-in cover preview. The chosen provider binding
+saves with the reviewed data for future scrapes. Unresolved scraper identities
+have a centered cover warning and a sticky **Scraper conflicts only** filter.
+See [manual resolution](enrichment.md#review-a-single-title).
 
 ## Search options
 

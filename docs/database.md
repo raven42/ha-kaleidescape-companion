@@ -26,8 +26,8 @@ selected table and each table's sort field/order as personal database
 preferences. These use a separate settings row from Library preferences and
 require no HA reload. Initially the three main tables are visible: viewings,
 sessions and Library. Collections, artwork and sources are system tables. **Show
-system tables** exposes all eighteen tables for inspection; it does not remove
-write protections.
+system tables** exposes the full trusted inspection allowlist; private log
+configuration/alias keys are excluded. It does not remove write protections.
 
 | Table                                                                          | Supported editing/deletion                                                                                                                                                           |
 | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -38,7 +38,7 @@ write protections.
 | `library_sources`                                                              | Correct the source detection date while keeping sync state protected; delete a source and its local versions/collections/memberships when receipts permit                            |
 | `library_artwork`                                                              | Delete a managed cache entry, clear all title references, then unlink its private managed file; byte size/type/hash are protected                                                    |
 | `library_memberships`                                                          | Delete a local membership; relationship keys cannot be edited                                                                                                                        |
-| `settings`                                                                     | Validate/edit recognized Library/shared/Database preference JSON or delete a row to restore defaults                                                                                 |
+| `settings`                                                                     | Validate/edit recognized personal/shared UI preference JSON or delete an allowed row to restore defaults                                                                             |
 | Audit, request, dataset metadata, calendar and collection-write receipt tables | Inspect/search/sort only; identity, attribution and replay barriers remain protected                                                                                                 |
 
 Library `purchase_history` keeps all orders on the owning version. Flat order,

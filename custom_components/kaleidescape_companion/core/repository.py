@@ -48,6 +48,7 @@ from .models import (
     timestamp,
     validate_times,
 )
+from .read_cache import ReadCache
 from .security import async_finish_cleanup, private_directory, private_file
 
 MAX_PENDING = 128
@@ -89,6 +90,7 @@ class JournalRepository:
         self._calendar: dict | None = None
         self._recording_library_source: str | None = None
         self._metadata_sources = {}
+        self._read_cache = ReadCache()
 
     def _queue_log(self, event):
         # Only sanitized DTOs created by SafeLogger/movie_value reach this queue.
@@ -249,6 +251,8 @@ class JournalRepository:
         await self._call(self._open)
 
     def _open(self) -> None:
+        if sqlite3.sqlite_version_info < (3, 35, 0):
+            raise UnsupportedSchemaError("SQLite 3.35 or newer is required")
         private_directory(self.path.parent)
         private_file(self.path, create=True)
         for suffix in ("-journal", "-wal", "-shm"):
@@ -269,9 +273,9 @@ class JournalRepository:
             lambda value: str(value or "").casefold(),
             deterministic=True,
         )
-        from .search import matches
-
-        connection.create_function("companion_matches", 3, matches, deterministic=True)
+        connection.create_function(
+            "companion_matches", 3, self._read_cache.matches, deterministic=True
+        )
         connection.create_function(
             "companion_shuffle", 2, library_browse.shuffle_key, deterministic=True
         )
@@ -284,12 +288,13 @@ class JournalRepository:
         connection.create_function("companion_quality", 1, quality, deterministic=True)
         from ..enrichment.store import effective
 
+        def project_metadata(data, enrichment):
+            return effective(data, enrichment, self._metadata_sources)
+
         connection.create_function(
             "companion_metadata",
             2,
-            lambda data, enrichment: effective(
-                data, enrichment, self._metadata_sources
-            ),
+            lambda *args: self._read_cache.projections.call(project_metadata, *args),
             deterministic=True,
         )
         from ..enrichment.selection import image
@@ -300,6 +305,14 @@ class JournalRepository:
             lambda original, enrichment, kind: image(
                 original, enrichment, self._metadata_sources, kind
             ),
+            deterministic=True,
+        )
+        from ..enrichment.matching import has_conflict
+
+        connection.create_function(
+            "companion_conflict",
+            1,
+            lambda enrichment: has_conflict(enrichment, self._metadata_sources),
             deterministic=True,
         )
         try:
@@ -363,6 +376,7 @@ class JournalRepository:
                 "settings_revision=settings_revision+1"
             )
         self._metadata_sources = sources
+        self._read_cache.clear()
 
     async def async_library_info(self, source: str, excluded: str = "") -> dict:
         return await self._call(
@@ -378,7 +392,12 @@ class JournalRepository:
         self, source: str, filters: dict, excluded: str = ""
     ) -> dict:
         return await self._call(
-            self._search_read, library_browse.library_list, source, filters, excluded
+            self._search_read,
+            library_browse.library_list,
+            source,
+            filters,
+            excluded,
+            self._read_cache,
         )
 
     async def async_library_versions(
@@ -445,6 +464,10 @@ class JournalRepository:
             return await self._call(self._search_read, store.candidates, *args)
         if operation == "save":
             return await self._call(self._library_write, store.save, *args)
+        if operation == "conflict":
+            from ..enrichment.matching import conflict
+
+            return await self._call(self._library_write, conflict, *args)
         if operation == "poster":
             return await self._call(self._library_write, self._save_poster, *args)
         if operation == "artwork":
@@ -640,6 +663,7 @@ class JournalRepository:
                 self._unregister_log_sink = None
             self._loop = None
             self._import_plan = None
+            self._read_cache.clear()
             if self._connection is not None:
                 self._connection.close()
                 self._connection = None
@@ -770,7 +794,8 @@ class JournalRepository:
         deadline = time.monotonic() + 2
         db.set_progress_handler(lambda: int(time.monotonic() > deadline), 1000)
         try:
-            return function(db, *args)
+            with self._read_cache.search():
+                return function(db, *args)
         except sqlite3.OperationalError as error:
             if getattr(error, "sqlite_errorcode", None) == sqlite3.SQLITE_INTERRUPT:
                 raise JournalError(
@@ -787,21 +812,9 @@ class JournalRepository:
         return await self._call(search, self._db(), source, query, excluded, fuzzy)
 
     def _inspect(self, table, offset, revision, limit, query, sort, descending) -> dict:
-        db = self._db()
-        deadline = time.monotonic() + 2
-        db.set_progress_handler(lambda: int(time.monotonic() > deadline), 1000)
-        try:
-            return inspect_database(
-                db, table, offset, revision, limit, query, sort, descending
-            )
-        except sqlite3.OperationalError as error:
-            if getattr(error, "sqlite_errorcode", None) == sqlite3.SQLITE_INTERRUPT:
-                raise JournalError(
-                    "query_limit", "Query exceeded its two-second execution budget"
-                ) from error
-            raise
-        finally:
-            db.set_progress_handler(None, 0)
+        return self._search_read(
+            inspect_database, table, offset, revision, limit, query, sort, descending
+        )
 
     async def async_database_validate_query(self, table, query):
         return await self._call(self._database_validate_query, table, query)

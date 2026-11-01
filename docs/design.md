@@ -1,6 +1,6 @@
 # Technical design
 
-Updated: 2026-10-30. This document describes implemented architecture and
+Updated: 2026-10-31. This document describes implemented architecture and
 explicit extension points. [Framework status](framework.md) tracks delivery;
 [product plan](plan.md) orders future work; [interface research](research.md)
 separates evidence from unverified capabilities. The
@@ -51,6 +51,7 @@ packages with no compatibility forwarding modules or development tools.
 | `config_flow.py`, `backup.py`, `diagnostics.py`, `sensor.py`                                                                                                                         | Required HA configuration, backup, health and sensor entry points                                                                |
 | `core/runtime.py`, `core/settings.py`                                                                                                                                                | Typed entry resources, readiness/scope resolution, entity references and shared option validation                                |
 | `core/repository.py`                                                                                                                                                                 | Single-worker connection, admission, backup/transfer barriers and asynchronous storage facade                                    |
+| `core/search.py`, `core/read_cache.py`                                                                                                                                               | Shared prepared text matching and bounded private display/facet memoization on the repository worker                             |
 | `core/journal_store.py`, `core/models.py`                                                                                                                                            | Worker-only journal CRUD/search/retry/audit and shared validation/errors                                                         |
 | `core/journal_calendar.py`                                                                                                                                                           | Bounded month/detail projections for the local Journal calendar; exact linked metadata and safe household fields                 |
 | `core/maintenance.py`, `core/database_schema.py`, `core/database_query.py`, `core/database_mutations.py`, `core/importing.py`, `core/import_merge.py`, `core/migrations/`            | Fixed-table inspection/purge, bounded merge imports and ordered schema upgrades                                                  |
@@ -122,8 +123,8 @@ and
 
 The [backend guide](backend.md) defines the implemented schema, API, timing
 defaults, resource limits, and restore procedure. Release/API/schema/export
-versions are independent: integration `0.0.0`, API `1`, SQLite `15`, JSON export
-`4`.
+versions are independent; the [backend guide](backend.md) lists their current
+values. Integration release metadata remains `0.0.0`.
 
 - Store durable history in `<HA config>/kaleidescape_companion/journal.sqlite3`,
   separate from Recorder and static web roots. Keep history unless explicitly
@@ -235,11 +236,11 @@ Playing itself adds no Python image decoder or private artwork cache. HA owns
 upstream image fetching/caching and its native image authorization; see the
 security policy for source permissions and role-specific snapshot projections.
 
-The card deliberately has no transport buttons, seek bar, interpolated progress,
-catalog dependency, or separate navigation. Counts describe the current source
-session, not the combined viewing or a durable completion verdict. HA's existing
-media cards/actions remain available. The separate API control card adds
-opted-in household transport controls without changing this observational API.
+The observation API supplies no controls, interpolated progress or completion
+verdict. Counts describe the current source session. The Now Playing page adds
+the separately opted-in household controls through its Remote popup without
+changing this observational API. HA's existing media cards/actions remain
+available.
 
 ### Future live updates and multiple players
 
@@ -273,7 +274,7 @@ private content-keyed object URLs with a 1000-image/128 MiB compressed-byte LRU,
 offscreen-first eviction and full Library/account cleanup. Completed images
 survive scrolling and view/page changes. Options owns live database-backed
 layout toggles; cover format selection and exclusive status/independent Favorite
-indicators live in `library/badges.ts`. Metadata uses schema 17 on the existing
+indicators live in `library/badges.ts`. Metadata uses the existing SQLite
 worker; a 192 MiB library write ceiling preserves 64 MiB of journal growth.
 `ui/preferences.py` validates the native landing default and database UI values;
 `core/preferences.py` atomically patches actor-scoped/shared rows on the worker.

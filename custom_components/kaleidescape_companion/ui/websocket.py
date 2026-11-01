@@ -113,6 +113,14 @@ def async_register_commands(hass: HomeAssistant) -> None:
             **scoped,
             p.Required("title_id"): str,
             p.Required("provider"): str,
+            p.Optional("search_id", default=""): str,
+            p.Optional("choice", default=""): str,
+        },
+        "metadata/title/search": {
+            **scoped,
+            p.Required("title_id"): str,
+            p.Required("provider"): str,
+            p.Required("query"): str,
         },
         "metadata/title/apply": {**mutations, p.Required("data"): dict},
         "library/edit/reset": {
@@ -426,6 +434,7 @@ async def async_handle(
                     case (
                         "metadata/title/options"
                         | "metadata/title/preview"
+                        | "metadata/title/search"
                         | "metadata/title/apply"
                     ):
                         library = get_library(hass, msg["entry_id"], runtime)
@@ -439,7 +448,15 @@ async def async_handle(
                             result = await manager.options(user, msg["title_id"])
                         elif operation.endswith("preview"):
                             result = await manager.preview(
-                                user, msg["title_id"], msg["provider"]
+                                user,
+                                msg["title_id"],
+                                msg["provider"],
+                                msg["search_id"],
+                                msg["choice"],
+                            )
+                        elif operation.endswith("search"):
+                            result = await manager.search(
+                                user, msg["title_id"], msg["provider"], msg["query"]
                             )
                         else:
                             result = await manager.apply(
@@ -1049,6 +1066,7 @@ MUTATIONS = {
     "library/collections/acknowledge": (Subsystem.LIBRARY, Operation.ACKNOWLEDGE),
     "metadata/sync": (Subsystem.METADATA, Operation.SCRAPE),
     "metadata/title/preview": (Subsystem.METADATA, Operation.SCRAPE),
+    "metadata/title/search": (Subsystem.METADATA, Operation.SCRAPE),
     "metadata/title/apply": (Subsystem.METADATA, Operation.UPDATE),
     "calendar/maintain": (Subsystem.CALENDAR, Operation.SYNC),
     "calendar/sync": (Subsystem.CALENDAR, Operation.EXPORT),

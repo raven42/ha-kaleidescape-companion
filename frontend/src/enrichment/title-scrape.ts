@@ -8,6 +8,7 @@ import type {
   PreparedMutation,
   ScrapeOptions,
   ScrapeReview,
+  ScrapeMatches,
 } from "../core/api";
 import { counted } from "../core/text";
 import { styles } from "../ui/styles";
@@ -73,6 +74,55 @@ export class TitleScrape extends LitElement {
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 10px;
       }
+      .match-results {
+        display: grid;
+        gap: 10px;
+        max-height: 48dvh;
+        overflow-y: auto;
+      }
+      .match-card {
+        display: grid;
+        grid-template-columns: 64px minmax(0, 1fr);
+        gap: 12px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+      }
+      .match-card h3 {
+        margin: 0 0 5px;
+        font-size: 16px;
+      }
+      .match-card p {
+        margin: 4px 0;
+        font-size: 12px;
+      }
+      .match-card button {
+        float: right;
+        margin-top: 6px;
+      }
+      .match-card kaleidescape-scrape-image {
+        width: 64px;
+        height: 96px;
+      }
+      .match-placeholder {
+        width: 64px;
+        min-height: 80px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .match-search {
+        display: flex;
+        gap: 8px;
+        align-items: end;
+        margin-block: 12px;
+      }
+      .match-search label {
+        flex: 1;
+        min-width: 0;
+      }
+      .match-search button {
+        flex: none;
+      }
       .candidate {
         min-width: 0;
         padding: 6px;
@@ -119,6 +169,8 @@ export class TitleScrape extends LitElement {
   blocked = false;
   private options?: ScrapeOptions;
   private review?: ScrapeReview;
+  private candidatesPage?: ScrapeMatches;
+  private query = "";
   private provider = "";
   private fields = new Set<string>();
   private images: Record<string, string> = {};
@@ -149,6 +201,8 @@ export class TitleScrape extends LitElement {
   private reset() {
     this.generation++;
     this.options = this.review = undefined;
+    this.candidatesPage = undefined;
+    this.query = "";
     this.fields.clear();
     this.images = {};
     this.pending = undefined;
@@ -183,6 +237,7 @@ export class TitleScrape extends LitElement {
       );
       if (generation !== this.generation) return;
       this.options = options;
+      this.query = options.title ?? "";
       this.provider =
         options.providers.find((provider) => provider.available)?.id ?? "";
     } catch (error) {
@@ -194,7 +249,7 @@ export class TitleScrape extends LitElement {
       }
     }
   }
-  private async scrape() {
+  private async scrape(choice = "") {
     if (!this.client || !this.scope || !this.provider || this.pending) return;
     const generation = this.generation;
     this.busy = true;
@@ -205,13 +260,61 @@ export class TitleScrape extends LitElement {
         this.scope,
         this.versionId,
         this.provider,
+        choice ? this.candidatesPage?.search_id : undefined,
+        choice,
       );
       if (generation !== this.generation) return;
+      if ("search_id" in review) {
+        this.candidatesPage = review;
+        this.query = review.query;
+        this.review = undefined;
+        this.dispatchEvent(
+          new CustomEvent("scrape-status-changed", {
+            bubbles: true,
+            composed: true,
+          }),
+        );
+        return;
+      }
       this.review = review;
       this.fields = new Set(Object.keys(review.fields));
       this.images = {};
       this.tab = "metadata";
       this.pages = { poster: 0, backdrop: 0 };
+    } catch (error) {
+      if (generation === this.generation) this.report(error);
+    } finally {
+      if (generation === this.generation) {
+        this.busy = false;
+        this.requestUpdate();
+      }
+    }
+  }
+  private async search() {
+    if (
+      !this.client ||
+      !this.scope ||
+      !this.provider ||
+      !this.query.trim() ||
+      this.pending ||
+      this.busy
+    )
+      return;
+    const generation = this.generation;
+    this.busy = true;
+    this.error = "";
+    this.requestUpdate();
+    try {
+      const matches = await this.client.titleScrapeSearch(
+        this.scope,
+        this.versionId,
+        this.provider,
+        this.query,
+      );
+      if (generation === this.generation) {
+        this.candidatesPage = matches;
+        this.review = undefined;
+      }
     } catch (error) {
       if (generation === this.generation) this.report(error);
     } finally {
@@ -231,6 +334,7 @@ export class TitleScrape extends LitElement {
         plan_id: this.review.plan_id,
         fields: [...this.fields],
         images: this.images,
+        ...(this.review.matched ? { save_match: true } : {}),
       });
       this.lock();
       this.requestUpdate();
@@ -372,6 +476,44 @@ export class TitleScrape extends LitElement {
         </div>
       </div>`;
   }
+  private matchResults() {
+    const matches = this.candidatesPage;
+    if (!matches) return nothing;
+    return html`<p class="muted">
+        Choose the correct movie. Up to eight results are shown; refine the
+        title search if needed. The match is saved when you apply its review.
+      </p>
+      ${!matches.candidates.length ? html`<p role="status">No matching movies found. Try a different title in the search above.</p>` : nothing}
+      <div class="match-results" aria-label="Scraper matches">
+        ${matches.candidates.map(
+          (candidate) =>
+            html`<article class="match-card">
+              ${candidate.has_artwork ? html`<kaleidescape-scrape-image .client=${this.client} .scope=${this.scope} .queue=${this.queue} .plan=${matches.search_id} .choice=${candidate.id}></kaleidescape-scrape-image>` : html`<div class="match-placeholder">Cover unavailable</div>`}
+              <div>
+                <h3>${candidate.title} (${candidate.year})</h3>
+                <p>
+                  <strong>Director:</strong>
+                  ${candidate.directors.join(", ") || "Unavailable"}
+                </p>
+                <p>
+                  <strong>Cast:</strong>
+                  ${candidate.actors.join(", ") || "Unavailable"}
+                </p>
+                <p>
+                  <strong>Genres:</strong>
+                  ${candidate.genres.join(", ") || "Unavailable"}
+                </p>
+                <button
+                  ?disabled=${this.busy || !!this.pending}
+                  @click=${() => this.scrape(candidate.id)}
+                >
+                  Use this match
+                </button>
+              </div>
+            </article>`,
+        )}
+      </div>`;
+  }
   protected render() {
     if (!this.scope?.permissions.edit) return nothing;
     return html`<button
@@ -400,7 +542,8 @@ export class TitleScrape extends LitElement {
         ${this.busy ? html`<p role="status">${this.pending ? "Applying selected data…" : "Retrieving provider data…"}</p>` : nothing}
         ${
           this.review
-            ? html`<p class="muted">
+            ? html`${this.review.matched ? html`<p class="notice">Matched: <strong>${this.review.matched.title} (${this.review.matched.year})</strong>. This source choice will be saved for future scrapes.</p>` : nothing}
+                <p class="muted">
                   Selected fields replace displayed data across this movie's
                   versions and survive automatic scans. Identity, purchase and
                   viewing data are preserved. TMDB cast follows billing order;
@@ -513,13 +656,41 @@ ${Array.isArray(value.after) ? value.after.join(", ") : String(value.after)}</pr
                         this.provider = (
                           event.target as HTMLSelectElement
                         ).value;
+                        this.candidatesPage = undefined;
+                        this.error = "";
                         this.requestUpdate();
                       }}
                     >
                       <option value="">Choose a scraper</option>
-                      ${this.options.providers.map((provider) => html`<option value=${provider.id} ?disabled=${!provider.available}>${provider.label}${provider.available ? "" : " · missing year, link or credential"}</option>`)}
+                      ${this.options.providers.map((provider) => html`<option value=${provider.id} ?disabled=${!provider.available}>${provider.label}${provider.available ? "" : " · missing credential"}</option>`)}
                     </select></label
-                  >${!this.options.providers.some((provider) => provider.available) ? html`<p class="muted">Enable and configure a scraper in Settings and sync the title's release year first. The store also requires a linked store page.</p>` : nothing}`
+                  >
+                  <form
+                    class="match-search"
+                    @submit=${(event: Event) => {
+                      event.preventDefault();
+                      void this.search();
+                    }}
+                  >
+                    <label
+                      >Title search<input
+                        name="scraper_query"
+                        type="search"
+                        maxlength="200"
+                        .value=${this.query}
+                        ?disabled=${this.busy || !!this.pending}
+                        @input=${(event: Event) => {
+                          this.query = (event.target as HTMLInputElement).value;
+                          this.requestUpdate();
+                        }} /></label
+                    ><button
+                      type="submit"
+                      ?disabled=${this.busy || !this.provider || !this.query.trim()}
+                    >
+                      Search titles
+                    </button>
+                  </form>
+                  ${this.matchResults()}${!this.options.providers.some((provider) => provider.available) ? html`<p class="muted">Enable and configure a scraper in Settings first.</p>` : nothing}`
               : nothing
         }
         <div class="dialog-footer">
@@ -550,15 +721,15 @@ ${Array.isArray(value.after) ? value.after.join(", ") : String(value.after)}</pr
                       this.requestUpdate();
                     }}
                   >
-                    Choose scraper
+                    Change match / scraper
                   </button>`
                 : nothing
           }<button
             class="primary"
-            ?disabled=${this.busy || (!this.review && !this.provider) || (!!this.review && !this.fields.size && !Object.keys(this.images).length)}
-            @click=${this.review ? this.apply : this.scrape}
+            ?disabled=${this.busy || (!this.review && !this.provider) || (!!this.review && !this.review.matched && !this.fields.size && !Object.keys(this.images).length)}
+            @click=${() => (this.review ? this.apply() : this.scrape())}
           >
-            ${this.pending ? "Retry exact apply" : this.review ? "Apply selected data" : "Scrape title"}
+            ${this.pending ? "Retry exact apply" : this.review ? (this.review.matched && !this.fields.size && !Object.keys(this.images).length ? "Save match" : "Apply selected data") : this.candidatesPage ? "Try automatic match" : "Scrape title"}
           </button>
         </div>
       </dialog>`;

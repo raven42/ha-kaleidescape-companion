@@ -280,16 +280,17 @@ blindly replaying it.
 
 Database inspection and the new query/administration commands require an active
 administrator, before storage work and again after awaited results. The
-[Database contract](database.md) allows nineteen fixed tables, known column/JSON
-aliases, 10/25/100/500-row pages and 8 MiB result pages. Column identifiers come
-only from the local migrated schema; values use parameters. The condition parser
-supports comparisons, NULL tests, literal CONTAINS, LIKE and boolean grouping.
-It accepts at most 2000 characters, 128 tokens and eight levels; inspection SQL
-has a two-second progress deadline removed in finally. It cannot execute
-arbitrary SQL/DDL/functions/subqueries, install schemas, or accept paths. Query
-validation returns owned, position-based guidance without echoing entered
-values. Autocomplete uses schema names/operators and text bindings. All columns,
-even protected keys, can be queried without becoming writable.
+[Database contract](database.md) allows only its fixed table allowlist, known
+column/JSON aliases, 10/25/100/500-row pages and 8 MiB result pages. Column
+identifiers come only from the local migrated schema; values use parameters. The
+condition parser supports comparisons, NULL tests, literal CONTAINS, LIKE and
+boolean grouping. It accepts at most 2000 characters, 128 tokens and eight
+levels; inspection SQL has a two-second progress deadline removed in finally. It
+cannot execute arbitrary SQL/DDL/functions/subqueries, install schemas, or
+accept paths. Query validation returns owned, position-based guidance without
+echoing entered values. Autocomplete uses schema names/operators and text
+bindings. All columns, even protected keys, can be queried without becoming
+writable.
 
 `database/mutate` is a narrow edit/delete API over supported fields. It requires
 entry/dataset scope, actor-bound cryptographic UUID, inspected content revision,
@@ -561,8 +562,9 @@ new network operation or write capability is introduced by hiding names. The
 separately opted-in [Add to Collection action](library-collections.md) honors
 these preferences and requires an explicit administrator submission. Source
 reads never trigger it. Disabling sync denies Library API access but retains
-private cached data. No cloud store, password login, arbitrary vendor editing
-route, or playback operation is supported.
+private cached data. The local browser connector has no password-login,
+arbitrary vendor-editing or playback route. Separately opted-in provider and
+device-control adapters have their own boundaries below.
 
 Configured origins allow HTTP(S) on standard ports, without credentials, path,
 query, or fragment. Resolution uses HA's shared DNS/mDNS resolver when
@@ -579,17 +581,17 @@ Only `/movies`, its encoded collection query, `/details` with an encoded source
 handle, and validated `/webcovers/` or `/webcoverslarge/` raster paths are
 fetched. No browser-supplied URL/path/SQL or metadata-supplied external
 destination is used. HTML parsing uses the native structural parser without
-evaluating scripts. Cached search uses Unicode-folded title/actor/director
-substrings, with an optional bounded native fuzzy matcher. `library/suggest`
-exposes at most 20 cached actor/director names per bounded query, under the same
-active-user/enabled-source scope and access checks. It adds no device request.
-Complete group/count/identity checks protect catalog availability;
-missing/unrecognized or partial collection navigation preserves old memberships
-rather than inventing unwatched status. The built-in Scenes navigation is
-excluded because it opens scene management, not a movie collection; arbitrary
-malformed pages still fail. Details and collections retain freshness separately.
-Source Played/Paused labels never create journal completion or dated viewing
-history.
+evaluating scripts. Cached search uses Unicode-folded title and available
+cast/director/writer/producer/studio substrings, with an optional bounded native
+fuzzy matcher. `library/suggest` exposes at most 20 cached actor/director names
+per bounded query, under the same active-user/enabled-source scope and access
+checks. It adds no device request. Complete group/count/identity checks protect
+catalog availability; missing/unrecognized or partial collection navigation
+preserves old memberships rather than inventing unwatched status. The built-in
+Scenes navigation is excluded because it opens scene management, not a movie
+collection; arbitrary malformed pages still fail. Details and collections retain
+freshness separately. Source Played/Paused labels never create journal
+completion or dated viewing history.
 
 Requests are sequential, with 5-second DNS/connect, 15-second request, and
 30-minute scan budgets. HTML responses are capped at 8 MiB, trees at 200,000
@@ -1228,6 +1230,29 @@ defaults without rewriting existing rows. No device networking, arbitrary
 expression or direct provider access is added by search. SQL and filesystem
 access remain on the established worker and managed paths.
 
+Library people searches materialize distinct names before invoking the matcher,
+then resolve matches only within the active source's existing groups. Bound
+parameters carry query text and matched group IDs; no SQL or caller regex is
+accepted. Both roles use the same query and limits. Prepared matchers retain at
+most eight queries per worker read and 4096 bounded word-pair results per query;
+all query state is cleared on success, failure and interruption. ASCII folding
+has a fast path with the same Unicode fallback and literal/quoted semantics.
+
+Pure metadata projections and bounded facet lists use a worker-local LRU,
+limited to 4096 entries and 16 MiB of accounted Python values/container
+overhead. Of that budget, one facet snapshot has a separate 1 MiB allowance,
+preserving it while a large catalog rotates through the 15 MiB projection cache.
+Facet generation resolves each version once; year/rating summaries read only raw
+or explicitly reviewed scalar values, including intentional JSON null overrides.
+Metadata keys include their complete source/enrichment inputs. Facet keys
+include source identity/revision and hidden labels; changing provider policy
+clears the cache and advances source revisions. Returned containers are copied
+so a response consumer cannot mutate future results. Unload clears the cache. It
+is never persisted, exported, logged or shared between repositories, and it does
+not replace any authorization, stale-page check or positive public projection.
+SQLite execution/output limits remain in place; measured development timings are
+not HA hardware guarantees.
+
 ## Offline title comparison tools
 
 `dev/benchmark_title_matching.py` is excluded from runtime packages and accepts
@@ -1396,7 +1421,7 @@ Reusable providers live in `lib/scrapers/`; the runtime has a generated copy. A
 common `Providers.metadata` API dispatches immutable movie queries to separate
 provider adapters. Their injected transport shares rate/body limits; adding an
 adapter cannot extend the HA destination allowlist or enable access by itself.
-The HA adapter allows only fixed HTTPS store/movie/robots and TMDB v3 movie
+Ordinary passes allow only fixed HTTPS store/movie/robots and TMDB v3 movie
 routes, plus `image.tmdb.org/t/p/w780/<alphanumeric>.jpg` for optional backdrops
 and a fixed `w500` poster route when TMDB is the saved cover source. Both image
 capabilities require TMDB and artwork opt-ins. It rejects redirects and
@@ -1460,13 +1485,16 @@ review and administrator boundaries.
 ## Reviewed title enrichment
 
 Single-title scraping adds administrator-only `metadata/title/options`,
-`metadata/title/preview` and `metadata/title/apply` operations. Previews change
-no Library data and expose only known fields and opaque gallery choices. At most
-eight actor-bound reviews remain in memory for 20 minutes, each covering at most
-100 movie versions. Up to twelve bounded requests may wait for three worker
-slots; those clients and automatic scans share the same provider rate budget. No
-credentials, purchase/viewing data or network addresses are sent as movie
-metadata.
+`metadata/title/preview`, `metadata/title/search` and `metadata/title/apply`
+operations. Previews/searches do not import descriptive metadata; failed
+automatic matching can record an owned conflict code on the worker. They expose
+only known fields and opaque candidate/gallery choices. At most eight
+actor-bound search or review plans remain in memory for 20 minutes, each
+covering at most 100 movie versions. Search stages at most eight detailed
+candidates/512 KiB. Up to twelve bounded requests may wait for three worker
+slots, with a 180-second budget including waits; those clients and automatic
+scans share the provider rate budget. No credentials, purchase/viewing data or
+network addresses are sent as movie metadata.
 
 The authenticated administrator-only thumbnail route
 `metadata/review/{plan_id}/image/{choice}` resolves an owned staged image,
@@ -1491,6 +1519,36 @@ image references. Backup/unload cancels review networking and drops transient
 plans; uncertain UI writes retain a guarded retry. Tests use fictional providers
 and verify denial, revocation, stale reviews, selected-only imports, atomic
 failure, cached-image isolation, billing order and preview-route restrictions.
+
+Manual matching additionally permits the fixed public store search HTML and
+`/movie-store/rest/packages/search` JSON routes, only on review clients. Queries
+are at most 200 characters; JSON search fixes country US and display limit 15,
+ignoring related-person, account, ownership and payment data. Its two
+application headers contain only the fixed `store.js` name and a validated
+public version obtained from the search page. Preview-only covers allow exactly
+`images0[1-8].kaleidescape.com/transformed/covers/{132x189s,264x378s}/<digits>/<digits>.jpg`,
+requiring store and artwork opt-ins, public DNS pinning, JPEG validation and no
+credentials/query/redirect. Browser requests retain the actor-bound
+authenticated preview route; no external URL is returned or supplied by the
+caller.
+
+Apply may persist only the server-staged provider binding in protected Library
+enrichment, alongside selected data and its retry receipt. Saved source IDs/URLs
+are revalidated by the provider adapter on later reads; stale group snapshots or
+in-flight results using an older binding cannot overwrite a new choice. Bindings
+can differ from scanned title/year only after explicit administrator review; raw
+identities remain unchanged. Missing/ambiguous identity and missing movie pages
+record static conflict codes, while transient failures do not imply a bad match.
+Household reads expose only a conflict boolean for currently desired enabled
+providers. Private SQLite backups retain bindings/conflicts; portable Library
+JSON excludes them. Original-source restoration clears them. Queries, candidate
+metadata, raw URLs and external response bodies must never enter logs.
+
+Whole-search double quotes select an escaped, case-insensitive whole-word phrase
+and bypass fuzzy expansion. This uses the fixed `companion_matches` callback for
+worker searches and parameter-bound plain Database search, not arbitrary regex
+or SQL. Structured Database predicates retain their existing grammar. Client
+filtering uses the same phrase semantics, and person links quote values safely.
 
 ## Modal dismissal consistency
 
@@ -1568,6 +1626,10 @@ exact-revision cause after reload; this does not publish audit actors or request
 IDs. Alias filters are administrator-only, bounded, parameterized equality
 queries against positive log fields. Calendar pending-work warnings do not
 override quarantine, stale-data checks or unconfirmed-write barriers.
+
+Log-level query/export filters select the requested severity and all higher
+severities using fixed enum values and bound parameters. This does not alter
+administrator authorization, live logging levels, aliases or retention.
 
 ## Profile preferences and Library display corrections
 

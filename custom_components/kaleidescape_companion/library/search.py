@@ -3,7 +3,7 @@
 from time import monotonic
 
 from ..core.models import invalid
-from ..core.search import matches, normalized, score
+from ..core.search import matches, normalized, quoted, score
 from .browse import (
     FAVORITE_SQL,
     PURCHASE_SQL,
@@ -42,7 +42,7 @@ def search(db, source, query, excluded, fuzzy=True):
         ranked.append(
             (
                 score(query, normalized(row["title"]))
-                if fuzzy and (query or not raw.strip())
+                if fuzzy and not quoted(raw) and (query or not raw.strip())
                 else int(bool(raw.strip()) and matches(row["title"], raw)),
                 row["title"].casefold(),
                 row["id"],

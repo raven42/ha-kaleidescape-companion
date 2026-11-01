@@ -1,15 +1,15 @@
-const oe = globalThis, $t = oe.ShadowRoot && (oe.ShadyCSS === void 0 || oe.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, wt = /* @__PURE__ */ Symbol(), Rt = /* @__PURE__ */ new WeakMap();
+const oe = globalThis, wt = oe.ShadowRoot && (oe.ShadyCSS === void 0 || oe.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, xt = /* @__PURE__ */ Symbol(), zt = /* @__PURE__ */ new WeakMap();
 let Xt = class {
   constructor(e, t, i) {
-    if (this._$cssResult$ = !0, i !== wt) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
+    if (this._$cssResult$ = !0, i !== xt) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
     this.cssText = e, this.t = t;
   }
   get styleSheet() {
     let e = this.o;
     const t = this.t;
-    if ($t && e === void 0) {
+    if (wt && e === void 0) {
       const i = t !== void 0 && t.length === 1;
-      i && (e = Rt.get(t)), e === void 0 && ((this.o = e = new CSSStyleSheet()).replaceSync(this.cssText), i && Rt.set(t, e));
+      i && (e = zt.get(t)), e === void 0 && ((this.o = e = new CSSStyleSheet()).replaceSync(this.cssText), i && zt.set(t, e));
     }
     return e;
   }
@@ -17,20 +17,20 @@ let Xt = class {
     return this.cssText;
   }
 };
-const vi = (n) => new Xt(typeof n == "string" ? n : n + "", void 0, wt), S = (n, ...e) => {
+const vi = (n) => new Xt(typeof n == "string" ? n : n + "", void 0, xt), S = (n, ...e) => {
   const t = n.length === 1 ? n[0] : e.reduce((i, s, r) => i + ((o) => {
     if (o._$cssResult$ === !0) return o.cssText;
     if (typeof o == "number") return o;
     throw Error("Value passed to 'css' function must be a 'css' function result: " + o + ". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.");
   })(s) + n[r + 1], n[0]);
-  return new Xt(t, n, wt);
+  return new Xt(t, n, xt);
 }, yi = (n, e) => {
-  if ($t) n.adoptedStyleSheets = e.map((t) => t instanceof CSSStyleSheet ? t : t.styleSheet);
+  if (wt) n.adoptedStyleSheets = e.map((t) => t instanceof CSSStyleSheet ? t : t.styleSheet);
   else for (const t of e) {
     const i = document.createElement("style"), s = oe.litNonce;
     s !== void 0 && i.setAttribute("nonce", s), i.textContent = t.cssText, n.appendChild(i);
   }
-}, zt = $t ? (n) => n : (n) => n instanceof CSSStyleSheet ? ((e) => {
+}, Ut = wt ? (n) => n : (n) => n instanceof CSSStyleSheet ? ((e) => {
   let t = "";
   for (const i of e.cssRules) t += i.cssText;
   return vi(t);
@@ -63,7 +63,7 @@ const { is: $i, defineProperty: wi, getOwnPropertyDescriptor: xi, getOwnProperty
       }
   }
   return t;
-} }, ei = (n, e) => !$i(n, e), Ut = { attribute: !0, type: String, converter: Je, reflect: !1, useDefault: !1, hasChanged: ei };
+} }, ei = (n, e) => !$i(n, e), At = { attribute: !0, type: String, converter: Je, reflect: !1, useDefault: !1, hasChanged: ei };
 Symbol.metadata ??= /* @__PURE__ */ Symbol("metadata"), Pe.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
 let M = class extends HTMLElement {
   static addInitializer(e) {
@@ -72,7 +72,7 @@ let M = class extends HTMLElement {
   static get observedAttributes() {
     return this.finalize(), this._$Eh && [...this._$Eh.keys()];
   }
-  static createProperty(e, t = Ut) {
+  static createProperty(e, t = At) {
     if (t.state && (t.attribute = !1), this._$Ei(), this.prototype.hasOwnProperty(e) && ((t = Object.create(t)).wrapped = !0), this.elementProperties.set(e, t), !t.noAccessor) {
       const i = /* @__PURE__ */ Symbol(), s = this.getPropertyDescriptor(e, i, t);
       s !== void 0 && wi(this.prototype, e, s);
@@ -90,7 +90,7 @@ let M = class extends HTMLElement {
     }, configurable: !0, enumerable: !0 };
   }
   static getPropertyOptions(e) {
-    return this.elementProperties.get(e) ?? Ut;
+    return this.elementProperties.get(e) ?? At;
   }
   static _$Ei() {
     if (this.hasOwnProperty(Q("elementProperties"))) return;
@@ -119,8 +119,8 @@ let M = class extends HTMLElement {
     const t = [];
     if (Array.isArray(e)) {
       const i = new Set(e.flat(1 / 0).reverse());
-      for (const s of i) t.unshift(zt(s));
-    } else e !== void 0 && t.push(zt(e));
+      for (const s of i) t.unshift(Ut(s));
+    } else e !== void 0 && t.push(Ut(e));
     return t;
   }
   static _$Eu(e, t) {
@@ -247,53 +247,53 @@ let M = class extends HTMLElement {
   }
 };
 M.elementStyles = [], M.shadowRootOptions = { mode: "open" }, M[Q("elementProperties")] = /* @__PURE__ */ new Map(), M[Q("finalized")] = /* @__PURE__ */ new Map(), qi?.({ ReactiveElement: M }), (Pe.reactiveElementVersions ??= []).push("2.1.2");
-const xt = globalThis, At = (n) => n, le = xt.trustedTypes, Tt = le ? le.createPolicy("lit-html", { createHTML: (n) => n }) : void 0, ti = "$lit$", L = `lit$${Math.random().toFixed(9).slice(2)}$`, ii = "?" + L, Ei = `<${ii}>`, D = document, X = () => D.createComment(""), ee = (n) => n === null || typeof n != "object" && typeof n != "function", kt = Array.isArray, Ri = (n) => kt(n) || typeof n?.[Symbol.iterator] == "function", Ne = `[ 	
-\f\r]`, J = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, Pt = /-->/g, Dt = />/g, U = RegExp(`>|${Ne}(?:([^\\s"'>=/]+)(${Ne}*=${Ne}*(?:[^ 	
-\f\r"'\`<>=]|("|')|))|$)`, "g"), jt = /'/g, Mt = /"/g, si = /^(?:script|style|textarea|title)$/i, zi = (n) => (e, ...t) => ({ _$litType$: n, strings: e, values: t }), a = zi(1), E = /* @__PURE__ */ Symbol.for("lit-noChange"), l = /* @__PURE__ */ Symbol.for("lit-nothing"), Ot = /* @__PURE__ */ new WeakMap(), P = D.createTreeWalker(D, 129);
+const kt = globalThis, Tt = (n) => n, le = kt.trustedTypes, Pt = le ? le.createPolicy("lit-html", { createHTML: (n) => n }) : void 0, ti = "$lit$", U = `lit$${Math.random().toFixed(9).slice(2)}$`, ii = "?" + U, Ei = `<${ii}>`, D = document, ee = () => D.createComment(""), te = (n) => n === null || typeof n != "object" && typeof n != "function", _t = Array.isArray, Ri = (n) => _t(n) || typeof n?.[Symbol.iterator] == "function", Ne = `[ 	
+\f\r]`, W = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, Dt = /-->/g, jt = />/g, L = RegExp(`>|${Ne}(?:([^\\s"'>=/]+)(${Ne}*=${Ne}*(?:[^ 	
+\f\r"'\`<>=]|("|')|))|$)`, "g"), Mt = /'/g, Ot = /"/g, si = /^(?:script|style|textarea|title)$/i, zi = (n) => (e, ...t) => ({ _$litType$: n, strings: e, values: t }), a = zi(1), E = /* @__PURE__ */ Symbol.for("lit-noChange"), l = /* @__PURE__ */ Symbol.for("lit-nothing"), It = /* @__PURE__ */ new WeakMap(), P = D.createTreeWalker(D, 129);
 function ai(n, e) {
-  if (!kt(n) || !n.hasOwnProperty("raw")) throw Error("invalid template strings array");
-  return Tt !== void 0 ? Tt.createHTML(e) : e;
+  if (!_t(n) || !n.hasOwnProperty("raw")) throw Error("invalid template strings array");
+  return Pt !== void 0 ? Pt.createHTML(e) : e;
 }
-const Li = (n, e) => {
+const Ui = (n, e) => {
   const t = n.length - 1, i = [];
-  let s, r = e === 2 ? "<svg>" : e === 3 ? "<math>" : "", o = J;
+  let s, r = e === 2 ? "<svg>" : e === 3 ? "<math>" : "", o = W;
   for (let d = 0; d < t; d++) {
     const h = n[d];
-    let c, g, p = -1, $ = 0;
-    for (; $ < h.length && (o.lastIndex = $, g = o.exec(h), g !== null); ) $ = o.lastIndex, o === J ? g[1] === "!--" ? o = Pt : g[1] !== void 0 ? o = Dt : g[2] !== void 0 ? (si.test(g[2]) && (s = RegExp("</" + g[2], "g")), o = U) : g[3] !== void 0 && (o = U) : o === U ? g[0] === ">" ? (o = s ?? J, p = -1) : g[1] === void 0 ? p = -2 : (p = o.lastIndex - g[2].length, c = g[1], o = g[3] === void 0 ? U : g[3] === '"' ? Mt : jt) : o === Mt || o === jt ? o = U : o === Pt || o === Dt ? o = J : (o = U, s = void 0);
-    const y = o === U && n[d + 1].startsWith("/>") ? " " : "";
-    r += o === J ? h + Ei : p >= 0 ? (i.push(c), h.slice(0, p) + ti + h.slice(p) + L + y) : h + L + (p === -2 ? d : y);
+    let c, u, p = -1, $ = 0;
+    for (; $ < h.length && (o.lastIndex = $, u = o.exec(h), u !== null); ) $ = o.lastIndex, o === W ? u[1] === "!--" ? o = Dt : u[1] !== void 0 ? o = jt : u[2] !== void 0 ? (si.test(u[2]) && (s = RegExp("</" + u[2], "g")), o = L) : u[3] !== void 0 && (o = L) : o === L ? u[0] === ">" ? (o = s ?? W, p = -1) : u[1] === void 0 ? p = -2 : (p = o.lastIndex - u[2].length, c = u[1], o = u[3] === void 0 ? L : u[3] === '"' ? Ot : Mt) : o === Ot || o === Mt ? o = L : o === Dt || o === jt ? o = W : (o = L, s = void 0);
+    const y = o === L && n[d + 1].startsWith("/>") ? " " : "";
+    r += o === W ? h + Ei : p >= 0 ? (i.push(c), h.slice(0, p) + ti + h.slice(p) + U + y) : h + U + (p === -2 ? d : y);
   }
   return [ai(n, r + (n[t] || "<?>") + (e === 2 ? "</svg>" : e === 3 ? "</math>" : "")), i];
 };
-class te {
+class ie {
   constructor({ strings: e, _$litType$: t }, i) {
     let s;
     this.parts = [];
     let r = 0, o = 0;
-    const d = e.length - 1, h = this.parts, [c, g] = Li(e, t);
-    if (this.el = te.createElement(c, i), P.currentNode = this.el.content, t === 2 || t === 3) {
+    const d = e.length - 1, h = this.parts, [c, u] = Ui(e, t);
+    if (this.el = ie.createElement(c, i), P.currentNode = this.el.content, t === 2 || t === 3) {
       const p = this.el.content.firstChild;
       p.replaceWith(...p.childNodes);
     }
     for (; (s = P.nextNode()) !== null && h.length < d; ) {
       if (s.nodeType === 1) {
         if (s.hasAttributes()) for (const p of s.getAttributeNames()) if (p.endsWith(ti)) {
-          const $ = g[o++], y = s.getAttribute(p).split(L), q = /([.?@])?(.*)/.exec($);
+          const $ = u[o++], y = s.getAttribute(p).split(U), q = /([.?@])?(.*)/.exec($);
           h.push({ type: 1, index: r, name: q[2], strings: y, ctor: q[1] === "." ? Ai : q[1] === "?" ? Ti : q[1] === "@" ? Pi : De }), s.removeAttribute(p);
-        } else p.startsWith(L) && (h.push({ type: 6, index: r }), s.removeAttribute(p));
+        } else p.startsWith(U) && (h.push({ type: 6, index: r }), s.removeAttribute(p));
         if (si.test(s.tagName)) {
-          const p = s.textContent.split(L), $ = p.length - 1;
+          const p = s.textContent.split(U), $ = p.length - 1;
           if ($ > 0) {
             s.textContent = le ? le.emptyScript : "";
-            for (let y = 0; y < $; y++) s.append(p[y], X()), P.nextNode(), h.push({ type: 2, index: ++r });
-            s.append(p[$], X());
+            for (let y = 0; y < $; y++) s.append(p[y], ee()), P.nextNode(), h.push({ type: 2, index: ++r });
+            s.append(p[$], ee());
           }
         }
       } else if (s.nodeType === 8) if (s.data === ii) h.push({ type: 2, index: r });
       else {
         let p = -1;
-        for (; (p = s.data.indexOf(L, p + 1)) !== -1; ) h.push({ type: 7, index: r }), p += L.length - 1;
+        for (; (p = s.data.indexOf(U, p + 1)) !== -1; ) h.push({ type: 7, index: r }), p += U.length - 1;
       }
       r++;
     }
@@ -303,13 +303,13 @@ class te {
     return i.innerHTML = e, i;
   }
 }
-function H(n, e, t = n, i) {
+function V(n, e, t = n, i) {
   if (e === E) return e;
   let s = i !== void 0 ? t._$Co?.[i] : t._$Cl;
-  const r = ee(e) ? void 0 : e._$litDirective$;
-  return s?.constructor !== r && (s?._$AO?.(!1), r === void 0 ? s = void 0 : (s = new r(n), s._$AT(n, t, i)), i !== void 0 ? (t._$Co ??= [])[i] = s : t._$Cl = s), s !== void 0 && (e = H(n, s._$AS(n, e.values), s, i)), e;
+  const r = te(e) ? void 0 : e._$litDirective$;
+  return s?.constructor !== r && (s?._$AO?.(!1), r === void 0 ? s = void 0 : (s = new r(n), s._$AT(n, t, i)), i !== void 0 ? (t._$Co ??= [])[i] = s : t._$Cl = s), s !== void 0 && (e = V(n, s._$AS(n, e.values), s, i)), e;
 }
-class Ui {
+class Li {
   constructor(e, t) {
     this._$AV = [], this._$AN = void 0, this._$AD = e, this._$AM = t;
   }
@@ -326,7 +326,7 @@ class Ui {
     for (; h !== void 0; ) {
       if (o === h.index) {
         let c;
-        h.type === 2 ? c = new W(r, r.nextSibling, this, e) : h.type === 1 ? c = new h.ctor(r, h.name, h.strings, this, e) : h.type === 6 && (c = new Di(r, this, e)), this._$AV.push(c), h = i[++d];
+        h.type === 2 ? c = new H(r, r.nextSibling, this, e) : h.type === 1 ? c = new h.ctor(r, h.name, h.strings, this, e) : h.type === 6 && (c = new Di(r, this, e)), this._$AV.push(c), h = i[++d];
       }
       o !== h?.index && (r = P.nextNode(), o++);
     }
@@ -337,7 +337,7 @@ class Ui {
     for (const i of this._$AV) i !== void 0 && (i.strings !== void 0 ? (i._$AI(e, i, t), t += i.strings.length - 2) : i._$AI(e[t])), t++;
   }
 }
-class W {
+class H {
   get _$AU() {
     return this._$AM?._$AU ?? this._$Cv;
   }
@@ -356,7 +356,7 @@ class W {
     return this._$AB;
   }
   _$AI(e, t = this) {
-    e = H(this, e, t), ee(e) ? e === l || e == null || e === "" ? (this._$AH !== l && this._$AR(), this._$AH = l) : e !== this._$AH && e !== E && this._(e) : e._$litType$ !== void 0 ? this.$(e) : e.nodeType !== void 0 ? this.T(e) : Ri(e) ? this.k(e) : this._(e);
+    e = V(this, e, t), te(e) ? e === l || e == null || e === "" ? (this._$AH !== l && this._$AR(), this._$AH = l) : e !== this._$AH && e !== E && this._(e) : e._$litType$ !== void 0 ? this.$(e) : e.nodeType !== void 0 ? this.T(e) : Ri(e) ? this.k(e) : this._(e);
   }
   O(e) {
     return this._$AA.parentNode.insertBefore(e, this._$AB);
@@ -365,31 +365,31 @@ class W {
     this._$AH !== e && (this._$AR(), this._$AH = this.O(e));
   }
   _(e) {
-    this._$AH !== l && ee(this._$AH) ? this._$AA.nextSibling.data = e : this.T(D.createTextNode(e)), this._$AH = e;
+    this._$AH !== l && te(this._$AH) ? this._$AA.nextSibling.data = e : this.T(D.createTextNode(e)), this._$AH = e;
   }
   $(e) {
-    const { values: t, _$litType$: i } = e, s = typeof i == "number" ? this._$AC(e) : (i.el === void 0 && (i.el = te.createElement(ai(i.h, i.h[0]), this.options)), i);
+    const { values: t, _$litType$: i } = e, s = typeof i == "number" ? this._$AC(e) : (i.el === void 0 && (i.el = ie.createElement(ai(i.h, i.h[0]), this.options)), i);
     if (this._$AH?._$AD === s) this._$AH.p(t);
     else {
-      const r = new Ui(s, this), o = r.u(this.options);
+      const r = new Li(s, this), o = r.u(this.options);
       r.p(t), this.T(o), this._$AH = r;
     }
   }
   _$AC(e) {
-    let t = Ot.get(e.strings);
-    return t === void 0 && Ot.set(e.strings, t = new te(e)), t;
+    let t = It.get(e.strings);
+    return t === void 0 && It.set(e.strings, t = new ie(e)), t;
   }
   k(e) {
-    kt(this._$AH) || (this._$AH = [], this._$AR());
+    _t(this._$AH) || (this._$AH = [], this._$AR());
     const t = this._$AH;
     let i, s = 0;
-    for (const r of e) s === t.length ? t.push(i = new W(this.O(X()), this.O(X()), this, this.options)) : i = t[s], i._$AI(r), s++;
+    for (const r of e) s === t.length ? t.push(i = new H(this.O(ee()), this.O(ee()), this, this.options)) : i = t[s], i._$AI(r), s++;
     s < t.length && (this._$AR(i && i._$AB.nextSibling, s), t.length = s);
   }
   _$AR(e = this._$AA.nextSibling, t) {
     for (this._$AP?.(!1, !0, t); e !== this._$AB; ) {
-      const i = At(e).nextSibling;
-      At(e).remove(), e = i;
+      const i = Tt(e).nextSibling;
+      Tt(e).remove(), e = i;
     }
   }
   setConnected(e) {
@@ -409,11 +409,11 @@ class De {
   _$AI(e, t = this, i, s) {
     const r = this.strings;
     let o = !1;
-    if (r === void 0) e = H(this, e, t, 0), o = !ee(e) || e !== this._$AH && e !== E, o && (this._$AH = e);
+    if (r === void 0) e = V(this, e, t, 0), o = !te(e) || e !== this._$AH && e !== E, o && (this._$AH = e);
     else {
       const d = e;
       let h, c;
-      for (e = r[0], h = 0; h < r.length - 1; h++) c = H(this, d[i + h], t, h), c === E && (c = this._$AH[h]), o ||= !ee(c) || c !== this._$AH[h], c === l ? e = l : e !== l && (e += (c ?? "") + r[h + 1]), this._$AH[h] = c;
+      for (e = r[0], h = 0; h < r.length - 1; h++) c = V(this, d[i + h], t, h), c === E && (c = this._$AH[h]), o ||= !te(c) || c !== this._$AH[h], c === l ? e = l : e !== l && (e += (c ?? "") + r[h + 1]), this._$AH[h] = c;
     }
     o && !s && this.j(e);
   }
@@ -442,7 +442,7 @@ class Pi extends De {
     super(e, t, i, s, r), this.type = 5;
   }
   _$AI(e, t = this) {
-    if ((e = H(this, e, t, 0) ?? l) === E) return;
+    if ((e = V(this, e, t, 0) ?? l) === E) return;
     const i = this._$AH, s = e === l && i !== l || e.capture !== i.capture || e.once !== i.once || e.passive !== i.passive, r = e !== l && (i === l || s);
     s && this.element.removeEventListener(this.name, this, i), r && this.element.addEventListener(this.name, this, e), this._$AH = e;
   }
@@ -458,21 +458,21 @@ class Di {
     return this._$AM._$AU;
   }
   _$AI(e) {
-    H(this, e);
+    V(this, e);
   }
 }
-const ji = { I: W }, Mi = xt.litHtmlPolyfillSupport;
-Mi?.(te, W), (xt.litHtmlVersions ??= []).push("3.3.3");
+const ji = { I: H }, Mi = kt.litHtmlPolyfillSupport;
+Mi?.(ie, H), (kt.litHtmlVersions ??= []).push("3.3.3");
 const Oi = (n, e, t) => {
   const i = t?.renderBefore ?? e;
   let s = i._$litPart$;
   if (s === void 0) {
     const r = t?.renderBefore ?? null;
-    i._$litPart$ = s = new W(e.insertBefore(X(), r), r, void 0, t ?? {});
+    i._$litPart$ = s = new H(e.insertBefore(ee(), r), r, void 0, t ?? {});
   }
   return s._$AI(n), s;
 };
-const _t = globalThis;
+const Ct = globalThis;
 let x = class extends M {
   constructor() {
     super(...arguments), this.renderOptions = { host: this }, this._$Do = void 0;
@@ -495,10 +495,10 @@ let x = class extends M {
     return E;
   }
 };
-x._$litElement$ = !0, x.finalized = !0, _t.litElementHydrateSupport?.({ LitElement: x });
-const Ii = _t.litElementPolyfillSupport;
+x._$litElement$ = !0, x.finalized = !0, Ct.litElementHydrateSupport?.({ LitElement: x });
+const Ii = Ct.litElementPolyfillSupport;
 Ii?.({ LitElement: x });
-(_t.litElementVersions ??= []).push("4.2.2");
+(Ct.litElementVersions ??= []).push("4.2.2");
 const T = { ATTRIBUTE: 1, CHILD: 2, PROPERTY: 3, BOOLEAN_ATTRIBUTE: 4 }, ri = (n) => (...e) => ({ _$litDirective$: n, values: e });
 let ni = class {
   constructor(e) {
@@ -516,10 +516,10 @@ let ni = class {
     return this.render(...t);
   }
 };
-const { I: Ni } = ji, It = (n) => n, Fi = (n) => n.strings === void 0, Nt = () => document.createComment(""), K = (n, e, t) => {
+const { I: Ni } = ji, Nt = (n) => n, Fi = (n) => n.strings === void 0, Ft = () => document.createComment(""), J = (n, e, t) => {
   const i = n._$AA.parentNode, s = e === void 0 ? n._$AB : e._$AA;
   if (t === void 0) {
-    const r = i.insertBefore(Nt(), s), o = i.insertBefore(Nt(), s);
+    const r = i.insertBefore(Ft(), s), o = i.insertBefore(Ft(), s);
     t = new Ni(r, o, n, n.options);
   } else {
     const r = t._$AB.nextSibling, o = t._$AM, d = o !== n;
@@ -530,8 +530,8 @@ const { I: Ni } = ji, It = (n) => n, Fi = (n) => n.strings === void 0, Nt = () =
     if (r !== s || d) {
       let h = t._$AA;
       for (; h !== r; ) {
-        const c = It(h).nextSibling;
-        It(i).insertBefore(h, s), h = c;
+        const c = Nt(h).nextSibling;
+        Nt(i).insertBefore(h, s), h = c;
       }
     }
   }
@@ -539,7 +539,7 @@ const { I: Ni } = ji, It = (n) => n, Fi = (n) => n.strings === void 0, Nt = () =
 }, A = (n, e, t = n) => (n._$AI(e, t), n), Bi = {}, oi = (n, e = Bi) => n._$AH = e, Vi = (n) => n._$AH, Fe = (n) => {
   n._$AR(), n._$AA.remove();
 };
-const Ft = (n, e, t) => {
+const Bt = (n, e, t) => {
   const i = /* @__PURE__ */ new Map();
   for (let s = e; s <= t; s++) i.set(n[s], s);
   return i;
@@ -562,24 +562,24 @@ const Ft = (n, e, t) => {
     const s = Vi(n), { values: r, keys: o } = this.dt(e, t, i);
     if (!Array.isArray(s)) return this.ut = o, r;
     const d = this.ut ??= [], h = [];
-    let c, g, p = 0, $ = s.length - 1, y = 0, q = r.length - 1;
+    let c, u, p = 0, $ = s.length - 1, y = 0, q = r.length - 1;
     for (; p <= $ && y <= q; ) if (s[p] === null) p++;
     else if (s[$] === null) $--;
     else if (d[p] === o[y]) h[y] = A(s[p], r[y]), p++, y++;
     else if (d[$] === o[q]) h[q] = A(s[$], r[q]), $--, q--;
-    else if (d[p] === o[q]) h[q] = A(s[p], r[q]), K(n, h[q + 1], s[p]), p++, q--;
-    else if (d[$] === o[y]) h[y] = A(s[$], r[y]), K(n, s[p], s[$]), $--, y++;
-    else if (c === void 0 && (c = Ft(o, y, q), g = Ft(d, p, $)), c.has(d[p])) if (c.has(d[$])) {
-      const z = g.get(o[y]), Ie = z !== void 0 ? s[z] : null;
+    else if (d[p] === o[q]) h[q] = A(s[p], r[q]), J(n, h[q + 1], s[p]), p++, q--;
+    else if (d[$] === o[y]) h[y] = A(s[$], r[y]), J(n, s[p], s[$]), $--, y++;
+    else if (c === void 0 && (c = Bt(o, y, q), u = Bt(d, p, $)), c.has(d[p])) if (c.has(d[$])) {
+      const z = u.get(o[y]), Ie = z !== void 0 ? s[z] : null;
       if (Ie === null) {
-        const Et = K(n, s[p]);
-        A(Et, r[y]), h[y] = Et;
-      } else h[y] = A(Ie, r[y]), K(n, s[p], Ie), s[z] = null;
+        const Rt = J(n, s[p]);
+        A(Rt, r[y]), h[y] = Rt;
+      } else h[y] = A(Ie, r[y]), J(n, s[p], Ie), s[z] = null;
       y++;
     } else Fe(s[$]), $--;
     else Fe(s[p]), p++;
     for (; y <= q; ) {
-      const z = K(n, h[q + 1]);
+      const z = J(n, h[q + 1]);
       A(z, r[y]), h[y++] = z;
     }
     for (; p <= $; ) {
@@ -589,7 +589,7 @@ const Ft = (n, e, t) => {
     return this.ut = o, oi(n, h), E;
   }
 });
-function V() {
+function B() {
   const n = window.innerWidth;
   return n <= 600 ? "mobile" : n <= 1024 ? "tablet" : "desktop";
 }
@@ -601,8 +601,8 @@ class b extends Error {
 const m = "kaleidescape_companion", Wi = 15e3, f = ({ entry_id: n, dataset_id: e }) => ({
   entry_id: n,
   dataset_id: e
-}), Ji = 256 * 1024 * 1024, Bt = 5 * 1024 * 1024, Ki = 32 * 1024 * 1024;
-function Ct() {
+}), Ji = 256 * 1024 * 1024, Vt = 5 * 1024 * 1024, Ki = 32 * 1024 * 1024;
+function St() {
   const n = globalThis.crypto;
   if (typeof n?.randomUUID == "function") return n.randomUUID();
   if (typeof n?.getRandomValues != "function")
@@ -615,7 +615,7 @@ function Ct() {
   ).join("");
   return `${t.slice(0, 8)}-${t.slice(8, 12)}-${t.slice(12, 16)}-${t.slice(16, 20)}-${t.slice(20)}`;
 }
-async function se(n, e, t) {
+async function ae(n, e, t) {
   const i = n.body?.getReader();
   if (!i) throw new b("storage_error");
   const s = [];
@@ -633,7 +633,7 @@ async function se(n, e, t) {
     }), i.releaseLock();
   }
 }
-function u(n) {
+function g(n) {
   return typeof n == "object" && n !== null && "code" in n && typeof n.code == "string" ? n.code : "connection_lost";
 }
 function w(n) {
@@ -678,9 +678,9 @@ function w(n) {
     tmdb_ambiguous: "TMDB returned more than one matching movie. No data was imported.",
     provider_rate_limited: "The provider rate limit was reached. Wait before trying again.",
     provider_artwork_unavailable: "This provider does not have that image available."
-  }[u(n)] ?? "The connection was interrupted. The result could not be confirmed.";
+  }[g(n)] ?? "The connection was interrupted. The result could not be confirmed.";
 }
-async function ae(n, e = Wi) {
+async function K(n, e = Wi) {
   let t;
   try {
     return await Promise.race([
@@ -701,13 +701,13 @@ class li {
     this.transport = e;
   }
   call(e) {
-    return ae(this.transport.callWS(e));
+    return K(this.transport.callWS(e));
   }
   controlInfo(e) {
     return this.call({ type: `${m}/control/info`, ...f(e) });
   }
   controlDiscover(e) {
-    return ae(
+    return K(
       this.transport.callWS({
         type: `${m}/control/discover`,
         ...f(e)
@@ -760,28 +760,42 @@ class li {
       title_id: t
     });
   }
-  titleScrapePreview(e, t, i) {
-    return ae(
+  titleScrapePreview(e, t, i, s = "", r = "") {
+    return K(
       this.transport.callWS({
         type: `${m}/metadata/title/preview`,
         ...f(e),
         title_id: t,
-        provider: i
+        provider: i,
+        search_id: s,
+        choice: r
       }),
-      8e4
+      185e3
+    );
+  }
+  titleScrapeSearch(e, t, i, s) {
+    return K(
+      this.transport.callWS({
+        type: `${m}/metadata/title/search`,
+        ...f(e),
+        title_id: t,
+        provider: i,
+        query: s
+      }),
+      185e3
     );
   }
   prepareTitleScrape(e, t) {
     return this.prepareCommand(e, "metadata/title/apply", { data: t });
   }
   applyTitleScrape(e) {
-    return ae(
+    return K(
       this.transport.callWS({ ...e.message }),
       8e4
     );
   }
   async titleScrapeImage(e, t, i, s) {
-    if (!/^[a-f0-9-]{36}$/.test(t) || !/^(poster|backdrop)-[0-9]{1,3}$/.test(i))
+    if (!/^[a-f0-9-]{36}$/.test(t) || !/^(poster|backdrop|match)-[0-9]{1,3}$/.test(i))
       throw new b("invalid_request");
     return this.raster(
       `/api/${m}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/metadata/review/${t}/image/${i}`,
@@ -827,7 +841,7 @@ class li {
   saveLibraryEdit(e) {
     return this.call({ ...e.message });
   }
-  uiPreferences(e, t = !1, i = "library", s = V()) {
+  uiPreferences(e, t = !1, i = "library", s = B()) {
     return this.call({
       type: `${m}/ui/${t ? "shared" : "preferences"}/get`,
       ...i !== "library" ? { area: i } : {},
@@ -835,7 +849,7 @@ class li {
       ...f(e)
     });
   }
-  prepareUIPreferences(e, t, i, s, r = "library", o = V()) {
+  prepareUIPreferences(e, t, i, s, r = "library", o = B()) {
     return this.prepareCommand(
       e,
       `ui/${t ? "shared" : "preferences"}/update`,
@@ -995,7 +1009,7 @@ class li {
     const s = i.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase();
     if (!s || !["image/jpeg", "image/png", "image/webp"].includes(s))
       throw await i.body?.cancel(), new b("invalid_request");
-    return se(i, Bt, s);
+    return ae(i, Vt, s);
   }
   logs(e, t, i = {}) {
     return this.call({
@@ -1094,7 +1108,7 @@ class li {
       const h = await r.json().catch(() => null);
       throw new b(h?.code ?? "connection_lost");
     }
-    const o = await se(
+    const o = await ae(
       r,
       8 * 1024 * 1024,
       "application/json"
@@ -1122,7 +1136,7 @@ class li {
       );
     }
     const s = i.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase();
-    return !s || !["image/jpeg", "image/png", "image/webp"].includes(s) ? (await i.body?.cancel(), null) : se(i, Bt, s);
+    return !s || !["image/jpeg", "image/png", "image/webp"].includes(s) ? (await i.body?.cancel(), null) : ae(i, Vt, s);
   }
   librarySuggestions(e, t, i, s = !1) {
     return this.call({
@@ -1228,7 +1242,7 @@ class li {
       ...i,
       ...f(e),
       type: `${m}/${t}`,
-      request_id: Ct()
+      request_id: St()
     });
     return { scope: f(e), message: Object.freeze(s) };
   }
@@ -1251,7 +1265,7 @@ class li {
       };
       throw new b(o[r.status] ?? "storage_error");
     }
-    return se(
+    return ae(
       r,
       Ji,
       t === "json" ? "application/json" : "application/vnd.sqlite3"
@@ -1388,7 +1402,7 @@ const he = class he extends x {
         return;
       this.url = this.queue.cache.put(this.cacheKey, d), this.requestUpdate();
     } catch (o) {
-      t === this.generation && u(o) === "unauthorized" && this.dispatchEvent(
+      t === this.generation && g(o) === "unauthorized" && this.dispatchEvent(
         new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
       );
     } finally {
@@ -1431,14 +1445,14 @@ he.properties = {
   `;
 let Ke = he;
 customElements.get("kaleidescape-library-cover") || customElements.define("kaleidescape-library-cover", Ke);
-function Zi(n) {
+function Gi(n) {
   const e = n.watched_status === "in_progress" ? { key: "progress", label: "In progress", symbol: "◔" } : n.watched_status === "watched" ? { key: "watched", label: "Watched", symbol: "✓" } : n.is_recently_added ? { key: "recent", label: "Recently added", symbol: "NEW" } : void 0;
   return [
     ...e ? [e] : [],
     ...n.is_favorite ? [{ key: "favorite", label: "Favorite", symbol: "★" }] : []
   ];
 }
-function St(n) {
+function qt(n) {
   const e = (n.formats?.length ? n.formats : [n.edition ?? ""]).map(
     (s) => s.toLowerCase()
   ), t = (s) => e.some((r) => s.test(r)), i = [];
@@ -1446,13 +1460,13 @@ function St(n) {
     (s) => /\b4k\b/.test(s) && !/\bcinematic\b/.test(s)
   ) && i.push({ key: "four-k", label: "4K" }), e.some((s) => /\b4k\b/.test(s) && /\bcinematic\b/.test(s)) && i.push({ key: "cinematic", label: "4K Cinematic" }), t(/\bhd\b|\b1080p\b/) && i.push({ key: "hd", label: "HD" }), t(/\bsd\b|\b(?:480|576)[pi]\b/) && i.push({ key: "sd", label: "SD" }), t(/\bsdr\b/) && i.push({ key: "sdr", label: "SDR" }), t(/\bhdr10\b/) && i.push({ key: "hdr10", label: "HDR10" }), t(/\bdolby\s*vision\b/) && i.push({ key: "vision", label: "Dolby Vision" }), t(/\bdolby\s*atmos\b/) && i.push({ key: "atmos", label: "Dolby Atmos" }), i;
 }
-function Gi(n) {
-  const e = St(n);
+function Zi(n) {
+  const e = qt(n);
   return ["cinematic", "four-k", "hd", "sd"].map((t) => e.find((i) => i.key === t)).find(Boolean);
 }
 function I(n, e = !1, t, i = !1) {
-  const s = e ? Gi(n) : void 0;
-  return (e ? s ? [s] : [] : St(n)).map((r) => {
+  const s = e ? Zi(n) : void 0;
+  return (e ? s ? [s] : [] : qt(n)).map((r) => {
     const o = r.key === "cinematic" ? a`<b>4K</b><span class="cinematic-label">Cinematic</span>` : r.label;
     return t ? a`<button
           type="button"
@@ -1470,7 +1484,7 @@ function I(n, e = !1, t, i = !1) {
   });
 }
 function Be(n, e = !1, t = []) {
-  return Zi(n).filter((i) => !t.includes(i.key)).map(
+  return Gi(n).filter((i) => !t.includes(i.key)).map(
     (i) => a`<span
           class=${e ? `cover-flag flag-${i.key}` : `status-badge flag-${i.key}`}
           title=${i.label}
@@ -1482,7 +1496,7 @@ function Be(n, e = !1, t = []) {
         >`
   );
 }
-function N(n, e, t = !1) {
+function X(n, e, t = !1) {
   if (!n?.trim()) return l;
   const i = n.trim(), s = i.toUpperCase().replaceAll(" ", ""), r = {
     G: "general",
@@ -1592,6 +1606,27 @@ const je = S`
     overflow: hidden;
     text-overflow: ellipsis;
     padding: 3px 2px;
+  }
+  .scraper-conflict-icon {
+    color: #f5bb35;
+    text-shadow: 0 1px 3px #000;
+    margin-inline-start: 5px;
+  }
+  .cover-tile > .scraper-conflict-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 4;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    margin: 0;
+    border-radius: 50%;
+    background: #101316dd;
+    font-size: 32px;
+    pointer-events: none;
   }
   .cover-image {
     aspect-ratio: 2 / 3;
@@ -2015,6 +2050,9 @@ const je = S`
     margin-top: 12px;
     font-size: 12px;
   }
+  .version-format-badges {
+    margin-top: 10px;
+  }
   @container movie-modal (max-width: 600px) {
     .movie-ratings {
       gap: 5px;
@@ -2098,6 +2136,10 @@ const je = S`
       margin-top: 0;
       border-top: 1px solid var(--line);
       padding-top: 8px;
+    }
+    .version-format-badges {
+      grid-column: 1 / -1;
+      order: 9;
     }
     .movie-credits {
       gap: 10px;
@@ -3315,7 +3357,7 @@ function _(n) {
   const t = e.getBoundingClientRect();
   n.clientX >= t.left && n.clientX <= t.right && n.clientY >= t.top && n.clientY <= t.bottom || e.dispatchEvent(new Event("cancel", { cancelable: !0 })) && e.close();
 }
-function F(n) {
+function N(n) {
   return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
 }
 function Xi(n) {
@@ -3325,7 +3367,7 @@ function Xi(n) {
   ];
 }
 function es(n) {
-  const e = F(new Date(n.started_at)), t = n.ended_at ? F(new Date(n.ended_at)) : e;
+  const e = N(new Date(n.started_at)), t = n.ended_at ? N(new Date(n.ended_at)) : e;
   return n.status === "completed" && t !== e && n.ended_at && new Date(n.ended_at) > new Date(n.started_at) ? [
     { day: e, phase: "start" },
     { day: t, phase: "completion" }
@@ -3341,10 +3383,10 @@ const ce = class ce extends x {
           this.getBoundingClientRect().top,
           this.previousElementSibling?.getBoundingClientRect().bottom ?? 0
         ), i = this.closest("main"), s = [".month-bar", ".weekday"].reduce(
-          (c, g) => c + (this.renderRoot.querySelector(g)?.getBoundingClientRect().height ?? 0),
+          (c, u) => c + (this.renderRoot.querySelector(u)?.getBoundingClientRect().height ?? 0),
           0
         ) + [...this.renderRoot.querySelectorAll(".month-status")].reduce(
-          (c, g) => c + g.getBoundingClientRect().height,
+          (c, u) => c + u.getBoundingClientRect().height,
           0
         ) + (this.nextElementSibling?.getBoundingClientRect().height ?? 0) + (i && parseFloat(getComputedStyle(i).paddingBottom) || 0) + 16, r = new Date(
           this.month.getFullYear(),
@@ -3387,7 +3429,7 @@ const ce = class ce extends x {
     this.generation++, this.closeDetails(), this.items = [], this.error = "", this.loading = !1, this.queue.cache.dispose(), this.queue = new R();
   }
   fail(e) {
-    u(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
+    g(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     )), this.error = w(e), this.requestUpdate();
   }
@@ -3431,7 +3473,7 @@ const ce = class ce extends x {
         const r = await this.client.calendarDetails(this.scope, e.id);
         i === this.generation && s === this.detailRequest && (this.selected = r.viewing, this.movie = r.movie, this.selectedArtwork = r.movie?.artwork_key ?? t);
       } catch (r) {
-        i === this.generation && s === this.detailRequest && (u(r) === "unauthorized" ? this.fail(r) : this.detailError = w(r));
+        i === this.generation && s === this.detailRequest && (g(r) === "unauthorized" ? this.fail(r) : this.detailError = w(r));
       } finally {
         i === this.generation && s === this.detailRequest && (this.detailLoading = !1, this.requestUpdate());
       }
@@ -3462,13 +3504,13 @@ const ce = class ce extends x {
     return a`<button
       type="button"
       class="link detail-link"
-      @click=${() => this.browse(e, t)}
+      @click=${() => this.browse(e, e === "query" ? JSON.stringify(t) : t)}
     >
       ${t}
     </button>`;
   }
   renderDetails() {
-    const e = this.selected, t = this.movie, i = e ? new Date(e.started_at) : null, s = e?.ended_at ? new Date(e.ended_at) : null, r = i && s && F(i) !== F(s), o = t?.duration_seconds ?? e?.duration_seconds;
+    const e = this.selected, t = this.movie, i = e ? new Date(e.started_at) : null, s = e?.ended_at ? new Date(e.ended_at) : null, r = i && s && N(i) !== N(s), o = t?.duration_seconds ?? e?.duration_seconds;
     return a`<dialog
       class="database-dialog calendar-dialog"
       aria-labelledby="calendar-movie-title"
@@ -3498,7 +3540,7 @@ const ce = class ce extends x {
                 ${this.detailLoading ? a`<p role="status">Loading movie details…</p>` : l}
                 ${this.detailError ? a`<p class="error" role="alert">${this.detailError} <button @click=${() => this.select(e, this.selectedArtwork)}>Retry details</button></p>` : l}
                 ${t ? a`<div class="detail-badges">
-                          ${I(t, !1, (d) => this.browse("format", d))}${N(t.rating ?? "", (d) => this.browse("rating", d))}
+                          ${I(t, !1, (d) => this.browse("format", d))}${X(t.rating ?? "", (d) => this.browse("rating", d))}
                         </div>
                         ${t.year ? a`<p><strong>Year:</strong> ${this.detailLink("year", String(t.year))}</p>` : l}
                         ${[
@@ -3508,7 +3550,7 @@ const ce = class ce extends x {
     ].map(
       ([d, h]) => h?.length ? a`<p>
                                 <strong>${d}:</strong>
-                                ${h.map((c, g) => a`${g ? ", " : ""}${this.detailLink(d === "Genres" ? "genre" : "query", c)}`)}
+                                ${h.map((c, u) => a`${u ? ", " : ""}${this.detailLink(d === "Genres" ? "genre" : "query", c)}`)}
                               </p>` : l
     )}` : !this.detailLoading && !this.detailError ? a`<p class="muted">
                           No linked Library metadata is available.
@@ -3544,8 +3586,8 @@ const ce = class ce extends x {
       (h, c) => new Date(e, t, c - i.getDay() + 1)
     ), d = /* @__PURE__ */ new Map();
     for (const h of this.items)
-      for (const { day: c, phase: g } of es(h))
-        d.set(c, [...d.get(c) ?? [], { row: h, phase: g }]);
+      for (const { day: c, phase: u } of es(h))
+        d.set(c, [...d.get(c) ?? [], { row: h, phase: u }]);
     return a`<div class="month-bar">
         <button
           aria-label="Previous month"
@@ -3576,18 +3618,18 @@ const ce = class ce extends x {
         >
           ${Array.from({ length: 7 }, (h, c) => a`<div class="weekday">${new Date(2023, 0, 1 + c).toLocaleDateString(void 0, { weekday: "short" })}</div>`)}
           ${o.map((h) => {
-      const c = F(h), g = d.get(c) ?? [];
+      const c = N(h), u = d.get(c) ?? [];
       return a`<section
-              class=${`day${h.getMonth() !== t ? " other-month" : ""}${c === F(/* @__PURE__ */ new Date()) ? " today" : ""}`}
+              class=${`day${h.getMonth() !== t ? " other-month" : ""}${c === N(/* @__PURE__ */ new Date()) ? " today" : ""}`}
               aria-label=${h.toLocaleDateString()}
             >
               <time datetime=${c}>${h.getDate()}</time>
-              ${g.length ? a`<div
+              ${u.length ? a`<div
                       class="cover-stack"
-                      style=${`--spread:${1 + (g.length - 1) * 0.15}`}
+                      style=${`--spread:${1 + (u.length - 1) * 0.15}`}
                     >
                       ${Hi(
-        g,
+        u,
         ({ row: p }) => p.id,
         ({ row: p, phase: $ }, y) => a`<button
                             class=${`poster poster-${$}`}
@@ -3658,8 +3700,8 @@ class ts {
           )
         };
         for (const [h, c] of Object.entries(d)) {
-          const g = `${Math.round(c)}px`;
-          this.host.style.getPropertyValue(h) !== g && this.host.style.setProperty(h, g);
+          const u = `${Math.round(c)}px`;
+          this.host.style.getPropertyValue(h) !== u && this.host.style.setProperty(h, u);
         }
       }));
     };
@@ -3707,7 +3749,7 @@ const pe = class pe extends x {
       e === this.generation && (this.link = t.library);
     } catch (t) {
       if (e !== this.generation) return;
-      this.error = w(t), u(t) === "unauthorized" && (this.clear(), this.requestUpdate(), this.dispatchEvent(
+      this.error = w(t), g(t) === "unauthorized" && (this.clear(), this.requestUpdate(), this.dispatchEvent(
         new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
       ));
     } finally {
@@ -3784,17 +3826,17 @@ pe.properties = {
       }
     `
 ];
-let Ze = pe;
-customElements.get("kaleidescape-viewing-library") || customElements.define("kaleidescape-viewing-library", Ze);
-function ie(n) {
+let Ge = pe;
+customElements.get("kaleidescape-viewing-library") || customElements.define("kaleidescape-viewing-library", Ge);
+function se(n) {
   const e = new Date(n);
   return new Date(e.getTime() - e.getTimezoneOffset() * 6e4).toISOString().slice(0, 19);
 }
-function Vt(n) {
+function Ht(n) {
   return {
     title: n?.title ?? "",
-    started_at: ie(n?.started_at ?? (/* @__PURE__ */ new Date()).toISOString()),
-    ended_at: n?.ended_at ? ie(n.ended_at) : "",
+    started_at: se(n?.started_at ?? (/* @__PURE__ */ new Date()).toISOString()),
+    ended_at: n?.ended_at ? se(n.ended_at) : "",
     duration_seconds: n?.duration_seconds == null ? "" : (n.duration_seconds / 60).toFixed(2),
     watched_seconds: ((n?.watched_seconds ?? 0) / 60).toFixed(2),
     status: n?.status ?? "partial",
@@ -3808,7 +3850,7 @@ function is(n, e, t, i = n) {
   const s = { ...n, [e]: t };
   if (e === "started_at") {
     const r = new Date(t).getTime(), o = new Date(i.started_at).getTime(), d = new Date(i.ended_at).getTime();
-    t && i.ended_at && [r, o, d].every(Number.isFinite) && (s.ended_at = ie(
+    t && i.ended_at && [r, o, d].every(Number.isFinite) && (s.ended_at = se(
       new Date(r + d - o).toISOString()
     ));
   }
@@ -3920,7 +3962,7 @@ const ue = class ue extends x {
         );
         t === this.request && this.isConnected && (this.items = i.items, this.requestUpdate());
       } catch (i) {
-        t === this.request && (this.error = w(i), this.requestUpdate(), u(i) === "unauthorized" && this.dispatchEvent(
+        t === this.request && (this.error = w(i), this.requestUpdate(), g(i) === "unauthorized" && this.dispatchEvent(
           new CustomEvent("access-denied", {
             bubbles: !0,
             composed: !0
@@ -3961,7 +4003,7 @@ const ue = class ue extends x {
         ${this.open ? a`<div class="movie-suggestions" id="movie-suggestions" role="listbox">${this.items.map((e, t) => a`<button type="button" role="option" id=${`movie-option-${t}`} aria-selected=${this.active === t} ?disabled=${this.requireRuntime && !e.duration_seconds} @pointerdown=${(i) => i.preventDefault()} @click=${() => this.choose(e)}><strong>${e.title}</strong> · ${e.year ?? "Year unknown"} · ${(e.formats?.length ? e.formats : [e.edition]).filter(Boolean).join(", ")} · ${e.duration_seconds ? `${(e.duration_seconds / 60).toFixed(2)} min` : "Runtime unknown"}</button>`)}${this.items.length ? l : a`<small>Type a title; only cached Library movies can be selected.</small>`}</div>` : l}
       </div>
       ${this.error ? a`<p class="error" role="alert">${this.error}</p>` : l}
-      ${this.selected ? a`<p class="manual-metadata">${this.selected.year ?? ""} ${I(this.selected)} ${N(this.selected.rating)} · ${((this.selected.duration_seconds ?? 0) / 60).toFixed(2)} min</p>` : l}
+      ${this.selected ? a`<p class="manual-metadata">${this.selected.year ?? ""} ${I(this.selected)} ${X(this.selected.rating)} · ${((this.selected.duration_seconds ?? 0) / 60).toFixed(2)} min</p>` : l}
     </fieldset>`;
   }
 };
@@ -3974,13 +4016,13 @@ ue.properties = {
   disabled: { type: Boolean },
   fuzzySearch: { attribute: !1 }
 }, ue.styles = [C, je];
-let Ge = ue;
+let Ze = ue;
 customElements.get("kaleidescape-library-title-picker") || customElements.define(
   "kaleidescape-library-title-picker",
-  Ge
+  Ze
 );
 function de() {
-  const n = ie((/* @__PURE__ */ new Date()).toISOString());
+  const n = se((/* @__PURE__ */ new Date()).toISOString());
   return {
     library_title_id: "",
     date: n.slice(0, 10),
@@ -4002,7 +4044,7 @@ function di(n) {
     throw new Error("Enter a valid local time.");
   s && (t = t % 12 + (s === "pm" ? 12 : 0));
   const r = `${n.date}T${String(t).padStart(2, "0")}:${String(i).padStart(2, "0")}:00`, o = new Date(r);
-  if (!Number.isFinite(o.getTime()) || ie(o.toISOString()) !== r)
+  if (!Number.isFinite(o.getTime()) || se(o.toISOString()) !== r)
     throw new Error(
       "That local date/time does not exist. Check the date or daylight-saving transition."
     );
@@ -4095,7 +4137,7 @@ ge.properties = {
 }, ge.styles = [C, je];
 let Qe = ge;
 customElements.get("kaleidescape-manual-viewing") || customElements.define("kaleidescape-manual-viewing", Qe);
-const qt = S`
+const Et = S`
   .entries-header {
     position: sticky;
     top: var(--companion-sticky-top, 0px);
@@ -4434,7 +4476,7 @@ function ui(n, e, t) {
   const i = (r) => rs.includes(r) && (e || r === "now-playing" || r === "journal" || r === "library") && (r !== "library" || t), s = new URL(location.href).searchParams.get("companion_page");
   return i(s) ? s : i(n) ? n : "journal";
 }
-function B(n) {
+function F(n) {
   const e = new URL(location.href);
   e.searchParams.set("companion_page", n), history.replaceState(history.state, "", e);
 }
@@ -4587,7 +4629,7 @@ const me = class me extends x {
       );
       !e.signal.aborted && this.isConnected && (this.url = URL.createObjectURL(s));
     } catch (s) {
-      e.signal.aborted || (this.failed = !0, u(s) === "unauthorized" && this.dispatchEvent(
+      e.signal.aborted || (this.failed = !0, g(s) === "unauthorized" && this.dispatchEvent(
         new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
       ));
     } finally {
@@ -4641,7 +4683,7 @@ const gs = {
   audience_votes: "Audience votes"
 }, fe = class fe extends x {
   constructor() {
-    super(...arguments), this.versionId = "", this.blocked = !1, this.provider = "", this.fields = /* @__PURE__ */ new Set(), this.images = {}, this.pages = { poster: 0, backdrop: 0 }, this.tab = "metadata", this.busy = !1, this.error = "", this.generation = 0, this.queue = new R();
+    super(...arguments), this.versionId = "", this.blocked = !1, this.query = "", this.provider = "", this.fields = /* @__PURE__ */ new Set(), this.images = {}, this.pages = { poster: 0, backdrop: 0 }, this.tab = "metadata", this.busy = !1, this.error = "", this.generation = 0, this.queue = new R();
   }
   willUpdate(e) {
     ["client", "scope", "versionId"].some((t) => e.has(t)) && this.reset();
@@ -4659,7 +4701,7 @@ const gs = {
     );
   }
   reset() {
-    this.generation++, this.options = this.review = void 0, this.fields.clear(), this.images = {}, this.pending = void 0, this.busy = !1, this.error = "", this.provider = "", this.tab = "metadata", this.pages = { poster: 0, backdrop: 0 }, this.queue.cache.dispose(), this.queue = new R(), this.renderRoot.querySelector("dialog")?.close(), this.lock();
+    this.generation++, this.options = this.review = void 0, this.candidatesPage = void 0, this.query = "", this.fields.clear(), this.images = {}, this.pending = void 0, this.busy = !1, this.error = "", this.provider = "", this.tab = "metadata", this.pages = { poster: 0, backdrop: 0 }, this.queue.cache.dispose(), this.queue = new R(), this.renderRoot.querySelector("dialog")?.close(), this.lock();
   }
   close() {
     this.pending || (this.reset(), this.requestUpdate());
@@ -4674,25 +4716,55 @@ const gs = {
         this.versionId
       );
       if (e !== this.generation) return;
-      this.options = t, this.provider = t.providers.find((i) => i.available)?.id ?? "";
+      this.options = t, this.query = t.title ?? "", this.provider = t.providers.find((i) => i.available)?.id ?? "";
     } catch (t) {
       e === this.generation && this.report(t);
     } finally {
       e === this.generation && (this.busy = !1, this.requestUpdate());
     }
   }
-  async scrape() {
+  async scrape(e = "") {
     if (!this.client || !this.scope || !this.provider || this.pending) return;
+    const t = this.generation;
+    this.busy = !0, this.error = "", this.requestUpdate();
+    try {
+      const i = await this.client.titleScrapePreview(
+        this.scope,
+        this.versionId,
+        this.provider,
+        e ? this.candidatesPage?.search_id : void 0,
+        e
+      );
+      if (t !== this.generation) return;
+      if ("search_id" in i) {
+        this.candidatesPage = i, this.query = i.query, this.review = void 0, this.dispatchEvent(
+          new CustomEvent("scrape-status-changed", {
+            bubbles: !0,
+            composed: !0
+          })
+        );
+        return;
+      }
+      this.review = i, this.fields = new Set(Object.keys(i.fields)), this.images = {}, this.tab = "metadata", this.pages = { poster: 0, backdrop: 0 };
+    } catch (i) {
+      t === this.generation && this.report(i);
+    } finally {
+      t === this.generation && (this.busy = !1, this.requestUpdate());
+    }
+  }
+  async search() {
+    if (!this.client || !this.scope || !this.provider || !this.query.trim() || this.pending || this.busy)
+      return;
     const e = this.generation;
     this.busy = !0, this.error = "", this.requestUpdate();
     try {
-      const t = await this.client.titleScrapePreview(
+      const t = await this.client.titleScrapeSearch(
         this.scope,
         this.versionId,
-        this.provider
+        this.provider,
+        this.query
       );
-      if (e !== this.generation) return;
-      this.review = t, this.fields = new Set(Object.keys(t.fields)), this.images = {}, this.tab = "metadata", this.pages = { poster: 0, backdrop: 0 };
+      e === this.generation && (this.candidatesPage = t, this.review = void 0);
     } catch (t) {
       e === this.generation && this.report(t);
     } finally {
@@ -4707,7 +4779,8 @@ const gs = {
       this.pending ??= this.client.prepareTitleScrape(this.scope, {
         plan_id: this.review.plan_id,
         fields: [...this.fields],
-        images: this.images
+        images: this.images,
+        ...this.review.matched ? { save_match: !0 } : {}
       }), this.lock(), this.requestUpdate();
       const t = await this.client.applyTitleScrape(this.pending);
       if (e !== this.generation) return;
@@ -4721,14 +4794,14 @@ const gs = {
     } catch (t) {
       if (e !== this.generation) return;
       this.report(t), ["invalid_request", "conflict", "refresh_required"].includes(
-        u(t)
+        g(t)
       ) && (this.pending = void 0, this.lock());
     } finally {
       e === this.generation && (this.busy = !1, this.requestUpdate());
     }
   }
   report(e) {
-    this.error = w(e), u(e) === "unauthorized" && this.dispatchEvent(
+    this.error = w(e), g(e) === "unauthorized" && this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     );
   }
@@ -4811,6 +4884,42 @@ const gs = {
         </div>
       </div>`;
   }
+  matchResults() {
+    const e = this.candidatesPage;
+    return e ? a`<p class="muted">
+        Choose the correct movie. Up to eight results are shown; refine the
+        title search if needed. The match is saved when you apply its review.
+      </p>
+      ${e.candidates.length ? l : a`<p role="status">No matching movies found. Try a different title in the search above.</p>`}
+      <div class="match-results" aria-label="Scraper matches">
+        ${e.candidates.map(
+      (t) => a`<article class="match-card">
+              ${t.has_artwork ? a`<kaleidescape-scrape-image .client=${this.client} .scope=${this.scope} .queue=${this.queue} .plan=${e.search_id} .choice=${t.id}></kaleidescape-scrape-image>` : a`<div class="match-placeholder">Cover unavailable</div>`}
+              <div>
+                <h3>${t.title} (${t.year})</h3>
+                <p>
+                  <strong>Director:</strong>
+                  ${t.directors.join(", ") || "Unavailable"}
+                </p>
+                <p>
+                  <strong>Cast:</strong>
+                  ${t.actors.join(", ") || "Unavailable"}
+                </p>
+                <p>
+                  <strong>Genres:</strong>
+                  ${t.genres.join(", ") || "Unavailable"}
+                </p>
+                <button
+                  ?disabled=${this.busy || !!this.pending}
+                  @click=${() => this.scrape(t.id)}
+                >
+                  Use this match
+                </button>
+              </div>
+            </article>`
+    )}
+      </div>` : l;
+  }
   render() {
     return this.scope?.permissions.edit ? a`<button
         class="scrape-button"
@@ -4835,7 +4944,8 @@ const gs = {
         </div>
         ${this.error ? a`<p class="error" role="alert">${this.error}</p>` : l}
         ${this.busy ? a`<p role="status">${this.pending ? "Applying selected data…" : "Retrieving provider data…"}</p>` : l}
-        ${this.review ? a`<p class="muted">
+        ${this.review ? a`${this.review.matched ? a`<p class="notice">Matched: <strong>${this.review.matched.title} (${this.review.matched.year})</strong>. This source choice will be saved for future scrapes.</p>` : l}
+                <p class="muted">
                   Selected fields replace displayed data across this movie's
                   versions and survive automatic scans. Identity, purchase and
                   viewing data are preserved. TMDB cast follows billing order;
@@ -4924,13 +5034,37 @@ ${Array.isArray(t.after) ? t.after.join(", ") : String(t.after)}</pre>
                       .value=${this.provider}
                       ?disabled=${this.busy}
                       @change=${(e) => {
-      this.provider = e.target.value, this.requestUpdate();
+      this.provider = e.target.value, this.candidatesPage = void 0, this.error = "", this.requestUpdate();
     }}
                     >
                       <option value="">Choose a scraper</option>
-                      ${this.options.providers.map((e) => a`<option value=${e.id} ?disabled=${!e.available}>${e.label}${e.available ? "" : " · missing year, link or credential"}</option>`)}
+                      ${this.options.providers.map((e) => a`<option value=${e.id} ?disabled=${!e.available}>${e.label}${e.available ? "" : " · missing credential"}</option>`)}
                     </select></label
-                  >${this.options.providers.some((e) => e.available) ? l : a`<p class="muted">Enable and configure a scraper in Settings and sync the title's release year first. The store also requires a linked store page.</p>`}` : l}
+                  >
+                  <form
+                    class="match-search"
+                    @submit=${(e) => {
+      e.preventDefault(), this.search();
+    }}
+                  >
+                    <label
+                      >Title search<input
+                        name="scraper_query"
+                        type="search"
+                        maxlength="200"
+                        .value=${this.query}
+                        ?disabled=${this.busy || !!this.pending}
+                        @input=${(e) => {
+      this.query = e.target.value, this.requestUpdate();
+    }} /></label
+                    ><button
+                      type="submit"
+                      ?disabled=${this.busy || !this.provider || !this.query.trim()}
+                    >
+                      Search titles
+                    </button>
+                  </form>
+                  ${this.matchResults()}${this.options.providers.some((e) => e.available) ? l : a`<p class="muted">Enable and configure a scraper in Settings first.</p>`}` : l}
         <div class="dialog-footer">
           ${this.pending ? a`<button
                   ?disabled=${this.busy}
@@ -4947,13 +5081,13 @@ ${Array.isArray(t.after) ? t.after.join(", ") : String(t.after)}</pre>
       this.review = void 0, this.error = "", this.requestUpdate();
     }}
                   >
-                    Choose scraper
+                    Change match / scraper
                   </button>` : l}<button
             class="primary"
-            ?disabled=${this.busy || !this.review && !this.provider || !!this.review && !this.fields.size && !Object.keys(this.images).length}
-            @click=${this.review ? this.apply : this.scrape}
+            ?disabled=${this.busy || !this.review && !this.provider || !!this.review && !this.review.matched && !this.fields.size && !Object.keys(this.images).length}
+            @click=${() => this.review ? this.apply() : this.scrape()}
           >
-            ${this.pending ? "Retry exact apply" : this.review ? "Apply selected data" : "Scrape title"}
+            ${this.pending ? "Retry exact apply" : this.review ? this.review.matched && !this.fields.size && !Object.keys(this.images).length ? "Save match" : "Apply selected data" : this.candidatesPage ? "Try automatic match" : "Scrape title"}
           </button>
         </div>
       </dialog>` : l;
@@ -5000,6 +5134,55 @@ fe.properties = {
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 10px;
       }
+      .match-results {
+        display: grid;
+        gap: 10px;
+        max-height: 48dvh;
+        overflow-y: auto;
+      }
+      .match-card {
+        display: grid;
+        grid-template-columns: 64px minmax(0, 1fr);
+        gap: 12px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+      }
+      .match-card h3 {
+        margin: 0 0 5px;
+        font-size: 16px;
+      }
+      .match-card p {
+        margin: 4px 0;
+        font-size: 12px;
+      }
+      .match-card button {
+        float: right;
+        margin-top: 6px;
+      }
+      .match-card kaleidescape-scrape-image {
+        width: 64px;
+        height: 96px;
+      }
+      .match-placeholder {
+        width: 64px;
+        min-height: 80px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .match-search {
+        display: flex;
+        gap: 8px;
+        align-items: end;
+        margin-block: 12px;
+      }
+      .match-search label {
+        flex: 1;
+        min-width: 0;
+      }
+      .match-search button {
+        flex: none;
+      }
       .candidate {
         min-width: 0;
         padding: 6px;
@@ -5042,7 +5225,7 @@ fe.properties = {
 ];
 let et = fe;
 customElements.get("kaleidescape-title-scrape") || customElements.define("kaleidescape-title-scrape", et);
-function Ht(n) {
+function Wt(n) {
   return n.toLocaleLowerCase().normalize("NFKD").replace(new RegExp("\\p{M}", "gu"), "").match(/[\p{L}\p{N}_]+/gu)?.join(" ") ?? "";
 }
 function ms(n, e) {
@@ -5066,16 +5249,31 @@ function ms(n, e) {
   }
   return i[e.length] <= t;
 }
-function Wt(n, e, t = !1) {
+function tt(n, e, t = !1) {
+  const i = e.trim();
+  if (i.length >= 2 && i.startsWith('"') && i.endsWith('"')) {
+    let h;
+    try {
+      h = JSON.parse(i).trim();
+    } catch {
+      h = i.slice(1, -1).trim();
+    }
+    if (!h) return !1;
+    const c = h.toLocaleLowerCase().split(/\s+/).map((u) => u.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    return new RegExp(
+      "(?<![\\p{L}\\p{N}_])" + c.join("\\s+") + "(?![\\p{L}\\p{N}_])",
+      "u"
+    ).test(n.toLocaleLowerCase());
+  }
   if (n.toLocaleLowerCase().includes(e.toLocaleLowerCase()))
     return !0;
   if (!t) return !1;
-  const i = Ht(e), s = Ht(n);
-  if (!i) return !1;
-  if (s.includes(i)) return !0;
-  const r = i.split(" "), o = s.split(" ");
-  return r.length <= 12 && r.every(
-    (d) => o.some((h) => h.includes(d) || ms(d, h))
+  const s = Wt(e), r = Wt(n);
+  if (!s) return !1;
+  if (r.includes(s)) return !0;
+  const o = s.split(" "), d = r.split(" ");
+  return o.length <= 12 && o.every(
+    (h) => d.some((c) => c.includes(h) || ms(h, c))
   );
 }
 const mi = ri(class extends ni {
@@ -5299,7 +5497,7 @@ const vs = {
     super.disconnectedCallback(), this.generation++, this.stopWaking(), this.pending = this.info = void 0;
   }
   fail(e) {
-    const t = u(e), i = {
+    const t = g(e), i = {
       control_disabled: "Playback controls are disabled. Ask an administrator to enable them.",
       control_player: "No player is configured. Ask an administrator to discover and select one.",
       control_not_ready: "The player is not ready. Power it on and wait for readiness before playing.",
@@ -5697,14 +5895,14 @@ be.properties = {
       }
     `
 ];
-let tt = be;
-customElements.get("kaleidescape-device-controls") || customElements.define("kaleidescape-device-controls", tt);
+let it = be;
+customElements.get("kaleidescape-device-controls") || customElements.define("kaleidescape-device-controls", it);
 class ys {
   constructor(e, t) {
-    this.host = e, this.change = t, this.profile = V(), this.schedule = () => {
-      this.frame !== void 0 || V() === this.profile || (this.frame = requestAnimationFrame(() => {
+    this.host = e, this.change = t, this.profile = B(), this.schedule = () => {
+      this.frame !== void 0 || B() === this.profile || (this.frame = requestAnimationFrame(() => {
         this.frame = void 0;
-        const i = V();
+        const i = B();
         this.host.isConnected && i !== this.profile && this.change() && (this.profile = i);
       }));
     };
@@ -5724,7 +5922,7 @@ function Oe(n, e) {
 }
 class j {
   constructor(e, t, i, s, r = "library") {
-    this.client = e, this.scope = t, this.shared = i, this.error = s, this.area = r, this.values = {}, this.revision = 0, this.profile = V(), this.active = !0, this.inflight = 0, this.sequence = 0, this.versions = /* @__PURE__ */ new Map(), this.failed = {};
+    this.client = e, this.scope = t, this.shared = i, this.error = s, this.area = r, this.values = {}, this.revision = 0, this.profile = B(), this.active = !0, this.inflight = 0, this.sequence = 0, this.versions = /* @__PURE__ */ new Map(), this.failed = {};
   }
   get unsettled() {
     return this.inflight > 0 || Object.keys(this.failed).length > 0;
@@ -5808,9 +6006,9 @@ const ve = class ve extends x {
     e?.preventDefault(), this.confirmNavigation() && (this.generation++, this.loading = !1, this.renderRoot.querySelector("dialog")?.close(), this.requestUpdate());
   }
   fail(e) {
-    this.error = w(e), ["unauthorized", "library_disabled"].includes(u(e)) && (this.clear(), this.dispatchEvent(
+    this.error = w(e), ["unauthorized", "library_disabled"].includes(g(e)) && (this.clear(), this.dispatchEvent(
       new CustomEvent(
-        u(e) === "unauthorized" ? "access-denied" : "library-disabled",
+        g(e) === "unauthorized" ? "access-denied" : "library-disabled",
         { bubbles: !0, composed: !0 }
       )
     ));
@@ -5883,7 +6081,7 @@ const ve = class ve extends x {
       );
       e === this.generation && this.complete(t);
     } catch (t) {
-      e === this.generation && (u(t) === "not_found" ? (this.pending = void 0, this.error = "No accepted add request was found. Refresh title details before starting another add.") : this.fail(t));
+      e === this.generation && (g(t) === "not_found" ? (this.pending = void 0, this.error = "No accepted add request was found. Refresh title details before starting another add.") : this.fail(t));
     } finally {
       e === this.generation && (this.busy = !1, this.requestUpdate());
     }
@@ -5966,10 +6164,10 @@ ve.properties = {
       }
     `
 ];
-let it = ve;
+let st = ve;
 customElements.get("kaleidescape-library-collection-add") || customElements.define(
   "kaleidescape-library-collection-add",
-  it
+  st
 );
 const Jt = [
   ["title", "Display title"],
@@ -6016,7 +6214,7 @@ const Jt = [
     !this.busy && !this.pending && (this.reset(), this.requestUpdate());
   }
   report(e) {
-    this.error = w(e), u(e) === "unauthorized" && (this.reset(), this.dispatchEvent(
+    this.error = w(e), g(e) === "unauthorized" && (this.reset(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     ));
   }
@@ -6078,7 +6276,7 @@ const Jt = [
         "not_found",
         "backup_in_progress",
         "busy"
-      ].includes(u(t)) && (this.pending = void 0), this.report(t);
+      ].includes(g(t)) && (this.pending = void 0), this.report(t);
     } finally {
       e === this.generation && (this.busy = !1, this.lock(), this.requestUpdate());
     }
@@ -6199,8 +6397,8 @@ ye.properties = {
       }
     `
 ];
-let st = ye;
-customElements.get("kaleidescape-title-edit") || customElements.define("kaleidescape-title-edit", st);
+let at = ye;
+customElements.get("kaleidescape-title-edit") || customElements.define("kaleidescape-title-edit", at);
 const Y = [
   ["collection", "Collection", "collections"],
   ["actor", "Actor", "actors"],
@@ -6273,14 +6471,14 @@ const Y = [
       this.scope,
       !1,
       (t) => {
-        e === this.generation && (t && u(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? w(t) : "", this.requestUpdate()));
+        e === this.generation && (t && g(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? w(t) : "", this.requestUpdate()));
       }
     ), this.searchPreferences = new j(
       this.client,
       this.scope,
       !1,
       (t) => {
-        e === this.generation && (t && u(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? w(t) : "", this.requestUpdate()));
+        e === this.generation && (t && g(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? w(t) : "", this.requestUpdate()));
       },
       "search"
     );
@@ -6299,7 +6497,8 @@ const Y = [
           "random_seed",
           "descending",
           ...Y.map(([s]) => s),
-          "status"
+          "status",
+          "scraper_conflict"
         ].map((s) => [s, t[s]])
       ), this.filters = structuredClone(this.applied), this.preferencesReady = !0, this.openCriterion ? this.fromDetails(this.openCriterion.key, this.openCriterion.value) : await this.load(), this.openTitleId && e === this.generation && this.openLinkedTitle(this.openTitleId);
     } catch (t) {
@@ -6309,9 +6508,14 @@ const Y = [
   saveFilters() {
     this.preferences?.set(
       Object.fromEntries(
-        ["query", ...Y.map(([e]) => e), "status"].map((e) => [
+        [
+          "query",
+          ...Y.map(([e]) => e),
+          "status",
+          "scraper_conflict"
+        ].map((e) => [
           e,
-          this.applied[e] ?? (e === "query" ? "" : [])
+          this.applied[e] ?? (e === "query" ? "" : e === "scraper_conflict" ? !1 : [])
         ])
       )
     );
@@ -6386,7 +6590,7 @@ const Y = [
     i !== "all" && ![25, 100, 1e3].includes(i) || (this.entriesPerPage = i, this.preferences?.set({ page_size: i }), this.requestUpdate(), this.scheduleLayoutPage());
   }
   fail(e) {
-    const t = u(e);
+    const t = g(e);
     (t === "unauthorized" || t === "library_disabled") && (this.clear(), this.dispatchEvent(
       new CustomEvent(
         t === "unauthorized" ? "access-denied" : "library-disabled",
@@ -6440,7 +6644,7 @@ const Y = [
         return;
       this.info = s, (this.display.show_library_cost || this.purchaseDetailsOpen) && this.loadPurchaseTotals(), this.page && (this.page.revision !== s.revision || this.page.preferences_key !== s.preferences_key) && !this.loading && (this.selected ? !this.detailsLocked && (this.versions?.revision !== s.revision || this.versions?.preferences_key !== s.preferences_key) && this.loadVersions() : this.load(this.page.offset, !0));
     } catch (s) {
-      i = u(s) === "unauthorized", e === this.generation && t === this.statusRequest && this.fail(s);
+      i = g(s) === "unauthorized", e === this.generation && t === this.statusRequest && this.fail(s);
     } finally {
       e === this.generation && t === this.statusRequest && this.isConnected && !i && !document.hidden && (this.timer = setTimeout(
         () => {
@@ -6509,7 +6713,7 @@ const Y = [
         return;
       this.versions = o, this.activeVersion = o.items.find((d) => d.id === r) ?? o.items[0], this.activeVersion && (this.selected = { ...this.selected, title: this.activeVersion.title });
     } catch (o) {
-      t === this.generation && i === this.versionRequest && (["unauthorized", "library_disabled"].includes(u(o)) ? this.fail(o) : u(o) === "refresh_required" && e ? this.loadVersions() : this.versionsError = w(o));
+      t === this.generation && i === this.versionRequest && (["unauthorized", "library_disabled"].includes(g(o)) ? this.fail(o) : g(o) === "refresh_required" && e ? this.loadVersions() : this.versionsError = w(o));
     } finally {
       t === this.generation && i === this.versionRequest && (this.versionsLoading = !1, this.requestUpdate());
     }
@@ -6551,7 +6755,7 @@ const Y = [
     if (e === "random") {
       let i;
       try {
-        i = Ct().replaceAll("-", "");
+        i = St().replaceAll("-", "");
       } catch (s) {
         this.fail(s);
         return;
@@ -6596,7 +6800,7 @@ const Y = [
       type="button"
       class="link detail-link"
       ?disabled=${this.detailsLocked || this.checkingCollection}
-      @click=${() => this.fromDetails(e, t)}
+      @click=${() => this.fromDetails(e, e === "query" ? JSON.stringify(t) : t)}
     >
       ${i}
     </button>`;
@@ -6634,7 +6838,7 @@ const Y = [
     return [
       .../* @__PURE__ */ new Set([...i, ...this.draft[e] ?? []])
     ].filter(
-      (s) => Wt(
+      (s) => tt(
         e === "collection" ? O(s) : s,
         this.facetSearch,
         this.fuzzySearch
@@ -6685,7 +6889,7 @@ const Y = [
       t === this.generation && (this.purchaseTotals = i);
     } catch (i) {
       if (t !== this.generation) return;
-      this.purchaseTotals = void 0, this.purchaseError = w(i), ["unauthorized", "library_disabled"].includes(u(i)) && this.fail(i);
+      this.purchaseTotals = void 0, this.purchaseError = w(i), ["unauthorized", "library_disabled"].includes(g(i)) && this.fail(i);
     } finally {
       t === this.generation && (this.purchaseLoading = !1, this.requestUpdate());
     }
@@ -6759,7 +6963,8 @@ const Y = [
         ><small
           >Applies across all views for your HA user. Off matches literal text,
           ignoring case. On also tolerates small spelling mistakes and word
-          order differences.</small
+          order differences. Double quotes require an exact whole-word
+          phrase.</small
         >
         <fieldset class="view-options">
           <legend>View type</legend>
@@ -6863,6 +7068,16 @@ const Y = [
     }}
       /></label>
       ${this.page?.truncated_facets.length ? a`<p class="muted">Each category shows up to 500 known names.</p>` : l}
+      <label class="check"
+        ><input
+          name="scraper_conflict"
+          type="checkbox"
+          .checked=${!!this.draft.scraper_conflict}
+          @change=${(e) => {
+      this.draft.scraper_conflict = e.target.checked, this.requestUpdate();
+    }}
+        />Scraper conflicts only</label
+      >
       <div class="facet-groups">
         ${[
       ["status", "Watched status", "status"],
@@ -6886,7 +7101,7 @@ const Y = [
             [e]: d.target.checked ? [...s, o] : s.filter((h) => h !== o)
           }, this.requestUpdate();
         }}
-                          />${e === "status" ? re[o] : e === "rating" ? N(o) : e === "collection" ? O(o) : o}</label
+                          />${e === "status" ? re[o] : e === "rating" ? X(o) : e === "collection" ? O(o) : o}</label
                         >`
       ) : a`<p class="muted">No matching options</p>`}
             </div>
@@ -6899,7 +7114,7 @@ const Y = [
       ["director", "Director", "directors"]
     ].map(([e, t, i]) => {
       const s = this.draft[e] ?? [], r = (this.peopleChoices[e] ?? (this.page?.facets[i] ?? []).filter(
-        (o) => Wt(o, this.peopleSearch[e] ?? "", this.fuzzySearch)
+        (o) => tt(o, this.peopleSearch[e] ?? "", this.fuzzySearch)
       )).slice(0, 20);
       return a`<fieldset>
             <legend>${t}</legend>
@@ -6965,7 +7180,7 @@ const Y = [
       const e = { ...this.applied };
       for (const t of [...Y.map(([i]) => i), "status"])
         e[t] = this.draft[t] ?? [];
-      this.applied = e, this.saveFilters(), this.closeDialog("filter-dialog"), this.load();
+      e.scraper_conflict = !!this.draft.scraper_conflict, this.applied = e, this.saveFilters(), this.closeDialog("filter-dialog"), this.load();
     }}
         >
           Apply filters
@@ -6995,15 +7210,24 @@ const Y = [
     const t = Math.round(e / 60), i = Math.floor(t / 60);
     return i ? `${i}h ${t % 60}m` : `${t}m`;
   }
+  conflictIcon(e) {
+    return e.scraper_conflict ? a`<span
+          class="scraper-conflict-icon"
+          role="img"
+          aria-label="Scraper conflict"
+          title="Scraper conflict: review a provider match"
+          >⚠</span
+        >` : l;
+  }
   renderTitleDialog() {
-    const e = this.selected, t = this.activeVersion, i = this.scope?.permissions.edit, s = this.detailsLocked || this.checkingCollection, r = t && "backdrop_key" in t ? t.backdrop_key : t?.enrichment?.tmdb?.backdrop_key;
+    const e = this.selected, t = this.activeVersion, i = (this.versions?.total ?? e?.version_count ?? 1) > 1, s = this.scope?.permissions.edit, r = this.detailsLocked || this.checkingCollection, o = t && "backdrop_key" in t ? t.backdrop_key : t?.enrichment?.tmdb?.backdrop_key;
     return a`<dialog
       id="title-dialog"
-      @cancel=${(o) => {
-      this.detailsLocked && o.preventDefault();
+      @cancel=${(d) => {
+      this.detailsLocked && d.preventDefault();
     }}
       @click=${_}
-      class=${`database-dialog library-dialog movie-dialog inset-dialog${r ? " has-backdrop" : ""}`}
+      class=${`database-dialog library-dialog movie-dialog inset-dialog${o ? " has-backdrop" : ""}`}
       aria-labelledby="library-title"
       @close=${() => {
       this.selected = void 0, this.clearVersions(), this.controlLocked = !1, this.requestUpdate();
@@ -7014,7 +7238,7 @@ const Y = [
                 ${k(() => this.closeDialog("title-dialog"), this.detailsLocked)}
               </div>
               <div class="movie-intro">
-                ${r && t ? a`<div class="movie-hero" aria-hidden="true">${this.cover(t, r)}</div>` : l}
+                ${o && t ? a`<div class="movie-hero" aria-hidden="true">${this.cover(t, o)}</div>` : l}
                 <div class="movie-heading">
                   <h2 id="library-title">
                     ${this.detailLink("query", e.title)}
@@ -7024,14 +7248,14 @@ const Y = [
                   ${t?.year ?? e.year ? this.detailLink("year", String(t?.year ?? e.year)) : "Year unknown"}
                   ·
                   ${this.compactRuntime(t?.duration_seconds ?? e.duration_seconds)}
-                  ${t?.genres.length ? a` · ${t.genres.map((o, d) => a`${d ? ", " : ""}${this.detailLink("genre", o)}`)}` : l}
+                  ${t?.genres.length ? a` · ${t.genres.map((d, h) => a`${h ? ", " : ""}${this.detailLink("genre", d)}`)}` : l}
                 </p>
                 <div class="detail-badges movie-heading-badges">
-                  ${I(e, !1, (o) => this.fromDetails("format", o), s)}
-                  ${N(t?.rating ?? e.rating, (o) => this.fromDetails("rating", o), s)}
+                  ${i ? l : I(t ?? e, !1, (d) => this.fromDetails("format", d), r)}
+                  ${X(t?.rating ?? e.rating, (d) => this.fromDetails("rating", d), r)}
                   <button
                     class="movie-status"
-                    ?disabled=${s}
+                    ?disabled=${r}
                     @click=${() => this.fromDetails("status", t?.watched_status ?? e.watched_status)}
                   >
                     ${re[t?.watched_status ?? e.watched_status]}
@@ -7043,17 +7267,17 @@ const Y = [
                         .scope=${this.scope}
                         .versionId=${t.id}
                         mode="movie"
-                        @control-lock=${(o) => {
-      o.detail !== this.controlLocked && (this.controlLocked = o.detail, this.requestUpdate());
+                        @control-lock=${(d) => {
+      d.detail !== this.controlLocked && (this.controlLocked = d.detail, this.requestUpdate());
     }}
-                        >${this.renderCollectionAction(t)}${i ? a`<kaleidescape-title-edit
+                        >${this.renderCollectionAction(t)}${s ? a`<kaleidescape-title-edit
                                   slot="collection"
                                   .client=${this.client}
                                   .scope=${this.scope}
                                   .versionId=${t.id}
                                   .blocked=${this.controlLocked || this.collectionLocked || this.scrapeLocked}
-                                  @edit-lock=${(o) => {
-      o.detail !== this.editLocked && (this.editLocked = o.detail, this.requestUpdate());
+                                  @edit-lock=${(d) => {
+      d.detail !== this.editLocked && (this.editLocked = d.detail, this.requestUpdate());
     }}
                                   @metadata-changed=${async () => {
       this.editLocked = !1, this.versions = void 0, await this.load(
@@ -7068,8 +7292,11 @@ const Y = [
                                   .scope=${this.scope}
                                   .versionId=${t.id}
                                   .blocked=${this.controlLocked || this.collectionLocked || this.editLocked}
-                                  @scrape-lock=${(o) => {
-      o.detail !== this.scrapeLocked && (this.scrapeLocked = o.detail, this.requestUpdate());
+                                  @scrape-status-changed=${() => {
+      this.load(this.page?.offset ?? 0, !0);
+    }}
+                                  @scrape-lock=${(d) => {
+      d.detail !== this.scrapeLocked && (this.scrapeLocked = d.detail, this.requestUpdate());
     }}
                                   @metadata-changed=${async () => {
       this.scrapeLocked = !1, this.editLocked = !1, this.versions = void 0, await this.load(
@@ -7099,18 +7326,18 @@ const Y = [
                           @keydown=${this.versionKey}
                         >
                           ${this.versions.items.map(
-      (o, d) => a`<button
+      (d, h) => a`<button
                                 ?disabled=${this.detailsLocked}
                                 role="tab"
-                                id=${`version-${d}`}
+                                id=${`version-${h}`}
                                 aria-controls="version-details"
-                                tabindex=${o.id === t?.id ? 0 : -1}
-                                aria-selected=${o.id === t?.id}
+                                tabindex=${d.id === t?.id ? 0 : -1}
+                                aria-selected=${d.id === t?.id}
                                 @click=${() => {
-        this.activeVersion = o, this.requestUpdate();
+        this.activeVersion = d, this.requestUpdate();
       }}
                               >
-                                Version ${this.versions.offset + d + 1}
+                                Version ${this.versions.offset + h + 1}
                               </button>`
     )}
                         </div>
@@ -7122,21 +7349,22 @@ const Y = [
                       id="version-details"
                       role=${(this.versions?.total ?? 1) > 1 ? "tabpanel" : "region"}
                       aria-label=${(this.versions?.total ?? 1) === 1 ? "Version details" : l}
-                      aria-labelledby=${(this.versions?.total ?? 1) > 1 ? `version-${this.versions?.items.findIndex((o) => o.id === t.id) ?? 0}` : l}
+                      aria-labelledby=${(this.versions?.total ?? 1) > 1 ? `version-${this.versions?.items.findIndex((d) => d.id === t.id) ?? 0}` : l}
                     >
                       <div class="movie-aside">
                         <div class="cover movie-poster">${this.cover(t)}</div>
+                        ${i ? a`<div class="detail-badges version-format-badges">${I(t, !1, (d) => this.fromDetails("format", d), r)}</div>` : l}
                         <details class="movie-record-details">
                           <summary>Library details</summary>
                           <p class="muted">
                             ${t.purchased_on ? a`Purchased ${this.date(t.purchased_on)}<br />` : l}First
                             detected ${this.date(t.first_seen)}.
                           </p>
-                          ${i && t.purchase_history?.length ? a`<details>
+                          ${s && t.purchase_history?.length ? a`<details>
                                   <summary>
                                     Purchase history · Administrator
                                   </summary>
-                                  ${t.purchase_history.map((o) => a`<p>${this.date(o.purchased_on)} · ${o.title}<br />Paid: ${o.purchase_price ?? "Unknown"} · Retail: ${o.retail_price ?? "Unknown"}<br />Order: ${o.order_id ?? "Unknown"}${o.href ? a`<br />Store reference: ${o.href}` : l}</p>`)}
+                                  ${t.purchase_history.map((d) => a`<p>${this.date(d.purchased_on)} · ${d.title}<br />Paid: ${d.purchase_price ?? "Unknown"} · Retail: ${d.retail_price ?? "Unknown"}<br />Order: ${d.order_id ?? "Unknown"}${d.href ? a`<br />Store reference: ${d.href}` : l}</p>`)}
                                 </details>` : l}
                         </details>
                       </div>
@@ -7145,10 +7373,6 @@ const Y = [
                         <p class="movie-synopsis">
                           ${t.synopsis || "No synopsis available."}
                         </p>
-                        <div class="detail-badges">
-                          ${I(t, !1, (o) => this.fromDetails("format", o), s)}
-                          ${N(t.rating || "Unrated", (o) => this.fromDetails("rating", o), s)}
-                        </div>
                         <hr />
                         <dl class="movie-credits">
                           ${[
@@ -7161,15 +7385,15 @@ const Y = [
       ["Genres", t.genres, "genre"],
       ["Collections", t.collections, "collection"]
     ].map(
-      ([o, d, h]) => d.length ? a`<div>
-                                  <dt>${o}</dt>
+      ([d, h, c]) => h.length ? a`<div>
+                                  <dt>${d}</dt>
                                   <dd>
-                                    ${d.map((c, g) => a`${g ? ", " : ""}${this.detailLink(h, c, o === "Collections" ? O(c) : c)}`)}
+                                    ${h.map((u, p) => a`${p ? ", " : ""}${this.detailLink(c, u, d === "Collections" ? O(u) : u)}`)}
                                   </dd>
                                 </div>` : l
     )}
                         </dl>
-                        ${us(t, (o) => this.detailLink("query", o), this.castLimit)}
+                        ${us(t, (d) => this.detailLink("query", d), this.castLimit)}
                         <p>
                           <button
                             class="link"
@@ -7195,7 +7419,7 @@ const Y = [
       i.length - i.length % this.coverColumns
     ) : i, r = this.scope?.permissions.edit, o = [...Y.map(([d]) => d), "status"].reduce(
       (d, h) => d + (this.applied[h]?.length ?? 0),
-      0
+      +!!this.applied.scraper_conflict
     );
     return a`<section
       class="library-page"
@@ -7297,7 +7521,8 @@ const Y = [
                       <div class="cover-image">${this.cover(d)}</div>
                       ${this.display.show_badges ? a`<div class="cover-flags">${Be(d, !0)}</div>` : l}
                       ${this.display.show_format ? a`<div class="cover-formats">${I(d, !0)}</div>` : l}
-                      ${this.display.show_rating ? a`<div class="cover-rating">${N(d.rating)}</div>` : l}
+                      ${this.display.show_rating ? a`<div class="cover-rating">${X(d.rating)}</div>` : l}
+                      ${this.conflictIcon(d)}
                       ${this.display.show_titles ? a`<span class="cover-caption">${d.title}${d.year ? ` (${d.year})` : ""}</span>` : l}
                     </button>`
     )}
@@ -7334,20 +7559,20 @@ const Y = [
                               aria-valuenow=${this.widths[c]}
                               tabindex="0"
                               title="Drag or use Left/Right to resize; Home resets"
-                              @keydown=${(g) => this.resizeColumn(g, c)}
-                              @pointerdown=${(g) => {
-        g.preventDefault(), this.resize = {
+                              @keydown=${(u) => this.resizeColumn(u, c)}
+                              @pointerdown=${(u) => {
+        u.preventDefault(), this.resize = {
           index: c,
-          start: g.clientX,
+          start: u.clientX,
           width: this.widths[c]
-        }, g.currentTarget.setPointerCapture(g.pointerId);
+        }, u.currentTarget.setPointerCapture(u.pointerId);
       }}
-                              @pointermove=${(g) => {
+                              @pointermove=${(u) => {
         this.resize?.index === c && (this.widths[c] = Math.max(
           80,
           Math.min(
             800,
-            this.resize.width + g.clientX - this.resize.start
+            this.resize.width + u.clientX - this.resize.start
           )
         ), this.requestUpdate());
       }}
@@ -7369,13 +7594,14 @@ const Y = [
                             >
                               ${d.title}
                             </button>
+                            ${this.conflictIcon(d)}
                             <div
                               class="library-summary-line"
                               title=${this.format(d)}
                             >
                               ${this.display.show_badges ? Be(d) : l}
                               ${this.display.show_format ? I(d) : l}
-                              ${this.display.show_format && !St(d).length ? a`<small>${this.format(d)}</small>` : l}
+                              ${this.display.show_format && !qt(d).length ? a`<small>${this.format(d)}</small>` : l}
                               ${(d.version_count ?? 1) > 1 ? a`<small>${v(d.version_count, "version")}</small>` : l}
                             </div>
                           </td>
@@ -7455,8 +7681,8 @@ $e.properties = {
   openTitleId: { attribute: !1 },
   openCriterion: { attribute: !1 }
 }, $e.styles = [C, je];
-let at = $e;
-customElements.get("kaleidescape-library") || customElements.define("kaleidescape-library", at);
+let rt = $e;
+customElements.get("kaleidescape-library") || customElements.define("kaleidescape-library", rt);
 const $s = {
   playing: "Playing",
   paused: "Paused",
@@ -7517,14 +7743,14 @@ const $s = {
           );
           i === this.generation && c && (this.image = URL.createObjectURL(c));
         } catch (c) {
-          if (u(c) === "unauthorized") throw c;
+          if (g(c) === "unauthorized") throw c;
         } finally {
           clearTimeout(h), this.abort === d && (this.abort = void 0);
         }
       }
     } catch (s) {
       if (i !== this.generation) return;
-      this.player = null, this.clearImage(), this.denied = u(s) === "unauthorized", this.error = this.denied ? "Now Playing access is unavailable. Check your account and source permissions." : "Now Playing could not refresh. Check the connection or refresh again.";
+      this.player = null, this.clearImage(), this.denied = g(s) === "unauthorized", this.error = this.denied ? "Now Playing access is unavailable. Check your account and source permissions." : "Now Playing could not refresh. Check the connection or refresh again.";
     } finally {
       i === this.generation && (this.loading = !1, this.requestUpdate(), !this.denied && this.isConnected && !document.hidden && (this.timer = setTimeout(() => {
         this.refresh();
@@ -7670,8 +7896,8 @@ we.properties = {
       }
     `
 ];
-let rt = we;
-customElements.get("kaleidescape-now-playing") || customElements.define("kaleidescape-now-playing", rt);
+let nt = we;
+customElements.get("kaleidescape-now-playing") || customElements.define("kaleidescape-now-playing", nt);
 const xe = class xe extends x {
   constructor() {
     super(), this.disabled = !1, this.view = "list", this.calendarSize = 180, this.calendarFit = !1, this.bound = "", this.generation = 0, this.ready = !1, this.fuzzy = !0, this.error = "", Oe(this, () => !this.ready || this.store?.unsettled || this.viewStore?.unsettled || this.disabled || this.renderRoot.querySelector("dialog[open]") ? !1 : (this.clear(), this.load(), !0));
@@ -7705,7 +7931,7 @@ const xe = class xe extends x {
     );
   }
   fail(e) {
-    this.error = w(e), u(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
+    this.error = w(e), g(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     )), this.requestUpdate();
   }
@@ -7837,8 +8063,8 @@ xe.properties = {
   scope: { attribute: !1 },
   disabled: { type: Boolean }
 }, xe.styles = C;
-let nt = xe;
-customElements.get("kaleidescape-journal-options") || customElements.define("kaleidescape-journal-options", nt);
+let ot = xe;
+customElements.get("kaleidescape-journal-options") || customElements.define("kaleidescape-journal-options", ot);
 const ke = class ke extends x {
   constructor() {
     super(), this.narrow = !1, this.api = null, this.userKey = "", this.generation = 0, this.scope = null, this.rows = [], this.selected = null, this.detailLoading = !1, this.detailRequest = 0, this.loading = !1, this.error = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.next = null, this.history = [], this.page = 1, this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, Me(this);
@@ -7868,7 +8094,7 @@ const ke = class ke extends x {
     e !== this.api && (this.clear(), this.api = e, this.requestUpdate(), e && this.refresh());
   }
   fail(e) {
-    u(e) === "unauthorized" && this.clear(), this.error = w(e), this.requestUpdate();
+    g(e) === "unauthorized" && this.clear(), this.error = w(e), this.requestUpdate();
   }
   async refresh() {
     if (!this.api) return;
@@ -7890,7 +8116,7 @@ const ke = class ke extends x {
         );
         this.activePage = i === "library" || i === "now-playing" ? i : "journal", this.navigationReady = !0;
       }
-      this.activePage === "library" && !this.scope.library_enabled && (this.activePage = "journal"), B(this.activePage), await this.load(void 0, e);
+      this.activePage === "library" && !this.scope.library_enabled && (this.activePage = "journal"), F(this.activePage), await this.load(void 0, e);
     } catch (t) {
       e === this.generation && this.fail(t);
     } finally {
@@ -7939,7 +8165,7 @@ const ke = class ke extends x {
     return Number.isNaN(t.getTime()) ? "—" : t.toLocaleString();
   }
   selectPage(e, t) {
-    e === "library" && !this.scope?.library_enabled || (this.selected = null, this.detailLoading = !1, this.detailRequest++, this.libraryTitleId = t?.libraryTitleId, this.libraryCriterion = t?.libraryCriterion, this.activePage = e, e === "journal" && (this.journalMovie = t?.movie, this.query = this.searchText = this.status = this.filterStatus = "", this.page = 1, this.history = [], this.load()), B(e), this.requestUpdate());
+    e === "library" && !this.scope?.library_enabled || (this.selected = null, this.detailLoading = !1, this.detailRequest++, this.libraryTitleId = t?.libraryTitleId, this.libraryCriterion = t?.libraryCriterion, this.activePage = e, e === "journal" && (this.journalMovie = t?.movie, this.query = this.searchText = this.status = this.filterStatus = "", this.page = 1, this.history = [], this.load()), F(e), this.requestUpdate());
   }
   tabKey(e) {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return;
@@ -8194,9 +8420,9 @@ ke.properties = {
   hass: { attribute: !1 },
   client: { attribute: !1 },
   narrow: { type: Boolean }
-}, ke.styles = [C, qt, pi];
-let ot = ke;
-customElements.get("kaleidescape-reader") || customElements.define("kaleidescape-reader", ot);
+}, ke.styles = [C, Et, pi];
+let lt = ke;
+customElements.get("kaleidescape-reader") || customElements.define("kaleidescape-reader", lt);
 function xs(n, e) {
   return a`<label class="check"
       ><input
@@ -8280,7 +8506,7 @@ const _e = class _e extends x {
     return !this.working && !this.pending;
   }
   fail(e) {
-    u(e) === "unauthorized" ? (this.clear(), this.dispatchEvent(
+    g(e) === "unauthorized" ? (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     )) : this.error = w(e), this.requestUpdate();
   }
@@ -8323,7 +8549,7 @@ const _e = class _e extends x {
         "conflict",
         "busy",
         "not_ready"
-      ].includes(u(t)) && (this.pending = void 0), this.fail(t);
+      ].includes(g(t)) && (this.pending = void 0), this.fail(t);
     } finally {
       e === this.generation && (this.working = !1, this.requestUpdate());
     }
@@ -8570,8 +8796,8 @@ _e.properties = {
   scope: { attribute: !1 },
   disabled: { type: Boolean }
 }, _e.styles = C;
-let lt = _e;
-customElements.get("kaleidescape-calendar-export") || customElements.define("kaleidescape-calendar-export", lt);
+let dt = _e;
+customElements.get("kaleidescape-calendar-export") || customElements.define("kaleidescape-calendar-export", dt);
 const ks = [
   ["rules", "Runtime rules and feature enablement"],
   ["browsing", "Personal browsing preferences · may include searches/names"],
@@ -8593,7 +8819,7 @@ const ks = [
     this.generation++, this.artifact = this.preview = void 0, this.request = "", this.busy = this.pending = !1, this.error = this.notice = "", this.renderRoot.querySelector("dialog")?.close();
   }
   fail(e) {
-    this.error = w(e), u(e) === "unauthorized" && (this.reset(), this.dispatchEvent(
+    this.error = w(e), g(e) === "unauthorized" && (this.reset(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     ));
   }
@@ -8617,7 +8843,7 @@ const ks = [
     const t = this.generation;
     this.busy = !0, this.error = "", this.requestUpdate();
     try {
-      e === "apply" && (this.request ||= Ct(), this.pending = !0);
+      e === "apply" && (this.request ||= St(), this.pending = !0);
       const i = await this.client.settingsTransfer(
         this.scope,
         e,
@@ -8749,8 +8975,8 @@ Ce.properties = {
   scope: { attribute: !1 },
   disabled: { type: Boolean }
 }, Ce.styles = C;
-let dt = Ce;
-customElements.define("kaleidescape-settings-transfer", dt);
+let ht = Ce;
+customElements.define("kaleidescape-settings-transfer", ht);
 const Se = class Se extends x {
   constructor() {
     super(...arguments), this.disabled = !1, this.working = !1, this.error = "", this.generation = 0, this.bound = "";
@@ -8773,7 +8999,7 @@ const Se = class Se extends x {
     e?.preventDefault(), this.confirmNavigation() && this.renderRoot.querySelector("dialog")?.close();
   }
   fail(e) {
-    u(e) === "unauthorized" ? (this.clear(), this.dispatchEvent(
+    g(e) === "unauthorized" ? (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     )) : this.error = w(e), this.requestUpdate();
   }
@@ -8818,7 +9044,7 @@ const Se = class Se extends x {
         "backup_in_progress",
         "library_disabled",
         "repair_limit"
-      ].includes(u(t)) && (this.pending = void 0, this.review = void 0), this.fail(t);
+      ].includes(g(t)) && (this.pending = void 0, this.review = void 0), this.fail(t);
     } finally {
       e === this.generation && (this.working = !1, this.requestUpdate());
     }
@@ -8896,9 +9122,9 @@ Se.properties = {
   scope: { attribute: !1 },
   disabled: { type: Boolean }
 }, Se.styles = C;
-let ht = Se;
-customElements.get("kaleidescape-metadata-repair") || customElements.define("kaleidescape-metadata-repair", ht);
-const Zt = [
+let ct = Se;
+customElements.get("kaleidescape-metadata-repair") || customElements.define("kaleidescape-metadata-repair", ct);
+const Gt = [
   ["actors", "Cast", ["kaleidescape", "tmdb"]],
   ["directors", "Directors", ["kaleidescape", "tmdb"]],
   ["writers", "Writers", ["kaleidescape", "tmdb"]],
@@ -9026,7 +9252,7 @@ const Zt = [
           ?disabled=${this.disabled || !this.draft.metadata_tmdb_enabled}
           @click=${() => {
       const e = Object.fromEntries(
-        Zt.map(([t, , i]) => [
+        Gt.map(([t, , i]) => [
           "metadata_source_" + t,
           t === "artwork" || t === "critic_score" || t === "audience_score" || t === "distributor" ? "kaleidescape" : i.some((s) => s === "tmdb") ? "tmdb" : "auto"
         ])
@@ -9043,7 +9269,7 @@ const Zt = [
           Prefer TMDB · keep Kaleidescape covers and RT scores
         </button>
         <div class="grid settings-grid">
-          ${Zt.map(([e, t, i]) => {
+          ${Gt.map(([e, t, i]) => {
       const s = "metadata_source_" + e;
       return a`<label
               >${t}<select
@@ -9104,8 +9330,8 @@ qe.properties = {
   draft: { attribute: !1 },
   disabled: { type: Boolean }
 }, qe.styles = C;
-let ct = qe;
-customElements.get("kaleidescape-enrichment-settings") || customElements.define("kaleidescape-enrichment-settings", ct);
+let pt = qe;
+customElements.get("kaleidescape-enrichment-settings") || customElements.define("kaleidescape-enrichment-settings", pt);
 const He = [
   ["media_player", "Kaleidescape media player", "text", "", ""],
   ["play_status", "Exact play-status sensor", "text", "", ""],
@@ -9131,7 +9357,7 @@ const He = [
     "0",
     "168"
   ]
-], Gt = [
+], Zt = [
   [
     "library_host",
     "Library hostname · blank uses my-kaleidescape.local",
@@ -9205,7 +9431,7 @@ const He = [
     });
   }
   fail(e) {
-    this.error = w(e), u(e) === "unauthorized" && (this.personalPreferences?.dispose(), this.personalPreferences = void 0, this.personalReady = !1, this.sharedPreferences?.dispose(), this.sharedPreferences = void 0, this.sharedReady = !1, this.hiddenCollections = [], this.flow = void 0, this.draft = {}, this.initial = {}, this.dispatchEvent(
+    this.error = w(e), g(e) === "unauthorized" && (this.personalPreferences?.dispose(), this.personalPreferences = void 0, this.personalReady = !1, this.sharedPreferences?.dispose(), this.sharedPreferences = void 0, this.sharedReady = !1, this.hiddenCollections = [], this.flow = void 0, this.draft = {}, this.initial = {}, this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     )), this.requestUpdate();
   }
@@ -9229,7 +9455,7 @@ const He = [
         t,
         !0,
         (o) => {
-          i === this.generation && (o && u(o) === "unauthorized" ? this.fail(o) : (this.sharedError = o ? w(o) : "", this.requestUpdate()));
+          i === this.generation && (o && g(o) === "unauthorized" ? this.fail(o) : (this.sharedError = o ? w(o) : "", this.requestUpdate()));
         }
       );
       const r = await this.sharedPreferences.load();
@@ -9273,7 +9499,7 @@ const He = [
     const i = { ...this.draft };
     for (const [s, , r] of He)
       r === "number" ? i[s] = Number(i[s]) : i[s] || delete i[s];
-    for (const [s, , r] of Gt)
+    for (const [s, , r] of Zt)
       r === "number" && (i[s] = Number(i[s]));
     i.library_host = String(i.library_host ?? ""), i.calendar_full_sync_months !== void 0 && (i.calendar_full_sync_months = Number(i.calendar_full_sync_months)), i.calendar_entity || delete i.calendar_entity;
     try {
@@ -9292,7 +9518,7 @@ const He = [
         "unauthorized",
         "invalid_request",
         "conflict"
-      ].includes(u(s)));
+      ].includes(g(s)));
     } finally {
       t === this.generation && (this.saving = !1, this.busy(), this.requestUpdate());
     }
@@ -9306,7 +9532,7 @@ const He = [
       this.scope,
       !1,
       (i) => {
-        t === this.generation && (i && u(i) === "unauthorized" ? this.fail(i) : (this.personalError = i ? w(i) : "", this.requestUpdate()));
+        t === this.generation && (i && g(i) === "unauthorized" ? this.fail(i) : (this.personalError = i ? w(i) : "", this.requestUpdate()));
       },
       "search"
     );
@@ -9315,7 +9541,7 @@ const He = [
       this.personalReady = !0;
     } catch (i) {
       if (t !== this.generation) return;
-      this.personalError = w(i), this.personalPreferences?.dispose(), this.personalPreferences = void 0, u(i) === "unauthorized" && this.fail(i);
+      this.personalError = w(i), this.personalPreferences?.dispose(), this.personalPreferences = void 0, g(i) === "unauthorized" && this.fail(i);
     }
     this.requestUpdate();
   }
@@ -9649,7 +9875,7 @@ const He = [
                         device requests occur while disabled.
                       </p>
                       ${this.draft.library_enabled ? a`<div class="grid settings-grid">
-                                ${Gt.map(
+                                ${Zt.map(
       ([e, t, i, s, r]) => a`<label
                                       class=${i === "text" ? "full" : ""}
                                       >${t}<input
@@ -9973,8 +10199,8 @@ Ee.properties = {
       }
     `
 ];
-let pt = Ee;
-customElements.get("kaleidescape-settings") || customElements.define("kaleidescape-settings", pt);
+let ut = Ee;
+customElements.get("kaleidescape-settings") || customElements.define("kaleidescape-settings", ut);
 const qs = {
   resource: "Resource",
   target: "Backend",
@@ -10009,11 +10235,11 @@ const qs = {
 function bi(n) {
   return typeof n.message == "string" && n.message ? n.message : `${`${String(n.logger ?? "Operation")}: ${String(n.operation ?? "operation")} ${String(n.outcome ?? "recorded")}.`}${typeof n.failure == "string" && Qt[n.failure] ? " " + Qt[n.failure] : ""}`;
 }
-function G(n, e = !1) {
+function Z(n, e = !1) {
   const t = n.file, i = n.line;
   return typeof i != "number" || !Number.isInteger(i) || i < 0 ? "Not recorded" : t === "external" ? `External caller:${i}` : typeof t != "string" || !/^[A-Za-z_][\w]*(?:\/[A-Za-z_][\w]*)*\.py$/.test(t) ? "Not recorded" : `${e ? t : t.split("/").at(-1)}:${i}`;
 }
-function ut(n) {
+function gt(n) {
   return Object.entries(qs).flatMap(([e, t]) => {
     const i = n[e];
     return i == null ? [] : [
@@ -10025,9 +10251,9 @@ function ut(n) {
   });
 }
 function Es(n) {
-  const e = ut(n).map(([t, i]) => `  ${t}: ${i}`).join(`
+  const e = gt(n).map(([t, i]) => `  ${t}: ${i}`).join(`
 `);
-  return `${String(n.timestamp ?? "")} ${String(n.level ?? "")} [${G(n, !0)}] ${bi(n)}${e ? `
+  return `${String(n.timestamp ?? "")} ${String(n.level ?? "")} [${Z(n, !0)}] ${bi(n)}${e ? `
 ` + e : ""}`;
 }
 const Re = class Re extends x {
@@ -10041,7 +10267,7 @@ const Re = class Re extends x {
     super.disconnectedCallback(), this.generation++, this.page = void 0;
   }
   fail(e) {
-    this.error = w(e), u(e) === "unauthorized" && (this.page = void 0, this.dispatchEvent(
+    this.error = w(e), g(e) === "unauthorized" && (this.page = void 0, this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     ));
   }
@@ -10108,12 +10334,12 @@ const Re = class Re extends x {
           throw new Error("Export exceeds limit");
         d.push(...y.items), r = y.before ?? void 0;
       } while (r !== void 0);
-      const g = e === "json" ? JSON.stringify({ banner: h, entries: d }, null, 2) : h + `
+      const u = e === "json" ? JSON.stringify({ banner: h, entries: d }, null, 2) : h + `
 
 ` + d.map(Es).join(`
 
 `), p = URL.createObjectURL(
-        new Blob([g], {
+        new Blob([u], {
           type: e === "json" ? "application/json" : "text/plain"
         })
       ), $ = document.createElement("a");
@@ -10159,7 +10385,7 @@ const Re = class Re extends x {
     }}
               /></label>
               <label
-                >Level<select
+                >Minimum level<select
                   name="filter-level"
                   .value=${this.level}
                   ?disabled=${this.busy}
@@ -10227,13 +10453,13 @@ const Re = class Re extends x {
                         ${bi(e)}
                         <small
                           class="log-inline-source"
-                          title=${G(e, !0)}
-                          >${G(e)}</small
+                          title=${Z(e, !0)}
+                          >${Z(e)}</small
                         >
-                        ${ut(e).length ? a`<details class="log-detail">
+                        ${gt(e).length ? a`<details class="log-detail">
                                 <summary>Details</summary>
                                 <dl>
-                                  ${ut(e).map(
+                                  ${gt(e).map(
         ([t, i]) => a`<dt>${t}</dt>
                                         <dd>
                                           ${/^[a-z_]+-[0-9a-f]{24}$/.test(i) ? a`<button
@@ -10252,8 +10478,8 @@ const Re = class Re extends x {
                               </details>` : l}
                       </td>
                       <td class="log-source">
-                        <code title=${G(e, !0)}
-                          >${G(e)}</code
+                        <code title=${Z(e, !0)}
+                          >${Z(e)}</code
                         >
                       </td>
                     </tr>`
@@ -10563,8 +10789,8 @@ Re.properties = {
       }
     `
 ];
-let gt = Re;
-customElements.define("kaleidescape-logs", gt);
+let mt = Re;
+customElements.define("kaleidescape-logs", mt);
 const Rs = S`
   .database {
     overflow: visible;
@@ -10749,7 +10975,7 @@ const Rs = S`
         ), e === this.generation && (this.message = "", this.invalid = !1);
       } catch (t) {
         if (e !== this.generation) return;
-        this.invalid = !0, this.message = u(t) === "query_syntax" && typeof t.message == "string" ? t.message : w(t), u(t) === "unauthorized" && this.dispatchEvent(
+        this.invalid = !0, this.message = g(t) === "query_syntax" && typeof t.message == "string" ? t.message : w(t), g(t) === "unauthorized" && this.dispatchEvent(
           new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
         );
       } finally {
@@ -10813,7 +11039,8 @@ const Rs = S`
         <summary>Query help</summary>
         <small id="query-help"
           >Text searches every column. Conditions: purchased_on IS NULL · actors
-          CONTAINS 'name' · title LIKE 'Star%'. Tab accepts a suggestion; Enter
+          CONTAINS 'name' · title LIKE 'Star%'. Double quotes around a plain
+          search require whole words. Tab accepts a suggestion; Enter
           searches.</small
         >
       </details>`;
@@ -10924,9 +11151,9 @@ ze.properties = {
       color: var(--error-color, #b3261e);
     }
   `;
-let mt = ze;
-customElements.get("kaleidescape-database-search") || customElements.define("kaleidescape-database-search", mt);
-const Le = class Le extends x {
+let ft = ze;
+customElements.get("kaleidescape-database-search") || customElements.define("kaleidescape-database-search", ft);
+const Ue = class Ue extends x {
   constructor() {
     super(...arguments), this.disabled = !1, this.bound = "", this.request = 0, this.query = "", this.items = [], this.active = -1, this.loading = !1, this.more = !1, this.error = "";
   }
@@ -10959,7 +11186,7 @@ const Le = class Le extends x {
       this.items = t.items, this.more = t.has_more;
     } catch (t) {
       if (e !== this.request || !this.isConnected) return;
-      this.error = w(t), u(t) === "unauthorized" && this.dispatchEvent(
+      this.error = w(t), g(t) === "unauthorized" && this.dispatchEvent(
         new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
       );
     } finally {
@@ -11045,13 +11272,13 @@ const Le = class Le extends x {
       </div>`;
   }
 };
-Le.properties = {
+Ue.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   review: { attribute: !1 },
   row: { attribute: !1 },
   disabled: { type: Boolean }
-}, Le.styles = [
+}, Ue.styles = [
   C,
   S`
       :host {
@@ -11098,12 +11325,12 @@ Le.properties = {
       }
     `
 ];
-let ft = Le;
+let bt = Ue;
 customElements.get("kaleidescape-import-matcher") || customElements.define(
   "kaleidescape-import-matcher",
-  ft
+  bt
 );
-const Ue = class Ue extends x {
+const Le = class Le extends x {
   constructor() {
     super(...arguments), this.disabled = !1, this.bound = "", this.generation = 0, this.selected = /* @__PURE__ */ new Set(), this.query = "", this.changesOnly = !1, this.page = 0, this.pageSize = 100, this.working = !1, this.error = "", this.notice = "", this.dialog = null;
   }
@@ -11153,7 +11380,7 @@ const Ue = class Ue extends x {
     );
   }
   fail(e) {
-    u(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
+    g(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     )), this.error = w(e), this.requestUpdate();
   }
@@ -11227,7 +11454,7 @@ const Ue = class Ue extends x {
         "conflict",
         "not_found",
         "tracking_enabled"
-      ].includes(u(t)) && (this.pending = void 0, this.review = void 0, this.matching = void 0, this.selected.clear()), this.fail(t);
+      ].includes(g(t)) && (this.pending = void 0, this.review = void 0, this.matching = void 0, this.selected.clear()), this.fail(t);
     } finally {
       e === this.generation && (this.working = !1, this.busy(), this.requestUpdate());
     }
@@ -11266,7 +11493,10 @@ const Ue = class Ue extends x {
   renderReview(e) {
     if (!this.review) return l;
     const t = this.review, i = this.query.trim().toLocaleLowerCase(), s = t.rows.filter(
-      (h) => (!this.changesOnly || h.needs_match || !h.needs_match && ["new", "merge"].includes(h.action)) && `${h.title} ${h.detail ?? ""} ${h.table} ${Object.keys(h.changes).join(" ")}`.toLocaleLowerCase().includes(i)
+      (h) => (!this.changesOnly || h.needs_match || !h.needs_match && ["new", "merge"].includes(h.action)) && tt(
+        `${h.title} ${h.detail ?? ""} ${h.table} ${Object.keys(h.changes).join(" ")}`,
+        i
+      )
     ).sort(
       (h, c) => +!!c.needs_match - +!!h.needs_match
     ), r = Math.max(0, Math.ceil(s.length / this.pageSize) - 1), o = Math.min(this.page, r), d = s.slice(
@@ -11350,7 +11580,7 @@ const Ue = class Ue extends x {
           </thead>
           <tbody>
             ${d.map((h) => {
-      const c = h.key.startsWith("purchases:"), g = c ? h.needs_match ? "Choose Library match" : {
+      const c = h.key.startsWith("purchases:"), u = c ? h.needs_match ? "Choose Library match" : {
         new: "Add purchase to Library entry",
         merge: "Update purchase record",
         unchanged: "Purchase already imported",
@@ -11375,7 +11605,7 @@ const Ue = class Ue extends x {
                     >${c ? "Purchase history on Library entry" : h.table}</small
                   >
                 </td>
-                <td>${g}</td>
+                <td>${u}</td>
                 <td>
                   ${h.reason || Object.keys(h.changes).join(", ") || "No missing data"}
                   ${h.needs_match ? a`<small class="warning">No Library match selected</small>` : l}
@@ -11531,11 +11761,11 @@ const Ue = class Ue extends x {
       </dialog>`;
   }
 };
-Ue.properties = {
+Le.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, Ue.styles = [
+}, Le.styles = [
   C,
   S`
       .database-dialog {
@@ -11594,9 +11824,9 @@ Ue.properties = {
       }
     `
 ];
-let bt = Ue;
-customElements.get("kaleidescape-transfers") || customElements.define("kaleidescape-transfers", bt);
-const Z = {
+let vt = Le;
+customElements.get("kaleidescape-transfers") || customElements.define("kaleidescape-transfers", vt);
+const G = {
   viewings: "Viewings",
   sessions: "Sessions",
   library: "Library",
@@ -11643,7 +11873,7 @@ const Z = {
       this.scope,
       !1,
       (t) => {
-        e === this.generation && (t && u(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? w(t) : "", this.requestUpdate()));
+        e === this.generation && (t && g(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? w(t) : "", this.requestUpdate()));
       },
       "database"
     );
@@ -11682,10 +11912,10 @@ const Z = {
     );
   }
   fail(e) {
-    u(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
+    g(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     ));
-    const t = u(e), i = e?.message;
+    const t = g(e), i = e?.message;
     this.error = ["query_syntax", "conflict", "invalid_request", "busy"].includes(t) && typeof i == "string" && i !== t ? i : w(e), this.requestUpdate();
   }
   async load(e = 0, t) {
@@ -11847,7 +12077,7 @@ const Z = {
             "busy",
             "backup_in_progress",
             "library_storage_limit"
-          ].includes(u(i)) && (this.pending = void 0), this.fail(i);
+          ].includes(g(i)) && (this.pending = void 0), this.fail(i);
         } finally {
           t === this.generation && (this.saving = !1, this.busy(), this.requestUpdate());
         }
@@ -11937,7 +12167,7 @@ const Z = {
     if (!this.ready)
       return a`<p>${this.error || "Loading database preferences…"}</p>
         ${this.error ? a`<button @click=${() => this.initialize()}>Retry loading database</button>` : l}`;
-    const e = Object.keys(this.page?.tables ?? Z).filter(
+    const e = Object.keys(this.page?.tables ?? G).filter(
       (i) => this.showSystem || ne.includes(i)
     ), t = (this.page?.schema ?? []).some((i) => i.editable);
     return a`<section class="card database" aria-label="Database management">
@@ -11993,7 +12223,7 @@ const Z = {
       ));
     }}
         >
-          ${e.map((i) => a`<button role="tab" id=${`table-${i}`} aria-selected=${this.table === i} tabindex=${this.table === i ? 0 : -1} ?disabled=${this.blocked} @click=${() => this.changeTable(i)}>${Z[i] ?? i}${this.page ? ` (${this.page.tables[i]})` : ""}</button>`)}
+          ${e.map((i) => a`<button role="tab" id=${`table-${i}`} aria-selected=${this.table === i} tabindex=${this.table === i ? 0 : -1} ?disabled=${this.blocked} @click=${() => this.changeTable(i)}>${G[i] ?? i}${this.page ? ` (${this.page.tables[i]})` : ""}</button>`)}
         </div>
         <div class="database-filters filters">
           <kaleidescape-database-search
@@ -12041,7 +12271,7 @@ const Z = {
           aria-label="Database entries"
         >
           <div class="card-head">
-            <h2>${Z[this.table] ?? this.table}</h2>
+            <h2>${G[this.table] ?? this.table}</h2>
           </div>
           ${this.loading ? a`<p role="status">Loading database…</p>` : l}
           <ul class="entry-list" tabindex="0" aria-label="Database rows">
@@ -12086,7 +12316,7 @@ const Z = {
                           </div>
                           ${this.scope?.library_enabled ? l : a`<small>Enable Library to preview cached artwork.</small>`}` : l}
                   <div class="database-references">
-                    ${(this.page?.references ?? []).filter((i) => Object.values(i.key).every((s) => this.detail?.[s] != null)).map((i) => a`<button class="link" ?disabled=${this.blocked} @click=${() => this.follow(i)}>Open ${Z[i.table] ?? i.table} · ${Object.values(i.key).join(", ")}</button>`)}
+                    ${(this.page?.references ?? []).filter((i) => Object.values(i.key).every((s) => this.detail?.[s] != null)).map((i) => a`<button class="link" ?disabled=${this.blocked} @click=${() => this.follow(i)}>Open ${G[i.table] ?? i.table} · ${Object.values(i.key).join(", ")}</button>`)}
                   </div>
                   <pre>${JSON.stringify(this.detail, null, 2)}</pre>
                   ${t ? l : a`<p class="muted">This table protects system integrity; stored values are read-only.</p>`}` : a`<p class="empty">
@@ -12096,7 +12326,7 @@ const Z = {
       </div>
       <footer class="entries-footer">
         <span
-          >${Z[this.table] ?? this.table} · ${this.page?.total ?? 0} total
+          >${G[this.table] ?? this.table} · ${this.page?.total ?? 0} total
           · Revision ${this.page?.dataset_revision ?? 0}</span
         >
         ${this.page ? a`<div class="pagination database-pagination">
@@ -12261,9 +12491,9 @@ const Z = {
 Ae.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 }
-}, Ae.styles = [C, qt, Rs];
-let vt = Ae;
-customElements.get("kaleidescape-database") || customElements.define("kaleidescape-database", vt);
+}, Ae.styles = [C, Et, Rs];
+let yt = Ae;
+customElements.get("kaleidescape-database") || customElements.define("kaleidescape-database", yt);
 const We = [
   {
     id: "now-playing",
@@ -12326,7 +12556,7 @@ const We = [
     this.api !== e && (this.clearPrivate(), this.api = e, this.error = "", this.requestUpdate(), e && this.refresh());
   }
   fail(e) {
-    u(e) === "unauthorized" && this.clearPrivate(), this.lastError = u(e), this.error = w(e), this.requestUpdate();
+    g(e) === "unauthorized" && this.clearPrivate(), this.lastError = g(e), this.error = w(e), this.requestUpdate();
   }
   dirty() {
     return this.manual ? JSON.stringify(this.manual) !== this.manualInitial : this.draft && (this.editTitleTouched || JSON.stringify(this.draft) !== JSON.stringify(this.initial));
@@ -12335,7 +12565,7 @@ const We = [
     return (!this.dirty() || window.confirm("Discard your unsaved changes?")) && (this.activePage !== "library" || (this.renderRoot.querySelector("kaleidescape-library")?.confirmNavigation() ?? !0)) && (this.activePage !== "database" || (this.renderRoot.querySelector("kaleidescape-database")?.confirmNavigation() ?? !0)) && (this.activePage !== "settings" || (this.renderRoot.querySelector("kaleidescape-settings")?.confirmNavigation() ?? !0));
   }
   async switchPage(e, t) {
-    e === "library" && !this.info?.library_enabled || e === this.activePage && !(e === "journal" && this.journalMovie) || this.loading || this.saving || this.pending || this.maintenanceBusy || this.settingsBusy || !this.discard() || (this.closeEditor(), this.libraryTitleId = t?.libraryTitleId, this.libraryCriterion = t?.libraryCriterion, e === "journal" && (this.journalMovie = t?.movie, this.query = this.searchText = "", this.status = this.filterStatus = ""), this.activePage = e, B(e), this.error = this.notice = "", this.requestUpdate(), e === "journal" && (this.page = 1, this.history = [], await this.loadList()));
+    e === "library" && !this.info?.library_enabled || e === this.activePage && !(e === "journal" && this.journalMovie) || this.loading || this.saving || this.pending || this.maintenanceBusy || this.settingsBusy || !this.discard() || (this.closeEditor(), this.libraryTitleId = t?.libraryTitleId, this.libraryCriterion = t?.libraryCriterion, e === "journal" && (this.journalMovie = t?.movie, this.query = this.searchText = "", this.status = this.filterStatus = ""), this.activePage = e, F(e), this.error = this.notice = "", this.requestUpdate(), e === "journal" && (this.page = 1, this.history = [], await this.loadList()));
   }
   pageKey(e) {
     const t = We.filter(
@@ -12364,7 +12594,7 @@ const We = [
         this.info.ui_defaults?.default_landing_page,
         !0,
         !!this.info.library_enabled
-      ), this.navigationReady = !0, B(this.activePage)), this.activePage === "library" && !this.info.library_enabled && (this.activePage = "journal", B(this.activePage)), this.history = [], this.cursor = void 0, this.page = 1, await this.loadList();
+      ), this.navigationReady = !0, F(this.activePage)), this.activePage === "library" && !this.info.library_enabled && (this.activePage = "journal", F(this.activePage)), this.history = [], this.cursor = void 0, this.page = 1, await this.loadList();
     } catch (s) {
       i === this.generation && this.fail(s);
     } finally {
@@ -12409,7 +12639,7 @@ const We = [
         const d = await t.sessions(i, e);
         s === this.generation && r === this.detailRequest && (this.sessions = d);
       } catch (d) {
-        s === this.generation && r === this.detailRequest && (u(d) === "unauthorized" ? this.fail(d) : this.sessionError = "Session details could not be loaded.");
+        s === this.generation && r === this.detailRequest && (g(d) === "unauthorized" ? this.fail(d) : this.sessionError = "Session details could not be loaded.");
       }
     } catch (o) {
       s === this.generation && r === this.detailRequest && this.fail(o);
@@ -12421,7 +12651,7 @@ const We = [
     this.timingAnchor = void 0, this.renderRoot.querySelectorAll("dialog").forEach((e) => e.close()), this.manual = null, this.manualInitial = "", this.detailRequest++, this.selected = null, this.editMovieId = null, this.editTitleTouched = !1, this.draft = null, this.initial = null, this.sessions = null, this.sessionError = "", this.confirmDelete = !1, this.detailLoading = !1;
   }
   newRecord() {
-    this.pending || !this.discard() || (this.closeEditor(), this.draft = Vt(), this.initial = { ...this.draft }, this.manual = de(), this.manualInitial = JSON.stringify(this.manual), this.error = "", this.notice = "", this.requestUpdate(), this.updateComplete.then(async () => {
+    this.pending || !this.discard() || (this.closeEditor(), this.draft = Ht(), this.initial = { ...this.draft }, this.manual = de(), this.manualInitial = JSON.stringify(this.manual), this.error = "", this.notice = "", this.requestUpdate(), this.updateComplete.then(async () => {
       this.renderRoot.querySelector("#journal-editor")?.showModal();
       const e = this.renderRoot.querySelector(
         "kaleidescape-manual-viewing"
@@ -12476,7 +12706,7 @@ const We = [
           } : { data: i }
         ), await this.commit();
       } catch (i) {
-        u(i) === "request_id_unavailable" ? this.fail(i) : (this.error = this.manual && i instanceof Error ? i.message : "Check the dates and numeric fields before saving.", this.requestUpdate());
+        g(i) === "request_id_unavailable" ? this.fail(i) : (this.error = this.manual && i instanceof Error ? i.message : "Check the dates and numeric fields before saving.", this.requestUpdate());
       }
     }
   }
@@ -12508,7 +12738,7 @@ const We = [
     } catch (s) {
       if (i !== this.generation) return;
       ["invalid_request", "conflict", "unauthorized"].includes(
-        u(s)
+        g(s)
       ) && (this.pending = null), this.fail(s);
     } finally {
       i === this.generation && (this.saving = !1, this.requestUpdate());
@@ -12594,7 +12824,7 @@ const We = [
     await i, t === this.generation && s === this.detailRequest && this.selected?.id === e && !this.draft && this.info?.permissions.edit && this.editRecord();
   }
   editRecord() {
-    !this.selected || this.pending || this.saving || (this.draft = Vt(this.selected), this.timingAnchor = {
+    !this.selected || this.pending || this.saving || (this.draft = Ht(this.selected), this.timingAnchor = {
       started_at: this.draft.started_at,
       ended_at: this.draft.ended_at
     }, this.editMovieId = null, this.editTitleTouched = !1, this.initial = { ...this.draft }, this.error = this.notice = "", this.requestUpdate(), this.updateComplete.then(
@@ -12960,7 +13190,7 @@ const We = [
       this.settingsBusy !== t.detail && (this.settingsBusy = t.detail, this.requestUpdate());
     }}
                               @settings-saved=${() => {
-      this.activePage = "settings", B("settings"), this.notice = "Settings saved. Reloading the integration…";
+      this.activePage = "settings", F("settings"), this.notice = "Settings saved. Reloading the integration…";
       const t = this.api;
       this.refresh(!0).then(() => {
         this.api === t && this.info && (this.notice = "Settings saved.", this.requestUpdate());
@@ -12989,9 +13219,9 @@ Te.properties = {
   hass: { attribute: !1 },
   client: { attribute: !1 },
   narrow: { type: Boolean }
-}, Te.styles = [C, qt, pi];
-let yt = Te;
-customElements.get("kaleidescape-panel") || customElements.define("kaleidescape-panel", yt);
+}, Te.styles = [C, Et, pi];
+let $t = Te;
+customElements.get("kaleidescape-panel") || customElements.define("kaleidescape-panel", $t);
 export {
-  yt as KaleidescapePanel
+  $t as KaleidescapePanel
 };

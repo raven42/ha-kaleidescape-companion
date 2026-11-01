@@ -230,3 +230,56 @@ class TMDBProvider:
             {"append_to_response": "credits", "language": "en-US"},
         )
         return parse(data, movie_id, movie.title, movie.year)
+
+    async def resolve(self, reference: dict) -> Metadata:
+        movie_id = reference.get("provider_id", "")
+        if not isinstance(movie_id, str) or not re.fullmatch(
+            r"[1-9][0-9]{0,9}", movie_id
+        ):
+            raise ProviderError("provider_identity_mismatch")
+        movie = MovieQuery(reference.get("title"), reference.get("year"))
+        data = await self._get(
+            f"/3/movie/{movie_id}",
+            {"append_to_response": "credits", "language": "en-US"},
+        )
+        return parse(data, int(movie_id), movie.title, movie.year)
+
+    async def search(self, query: str, year: int | None = None) -> list[Metadata]:
+        params = {
+            "query": query,
+            "language": "en-US",
+            "include_adult": "false",
+            "page": 1,
+        }
+        if year is not None:
+            params["primary_release_year"] = year
+        data = await self._get("/3/search/movie", params)
+        if not isinstance(data, dict) or not isinstance(data.get("results"), list):
+            raise ProviderError("tmdb_format_changed")
+        results, seen = [], set()
+        for item in data["results"][:20]:
+            if not isinstance(item, dict):
+                continue
+            movie_id, date = item.get("id"), item.get("release_date", "")
+            if (
+                type(movie_id) is not int
+                or not 0 < movie_id < 10**10
+                or movie_id in seen
+                or not isinstance(date, str)
+                or not date[:4].isdigit()
+                or not label(item.get("title"))
+            ):
+                continue
+            seen.add(movie_id)
+            results.append(
+                await self.resolve(
+                    {
+                        "provider_id": str(movie_id),
+                        "title": item["title"],
+                        "year": int(date[:4]),
+                    }
+                )
+            )
+            if len(results) == 8:
+                break
+        return results

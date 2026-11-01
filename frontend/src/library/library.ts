@@ -281,6 +281,7 @@ export class KaleidescapeLibrary extends LitElement {
           "descending",
           ...FILTERS.map(([key]) => key),
           "status",
+          "scraper_conflict",
         ].map((key) => [key, values[key]]),
       ) as Filters;
       this.filters = structuredClone(this.applied);
@@ -297,9 +298,15 @@ export class KaleidescapeLibrary extends LitElement {
   private saveFilters() {
     this.preferences?.set(
       Object.fromEntries(
-        ["query", ...FILTERS.map(([key]) => key), "status"].map((key) => [
+        [
+          "query",
+          ...FILTERS.map(([key]) => key),
+          "status",
+          "scraper_conflict",
+        ].map((key) => [
           key,
-          this.applied[key] ?? (key === "query" ? "" : []),
+          this.applied[key] ??
+            (key === "query" ? "" : key === "scraper_conflict" ? false : []),
         ]),
       ),
     );
@@ -880,7 +887,7 @@ export class KaleidescapeLibrary extends LitElement {
       type="button"
       class="link detail-link"
       ?disabled=${this.detailsLocked || this.checkingCollection}
-      @click=${() => this.fromDetails(key, value)}
+      @click=${() => this.fromDetails(key, key === "query" ? JSON.stringify(value) : value)}
     >
       ${label}
     </button>`;
@@ -1121,7 +1128,8 @@ export class KaleidescapeLibrary extends LitElement {
         ><small
           >Applies across all views for your HA user. Off matches literal text,
           ignoring case. On also tolerates small spelling mistakes and word
-          order differences.</small
+          order differences. Double quotes require an exact whole-word
+          phrase.</small
         >
         <fieldset class="view-options">
           <legend>View type</legend>
@@ -1246,6 +1254,19 @@ export class KaleidescapeLibrary extends LitElement {
           }}
       /></label>
       ${this.page?.truncated_facets.length ? html`<p class="muted">Each category shows up to 500 known names.</p>` : nothing}
+      <label class="check"
+        ><input
+          name="scraper_conflict"
+          type="checkbox"
+          .checked=${!!this.draft.scraper_conflict}
+          @change=${(event: Event) => {
+            this.draft.scraper_conflict = (
+              event.target as HTMLInputElement
+            ).checked;
+            this.requestUpdate();
+          }}
+        />Scraper conflicts only</label
+      >
       <div class="facet-groups">
         ${[
           ["status", "Watched status", "status"],
@@ -1371,6 +1392,7 @@ export class KaleidescapeLibrary extends LitElement {
             const next = { ...this.applied };
             for (const key of [...FILTERS.map(([key]) => key), "status"])
               next[key] = this.draft[key] ?? [];
+            next.scraper_conflict = !!this.draft.scraper_conflict;
             this.applied = next;
             this.saveFilters();
             this.closeDialog("filter-dialog");
@@ -1415,9 +1437,21 @@ export class KaleidescapeLibrary extends LitElement {
     const hours = Math.floor(minutes / 60);
     return hours ? `${hours}h ${minutes % 60}m` : `${minutes}m`;
   }
+  private conflictIcon(item: LibrarySummary) {
+    return item.scraper_conflict
+      ? html`<span
+          class="scraper-conflict-icon"
+          role="img"
+          aria-label="Scraper conflict"
+          title="Scraper conflict: review a provider match"
+          >⚠</span
+        >`
+      : nothing;
+  }
   private renderTitleDialog() {
     const group = this.selected;
     const row = this.activeVersion;
+    const multiple = (this.versions?.total ?? group?.version_count ?? 1) > 1;
     const admin = this.scope?.permissions.edit;
     const locked = this.detailsLocked || this.checkingCollection;
     const backdrop =
@@ -1459,7 +1493,7 @@ export class KaleidescapeLibrary extends LitElement {
                   ${row?.genres.length ? html` · ${row.genres.map((genre, index) => html`${index ? ", " : ""}${this.detailLink("genre", genre)}`)}` : nothing}
                 </p>
                 <div class="detail-badges movie-heading-badges">
-                  ${renderFormatBadges(group, false, (value) => this.fromDetails("format", value), locked)}
+                  ${multiple ? nothing : renderFormatBadges(row ?? group, false, (value) => this.fromDetails("format", value), locked)}
                   ${renderRatingBadge(row?.rating ?? group.rating, (value) => this.fromDetails("rating", value), locked)}
                   <button
                     class="movie-status"
@@ -1516,6 +1550,7 @@ export class KaleidescapeLibrary extends LitElement {
                                   .scope=${this.scope}
                                   .versionId=${row.id}
                                   .blocked=${this.controlLocked || this.collectionLocked || this.editLocked}
+                                  @scrape-status-changed=${() => void this.load(this.page?.offset ?? 0, true)}
                                   @scrape-lock=${(
                                     event: CustomEvent<boolean>,
                                   ) => {
@@ -1601,6 +1636,7 @@ export class KaleidescapeLibrary extends LitElement {
                     >
                       <div class="movie-aside">
                         <div class="cover movie-poster">${this.cover(row)}</div>
+                        ${multiple ? html`<div class="detail-badges version-format-badges">${renderFormatBadges(row, false, (value) => this.fromDetails("format", value), locked)}</div>` : nothing}
                         <details class="movie-record-details">
                           <summary>Library details</summary>
                           <p class="muted">
@@ -1624,10 +1660,6 @@ export class KaleidescapeLibrary extends LitElement {
                         <p class="movie-synopsis">
                           ${row.synopsis || "No synopsis available."}
                         </p>
-                        <div class="detail-badges">
-                          ${renderFormatBadges(row, false, (value) => this.fromDetails("format", value), locked)}
-                          ${renderRatingBadge(row.rating || "Unrated", (value) => this.fromDetails("rating", value), locked)}
-                        </div>
                         <hr />
                         <dl class="movie-credits">
                           ${[
@@ -1691,7 +1723,7 @@ export class KaleidescapeLibrary extends LitElement {
     const activeFilters = [...FILTERS.map(([key]) => key), "status"].reduce(
       (count, key) =>
         count + ((this.applied[key] as string[] | undefined)?.length ?? 0),
-      0,
+      Number(!!this.applied.scraper_conflict),
     );
     return html`<section
       class="library-page"
@@ -1811,6 +1843,7 @@ export class KaleidescapeLibrary extends LitElement {
                       ${this.display.show_badges ? html`<div class="cover-flags">${renderStatusBadges(item, true)}</div>` : nothing}
                       ${this.display.show_format ? html`<div class="cover-formats">${renderFormatBadges(item, true)}</div>` : nothing}
                       ${this.display.show_rating ? html`<div class="cover-rating">${renderRatingBadge(item.rating)}</div>` : nothing}
+                      ${this.conflictIcon(item)}
                       ${this.display.show_titles ? html`<span class="cover-caption">${item.title}${item.year ? ` (${item.year})` : ""}</span>` : nothing}
                     </button>`,
                 )}
@@ -1893,6 +1926,7 @@ export class KaleidescapeLibrary extends LitElement {
                             >
                               ${item.title}
                             </button>
+                            ${this.conflictIcon(item)}
                             <div
                               class="library-summary-line"
                               title=${this.format(item)}

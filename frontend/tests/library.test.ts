@@ -808,9 +808,9 @@ it("replaces all criteria when clicking people, years, genres, collections, stat
       .filter((call) => call.type.endsWith("library/list"))
       .at(-1)!.filters as Record<string, unknown>;
     expect(filters).toMatchObject({
-      query: key === "query" ? value : "",
+      query: key === "query" ? JSON.stringify(value) : "",
       offset: 0,
-      [key]: value,
+      [key]: key === "query" ? JSON.stringify(value) : value,
     });
     for (const other of [
       "collection",
@@ -828,8 +828,10 @@ it("replaces all criteria when clicking people, years, genres, collections, stat
     );
     expect(
       root().querySelector<HTMLInputElement>('[name="library_query"]')!.value,
-    ).toBe(key === "query" ? value : "");
-    expect(transport.uiPreferences[key]).toEqual(value);
+    ).toBe(key === "query" ? JSON.stringify(value) : "");
+    expect(transport.uiPreferences[key]).toEqual(
+      key === "query" ? JSON.stringify(value) : value,
+    );
     if (label === "Fictional Shared Name")
       expect(root().querySelectorAll("tbody tr")).toHaveLength(2);
   }
@@ -898,11 +900,11 @@ it("lets household readers browse from cover details without administrator or de
   await flush();
   expect(
     root().querySelector<HTMLInputElement>('[name="library_query"]')!.value,
-  ).toBe("Fictional Director");
+  ).toBe(JSON.stringify("Fictional Director"));
   expect(
     transport.calls.filter((call) => call.type.endsWith("library/list")).at(-1)!
       .filters,
-  ).toMatchObject({ query: "Fictional Director", offset: 0 });
+  ).toMatchObject({ query: JSON.stringify("Fictional Director"), offset: 0 });
   expect(
     transport.calls.some((call) =>
       /collections\/(add|targets)|journal\/(create|update|delete)|library\/sync$/.test(
@@ -939,4 +941,35 @@ it("shows private purchase history only in administrator title details", async (
   await flush();
   expect(text()).not.toContain("FICTIONAL-ORDER");
   expect(text()).not.toContain("Purchase history · Administrator");
+});
+
+it("overlays scraper conflicts independently of badges and persists a conflicts-only filter", async () => {
+  transport.libraryTitles[0].scraper_conflict = true;
+  button("Refresh cached data").click();
+  await flush();
+  expect(root().querySelector("tbody .scraper-conflict-icon")).toBeTruthy();
+  button("Options").click();
+  await flush();
+  root()
+    .querySelector<HTMLInputElement>(
+      'input[name="library_view"][value="covers"]',
+    )!
+    .click();
+  await flush();
+  root().querySelector<HTMLInputElement>('[name="show_badges"]')!.click();
+  await flush();
+  expect(
+    root().querySelector(".cover-tile > .scraper-conflict-icon"),
+  ).toBeTruthy();
+  modalClose(root()).click();
+  button("Filters").click();
+  await flush();
+  root().querySelector<HTMLInputElement>('[name="scraper_conflict"]')!.click();
+  button("Apply filters").click();
+  await flush();
+  expect(transport.uiPreferences.scraper_conflict).toBe(true);
+  expect(root().querySelectorAll(".cover-tile")).toHaveLength(1);
+  button("Clear Filter").click();
+  await flush();
+  expect(transport.uiPreferences.scraper_conflict).toBe(false);
 });

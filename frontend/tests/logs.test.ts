@@ -181,6 +181,24 @@ it.each(["json", "text"] as const)(
   "exports %s with the privacy banner and active filters",
   async (format) => {
     const { call, root } = await mount();
+    const level = root.querySelector<HTMLSelectElement>(
+      '[name="filter-level"]',
+    )!;
+    expect(level.closest("label")?.textContent).toContain("Minimum level");
+    level.value = "WARNING";
+    level.dispatchEvent(new Event("change"));
+    await vi.waitFor(() =>
+      expect(call).toHaveBeenLastCalledWith(info, "list", {
+        filters: {
+          level: "WARNING",
+          logger: "",
+          hidden: false,
+          reference: "",
+          before: undefined,
+        },
+      }),
+    );
+    await element.updateComplete;
     const blobs: Blob[] = [];
     vi.spyOn(URL, "createObjectURL").mockImplementation((blob) => {
       blobs.push(blob as Blob);
@@ -202,7 +220,7 @@ it.each(["json", "text"] as const)(
     expect(content).toContain("description differs");
     expect(call).toHaveBeenLastCalledWith(info, "export", {
       filters: {
-        level: "",
+        level: "WARNING",
         logger: "",
         hidden: false,
         reference: "",

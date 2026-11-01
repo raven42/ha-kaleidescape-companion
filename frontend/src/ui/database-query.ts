@@ -316,7 +316,8 @@ export class DatabaseSearch extends LitElement {
         <summary>Query help</summary>
         <small id="query-help"
           >Text searches every column. Conditions: purchased_on IS NULL · actors
-          CONTAINS 'name' · title LIKE 'Star%'. Tab accepts a suggestion; Enter
+          CONTAINS 'name' · title LIKE 'Star%'. Double quotes around a plain
+          search require whole words. Tab accepts a suggestion; Enter
           searches.</small
         >
       </details>`;

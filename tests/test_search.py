@@ -13,6 +13,88 @@ class SearchTest(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = repository.RepositoryTest.asyncSetUp
     assert_error = repository.RepositoryTest.assert_error
 
+    async def test_quoted_phrases_across_all_worker_searches(
+        self,
+    ):
+        rows = [
+            {
+                **library.ROWS[0],
+                "source_handle": f"quoted-{i}",
+                "source_group": f"quoted-{i}",
+                "title": title,
+                "actors": [person],
+            }
+            for i, (title, person) in enumerate(
+                [
+                    ("A Fictional Journey", "Tom Holland"),
+                    ("Another Fictional Journey", "Tom Hollander"),
+                ]
+            )
+        ]
+        await self.repository.async_library_catalog(library.ORIGIN, rows, {})
+        for fuzzy in (False, True):
+            page = await self.repository.async_library_list(
+                library.SOURCE,
+                {"query": '"Tom Holland"', "fuzzy": fuzzy, "grouped": True},
+            )
+            self.assertEqual(page["total"], 1)
+            self.assertEqual(page["items"][0]["title"], "A Fictional Journey")
+            self.assertEqual(
+                (
+                    await self.repository.async_library_list(
+                        library.SOURCE, {"query": "Tom Holland", "fuzzy": fuzzy}
+                    )
+                )["total"],
+                2,
+            )
+            self.assertEqual(
+                len(
+                    (
+                        await self.repository.async_library_search(
+                            library.SOURCE, '"Fictional Journey"', [], fuzzy
+                        )
+                    )["items"]
+                ),
+                2,
+            )
+            self.assertEqual(
+                (
+                    await self.repository.async_library_search(
+                        library.SOURCE, '"Fictional Journe"', [], fuzzy
+                    )
+                )["items"],
+                [],
+            )
+        self.assertEqual(
+            (await self.repository.async_inspect("library", query='"Tom Holland"'))[
+                "total"
+            ],
+            1,
+        )
+        for title in ("Tom Holland Documentary", "Tom Hollander Documentary"):
+            await self.repository.async_create(
+                str(uuid4()), repository.viewing(title=title)
+            )
+        for fuzzy in (False, True):
+            self.assertEqual(
+                len(
+                    (
+                        await self.repository.async_list(
+                            query='"Tom Holland"', fuzzy=fuzzy
+                        )
+                    )["items"]
+                ),
+                1,
+            )
+        from custom_components.kaleidescape_companion.core.search import matches
+
+        self.assertFalse(matches("Tom Hollander", '"Tom Holland"', True))
+        self.assertTrue(
+            matches("Cast: Tom Holland, Other Person", '"Tom Holland"', True)
+        )
+        self.assertTrue(matches("A [Literal] Title", '"[Literal]"'))
+        self.assertFalse(matches("anything", '""', True))
+
     async def seed(self):
         await self.repository.async_library_catalog(
             library.ORIGIN,

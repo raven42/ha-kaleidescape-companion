@@ -181,6 +181,14 @@ additionally tolerates bounded spelling and word-order differences. Selected
 facets and Database query syntax remain exact. Other users retain their own
 choices.
 
+Double quotes around a whole search override fuzzy matching with an exact
+whole-word phrase. `"Tom Holland"` excludes `Tom Hollander`; the unquoted query
+matches both. This applies to Journal/Library, suggestions, manual title
+pickers, import review and plain Database searches. People links insert the
+quotes. Structured Database query values retain their existing syntax. The
+personal Library profile also saves the **Scraper conflicts only** checkbox.
+Conflict overlays remain visible when library/status badges are hidden.
+
 Changes save immediately, with the current mode restored when opening another
 view or reloading, without changing HA options. Startup consolidates old Journal
 and Library choices using the most recently saved preference row, removes the

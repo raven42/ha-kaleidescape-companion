@@ -5,18 +5,18 @@
 This repository contains the journal backend, automatic observation, shared
 reader/administrator UI, history/Library sensors, and opt-in library sync. Keep
 feature behavior aligned with the [plan](plan.md), [design](design.md), and
-[framework status](framework.md). Journal implementation comes before the
-library browser and controls.
+[framework status](framework.md). The implemented Library and controls extend
+the journal without replacing HA's built-in playback entities.
 
 ## Tooling
 
 ### Development setup
 
-Requires Python **3.14.2+**, Node.js **22.13+ (22.x) or 24+**, and npm. Python's
-minimum matches the Home Assistant **2026.10.4** development dependency; it is
-not a declared minimum supported HA release. The isolated HA runtime may also
-need FFmpeg and jpeg-turbo for its base media components; the journal itself
-does not process media.
+Requires Python **3.14.2+**, SQLite **3.35+**, Node.js **22.13+ (22.x) or 24+**,
+and npm. Python's minimum matches the Home Assistant **2026.10.4** development
+dependency; it is not a declared minimum supported HA release. The isolated HA
+runtime may also need FFmpeg and jpeg-turbo for its base media components; the
+journal itself does not process media.
 
 From the repository root:
 
@@ -178,8 +178,8 @@ distribution builds run in the sibling `../kaleidescape-api` checkout.
 
 ## Integration framework
 
-Integration release versions remain `0.0.0`; API and database schema versions
-are `1` and `8`, respectively; JSON export format remains `2`. The
+Integration release versions remain `0.0.0`; current API, database and JSON
+export versions are listed in the [backend guide](backend.md). The
 `kaleidescape_companion` domain coexists with HA's built-in `kaleidescape`
 integration. Existing framework entries open the database on reload/restart
 without a configuration migration.
@@ -193,10 +193,10 @@ Manual additions select cached Library versions with known runtime; the worker
 derives identity/runtime/end. New entries default to completed; Partial asks for
 watched minutes. Journal date/title sorts retain revision-bound paging. Opt-in
 [calendar publishing](calendar.md) uses a fixed writable HA calendar and flat
-title/description placeholders. Schema 14 retains protected display snapshots
-and outbox receipts, adding confirmed historical Journal export with bounded
-remote matching. No automatic history/import backfill occurs. Automated tests
-use simulated calendar actions; provider/browser review stays an operator step.
+title/description placeholders. Protected display snapshots and outbox receipts
+support confirmed historical Journal export with bounded remote matching. No
+automatic history/import backfill occurs. Automated tests use simulated calendar
+actions; provider/browser review stays an operator step.
 
 Journal's personal Calendar-view toggle uses bounded local-month reads and the
 existing authenticated Library artwork cache, independently of external
@@ -249,7 +249,7 @@ Library search/status bars are sticky, search includes partial actors/directors,
 and filters use bounded people suggestions. Database now has personal Options,
 raw-first details and confirmed supported-field edits/deletions with
 schema-aware condition completion; see the [Database guide](database.md). Normal
-checks use only synthetic databases and mocked devices. Schema 12 upgrades
+checks use only synthetic databases and mocked devices. Schema upgrades run
 automatically with a private pre-migration backup; runtime code and frontend
 must ship together.
 
@@ -304,6 +304,39 @@ the existing paging/dialog tests. Follow the
 [responsive review checklist](ui.md#responsive-layouts-and-review) for real
 phone/tablet rendering; automated DOM tests do not replace that review.
 
+## Library performance
+
+Use the offline benchmark with fictional provider credits to exercise the
+expanded catalog, paging and literal/fuzzy/quoted searches:
+
+```sh
+python dev/benchmark_library.py --titles 1000 --samples 5 --enriched
+```
+
+Omit `--enriched` for the source-only baseline, or use up to 5000 movie groups
+(10,000 versions). Timings include repository dispatch, query/projection and
+page-size validation; they exclude WebSocket transport, rendering and artwork.
+Compare the same catalog, machine, page size and warm/cold state. Local results
+do not guarantee target HA performance. The benchmark never reads household
+files or makes network requests.
+
+Library search materializes distinct names before matching, while private
+worker-local memoization reuses effective metadata and revision-bound facets.
+Cache state is bounded and discarded at close; imports, edits, source policies,
+membership changes and availability keep the existing revision/input checks.
+Current profiling does not justify duplicating credits into permanent tables or
+introducing FTS/WAL. Keep the two-second query and response-byte limits when
+extending this read path.
+
+For an explicitly authorized household investigation, create an owner-only
+temporary directory and use SQLite's backup API from a read-only source
+connection. Open only that disposable copy through the repository. Never open
+the source export through runtime setup, which may migrate it or tighten its
+permissions. Keep records, user identities, queries and private files out of
+benchmarks, fixtures and logs; report only aggregate counts/timings. Remove the
+copy afterward. A running scrape need not block read profiling, but take one
+consistent snapshot for comparisons.
+
 ## Working practices
 
 The [security policy](security.md) applies to every development phase. Review
@@ -326,8 +359,9 @@ assessment.
   verification.
 
 Use the general [reviewed merge import](imports.md) to bring a corrected copy
-into live storage. The HTML parser and helper stay under `dev/`; the runtime has
-no purchase-specific upload or apply hook.
+into live storage. The HTML parser and corrected-copy helper stay under `dev/`;
+the runtime accepts reviewed purchase JSON through the general Database import
+flow, with explicit Library matching and administrator-only financial fields.
 
 ### Provider development
 

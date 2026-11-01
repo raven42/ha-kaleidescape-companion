@@ -28,6 +28,10 @@ npm --prefix frontend run build
   roles.
 - Library, purchases, matching and preferences suites cover exact identities,
   cache preservation, browsing, financial field privacy and sticky UI settings.
+- `test_read_cache` checks distinct-credit work, household/admin search parity,
+  cache bounds/invalidation and cleanup after interrupted queries. The offline
+  [enriched Library benchmark](../docs/development.md#library-performance)
+  measures fictional paging and search separately from browser rendering.
 - Observation, tracking, history, journal linkage and calendar suites cover
   timing, durable evidence, corrections and external-write receipts.
 - `test_controls` and the standalone API suite use fictional protocol peers;

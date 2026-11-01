@@ -97,25 +97,38 @@ version IDs remain independent. Unavailable versions and other sources/groups
 cannot supply fallback metadata. No title-text or guessed year/director matching
 merges works.
 
-Search titles, actor names or director names using partial text. Input debounces
-for 300 ms; Search/Enter applies immediately. Literal mode uses Unicode case
-folding; the global personal fuzzy-search option additionally tolerates bounded
-word/typo differences, including credits from another available version in the
-same exact source group. Open **Filters** to select collection, actor, director,
-rating, genre, year, viewing-format and watched-status checkboxes. Multiple
-checked values match **any** value within that category; different categories
-must **all** match on the **same version**. A matching group still opens all its
-versions, including those that did not match. An unchecked category is
-unrestricted. Filter-option search narrows available filter values, not the
-titles. Primary filters appear as Watched status, Collection, Rating;
-actor/director fields below use typed suggestions (up to 20 from the full cached
-source) and removable selected-name chips. Rating choices reuse the same badges
-as title details. **Apply filters** applies the draft and returns to page one;
-Closing with X discards it. The toolbar **Clear Filter** clears search and all
-checkbox filters, including unsubmitted search text, and returns to page one. It
-preserves view, sort and page size. Each category offers up to 500 known names
-(collections up to 200), with at most 100 selections per category. Writer and
-studio filters are omitted because the observed source supplies neither field.
+Search titles, cast, directors, writers, producers or studios using partial
+text. Input debounces for 300 ms; Search/Enter applies immediately. Literal mode
+uses Unicode case folding; the global personal fuzzy-search option additionally
+tolerates bounded word/typo differences, including credits from another
+available version in the same exact source group. Open **Filters** to select
+collection, actor, director, rating, genre, year, viewing-format and
+watched-status checkboxes. Multiple checked values match **any** value within
+that category; different categories must **all** match on the **same version**.
+A matching group still opens all its versions, including those that did not
+match. An unchecked category is unrestricted. Filter-option search narrows
+available filter values, not the titles. Primary filters appear as Watched
+status, Collection, Rating; actor/director fields below use typed suggestions
+(up to 20 from the full cached source) and removable selected-name chips. Rating
+choices reuse the same badges as title details. **Apply filters** applies the
+draft and returns to page one; Closing with X discards it. The toolbar **Clear
+Filter** clears search and all checkbox filters, including unsubmitted search
+text, and returns to page one. It preserves view, sort and page size. Each
+category offers up to 500 known names (collections up to 200), with at most 100
+selections per category. Writers, producers and studios are searchable when
+available, without separate facet controls.
+
+Search and display projections run on the same worker for both household roles.
+One search evaluates each distinct credited name once, then resolves matches to
+their existing source groups; it does not infer identities from names. A bounded
+worker-local cache reuses effective metadata, and source-revision/hidden-label
+keys reuse unchanged facet choices. Source-policy changes invalidate those
+projections. Cached values are private memory only and are discarded on unload;
+edits/imports use their new input values immediately. The two-second search
+budget, source scoping and public-field allowlists still apply. There is no
+additional persistent actor table or search-data migration. Fuzzy search can
+take more work than literal/quoted search, and different users may have
+different saved fuzzy-search choices.
 
 List columns are title/formats, year(s), collection, length, watched status, and
 Added on. Fixed-layout columns keep their widths when sorting or filtering. Drag
@@ -237,12 +250,14 @@ it to refresh hidden labels after an external shared-preference change. Facets
 take arrays of at most 100 strings; a single string is retained for existing
 clients. `status` values are `watched`, `unwatched`, `in_progress`, and
 `unknown`. `sort` is one of `name`, `year`, `collection`, `length`, `watched`,
-or `added`. List pages use source/preference revisions, a 1000-entry ceiling,
-and an 8 MiB conservative serialized JSON payload budget (including facets).
-Oversized pages fail with `library_page_too_large`; reduce the target and retry.
-Internal lookup batches stay below 999 SQLite parameters. Individual-version
-pages share the byte budget and remain capped at 50. Fixed sort expressions and
-bound values accept no client SQL or paths.
+`added`, or `random`. Random uses the validated `random_seed` so pages and
+personal display profiles share one stable shuffle until Randomize is clicked.
+List pages use source/preference revisions, a 1000-entry ceiling, and an 8 MiB
+conservative serialized JSON payload budget (including facets). Oversized pages
+fail with `library_page_too_large`; reduce the target and retry. Internal lookup
+batches stay below 999 SQLite parameters. Individual-version pages share the
+byte budget and remain capped at 50. Fixed sort expressions and bound values
+accept no client SQL or paths.
 
 ## Storage, artwork, and recovery
 
@@ -383,6 +398,22 @@ invalidate pending suggestions and refresh results from page one, including
 All/Covers views. Other users are unaffected; Journal and manual-viewing pickers
 use the same saved mode. Direct list/suggestion API calls retain a literal
 default when `fuzzy` is omitted.
+
+Enclosing the entire search in double quotes requires a case-insensitive,
+whole-word phrase, regardless of the fuzzy toggle. `"Tom Holland"` matches that
+name within cast/director fields but excludes `Tom Hollander`; unquoted text
+retains partial/fuzzy behavior. Punctuation stays literal and whitespace between
+words may vary. People links in movie/calendar details insert double quotes and
+replace existing Library search/filters. The same phrase rule applies to Journal
+search, manual title pickers, filter autocomplete, import review and plain
+Database search. Structured Database predicates keep their documented SQL style
+operators and single-quoted values.
+
+**Scraper conflicts only** selects movies with an unresolved identity problem
+for a desired enabled provider. Covers show a centered warning independently of
+Library badges; List view shows the same warning alongside the title. The
+boolean filter saves with other personal browsing preferences. See
+[manual resolution](enrichment.md#review-a-single-title).
 
 The filter panes use consistent inner heading padding, and their sticky action
 footer has extra space below the buttons.
