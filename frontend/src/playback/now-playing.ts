@@ -28,10 +28,23 @@ export class KaleidescapeNowPlaying extends LitElement {
     client: { attribute: false },
     scope: { attribute: false },
     playerId: {},
+    compact: { type: Boolean, reflect: true },
+    showControls: { type: Boolean },
   };
   static styles = [
     styles,
     css`
+      :host([compact]) .now-playing {
+        min-height: 0;
+        margin: 0;
+      }
+      :host([compact]) .playback-layout {
+        padding: 12px;
+        gap: 16px;
+      }
+      :host([compact]) .playback-detail h3 {
+        font-size: clamp(22px, 3vw, 36px);
+      }
       .now-playing {
         min-height: min(60dvh, 640px);
       }
@@ -99,6 +112,8 @@ export class KaleidescapeNowPlaying extends LitElement {
   client?: JournalClient;
   scope?: JournalInfo;
   playerId = "";
+  compact = false;
+  showControls = true;
   private boundClient?: JournalClient;
   private boundScope = "";
   private generation = 0;
@@ -320,14 +335,18 @@ export class KaleidescapeNowPlaying extends LitElement {
                 </div>`
         }
       </section>
-      <kaleidescape-device-controls
-        .client=${this.client}
-        .scope=${this.scope}
-        .playerId=${this.playerId}
-        @player-changed=${(event: CustomEvent<string>) => {
-          this.playerId = event.detail;
-        }}
-      ></kaleidescape-device-controls>`;
+      ${
+        this.showControls
+          ? html` <kaleidescape-device-controls
+              .client=${this.client}
+              .scope=${this.scope}
+              .playerId=${this.playerId}
+              @player-changed=${(event: CustomEvent<string>) => {
+                this.playerId = event.detail;
+              }}
+            ></kaleidescape-device-controls>`
+          : nothing
+      }`;
   }
 }
 if (!customElements.get("kaleidescape-now-playing"))

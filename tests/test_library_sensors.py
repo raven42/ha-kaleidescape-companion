@@ -98,9 +98,34 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
         result = await self.summary()
         self.assertEqual(result["missing_artwork"], 1)
         self.assertEqual(result["scraper_conflicts"], 1)
+        self.assertEqual(result["scraper_conflicts_movies"], [library.ROWS[0]["title"]])
+        self.assertFalse(result["scraper_conflicts_truncated"])
+        self.assertEqual(len(result["missing_artwork_movies"]), 1)
+        self.assertFalse(result["missing_artwork_truncated"])
         self.assertEqual(result["last_scrape_date"], "2026-01-01T00:00:00+00:00")
         await self.repository.async_library_trim(0)
         self.assertEqual((await self.summary())["missing_artwork"], 2)
+
+    async def test_problem_sensor_lists_bound_titles_without_private_metadata(self):
+        rows = [
+            movie(str(i), str(i), title="Fictional " + str(i) + "x" * 480)
+            for i in range(70)
+        ]
+        result = await self.scan(rows, {})
+        self.assertEqual(result["missing_artwork"], 70)
+        self.assertTrue(result["missing_artwork_truncated"])
+        self.assertLessEqual(len(result["missing_artwork_movies"]), 50)
+        self.assertLessEqual(
+            len(
+                json.dumps(
+                    result["missing_artwork_movies"], ensure_ascii=False
+                ).encode()
+            ),
+            8192,
+        )
+        self.assertTrue(
+            all(isinstance(title, str) for title in result["missing_artwork_movies"])
+        )
 
     async def test_baseline_unique_groups_and_empty_catalog_are_not_initial_additions(
         self,
@@ -361,6 +386,14 @@ class LibrarySensorTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(sensors["recently_added"].native_value, 0)
         self.assertEqual(sensors["missing_artwork"].native_value, 2)
         self.assertEqual(sensors["scraper_conflicts"].native_value, 0)
+        self.assertEqual(
+            sensors["scraper_conflicts"].extra_state_attributes,
+            {"movies": [], "truncated": False},
+        )
+        self.assertEqual(
+            len(sensors["missing_artwork"].extra_state_attributes["movies"]), 2
+        )
+        self.assertFalse(sensors["missing_artwork"].extra_state_attributes["truncated"])
         self.assertEqual(sensors["scraper_failures"].native_value, 0)
         self.assertEqual(
             sensors["scraper_failures"].state_class, SensorStateClass.TOTAL_INCREASING

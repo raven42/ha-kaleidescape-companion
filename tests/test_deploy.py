@@ -88,6 +88,25 @@ class DeployTest(unittest.TestCase):
                 all(member.isfile() and member.mode == 0o644 for member in archive)
             )
 
+    def test_only_the_integration_brand_icons_enter_the_runtime_archive(self):
+        for name in (
+            "brand/icon.png",
+            "brand/icon@2x.png",
+            "brand/private.png",
+            "other.png",
+        ):
+            path = self.source / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"fictional public image")
+        with tarfile.open(
+            fileobj=io.BytesIO(deploy.runtime_package(self.root)), mode="r:gz"
+        ) as archive:
+            names = set(archive.getnames())
+        self.assertIn(f"{deploy.DOMAIN}/brand/icon.png", names)
+        self.assertIn(f"{deploy.DOMAIN}/brand/icon@2x.png", names)
+        self.assertNotIn(f"{deploy.DOMAIN}/brand/private.png", names)
+        self.assertNotIn(f"{deploy.DOMAIN}/other.png", names)
+
     def test_real_archive_imports_all_runtime_packages_without_checkout_fallback(self):
         """Exercise deployed imports from an archive, not the editable installation."""
         payload = deploy.runtime_package(Path(__file__).resolve().parents[1])

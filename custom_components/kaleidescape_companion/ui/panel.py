@@ -55,6 +55,7 @@ async def async_setup_panel(hass: HomeAssistant) -> bool:
                 require_admin=False,
                 update=True,
             )
+        _register_cards(hass, module_url)
         return False
     await panel_custom.async_register_panel(
         hass,
@@ -65,7 +66,20 @@ async def async_setup_panel(hass: HomeAssistant) -> bool:
         module_url=module_url,
         require_admin=False,
     )
+    _register_cards(hass, module_url)
     return True
+
+
+def _register_cards(hass, module_url):
+    """Load the same public module on dashboards, even before opening the panel."""
+    key = f"{DOMAIN}.cards_module"
+    previous = hass.data.get(key)
+    if previous == module_url:
+        return
+    if previous:
+        frontend.remove_extra_js_url(hass, previous)
+    frontend.add_extra_js_url(hass, module_url)
+    hass.data[key] = module_url
 
 
 def _asset_digest() -> str:
@@ -75,5 +89,7 @@ def _asset_digest() -> str:
 @callback
 def async_remove_panel(hass: HomeAssistant) -> None:
     """Remove the sidebar entry while retaining its harmless static module route."""
+    if module_url := hass.data.pop(f"{DOMAIN}.cards_module", None):
+        frontend.remove_extra_js_url(hass, module_url)
     if _owned(hass.data.get(frontend.DATA_PANELS, {}).get(PANEL_PATH)):
         frontend.async_remove_panel(hass, PANEL_PATH, warn_if_unknown=False)

@@ -70,6 +70,7 @@ export class JournalCalendar extends LitElement {
     fitScreen: { type: Boolean },
     disabled: { type: Boolean },
     editable: { type: Boolean },
+    rememberUrl: { type: Boolean },
   };
   static styles = [styles, libraryStyles, calendarStyles];
   client?: JournalClient;
@@ -83,6 +84,7 @@ export class JournalCalendar extends LitElement {
   disabled = false;
   // Only the administrator host connects the shared Journal editor.
   editable = false;
+  rememberUrl = true;
   private fittedSize = 180;
   private resizeObserver?: ResizeObserver;
   private layoutFrame?: number;
@@ -286,6 +288,7 @@ export class JournalCalendar extends LitElement {
     this.requestUpdate();
   }
   private rememberMonth() {
+    if (!this.rememberUrl) return;
     const url = new URL(location.href);
     url.searchParams.set(
       "companion_month",

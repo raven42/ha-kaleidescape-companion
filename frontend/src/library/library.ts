@@ -73,6 +73,21 @@ const STATUS: Record<string, string> = {
   unknown: "Unknown",
 };
 
+/** Dashboard layout is local to the card, never written to user preferences. */
+export interface DashboardLibrary {
+  columns: number;
+  page_size: number;
+  view: "covers" | "list";
+  search_position: "top" | "bottom" | "off";
+  show_filters: boolean;
+  show_sort: boolean;
+  show_stats: boolean;
+  show_titles: boolean;
+  show_format: boolean;
+  show_badges: boolean;
+  show_rating: boolean;
+}
+
 export class KaleidescapeLibrary extends LitElement {
   constructor() {
     super();
@@ -98,12 +113,14 @@ export class KaleidescapeLibrary extends LitElement {
     scope: { attribute: false },
     openTitleId: { attribute: false },
     openCriterion: { attribute: false },
+    dashboard: { attribute: false },
   };
   static styles = [styles, libraryStyles];
   client?: JournalClient;
   scope?: JournalInfo;
   openTitleId?: string;
   openCriterion?: LibraryCriterion;
+  dashboard?: DashboardLibrary;
   private boundClient?: JournalClient;
   private bound = "";
   private generation = 0;
@@ -235,6 +252,10 @@ export class KaleidescapeLibrary extends LitElement {
       }
       return;
     }
+    if (changed.has("dashboard") && this.preferencesReady) {
+      void this.initializePreferences();
+      return;
+    }
     if (!this.preferencesReady) return;
     if (changed.has("openCriterion") && this.openCriterion)
       this.fromDetails(this.openCriterion.key, this.openCriterion.value);
@@ -272,11 +293,36 @@ export class KaleidescapeLibrary extends LitElement {
       "search",
     );
     try {
-      const [values, search] = await Promise.all([
+      const [saved, search] = await Promise.all([
         this.preferences.load(),
         this.searchPreferences.load(),
       ]);
       if (generation !== this.generation) return;
+      const values = this.dashboard
+        ? {
+            ...saved,
+            ...this.dashboard,
+            view: this.dashboard.view,
+            page_size: this.dashboard.page_size,
+            query: "",
+            sort: "name",
+            descending: false,
+            ...Object.fromEntries(
+              [...FILTERS.map(([key]) => key), "status"].map((key) => [
+                key,
+                [],
+              ]),
+            ),
+            scraper_conflict: false,
+          }
+        : saved;
+      if (this.dashboard) {
+        this.preferences?.dispose();
+        this.preferences = undefined;
+        this.searchPreferences?.dispose();
+        this.searchPreferences = undefined;
+        this.coverColumns = this.dashboard.columns;
+      }
       this.fuzzySearch = search.fuzzy_search as boolean;
       this.mode = values.view as "list" | "covers";
       this.entriesPerPage = values.page_size as number | "all";
@@ -423,7 +469,7 @@ export class KaleidescapeLibrary extends LitElement {
   }
   private get pageSize() {
     if (this.entriesPerPage === "all") return 1000;
-    if (this.mode === "list") return this.entriesPerPage;
+    if (this.mode === "list" || this.dashboard) return this.entriesPerPage;
     return Math.max(
       this.coverColumns,
       Math.floor(this.entriesPerPage / this.coverColumns) * this.coverColumns,
@@ -441,7 +487,8 @@ export class KaleidescapeLibrary extends LitElement {
     // Match the 2px grid gap, and keep one full row even for a small target.
     const columns = Math.max(
       1,
-      Math.min(1000, Math.floor((width + 2) / (this.coverSize + 2))),
+      this.dashboard?.columns ??
+        Math.min(1000, Math.floor((width + 2) / (this.coverSize + 2))),
     );
     if (columns !== this.coverColumns) {
       this.coverColumns = columns;
@@ -1760,6 +1807,7 @@ export class KaleidescapeLibrary extends LitElement {
     const pageItems = this.page?.items ?? [];
     const coverItems =
       this.mode === "covers" &&
+      !this.dashboard &&
       this.page?.has_more &&
       pageItems.length >= this.coverColumns
         ? pageItems.slice(
@@ -1824,8 +1872,12 @@ export class KaleidescapeLibrary extends LitElement {
           : nothing
       }
       <section class="card library-results">
-        <div class="library-toolbar">
+        <div
+          class=${`library-toolbar${this.dashboard?.search_position === "bottom" ? " toolbar-bottom" : ""}`}
+          ?hidden=${!!this.dashboard && this.dashboard.search_position === "off" && !this.dashboard.show_filters && !this.dashboard.show_sort}
+        >
           <form
+            ?hidden=${this.dashboard?.search_position === "off"}
             @submit=${(event: Event) => {
               event.preventDefault();
               this.applySearch();
@@ -1846,13 +1898,20 @@ export class KaleidescapeLibrary extends LitElement {
             <button type="submit" ?disabled=${this.loading}>Search</button>
           </form>
           <div class="library-tools">
-            <button @click=${this.openFilters}>
+            <button
+              ?hidden=${this.dashboard?.show_filters === false}
+              @click=${this.openFilters}
+            >
               Filters${activeFilters ? ` (${activeFilters})` : ""}
             </button>
-            <button ?disabled=${this.loading} @click=${this.clearFilters}>
+            <button
+              ?hidden=${this.dashboard?.show_filters === false}
+              ?disabled=${this.loading}
+              @click=${this.clearFilters}
+            >
               Clear Filter
             </button>
-            <label
+            <label ?hidden=${this.dashboard?.show_sort === false}
               >Sort by<select
                 name="library_sort"
                 .value=${String(this.applied.sort)}
@@ -1861,12 +1920,16 @@ export class KaleidescapeLibrary extends LitElement {
                 ${SORTS.map(([key, label]) => html`<option value=${key}>${label}</option>`)}
               </select></label
             >
-            <button @click=${() => this.sort(String(this.applied.sort))}>
+            <button
+              ?hidden=${this.dashboard?.show_sort === false}
+              @click=${() => this.sort(String(this.applied.sort))}
+            >
               ${this.applied.sort === "random" ? "Randomize" : this.applied.descending ? "Descending ↓" : "Ascending ↑"}
             </button>
           </div>
           <button
             aria-haspopup="dialog"
+            ?hidden=${!!this.dashboard}
             aria-controls="library-options"
             @click=${() => this.openDialog("library-options")}
           >
@@ -2008,8 +2071,16 @@ export class KaleidescapeLibrary extends LitElement {
         }
         ${!this.page?.items.length ? html`<p class="empty" role="status">${this.loading ? "Loading library…" : "No cached titles match. Adjust your filters or wait for a library sync."}</p>` : nothing}
       </section>
-      <footer class="library-footer" aria-label="Library status and navigation">
-        <div class="footer-summary" role="status">
+      <footer
+        class="library-footer"
+        aria-label="Library status and navigation"
+        ?hidden=${this.dashboard?.show_stats === false && !this.page?.offset && !this.page?.has_more}
+      >
+        <div
+          class="footer-summary"
+          role="status"
+          ?hidden=${this.dashboard?.show_stats === false}
+        >
           <span>
             ${String(this.applied.query ?? "").trim() || activeFilters ? html`<strong class="match-count">Matches ${this.page?.total ?? 0}</strong> · ` : nothing}
             Total ${this.info?.group_count ?? 0} · Unwatched
@@ -2044,6 +2115,7 @@ export class KaleidescapeLibrary extends LitElement {
               : nothing
           }
           <button
+            ?hidden=${this.dashboard?.show_stats === false}
             data-refresh
             aria-label="Refresh cached data"
             title="Refresh cached data"

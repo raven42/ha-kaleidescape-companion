@@ -33,6 +33,7 @@ export class DeviceControls extends LitElement {
     mode: {},
     versionId: {},
     playerId: {},
+    inlineRemote: { type: Boolean },
     value: {},
     configured: { type: Boolean },
   };
@@ -134,6 +135,7 @@ export class DeviceControls extends LitElement {
   mode = "remote";
   versionId = "";
   playerId = "";
+  inlineRemote = false;
   value = "";
   configured = true;
   private generation = 0;
@@ -494,6 +496,7 @@ export class DeviceControls extends LitElement {
               <button
                 type="button"
                 ?disabled=${disabled}
+                ?hidden=${this.inlineRemote}
                 @click=${this.openRemote}
               >
                 Remote
@@ -581,6 +584,7 @@ export class DeviceControls extends LitElement {
                   ${this.waking ? html`<span role="status">◌ Starting player…</span>` : nothing}
                 `
       }
+      ${this.mode === "remote" && this.inlineRemote && info?.enabled ? remoteControls(player?.name || "Kaleidescape player", !!disabled, !!this.status?.ready, (operation) => void this.prepare(operation)) : nothing}
       ${this.dialog !== "remote" || this.acknowledge ? this.feedback() : nothing}
       ${blocked && !(info?.can_manage && this.scope.permissions.edit) ? html`<p class="warning">This player needs administrator review of an uncertain command before more commands can be sent.</p>` : nothing}
       ${info?.can_manage && this.scope.permissions.edit ? info.pending.map((item) => html`<p class="warning">Unconfirmed ${item.operation} for ${info.players.find((row) => row.id === item.player_id)?.name || "a previously selected player"}. <button type="button" ?disabled=${this.busy} @click=${() => this.reviewPending(item.request_id)}>I inspected the player…</button></p>`) : nothing}

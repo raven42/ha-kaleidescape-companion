@@ -2,6 +2,21 @@
 import { css } from "lit";
 
 export const libraryStyles = css`
+  .library-toolbar [hidden],
+  .library-toolbar[hidden],
+  .library-footer [hidden],
+  .library-footer[hidden] {
+    display: none;
+  }
+  .library-results {
+    display: flex;
+    flex-direction: column;
+  }
+  .library-toolbar.toolbar-bottom {
+    order: 10;
+    position: static;
+  }
+
   .match-count {
     color: var(--primary-color, #03a9f4);
     font-weight: 700;

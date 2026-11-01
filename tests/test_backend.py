@@ -13,6 +13,7 @@ import probatio
 from aiohttp import web
 from aiohttp.test_utils import make_mocked_request
 from aiohttp.web_exceptions import NotAppKeyWarning
+from homeassistant.components import frontend
 from homeassistant.components.http import KEY_HASS
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
@@ -73,6 +74,9 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
         self.hass = HomeAssistant(self.directory.name)
+        self.hass.data[frontend.DATA_EXTRA_MODULE_URL] = frontend.UrlManager(
+            lambda *_: None, []
+        )
         self.hass.http = Mock()
         self.hass.http.async_register_static_paths = AsyncMock()
         self.hass.config_entries = Mock()

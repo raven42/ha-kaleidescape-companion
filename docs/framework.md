@@ -42,7 +42,9 @@ The product name is **Kaleidescape Companion**. The HA domain
   14 adds configurable descriptions and explicit, matched historical Journal
   export. Journal Options also provides a saved monthly calendar with
   overlapping cached covers and compact viewing/movie detail popups for both
-  roles. A standalone HA dashboard card remains planned.
+  roles. Six [dashboard cards](dashboard-cards.md) reuse the remote, Now
+  Playing, Library covers/search/full view and Journal calendar. Cards have HA
+  visual configuration forms and household-safe access.
 - Shared Library metadata snapshots for manual/observed viewings, persisted
   before observed completion enqueue. Settings provides a reviewed, fill-only
   repair for older Journal entries, preserving raw identities, existing values,

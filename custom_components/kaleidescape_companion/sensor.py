@@ -298,7 +298,13 @@ class LibrarySensor(CompanionSensor):
         if not self.available:
             return {}
         data = self.coordinator.data
-        if self.entity_description.key == "recently_added":
+        key = self.entity_description.key
+        if key in {"missing_artwork", "scraper_conflicts"}:
+            return {
+                "movies": list(data[f"{key}_movies"]),
+                "truncated": data[f"{key}_truncated"],
+            }
+        if key == "recently_added":
             return {
                 "movies": list(data["recently_added_movies"]),
                 "truncated": data["recently_added_truncated"],

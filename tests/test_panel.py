@@ -30,6 +30,9 @@ class PanelTest(unittest.IsolatedAsyncioTestCase):
         config = panel.config["_panel_custom"]
         self.assertEqual(config["name"], "kaleidescape-panel")
         self.assertTrue(config["module_url"].startswith(ASSET_URL + "?v="))
+        self.assertIn(
+            config["module_url"], self.hass.data[frontend.DATA_EXTRA_MODULE_URL].urls
+        )
         paths = self.hass.http.async_register_static_paths.call_args.args[0]
         self.assertEqual(len(paths), 1)
         self.assertEqual(paths[0].path, str(ASSET))
@@ -37,6 +40,9 @@ class PanelTest(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn(self.directory.name, paths[0].path)
         await async_unload_entry(self.hass, self.entry)
         self.assertFalse(frontend.async_panel_exists(self.hass, PANEL_PATH))
+        self.assertNotIn(
+            config["module_url"], self.hass.data[frontend.DATA_EXTRA_MODULE_URL].urls
+        )
         await async_setup_entry(self.hass, self.entry)
         self.addAsyncCleanup(self.entry.runtime_data.repository.async_close)
         self.assertTrue(frontend.async_panel_exists(self.hass, PANEL_PATH))
@@ -122,6 +128,20 @@ class PanelTest(unittest.IsolatedAsyncioTestCase):
             panel.config["_panel_custom"]["module_url"], f"{ASSET_URL}?v=new-build"
         )
         self.assertFalse(panel.require_admin)
+
+    async def test_failed_frontend_registration_does_not_leave_a_card_module(self):
+        from custom_components.kaleidescape_companion.ui.panel import async_setup_panel
+
+        await async_unload_entry(self.hass, self.entry)
+        with patch(
+            "custom_components.kaleidescape_companion.ui.panel.panel_custom.async_register_panel",
+            side_effect=RuntimeError("fictional registration failure"),
+        ):
+            with self.assertRaises(RuntimeError):
+                await async_setup_panel(self.hass)
+        self.assertEqual(
+            self.hass.data[frontend.DATA_EXTRA_MODULE_URL].urls, frozenset()
+        )
 
     async def test_failed_panel_registration_closes_backend(self):
         await async_unload_entry(self.hass, self.entry)

@@ -21,7 +21,8 @@ delivered features and validation limits.
 - [Security policy and hardening](docs/security.md)
 - [Product plan](docs/plan.md) and [technical design](docs/design.md)
 - [Journal backend and API](docs/backend.md)
-- [User interface](docs/ui.md) and [HA sensors](docs/sensors.md)
+- [User interface](docs/ui.md), [dashboard cards](docs/dashboard-cards.md) and
+  [HA sensors](docs/sensors.md)
 - [Library](docs/library.md),
   [collection additions](docs/library-collections.md), and
   [purchase dates](docs/purchase-dates.md) and
@@ -42,10 +43,11 @@ custom_components/kaleidescape_companion/
   enrichment/ Optional external metadata scheduling and cache storage
   calendar/   Opt-in publishing, dedicated-calendar Full Sync and durable receipts
   _vendor/    Generated runtime subset of the provider library
-  ui/         Authenticated APIs, panel registration and compiled assets
+  ui/         Authenticated APIs, panel/card registration and compiled assets
+  brand/      Local transparent integration icons
   *.py        Required HA entry points and integration constants
 frontend/
-  src/        Typed UI grouped into core, library, playback, enrichment and ui
+  src/        Typed UI grouped into core, library, playback, enrichment, cards and ui
   dev/        Preview shell, guarded local proxy and fictional review page
   tests/      Component and proxy security tests
 lib/scrapers/  Independent provider parsers/client, docs and offline tests

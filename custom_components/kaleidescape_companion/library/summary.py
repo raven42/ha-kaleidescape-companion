@@ -80,6 +80,10 @@ def library_summary(db, source):
         "scraper_failures": 0,
         "scraper_conflicts": None,
         "missing_artwork": None,
+        "missing_artwork_movies": [],
+        "missing_artwork_truncated": False,
+        "scraper_conflicts_movies": [],
+        "scraper_conflicts_truncated": False,
         "recently_added": None,
         "recently_added_movies": [],
         "recently_added_truncated": False,
@@ -110,7 +114,7 @@ def library_summary(db, source):
     cached_images = {
         row[0] for row in db.execute("SELECT cache_key FROM library_artwork")
     }
-    groups, conflicts, stamps = {}, set(), []
+    groups, conflicts, stamps, titles = {}, set(), [], {}
     # Project only image references, conflicts and times; never decode full credits.
     projected = [
         "'conflicts',json(coalesce(json_extract(enrichment,'$.conflicts'),'{}'))",
@@ -126,13 +130,16 @@ def library_summary(db, source):
         ),
     ]
     for row in db.execute(
-        "SELECT source_group,artwork_key,json_object("
+        "SELECT source_group,title,artwork_key,json_object("
         + ",".join(projected)
         + ") enrichment FROM library "
         "WHERE source_id=? AND available=1 AND purchase_match_pending=0",
         (source,),
     ):
         enrichment = json.loads(row["enrichment"])
+        titles[row["source_group"]] = min(
+            titles.get(row["source_group"], row["title"]), row["title"]
+        )
         images = groups.setdefault(row["source_group"], [False, False])
         images[0] |= image(row["artwork_key"], enrichment, sources) in cached_images
         images[1] |= image(None, enrichment, sources, "backdrop") in cached_images
@@ -145,12 +152,27 @@ def library_summary(db, source):
     activity = scrape_activity(db, source)
     if activity["last_scrape_date"]:
         stamps.append(activity["last_scrape_date"])
+    missing = {group for group, images in groups.items() if not all(images)}
+
+    def names(selected):
+        return sensor_titles(
+            {"title": titles[group]}
+            for group in sorted(
+                selected, key=lambda group: (titles[group].casefold(), group)
+            )
+        )
+
+    missing_names, conflict_names = names(missing), names(conflicts)
     return {
         **result,
         **activity,
         "last_scrape_date": max(stamps, default=None),
         "scraper_conflicts": len(conflicts),
-        "missing_artwork": sum(not all(images) for images in groups.values()),
+        "missing_artwork": len(missing),
+        "missing_artwork_movies": missing_names,
+        "missing_artwork_truncated": len(missing_names) < len(missing),
+        "scraper_conflicts_movies": conflict_names,
+        "scraper_conflicts_truncated": len(conflict_names) < len(conflicts),
         "total_movies": counts[0],
         "unwatched_movies": counts[1] if status_known else None,
         "watched_movies": counts[3] if status_known else None,

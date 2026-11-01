@@ -1717,3 +1717,32 @@ ignore search/status filters, exclude tombstones, and use the validated bounded
 local month interval. They expose no notes, source identities or session
 evidence. Viewport sizing observes enclosing HA containers in memory, without
 storing or exporting their geometry or identifiers.
+
+## Dashboard cards and branding
+
+The public compiled panel module also registers six dashboard elements. HA's
+frontend extra-module registry loads its versioned URL without modifying
+dashboard storage. Unloading removes that owned module registration; static
+content is code only. The two fixed `brand/icon` PNG filenames are the only
+additional packaged image paths. Other project images never enter the runtime
+archive.
+
+Cards use HA's authenticated connection and the same scoped WebSocket/artwork
+APIs as the panel, with no supplied tokens, hosts, arbitrary services or URLs.
+All cards mask administrator presentation capabilities; server authorization and
+playback opt-ins remain authoritative. Account/connection changes clear card
+scope and children and invalidate late reads. Hidden/disconnected cards stop
+polling; children retain their existing image and command lifecycle protections.
+Inline remotes use the existing prepared, receipted command flow; mounting a
+card never starts discovery, playback, scan, scrape or any write. Command
+uncertainty still blocks controls and requires administrator review in Companion
+Advanced.
+
+Library card layout overrides are transient per-card configuration, with no
+writes to the actor's normal browsing preferences. Search cards share only
+bounded search text on an in-document event scoped by entry, dataset and
+configured channel; queries never enter URLs, storage or exports through this
+bridge. Calendar cards read the local database, not HA calendar providers. They
+expose the same public movie/viewing fields and aggregate totals. Sensor problem
+lists deliberately expose bounded title strings through HA state attributes,
+with the same Recorder/privacy limits as existing watched-title lists.

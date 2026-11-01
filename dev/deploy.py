@@ -238,6 +238,7 @@ def runtime_package(root: Path = ROOT) -> bytes:
             path.suffix == ".py"
             or name in {"manifest.json", "strings.json", "ui/assets/panel.js"}
             or (relative.parent.as_posix() == "translations" and path.suffix == ".json")
+            or name in {"brand/icon.png", "brand/icon@2x.png"}
         )
         if not allowed or any(
             part.startswith(".") or part == "__pycache__" for part in relative.parts

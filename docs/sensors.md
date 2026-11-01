@@ -66,19 +66,19 @@ SQLite summaries every 30 seconds. No sensor starts a scan, resolves a hostname
 or contacts a device. Updating files and restarting/reloading the integration
 adds them to the same service device; existing history unique IDs are unchanged.
 
-| Sensor key           | Name / state                   | Notes and attributes                                                                                                                                                                     |
-| -------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `total_movies`       | Total movies: integer          | Available movies unique by `source_group` in the configured source, matching the grouped Library view                                                                                    |
-| `database_size`      | Database size: MiB             | Main Companion SQLite file size; excludes artwork, backup/export files and transient SQLite sidecars                                                                                     |
-| `last_library_sync`  | Last library sync: timestamp   | Most recent committed complete catalog snapshot; HA renders the UTC timestamp in local time                                                                                              |
-| `artwork_cache_size` | Artwork cache size: MiB        | Indexed image payload bytes for the entire managed cache, counting shared files once; excludes filesystem overhead and temporary files                                                   |
-| `watched_movies`     | Watched movies: integer        | Groups marked Played, excluding Paused groups; `unknown_movies` and `collections_synced_at` attributes                                                                                   |
-| `unwatched_movies`   | Unwatched movies: integer      | Grouped Played/Paused status, with `unknown_movies` and `collections_synced_at` attributes                                                                                               |
-| `recently_added`     | Recently added movies: integer | Exact count for the latest addition batch; attributes `movies` (title strings), `truncated`, and `added_at`                                                                              |
-| `last_scrape_date`   | Last scrape date: timestamp    | Latest finished automatic pass or manual provider search/preview, including failed attempts; older installations initially use their latest saved provider/review timestamp              |
-| `scraper_conflicts`  | Scraper conflicts: integer     | Current available scanned movie groups with an unresolved conflict for a desired enabled provider, counted once per title                                                                |
-| `scraper_failures`   | Scraper failures: integer      | Persistent cumulative failed automatic passes and manual provider search/preview operations since activity tracking began; nested requests and cancellations are not additional failures |
-| `missing_artwork`    | Missing artwork: integer       | Available scanned movie groups without a selected cached poster or backdrop; a title missing both counts once, and images may come from different versions                               |
+| Sensor key           | Name / state                   | Notes and attributes                                                                                                                                                                            |
+| -------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `total_movies`       | Total movies: integer          | Available movies unique by `source_group` in the configured source, matching the grouped Library view                                                                                           |
+| `database_size`      | Database size: MiB             | Main Companion SQLite file size; excludes artwork, backup/export files and transient SQLite sidecars                                                                                            |
+| `last_library_sync`  | Last library sync: timestamp   | Most recent committed complete catalog snapshot; HA renders the UTC timestamp in local time                                                                                                     |
+| `artwork_cache_size` | Artwork cache size: MiB        | Indexed image payload bytes for the entire managed cache, counting shared files once; excludes filesystem overhead and temporary files                                                          |
+| `watched_movies`     | Watched movies: integer        | Groups marked Played, excluding Paused groups; `unknown_movies` and `collections_synced_at` attributes                                                                                          |
+| `unwatched_movies`   | Unwatched movies: integer      | Grouped Played/Paused status, with `unknown_movies` and `collections_synced_at` attributes                                                                                                      |
+| `recently_added`     | Recently added movies: integer | Exact count for the latest addition batch; attributes `movies` (title strings), `truncated`, and `added_at`                                                                                     |
+| `last_scrape_date`   | Last scrape date: timestamp    | Latest finished automatic pass or manual provider search/preview, including failed attempts; older installations initially use their latest saved provider/review timestamp                     |
+| `scraper_conflicts`  | Scraper conflicts: integer     | Current available scanned movie groups with an unresolved conflict for a desired enabled provider, counted once per title; attributes `movies` and `truncated`                                  |
+| `scraper_failures`   | Scraper failures: integer      | Persistent cumulative failed automatic passes and manual provider search/preview operations since activity tracking began; nested requests and cancellations are not additional failures        |
+| `missing_artwork`    | Missing artwork: integer       | Available scanned movie groups without a selected cached poster or backdrop; a title missing both counts once, and images may come from different versions; attributes `movies` and `truncated` |
 
 Sizes use HA's data-size device class, measurement state class and two-decimal
 display precision. Timestamps use the timestamp device class. Sizes, timestamps,
@@ -180,3 +180,12 @@ active-user/enabled-Library checks. Collection exclusions remain display
 preferences. This API returns positive display fields and opaque title keys; it
 does not expose source handles/groups, private paths or journal notes. All
 sensors retain the wider HA entity/Recorder privacy boundary above.
+
+Missing-artwork and scraper-conflict sensors include `movies` (title strings)
+and `truncated`, matching the history-list attribute shape. Lists sort
+alphabetically, count each source movie group once across versions, and are
+bounded to 50 titles and 8 KiB of UTF-8 JSON. Their state always retains the
+exact affected-group count. Poster and backdrop absence together still count
+once. Explicit provider no-data markers continue to exclude that provider from
+conflicts. Attributes contain no provider IDs, credentials, device identities,
+invoice data or filesystem paths.
