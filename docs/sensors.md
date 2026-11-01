@@ -1,6 +1,6 @@
 # Home Assistant sensors
 
-The integration creates fourteen read-only sensors under a **Kaleidescape
+The integration creates eighteen read-only sensors under a **Kaleidescape
 Companion** service device. Restart/reload the integration after updating its
 files. Find the actual entity IDs under **Settings → Devices & services →
 Kaleidescape Companion**; names/IDs can vary if you rename entities or already
@@ -61,29 +61,36 @@ sessions, audit actors, or paths. See the
 
 ## Library and storage
 
-The seven additional sensors share a separate coordinator refreshing local
+The eleven additional sensors share a separate coordinator refreshing local
 SQLite summaries every 30 seconds. No sensor starts a scan, resolves a hostname
 or contacts a device. Updating files and restarting/reloading the integration
 adds them to the same service device; existing history unique IDs are unchanged.
 
-| Sensor key           | Name / state                   | Notes and attributes                                                                                                                   |
-| -------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `total_movies`       | Total movies: integer          | Available movies unique by `source_group` in the configured source, matching the grouped Library view                                  |
-| `database_size`      | Database size: MiB             | Main Companion SQLite file size; excludes artwork, backup/export files and transient SQLite sidecars                                   |
-| `last_library_sync`  | Last library sync: timestamp   | Most recent committed complete catalog snapshot; HA renders the UTC timestamp in local time                                            |
-| `artwork_cache_size` | Artwork cache size: MiB        | Indexed image payload bytes for the entire managed cache, counting shared files once; excludes filesystem overhead and temporary files |
-| `watched_movies`     | Watched movies: integer        | Groups marked Played, excluding Paused groups; `unknown_movies` and `collections_synced_at` attributes                                 |
-| `unwatched_movies`   | Unwatched movies: integer      | Grouped Played/Paused status, with `unknown_movies` and `collections_synced_at` attributes                                             |
-| `recently_added`     | Recently added movies: integer | Exact count for the latest addition batch; attributes `movies` (title strings), `truncated`, and `added_at`                            |
+| Sensor key           | Name / state                   | Notes and attributes                                                                                                                                                                     |
+| -------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `total_movies`       | Total movies: integer          | Available movies unique by `source_group` in the configured source, matching the grouped Library view                                                                                    |
+| `database_size`      | Database size: MiB             | Main Companion SQLite file size; excludes artwork, backup/export files and transient SQLite sidecars                                                                                     |
+| `last_library_sync`  | Last library sync: timestamp   | Most recent committed complete catalog snapshot; HA renders the UTC timestamp in local time                                                                                              |
+| `artwork_cache_size` | Artwork cache size: MiB        | Indexed image payload bytes for the entire managed cache, counting shared files once; excludes filesystem overhead and temporary files                                                   |
+| `watched_movies`     | Watched movies: integer        | Groups marked Played, excluding Paused groups; `unknown_movies` and `collections_synced_at` attributes                                                                                   |
+| `unwatched_movies`   | Unwatched movies: integer      | Grouped Played/Paused status, with `unknown_movies` and `collections_synced_at` attributes                                                                                               |
+| `recently_added`     | Recently added movies: integer | Exact count for the latest addition batch; attributes `movies` (title strings), `truncated`, and `added_at`                                                                              |
+| `last_scrape_date`   | Last scrape date: timestamp    | Latest finished automatic pass or manual provider search/preview, including failed attempts; older installations initially use their latest saved provider/review timestamp              |
+| `scraper_conflicts`  | Scraper conflicts: integer     | Current available scanned movie groups with an unresolved conflict for a desired enabled provider, counted once per title                                                                |
+| `scraper_failures`   | Scraper failures: integer      | Persistent cumulative failed automatic passes and manual provider search/preview operations since activity tracking began; nested requests and cancellations are not additional failures |
+| `missing_artwork`    | Missing artwork: integer       | Available scanned movie groups without a selected cached poster or backdrop; a title missing both counts once, and images may come from different versions                               |
 
 Sizes use HA's data-size device class, measurement state class and two-decimal
-display precision. Timestamp uses its timestamp device class. These three are
-diagnostic entities. Counts are integers; they can decrease and are not lifetime
-counters. Size sensors remain available when Library sync is disabled, because
-retained storage still occupies space. Other Library sensors become unavailable
-when disabled. With Library enabled but no successful catalog yet, their values
-are unknown. Failed storage reads make the whole Library/storage coordinator
-unavailable; they do not publish zeroes. History failures are independent.
+display precision. Timestamps use the timestamp device class. Sizes, timestamps,
+scraper counts and missing artwork are diagnostic entities. Counts are integers;
+only `scraper_failures` is a lifetime counter with the total-increasing state
+class. Conflict and missing-artwork counts use the measurement state class. Size
+sensors remain available when Library sync is disabled, because retained storage
+still occupies space. Other Library sensors become unavailable when disabled.
+With Library enabled but no successful catalog yet, movie counts and timestamps
+are unknown; the new failure counter starts at zero. Failed storage reads make
+the whole Library/storage coordinator unavailable; they do not publish zeroes.
+History failures are independent.
 
 Only the configured source is counted. Unavailable old versions and inactive
 versions added by imports are excluded. Same-name remakes with different source
@@ -96,6 +103,17 @@ Existing cached collection data can be older than the last catalog: its
 timestamp is exposed. A valid catalog updates `last_library_sync` even if later
 detail/artwork requests fail; it does not assert that every cover or collection
 was synchronized.
+
+Scrape activity persists per Library source in a private `settings` record and
+survives restarts. Successful operations advance the date without resetting
+failure totals. A failed full pass stops on its first operational failure, so it
+increments the counter once. Matching problems such as missing/ambiguous movies
+contribute to conflicts instead. Aborted operations due to revoked access,
+configuration changes or cancellation are excluded. Previews/searches record
+activity but do not import movie fields. Sensor reads never scrape. No scraper
+names, failure messages, provider IDs, image keys or movie lists are added as
+sensor attributes. Missing artwork checks indexed selected image references, not
+a filesystem rescan; normal cache recovery handles missing files.
 
 The watched count describes the cached Library Played collection, independently
 of completed journal viewings and rewatches. Paused takes priority even when

@@ -4,6 +4,10 @@ import json
 from uuid import uuid4
 
 from ..core.sensor_data import sensor_titles
+from ..enrichment.activity import read as scrape_activity
+from ..enrichment.matching import has_conflict
+from ..enrichment.selection import image
+from ..enrichment.selection import read as source_preferences
 from .browse import STATUS_SQL
 
 
@@ -72,6 +76,10 @@ def library_summary(db, source):
         "unknown_movies": 0,
         "collections_synced_at": None,
         "last_library_sync": None,
+        "last_scrape_date": None,
+        "scraper_failures": 0,
+        "scraper_conflicts": None,
+        "missing_artwork": None,
         "recently_added": None,
         "recently_added_movies": [],
         "recently_added_truncated": False,
@@ -98,8 +106,51 @@ def library_summary(db, source):
     ).fetchone()
     status_known = info["collections_synced_at"] is not None and not counts[2]
     movies = json.loads(info["recently_added_movies"])
+    sources = source_preferences(db)
+    cached_images = {
+        row[0] for row in db.execute("SELECT cache_key FROM library_artwork")
+    }
+    groups, conflicts, stamps = {}, set(), []
+    # Project only image references, conflicts and times; never decode full credits.
+    projected = [
+        "'conflicts',json(coalesce(json_extract(enrichment,'$.conflicts'),'{}'))",
+        "'unavailable',json(coalesce(json_extract(enrichment,'$.unavailable'),'{}'))",
+        *(
+            f"'{provider}',json_object("
+            + ",".join(
+                f"'{key}',json_extract(enrichment,'$.{provider}.{key}')"
+                for key in ("fetched_at", "poster_key", "backdrop_key")
+            )
+            + ")"
+            for provider in ("tmdb", "kaleidescape", "reviewed")
+        ),
+    ]
+    for row in db.execute(
+        "SELECT source_group,artwork_key,json_object("
+        + ",".join(projected)
+        + ") enrichment FROM library "
+        "WHERE source_id=? AND available=1 AND purchase_match_pending=0",
+        (source,),
+    ):
+        enrichment = json.loads(row["enrichment"])
+        images = groups.setdefault(row["source_group"], [False, False])
+        images[0] |= image(row["artwork_key"], enrichment, sources) in cached_images
+        images[1] |= image(None, enrichment, sources, "backdrop") in cached_images
+        if has_conflict(enrichment, sources):
+            conflicts.add(row["source_group"])
+        for provider in ("tmdb", "kaleidescape", "reviewed"):
+            stamp = enrichment.get(provider, {}).get("fetched_at")
+            if stamp:
+                stamps.append(stamp)
+    activity = scrape_activity(db, source)
+    if activity["last_scrape_date"]:
+        stamps.append(activity["last_scrape_date"])
     return {
         **result,
+        **activity,
+        "last_scrape_date": max(stamps, default=None),
+        "scraper_conflicts": len(conflicts),
+        "missing_artwork": sum(not all(images) for images in groups.values()),
         "total_movies": counts[0],
         "unwatched_movies": counts[1] if status_known else None,
         "watched_movies": counts[3] if status_known else None,

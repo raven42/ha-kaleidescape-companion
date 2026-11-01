@@ -19,6 +19,32 @@ class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = library.LibraryStorageTest.asyncSetUp
     assert_error = library.LibraryStorageTest.assert_error
 
+    async def test_interface_mode_validation_and_retired_library_switch(
+        self,
+    ):
+        default = await self.repository.async_ui_preferences("a", area="interface")
+        self.assertTrue(default["values"]["advanced_view"])
+        await self.repository.async_ui_preferences_update(
+            "a", False, str(uuid4()), 0, {"advanced_view": False}, "interface"
+        )
+        self.assertFalse(
+            (await self.repository.async_ui_preferences("a", area="interface"))[
+                "values"
+            ]["advanced_view"]
+        )
+        self.assertTrue(
+            (await self.repository.async_ui_preferences("b", area="interface"))[
+                "values"
+            ]["advanced_view"]
+        )
+        with self.assert_error("invalid_request"):
+            await self.repository.async_ui_preferences_update(
+                "a", False, str(uuid4()), 0, {"advanced_view": "yes"}, "interface"
+            )
+        self.assertNotIn(
+            "show_system_buttons", validate_library({"show_system_buttons": False})
+        )
+
     async def test_profiles_inherit_legacy_then_isolate_all_choices_except_shuffle(
         self,
     ):
@@ -78,6 +104,7 @@ class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
             ("journal", {"calendar_size": 90}),
             ("database", {"limit": 500}),
             ("search", {"fuzzy_search": False}),
+            ("interface", {"advanced_view": False}),
         ):
             await self.repository.async_ui_preferences_update(
                 "a", False, str(uuid4()), 0, patch, area, "mobile"

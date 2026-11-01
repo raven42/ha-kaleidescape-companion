@@ -385,7 +385,9 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
             repository = SimpleNamespace(
                 logger=self.repo.logger,
                 async_enrichment=AsyncMock(
-                    side_effect=[[row], None, None] if artwork else [[row], None]
+                    side_effect=[[row], None, None, None]
+                    if artwork
+                    else [[row], None, None]
                 ),
             )
             sync.repository = repository
@@ -401,8 +403,12 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(sync.providers.artwork.await_count, int(artwork))
             if artwork:
                 self.assertEqual(
-                    repository.async_enrichment.call_args.args[0], "artwork"
+                    repository.async_enrichment.await_args_list[-2].args[0], "artwork"
                 )
+            self.assertEqual(
+                repository.async_enrichment.call_args.args,
+                ("activity", sync.source, False),
+            )
 
     async def test_fixed_https_pins_dns_and_refuses_private_or_redirected_responses(
         self,
@@ -477,6 +483,29 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
         session.detach.assert_called_once()
         self.assertEqual(sync.repository.async_enrichment.await_count, 1)
         self.assertIsNone(sync.session)
+
+    async def test_failed_pass_updates_durable_activity_without_title_conflicts(self):
+        await self.seed()
+        sync = self.sync(library_host=ORIGIN)
+        sync.providers.metadata = AsyncMock(
+            side_effect=ProviderError("provider_http_error")
+        )
+        with patch(
+            "custom_components.kaleidescape_companion.enrichment.sync.async_create_clientsession",
+            return_value=SimpleNamespace(detach=Mock()),
+        ):
+            await sync._run(True)
+            result = await self.repo.async_library_summary(self.source)
+            self.assertEqual(result["scraper_failures"], 1)
+            self.assertEqual(result["scraper_conflicts"], 0)
+            self.assertIsNotNone(result["last_scrape_date"])
+            sync.providers.metadata = AsyncMock(
+                side_effect=ProviderError("tmdb_not_found")
+            )
+            await sync._run(True)
+        self.assertEqual(
+            (await self.repo.async_library_summary(self.source))["scraper_failures"], 1
+        )
 
     async def test_success_rate_limit_and_body_limits(self):
         sync = self.sync()

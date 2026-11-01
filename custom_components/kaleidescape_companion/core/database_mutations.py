@@ -327,6 +327,7 @@ def validated_patch(db, table, row, patch, now):
     elif table == "settings":
         from ..ui.preferences import (
             validate_database,
+            validate_interface,
             validate_journal,
             validate_library,
             validate_search,
@@ -345,6 +346,8 @@ def validated_patch(db, table, row, patch, now):
         validator = (
             validate_database
             if area == "database"
+            else validate_interface
+            if area == "interface"
             else validate_search
             if area == "search"
             else validate_journal

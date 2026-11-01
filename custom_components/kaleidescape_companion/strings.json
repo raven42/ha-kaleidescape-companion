@@ -224,6 +224,18 @@
       },
       "watched_movies": {
         "name": "Watched movies"
+      },
+      "last_scrape_date": {
+        "name": "Last scrape date"
+      },
+      "scraper_conflicts": {
+        "name": "Scraper conflicts"
+      },
+      "scraper_failures": {
+        "name": "Scraper failures"
+      },
+      "missing_artwork": {
+        "name": "Missing artwork"
       }
     }
   }

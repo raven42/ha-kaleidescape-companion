@@ -59,6 +59,8 @@ def members(db, source, title):
 
 
 def target(db, source, title):
+    from .availability import for_group
+
     rows = members(db, source, title)
     enrichment = [json.loads(row["enrichment"]) for row in rows]
     selected = next(row for row in rows if row["id"] == title)
@@ -103,6 +105,13 @@ def target(db, source, title):
         "snapshot": signature(rows),
         "current": {key: current.get(key) for key in REVIEW_FIELDS},
         "has_backdrop": bool(current.get("backdrop_key")),
+        "unavailable": sorted(for_group(db, source, selected["source_group"])),
+        "comparison": {
+            "title": current["title"],
+            "year": current.get("year"),
+            "directors": (current.get("directors") or [])[:5],
+            "actors": (current.get("actors") or [])[:5],
+        },
     }
 
 

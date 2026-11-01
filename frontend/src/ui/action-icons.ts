@@ -69,8 +69,11 @@ export const iconActionStyles = css`
     border: 5px solid transparent;
     border-top-color: var(--surface, #202020);
   }
-  .icon-action-wrap:hover .action-tooltip,
-  .icon-action-wrap:focus-within .action-tooltip {
+  .icon-action-wrap:not([data-tooltip-dismissed]):hover .action-tooltip,
+  .icon-action-wrap:not([data-tooltip-dismissed]):has(
+      .icon-action:focus-visible
+    )
+    .action-tooltip {
     opacity: 1;
     visibility: visible;
   }
@@ -83,14 +86,28 @@ export function iconAction(
   activate: () => unknown,
   className = "",
 ) {
-  return html`<span class="icon-action-wrap"
+  return html`<span
+    class="icon-action-wrap"
+    @pointerenter=${(event: PointerEvent) => (event.currentTarget as HTMLElement).removeAttribute("data-tooltip-dismissed")}
+    @focusin=${(event: FocusEvent) => {
+      if ((event.target as HTMLElement).matches(":focus-visible"))
+        (event.currentTarget as HTMLElement).removeAttribute(
+          "data-tooltip-dismissed",
+        );
+    }}
     ><button
       type="button"
       class=${`icon-action ${className}`}
       aria-label=${label}
       aria-describedby="action-tooltip"
       ?disabled=${disabled}
-      @click=${activate}
+      @click=${(event: MouseEvent) => {
+        (event.currentTarget as HTMLElement).parentElement!.setAttribute(
+          "data-tooltip-dismissed",
+          "",
+        );
+        void activate();
+      }}
     >
       ${actionIcon(icon)}<span class="icon-action-label">${label}</span></button
     ><span class="action-tooltip" id="action-tooltip" role="tooltip"

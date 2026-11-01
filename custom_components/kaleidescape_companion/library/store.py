@@ -285,6 +285,8 @@ def save_backdrop(
     db, directory, source, id, metadata, data, budget, *, kind="backdrop"
 ):
     """Link TMDB artwork to the verified movie group, preserving edition covers."""
+    from ..enrichment.availability import for_group
+
     if kind not in {"poster", "backdrop"}:
         raise JournalError("invalid_request", "Unsupported artwork kind")
     row = db.execute(
@@ -295,6 +297,7 @@ def save_backdrop(
     provider_id = metadata.get("provider_id")
     if (
         row is None
+        or "tmdb" in for_group(db, source, row["source_group"])
         or not isinstance(provider_id, str)
         or not re.fullmatch(r"[1-9][0-9]{0,9}", provider_id)
         or row["title"] != metadata.get("matched_title")

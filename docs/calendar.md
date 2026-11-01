@@ -20,7 +20,9 @@ Viewings appear on their browser-local start date, including partial viewings
 unless excluded by the Journal status filter. Search, fuzzy-search mode and a
 Library movie filter apply to the month. Deleted entries are excluded. Each
 viewing has a poster; same-day posters overlap diagonally with about 15% of each
-rear cover exposed. Hover or keyboard focus brings that poster forward.
+rear cover exposed. Hover or keyboard focus brings that poster forward. Poster
+stacks fill the day vertically with 5 px top/bottom insets. The date sits above
+the artwork as a small readable overlay instead of reserving a separate row.
 
 Click a poster to open compact viewing/movie details: artwork, rating, cast,
 directors, genres, runtime, year, format/version badges, watched minutes and

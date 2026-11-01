@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 
 from ..ui.preferences import (
     validate_database,
+    validate_interface,
     validate_journal,
     validate_library,
     validate_search,
@@ -15,6 +16,7 @@ from . import preferences
 from .models import JournalError, identifier, invalid
 
 VALIDATORS = {
+    "interface": validate_interface,
     "library": validate_library,
     "journal": validate_journal,
     "database": validate_database,

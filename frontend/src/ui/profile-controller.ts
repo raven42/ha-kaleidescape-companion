@@ -2,6 +2,15 @@
 import type { LitElement, ReactiveController } from "lit";
 import { displayProfile } from "../core/display-profile";
 
+const SIGNALS = [
+  "close",
+  "cancel",
+  "control-lock",
+  "edit-lock",
+  "scrape-lock",
+  "collection-lock",
+];
+
 class ProfileController implements ReactiveController {
   private profile = displayProfile();
   private frame?: number;
@@ -11,8 +20,8 @@ class ProfileController implements ReactiveController {
   ) {}
   hostConnected() {
     window.addEventListener("resize", this.schedule);
-    this.host.renderRoot.addEventListener("close", this.schedule, true);
-    this.host.renderRoot.addEventListener("cancel", this.schedule, true);
+    for (const signal of SIGNALS)
+      this.host.renderRoot.addEventListener(signal, this.schedule, true);
   }
   hostUpdated() {
     this.schedule();
@@ -29,8 +38,8 @@ class ProfileController implements ReactiveController {
   };
   hostDisconnected() {
     window.removeEventListener("resize", this.schedule);
-    this.host.renderRoot.removeEventListener("close", this.schedule, true);
-    this.host.renderRoot.removeEventListener("cancel", this.schedule, true);
+    for (const signal of SIGNALS)
+      this.host.renderRoot.removeEventListener(signal, this.schedule, true);
     if (this.frame !== undefined) cancelAnimationFrame(this.frame);
     this.frame = undefined;
   }

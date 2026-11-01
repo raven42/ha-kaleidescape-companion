@@ -36,6 +36,10 @@ import type { KaleidescapeSettings } from "./settings";
 import type { KaleidescapeDatabase } from "./database";
 import type { KaleidescapeLibrary } from "../library/library";
 import type { ViewingSummary } from "../core/api";
+import type { KaleidescapeReader } from "./reader";
+import { PreferenceStore } from "./preference-store";
+import { viewModeSwitch } from "./view-mode";
+import { responsivePreferences } from "./profile-controller";
 
 const PAGES = [
   {
@@ -75,6 +79,31 @@ export class KaleidescapePanel extends LitElement {
   constructor() {
     super();
     responsiveViewport(this);
+    responsivePreferences(this, () => {
+      const reader = this.renderRoot.querySelector<KaleidescapeReader>(
+        "kaleidescape-reader",
+      );
+      if (
+        !this.info?.permissions.edit ||
+        !this.modeReady ||
+        this.loading ||
+        this.saving ||
+        this.pending ||
+        this.settingsBusy ||
+        this.maintenanceBusy ||
+        this.controlLocked ||
+        this.dirty() ||
+        this.hasOpenDialog() ||
+        this.modePreferences?.unsettled ||
+        !(reader?.confirmNavigation() ?? true)
+      )
+        return false;
+      this.modePreferences?.dispose();
+      this.modePreferences = undefined;
+      this.modeReady = false;
+      void this.refresh();
+      return true;
+    });
   }
 
   static properties = {
@@ -135,6 +164,86 @@ export class KaleidescapePanel extends LitElement {
   private navigationReady = false;
   private settingsBusy = false;
   private maintenanceBusy = false;
+  private advancedView = true;
+  private modeReady = false;
+  private modePreferences?: PreferenceStore;
+  private modeScope = "";
+  private modeError = "";
+  private controlLocked = false;
+
+  private modeControl(blocked = false) {
+    return html`<div class="mode-control" slot="view-mode">
+      ${viewModeSwitch(this.advancedView, blocked, () => void this.changeMode())}
+      ${this.modeError ? html`<small role="alert">Mode preference did not save. <button @click=${() => this.modePreferences?.retry()}>Retry</button></small>` : nothing}
+    </div>`;
+  }
+  private hasOpenDialog(
+    root: ParentNode = this.renderRoot,
+    adminOnly = false,
+  ): boolean {
+    return [...root.querySelectorAll("*")].some(
+      (node) =>
+        (node instanceof HTMLDialogElement &&
+          node.open &&
+          (!adminOnly || node.hasAttribute("data-admin-dialog"))) ||
+        (node.shadowRoot && this.hasOpenDialog(node.shadowRoot, adminOnly)),
+    );
+  }
+  private async changeMode() {
+    if (
+      !this.info?.permissions.edit ||
+      !this.modeReady ||
+      this.loading ||
+      this.saving ||
+      this.pending ||
+      this.maintenanceBusy ||
+      this.settingsBusy ||
+      this.controlLocked
+    )
+      return;
+    const reader = this.renderRoot.querySelector<KaleidescapeReader>(
+      "kaleidescape-reader",
+    );
+    const advanced = !this.advancedView;
+    const fallback =
+      !advanced &&
+      (["database", "settings", "logs"].includes(this.activePage) ||
+        this.hasOpenDialog(this.renderRoot, true));
+    if (
+      this.advancedView
+        ? !this.discard()
+        : !(reader?.confirmNavigation() ?? true)
+    )
+      return;
+    this.generation++;
+    this.listRequest++;
+    this.detailRequest++;
+    this.closeEditor();
+    this.rows = [];
+    this.selected = this.sessions = null;
+    this.cursor = undefined;
+    this.history = [];
+    this.nextCursor = null;
+    this.page = 1;
+    this.journalReady = false;
+    this.error = this.notice = "";
+    if (fallback)
+      this.activePage = landingPage(
+        this.info.ui_defaults?.default_landing_page,
+        false,
+        !!this.info.library_enabled,
+        false,
+      );
+    rememberPage(this.activePage);
+    this.advancedView = advanced;
+    this.modePreferences?.set({ advanced_view: advanced });
+    this.requestUpdate();
+    if (advanced) await this.loadList();
+    await this.updateComplete;
+    this.renderRoot
+      .querySelector<HTMLButtonElement>(".view-mode-pill")
+      ?.focus();
+  }
 
   protected willUpdate(changed: PropertyValues) {
     if (!changed.has("hass") && !changed.has("client")) return;
@@ -169,6 +278,11 @@ export class KaleidescapePanel extends LitElement {
     this.bind(null);
   }
   private clearPrivate() {
+    this.modePreferences?.dispose();
+    this.modePreferences = undefined;
+    this.modeScope = this.modeError = "";
+    this.modeReady = this.controlLocked = false;
+    this.advancedView = true;
     this.manual = null;
     this.manualInitial = "";
     this.sort = "completed_at";
@@ -268,6 +382,7 @@ export class KaleidescapePanel extends LitElement {
       this.pending ||
       this.maintenanceBusy ||
       this.settingsBusy ||
+      this.controlLocked ||
       !this.discard()
     )
       return;
@@ -342,6 +457,32 @@ export class KaleidescapePanel extends LitElement {
       if (entries[0].api_version !== 1) throw new ApiError("not_ready");
       this.info = entries[0];
       if (!this.info.permissions.edit) return;
+      const modeScope = `${this.info.entry_id}:${this.info.dataset_id}`;
+      if (
+        !this.modePreferences ||
+        !this.modeReady ||
+        this.modeScope !== modeScope
+      ) {
+        this.modeReady = false;
+        this.modePreferences?.dispose();
+        const preferences = new PreferenceStore(
+          api,
+          this.info,
+          false,
+          (error) => {
+            if (this.modePreferences !== preferences) return;
+            this.modeError = error ? errorMessage(error) : "";
+            this.requestUpdate();
+          },
+          "interface",
+        );
+        this.modePreferences = preferences;
+        this.modeScope = modeScope;
+        const values = await preferences.load();
+        if (generation !== this.generation) return;
+        this.advancedView = values.advanced_view === true;
+        this.modeReady = true;
+      }
       if (!this.navigationReady) {
         this.activePage = landingPage(
           this.info.ui_defaults?.default_landing_page,
@@ -358,7 +499,7 @@ export class KaleidescapePanel extends LitElement {
       this.history = [];
       this.cursor = undefined;
       this.page = 1;
-      await this.loadList();
+      if (this.advancedView) await this.loadList();
     } catch (error) {
       if (generation === this.generation) this.fail(error);
     } finally {
@@ -1112,6 +1253,7 @@ export class KaleidescapePanel extends LitElement {
       </section>
       <dialog
         id="journal-editor"
+        data-admin-dialog
         class="database-dialog journal-dialog"
         aria-labelledby="journal-editor-title"
         @click=${dismissBackdrop}
@@ -1130,6 +1272,7 @@ export class KaleidescapePanel extends LitElement {
       </dialog>
       <dialog
         id="journal-delete"
+        data-admin-dialog
         class="database-dialog"
         aria-labelledby="journal-delete-title"
         @click=${dismissBackdrop}
@@ -1167,12 +1310,33 @@ export class KaleidescapePanel extends LitElement {
         .narrow=${this.narrow}
       ></kaleidescape-reader>`;
     }
+    if (this.info?.permissions.edit && !this.modeReady)
+      return html`<main>
+        <p role="status">${this.error || "Loading view preference…"}</p>
+        ${this.error ? html`<button @click=${() => this.refresh()}>Retry</button>` : nothing}
+      </main>`;
+    if (this.info?.permissions.edit && !this.advancedView)
+      return html`<kaleidescape-reader
+        .hass=${this.hass}
+        .client=${this.hass ? undefined : this.client}
+        .narrow=${this.narrow}
+        @page-changed=${(event: CustomEvent<Page>) => {
+          if (["library", "journal", "now-playing"].includes(event.detail))
+            this.activePage = event.detail;
+        }}
+        @control-lock=${(event: CustomEvent<boolean>) => {
+          this.controlLocked = event.detail;
+          this.requestUpdate();
+        }}
+        >${this.modeControl(this.controlLocked)}</kaleidescape-reader
+      >`;
     const blocked =
       this.loading ||
       this.saving ||
       !!this.pending ||
       this.maintenanceBusy ||
-      this.settingsBusy;
+      this.settingsBusy ||
+      this.controlLocked;
     return html`<main>
       <header>
         ${this.hass && this.narrow ? html`<button class="menu" aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: true, composed: true }))}>☰</button>` : nothing}
@@ -1186,13 +1350,16 @@ export class KaleidescapePanel extends LitElement {
       </header>
       ${
         this.info?.permissions.edit
-          ? html`<div
-              class="page-tabs"
-              role="tablist"
-              aria-label="Companion pages"
-              @keydown=${(event: KeyboardEvent) => this.pageKey(event)}
-            >
-              ${PAGES.map((page) => html`<button id=${`page-${page.id}`} role="tab" aria-selected=${this.activePage === page.id} aria-controls="companion-page" tabindex=${this.activePage === page.id ? "0" : "-1"} ?disabled=${blocked || (page.id === "library" && !this.info?.library_enabled)} title=${page.id === "library" && !this.info?.library_enabled ? "Enable library sync in Settings" : nothing} @click=${() => this.switchPage(page.id)}>${page.label}</button>`)}
+          ? html`<div class="page-navigation">
+              <div
+                class="page-tabs"
+                role="tablist"
+                aria-label="Companion pages"
+                @keydown=${(event: KeyboardEvent) => this.pageKey(event)}
+              >
+                ${PAGES.map((page) => html`<button id=${`page-${page.id}`} role="tab" aria-selected=${this.activePage === page.id} aria-controls="companion-page" tabindex=${this.activePage === page.id ? "0" : "-1"} ?disabled=${blocked || (page.id === "library" && !this.info?.library_enabled)} title=${page.id === "library" && !this.info?.library_enabled ? "Enable library sync in Settings" : nothing} @click=${() => this.switchPage(page.id)}>${page.label}</button>`)}
+              </div>
+              ${this.modeControl(blocked || this.controlLocked)}
             </div>`
           : nothing
       }
@@ -1215,6 +1382,10 @@ export class KaleidescapePanel extends LitElement {
               </div>`
             : html`<section
                 id="companion-page"
+                @control-lock=${(event: CustomEvent<boolean>) => {
+                  this.controlLocked = event.detail;
+                  this.requestUpdate();
+                }}
                 @playback-started=${(event: CustomEvent<string>) => {
                   this.playbackPlayer = event.detail;
                   void this.switchPage("now-playing");

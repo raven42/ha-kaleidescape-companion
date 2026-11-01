@@ -1,7 +1,7 @@
 /** Review one title before applying selected provider facts and cached images. */
 import { LitElement, css, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
-import { errorCode, errorMessage } from "../core/api";
+import { ApiError, errorCode, errorMessage } from "../core/api";
 import type {
   JournalClient,
   JournalInfo,
@@ -102,6 +102,21 @@ export class TitleScrape extends LitElement {
       .match-card button {
         float: right;
         margin-top: 6px;
+      }
+      .current-movie {
+        padding: 8px 12px;
+        margin-block: 8px 12px;
+        border-left: 2px solid var(--line);
+        overflow-wrap: anywhere;
+      }
+      .current-movie h3 {
+        margin: 0 0 5px;
+        font-size: 13px;
+      }
+      .current-movie p {
+        margin: 3px 0;
+        font-size: 12px;
+        line-height: 1.4;
       }
       .match-card kaleidescape-scrape-image {
         width: 64px;
@@ -255,7 +270,7 @@ export class TitleScrape extends LitElement {
             ),
           }
         : options;
-      this.query = options.title ?? "";
+      this.query = options.search_title ?? options.title ?? "";
       this.provider =
         this.options.providers.find((provider) => provider.available)?.id ?? "";
     } catch (error) {
@@ -356,17 +371,38 @@ export class TitleScrape extends LitElement {
       }
     }
   }
-  private async apply() {
-    if (!this.client || !this.scope || !this.review || this.busy) return;
+  private async apply(unavailable?: boolean) {
+    if (
+      !this.client ||
+      !this.scope ||
+      (!this.review && !this.pending && unavailable === undefined) ||
+      this.busy
+    )
+      return;
     const generation = this.generation;
     this.busy = true;
     this.error = "";
     try {
+      if (unavailable !== undefined && !this.pending) {
+        // Searches may have recorded a conflict since the dialog opened.
+        const options = await this.client.titleScrapeOptions(
+          this.scope,
+          this.versionId,
+        );
+        if (generation !== this.generation) return;
+        if (!options.snapshot) throw new ApiError("refresh_required");
+        this.pending = this.client.prepareScraperAvailability(this.scope, {
+          title_id: this.versionId,
+          provider: this.provider,
+          snapshot: options.snapshot,
+          unavailable,
+        });
+      }
       this.pending ??= this.client.prepareTitleScrape(this.scope, {
-        plan_id: this.review.plan_id,
+        plan_id: this.review!.plan_id,
         fields: [...this.fields],
         images: this.images,
-        ...(this.review.matched ? { save_match: true } : {}),
+        ...(this.review!.matched ? { save_match: true } : {}),
       });
       this.lock();
       this.requestUpdate();
@@ -552,6 +588,7 @@ export class TitleScrape extends LitElement {
     if (!this.scope?.permissions.edit) return nothing;
     return html`${iconAction(this.artworkOnly ? "Edit Artwork" : "Scrape title", this.artworkOnly ? "artwork" : "scrape", this.blocked || !!this.pending, () => this.open(), "scrape-button")}
       <dialog
+        data-admin-dialog
         class="inset-dialog"
         aria-labelledby="scrape-title"
         @click=${dismissBackdrop}
@@ -568,6 +605,7 @@ export class TitleScrape extends LitElement {
         </div>
         ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
         ${this.busy ? html`<p role="status">${this.pending ? "Applying selected data…" : "Retrieving provider data…"}</p>` : nothing}
+        ${this.currentMovie()}
         ${
           this.review
             ? html`${this.review.matched ? html`<p class="notice">Matched: <strong>${this.review.matched.title} (${this.review.matched.year})</strong>. This source choice will be saved for future scrapes.</p>` : nothing}
@@ -706,14 +744,15 @@ ${Array.isArray(value.after) ? value.after.join(", ") : String(value.after)}</pr
                             value=${provider.id}
                             ?disabled=${!provider.available}
                             title=${provider.missing_data ? "No saved data from this scraper" : ""}
-                            aria-label=${[provider.label, provider.missing_data ? "no saved data" : "", provider.available ? "" : "missing credential"].filter(Boolean).join(" · ")}
+                            aria-label=${[provider.label, provider.unavailable ? "no data available" : provider.missing_data ? "no saved data" : "", provider.available ? "" : "missing credential"].filter(Boolean).join(" · ")}
                           >
-                            ${provider.label}${provider.missing_data ? " ⚠" : ""}${provider.available ? "" : " · missing credential"}
+                            ${provider.label}${provider.unavailable ? " · no data available" : provider.missing_data ? " ⚠" : ""}${provider.available ? "" : " · missing credential"}
                           </option>`,
                       )}
                     </select></label
                   >
                   ${this.options.providers.some((provider) => provider.missing_data) ? html`<p class="muted">⚠ No saved data from this scraper.</p>` : nothing}
+                  ${this.options.providers.find((provider) => provider.id === this.provider)?.unavailable ? html`<p class="muted">No scraper data available for this provider. Automatic attempts and conflicts are excluded. You can still search manually, or clear the flag to resume automatic attempts.</p>` : nothing}
                   <form
                     class="match-search"
                     @submit=${(event: Event) => {
@@ -743,6 +782,7 @@ ${Array.isArray(value.after) ? value.after.join(", ") : String(value.after)}</pr
               : nothing
         }
         <div class="dialog-footer">
+          ${!this.artworkOnly && !this.review && !this.pending && this.options?.snapshot && this.provider ? html`<button class="availability-button" ?disabled=${this.busy} @click=${() => this.apply(!this.options?.providers.find((provider) => provider.id === this.provider)?.unavailable)}>${this.options.providers.find((provider) => provider.id === this.provider)?.unavailable ? "Clear no-data flag" : "Mark no scraper data available"}</button>` : nothing}
           ${
             this.pending
               ? html`<button
@@ -776,12 +816,32 @@ ${Array.isArray(value.after) ? value.after.join(", ") : String(value.after)}</pr
           }<button
             class="primary"
             ?disabled=${this.busy || (this.artworkOnly && !this.options?.artwork_enabled) || (!this.review && !this.provider) || (!!this.review && (this.artworkOnly || !this.review.matched) && !this.fields.size && !Object.keys(this.images).length)}
-            @click=${() => (this.review ? this.apply() : this.scrape())}
+            @click=${() => (this.pending || this.review ? this.apply() : this.scrape())}
           >
             ${this.pending ? "Retry exact apply" : this.review ? (this.artworkOnly ? "Apply images" : this.review.matched && !this.fields.size && !Object.keys(this.images).length ? "Save match" : "Apply selected data") : this.candidatesPage ? "Try automatic match" : "Scrape title"}
           </button>
         </div>
       </dialog>`;
+  }
+  private currentMovie() {
+    const current = this.options?.current;
+    return current
+      ? html`<section class="current-movie" aria-label="Current Library movie">
+          <h3>Current Library movie</h3>
+          <p>
+            <strong>${current.title}</strong> ·
+            ${current.year ?? "Year unavailable"}
+          </p>
+          <p>
+            <strong>Director:</strong>
+            ${current.directors.join(", ") || "Unavailable"}
+          </p>
+          <p>
+            <strong>Top cast:</strong>
+            ${current.actors.join(", ") || "Unavailable"}
+          </p>
+        </section>`
+      : nothing;
   }
 }
 if (!customElements.get("kaleidescape-title-scrape"))

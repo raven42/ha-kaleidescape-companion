@@ -32,7 +32,8 @@ export const calendarStyles = css`
     color: var(--muted);
   }
   .day {
-    padding: 6px;
+    position: relative;
+    padding: 5px;
     min-height: 0;
     height: var(--calendar-day-size);
     border-top: 1px solid var(--line);
@@ -42,8 +43,15 @@ export const calendarStyles = css`
     opacity: 0.35;
   }
   .day time {
+    position: absolute;
+    inset-block-start: 5px;
+    inset-inline-start: 5px;
+    z-index: 2;
     display: inline-block;
-    margin-bottom: 6px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: var(--surface);
+    pointer-events: none;
     font-size: 12px;
   }
   .day.today time {
@@ -51,10 +59,13 @@ export const calendarStyles = css`
     font-weight: 700;
   }
   .cover-stack {
-    position: relative;
-    width: min(100%, calc((var(--calendar-day-size) - 32px) * 2 / 3));
+    position: absolute;
+    inset: 5px;
+    width: min(
+      calc(100% - 10px),
+      calc((var(--calendar-day-size) - 11px) * 2 / 3)
+    );
     margin-inline: auto;
-    aspect-ratio: 2 / 3;
     isolation: isolate;
   }
   .poster {
@@ -62,7 +73,7 @@ export const calendarStyles = css`
     inset-block-start: 0;
     inset-inline-start: 0;
     width: calc(100% / var(--spread));
-    aspect-ratio: 2 / 3;
+    height: calc(100% / var(--spread));
     min-height: 0;
     transform: translate(calc(var(--index) * 15%), calc(var(--index) * 15%));
     z-index: var(--layer);

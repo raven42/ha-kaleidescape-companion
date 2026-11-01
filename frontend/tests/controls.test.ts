@@ -285,6 +285,32 @@ it("blocks uncertain writes only for their player and refreshes receipts", async
   button("Refresh player state").click();
   await vi.waitFor(() => expect(button("Pause").disabled).toBe(false));
 });
+
+it("hides administrator receipt review in Basic mode even for an admin response", async () => {
+  element.scope = {
+    ...info,
+    permissions: { read: true, edit: false, export: false },
+  };
+  data.blocked_players = [data.default_player];
+  data.pending = [
+    {
+      request_id: "fictional-receipt",
+      player_id: data.default_player,
+      operation: "stop",
+      created_at: "2026-10-30T12:00:00+00:00",
+    },
+  ];
+  document.body.append(element);
+  await vi.waitFor(() =>
+    expect(element.shadowRoot!.textContent).toContain(
+      "needs administrator review",
+    ),
+  );
+  expect(element.shadowRoot!.textContent).not.toContain(
+    "I inspected the player",
+  );
+  expect(element.shadowRoot!.textContent).not.toContain("Unconfirmed stop");
+});
 it("discovers explicitly and offers players rather than servers as defaults", async () => {
   element.mode = "settings";
   data.devices = [

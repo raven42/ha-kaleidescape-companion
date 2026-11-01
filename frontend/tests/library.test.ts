@@ -961,16 +961,7 @@ it("overlays scraper conflicts independently of badges and persists a conflicts-
   expect(
     root().querySelector(".cover-tile > .scraper-conflict-icon"),
   ).toBeTruthy();
-  root()
-    .querySelector<HTMLInputElement>('[name="show_system_buttons"]')!
-    .click();
-  await flush();
-  expect(transport.uiPreferences.show_system_buttons).toBe(false);
-  expect(root().querySelector(".scraper-conflict-icon")).toBeNull();
-  root()
-    .querySelector<HTMLInputElement>('[name="show_system_buttons"]')!
-    .click();
-  await flush();
+  expect(root().querySelector('[name="show_system_buttons"]')).toBeNull();
   modalClose(root()).click();
   button("Filters").click();
   await flush();

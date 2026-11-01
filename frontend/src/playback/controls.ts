@@ -419,6 +419,7 @@ export class DeviceControls extends LitElement {
     this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.showModal();
   }
   private async reviewPending(request: string) {
+    if (!this.scope?.permissions.edit || !this.info?.can_manage) return;
     const generation = this.generation;
     this.acknowledge = request;
     this.requestUpdate();
@@ -427,7 +428,12 @@ export class DeviceControls extends LitElement {
     this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.showModal();
   }
   private async confirmReview() {
-    if (!this.acknowledge || !this.info?.can_manage) return;
+    if (
+      !this.acknowledge ||
+      !this.info?.can_manage ||
+      !this.scope?.permissions.edit
+    )
+      return;
     await this.action(async () => {
       const generation = this.generation;
       await this.client!.controlAcknowledge(this.scope!, this.acknowledge);
@@ -576,9 +582,10 @@ export class DeviceControls extends LitElement {
                 `
       }
       ${this.dialog !== "remote" || this.acknowledge ? this.feedback() : nothing}
-      ${blocked && !info?.can_manage ? html`<p class="warning">This player needs administrator review of an uncertain command before more commands can be sent.</p>` : nothing}
-      ${info?.can_manage ? info.pending.map((item) => html`<p class="warning">Unconfirmed ${item.operation} for ${info.players.find((row) => row.id === item.player_id)?.name || "a previously selected player"}. <button type="button" ?disabled=${this.busy} @click=${() => this.reviewPending(item.request_id)}>I inspected the player…</button></p>`) : nothing}
+      ${blocked && !(info?.can_manage && this.scope.permissions.edit) ? html`<p class="warning">This player needs administrator review of an uncertain command before more commands can be sent.</p>` : nothing}
+      ${info?.can_manage && this.scope.permissions.edit ? info.pending.map((item) => html`<p class="warning">Unconfirmed ${item.operation} for ${info.players.find((row) => row.id === item.player_id)?.name || "a previously selected player"}. <button type="button" ?disabled=${this.busy} @click=${() => this.reviewPending(item.request_id)}>I inspected the player…</button></p>`) : nothing}
       <dialog
+        ?data-admin-dialog=${!!this.acknowledge}
         class=${this.dialog === "remote" && !this.acknowledge ? "database-dialog remote-dialog" : "database-dialog"}
         @click=${dismissBackdrop}
         @cancel=${this.close}

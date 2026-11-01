@@ -127,6 +127,16 @@ class MetadataSync:
             "last_finished": self.last_finished,
         }
 
+    async def record_activity(self, failed):
+        """Telemetry must not mask a provider failure or break an accepted review."""
+        try:
+            self._ready()
+            await self.repository.async_enrichment("activity", self.source, failed)
+        except JournalError as error:
+            self.repository.logger.emit_failure(
+                Subsystem.METADATA, Operation.SCRAPE, error
+            )
+
     @traced(Subsystem.METADATA, Operation.REQUEST, debug=True)
     async def _get(self, url, headers):
         self._ready()
@@ -305,6 +315,9 @@ class MetadataSync:
                     ):
                         if not enabled:
                             continue
+                        if provider in row.get("unavailable", []):
+                            self.skipped += 1
+                            continue
                         reference = row.get("matches", {}).get(provider)
                         if (
                             provider == "tmdb"
@@ -467,6 +480,8 @@ class MetadataSync:
                 self.session.detach()
                 self.session = None
             self.last_finished = datetime.now(UTC).isoformat()
+            if not cancelled:
+                await self.record_activity(failure is not None)
             self.actor = None
 
     async def async_pause(self):

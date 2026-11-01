@@ -172,12 +172,35 @@ hiding editor/export controls is not authorization. Known user/connection/role
 changes clear the browser's old data and ignore late responses. Browser
 downloads and data already observed cannot be recalled when access changes.
 
+The administrator Basic/Advanced switch is a presentation preference, stored in
+the actor/profile-owned `interface` settings row as a strictly validated
+boolean. Basic mounts the existing household renderer with edit/export
+capabilities masked and hides all management tabs/actions, private
+purchase/diagnostic displays, scraper overlays and player receipt
+acknowledgements. Advanced is offered only to an actual administrator; storing
+this preference as a regular user grants no capability. Backend checks continue
+to use the authenticated HA role. Mode changes invalidate old view reads, clear
+detached view state and respect dirty-draft and unconfirmed-write guards.
+Admin-only pages/dialogs return to a household-compatible landing page.
+Preference exports/imports and validated Database settings edits include this
+new personal area without changing credentials or HA roles.
+
 The household [sensors](sensors.md) publish completed/partial viewing history,
 source-scoped Library counts, last catalog time, storage sizes and a bounded
 recent-addition title batch. These are normal HA entity states, not
 administrator-only API responses or per-user lists. HA entity permissions,
 Recorder, automations and backups can retain them. They contain no notes, audit
 actors, raw source handles/groups, origin, cache keys or private paths.
+
+Scraper sensors expose only a timestamp, cumulative failed-operation count and
+current conflict/missing-artwork title counts. Worker-owned source-scoped
+`scrape_activity` settings contain only a timestamp and integer counter, with no
+provider responses, identifiers or credentials. Activity writes retain backup,
+transfer, source readiness and administrator revalidation guards; cancelled or
+revoked work does not write telemetry. Summary reads project only relevant image
+keys, conflict markers and times internally, never full cast/provider payloads
+or new entity attributes. Collection symbols are static local SVG, and arbitrary
+collection labels remain text-bound.
 
 History and Library/storage each use a local-worker coordinator every 30 seconds
 while their enabled entities have listeners. Entity getters read memory. No
@@ -1500,6 +1523,18 @@ image-only TMDB editor reuses the same administrator-checked review/apply
 operations, image allowlists, opt-ins and retry receipts. The system-button
 preference is display-only and cannot authorize an operation. Action icons are
 static local SVG templates, not provider markup.
+
+Administrator `metadata/title/availability` records a strict boolean for one
+known provider and an exact Library group, with worker-time access revalidation,
+snapshot protection and an actor/source/payload-bound UUID receipt. Flags cover
+inactive versions too, survive scans, and suppress that provider's automatic
+requests, conflict writes and late cache commits. They preserve cached facts,
+other providers and historical failure totals. Unavailability is private
+enrichment state, omitted from household and portable projections. Options
+expose only per-provider booleans and bounded Library comparison metadata;
+suggested title normalization does not alter stored identities. All strings
+remain text-bound. Tests cover retry, stale snapshots, role denial, version and
+remake isolation and automatic skip behavior.
 
 Previews/searches do not import descriptive metadata; failed automatic matching
 can record an owned conflict code on the worker. They expose only known fields

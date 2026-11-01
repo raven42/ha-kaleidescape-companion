@@ -24,7 +24,6 @@ LIBRARY_DEFAULTS = {
     "show_format": True,
     "show_badges": True,
     "show_rating": False,
-    "show_system_buttons": True,
     "show_library_cost": False,
     "cast_limit": 8,
     "widths": [360, 90, 260, 150, 140, 210],
@@ -64,9 +63,15 @@ def public_defaults(config):
 
 
 def validate_library(patch, previous=None):
+    # Retire the Library-only switch without breaking older preference exports.
+    if isinstance(patch, dict):
+        patch = {
+            key: value for key, value in patch.items() if key != "show_system_buttons"
+        }
     if not isinstance(patch, dict) or set(patch) - LIBRARY_DEFAULTS.keys():
         raise invalid("Unknown UI settings")
     values = {**LIBRARY_DEFAULTS, **(previous or {}), **patch}
+    values.pop("show_system_buttons", None)
     if values["view"] not in ("list", "covers") or values["sort"] not in tuple(SORTS):
         raise invalid("Invalid Library view/sort")
     seed = values["random_seed"]
@@ -84,7 +89,6 @@ def validate_library(patch, previous=None):
             "show_format",
             "show_badges",
             "show_rating",
-            "show_system_buttons",
             "show_library_cost",
             "scraper_conflict",
         )
@@ -186,6 +190,18 @@ def validate_database(patch, previous=None):
 
 
 SEARCH_DEFAULTS = {"fuzzy_search": True}
+INTERFACE_DEFAULTS = {"advanced_view": True}
+
+
+def validate_interface(patch, previous=None):
+    if not isinstance(patch, dict) or set(patch) - INTERFACE_DEFAULTS.keys():
+        raise invalid("Unknown interface preferences")
+    values = {**INTERFACE_DEFAULTS, **(previous or {}), **patch}
+    if type(values["advanced_view"]) is not bool:
+        raise invalid("Invalid interface mode")
+    return values
+
+
 JOURNAL_DEFAULTS = {"view": "list", "calendar_size": 180, "calendar_fit": False}
 
 

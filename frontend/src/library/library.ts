@@ -31,9 +31,13 @@ import {
   renderStatusBadges,
   renderRatingBadge,
   collectionLabel,
+  collectionKind,
+  collectionSymbol,
+  renderCollectionBadge,
 } from "./badges";
 import "./collections";
 import "./title-edit";
+import type { TitleEdit } from "./title-edit";
 import type { LibraryCriterion } from "./criteria";
 
 const FILTERS = [
@@ -60,7 +64,6 @@ const DISPLAY_OPTIONS = [
   ["show_format", "Show format"],
   ["show_badges", "Show library badges"],
   ["show_rating", "Show rating on covers"],
-  ["show_system_buttons", "Show system buttons"],
   ["show_library_cost", "Show total library cost in footer"],
 ] as const;
 const STATUS: Record<string, string> = {
@@ -137,8 +140,19 @@ export class KaleidescapeLibrary extends LitElement {
   }
   private checkingCollection = false;
   confirmNavigation() {
-    if (this.detailsLocked || this.checkingCollection) return false;
-    return true;
+    if (
+      this.controlLocked ||
+      this.collectionLocked ||
+      this.scrapeLocked ||
+      this.artworkLocked ||
+      this.checkingCollection
+    )
+      return false;
+    return (
+      this.renderRoot
+        .querySelector<TitleEdit>("kaleidescape-title-edit")
+        ?.confirmNavigation() ?? true
+    );
   }
 
   private filters: Filters = {
@@ -161,7 +175,6 @@ export class KaleidescapeLibrary extends LitElement {
     show_format: true,
     show_badges: true,
     show_rating: false,
-    show_system_buttons: true,
     show_library_cost: false,
   };
   private entriesPerPage: number | "all" = 100;
@@ -360,7 +373,6 @@ export class KaleidescapeLibrary extends LitElement {
       show_format: true,
       show_badges: true,
       show_rating: false,
-      show_system_buttons: true,
       show_library_cost: false,
     };
     this.draft = {};
@@ -586,7 +598,18 @@ export class KaleidescapeLibrary extends LitElement {
       const info = await this.client.libraryInfo(this.scope);
       if (generation !== this.generation || request !== this.statusRequest)
         return;
-      this.info = info;
+      this.info = this.scope.permissions.edit
+        ? info
+        : {
+            title_count: info.title_count,
+            group_count: info.group_count,
+            collection_count: info.collection_count,
+            name_count: info.name_count,
+            revision: info.revision,
+            preferences_key: info.preferences_key,
+            last_synced_at: info.last_synced_at,
+            collections_synced_at: info.collections_synced_at,
+          };
       if (this.display.show_library_cost || this.purchaseDetailsOpen)
         void this.loadPurchaseTotals();
       if (
@@ -1193,8 +1216,7 @@ export class KaleidescapeLibrary extends LitElement {
         }
         ${DISPLAY_OPTIONS.filter(
           ([key]) =>
-            !["show_library_cost", "show_system_buttons"].includes(key) ||
-            this.scope?.permissions.edit,
+            key !== "show_library_cost" || this.scope?.permissions.edit,
         ).map(
           ([key, label]) =>
             html`<label class="check"
@@ -1305,7 +1327,7 @@ export class KaleidescapeLibrary extends LitElement {
                               };
                               this.requestUpdate();
                             }}
-                          />${key === "status" ? STATUS[value] : key === "rating" ? renderRatingBadge(value) : key === "collection" ? collectionLabel(value) : value}</label
+                          />${key === "status" ? renderCollectionBadge(STATUS[value]) : key === "rating" ? renderRatingBadge(value) : key === "collection" ? renderCollectionBadge(value) : value}</label
                         >`,
                     )
                   : html`<p class="muted">No matching options</p>`
@@ -1445,9 +1467,7 @@ export class KaleidescapeLibrary extends LitElement {
     return hours ? `${hours}h ${minutes % 60}m` : `${minutes}m`;
   }
   private conflictIcon(item: LibrarySummary) {
-    return this.scope?.permissions.edit &&
-      this.display.show_system_buttons &&
-      item.scraper_conflict
+    return this.scope?.permissions.edit && item.scraper_conflict
       ? html`<span
           class="scraper-conflict-icon"
           role="img"
@@ -1539,24 +1559,22 @@ export class KaleidescapeLibrary extends LitElement {
                   ${renderFormatBadges(multiple ? group : (row ?? group), false, (value) => this.fromDetails("format", value), locked)}
                   ${ratings.map((rating) => renderRatingBadge(rating, (value) => this.fromDetails("rating", value), locked))}
                   <button
-                    class="movie-status"
+                    class=${`movie-status collection-badge collection-${collectionKind(STATUS[row?.watched_status ?? group.watched_status])}`}
                     ?disabled=${locked}
                     @click=${() => this.fromDetails("status", row?.watched_status ?? group.watched_status)}
                   >
-                    ${STATUS[row?.watched_status ?? group.watched_status]}
+                    ${collectionSymbol(STATUS[row?.watched_status ?? group.watched_status])}
+                    <span
+                      >${STATUS[row?.watched_status ?? group.watched_status]}</span
+                    >
                   </button>
                   ${renderStatusBadges(group, false, ["watched", "progress"])}
-                  ${group.collections.map(
-                    (collection) =>
-                      html`<button
-                        type="button"
-                        class="status-badge collection-badge"
-                        aria-label=${`Filter by collection: ${collectionLabel(collection)}`}
-                        ?disabled=${locked}
-                        @click=${() => this.fromDetails("collection", collection)}
-                      >
-                        ${collectionLabel(collection)}
-                      </button>`,
+                  ${group.collections.map((collection) =>
+                    renderCollectionBadge(
+                      collection,
+                      () => this.fromDetails("collection", collection),
+                      locked,
+                    ),
                   )}
                 </div>
                 ${
@@ -1573,7 +1591,7 @@ export class KaleidescapeLibrary extends LitElement {
                           }
                         }}
                         >${this.renderCollectionAction(row)}${
-                          admin && this.display.show_system_buttons
+                          admin
                             ? html`<kaleidescape-title-edit
                                   slot="collection"
                                   .client=${this.client}

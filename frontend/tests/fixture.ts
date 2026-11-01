@@ -204,7 +204,6 @@ export class FixtureTransport implements Transport {
     show_format: true,
     show_badges: true,
     show_rating: false,
-    show_system_buttons: true,
     show_library_cost: false,
     widths: [360, 90, 260, 150, 140, 210],
     query: "",
@@ -223,6 +222,7 @@ export class FixtureTransport implements Transport {
   };
   sharedPreferences: Record<string, unknown> = { hidden_collections: [] };
   searchPreferences: Record<string, unknown> = { fuzzy_search: true };
+  interfacePreferences: Record<string, unknown> = { advanced_view: true };
   journalPreferences: Record<string, unknown> = {
     view: "list",
     calendar_size: 180,
@@ -267,7 +267,9 @@ export class FixtureTransport implements Transport {
             ? this.searchPreferences
             : message.area === "journal"
               ? this.journalPreferences
-              : this.uiPreferences;
+              : message.area === "interface"
+                ? this.interfacePreferences
+                : this.uiPreferences;
       if (operation.endsWith("/get"))
         result = { values, revision: this.uiRevision };
       else {

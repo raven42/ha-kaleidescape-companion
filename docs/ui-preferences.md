@@ -8,6 +8,20 @@ user also has separate desktop, tablet and mobile profiles.
 
 ## What is stored
 
+Administrators can use the **Basic / Advanced** pill at the right of the main
+view tabs. The `interface` preference area's `advanced_view` boolean defaults to
+true and saves separately for each user and desktop/tablet/mobile profile. Basic
+uses the household renderer, hiding management pages, editing, private
+purchase/diagnostic information and scraper warnings. Advanced enables the
+administrator UI. Actual HA account permissions remain authoritative. The
+Library-only `show_system_buttons` preference is retired; legacy exports remain
+importable and its old value is ignored.
+
+When leaving an admin-only page or dialog, Basic navigates to the configured
+landing page, or Journal if that landing page requires administrator controls.
+Dirty drafts and pending writes retain their existing navigation guards. Screen
+profile changes wait for dialogs/operations and mode-preference saves to settle.
+
 | Scope                         | Values                                                                                                                                                                                                                                                                     |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Personal Library preferences  | List/Covers, entries per page, cover size, title overlay, format/library/rating badge toggles, column widths, applied title search, selected collection/actor/director/rating/status/genre/year/format filters, sort field, direction and administrator footer-cost toggle |
@@ -116,6 +130,14 @@ suppresses New even while the movie remains in the sensor batch; the sensor
 batch itself is unchanged. These use cached source statuses and refresh with
 collection sync, rather than adding playback polling or treating journal facts
 as device collection membership. Favorite can accompany any of the statuses.
+
+Text collection/status badges use compact outlined gradient pills: All in slate,
+New in blue, Unwatched in gold, Watched in green, Favorites in purple and In
+progress in amber, each with a local line icon. Their compact icons and padding
+match inline format badges; movie-detail badges share the same 28 px minimum
+height as the format and rating buttons. Movie-detail filter links and filter
+checkboxes retain their existing actions. Cover corner flags retain their layout
+and mutually exclusive status behavior.
 
 Hidden collection names affect labels and filters, not status/favorite
 classification. Recent identity uses the source-scoped group, never title text,

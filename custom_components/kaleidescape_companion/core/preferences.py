@@ -6,10 +6,12 @@ from datetime import UTC, datetime
 
 from ..ui.preferences import (
     DATABASE_DEFAULTS,
+    INTERFACE_DEFAULTS,
     JOURNAL_DEFAULTS,
     LIBRARY_DEFAULTS,
     SEARCH_DEFAULTS,
     validate_database,
+    validate_interface,
     validate_journal,
     validate_library,
     validate_search,
@@ -104,7 +106,7 @@ def random_seed(db, actor):
 
 
 def get(db, actor, shared=False, area="library", profile=None):
-    if area not in ("library", "database", "search", "journal") or (
+    if area not in ("library", "database", "search", "journal", "interface") or (
         shared and area != "library"
     ):
         raise JournalError("invalid_request", "Unknown UI preference area")
@@ -129,6 +131,8 @@ def get(db, actor, shared=False, area="library", profile=None):
         values = SEARCH_DEFAULTS
     elif area == "journal":
         values = JOURNAL_DEFAULTS
+    elif area == "interface":
+        values = INTERFACE_DEFAULTS
     elif shared:
         values = {"hidden_collections": []}
     else:
@@ -142,6 +146,8 @@ def get(db, actor, shared=False, area="library", profile=None):
         values = (
             validate_database
             if area == "database"
+            else validate_interface
+            if area == "interface"
             else validate_search
             if area == "search"
             else validate_journal
@@ -188,6 +194,8 @@ def update(db, actor, shared, request, revision, patch, area="library", profile=
         if shared
         else validate_database
         if area == "database"
+        else validate_interface
+        if area == "interface"
         else validate_search
         if area == "search"
         else validate_journal

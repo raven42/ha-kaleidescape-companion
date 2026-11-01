@@ -42,6 +42,66 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
     async def summary(self):
         return await self.repository.async_library_summary(library.SOURCE)
 
+    async def test_scrape_activity_is_durable_and_source_scoped(self):
+        await self.scan(collections={})
+        initial = await self.summary()
+        self.assertEqual(initial["scraper_failures"], 0)
+        self.assertIsNone(initial["last_scrape_date"])
+        for failed in (True, False, True):
+            await self.repository.async_enrichment("activity", library.SOURCE, failed)
+        await self.repository.async_enrichment("activity", "other-source", True)
+        value = await self.summary()
+        self.assertEqual(value["scraper_failures"], 2)
+        self.assertIsNotNone(
+            datetime.fromisoformat(value["last_scrape_date"]).utcoffset()
+        )
+        await self.repository.async_close()
+        self.repository = JournalRepository(self.path)
+        self.addAsyncCleanup(self.repository.async_close)
+        await self.repository.async_open()
+        self.assertEqual((await self.summary())["scraper_failures"], 2)
+        self.assertEqual(
+            (await self.summary())["last_scrape_date"], value["last_scrape_date"]
+        )
+
+    async def test_artwork_and_conflicts_count_groups_once_across_versions(self):
+        await self.scan(collections={})
+        self.assertEqual((await self.summary())["missing_artwork"], 2)
+        await self.repository.async_library_artwork_save(
+            library.SOURCE,
+            title_id(library.SOURCE, "fixture-a"),
+            b"\xff\xd8\xfffictional",
+            "image/jpeg",
+            1048576,
+        )
+        self.assertEqual((await self.summary())["missing_artwork"], 2)
+        with closing(sqlite3.connect(self.path)) as db, db:
+            key = db.execute("SELECT cache_key FROM library_artwork").fetchone()[0]
+            db.execute(
+                "UPDATE library SET enrichment=? WHERE source_group=?",
+                (
+                    json.dumps(
+                        {
+                            "reviewed": {
+                                "backdrop_key": key,
+                                "fetched_at": "2026-01-01T00:00:00+00:00",
+                            },
+                            "conflicts": {
+                                "tmdb": {"reason": "tmdb_ambiguous"},
+                                "kaleidescape": {"reason": "store_not_found"},
+                            },
+                        }
+                    ),
+                    library.ROWS[0]["source_group"],
+                ),
+            )
+        result = await self.summary()
+        self.assertEqual(result["missing_artwork"], 1)
+        self.assertEqual(result["scraper_conflicts"], 1)
+        self.assertEqual(result["last_scrape_date"], "2026-01-01T00:00:00+00:00")
+        await self.repository.async_library_trim(0)
+        self.assertEqual((await self.summary())["missing_artwork"], 2)
+
     async def test_baseline_unique_groups_and_empty_catalog_are_not_initial_additions(
         self,
     ):
@@ -299,6 +359,15 @@ class LibrarySensorTest(unittest.IsolatedAsyncioTestCase):
         await watched.coordinator.async_refresh()
         self.assertEqual(watched.native_value, 1)
         self.assertEqual(sensors["recently_added"].native_value, 0)
+        self.assertEqual(sensors["missing_artwork"].native_value, 2)
+        self.assertEqual(sensors["scraper_conflicts"].native_value, 0)
+        self.assertEqual(sensors["scraper_failures"].native_value, 0)
+        self.assertEqual(
+            sensors["scraper_failures"].state_class, SensorStateClass.TOTAL_INCREASING
+        )
+        self.assertEqual(
+            sensors["last_scrape_date"].device_class, SensorDeviceClass.TIMESTAMP
+        )
         stamp = sensors["last_library_sync"]
         self.assertEqual(stamp.device_class, SensorDeviceClass.TIMESTAMP)
         self.assertIsInstance(stamp.native_value, datetime)

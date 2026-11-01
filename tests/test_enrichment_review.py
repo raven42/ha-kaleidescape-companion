@@ -13,6 +13,7 @@ from homeassistant.components.http import KEY_HASS
 
 from custom_components.kaleidescape_companion.core.models import JournalError
 from custom_components.kaleidescape_companion.enrichment.http import MetadataImageView
+from custom_components.kaleidescape_companion.enrichment.review import search_title
 
 
 class TitleReviewTest(unittest.IsolatedAsyncioTestCase):
@@ -20,6 +21,209 @@ class TitleReviewTest(unittest.IsolatedAsyncioTestCase):
     seed = enrichment.EnrichmentTest.seed
     sync = enrichment.EnrichmentTest.sync
     call = enrichment.EnrichmentTest.call
+
+    def test_search_title_strips_only_the_trailing_directors_cut(self):
+        for suffix in (" (Director's Cut)", " (DIRECTOR’S CUT) "):
+            self.assertEqual(search_title("Fictional Film" + suffix), "Fictional Film")
+        self.assertEqual(search_title("Director's Cut"), "Director's Cut")
+        self.assertEqual(
+            search_title("Film (Director's Cut) Returns"),
+            "Film (Director's Cut) Returns",
+        )
+
+    async def test_options_include_bounded_library_comparison_and_search_title(self):
+        await self.setup_review()
+        await self.repo.async_library_catalog(
+            enrichment.ORIGIN,
+            [
+                {
+                    "source_handle": "fictional",
+                    "source_group": "movie",
+                    "title": "Fictional Film (Director's Cut)",
+                    "year": 2025,
+                    "actors": [f"Example Actor {number}" for number in range(8)],
+                    "directors": ["Example Director"],
+                }
+            ],
+        )
+        options = await self.manager.options(self.admin, self.id)
+        self.assertEqual(options["search_title"], "Fictional Film")
+        self.assertEqual(options["current"]["year"], 2025)
+        self.assertEqual(options["current"]["directors"], ["Example Director"])
+        self.assertEqual(len(options["current"]["actors"]), 5)
+        self.assertEqual(options["title"], "Fictional Film (Director's Cut)")
+
+    async def test_provider_unavailable_is_group_scoped_reversible_and_retry_safe(self):
+        await self.setup_review()
+        await self.repo.async_metadata_sources(
+            {"metadata_tmdb_enabled": True, "metadata_store_enabled": True}
+        )
+        await self.repo.async_enrichment(
+            "conflict",
+            self.source,
+            self.id,
+            "tmdb",
+            "tmdb_not_found",
+            {"title": "Fictional Film", "source_group": "movie"},
+        )
+        self.assertEqual(
+            (await self.repo.async_library_summary(self.source))["scraper_conflicts"], 1
+        )
+        options = await self.manager.options(self.admin, self.id)
+        data = {
+            "title_id": self.id,
+            "snapshot": options["snapshot"],
+            "provider": "tmdb",
+            "unavailable": True,
+        }
+        request = str(uuid4())
+        first = await self.manager.availability(self.admin, request, data)
+        self.assertEqual(
+            await self.manager.availability(self.admin, request, data), first
+        )
+        self.assertEqual(first["updated_count"], 2)
+        self.assertEqual(
+            (await self.repo.async_library_summary(self.source))["scraper_conflicts"], 0
+        )
+        options = await self.manager.options(self.admin, self.id)
+        tmdb = next(row for row in options["providers"] if row["id"] == "tmdb")
+        self.assertTrue(tmdb["unavailable"])
+        self.assertFalse(tmdb["missing_data"])
+        candidates = await self.repo.async_enrichment("candidates", self.source)
+        self.assertEqual(
+            next(row for row in candidates if row["source_group"] == "movie")[
+                "unavailable"
+            ],
+            ["tmdb"],
+        )
+        self.assertEqual(
+            next(row for row in candidates if row["source_group"] == "remake")[
+                "unavailable"
+            ],
+            [],
+        )
+        with self.assertRaises(JournalError):
+            await self.manager.availability(
+                self.admin, str(uuid4()), {**data, "unavailable": False}
+            )
+        await self.manager.availability(
+            self.admin,
+            str(uuid4()),
+            {**data, "snapshot": options["snapshot"], "unavailable": False},
+        )
+        options = await self.manager.options(self.admin, self.id)
+        self.assertFalse(
+            next(row for row in options["providers"] if row["id"] == "tmdb")[
+                "unavailable"
+            ]
+        )
+        reader = SimpleNamespace(id="reader", is_active=True, is_admin=False)
+        denied = await self.call(
+            "metadata/title/availability",
+            user=reader,
+            **self.scope,
+            request_id=str(uuid4()),
+            data=data,
+        )
+        self.assertEqual(denied["code"], "unauthorized")
+
+    async def test_unavailable_groups_are_skipped_by_automatic_scraping(self):
+        await self.setup_review()
+        candidates = await self.repo.async_enrichment("candidates", self.source)
+        for row in candidates:
+            options = await self.manager.options(self.admin, row["id"])
+            await self.manager.availability(
+                self.admin,
+                str(uuid4()),
+                {
+                    "title_id": row["id"],
+                    "provider": "tmdb",
+                    "snapshot": options["snapshot"],
+                    "unavailable": True,
+                },
+            )
+        self.metadata.reset_mock()
+        await self.manager.parent._run(True)
+        self.metadata.assert_not_awaited()
+        self.assertEqual(
+            (await self.repo.async_library_summary(self.source))["scraper_failures"], 0
+        )
+
+    async def test_unavailable_provider_blocks_late_writes_but_not_other_providers(
+        self,
+    ):
+        await self.setup_review()
+        await self.repo.async_metadata_sources(
+            {"metadata_tmdb_enabled": True, "metadata_store_enabled": True}
+        )
+        await self.repo.async_enrichment(
+            "save", self.source, self.id, "tmdb", self.data
+        )
+        options = await self.manager.options(self.admin, self.id)
+        await self.manager.availability(
+            self.admin,
+            str(uuid4()),
+            {
+                "title_id": self.id,
+                "provider": "tmdb",
+                "snapshot": options["snapshot"],
+                "unavailable": True,
+            },
+        )
+        with self.assertRaises(JournalError) as error:
+            await self.repo.async_enrichment(
+                "artwork", self.source, self.id, self.data, enrichment.IMAGE, 1048576
+            )
+        self.assertEqual(error.exception.code, "refresh_required")
+        expected = {"title": "Fictional Film", "source_group": "movie"}
+        with self.assertRaises(JournalError):
+            await self.repo.async_enrichment(
+                "conflict", self.source, self.id, "tmdb", "tmdb_not_found", expected
+            )
+        await self.repo.async_enrichment(
+            "conflict",
+            self.source,
+            self.id,
+            "kaleidescape",
+            "store_not_found",
+            expected,
+        )
+        self.assertEqual(
+            (await self.repo.async_library_summary(self.source))["scraper_conflicts"], 1
+        )
+        self.assertEqual((await self.repo.async_inspect("library_artwork"))["total"], 0)
+
+    async def test_availability_rechecks_role_when_the_worker_accepts_the_write(self):
+        await self.setup_review()
+        options = await self.manager.options(self.admin, self.id)
+        actor = SimpleNamespace(id="another-admin", is_admin=True, is_active=True)
+        original = self.repo._library_write
+
+        def revoke(operation, *args):
+            actor.is_active = False
+            return original(operation, *args)
+
+        with (
+            patch.object(self.repo, "_library_write", revoke),
+            self.assertRaises(JournalError) as error,
+        ):
+            await self.manager.availability(
+                actor,
+                str(uuid4()),
+                {
+                    "title_id": self.id,
+                    "provider": "tmdb",
+                    "snapshot": options["snapshot"],
+                    "unavailable": True,
+                },
+            )
+        self.assertEqual(error.exception.code, "unauthorized")
+        options = await self.manager.options(self.admin, self.id)
+        self.assertFalse(
+            next(row for row in options["providers"] if row["id"] == "tmdb")[
+                "unavailable"
+            ]
+        )
 
     async def test_options_report_missing_provider_data_for_the_exact_movie_group(self):
         await self.setup_review()

@@ -357,6 +357,39 @@ export const styles = css`
     margin: 12px 0;
     padding: 4px 0 0;
   }
+  .page-navigation {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .page-navigation > .page-tabs {
+    flex: 1;
+    min-width: 0;
+  }
+  .view-mode-slot,
+  .mode-control {
+    flex: none;
+  }
+  .view-mode-pill {
+    display: inline-flex;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 3px;
+    gap: 2px;
+    min-height: 36px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .view-mode-pill span {
+    padding: 5px 8px;
+    border-radius: 999px;
+  }
+  .view-mode-pill[aria-checked="false"] .mode-basic,
+  .view-mode-pill[aria-checked="true"] .mode-advanced {
+    background: var(--accent);
+    color: var(--text-primary-color, #fff);
+  }
   .page-tabs button {
     flex-shrink: 0;
     border: 0;
@@ -634,6 +667,9 @@ export const styles = css`
     }
     .page-tabs button {
       padding: 8px 10px;
+    }
+    .view-mode-pill {
+      min-height: 44px;
     }
     header .eyebrow,
     header p {

@@ -301,11 +301,20 @@ export interface ProviderMetadata {
 }
 export interface ScrapeOptions {
   title?: string;
+  search_title?: string;
+  snapshot?: string;
+  current?: {
+    title: string;
+    year: number | null;
+    directors: string[];
+    actors: string[];
+  };
   providers: {
     id: string;
     label: string;
     available: boolean;
     missing_data?: boolean;
+    unavailable?: boolean;
   }[];
   artwork_enabled: boolean;
 }
@@ -827,6 +836,17 @@ export class JournalClient {
     },
   ) {
     return this.prepareCommand(scope, "metadata/title/apply", { data });
+  }
+  prepareScraperAvailability(
+    scope: Scope,
+    data: {
+      title_id: string;
+      provider: string;
+      snapshot: string;
+      unavailable: boolean;
+    },
+  ) {
+    return this.prepareCommand(scope, "metadata/title/availability", { data });
   }
   applyTitleScrape(
     pending: PreparedMutation,

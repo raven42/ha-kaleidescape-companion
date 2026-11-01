@@ -1,5 +1,5 @@
 /** Positive metadata-only badges; never infer capabilities from resolution. */
-import { html, nothing } from "lit";
+import { html, nothing, svg } from "lit";
 import type { LibrarySummary } from "../core/api";
 type VideoMetadata = { formats?: string[] | null; edition?: string | null };
 export function statusBadges(row: LibrarySummary) {
@@ -90,13 +90,11 @@ export function renderStatusBadges(
     .map(
       (badge) =>
         html`<span
-          class=${flags ? `cover-flag flag-${badge.key}` : `status-badge flag-${badge.key}`}
+          class=${flags ? `cover-flag flag-${badge.key}` : `status-badge collection-badge collection-${collectionKind(badge.label)}`}
           title=${badge.label}
           aria-label=${badge.label}
           role="img"
-          ><span class="badge-symbol" aria-hidden="true"
-            >${flags ? badge.symbol : badge.key === "recent" ? "✦" : badge.symbol}</span
-          >${flags ? "" : ` ${badge.label}`}</span
+          >${flags ? html`<span class="badge-symbol" aria-hidden="true">${badge.symbol}</span>` : html`${collectionSymbol(badge.label)}<span>${badge.label}</span>`}</span
         >`,
     );
 }
@@ -140,4 +138,59 @@ export function renderRatingBadge(
 
 export function collectionLabel(value: string) {
   return value.toLocaleLowerCase() === "played" ? "Watched" : value;
+}
+
+export function collectionKind(value: string) {
+  const key = value.toLowerCase();
+  return (
+    (
+      {
+        all: "all",
+        new: "new",
+        "recently added": "new",
+        unwatched: "unwatched",
+        watched: "watched",
+        played: "watched",
+        favorites: "favorite",
+        favorite: "favorite",
+        paused: "progress",
+        "in progress": "progress",
+      } as Record<string, string>
+    )[key] ?? "all"
+  );
+}
+
+export function collectionSymbol(value: string) {
+  const kind = collectionKind(value);
+  const shapes = {
+    all: svg`<path d="m2 7 10-5 10 5-10 5zM2 12l10 5 10-5M2 17l10 5 10-5"/>`,
+    new: svg`<path d="m12 1 3 2 4 1 1 4 3 4-3 3-1 4-4 1-3 3-3-3-4-1-1-4-3-3 3-4 1-4 4-1z"/><text x="12" y="14.5" text-anchor="middle" fill="currentColor" stroke="none" font-size="6" font-weight="800">NEW</text>`,
+    unwatched: svg`<circle cx="12" cy="12" r="10"/><path fill="currentColor" stroke="none" d="m9 6 9 6-9 6z"/>`,
+    watched: svg`<circle cx="12" cy="12" r="10"/><path d="m6 12 4 4 8-8"/>`,
+    favorite: svg`<path d="M12 21 3 12C-3 4 6-1 12 6c6-7 15-2 9 6z"/>`,
+    progress: svg`<circle cx="12" cy="12" r="10"/><path d="M9 7v10M15 7v10"/>`,
+  };
+  return svg`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${shapes[kind as keyof typeof shapes]}</svg>`;
+}
+
+export function renderCollectionBadge(
+  value: string,
+  select?: () => void,
+  disabled = false,
+) {
+  const content = html`${collectionSymbol(value)}<span
+      >${collectionLabel(value)}</span
+    >`;
+  const className = `collection-badge collection-${collectionKind(value)}`;
+  return select
+    ? html`<button
+        type="button"
+        class=${className}
+        aria-label=${`Filter by collection: ${collectionLabel(value)}`}
+        ?disabled=${disabled}
+        @click=${select}
+      >
+        ${content}
+      </button>`
+    : html`<span class=${className}>${content}</span>`;
 }

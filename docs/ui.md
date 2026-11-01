@@ -461,8 +461,8 @@ Administrator title scraping offers a bounded result picker when matching is
 ambiguous or empty, plus a replacement-title search. Each result shows basic
 credits, year, genres and an opt-in cover preview. The chosen provider binding
 saves with the reviewed data for future scrapes. Unresolved scraper identities
-have a centered cover warning for administrators with system buttons enabled,
-and a sticky **Scraper conflicts only** filter. See
+have a centered cover warning for administrators using Advanced view, and a
+sticky **Scraper conflicts only** filter. See
 [manual resolution](enrichment.md#review-a-single-title).
 
 ## Search options
@@ -608,10 +608,20 @@ buttons share a 44 px minimum height and have space below the action row.
 Collection uses a yellow starred bookmark. Edit, Scrape and Edit Artwork use
 icon buttons with accessible labels and hover/focus balloons. Power On has a
 green power-switch button; once the player is ready, it becomes a blue Play
-button. Administrator **Library Options → Show system buttons** controls the
-Edit, Scrape and TMDB Edit Artwork actions and conflict overlays. It saves with
-the user's display-profile preferences and defaults on; it grants no backend
-permission. Other users never receive these actions or warning overlays.
+button. Balloons dismiss on activation and use fresh pointer hover or visible
+keyboard focus, so returning from a modal does not retain a pointer tooltip.
+Administrators have a **Basic / Advanced** pill on the right of the main view
+tabs. Basic uses the household interface across all views, including Library,
+Journal/calendar and playback. Advanced adds editing, scraping, purchase and
+diagnostic information, Database, Logs and Settings. This replaces the old
+Library-only system-button option. Advanced is the default; the mode saves per
+HA user and screen profile. It grants no backend permission.
+
+Leaving Advanced while on an administrator-only page or with an admin-only
+dialog open returns to the configured landing page. An administrator-only
+landing page falls back to Journal in Basic mode. Dirty drafts retain discard
+confirmation; unconfirmed writes and active operations block switching. Regular
+users have the household interface and no mode switch.
 
 Operator browser review: open a Library movie, Remote, filters, both Options
 popups, viewing/database editors, imports/exports and calendar export. Check the

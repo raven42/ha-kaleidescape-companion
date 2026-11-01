@@ -709,12 +709,24 @@ retain them.
 ## External metadata
 
 Administrator `metadata/title/options` and `metadata/title/preview` accept an
-exact scanned title ID and, for preview, an enabled provider name. Preview is
-read-only and returns an actor-bound review token, allowlisted before/after
-fields and opaque image choices. `metadata/title/apply` accepts a request UUID
-and `{plan_id, fields, images}` selection, never incoming values or URLs. The
-worker validates the group snapshot and commits reviewed overrides, image links
-and an exact-retry receipt atomically. No new schema/table is required.
+exact scanned title ID and, for preview, an enabled provider name. Preview does
+not import movie fields and returns an actor-bound review token, allowlisted
+before/after fields and opaque image choices. `metadata/title/apply` accepts a
+request UUID and `{plan_id, fields, images}` selection, never incoming values or
+URLs. The worker validates the group snapshot and commits reviewed overrides,
+image links and an exact-retry receipt atomically. No new schema/table is
+required.
+
+Options also provide a normalized search suggestion, a bounded positive
+projection of the current Library year/credits, a group snapshot and
+per-provider unavailability booleans. Administrator
+`metadata/title/availability` accepts a request UUID and
+`{title_id, provider, snapshot, unavailable}` data object. It atomically updates
+protected per-provider flags across versions and stores an
+actor/source/payload-bound retry receipt. It changes no title identity or cached
+provider facts, and blocks stale automatic conflict/cache writes for a marked
+provider. The private flag is not added to portable imports or household detail
+projections.
 
 `GET /api/kaleidescape_companion/{entry_id}/{dataset_id}/metadata/review/{plan_id}/image/{choice}`
 is an administrator-only, no-store thumbnail route. It resolves a staged

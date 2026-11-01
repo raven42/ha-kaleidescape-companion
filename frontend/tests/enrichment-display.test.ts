@@ -168,7 +168,7 @@ it("defaults to the first quality-ranked version rather than the summary row and
     [...root.querySelectorAll(".movie-heading-badges .collection-badge")].map(
       (badge) => badge.textContent!.trim(),
     ),
-  ).toEqual(["Family", "Favorites"]);
+  ).toEqual(["Watched", "Favorite", "Family", "Favorites"]);
   expect(root.querySelector(".movie-version-count")).toBeNull();
   expect(root.querySelector(".movie-intro")!.textContent).not.toContain(
     "2 versions",

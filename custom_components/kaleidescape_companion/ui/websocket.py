@@ -123,6 +123,7 @@ def async_register_commands(hass: HomeAssistant) -> None:
             p.Required("query"): str,
         },
         "metadata/title/apply": {**mutations, p.Required("data"): dict},
+        "metadata/title/availability": {**mutations, p.Required("data"): dict},
         "library/edit/reset": {
             **mutations,
             p.Required("title_id"): str,
@@ -436,6 +437,7 @@ async def async_handle(
                         | "metadata/title/preview"
                         | "metadata/title/search"
                         | "metadata/title/apply"
+                        | "metadata/title/availability"
                     ):
                         library = get_library(hass, msg["entry_id"], runtime)
                         if runtime.enrichment is None:
@@ -457,6 +459,10 @@ async def async_handle(
                         elif operation.endswith("search"):
                             result = await manager.search(
                                 user, msg["title_id"], msg["provider"], msg["query"]
+                            )
+                        elif operation.endswith("availability"):
+                            result = await manager.availability(
+                                user, msg["request_id"], msg["data"]
                             )
                         else:
                             result = await manager.apply(
@@ -1073,6 +1079,7 @@ MUTATIONS = {
     "metadata/title/preview": (Subsystem.METADATA, Operation.SCRAPE),
     "metadata/title/search": (Subsystem.METADATA, Operation.SCRAPE),
     "metadata/title/apply": (Subsystem.METADATA, Operation.UPDATE),
+    "metadata/title/availability": (Subsystem.METADATA, Operation.UPDATE),
     "calendar/maintain": (Subsystem.CALENDAR, Operation.SYNC),
     "calendar/sync": (Subsystem.CALENDAR, Operation.EXPORT),
     "calendar/cancel": (Subsystem.CALENDAR, Operation.PAUSE),

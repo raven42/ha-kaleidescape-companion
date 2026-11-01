@@ -46,13 +46,14 @@ CATEGORIES = {
     "browsing": [
         *[
             f"{area}:{profile}"
-            for area in ("library", "journal", "database", "search")
+            for area in ("library", "journal", "database", "search", "interface")
             for profile in ("desktop", "tablet", "mobile")
         ],
         "library",
         "journal",
         "database",
         "search",
+        "interface",
     ],
     "shared": ["hidden_collections"],
     "logging": ["level", "log_values"],

@@ -47,6 +47,31 @@ HISTORY_DESCRIPTIONS = tuple(
 
 LIBRARY_DESCRIPTIONS = (
     SensorEntityDescription(
+        key="last_scrape_date",
+        translation_key="last_scrape_date",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    *(
+        SensorEntityDescription(
+            key=key,
+            translation_key=key,
+            icon=icon,
+            suggested_display_precision=0,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            state_class=(
+                SensorStateClass.TOTAL_INCREASING
+                if key == "scraper_failures"
+                else SensorStateClass.MEASUREMENT
+            ),
+        )
+        for key, icon in (
+            ("scraper_failures", "mdi:alert-circle-outline"),
+            ("scraper_conflicts", "mdi:movie-search-outline"),
+            ("missing_artwork", "mdi:image-off-outline"),
+        )
+    ),
+    SensorEntityDescription(
         key="total_movies",
         translation_key="total_movies",
         icon="mdi:movie-open",
@@ -162,11 +187,12 @@ class LibraryCoordinator(DataUpdateCoordinator[dict]):
             if source != self.source:
                 raise UpdateFailed("Library settings changed during refresh")
             data["source"] = source  # Internal scope guard; never an entity attribute.
-            stamp = data["last_library_sync"]
-            parsed = datetime.fromisoformat(stamp) if stamp else None
-            if parsed is not None and parsed.utcoffset() is None:
-                raise ValueError("Stored sync time must have a timezone")
-            data["last_library_sync"] = parsed
+            for key in ("last_library_sync", "last_scrape_date"):
+                stamp = data[key]
+                parsed = datetime.fromisoformat(stamp) if stamp else None
+                if parsed is not None and parsed.utcoffset() is None:
+                    raise ValueError("Stored sync time must have a timezone")
+                data[key] = parsed
             return data
         except (JournalError, ValueError) as error:
             raise UpdateFailed("Library summary is unavailable") from error

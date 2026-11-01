@@ -112,6 +112,15 @@ export class TitleEdit extends LitElement {
       this.requestUpdate();
     }
   }
+  confirmNavigation() {
+    if (this.busy || this.pending) return false;
+    return (
+      !this.opened ||
+      !this.review ||
+      (!this.restoring && !Object.keys(this.patch()).length) ||
+      window.confirm("Discard your unsaved Library changes?")
+    );
+  }
   private report(error: unknown) {
     this.error = errorMessage(error);
     if (errorCode(error) === "unauthorized") {
@@ -241,6 +250,7 @@ export class TitleEdit extends LitElement {
     if (!this.scope?.permissions.edit) return nothing;
     return html`${iconAction("Edit details", "edit", this.blocked || this.busy || !!this.pending, () => this.open())}
       <dialog
+        data-admin-dialog
         class="inset-dialog"
         aria-labelledby="library-edit-title"
         @click=${dismissBackdrop}

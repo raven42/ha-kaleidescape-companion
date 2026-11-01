@@ -13,6 +13,7 @@ export function landingPage(
   fallback: string | undefined,
   admin: boolean,
   library: boolean,
+  useCurrentPage = true,
 ): Page {
   const allowed = (page: string | null | undefined): page is Page =>
     pages.includes(page as Page) &&
@@ -21,7 +22,9 @@ export function landingPage(
       page === "journal" ||
       page === "library") &&
     (page !== "library" || library);
-  const requested = new URL(location.href).searchParams.get("companion_page");
+  const requested = useCurrentPage
+    ? new URL(location.href).searchParams.get("companion_page")
+    : null;
   return allowed(requested)
     ? requested
     : allowed(fallback)

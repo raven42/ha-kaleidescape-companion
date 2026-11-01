@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 
 from ..core.models import JournalError
 from ..library.store import changed
+from .availability import for_group
 from .matching import bindings, reference
 
 PROVIDERS = {"kaleidescape", "tmdb"}
@@ -148,6 +149,8 @@ def candidates(db, source):
         ):
             if row[field]:
                 entry["enrichment"][provider] = {"fetched_at": row[field]}
+    for group, entry in groups.items():
+        entry["unavailable"] = sorted(for_group(db, source, group))
     return list(groups.values())
 
 
@@ -164,6 +167,7 @@ def save(db, source, title_id, provider, metadata):
     ).fetchone()
     if (
         row is None
+        or provider in for_group(db, source, row["source_group"])
         or db.execute(
             "SELECT 1 FROM library WHERE source_id=? AND source_group=? "
             "AND json_extract(enrichment,'$.source_only')=1 LIMIT 1",

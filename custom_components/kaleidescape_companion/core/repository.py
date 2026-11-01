@@ -458,6 +458,16 @@ class JournalRepository:
     async def async_enrichment(self, operation, *args):
         from ..enrichment import review_store, store
 
+        if operation == "availability":
+            from ..enrichment.availability import change
+
+            return await self._call(self._library_write, change, *args)
+
+        if operation == "activity":
+            from ..enrichment.activity import record
+
+            return await self._call(self._library_write, record, *args)
+
         if operation == "statistics":
             return await self._call(self._search_read, store.statistics, *args)
         if operation == "candidates":

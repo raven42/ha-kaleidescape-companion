@@ -1,5 +1,39 @@
 # Changelog
 
+## Unreleased — Basic and Advanced view
+
+- Replace the Library-only system-button option with a main-tab Basic/Advanced
+  switch for administrators, saved per user and screen profile.
+- Reuse the household interface in Basic mode across all views; Advanced shows
+  management features. Leaving an admin-only page/dialog returns to the landing
+  page while retaining draft and pending-write protections.
+
+## Unreleased — Calendar poster spacing
+
+- Fill calendar days vertically with 5 px poster-stack insets and overlay the
+  date label, preserving stacked covers and hover/focus selection.
+
+## Unreleased — Scraper comparison and unavailable providers
+
+- Dismiss icon tooltips on activation so they do not linger after closing a
+  dialog; retain hover and keyboard focus labels.
+
+- Remove a trailing Director's Cut suffix from suggested scrape searches, and
+  show the current Library year, directors and top cast for comparison.
+- Add a reversible per-movie/provider no-data flag, skipping automatic requests
+  and excluding that provider from conflicts and missing-data warnings while
+  preserving cached metadata and historical failure totals.
+
+## Unreleased — Scraper sensors and collection badges
+
+- Add last scrape date, persistent scraper failure total, current scraper title
+  conflicts and missing poster/backdrop counts. Count each title once for
+  conflicts and missing artwork, across available versions.
+- Use compact colored collection/status pills with matching local icons,
+  including In progress; preserve clickable filters and cover corner flags.
+- Reduce collection/status icon size and padding to match other inline badges,
+  with the same height as format and rating badges in movie details.
+
 ## Unreleased — Movie actions and image editing
 
 - Add themed icon actions with accessible hover/focus labels, green Power On and

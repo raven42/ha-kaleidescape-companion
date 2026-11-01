@@ -96,6 +96,22 @@ directors, writers, producers, studios, genres, synopsis and provider-specific
 scores. **Compare values** shows current and incoming data. No Library data
 changes until **Apply selected data**.
 
+The suggested **Title search** removes a trailing `(Director's Cut)` suffix
+(also accepting the typographic apostrophe) without changing the Library title.
+The dialog shows the current Library title, year, up to five directors and top
+five cast members above the results for comparison.
+
+For a provider that has no matching data, choose **Mark no scraper data
+available**. This administrator-only flag applies to that provider across the
+movie's versions, including returning versions. It clears that provider's
+conflicts and missing-data warning and skips future automatic attempts, so it
+does not create new scrape failures. Other providers and same-name remakes are
+unaffected. The provider remains selectable for an explicit manual search.
+**Clear no-data flag** resumes automatic attempts; a manual import does not
+silently clear the flag. Existing cached data is preserved, and the cumulative
+historical failure counter is not decremented. Availability saves require a
+current group snapshot and support exact retry after an uncertain response.
+
 With TMDB enabled, **Edit Artwork** opens the same review flow for images only.
 It still requires configured TMDB credentials and **Sync artwork**. **Poster**
 and **Backdrop** previews preserve the entire image and its aspect ratio. If the
@@ -136,11 +152,11 @@ credential, rate-limit and provider-format errors remain operational failures,
 without declaring a false identity conflict. A successful refresh or approved
 match clears that provider's conflict. The Library shows a centered warning
 overlay on affected covers and a warning in List view for administrators with
-**Options → Show system buttons** enabled, independently of badge toggles.
-Standard users see no warning overlay. **Filters → Scraper conflicts only** is a
-sticky personal filter. The indicator considers enabled providers needed by
-current field-source preferences; disabling a provider hides its unresolved
-indicator without erasing its record.
+**Advanced view** enabled, independently of badge toggles. Standard users see no
+warning overlay. **Filters → Scraper conflicts only** is a sticky personal
+filter. The indicator considers enabled providers needed by current field-source
+preferences; disabling a provider hides its unresolved indicator without erasing
+its record.
 
 Store title search uses its anonymous public search page and the public
 application headers needed by that page's JSON search route. It does not log in

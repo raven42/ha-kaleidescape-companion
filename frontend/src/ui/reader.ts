@@ -16,6 +16,7 @@ import "../playback/now-playing";
 import "./journal-options";
 import type { JournalOptionsValue } from "./journal-options";
 import type { LibraryCriterion } from "../library/criteria";
+import type { KaleidescapeLibrary } from "../library/library";
 
 export class KaleidescapeReader extends LitElement {
   constructor() {
@@ -63,6 +64,26 @@ export class KaleidescapeReader extends LitElement {
   private playbackPlayer = "";
   private activePage: "now-playing" | "journal" | "library" = "journal";
   private navigationReady = false;
+  private controlLocked = false;
+
+  confirmNavigation() {
+    return (
+      !this.controlLocked &&
+      (this.renderRoot
+        .querySelector<KaleidescapeLibrary>("kaleidescape-library")
+        ?.confirmNavigation() ??
+        true)
+    );
+  }
+  private announcePage() {
+    this.dispatchEvent(
+      new CustomEvent("page-changed", {
+        detail: this.activePage,
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
 
   protected willUpdate(changed: PropertyValues) {
     if (!changed.has("hass") && !changed.has("client")) return;
@@ -95,6 +116,7 @@ export class KaleidescapeReader extends LitElement {
     this.bind(null);
   }
   private clear() {
+    this.controlLocked = false;
     this.generation++;
     this.scope = null;
     this.playbackPlayer = "";
@@ -170,6 +192,7 @@ export class KaleidescapeReader extends LitElement {
       if (this.activePage === "library" && !this.scope.library_enabled)
         this.activePage = "journal";
       rememberPage(this.activePage);
+      this.announcePage();
       await this.load(undefined, generation);
     } catch (error) {
       if (generation === this.generation) this.fail(error);
@@ -250,7 +273,11 @@ export class KaleidescapeReader extends LitElement {
       libraryCriterion?: LibraryCriterion;
     },
   ) {
-    if (page === "library" && !this.scope?.library_enabled) return;
+    if (
+      this.controlLocked ||
+      (page === "library" && !this.scope?.library_enabled)
+    )
+      return;
     this.selected = null;
     this.detailLoading = false;
     this.detailRequest++;
@@ -265,6 +292,7 @@ export class KaleidescapeReader extends LitElement {
       void this.load();
     }
     rememberPage(page);
+    this.announcePage();
     this.requestUpdate();
   }
   private tabKey(event: KeyboardEvent) {
@@ -305,16 +333,24 @@ export class KaleidescapeReader extends LitElement {
         </div>
       </header>
       ${this.error ? html`<p role="alert" class="error">${this.error}</p>` : nothing}
-      <nav
-        class="page-tabs"
-        role="tablist"
-        aria-label="Companion pages"
-        @keydown=${this.tabKey}
-      >
-        ${(["now-playing", "library", "journal"] as const).map((page) => html`<button id=${`reader-${page}`} role="tab" aria-controls="reader-content" aria-selected=${this.activePage === page} tabindex=${this.activePage === page ? 0 : -1} ?disabled=${page === "library" && !this.scope?.library_enabled} @click=${() => this.selectPage(page)}>${page === "now-playing" ? "Now Playing" : page === "journal" ? "Journal" : "Library"}</button>`)}
-      </nav>
+      <div class="page-navigation">
+        <nav
+          class="page-tabs"
+          role="tablist"
+          aria-label="Companion pages"
+          @keydown=${this.tabKey}
+        >
+          ${(["now-playing", "library", "journal"] as const).map((page) => html`<button id=${`reader-${page}`} role="tab" aria-controls="reader-content" aria-selected=${this.activePage === page} tabindex=${this.activePage === page ? 0 : -1} ?disabled=${page === "library" && !this.scope?.library_enabled} @click=${() => this.selectPage(page)}>${page === "now-playing" ? "Now Playing" : page === "journal" ? "Journal" : "Library"}</button>`)}
+        </nav>
+        <span class="view-mode-slot"><slot name="view-mode"></slot></span>
+      </div>
       <section
         id="reader-content"
+        @control-lock=${(event: CustomEvent<boolean>) => {
+          if (this.controlLocked === event.detail) return;
+          this.controlLocked = event.detail;
+          this.requestUpdate();
+        }}
         role="tabpanel"
         aria-labelledby=${`reader-${this.activePage}`}
         @playback-started=${(event: CustomEvent<string>) => {

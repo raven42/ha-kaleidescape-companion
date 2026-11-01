@@ -469,19 +469,50 @@ export const libraryStyles = css`
   .movie-heading-badges {
     margin-bottom: 12px;
   }
-  .movie-status {
-    border-radius: 999px;
-    min-height: 28px;
-    padding: 2px 12px;
-    background: var(--surface);
-  }
   .collection-badge {
+    --badge-color: #9aafc1;
+    --badge-tint: #334453;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     max-width: 100%;
     white-space: normal;
     overflow-wrap: anywhere;
-    font-weight: 500;
-    border: 1px solid var(--line);
-    background: var(--surface);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.3;
+    padding: 2px 6px;
+    min-height: 0;
+    border-radius: 999px;
+    border: 1px solid var(--badge-color);
+    background: linear-gradient(150deg, var(--badge-tint), #101820);
+    color: #fff;
+    box-shadow: inset 0 1px 3px #ffffff18;
+  }
+  .collection-badge svg {
+    width: 14px;
+    height: 14px;
+    flex: none;
+  }
+  .collection-new {
+    --badge-color: #27c4f2;
+    --badge-tint: #086f95;
+  }
+  .collection-unwatched {
+    --badge-color: #ffc107;
+    --badge-tint: #795b00;
+  }
+  .collection-watched {
+    --badge-color: #4ee16a;
+    --badge-tint: #176d30;
+  }
+  .collection-favorite {
+    --badge-color: #c585f4;
+    --badge-tint: #64338b;
+  }
+  .collection-progress {
+    --badge-color: #ffa94d;
+    --badge-tint: #86501b;
   }
   .movie-dialog .movie-body {
     grid-template-columns: minmax(130px, 190px) minmax(0, 1fr);
@@ -746,7 +777,8 @@ export const libraryStyles = css`
     border-radius: 3px;
     vertical-align: baseline;
   }
-  .detail-badges button {
+  .detail-badges button,
+  .detail-badges .collection-badge {
     min-height: 28px;
   }
   .detail-link:hover:not(:disabled) {

@@ -235,6 +235,7 @@ export class LibraryCollectionAdd extends LitElement {
     return html`${iconAction("Collection", "collection", this.blocked || this.busy, () => this.open(), "collection-button")}
       ${this.notice ? html`<p role="status">${this.notice}</p>` : nothing}
       <dialog
+        data-admin-dialog
         class="database-dialog"
         @click=${dismissBackdrop}
         @cancel=${this.close}

@@ -52,6 +52,22 @@ async function editor() {
   );
   return { client, root: element.shadowRoot! };
 }
+it("allows a mode change from a settled editor while protecting unsaved changes", async () => {
+  const { root } = await editor();
+  expect(element.confirmNavigation()).toBe(true);
+  const title = root.querySelector<HTMLInputElement>('[name="title"]')!;
+  title.value = "Unsaved fictional title";
+  title.dispatchEvent(new Event("input", { bubbles: true }));
+  const original = window.confirm;
+  try {
+    window.confirm = vi.fn(() => false);
+    expect(element.confirmNavigation()).toBe(false);
+    window.confirm = vi.fn(() => true);
+    expect(element.confirmNavigation()).toBe(true);
+  } finally {
+    window.confirm = original;
+  }
+});
 it("restricts editing to display fields, locks drafts, and retries exactly after an uncertain save", async () => {
   const { client, root } = await editor();
   expect(root.querySelector('[name="id"]')).toBeNull();

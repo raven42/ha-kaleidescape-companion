@@ -82,6 +82,74 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+it("prefills the cleaned search title and shows current Library credits for comparison", async () => {
+  vi.mocked(element.client!.titleScrapeOptions).mockResolvedValue({
+    title: "Fictional Voyage (Director's Cut)",
+    search_title: "Fictional Voyage",
+    current: {
+      title: "Fictional Voyage (Director's Cut)",
+      year: 2025,
+      directors: ["Example Director"],
+      actors: ["Lead Example", "Supporting Example"],
+    },
+    providers: [{ id: "tmdb", label: "TMDB", available: true }],
+    artwork_enabled: true,
+  });
+  await open();
+  expect(
+    root().querySelector<HTMLInputElement>('[name="scraper_query"]')!.value,
+  ).toBe("Fictional Voyage");
+  const current = root().querySelector(".current-movie")!;
+  expect(current.textContent).toContain("Fictional Voyage (Director's Cut)");
+  expect(current.textContent).toContain("2025");
+  expect(current.textContent).toContain("Example Director");
+  expect(current.textContent).toContain("Lead Example, Supporting Example");
+});
+
+it.each([false, true])(
+  "saves a provider no-data flag with exact retry (previously marked: %s)",
+  async (marked) => {
+    vi.mocked(element.client!.titleScrapeOptions).mockResolvedValue({
+      snapshot: "b".repeat(64),
+      providers: [
+        {
+          id: "tmdb",
+          label: "TMDB",
+          available: true,
+          unavailable: marked,
+          missing_data: false,
+        },
+      ],
+      artwork_enabled: true,
+    });
+    const apply = vi
+      .spyOn(element.client!, "applyTitleScrape")
+      .mockRejectedValueOnce(new ApiError("connection_lost"))
+      .mockResolvedValue({ title_id: element.versionId, updated_count: 2 });
+    await open();
+    button(
+      marked ? "Clear no-data flag" : "Mark no scraper data available",
+    ).click();
+    await flush();
+    const pending = apply.mock.calls[0][0];
+    expect(pending.message.type).toContain("metadata/title/availability");
+    expect(pending.message.data).toEqual({
+      title_id: element.versionId,
+      provider: "tmdb",
+      snapshot: "b".repeat(64),
+      unavailable: !marked,
+    });
+    expect(
+      root().querySelector<HTMLButtonElement>(".dialog-close")!.disabled,
+    ).toBe(true);
+    button("Retry exact apply").click();
+    await flush();
+    expect(apply.mock.calls[1][0]).toBe(pending);
+    expect(root().querySelector<HTMLDialogElement>("dialog")!.open).toBe(false);
+    expect(element.client!.titleScrapePreview).not.toHaveBeenCalled();
+  },
+);
+
 it.each([false, true])(
   "defaults a missing backdrop only (existing: %s)",
   async (existing) => {

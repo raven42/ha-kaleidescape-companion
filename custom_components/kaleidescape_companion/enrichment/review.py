@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import re
 import time
 from contextlib import asynccontextmanager
 from uuid import uuid4
@@ -17,6 +18,13 @@ from .matching import REASONS, reference
 from .review_store import REVIEW_FIELDS, selection
 
 REVIEW_SECONDS = 20 * 60
+
+
+def search_title(title):
+    """Remove only a trailing edition suffix; leave the Library identity intact."""
+    return re.sub(
+        r"\s*\(director['’]s cut\)\s*$", "", title, flags=re.IGNORECASE
+    ).strip()[:200]
 
 
 class TitleReviews:
@@ -54,7 +62,9 @@ class TitleReviews:
                     "id": provider,
                     "label": label,
                     "available": self.enabled(provider),
-                    "missing_data": provider not in target["cached_providers"],
+                    "missing_data": provider not in target["cached_providers"]
+                    and provider not in target["unavailable"],
+                    "unavailable": provider in target["unavailable"],
                 }
                 for provider, label in (
                     ("kaleidescape", "Kaleidescape store"),
@@ -68,7 +78,30 @@ class TitleReviews:
             ],
             "artwork_enabled": bool(self.parent.config.get("library_sync_artwork")),
             "title": target["title"],
+            "search_title": search_title(target["comparison"]["title"]),
+            "current": target["comparison"],
+            "snapshot": target["snapshot"],
         }
+
+    async def availability(self, actor, request, data):
+        self.ready(actor)
+        provider = data.get("provider") if isinstance(data, dict) else None
+        if not isinstance(provider, str) or provider not in {"tmdb", "kaleidescape"}:
+            raise invalid("Choose a supported scraper")
+        if not self.parent.config.get(
+            "metadata_tmdb_enabled" if provider == "tmdb" else "metadata_store_enabled"
+        ):
+            raise JournalError("metadata_disabled", "Enable this scraper first")
+        result = await self.parent.repository.async_enrichment(
+            "availability",
+            self.parent.source,
+            actor.id,
+            request,
+            data,
+            lambda: self.ready(actor),
+        )
+        self.ready(actor)
+        return result
 
     @asynccontextmanager
     async def worker(self, actor, title):
@@ -90,6 +123,7 @@ class TitleReviews:
         child.review_title = title
         task = asyncio.current_task()
         self.jobs[task] = child
+        completed, failed = False, False
         try:
             async with asyncio.timeout(180), self.slots:
                 self.ready(actor)
@@ -101,7 +135,9 @@ class TitleReviews:
                 ):
                     yield child
                 self.ready(actor)
+                completed = True
         except ProviderError as error:
+            failed = True
             raise JournalError(
                 str(error),
                 "Provider data could not be retrieved; check the operation logs",
@@ -114,6 +150,7 @@ class TitleReviews:
             TypeError,
             KeyError,
         ) as error:
+            failed = True
             raise JournalError(
                 "metadata_unavailable",
                 "Metadata retrieval failed; check the operation logs",
@@ -123,6 +160,8 @@ class TitleReviews:
                 child.session.detach()
                 child.session = None
             self.jobs.pop(task, None)
+            if completed or failed:
+                await self.parent.record_activity(failed)
 
     def plan(self, actor, token):
         self.ready(actor)
@@ -189,7 +228,9 @@ class TitleReviews:
                         else await client.providers.metadata(
                             provider,
                             MovieQuery(
-                                target["title"], target["year"], target["href"] or ""
+                                search_title(target["title"]),
+                                target["year"],
+                                target["href"] or "",
                             ),
                         )
                     )
@@ -208,7 +249,9 @@ class TitleReviews:
                 )
         if result is None:
             await self.parent.mark_conflict(target, provider, reason)
-            return await self.search(actor, title, provider, target["title"][:200])
+            return await self.search(
+                actor, title, provider, search_title(target["title"])
+            )
         if len(json.dumps(result).encode()) > 128 * 1024:
             raise JournalError("metadata_limit", "Provider metadata is too large")
         choices = {

@@ -4,6 +4,7 @@ import json
 from datetime import UTC, datetime
 
 from ..core.models import JournalError
+from .availability import for_group, marked
 from .selection import OPTIONS
 
 REASONS = {
@@ -39,7 +40,7 @@ def has_conflict(encoded, sources):
     for field, choices in OPTIONS.items():
         preferred = sources.get(field, "auto")
         desired.update((set(choices) if preferred == "auto" else {preferred}) & enabled)
-    return bool(desired & enrichment.get("conflicts", {}).keys())
+    return bool((desired - marked(enrichment)) & enrichment.get("conflicts", {}).keys())
 
 
 def conflict(db, source, id, provider, reason, expected):
@@ -55,6 +56,7 @@ def conflict(db, source, id, provider, reason, expected):
         row["title"] != expected["title"]
         or row["source_group"] != expected.get("source_group", expected.get("group"))
         or value.get("source_only")
+        or provider in for_group(db, source, row["source_group"])
         or bindings(db, source, row["source_group"]).get(provider)
         != expected.get("matches", {}).get(provider)
     ):
