@@ -961,6 +961,16 @@ it("overlays scraper conflicts independently of badges and persists a conflicts-
   expect(
     root().querySelector(".cover-tile > .scraper-conflict-icon"),
   ).toBeTruthy();
+  root()
+    .querySelector<HTMLInputElement>('[name="show_system_buttons"]')!
+    .click();
+  await flush();
+  expect(transport.uiPreferences.show_system_buttons).toBe(false);
+  expect(root().querySelector(".scraper-conflict-icon")).toBeNull();
+  root()
+    .querySelector<HTMLInputElement>('[name="show_system_buttons"]')!
+    .click();
+  await flush();
   modalClose(root()).click();
   button("Filters").click();
   await flush();
@@ -972,4 +982,18 @@ it("overlays scraper conflicts independently of badges and persists a conflicts-
   button("Clear Filter").click();
   await flush();
   expect(transport.uiPreferences.scraper_conflict).toBe(false);
+});
+
+it("hides conflict overlays and system-button options from standard users", async () => {
+  transport.libraryTitles[0].scraper_conflict = true;
+  element.scope = {
+    ...info,
+    library_enabled: true,
+    permissions: { read: true, edit: false, export: false },
+  };
+  await flush();
+  expect(root().querySelector(".scraper-conflict-icon")).toBeNull();
+  button("Options").click();
+  await flush();
+  expect(root().querySelector('[name="show_system_buttons"]')).toBeNull();
 });

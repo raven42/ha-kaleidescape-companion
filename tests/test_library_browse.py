@@ -27,6 +27,27 @@ class GroupedLibraryTest(unittest.IsolatedAsyncioTestCase):
     page = library_tests.LibraryStorageTest.page
     assert_error = library_tests.LibraryStorageTest.assert_error
 
+    async def test_group_ratings_include_versions_beyond_the_current_detail_page(self):
+        await self.repository.async_library_catalog(
+            ORIGIN,
+            [
+                {
+                    **ROWS[0],
+                    "source_handle": f"version-{index}",
+                    "rating": "R" if index == 59 else "PG",
+                    "edition": "SD" if index == 59 else "4K",
+                    "formats": ["SD" if index == 59 else "4K"],
+                }
+                for index in range(60)
+            ],
+        )
+        group = (await self.page(grouped=True))["items"][0]
+        self.assertEqual(group["content_ratings"], ["PG", "R"])
+        details = await self.repository.async_library_versions(SOURCE, group["id"])
+        self.assertEqual(len(details["items"]), 50)
+        self.assertEqual({row["rating"] for row in details["items"]}, {"PG"})
+        self.assertEqual(group["version_count"], 60)
+
     async def test_versions_sort_quality_then_runtime_with_stable_pagination(self):
         variants = [
             ("sd", "SD", 10000),

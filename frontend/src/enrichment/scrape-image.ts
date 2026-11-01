@@ -20,8 +20,11 @@ export class ScrapeImage extends LitElement {
       overflow: hidden;
       background: var(--secondary-background-color, #222);
       border-radius: 8px;
+      position: relative;
     }
     img {
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
       object-fit: contain;

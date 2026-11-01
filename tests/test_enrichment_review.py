@@ -21,6 +21,59 @@ class TitleReviewTest(unittest.IsolatedAsyncioTestCase):
     sync = enrichment.EnrichmentTest.sync
     call = enrichment.EnrichmentTest.call
 
+    async def test_options_report_missing_provider_data_for_the_exact_movie_group(self):
+        await self.setup_review()
+        self.metadata.reset_mock()
+        manager = self.sync(
+            library_host=enrichment.ORIGIN, metadata_store_enabled=True
+        ).title_reviews()
+        self.addAsyncCleanup(manager.parent.async_stop)
+        options = await manager.options(self.admin, self.id)
+        self.assertTrue(all(row["missing_data"] for row in options["providers"]))
+        self.metadata.assert_not_awaited()
+        await self.repo.async_enrichment(
+            "save", self.source, self.id, "tmdb", self.data
+        )
+        options = await manager.options(self.admin, self.id)
+        self.assertEqual(
+            {row["id"]: row["missing_data"] for row in options["providers"]},
+            {"tmdb": False, "kaleidescape": True},
+        )
+        versions = await self.repo.async_library_versions(self.source, self.id)
+        other_version = next(
+            row["id"] for row in versions["items"] if row["id"] != self.id
+        )
+        self.assertFalse(
+            next(
+                row
+                for row in (await manager.options(self.admin, other_version))[
+                    "providers"
+                ]
+                if row["id"] == "tmdb"
+            )["missing_data"]
+        )
+        remake = next(
+            row["id"]
+            for row in (await self.repo.async_inspect("library"))["items"]
+            if row["source_group"] == "remake"
+        )
+        self.assertTrue(
+            all(
+                row["missing_data"]
+                for row in (await manager.options(self.admin, remake))["providers"]
+            )
+        )
+
+    async def test_reviewed_provider_data_also_clears_missing_indicator(self):
+        review = await self.setup_review()
+        await self.manager.apply(
+            self.admin,
+            str(uuid4()),
+            {"plan_id": review["plan_id"], "fields": ["actors"], "images": {}},
+        )
+        options = await self.manager.options(self.admin, self.id)
+        self.assertFalse(options["providers"][0]["missing_data"])
+
     async def setup_review(self):
         await self.seed()
         self.manager = self.sync(
@@ -151,9 +204,16 @@ class TitleReviewTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_selected_images_use_shared_cache_and_survive_device_covers(self):
         review = await self.setup_review()
+        self.assertFalse(review["has_backdrop"])
         images = {image["kind"]: image["id"] for image in review["images"]}
         data = {"plan_id": review["plan_id"], "fields": [], "images": images}
         await self.manager.apply(self.admin, str(uuid4()), data)
+        with patch(
+            "custom_components.kaleidescape_companion.enrichment.review.Providers.resolve",
+            AsyncMock(return_value=self.data),
+        ):
+            refreshed = await self.manager.preview(self.admin, self.id, "tmdb")
+        self.assertTrue(refreshed["has_backdrop"])
         key = hashlib.sha256(enrichment.IMAGE).hexdigest()
         self.assertEqual((await self.repo.async_inspect("library_artwork"))["total"], 1)
         self.assertEqual(

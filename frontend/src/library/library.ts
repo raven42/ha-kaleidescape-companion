@@ -60,6 +60,7 @@ const DISPLAY_OPTIONS = [
   ["show_format", "Show format"],
   ["show_badges", "Show library badges"],
   ["show_rating", "Show rating on covers"],
+  ["show_system_buttons", "Show system buttons"],
   ["show_library_cost", "Show total library cost in footer"],
 ] as const;
 const STATUS: Record<string, string> = {
@@ -122,6 +123,7 @@ export class KaleidescapeLibrary extends LitElement {
   private collectionLocked = false;
   private controlLocked = false;
   private scrapeLocked = false;
+  private artworkLocked = false;
   private editLocked = false;
   private castLimit = 8;
   private get detailsLocked() {
@@ -129,6 +131,7 @@ export class KaleidescapeLibrary extends LitElement {
       this.collectionLocked ||
       this.controlLocked ||
       this.scrapeLocked ||
+      this.artworkLocked ||
       this.editLocked
     );
   }
@@ -158,6 +161,7 @@ export class KaleidescapeLibrary extends LitElement {
     show_format: true,
     show_badges: true,
     show_rating: false,
+    show_system_buttons: true,
     show_library_cost: false,
   };
   private entriesPerPage: number | "all" = 100;
@@ -356,6 +360,7 @@ export class KaleidescapeLibrary extends LitElement {
       show_format: true,
       show_badges: true,
       show_rating: false,
+      show_system_buttons: true,
       show_library_cost: false,
     };
     this.draft = {};
@@ -695,6 +700,7 @@ export class KaleidescapeLibrary extends LitElement {
     this.controlLocked =
       this.collectionLocked =
       this.scrapeLocked =
+      this.artworkLocked =
       this.editLocked =
         false;
     this.versionRequest++;
@@ -1187,7 +1193,8 @@ export class KaleidescapeLibrary extends LitElement {
         }
         ${DISPLAY_OPTIONS.filter(
           ([key]) =>
-            key !== "show_library_cost" || this.scope?.permissions.edit,
+            !["show_library_cost", "show_system_buttons"].includes(key) ||
+            this.scope?.permissions.edit,
         ).map(
           ([key, label]) =>
             html`<label class="check"
@@ -1413,7 +1420,7 @@ export class KaleidescapeLibrary extends LitElement {
       .version=${row}
       .revision=${this.versions?.revision ?? 0}
       .enabled=${!!this.info?.collection_add_enabled}
-      .blocked=${this.controlLocked || this.scrapeLocked || !!this.info?.pending_adds?.length}
+      .blocked=${this.controlLocked || this.scrapeLocked || this.artworkLocked || !!this.info?.pending_adds?.length}
       @collection-lock=${(event: CustomEvent<boolean>) => {
         if (event.detail !== this.collectionLocked) {
           this.collectionLocked = event.detail;
@@ -1438,7 +1445,9 @@ export class KaleidescapeLibrary extends LitElement {
     return hours ? `${hours}h ${minutes % 60}m` : `${minutes}m`;
   }
   private conflictIcon(item: LibrarySummary) {
-    return item.scraper_conflict
+    return this.scope?.permissions.edit &&
+      this.display.show_system_buttons &&
+      item.scraper_conflict
       ? html`<span
           class="scraper-conflict-icon"
           role="img"
@@ -1448,12 +1457,46 @@ export class KaleidescapeLibrary extends LitElement {
         >`
       : nothing;
   }
+  private renderScrapeAction(row: LibraryTitle, artworkOnly = false) {
+    return html`<kaleidescape-title-scrape
+      slot="collection"
+      .client=${this.client}
+      .scope=${this.scope}
+      .versionId=${row.id}
+      .artworkOnly=${artworkOnly}
+      .blocked=${this.controlLocked || this.collectionLocked || this.editLocked || (artworkOnly ? this.scrapeLocked : this.artworkLocked)}
+      @scrape-status-changed=${() => void this.load(this.page?.offset ?? 0, true)}
+      @scrape-lock=${(event: CustomEvent<boolean>) => {
+        const key = artworkOnly ? "artworkLocked" : "scrapeLocked";
+        if (event.detail !== this[key]) {
+          this[key] = event.detail;
+          this.requestUpdate();
+        }
+      }}
+      @metadata-changed=${async () => {
+        if (artworkOnly) this.artworkLocked = false;
+        else this.scrapeLocked = false;
+        this.versions = undefined;
+        await this.load(this.page?.offset ?? 0, true);
+        await this.loadVersions();
+        void this.refreshStatus();
+      }}
+    ></kaleidescape-title-scrape>`;
+  }
   private renderTitleDialog() {
     const group = this.selected;
     const row = this.activeVersion;
     const multiple = (this.versions?.total ?? group?.version_count ?? 1) > 1;
     const admin = this.scope?.permissions.edit;
     const locked = this.detailsLocked || this.checkingCollection;
+    const ratings = group?.content_ratings ?? [
+      ...new Set(
+        [
+          group?.rating,
+          ...(this.versions?.items ?? []).map((item) => item.rating),
+        ].filter((value): value is string => !!value?.trim()),
+      ),
+    ];
     const backdrop =
       row && "backdrop_key" in row
         ? row.backdrop_key
@@ -1493,8 +1536,8 @@ export class KaleidescapeLibrary extends LitElement {
                   ${row?.genres.length ? html` · ${row.genres.map((genre, index) => html`${index ? ", " : ""}${this.detailLink("genre", genre)}`)}` : nothing}
                 </p>
                 <div class="detail-badges movie-heading-badges">
-                  ${multiple ? nothing : renderFormatBadges(row ?? group, false, (value) => this.fromDetails("format", value), locked)}
-                  ${renderRatingBadge(row?.rating ?? group.rating, (value) => this.fromDetails("rating", value), locked)}
+                  ${renderFormatBadges(multiple ? group : (row ?? group), false, (value) => this.fromDetails("format", value), locked)}
+                  ${ratings.map((rating) => renderRatingBadge(rating, (value) => this.fromDetails("rating", value), locked))}
                   <button
                     class="movie-status"
                     ?disabled=${locked}
@@ -1503,6 +1546,18 @@ export class KaleidescapeLibrary extends LitElement {
                     ${STATUS[row?.watched_status ?? group.watched_status]}
                   </button>
                   ${renderStatusBadges(group, false, ["watched", "progress"])}
+                  ${group.collections.map(
+                    (collection) =>
+                      html`<button
+                        type="button"
+                        class="status-badge collection-badge"
+                        aria-label=${`Filter by collection: ${collectionLabel(collection)}`}
+                        ?disabled=${locked}
+                        @click=${() => this.fromDetails("collection", collection)}
+                      >
+                        ${collectionLabel(collection)}
+                      </button>`,
+                  )}
                 </div>
                 ${
                   row
@@ -1518,13 +1573,13 @@ export class KaleidescapeLibrary extends LitElement {
                           }
                         }}
                         >${this.renderCollectionAction(row)}${
-                          admin
+                          admin && this.display.show_system_buttons
                             ? html`<kaleidescape-title-edit
                                   slot="collection"
                                   .client=${this.client}
                                   .scope=${this.scope}
                                   .versionId=${row.id}
-                                  .blocked=${this.controlLocked || this.collectionLocked || this.scrapeLocked}
+                                  .blocked=${this.controlLocked || this.collectionLocked || this.scrapeLocked || this.artworkLocked}
                                   @edit-lock=${(
                                     event: CustomEvent<boolean>,
                                   ) => {
@@ -1543,40 +1598,14 @@ export class KaleidescapeLibrary extends LitElement {
                                     await this.loadVersions();
                                     void this.refreshStatus();
                                   }}
-                                ></kaleidescape-title-edit
-                                ><kaleidescape-title-scrape
-                                  slot="collection"
-                                  .client=${this.client}
-                                  .scope=${this.scope}
-                                  .versionId=${row.id}
-                                  .blocked=${this.controlLocked || this.collectionLocked || this.editLocked}
-                                  @scrape-status-changed=${() => void this.load(this.page?.offset ?? 0, true)}
-                                  @scrape-lock=${(
-                                    event: CustomEvent<boolean>,
-                                  ) => {
-                                    if (event.detail !== this.scrapeLocked) {
-                                      this.scrapeLocked = event.detail;
-                                      this.requestUpdate();
-                                    }
-                                  }}
-                                  @metadata-changed=${async () => {
-                                    this.scrapeLocked = false;
-                                    this.editLocked = false;
-                                    this.versions = undefined;
-                                    await this.load(
-                                      this.page?.offset ?? 0,
-                                      true,
-                                    );
-                                    await this.loadVersions();
-                                    void this.refreshStatus();
-                                  }}
-                                ></kaleidescape-title-scrape>`
+                                ></kaleidescape-title-edit>
+                                ${this.renderScrapeAction(row)}
+                                ${this.info?.metadata?.tmdb_enabled ? this.renderScrapeAction(row, true) : nothing}`
                             : nothing
                         }${renderRatings(row)}</kaleidescape-device-controls
                       >`
                     : nothing
                 }
-                ${(group.version_count ?? 1) > 1 ? html`<p class="movie-version-count muted">${counted(group.version_count!, "version")}</p>` : nothing}
                 ${this.versionsLoading ? html`<p role="status">Loading individual versions…</p>` : nothing}
                 ${
                   this.versionsError

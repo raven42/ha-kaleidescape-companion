@@ -24,6 +24,7 @@ LIBRARY_DEFAULTS = {
     "show_format": True,
     "show_badges": True,
     "show_rating": False,
+    "show_system_buttons": True,
     "show_library_cost": False,
     "cast_limit": 8,
     "widths": [360, 90, 260, 150, 140, 210],
@@ -83,6 +84,7 @@ def validate_library(patch, previous=None):
             "show_format",
             "show_badges",
             "show_rating",
+            "show_system_buttons",
             "show_library_cost",
             "scraper_conflict",
         )

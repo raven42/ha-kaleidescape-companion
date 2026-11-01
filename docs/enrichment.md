@@ -86,11 +86,22 @@ landscape downloads.
 
 Administrators can open a Library title and choose **Scrape title**. The popup
 lists only enabled scrapers; TMDB requires a configured credential. Missing
-Library years or store links can be resolved through manual title search. Choose
-a scraper, retrieve its data, then review the field checkboxes. Available fields
-include full cast, directors, writers, producers, studios, genres, synopsis and
-provider-specific scores. **Compare values** shows current and incoming data. No
-Library data changes until **Apply selected data**.
+saved data is marked with **⚠** beside the scraper name. This indicates no
+cached or reviewed data from that provider for this exact movie group, rather
+than requiring every optional field to be populated. Configured scrapers remain
+selectable so the missing data can be retrieved. Missing Library years or store
+links can be resolved through manual title search. Choose a scraper, retrieve
+its data, then review the field checkboxes. Available fields include full cast,
+directors, writers, producers, studios, genres, synopsis and provider-specific
+scores. **Compare values** shows current and incoming data. No Library data
+changes until **Apply selected data**.
+
+With TMDB enabled, **Edit Artwork** opens the same review flow for images only.
+It still requires configured TMDB credentials and **Sync artwork**. **Poster**
+and **Backdrop** previews preserve the entire image and its aspect ratio. If the
+movie has no current backdrop, its first available backdrop is selected by
+default; it is not saved until Apply. Existing backdrops default to keeping the
+current image. Image-only review leaves descriptive fields unchanged.
 
 If automatic matching finds no unique movie, the popup offers up to **eight**
 candidate movies. **Title search** also accepts a different title at any time.
@@ -124,11 +135,12 @@ attempted; older skipped attempts cannot be reconstructed. Transient network,
 credential, rate-limit and provider-format errors remain operational failures,
 without declaring a false identity conflict. A successful refresh or approved
 match clears that provider's conflict. The Library shows a centered warning
-overlay on affected covers, independently of badge toggles, and a warning in
-List view. **Filters → Scraper conflicts only** is a sticky personal filter. The
-indicator considers enabled providers needed by current field-source
-preferences; disabling a provider hides its unresolved indicator without erasing
-its record.
+overlay on affected covers and a warning in List view for administrators with
+**Options → Show system buttons** enabled, independently of badge toggles.
+Standard users see no warning overlay. **Filters → Scraper conflicts only** is a
+sticky personal filter. The indicator considers enabled providers needed by
+current field-source preferences; disabling a provider hides its unresolved
+indicator without erasing its record.
 
 Store title search uses its anonymous public search page and the public
 application headers needed by that page's JSON search route. It does not log in

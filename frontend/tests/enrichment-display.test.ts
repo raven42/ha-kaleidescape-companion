@@ -111,14 +111,20 @@ it("defaults to the first quality-ranked version rather than the summary row and
     client = transport.client();
   const lower = libraryTitle({
     edition: "HD",
+    rating: "PG",
+    collections: ["Family"],
     synopsis: "Lower-quality version",
   });
   const highest = libraryTitle({
     id: "b".repeat(64),
     edition: "4K Cinematic",
+    rating: "R",
+    collections: ["Favorites"],
     synopsis: "Highest-quality version",
   });
   transport.libraryTitles = [lower, highest];
+  transport.libraryGroups.set(lower.id, "fictional-work");
+  transport.libraryGroups.set(highest.id, "fictional-work");
   const versions = vi.spyOn(client, "libraryVersions").mockResolvedValue({
     items: [highest, lower],
     total: 2,
@@ -149,7 +155,24 @@ it("defaults to the first quality-ranked version rather than the summary row and
     "Lower-quality",
   );
   expect(root.querySelector(".movie-description .detail-badges")).toBeNull();
-  expect(root.querySelector(".movie-heading-badges .format-badge")).toBeNull();
+  expect(root.querySelector(".movie-heading-badges .format-hd")).toBeTruthy();
+  expect(
+    root.querySelector(".movie-heading-badges .format-cinematic"),
+  ).toBeTruthy();
+  expect(
+    [...root.querySelectorAll(".movie-heading-badges .rating-badge")].map(
+      (badge) => badge.textContent!.trim(),
+    ),
+  ).toEqual(["PG", "R"]);
+  expect(
+    [...root.querySelectorAll(".movie-heading-badges .collection-badge")].map(
+      (badge) => badge.textContent!.trim(),
+    ),
+  ).toEqual(["Family", "Favorites"]);
+  expect(root.querySelector(".movie-version-count")).toBeNull();
+  expect(root.querySelector(".movie-intro")!.textContent).not.toContain(
+    "2 versions",
+  );
   expect(root.querySelector(".version-format-badges .format-hd")).toBeTruthy();
   expect(root.querySelector(".version-format-badges .rating-badge")).toBeNull();
   expect(
@@ -171,4 +194,18 @@ it("defaults to the first quality-ranked version rather than the summary row and
       (button) => button.textContent!.trim() === "Next",
     ),
   ).toBe(false);
+  root
+    .querySelector<HTMLButtonElement>(
+      '.collection-badge[aria-label="Filter by collection: Family"]',
+    )!
+    .click();
+  await vi.waitFor(() =>
+    expect(root.querySelector<HTMLDialogElement>("#title-dialog")!.open).toBe(
+      false,
+    ),
+  );
+  expect(
+    transport.calls.filter((call) => call.type.endsWith("/library/list")).at(-1)
+      ?.filters,
+  ).toMatchObject({ query: "", collection: ["Family"] });
 });

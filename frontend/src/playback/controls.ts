@@ -11,6 +11,7 @@ import type {
   PreparedMutation,
 } from "../core/api";
 import { styles } from "../ui/styles";
+import { actionIcon } from "../ui/action-icons";
 import { remoteControls, remoteStyles } from "./remote";
 import { closeButton, dismissBackdrop } from "../ui/dialog";
 
@@ -67,6 +68,16 @@ export class DeviceControls extends LitElement {
         display: inline-flex;
         align-items: center;
         gap: 10px;
+      }
+      .play-movie.is-power {
+        background: #238548;
+        border-color: #238548;
+        color: #fff;
+      }
+      .play-movie.is-play {
+        background: #008fb5;
+        border-color: #008fb5;
+        color: #fff;
       }
       .spinner {
         display: inline-block;
@@ -539,23 +550,14 @@ export class DeviceControls extends LitElement {
                 <div class="movie-actions">
                   <button
                     type="button"
-                    class="primary play-movie"
+                    class=${`primary play-movie ${this.status?.ready ? "is-play" : "is-power"}`}
                     ?disabled=${disabled}
                     aria-busy=${this.waking || this.busy}
-                    title=${`Play on ${player?.name || "the selected player"}`}
+                    title=${`${this.status?.ready ? "Play on" : "Power on"} ${player?.name || "the selected player"}`}
                     @click=${() => (this.status && this.status.readiness !== "starting" ? this.prepare(this.status.ready ? "launch" : "power_on") : this.refresh())}
                   >
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <circle
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                      />
-                      <path d="M10 7v10l7-5z" fill="currentColor" /></svg
-                    >${this.waking ? html`<span class="spinner" aria-hidden="true">◌</span> Starting player…` : !this.status || this.status.readiness === "starting" ? "Check player" : this.status.ready ? "Play Movie" : "Power On"}</button
+                    ${actionIcon(this.status?.ready && !this.waking ? "play" : "power")}
+                    ${this.waking ? html`<span class="spinner" aria-hidden="true">◌</span> Starting player…` : !this.status || this.status.readiness === "starting" ? "Check player" : this.status.ready ? "Play" : "Power On"}</button
                   ><button
                     type="button"
                     ?disabled=${this.busy || this.waking || !!this.pending}

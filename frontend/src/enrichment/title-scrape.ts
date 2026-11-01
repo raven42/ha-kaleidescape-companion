@@ -12,6 +12,7 @@ import type {
 } from "../core/api";
 import { counted } from "../core/text";
 import { styles } from "../ui/styles";
+import { iconAction, iconActionStyles } from "../ui/action-icons";
 import { closeButton, dismissBackdrop } from "../ui/dialog";
 import { CoverQueue } from "../library/cover";
 import "./scrape-image";
@@ -37,9 +38,11 @@ export class TitleScrape extends LitElement {
     scope: { attribute: false },
     versionId: {},
     blocked: { type: Boolean },
+    artworkOnly: { type: Boolean },
   };
   static styles = [
     styles,
+    iconActionStyles,
     css`
       :host {
         display: inline-block;
@@ -138,10 +141,13 @@ export class TitleScrape extends LitElement {
       }
       kaleidescape-scrape-image {
         aspect-ratio: 2/3;
-        max-height: 180px;
+        width: 100%;
+        max-width: 160px;
+        margin-inline: auto;
       }
       [data-kind="backdrop"] kaleidescape-scrape-image {
         aspect-ratio: 16/9;
+        max-width: none;
       }
       .image-grid small {
         overflow-wrap: anywhere;
@@ -167,6 +173,7 @@ export class TitleScrape extends LitElement {
   scope?: JournalInfo;
   versionId = "";
   blocked = false;
+  artworkOnly = false;
   private options?: ScrapeOptions;
   private review?: ScrapeReview;
   private candidatesPage?: ScrapeMatches;
@@ -182,7 +189,11 @@ export class TitleScrape extends LitElement {
   private generation = 0;
   private queue = new CoverQueue();
   protected willUpdate(changed: PropertyValues) {
-    if (["client", "scope", "versionId"].some((key) => changed.has(key)))
+    if (
+      ["client", "scope", "versionId", "artworkOnly"].some((key) =>
+        changed.has(key),
+      )
+    )
       this.reset();
   }
   disconnectedCallback() {
@@ -236,10 +247,17 @@ export class TitleScrape extends LitElement {
         this.versionId,
       );
       if (generation !== this.generation) return;
-      this.options = options;
+      this.options = this.artworkOnly
+        ? {
+            ...options,
+            providers: options.providers.filter(
+              (provider) => provider.id === "tmdb",
+            ),
+          }
+        : options;
       this.query = options.title ?? "";
       this.provider =
-        options.providers.find((provider) => provider.available)?.id ?? "";
+        this.options.providers.find((provider) => provider.available)?.id ?? "";
     } catch (error) {
       if (generation === this.generation) this.report(error);
     } finally {
@@ -248,6 +266,13 @@ export class TitleScrape extends LitElement {
         this.requestUpdate();
       }
     }
+    if (
+      generation === this.generation &&
+      this.artworkOnly &&
+      this.provider &&
+      this.options?.artwork_enabled
+    )
+      await this.scrape();
   }
   private async scrape(choice = "") {
     if (!this.client || !this.scope || !this.provider || this.pending) return;
@@ -277,9 +302,16 @@ export class TitleScrape extends LitElement {
         return;
       }
       this.review = review;
-      this.fields = new Set(Object.keys(review.fields));
+      this.fields = new Set(this.artworkOnly ? [] : Object.keys(review.fields));
       this.images = {};
-      this.tab = "metadata";
+      const backdrop = review.images.find((image) => image.kind === "backdrop");
+      if (review.has_backdrop === false && backdrop)
+        this.images.backdrop = backdrop.id;
+      this.tab = this.artworkOnly
+        ? review.images.some((image) => image.kind === "poster")
+          ? "poster"
+          : "backdrop"
+        : "metadata";
       this.pages = { poster: 0, backdrop: 0 };
     } catch (error) {
       if (generation === this.generation) this.report(error);
@@ -405,6 +437,7 @@ export class TitleScrape extends LitElement {
   }
   private gallery(kind: "poster" | "backdrop") {
     const images = this.review!.images.filter((image) => image.kind === kind);
+    if (!images.length) return nothing;
     const start = this.pages[kind] * 6;
     return html`<p class="muted">
         Choose one image, or keep the current image.
@@ -426,6 +459,7 @@ export class TitleScrape extends LitElement {
           (image, index) =>
             html`<label class="candidate"
               ><kaleidescape-scrape-image
+                style=${Number.isFinite(image.width) && Number.isFinite(image.height) && image.width! > 0 && image.height! > 0 ? `aspect-ratio: ${image.width}/${image.height}` : ""}
                 .client=${this.client}
                 .scope=${this.scope}
                 .queue=${this.queue}
@@ -442,7 +476,7 @@ export class TitleScrape extends LitElement {
                     this.images[kind] = image.id;
                     this.requestUpdate();
                   }}
-                />${kind === "poster" ? "Artwork" : "Landscape"}
+                />${kind === "poster" ? "Poster" : "Backdrop"}
                 ${start + index + 1}</span
               ><small
                 >${image.width ?? "?"} × ${image.height ?? "?"}</small
@@ -516,13 +550,7 @@ export class TitleScrape extends LitElement {
   }
   protected render() {
     if (!this.scope?.permissions.edit) return nothing;
-    return html`<button
-        class="scrape-button"
-        ?disabled=${this.blocked || !!this.pending}
-        @click=${this.open}
-      >
-        Scrape title
-      </button>
+    return html`${iconAction(this.artworkOnly ? "Edit Artwork" : "Scrape title", this.artworkOnly ? "artwork" : "scrape", this.blocked || !!this.pending, () => this.open(), "scrape-button")}
       <dialog
         class="inset-dialog"
         aria-labelledby="scrape-title"
@@ -534,7 +562,7 @@ export class TitleScrape extends LitElement {
       >
         <div class="card-head">
           <h2 id="scrape-title">
-            ${this.review ? `Review scrape: ${this.review.title}` : "Scrape title"}
+            ${this.artworkOnly ? (this.review ? `Edit Artwork: ${this.review.title}` : "Edit Artwork") : this.review ? `Review scrape: ${this.review.title}` : "Scrape title"}
           </h2>
           ${closeButton(() => this.close(), !!this.pending)}
         </div>
@@ -543,12 +571,20 @@ export class TitleScrape extends LitElement {
         ${
           this.review
             ? html`${this.review.matched ? html`<p class="notice">Matched: <strong>${this.review.matched.title} (${this.review.matched.year})</strong>. This source choice will be saved for future scrapes.</p>` : nothing}
-                <p class="muted">
-                  Selected fields replace displayed data across this movie's
-                  versions and survive automatic scans. Identity, purchase and
-                  viewing data are preserved. TMDB cast follows billing order;
-                  other providers retain source order.
-                </p>
+                ${
+                  this.artworkOnly
+                    ? html`<p class="muted">
+                        Choose a poster and backdrop. Only selected images are
+                        applied; movie details are kept.
+                      </p>`
+                    : html`<p class="muted">
+                        Selected fields replace displayed data across this
+                        movie's versions and survive automatic scans. Identity,
+                        purchase and viewing data are preserved. TMDB cast
+                        follows billing order; other providers retain source
+                        order.
+                      </p>`
+                }
                 <div
                   class="page-tabs"
                   role="tablist"
@@ -562,17 +598,19 @@ export class TitleScrape extends LitElement {
                     ],
                     [
                       "poster",
-                      `Artwork (${this.review.images.filter((image) => image.kind === "poster").length})`,
+                      `Poster (${this.review.images.filter((image) => image.kind === "poster").length})`,
                     ],
                     [
                       "backdrop",
-                      `Landscape (${this.review.images.filter((image) => image.kind === "backdrop").length})`,
+                      `Backdrop (${this.review.images.filter((image) => image.kind === "backdrop").length})`,
                     ],
                   ]
-                    .filter(
-                      ([key]) =>
-                        key === "metadata" ||
-                        this.review!.images.some((image) => image.kind === key),
+                    .filter(([key]) =>
+                      key === "metadata"
+                        ? !this.artworkOnly
+                        : this.review!.images.some(
+                            (image) => image.kind === key,
+                          ),
                     )
                     .map(
                       ([key, label]) =>
@@ -648,7 +686,7 @@ ${Array.isArray(value.after) ? value.after.join(", ") : String(value.after)}</pr
                     : this.gallery(this.tab as "poster" | "backdrop")
                 }${!this.review.images.length ? html`<p class="muted">${this.review.artwork_enabled ? "This provider returned no image choices." : "Enable Sync artwork in Settings to retrieve image choices."}</p>` : nothing}`
             : this.options
-              ? html`<label
+              ? html`${this.artworkOnly && !this.options.artwork_enabled ? html`<p class="notice">Enable Sync artwork in Settings to retrieve image choices.</p>` : nothing}<label
                     >Enabled scraper<select
                       .value=${this.provider}
                       ?disabled=${this.busy}
@@ -662,9 +700,20 @@ ${Array.isArray(value.after) ? value.after.join(", ") : String(value.after)}</pr
                       }}
                     >
                       <option value="">Choose a scraper</option>
-                      ${this.options.providers.map((provider) => html`<option value=${provider.id} ?disabled=${!provider.available}>${provider.label}${provider.available ? "" : " · missing credential"}</option>`)}
+                      ${this.options.providers.map(
+                        (provider) =>
+                          html`<option
+                            value=${provider.id}
+                            ?disabled=${!provider.available}
+                            title=${provider.missing_data ? "No saved data from this scraper" : ""}
+                            aria-label=${[provider.label, provider.missing_data ? "no saved data" : "", provider.available ? "" : "missing credential"].filter(Boolean).join(" · ")}
+                          >
+                            ${provider.label}${provider.missing_data ? " ⚠" : ""}${provider.available ? "" : " · missing credential"}
+                          </option>`,
+                      )}
                     </select></label
                   >
+                  ${this.options.providers.some((provider) => provider.missing_data) ? html`<p class="muted">⚠ No saved data from this scraper.</p>` : nothing}
                   <form
                     class="match-search"
                     @submit=${(event: Event) => {
@@ -726,10 +775,10 @@ ${Array.isArray(value.after) ? value.after.join(", ") : String(value.after)}</pr
                 : nothing
           }<button
             class="primary"
-            ?disabled=${this.busy || (!this.review && !this.provider) || (!!this.review && !this.review.matched && !this.fields.size && !Object.keys(this.images).length)}
+            ?disabled=${this.busy || (this.artworkOnly && !this.options?.artwork_enabled) || (!this.review && !this.provider) || (!!this.review && (this.artworkOnly || !this.review.matched) && !this.fields.size && !Object.keys(this.images).length)}
             @click=${() => (this.review ? this.apply() : this.scrape())}
           >
-            ${this.pending ? "Retry exact apply" : this.review ? (this.review.matched && !this.fields.size && !Object.keys(this.images).length ? "Save match" : "Apply selected data") : this.candidatesPage ? "Try automatic match" : "Scrape title"}
+            ${this.pending ? "Retry exact apply" : this.review ? (this.artworkOnly ? "Apply images" : this.review.matched && !this.fields.size && !Object.keys(this.images).length ? "Save match" : "Apply selected data") : this.candidatesPage ? "Try automatic match" : "Scrape title"}
           </button>
         </div>
       </dialog>`;

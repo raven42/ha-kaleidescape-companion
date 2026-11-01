@@ -10,7 +10,7 @@ from ..core.security import private_directory
 from ..library.browse import library_versions
 from ..library.store import image_type, save_images
 from .matching import bindings
-from .store import REVIEW_FIELDS
+from .store import PROVIDERS, REVIEW_FIELDS
 
 
 def signature(rows):
@@ -60,6 +60,7 @@ def members(db, source, title):
 
 def target(db, source, title):
     rows = members(db, source, title)
+    enrichment = [json.loads(row["enrichment"]) for row in rows]
     selected = next(row for row in rows if row["id"] == title)
     current = library_versions(db, source, title)["items"]
     current = next((row for row in current if row["id"] == title), current[0])
@@ -90,8 +91,18 @@ def target(db, source, title):
         ),
         "href": href,
         "matches": bindings(db, source, selected["source_group"]),
+        "cached_providers": [
+            provider
+            for provider in sorted(PROVIDERS)
+            if any(
+                value.get(provider, {}).get("fetched_at")
+                or provider in value.get("reviewed", {}).get("providers", [])
+                for value in enrichment
+            )
+        ],
         "snapshot": signature(rows),
         "current": {key: current.get(key) for key in REVIEW_FIELDS},
+        "has_backdrop": bool(current.get("backdrop_key")),
     }
 
 

@@ -10,6 +10,7 @@ import type {
   CollectionAddResult,
 } from "../core/api";
 import { styles } from "../ui/styles";
+import { iconAction, iconActionStyles } from "../ui/action-icons";
 import { closeButton, dismissBackdrop } from "../ui/dialog";
 
 export class LibraryCollectionAdd extends LitElement {
@@ -23,16 +24,17 @@ export class LibraryCollectionAdd extends LitElement {
   };
   static styles = [
     styles,
+    iconActionStyles,
     css`
       .collection-button {
         border-radius: 999px;
-        padding: 10px 20px;
+        padding: 9px;
         min-height: 44px;
         line-height: 20px;
       }
       @media (max-width: 600px) {
         .collection-button {
-          padding-inline: 12px;
+          padding-inline: 9px;
           font-size: 13px;
         }
       }
@@ -230,13 +232,7 @@ export class LibraryCollectionAdd extends LitElement {
   protected render() {
     if (!this.scope?.permissions.edit || !this.version || !this.enabled)
       return nothing;
-    return html`<button
-        class="collection-button"
-        ?disabled=${this.blocked || this.busy}
-        @click=${this.open}
-      >
-        Collection
-      </button>
+    return html`${iconAction("Collection", "collection", this.blocked || this.busy, () => this.open(), "collection-button")}
       ${this.notice ? html`<p role="status">${this.notice}</p>` : nothing}
       <dialog
         class="database-dialog"

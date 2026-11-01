@@ -82,6 +82,65 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+it.each([false, true])(
+  "defaults a missing backdrop only (existing: %s)",
+  async (existing) => {
+    vi.mocked(element.client!.titleScrapePreview).mockResolvedValue({
+      ...structuredClone(review),
+      has_backdrop: existing,
+      images: [
+        ...review.images,
+        { id: "backdrop-1", kind: "backdrop", width: 780, height: 439 },
+      ],
+    });
+    const prepare = vi.spyOn(element.client!, "prepareTitleScrape");
+    await scrape();
+    button("Backdrop (1)").click();
+    await flush();
+    expect(
+      root().querySelector<HTMLInputElement>(".candidate input")!.checked,
+    ).toBe(!existing);
+    button("Apply selected data").click();
+    await flush();
+    expect(prepare.mock.calls[0][1].images).toEqual(
+      existing ? {} : { backdrop: "backdrop-1" },
+    );
+  },
+);
+
+it("opens a TMDB image-only review without selecting metadata", async () => {
+  element.artworkOnly = true;
+  await flush();
+  const prepare = vi.spyOn(element.client!, "prepareTitleScrape");
+  await open();
+  expect(element.client!.titleScrapePreview).toHaveBeenCalled();
+  expect(root().querySelector(".scrape-fields")).toBeNull();
+  expect(root().textContent).not.toContain("Metadata (2)");
+  expect(button("Apply images").disabled).toBe(true);
+  root().querySelector<HTMLInputElement>(".candidate input")!.click();
+  await flush();
+  button("Apply images").click();
+  await flush();
+  expect(prepare.mock.calls[0][1].fields).toEqual([]);
+  expect(prepare.mock.calls[0][1].images).toEqual({ poster: "poster-0" });
+});
+
+it("does not fetch image choices without the artwork opt-in", async () => {
+  element.artworkOnly = true;
+  vi.mocked(element.client!.titleScrapeOptions).mockResolvedValue({
+    providers: [{ id: "tmdb", label: "TMDB", available: true }],
+    artwork_enabled: false,
+  });
+  await flush();
+  await open();
+  expect(element.client!.titleScrapePreview).not.toHaveBeenCalled();
+  expect(root().textContent).toContain("Enable Sync artwork");
+  expect(
+    root().querySelector<HTMLButtonElement>(".dialog-footer .primary")!
+      .disabled,
+  ).toBe(true);
+});
+
 it("reviews fields and paged images, then retries the exact selected apply", async () => {
   const apply = vi
     .spyOn(element.client!, "applyTitleScrape")
@@ -97,7 +156,7 @@ it("reviews fields and paged images, then retries the exact selected apply", asy
     .find((row) => row.textContent!.includes("Directors"))!
     .querySelector<HTMLInputElement>("input")!
     .click();
-  button("Artwork (8)").click();
+  button("Poster (8)").click();
   await flush();
   expect(root().querySelectorAll(".candidate")).toHaveLength(6);
   button("Next images").click();
@@ -155,7 +214,7 @@ it("ignores a late readonly preview after closing and hides actions from readers
 it("keeps image downloads lazy and clears private selections on account changes", async () => {
   await scrape();
   expect(element.client!.titleScrapeImage).not.toHaveBeenCalled();
-  button("Artwork (8)").click();
+  button("Poster (8)").click();
   await flush();
   expect(element.client!.titleScrapeImage).toHaveBeenCalled();
   element.client = new FixtureTransport().client();
@@ -179,6 +238,36 @@ it("shows only enabled providers and makes unavailable providers unselectable", 
     root().querySelector<HTMLButtonElement>(".dialog-footer .primary")!
       .disabled,
   ).toBe(true);
+});
+
+it("marks scrapers without saved data while leaving configured scrapers selectable", async () => {
+  vi.mocked(element.client!.titleScrapeOptions).mockResolvedValue({
+    providers: [
+      { id: "tmdb", label: "TMDB", available: true, missing_data: true },
+      {
+        id: "kaleidescape",
+        label: "Kaleidescape store",
+        available: true,
+        missing_data: false,
+      },
+    ],
+    artwork_enabled: false,
+  });
+  await open();
+  const missing = root().querySelector<HTMLOptionElement>(
+    'option[value="tmdb"]',
+  )!;
+  expect(missing.textContent).toContain("TMDB ⚠");
+  expect(missing.getAttribute("aria-label")).toContain("no saved data");
+  expect(missing.disabled).toBe(false);
+  expect(
+    root().querySelector<HTMLOptionElement>('option[value="kaleidescape"]')!
+      .textContent,
+  ).not.toContain("⚠");
+  expect(
+    root().querySelector<HTMLButtonElement>(".dialog-footer .primary")!
+      .disabled,
+  ).toBe(false);
 });
 
 it("offers detailed candidates, permits a replacement title search, and saves the chosen match", async () => {

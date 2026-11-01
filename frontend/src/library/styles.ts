@@ -475,9 +475,13 @@ export const libraryStyles = css`
     padding: 2px 12px;
     background: var(--surface);
   }
-  .movie-version-count {
-    margin: 14px 0;
-    font-size: 12px;
+  .collection-badge {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    font-weight: 500;
+    border: 1px solid var(--line);
+    background: var(--surface);
   }
   .movie-dialog .movie-body {
     grid-template-columns: minmax(130px, 190px) minmax(0, 1fr);

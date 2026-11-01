@@ -54,6 +54,7 @@ class TitleReviews:
                     "id": provider,
                     "label": label,
                     "available": self.enabled(provider),
+                    "missing_data": provider not in target["cached_providers"],
                 }
                 for provider, label in (
                     ("kaleidescape", "Kaleidescape store"),
@@ -229,6 +230,7 @@ class TitleReviews:
         }
         return {
             "plan_id": token,
+            "has_backdrop": target["has_backdrop"],
             "title": target["title"],
             "matched": {"title": result["title"], "year": result["year"]},
             "fields": fields,

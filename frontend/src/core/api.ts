@@ -301,10 +301,16 @@ export interface ProviderMetadata {
 }
 export interface ScrapeOptions {
   title?: string;
-  providers: { id: string; label: string; available: boolean }[];
+  providers: {
+    id: string;
+    label: string;
+    available: boolean;
+    missing_data?: boolean;
+  }[];
   artwork_enabled: boolean;
 }
 export interface ScrapeReview {
+  has_backdrop?: boolean;
   matched?: { title: string; year: number };
   plan_id: string;
   title: string;
@@ -332,6 +338,7 @@ export interface ScrapeMatches {
   }[];
 }
 export interface MetadataStatus {
+  tmdb_enabled?: boolean;
   enabled?: boolean;
   active?: number;
   queued?: number;
@@ -369,6 +376,7 @@ export interface LibraryTitle {
   title: string;
   formats?: string[];
   formats_truncated?: boolean;
+  content_ratings?: string[];
   years?: number[];
   version_count?: number;
   maximum_duration_seconds?: number | null;
@@ -400,6 +408,7 @@ export type LibrarySummary = Pick<
   | "title"
   | "formats"
   | "formats_truncated"
+  | "content_ratings"
   | "years"
   | "version_count"
   | "maximum_duration_seconds"

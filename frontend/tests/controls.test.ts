@@ -137,8 +137,8 @@ it("reads readiness without waking or sending a command on load", async () => {
 it("starts the selected Library movie with automatic preflight and no confirmation", async () => {
   element.mode = "movie";
   element.versionId = "b".repeat(64);
-  await mount("Play Movie");
-  button("Play Movie").click();
+  await mount("Play");
+  button("Play").click();
   await vi.waitFor(() =>
     expect(
       calls.filter((call) => call.type.endsWith("/control/execute")),
@@ -163,7 +163,7 @@ it("chooses a player for this launch without changing household settings", async
     name: "Den",
     model: "Fictional player",
   });
-  await mount("Play Movie");
+  await mount("Play");
   button("Choose Player").click();
   await vi.waitFor(() =>
     expect(element.shadowRoot!.querySelector("dialog")!.open).toBe(true),
@@ -175,8 +175,8 @@ it("chooses a player for this launch without changing household settings", async
   ].find((item) => item.textContent!.includes("Den"))!;
   den.click();
   await element.updateComplete;
-  await vi.waitFor(() => expect(button("Play Movie")?.disabled).toBe(false));
-  button("Play Movie").click();
+  await vi.waitFor(() => expect(button("Play")?.disabled).toBe(false));
+  button("Play").click();
   await vi.waitFor(() =>
     expect(calls.some((call) => call.type.endsWith("/control/execute"))).toBe(
       true,
@@ -322,10 +322,10 @@ it("hides redundant single-player controls and navigates only after accepted pla
   element.versionId = "b".repeat(64);
   const started = vi.fn();
   element.addEventListener("playback-started", started);
-  await mount("Play Movie");
+  await mount("Play");
   expect(button("Choose Player").hidden).toBe(true);
   expect(element.shadowRoot!.querySelector(".player-target")).toBeNull();
-  button("Play Movie").click();
+  button("Play").click();
   await vi.waitFor(() => expect(started).toHaveBeenCalledTimes(1));
   expect((started.mock.calls[0][0] as CustomEvent).detail).toBe(
     data.default_player,
@@ -373,11 +373,11 @@ it("wakes once then waits for readiness before allowing an explicit movie launch
     ready = true;
     await vi.advanceTimersByTimeAsync(1000);
     await flush();
-    expect(button("Play Movie").disabled).toBe(false);
+    expect(button("Play").disabled).toBe(false);
     expect(
       calls.filter((call) => call.type.endsWith("/control/execute")),
     ).toHaveLength(1);
-    button("Play Movie").click();
+    button("Play").click();
     await vi.waitFor(() => expect(started).toHaveBeenCalledTimes(1));
   } finally {
     vi.useRealTimers();

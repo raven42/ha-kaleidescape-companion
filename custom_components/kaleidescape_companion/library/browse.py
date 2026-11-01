@@ -751,6 +751,10 @@ def grouped_page(
                         )
                     },
                     "formats": known_formats[:100],
+                    "content_ratings": sorted(
+                        {row["rating"] for row in rows if row["rating"]},
+                        key=str.casefold,
+                    )[:100],
                     "formats_truncated": len(known_formats) > 100,
                     "years": sorted(
                         {row["year"] for row in rows if row["year"] is not None}

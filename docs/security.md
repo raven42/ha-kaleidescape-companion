@@ -1486,15 +1486,30 @@ review and administrator boundaries.
 
 Single-title scraping adds administrator-only `metadata/title/options`,
 `metadata/title/preview`, `metadata/title/search` and `metadata/title/apply`
-operations. Previews/searches do not import descriptive metadata; failed
-automatic matching can record an owned conflict code on the worker. They expose
-only known fields and opaque candidate/gallery choices. At most eight
-actor-bound search or review plans remain in memory for 20 minutes, each
-covering at most 100 movie versions. Search stages at most eight detailed
-candidates/512 KiB. Up to twelve bounded requests may wait for three worker
-slots, with a 180-second budget including waits; those clients and automatic
-scans share the provider rate budget. No credentials, purchase/viewing data or
-network addresses are sent as movie metadata.
+operations. Provider options include a worker-derived missing-data boolean per
+enabled scraper, based only on that movie's available source-group cache/review
+markers. It reveals no saved provider IDs, credentials or metadata values and
+retains the same administrator checks before and after awaits. Public grouped
+Library summaries include up to 100 distinct known content-rating labels, with
+the same source scope and hidden-collection projection; movie badges use
+text-bound fixed filter actions.
+
+Administrator Library info exposes a TMDB-enabled boolean; title previews expose
+a current-backdrop boolean, without raw cache keys or credentials. The
+image-only TMDB editor reuses the same administrator-checked review/apply
+operations, image allowlists, opt-ins and retry receipts. The system-button
+preference is display-only and cannot authorize an operation. Action icons are
+static local SVG templates, not provider markup.
+
+Previews/searches do not import descriptive metadata; failed automatic matching
+can record an owned conflict code on the worker. They expose only known fields
+and opaque candidate/gallery choices. At most eight actor-bound search or review
+plans remain in memory for 20 minutes, each covering at most 100 movie versions.
+Search stages at most eight detailed candidates/512 KiB. Up to twelve bounded
+requests may wait for three worker slots, with a 180-second budget including
+waits; those clients and automatic scans share the provider rate budget. No
+credentials, purchase/viewing data or network addresses are sent as movie
+metadata.
 
 The authenticated administrator-only thumbnail route
 `metadata/review/{plan_id}/image/{choice}` resolves an owned staged image,

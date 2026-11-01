@@ -443,13 +443,14 @@ the main search across title/cast/directors. Other clicks clear search and
 previous facets, applying only the chosen exact criterion. The popup closes to
 page one while view/count/sort stay unchanged, and criteria save personally.
 Genre/year/viewing-format filters include source labels and positive badge
-categories. Badges are no longer repeated below the synopsis. A single-version
-movie keeps its format and rating badges above the action row. Multiple-version
-movies show selected-version format badges below the poster and above Library
-details; the rating remains in the heading rather than below the poster. Tabs
-read only Version 1, Version 2 and so on. Single-version details use a labelled
-region without a tab row. Dynamic numeric count labels use singular for one and
-plural otherwise, including entry/entries.
+categories. Badges are not repeated below the synopsis. The heading shows all
+known formats, content ratings and visible collections for the movie group,
+alongside its status indicators. Multiple-version movies also show the selected
+version's format-only badges below the poster and above Library details. Tabs
+read only Version 1, Version 2 and so on, without a version-count line above
+them. Single-version details use a labelled region without a tab row. Dynamic
+numeric count labels use singular for one and plural otherwise, including
+entry/entries.
 
 People links insert a double-quoted whole-word search, replacing existing
 criteria. Quoted searches override fuzzy mode throughout the UI, including
@@ -460,8 +461,9 @@ Administrator title scraping offers a bounded result picker when matching is
 ambiguous or empty, plus a replacement-title search. Each result shows basic
 credits, year, genres and an opt-in cover preview. The chosen provider binding
 saves with the reviewed data for future scrapes. Unresolved scraper identities
-have a centered cover warning and a sticky **Scraper conflicts only** filter.
-See [manual resolution](enrichment.md#review-a-single-title).
+have a centered cover warning for administrators with system buttons enabled,
+and a sticky **Scraper conflicts only** filter. See
+[manual resolution](enrichment.md#review-a-single-title).
 
 ## Search options
 
@@ -602,6 +604,14 @@ Export and other commit actions sit in a right-aligned footer; automatically
 saved Options dialogs have no empty footer. Remote uses the same surface and
 border as other dialogs, without a Done box. Movie Play/Power On and Collection
 buttons share a 44 px minimum height and have space below the action row.
+
+Collection uses a yellow starred bookmark. Edit, Scrape and Edit Artwork use
+icon buttons with accessible labels and hover/focus balloons. Power On has a
+green power-switch button; once the player is ready, it becomes a blue Play
+button. Administrator **Library Options → Show system buttons** controls the
+Edit, Scrape and TMDB Edit Artwork actions and conflict overlays. It saves with
+the user's display-profile preferences and defaults on; it grants no backend
+permission. Other users never receive these actions or warning overlays.
 
 Operator browser review: open a Library movie, Remote, filters, both Options
 popups, viewing/database editors, imports/exports and calendar export. Check the

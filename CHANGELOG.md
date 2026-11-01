@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased — Movie actions and image editing
+
+- Add themed icon actions with accessible hover/focus labels, green Power On and
+  blue Play states, and a sticky administrator system-button display option.
+- Add TMDB image-only editing; label image choices Poster and Backdrop, display
+  full previews, and initially select a backdrop when none is saved.
+- Hide scraper conflict overlays from standard users and administrators who hide
+  system buttons.
+
+## Unreleased — Movie badge summaries and scraper hints
+
+- Keep all movie-group formats, content ratings and visible collection badges
+  above the detail actions, with selected-version format badges below artwork.
+  Remove the separate version-count line above the tabs.
+- Mark enabled scrapers without saved movie-group data in the review picker,
+  while retaining configured-provider selection and administrator access checks.
+
 ## Unreleased — Library search and log filtering
 
 - Treat log filters as minimum severity, including higher levels in paging and

@@ -204,6 +204,7 @@ export class FixtureTransport implements Transport {
     show_format: true,
     show_badges: true,
     show_rating: false,
+    show_system_buttons: true,
     show_library_cost: false,
     widths: [360, 90, 260, 150, 140, 210],
     query: "",
@@ -581,6 +582,9 @@ export class FixtureTransport implements Transport {
           return {
             ...versions[0],
             version_count: versions.length,
+            content_ratings: [
+              ...new Set(versions.map((row) => row.rating).filter(Boolean)),
+            ].sort(),
             is_favorite: versions.some(
               (row) =>
                 row.is_favorite ||

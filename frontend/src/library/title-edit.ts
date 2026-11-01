@@ -9,6 +9,7 @@ import type {
   PreparedMutation,
 } from "../core/api";
 import { styles } from "../ui/styles";
+import { iconAction, iconActionStyles } from "../ui/action-icons";
 import { closeButton, dismissBackdrop } from "../ui/dialog";
 import { counted } from "../core/text";
 
@@ -43,13 +44,10 @@ export class TitleEdit extends LitElement {
   };
   static styles = [
     styles,
+    iconActionStyles,
     css`
       :host {
         display: inline-block;
-      }
-      :host > button {
-        border-radius: 999px;
-        min-height: 44px;
       }
       dialog {
         width: min(640px, calc(100% - 24px));
@@ -241,12 +239,7 @@ export class TitleEdit extends LitElement {
   }
   protected render() {
     if (!this.scope?.permissions.edit) return nothing;
-    return html`<button
-        ?disabled=${this.blocked || this.busy || !!this.pending}
-        @click=${this.open}
-      >
-        Edit details
-      </button>
+    return html`${iconAction("Edit details", "edit", this.blocked || this.busy || !!this.pending, () => this.open())}
       <dialog
         class="inset-dialog"
         aria-labelledby="library-edit-title"

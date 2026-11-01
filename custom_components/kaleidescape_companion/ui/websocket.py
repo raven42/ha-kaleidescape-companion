@@ -622,6 +622,11 @@ async def async_handle(
                                     **metadata,
                                     **library.status(),
                                     "metadata": {
+                                        "tmdb_enabled": bool(
+                                            (entry.options or entry.data).get(
+                                                "metadata_tmdb_enabled", False
+                                            )
+                                        ),
                                         **await repository.async_enrichment(
                                             "statistics", library.source
                                         ),

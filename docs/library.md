@@ -75,10 +75,12 @@ browsing without a separate details pane. Both views show one entry per source's
 keys stay separate, while editions in the same group share a row or cover. Cover
 captions and detail headings include the known year. The popup lists each
 original version with full metadata. Multiple versions use simple Version 1,
-Version 2 and subsequent tabs; a single version has no tab row. Count labels use
-singular for one version. Version tabs support Left/Right and Home/End; large
-groups use 50-version pages. A source group remains a browsing identity, not
-permission to edit every version together.
+Version 2 and subsequent tabs, without a separate version-count line; a single
+version has no tab row. The top badges summarize the group's known formats,
+content ratings and visible collections. Multi-version details also show the
+selected version's format-only badges beneath its artwork. Version tabs support
+Left/Right and Home/End; large groups use 50-version pages. A source group
+remains a browsing identity, not permission to edit every version together.
 
 Versions are ordered by video quality: **4K Cinematic, 4K, HD, SD**, then
 unknown formats. Within each quality tier, longer runtimes come first; stable
@@ -151,12 +153,12 @@ search/filters, sort, cover size and widths save as personal database
 preferences; main-tab navigation remains in the URL. See
 [preference limits and badge criteria](ui-preferences.md).
 
-The summary shows the union of visible collections/formats/years,
-minimum–maximum known runtime, earliest detection, and a source status priority
-of In progress, Watched, Unknown, then Unwatched. Sorts use the earliest year,
-minimum known runtime, first visible collection name, and earliest detection as
-applicable. Browsing preferences restore from the database when Library is
-reopened.
+The summary shows the union of visible collections/formats/content
+ratings/years, minimum–maximum known runtime, earliest detection, and a source
+status priority of In progress, Watched, Unknown, then Unwatched. Sorts use the
+earliest year, minimum known runtime, first visible collection name, and
+earliest detection as applicable. Browsing preferences restore from the database
+when Library is reopened.
 
 Statuses reflect source collection membership, independently for exact source
 handles: **Paused → In progress**, otherwise **Played → Watched**, otherwise
