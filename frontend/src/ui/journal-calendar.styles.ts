@@ -157,7 +157,7 @@ export const calendarStyles = css`
   @container journal-calendar (max-width: 560px) {
     .month-bar {
       gap: 6px;
-      padding: 10px;
+      padding: 6px 8px;
     }
     .month-bar h2 {
       font-size: 16px;
@@ -172,6 +172,21 @@ export const calendarStyles = css`
       font-size: 11px;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+  }
+  @media (max-width: 700px) {
+    .month-bar {
+      position: sticky;
+      top: var(
+        --calendar-sticky-top,
+        max(
+          var(--companion-sticky-top, 0px),
+          var(--companion-viewport-top, 0px),
+          env(safe-area-inset-top, 0px)
+        )
+      );
+      z-index: 10;
+      background: var(--surface);
     }
   }
   @media (max-width: 600px) {
@@ -203,7 +218,7 @@ export const calendarStyles = css`
     }
     .month-bar {
       gap: 6px;
-      padding: 12px;
+      padding: 6px 8px;
     }
     .month-bar h2 {
       font-size: 16px;

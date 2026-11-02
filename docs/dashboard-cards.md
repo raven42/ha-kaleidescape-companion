@@ -96,6 +96,8 @@ The calendar fits all seven weekday columns to its card width, including narrow
 Sections/masonry columns. Its month controls compact according to the card
 width; posters retain their portrait proportions. `calendar_size` controls day
 height, while `calendar_fit` adjusts that height to the available screen space.
+On phones its compact footer shows only the selected month’s viewing count and
+watched time, with loading/error messages when needed.
 
 The remote reuses the exact panel command/uncertainty protections and readiness
 checks. When multiple players are available its Choose Player dialog selects a

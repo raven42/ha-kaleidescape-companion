@@ -10,22 +10,29 @@ rules, retry behavior and limits.
 
 Both Journal roles use a single shared surface: one sticky toolbar with search,
 sort, Refresh, Options and administrator Add viewing above a selectable entry
-list and readable details pane. On narrow screens the details stack beneath the
-list. Administrator Add/Edit opens a separate dialog with consistent
-header-close/footer-save actions, guarded dismissal and retry handling; Journal
-Delete has its own confirmation and retains stored history. Regular users see
-only the household-safe summary fields and have no edit/session controls.
-Administrator database size, recording/backup status and schema/revision appear
-in the same compact footer in Advanced mode. Basic mode shows only Total
-Viewings, the month count, and watched time split into all-time and month
-totals. List mode uses the current month in the Home Assistant time zone.
-Calendar mode uses the selected browser-local month, independently of
-search/status filters. Totals exclude deleted entries and attribute each viewing
-and its whole watched time to its completion date (start date for a partial
-viewing). All calendar loading, empty and retry/error messages live in the
-sticky Journal footer. Status filtering lives in Journal Options and applies
-immediately. Calendar navigation remembers its selected month as
-`companion_month=YYYY-MM` in the URL, including across reloads.
+list and readable details pane. On phones, Calendar mode replaces that toolbar
+with square Search, Clear and Options shortcuts, plus Add viewing in Advanced
+mode. Search opens a small popup; Refresh Journal is available in Options. The
+compact month navigation stays below the shortcuts while scrolling. On narrow
+screens the details stack beneath the list. Administrator Add/Edit opens a
+separate dialog with consistent header-close/footer-save actions, guarded
+dismissal and retry handling; Journal Delete has its own confirmation and
+retains stored history. Regular users see only the household-safe summary fields
+and have no edit/session controls. Administrator database size, recording/backup
+status and schema/revision appear in the same compact footer in Advanced mode.
+Basic mode shows only Total Viewings, the month count, and watched time split
+into all-time and month totals. The mobile calendar footer shows only the
+selected month’s viewing count and watched time, hiding all-time and database
+details in both modes. An empty month shows zero viewings without an additional
+empty-state label; loading and actionable errors remain in the footer. List mode
+uses the current month in the Home Assistant time zone. Calendar mode uses the
+selected browser-local month, independently of search/status filters. Totals
+exclude deleted entries and attribute each viewing and its whole watched time to
+its completion date (start date for a partial viewing). All calendar loading,
+empty and retry/error messages live in the sticky Journal footer. Status
+filtering lives in Journal Options and applies immediately. Calendar navigation
+remembers its selected month as `companion_month=YYYY-MM` in the URL, including
+across reloads.
 
 Journal rows show the linked title, local calendar date and status on one
 compact line. Select a row for full times, watched/runtime values and other
@@ -51,19 +58,20 @@ row. List widths stay fixed across sorts and can be resized by dragging dividers
 or using Left/Right/Home on a focused divider. Entries per page offers 25, 100
 (initial), 1000 and All. Personal browsing preferences save immediately in the
 database through **Options**. The popup groups view, count, cover size, title
-overlay, format/library badge switches and fuzzy search. Sort/order remains in
-the main Library toolbar. Covers show an exclusive top-left Watched/In progress/
-New marker and an independent top-right Favorite bookmark, plus only the highest
-known video format. Lists retain all explicit format chips and summary badges.
-Cover pages round the target to complete rows for the measured grid, adapting to
-window and cover-size changes. The final page can contain fewer titles. Large
-pages use compact summaries and visible-only artwork fetching, retaining
-completed covers in a private bounded Library-session cache; full metadata loads
-when opening a title. Settings can hide collection names without hiding movies
-or editing the device. Collection additions have a separate opt-in
-[contract](library-collections.md). [Player controls](playback-controls.md) and
-experimental Library launch are separately opted in; progress remains later
-work.
+overlay, format/library badge switches and fuzzy search. Desktop sort/order
+remains in the main Library toolbar. On phones, sort method is in Options and
+the toolbar sort icon changes direction or reshuffles Random mode. Covers show
+an exclusive top-left Watched/In progress/ New marker and an independent
+top-right Favorite bookmark, plus only the highest known video format. Lists
+retain all explicit format chips and summary badges. Cover pages round the
+target to complete rows for the measured grid, adapting to window and cover-size
+changes. The final page can contain fewer titles. Large pages use compact
+summaries and visible-only artwork fetching, retaining completed covers in a
+private bounded Library-session cache; full metadata loads when opening a title.
+Settings can hide collection names without hiding movies or editing the device.
+Collection additions have a separate opt-in [contract](library-collections.md).
+[Player controls](playback-controls.md) and experimental Library launch are
+separately opted in; progress remains later work.
 
 Administrators also have **Scrape title** in Library movie details. It opens an
 enabled-provider chooser, a field comparison/review and paged poster/landscape
@@ -76,18 +84,23 @@ credits. See the [single-title workflow](enrichment.md#review-a-single-title).
 
 The same views serve desktop, tablet and phone screens. Narrow layouts reduce
 decorative headings and padding while retaining the existing actions and
-permissions. Library search and Options stay together above a horizontally
-scrollable filter/sort strip. Pagination and the Library status line share a
-compact sticky footer. Fixed-width Library columns and import-review tables
-scroll inside their own containers instead of widening the page.
+permissions. On phones the sticky Library toolbar uses five square icons: Search
+(opens a popup), Filters, Clear search/filters, sort direction/Randomize, and
+Options. Active search/filter icons are highlighted. The toolbar respects the
+visible viewport and safe top inset. Pagination and the Library status line
+share a compact sticky footer. Fixed-width Library columns and import-review
+tables scroll inside their own containers instead of widening the page.
 
-Library uses one footer surface for status, basic administrator scraper
-progress, refresh/sync and pagination. Single-page results, including All, omit
-the paging buttons. Detailed scraper counters remain in Settings. In movie
-details, ratings sit on the Play/Collection/Edit action row: a circular TMDB
-percentage and locally bundled standard RT icons. The desktop hero fade ends at
-the version-tab divider, with the heading/actions closer to the top of the
-image. Versions open in descending video quality (4K Cinematic/4K/HD/SD), longer
+Library uses one footer surface for status, basic administrator scraper progress
+on desktop, and pagination. Refresh cached data and administrator Sync now are
+inside Options. On phones the footer uses a single compact status line, with
+icon paging buttons only when multiple pages exist; extra administrator status
+stays out of the mobile footer. Single-page results, including All, omit the
+paging buttons. Detailed scraper counters remain in Settings. In movie details,
+ratings sit on the Play/Collection/Edit action row: a circular TMDB percentage
+and locally bundled standard RT icons. The desktop hero fade ends at the
+version-tab divider, with the heading/actions closer to the top of the image.
+Versions open in descending video quality (4K Cinematic/4K/HD/SD), longer
 runtimes first within each tier, with the highest-ranked selected initially.
 
 Journal and Database keep sticky controls and pagination around independently
@@ -628,12 +641,14 @@ icon buttons with accessible labels and hover/focus balloons. Power On has a
 green power-switch button; once the player is ready, it becomes a blue Play
 button. Balloons dismiss on activation and use fresh pointer hover or visible
 keyboard focus, so returning from a modal does not retain a pointer tooltip.
-Administrators have a **Basic / Advanced** pill on the right of the main view
-tabs. Basic uses the household interface across all views, including Library,
-Journal/calendar and playback. Advanced adds editing, scraping, purchase and
-diagnostic information, Database, Logs and Settings. This replaces the old
-Library-only system-button option. Advanced is the default; the mode saves per
-HA user and screen profile. It grants no backend permission.
+Administrators have a compact **Adv** on/off switch on the right of the main
+view tabs. The slider is gray and left-aligned for Basic, blue and right-aligned
+for Advanced; its accessible name remains Advanced view. Basic uses the
+household interface across all views, including Library, Journal/calendar and
+playback. Advanced adds editing, scraping, purchase and diagnostic information,
+Database, Logs and Settings. This replaces the old Library-only system-button
+option. Advanced is the default; the mode saves per HA user and screen profile.
+It grants no backend permission.
 
 Leaving Advanced while on an administrator-only page or with an admin-only
 dialog open returns to the configured landing page. An administrator-only

@@ -1,3 +1,4 @@
+import "./journal-shortcuts";
 import "../cards/cards";
 import "./journal-calendar";
 import { responsiveViewport } from "./viewport";
@@ -29,7 +30,7 @@ import { closeButton, dismissBackdrop } from "./dialog";
 import { landingPage, rememberPage } from "./navigation";
 import "./reader";
 import "./journal-options";
-import type { JournalOptionsValue } from "./journal-options";
+import type { JournalOptions, JournalOptionsValue } from "./journal-options";
 import type { LibraryCriterion } from "../library/criteria";
 import "../playback/now-playing";
 import "./settings";
@@ -1023,8 +1024,43 @@ export class KaleidescapePanel extends LitElement {
               </button>
             </div>`
         : nothing;
-    return html`<section class="card journal" aria-label="Journal">
+    return html`<section
+        class=${`card journal${this.journalView === "calendar" ? " journal-calendar-mode" : ""}`}
+        aria-label="Journal"
+      >
         <div class="entries-header">
+          ${
+            this.journalView === "calendar"
+              ? html`<kaleidescape-journal-shortcuts
+                  .context=${this.api}
+                  .scopeKey=${`${this.info?.entry_id}:${this.info?.dataset_id}`}
+                  .value=${this.searchText}
+                  .disabled=${blocked}
+                  .allowAdd=${true}
+                  .filtered=${!!this.status || !!this.journalMovie}
+                  .filterLabel=${this.journalMovie ? `Viewings for ${this.journalMovie.title}` : ""}
+                  @journal-search=${(event: CustomEvent<string>) => {
+                    this.query = this.searchText = event.detail;
+                    this.page = 1;
+                    this.history = [];
+                    void this.loadList();
+                  }}
+                  @journal-clear=${() => {
+                    this.query =
+                      this.searchText =
+                      this.status =
+                      this.filterStatus =
+                        "";
+                    this.journalMovie = undefined;
+                    this.page = 1;
+                    this.history = [];
+                    void this.loadList();
+                  }}
+                  @journal-add=${this.newRecord}
+                  @journal-open-options=${() => this.renderRoot.querySelector<JournalOptions>("kaleidescape-journal-options")?.open()}
+                ></kaleidescape-journal-shortcuts>`
+              : nothing
+          }
           ${this.journalMovie ? html`<p class="journal-movie-filter">Viewings for ${this.journalMovie.title} <button ?disabled=${blocked} @click=${() => this.switchPage("journal")}>Show all viewings</button></p>` : nothing}
           <form
             class="filters journal-filters"
@@ -1101,6 +1137,8 @@ export class KaleidescapePanel extends LitElement {
                 Refresh
               </button>
               <kaleidescape-journal-options
+                .mobileCompact=${this.journalView === "calendar"}
+                @journal-refresh=${() => this.refresh()}
                 .status=${this.status}
                 @journal-status=${(event: CustomEvent<string>) => {
                   this.status = this.filterStatus = event.detail;
@@ -1228,14 +1266,16 @@ export class KaleidescapePanel extends LitElement {
         }
         <footer class="entries-footer journal-status">
           <span>
-            ${journalTotals(this.info, this.journalView === "calendar" ? this.calendarStatus : undefined)}
-            · ${this.bytes(this.info?.database_bytes ?? 0)} /
-            ${this.bytes(this.info?.database_limit_bytes ?? 0)} database ·
-            Recording:
-            ${this.info?.tracking_enabled ? "Enabled" : "Manual only"} ·
-            ${this.info?.backup_in_progress ? "Backing up" : "Storage ready"} ·
-            Schema ${this.info?.schema_version} · Revision
-            ${this.info?.revision} </span
+            ${journalTotals(this.info, this.journalView === "calendar" ? this.calendarStatus : undefined, this.journalView === "calendar")}
+            <span class="journal-system-details"
+              >· ${this.bytes(this.info?.database_bytes ?? 0)} /
+              ${this.bytes(this.info?.database_limit_bytes ?? 0)} database ·
+              Recording:
+              ${this.info?.tracking_enabled ? "Enabled" : "Manual only"} ·
+              ${this.info?.backup_in_progress ? "Backing up" : "Storage ready"}
+              · Schema ${this.info?.schema_version} · Revision
+              ${this.info?.revision}</span
+            > </span
           >${
             this.journalView === "calendar"
               ? calendarNotice(this.calendarStatus, () => {

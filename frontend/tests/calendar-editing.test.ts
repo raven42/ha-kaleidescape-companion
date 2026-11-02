@@ -272,3 +272,26 @@ it("closes an outstanding save and ignores its late response without replaying i
     transport.calls.filter((c) => c.type.endsWith("journal/update")),
   ).toHaveLength(1);
 });
+
+it("routes compact calendar Options and Add viewing to the shared dialogs", async () => {
+  await mount();
+  modalClose(calendarRoot().querySelector("dialog")!).click();
+  await panel.updateComplete;
+  const shortcuts = root().querySelector(
+    "kaleidescape-journal-shortcuts",
+  )!.shadowRoot!;
+  shortcuts
+    .querySelector<HTMLButtonElement>('[aria-label="Journal options"]')!
+    .click();
+  const options = root().querySelector(
+    "kaleidescape-journal-options",
+  )!.shadowRoot!;
+  expect(options.querySelector("dialog")!.open).toBe(true);
+  expect(options.textContent).toContain("Refresh Journal");
+  modalClose(options).click();
+  shortcuts
+    .querySelector<HTMLButtonElement>('[aria-label="Add viewing"]')!
+    .click();
+  await vi.waitFor(() => expect(editor().open).toBe(true));
+  expect(root().querySelector(".journal-system-details")).not.toBeNull();
+});

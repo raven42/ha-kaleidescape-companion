@@ -1,6 +1,6 @@
 import { responsivePreferences } from "./profile-controller";
 /** Personal Journal layout and global search options for both household roles. */
-import { LitElement, html, nothing } from "lit";
+import { LitElement, css, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
 import type { JournalClient, Scope } from "../core/api";
 import { errorCode, errorMessage } from "../core/api";
@@ -37,12 +37,23 @@ export class JournalOptions extends LitElement {
     scope: { attribute: false },
     disabled: { type: Boolean },
     status: { type: String },
+    mobileCompact: { type: Boolean },
   };
-  static styles = styles;
+  static styles = [
+    styles,
+    css`
+      @media (max-width: 700px) {
+        .desktop-options {
+          display: none;
+        }
+      }
+    `,
+  ];
   client?: JournalClient;
   scope?: Scope;
   disabled = false;
   status = "";
+  mobileCompact = false;
   private store?: PreferenceStore;
   private viewStore?: PreferenceStore;
   private view: "list" | "calendar" = "list";
@@ -167,10 +178,16 @@ export class JournalOptions extends LitElement {
     this.store?.retry();
     this.viewStore?.retry();
   }
+  open() {
+    if (this.ready && !this.disabled)
+      this.renderRoot.querySelector("dialog")?.showModal();
+  }
   protected render() {
     return html`<button
+        type="button"
+        class=${this.mobileCompact ? "desktop-options" : ""}
         ?disabled=${!this.ready || this.disabled}
-        @click=${() => this.renderRoot.querySelector("dialog")?.showModal()}
+        @click=${this.open}
       >
         Options
       </button>
@@ -291,6 +308,15 @@ export class JournalOptions extends LitElement {
               `
             : nothing
         }
+        <div class="dialog-footer">
+          <button
+            type="button"
+            ?disabled=${this.disabled}
+            @click=${() => this.dispatchEvent(new CustomEvent("journal-refresh", { bubbles: true, composed: true }))}
+          >
+            Refresh Journal
+          </button>
+        </div>
       </dialog>`;
   }
 }

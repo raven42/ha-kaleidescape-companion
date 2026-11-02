@@ -1032,3 +1032,89 @@ it("limits the Basic footer to global counts and shows a highlighted match count
   );
   expect(footer().textContent).toContain("Total 5");
 });
+
+it("opens a mobile search popup, discards cancelled input, and applies through the existing search", async () => {
+  const shortcut = root().querySelector<HTMLButtonElement>(
+    '.mobile-library-tools [aria-label="Search Library"]',
+  )!;
+  shortcut.click();
+  await flush();
+  const dialog = root().querySelector<HTMLDialogElement>("#library-search")!;
+  expect(dialog.open).toBe(true);
+  const query = dialog.querySelector<HTMLInputElement>("input")!;
+  query.value = "Cancelled search";
+  query.dispatchEvent(new Event("input"));
+  modalClose(dialog).click();
+  await flush();
+  expect(dialog.open).toBe(false);
+  expect(
+    transport.calls.filter((c) => c.type.endsWith("library/list")).at(-1)
+      ?.filters,
+  ).not.toMatchObject({ query: "Cancelled search" });
+  shortcut.click();
+  await flush();
+  expect(query.value).toBe("");
+  query.value = "Europa";
+  query.dispatchEvent(new Event("input"));
+  dialog
+    .querySelector("form")!
+    .dispatchEvent(new Event("submit", { cancelable: true }));
+  await flush();
+  expect(dialog.open).toBe(false);
+  expect(
+    transport.calls.filter((c) => c.type.endsWith("library/list")).at(-1)
+      ?.filters,
+  ).toMatchObject({ query: "Europa" });
+  expect(root().querySelector(".footer-summary")!.textContent).toContain(
+    "Matches",
+  );
+  root()
+    .querySelector<HTMLButtonElement>(
+      '[aria-label="Clear search and filters"]',
+    )!
+    .click();
+  await flush();
+  expect(
+    transport.calls.filter((c) => c.type.endsWith("library/list")).at(-1)
+      ?.filters,
+  ).toMatchObject({ query: "" });
+});
+
+it("connects mobile filter and randomize shortcuts and keeps refresh inside Options", async () => {
+  root()
+    .querySelector<HTMLButtonElement>('[aria-label="Library filters"]')!
+    .click();
+  await flush();
+  expect(root().querySelector<HTMLDialogElement>("#filter-dialog")!.open).toBe(
+    true,
+  );
+  modalClose(root().querySelector("#filter-dialog")!).click();
+  root()
+    .querySelector<HTMLButtonElement>('[aria-label="Library options"]')!
+    .click();
+  await flush();
+  expect(
+    root().querySelector<HTMLDialogElement>("#library-options")!.open,
+  ).toBe(true);
+  field("library_mobile_sort", "random");
+  await flush();
+  const seed = transport.calls
+    .filter((c) => c.type.endsWith("library/list"))
+    .at(-1)?.filters as Record<string, unknown>;
+  root()
+    .querySelector<HTMLButtonElement>('[aria-label="Randomize Library"]')!
+    .click();
+  await flush();
+  const fresh = transport.calls
+    .filter((c) => c.type.endsWith("library/list"))
+    .at(-1)?.filters as Record<string, unknown>;
+  expect(fresh.random_seed).not.toBe(seed.random_seed);
+  expect(root().querySelector(".library-footer")!.textContent).not.toContain(
+    "Refresh cached data",
+  );
+  expect(
+    [
+      ...root().querySelectorAll<HTMLButtonElement>("#library-options button"),
+    ].some((b) => b.textContent?.trim() === "Refresh cached data"),
+  ).toBe(true);
+});

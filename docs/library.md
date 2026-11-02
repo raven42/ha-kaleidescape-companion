@@ -203,18 +203,22 @@ through the protocol extension, with edition limitations. The separately
 opted-in [Add to Collection](library-collections.md) action is the only
 supported vendor edit.
 
-The search toolbar sticks to the top of the scrolling Library. A compact sticky
-footer holds global movie/status totals, with a blue match count for active
-search/filter criteria. Advanced mode adds collection counts, last catalog sync,
-artwork usage and compact scraper progress. It is one shared status/navigation
-bar; First/Previous/Next are omitted when all matching titles fit on one page,
+The search toolbar sticks to the top of the scrolling Library. On phones it
+becomes square Search, Filters, Clear, Sort/Randomize and Options shortcuts,
+with search in a popup and the sort method in Options. Refresh cached data and
+administrator Sync now are also inside Options. A compact sticky footer holds
+global movie/status totals, with a blue match count for active search/filter
+criteria. Advanced mode adds collection counts, last catalog sync, artwork usage
+and compact scraper progress. It is one shared status/navigation bar;
+First/Previous/Next are omitted when all matching titles fit on one page,
 including All. Options contains detailed freshness timestamps and
 individual-version counts. Source Played is displayed as **Watched** in browsing
 labels; Options explains the mapping while API/device collection names remain
 unchanged.
 
-The redundant Library heading is omitted. Sort method/direction remain directly
-available in the search toolbar; refresh/sync are compact footer controls.
+The redundant Library heading is omitted. Desktop sort method/direction remain
+directly available in the search toolbar. On phones, the method is in Options
+and direction/Randomize uses a toolbar icon. Refresh/sync are inside Options.
 Options contains the other presentation settings, with a borderless view-type
 radio group. Manual Journal additions select an exact cached version with known
 runtime; see the [viewing form](ui.md#open-in-home-assistant).
@@ -536,5 +540,10 @@ active; global totals remain unchanged. Multiple versions count as one movie and
 follow the same Paused-before-Watched precedence as the Library list. Unknown
 statuses are included in Total. Per-page and covers-per-row labels are omitted.
 Collection, artwork-cache, sync, scraper and enabled purchase-cost details
-remain visible only in Advanced mode. Navigation and refresh stay on the same
-sticky footer.
+remain visible only in Advanced mode on desktop. Navigation stays on the same
+sticky footer; refresh/sync are in Options.
+
+On phones, the footer keeps totals/matches on one compact line, with square
+paging icons only for multipage results. Administrator cache/scraper details
+remain in the desktop footer and detailed dialogs. Mobile shortcut controls
+reuse the same search, filter, sort and preference behavior as desktop controls.

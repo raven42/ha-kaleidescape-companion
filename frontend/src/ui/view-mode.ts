@@ -16,7 +16,8 @@ export function viewModeSwitch(
     ?disabled=${disabled}
     @click=${change}
   >
-    <span class="mode-basic">Basic</span
-    ><span class="mode-advanced">Advanced</span>
+    <span class="mode-track" aria-hidden="true"
+      ><span class="mode-thumb"></span></span
+    ><span class="mode-label">Adv</span>
   </button>`;
 }

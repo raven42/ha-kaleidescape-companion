@@ -21,6 +21,7 @@ import type {
 import { styles } from "../ui/styles";
 import { libraryStyles } from "./styles";
 import { closeButton, dismissBackdrop } from "../ui/dialog";
+import { actionIcon } from "../ui/action-icons";
 import "../playback/controls";
 import { CoverQueue } from "./cover";
 import { responsivePreferences } from "../ui/profile-controller";
@@ -380,6 +381,7 @@ export class KaleidescapeLibrary extends LitElement {
     this.preferences?.set({ widths: [...this.widths] });
   }
   private clear() {
+    this.mobileQuery = "";
     this.purchaseTotals = undefined;
     this.purchaseLoading = false;
     this.purchaseError = "";
@@ -732,6 +734,8 @@ export class KaleidescapeLibrary extends LitElement {
       this.renderRoot.querySelector<HTMLDialogElement>(`#${id}`)?.showModal();
   }
   private closeDialog(id: string) {
+    if (id === "library-search")
+      this.mobileQuery = String(this.filters.query ?? "");
     if (id === "filter-dialog") this.clearPeople();
     this.renderRoot.querySelector<HTMLDialogElement>(`#${id}`)?.close();
     if (id === "title-dialog") {
@@ -1010,6 +1014,53 @@ export class KaleidescapeLibrary extends LitElement {
     }, 200);
     this.requestUpdate();
   }
+  private mobileQuery = "";
+  private async openSearch() {
+    this.mobileQuery = String(this.filters.query ?? "");
+    await this.openDialog("library-search");
+    this.renderRoot
+      .querySelector<HTMLInputElement>('[name="library_mobile_query"]')
+      ?.focus();
+  }
+  private refreshCached() {
+    void this.load();
+    void this.refreshStatus();
+  }
+  private renderSearchDialog() {
+    return html`<dialog
+      id="library-search"
+      class="library-options"
+      aria-labelledby="library-search-title"
+      @click=${dismissBackdrop}
+    >
+      <div class="card-head">
+        <h2 id="library-search-title">Search Library</h2>
+        ${closeButton(() => this.closeDialog("library-search"))}
+      </div>
+      <form
+        @submit=${(event: Event) => {
+          event.preventDefault();
+          this.filters.query = this.mobileQuery;
+          this.applySearch();
+          this.closeDialog("library-search");
+        }}
+      >
+        <label
+          >Title, actor or director<input
+            type="search"
+            name="library_mobile_query"
+            maxlength="500"
+            .value=${live(this.mobileQuery)}
+            @input=${(event: Event) => {
+              this.mobileQuery = (event.target as HTMLInputElement).value;
+            }}
+        /></label>
+        <div class="dialog-footer">
+          <button type="submit" class="primary">Search</button>
+        </div>
+      </form>
+    </dialog>`;
+  }
   private applySearch() {
     clearTimeout(this.searchTimer);
     this.applied = { ...this.applied, query: this.filters.query };
@@ -1186,6 +1237,15 @@ export class KaleidescapeLibrary extends LitElement {
         ${this.preferences?.profile} layout.
       </p>
       <div class="options-fields">
+        <label class="mobile-sort-setting"
+          >Sort by<select
+            name="library_mobile_sort"
+            .value=${String(this.applied.sort)}
+            @change=${(event: Event) => this.sort((event.target as HTMLSelectElement).value)}
+          >
+            ${SORTS.map(([key, label]) => html`<option value=${key} ?selected=${key === this.applied.sort}>${label}</option>`)}
+          </select></label
+        >
         <label class="check"
           ><input
             type="checkbox"
@@ -1303,6 +1363,16 @@ export class KaleidescapeLibrary extends LitElement {
           : nothing
       }
       ${this.renderPurchaseDetails()}
+      <div class="dialog-footer">
+        <button
+          type="button"
+          ?disabled=${this.loading}
+          @click=${this.refreshCached}
+        >
+          Refresh cached data
+        </button>
+        ${this.scope?.permissions.edit ? html`<button type="button" ?disabled=${this.requesting || (!!this.info?.phase && this.info.phase !== "idle")} @click=${this.sync}>Sync now</button>` : nothing}
+      </div>
     </dialog>`;
   }
   private renderFilterDialog() {
@@ -1876,7 +1946,68 @@ export class KaleidescapeLibrary extends LitElement {
           class=${`library-toolbar${this.dashboard?.search_position === "bottom" ? " toolbar-bottom" : ""}`}
           ?hidden=${!!this.dashboard && this.dashboard.search_position === "off" && !this.dashboard.show_filters && !this.dashboard.show_sort}
         >
+          <div
+            class="mobile-library-tools"
+            role="toolbar"
+            aria-label="Library shortcuts"
+          >
+            <button
+              type="button"
+              aria-label="Search Library"
+              title="Search Library"
+              aria-haspopup="dialog"
+              aria-controls="library-search"
+              class=${this.applied.query ? "active-shortcut" : ""}
+              ?hidden=${this.dashboard?.search_position === "off"}
+              @click=${this.openSearch}
+            >
+              ${actionIcon("search")}
+            </button>
+            <button
+              type="button"
+              aria-label="Library filters"
+              title="Filters"
+              aria-haspopup="dialog"
+              aria-controls="filter-dialog"
+              class=${activeFilters ? "active-shortcut" : ""}
+              ?hidden=${this.dashboard?.show_filters === false}
+              @click=${this.openFilters}
+            >
+              ${actionIcon("filter")}
+            </button>
+            <button
+              type="button"
+              aria-label="Clear search and filters"
+              title="Clear search and filters"
+              ?hidden=${this.dashboard?.show_filters === false}
+              ?disabled=${this.loading}
+              @click=${this.clearFilters}
+            >
+              ${actionIcon("clear")}
+            </button>
+            <button
+              type="button"
+              aria-label=${this.applied.sort === "random" ? "Randomize Library" : this.applied.descending ? "Sort ascending" : "Sort descending"}
+              title=${this.applied.sort === "random" ? "Randomize" : this.applied.descending ? "Sort ascending" : "Sort descending"}
+              ?hidden=${this.dashboard?.show_sort === false}
+              @click=${() => this.sort(String(this.applied.sort))}
+            >
+              ${actionIcon(this.applied.sort === "random" ? "shuffle" : this.applied.descending ? "descending" : "ascending")}
+            </button>
+            <button
+              type="button"
+              aria-label="Library options"
+              title="Options"
+              aria-haspopup="dialog"
+              aria-controls="library-options"
+              ?hidden=${!!this.dashboard}
+              @click=${() => this.openDialog("library-options")}
+            >
+              ${actionIcon("options")}
+            </button>
+          </div>
           <form
+            class="desktop-library-search"
             ?hidden=${this.dashboard?.search_position === "off"}
             @submit=${(event: Event) => {
               event.preventDefault();
@@ -1931,6 +2062,7 @@ export class KaleidescapeLibrary extends LitElement {
             aria-haspopup="dialog"
             ?hidden=${!!this.dashboard}
             aria-controls="library-options"
+            class="desktop-library-options"
             @click=${() => this.openDialog("library-options")}
           >
             Options
@@ -2088,50 +2220,45 @@ export class KaleidescapeLibrary extends LitElement {
             ${this.info?.status_counts?.watched ?? 0} · Paused
             ${this.info?.status_counts?.in_progress ?? 0}
           </span>
-          ${admin && this.info ? html`<span>${counted(this.info.collection_count, "collection")}${this.info.artwork_enabled ? ` · Artwork ${((this.info.artwork_bytes ?? 0) / 1048576).toFixed(1)} MiB` : ""}${this.display.show_library_cost ? ` · Library cost ${this.purchaseAmount("library_cost")}` : ""} · Synced ${this.date(this.info.last_synced_at)}</span>` : nothing}
-          ${admin && this.info?.metadata ? html`<span class="scraper-status">${this.scraperSummary()}</span>` : nothing}
+          ${admin && this.info ? html`<span class="footer-admin">${counted(this.info.collection_count, "collection")}${this.info.artwork_enabled ? ` · Artwork ${((this.info.artwork_bytes ?? 0) / 1048576).toFixed(1)} MiB` : ""}${this.display.show_library_cost ? ` · Library cost ${this.purchaseAmount("library_cost")}` : ""} · Synced ${this.date(this.info.last_synced_at)}</span>` : nothing}
+          ${admin && this.info?.metadata ? html`<span class="scraper-status footer-admin">${this.scraperSummary()}</span>` : nothing}
         </div>
-        <div class="footer-actions actions">
+        <div
+          class="footer-actions actions"
+          ?hidden=${!this.page || (!this.page.offset && !this.page.has_more)}
+        >
           ${
             this.page && (this.page.offset > 0 || this.page.has_more)
               ? html` <button
+                    aria-label="First page"
                     ?disabled=${paging || !this.page.offset}
                     @click=${() => this.load()}
                   >
-                    First
+                    <span class="paging-label">First</span
+                    ><span class="paging-icon">${actionIcon("first")}</span>
                   </button>
                   <button
+                    aria-label="Previous page"
                     ?disabled=${paging || !this.page.offset}
                     @click=${() => this.load(Math.max(0, (this.page?.offset ?? 0) - step))}
                   >
-                    Previous
+                    <span class="paging-label">Previous</span
+                    ><span class="paging-icon">${actionIcon("previous")}</span>
                   </button>
                   <button
+                    aria-label="Next page"
                     ?disabled=${paging || !this.page.has_more}
                     @click=${() => this.load((this.page?.offset ?? 0) + step)}
                   >
-                    Next
+                    <span class="paging-label">Next</span
+                    ><span class="paging-icon">${actionIcon("next")}</span>
                   </button>`
               : nothing
           }
-          <button
-            ?hidden=${this.dashboard?.show_stats === false}
-            data-refresh
-            aria-label="Refresh cached data"
-            title="Refresh cached data"
-            ?disabled=${this.loading}
-            @click=${() => {
-              void this.load();
-              void this.refreshStatus();
-            }}
-          >
-            Refresh cached data
-          </button>
-          ${admin ? html`<button ?disabled=${this.requesting || (!!this.info?.phase && this.info.phase !== "idle")} @click=${this.sync}>Sync now</button>` : nothing}
         </div>
       </footer>
       ${this.renderOptionsDialog()} ${this.renderFilterDialog()}
-      ${this.renderTitleDialog()}
+      ${this.renderSearchDialog()} ${this.renderTitleDialog()}
     </section>`;
   }
 }

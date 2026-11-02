@@ -5,7 +5,11 @@ import { ApiError, JournalClient, errorMessage } from "../core/api";
 import type { Hass, JournalInfo } from "../core/api";
 import { styles } from "../ui/styles";
 import { closeButton, dismissBackdrop } from "../ui/dialog";
-import { calendarNotice, journalTotals } from "../ui/journal-view";
+import {
+  calendarNotice,
+  calendarTotalsStyles,
+  journalTotals,
+} from "../ui/journal-view";
 import type { CalendarStatus } from "../ui/journal-view";
 import type { JournalCalendar } from "../ui/journal-calendar";
 import type { KaleidescapeLibrary } from "../library/library";
@@ -23,6 +27,7 @@ export class CompanionCard extends LitElement {
   static properties = { hass: { attribute: false } };
   static styles = [
     styles,
+    calendarTotalsStyles,
     css`
       :host {
         display: block;
@@ -69,6 +74,14 @@ export class CompanionCard extends LitElement {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
+      }
+      @media (max-width: 700px) {
+        .calendar-footer {
+          padding: 4px 8px max(4px, env(safe-area-inset-bottom));
+          font-size: 11px;
+          line-height: 16px;
+          gap: 4px;
+        }
       }
       dialog {
         width: min(1120px, calc(100% - 24px));
@@ -353,7 +366,7 @@ export class CompanionCard extends LitElement {
                         ></kaleidescape-journal-calendar>
                         <footer class="calendar-footer">
                           <span
-                            >${journalTotals(this.scope, this.calendarStatus)}</span
+                            >${journalTotals(this.scope, this.calendarStatus, true)}</span
                           >${calendarNotice(this.calendarStatus, () => void this.renderRoot.querySelector<JournalCalendar>("kaleidescape-journal-calendar")?.refresh())}
                         </footer>`
                     : this.scope.library_enabled

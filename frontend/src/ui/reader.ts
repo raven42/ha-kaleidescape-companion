@@ -1,3 +1,4 @@
+import "./journal-shortcuts";
 import "./journal-calendar";
 import { responsiveViewport } from "./viewport";
 import "./viewing-library";
@@ -16,7 +17,7 @@ import { landingPage, rememberPage } from "./navigation";
 import "../library/library";
 import "../playback/now-playing";
 import "./journal-options";
-import type { JournalOptionsValue } from "./journal-options";
+import type { JournalOptions, JournalOptionsValue } from "./journal-options";
 import type { LibraryCriterion } from "../library/criteria";
 import type { KaleidescapeLibrary } from "../library/library";
 
@@ -383,8 +384,42 @@ export class KaleidescapeReader extends LitElement {
                     void this.refresh();
                   }}
                 ></kaleidescape-library>`
-              : html`<section class="card journal" aria-label="Viewing history">
+              : html`<section
+                  class=${`card journal${this.journalView === "calendar" ? " journal-calendar-mode" : ""}`}
+                  aria-label="Viewing history"
+                >
                   <div class="entries-header">
+                    ${
+                      this.journalView === "calendar"
+                        ? html`<kaleidescape-journal-shortcuts
+                            .context=${this.api}
+                            .scopeKey=${`${this.scope?.entry_id}:${this.scope?.dataset_id}`}
+                            .value=${this.searchText}
+                            .disabled=${this.loading || !this.scope}
+                            .allowAdd=${false}
+                            .filtered=${!!this.status || !!this.journalMovie}
+                            .filterLabel=${this.journalMovie ? `Viewings for ${this.journalMovie.title}` : ""}
+                            @journal-search=${(event: CustomEvent<string>) => {
+                              this.query = this.searchText = event.detail;
+                              this.page = 1;
+                              this.history = [];
+                              void this.load();
+                            }}
+                            @journal-clear=${() => {
+                              this.query =
+                                this.searchText =
+                                this.status =
+                                this.filterStatus =
+                                  "";
+                              this.journalMovie = undefined;
+                              this.page = 1;
+                              this.history = [];
+                              void this.load();
+                            }}
+                            @journal-open-options=${() => this.renderRoot.querySelector<JournalOptions>("kaleidescape-journal-options")?.open()}
+                          ></kaleidescape-journal-shortcuts>`
+                        : nothing
+                    }
                     ${this.journalMovie ? html`<p class="journal-movie-filter">Viewings for ${this.journalMovie.title} <button @click=${() => this.selectPage("journal")}>Show all viewings</button></p>` : nothing}
                     <form
                       class="filters journal-filters"
@@ -459,6 +494,8 @@ export class KaleidescapeReader extends LitElement {
                         >
                           Refresh</button
                         ><kaleidescape-journal-options
+                          .mobileCompact=${this.journalView === "calendar"}
+                          @journal-refresh=${() => this.refresh()}
                           .status=${this.status}
                           @journal-status=${(event: CustomEvent<string>) => {
                             this.status = this.filterStatus = event.detail;
@@ -581,7 +618,7 @@ export class KaleidescapeReader extends LitElement {
                   }
                   <footer class="entries-footer journal-status">
                     <span
-                      >${journalTotals(this.scope, this.journalView === "calendar" ? this.calendarStatus : undefined)}</span
+                      >${journalTotals(this.scope, this.journalView === "calendar" ? this.calendarStatus : undefined, this.journalView === "calendar")}</span
                     >${
                       this.journalView === "calendar"
                         ? calendarNotice(this.calendarStatus, () => {

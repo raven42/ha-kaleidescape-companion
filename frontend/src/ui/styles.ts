@@ -373,22 +373,44 @@ export const styles = css`
   }
   .view-mode-pill {
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: 1px solid var(--line);
     border-radius: 999px;
-    padding: 3px;
-    gap: 2px;
-    min-height: 36px;
+    padding: 6px 9px;
+    gap: 6px;
+    min-height: 34px;
+    background: var(--divider-color, #666);
+    color: var(--primary-text-color);
     font-size: 12px;
+    line-height: 1;
     white-space: nowrap;
   }
-  .view-mode-pill span {
-    padding: 5px 8px;
+  .mode-track {
+    position: relative;
+    display: inline-block;
+    width: 30px;
+    height: 16px;
     border-radius: 999px;
+    background: #0003;
+    flex: none;
   }
-  .view-mode-pill[aria-checked="false"] .mode-basic,
-  .view-mode-pill[aria-checked="true"] .mode-advanced {
-    background: var(--accent);
+  .mode-thumb {
+    position: absolute;
+    inset-block-start: 2px;
+    inset-inline-start: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.15s;
+  }
+  .view-mode-pill[aria-checked="true"] {
+    background: var(--primary-color, #03a9f4);
     color: var(--text-primary-color, #fff);
+  }
+  .view-mode-pill[aria-checked="true"] .mode-thumb {
+    transform: translateX(14px);
   }
   .page-tabs button {
     flex-shrink: 0;
@@ -669,7 +691,7 @@ export const styles = css`
       padding: 8px 10px;
     }
     .view-mode-pill {
-      min-height: 44px;
+      min-height: 36px;
     }
     header .eyebrow,
     header p {

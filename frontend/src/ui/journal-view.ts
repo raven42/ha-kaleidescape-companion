@@ -1,5 +1,6 @@
 /** Shared presentation of the household-safe viewing fields. */
 import { css, html, nothing } from "lit";
+import { counted } from "../core/text";
 import type { JournalInfo, ViewingSummary } from "../core/api";
 
 export interface CalendarStatus {
@@ -17,16 +18,21 @@ function watchedTime(seconds = 0) {
 export function journalTotals(
   info?: JournalInfo | null,
   calendar?: CalendarStatus,
+  calendarView = !!calendar,
 ) {
-  const count = calendar ? calendar.count : info?.month_viewing_count;
-  const seconds = calendar
-    ? calendar.watchedSeconds
+  const count = calendarView ? calendar?.count : info?.month_viewing_count;
+  const seconds = calendarView
+    ? calendar?.watchedSeconds
     : info?.month_watched_seconds;
-  return html`Total Viewings ${info?.viewing_count ?? 0} ·
-  ${calendar ? calendar.month : "This Month"} ${count ?? "—"} · Watched Time:
-  Total ${watchedTime(info?.watched_seconds)} ·
-  ${calendar ? "Selected Month" : "This Month"}
-  ${seconds === undefined && calendar ? "—" : watchedTime(seconds)}`;
+  return html`<span class=${calendarView ? "calendar-totals-full" : ""}
+      >Total Viewings ${info?.viewing_count ?? 0} ·
+      ${calendarView ? (calendar?.month ?? "Selected Month") : "This Month"}
+      ${count ?? "—"} · Watched Time: Total
+      ${watchedTime(info?.watched_seconds)} ·
+      ${calendarView ? "Selected Month" : "This Month"}
+      ${seconds === undefined && calendarView ? "—" : watchedTime(seconds)}</span
+    >
+    ${calendarView ? html`<span class="calendar-totals-compact">${count === undefined ? "— viewings" : counted(count, "viewing")} · ${seconds === undefined ? "—" : watchedTime(seconds)} watched</span>` : nothing}`;
 }
 export function calendarNotice(
   state: CalendarStatus | undefined,
@@ -40,7 +46,9 @@ export function calendarNotice(
     : state.loading
       ? html`<span role="status">Loading month…</span>`
       : state.empty
-        ? html`<span role="status">No viewings match this month</span>`
+        ? html`<span class="calendar-empty-notice" role="status"
+            >No viewings match this month</span
+          >`
         : nothing;
 }
 
@@ -106,7 +114,24 @@ export function viewingDetails(
     </dl>`;
 }
 
+export const calendarTotalsStyles = css`
+  .calendar-totals-compact {
+    display: none;
+  }
+  @media (max-width: 700px) {
+    .calendar-totals-full,
+    .calendar-empty-notice {
+      display: none;
+    }
+    .calendar-totals-compact {
+      display: inline;
+      white-space: nowrap;
+    }
+  }
+`;
+
 export const journalStyles = css`
+  ${calendarTotalsStyles}
   .journal [hidden] {
     display: none;
   }
@@ -204,6 +229,51 @@ export const journalStyles = css`
   .journal-dialog .delete-viewing {
     margin-inline-end: auto;
     order: 0;
+  }
+  @media (max-width: 700px) {
+    .journal-calendar-mode {
+      --calendar-sticky-top: calc(
+        max(
+            var(--companion-sticky-top, 0px),
+            var(--companion-viewport-top, 0px),
+            env(safe-area-inset-top, 0px)
+          ) +
+          56px
+      );
+    }
+    .journal-calendar-mode .entries-header {
+      top: max(
+        var(--companion-sticky-top, 0px),
+        var(--companion-viewport-top, 0px),
+        env(safe-area-inset-top, 0px)
+      );
+    }
+    .journal-calendar-mode .journal-filters,
+    .journal-calendar-mode .journal-toolbar {
+      display: contents;
+    }
+    .journal-calendar-mode .journal-filters > label,
+    .journal-calendar-mode .journal-filter-tools,
+    .journal-calendar-mode .journal-search-button,
+    .journal-calendar-mode .journal-toolbar > button,
+    .journal-calendar-mode .journal-movie-filter,
+    .journal-calendar-mode .journal-system-details {
+      display: none;
+    }
+    .journal-calendar-mode .entries-footer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 4px 8px max(4px, env(safe-area-inset-bottom));
+      font-size: 11px;
+      line-height: 16px;
+    }
+    .journal-calendar-mode .entries-footer > span {
+      min-width: 0;
+    }
+    .journal-calendar-mode .entries-footer .error {
+      white-space: normal;
+    }
   }
   @media (max-width: 600px) {
     .journal-summary {

@@ -1823,3 +1823,20 @@ enters those diagnostics. Image validation logs distinguish unsupported MIME
 headers, unsupported signatures and safe raster MIME normalization without
 copying headers or body bytes. Signature checks are bounded format checks, not a
 full image decode or proof that a provider returned the intended artwork.
+
+Mobile Library shortcuts reuse the existing authenticated search/filter/sort and
+preference operations. The popup query draft is transient and cleared on
+account/dataset changes; opening or cancelling it performs no search or write.
+Only explicit submission updates the normal personal search preference. Icons
+are fixed local SVG templates, not provider markup. The compact Adv switch
+retains the existing role, ownership, navigation and authorization behavior.
+Moving refresh/sync into Options does not broaden access or start either action
+on opening a dialog. CSS-only safe-area sizing adds no stored device geometry.
+
+The mobile Journal calendar shortcuts delegate to the existing host actions;
+they add no API or device access. Only Advanced mode offers Add viewing, with
+the existing server authorization and editor protections. Search remains inert
+text, is submitted explicitly, and clears its private draft when the client or
+dataset changes. Opening Options does not trigger refresh or a write. Compact
+footer presentation does not alter the household-safe totals returned by the
+API.
