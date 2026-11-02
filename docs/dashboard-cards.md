@@ -15,6 +15,56 @@ uncertain-command review. Cards do not create or edit Journal records. Nothing
 is sent to a player merely by adding a card; enabled controls explicitly send
 commands when pressed.
 
+## Generate a test dashboard
+
+In **Companion → Advanced → Settings → Home Assistant**, choose **Generate test
+dashboard**, enter a name, then **Create test dashboard**. Save any pending
+settings changes first. This creates a separate HA-managed dashboard, visible to
+household users and editable with HA's usual dashboard tools. **Open test
+dashboard** opens it in a new tab; **Download YAML** saves the generated
+configuration for reuse or the Raw configuration editor. It does not edit
+`configuration.yaml` or create a file-mode YAML dashboard requiring a restart.
+
+Generation fails before any dashboard write unless HA dashboards are loaded,
+Library is enabled with a successful nonempty catalog, controls are enabled with
+a saved default player and valid hostname configuration (blank hostnames use the
+normal default), an existing HA media-player source is available for Now Playing
+through tracking or the built-in integration's default-player registry match,
+and the Journal contains at least one non-deleted viewing. Scrapers, HA calendar
+publishing, active playback and experimental movie launch are not prerequisites.
+The guide explains the current launch opt-in state.
+
+Seven views cover the overview, remote, Now Playing, cover layouts, linked
+search, full Library and Journal calendar. Each example has a Markdown test case
+with its exact YAML, expected display and interaction checklist. Variants
+include default/specific players, controls shown/hidden, compact/badged covers,
+partial rows, isolated search channels, top/bottom/off search, list/cover
+layout, and calendar sizing/fit. The full Library view uses a full-width panel
+layout. Examples use the configured entry and opaque player IDs; they copy no
+movie metadata, player names, serials, addresses, provider keys or credentials.
+
+The generator uses HA's native dashboard create/save API and verifies the result
+against the prepared configuration. Its unique URL is independent of the entered
+name, so repeated names are safe. It never replaces or deletes another
+dashboard. On a lost response, **Check and finish setup** reads the same URL
+before doing anything further: a previously attempted create is not sent again,
+an unchanged empty dashboard from that attempt can be completed, and a matching
+saved configuration is recognized without a second save. Changed settings or
+content stop recovery rather than overwriting edits. If HA has not exposed a
+creation result yet, wait and check again or inspect **HA Settings →
+Dashboards**. Closing an unconfirmed setup asks you to inspect HA before
+starting another. Failed setup may leave the newly created empty dashboard;
+nothing is deleted automatically. Remove unwanted test dashboards through HA
+dashboard settings.
+
+Creation sends no device commands, scans, scrapes, or calendar publications.
+Pressing a remote or movie Play button in the resulting dashboard acts on a real
+configured player, as described on the guide's first view. Normal and uncertain
+setup states participate in the existing Settings navigation/write guards.
+Prepared YAML and native dashboard verification have privacy-filtered Settings
+log events linked by a hashed request alias; HA owns its dashboard storage
+writes.
+
 ## Cards
 
 | Type                                        | Purpose                                                                                       |
@@ -41,6 +91,11 @@ type: custom:kaleidescape-journal-calendar-card
 calendar_size: 100
 calendar_fit: false
 ```
+
+The calendar fits all seven weekday columns to its card width, including narrow
+Sections/masonry columns. Its month controls compact according to the card
+width; posters retain their portrait proportions. `calendar_size` controls day
+height, while `calendar_fit` adjusts that height to the available screen space.
 
 The remote reuses the exact panel command/uncertainty protections and readiness
 checks. When multiple players are available its Choose Player dialog selects a

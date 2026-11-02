@@ -1,4 +1,20 @@
 import { displayProfile } from "./display-profile";
+export interface TestDashboardPlan {
+  title: string;
+  url_path: string;
+  config: Record<string, unknown>;
+  yaml: string;
+  views: string[];
+}
+export interface HADashboard {
+  id: string;
+  url_path: string;
+  title: string;
+  mode: string;
+  icon?: string;
+  require_admin?: boolean;
+  show_in_sidebar?: boolean;
+}
 export interface SettingsTransfer {
   format: string;
   version: number;
@@ -673,6 +689,23 @@ export function errorMessage(error: unknown): string {
       "A library response exceeded its safety limit. Cached data is retained.",
     library_artwork:
       "Some artwork could not be cached. Previous artwork is retained when available.",
+    provider_destination:
+      "The provider request destination or path failed the network allowlist checks. No request was sent to that destination.",
+    provider_content_type:
+      "The provider returned an unsupported content type or the image bytes did not match that type.",
+    provider_encoding:
+      "The provider returned compressed content despite requesting an uncompressed response.",
+    provider_response_too_large:
+      "The provider response exceeded the download size limit.",
+    provider_http_error:
+      "The provider returned an unsuccessful HTTP response. Check the preceding HTTP status event.",
+    provider_access_denied:
+      "The provider denied access. Check the scraper credentials and permissions.",
+    provider_rate_limited:
+      "The provider rate limit was reached. Wait before trying again.",
+    provider_artwork_unavailable:
+      "The selected image is no longer available from this provider.",
+    provider_disabled: "The required provider or artwork feature is disabled.",
     metadata_disabled: "Enable and configure a scraper in Settings first.",
     metadata_unavailable:
       "Metadata retrieval failed. Check the operation logs and try again.",
@@ -681,10 +714,6 @@ export function errorMessage(error: unknown): string {
     tmdb_not_found: "TMDB did not find a matching title and release year.",
     tmdb_ambiguous:
       "TMDB returned more than one matching movie. No data was imported.",
-    provider_rate_limited:
-      "The provider rate limit was reached. Wait before trying again.",
-    provider_artwork_unavailable:
-      "This provider does not have that image available.",
   };
   return (
     messages[errorCode(error)] ??
@@ -852,6 +881,16 @@ export class JournalClient {
   ) {
     return this.prepareCommand(scope, "metadata/title/availability", { data });
   }
+  cancelTitleScrape(
+    scope: Scope,
+    planId: string,
+  ): Promise<{ cancelled: boolean }> {
+    return this.call({
+      type: `${DOMAIN}/metadata/title/cancel`,
+      ...scopeFields(scope),
+      plan_id: planId,
+    });
+  }
   applyTitleScrape(
     pending: PreparedMutation,
   ): Promise<{ title_id: string; updated_count: number }> {
@@ -956,6 +995,52 @@ export class JournalClient {
   }
   saveUIPreferences(pending: PreparedMutation): Promise<{ revision: number }> {
     return this.call({ ...pending.message });
+  }
+  testDashboard(
+    scope: Scope,
+    request_id: string,
+    name: string,
+  ): Promise<TestDashboardPlan> {
+    return this.call({
+      type: `${DOMAIN}/dashboard/preview`,
+      ...scopeFields(scope),
+      request_id,
+      name,
+    });
+  }
+  verifyTestDashboard(
+    scope: Scope,
+    request_id: string,
+  ): Promise<{ url_path: string; views: number }> {
+    return this.call({
+      type: `${DOMAIN}/dashboard/verify`,
+      ...scopeFields(scope),
+      request_id,
+    });
+  }
+  haDashboards(): Promise<HADashboard[]> {
+    return this.call({ type: "lovelace/dashboards/list" });
+  }
+  createHATestDashboard(plan: TestDashboardPlan): Promise<HADashboard> {
+    return this.call({
+      type: "lovelace/dashboards/create",
+      title: plan.title,
+      url_path: plan.url_path,
+      mode: "storage",
+      icon: "mdi:test-tube",
+      show_in_sidebar: true,
+      require_admin: false,
+    });
+  }
+  haTestDashboardConfig(path: string): Promise<Record<string, unknown>> {
+    return this.call({ type: "lovelace/config", url_path: path, force: true });
+  }
+  saveHATestDashboard(plan: TestDashboardPlan): Promise<void> {
+    return this.call({
+      type: "lovelace/config/save",
+      url_path: plan.url_path,
+      config: plan.config,
+    });
   }
   info(): Promise<{ entries: JournalInfo[] }> {
     return this.call({ type: `${DOMAIN}/info` });

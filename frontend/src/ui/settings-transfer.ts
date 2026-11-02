@@ -49,6 +49,11 @@ export class SettingsTransferPanel extends LitElement {
     this.error = this.notice = "";
     this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.close();
   }
+  private close(event?: Event) {
+    event?.preventDefault();
+    this.reset();
+    this.requestUpdate();
+  }
   private fail(error: unknown) {
     this.error = errorMessage(error);
     if (errorCode(error) === "unauthorized") {
@@ -146,13 +151,11 @@ export class SettingsTransferPanel extends LitElement {
       <dialog
         class="database-dialog"
         @click=${dismissBackdrop}
-        @cancel=${(event: Event) => {
-          if (this.busy || this.pending) event.preventDefault();
-        }}
+        @cancel=${(event: Event) => this.close(event)}
       >
         <div class="card-head">
           <h2>Export / import settings</h2>
-          ${closeButton(() => this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.close(), this.busy || this.pending)}
+          ${closeButton(() => this.close())}
         </div>
         <p>
           Choose the categories to transfer. Credentials are always excluded.

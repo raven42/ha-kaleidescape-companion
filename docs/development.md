@@ -383,3 +383,13 @@ counts and keyed aliases only. Never log exception strings, request/response
 payloads, wire frames, SQL, paths or credential-bearing configuration.
 Independent API changes belong in the sibling API project; run its isolated
 logging/privacy tests as well as the full Companion checks.
+
+### Validate an exported database
+
+Run `python dev/validate_database.py path/to/export.sqlite` to perform read-only
+SQLite integrity and foreign-key checks plus validation of known Library/Journal
+JSON columns. Output contains counts only; it does not expose record values or
+repair the file. Exit codes are 0 for a passing file, 1 for detected violations,
+and 2 when validation cannot finish. Prefer a downloaded SQLite export over a
+running database. Structural validation does not test scraper providers or
+semantic metadata correctness.

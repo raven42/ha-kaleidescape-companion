@@ -733,7 +733,6 @@ export class KaleidescapeLibrary extends LitElement {
   }
   private closeDialog(id: string) {
     if (id === "filter-dialog") this.clearPeople();
-    if (id === "title-dialog" && this.detailsLocked) return;
     this.renderRoot.querySelector<HTMLDialogElement>(`#${id}`)?.close();
     if (id === "title-dialog") {
       this.selected = undefined;
@@ -1572,7 +1571,8 @@ export class KaleidescapeLibrary extends LitElement {
     return html`<dialog
       id="title-dialog"
       @cancel=${(event: Event) => {
-        if (this.detailsLocked) event.preventDefault();
+        event.preventDefault();
+        this.closeDialog("title-dialog");
       }}
       @click=${dismissBackdrop}
       class=${`database-dialog library-dialog movie-dialog inset-dialog${backdrop ? " has-backdrop" : ""}`}
@@ -1588,7 +1588,7 @@ export class KaleidescapeLibrary extends LitElement {
         group
           ? html`
               <div class="movie-close">
-                ${closeButton(() => this.closeDialog("title-dialog"), this.detailsLocked)}
+                ${closeButton(() => this.closeDialog("title-dialog"))}
               </div>
               <div class="movie-intro">
                 ${backdrop && row ? html`<div class="movie-hero" aria-hidden="true">${this.cover(row, backdrop)}</div>` : nothing}

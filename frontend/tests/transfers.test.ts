@@ -273,12 +273,8 @@ it("locks the exact selection and UUID for uncertain retries, even if the review
   await flush();
   expect(text()).toContain("unconfirmed");
   const dialog = root().querySelector<HTMLDialogElement>("dialog")!;
-  const cancel = new Event("cancel", { cancelable: true });
-  dialog.dispatchEvent(cancel);
-  await flush();
-  expect(cancel.defaultPrevented).toBe(true);
   expect(dialog.open).toBe(true);
-  expect(modalClose(root()).disabled).toBe(true);
+  expect(modalClose(root()).disabled).toBe(false);
   expect(
     root().querySelector<HTMLInputElement>('input[type="file"]')!.disabled,
   ).toBe(true);

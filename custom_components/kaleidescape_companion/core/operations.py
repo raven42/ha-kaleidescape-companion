@@ -8,9 +8,25 @@ from kaleidescape_api.logging import (
     Level,
     Operation,
     Outcome,
+    Reason,
     Resource,
     Subsystem,
 )
+
+
+def failure_reason(error):
+    """Only positively allowlisted provider codes become static diagnostic reasons."""
+    from .._vendor.kaleidescape_scrapers import ProviderError
+
+    if not isinstance(error, ProviderError) or len(error.args) != 1:
+        return None
+    code = error.args[0]
+    if type(code) is not str:
+        return None
+    allowed = {
+        reason.value: reason for reason in Reason if reason.name.startswith("PROVIDER_")
+    }
+    return allowed.get(code)
 
 
 def traced(
@@ -56,7 +72,12 @@ def traced(
                 raise
             except Exception as error:
                 logger.emit_failure(
-                    subsystem, operation, error, resource=resource, target=target
+                    subsystem,
+                    operation,
+                    error,
+                    resource=resource,
+                    target=target,
+                    reason=failure_reason(error),
                 )
                 raise
             logger.emit(

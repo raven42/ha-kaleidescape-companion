@@ -159,9 +159,8 @@ export class KaleidescapeTransfers extends LitElement {
   }
   private closeDialog(event?: Event) {
     event?.preventDefault();
-    if (this.working || this.pending) return;
     const dialog = this.dialog;
-    this.hideDialog();
+    this.clear();
     this.file = undefined;
     this.review = undefined;
     this.matching = undefined;
@@ -742,7 +741,7 @@ export class KaleidescapeTransfers extends LitElement {
           <h2 id="transfer-title">
             ${this.dialog === "export" ? "Export database" : "Merge Import"}
           </h2>
-          ${closeButton((event) => this.closeDialog(event), this.working || !!this.pending)}
+          ${closeButton((event) => this.closeDialog(event))}
         </div>
         ${this.error && this.dialog ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
         ${

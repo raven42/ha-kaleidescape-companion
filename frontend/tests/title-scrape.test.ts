@@ -141,7 +141,7 @@ it.each([false, true])(
     });
     expect(
       root().querySelector<HTMLButtonElement>(".dialog-close")!.disabled,
-    ).toBe(true);
+    ).toBe(false);
     button("Retry exact apply").click();
     await flush();
     expect(apply.mock.calls[1][0]).toBe(pending);
@@ -242,10 +242,7 @@ it("reviews fields and paged images, then retries the exact selected apply", asy
   });
   expect(
     root().querySelector<HTMLButtonElement>(".dialog-close")!.disabled,
-  ).toBe(true);
-  const cancel = new Event("cancel", { cancelable: true });
-  root().querySelector("dialog")!.dispatchEvent(cancel);
-  expect(cancel.defaultPrevented).toBe(true);
+  ).toBe(false);
   button("Retry exact apply").click();
   await flush();
   expect(apply.mock.calls[1][0]).toBe(pending);
@@ -400,4 +397,54 @@ it("offers detailed candidates, permits a replacement title search, and saves th
     images: {},
     save_match: true,
   });
+});
+
+it.each([false, true])(
+  "allows close during an outstanding apply or uncertain retry (reply rejected: %s)",
+  async (rejected) => {
+    const cancel = vi
+      .spyOn(element.client!, "cancelTitleScrape")
+      .mockResolvedValue({ cancelled: true });
+    let done!: (value: { title_id: string; updated_count: number }) => void;
+    const apply = vi.spyOn(element.client!, "applyTitleScrape");
+    if (rejected) apply.mockRejectedValue(new ApiError("connection_lost"));
+    else
+      apply.mockReturnValue(
+        new Promise((resolve) => {
+          done = resolve;
+        }),
+      );
+    const changed = vi.fn();
+    element.addEventListener("metadata-changed", changed);
+    await scrape();
+    button("Apply selected data").click();
+    await flush();
+    const close = root().querySelector<HTMLButtonElement>(".dialog-close")!;
+    expect(close.disabled).toBe(false);
+    close.click();
+    await flush();
+    expect(root().querySelector<HTMLDialogElement>("dialog")!.open).toBe(false);
+    expect(cancel).toHaveBeenCalledWith(element.scope, review.plan_id);
+    expect(root().textContent).not.toContain("Retry exact apply");
+    if (!rejected) {
+      done({ title_id: element.versionId, updated_count: 1 });
+      await flush();
+    }
+    expect(changed).not.toHaveBeenCalled();
+    expect(apply).toHaveBeenCalledTimes(1);
+  },
+);
+
+it("reports a provider rejection as a confirmed error and releases the apply selection", async () => {
+  vi.spyOn(element.client!, "applyTitleScrape").mockRejectedValue(
+    new ApiError("provider_content_type"),
+  );
+  await scrape();
+  button("Apply selected data").click();
+  await flush();
+  expect(root().textContent).toContain("unsupported content type");
+  expect(root().textContent).not.toContain("Retry exact apply");
+  expect(
+    root().querySelector<HTMLButtonElement>(".dialog-close")!.disabled,
+  ).toBe(false);
 });

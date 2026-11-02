@@ -450,3 +450,28 @@ it("uses the shared header X for Remote without a redundant heading or footer", 
     false,
   );
 });
+
+it("restores the saved default after asynchronous discovery populates the select", async () => {
+  element.mode = "settings";
+  element.value = "1A2B";
+  data.devices = [
+    {
+      serial: "1A2B",
+      name: "Example cinema",
+      model: "Fictional player",
+      ipaddress: "10.0.0.25",
+      is_player: true,
+    },
+  ];
+  await mount("Discover devices");
+  const select = element.shadowRoot!.querySelector<HTMLSelectElement>(
+    '[name="control_player"]',
+  )!;
+  expect(select.value).toBe("1A2B");
+  expect(select.selectedOptions[0].textContent).toBe("Example cinema (1A2B)");
+  button("Discover devices").click();
+  await vi.waitFor(() =>
+    expect(calls.some((c) => c.type.endsWith("/control/discover"))).toBe(true),
+  );
+  expect(select.value).toBe("1A2B");
+});

@@ -124,6 +124,7 @@ export class KaleidescapePanel extends LitElement {
   private haConnection?: Hass["connection"];
   private haUser?: string;
   private generation = 0;
+  private mutationEpoch = 0;
   private listRequest = 0;
   private detailRequest = 0;
   private info: JournalInfo | null = null;
@@ -733,14 +734,16 @@ export class KaleidescapePanel extends LitElement {
     if (!this.api || !this.pending || this.saving) return;
     const api = this.api,
       pending = this.pending,
-      generation = this.generation;
+      generation = this.generation,
+      epoch = this.mutationEpoch;
     this.saving = true;
     this.error = "";
     this.notice = "";
     this.requestUpdate();
     try {
       const result = await api.mutate(pending);
-      if (generation !== this.generation) return;
+      if (generation !== this.generation || epoch !== this.mutationEpoch)
+        return;
       this.pending = null;
       this.closeEditor();
       this.notice = result.viewing.deleted_at
@@ -758,14 +761,17 @@ export class KaleidescapePanel extends LitElement {
         const { entries } = await api.info();
         if (
           generation === this.generation &&
+          epoch === this.mutationEpoch &&
           entries[0]?.dataset_id === this.info?.dataset_id
         )
           this.info = entries[0];
       } catch (error) {
-        if (generation === this.generation) this.fail(error);
+        if (generation === this.generation && epoch === this.mutationEpoch)
+          this.fail(error);
       }
     } catch (error) {
-      if (generation !== this.generation) return;
+      if (generation !== this.generation || epoch !== this.mutationEpoch)
+        return;
       if (
         ["invalid_request", "conflict", "unauthorized"].includes(
           errorCode(error),
@@ -774,7 +780,7 @@ export class KaleidescapePanel extends LitElement {
         this.pending = null;
       this.fail(error);
     } finally {
-      if (generation === this.generation) {
+      if (generation === this.generation && epoch === this.mutationEpoch) {
         this.saving = false;
         this.requestUpdate();
       }
@@ -934,7 +940,10 @@ export class KaleidescapePanel extends LitElement {
   }
   private cancelEdit(event?: Event) {
     event?.preventDefault();
-    if (this.saving || this.pending || !this.discard()) return;
+    if (!this.saving && !this.pending && !this.discard()) return;
+    this.mutationEpoch++;
+    this.saving = false;
+    this.pending = null;
     this.draft = this.initial = null;
     this.editMovieId = null;
     this.editTitleTouched = false;
@@ -958,7 +967,9 @@ export class KaleidescapePanel extends LitElement {
   }
   private cancelDelete(event?: Event) {
     event?.preventDefault();
-    if (this.saving || this.pending) return;
+    this.mutationEpoch++;
+    this.saving = false;
+    this.pending = null;
     this.confirmDelete = false;
     this.renderRoot
       .querySelector<HTMLDialogElement>("#journal-delete")
@@ -1286,7 +1297,7 @@ export class KaleidescapePanel extends LitElement {
           <h2 id="journal-editor-title">
             ${this.manual ? "New viewing" : "Edit viewing"}
           </h2>
-          ${closeButton((event) => this.cancelEdit(event), this.saving || !!this.pending)}
+          ${closeButton((event) => this.cancelEdit(event))}
         </div>
         ${this.notice ? html`<p class="notice" role="status">${this.notice}</p>` : nothing}
         ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
@@ -1303,7 +1314,7 @@ export class KaleidescapePanel extends LitElement {
       >
         <div class="card-head">
           <h2 id="journal-delete-title">Remove this entry from the journal?</h2>
-          ${closeButton((event) => this.cancelDelete(event), this.saving || !!this.pending)}
+          ${closeButton((event) => this.cancelDelete(event))}
         </div>
         <p>${this.selected?.title}</p>
         <p>

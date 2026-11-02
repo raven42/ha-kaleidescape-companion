@@ -391,10 +391,13 @@ export class DeviceControls extends LitElement {
     }
   }
   private close(event?: Event) {
-    if (this.busy) {
-      event?.preventDefault();
-      return;
-    }
+    event?.preventDefault();
+    // Keep durable server receipts authoritative; closing never replays a command.
+    this.stopWaking();
+    this.generation++;
+    this.busy = false;
+    this.pending = undefined;
+    if (this.client && this.scope) void this.load();
     this.acknowledge = "";
     this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.close();
     this.dialog = "players";
@@ -536,9 +539,11 @@ export class DeviceControls extends LitElement {
                   ?disabled=${this.busy}
                   @change=${(event: Event) => this.dispatchEvent(new CustomEvent("player-selected", { detail: (event.target as HTMLSelectElement).value, bubbles: true, composed: true }))}
                 >
-                  <option value="">No default player selected</option>
-                  ${this.value && !devices.some((device) => device.serial === this.value) ? html`<option value=${this.value}>Configured player (${this.value})</option>` : nothing}
-                  ${devices.map((device) => html`<option value=${device.serial}>${device.name} (${device.serial})</option>`)}
+                  <option value="" ?selected=${!this.value}>
+                    No default player selected
+                  </option>
+                  ${this.value && !devices.some((device) => device.serial === this.value) ? html`<option value=${this.value} selected>Configured player (${this.value})</option>` : nothing}
+                  ${devices.map((device) => html`<option value=${device.serial} ?selected=${device.serial === this.value}>${device.name || device.model || "Movie player"} (${device.serial})</option>`)}
                 </select></label
               >
               ${
@@ -598,7 +603,7 @@ export class DeviceControls extends LitElement {
           <h2>
             ${this.acknowledge ? "Review unconfirmed command" : this.dialog === "remote" ? "Theater Remote" : "Choose Player"}
           </h2>
-          ${closeButton((event) => this.close(event), this.busy)}
+          ${closeButton((event) => this.close(event))}
         </div>
         ${
           this.acknowledge

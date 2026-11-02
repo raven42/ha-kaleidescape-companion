@@ -56,8 +56,8 @@ export class MetadataRepair extends LitElement {
   }
   private close(event?: Event) {
     event?.preventDefault();
-    if (this.confirmNavigation())
-      this.renderRoot.querySelector("dialog")?.close();
+    this.clear();
+    this.requestUpdate();
   }
   private fail(error: unknown) {
     if (errorCode(error) === "unauthorized") {
@@ -168,7 +168,7 @@ export class MetadataRepair extends LitElement {
       >
         <div class="card-head">
           <h2 id="metadata-repair-title">Repair Journal Library metadata</h2>
-          ${closeButton((event) => this.close(event), !this.confirmNavigation())}
+          ${closeButton((event) => this.close(event))}
         </div>
         ${review ? html`<p>${counted(review.updated_count, "entry", "entries")} with missing details can be updated. ${review.unchanged_count} already up to date · ${review.unmatched_count} unmatched · ${review.active_count} active and skipped.</p>` : nothing}
         <p>

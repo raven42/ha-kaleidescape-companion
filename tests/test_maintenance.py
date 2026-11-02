@@ -559,3 +559,27 @@ class MaintenanceApiTest(unittest.IsolatedAsyncioTestCase):
             "settings/cancel", **self.scope, flow_id=foreign["flow_id"]
         )
         self.assertEqual(result["code"], "unauthorized")
+
+    async def test_default_player_survives_real_options_flow_roundtrip(self):
+        form = await self.prepare_flow()
+        result = await self.call(
+            "settings/submit",
+            **self.scope,
+            flow_id=form["flow_id"],
+            data={
+                "tracking_enabled": False,
+                "control_enabled": True,
+                "library_host": "fictional.local",
+                "control_host": "",
+                "control_player": "00001a2b",
+            },
+        )
+        self.assertTrue(result["success"])
+        self.assertEqual(result["result"]["type"], "create_entry")
+        self.assertEqual(self.entry.options["control_player"], "1A2B")
+        reopened = await self.call("settings/start", **self.scope)
+        defaults = {
+            field["name"]: field.get("default")
+            for field in reopened["result"]["fields"]
+        }
+        self.assertEqual(defaults["control_player"], "1A2B")

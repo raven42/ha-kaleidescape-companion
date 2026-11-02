@@ -2,7 +2,7 @@ import { responsivePreferences } from "./profile-controller";
 /** Administrator settings page backed by Companion's native HA options flow. */
 import { LitElement, css, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
-import { errorCode, errorMessage } from "../core/api";
+import { ApiError, errorCode, errorMessage } from "../core/api";
 import type {
   JournalClient,
   JournalInfo,
@@ -14,6 +14,8 @@ import { collectionLabel } from "../library/badges";
 import { fullSyncSettings } from "./calendar-settings";
 import "./calendar-export";
 import "./settings-transfer";
+import "./test-dashboard";
+import type { TestDashboard } from "./test-dashboard";
 import { CalendarExport } from "./calendar-export";
 import "./metadata-repair";
 import type { MetadataRepair } from "./metadata-repair";
@@ -190,6 +192,7 @@ export class KaleidescapeSettings extends LitElement {
   private loading = false;
   private saving = false;
   private uncertain = false;
+  private dashboardBusy = false;
   private error = "";
   private bound = "";
   private boundClient?: JournalClient;
@@ -331,11 +334,15 @@ export class KaleidescapeSettings extends LitElement {
     const exporting = this.renderRoot.querySelector<CalendarExport>(
       "kaleidescape-calendar-export",
     );
+    const dashboard = this.renderRoot.querySelector<TestDashboard>(
+      "kaleidescape-test-dashboard",
+    );
     const repairing = this.renderRoot.querySelector<MetadataRepair>(
       "kaleidescape-metadata-repair",
     );
     if (
       this.saving ||
+      (dashboard && !dashboard.confirmNavigation()) ||
       (exporting && !exporting.confirmNavigation()) ||
       (repairing && !repairing.confirmNavigation())
     )
@@ -352,7 +359,7 @@ export class KaleidescapeSettings extends LitElement {
   private busy() {
     this.dispatchEvent(
       new CustomEvent("settings-busy", {
-        detail: this.saving,
+        detail: this.saving || this.dashboardBusy,
         bubbles: true,
         composed: true,
       }),
@@ -373,7 +380,8 @@ export class KaleidescapeSettings extends LitElement {
       !this.scope ||
       !this.flow?.flow_id ||
       this.saving ||
-      this.uncertain
+      this.uncertain ||
+      this.dashboardBusy
     )
       return;
     if (!(event.target as HTMLFormElement).reportValidity()) return;
@@ -560,7 +568,7 @@ export class KaleidescapeSettings extends LitElement {
             class="primary"
             type="button"
             @click=${this.submitForm}
-            ?disabled=${this.saving || this.loading || this.uncertain || this.flow?.type !== "form"}
+            ?disabled=${this.saving || this.loading || this.uncertain || this.dashboardBusy || this.flow?.type !== "form"}
           >
             ${this.saving ? "Saving…" : "Save settings"}
           </button>
@@ -623,6 +631,19 @@ export class KaleidescapeSettings extends LitElement {
                         Home Assistant integration · shared · Save settings
                         required
                       </p>
+                      <kaleidescape-test-dashboard
+                        .client=${this.client}
+                        .scope=${this.scope}
+                        .disabled=${this.saving || this.uncertain || JSON.stringify(this.draft) !== JSON.stringify(this.initial)}
+                        @dashboard-busy=${(event: CustomEvent<boolean>) => {
+                          if (this.dashboardBusy !== event.detail) {
+                            this.dashboardBusy = event.detail;
+                            this.busy();
+                            this.requestUpdate();
+                          }
+                        }}
+                        @access-denied=${() => this.fail(new ApiError("unauthorized"))}
+                      ></kaleidescape-test-dashboard>
                       <h3>Playback source entities</h3>
                       <p class="muted">
                         Choose the HA entities used for automatic journal

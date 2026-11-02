@@ -107,10 +107,8 @@ export class TitleEdit extends LitElement {
     this.lock();
   }
   private close() {
-    if (!this.busy && !this.pending) {
-      this.reset();
-      this.requestUpdate();
-    }
+    this.reset();
+    this.requestUpdate();
   }
   confirmNavigation() {
     if (this.busy || this.pending) return false;
@@ -255,13 +253,13 @@ export class TitleEdit extends LitElement {
         aria-labelledby="library-edit-title"
         @click=${dismissBackdrop}
         @cancel=${(event: Event) => {
-          if (this.busy || this.pending) event.preventDefault();
-          else this.close();
+          event.preventDefault();
+          this.close();
         }}
       >
         <div class="card-head">
           <h2 id="library-edit-title">Edit Library details</h2>
-          ${closeButton(() => this.close(), this.busy || !!this.pending)}
+          ${closeButton(() => this.close())}
         </div>
         ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
         ${this.busy ? html`<p role="status">${this.pending ? "Saving changes…" : "Loading details…"}</p>` : nothing}

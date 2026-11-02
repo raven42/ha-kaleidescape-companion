@@ -72,9 +72,6 @@ it("keeps the identical UUID and review after a lost repair response", async () 
   await vi.waitFor(() =>
     expect(root.textContent).toContain("The result is unconfirmed"),
   );
-  const cancel = new Event("cancel", { cancelable: true });
-  root.querySelector("dialog")!.dispatchEvent(cancel);
-  expect(cancel.defaultPrevented).toBe(true);
   expect(element!.confirmNavigation()).toBe(false);
   button(root, "Retry same repair").click();
   await vi.waitFor(() => expect(repair).toHaveBeenCalledTimes(2));
@@ -132,4 +129,21 @@ it("shows secure request-ID failures before sending a write", async () => {
     transport.calls.some((call) => call.type.endsWith("metadata/repair")),
   ).toBe(false);
   expect(element!.confirmNavigation()).toBe(true);
+});
+
+it("closes an unconfirmed repair and clears its retry", async () => {
+  const { root, client } = await mount();
+  const repair = vi
+    .spyOn(client, "repairMetadata")
+    .mockRejectedValue(new ApiError("connection_lost"));
+  await review(root);
+  button(root, "Repair missing metadata").click();
+  await vi.waitFor(() =>
+    expect(root.textContent).toContain("The result is unconfirmed"),
+  );
+  root.querySelector<HTMLButtonElement>(".dialog-close")!.click();
+  await element!.updateComplete;
+  expect(root.querySelector<HTMLDialogElement>("dialog")!.open).toBe(false);
+  expect(element!.confirmNavigation()).toBe(true);
+  expect(repair).toHaveBeenCalledTimes(1);
 });

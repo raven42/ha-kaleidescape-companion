@@ -91,6 +91,7 @@ export class KaleidescapeDatabase extends LitElement {
   private boundClient?: JournalClient;
   private bound = "";
   private generation = 0;
+  private mutationEpoch = 0;
   private request = 0;
   private page?: DatabasePage;
   private table = "viewings";
@@ -507,7 +508,11 @@ export class KaleidescapeDatabase extends LitElement {
   }
   private close(event?: Event) {
     event?.preventDefault();
-    if (!this.discard()) return;
+    if (!this.saving && !this.pending && !this.discard()) return;
+    this.mutationEpoch++;
+    this.pending = undefined;
+    this.saving = false;
+    this.busy();
     for (const id of ["database-edit", "database-delete"])
       this.renderRoot.querySelector<HTMLDialogElement>(`#${id}`)?.close();
     this.operation = null;
@@ -568,7 +573,8 @@ export class KaleidescapeDatabase extends LitElement {
           });
         }
       }
-      const generation = this.generation;
+      const generation = this.generation,
+        epoch = this.mutationEpoch;
       this.saving = true;
       this.error = "";
       this.busy();
@@ -576,7 +582,8 @@ export class KaleidescapeDatabase extends LitElement {
       try {
         if (this.operation === "new") await this.client.mutate(this.pending);
         else await this.client.databaseMutation(this.pending);
-        if (generation !== this.generation) return;
+        if (generation !== this.generation || epoch !== this.mutationEpoch)
+          return;
         this.pending = undefined;
         this.saving = false;
         this.operation = null;
@@ -595,7 +602,8 @@ export class KaleidescapeDatabase extends LitElement {
         );
         await this.load();
       } catch (error) {
-        if (generation !== this.generation) return;
+        if (generation !== this.generation || epoch !== this.mutationEpoch)
+          return;
         if (
           [
             "invalid_request",
@@ -610,7 +618,7 @@ export class KaleidescapeDatabase extends LitElement {
           this.pending = undefined;
         this.fail(error);
       } finally {
-        if (generation === this.generation) {
+        if (generation === this.generation && epoch === this.mutationEpoch) {
           this.saving = false;
           this.busy();
           this.requestUpdate();
@@ -979,7 +987,7 @@ export class KaleidescapeDatabase extends LitElement {
           <h2>
             ${this.operation === "new" ? "New viewing" : "Edit database entry"}
           </h2>
-          ${closeButton((event) => this.close(event), this.saving || !!this.pending)}
+          ${closeButton((event) => this.close(event))}
         </div>
         <p class="warning">
           Only supported fields can change. Source metadata may be restored by a
@@ -1101,7 +1109,7 @@ export class KaleidescapeDatabase extends LitElement {
             Permanently delete
             ${counted(this.selectedRows().length, "entry", "entries")}?
           </h2>
-          ${closeButton((event) => this.close(event), this.saving || !!this.pending)}
+          ${closeButton((event) => this.close(event))}
         </div>
         <p>
           Database deletion is permanent. Associated memberships/session

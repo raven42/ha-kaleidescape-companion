@@ -570,7 +570,7 @@ export class KaleidescapeLogs extends LitElement {
       <dialog id="log-clear" class="database-dialog" @click=${dismissBackdrop}>
         <div class="card-head">
           <h2>Clear logs?</h2>
-          ${closeButton(() => this.renderRoot.querySelector<HTMLDialogElement>("#log-clear")?.close(), this.busy)}
+          ${closeButton(() => this.renderRoot.querySelector<HTMLDialogElement>("#log-clear")?.close())}
         </div>
         <p>
           This hides retained entries through the last refresh. Include cleared
@@ -594,7 +594,7 @@ export class KaleidescapeLogs extends LitElement {
       >
         <div class="card-head">
           <h2>Logging options</h2>
-          ${closeButton(() => this.renderRoot.querySelector<HTMLDialogElement>("#log-options")?.close(), this.busy)}
+          ${closeButton(() => this.renderRoot.querySelector<HTMLDialogElement>("#log-options")?.close())}
         </div>
         <p class="notice">
           ${this.page?.banner ?? "Logs contain structured events and opaque resource IDs. No credentials or network identities."}

@@ -17,7 +17,9 @@ from kaleidescape_api.logging import (
     Level,
     Operation,
     Outcome,
+    Reason,
     Resource,
+    Stage,
     Subsystem,
 )
 from yarl import URL
@@ -221,6 +223,11 @@ class MetadataSync:
                 **headers,
                 "Host": base.authority,
                 "User-Agent": "KaleidescapeCompanion/0.0.0",
+                **(
+                    {"Accept": "image/jpeg, image/png, image/webp"}
+                    if parsed.hostname == "image.tmdb.org" or store_cover
+                    else {}
+                ),
             },
             server_hostname=base.host,
             allow_redirects=False,
@@ -258,7 +265,13 @@ class MetadataSync:
             if parsed.path == "/robots.txt":
                 expected = {"text/plain"}
             elif parsed.hostname == "image.tmdb.org" or store_cover:
-                expected = {"image/jpeg"}
+                expected = {
+                    "image/jpeg",
+                    "image/jpg",
+                    "image/png",
+                    "image/webp",
+                    "application/octet-stream",
+                }
             elif (
                 parsed.hostname == "www.kaleidescape.com"
                 and parsed.path != "/movie-store/rest/packages/search"
@@ -267,6 +280,16 @@ class MetadataSync:
             else:
                 expected = {"application/json"}
             if response.content_type not in expected:
+                if parsed.hostname == "image.tmdb.org" or store_cover:
+                    self.repository.logger.emit(
+                        Subsystem.METADATA,
+                        Operation.READ,
+                        Outcome.REJECTED,
+                        level=Level.WARNING,
+                        reason=Reason.PROVIDER_IMAGE_HEADER,
+                        stage=Stage.VALIDATION,
+                        status=response.status,
+                    )
                 raise ProviderError("provider_content_type")
             if response.content_length and response.content_length > 4 * 1024 * 1024:
                 raise ProviderError("provider_response_too_large")
@@ -276,10 +299,30 @@ class MetadataSync:
                 body.extend(chunk)
                 if len(body) > 4 * 1024 * 1024:
                     raise ProviderError("provider_response_too_large")
-            if (parsed.hostname == "image.tmdb.org" or store_cover) and image_type(
-                body
-            ) != response.content_type:
-                raise ProviderError("provider_content_type")
+            if parsed.hostname == "image.tmdb.org" or store_cover:
+                actual_type = image_type(body)
+                if actual_type is None:
+                    self.repository.logger.emit(
+                        Subsystem.METADATA,
+                        Operation.READ,
+                        Outcome.REJECTED,
+                        level=Level.WARNING,
+                        reason=Reason.PROVIDER_IMAGE_INVALID,
+                        stage=Stage.VALIDATION,
+                        status=response.status,
+                        count=len(body),
+                    )
+                    raise ProviderError("provider_content_type")
+                if actual_type != response.content_type:
+                    self.repository.logger.emit(
+                        Subsystem.METADATA,
+                        Operation.READ,
+                        Outcome.CHANGED,
+                        reason=Reason.PROVIDER_IMAGE_NORMALIZED,
+                        stage=Stage.VALIDATION,
+                        status=response.status,
+                        count=len(body),
+                    )
         self._ready()
         return bytes(body)
 

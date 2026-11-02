@@ -282,3 +282,32 @@ it("requires a dedicated-calendar acknowledgement for Full Sync and bounds its a
   await flush();
   expect(acknowledgement.checked).toBe(false);
 });
+
+it("saves and restores the chosen default player through the settings page", async () => {
+  transport.options.control_enabled = true;
+  transport.options.control_player = "";
+  await mount("kaleidescape-settings");
+  const controls = root().querySelector<HTMLElement>(
+    "kaleidescape-device-controls",
+  )!;
+  controls.dispatchEvent(
+    new CustomEvent("player-selected", {
+      detail: "1A2B",
+      bubbles: true,
+      composed: true,
+    }),
+  );
+  await flush();
+  button("Save settings").click();
+  await flush();
+  expect(transport.options.control_player).toBe("1A2B");
+  element.remove();
+  await mount("kaleidescape-settings");
+  await vi.waitFor(() =>
+    expect(
+      root()
+        .querySelector("kaleidescape-device-controls")
+        ?.shadowRoot?.querySelector<HTMLSelectElement>("select")?.value,
+    ).toBe("1A2B"),
+  );
+});

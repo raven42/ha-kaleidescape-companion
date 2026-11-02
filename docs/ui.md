@@ -328,6 +328,13 @@ appropriate. A settings save with an unconfirmed response requires explicit
 confirmation before leaving or reloading; inspect saved values before another
 change.
 
+**Settings → Home Assistant → Generate test dashboard** asks for a name and
+creates a separate, editable HA dashboard with seven annotated card-test views.
+It uses saved configuration, checks prerequisites before creating anything, and
+offers a YAML download. Existing dashboards are not replaced. See the
+[test guide generator](dashboard-cards.md#generate-a-test-dashboard) for
+prerequisites, recovery and browser checks.
+
 **Database** has a toolbar, main/system table tabs, schema-aware search, an
 entry list and raw details. Selecting a row always shows raw stored values;
 **Edit entry** opens a separate dialog with supported fields and an explicit
@@ -702,3 +709,31 @@ widths, sticky actions, draft preservation, native validation navigation,
 personal immediate saves, pending-delete status and cancelling/continuing the
 pending-work warning. Review an edit's linked logs across subsystems. Automated
 component tests do not replace this browser review.
+
+### Closing pending dialogs
+
+The X and Escape close dialogs even during a failed or pending request. Closing
+cancels the browser retry and ignores late responses; scrape reviews also cancel
+their outstanding image downloads. It cannot roll back a database write or
+external action already accepted by the server. Refresh and inspect the record
+before recreating an uncertain change. Leaving a dialog open retains its exact
+retry payload and UUID.
+
+The default-player selector retains the saved selection when asynchronous
+discovery populates its choices. Player labels use the protocol API's friendly
+name with the serial number in parentheses, falling back to the model when no
+friendly name is available. A blank control hostname uses the Library host,
+including in test-dashboard prerequisite validation. Save Settings before
+running the dashboard generator.
+
+Test-dashboard prerequisite failures now identify each missing requirement in
+both the dialog and the operation logs. A blank control hostname uses the
+Library hostname; if both are blank, playback and dashboard validation use the
+normal `my-kaleidescape.local` default. Journal tracking does not need to be
+enabled if the default player has a matching built-in HA media-player entity.
+
+Scraper posters/backdrops accept JPEG, PNG and WebP responses from the existing
+fixed provider image routes. Supported raster or generic binary MIME headers are
+reconciled with the image signature; cached previews use the detected content
+type. Unsupported headers and non-raster signatures remain errors and have
+separate diagnostic reasons.

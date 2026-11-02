@@ -111,7 +111,15 @@ export class CalendarExport extends LitElement {
   }
   private close(event?: Event) {
     event?.preventDefault();
-    if (!this.confirmNavigation()) return;
+    const job = this.status?.job;
+    if (job && !job.finished && this.client && this.scope)
+      void this.client.calendarCancel(this.scope, job.job_id).catch(() => {});
+    this.generation++;
+    clearTimeout(this.timer);
+    this.pending = undefined;
+    this.working = false;
+    this.error = "";
+    this.requestUpdate();
     this.renderRoot
       .querySelectorAll("dialog")
       .forEach((dialog) => dialog.close());
@@ -293,7 +301,7 @@ export class CalendarExport extends LitElement {
           <h2 id="maintenance-review-title">
             Review unconfirmed calendar writes
           </h2>
-          ${closeButton((event) => this.close(event), this.working)}
+          ${closeButton((event) => this.close(event))}
         </div>
         <p>
           Inspect the assigned calendar first. A write may already have
@@ -335,7 +343,7 @@ export class CalendarExport extends LitElement {
           <h2 id="maintenance-run-title">
             Run Full Sync with pending operations?
           </h2>
-          ${closeButton((event) => this.close(event), this.working)}
+          ${closeButton((event) => this.close(event))}
         </div>
         <p>
           Pending delete: ${state.quarantined} ·
@@ -401,7 +409,7 @@ export class CalendarExport extends LitElement {
       >
         <div class="card-head">
           <h2 id="calendar-export-title">Export Journal to calendar</h2>
-          ${closeButton((event) => this.close(event), this.working || !!this.pending)}
+          ${closeButton((event) => this.close(event))}
         </div>
         <p id="calendar-export-summary">
           Create events for up to

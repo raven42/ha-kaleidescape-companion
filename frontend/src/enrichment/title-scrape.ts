@@ -243,10 +243,11 @@ export class TitleScrape extends LitElement {
     this.lock();
   }
   private close() {
-    if (!this.pending) {
-      this.reset();
-      this.requestUpdate();
-    }
+    const plan = this.review?.plan_id ?? this.candidatesPage?.search_id;
+    if (plan && this.client && this.scope)
+      void this.client.cancelTitleScrape(this.scope, plan).catch(() => {});
+    this.reset();
+    this.requestUpdate();
   }
   private async open() {
     if (!this.client || !this.scope?.permissions.edit || this.blocked) return;
@@ -422,9 +423,24 @@ export class TitleScrape extends LitElement {
       if (generation !== this.generation) return;
       this.report(error);
       if (
-        ["invalid_request", "conflict", "refresh_required"].includes(
-          errorCode(error),
-        )
+        [
+          "invalid_request",
+          "conflict",
+          "refresh_required",
+          "not_found",
+          "metadata_unavailable",
+          "metadata_disabled",
+          "library_artwork",
+          "provider_destination",
+          "provider_encoding",
+          "provider_content_type",
+          "provider_response_too_large",
+          "provider_http_error",
+          "provider_access_denied",
+          "provider_rate_limited",
+          "provider_artwork_unavailable",
+          "provider_disabled",
+        ].includes(errorCode(error))
       ) {
         this.pending = undefined;
         this.lock();
@@ -593,15 +609,15 @@ export class TitleScrape extends LitElement {
         aria-labelledby="scrape-title"
         @click=${dismissBackdrop}
         @cancel=${(event: Event) => {
-          if (this.pending) event.preventDefault();
-          else this.close();
+          event.preventDefault();
+          this.close();
         }}
       >
         <div class="card-head">
           <h2 id="scrape-title">
             ${this.artworkOnly ? (this.review ? `Edit Artwork: ${this.review.title}` : "Edit Artwork") : this.review ? `Review scrape: ${this.review.title}` : "Scrape title"}
           </h2>
-          ${closeButton(() => this.close(), !!this.pending)}
+          ${closeButton(() => this.close())}
         </div>
         ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
         ${this.busy ? html`<p role="status">${this.pending ? "Applying selected data…" : "Retrieving provider data…"}</p>` : nothing}

@@ -574,3 +574,86 @@ class TitleReviewTest(unittest.IsolatedAsyncioTestCase):
             )
         self.assertEqual(error.exception.code, "metadata_limit")
         self.metadata.assert_not_awaited()
+
+    async def test_cancel_review_stops_only_its_actor_bound_image_job(self):
+        import asyncio
+
+        review = await self.setup_review()
+        other = SimpleNamespace(id="other-admin", is_active=True, is_admin=True)
+        with self.assertRaises(JournalError):
+            await self.manager.cancel(other, review["plan_id"])
+        waiting = asyncio.Event()
+
+        async def image(*args, **kwargs):
+            waiting.set()
+            await asyncio.Future()
+
+        with patch(
+            "custom_components.kaleidescape_companion.enrichment.review.Providers.image",
+            side_effect=image,
+        ):
+            task = asyncio.create_task(
+                self.manager.apply(
+                    self.admin,
+                    str(uuid4()),
+                    {
+                        "plan_id": review["plan_id"],
+                        "fields": [],
+                        "images": {"poster": review["images"][0]["id"]},
+                    },
+                )
+            )
+            await asyncio.wait_for(waiting.wait(), 2)
+            result = await self.manager.cancel(self.admin, review["plan_id"])
+            self.assertTrue(result["cancelled"])
+            with self.assertRaises(asyncio.CancelledError):
+                await task
+        self.assertEqual((await self.repo.async_inspect("library_artwork"))["total"], 0)
+        self.assertNotIn(review["plan_id"], self.manager.plans)
+        self.assertFalse(self.manager.jobs)
+
+    def test_provider_failure_reasons_are_positive_static_codes(self):
+        from custom_components.kaleidescape_companion.core.operations import (
+            failure_reason,
+        )
+
+        self.assertEqual(
+            failure_reason(enrichment.ProviderError("provider_content_type")).value,
+            "provider_content_type",
+        )
+        self.assertIsNone(
+            failure_reason(enrichment.ProviderError("https://private.example/secret"))
+        )
+        self.assertIsNone(failure_reason(ValueError("provider_content_type")))
+
+    async def test_png_review_preview_and_apply_store_the_verified_image_type(self):
+        review = await self.setup_review()
+        png = b"\x89PNG\r\n\x1a\nfictional-image"
+        with patch(
+            "custom_components.kaleidescape_companion.enrichment.review.Providers.image",
+            new=AsyncMock(return_value=png),
+        ):
+            request = SimpleNamespace(
+                app={KEY_HASS: self.hass},
+                query={},
+                get={"hass_user": self.admin}.get,
+            )
+            response = await MetadataImageView().get(
+                request,
+                **self.scope,
+                plan_id=review["plan_id"],
+                choice=review["images"][0]["id"],
+            )
+            self.assertEqual(response.content_type, "image/png")
+            await self.manager.apply(
+                self.admin,
+                str(uuid4()),
+                {
+                    "plan_id": review["plan_id"],
+                    "fields": [],
+                    "images": {"backdrop": review["images"][1]["id"]},
+                },
+            )
+        cached = await self.repo.async_inspect("library_artwork")
+        self.assertEqual(cached["total"], 1)
+        self.assertEqual(cached["items"][0]["content_type"], "image/png")

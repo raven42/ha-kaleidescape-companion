@@ -83,7 +83,7 @@ it("restricts editing to display fields, locks drafts, and retries exactly after
   await vi.waitFor(() => expect(button(root, "Retry exact save")).toBeTruthy());
   expect(
     root.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.disabled,
-  ).toBe(true);
+  ).toBe(false);
   expect(save.mock.calls[0][0].message.patch).toEqual({
     sort_title: "Fictional Film, The",
   });

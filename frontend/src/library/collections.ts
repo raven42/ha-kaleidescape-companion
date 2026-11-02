@@ -90,10 +90,7 @@ export class LibraryCollectionAdd extends LitElement {
   }
   private close(event?: Event) {
     event?.preventDefault();
-    if (!this.confirmNavigation()) return;
-    this.generation++;
-    this.loading = false;
-    this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.close();
+    this.clear();
     this.requestUpdate();
   }
   private fail(error: unknown) {
@@ -243,7 +240,7 @@ export class LibraryCollectionAdd extends LitElement {
       >
         <div class="card-head">
           <h2 id="collection-add-title">Add to Collection</h2>
-          ${closeButton((event) => this.close(event), this.busy || !!this.pending)}
+          ${closeButton((event) => this.close(event))}
         </div>
         <p>
           <strong>${this.version.title}</strong> ·

@@ -8,10 +8,18 @@ from contextlib import asynccontextmanager
 from uuid import uuid4
 
 from aiohttp import ClientError
-from kaleidescape_api.logging import Resource, Trigger
+from kaleidescape_api.logging import (
+    Operation,
+    Outcome,
+    Reason,
+    Resource,
+    Stage,
+    Subsystem,
+    Trigger,
+)
 
 from .._vendor.kaleidescape_scrapers import MovieQuery, ProviderError, Providers
-from ..core.models import JournalError, invalid
+from ..core.models import JournalError, identifier, invalid
 from ..core.security import is_active_admin
 from ..library.store import image_type
 from .matching import REASONS, reference
@@ -295,11 +303,39 @@ class TitleReviews:
         if image is None or not self.parent.config.get("library_sync_artwork"):
             raise JournalError("not_found", "Image is unavailable")
         async with self.worker(actor, plan["target"]["id"]) as client:
+            client.review_token = token
             body = await client.providers.image(plan["provider"], image, thumbnail=True)
         self.plan(actor, token)
-        if image_type(body) != "image/jpeg":
+        if image_type(body) is None:
             raise JournalError("library_artwork", "Image was rejected")
         return body
+
+    async def cancel(self, actor, token):
+        self.ready(actor)
+        token = identifier(token)
+        plan = self.plans.get(token)
+        if plan is None:
+            return {"cancelled": True}
+        if plan["actor"] != actor.id:
+            raise JournalError(
+                "unauthorized", "Review belongs to another administrator"
+            )
+        self.plans.pop(token, None)
+        for task, child in list(self.jobs.items()):
+            if (
+                getattr(child, "review_token", None) == token
+                and child.actor.id == actor.id
+            ):
+                child.stopped = True
+                task.cancel()
+        self.parent.repository.logger.emit(
+            Subsystem.METADATA,
+            Operation.PAUSE,
+            Outcome.SUCCEEDED,
+            reason=Reason.METADATA_CANCELLED,
+            resource=(Resource.MOVIE, plan["target"]["id"]),
+        )
+        return {"cancelled": True}
 
     async def apply(self, actor, request, data):
         self.ready(actor)
@@ -312,18 +348,46 @@ class TitleReviews:
         plan = self.plan(actor, data["plan_id"])
         if plan.get("kind") != "review":
             raise invalid("Select a match and review its data first")
+        logger = self.parent.repository.logger
+        logger.emit(
+            Subsystem.METADATA,
+            Operation.UPDATE,
+            Outcome.STARTED,
+            reason=Reason.METADATA_APPLY,
+            stage=Stage.PREFLIGHT,
+            resource=(Resource.MOVIE, plan["target"]["id"]),
+            count=len(data["images"]),
+        )
         images = {}
         if data["images"]:
             if not self.parent.config.get("library_sync_artwork"):
                 raise invalid("Enable artwork sync first")
             async with self.worker(actor, plan["target"]["id"]) as client:
+                client.review_token = data["plan_id"]
                 for kind, choice in data["images"].items():
                     image = plan["images"].get(choice)
                     if image is None or image["kind"] != kind:
                         raise invalid("Image is not part of this review")
+                    logger.emit(
+                        Subsystem.METADATA,
+                        Operation.REQUEST,
+                        Outcome.STARTED,
+                        reason=Reason.METADATA_IMAGE,
+                        stage=Stage.READ,
+                        resource=(Resource.MOVIE, plan["target"]["id"]),
+                        target=(Resource.EVENT, choice),
+                    )
                     images[kind] = await client.providers.image(plan["provider"], image)
         self.plan(actor, data["plan_id"])
-        return await self.parent.repository.async_enrichment(
+        logger.emit(
+            Subsystem.METADATA,
+            Operation.WRITE,
+            Outcome.STARTED,
+            reason=Reason.METADATA_COMMIT,
+            stage=Stage.WRITE,
+            resource=(Resource.MOVIE, plan["target"]["id"]),
+        )
+        result = await self.parent.repository.async_enrichment(
             "review_apply",
             self.parent.source,
             actor.id,
@@ -333,6 +397,16 @@ class TitleReviews:
             images,
             self.parent.config.get("library_artwork_cache_mb", 512) * 1024 * 1024,
         )
+
+        logger.emit(
+            Subsystem.METADATA,
+            Operation.WRITE,
+            Outcome.SUCCEEDED,
+            reason=Reason.METADATA_SAVED,
+            stage=Stage.RECEIPT,
+            resource=(Resource.MOVIE, plan["target"]["id"]),
+        )
+        return result
 
     async def clear(self):
         self.plans.clear()

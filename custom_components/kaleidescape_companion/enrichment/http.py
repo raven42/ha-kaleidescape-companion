@@ -8,6 +8,7 @@ from ..const import DOMAIN
 from ..core.models import JournalError
 from ..core.runtime import get_library, get_runtime
 from ..core.security import is_active_admin
+from ..library.store import image_type
 
 
 class MetadataImageView(HomeAssistantView):
@@ -41,7 +42,7 @@ class MetadataImageView(HomeAssistantView):
                 raise web.HTTPNotFound
             return web.Response(
                 body=body,
-                content_type="image/jpeg",
+                content_type=image_type(body),
                 headers={
                     "Cache-Control": "no-store",
                     "X-Content-Type-Options": "nosniff",

@@ -59,6 +59,8 @@ def async_register_commands(hass: HomeAssistant) -> None:
     scoped = {p.Required("entry_id"): str, p.Required("dataset_id"): str}
     mutations = {**scoped, p.Required("request_id"): str}
     schemas = {
+        "dashboard/preview": {**mutations, p.Required("name"): str},
+        "dashboard/verify": mutations,
         "settings/transfer": {
             **scoped,
             p.Required("operation"): str,
@@ -122,6 +124,7 @@ def async_register_commands(hass: HomeAssistant) -> None:
             p.Required("provider"): str,
             p.Required("query"): str,
         },
+        "metadata/title/cancel": {**scoped, p.Required("plan_id"): str},
         "metadata/title/apply": {**mutations, p.Required("data"): dict},
         "metadata/title/availability": {**mutations, p.Required("data"): dict},
         "library/edit/reset": {
@@ -405,6 +408,20 @@ async def async_handle(
                         *event, Outcome.STARTED, reason=Reason.USER_ACTION
                     )
                 match operation:
+                    case "dashboard/preview":
+                        from .test_dashboard import prepare
+
+                        result = await prepare(
+                            hass,
+                            msg["entry_id"],
+                            runtime,
+                            msg["name"],
+                            msg["request_id"],
+                        )
+                    case "dashboard/verify":
+                        from .test_dashboard import verify
+
+                        result = await verify(hass, msg["entry_id"], msg["request_id"])
                     case "settings/transfer":
                         entry = hass.config_entries.async_get_entry(msg["entry_id"])
                         result = await settings_transfer(
@@ -445,6 +462,7 @@ async def async_handle(
                         "metadata/title/options"
                         | "metadata/title/preview"
                         | "metadata/title/search"
+                        | "metadata/title/cancel"
                         | "metadata/title/apply"
                         | "metadata/title/availability"
                     ):
@@ -469,6 +487,8 @@ async def async_handle(
                             result = await manager.search(
                                 user, msg["title_id"], msg["provider"], msg["query"]
                             )
+                        elif operation.endswith("cancel"):
+                            result = await manager.cancel(user, msg["plan_id"])
                         elif operation.endswith("availability"):
                             result = await manager.availability(
                                 user, msg["request_id"], msg["data"]
@@ -1034,7 +1054,7 @@ async def async_handle(
             if operation not in {"info", "settings/submit"} and not runtime.ready:
                 raise JournalError("not_ready", "Journal integration unloaded")
             if (
-                operation.startswith("database/import")
+                operation.startswith(("database/import", "dashboard/"))
                 and get_runtime(hass, msg["entry_id"], msg["dataset_id"]) is not runtime
             ):
                 raise JournalError("not_ready", "Journal integration reloaded")
@@ -1070,6 +1090,8 @@ async def async_handle(
 
 
 MUTATIONS = {
+    "dashboard/preview": (Subsystem.SETTINGS, Operation.EXPORT),
+    "dashboard/verify": (Subsystem.SETTINGS, Operation.VERIFY),
     "journal/create": (Subsystem.OBSERVER, Operation.CREATE),
     "journal/update": (Subsystem.OBSERVER, Operation.UPDATE),
     "journal/delete": (Subsystem.OBSERVER, Operation.DELETE),

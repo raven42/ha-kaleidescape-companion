@@ -70,7 +70,7 @@ it("requires confirmation, describes matching and duplicate risk, and sends one 
     button(root, "Export Journal").closest(".dialog-footer"),
   ).not.toBeNull();
 });
-it("blocks dismissal and preserves the exact request after a lost response", async () => {
+it("preserves the exact request while the dialog remains open after a lost response", async () => {
   const { root, client } = await mount();
   const sync = vi
     .spyOn(client, "calendarSync")
@@ -83,9 +83,6 @@ it("blocks dismissal and preserves the exact request after a lost response", asy
     expect(root.textContent).toContain("start result is unconfirmed"),
   );
   expect(element!.confirmNavigation()).toBe(false);
-  const cancel = new Event("cancel", { cancelable: true });
-  root.querySelector("dialog")!.dispatchEvent(cancel);
-  expect(cancel.defaultPrevented).toBe(true);
   button(root, "Retry same export").click();
   await vi.waitFor(() => expect(sync).toHaveBeenCalledTimes(2));
   expect(sync.mock.calls[1][0]).toBe(sync.mock.calls[0][0]);
@@ -213,4 +210,22 @@ it("reloads saved calendar mode after settings are saved without leaving the pag
       before,
     ),
   );
+});
+
+it("closes an uncertain calendar export without resending it", async () => {
+  const { root, client } = await mount();
+  const sync = vi
+    .spyOn(client, "calendarSync")
+    .mockRejectedValue(new ApiError("connection_lost"));
+  button(root, "Sync all watched movies to calendar").click();
+  await vi.waitFor(() => expect(root.querySelector("dialog")!.open).toBe(true));
+  button(root, "Export Journal").click();
+  await vi.waitFor(() =>
+    expect(root.textContent).toContain("start result is unconfirmed"),
+  );
+  modalClose(root).click();
+  await element!.updateComplete;
+  expect(root.querySelector("dialog")!.open).toBe(false);
+  expect(element!.confirmNavigation()).toBe(true);
+  expect(sync).toHaveBeenCalledTimes(1);
 });

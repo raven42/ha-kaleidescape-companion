@@ -86,7 +86,7 @@ it("loads choices only on explicit open and sends the chosen individual version"
   expect(transport.libraryTitles[2].collections).toContain("Science Fiction");
 });
 
-it("checks a lost reply without posting again and protects dismissal until checked", async () => {
+it("checks a lost reply without posting again while the review stays open", async () => {
   await choose();
   vi.spyOn(element.client!, "collectionAdd").mockRejectedValueOnce(
     new ApiError("connection_lost"),
@@ -98,9 +98,6 @@ it("checks a lost reply without posting again and protects dismissal until check
   const id = String(pending.message.request_id);
   const dialog = root().querySelector("dialog")!;
   expect(element.confirmNavigation()).toBe(false);
-  expect(dialog.dispatchEvent(new Event("cancel", { cancelable: true }))).toBe(
-    false,
-  );
   transport.collectionResults.set(id, { status: "confirmed", request_id: id });
   button("Check add result").click();
   await flush();

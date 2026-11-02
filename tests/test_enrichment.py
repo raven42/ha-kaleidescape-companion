@@ -544,3 +544,51 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
         response.content_type = "text/html"
         with self.assertRaisesRegex(ProviderError, "content_type"):
             await sync._get(url, {})
+
+    async def test_provider_images_accept_supported_rasters_with_canonical_delivery(
+        self,
+    ):
+        # The CDN can transform a .jpg resource to PNG/WebP or return a generic
+        # MIME type. All bytes still pass a supported raster signature check.
+        sync = self.sync(library_sync_artwork=True)
+        sync.session = Mock()
+        self.hass.data[DATA_RESOLVER] = SimpleNamespace(
+            resolve=AsyncMock(return_value=[{"host": "1.1.1.1"}])
+        )
+        body = IMAGE
+        response = SimpleNamespace(
+            status=200, content_type="image/jpeg", content_length=None, headers={}
+        )
+
+        async def chunks(size):
+            yield body
+
+        response.content = SimpleNamespace(iter_chunked=chunks)
+        context = sync.session.get.return_value
+        context.__aenter__ = AsyncMock(return_value=response)
+        context.__aexit__ = AsyncMock(return_value=False)
+        url = "https://image.tmdb.org/t/p/w780/FictionalImage.jpg"
+        for declared, image in (
+            ("image/png", b"\x89PNG\r\n\x1a\nfictional"),
+            ("image/webp", b"RIFF1234WEBPfictional"),
+            ("application/octet-stream", IMAGE),
+            ("image/jpeg", b"\x89PNG\r\n\x1a\nfictional"),
+        ):
+            response.content_type, body = declared, image
+            self.assertEqual(await sync._get(url, {}), image)
+        self.assertEqual(
+            sync.session.get.call_args.kwargs["headers"]["Accept"],
+            "image/jpeg, image/png, image/webp",
+        )
+        body = b"<svg>unsafe</svg>"
+        response.content_type = "application/octet-stream"
+        with self.assertRaisesRegex(ProviderError, "content_type"):
+            await sync._get(url, {})
+        body = IMAGE
+        response.content_type = "text/html"
+        with self.assertRaisesRegex(ProviderError, "content_type"):
+            await sync._get(url, {})
+        reasons = [event.reason for event in sync.repository.logger.snapshot()]
+        self.assertIn("provider_image_normalized", reasons)
+        self.assertIn("provider_image_invalid", reasons)
+        self.assertIn("provider_image_header", reasons)

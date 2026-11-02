@@ -3,6 +3,8 @@ import { css } from "lit";
 export const calendarStyles = css`
   :host {
     display: block;
+    min-width: 0;
+    container: journal-calendar / inline-size;
   }
   .month-bar {
     display: flex;
@@ -14,6 +16,8 @@ export const calendarStyles = css`
   .month-bar h2 {
     margin: 0;
     flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
     text-align: center;
     font-size: 20px;
   }
@@ -23,7 +27,8 @@ export const calendarStyles = css`
   .month-grid {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    min-width: 560px;
+    width: 100%;
+    min-width: 0;
   }
   .weekday {
     text-align: center;
@@ -61,6 +66,8 @@ export const calendarStyles = css`
   .cover-stack {
     position: absolute;
     inset: 5px;
+    inset-block-end: auto;
+    aspect-ratio: 2 / 3;
     width: min(
       calc(100% - 10px),
       calc((var(--calendar-day-size) - 11px) * 2 / 3)
@@ -146,6 +153,26 @@ export const calendarStyles = css`
   }
   .movie-detail p {
     overflow-wrap: anywhere;
+  }
+  @container journal-calendar (max-width: 560px) {
+    .month-bar {
+      gap: 6px;
+      padding: 10px;
+    }
+    .month-bar h2 {
+      font-size: 16px;
+    }
+    .month-bar button {
+      flex: none;
+      padding: 8px;
+      min-width: 40px;
+    }
+    .weekday {
+      padding: 6px 2px;
+      font-size: 11px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   }
   @media (max-width: 600px) {
     .month-grid {

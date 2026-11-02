@@ -1473,18 +1473,22 @@ Backdrop retrieval requires both the TMDB and artwork opt-ins. Its fixed-size
 HTTPS image route allows only a bounded JPEG filename, no query, redirect,
 credential header or arbitrary provider URL. The same public DNS pinning, shared
 rate limiter, cancellation/readiness checks and 4 MiB response limit apply; the
-JPEG header must match its content type. Storage checks the matched
-source/group/provider identity and uses the existing private content-addressed
-file cache and budget. Public version metadata exposes only a validated hash
-key; the existing active-user, dataset/source-scoped artwork route serves bytes.
-Device covers remain independent. Preferred TMDB posters use the same scoped
-cache, identity checks, raster validation and cancellation, with `poster_key`
-references separate from source covers. Eviction, missing-file recovery and
-manual cache deletion clear both image references too. No schema or credential
-export change is introduced; portable imports still exclude enrichment.
-Regression tests cover opt-ins, destination/credential rejection, body
-validation, stale identities, source isolation and cache cleanup. Real TMDB and
-browser review remain operator steps.
+response must have a supported JPEG, PNG or WebP signature. Image requests
+advertise only those supported formats. Raster or binary MIME headers are
+accepted only on these fixed image routes; supported but mismatched/generic
+headers are normalized to the detected signature for storage and delivery. HTML,
+SVG, unknown MIME headers and unrecognized signatures are rejected. Storage
+checks the matched source/group/provider identity and uses the existing private
+content-addressed file cache and budget. Public version metadata exposes only a
+validated hash key; the existing active-user, dataset/source-scoped artwork
+route serves bytes. Device covers remain independent. Preferred TMDB posters use
+the same scoped cache, identity checks, raster validation and cancellation, with
+`poster_key` references separate from source covers. Eviction, missing-file
+recovery and manual cache deletion clear both image references too. No schema or
+credential export change is introduced; portable imports still exclude
+enrichment. Regression tests cover opt-ins, destination/credential rejection,
+body validation, stale identities, source isolation and cache cleanup. Real TMDB
+and browser review remain operator steps.
 
 TMDB secrets use HA's native configuration storage, with a blank password
 selector, explicit removal and no prefilled credential in either settings UI.
@@ -1551,14 +1555,14 @@ metadata.
 The authenticated administrator-only thumbnail route
 `metadata/review/{plan_id}/image/{choice}` resolves an owned staged image,
 rechecks role/configuration/runtime after retrieval, refuses query strings and
-sends `no-store`/`nosniff` JPEG bytes. It cannot proxy a supplied URL. Review
-clients alone may use fixed TMDB `/3/movie/<id>/images` and `w300` thumbnails.
-Reviewed images and ordinary scans use the fixed `w780` landscape route; `w500`
-posters require review or the saved TMDB cover preference. Both artwork and TMDB
-opt-ins are required for those images. Preview object URLs are transient and
-revoked on page/dialog or account changes. Vite forwards only this explicit
-scoped GET route to local HA, with its existing origin/method checks and caller
-authentication.
+sends `no-store`/`nosniff` raster bytes with their detected JPEG, PNG or WebP
+content type. It cannot proxy a supplied URL. Review clients alone may use fixed
+TMDB `/3/movie/<id>/images` and `w300` thumbnails. Reviewed images and ordinary
+scans use the fixed `w780` landscape route; `w500` posters require review or the
+saved TMDB cover preference. Both artwork and TMDB opt-ins are required for
+those images. Preview object URLs are transient and revoked on page/dialog or
+account changes. Vite forwards only this explicit scoped GET route to local HA,
+with its existing origin/method checks and caller authentication.
 
 Apply imports field names and image choice IDs, never caller values, identities,
 SQL or paths. The worker binds the actor/source/plan and checks the whole
@@ -1579,10 +1583,10 @@ ignoring related-person, account, ownership and payment data. Its two
 application headers contain only the fixed `store.js` name and a validated
 public version obtained from the search page. Preview-only covers allow exactly
 `images0[1-8].kaleidescape.com/transformed/covers/{132x189s,264x378s}/<digits>/<digits>.jpg`,
-requiring store and artwork opt-ins, public DNS pinning, JPEG validation and no
-credentials/query/redirect. Browser requests retain the actor-bound
-authenticated preview route; no external URL is returned or supplied by the
-caller.
+requiring store and artwork opt-ins, public DNS pinning, supported
+raster-signature validation and no credentials/query/redirect. Browser requests
+retain the actor-bound authenticated preview route; no external URL is returned
+or supplied by the caller.
 
 Apply may persist only the server-staged provider binding in protected Library
 enrichment, alongside selected data and its retry receipt. Saved source IDs/URLs
@@ -1746,3 +1750,76 @@ bridge. Calendar cards read the local database, not HA calendar providers. They
 expose the same public movie/viewing fields and aggregate totals. Sensor problem
 lists deliberately expose bounded title strings through HA state attributes,
 with the same Recorder/privacy limits as existing watched-title lists.
+
+## Test dashboard generator
+
+Administrator-only scoped `dashboard/preview` and `dashboard/verify` operations
+prepare a fixed, bounded guide and verify its native HA dashboard marker. They
+recheck current user/runtime access after awaits. Preflight reads cached
+Library, Journal and HA source/configuration data only; it starts no discovery,
+device query, scrape or scan. YAML formatting runs outside the event loop and
+never reads a browser-supplied filename. Dashboard titles are bounded plain text
+and are not interpolated into Markdown or logs. View descriptions are static
+text. Generated examples include the selected entry/opaque player IDs, no
+credentials, addresses, serials, device labels, source paths or movie metadata.
+
+The browser uses HA's administrator-authorized native dashboard create/save
+commands for one cryptographically unique `companion-test-<UUID>` URL. It does
+not modify `configuration.yaml`, write arbitrary files, delete dashboards, or
+provide a general-purpose integration API for HA operations. The YAML copy is a
+bounded local Blob download; its object URL is revoked. Native writes remain
+subject to HA authorization independently of Companion's preflight.
+
+Recovery pins the exact configuration and unique path. It refuses a pre-existing
+URL before creation, never sends a second create for an already attempted
+request, and checks unchanged metadata plus absence/equality of content before
+saving. Existing or changed content is never overwritten. HA's native dashboard
+writes do not support Companion transaction receipts or cross-system atomicity;
+an interrupted setup can leave a new empty dashboard for inspection. There is no
+automatic rollback/delete. Settings guards cover pending setup, while account or
+dataset changes invalidate late responses and prevent further native phases.
+Verification reads HA's managed dashboard API and exposes only its known path
+and view count. Privacy-filtered prepare/verify logs contain hashed
+actor/request relationships, not generated YAML or dashboard names. No actual
+household HA instance is modified by automated tests.
+
+## Review dismissal and provider diagnostics
+
+Modal close and Escape remain available during errors and unconfirmed retries.
+Closing invalidates the dialog generation, drops its exact browser retry, stops
+local timers/image queues and aborts abortable transfers. Late responses cannot
+reopen or apply changes to the dismissed form. This is cancellation of further
+browser work, not rollback: a database operation already accepted by the worker,
+a native HA write, or an external device/calendar action may still complete.
+Durable server receipts and external-write uncertainty barriers remain intact.
+Inspect the refreshed record before starting another write after an uncertain
+close. Explicit retry while the dialog remains open retains the original UUID
+and payload.
+
+Administrator-only `metadata/title/cancel` removes an actor-owned ephemeral
+review and cancels its active image-download jobs. It cannot select another
+actor's job and cannot undo an accepted database commit. Plan expiry, access
+checks, fixed provider destinations, response bounds, and image validation still
+apply. Provider failures now attach only allowlisted, static reason codes to
+logs; URLs, response bodies, exception strings, image names and credentials are
+never copied. Apply-stage events retain hashed movie/request relationships and
+trusted file/line locations. Historical generic validation logs cannot reveal
+the exact provider rejection retroactively.
+
+The development-only `dev/validate_database.py` opens a locally selected SQLite
+file read-only and reports integrity, foreign-key and known JSON-column error
+counts without row values or raw SQLite error text. It repairs nothing and has
+an execution limit. Use an exported copy; a structural integrity pass does not
+prove provider availability, metadata accuracy or every application invariant.
+
+Test-dashboard prerequisites resolve the control hostname using the same
+validation/default-host helper as playback. Both hostname fields may be blank;
+the usual default host is valid without performing DNS or device requests here.
+Now Playing source checks use the observation source, or the built-in
+integration's registry match for the saved default player when tracking is off.
+Individual unmet prerequisites emit static, privacy-safe `dashboard_*` reasons
+at the preflight stage; no hostname, serial, entity ID or saved setting value
+enters those diagnostics. Image validation logs distinguish unsupported MIME
+headers, unsupported signatures and safe raster MIME normalization without
+copying headers or body bytes. Signature checks are bounded format checks, not a
+full image decode or proof that a provider returned the intended artwork.

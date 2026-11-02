@@ -158,7 +158,7 @@ it("confirms a recoverable deletion from inside the shared editor and refreshes 
   ).toBe(false);
 });
 
-it("preserves a conflict draft and blocks dismissal of an uncertain deletion until retry", async () => {
+it("preserves a conflict draft and retries an uncertain deletion exactly while open", async () => {
   await mount();
   await edit();
   input("notes", "Keep the correction");
@@ -194,9 +194,6 @@ it("preserves a conflict draft and blocks dismissal of an uncertain deletion unt
   await vi.waitFor(() =>
     expect(deletion().textContent).toContain("Retry same change"),
   );
-  const cancel = new Event("cancel", { cancelable: true });
-  deletion().dispatchEvent(cancel);
-  expect(cancel.defaultPrevented).toBe(true);
   button(deletion(), "Retry same change").click();
   await vi.waitFor(() =>
     expect(root().textContent).toContain("Entry removed from the journal"),
@@ -243,4 +240,35 @@ it("leaves the household calendar read-only with no editor fetches or delete con
       /journal\/(get|sessions|update|delete)$/.test(call.type),
     ),
   ).toBe(false);
+});
+
+it("closes an outstanding save and ignores its late response without replaying it", async () => {
+  await mount();
+  await edit();
+  input("notes", "Fictional correction");
+  const original = transport.callWS.bind(transport);
+  let finish!: () => void;
+  vi.spyOn(transport, "callWS").mockImplementation(
+    async <T>(message: ApiMessage): Promise<T> => {
+      const result = await original<T>(message);
+      if (message.type.endsWith("journal/update"))
+        await new Promise<void>((resolve) => {
+          finish = resolve;
+        });
+      return result;
+    },
+  );
+  save();
+  await vi.waitFor(() => expect(finish).toBeTypeOf("function"));
+  expect(modalClose(editor()).disabled).toBe(false);
+  modalClose(editor()).click();
+  await vi.waitFor(() => expect(editor().open).toBe(false));
+  finish();
+  await panel.updateComplete;
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(editor().open).toBe(false);
+  expect(root().textContent).not.toContain("Entry saved.");
+  expect(
+    transport.calls.filter((c) => c.type.endsWith("journal/update")),
+  ).toHaveLength(1);
 });
