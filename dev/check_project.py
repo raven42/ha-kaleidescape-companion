@@ -82,8 +82,8 @@ def validate() -> None:
     # Guard the contributor/security guides against accidental cross-file edits;
     # valid links alone cannot detect one guide replacing another's contents.
     for relative, heading in {
-        "docs/security.md": "# Security policy and hardening",
-        "docs/ui.md": "# Household journal and management UI",
+        "docs/policies/policy-security.md": "# Security policy and hardening",
+        "docs/design/design-user-interface.md": "# Household journal and management UI",
     }.items():
         if (ROOT / relative).read_text(encoding="utf-8").splitlines()[0] != heading:
             raise ValueError(f"Unexpected documentation title: {relative}")
@@ -136,7 +136,7 @@ def validate() -> None:
     schema = read_constants(INTEGRATION / "core/migrations/__init__.py")[
         "SCHEMA_VERSION"
     ]
-    backend_guide = (ROOT / "docs/backend.md").read_text(encoding="utf-8")
+    backend_guide = (ROOT / "docs/design/design-journal.md").read_text(encoding="utf-8")
     if f"SQLite schema is `{schema}`" not in backend_guide:
         raise ValueError("Backend guide must document the current SQLite schema")
 
@@ -154,7 +154,7 @@ def validate() -> None:
     markdown_files.extend(
         [ROOT / "AGENTS.md", ROOT / ".github/pull_request_template.md"]
     )
-    markdown_files.extend((ROOT / "docs").glob("*.md"))
+    markdown_files.extend((ROOT / "docs").rglob("*.md"))
     markdown_files.append(ROOT / "tests" / "README.md")
     for path in markdown_files:
         text = path.read_text(encoding="utf-8")

@@ -43,18 +43,19 @@ an exported reference database:
 
 ```sh
 .venv/bin/python dev/benchmark_title_matching.py \
-  --database .ha-dev/kaleidescape-journal.sqlite \
+  --database /path/to/private-export.sqlite \
   --input .ha-dev/purchases.json \
   --report .ha-dev/new-title-match-review.json
 ```
 
-`--input` accepts the [supported Companion exports](imports.md), purchase
-arrays, or an explicit title-only manifest. JSON is the default; `.sqlite`,
-`.sqlite3` and `.db` select SQLite. `--format json|sqlite` overrides suffix
-detection. Mixed Companion exports report each record's type separately. Journal
-exports provide title evidence; Library exports also supply known years and
-source scope. Purchase arrays use their format adapter. Existing associations
-are ignored when measuring fresh suggestion coverage.
+`--input` accepts the
+[supported Companion exports](design-data-management.md#reviewed-merge-imports),
+purchase arrays, or an explicit title-only manifest. JSON is the default;
+`.sqlite`, `.sqlite3` and `.db` select SQLite. `--format json|sqlite` overrides
+suffix detection. Mixed Companion exports report each record's type separately.
+Journal exports provide title evidence; Library exports also supply known years
+and source scope. Purchase arrays use their format adapter. Existing
+associations are ignored when measuring fresh suggestion coverage.
 
 A title-only JSON manifest is useful for another importer without constructing
 invoice or viewing records:

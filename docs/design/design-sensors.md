@@ -57,7 +57,7 @@ Titles, viewing times, and counts become HA state data. HA's entity permissions,
 Recorder configuration, automations, dashboards, and backups govern their
 visibility and retention. The sensors include no journal notes, raw device IDs,
 sessions, audit actors, or paths. See the
-[security policy](security.md#household-read-access-and-sensors).
+[security policy](../policies/policy-security.md#access-boundaries).
 
 ## Library and storage
 

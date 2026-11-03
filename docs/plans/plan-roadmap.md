@@ -1,0 +1,83 @@
+# Companion delivery roadmap
+
+Reviewed against the implementation on 2026-11-03. This is the single product
+status and remaining-work list. Feature designs describe implemented behavior;
+the [pyk migration plan](plan-pykaliedescape-migration.md) owns transport
+phases, protocol correctness, compatibility and hardware qualification.
+
+Priorities are **functionality, privacy, usability, scalability, flexibility**.
+Preserve the built-in HA integration, household data and pyk's established
+workflow. An upstream privacy enhancement is proposed work subject to its code
+owner's approval, not a condition that overrides functional migration.
+
+## Implemented
+
+| Aspect          | Delivered scope                                                                                                                   | Authoritative document                                                                                                             |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Journal         | Single-player HA observation, session/restart recovery, manual entries, corrections, deletion and exports                         | [Journal](../design/design-journal.md)                                                                                             |
+| Data management | Worker-owned SQLite, schema-aware administration, reviewed merge imports and offline purchase-history preparation                 | [Data management](../design/design-data-management.md)                                                                             |
+| Library         | Opt-in local catalog/details/collections/artwork, grouped versions, cached browsing, filters and explicit collection addition     | [Library](../design/design-library.md)                                                                                             |
+| Metadata        | Optional public Store/TMDB providers, reviewed matches/fields/images, cache and source preferences                                | [Metadata](../design/design-metadata.md)                                                                                           |
+| Controls        | Opt-in discovery, selected-player remote, explicit power/pause/resume and experimental movie launch, durable uncertainty recovery | [Controls](../design/design-playback-controls.md)                                                                                  |
+| UI              | Household and administrator surfaces, personal responsive profiles, settings transfer and management                              | [UI](../design/design-user-interface.md)                                                                                           |
+| HA surfaces     | 18 sensors, six dashboard cards and an explicit test-dashboard generator                                                          | [Sensors](../design/design-sensors.md), [cards](../design/design-dashboard-cards.md)                                               |
+| Calendar        | Local Journal month view, optional publishing/history export and dedicated-calendar Full Sync                                     | [Calendar](../design/design-calendar.md)                                                                                           |
+| Operations      | Native module logging, bounded diagnostics, backup coordination, local checks, runtime packaging and explicit SSH deployment      | [Logging](../design/design-logging.md), [development](../guides/guide-development.md), [deployment](../guides/guide-deployment.md) |
+
+Implemented means present in code with offline tests; it does not mean every
+model, firmware, browser size or HA release is qualified. The dashboard calendar
+card, native logging and metadata review are implemented features, not backlog.
+
+## Next delivery gates
+
+1. Establish the pyk/HA compatibility baseline and upstream scope agreements.
+   Fix printable message handling, correlation, timeout recovery and task/state
+   lifecycle in small tested changes while preserving existing Device usage.
+2. Add the required public pyk discovery/freshness/control/launch capabilities;
+   migrate Companion's controls and development harness using that workflow.
+   Coordinate a released dependency with HA before changing the supported pin.
+3. Qualify on the owned Strato K, Terra Server Compact 30 TB and Terra Server
+   Prime 120 TB. Record firmware and topology. Test reads before selected player
+   writes, then recovery and coexistence with the built-in integration.
+4. Propose separate optional pyk clients for local browser HTTP and public Store
+   access. Preserve Companion's application state and permissions. Full TCP
+   migration and migration of every Kaleidescape interaction are distinct gates.
+5. Extend modern, hardware-testable video/capability features in small
+   increments. Premiere music, vault/disc-specific workflows and alternative
+   framing remain deferred without applicable hardware and a concrete use case.
+
+These gates are dependencies, not dates. No hardware tests or deployments are
+implied by documenting available equipment. The migration plan defines the
+precise functional requirements, optional owner decisions and exit evidence.
+
+## Release readiness
+
+- Declare and test supported HA releases; complete manifest repository URLs,
+  code ownership, versioning, license and distribution metadata. HA 2026.10.4 is
+  the development baseline, not a promised minimum version.
+- Make a clean checkout/build/install reproducible with the accepted released
+  pyk dependency; verify setup, options reload, unload, restart and upgrade.
+- Run current dependency audits against the release candidate and assess actual
+  exposure. Keep findings with versions and dispositions; a dated audit count is
+  neither a permanent blocker nor proof that dependencies are safe today.
+- Complete operator browser review for both roles and desktop/tablet/mobile;
+  validate private exports, real-source parsing, backup/restore and calendar
+  provider behavior. Offline fixtures do not substitute for these checks.
+- Measure startup, reconnect, catalog size, memory and request latency on the
+  supported environment before promising larger deployments.
+
+A development deployment may use an operator-selected household HA instance. The
+[deployment guide](../guides/guide-deployment.md) describes the actual tooling
+and rollback limits; isolated testing remains recommended when practical.
+
+## Later product decisions
+
+Multiple-player recording is not implemented. Exact-edition launch, start-over,
+seek/resume semantics and advanced theater automation require separate evidence
+and feature decisions. Calendar behavior remains constrained by the selected HA
+provider. Arbitrary SQL, generic network proxies, device network administration
+and automatic replay of uncertain mutations are outside the current product.
+
+Keep future work here or in the migration plan until implemented. Update the
+owning design and tests with each delivered behavior; do not append another
+parallel feature-status narrative to every guide.

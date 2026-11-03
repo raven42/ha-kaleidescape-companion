@@ -1,169 +1,78 @@
 # Kaleidescape Companion
 
 A Home Assistant integration for a shared household watch journal, Now Playing,
-and an optional local movie library. It uses HA's built-in **Kaleidescape**
-integration for playback observations. Optional player controls use the
-standalone Kaleidescape API for all active HA users; administrators configure
-and discover devices.
+and an optional local movie Library. It observes playback through HA's built-in
+**Kaleidescape** integration and adds optional selected-player controls. Active
+HA users browse household data and use enabled controls; administrators manage
+configuration, records and discovery.
 
-Active HA users can browse the journal and enabled Library. Administrators can
-correct records, manage the database, configure tracking and sync, and
-explicitly add a version to a device collection. Library sync and collection
-additions, playback controls and experimental title launch are separate opt-in
-features, all disabled by default. Optional store/TMDB metadata enrichment is
-also disabled by default. See the [framework status](docs/framework.md) for
-delivered features and validation limits.
+Recording, Library sync, collection additions, player controls, experimental
+title launch, calendar publishing and external metadata are separately opted in.
+The built-in integration is preserved. Companion's domain is
+`kaleidescape_companion`.
 
 ## Documentation
 
-- [Development and checks](docs/development.md)
-- [Build and deploy to test HA](docs/deployment.md)
-- [Security policy and hardening](docs/security.md)
-- [Product plan](docs/plan.md) and [technical design](docs/design.md)
-- [Journal backend and API](docs/backend.md)
-- [User interface](docs/ui.md), [dashboard cards](docs/dashboard-cards.md) and
-  [HA sensors](docs/sensors.md)
-- [Library](docs/library.md),
-  [collection additions](docs/library-collections.md), and
-  [purchase dates](docs/purchase-dates.md) and
-  [reviewed merge imports](docs/imports.md)
-- [Independent Kaleidescape API library](https://pypi.org/project/kaleidescape-api/)
-- [External metadata enrichment](docs/enrichment.md) and
-  [provider package](docs/scrapers.md)
-- [Player discovery and controls](docs/playback-controls.md#companion-setup-and-use)
-- [Interface research](docs/research.md) and [changelog](CHANGELOG.md)
+The [documentation index](docs/README.md) identifies one authoritative document
+per aspect, organized into designs, plans, guides and policies.
 
-## Layout
+- [Delivery roadmap](docs/plans/plan-roadmap.md): implemented features and
+  remaining release work.
+- [Pykaleidescape migration plan](docs/plans/plan-pykaliedescape-migration.md):
+  compatibility, missing capabilities, protocol fixes and the complete command
+  inventory.
+- [Architecture](docs/design/design-architecture.md) and
+  [security policy](docs/policies/policy-security.md).
+- [Development](docs/guides/guide-development.md) and
+  [installation/deployment](docs/guides/guide-deployment.md).
+- [Logging and diagnostics](docs/design/design-logging.md).
 
-```text
-custom_components/kaleidescape_companion/
-  core/       SQLite worker, migrations, journal operations, settings and security
-  library/    Catalog sync, metadata, artwork, collections and title validation
-  playback/   HA observation/recording, device discovery, controls and receipts
-  enrichment/ Optional external metadata scheduling and cache storage
-  scrapers/   Metadata provider clients, parsers and shared transport
-  calendar/   Opt-in publishing, dedicated-calendar Full Sync and durable receipts
-  _vendor/    Generated runtime copy of the protocol API
-  ui/         Authenticated APIs, panel/card registration and compiled assets
-  brand/      Local transparent integration icons
-  *.py        Required HA entry points and integration constants
-frontend/
-  src/        Typed UI grouped into core, library, playback, enrichment, cards and ui
-  dev/        Preview shell, guarded local proxy and fictional review page
-  tests/      Component and proxy security tests
-dev/         Development, validation, packaging and deployment tools
-tests/       Python storage, API, lifecycle and deployment tests
-docs/        Product, architecture, security and operator guides
-```
+## Current capabilities
 
-The `dev/` tools, standalone API CLI/docs/tests and frontend development sources
-are excluded from integration deployment. Only the integration directory,
-including its generated API runtime and scraper code, is installed into HA. Home
-Assistant installs or reuses the pinned `pykaleidescape` dependency; it does not
-need to download the separate Kaleidescape API package during setup.
+The Journal supports one-player observation, manual viewings, corrections,
+recovery, private exports and a monthly calendar. Library provides cached movie
+browsing, grouped editions, artwork and explicit collection additions. Optional
+public Store/TMDB enrichment supports reviewed metadata and images.
 
-## Development setup
+The shared panel includes **Now Playing | Library | Journal | Database |
+Settings**, with personal desktop/tablet/mobile preferences. HA dashboards have
+six cards, including a Journal calendar, and the integration exposes 18 sensors.
+Administrator database tools support bounded inspection/edits and reviewed merge
+imports. HA calendar publishing and dedicated-calendar Full Sync are optional.
 
-Requires Python **3.14.2+** with SQLite **3.35+**, Node.js **22.13+ (22.x) or
-24+**, and npm. From the repository root:
+Controls include discovery, remote/power actions, explicit pause/resume and
+experimental selected-title launch with durable uncertainty recovery. Transport
+has not yet migrated to public pyk Device methods. The migration plan preserves
+pyk's existing workflow and coordinates its release with HA's pinned dependency.
+
+## Installation and development
+
+Install the complete built `custom_components/kaleidescape_companion/` directory
+under the target HA configuration, restart HA and add **Kaleidescape Companion**
+through **Settings → Devices & services**. Production includes compiled frontend
+assets and needs neither Node nor Vite. HA installs or reuses the pinned pyk
+dependency. The deployment guide covers packaging, optional SSH deployment,
+configuration checks and rollback limits.
+
+Development requires Python 3.14.2+ with SQLite 3.35+, Node.js 22.13+ (22.x) or
+24+, and npm. HA 2026.10.4 with pyk 1.1.6 is the current development baseline,
+not a promised supported minimum. In the prepared developer workspace:
 
 ```sh
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e '.[dev]'
-python -m pip install -e ../kaleidescape-api
-npm --prefix frontend ci
+bash dev/dev.sh setup
 bash dev/dev.sh check
 ```
 
-Python dependencies and development tools come from `pyproject.toml`; Node tools
-use `frontend/package-lock.json`. HA **2026.10.4** is the development baseline,
-not a declared minimum supported HA release. An editable pip install prepares
-imports and tools; HA discovers the integration through `custom_components/`.
-
-Read the [security policy](docs/security.md). Use an isolated HA instance,
-fictional records and development credentials. Custom integrations execute with
-HA's privileges.
-
-Start the servers in separate terminals:
-
-```sh
-bash dev/dev.sh preview  # http://127.0.0.1:5173
-bash dev/dev.sh ha       # http://127.0.0.1:8123
-```
-
-The HA launcher keeps configuration and storage in ignored `.ha-dev/` and links
-only this integration into its `custom_components/`. Complete HA onboarding, add
-**Kaleidescape Companion** under **Settings → Devices & services**, and open its
-sidebar page. In HA, the panel uses your signed-in session. The standalone Vite
-preview uses a memory-only token from the isolated development instance.
-
-The [development guide](docs/development.md) covers VS Code tasks, individual
-checks and manual browser review. All checks and packaging remain local;
-deployment and restart tasks are explicit.
-
-## Installation and use
-
-Copy `custom_components/kaleidescape_companion/` into the target HA
-configuration's `custom_components/`, then restart HA and add **Kaleidescape
-Companion**. Preserve the built-in `kaleidescape` integration. This project's
-domain is `kaleidescape_companion`.
-
-Production needs the compiled `ui/assets/panel.js`, which is included in the
-runtime package. It needs neither Node nor Vite. The VS Code default build task
-checks the project and creates `dist/kaleidescape-companion.tar.gz`;
-configurable SSH tasks support HA OS and Container. See
-[deployment](docs/deployment.md).
-
-The page order is **Now Playing | Library | Journal | Database | Settings**.
-Settings controls the default landing page; the selected tab is retained in the
-URL. Personal [Library preferences](docs/ui-preferences.md) save immediately in
-the database: view, count, filters, search, sort, cover size and column widths.
-Configure one player's entities for automatic recording. Minimum runtime
-defaults to 10 minutes; 0 disables the cutoff. Fourteen
-[HA sensors](docs/sensors.md) expose viewing history, Library counts/recent
-additions, last catalog sync and storage sizes. Full catalogs stay in the
-paginated Library UI/API rather than sensor attributes.
-
-Enable Library explicitly, leaving its host blank to try `my-kaleidescape.local`
-or setting a local host. Choose sync interval, metadata and optional artwork.
-Source groups distinguish remakes from editions; Library offers list/cover
-views, search, checkbox filters, **Clear Filter**, status/format badges and
-25/100/1000/All page sizes. [Database tools](docs/database.md) offer sticky
-options, schema-aware condition search, protected confirmed edits/permanent
-deletion, and import/export. Library adds sticky search/status bars, partial
-title/people search, and reusable format/rating badges. Recording must still be
-disabled before merge imports and legacy bulk purge operations.
-
-Manual additions select an exact cached Library movie, default to Completed and
-infer runtime/end time; Partial exposes watched minutes. Journal can sort by
-completion date (partials first) or title in either direction. Optional
-[Journal Calendar view](docs/calendar.md#journal-month-view) under Journal
-Options shows monthly overlapping covers and compact viewing/movie details for
-both household roles, independently of calendar publishing. Optional
-[calendar publishing](docs/calendar.md), disabled by default, adds new
-completions to one writable HA calendar with configurable title/description
-templates and bounded metadata.
+The [development guide](docs/guides/guide-development.md) describes current
+workspace prerequisites and local HA/Vite preview. Tests use fictional data;
+normal checks do not control devices or deploy. Hardware validation and
+deployment are explicit operator actions. Custom integrations execute with HA's
+privileges; the security policy explains the actual boundaries.
 
 ## Release status
 
-This is a development integration. Operator browser, real-source, backup and HA
-compatibility validation remain. Repository ownership/URLs, a license, supported
-HA releases and the documented
-[dependency release blocker](docs/security.md#known-dependency-findings-2026-10-25)
-must be resolved before publication. HACS metadata is preparatory.
-
-Historical completed Journal viewings can be explicitly exported from Settings
-to the configured calendar, with matching/progress and a warning about
-title-format duplicates. Optional **Full Sync** maintains a separate dedicated
-calendar, including Journal edits and delayed deletion of unmatched events. It
-has a configurable 1–12 month window and daily sweep, with a required deletion
-warning/acknowledgement. See [calendar procedures](docs/calendar.md).
-
-External metadata setup, request limits and privacy are covered in the
-[enrichment guide](docs/enrichment.md). Now Playing and artwork are shared with
-active users who can read the selected HA source entities; recording internals
-remain administrator-only.
-
-Settings export/import supports reviewed category selection and always excludes
-credentials.
+This remains a development integration. Supported HA versions, distribution
+metadata/license, current dependency review and operator/hardware/backup
+validation remain release work tracked in the roadmap. An operator may choose a
+household deployment after reviewing those limits. This documentation does not
+claim hardware qualification or completion of the planned pyk migration.

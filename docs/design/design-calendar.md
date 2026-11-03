@@ -188,10 +188,10 @@ may still contain the previous metadata block.
 
 The Journal month view reads the local database and exact linked Library
 version, using authenticated artwork access. The
-[dashboard calendar card](dashboard-cards.md) uses the same local approach,
-without parsing provider events or requiring an export. Evicted or missing
-artwork shows a placeholder. Provider copies of previously published details
-remain independent of local deletion.
+[dashboard calendar card](design-dashboard-cards.md) uses the same local
+approach, without parsing provider events or requiring an export. Evicted or
+missing artwork shows a placeholder. Provider copies of previously published
+details remain independent of local deletion.
 
 ## Delivery and recovery
 
@@ -367,7 +367,7 @@ description templates and the format-change warning. This operator check is
 still needed; no live calendar was used to implement the feature.
 
 The Journal month view is also available as a
-[dashboard card](dashboard-cards.md). Dedicated-calendar
+[dashboard card](design-dashboard-cards.md). Dedicated-calendar
 reconciliation/edit/delete is implemented as Full Sync above. Gmail or other
 sharing connectors need a separate authorization and privacy design; they are
 not implemented by this feature.

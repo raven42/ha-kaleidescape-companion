@@ -1,10 +1,16 @@
-# Optional local library
+# Library, artwork and collections
 
 Library sync is **disabled by default** and independent from playback recording.
 The Library tab is visible but disabled until an administrator saves **Settings
 → Enable library sync**. The same options are available under the integration's
 **Configure** action. Once enabled, all active HA users can browse the shared
 cached library and artwork. Settings and **Sync now** remain administrator-only.
+
+The current HTTP client/parser is internal to Companion. Its proposed move into
+an optional public pyk capability is part of the
+[migration plan](../plans/plan-pykaliedescape-migration.md#http-work-needed-for-the-literal-all-interaction-target).
+Caching, scheduling, identity, authorization and durable collection outcomes
+remain Companion responsibilities.
 
 ## Connection and sync settings
 
@@ -34,9 +40,10 @@ It is a firmware-dependent HTML interface, not a promised public JSON API.
 | Artwork cache limit     | 512 MiB | 32–4096 MiB, separate from the database; older covers are evicted when full                                        |
 
 Library view/count, applied filters, sort, cover size and column widths are
-[personal database preferences](ui-preferences.md), saved when changed. Hidden
-collection names are shared database preferences in Settings, also saved
-immediately without reloading HA. The default landing page remains native.
+[personal database preferences](design-user-interface.md#personal-and-shared-preferences),
+saved when changed. Hidden collection names are shared database preferences in
+Settings, also saved immediately without reloading HA. The default landing page
+remains native.
 
 Basic titles, ratings, directors, genres, years, and edition labels always sync.
 Other fields depend on the source; missing writers/studios remain unavailable.
@@ -151,7 +158,7 @@ the entire matching catalog (maximum 10,000 groups and 32 MiB aggregate
 metadata). Nothing is duplicated to fill rows. View, count, applied
 search/filters, sort, cover size and widths save as personal database
 preferences; main-tab navigation remains in the URL. See
-[preference limits and badge criteria](ui-preferences.md).
+[preference limits and badge criteria](design-user-interface.md#personal-and-shared-preferences).
 
 The summary shows the union of visible collections/formats/content
 ratings/years, minimum–maximum known runtime, earliest detection, and a source
@@ -175,14 +182,15 @@ caches need the next catalog sync to read those hidden format rows; missing
 formats are shown as unavailable rather than invented. **Added on** is the first
 successful detection of that handle by Companion, retained across subsequent
 syncs and temporary absence. All titles already present at the first sync get
-that first detection date. [Reviewed imports](imports.md) can fill a missing
-calendar purchase date on the schema **9** title-version row. Added on prefers
-that date, falling back to first detection; detection itself is never rewritten.
-Download dates remain unknown. Hidden collection preferences use known-name
-checkboxes and custom values in the shared database settings row, migrated once
-from former HA options. Changing the configured origin creates a separate source
-namespace, even if it reaches the same physical system. Cross-host identity
-reconciliation is deferred.
+that first detection date.
+[Reviewed imports](design-data-management.md#reviewed-merge-imports) can fill a
+missing calendar purchase date on the schema **9** title-version row. Added on
+prefers that date, falling back to first detection; detection itself is never
+rewritten. Download dates remain unknown. Hidden collection preferences use
+known-name checkboxes and custom values in the shared database settings row,
+migrated once from former HA options. Changing the configured origin creates a
+separate source namespace, even if it reaches the same physical system.
+Cross-host identity reconciliation is deferred.
 
 Sync progress/status refreshes only while the Library page is visible: about
 every five seconds during a scan and 30 seconds when idle. Newly cached metadata
@@ -194,14 +202,14 @@ cache across scrolling, paging, view changes and title popups (1000 images / 128
 MiB compressed bytes). Offscreen unfinished requests still cancel. Cache
 eviction revokes URLs, preferring offscreen images; leaving Library or an
 account/access/scope change clears all retained covers. See
-[cover retention and layout options](ui-preferences.md). Regular users poll
-cached counts/revisions/timestamps every 30 seconds, without administrator sync
-progress, settings, errors, or storage details. Background scheduled sync
-continues independently when enabled. Separately enabled household
-[Library playback](playback-controls.md) can launch an exact cached version
-through the protocol extension, with edition limitations. The separately
-opted-in [Add to Collection](library-collections.md) action is the only
-supported vendor edit.
+[cover retention and layout options](design-user-interface.md#personal-and-shared-preferences).
+Regular users poll cached counts/revisions/timestamps every 30 seconds, without
+administrator sync progress, settings, errors, or storage details. Background
+scheduled sync continues independently when enabled. Separately enabled
+household [Library playback](design-playback-controls.md) can launch an exact
+cached version through the protocol extension, with edition limitations. The
+separately opted-in [Add to Collection](design-library.md#add-to-collection)
+action is the only supported vendor edit.
 
 The search toolbar sticks to the top of the scrolling Library. On phones it
 becomes square Search, Filters, Clear, Sort/Randomize and Options shortcuts,
@@ -221,7 +229,8 @@ directly available in the search toolbar. On phones, the method is in Options
 and direction/Randomize uses a toolbar icon. Refresh/sync are inside Options.
 Options contains the other presentation settings, with a borderless view-type
 radio group. Manual Journal additions select an exact cached version with known
-runtime; see the [viewing form](ui.md#open-in-home-assistant).
+runtime; see the
+[viewing form](../guides/guide-development.md#local-ha-and-frontend-preview).
 
 ### Cached API
 
@@ -289,11 +298,11 @@ authenticated active-user endpoint with opaque keys; never through `www` or
 directly from metadata URLs. Only JPEG/PNG/WebP magic/type pairs are accepted.
 Python does not decode images.
 
-Opt-in [TMDB enrichment](enrichment.md) can add widescreen backdrops when Sync
-artwork is enabled. They share this budget and authenticated endpoint, using a
-protected reference in each movie group's enrichment JSON. They do not replace
-edition covers. Mobile title dialogs start 15% below the visible screen top,
-with a compact backdrop or small-poster fallback, linked credit rows and
+Opt-in [TMDB enrichment](design-metadata.md) can add widescreen backdrops when
+Sync artwork is enabled. They share this budget and authenticated endpoint,
+using a protected reference in each movie group's enrichment JSON. They do not
+replace edition covers. Mobile title dialogs start 15% below the visible screen
+top, with a compact backdrop or small-poster fallback, linked credit rows and
 collapsed Library/purchase details. The top offset includes device safe areas;
 long content scrolls within the remaining height.
 
@@ -301,17 +310,19 @@ HA backups pause sync and drain accepted worker/file writes before copying
 storage. SQLite exports include library metadata and cache indexes, but not
 artwork files. JSON format 5 includes portable title metadata, purchase dates
 and private purchase-history records. Missing cover files are reconciled when
-storage opens and can be fetched again. [Reviewed imports](imports.md) can merge
+storage opens and can be fetched again.
+[Reviewed imports](design-data-management.md#reviewed-merge-imports) can merge
 title metadata/dates but do not restore source configuration,
 memberships/status, fetch/cache paths, or artwork files. A full trusted database
 restore is still the offline
-[restore procedure](backend.md#export-backup-and-restore).
+[restore procedure](design-journal.md#exports-backups-and-restore).
 
 Disabling sync retains cached library records and covers; it stops network work
 and denies the Library API. Journal delete/purge does not remove this
 independent catalog cache. Operator deletion of cached artwork should be done
 with HA stopped; leave the journal database intact. Full dataset removal follows
-the [security procedures](security.md#backup-restore-retention-and-capacity).
+the
+[security procedures](../policies/policy-security.md#storage-imports-and-rendering).
 
 ## Validation and limits
 
@@ -337,9 +348,9 @@ editions and separate same-name remake demonstrate source-group browsing and
 detail tabs. The fictional page can enable Library in Settings without
 contacting any device. Canonical work/edition identity and historical artwork
 associations and library-specific import/export remain follow-ups. The
-[Add to Collection action](library-collections.md) adds a separate, explicit
-administrator-only POST capability; automatic synchronization remains GET-only.
-Removal remains deferred.
+[Add to Collection action](design-library.md#add-to-collection) adds a separate,
+explicit administrator-only POST capability; automatic synchronization remains
+GET-only. Removal remains deferred.
 
 ### Performance checks
 
@@ -420,7 +431,7 @@ operators and single-quoted values.
 for a desired enabled provider. Covers show a centered warning independently of
 Library badges; List view shows the same warning alongside the title. The
 boolean filter saves with other personal browsing preferences. See
-[manual resolution](enrichment.md#review-a-single-title).
+[manual resolution](design-metadata.md#review-a-single-title).
 
 The filter panes use consistent inner heading padding, and their sticky action
 footer has extra space below the buttons.
@@ -476,12 +487,12 @@ order IDs, not title/version rows. Purchases without an order ID are reported
 separately rather than assigned invented transactions. These recorded totals do
 not estimate missing prices or currency conversions.
 
-## Optional external credits and ratings
+## External metadata integration
 
 Separately enable store/TMDB enrichment to extend credits and add
 source-specific ratings. Source scan data, edition identities and financial
-privacy stay intact. See [external metadata](enrichment.md) for credentials,
-matching, caching and request limits.
+privacy stay intact. See [external metadata](design-metadata.md) for
+credentials, matching, caching and request limits.
 
 ## Movie details and administrator editing
 
@@ -499,7 +510,7 @@ remains expandable.
 Administrators can set shared, field-by-field provider preferences in **Settings
 → Scrapers → Preferred metadata sources**. Cached values are projected without
 rewriting raw scan facts; explicit reviewed title edits win. See
-[source selection](enrichment.md#preferred-metadata-sources).
+[source selection](design-metadata.md#preferred-metadata-sources).
 
 An open details popup reads fresh versions independently of its Library list's
 older revision. Metadata changes refresh the selected movie without dropping its
@@ -547,3 +558,195 @@ On phones, the footer keeps totals/matches on one compact line, with square
 paging icons only for multipage results. Administrator cache/scraper details
 remain in the desktop footer and detailed dialogs. Mobile shortcut controls
 reuse the same search, filter, sort and preference behavior as desktop controls.
+
+## Add to Collection
+
+Administrators can enable **Settings → Allow Add to Collection on the device**.
+It is off by default and also requires enabled Library and collection sync. Open
+a Library title, select its individual version tab, and choose **Collection**.
+The dialog reads the server's offered targets. Choose one existing collection
+and **Add selected version**. Viewing history and purchase dates are not
+changed. Removal, collection creation/renaming/deletion, and bulk/group edits
+remain outside this implementation.
+
+### Protocol capability
+
+The
+[official control protocol, revision 17](https://www.kaleidescape.com/wp-content/uploads/Kaleidescape-System-Control-Protocol-Reference-Manual.pdf)
+was rechecked on 2026-10-31. `GO_MOVIE_COLLECTION` and `GO_MOVIE_COLLECTIONS`
+select onscreen views; they do not change membership. The command catalog has no
+movie collection membership add/remove command. Pyk would need an accepted HTTP
+client capability to provide this operation; TCP view commands cannot replace
+the HTTP add path. Removal still needs an observed, verified web request
+contract and its own guarded mutation/recovery path; no guessed command or
+removal request is sent.
+
+### Observed form and compatibility
+
+Read-only inspection on 2026-10-28 of the `26.1.2-27147` interface found the
+fixed `main` Movies form: POST, multipart/form-data, current `/movies` action.
+The button uses `submit_parent_form_once( event, 'Add-To-Collection' );`.
+Submitted fields are `submit_type=Add-To-Collection`,
+`add_to_collection_select`, and one `check-<source handle>=on`. Dropdown
+JavaScript copies each option's hidden input value into the selector field.
+Labels and wire values can differ; the backend resolves the fresh hidden value
+instead of guessing from the displayed name. No source JavaScript is executed or
+packaged.
+
+The form is a firmware-dependent interface, not a documented stable API. No real
+POST was sent during implementation. Successful real-device behavior, charset
+handling, and version/group semantics still require operator validation. Normal
+checks use fictional pages, mock transport and isolated databases only.
+
+### Access and request scope
+
+The existing authenticated HA WebSocket API exposes administrator-only commands:
+
+- `library/collections/targets`: opaque `title_id` and source `revision`;
+  returns offered, cached, visible collection labels after a bounded fresh form
+  read.
+- `library/collections/add`: request UUID, opaque `title_id`, one collection
+  label, and expected source `revision`. Each request selects one exact source
+  handle.
+- `library/collections/check`: request UUID; performs read-only reconciliation.
+- `library/collections/acknowledge`: request UUID and
+  `confirmation=ACKNOWLEDGE`; retires an uncertain request locally without
+  sending any device mutation.
+
+All use the current entry/dataset scope. The backend resolves raw handles, form
+fields, collection values and fixed routes. Hidden targets and protected labels
+All/New/Played/Paused/Scenes/Trash/Deleted are rejected. Targets must be in both
+the current cached collections and the source's add dropdown. No supplied URL,
+path, method, arbitrary form, SQL, or action is forwarded. The opt-in, current
+administrator, source/runtime identity, settings fingerprint and readiness are
+checked before work and immediately before a possible POST, and access is
+checked again before a result is returned. Checks/acknowledgments remain
+available with collection additions switched off, as long as Library is still
+enabled.
+
+### Execution and durable outcomes
+
+Scans and explicit collection operations share one source lock. An active scan
+or collection operation returns Busy to new operations. A fresh Movies form must
+still match the cached selected handle/group/title and expose its checkbox. A
+complete target-collection GET establishes the expected membership set. A source
+revision mismatch rejects the operation before POST.
+
+Schema **8** adds private `library_collection_intents` alongside the shared
+`requests` retry receipts. Before POST, a worker transaction records an
+uncertain intent and actor/payload/source-bound UUID fingerprint. There is at
+most one uncertain request per source and at most 10000 retained collection
+receipts in the database. The receipt includes an expected-membership hash,
+without storing a full member list. Confirmed/acknowledged intents clear their
+temporary version, collection and hash fields; attribution, timestamps, outcome
+and the retry barrier remain. UUID reuse with a different actor or payload
+fails. SQLite snapshots and HA backups include these rows; portable JSON
+transfers and journal purge do not remove them. There is no automatic receipt
+pruning or replay.
+
+Only one fixed multipart POST to the pinned configured LAN `/movies` route is
+possible for a newly accepted UUID. Existing membership is a no-op, verified by
+GET. TLS/Host/DNS pinning, disabled cookies/proxy environment use, size/time
+limits and refused redirect following remain. POST responses accept 200 or
+302/303 to exact relative `movies`/`/movies`; no redirect is followed. Responses
+are bounded at 8 MiB. Operations have a 90-second budget, with existing
+five-second DNS/connect and 15-second per-request limits.
+
+After a possible POST, a complete target GET must match the expected set and
+contain the selected handle before success is confirmed. Only that verified
+collection snapshot updates cached memberships and source revision. Other
+collections remain untouched; the global collection-snapshot timestamp is not
+advanced. If the server affects additional versions or memberships, the
+operation stays uncertain. The device and SQLite do not share an atomic
+transaction.
+
+Timeouts, response loss, crashes and cancellation after possible POST retain the
+uncertain receipt. Repeating its UUID or choosing **Check membership** makes
+GETs only and never replays the POST. New additions are blocked until it is
+confirmed or an administrator explicitly acknowledges it after inspecting the
+device. Acknowledgment records the acknowledging actor and permits a new
+request; it neither undoes the earlier add nor proves it failed. Closed/reopened
+pages and integration restarts retain pending requests in the Library warning
+banner.
+
+Accepted operations outlive browser cancellation. Backup/unload stops new work,
+cancels scans and drains accepted collection work before pausing/closing SQLite.
+Private previews/forms clear on role/connection changes and late replies are
+ignored. In-flight or unconfirmed browser requests block implicit dialog
+dismissal until checked; a known uncertain outcome can be closed and reviewed in
+the banner.
+
+### Operator validation
+
+Build/check/package locally without deploying or mutating a device. In the Vite
+fictional fixture, enable Library and the new option, select an individual
+version, review the add dialog and cancellation. The fixture simulates the
+operation. Real browser review remains with the operator.
+
+On an isolated test deployment, first use a disposable existing collection and
+one deliberately selected version. Verify the target, membership before/after,
+unselected versions and unrelated memberships, refreshed UI/cache, and restart
+reconciliation. Do not use Played/Paused or other protected collections for
+tests. Successful form inspection and mocked tests do not replace this firmware
+check. Removal will need its own verified contract and security review.
+
+## Badge meanings
+
+| Badge                    | Criterion and cover placement                                                                                |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| Watched · green check    | Source Played status, unless Paused takes priority; top-left triangle                                        |
+| In progress · amber ring | Source Paused status; top-left triangle, with no invented completion percentage                              |
+| New · blue label         | Retained `recently_added` sensor batch membership, only when neither In progress nor Watched; top-left label |
+| Favorite · gold star     | An available version belongs to Favorites; independent top-right bookmark                                    |
+
+Watched, In progress and New are mutually exclusive. Progress/completion
+suppresses New even while the movie remains in the sensor batch; the sensor
+batch itself is unchanged. These use cached source statuses and refresh with
+collection sync, rather than adding playback polling or treating journal facts
+as device collection membership. Favorite can accompany any of the statuses.
+
+Text collection/status badges use compact outlined gradient pills: All in slate,
+New in blue, Unwatched in gold, Watched in green, Favorites in purple and In
+progress in amber, each with a local line icon. Their compact icons and padding
+match inline format badges; movie-detail badges share the same 28 px minimum
+height as the format and rating buttons. Movie-detail filter links and filter
+checkboxes retain their existing actions. Cover corner flags retain their layout
+and mutually exclusive status behavior.
+
+Hidden collection names affect labels and filters, not status/favorite
+classification. Recent identity uses the source-scoped group, never title text,
+so remakes remain distinct. The first scan establishes a baseline. Unchanged
+scans, metadata imports and new formats of known groups do not replace the
+batch. Schema 11 stores an internal source batch marker and matching version
+markers. Older title-only sensor snapshots cannot safely identify groups; their
+sensor values remain intact, and recent badges start with the next batch of
+newly discovered groups.
+
+Covers show only the highest known video format across the group's versions:
+**4K Cinematic > 4K > HD > SD**. Unknown video quality produces no format badge;
+SDR/HDR10 alone does not imply SD/HD. Lists retain all known video/HDR/audio
+format chips, including SDR, HDR10, Dolby Vision and Dolby Atmos. Resolution
+does not imply HDR or audio capability. Lists also show the mutually exclusive
+status plus independent favorite below the title. Indicators have accessible
+labels and use text/CSS without remote assets or new dependencies.
+
+## Cover image retention
+
+Requests still begin only when a cover is visible, with three concurrent
+requests and five-second request budgets. An offscreen or hidden page cancels
+unfinished requests. Successfully loaded covers remain in a private in-memory
+LRU cache for this mounted Library session, reusable across scrolling,
+pagination, view changes and title popups. It holds at most 1000 images and 128
+MiB of compressed image bytes. Eviction prefers the least recently used
+offscreen image, revokes its object URL, and clears any mounted references. If
+visible images alone exceed the budget, they can also be evicted. Browser image
+decoding/DOM memory is additional and not bounded by the compressed-byte cap.
+Evicted images can download again when revisited.
+
+The cache uses entry/dataset scope and the content-hash artwork key. Changed
+artwork bytes therefore use a new key. It is not local storage, a cookie, a
+service worker or a shared HTTP cache. Leaving Library, disconnecting/changing
+accounts, role/scope changes, detected access denial or opt-out revoke all URLs
+and discard the cache; late requests cannot repopulate a disposed cache. Closing
+a title popup or hiding the browser retains already accepted covers within the
+same session. No tokens, source URLs or images enter UI settings.

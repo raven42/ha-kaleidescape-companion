@@ -1,16 +1,18 @@
-# Deploying to a test Home Assistant instance
+# Installation and deployment
 
-These tasks deploy the current working tree from your development machine over
-SSH. The GitHub repository can stay private; HA needs no GitHub credentials, Git
-checkout, Node installation, or Vite server. The integration remains an early
-test build. Confirm the target HA version and review the
-[security findings](security.md#known-dependency-findings-2026-10-25) before a
-household rollout. Take a full HA backup before the first installation.
+Deploy the current working tree to an operator-selected Home Assistant instance
+over SSH, or copy the built integration directory manually. The repository may
+remain private; HA needs no Git checkout, Node or Vite. This is a development
+integration with no supported release matrix yet. Start with isolated validation
+when practical, then choose a household deployment deliberately with a usable
+backup and compatible HA version. Isolation is a testing recommendation, not a
+runtime requirement. See the [security policy](../policies/policy-security.md).
 
-The built archive includes the generated Kaleidescape API runtime inside the
-integration. HA installs or reuses the separately packaged `pykaleidescape`
-version pinned in the manifest; an offline installation needs that dependency
-already available. Controls stay disabled until explicitly configured in HA.
+HA installs or reuses the `pykaleidescape` version pinned in the manifest;
+offline installation needs that dependency available. The current development
+baseline is HA 2026.10.4 with pyk 1.1.6. The planned pyk update must remain
+compatible with HA's built-in integration. Controls remain disabled until
+configured.
 
 ## Configure the target
 
@@ -94,14 +96,13 @@ file changes. The package includes current uncommitted runtime edits, so finish
 editing before starting the task. Deployment packages the runtime again after
 its dependent checks; do not edit source while the task runs.
 
-The reorganized package requires a full HA Core restart after installation;
+Updating Python code requires a full HA Core restart after installation;
 reloading the entry alone does not replace already imported Python code or old
 static-path registrations.
 
-The archive contains only runtime Python files, manifest/setup/translation JSON,
-and the compiled `ui/assets/panel.js`, including the generated API under
-`_vendor/` and the integration's `scrapers/` modules. It excludes the
-development adapter source, environments, caches, databases, and repository
+The archive contains the integration's runtime Python, supported JSON files,
+compiled `ui/assets/panel.js` and local PNG branding. It excludes development
+sources outside the integration, environments, caches, databases and repository
 metadata. Symlinked or hard-linked runtime sources are rejected. The printed
 digest identifies the exact uploaded archive; it is not a signature or a
 compatibility guarantee.
@@ -132,13 +133,13 @@ started successfully. Remote error messages remain visible; the local failure
 summary reports the SSH exit status or timeout without printing the entire
 remote script. After a timeout, inspect the target state before retrying.
 
-The [backend guide](backend.md) lists the current database schema and table
-responsibilities. Deploy Python code, generated libraries and the compiled
-frontend together, then explicitly restart HA. Its first open upgrades an older
-journal and creates a private pre-migration backup. Code supporting only earlier
-schemas cannot read it; code rollback alone is insufficient. A matching database
-restore must be done with HA stopped and may lose changes made since that
-backup.
+The [backend guide](../design/design-journal.md) lists the current database
+schema and table responsibilities. Deploy the complete Python runtime and
+compiled frontend together, then explicitly restart HA. Its first open upgrades
+an older journal and creates a private pre-migration backup. Code supporting
+only earlier schemas cannot read it; code rollback alone is insufficient. A
+matching database restore must be done with HA stopped and may lose changes made
+since that backup.
 
 ## Review the installed integration
 
@@ -147,14 +148,16 @@ Kaleidescape Companion**, initially with tracking disabled. Open the
 administrator sidebar panel at `/kaleidescape-companion` and review:
 
 - The integration/sidebar name and the desktop/narrow-screen layout.
-- A fictional manual viewing: create, edit, filter, and confirm deletion.
+- On a fixture-backed test instance, create, edit, filter and delete a manual
+  viewing. Manual creation needs an enabled Library version with known runtime;
+  do not add fictional records to a household journal.
 - JSON/SQLite downloads and record persistence after another restart.
 - A regular account’s read-only history, without notes, source/session details,
   or exports.
-- All fourteen sensors: seven history sensors plus seven Library/storage
-  sensors. Check their bounded attributes/counts after the next refresh, the
-  initial discovery baseline, unchanged-scan batch retention and
-  unavailable/unknown behavior when Library/status data is disabled or missing.
+- All 18 sensors: seven history sensors plus eleven Library/storage sensors.
+  Check their bounded attributes/counts after the next refresh, the initial
+  discovery baseline, unchanged-scan batch retention and unavailable/unknown
+  behavior when Library/status data is disabled or missing.
 - With a deliberately selected player, the administrator Now Playing card:
   cover/placeholder, pause/scan/credits states, counted time, and
   unavailable/recording-health states.
@@ -164,7 +167,7 @@ administrator sidebar panel at `/kaleidescape-companion` and review:
 Browser review is performed by the operator; automated checks use fictional
 records and never contact the target. Enable observation only for deliberately
 selected entities after the basic checks. See the
-[tracking guide](backend.md#automatic-tracking).
+[tracking guide](../design/design-journal.md#automatic-tracking).
 
 The same tooling is available from the terminal with
 `.venv/bin/python dev/deploy.py ACTION`, where `ACTION` is `init`, `package`,

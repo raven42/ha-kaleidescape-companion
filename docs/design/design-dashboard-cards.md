@@ -180,7 +180,7 @@ server settings.
 
 ## Icons and installation checks
 
-The eight background-free PNG cutouts are in [assets/icons](../assets/icons/).
+The eight background-free PNG cutouts are in [assets/icons](../../assets/icons).
 The first is installed as `brand/icon.png` (256 px) and `icon@2x.png` (512 px).
 HA 2026.3 and newer uses local integration branding automatically; the sidebar
 continues to use its standard movie icon. The brand folder and dashboard code
