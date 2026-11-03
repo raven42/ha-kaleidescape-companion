@@ -2,6 +2,7 @@
 
 import asyncio
 import hashlib
+import ipaddress
 import json
 import logging
 import re
@@ -13,25 +14,23 @@ from dataclasses import asdict, dataclass
 
 from homeassistant.helpers.aiohttp_client import DATA_RESOLVER
 from homeassistant.helpers.storage import Store
+from kaleidescape import Device
 from kaleidescape import const as pyk_const
 from kaleidescape import message as pyk
-
-from .._vendor.kaleidescape_api import (
-    Address,
-    Client,
-    ProtocolError,
-    Rejected,
-    Status,
-    device_address,
+from kaleidescape.error import (
+    KaleidescapeError,
+    MessageError,
+    RequestNotSentError,
 )
-from .._vendor.kaleidescape_api.extensions import MovieCommands
+
 from ..const import DOMAIN
 from ..core.models import JournalError, invalid
 from ..core.security import async_finish_cleanup
 from ..core.tasks import async_wait
-from ..library.config import origin
+from ..library.config import lan_address, origin
 from ..library.store import source_id
 from .control_config import COMMANDS, fingerprint, host
+from .identity import normalize_serial
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -56,7 +55,7 @@ def state_key(state):
 
 
 def playback_handle(value):
-    """Admit known handle spellings; the API resolves a bare namespace live."""
+    """Admit known handle spellings; pyk resolves a bare namespace live."""
     if not re.fullmatch(
         r"(?:[0-9]{1,3}-[0-9]{1,3}\.)?[0-9]{1,3}-S_[0-9A-Fa-f]{8}", value
     ):
@@ -69,7 +68,24 @@ def playback_handle(value):
 def reported_address(value):
     if re.fullmatch(r"[0-9]{1,3}(?:\.[0-9]{1,3}){3}", value):
         value = ".".join(str(int(part)) for part in value.split("."))
-    return device_address(value)
+    try:
+        address = str(ipaddress.ip_address(value))
+    except ValueError as error:
+        raise ValueError("Invalid device address") from error
+    if not lan_address(address):
+        raise ValueError("Device address is outside the private LAN")
+    return address
+
+
+async def one_response(device, request, *, serial=None):
+    """Use pyk's public Request path for routed reads without a second client."""
+    target = (
+        f"#{serial.upper().zfill(12)}" if serial is not None else pyk_const.LOCAL_CPDID
+    )
+    rows = await request(device_id=target).send(device.connection)
+    if len(rows) != 1:
+        raise KaleidescapeError("Unexpected device response count")
+    return rows[0]
 
 
 class PlaybackControls:
@@ -81,6 +97,7 @@ class PlaybackControls:
         self.lock = asyncio.Lock()
         self.task = None
         self.clients = set()
+        self._devices_by_ip = {}
         self.paused = self.stopped = False
         self.device_store = Store(
             hass, 1, f"{DOMAIN}.control_devices", private=True, atomic_writes=True
@@ -103,7 +120,7 @@ class PlaybackControls:
             # Cached identities are hints: every connection still verifies them live.
             devices = []
             for row in rows:
-                serial = Address.serial(row["serial"]).device[1:]
+                serial = normalize_serial(row["serial"])
                 if type(row["is_player"]) is not bool:
                     return
                 devices.append(
@@ -116,7 +133,7 @@ class PlaybackControls:
                     }
                 )
             self.devices = devices
-        except KeyError, TypeError, AttributeError, ProtocolError:
+        except KeyError, TypeError, AttributeError, ValueError:
             return
 
     def player_id(self, serial):
@@ -177,7 +194,9 @@ class PlaybackControls:
 
             await async_finish_cleanup(drain())
         for client in tuple(self.clients):
-            await client.close()
+            await client.async_close()
+        self.clients.clear()
+        self._devices_by_ip.clear()
 
     async def async_stop(self):
         self.stopped = True
@@ -188,18 +207,26 @@ class PlaybackControls:
 
     @asynccontextmanager
     async def _client(self, ip):
-        client = Client(ip, timeout=3)
-        self.clients.add(client)
+        client = self._devices_by_ip.get(ip)
+        if client is None:
+            client = Device(ip, timeout=3, reconnect=True)
+            self._devices_by_ip[ip] = client
+            self.clients.add(client)
         try:
-            async with client:
-                yield client
-        finally:
-            self.clients.discard(client)
+            if not client.is_connected:
+                await client.connect()
+            yield client
+        except BaseException:
+            if not client.is_connected:
+                self._devices_by_ip.pop(ip, None)
+                self.clients.discard(client)
+                await client.async_close()
+            raise
 
     async def _resolve(self, hostname):
         try:
-            return device_address(hostname)
-        except ProtocolError:
+            return reported_address(hostname)
+        except ValueError:
             pass
         async with asyncio.timeout(4):
             resolver = self.hass.data.get(DATA_RESOLVER)
@@ -212,7 +239,7 @@ class PlaybackControls:
                 )
                 addresses = [row[4][0] for row in rows]
         # Reject mixed LAN/WAN answers, then connect to one literal pinned address.
-        addresses = list(dict.fromkeys(device_address(ip) for ip in addresses))
+        addresses = list(dict.fromkeys(reported_address(ip) for ip in addresses))
         if not addresses:
             raise JournalError(
                 "control_destination", "Control hostname has no private LAN address"
@@ -224,58 +251,50 @@ class PlaybackControls:
             host(self.config, self.config.get("library_host", ""))
         )
 
-    async def _power(self, client, target):
-        """Documented power/idle queries; no wake is implied by a read."""
-        reply = await client.query(pyk.GetDevicePowerState.name, target=target)
-        value = reply.values["power_state"]
-        if value not in {"0", "1"} or any(
-            zone not in {"0", "1"} for zone in reply.extra_fields
-        ):
-            raise ProtocolError("Invalid device power state")
-        power_state = pyk.DevicePowerState.index["power"][int(value)]
-        if power_state == pyk_const.DEVICE_POWER_STATE_STANDBY:
-            return {"power_state": power_state, "readiness": "idle", "ready": False}
-        try:
-            idle = await client.query(pyk.GetSystemReadinessState.name, target=target)
-            raw_readiness = idle.values["state"]
-            if raw_readiness not in {"0", "1", "2"}:
-                raise ProtocolError("Invalid system readiness")
-            readiness = pyk.SystemReadinessState.index[int(raw_readiness)]
-            if readiness == pyk_const.SYSTEM_READINESS_STATE_BECOMING_READY:
-                readiness = "starting"
-        except Rejected as error:
-            if error.status != Status.INVALID_REQUEST:
-                raise
-            # Premiere players lack the newer idle command. Playback is also
-            # queried before treating an on-state legacy player as usable.
-            readiness = "ready"
-        zone_ready = not reply.extra_fields or (
-            pyk.DevicePowerState.index["zone"][int(reply.extra_fields[0])]
-            == pyk_const.DEVICE_ZONE_STATE_AVAILABLE
+    async def _state(self, client, operation=""):
+        """Project fresh pyk state and zone evidence into the existing UI shape."""
+        snapshot = await client.read_control_state()
+        reply = await one_response(client, pyk.GetDevicePowerState)
+        zone_ready = not reply.field_zone or (
+            reply.field_zone[0] == pyk_const.DEVICE_ZONE_STATE_AVAILABLE
         )
-        return {
-            "power_state": power_state,
+        readiness = snapshot.readiness
+        if readiness == pyk_const.SYSTEM_READINESS_STATE_BECOMING_READY:
+            readiness = "starting"
+        if snapshot.power == pyk_const.DEVICE_POWER_STATE_STANDBY:
+            readiness = "idle"
+        power = {
+            "power_state": snapshot.power,
             "readiness": "starting"
             if readiness == "ready" and not zone_ready
             else readiness,
-            "ready": readiness == "ready" and zone_ready,
+            "ready": snapshot.power == pyk_const.DEVICE_POWER_STATE_ON
+            and readiness == "ready"
+            and zone_ready,
         }
-
-    async def _state(self, client, target, operation=""):
-        power = await self._power(client, target)
         if not power["ready"]:
             if operation not in {"power_on", "power_off", "status"}:
                 raise JournalError(
                     "control_not_ready", "Power on and wait for readiness"
                 )
             return power, PlaybackState("", -1, 0, 0)
-        status = await client.query(pyk.GetPlayStatus.name, target=target)
-        title = await client.query(pyk.GetPlayingTitleName.name, target=target)
+        status = await one_response(client, pyk.GetPlayStatus)
+        mode = {
+            pyk_const.PLAY_STATUS_NONE: 0,
+            pyk_const.PLAY_STATUS_PAUSED: 1,
+            pyk_const.PLAY_STATUS_PLAYING: 2,
+            pyk_const.PLAY_STATUS_FORWARD: 4,
+            pyk_const.PLAY_STATUS_REVERSE: 6,
+        }.get(status.field_play_status)
+        if mode is None:
+            raise KaleidescapeError("Unknown playback status")
+        if snapshot.identity.generation != client.connection.generation:
+            raise KaleidescapeError("Playback state crossed a connection change")
         return power, PlaybackState(
-            title.values["title"],
-            status.mode,
-            status.duration_seconds,
-            status.position_seconds,
+            snapshot.playing_title or "",
+            mode,
+            status.field_title_length,
+            status.field_title_location,
         )
 
     @asynccontextmanager
@@ -286,26 +305,29 @@ class PlaybackControls:
             raise JournalError(
                 "control_player", "Discover and select a default player in Settings"
             )
-        target = Address.serial(serial)
         if ip is None:
             async with self._client(await self._seed()) as seed:
                 self._ready(authorize)
-                info = await seed.device_info(target)
-                if info.serial != serial:
+                identity = await seed.read_identity(serial)
+                if normalize_serial(identity.serial_number) != serial:
                     raise JournalError(
                         "control_identity", "Discovered player identity changed"
                     )
-                ip = reported_address(info.ipaddress)
+                info = await one_response(seed, pyk.GetDeviceInfo, serial=serial)
+                ip = reported_address(info.field_ip)
         self._ready(authorize)
         async with self._client(ip) as client:
-            info = await client.device_info()
-            if info.serial != serial or (await client.zones(target)).movie < 1:
+            identity = await client.read_identity()
+            if (
+                normalize_serial(identity.serial_number) != serial
+                or identity.movie_zones < 1
+            ):
                 raise JournalError(
                     "control_identity",
                     "Direct connection does not identify the selected movie player",
                 )
             self._ready(authorize)
-            yield client, target, ip
+            yield client, serial, ip
 
     async def async_info(self):
         return {
@@ -325,7 +347,7 @@ class PlaybackControls:
                 result = await operation()
                 self._ready(authorize)
                 return result
-        except (ProtocolError, OSError, TimeoutError) as error:
+        except (KaleidescapeError, OSError, TimeoutError, ValueError) as error:
             raise JournalError(
                 "control_unreachable", "Device query failed; no control was sent"
             ) from error
@@ -333,18 +355,28 @@ class PlaybackControls:
     async def async_discover(self, authorize):
         async def discover():
             async with self._client(await self._seed()) as client:
-                devices = await client.discover()
+                identities = await client.discover_devices()
+                devices = []
+                for identity in identities:
+                    serial = normalize_serial(identity.serial_number)
+                    info = await one_response(client, pyk.GetDeviceInfo, serial=serial)
+                    name = ""
+                    if identity.movie_zones:
+                        friendly = await one_response(
+                            client, pyk.GetFriendlyName, serial=serial
+                        )
+                        name = friendly.field
+                    devices.append(
+                        {
+                            "serial": serial,
+                            "name": " ".join((name or identity.model).split())[:160],
+                            "model": " ".join(identity.model.split())[:160],
+                            "ipaddress": reported_address(info.field_ip),
+                            "is_player": identity.movie_zones > 0,
+                        }
+                    )
             self._ready(authorize)
-            self.devices = [
-                {
-                    "serial": row.info.serial,
-                    "name": " ".join((row.name or row.model).split())[:160],
-                    "model": " ".join(row.model.split())[:160],
-                    "ipaddress": reported_address(row.info.ipaddress),
-                    "is_player": row.is_player,
-                }
-                for row in devices
-            ]
+            self.devices = devices
             await self.device_store.async_save(
                 {"seed": self._seed_key(), "devices": self.devices}
             )
@@ -360,17 +392,17 @@ class PlaybackControls:
         async def status():
             async with self._player(
                 authorize, serial=self._selected_serial(player_id)
-            ) as (client, target, _ip):
-                power, state = await self._state(client, target, "status")
+            ) as (client, serial, _ip):
+                power, state = await self._state(client, "status")
                 return {
-                    "player_id": self.player_id(target.device[1:]),
+                    "player_id": self.player_id(serial),
                     **power,
                     "state": asdict(state),
                 }
 
         return await self._read(status, authorize)
 
-    async def _movie(self, client, target, title_id, authorize):
+    async def _movie(self, client, serial, title_id, authorize):
         if not self.config.get("control_allow_launch", False) or not self.config.get(
             "library_enabled", False
         ):
@@ -389,19 +421,19 @@ class PlaybackControls:
         source = source_id(origin(self.config.get("library_host", "")))
         row = await self.repository.async_control("library_version", source, title_id)
         self._ready(authorize)
-        prepared = await MovieCommands(client).prepare(
-            playback_handle(row["source_handle"]), target=target
+        prepared = await client.prepare_movie_launch(
+            playback_handle(row["source_handle"]), serial=serial
         )
+        details = await client.get_content_details(prepared.handle)
         data = json.loads(row["data"])
-        actual = prepared.metadata.values
-        if " ".join(actual["Title"].split()).casefold() != " ".join(
+        if " ".join(prepared.title.split()).casefold() != " ".join(
             row["title"].split()
-        ).casefold() or (data.get("year") and str(data["year"]) != actual.get("Year")):
+        ).casefold() or (data.get("year") and str(data["year"]) != details.field_year):
             raise JournalError(
                 "control_identity",
                 "Live movie details do not match the selected Library entry",
             )
-        return prepared, digest(row)
+        return prepared, digest(row), details.field_year
 
     async def async_prepare(
         self, actor, operation, title_id, authorize, player_id=None
@@ -414,12 +446,12 @@ class PlaybackControls:
         async def prepare():
             async with self._player(
                 authorize, serial=self._selected_serial(player_id)
-            ) as (client, target, ip):
-                power, before = await self._state(client, target, operation)
-                movie, library_key = (
-                    await self._movie(client, target, title_id, authorize)
+            ) as (client, serial, ip):
+                power, before = await self._state(client, operation)
+                movie, library_key, year = (
+                    await self._movie(client, serial, title_id, authorize)
                     if title_id
-                    else (None, None)
+                    else (None, None, None)
                 )
                 self.reviews = {
                     key: value
@@ -432,7 +464,7 @@ class PlaybackControls:
                 self.reviews[token] = {
                     "actor": actor,
                     "operation": operation,
-                    "serial": target.device[1:],
+                    "serial": serial,
                     "ip": ip,
                     "state": digest([state_key(before), power]),
                     "title_id": title_id,
@@ -442,10 +474,10 @@ class PlaybackControls:
                 return {
                     "token": token,
                     "operation": operation,
-                    "player_id": self.player_id(target.device[1:]),
+                    "player_id": self.player_id(serial),
                     "before": asdict(before),
-                    "title": movie.metadata.values["Title"] if movie else None,
-                    "year": movie.metadata.values.get("Year") if movie else None,
+                    "title": movie.title if movie else None,
+                    "year": year,
                     "exact_version_confirmed": False,
                 }
 
@@ -492,18 +524,16 @@ class PlaybackControls:
             async with asyncio.timeout(12):
                 async with self._player(
                     authorize, ip=review["ip"], serial=review["serial"]
-                ) as (client, target, _ip):
-                    power, before = await self._state(
-                        client, target, review["operation"]
-                    )
+                ) as (client, serial, _ip):
+                    power, before = await self._state(client, review["operation"])
                     if digest([state_key(before), power]) != review["state"]:
                         raise JournalError(
                             "refresh_required", "Player changed since review"
                         )
                     movie = None
                     if review["title_id"]:
-                        movie, key = await self._movie(
-                            client, target, review["title_id"], authorize
+                        movie, key, _year = await self._movie(
+                            client, serial, review["title_id"], authorize
                         )
                         if key != review["library_key"]:
                             raise JournalError(
@@ -525,14 +555,12 @@ class PlaybackControls:
                     self._ready(authorize)
                     sent = True
                     if movie:
-                        await MovieCommands(client).send(movie)
+                        await client.send_movie_launch(movie, allow_experimental=True)
                     else:
-                        await client.execute(
-                            COMMANDS[review["operation"]], target=target
-                        )
+                        await getattr(client, COMMANDS[review["operation"]])()
                     result.update(outcome="acknowledged", acknowledged=True)
                     # One bounded observation; acceptance cannot prove exact edition.
-                    after_power, after = await self._state(client, target, "status")
+                    after_power, after = await self._state(client, "status")
                     if review["operation"] in {"power_on", "power_off"}:
                         if (
                             review["operation"] == "power_on" and after_power["ready"]
@@ -550,7 +578,7 @@ class PlaybackControls:
                     }.get(review["operation"])
                     if desired is not None and after.mode == desired:
                         if not movie or (
-                            after.title == movie.metadata.values["Title"]
+                            after.title == movie.title
                             and (
                                 before.title != after.title
                                 or before.mode != after.mode
@@ -558,7 +586,7 @@ class PlaybackControls:
                             )
                         ):
                             result["outcome"] = "state_observed"
-        except Rejected as error:
+        except MessageError as error:
             if not reserved:
                 _LOGGER.error(
                     "Device control preflight was rejected; no control was sent"
@@ -567,13 +595,21 @@ class PlaybackControls:
                     "control_unreachable", "Player query was rejected"
                 ) from error
             if not result["acknowledged"]:
-                result.update(outcome="rejected", status=error.status)
+                result.update(outcome="rejected", status=error.code)
+        except RequestNotSentError:
+            if not reserved:
+                raise JournalError(
+                    "control_unreachable",
+                    "Device preflight failed; no control was sent",
+                ) from None
+            if not result["acknowledged"]:
+                result["outcome"] = "not_sent"
         except JournalError:
             if not reserved:
                 raise
             if not sent:
                 result["outcome"] = "not_sent"
-        except ProtocolError, OSError, TimeoutError:
+        except KaleidescapeError, OSError, TimeoutError, ValueError:
             if not reserved:
                 _LOGGER.error("Device control preflight failed; no control was sent")
                 raise JournalError(

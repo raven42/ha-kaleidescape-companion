@@ -15,6 +15,13 @@ import test_repository as repository_tests
 from aiohttp import TCPConnector, web
 from aiohttp.test_utils import make_mocked_request
 from homeassistant.components.http import KEY_HASS
+from kaleidescape.library_parser import (
+    LibraryFormatError,
+    artwork_path,
+    catalog,
+    details,
+)
+from kaleidescape.local_browser import BrowserResponse, LocalLibrary
 
 from custom_components.kaleidescape_companion import (
     async_setup_entry,
@@ -30,11 +37,6 @@ from custom_components.kaleidescape_companion.library.config import (
     DEFAULTS,
     origin,
     validate,
-)
-from custom_components.kaleidescape_companion.library.parser import (
-    artwork_path,
-    catalog,
-    details,
 )
 from custom_components.kaleidescape_companion.library.store import source_id, title_id
 from custom_components.kaleidescape_companion.library.sync import LibrarySync
@@ -132,13 +134,13 @@ class LibraryParserTest(unittest.TestCase):
             listing(expected=99),
             listing().replace('id="movie_count_str"', 'id="unknown"'),
         ):
-            with self.assertRaises(JournalError):
+            with self.assertRaises(LibraryFormatError):
                 catalog(body)
         self.assertIsNone(catalog(listing(collections=("Unrecognized",)))[1])
 
     def test_duplicate_version_rows_are_not_duplicate_movies(self):
         self.assertEqual(len(catalog(listing([ROWS[0], ROWS[0]]))[0]), 1)
-        with self.assertRaises(JournalError):
+        with self.assertRaises(LibraryFormatError):
             catalog(listing([ROWS[0], {**ROWS[0], "source_group": "other"}]))
 
     def test_scene_management_is_not_a_movie_collection(self):
@@ -148,7 +150,7 @@ class LibraryParserTest(unittest.TestCase):
         self.assertEqual(len(rows), 3)
         self.assertEqual(names, ["Favorites", "Paused", "Played"])
         # Continue to reject arbitrary non-listing HTML, including scene pages.
-        with self.assertRaises(JournalError):
+        with self.assertRaises(LibraryFormatError):
             catalog('<html><form id="scene_management">Scenes</form></html>')
 
     def test_scripts_and_external_or_traversing_artwork_are_not_used(self):
@@ -543,6 +545,12 @@ class LibrarySyncTest(unittest.IsolatedAsyncioTestCase):
             hass, self.repository, {**DEFAULTS, "library_host": ORIGIN, **config}
         )
         sync._resolve = AsyncMock(return_value="192.168.50.10")
+        sync.browser = SimpleNamespace(
+            movies=AsyncMock(return_value=(ROWS, ["Played", "Paused"])),
+            collection=AsyncMock(return_value=[]),
+            version_details=AsyncMock(return_value=details(DETAIL)),
+            artwork=AsyncMock(return_value=(b"\xff\xd8\xffcover", "image/jpeg")),
+        )
         return sync
 
     async def test_sync_toggles_skip_detail_artwork_and_collection_requests(self):
@@ -551,11 +559,10 @@ class LibrarySyncTest(unittest.IsolatedAsyncioTestCase):
             library_sync_artwork=False,
             library_sync_collections=False,
         )
-        sync._listing = AsyncMock(return_value=(ROWS, ["Played", "Paused"]))
-        sync._get = AsyncMock()
         await sync._sync()
-        sync._listing.assert_awaited_once_with("/movies")
-        sync._get.assert_not_awaited()
+        sync.browser.movies.assert_awaited_once_with()
+        sync.browser.collection.assert_not_awaited()
+        sync.browser.version_details.assert_not_awaited()
         self.assertEqual((await self.page())["total"], 3)
 
     async def test_initial_collections_sync_skips_builtin_scene_management(self):
@@ -566,7 +573,15 @@ class LibrarySyncTest(unittest.IsolatedAsyncioTestCase):
             "/movies?collection=Paused&sort=2": listing([ROWS[1]]),
             "/movies?collection=Played&sort=2": listing([ROWS[0], ROWS[1]]),
         }
-        sync._get = AsyncMock(side_effect=lambda path: pages[path])
+        sync.browser = LocalLibrary(
+            SimpleNamespace(
+                get=AsyncMock(
+                    side_effect=lambda path: BrowserResponse(
+                        200, "text/html", pages[path].encode()
+                    )
+                )
+            )
+        )
         await sync._sync()
         self.assertIsNone(sync.error)
         self.assertEqual(
@@ -575,28 +590,27 @@ class LibrarySyncTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.page(collection="Favorites"))["total"], 1)
         self.assertEqual((await self.page(status="in_progress"))["total"], 1)
         self.assertFalse(
-            any("Scenes" in call.args[0] for call in sync._get.await_args_list)
+            any(
+                "Scenes" in call.args[0]
+                for call in sync.browser._transport.get.await_args_list
+            )
         )
 
     async def test_full_sync_uses_only_bounded_read_routes_and_caches_covers(self):
         sync = await self.connector(library_sync_artwork=True)
-        sync._listing = AsyncMock(
-            side_effect=[(ROWS, ["Played", "Paused"]), ([ROWS[0]], []), ([ROWS[1]], [])]
-        )
+        sync.browser.movies = AsyncMock(return_value=(ROWS, ["Played", "Paused"]))
         image = b"\xff\xd8\xfffictional-cover"
-        sync._get = AsyncMock(
-            side_effect=lambda path, **kw: (
-                (image, "image/jpeg") if kw.get("image") else DETAIL
-            )
-        )
+        sync.browser.collection = AsyncMock(side_effect=[[ROWS[0]], [ROWS[1]]])
+        sync.browser.version_details = AsyncMock(return_value=details(DETAIL))
+        sync.browser.artwork = AsyncMock(return_value=(image, "image/jpeg"))
         await sync._sync()
         self.assertEqual((await self.page(status="in_progress"))["total"], 1)
         self.assertEqual((await self.page(actor="Zoë Example"))["total"], 3)
         self.assertGreater(
             (await self.repository.async_library_info(SOURCE))["artwork_bytes"], 0
         )
-        for call in sync._get.await_args_list:
-            self.assertTrue(call.args[0].startswith(("/details?id=", "/webcovers/")))
+        self.assertGreater(sync.browser.version_details.await_count, 0)
+        self.assertGreater(sync.browser.artwork.await_count, 0)
 
     async def test_collection_and_listing_failures_preserve_cache(
         self,
@@ -605,15 +619,13 @@ class LibrarySyncTest(unittest.IsolatedAsyncioTestCase):
         sync = await self.connector(
             library_sync_details=False, library_sync_artwork=False
         )
-        sync._listing = AsyncMock(
-            side_effect=[
-                (ROWS, ["Played"]),
-                JournalError("library_format", "Bad format"),
-            ]
+        sync.browser.movies = AsyncMock(return_value=(ROWS, ["Played"]))
+        sync.browser.collection = AsyncMock(
+            side_effect=LibraryFormatError("Bad format")
         )
         await sync._sync()
         self.assertEqual((await self.page(status="in_progress"))["total"], 1)
-        sync._listing = AsyncMock(
+        sync.browser.movies = AsyncMock(
             side_effect=JournalError("library_unreachable", "Offline")
         )
         with self.assert_error("library_unreachable"):

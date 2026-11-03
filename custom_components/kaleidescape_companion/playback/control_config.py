@@ -4,8 +4,6 @@ import hashlib
 import json
 from urllib.parse import urlsplit
 
-from kaleidescape import message as pyk
-
 from ..library.config import origin
 from .identity import normalize_serial
 
@@ -16,22 +14,22 @@ DEFAULTS = {
     "control_allow_launch": False,
 }
 COMMANDS = {
-    "play": pyk.Play.name,
-    "pause": "PAUSE_ON",
-    "resume": "PAUSE_OFF",
-    "stop": pyk.Stop.name,
-    "next": pyk.Next.name,
-    "previous": pyk.Previous.name,
-    "up": pyk.Up.name,
-    "down": pyk.Down.name,
-    "left": pyk.Left.name,
-    "right": pyk.Right.name,
-    "select": pyk.Select.name,
-    "back": "BACK",
-    "menu": pyk.MenuToggle.name,
-    "movies": pyk.GoMovieCovers.name,
-    "power_on": pyk.LeaveStandby.name,
-    "power_off": pyk.EnterStandby.name,
+    "play": "play",
+    "pause": "pause_on",
+    "resume": "pause_off",
+    "stop": "stop",
+    "next": "next",
+    "previous": "previous",
+    "up": "up",
+    "down": "down",
+    "left": "left",
+    "right": "right",
+    "select": "select",
+    "back": "back",
+    "menu": "menu_toggle",
+    "movies": "go_movie_covers",
+    "power_on": "leave_standby",
+    "power_off": "enter_standby",
 }
 
 

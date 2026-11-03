@@ -1,8 +1,8 @@
 # Security policy and hardening
 
 This policy describes current boundaries and development expectations, reviewed
-2026-11-03. It is not a claim of isolation from Home Assistant itself. Future
-transport behavior is governed by the
+2026-11-03. It is not a claim of isolation from Home Assistant itself. The
+patched-pyk PoC and release gates are described in the
 [pyk migration plan](../plans/plan-pykaliedescape-migration.md). A documentation
 change does not remove a guard enforced by the current code.
 
@@ -122,7 +122,7 @@ storage closes. A failed observation after acknowledgement does not turn the
 command into an unsent failure. Reconnect must not replay user writes. Protocol
 ACKs do not prove physical outcome or exact movie edition.
 
-The planned persistent pyk workflow includes ordinary initialization, local
+The PoC's persistent pyk workflow includes ordinary initialization, local
 events, version identification and automatic reconnect. These are compatible
 with an opt-in connection and must not be prohibited by a blanket “no connection
 writes” policy. Optional upstream logging/syslog changes require owner

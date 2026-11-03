@@ -7,7 +7,6 @@ from datetime import UTC, datetime
 
 from ..core.models import JournalError, identifier, invalid
 from .config import excluded_collections
-from .parser import Tree, clean
 from .store import changed
 
 RESERVED = {"all", "new", "played", "paused", "scenes", "trash", "deleted"}
@@ -40,69 +39,6 @@ def parameters(request, source, title, collection, revision, actor):
         ).encode()
     ).hexdigest()
     return request, fingerprint
-
-
-def form_targets(page, handle=None):
-    """Accept only the observed fixed form; never evaluate JavaScript."""
-    root = Tree(page).root
-    form = root.find(id="main", tag="form")
-    if (
-        form is None
-        or form.attrs.get("method", "").lower() != "post"
-        or form.attrs.get("enctype", "").lower() != "multipart/form-data"
-        or form.attrs.get("action", "") not in {"", "/movies", "movies"}
-    ):
-        raise JournalError("collection_form", "Collection add form was not recognized")
-    button = form.find(id="add_to_collection", tag="button")
-    field = form.find(id="add_to_collection_select_dropdown_value", tag="input")
-    dropdown = form.find(id="add_to_collection_select_dropdown")
-    if (
-        button is None
-        or button.attrs.get("onclick", "").strip()
-        != "submit_parent_form_once( event, 'Add-To-Collection' );"
-        or field is None
-        or field.attrs.get("name") != "add_to_collection_select"
-        or dropdown is None
-    ):
-        raise JournalError("collection_form", "Collection add form was not recognized")
-    if handle is not None:
-        controls = [
-            node
-            for node in form.nodes()
-            if node.tag == "input"
-            and node.attrs.get("name") == "check-" + handle
-            and node.attrs.get("type", "").lower() == "checkbox"
-            and "disabled" not in node.attrs
-        ]
-        if not controls or any(
-            node.attrs.get("value", "on") != "on" for node in controls
-        ):
-            raise JournalError("collection_form", "Selected version cannot be added")
-    targets = {}
-    for node in dropdown.nodes():
-        if (
-            node.tag == "li"
-            and "dropdown_option" in node.attrs.get("class", "").split()
-        ):
-            label = clean(node.text(), 256)
-            if label and label.casefold() not in RESERVED:
-                value = node.find(tag="input")
-                if value is None or "disabled" in node.attrs:
-                    continue
-                raw = value.attrs.get("value", "")
-                if not raw:
-                    continue
-                if label in targets:
-                    raise JournalError("collection_form", "Duplicate collection choice")
-                # Values may be internal IDs; never substitute a displayed label.
-                if len(raw) > 512 or any(ord(char) < 32 for char in raw):
-                    raise JournalError(
-                        "collection_form", "Collection value was rejected"
-                    )
-                targets[label] = raw
-    if len(targets) > 200:
-        raise JournalError("collection_form", "Collection choices exceeded their limit")
-    return targets
 
 
 def snapshot(db, source, title=None, excluded=""):

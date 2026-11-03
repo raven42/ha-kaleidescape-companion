@@ -27,7 +27,6 @@ include = ["custom_components", "custom_components.kaleidescape_companion*"]
 [tool.ruff]
 target-version = "py314"
 line-length = 88
-extend-exclude = ["custom_components/kaleidescape_companion/_vendor"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]

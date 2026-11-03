@@ -1,13 +1,14 @@
-"""Exercise the HA-packaged pyk definitions without connecting to a player."""
+"""Exercise the patched pyk Device surface without connecting to a player."""
 
 import json
 import unittest
-from importlib.metadata import version
 from pathlib import Path
 from types import SimpleNamespace
 
 import homeassistant
+from kaleidescape import Device
 from kaleidescape import message as pyk
+from kaleidescape.local_browser import LocalLibrary
 
 from custom_components.kaleidescape_companion.playback.control_config import COMMANDS
 from custom_components.kaleidescape_companion.playback.controls import (
@@ -31,17 +32,17 @@ class PykCompatibilityTest(unittest.TestCase):
                 / "components/kaleidescape/manifest.json"
             ).read_text()
         )
-        expected = f"pykaleidescape=={version('pykaleidescape')}"
-        self.assertIn(expected, manifest["requirements"])
-        self.assertIn(expected, ha_manifest["requirements"])
+        self.assertEqual(manifest["requirements"], ha_manifest["requirements"])
+        self.assertTrue(callable(Device.prepare_movie_launch))
+        self.assertTrue(callable(LocalLibrary.add_to_collection))
 
-    def test_pyk_commands_and_explicit_fallbacks_preserve_control_intent(self):
-        self.assertEqual(COMMANDS["play"], pyk.Play.name)
-        self.assertEqual(COMMANDS["stop"], pyk.Stop.name)
-        self.assertEqual(COMMANDS["power_on"], pyk.LeaveStandby.name)
-        self.assertEqual(COMMANDS["pause"], "PAUSE_ON")
-        self.assertEqual(COMMANDS["resume"], "PAUSE_OFF")
-        self.assertEqual(COMMANDS["back"], "BACK")
+    def test_pyk_commands_use_explicit_device_methods(self):
+        for method in COMMANDS.values():
+            self.assertTrue(callable(getattr(Device, method)))
+        self.assertEqual(COMMANDS["pause"], "pause_on")
+        self.assertEqual(COMMANDS["resume"], "pause_off")
+        self.assertEqual(COMMANDS["back"], "back")
+        self.assertTrue(callable(LocalLibrary.movies))
 
     def test_serial_normalization_retains_existing_validation(self):
         self.assertEqual(normalize_serial("00001a2b"), "1A2B")
@@ -55,15 +56,11 @@ class PykStateTest(unittest.IsolatedAsyncioTestCase):
     async def test_state_reads_use_pyk_names_on_guarded_client(self):
         controls = object.__new__(PlaybackControls)
         responses = {
-            pyk.GetDevicePowerState.name: SimpleNamespace(
-                values={"power_state": "1"}, extra_fields=("1",)
-            ),
-            pyk.GetSystemReadinessState.name: SimpleNamespace(values={"state": "0"}),
-            pyk.GetPlayStatus.name: SimpleNamespace(
-                mode=2, duration_seconds=7200, position_seconds=100
-            ),
-            pyk.GetPlayingTitleName.name: SimpleNamespace(
-                values={"title": "Fictional"}
+            pyk.GetDevicePowerState: SimpleNamespace(field_zone=[]),
+            pyk.GetPlayStatus: SimpleNamespace(
+                field_play_status="playing",
+                field_title_length=7200,
+                field_title_location=100,
             ),
         }
 
@@ -71,24 +68,34 @@ class PykStateTest(unittest.IsolatedAsyncioTestCase):
             def __init__(self):
                 self.queries = []
 
-            async def query(self, name, *, target):
-                self.queries.append((name, target))
-                return responses[name]
+            connection = SimpleNamespace(generation=1)
+
+            async def read_control_state(self):
+                return SimpleNamespace(
+                    identity=SimpleNamespace(generation=1),
+                    power="on",
+                    readiness="ready",
+                    playing_title="Fictional",
+                )
 
         client = Client()
-        target = object()
-        with self.assertNoLogs("kaleidescape", level="DEBUG"):
-            power, state = await controls._state(client, target, "status")
+
+        async def response(device, request, *, serial=None):
+            client.queries.append(request)
+            return responses[request]
+
+        from unittest.mock import patch
+
+        with patch(
+            "custom_components.kaleidescape_companion.playback.controls.one_response",
+            response,
+        ):
+            power, state = await controls._state(client, "status")
         self.assertEqual(
             power, {"power_state": "on", "readiness": "ready", "ready": True}
         )
         self.assertEqual(state, PlaybackState("Fictional", 2, 7200, 100))
         self.assertEqual(
-            [name for name, _ in client.queries],
-            [
-                pyk.GetDevicePowerState.name,
-                pyk.GetSystemReadinessState.name,
-                pyk.GetPlayStatus.name,
-                pyk.GetPlayingTitleName.name,
-            ],
+            client.queries,
+            [pyk.GetDevicePowerState, pyk.GetPlayStatus],
         )

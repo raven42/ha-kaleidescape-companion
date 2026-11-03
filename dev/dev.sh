@@ -11,12 +11,15 @@ case "${1:-help}" in
       python3 -m venv .venv
     fi
     .venv/bin/python -m pip install -e '.[dev]'
-    .venv/bin/python -m pip install -e ../kaleidescape-api
     (cd frontend && npm ci)
     ;;
   check)
-    .venv/bin/python dev/vendor_api.py --check
-    PYTHONPATH=custom_components/kaleidescape_companion .venv/bin/python -m unittest discover -s tests/scrapers
+    if [[ ! -f "$ROOT/../pykaleidescape/kaleidescape/local_browser.py" ]]; then
+      echo "The patched pykaleidescape checkout is required beside this PoC checkout" >&2
+      exit 1
+    fi
+    export PYTHONPATH="$ROOT/../pykaleidescape${PYTHONPATH:+:$PYTHONPATH}"
+    PYTHONPATH="$ROOT/custom_components/kaleidescape_companion:$PYTHONPATH" .venv/bin/python -m unittest discover -s tests/scrapers
     .venv/bin/python -m unittest discover -s tests
     .venv/bin/python dev/check_project.py
     .venv/bin/ruff check .

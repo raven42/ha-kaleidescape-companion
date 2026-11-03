@@ -12,7 +12,9 @@ delivered/remaining product work; the
 Requires Python 3.14.2+ with SQLite 3.35+, Node.js 22.13+ (22.x) or 24+, and
 npm. Python dependencies are declared in `pyproject.toml`; frontend tooling uses
 `frontend/package-lock.json`. The current development baseline is HA 2026.10.4
-with pyk 1.1.6. This is not yet a supported minimum HA version.
+with pyk 1.1.6 in HA's manifest. This PoC tests against the adjacent patched pyk
+checkout, whose new interfaces are not present in the released 1.1.6 package.
+This is not yet a supported minimum HA version.
 
 ```sh
 bash dev/dev.sh setup
@@ -20,10 +22,11 @@ bash dev/dev.sh check
 ```
 
 The setup/check scripts currently assume the prepared multi-repository developer
-workspace. Inspect [dev/dev.sh](../../dev/dev.sh) for its installation
-prerequisites when preparing a new machine; a standalone clean-checkout workflow
-is a migration release gate, not an already delivered capability. Do not force a
-development pyk wheel into HA's shared environment when its pin is incompatible.
+workspace. `check` requires `../pykaleidescape` with the reviewed patch series
+applied and sets `PYTHONPATH` for offline tests. `setup` alone installs the
+released HA-pinned package, which lacks the PoC interfaces. A standalone
+clean-checkout workflow is a migration release gate. The shared HA dependency
+must remain compatible with the built-in integration.
 
 The complete check validates workspace/runtime consistency, standalone provider
 contracts, Python integration tests, project structure and documentation links,
@@ -35,8 +38,8 @@ checks do not contact household devices or external providers.
 Focused checks, using the prepared virtual environment:
 
 ```sh
-.venv/bin/python -m unittest discover -s tests
-PYTHONPATH=custom_components/kaleidescape_companion .venv/bin/python -m unittest discover -s tests/scrapers
+PYTHONPATH=../pykaleidescape .venv/bin/python -m unittest discover -s tests
+PYTHONPATH=../pykaleidescape:custom_components/kaleidescape_companion .venv/bin/python -m unittest discover -s tests/scrapers
 .venv/bin/python dev/check_project.py
 .venv/bin/ruff check .
 .venv/bin/ruff format --check .

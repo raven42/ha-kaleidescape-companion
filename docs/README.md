@@ -15,10 +15,10 @@ that its implementation or hardware validation has shipped.
 
 ## Plans
 
-| Document                                                           | Owns                                                                                                                                      |
-| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| [Delivery roadmap](plans/plan-roadmap.md)                          | Implemented features, remaining product/release work and validation status                                                                |
-| [Pykaleidescape migration](plans/plan-pykaliedescape-migration.md) | Compatibility contract, priority requirements, protocol fixes, delivery phases, hardware test strategy and the full 206-command inventory |
+| Document                                                           | Owns                                                                                         |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| [Delivery roadmap](plans/plan-roadmap.md)                          | Implemented features, remaining product/release work and validation status                   |
+| [Pykaleidescape migration](plans/plan-pykaliedescape-migration.md) | Temporary PoC status, local-device ownership, upstream/release gates and hardware validation |
 
 ## Designs
 

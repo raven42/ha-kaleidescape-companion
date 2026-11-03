@@ -8,11 +8,19 @@ when practical, then choose a household deployment deliberately with a usable
 backup and compatible HA version. Isolation is a testing recommendation, not a
 runtime requirement. See the [security policy](../policies/policy-security.md).
 
-HA installs or reuses the `pykaleidescape` version pinned in the manifest;
-offline installation needs that dependency available. The current development
-baseline is HA 2026.10.4 with pyk 1.1.6. The planned pyk update must remain
-compatible with HA's built-in integration. Controls remain disabled until
-configured.
+The current manifest pins `pykaleidescape==1.1.6` to match HA 2026.10.4, but
+that release lacks the new `Device` and `LocalLibrary` interfaces used by this
+**temporary PoC**. Before loading this Companion code into HA OS, the operator
+must install the reviewed patched pyk `kaleidescape` package into the HA Core
+`/config/deps/lib/python3.14/site-packages` override and restart Core. The
+existing package metadata can remain 1.1.6 for this controlled test; that does
+not make the patched code a released 1.1.6 distribution. Confirm the active Core
+Python version/path on the target, and inspect any existing override before
+replacing it. Reverting the PoC also requires removing/restoring that override
+and restarting Core. This overlay affects HA's built-in Kaleidescape integration
+too, so validate both integrations together. See the
+[migration plan](../plans/plan-pykaliedescape-migration.md). Controls remain
+disabled until configured. This guide's component upload does not install pyk.
 
 ## Configure the target
 

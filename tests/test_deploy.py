@@ -116,9 +116,7 @@ class DeployTest(unittest.TestCase):
         components.mkdir()
         modules = []
         with tarfile.open(fileobj=io.BytesIO(payload), mode="r:gz") as archive:
-            self.assertTrue(
-                any("/_vendor/kaleidescape_api/" in member.name for member in archive)
-            )
+            self.assertFalse(any("/_vendor/" in member.name for member in archive))
             self.assertTrue(
                 any(
                     "/scrapers/providers/store_search.py" in member.name
@@ -142,20 +140,26 @@ class DeployTest(unittest.TestCase):
 import importlib, json, pathlib, sys
 root = pathlib.Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(root))
+sys.path.insert(0, sys.argv[3])
 for name in json.loads(sys.argv[2]):
     module = importlib.import_module(name)
     assert pathlib.Path(module.__file__).resolve().is_relative_to(root), name
-import custom_components.kaleidescape_companion._vendor.kaleidescape_api as api
 import custom_components.kaleidescape_companion.scrapers as scrapers
-assert pathlib.Path(api.__file__).resolve().is_relative_to(root)
 assert pathlib.Path(scrapers.__file__).resolve().is_relative_to(root)
-assert api.Client is not None
 assert scrapers.Providers is not None
 assert 'kaleidescape_api' not in sys.modules
 assert not any(name == 'dev' or name.startswith('dev.') for name in sys.modules)
 """
         result = subprocess.run(
-            [sys.executable, "-I", "-c", script, str(destination), json.dumps(modules)],
+            [
+                sys.executable,
+                "-I",
+                "-c",
+                script,
+                str(destination),
+                json.dumps(modules),
+                str(Path(__file__).resolve().parents[2] / "pykaleidescape"),
+            ],
             capture_output=True,
             text=True,
             timeout=30,

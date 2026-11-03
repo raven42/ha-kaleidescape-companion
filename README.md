@@ -19,8 +19,7 @@ per aspect, organized into designs, plans, guides and policies.
 - [Delivery roadmap](docs/plans/plan-roadmap.md): implemented features and
   remaining release work.
 - [Pykaleidescape migration plan](docs/plans/plan-pykaliedescape-migration.md):
-  compatibility, missing capabilities, protocol fixes and the complete command
-  inventory.
+  temporary PoC status, compatibility, release gates and hardware validation.
 - [Architecture](docs/design/design-architecture.md) and
   [security policy](docs/policies/policy-security.md).
 - [Development](docs/guides/guide-development.md) and
@@ -41,22 +40,25 @@ Administrator database tools support bounded inspection/edits and reviewed merge
 imports. HA calendar publishing and dedicated-calendar Full Sync are optional.
 
 Controls include discovery, remote/power actions, explicit pause/resume and
-experimental selected-title launch with durable uncertainty recovery. Transport
-has not yet migrated to public pyk Device methods. The migration plan preserves
-pyk's existing workflow and coordinates its release with HA's pinned dependency.
+experimental selected-title launch with durable uncertainty recovery. This
+temporary PoC uses patched pyk `Device` methods for controls and `LocalLibrary`
+for local server browsing. Public Store scraping remains in Companion. The
+migration plan preserves pyk's workflow and tracks upstream release work.
 
 ## Installation and development
 
 Install the complete built `custom_components/kaleidescape_companion/` directory
 under the target HA configuration, restart HA and add **Kaleidescape Companion**
 through **Settings → Devices & services**. Production includes compiled frontend
-assets and needs neither Node nor Vite. HA installs or reuses the pinned pyk
-dependency. The deployment guide covers packaging, optional SSH deployment,
-configuration checks and rollback limits.
+assets and needs neither Node nor Vite. The released HA-pinned pyk dependency
+lacks this PoC's new interfaces; HA OS testing requires the patched package
+overlay described in the deployment guide. That guide also covers packaging,
+optional SSH deployment, configuration checks and rollback limits.
 
 Development requires Python 3.14.2+ with SQLite 3.35+, Node.js 22.13+ (22.x) or
 24+, and npm. HA 2026.10.4 with pyk 1.1.6 is the current development baseline,
-not a promised supported minimum. In the prepared developer workspace:
+not a promised supported minimum. Offline tests load the adjacent patched pyk
+checkout. In the prepared developer workspace:
 
 ```sh
 bash dev/dev.sh setup
@@ -75,4 +77,4 @@ This remains a development integration. Supported HA versions, distribution
 metadata/license, current dependency review and operator/hardware/backup
 validation remain release work tracked in the roadmap. An operator may choose a
 household deployment after reviewing those limits. This documentation does not
-claim hardware qualification or completion of the planned pyk migration.
+claim hardware qualification or an upstream pyk release.

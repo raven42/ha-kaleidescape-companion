@@ -3,8 +3,8 @@
 Status: native logging is implemented across Companion. This document owns the
 logging mechanism, message policy and diagnostics contract. Remaining upstream
 pyk privacy proposals belong to the
-[migration plan](../plans/plan-pykaliedescape-migration.md#2-privacy); they are
-optional and require pyk's code-owner approval.
+[migration plan](../plans/plan-pykaliedescape-migration.md#compatibility-and-upstream-path);
+they are optional and require pyk's code-owner approval.
 
 ## Native HA logging
 

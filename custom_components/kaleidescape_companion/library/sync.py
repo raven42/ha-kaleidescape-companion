@@ -4,7 +4,6 @@ import asyncio
 import logging
 import socket
 from datetime import UTC, datetime, timedelta
-from urllib.parse import urlencode
 from uuid import uuid4
 
 from aiohttp import ClientError, ClientTimeout, DummyCookieJar, FormData
@@ -12,15 +11,21 @@ from homeassistant.helpers.aiohttp_client import (
     DATA_RESOLVER,
     async_create_clientsession,
 )
+from kaleidescape.error import KaleidescapeError
+from kaleidescape.library_parser import LibraryFormatError, artwork_path
+from kaleidescape.local_browser import (
+    BrowserResponse,
+    BrowserResponseError,
+    LocalLibrary,
+)
 from yarl import URL
 
 from ..core.logging import safe_exception
 from ..core.models import JournalError
 from ..core.security import async_finish_cleanup
 from ..core.tasks import async_wait
-from .collections import form_targets, member_hash, parameters
+from .collections import member_hash, parameters
 from .config import DEFAULTS, lan_address, origin
-from .parser import artwork_path, catalog, details
 from .store import MAX_ARTWORK_BYTES, image_type, source_id
 
 _LOGGER = logging.getLogger(__name__)
@@ -50,6 +55,7 @@ class LibrarySync:
         self.after_sync = None
         self._reported_error = None
         self._manual_sync = False
+        self.browser = LocalLibrary(self)
 
     async def async_start(self):
         self.session = async_create_clientsession(
@@ -108,7 +114,13 @@ class LibrarySync:
             async def finish():
                 try:
                     await self.collection_task
-                except JournalError, ClientError, OSError, TimeoutError:
+                except (
+                    JournalError,
+                    KaleidescapeError,
+                    ClientError,
+                    OSError,
+                    TimeoutError,
+                ):
                     pass
 
             await async_finish_cleanup(finish())
@@ -137,7 +149,11 @@ class LibrarySync:
                         return await operation()
             except JournalError as error:
                 return error
-            except ClientError, OSError, TimeoutError, UnicodeError:
+            except LibraryFormatError, BrowserResponseError:
+                return JournalError(
+                    "library_format", "The local library page was not recognized"
+                )
+            except ClientError, KaleidescapeError, OSError, TimeoutError, UnicodeError:
                 return JournalError(
                     "library_unreachable", "Collection operation could not be confirmed"
                 )
@@ -163,10 +179,7 @@ class LibrarySync:
                     "refresh_required", "Library changed; refresh title details"
                 )
             self.address = await self._resolve()
-            page = await self._get("/movies")
-            choices = await self.hass.async_add_executor_job(
-                form_targets, page, state["version"]["source_handle"]
-            )
+            choices = await self.browser.add_targets(state["version"]["source_handle"])
             authorize()
             return {
                 "collections": [
@@ -178,19 +191,21 @@ class LibrarySync:
         return await self.async_collection_operation(targets, authorize)
 
     async def _collection_members(self, collection):
-        rows, _ = await self._listing(
-            "/movies?" + urlencode({"collection": collection, "sort": 2})
-        )
-        return rows
+        return await self.browser.collection(collection)
 
     async def _post_collection_add(self, handle, collection):
-        """One fixed multipart operation. No forwarding of supplied routes or forms."""
+        """Use pyk's add-only form with no automatic retry."""
+        await self.browser.add_to_collection(handle, collection)
+
+    async def post(self, path: str, fields: dict[str, str]) -> BrowserResponse:
+        """Companion-owned, pinned multipart transport for pyk's local browser."""
+        if path != "/movies":
+            raise JournalError("library_destination", "Library route was rejected")
         form = FormData(default_to_multipart=True)
-        form.add_field("submit_type", "Add-To-Collection")
-        form.add_field("add_to_collection_select", collection)
-        form.add_field("check-" + handle, "on")
+        for name, value in fields.items():
+            form.add_field(name, value)
         base = URL(self.origin)
-        url = URL(self.origin + "/movies").with_host(self.address)
+        url = URL(self.origin + path).with_host(self.address)
         async with self.session.post(
             url,
             data=form,
@@ -199,28 +214,22 @@ class LibrarySync:
             headers={"Host": base.authority},
             server_hostname=base.host if base.scheme == "https" else None,
         ) as response:
-            if (
-                response.status not in {200, 302, 303}
-                or response.headers.get("Content-Encoding", "identity").lower()
-                != "identity"
-            ):
-                raise JournalError(
-                    "collection_response", "Collection add response was not recognized"
-                )
-            if response.status != 200 and response.headers.get("Location") not in {
-                "/movies",
-                "movies",
-            }:
-                raise JournalError(
-                    "collection_response", "Collection add redirect was rejected"
-                )
-            length = 0
+            parts, length = [], 0
             async for part in response.content.iter_chunked(65536):
                 length += len(part)
                 if length > 8 * 1024 * 1024:
                     raise JournalError(
                         "library_too_large", "Collection response exceeded its limit"
                     )
+                parts.append(part)
+            return BrowserResponse(
+                response.status,
+                response.content_type,
+                b"".join(parts),
+                response.charset,
+                response.headers.get("Content-Encoding", "identity"),
+                response.headers.get("Location"),
+            )
 
     async def async_collection_add(
         self, request, title, collection, revision, actor, excluded, authorize
@@ -251,8 +260,7 @@ class LibrarySync:
             if collection not in state["collections"]:
                 raise JournalError("invalid_request", "Unknown or hidden collection")
             self.address = await self._resolve()
-            page = await self._get("/movies")
-            rows, _ = await self.hass.async_add_executor_job(catalog, page)
+            rows, _ = await self.browser.movies()
             version = state["version"]
             if not any(
                 all(
@@ -264,9 +272,7 @@ class LibrarySync:
                 raise JournalError(
                     "refresh_required", "Source identity changed; sync the Library"
                 )
-            choices = await self.hass.async_add_executor_job(
-                form_targets, page, version["source_handle"]
-            )
+            choices = await self.browser.add_targets(version["source_handle"])
             if collection not in choices:
                 raise JournalError(
                     "collection_form", "Collection is not an available add target"
@@ -296,9 +302,15 @@ class LibrarySync:
                     may_have_posted = True
                     try:
                         await self._post_collection_add(
-                            version["source_handle"], choices[collection]
+                            version["source_handle"], collection
                         )
-                    except ClientError, OSError, TimeoutError, JournalError:
+                    except (
+                        ClientError,
+                        KaleidescapeError,
+                        OSError,
+                        TimeoutError,
+                        JournalError,
+                    ):
                         pass  # A response failure is not proof the POST failed.
                     members = await self._collection_members(collection)
                 result = await self.repository.async_collection_finish(
@@ -396,19 +408,19 @@ class LibrarySync:
             )
         return min(ips, key=lambda ip: ":" in ip)
 
-    async def _get(self, path: str, *, image=False):
-        """Pin validated DNS results; refuse redirects, cookies, compressed bodies."""
+    async def get(self, path: str) -> BrowserResponse:
+        """Pin validated DNS results and return bounded bytes to pyk."""
         base = URL(self.origin)
         if not (
             path == "/movies"
             or path.startswith("/movies?collection=")
             or path.startswith("/details?id=")
-            or (image and artwork_path(path))
+            or artwork_path(path)
         ):
             raise JournalError("library_destination", "Library route was rejected")
         ip = self.address or await self._resolve()
         url = URL(self.origin + path).with_host(ip)
-        maximum = MAX_ARTWORK_BYTES if image else 8 * 1024 * 1024
+        maximum = MAX_ARTWORK_BYTES if artwork_path(path) else 8 * 1024 * 1024
         async with self.session.get(
             url,
             allow_redirects=False,
@@ -417,28 +429,11 @@ class LibrarySync:
             server_hostname=base.host if base.scheme == "https" else None,
         ) as response:
             if (
-                response.status != 200
-                or response.headers.get("Content-Encoding", "identity").lower()
-                != "identity"
-            ):
-                raise JournalError(
-                    "library_response", "The library returned an unsupported response"
-                )
-            if (
                 response.content_length is not None
                 and response.content_length > maximum
             ):
                 raise JournalError(
                     "library_too_large", "Library response exceeded its size limit"
-                )
-            content_type = response.content_type
-            if content_type not in (
-                {"image/jpeg", "image/png", "image/webp"}
-                if image
-                else {"text/html", "application/xhtml+xml"}
-            ):
-                raise JournalError(
-                    "library_response", "Library response type was rejected"
                 )
             parts, length = [], 0
             async for part in response.content.iter_chunked(65536):
@@ -448,27 +443,42 @@ class LibrarySync:
                         "library_too_large", "Library response exceeded its size limit"
                     )
                 parts.append(part)
-            body = b"".join(parts)
-            if image:
-                if image_type(body) != content_type:
-                    raise JournalError("library_artwork", "Cover image was rejected")
-                return body, content_type
-            charset = (response.charset or "iso-8859-1").lower()
-            if charset not in {
-                "utf-8",
-                "utf8",
-                "iso-8859-1",
-                "latin-1",
-                "windows-1252",
-            }:
-                raise JournalError(
-                    "library_format", "Library character encoding was rejected"
-                )
-            return body.decode(charset)
+            return BrowserResponse(
+                response.status,
+                response.content_type,
+                b"".join(parts),
+                response.charset,
+                response.headers.get("Content-Encoding", "identity"),
+                response.headers.get("Location"),
+            )
+
+    async def _get(self, path: str, *, image=False):
+        """Compatibility probe for transport tests; runtime parsing lives in pyk."""
+        response = await self.get(path)
+        if response.status != 200 or response.content_encoding.lower() != "identity":
+            raise JournalError(
+                "library_response", "The library returned an unsupported response"
+            )
+        if image:
+            if (
+                response.content_type not in {"image/jpeg", "image/png", "image/webp"}
+                or image_type(response.body) != response.content_type
+            ):
+                raise JournalError("library_artwork", "Cover image was rejected")
+            return response.body, response.content_type
+        if response.content_type not in {"text/html", "application/xhtml+xml"}:
+            raise JournalError("library_response", "Library response type was rejected")
+        charset = (response.charset or "iso-8859-1").lower()
+        if charset not in {"utf-8", "utf8", "iso-8859-1", "latin-1", "windows-1252"}:
+            raise JournalError(
+                "library_format", "Library character encoding was rejected"
+            )
+        return response.body.decode(charset)
 
     async def _listing(self, path):
-        page = await self._get(path)
-        return await self.hass.async_add_executor_job(catalog, page)
+        if path == "/movies":
+            return await self.browser.movies()
+        raise ValueError("Use the browser's collection method for named listings")
 
     async def _run(self):
         operation_id = uuid4().hex[:16]
@@ -497,6 +507,9 @@ class LibrarySync:
             failed = True
         except ClientError, OSError, TimeoutError, UnicodeError:
             self.error = "library_unreachable"
+            failed = True
+        except KaleidescapeError:
+            self.error = "library_format"
             failed = True
         except Exception as error:
             # Keep firmware errors private and independent from recording.
@@ -564,7 +577,7 @@ class LibrarySync:
     async def _sync(self):
         self.phase = "catalog"
         self.address = await self._resolve()
-        rows, names = await self._listing("/movies")
+        rows, names = await self.browser.movies()
         memberships = None
         if self.config["library_sync_collections"] and names is None:
             self.error = "library_format"
@@ -574,9 +587,7 @@ class LibrarySync:
             member_count = 0
             try:
                 for name in names:
-                    members, _ = await self._listing(
-                        "/movies?" + urlencode({"collection": name, "sort": 2})
-                    )
+                    members = await self.browser.collection(name)
                     memberships[name] = [row["source_handle"] for row in members]
                     member_count += len(members)
                     if member_count > 100_000:
@@ -588,6 +599,9 @@ class LibrarySync:
                 # Preserve previous collections; refresh the valid catalog.
                 memberships = None
                 self.error = error.code
+            except KaleidescapeError:
+                memberships = None
+                self.error = "library_format"
         await self.repository.async_library_catalog(self.origin, rows, memberships)
         budget = self.config["library_artwork_cache_mb"] * 1024 * 1024
         await self.repository.async_library_trim(budget)
@@ -612,11 +626,7 @@ class LibrarySync:
                 )
                 if metadata_due or cover_due or not item["fetched_at"]:
                     requested = True
-                    page = await self._get(
-                        "/details?"
-                        + urlencode({"id": item["source_handle"], "callback": "true"})
-                    )
-                    detail = await self.hass.async_add_executor_job(details, page)
+                    detail = await self.browser.version_details(item["source_handle"])
                     await self.repository.async_library_details(
                         self.source,
                         item["id"],
@@ -632,7 +642,7 @@ class LibrarySync:
                     path = item["artwork_path"]
                 if cover_due and path:
                     requested = True
-                    body, content_type = await self._get(path, image=True)
+                    body, content_type = await self.browser.artwork(path)
                     await self.repository.async_library_artwork_save(
                         self.source, item["id"], body, content_type, budget
                     )
@@ -640,6 +650,8 @@ class LibrarySync:
                 if error.code in {"backup_in_progress", "busy", "not_ready"}:
                     raise
                 self.error = error.code
+            except KaleidescapeError:
+                self.error = "library_format"
             except ClientError, OSError, TimeoutError, UnicodeError:
                 self.error = "library_unreachable"
             self.processed += 1

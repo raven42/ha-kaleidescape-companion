@@ -15,15 +15,15 @@ work.
 
 Keep HA-discovered entry points at the integration root. Put runtime internals
 in its `core/`, `library/`, `playback/` and `ui/` packages; add feature modules
-when their behavior is implemented. Future device integration must use pyk's
-public Device workflow and preserve its compatibility contract; the migration
-plan governs scope, sequencing and release gates. Do not borrow the built-in
+when their behavior is implemented. The temporary device PoC uses pyk's public
+Device workflow and must preserve its compatibility contract; the migration plan
+governs upstream release and hardware qualification. Do not borrow the built-in
 integration's private runtime or replace HA's shared pyk pin incompatibly. The
 integration's `scrapers/` package owns provider parsers and client code; keep it
-independent of HA, integration internals and development tools. Root `dev/` and
-`frontend/dev/` contain development tools only. The production UI must not
-import development code or test fixtures. Keep SQL on the repository's single
-worker.
+independent of HA, integration internals and development tools. Public Store
+scraping belongs only in Companion, not in pyk. Root `dev/` and `frontend/dev/`
+contain development tools only. The production UI must not import development
+code or test fixtures. Keep SQL on the repository's single worker.
 
 Use isolated instances and fictional data for development/testing; deployment
 may target an operator-selected household instance. Keep household data and

@@ -10,10 +10,11 @@ from uuid import uuid4
 import test_backend as backend
 import test_library as library
 from _expected_logs import expected_log
+from kaleidescape.library_parser import LibraryFormatError
+from kaleidescape.local_browser import form_targets
 
 from custom_components.kaleidescape_companion.core.models import JournalError
 from custom_components.kaleidescape_companion.library.collections import (
-    form_targets,
     member_hash,
     parameters,
 )
@@ -53,7 +54,7 @@ class CollectionParserTest(unittest.TestCase):
             form().replace("Add-To-Collection", "Delete"),
             form().replace('name="check-fixture-a"', 'name="wrong"'),
         ):
-            with self.assertRaises(JournalError):
+            with self.assertRaises(LibraryFormatError):
                 form_targets(page, "fixture-a")
 
 
@@ -89,7 +90,11 @@ class CollectionOperationTest(unittest.IsolatedAsyncioTestCase):
             },
         )
         sync._resolve = AsyncMock(return_value="192.168.50.10")
-        sync._get = AsyncMock(return_value=form())
+        sync.browser = SimpleNamespace(
+            movies=AsyncMock(return_value=(library.ROWS, ["Favorites", "Played"])),
+            add_targets=AsyncMock(return_value={"Favorites": "favorite-token"}),
+            add_to_collection=AsyncMock(),
+        )
         sync._collection_members = AsyncMock(
             side_effect=lambda name: list(self.members)
         )
@@ -124,7 +129,7 @@ class CollectionOperationTest(unittest.IsolatedAsyncioTestCase):
         result = await self.add(request)
         self.assertEqual(result["status"], "confirmed")
         self.sync._post_collection_add.assert_awaited_once_with(
-            "fixture-a", "favorite-token"
+            "fixture-a", "Favorites"
         )
         rows = (await self.repository.async_library_versions(library.SOURCE, self.id))[
             "items"
@@ -161,7 +166,9 @@ class CollectionOperationTest(unittest.IsolatedAsyncioTestCase):
         ):
             with self.assert_error(code):
                 await self.add(**values)
-        self.sync._get.return_value = "<html>Login</html>"
+        self.sync.browser.add_targets.side_effect = JournalError(
+            "collection_form", "Collection form was rejected"
+        )
         with self.assertRaises(JournalError):
             await self.add()
         self.sync._post_collection_add.assert_not_awaited()
@@ -305,7 +312,6 @@ class CollectionOperationTest(unittest.IsolatedAsyncioTestCase):
     async def test_fixed_multipart_transport_and_redirect_body_limits(self):
         await self.seed()
         sync = self.connector()
-        del sync._post_collection_add
         sync.address = "192.168.50.10"
 
         class Content:
@@ -315,7 +321,11 @@ class CollectionOperationTest(unittest.IsolatedAsyncioTestCase):
                 yield self.body
 
         response = SimpleNamespace(
-            status=303, headers={"Location": "/movies"}, content=Content()
+            status=303,
+            content_type="text/html",
+            charset="utf-8",
+            headers={"Location": "/movies"},
+            content=Content(),
         )
 
         class Context:
@@ -326,7 +336,14 @@ class CollectionOperationTest(unittest.IsolatedAsyncioTestCase):
                 pass
 
         sync.session = SimpleNamespace(post=Mock(return_value=Context()))
-        await sync._post_collection_add("fixture-a", "Zoë & Favorites")
+        await sync.post(
+            "/movies",
+            {
+                "submit_type": "Add-To-Collection",
+                "add_to_collection_select": "Zoë & Favorites",
+                "check-fixture-a": "on",
+            },
+        )
         call = sync.session.post.call_args
         self.assertEqual(str(call.args[0]), "http://192.168.50.10/movies")
         self.assertFalse(call.kwargs["allow_redirects"])
@@ -341,13 +358,15 @@ class CollectionOperationTest(unittest.IsolatedAsyncioTestCase):
             },
         )
         response.headers["Location"] = "http://evil.invalid/"
-        with self.assert_error("collection_response"):
-            await sync._post_collection_add("fixture-a", "Favorites")
+        self.assertEqual(
+            (await sync.post("/movies", {"submit_type": "Add-To-Collection"})).location,
+            "http://evil.invalid/",
+        )
         response.status = 200
         response.headers = {}
         response.content.body = b"x" * (8 * 1024 * 1024 + 1)
         with self.assert_error("library_too_large"):
-            await sync._post_collection_add("fixture-a", "Favorites")
+            await sync.post("/movies", {"submit_type": "Add-To-Collection"})
 
 
 class CollectionApiTest(unittest.IsolatedAsyncioTestCase):

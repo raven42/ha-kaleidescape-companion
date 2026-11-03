@@ -1,12 +1,11 @@
 # Player discovery and controls
 
-Status: implemented opt-in controls, with pyk transport migration still planned.
-Companion uses pyk command names and state constants, but its controls do not
-yet call public `Device` methods for transport. The
-[migration plan](../plans/plan-pykaliedescape-migration.md) owns the additive
-pyk work, compatibility contract and hardware gates. This document owns
-Companion's user permissions, player selection, title identity and command
-recovery behavior.
+Status: temporary patched-pyk proof of concept; offline tests pass, hardware
+qualification remains. Companion uses persistent pyk `Device` connections,
+public methods and routed Request classes for control transport. The
+[migration plan](../plans/plan-pykaliedescape-migration.md) owns upstream
+compatibility and release gates. This document owns Companion's user
+permissions, player selection, title identity and command recovery behavior.
 
 The built-in HA integration remains the playback observation source. Companion
 registers no replacement media player and never forwards arbitrary HA services.
@@ -155,14 +154,12 @@ automated tests do not certify device/firmware behavior.
 
 ## Migration and validation
 
-The current transport sends bounded one-shot operations. Migration will give
-Companion its own lazy, persistent pyk Devices, preserve normal initialization,
-state events and automatic reconnect, and retain these application protections.
-Connection initialization is distinct from playback or power mutation; cached
-player discovery still must not open a connection. Fresh verification remains
-required before a write. Automatic reconnect must never replay a user command.
-The migration plan defines public discovery, freshness, explicit pause/resume,
-back, launch and outcome-evidence gaps and the order of correctness fixes.
+The PoC creates lazy, persistent pyk Devices, preserving normal initialization,
+state events and automatic reconnect. Connection initialization is distinct from
+playback or power mutation; cached player discovery still opens no connection.
+Fresh verification remains required before a write, and automatic reconnect must
+never replay a user command. These capabilities require the patched pyk checkout
+until an accepted compatible release is available.
 
 Offline tests cover opt-outs, roles, discovery, identity mismatch, live
 metadata, stale preflights, receipt deduplication, crash recovery, standby and

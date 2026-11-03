@@ -9,11 +9,6 @@ import tomllib
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
-if __package__:
-    from .vendor_api import synchronize as synchronize_api
-else:
-    from vendor_api import synchronize as synchronize_api
-
 ROOT = Path(__file__).resolve().parents[1]
 DOMAIN = "kaleidescape_companion"
 NAME = "Kaleidescape Companion"
@@ -77,7 +72,6 @@ def validate() -> None:
         for path in directory.rglob("*.py"):
             ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     validate_runtime_imports()
-    synchronize_api(check=True)
 
     # Guard the contributor/security guides against accidental cross-file edits;
     # valid links alone cannot detect one guide replacing another's contents.

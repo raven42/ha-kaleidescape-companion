@@ -2,8 +2,8 @@
 
 Reviewed against the implementation on 2026-11-03. This is the single product
 status and remaining-work list. Feature designs describe implemented behavior;
-the [pyk migration plan](plan-pykaliedescape-migration.md) owns transport
-phases, protocol correctness, compatibility and hardware qualification.
+the [pyk migration plan](plan-pykaliedescape-migration.md) owns the current PoC,
+upstream compatibility and hardware qualification.
 
 Priorities are **functionality, privacy, usability, scalability, flexibility**.
 Preserve the built-in HA integration, household data and pyk's established
@@ -30,18 +30,18 @@ card, native logging and metadata review are implemented features, not backlog.
 
 ## Next delivery gates
 
-1. Establish the pyk/HA compatibility baseline and upstream scope agreements.
-   Fix printable message handling, correlation, timeout recovery and task/state
-   lifecycle in small tested changes while preserving existing Device usage.
-2. Add the required public pyk discovery/freshness/control/launch capabilities;
-   migrate Companion's controls and development harness using that workflow.
-   Coordinate a released dependency with HA before changing the supported pin.
-3. Qualify on the owned Strato K, Terra Server Compact 30 TB and Terra Server
-   Prime 120 TB. Record firmware and topology. Test reads before selected player
-   writes, then recovery and coexistence with the built-in integration.
-4. Propose separate optional pyk clients for local browser HTTP and public Store
-   access. Preserve Companion's application state and permissions. Full TCP
-   migration and migration of every Kaleidescape interaction are distinct gates.
+1. Review and upstream the local pyk patches while preserving its existing
+   `Device` workflow. Verify the released package with HA's built-in integration
+   before changing the shared dependency pin or removing the PoC overlay.
+2. Qualify the migrated controls and local Library browser on the owned Strato
+   K, Terra Server Compact 30 TB and Terra Server Prime 120 TB. Record firmware
+   and topology. Test reads before selected player writes, then recovery and
+   coexistence with the built-in integration.
+3. Validate Companion's public Store scraper independently for anonymous search,
+   metadata, covers, robots and request limits. Keep all public Store work out
+   of pyk.
+4. Replace the temporary patched overlay with a reproducible released pyk
+   dependency and complete clean HA install/reload/restart validation.
 5. Extend modern, hardware-testable video/capability features in small
    increments. Premiere music, vault/disc-specific workflows and alternative
    framing remain deferred without applicable hardware and a concrete use case.

@@ -7,11 +7,11 @@ flow. Both are disabled by default and require Library sync. Disabled providers
 make no external requests; the ordinary Library, controls and recording keep
 working without them.
 
-The current pure provider clients remain in Companion's `scrapers/` package. The
-[pyk migration plan](../plans/plan-pykaliedescape-migration.md#http-work-needed-for-the-literal-all-interaction-target)
-proposes a separate upstream public Store client. TMDB, scheduling,
-authorization, review and persistence remain Companion responsibilities. This
-proposal has not changed the implemented provider interfaces below.
+The pure Store and TMDB provider clients remain in Companion's `scrapers/`
+package. Public Store metadata pages, anonymous search and cover routes are
+scraped only here; pyk is limited to local devices. Scheduling, authorization,
+review and persistence also remain Companion responsibilities. The patched-pyk
+PoC does not change these provider interfaces.
 
 ## Setup and operation
 

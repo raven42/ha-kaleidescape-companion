@@ -1,9 +1,8 @@
 # Companion architecture
 
-Status: implemented architecture as of 2026-11-03. Future device integration is
-specified in the
-[pyk migration plan](../plans/plan-pykaliedescape-migration.md); this page does
-not claim that transport migration has shipped.
+Status: temporary patched-pyk proof of concept as of 2026-11-03. The
+[migration plan](../plans/plan-pykaliedescape-migration.md) tracks upstream
+release and hardware qualification.
 
 Companion is a single-entry Home Assistant service integration with domain
 `kaleidescape_companion`. It adds a household journal, cached movie Library,
@@ -18,7 +17,7 @@ Companion does not replace it or access its private runtime objects.
 | Integration root              | Config/options flows, setup/unload, backup hooks, diagnostics, sensors, translations and manifest | This document                                                                                            |
 | `core/`                       | One SQLite worker, migrations, requests, settings, permissions and safe logging helpers           | [Journal](design-journal.md), [data management](design-data-management.md), [logging](design-logging.md) |
 | `playback/`                   | HA observation, recording, selected-player discovery/control and durable command outcomes         | [Journal](design-journal.md#automatic-tracking), [controls](design-playback-controls.md)                 |
-| `library/`                    | Local browser sync/parsing, catalog identity, artwork, collections and matching                   | [Library](design-library.md), [matching](design-title-matching.md)                                       |
+| `library/`                    | Local browser transport/sync, catalog identity, artwork, collections and matching                 | [Library](design-library.md), [matching](design-title-matching.md)                                       |
 | `enrichment/` and `scrapers/` | HA scheduling/authorization/storage and standalone metadata provider clients respectively         | [Metadata](design-metadata.md)                                                                           |
 | `calendar/`                   | Publishing, reconciliation and dedicated-calendar Full Sync through HA                            | [Calendar](design-calendar.md)                                                                           |
 | `ui/` and `frontend/src/`     | Authenticated HTTP/WebSocket interfaces, panel/cards and typed frontend                           | [UI](design-user-interface.md), [cards](design-dashboard-cards.md)                                       |
@@ -64,8 +63,9 @@ SQLite and filesystem work run off the event loop on the repository worker or an
 executor. Sensor getters read coordinator caches; they perform no I/O. Two
 30-second coordinators refresh local summaries for the
 [18 sensors](design-sensors.md). Library and provider networking is
-asynchronous; HTML parsing runs off-loop. Preserve these properties when adding
-features, consistent with HA's
+asynchronous. Pyk's current local-browser HTML parsing runs synchronously in its
+async methods; quantify event-loop impact on large libraries before release.
+Preserve HA responsiveness when adding features, consistent with HA's
 [blocking-operation guidance](https://contributors.home-assistant.io/core/internals/blocking-operations/).
 
 Use HA HTTP session/connector helpers. The existing network adapters create
@@ -83,12 +83,13 @@ The current manifest pins `pykaleidescape==1.1.6`, matching development HA
 `after_dependencies`. A manual journal does not require a configured player or
 calendar. Automatic recording needs selected existing HA entities.
 
-The next control implementation will own lazy, persistent pyk `Device` objects,
-use public methods/state/dispatcher, preserve automatic reconnect and never
-replay a failed user command. Local HTTP/Store capabilities require separate
-upstream agreement. The
-[migration plan](../plans/plan-pykaliedescape-migration.md) owns those gates and
-the complete command inventory.
+The PoC owns lazy, persistent pyk `Device` objects and uses public methods and
+requests while preserving application preflight and durable outcomes. Pyk's
+`LocalLibrary` parses local browser pages through Companion's HA HTTP transport.
+Public Store scraping belongs entirely to Companion. The installed 1.1.6 package
+lacks these new interfaces, so this PoC requires the patched overlay described
+in the [deployment guide](../guides/guide-deployment.md). The
+[migration plan](../plans/plan-pykaliedescape-migration.md) owns release gates.
 
 Before release, establish supported HA versions, upstream pyk compatibility,
 repository metadata, license and installation validation. Match dependency pins
