@@ -4,8 +4,10 @@ import hashlib
 import json
 from urllib.parse import urlsplit
 
-from .._vendor.kaleidescape_api import ProtocolError, serial_number
+from kaleidescape import message as pyk
+
 from ..library.config import origin
+from .identity import normalize_serial
 
 DEFAULTS = {
     "control_enabled": False,
@@ -14,22 +16,22 @@ DEFAULTS = {
     "control_allow_launch": False,
 }
 COMMANDS = {
-    "play": "PLAY",
+    "play": pyk.Play.name,
     "pause": "PAUSE_ON",
     "resume": "PAUSE_OFF",
-    "stop": "STOP",
-    "next": "NEXT",
-    "previous": "PREVIOUS",
-    "up": "UP",
-    "down": "DOWN",
-    "left": "LEFT",
-    "right": "RIGHT",
-    "select": "SELECT",
+    "stop": pyk.Stop.name,
+    "next": pyk.Next.name,
+    "previous": pyk.Previous.name,
+    "up": pyk.Up.name,
+    "down": pyk.Down.name,
+    "left": pyk.Left.name,
+    "right": pyk.Right.name,
+    "select": pyk.Select.name,
     "back": "BACK",
-    "menu": "KALEIDESCAPE_MENU_TOGGLE",
-    "movies": "GO_MOVIE_COVERS",
-    "power_on": "LEAVE_STANDBY",
-    "power_off": "ENTER_STANDBY",
+    "menu": pyk.MenuToggle.name,
+    "movies": pyk.GoMovieCovers.name,
+    "power_on": pyk.LeaveStandby.name,
+    "power_off": pyk.EnterStandby.name,
 }
 
 
@@ -46,10 +48,10 @@ def validate(values, previous):
     try:
         host(result, previous.get("library_host", ""))
         if result["control_player"]:
-            result["control_player"] = serial_number(result["control_player"])
+            result["control_player"] = normalize_serial(result["control_player"])
         elif not isinstance(result["control_player"], str):
             raise ValueError
-    except (ValueError, ProtocolError) as error:
+    except ValueError as error:
         raise ValueError("invalid_control_options") from error
     return result
 

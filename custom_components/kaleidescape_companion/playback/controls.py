@@ -9,15 +9,16 @@ import secrets
 import socket
 import time
 from contextlib import asynccontextmanager
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 
 from homeassistant.helpers.aiohttp_client import DATA_RESOLVER
 from homeassistant.helpers.storage import Store
+from kaleidescape import const as pyk_const
+from kaleidescape import message as pyk
 
 from .._vendor.kaleidescape_api import (
     Address,
     Client,
-    PlaybackState,
     ProtocolError,
     Rejected,
     Status,
@@ -33,6 +34,16 @@ from ..library.store import source_id
 from .control_config import COMMANDS, fingerprint, host
 
 _LOGGER = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class PlaybackState:
+    """The stable state projection returned to Companion clients."""
+
+    title: str
+    mode: int
+    duration_seconds: int
+    position_seconds: int
 
 
 def digest(value):
@@ -215,30 +226,35 @@ class PlaybackControls:
 
     async def _power(self, client, target):
         """Documented power/idle queries; no wake is implied by a read."""
-        reply = await client.query("GET_DEVICE_POWER_STATE", target=target)
+        reply = await client.query(pyk.GetDevicePowerState.name, target=target)
         value = reply.values["power_state"]
         if value not in {"0", "1"} or any(
             zone not in {"0", "1"} for zone in reply.extra_fields
         ):
             raise ProtocolError("Invalid device power state")
-        if value == "0":
-            return {"power_state": "standby", "readiness": "idle", "ready": False}
+        power_state = pyk.DevicePowerState.index["power"][int(value)]
+        if power_state == pyk_const.DEVICE_POWER_STATE_STANDBY:
+            return {"power_state": power_state, "readiness": "idle", "ready": False}
         try:
-            idle = await client.query("GET_SYSTEM_READINESS_STATE", target=target)
-            readiness = {"0": "ready", "1": "starting", "2": "idle"}.get(
-                idle.values["state"]
-            )
-            if readiness is None:
+            idle = await client.query(pyk.GetSystemReadinessState.name, target=target)
+            raw_readiness = idle.values["state"]
+            if raw_readiness not in {"0", "1", "2"}:
                 raise ProtocolError("Invalid system readiness")
+            readiness = pyk.SystemReadinessState.index[int(raw_readiness)]
+            if readiness == pyk_const.SYSTEM_READINESS_STATE_BECOMING_READY:
+                readiness = "starting"
         except Rejected as error:
             if error.status != Status.INVALID_REQUEST:
                 raise
             # Premiere players lack the newer idle command. Playback is also
             # queried before treating an on-state legacy player as usable.
             readiness = "ready"
-        zone_ready = not reply.extra_fields or reply.extra_fields[0] == "1"
+        zone_ready = not reply.extra_fields or (
+            pyk.DevicePowerState.index["zone"][int(reply.extra_fields[0])]
+            == pyk_const.DEVICE_ZONE_STATE_AVAILABLE
+        )
         return {
-            "power_state": "on",
+            "power_state": power_state,
             "readiness": "starting"
             if readiness == "ready" and not zone_ready
             else readiness,
@@ -253,7 +269,14 @@ class PlaybackControls:
                     "control_not_ready", "Power on and wait for readiness"
                 )
             return power, PlaybackState("", -1, 0, 0)
-        return power, await client.status(target)
+        status = await client.query(pyk.GetPlayStatus.name, target=target)
+        title = await client.query(pyk.GetPlayingTitleName.name, target=target)
+        return power, PlaybackState(
+            title.values["title"],
+            status.mode,
+            status.duration_seconds,
+            status.position_seconds,
+        )
 
     @asynccontextmanager
     async def _player(self, authorize, *, ip=None, serial=None):

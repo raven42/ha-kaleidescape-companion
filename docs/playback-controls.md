@@ -1,11 +1,20 @@
 # Selected-title playback design
 
-Updated: 2026-10-30. Companion now consumes the
-[independent API](protocol-library.md) for opt-in device discovery, basic
-household controls and separately enabled experimental Library-title playback.
-The built-in HA integration still supplies recording observations. Library sync
-and the existing Now Playing snapshot remain read-only; the new control card is
-a separate interface.
+Companion uses the `pykaleidescape` version pinned by HA's Kaleidescape
+integration for supported command definitions and power/readiness mappings. The
+[independent API](protocol-library.md) still supplies the guarded transport,
+discovery and experimental Library-title playback. The built-in HA integration
+still supplies recording observations. Library sync and the existing Now Playing
+snapshot remain read-only; the new control card is a separate interface.
+
+Companion does not open a pykaleidescape connection. In HA's 1.1.6 dependency,
+that connection emits addresses and raw protocol data to Python logging, and
+`Device.connect()` sends a syslog identification command. Companion's existing
+transport supplies private-LAN validation, bounded replies, serial routing and
+uncertain-write handling without those side effects. Explicit `PAUSE_ON`,
+`PAUSE_OFF` and `BACK` remain API commands: pyk offers a pause toggle and
+`CANCEL`, which do not establish the same intent. This partial migration does
+not change device calls or use HA's private integration runtime.
 
 Checks use fictional peers and loopback emulators. The operator previously
 reported selected-title playback and STOP on one player using the CLI. The new

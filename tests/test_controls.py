@@ -98,16 +98,6 @@ class Peer:
                     ),
                 )
 
-            async def status(self, target):
-                peer.read_started.set()
-                if peer.read_hold:
-                    await peer.read_hold.wait()
-                if peer.hook:
-                    peer.hook()
-                if peer.standby:
-                    raise api.Rejected(api.Status.STANDBY)
-                return api.PlaybackState(peer.title, peer.mode, 7200, 100)
-
             async def query(self, command, **kwargs):
                 if command == "GET_DEVICE_POWER_STATE":
                     return api.NamedResponse(
@@ -119,6 +109,17 @@ class Peer:
                     return api.NamedResponse(
                         "SYSTEM_READINESS_STATE", {"state": peer.readiness}
                     )
+                if command == "GET_PLAY_STATUS":
+                    peer.read_started.set()
+                    if peer.read_hold:
+                        await peer.read_hold.wait()
+                    if peer.hook:
+                        peer.hook()
+                    if peer.standby:
+                        raise api.Rejected(api.Status.STANDBY)
+                    return api.PlayStatus(peer.mode, 1, 1, 7200, 100, 1, 0, 0)
+                if command == "GET_PLAYING_TITLE_NAME":
+                    return api.NamedResponse("TITLE_NAME", {"title": peer.title})
                 assert command == "GET_HIGHLIGHTED_SELECTION"
                 return api.NamedResponse("HIGHLIGHTED_SELECTION", {"handle": HANDLE})
 

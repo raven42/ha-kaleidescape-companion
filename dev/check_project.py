@@ -107,8 +107,11 @@ def validate() -> None:
         or strings["config"]["step"]["user"]["title"] != NAME
     ):
         raise ValueError(f"Display/project names must be {NAME}")
-    if manifest.get("requirements", []) or project.get("dependencies", []):
-        raise ValueError("Runtime dependencies must be bundled with the integration")
+    if (
+        manifest.get("requirements", []) != ["pykaleidescape==1.1.6"]
+        or project.get("dependencies", []) != manifest["requirements"]
+    ):
+        raise ValueError("Runtime dependency must match HA's pykaleidescape pin")
     if project["name"] != "kaleidescape" or frontend["name"] != "kaleidescape":
         raise ValueError("Package names must be kaleidescape")
 

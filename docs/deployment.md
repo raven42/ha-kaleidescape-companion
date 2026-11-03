@@ -7,9 +7,10 @@ test build. Confirm the target HA version and review the
 [security findings](security.md#known-dependency-findings-2026-10-25) before a
 household rollout. Take a full HA backup before the first installation.
 
-The built archive includes the generated API runtime inside the integration.
-Home Assistant does not need a separate package-index release to set up the
-integration. Controls stay disabled until explicitly configured in HA.
+The built archive includes the generated Kaleidescape API runtime inside the
+integration. HA installs or reuses the separately packaged `pykaleidescape`
+version pinned in the manifest; an offline installation needs that dependency
+already available. Controls stay disabled until explicitly configured in HA.
 
 ## Configure the target
 

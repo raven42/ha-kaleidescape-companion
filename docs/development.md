@@ -178,7 +178,9 @@ real device tests are operator actions, separate from build/test tasks. The
 The API source is maintained and checked independently in the sibling
 `../kaleidescape-api` checkout. Companion copies its importable runtime modules
 into `_vendor/` before deployment; the standalone project retains its own CLI,
-docs, tests, and distribution build.
+docs, tests, and distribution build. The manifest also pins `pykaleidescape` to
+the version used by HA's built-in Kaleidescape integration; keep the manifest
+and Python project dependency aligned when updating the HA development baseline.
 
 ## Integration framework
 

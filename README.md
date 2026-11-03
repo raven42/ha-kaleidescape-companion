@@ -59,7 +59,8 @@ docs/        Product, architecture, security and operator guides
 The `dev/` tools, standalone API CLI/docs/tests and frontend development sources
 are excluded from integration deployment. Only the integration directory,
 including its generated API runtime and scraper code, is installed into HA. Home
-Assistant does not need to download the API package during integration setup.
+Assistant installs or reuses the pinned `pykaleidescape` dependency; it does not
+need to download the separate Kaleidescape API package during setup.
 
 ## Development setup
 

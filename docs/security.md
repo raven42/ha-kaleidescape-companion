@@ -538,6 +538,11 @@ must satisfy the matching evidence; unknown exact IDs require manual matching.
   exposed. Discovery and catalog sync must not wake players or issue controls.
   Keep plain TCP on the trusted LAN without Internet exposure; HA authorization
   cannot protect a device from another host with direct network access.
+- Companion uses pykaleidescape's command names and power/readiness mappings,
+  pinned to the version used by HA's built-in integration. The guarded API
+  remains the transport: pykaleidescape 1.1.6 logs addresses and raw traffic and
+  sends a syslog identification command on device connection. This integration
+  does not open a pykaleidescape connection or configure its loggers.
 - Store necessary device credentials in HA config entries and redact them from
   errors, diagnostics, and exports. Do not assume config-entry storage is
   encrypted or inaccessible to other HA code.
