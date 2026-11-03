@@ -17,7 +17,7 @@ normal checks contact no household devices or external metadata providers.
 
 ```sh
 python ../kaleidescape-api/tools/check.py
-PYTHONPATH=lib/scrapers/src python -m unittest discover -s lib/scrapers/tests
+PYTHONPATH=custom_components/kaleidescape_companion python -m unittest discover -s tests/scrapers
 python -m unittest discover -s tests
 npm --prefix frontend test
 npm --prefix frontend run build
@@ -37,9 +37,8 @@ npm --prefix frontend run build
 - `test_controls` and the standalone API suite use fictional protocol peers;
   `test_now_playing` checks source permissions and household artwork
   projections.
-- `test_enrichment` and `lib/scrapers/tests` cover provider parsing,
-  credentials, matching, throttling, networking policy, cancellation and storage
-  boundaries.
+- `test_enrichment` and `tests/scrapers` cover provider parsing, credentials,
+  matching, throttling, networking policy, cancellation and storage boundaries.
 - `frontend/tests` uses a simulated DOM and fictional API transport. Unexpected
   console warnings/errors fail tests. Tests never automate a real browser.
 

@@ -360,11 +360,12 @@ alternate authentication in anticipation of these features.
 
 ### Optional metadata enrichment
 
-Independent parsers/client live in `lib/scrapers/`; HA scheduling/network
-enforcement and worker-only persistence live in `enrichment/`. Schema 19 keeps
-provider cache JSON on Library versions, shared within source groups, separate
-from raw scan data. Existing identities/relationships and private purchase
-projections remain authoritative. See [enrichment](enrichment.md).
+Provider parsers/client live in the integration's `scrapers/`; HA
+scheduling/network enforcement and worker-only persistence live in
+`enrichment/`. Schema 19 keeps provider cache JSON on Library versions, shared
+within source groups, separate from raw scan data. Existing
+identities/relationships and private purchase projections remain authoritative.
+See [enrichment](enrichment.md).
 
 Calendar Full Sync uses `calendar/maintenance.py` for bounded reconciliation,
 `calendar/entity.py` for the fixed HA entity contract, and

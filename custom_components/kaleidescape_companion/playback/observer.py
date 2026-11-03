@@ -1,6 +1,7 @@
 """In-process HA entity observation with ordered, bounded playback buffering."""
 
 import asyncio
+import logging
 from collections import deque
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -13,10 +14,12 @@ from ..const import DEFAULT_MINIMUM_RUNTIME_MINUTES
 from ..core.models import JournalError, seconds, text
 from ..core.repository import JournalRepository
 from ..core.settings import entity_ids
+from ..core.tasks import async_wait
 from .now_playing import picture_key
 from .tracker import Observation, PlaybackTracker
 
 MAX_OBSERVATIONS = 256
+_LOGGER = logging.getLogger(__name__)
 
 
 class PlaybackObserver:
@@ -52,6 +55,7 @@ class PlaybackObserver:
         self._accepting = True
         self.last_error: str | None = None
         self.overflow_count = 0
+        self._overflow_reported = False
         self._clock = clock or (
             lambda: (
                 datetime.now(UTC).isoformat(timespec="microseconds"),
@@ -69,6 +73,7 @@ class PlaybackObserver:
         recovered = await self.repository.async_open_session(self.config["player_id"])
         if recovered:
             self.tracker.restore(recovered)
+            _LOGGER.debug("Restored an open playback session")
         self._paused = False
         self._kick()
         self._schedule_tick()
@@ -147,6 +152,12 @@ class PlaybackObserver:
             self._queue.clear()
             self._queue.append(self.tracker.gap(observation))
             self.overflow_count += 1
+            if not self._overflow_reported:
+                _LOGGER.warning(
+                    "Playback observation buffer overflowed; "
+                    "a recording gap was inserted"
+                )
+                self._overflow_reported = True
         self._queue.append(observation)
         self._kick()
 
@@ -162,18 +173,31 @@ class PlaybackObserver:
             while self._outbox or (self._queue and not self._paused):
                 if self._outbox:
                     try:
+                        snapshot = self._outbox[0]
                         await self.repository.async_save_session(
-                            self._outbox[0],
+                            snapshot,
                             self.config.get("minimum_seconds", 300),
                             self.config.get("resume_hours", 24),
                         )
                     except JournalError as error:
+                        if self.last_error != error.code:
+                            _LOGGER.error(
+                                "Playback checkpoint could not be saved; "
+                                "recording remains buffered"
+                            )
                         self.last_error = error.code
                         return
                     self._outbox.popleft()
+                    if snapshot.get("closed_at"):
+                        _LOGGER.info("Playback session checkpoint committed")
+                    if self.last_error is not None:
+                        _LOGGER.info("Playback checkpoint storage recovered")
                     self.last_error = None
                 else:
                     self._outbox.extend(self.tracker.apply(self._queue.popleft()))
+            if self._overflow_reported and not self._queue:
+                _LOGGER.info("Playback observation buffer drained after overflow")
+                self._overflow_reported = False
         finally:
             self._task = None
 
@@ -191,7 +215,7 @@ class PlaybackObserver:
         """Drain available work, surfacing persistence failures to lifecycle callers."""
         self._kick()
         if self._task:
-            await asyncio.shield(self._task)
+            await async_wait(self._task)
         if self._outbox:
             raise JournalError(
                 self.last_error or "not_ready", "Playback checkpoint is not durable"
@@ -201,7 +225,7 @@ class PlaybackObserver:
         """Finish an accepted checkpoint, then buffer source edges during backup."""
         self._paused = True
         if self._task:
-            await asyncio.shield(self._task)
+            await async_wait(self._task)
         if self._outbox:
             raise JournalError(
                 self.last_error or "not_ready", "Playback checkpoint is not durable"

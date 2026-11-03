@@ -114,9 +114,8 @@ Browser view. The tasks use the default ports 5173 and 8123.
 With the virtual environment activated:
 
 ```sh
-python dev/vendor_scrapers.py --check
 python dev/vendor_api.py --check
-PYTHONPATH=lib/scrapers/src python -m unittest discover -s lib/scrapers/tests
+PYTHONPATH=custom_components/kaleidescape_companion python -m unittest discover -s tests/scrapers
 python -m unittest discover -s tests -v
 python dev/check_project.py
 ruff check .
@@ -134,10 +133,10 @@ The setuptools backend explicitly includes the
 strings, translations, and bundled panel. `pip install -e '.[dev]'` exposes
 checkout changes without reinstalling Python source files. HA still loads the
 integration through its configuration directory's `custom_components` path; the
-local launcher creates that link for development. Runtime API and provider code
-are generated into the integration's `_vendor/` directory and included in its
-archive. Home Assistant itself and development tools belong in the project's
-`dev` extra.
+local launcher creates that link for development. The protocol API is generated
+into the integration's `_vendor/` directory; provider code lives in its
+`scrapers/` directory. Both are included in its archive. Home Assistant itself
+and development tools belong in the project's `dev` extra.
 
 The Vite development server binds to loopback. Its development adapter connects
 only to local HA and clears its token on disconnect; the adapter is excluded
@@ -370,17 +369,15 @@ flow, with explicit Library matching and administrator-only financial fields.
 
 ### Provider development
 
-Canonical reusable provider code is under
-`lib/scrapers/src/kaleidescape_scrapers/`.
+Provider code is under `custom_components/kaleidescape_companion/scrapers/`.
 `Providers.metadata(provider, MovieQuery(...))` is the shared API; `providers/`
 owns individual provider adapters/parsers, and `transport.py` owns the shared
 limiter. HA opt-ins, network allowlists and storage stay in the integration's
-`enrichment/` adapter. Regenerate its runtime subset with
-`python dev/vendor_scrapers.py`; full checks verify equality and run its offline
-tests without installing it. The API runtime is also copied from the sibling
-project and checked with `python dev/vendor_api.py --check`. Do not use a
-household movie/page or real API credential as a fixture. Metadata setup and
-remaining operator validation are documented in [enrichment](enrichment.md).
+`enrichment/` adapter. Full checks run its offline tests directly from the
+integration source. The protocol API runtime is copied from the sibling project
+and checked with `python dev/vendor_api.py --check`. Do not use a household
+movie/page or real API credential as a fixture. Metadata setup and remaining
+operator validation are documented in [enrichment](enrichment.md).
 
 ### Validate an exported database
 
@@ -391,3 +388,14 @@ repair the file. Exit codes are 0 for a passing file, 1 for detected violations,
 and 2 when validation cannot finish. Prefer a downloaded SQLite export over a
 running database. Structural validation does not test scraper providers or
 semantic metadata correctness.
+
+### Operational logging
+
+Companion uses Home Assistant's Python logging configuration for integration
+messages. To investigate, enable debug logging for the integration or configure
+`custom_components.kaleidescape_companion` at `debug` in HA's Logger settings.
+Disable debug logging after reproduction and review logs before sharing them.
+Health diagnostics are a separate snapshot, not a log history. The bundled
+protocol API retains its own existing logging implementation; its replacement is
+a separate effort. Live HA debug-download behavior still requires operator
+review.

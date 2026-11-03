@@ -1,11 +1,14 @@
 """Explicit categories for private, administrator-reviewed settings transfer."""
 
 import json
+import logging
 
 from ..calendar.config import target
 from ..core.models import invalid
 from ..core.settings import entity_ids
 from ..enrichment.selection import DEFAULTS as SOURCE_DEFAULTS
+
+_LOGGER = logging.getLogger(__name__)
 
 CATEGORIES = {
     # Positive list: new native options never become exportable automatically.
@@ -129,6 +132,12 @@ async def transfer(hass, entry, repo, actor, operation, selected, data, request)
         # Dedicated-calendar acknowledgement must be made anew in the native form.
         patch["calendar_full_sync_dedicated"] = False
     result = await repo.async_transfer_settings(operation, actor, request, categories)
+    if operation == "apply":
+        _LOGGER.info(
+            "Settings transfer processed: %s categories selected", len(selected)
+        )
+    else:
+        _LOGGER.debug("Settings transfer preview completed")
     return {
         "format": "companion-settings",
         "version": 1,

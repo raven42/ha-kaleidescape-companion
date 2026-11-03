@@ -1,5 +1,6 @@
 """One metadata API; provider adapters own their request and parsing contracts."""
 
+import logging
 from collections.abc import Mapping
 from typing import Protocol
 
@@ -7,6 +8,8 @@ from .models import Metadata, MovieQuery, ProviderError
 from .providers.store import StoreProvider
 from .providers.tmdb import TMDBProvider
 from .transport import Fetch, RequestBudget, Transport
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class MetadataProvider(Protocol):
@@ -52,6 +55,7 @@ class Providers:
         """Fetch metadata using the same movie identity contract for every adapter."""
         adapter = self.adapters.get(provider)
         if adapter is None:
+            _LOGGER.debug("Metadata request rejected: provider is unavailable")
             raise ProviderError("unknown_provider")
         return await adapter.metadata(movie)
 

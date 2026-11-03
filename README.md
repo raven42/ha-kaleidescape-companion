@@ -29,7 +29,7 @@ delivered features and validation limits.
   [reviewed merge imports](docs/imports.md)
 - [Independent Kaleidescape API library](https://pypi.org/project/kaleidescape-api/)
 - [External metadata enrichment](docs/enrichment.md) and
-  [provider package](lib/scrapers/README.md)
+  [provider package](docs/scrapers.md)
 - [Player discovery and controls](docs/playback-controls.md#companion-setup-and-use)
 - [Interface research](docs/research.md) and [changelog](CHANGELOG.md)
 
@@ -41,8 +41,9 @@ custom_components/kaleidescape_companion/
   library/    Catalog sync, metadata, artwork, collections and title validation
   playback/   HA observation/recording, device discovery, controls and receipts
   enrichment/ Optional external metadata scheduling and cache storage
+  scrapers/   Metadata provider clients, parsers and shared transport
   calendar/   Opt-in publishing, dedicated-calendar Full Sync and durable receipts
-  _vendor/    Generated runtime copies of the API and provider libraries
+  _vendor/    Generated runtime copy of the protocol API
   ui/         Authenticated APIs, panel/card registration and compiled assets
   brand/      Local transparent integration icons
   *.py        Required HA entry points and integration constants
@@ -50,7 +51,6 @@ frontend/
   src/        Typed UI grouped into core, library, playback, enrichment, cards and ui
   dev/        Preview shell, guarded local proxy and fictional review page
   tests/      Component and proxy security tests
-lib/scrapers/  Independent provider parsers/client, docs and offline tests
 dev/         Development, validation, packaging and deployment tools
 tests/       Python storage, API, lifecycle and deployment tests
 docs/        Product, architecture, security and operator guides
@@ -58,7 +58,7 @@ docs/        Product, architecture, security and operator guides
 
 The `dev/` tools, standalone API CLI/docs/tests and frontend development sources
 are excluded from integration deployment. Only the integration directory,
-including its generated API and provider runtimes, is installed into HA. Home
+including its generated API runtime and scraper code, is installed into HA. Home
 Assistant does not need to download the API package during integration setup.
 
 ## Development setup

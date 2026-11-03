@@ -1,19 +1,34 @@
 """Storage health without titles, source identities, notes, or database paths."""
 
+import logging
+
 from homeassistant.core import HomeAssistant
 
 from .const import VERSION
+from .core.logging import safe_exception
 from .core.runtime import KaleidescapeConfigEntry
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_get_config_entry_diagnostics(
     hass: HomeAssistant, entry: KaleidescapeConfigEntry
 ) -> dict:
     """Return bounded metadata rather than private journal records."""
-    runtime = entry.runtime_data
-    if not runtime.ready:
+    runtime = getattr(entry, "runtime_data", None)
+    if runtime is None or not runtime.ready:
         return {"integration_version": VERSION, "ready": False}
-    info = await runtime.repository.async_info()
+    try:
+        info = await runtime.repository.async_info()
+    except Exception as error:
+        _LOGGER.debug(
+            "Diagnostic storage snapshot unavailable: %s", safe_exception(error)
+        )
+        return {
+            "integration_version": VERSION,
+            "ready": True,
+            "storage_available": False,
+        }
     return {
         "integration_version": VERSION,
         "ready": True,

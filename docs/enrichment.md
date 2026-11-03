@@ -13,8 +13,8 @@ and the store's
 [public role map](https://www.kaleidescape.com/movie-store/assets/v299300/store.js).
 Those pages expose structured store data suitable for an initial parser. It
 remains an undocumented interface, so parser failures stop a pass rather than
-guessing. TMDB uses its official API. See the independent
-[provider package](../lib/scrapers/README.md) for source research and usage.
+guessing. TMDB uses its official API. See the [provider package](scrapers.md)
+for source research and usage.
 
 ## Setup and operation
 

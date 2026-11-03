@@ -1,12 +1,14 @@
 """Injected HTTP transport with a shared, cancellation-aware rate limiter."""
 
 import asyncio
+import logging
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 
 from .models import ProviderError
 
 Fetch = Callable[[str, dict[str, str]], Awaitable[bytes]]
+_LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
@@ -38,6 +40,8 @@ class Transport:
 
     def defer(self, interval: float) -> None:
         """Honor stricter provider policy before the next request."""
+        if interval > self.budget.interval:
+            _LOGGER.debug("Metadata provider rate limit tightened")
         self.budget.interval = max(self.budget.interval, interval)
         self.budget.next_request = max(
             self.budget.next_request,

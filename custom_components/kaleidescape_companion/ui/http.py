@@ -1,6 +1,7 @@
 """Authenticated cached artwork and administrator-only journal transfers."""
 
 import asyncio
+import logging
 from http import HTTPStatus
 from pathlib import Path
 
@@ -14,8 +15,10 @@ from ..core.importing import IMPORT_SECONDS, MAX_IMPORT_BYTES
 from ..core.models import JournalError, invalid
 from ..core.runtime import KaleidescapeRuntime, get_library, get_runtime
 from ..core.security import async_finish_cleanup, is_active_admin, is_active_user
+from ..core.tasks import async_wait
 
 EXPORT_DOWNLOAD_SECONDS = 60
+_LOGGER = logging.getLogger(__name__)
 
 
 class LibraryArtworkView(HomeAssistantView):
@@ -57,10 +60,11 @@ class LibraryArtworkView(HomeAssistantView):
             )
         except JournalError as error:
             if error.code == "invalid_request":
-                raise web.HTTPBadRequest from error
+                raise web.HTTPBadRequest from None
             if error.code in {"not_found", "not_ready", "library_disabled"}:
-                raise web.HTTPNotFound from error
-            raise web.HTTPServiceUnavailable from error
+                raise web.HTTPNotFound from None
+            _LOGGER.debug("Cached Library artwork is unavailable")
+            raise web.HTTPServiceUnavailable from None
 
 
 class JournalImportView(HomeAssistantView):
@@ -126,8 +130,10 @@ class JournalImportView(HomeAssistantView):
                     if request.get("hass_user") is not user:
                         raise web.HTTPForbidden
                     self._authorize(request, runtime, entry)
+                    _LOGGER.info("Journal import preview completed")
                     return self.json(result, headers={"Cache-Control": "no-store"})
         except TimeoutError:
+            _LOGGER.error("Journal import preview timed out")
             return self.json(
                 {
                     "code": "import_timeout",
@@ -147,6 +153,8 @@ class JournalImportView(HomeAssistantView):
                 "busy": 503,
                 "backup_in_progress": 503,
             }.get(error.code, 500)
+            if code == 500:
+                _LOGGER.error("Journal import preview failed; no import was applied")
             return self.json(
                 {"code": error.code, "message": str(error)},
                 code,
@@ -181,14 +189,17 @@ class JournalExportView(HomeAssistantView):
                         hass, request, path, export_format, streaming, runtime
                     )
         except TimeoutError:
+            _LOGGER.error("Journal export timed out")
             if streaming.is_set():
                 raise ConnectionResetError("Journal export timed out") from None
             return self.json(
                 {"code": "export_timeout", "message": "Journal export timed out"},
                 HTTPStatus.SERVICE_UNAVAILABLE,
             )
-        except OSError:
+        except OSError as error:
             # Executor/file errors may contain paths; never put them in the API.
+            if not isinstance(error, ConnectionResetError):
+                _LOGGER.error("Journal export failed while accessing its snapshot")
             if streaming.is_set():
                 if request.transport is not None:
                     request.transport.close()
@@ -206,6 +217,8 @@ class JournalExportView(HomeAssistantView):
                 "export_too_large": HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
                 "export_timeout": HTTPStatus.SERVICE_UNAVAILABLE,
             }.get(error.code, HTTPStatus.INTERNAL_SERVER_ERROR)
+            if code == HTTPStatus.INTERNAL_SERVER_ERROR:
+                _LOGGER.error("Journal export could not be prepared")
             response = self.json({"code": error.code, "message": str(error)}, code)
             if error.code == "busy":
                 response.headers["Retry-After"] = "5"
@@ -227,7 +240,7 @@ class JournalExportView(HomeAssistantView):
         opening = asyncio.ensure_future(hass.async_add_executor_job(path.open, "rb"))
         try:
             try:
-                file = await asyncio.shield(opening)
+                file = await async_wait(opening)
             except asyncio.CancelledError:
                 # The open still runs in the executor; close before unlinking.
                 async def close_when_opened() -> None:
@@ -263,8 +276,10 @@ class JournalExportView(HomeAssistantView):
                     raise ConnectionResetError("Journal export access removed")
                 await response.write(chunk)
             await response.write_eof()
+            _LOGGER.info("Journal export transfer completed")
             return response
         except asyncio.CancelledError, ConnectionResetError:
+            _LOGGER.debug("Journal export transfer interrupted")
             # Once headers are sent, a timeout must close the partial transfer.
             if streaming.is_set() and request.transport is not None:
                 request.transport.close()

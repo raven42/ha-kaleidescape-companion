@@ -1,35 +1,32 @@
 # Movie metadata providers
 
-This independent Python **3.11+** package contains pure parsers and an async
-provider API. It has no Home Assistant, Companion, database, HTTP-client or CLI
-dependency. Add providers here; integrate scheduling, authorization, credentials
-and persistence in the calling application.
+The integration's `scrapers/` package contains pure parsers and an async
+provider API. Its modules have no Home Assistant, database, HTTP-client or CLI
+dependency. Add providers here; keep scheduling, authorization, credentials and
+persistence in the integration's enrichment adapter.
 
 ```text
-lib/scrapers/
-  pyproject.toml
-  src/kaleidescape_scrapers/
+custom_components/kaleidescape_companion/
+  scrapers/
     client.py    Common metadata/artwork API and adapter protocols
     transport.py Injected fetch, shared rate limit and cancellation
     models.py    MovieQuery, Metadata and bounded identity helpers
     providers/
       store.py   Experimental public store adapter/parser and robots policy
       tmdb.py    Official TMDB search/details/credits and optional images
-  tests/         Offline fictional provider contracts
+tests/scrapers/   Offline fictional provider contracts
 ```
 
 ## Usage
 
-Install with `python -m pip install -e lib/scrapers`, or use the source
-directory as `PYTHONPATH`. Supply an async `fetch(url, headers) -> bytes`
-function. It must verify HTTPS, allow only the documented provider destinations,
-refuse redirects, exclude cookies/environment proxies, enforce a timeout and a
-**4 MiB** streamed body limit, and raise `ProviderError` using an owned error
-code on HTTP errors. The Companion adapter implements those requirements and
-pins public DNS answers.
+Supply an async `fetch(url, headers) -> bytes` function. It must verify HTTPS,
+allow only the documented provider destinations, refuse redirects, exclude
+cookies/environment proxies, enforce a timeout and a **4 MiB** streamed body
+limit, and raise `ProviderError` using an owned error code on HTTP errors. The
+Companion adapter implements those requirements and pins public DNS answers.
 
 ```python
-from kaleidescape_scrapers import MovieQuery, Providers
+from custom_components.kaleidescape_companion.scrapers import MovieQuery, Providers
 
 providers = Providers(
     fetch,
@@ -180,16 +177,14 @@ TMDB uses its
 access and licensing remain the caller's responsibility. There are no live API
 tests requiring a key.
 
-## Checks and runtime copy
+## Checks
 
 ```sh
-PYTHONPATH=lib/scrapers/src python -m unittest discover -s lib/scrapers/tests
-ruff check lib/scrapers
-ruff format --check lib/scrapers
-python dev/vendor_scrapers.py
-python dev/vendor_scrapers.py --check
+PYTHONPATH=custom_components/kaleidescape_companion python -m unittest discover -s tests/scrapers
+ruff check custom_components/kaleidescape_companion/scrapers tests/scrapers
+ruff format --check custom_components/kaleidescape_companion/scrapers tests/scrapers
 ```
 
-Run these from the workspace root. Companion's generated runtime copy is under
-`custom_components/kaleidescape_companion/_vendor/kaleidescape_scrapers/`; edit
-this canonical package and regenerate it. Root checks enforce equality.
+Run these from the workspace root. Edit the integration's `scrapers/` package
+directly; no separate copy or scraper vendoring step is needed. The offline
+provider tests use that source directly and run without HA.

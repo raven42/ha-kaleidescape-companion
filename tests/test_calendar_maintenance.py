@@ -11,6 +11,7 @@ import test_backend as backend
 import test_calendar as fixtures
 import test_library as library
 import test_repository as repository
+from _expected_logs import expected_log
 from homeassistant import bootstrap, loader
 from homeassistant.components.calendar import (
     WEBSOCKET_EVENT_SCHEMA,
@@ -196,6 +197,10 @@ class MaintenanceTest(unittest.IsolatedAsyncioTestCase):
         await self.run_sync(601)
         self.assertEqual(set(self.entity.events), {"old"})
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.calendar.maintenance",
+        "Calendar maintenance failed",
+    )
     async def test_failed_lookup_prevents_writes_and_cleanup(self):
         self.extra()
         await self.run_sync()
@@ -208,6 +213,10 @@ class MaintenanceTest(unittest.IsolatedAsyncioTestCase):
         await self.run_sync(301)
         self.assertEqual(self.entity.writes, [("delete", "orphan")])
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.calendar.maintenance",
+        "Calendar maintenance failed",
+    )
     async def test_uncertain_create_is_read_back_without_replaying_after_restart(self):
         await self.create()
         self.entity.fail_after_write = True
@@ -224,6 +233,10 @@ class MaintenanceTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.manager.status())["uncertain"], 0)
         self.assertEqual(len(self.entity.writes), 1)
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.calendar.maintenance",
+        "Calendar maintenance failed",
+    )
     async def test_unseen_uncertain_create_blocks_replay_until_inspected(self):
         await self.create()
         self.entity.fail_after_write = True
@@ -284,6 +297,10 @@ class MaintenanceTest(unittest.IsolatedAsyncioTestCase):
         self.assertIn("orphan", self.entity.events)
         self.assertTrue(self.manager.error)
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.calendar.maintenance",
+        "Calendar maintenance failed",
+    )
     async def test_recurring_and_missing_uids_never_cause_series_deletion(self):
         self.extra(rrule="FREQ=DAILY")
         await self.run_sync()
@@ -295,6 +312,10 @@ class MaintenanceTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(self.manager.error)
         self.assertEqual(self.entity.writes, [])
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.calendar.maintenance",
+        "Calendar maintenance failed",
+    )
     async def test_opt_out_while_reading_and_backup_block_side_effects(self):
         await self.create()
 
@@ -328,6 +349,10 @@ class MaintenanceTest(unittest.IsolatedAsyncioTestCase):
             self.assertGreater(read.call_count, 0)
             self.assertEqual(self.entity.writes[-1][0], "update")
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.calendar.maintenance",
+        "Calendar maintenance failed",
+    )
     async def test_change_after_full_read_prevents_a_stale_delete(self):
         self.extra()
         await self.run_sync()
@@ -344,6 +369,10 @@ class MaintenanceTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(self.manager.error)
         self.assertEqual(self.entity.writes, [])
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.calendar.maintenance",
+        "Calendar maintenance failed",
+    )
     async def test_future_events_and_response_limits_are_outside_mutation_scope(self):
         self.extra("future")
         self.entity.events["future"].start = self.now + timedelta(days=1)
@@ -437,6 +466,10 @@ class MaintenanceTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(self.entity.writes), 1)
         self.assertEqual((await self.manager.status())["uncertain"], 0)
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.calendar.maintenance",
+        "Calendar maintenance failed",
+    )
     async def test_provider_normalization_diagnoses_mismatch_without_private_values(
         self,
     ):
@@ -459,6 +492,10 @@ class MaintenanceTest(unittest.IsolatedAsyncioTestCase):
         await self.run_sync(301)
         self.assertEqual(len(self.entity.writes), 1)
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.calendar.maintenance",
+        "Calendar maintenance failed",
+    )
     async def test_contract_failure_is_explained_without_provider_arguments(self):
         await self.create()
 

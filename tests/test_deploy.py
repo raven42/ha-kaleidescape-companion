@@ -119,6 +119,18 @@ class DeployTest(unittest.TestCase):
             self.assertTrue(
                 any("/_vendor/kaleidescape_api/" in member.name for member in archive)
             )
+            self.assertTrue(
+                any(
+                    "/scrapers/providers/store_search.py" in member.name
+                    for member in archive
+                )
+            )
+            self.assertFalse(
+                any(
+                    "/_vendor/kaleidescape_scrapers/" in member.name
+                    for member in archive
+                )
+            )
             archive.extractall(components, filter="data")
             for member in archive:
                 if member.name.endswith(".py"):
@@ -134,8 +146,11 @@ for name in json.loads(sys.argv[2]):
     module = importlib.import_module(name)
     assert pathlib.Path(module.__file__).resolve().is_relative_to(root), name
 import custom_components.kaleidescape_companion._vendor.kaleidescape_api as api
+import custom_components.kaleidescape_companion.scrapers as scrapers
 assert pathlib.Path(api.__file__).resolve().is_relative_to(root)
+assert pathlib.Path(scrapers.__file__).resolve().is_relative_to(root)
 assert api.Client is not None
+assert scrapers.Providers is not None
 assert 'kaleidescape_api' not in sys.modules
 assert not any(name == 'dev' or name.startswith('dev.') for name in sys.modules)
 """

@@ -11,10 +11,8 @@ from urllib.parse import unquote, urlsplit
 
 if __package__:
     from .vendor_api import synchronize as synchronize_api
-    from .vendor_utils import synchronize
 else:
     from vendor_api import synchronize as synchronize_api
-    from vendor_utils import synchronize
 
 ROOT = Path(__file__).resolve().parents[1]
 DOMAIN = "kaleidescape_companion"
@@ -79,12 +77,6 @@ def validate() -> None:
         for path in directory.rglob("*.py"):
             ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     validate_runtime_imports()
-    synchronize(
-        check=True,
-        source=ROOT / "lib/scrapers/src/kaleidescape_scrapers",
-        target=INTEGRATION / "_vendor/kaleidescape_scrapers",
-        excluded=set(),
-    )
     synchronize_api(check=True)
 
     # Guard the contributor/security guides against accidental cross-file edits;

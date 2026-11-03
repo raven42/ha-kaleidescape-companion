@@ -5,8 +5,8 @@ import json
 import unittest
 from unittest.mock import AsyncMock
 
-from kaleidescape_scrapers import MovieQuery, ProviderError, Providers
-from kaleidescape_scrapers.providers import store, tmdb
+from scrapers import MovieQuery, ProviderError, Providers
+from scrapers.providers import store, tmdb
 
 TITLE = "The Fictional Voyage"
 YEAR = 2025

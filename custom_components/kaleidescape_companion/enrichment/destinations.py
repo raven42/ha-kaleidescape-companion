@@ -3,8 +3,8 @@
 import re
 from urllib.parse import parse_qsl
 
-from .._vendor.kaleidescape_scrapers.providers.store import movie_path
-from .._vendor.kaleidescape_scrapers.providers.store_search import cover_url
+from ..scrapers.providers.store import movie_path
+from ..scrapers.providers.store_search import cover_url
 
 
 def store_request(parsed, headers, review):

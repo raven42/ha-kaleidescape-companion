@@ -16,6 +16,7 @@ from uuid import uuid4
 import probatio
 import test_backend as backend_tests
 import test_repository as repository_tests
+from _expected_logs import expected_log
 from aiohttp import web
 
 from custom_components.kaleidescape_companion.core.models import JournalError
@@ -400,6 +401,9 @@ class APISecurityTest(unittest.IsolatedAsyncioTestCase):
                 )
         self.assertEqual(list(repository._export_directory.iterdir()), [])
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.ui.http", "Journal export timed out"
+    )
     async def test_http_timeout_before_headers_cleans_up_and_releases_slot(self):
         repository = self.entry.runtime_data.repository
         with patch(
@@ -493,6 +497,9 @@ class APISecurityTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(stream.write.await_count, 1)
         self.assertEqual(list(repository._export_directory.iterdir()), [])
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.ui.http", "Journal export timed out"
+    )
     async def test_timeout_after_headers_aborts_partial_download_and_removes_snapshot(
         self,
     ):
@@ -538,6 +545,10 @@ class APISecurityTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["code"], "not_ready")
         self.assertNotIn("result", result)
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.ui.http",
+        "Journal export failed while accessing its snapshot",
+    )
     async def test_export_io_error_is_safe_and_removes_snapshot(self):
         repository = self.entry.runtime_data.repository
         with patch.object(

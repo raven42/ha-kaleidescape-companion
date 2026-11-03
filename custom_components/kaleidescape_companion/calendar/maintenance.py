@@ -1,6 +1,7 @@
 """Opt-in dedicated-calendar reconciliation with guarded writes and delayed cleanup."""
 
 import asyncio
+import logging
 from calendar import monthrange
 from datetime import UTC, datetime, timedelta
 
@@ -8,12 +9,15 @@ from homeassistant.components.calendar import CalendarEntityFeature
 from homeassistant.core import callback
 from homeassistant.helpers.event import async_track_time_change
 
+from ..core.logging import safe_exception
 from ..core.models import JournalError
 from ..core.security import async_finish_cleanup
 from . import entity
 from .config import DEFAULTS, fingerprint
 from .maintenance_store import GRACE_SECONDS
 from .publisher import event_data
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class SyncStopped(ValueError):
@@ -143,12 +147,22 @@ class CalendarMaintenance:
             self.failure_stage = "read"
             async with asyncio.timeout(300):
                 await self.reconcile(now)
+            if self.error:
+                _LOGGER.info("Calendar maintenance recovered")
             self.error = ""
             self.failure_stage = ""
             self.last_success = now.isoformat()
         except Exception as error:
             reason = error.reason if isinstance(error, SyncStopped) else None
-            self.error = reason if reason else type(error).__name__
+            next_error = reason if reason else type(error).__name__
+            if reason in {"paused", "snapshot_changed"}:
+                _LOGGER.debug("Calendar maintenance deferred; retry is scheduled")
+            elif self.error != next_error:
+                _LOGGER.error(
+                    "Calendar maintenance failed; retry is scheduled: %s",
+                    safe_exception(error),
+                )
+            self.error = next_error
             self.retry_after = now + timedelta(minutes=5)
             self.requested = True
         finally:

@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, Mock
 import test_enrichment as enrichment
 from homeassistant.helpers.aiohttp_client import DATA_RESOLVER
 
-from custom_components.kaleidescape_companion._vendor.kaleidescape_scrapers import (
+from custom_components.kaleidescape_companion.scrapers import (
     ProviderError,
 )
 

@@ -17,12 +17,11 @@ when their behavior is implemented. The independent `../kaleidescape-api/`
 project owns protocol code, extensions, packaging, documentation and tests; it
 must not import this integration or development tools. Companion's generated
 copy is checked with `dev/vendor_api.py` and included in the runtime archive.
-The independent `lib/scrapers/` package owns provider parsers/client code and
-must not import HA, the integration or development tools. Regenerate its
-vendored runtime with `dev/vendor_scrapers.py` after changes. Root `dev/` and
-`frontend/dev/` contain development tools only. The production UI must not
-import development code or test fixtures. Keep SQL on the repository's single
-worker.
+The integration's `scrapers/` package owns provider parsers and client code;
+keep it independent of HA, integration internals and development tools. Root
+`dev/` and `frontend/dev/` contain development tools only. The production UI
+must not import development code or test fixtures. Keep SQL on the repository's
+single worker.
 
 Use isolated instances and fictional data. Keep household data and credentials
 out of source, fixtures, and bundles. Device-control tests and deployment

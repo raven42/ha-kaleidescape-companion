@@ -24,7 +24,7 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 from .const import DOMAIN, NAME
-from .core.models import JournalError
+from .core.logging import safe_exception
 from .core.repository import JournalRepository
 from .core.runtime import KaleidescapeConfigEntry
 from .library.config import origin
@@ -148,8 +148,12 @@ class HistoryCoordinator(DataUpdateCoordinator[dict]):
     async def _async_update_data(self) -> dict:
         try:
             return await self.repository.async_history_summary()
-        except JournalError as error:
-            raise UpdateFailed("Journal history is unavailable") from error
+        except Exception as error:
+            if _LOGGER.isEnabledFor(logging.DEBUG):
+                _LOGGER.debug(
+                    "Journal history refresh failed: %s", safe_exception(error)
+                )
+            raise UpdateFailed("Journal history is unavailable") from None
 
 
 class LibraryCoordinator(DataUpdateCoordinator[dict]):
@@ -195,8 +199,14 @@ class LibraryCoordinator(DataUpdateCoordinator[dict]):
                     raise ValueError("Stored sync time must have a timezone")
                 data[key] = parsed
             return data
-        except (JournalError, ValueError) as error:
-            raise UpdateFailed("Library summary is unavailable") from error
+        except UpdateFailed:
+            raise
+        except Exception as error:
+            if _LOGGER.isEnabledFor(logging.DEBUG):
+                _LOGGER.debug(
+                    "Library summary refresh failed: %s", safe_exception(error)
+                )
+            raise UpdateFailed("Library summary is unavailable") from None
 
 
 async def async_setup_entry(

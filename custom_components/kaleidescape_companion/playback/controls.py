@@ -3,6 +3,7 @@
 import asyncio
 import hashlib
 import json
+import logging
 import re
 import secrets
 import socket
@@ -26,9 +27,12 @@ from .._vendor.kaleidescape_api.extensions import MovieCommands
 from ..const import DOMAIN
 from ..core.models import JournalError, invalid
 from ..core.security import async_finish_cleanup
+from ..core.tasks import async_wait
 from ..library.config import origin
 from ..library.store import source_id
 from .control_config import COMMANDS, fingerprint, host
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def digest(value):
@@ -154,7 +158,7 @@ class PlaybackControls:
 
             async def drain():
                 try:
-                    await asyncio.shield(self.task)
+                    await async_wait(self.task)
                 except JournalError:
                     # Pausing can invalidate a preflight before it reserves a write.
                     # That safe cancellation must not prevent a backup/unload.
@@ -322,6 +326,9 @@ class PlaybackControls:
                 {"seed": self._seed_key(), "devices": self.devices}
             )
             self._ready(authorize)
+            _LOGGER.info(
+                "Device discovery completed: %s devices found", len(self.devices)
+            )
             return await self.async_info()
 
         return await self._read(discover, authorize, 65)
@@ -448,7 +455,7 @@ class PlaybackControls:
         self.task.add_done_callback(
             lambda task: task.exception() if not task.cancelled() else None
         )
-        return await asyncio.shield(self.task)
+        return await async_wait(self.task)
 
     async def _execute(self, actor, request, token, review, authorize):
         reserved = sent = False
@@ -530,6 +537,9 @@ class PlaybackControls:
                             result["outcome"] = "state_observed"
         except Rejected as error:
             if not reserved:
+                _LOGGER.error(
+                    "Device control preflight was rejected; no control was sent"
+                )
                 raise JournalError(
                     "control_unreachable", "Player query was rejected"
                 ) from error
@@ -542,14 +552,45 @@ class PlaybackControls:
                 result["outcome"] = "not_sent"
         except ProtocolError, OSError, TimeoutError:
             if not reserved:
+                _LOGGER.error("Device control preflight failed; no control was sent")
                 raise JournalError(
                     "control_unreachable",
                     "Device preflight failed; no control was sent",
                 ) from None
+        except asyncio.CancelledError:
+            if sent:
+                _LOGGER.error("Device control outcome is uncertain after cancellation")
+            else:
+                _LOGGER.debug("Device control cancelled before sending")
+            raise
         finally:
             if reserved:
                 self.reviews.pop(token, None)
         if reserved:
             state = "uncertain" if result["outcome"] == "unconfirmed" else "finished"
-            return await self.repository.async_control("finish", request, result, state)
+            try:
+                receipt = await self.repository.async_control(
+                    "finish", request, result, state
+                )
+            except JournalError:
+                _LOGGER.error(
+                    "Device control receipt could not be recorded; review is required"
+                )
+                raise
+            if state == "uncertain":
+                _LOGGER.error(
+                    "Device control outcome is uncertain; automatic replay is "
+                    "blocked pending review"
+                )
+            elif result["outcome"] in {"rejected", "not_sent"}:
+                _LOGGER.error(
+                    "Device control was %s; the outcome was recorded", result["outcome"]
+                )
+            else:
+                _LOGGER.info(
+                    "Device control completed with outcome %s; "
+                    "the receipt was recorded",
+                    result["outcome"],
+                )
+            return receipt
         return result

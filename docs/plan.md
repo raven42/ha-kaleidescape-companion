@@ -255,5 +255,5 @@ be evaluated separately without a full-catalog sensor attribute.
 Store/TMDB enrichment, power-aware Library launch, shared Now Playing artwork
 and a portrait Remote dialog are implemented. Providers remain opt-in with
 conservative title/year matching; live TMDB credential and operator layout tests
-remain acceptance work. Future enrichment providers should reuse `lib/scrapers/`
-and the existing guarded worker cache rather than adding a second catalog.
+remain acceptance work. Future enrichment providers should reuse `scrapers/` and
+the existing guarded worker cache rather than adding a second catalog.

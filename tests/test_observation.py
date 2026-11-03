@@ -6,6 +6,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch
 
+from _expected_logs import expected_log
 from homeassistant import bootstrap, loader
 from homeassistant.config_entries import ConfigEntries
 from homeassistant.core import HomeAssistant
@@ -112,6 +113,10 @@ class ObserverTest(unittest.IsolatedAsyncioTestCase):
         self.assertAlmostEqual(record["watched_seconds"], 19.5)
         self.assertEqual(record["status"], "completed")
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.playback.observer",
+        "Playback observation buffer overflowed",
+    )
     async def test_buffer_overflow_records_a_gap_instead_of_counting_lost_edges(self):
         await self.tick(0.5)
         await self.observer.async_pause()
@@ -131,6 +136,10 @@ class ObserverTest(unittest.IsolatedAsyncioTestCase):
         self.assertGreater(self.observer.overflow_count, 0)
         self.assertGreater(self.observer.tracker.session.gap_count, 0)
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.playback.observer",
+        "Playback checkpoint could not be saved",
+    )
     async def test_storage_failure_retains_checkpoint_for_retry(self):
         with patch.object(
             self.repository,

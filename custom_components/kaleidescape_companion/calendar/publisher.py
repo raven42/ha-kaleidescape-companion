@@ -1,18 +1,23 @@
 """Publish newly completed viewings via the fixed calendar.create_event action."""
 
 import asyncio
+import logging
 from datetime import datetime, timedelta
 
 from homeassistant.components.calendar import CalendarEntityFeature
 from homeassistant.core import callback
 from homeassistant.helpers.event import async_track_time_interval
 
+from ..core.logging import safe_exception
 from ..core.models import JournalError
 from ..core.security import async_finish_cleanup
+from ..core.tasks import async_wait
 from ..library.config import origin
 from ..library.store import source_id
 from ..playback.metadata import metadata_text
 from .config import DEFAULTS, FIELDS, fingerprint, scope, target, template
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def event_data(row, title_template, description_template=None):
@@ -80,6 +85,7 @@ class CalendarPublisher:
         self.running = None
         self.stopping = False
         self.paused = False
+        self._claim_failed = False
         self.lock = asyncio.Lock()
         from .sync import JournalCalendarSync
 
@@ -147,6 +153,9 @@ class CalendarPublisher:
         state = "cancelled"
         try:
             row = await self.repository.async_calendar_claim()
+            if self._claim_failed:
+                _LOGGER.info("Calendar publishing storage recovered")
+                self._claim_failed = False
             if not row:
                 return
             data = event_data(
@@ -172,18 +181,48 @@ class CalendarPublisher:
                 )
             state = "sent"
             self.history.remember(data)
-        except JournalError, ValueError, TimeoutError:
-            pass
-        except Exception:
-            pass
+        except asyncio.CancelledError:
+            if state == "uncertain":
+                _LOGGER.error("Calendar event outcome is uncertain after cancellation")
+            else:
+                _LOGGER.debug("Calendar publishing cancelled")
+            raise
+        except Exception as error:
+            if state == "uncertain":
+                _LOGGER.error(
+                    "Calendar event outcome is uncertain; the attempt will not "
+                    "be replayed automatically: %s",
+                    safe_exception(error),
+                )
+            elif state == "sent":
+                _LOGGER.error(
+                    "Calendar action returned, but follow-up processing failed: %s",
+                    safe_exception(error),
+                )
+            elif row is not None or not self._claim_failed:
+                _LOGGER.error(
+                    "Calendar event could not be prepared or claimed: %s",
+                    safe_exception(error),
+                )
+                if row is None:
+                    self._claim_failed = True
         finally:
             if row:
                 try:
                     await async_finish_cleanup(
                         self.repository.async_calendar_finish(row["id"], state)
                     )
-                except JournalError:
-                    pass
+                    if state == "sent":
+                        _LOGGER.info(
+                            "Calendar event action returned; its receipt was recorded. "
+                            "Read-back was not verified"
+                        )
+                except JournalError as error:
+                    _LOGGER.error(
+                        "Calendar attempt receipt could not be recorded; "
+                        "the event outcome may need review: %s",
+                        safe_exception(error),
+                    )
 
     async def async_stop(self):
         self.stopping = True
@@ -201,7 +240,7 @@ class CalendarPublisher:
         await self.history.async_drain()
 
     async def _drain(self):
-        await asyncio.shield(self.running)
+        await async_wait(self.running)
 
     async def async_resume(self):
         self.paused = False

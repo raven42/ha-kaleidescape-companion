@@ -1,13 +1,19 @@
 """Household journal reads and administrator management through HA authentication."""
 
+import logging
 from typing import Any
 
 import probatio as p
 from homeassistant.components import websocket_api
+from homeassistant.components.websocket_api.connection import REDACT_KEYS
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import HomeAssistantError, Unauthorized
+from homeassistant.helpers.redact import async_redact_data
+from probatio.humanize import humanize_error
 
 from ..const import DOMAIN
 from ..core.journal_store import public_viewing
+from ..core.logging import safe_exception
 from ..core.models import JournalError
 from ..core.runtime import get_library, get_runtime, loaded_runtimes
 from ..core.security import is_active_admin, is_active_user
@@ -17,6 +23,8 @@ from .controls import control_request
 from .preferences import public_defaults
 from .settings import fingerprint, options_request
 from .settings_transfer import transfer as settings_transfer
+
+_LOGGER = logging.getLogger(__name__)
 
 USER_OPERATIONS = frozenset(
     {
@@ -304,6 +312,7 @@ async def async_handle(
     operation = msg["type"].removeprefix(f"{DOMAIN}/")
     admin = is_active_admin(user)
     if not is_active_user(user) or (operation not in USER_OPERATIONS and not admin):
+        _LOGGER.debug("Journal request rejected by access policy")
         connection.send_error(
             msg["id"], "unauthorized", "Access to this journal operation is denied"
         )
@@ -1003,4 +1012,31 @@ async def async_handle(
                 raise JournalError("not_ready", "Library integration reloaded")
         connection.send_result(msg["id"], result)
     except JournalError as error:
+        if error.code == "storage_error":
+            _LOGGER.error("Journal request failed because storage is unavailable")
+        elif error.code in {"not_ready", "conflict", "refresh_required"}:
+            _LOGGER.debug("Journal request rejected because its scope or state changed")
         connection.send_error(msg["id"], error.code, str(error))
+    except Unauthorized:
+        connection.send_error(msg["id"], "unauthorized", "Unauthorized")
+    except p.Invalid as error:
+        message = humanize_error(async_redact_data(msg, REDACT_KEYS), error)
+        connection.send_error(msg["id"], "invalid_format", message or "Unknown error")
+    except TimeoutError:
+        _LOGGER.error("Companion request timed out")
+        connection.send_error(msg["id"], "timeout", "Timeout")
+    except HomeAssistantError as error:
+        _LOGGER.error("Home Assistant operation failed: %s", safe_exception(error))
+        connection.send_error(
+            msg["id"],
+            "home_assistant_error",
+            str(error) or "Unknown error",
+            translation_key=error.translation_key,
+            translation_domain=error.translation_domain,
+            translation_placeholders=error.translation_placeholders,
+        )
+    except Exception as error:
+        _LOGGER.error(
+            "Companion request failed unexpectedly: %s", safe_exception(error)
+        )
+        connection.send_error(msg["id"], "unknown_error", "Unknown error")

@@ -7,6 +7,8 @@ from collections.abc import Coroutine
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from .tasks import async_wait
+
 if TYPE_CHECKING:
     from homeassistant.auth.models import User
 
@@ -68,7 +70,7 @@ async def async_finish_cleanup[T](operation: Coroutine[Any, Any, T]) -> T:
     interrupted = False
     while True:
         try:
-            result = await asyncio.shield(task)
+            result = await async_wait(task, report_abandoned=False)
             break
         except asyncio.CancelledError:
             if task.cancelled():

@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import logging
 import sqlite3
 import tempfile
 import time
@@ -37,12 +38,14 @@ from .models import (
 )
 from .read_cache import ReadCache
 from .security import async_finish_cleanup, private_directory, private_file
+from .tasks import async_wait
 
 MAX_PENDING = 128
 MAX_DATABASE_BYTES = 256 * 1024 * 1024
 MAX_LIBRARY_DATABASE_BYTES = 192 * 1024 * 1024
 MAX_EXPORT_BYTES = 256 * 1024 * 1024
 EXPORT_BUILD_SECONDS = 30
+_LOGGER = logging.getLogger(__name__)
 
 
 class JournalRepository:
@@ -95,6 +98,7 @@ class JournalRepository:
         if self._closing:
             raise JournalError("not_ready", "Journal is closed")
         if not control and self._pending >= MAX_PENDING:
+            _LOGGER.debug("Journal queue is full; request rejected for retry")
             raise JournalError("busy", "Journal queue is full; retry later")
         self._pending += 1
         future = asyncio.get_running_loop().run_in_executor(
@@ -102,7 +106,9 @@ class JournalRepository:
         )
         future.add_done_callback(self._finished)
         # A disconnected caller must not cancel an already accepted database write.
-        return await asyncio.shield(future)
+        # Python 3.14's shield reports failures of abandoned futures to the loop
+        # with their full exception chains, so wait on a separate notification.
+        return await async_wait(future)
 
     def _finished(self, future: asyncio.Future) -> None:
         self._pending -= 1
@@ -121,6 +127,7 @@ class JournalRepository:
     async def async_open(self) -> None:
         """Open and migrate on the connection's owning thread."""
         await self._call(self._open)
+        _LOGGER.debug("Journal storage opened")
 
     def _open(self) -> None:
         if sqlite3.sqlite_version_info < (3, 35, 0):
@@ -514,7 +521,7 @@ class JournalRepository:
         if self._close_task is None:
             self._closing = True
             self._close_task = asyncio.create_task(self._drain_and_close())
-        await asyncio.shield(self._close_task)
+        await async_wait(self._close_task)
 
     async def _drain_and_close(self) -> None:
         loop = asyncio.get_running_loop()
@@ -808,7 +815,7 @@ class JournalRepository:
                 self._preview_import, payload, import_format, self._actor(actor_id)
             )
         )
-        return await asyncio.shield(task)
+        return await async_wait(task)
 
     def _preview_import(self, payload, import_format, actor):
         self._import_plan = import_merge.review(
@@ -857,7 +864,9 @@ class JournalRepository:
                     self._actor(actor_id),
                 )
             )
-            return await asyncio.shield(task)
+            result = await async_wait(task)
+            _LOGGER.info("Journal import application completed")
+            return result
 
     def _apply_import(self, request_id, plan_id, revision, selected, actor):
         if self._paused:
@@ -1314,7 +1323,9 @@ class JournalRepository:
         self._export_active = True
         task = asyncio.create_task(self.async_export(export_format))
         try:
-            yield await asyncio.shield(task)
+            snapshot = await async_wait(task)
+            _LOGGER.info("Journal export snapshot prepared")
+            yield snapshot
         finally:
             try:
                 await async_finish_cleanup(self._cleanup_export(task))

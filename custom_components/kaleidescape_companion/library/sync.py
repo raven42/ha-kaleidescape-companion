@@ -1,9 +1,11 @@
 """Opt-in bounded catalog reads and separately enabled collection additions."""
 
 import asyncio
+import logging
 import socket
 from datetime import UTC, datetime, timedelta
 from urllib.parse import urlencode
+from uuid import uuid4
 
 from aiohttp import ClientError, ClientTimeout, DummyCookieJar, FormData
 from homeassistant.helpers.aiohttp_client import (
@@ -12,12 +14,16 @@ from homeassistant.helpers.aiohttp_client import (
 )
 from yarl import URL
 
+from ..core.logging import safe_exception
 from ..core.models import JournalError
 from ..core.security import async_finish_cleanup
+from ..core.tasks import async_wait
 from .collections import form_targets, member_hash, parameters
 from .config import DEFAULTS, lan_address, origin
 from .parser import artwork_path, catalog, details
 from .store import MAX_ARTWORK_BYTES, image_type, source_id
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class LibrarySync:
@@ -42,6 +48,8 @@ class LibrarySync:
         self.operation_lock = asyncio.Lock()
         self.collection_task = None
         self.after_sync = None
+        self._reported_error = None
+        self._manual_sync = False
 
     async def async_start(self):
         self.session = async_create_clientsession(
@@ -52,9 +60,9 @@ class LibrarySync:
             auto_cleanup=False,
             headers={"Accept-Encoding": "identity"},
         )
-        self.request_sync()
+        self.request_sync(manual=False)
 
-    def request_sync(self):
+    def request_sync(self, *, manual=True):
         """Coalesce manual requests; no overlapping scans or fire-and-forget writes."""
         if self.stopped or self.paused:
             raise JournalError("not_ready", "Library sync is paused")
@@ -63,6 +71,7 @@ class LibrarySync:
         if self.timer:
             self.timer.cancel()
             self.timer = None
+        self._manual_sync = manual
         self.task = self.hass.async_create_background_task(
             self._run(), "Kaleidescape library sync"
         )
@@ -136,7 +145,7 @@ class LibrarySync:
         self.collection_task = self.hass.async_create_background_task(
             run(), "Kaleidescape collection add"
         )
-        result = await asyncio.shield(self.collection_task)
+        result = await async_wait(self.collection_task)
         if isinstance(result, JournalError):
             raise result
         return result
@@ -292,11 +301,23 @@ class LibrarySync:
                     except ClientError, OSError, TimeoutError, JournalError:
                         pass  # A response failure is not proof the POST failed.
                     members = await self._collection_members(collection)
-                return await self.repository.async_collection_finish(
+                result = await self.repository.async_collection_finish(
                     self.source, request, members
                 )
+                if result["status"] == "confirmed":
+                    _LOGGER.info("Collection addition was verified and recorded")
+                elif result["status"] == "uncertain":
+                    _LOGGER.error(
+                        "Collection addition outcome is uncertain; review is required"
+                    )
+                return result
             except BaseException:
-                if not may_have_posted:
+                if may_have_posted:
+                    _LOGGER.error(
+                        "Collection addition could not be verified; "
+                        "the outcome may be uncertain"
+                    )
+                else:
                     await async_finish_cleanup(
                         self.repository.async_collection_finish(
                             self.source, request, acknowledge=actor
@@ -329,7 +350,7 @@ class LibrarySync:
     async def async_resume(self):
         self.paused = False
         if not self.stopped:
-            self.request_sync()
+            self.request_sync(manual=False)
 
     def status(self):
         return {
@@ -450,9 +471,12 @@ class LibrarySync:
         return await self.hass.async_add_executor_job(catalog, page)
 
     async def _run(self):
+        operation_id = uuid4().hex[:16]
+        _LOGGER.info("Library synchronization started (operation_id=%s)", operation_id)
         self.last_attempt = datetime.now(UTC).isoformat()
         self.error = None
         self.processed = self.total = 0
+        failed = False
         try:
             async with asyncio.timeout(1800):
                 async with self.operation_lock:
@@ -464,16 +488,68 @@ class LibrarySync:
                             # Optional provider readiness must not fail a device scan.
                             pass
         except asyncio.CancelledError:
+            _LOGGER.debug(
+                "Library synchronization cancelled (operation_id=%s)", operation_id
+            )
             raise
         except JournalError as error:
             self.error = error.code
+            failed = True
         except ClientError, OSError, TimeoutError, UnicodeError:
             self.error = "library_unreachable"
-        except Exception:
+            failed = True
+        except Exception as error:
             # Keep firmware errors private and independent from recording.
             self.error = "library_format"
+            failed = True
+            _LOGGER.debug(
+                "Library synchronization fault: %s (operation_id=%s)",
+                safe_exception(error),
+                operation_id,
+            )
         finally:
             self.phase = "idle"
+            if not asyncio.current_task().cancelling():
+                if self.error:
+                    if self.error in {"busy", "backup_in_progress"}:
+                        _LOGGER.debug("Library synchronization deferred for storage")
+                    elif (
+                        self._manual_sync
+                        or (self.error, failed) != self._reported_error
+                    ):
+                        if failed:
+                            _LOGGER.error(
+                                "Library synchronization failed; processed %s of %s "
+                                "detail candidates (operation_id=%s)",
+                                self.processed,
+                                self.total,
+                                operation_id,
+                            )
+                        else:
+                            _LOGGER.warning(
+                                "Library sync incomplete; processed %s of %s detail "
+                                "candidates (operation_id=%s)",
+                                self.processed,
+                                self.total,
+                                operation_id,
+                            )
+                    else:
+                        _LOGGER.debug(
+                            "Library synchronization remains incomplete "
+                            "(operation_id=%s)",
+                            operation_id,
+                        )
+                    self._reported_error = (self.error, failed)
+                else:
+                    if self._reported_error is not None:
+                        _LOGGER.info("Library synchronization recovered")
+                    self._reported_error = None
+                    _LOGGER.info(
+                        "Library synchronization completed: %s detail candidates "
+                        "processed (operation_id=%s)",
+                        self.processed,
+                        operation_id,
+                    )
             if not self.stopped and not self.paused:
                 delay = self.config["library_interval_hours"] * 3600
                 if self.error in {"busy", "backup_in_progress"}:
@@ -483,7 +559,7 @@ class LibrarySync:
                 )
 
     def _scheduled_sync(self):
-        self.request_sync()
+        self.request_sync(manual=False)
 
     async def _sync(self):
         self.phase = "catalog"

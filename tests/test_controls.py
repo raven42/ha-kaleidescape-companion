@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import test_backend as backend
+from _expected_logs import expected_log
 
 from custom_components.kaleidescape_companion._vendor import kaleidescape_api as api
 from custom_components.kaleidescape_companion.backup import (
@@ -230,6 +231,10 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["result"]["outcome"], "state_observed")
         self.assertEqual([name for name, *_ in self.peer.commands], ["STOP"])
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.playback.controls",
+        "Device control outcome is uncertain",
+    )
     async def test_other_users_receipts_are_private_but_still_block_the_player(self):
         await self.configure()
         self.peer.drop = True
@@ -358,6 +363,10 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["code"], "refresh_required")
         self.assertEqual(self.peer.commands, [])
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.playback.controls",
+        "Device control outcome is uncertain",
+    )
     async def test_uncertain_receipt_survives_restart_and_requires_review(self):
         await self.configure()
         token = await self.prepare()
@@ -387,6 +396,10 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
         self.peer.drop = False
         self.assertTrue((await self.execute(next_token))["success"])
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.playback.controls",
+        "Device control was rejected",
+    )
     async def test_rejection_is_recorded_without_retry_or_wake(self):
         await self.configure()
         token = await self.prepare("stop")

@@ -8,16 +8,17 @@ from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
 import test_backend as backend
+from _expected_logs import expected_log
 from homeassistant.helpers.aiohttp_client import DATA_RESOLVER
 
-from custom_components.kaleidescape_companion._vendor.kaleidescape_scrapers import (
-    ProviderError,
-)
 from custom_components.kaleidescape_companion.core.models import JournalError
 from custom_components.kaleidescape_companion.core.settings import form
 from custom_components.kaleidescape_companion.enrichment import config
 from custom_components.kaleidescape_companion.enrichment.sync import MetadataSync
 from custom_components.kaleidescape_companion.library.store import title_id
+from custom_components.kaleidescape_companion.scrapers import (
+    ProviderError,
+)
 
 ORIGIN = "http://fictional.local"
 IMAGE = b"\xff\xd8\xfffictional-backdrop"
@@ -449,6 +450,10 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(session.get.call_args.kwargs["allow_redirects"])
         self.assertEqual(session.get.call_args.args[0].host, "1.1.1.1")
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.enrichment.sync",
+        "Metadata refresh failed",
+    )
     async def test_provider_stop_and_revocation_close_sessions_without_writes(self):
         await self.seed()
         sync = self.sync()
@@ -483,6 +488,10 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(sync.repository.async_enrichment.await_count, 1)
         self.assertIsNone(sync.session)
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.enrichment.sync",
+        "Metadata refresh failed",
+    )
     async def test_failed_pass_updates_durable_activity_without_title_conflicts(self):
         await self.seed()
         sync = self.sync(library_host=ORIGIN)

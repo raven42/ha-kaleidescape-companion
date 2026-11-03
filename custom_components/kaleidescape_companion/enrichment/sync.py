@@ -2,10 +2,12 @@
 
 import asyncio
 import ipaddress
+import logging
 import re
 import socket
 from datetime import UTC, datetime, timedelta
 from urllib.parse import urlsplit
+from uuid import uuid4
 
 from aiohttp import ClientError, ClientTimeout, DummyCookieJar
 from homeassistant.helpers.aiohttp_client import (
@@ -14,14 +16,17 @@ from homeassistant.helpers.aiohttp_client import (
 )
 from yarl import URL
 
-from .._vendor.kaleidescape_scrapers import MovieQuery, ProviderError, Providers
+from ..core.logging import safe_exception
 from ..core.models import JournalError
 from ..core.security import is_active_admin
 from ..library.config import origin
 from ..library.store import image_type, source_id
+from ..scrapers import MovieQuery, ProviderError, Providers
 from .config import DEFAULTS
 from .destinations import store_image, store_request
 from .matching import REASONS
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class MetadataSync:
@@ -40,6 +45,7 @@ class MetadataSync:
         self.paused = self.stopped = False
         self.processed = self.updated = self.skipped = self.total = 0
         self.error = None
+        self._reported_failure = None
         self.last_finished = None
         self.actor = None
         self.current_title = None
@@ -285,6 +291,8 @@ class MetadataSync:
                 raise
 
     async def _run(self, force):
+        operation_id = uuid4().hex[:16]
+        _LOGGER.info("Metadata refresh started (operation_id=%s)", operation_id)
         self.error = None
         self.providers.robots = None
         self.processed = self.updated = self.skipped = 0
@@ -428,6 +436,7 @@ class MetadataSync:
                     self.current_title = None
         except asyncio.CancelledError:
             cancelled = True
+            _LOGGER.debug("Metadata refresh cancelled (operation_id=%s)", operation_id)
             raise
         except ProviderError as error:
             failure = error
@@ -450,6 +459,11 @@ class MetadataSync:
         except Exception as error:
             failure = error
             self.error = "metadata_format"
+            _LOGGER.debug(
+                "Metadata refresh fault: %s (operation_id=%s)",
+                safe_exception(error),
+                operation_id,
+            )
         finally:
             self.current_title = None
             if self.session:
@@ -458,6 +472,31 @@ class MetadataSync:
             self.last_finished = datetime.now(UTC).isoformat()
             if not cancelled:
                 await self.record_activity(failure is not None)
+                if failure is not None:
+                    category = type(failure).__name__
+                    if self.actor is not None or category != self._reported_failure:
+                        _LOGGER.error(
+                            "Metadata refresh failed after %s records; "
+                            "%s updates saved (operation_id=%s)",
+                            self.processed,
+                            self.updated,
+                            operation_id,
+                        )
+                    else:
+                        _LOGGER.debug("Metadata refresh remains unavailable")
+                    self._reported_failure = category
+                else:
+                    if self._reported_failure is not None:
+                        _LOGGER.info("Metadata refresh recovered")
+                    self._reported_failure = None
+                    _LOGGER.info(
+                        "Metadata refresh completed: %s records processed, %s updates, "
+                        "%s skipped (operation_id=%s)",
+                        self.processed,
+                        self.updated,
+                        self.skipped,
+                        operation_id,
+                    )
             self.actor = None
 
     async def async_pause(self):

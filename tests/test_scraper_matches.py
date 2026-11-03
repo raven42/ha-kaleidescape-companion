@@ -8,10 +8,10 @@ from uuid import uuid4
 
 import test_enrichment_review as reviews
 
-from custom_components.kaleidescape_companion._vendor.kaleidescape_scrapers import (
+from custom_components.kaleidescape_companion.core.models import JournalError
+from custom_components.kaleidescape_companion.scrapers import (
     ProviderError,
 )
-from custom_components.kaleidescape_companion.core.models import JournalError
 
 
 class ScraperMatchingTest(unittest.IsolatedAsyncioTestCase):

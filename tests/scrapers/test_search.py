@@ -4,10 +4,9 @@ import json
 import unittest
 from unittest.mock import AsyncMock
 
+from scrapers import MovieQuery, ProviderError, Providers
+from scrapers.providers.store_search import cover_url, packages
 from test_providers import MOVIE, PATH, TITLE, YEAR, page
-
-from kaleidescape_scrapers import MovieQuery, ProviderError, Providers
-from kaleidescape_scrapers.providers.store_search import cover_url, packages
 
 
 class ProviderSearchTest(unittest.IsolatedAsyncioTestCase):

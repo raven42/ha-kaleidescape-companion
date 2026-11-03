@@ -1,5 +1,6 @@
 """Home Assistant journal backend for Kaleidescape Companion."""
 
+import logging
 from pathlib import Path
 
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
@@ -8,6 +9,7 @@ from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
 
 from .calendar.publisher import CalendarPublisher
 from .const import DOMAIN, NAME
+from .core.logging import safe_exception
 from .core.migrations import UnsupportedSchemaError
 from .core.models import JournalError
 from .core.repository import JournalRepository
@@ -24,6 +26,7 @@ from .ui.panel import async_remove_panel, async_setup_panel
 from .ui.websocket import async_register_commands
 
 PLATFORMS = [Platform.SENSOR]
+_LOGGER = logging.getLogger(__name__)
 
 
 async def _async_close_runtime(
@@ -41,8 +44,8 @@ async def _async_close_runtime(
             await runtime.library.async_stop()
         if runtime.observer:
             await runtime.observer.async_stop(close_reason)
-    except JournalError:
-        pass
+    except JournalError as error:
+        _LOGGER.error("Runtime cleanup did not complete: %s", safe_exception(error))
     finally:
         await runtime.repository.async_close()
 
@@ -56,6 +59,7 @@ async def async_setup_entry(
     if entry.title == "Kaleidescape":
         hass.config_entries.async_update_entry(entry, title=NAME)
     repository = JournalRepository(Path(hass.config.path(DOMAIN, "journal.sqlite3")))
+    _LOGGER.debug("Opening journal storage and preparing integration")
     try:
         await repository.async_open()
         await repository.async_seed_ui_preferences(dict(entry.options or entry.data))
@@ -74,10 +78,23 @@ async def async_setup_entry(
         info = await repository.async_info()
     except UnsupportedSchemaError as error:
         await repository.async_close()
-        raise ConfigEntryError(str(error)) from error
+        _LOGGER.debug("Journal setup failed: %s", safe_exception(error))
+        message = str(error)
+        if message not in {
+            "SQLite 3.35 or newer is required",
+            "Journal schema is newer than this integration",
+            "Unrecognized journal database; left unchanged",
+        }:
+            message = "Journal schema is unsupported"
+        raise ConfigEntryError(message) from None
     except JournalError as error:
         await repository.async_close()
-        raise ConfigEntryNotReady("Could not open the journal database") from error
+        _LOGGER.debug("Journal setup failed: %s", safe_exception(error))
+        raise ConfigEntryNotReady("Could not open the journal database") from None
+    except Exception as error:
+        await repository.async_close()
+        _LOGGER.debug("Journal setup fault: %s", safe_exception(error))
+        raise ConfigEntryError("Unexpected journal setup failure") from None
     except BaseException:
         await repository.async_close()
         raise
@@ -124,7 +141,7 @@ async def async_setup_entry(
         entry.async_on_unload(
             hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, async_stop)
         )
-    except BaseException:
+    except BaseException as error:
         try:
             if platforms_started:
                 await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
@@ -132,7 +149,19 @@ async def async_setup_entry(
             if panel_registered:
                 async_remove_panel(hass)
             await _async_close_runtime(runtime)
+        if isinstance(error, Exception):
+            _LOGGER.debug("Companion initialization fault: %s", safe_exception(error))
+            if isinstance(error, ConfigEntryNotReady):
+                raise ConfigEntryNotReady(
+                    "Companion initialization is not ready"
+                ) from None
+            if type(error) is ValueError:
+                raise ValueError("Companion initialization failed") from None
+            if type(error) is RuntimeError:
+                raise RuntimeError("Companion initialization failed") from None
+            raise ConfigEntryError("Companion initialization failed") from None
         raise
+    _LOGGER.info("Kaleidescape Companion is ready")
     return True
 
 
@@ -141,6 +170,7 @@ async def async_unload_entry(
 ) -> bool:
     """Drain accepted writes and retain the database for reload or reinstallation."""
     runtime = entry.runtime_data
+    _LOGGER.debug("Unloading Kaleidescape Companion")
     if not await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         return False
     config = dict(entry.options or entry.data)
@@ -153,6 +183,7 @@ async def async_unload_entry(
     await _async_close_runtime(runtime, reason)
     if not runtime.preserve_panel_on_reload or entry.disabled_by is not None:
         async_remove_panel(hass)
+    _LOGGER.debug("Kaleidescape Companion unload processing finished")
     return True
 
 

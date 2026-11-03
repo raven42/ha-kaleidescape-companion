@@ -9,10 +9,10 @@ from uuid import uuid4
 
 from aiohttp import ClientError
 
-from .._vendor.kaleidescape_scrapers import MovieQuery, ProviderError, Providers
 from ..core.models import JournalError, identifier, invalid
 from ..core.security import is_active_admin
 from ..library.store import image_type
+from ..scrapers import MovieQuery, ProviderError, Providers
 from .matching import REASONS, reference
 from .review_store import REVIEW_FIELDS, selection
 

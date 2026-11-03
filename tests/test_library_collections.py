@@ -9,6 +9,7 @@ from uuid import uuid4
 
 import test_backend as backend
 import test_library as library
+from _expected_logs import expected_log
 
 from custom_components.kaleidescape_companion.core.models import JournalError
 from custom_components.kaleidescape_companion.library.collections import (
@@ -178,6 +179,10 @@ class CollectionOperationTest(unittest.IsolatedAsyncioTestCase):
             await self.add(authorize=deny)
         self.sync._post_collection_add.assert_not_awaited()
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.library.sync",
+        "Collection addition outcome is uncertain",
+    )
     async def test_uncertain_add_is_never_replayed_and_survives_connector_restart(self):
         await self.seed()
         self.sync._post_collection_add.side_effect = TimeoutError
@@ -210,6 +215,10 @@ class CollectionOperationTest(unittest.IsolatedAsyncioTestCase):
         self.sync._post_collection_add.side_effect = lost
         self.assertEqual((await self.add())["status"], "confirmed")
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.library.sync",
+        "Collection addition outcome is uncertain",
+    )
     async def test_wider_membership_change_remains_uncertain_until_acknowledged(self):
         await self.seed()
 

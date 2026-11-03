@@ -98,11 +98,12 @@ reloading the entry alone does not replace already imported Python code or old
 static-path registrations.
 
 The archive contains only runtime Python files, manifest/setup/translation JSON,
-and the compiled `ui/assets/panel.js`, including generated API and provider
-modules under `_vendor/`. It excludes the development adapter source,
-environments, caches, databases, and repository metadata. Symlinked or
-hard-linked runtime sources are rejected. The printed digest identifies the
-exact uploaded archive; it is not a signature or a compatibility guarantee.
+and the compiled `ui/assets/panel.js`, including the generated API under
+`_vendor/` and the integration's `scrapers/` modules. It excludes the
+development adapter source, environments, caches, databases, and repository
+metadata. Symlinked or hard-linked runtime sources are rejected. The printed
+digest identifies the exact uploaded archive; it is not a signature or a
+compatibility guarantee.
 
 Deployment stages files under `<HA config>/.kaleidescape-companion-deploy/`,
 then replaces `<HA config>/custom_components/kaleidescape_companion/`. It

@@ -10,6 +10,7 @@ from uuid import uuid4
 import test_backend as backend
 import test_library as library
 import test_repository as repository
+from _expected_logs import expected_log
 from homeassistant import bootstrap, loader
 from homeassistant.components.calendar import CalendarEntityFeature
 from homeassistant.config_entries import ConfigEntries
@@ -215,6 +216,10 @@ class CalendarTest(unittest.IsolatedAsyncioTestCase):
         await self.repository.async_calendar_configure(None)
         self.assertTrue(all(row["state"] == "cancelled" for row in await self.rows()))
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.calendar.publisher",
+        "Calendar event outcome is uncertain",
+    )
     async def test_fixed_action_and_uncertain_result_barrier(
         self,
     ):
@@ -543,6 +548,10 @@ class HistoricalCalendarTest(unittest.IsolatedAsyncioTestCase):
         await publisher.async_publish_one()
         self.assertEqual(len(calls), 1)
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.calendar.sync",
+        "Calendar export lookup failed",
+    )
     async def test_export_failed_lookup_stops_without_writes(self):
         await self.seed()
         await self.create()
@@ -554,6 +563,10 @@ class HistoricalCalendarTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(job["counts"], {"failed": 1, "cancelled": 1})
         self.assertTrue(job["finished"])
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.calendar.sync",
+        "Calendar export action outcome is uncertain",
+    )
     async def test_export_uncertain_write_never_blindly_repeats(self):
         await self.seed()
         await self.create()
@@ -682,6 +695,10 @@ class HistoricalCalendarTest(unittest.IsolatedAsyncioTestCase):
             {"skipped": 1, "cancelled": 1},
         )
 
+    @expected_log(
+        "custom_components.kaleidescape_companion.calendar.sync",
+        "Calendar export action outcome is uncertain",
+    )
     async def test_remote_match_resolves_prior_uncertainty_without_second_write(self):
         await self.seed()
         await self.create()

@@ -1438,23 +1438,23 @@ projections remain readable by active users. Current configuration/activity is
 checked across waits and before worker writes. Backup/unload cancels fetches,
 drains accepted worker operations and closes the dedicated HTTP session.
 
-Reusable providers live in `lib/scrapers/`; the runtime has a generated copy. A
-common `Providers.metadata` API dispatches immutable movie queries to separate
-provider adapters. Their injected transport shares rate/body limits; adding an
-adapter cannot extend the HA destination allowlist or enable access by itself.
-Ordinary passes allow only fixed HTTPS store/movie/robots and TMDB v3 movie
-routes, plus `image.tmdb.org/t/p/w780/<alphanumeric>.jpg` for optional backdrops
-and a fixed `w500` poster route when TMDB is the saved cover source. Both image
-capabilities require TMDB and artwork opt-ins. It rejects redirects and
-non-public/mixed DNS answers, pins a public literal with the original Host/TLS
-server name, verifies TLS, ignores environment proxies, uses no cookies and caps
-bodies at 4 MiB with a 20-second request budget. Credentials go only to TMDB.
-Response types/encoding are checked; HTML scripts are decoded as data, never
-evaluated. Store robots directives and one shared 0.1–10 requests/second limiter
-apply. Errors, including HTTP 429, stop the pass without automatic retries. A
-later scan or manual request can start a new pass. The one-hour/10,000-version
-budgets bound work; successful cache entries are reused for seven days. A
-configuration change cannot recall already sent queries.
+Providers live in the integration's `scrapers/` directory. A common
+`Providers.metadata` API dispatches immutable movie queries to separate provider
+adapters. Their injected transport shares rate/body limits; adding an adapter
+cannot extend the HA destination allowlist or enable access by itself. Ordinary
+passes allow only fixed HTTPS store/movie/robots and TMDB v3 movie routes, plus
+`image.tmdb.org/t/p/w780/<alphanumeric>.jpg` for optional backdrops and a fixed
+`w500` poster route when TMDB is the saved cover source. Both image capabilities
+require TMDB and artwork opt-ins. It rejects redirects and non-public/mixed DNS
+answers, pins a public literal with the original Host/TLS server name, verifies
+TLS, ignores environment proxies, uses no cookies and caps bodies at 4 MiB with
+a 20-second request budget. Credentials go only to TMDB. Response types/encoding
+are checked; HTML scripts are decoded as data, never evaluated. Store robots
+directives and one shared 0.1–10 requests/second limiter apply. Errors,
+including HTTP 429, stop the pass without automatic retries. A later scan or
+manual request can start a new pass. The one-hour/10,000-version budgets bound
+work; successful cache entries are reused for seven days. A configuration change
+cannot recall already sent queries.
 
 Providers receive title/year or the validated public store reference, never
 viewings, notes or invoice fields. Provider responses project only bounded
@@ -1800,3 +1800,12 @@ text, is submitted explicitly, and clears its private draft when the client or
 dataset changes. Opening Options does not trigger refresh or a write. Compact
 footer presentation does not alter the household-safe totals returned by the
 API.
+
+Companion operational logging uses the same privacy policy at every severity,
+including debug: do not emit household content, credentials, full network
+addresses, raw requests or exception messages. Logging arguments and exception
+chains must be safe before a record reaches HA. The bundled protocol API remains
+a separate logging boundary and has not been converted by the Companion logging
+changes. Accepted background work is allowed to finish after caller
+cancellation; failures are reported without handing their exception chains to
+asyncio logging.

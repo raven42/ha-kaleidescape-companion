@@ -1,5 +1,6 @@
 """Ordered, transactional journal schema migrations."""
 
+import logging
 import sqlite3
 from contextlib import closing
 from datetime import UTC, datetime
@@ -9,6 +10,7 @@ from uuid import uuid4
 from ..security import private_file
 
 SCHEMA_VERSION = 23
+_LOGGER = logging.getLogger(__name__)
 
 MIGRATIONS = {
     1: (
@@ -383,6 +385,9 @@ def migrate(connection: sqlite3.Connection, path: Path) -> None:
         raise UnsupportedSchemaError("Journal schema is newer than this integration")
     if version == SCHEMA_VERSION:
         return
+    _LOGGER.info(
+        "Journal schema migration started: version %s to %s", version, SCHEMA_VERSION
+    )
     tables = connection.execute(
         "SELECT name FROM sqlite_master WHERE type = 'table'"
     ).fetchall()
@@ -413,6 +418,8 @@ def migrate(connection: sqlite3.Connection, path: Path) -> None:
                 )
             connection.execute(f"PRAGMA user_version = {target}")
         connection.commit()
+        _LOGGER.info("Journal schema migration committed: version %s", SCHEMA_VERSION)
     except BaseException:
         connection.rollback()
+        _LOGGER.debug("Journal schema migration rolled back")
         raise

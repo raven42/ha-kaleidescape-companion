@@ -2,11 +2,16 @@
 
 import asyncio
 import json
+import logging
 from datetime import UTC, datetime, timedelta
 
+from ..core.logging import safe_exception
 from ..core.models import JournalError
 from ..core.security import async_finish_cleanup
+from ..core.tasks import async_wait
 from .config import DEFAULTS, fingerprint, target
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def instant(value):
@@ -110,7 +115,7 @@ class JournalCalendarSync:
             await async_finish_cleanup(self._drain())
 
     async def _drain(self):
-        await asyncio.shield(self.task)
+        await async_wait(self.task)
 
     async def cancel(self, job):
         if job != self.job:
@@ -131,7 +136,10 @@ class JournalCalendarSync:
                         if self.cancelled:
                             break
                         return
-            except Exception:
+            except Exception as error:
+                _LOGGER.error(
+                    "Calendar export stopped after a failure: %s", safe_exception(error)
+                )
                 self.cancelled = True
                 break
             await asyncio.sleep(0)
@@ -222,11 +230,20 @@ class JournalCalendarSync:
                     self.remember(data)
             else:
                 state = "skipped"
-        except Exception:
+        except Exception as error:
             # A failed lookup must not be treated as an empty calendar and followed
             # by blind creates.
             if state == "failed":
                 self.cancelled = True
+                _LOGGER.error(
+                    "Calendar export lookup failed; further creates stopped: %s",
+                    safe_exception(error),
+                )
+            elif state == "uncertain":
+                _LOGGER.error(
+                    "Calendar export action outcome is uncertain; "
+                    "automatic replay is blocked"
+                )
         finally:
             await async_finish_cleanup(
                 p.repository.async_calendar_sync("finish", self.job, row["id"], state)
