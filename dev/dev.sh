@@ -10,11 +10,13 @@ case "${1:-help}" in
     if [[ ! -x .venv/bin/python ]]; then
       python3 -m venv .venv
     fi
-    .venv/bin/python -m pip install --find-links ../kaleidescape-api/dist -e '.[dev]'
+    .venv/bin/python -m pip install -e '.[dev]'
+    .venv/bin/python -m pip install -e ../kaleidescape-api
     (cd frontend && npm ci)
     ;;
   check)
     .venv/bin/python dev/vendor_scrapers.py --check
+    .venv/bin/python dev/vendor_api.py --check
     PYTHONPATH=lib/scrapers/src .venv/bin/python -m unittest discover -s lib/scrapers/tests
     .venv/bin/python -m unittest discover -s tests
     .venv/bin/python dev/check_project.py

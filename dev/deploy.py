@@ -21,8 +21,6 @@ DEFAULT_CONFIG = ROOT / ".vscode" / "ha-deploy.json"
 EXAMPLE_CONFIG = ROOT / ".vscode" / "ha-deploy.example.json"
 MAX_PACKAGE_BYTES = 32 * 1024 * 1024
 REQUIRED = {
-    "core/logbook.py",
-    "core/operations.py",
     "core/settings_transfer.py",
     "ui/settings_transfer.py",
     "__init__.py",
@@ -33,6 +31,16 @@ REQUIRED = {
     "translations/en.json",
     "ui/assets/panel.js",
     "_vendor/__init__.py",
+    "_vendor/kaleidescape_api/__init__.py",
+    "_vendor/kaleidescape_api/client.py",
+    "_vendor/kaleidescape_api/codec.py",
+    "_vendor/kaleidescape_api/commands.py",
+    "_vendor/kaleidescape_api/errors.py",
+    "_vendor/kaleidescape_api/models.py",
+    "_vendor/kaleidescape_api/session.py",
+    "_vendor/kaleidescape_api/extensions/__init__.py",
+    "_vendor/kaleidescape_api/extensions/movies.py",
+    "_vendor/kaleidescape_api/extensions/playback.py",
     "_vendor/kaleidescape_scrapers/__init__.py",
     "_vendor/kaleidescape_scrapers/client.py",
     "_vendor/kaleidescape_scrapers/models.py",

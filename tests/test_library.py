@@ -514,14 +514,12 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
             db.execute("DROP TABLE calendar_managed_events")
             db.execute("DROP TABLE calendar_reconcile_candidates")
             db.execute("DROP TABLE calendar_reconcile_intents")
-            db.execute("DROP TABLE IF EXISTS operation_logs")
-            db.execute("DROP TABLE IF EXISTS log_state")
             db.execute("PRAGMA user_version=5")
             db.commit()
         self.repository = JournalRepository(self.path)
         self.addAsyncCleanup(self.repository.async_close)
         await self.repository.async_open()
-        self.assertEqual((await self.repository.async_info())["schema_version"], 22)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 23)
         self.assertEqual(
             await self.repository.async_get(created["viewing"]["id"]),
             created["viewing"],

@@ -4,26 +4,15 @@ import asyncio
 import socket
 from datetime import UTC, datetime, timedelta
 from urllib.parse import urlencode
-from uuid import uuid4
 
 from aiohttp import ClientError, ClientTimeout, DummyCookieJar, FormData
 from homeassistant.helpers.aiohttp_client import (
     DATA_RESOLVER,
     async_create_clientsession,
 )
-from kaleidescape_api.logging import (
-    Failure,
-    Level,
-    Operation,
-    Outcome,
-    Resource,
-    Subsystem,
-    Trigger,
-)
 from yarl import URL
 
 from ..core.models import JournalError
-from ..core.operations import traced
 from ..core.security import async_finish_cleanup
 from .collections import form_targets, member_hash, parameters
 from .config import DEFAULTS, lan_address, origin
@@ -185,7 +174,6 @@ class LibrarySync:
         )
         return rows
 
-    @traced(Subsystem.LIBRARY, Operation.WRITE, debug=False)
     async def _post_collection_add(self, handle, collection):
         """One fixed multipart operation. No forwarding of supplied routes or forms."""
         form = FormData(default_to_multipart=True)
@@ -202,19 +190,6 @@ class LibrarySync:
             headers={"Host": base.authority},
             server_hostname=base.host if base.scheme == "https" else None,
         ) as response:
-            self.repository.logger.emit(
-                Subsystem.LIBRARY,
-                Operation.REQUEST,
-                Outcome.SUCCEEDED
-                if response.status in {200, 302, 303}
-                else Outcome.REJECTED,
-                level=Level.DEBUG
-                if response.status in {200, 302, 303}
-                else Level.WARNING,
-                status=response.status,
-                resource=(Resource.COLLECTION, collection),
-                target=(Resource.DEVICE, self.origin),
-            )
             if (
                 response.status not in {200, 302, 303}
                 or response.headers.get("Content-Encoding", "identity").lower()
@@ -372,7 +347,6 @@ class LibrarySync:
             * 1024,
         }
 
-    @traced(Subsystem.LIBRARY, Operation.CONNECT, debug=True)
     async def _resolve(self):
         base = URL(self.origin)
         try:
@@ -401,7 +375,6 @@ class LibrarySync:
             )
         return min(ips, key=lambda ip: ":" in ip)
 
-    @traced(Subsystem.LIBRARY, Operation.REQUEST, debug=True)
     async def _get(self, path: str, *, image=False):
         """Pin validated DNS results; refuse redirects, cookies, compressed bodies."""
         base = URL(self.origin)
@@ -422,15 +395,6 @@ class LibrarySync:
             headers={"Host": base.authority},
             server_hostname=base.host if base.scheme == "https" else None,
         ) as response:
-            self.repository.logger.emit(
-                Subsystem.ARTWORK if image else Subsystem.LIBRARY,
-                Operation.REQUEST,
-                Outcome.SUCCEEDED if response.status == 200 else Outcome.REJECTED,
-                level=Level.DEBUG if response.status == 200 else Level.WARNING,
-                status=response.status,
-                resource=(Resource.REQUEST, path),
-                target=(Resource.DEVICE, self.origin),
-            )
             if (
                 response.status != 200
                 or response.headers.get("Content-Encoding", "identity").lower()
@@ -486,11 +450,9 @@ class LibrarySync:
         return await self.hass.async_add_executor_job(catalog, page)
 
     async def _run(self):
-        self.repository.logger.emit(Subsystem.LIBRARY, Operation.SYNC, Outcome.STARTED)
         self.last_attempt = datetime.now(UTC).isoformat()
         self.error = None
         self.processed = self.total = 0
-        failure, cancelled = None, False
         try:
             async with asyncio.timeout(1800):
                 async with self.operation_lock:
@@ -502,31 +464,15 @@ class LibrarySync:
                             # Optional provider readiness must not fail a device scan.
                             pass
         except asyncio.CancelledError:
-            cancelled = True
             raise
         except JournalError as error:
-            failure = error
             self.error = error.code
-        except (ClientError, OSError, TimeoutError, UnicodeError) as error:
-            failure = error
+        except ClientError, OSError, TimeoutError, UnicodeError:
             self.error = "library_unreachable"
-        except Exception as error:
-            failure = error
+        except Exception:
             # Keep firmware errors private and independent from recording.
             self.error = "library_format"
         finally:
-            if failure:
-                self.repository.logger.emit_failure(
-                    Subsystem.LIBRARY, Operation.SYNC, failure, count=self.processed
-                )
-            else:
-                self.repository.logger.emit(
-                    Subsystem.LIBRARY,
-                    Operation.SYNC,
-                    Outcome.SKIPPED if cancelled else Outcome.SUCCEEDED,
-                    failure=Failure.CANCELLED if cancelled else None,
-                    count=self.processed,
-                )
             self.phase = "idle"
             if not self.stopped and not self.paused:
                 delay = self.config["library_interval_hours"] * 3600
@@ -537,14 +483,7 @@ class LibrarySync:
                 )
 
     def _scheduled_sync(self):
-        # Timers inherit contextvars; detach the previous scan's user/trace.
-        with self.repository.logger.context(
-            inherit=False,
-            trigger=Trigger.SCHEDULED,
-            trace=(Resource.REQUEST, str(uuid4())),
-            target=(Resource.DEVICE, self.origin),
-        ):
-            self.request_sync()
+        self.request_sync()
 
     async def _sync(self):
         self.phase = "catalog"

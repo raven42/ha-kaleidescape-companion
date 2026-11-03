@@ -1,15 +1,15 @@
-const me = globalThis, It = me.ShadowRoot && (me.ShadyCSS === void 0 || me.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, Ft = /* @__PURE__ */ Symbol(), ei = /* @__PURE__ */ new WeakMap();
-let Ci = class {
+const ge = globalThis, jt = ge.ShadowRoot && (ge.ShadyCSS === void 0 || ge.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, Pt = /* @__PURE__ */ Symbol(), Yt = /* @__PURE__ */ new WeakMap();
+let $i = class {
   constructor(e, t, i) {
-    if (this._$cssResult$ = !0, i !== Ft) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
+    if (this._$cssResult$ = !0, i !== Pt) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
     this.cssText = e, this.t = t;
   }
   get styleSheet() {
     let e = this.o;
     const t = this.t;
-    if (It && e === void 0) {
+    if (jt && e === void 0) {
       const i = t !== void 0 && t.length === 1;
-      i && (e = ei.get(t)), e === void 0 && ((this.o = e = new CSSStyleSheet()).replaceSync(this.cssText), i && ei.set(t, e));
+      i && (e = Yt.get(t)), e === void 0 && ((this.o = e = new CSSStyleSheet()).replaceSync(this.cssText), i && Yt.set(t, e));
     }
     return e;
   }
@@ -17,54 +17,54 @@ let Ci = class {
     return this.cssText;
   }
 };
-const Vi = (r) => new Ci(typeof r == "string" ? r : r + "", void 0, Ft), S = (r, ...e) => {
-  const t = r.length === 1 ? r[0] : e.reduce((i, s, n) => i + ((o) => {
+const Mi = (n) => new $i(typeof n == "string" ? n : n + "", void 0, Pt), S = (n, ...e) => {
+  const t = n.length === 1 ? n[0] : e.reduce((i, s, r) => i + ((o) => {
     if (o._$cssResult$ === !0) return o.cssText;
     if (typeof o == "number") return o;
     throw Error("Value passed to 'css' function must be a 'css' function result: " + o + ". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.");
-  })(s) + r[n + 1], r[0]);
-  return new Ci(t, r, Ft);
-}, Hi = (r, e) => {
-  if (It) r.adoptedStyleSheets = e.map((t) => t instanceof CSSStyleSheet ? t : t.styleSheet);
+  })(s) + n[r + 1], n[0]);
+  return new $i(t, n, Pt);
+}, Oi = (n, e) => {
+  if (jt) n.adoptedStyleSheets = e.map((t) => t instanceof CSSStyleSheet ? t : t.styleSheet);
   else for (const t of e) {
-    const i = document.createElement("style"), s = me.litNonce;
-    s !== void 0 && i.setAttribute("nonce", s), i.textContent = t.cssText, r.appendChild(i);
+    const i = document.createElement("style"), s = ge.litNonce;
+    s !== void 0 && i.setAttribute("nonce", s), i.textContent = t.cssText, n.appendChild(i);
   }
-}, ti = It ? (r) => r : (r) => r instanceof CSSStyleSheet ? ((e) => {
+}, Gt = jt ? (n) => n : (n) => n instanceof CSSStyleSheet ? ((e) => {
   let t = "";
   for (const i of e.cssRules) t += i.cssText;
-  return Vi(t);
-})(r) : r;
-const { is: Wi, defineProperty: Ji, getOwnPropertyDescriptor: Ki, getOwnPropertyNames: Yi, getOwnPropertySymbols: Gi, getPrototypeOf: Zi } = Object, He = globalThis, ii = He.trustedTypes, Qi = ii ? ii.emptyScript : "", Xi = He.reactiveElementPolyfillSupport, ne = (r, e) => r, ot = { toAttribute(r, e) {
+  return Mi(t);
+})(n) : n;
+const { is: Ni, defineProperty: Ii, getOwnPropertyDescriptor: Fi, getOwnPropertyNames: Bi, getOwnPropertySymbols: Vi, getPrototypeOf: Hi } = Object, Be = globalThis, Zt = Be.trustedTypes, Wi = Zt ? Zt.emptyScript : "", Ji = Be.reactiveElementPolyfillSupport, re = (n, e) => n, at = { toAttribute(n, e) {
   switch (e) {
     case Boolean:
-      r = r ? Qi : null;
+      n = n ? Wi : null;
       break;
     case Object:
     case Array:
-      r = r == null ? r : JSON.stringify(r);
+      n = n == null ? n : JSON.stringify(n);
   }
-  return r;
-}, fromAttribute(r, e) {
-  let t = r;
+  return n;
+}, fromAttribute(n, e) {
+  let t = n;
   switch (e) {
     case Boolean:
-      t = r !== null;
+      t = n !== null;
       break;
     case Number:
-      t = r === null ? null : Number(r);
+      t = n === null ? null : Number(n);
       break;
     case Object:
     case Array:
       try {
-        t = JSON.parse(r);
+        t = JSON.parse(n);
       } catch {
         t = null;
       }
   }
   return t;
-} }, Si = (r, e) => !Wi(r, e), si = { attribute: !0, type: String, converter: ot, reflect: !1, useDefault: !1, hasChanged: Si };
-Symbol.metadata ??= /* @__PURE__ */ Symbol("metadata"), He.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
+} }, wi = (n, e) => !Ni(n, e), Qt = { attribute: !0, type: String, converter: at, reflect: !1, useDefault: !1, hasChanged: wi };
+Symbol.metadata ??= /* @__PURE__ */ Symbol("metadata"), Be.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
 let W = class extends HTMLElement {
   static addInitializer(e) {
     this._$Ei(), (this.l ??= []).push(e);
@@ -72,35 +72,35 @@ let W = class extends HTMLElement {
   static get observedAttributes() {
     return this.finalize(), this._$Eh && [...this._$Eh.keys()];
   }
-  static createProperty(e, t = si) {
+  static createProperty(e, t = Qt) {
     if (t.state && (t.attribute = !1), this._$Ei(), this.prototype.hasOwnProperty(e) && ((t = Object.create(t)).wrapped = !0), this.elementProperties.set(e, t), !t.noAccessor) {
       const i = /* @__PURE__ */ Symbol(), s = this.getPropertyDescriptor(e, i, t);
-      s !== void 0 && Ji(this.prototype, e, s);
+      s !== void 0 && Ii(this.prototype, e, s);
     }
   }
   static getPropertyDescriptor(e, t, i) {
-    const { get: s, set: n } = Ki(this.prototype, e) ?? { get() {
+    const { get: s, set: r } = Fi(this.prototype, e) ?? { get() {
       return this[t];
     }, set(o) {
       this[t] = o;
     } };
     return { get: s, set(o) {
       const d = s?.call(this);
-      n?.call(this, o), this.requestUpdate(e, d, i);
+      r?.call(this, o), this.requestUpdate(e, d, i);
     }, configurable: !0, enumerable: !0 };
   }
   static getPropertyOptions(e) {
-    return this.elementProperties.get(e) ?? si;
+    return this.elementProperties.get(e) ?? Qt;
   }
   static _$Ei() {
-    if (this.hasOwnProperty(ne("elementProperties"))) return;
-    const e = Zi(this);
+    if (this.hasOwnProperty(re("elementProperties"))) return;
+    const e = Hi(this);
     e.finalize(), e.l !== void 0 && (this.l = [...e.l]), this.elementProperties = new Map(e.elementProperties);
   }
   static finalize() {
-    if (this.hasOwnProperty(ne("finalized"))) return;
-    if (this.finalized = !0, this._$Ei(), this.hasOwnProperty(ne("properties"))) {
-      const t = this.properties, i = [...Yi(t), ...Gi(t)];
+    if (this.hasOwnProperty(re("finalized"))) return;
+    if (this.finalized = !0, this._$Ei(), this.hasOwnProperty(re("properties"))) {
+      const t = this.properties, i = [...Bi(t), ...Vi(t)];
       for (const s of i) this.createProperty(s, t[s]);
     }
     const e = this[Symbol.metadata];
@@ -119,8 +119,8 @@ let W = class extends HTMLElement {
     const t = [];
     if (Array.isArray(e)) {
       const i = new Set(e.flat(1 / 0).reverse());
-      for (const s of i) t.unshift(ti(s));
-    } else e !== void 0 && t.push(ti(e));
+      for (const s of i) t.unshift(Gt(s));
+    } else e !== void 0 && t.push(Gt(e));
     return t;
   }
   static _$Eu(e, t) {
@@ -146,7 +146,7 @@ let W = class extends HTMLElement {
   }
   createRenderRoot() {
     const e = this.shadowRoot ?? this.attachShadow(this.constructor.shadowRootOptions);
-    return Hi(e, this.constructor.elementStyles), e;
+    return Oi(e, this.constructor.elementStyles), e;
   }
   connectedCallback() {
     this.renderRoot ??= this.createRenderRoot(), this.enableUpdating(!0), this._$EO?.forEach((e) => e.hostConnected?.());
@@ -162,29 +162,29 @@ let W = class extends HTMLElement {
   _$ET(e, t) {
     const i = this.constructor.elementProperties.get(e), s = this.constructor._$Eu(e, i);
     if (s !== void 0 && i.reflect === !0) {
-      const n = (i.converter?.toAttribute !== void 0 ? i.converter : ot).toAttribute(t, i.type);
-      this._$Em = e, n == null ? this.removeAttribute(s) : this.setAttribute(s, n), this._$Em = null;
+      const r = (i.converter?.toAttribute !== void 0 ? i.converter : at).toAttribute(t, i.type);
+      this._$Em = e, r == null ? this.removeAttribute(s) : this.setAttribute(s, r), this._$Em = null;
     }
   }
   _$AK(e, t) {
     const i = this.constructor, s = i._$Eh.get(e);
     if (s !== void 0 && this._$Em !== s) {
-      const n = i.getPropertyOptions(s), o = typeof n.converter == "function" ? { fromAttribute: n.converter } : n.converter?.fromAttribute !== void 0 ? n.converter : ot;
+      const r = i.getPropertyOptions(s), o = typeof r.converter == "function" ? { fromAttribute: r.converter } : r.converter?.fromAttribute !== void 0 ? r.converter : at;
       this._$Em = s;
-      const d = o.fromAttribute(t, n.type);
+      const d = o.fromAttribute(t, r.type);
       this[s] = d ?? this._$Ej?.get(s) ?? d, this._$Em = null;
     }
   }
-  requestUpdate(e, t, i, s = !1, n) {
+  requestUpdate(e, t, i, s = !1, r) {
     if (e !== void 0) {
       const o = this.constructor;
-      if (s === !1 && (n = this[e]), i ??= o.getPropertyOptions(e), !((i.hasChanged ?? Si)(n, t) || i.useDefault && i.reflect && n === this._$Ej?.get(e) && !this.hasAttribute(o._$Eu(e, i)))) return;
+      if (s === !1 && (r = this[e]), i ??= o.getPropertyOptions(e), !((i.hasChanged ?? wi)(r, t) || i.useDefault && i.reflect && r === this._$Ej?.get(e) && !this.hasAttribute(o._$Eu(e, i)))) return;
       this.C(e, t, i);
     }
     this.isUpdatePending === !1 && (this._$ES = this._$EP());
   }
-  C(e, t, { useDefault: i, reflect: s, wrapped: n }, o) {
-    i && !(this._$Ej ??= /* @__PURE__ */ new Map()).has(e) && (this._$Ej.set(e, o ?? t ?? this[e]), n !== !0 || o !== void 0) || (this._$AL.has(e) || (this.hasUpdated || i || (t = void 0), this._$AL.set(e, t)), s === !0 && this._$Em !== e && (this._$Eq ??= /* @__PURE__ */ new Set()).add(e));
+  C(e, t, { useDefault: i, reflect: s, wrapped: r }, o) {
+    i && !(this._$Ej ??= /* @__PURE__ */ new Map()).has(e) && (this._$Ej.set(e, o ?? t ?? this[e]), r !== !0 || o !== void 0) || (this._$AL.has(e) || (this.hasUpdated || i || (t = void 0), this._$AL.set(e, t)), s === !0 && this._$Em !== e && (this._$Eq ??= /* @__PURE__ */ new Set()).add(e));
   }
   async _$EP() {
     this.isUpdatePending = !0;
@@ -203,13 +203,13 @@ let W = class extends HTMLElement {
     if (!this.isUpdatePending) return;
     if (!this.hasUpdated) {
       if (this.renderRoot ??= this.createRenderRoot(), this._$Ep) {
-        for (const [s, n] of this._$Ep) this[s] = n;
+        for (const [s, r] of this._$Ep) this[s] = r;
         this._$Ep = void 0;
       }
       const i = this.constructor.elementProperties;
-      if (i.size > 0) for (const [s, n] of i) {
-        const { wrapped: o } = n, d = this[s];
-        o !== !0 || this._$AL.has(s) || d === void 0 || this.C(s, void 0, n, d);
+      if (i.size > 0) for (const [s, r] of i) {
+        const { wrapped: o } = r, d = this[s];
+        o !== !0 || this._$AL.has(s) || d === void 0 || this.C(s, void 0, r, d);
       }
     }
     let e = !1;
@@ -246,56 +246,56 @@ let W = class extends HTMLElement {
   firstUpdated(e) {
   }
 };
-W.elementStyles = [], W.shadowRootOptions = { mode: "open" }, W[ne("elementProperties")] = /* @__PURE__ */ new Map(), W[ne("finalized")] = /* @__PURE__ */ new Map(), Xi?.({ ReactiveElement: W }), (He.reactiveElementVersions ??= []).push("2.1.2");
-const Bt = globalThis, ai = (r) => r, fe = Bt.trustedTypes, ri = fe ? fe.createPolicy("lit-html", { createHTML: (r) => r }) : void 0, qi = "$lit$", j = `lit$${Math.random().toFixed(9).slice(2)}$`, Ei = "?" + j, es = `<${Ei}>`, B = document, de = () => B.createComment(""), he = (r) => r === null || typeof r != "object" && typeof r != "function", Vt = Array.isArray, ts = (r) => Vt(r) || typeof r?.[Symbol.iterator] == "function", Ze = `[ 	
-\f\r]`, ee = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, ni = /-->/g, oi = />/g, D = RegExp(`>|${Ze}(?:([^\\s"'>=/]+)(${Ze}*=${Ze}*(?:[^ 	
-\f\r"'\`<>=]|("|')|))|$)`, "g"), li = /'/g, di = /"/g, Ri = /^(?:script|style|textarea|title)$/i, zi = (r) => (e, ...t) => ({ _$litType$: r, strings: e, values: t }), a = zi(1), C = zi(2), L = /* @__PURE__ */ Symbol.for("lit-noChange"), l = /* @__PURE__ */ Symbol.for("lit-nothing"), hi = /* @__PURE__ */ new WeakMap(), I = B.createTreeWalker(B, 129);
-function Li(r, e) {
-  if (!Vt(r) || !r.hasOwnProperty("raw")) throw Error("invalid template strings array");
-  return ri !== void 0 ? ri.createHTML(e) : e;
+W.elementStyles = [], W.shadowRootOptions = { mode: "open" }, W[re("elementProperties")] = /* @__PURE__ */ new Map(), W[re("finalized")] = /* @__PURE__ */ new Map(), Ji?.({ ReactiveElement: W }), (Be.reactiveElementVersions ??= []).push("2.1.2");
+const Dt = globalThis, Xt = (n) => n, me = Dt.trustedTypes, ei = me ? me.createPolicy("lit-html", { createHTML: (n) => n }) : void 0, xi = "$lit$", j = `lit$${Math.random().toFixed(9).slice(2)}$`, ki = "?" + j, Ki = `<${ki}>`, B = document, le = () => B.createComment(""), de = (n) => n === null || typeof n != "object" && typeof n != "function", Mt = Array.isArray, Yi = (n) => Mt(n) || typeof n?.[Symbol.iterator] == "function", Ke = `[ 	
+\f\r]`, ee = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, ti = /-->/g, ii = />/g, D = RegExp(`>|${Ke}(?:([^\\s"'>=/]+)(${Ke}*=${Ke}*(?:[^ 	
+\f\r"'\`<>=]|("|')|))|$)`, "g"), si = /'/g, ai = /"/g, _i = /^(?:script|style|textarea|title)$/i, Ci = (n) => (e, ...t) => ({ _$litType$: n, strings: e, values: t }), a = Ci(1), k = Ci(2), L = /* @__PURE__ */ Symbol.for("lit-noChange"), l = /* @__PURE__ */ Symbol.for("lit-nothing"), ri = /* @__PURE__ */ new WeakMap(), I = B.createTreeWalker(B, 129);
+function Si(n, e) {
+  if (!Mt(n) || !n.hasOwnProperty("raw")) throw Error("invalid template strings array");
+  return ei !== void 0 ? ei.createHTML(e) : e;
 }
-const is = (r, e) => {
-  const t = r.length - 1, i = [];
-  let s, n = e === 2 ? "<svg>" : e === 3 ? "<math>" : "", o = ee;
+const Gi = (n, e) => {
+  const t = n.length - 1, i = [];
+  let s, r = e === 2 ? "<svg>" : e === 3 ? "<math>" : "", o = ee;
   for (let d = 0; d < t; d++) {
-    const h = r[d];
-    let c, g, p = -1, v = 0;
-    for (; v < h.length && (o.lastIndex = v, g = o.exec(h), g !== null); ) v = o.lastIndex, o === ee ? g[1] === "!--" ? o = ni : g[1] !== void 0 ? o = oi : g[2] !== void 0 ? (Ri.test(g[2]) && (s = RegExp("</" + g[2], "g")), o = D) : g[3] !== void 0 && (o = D) : o === D ? g[0] === ">" ? (o = s ?? ee, p = -1) : g[1] === void 0 ? p = -2 : (p = o.lastIndex - g[2].length, c = g[1], o = g[3] === void 0 ? D : g[3] === '"' ? di : li) : o === di || o === li ? o = D : o === ni || o === oi ? o = ee : (o = D, s = void 0);
-    const y = o === D && r[d + 1].startsWith("/>") ? " " : "";
-    n += o === ee ? h + es : p >= 0 ? (i.push(c), h.slice(0, p) + qi + h.slice(p) + j + y) : h + j + (p === -2 ? d : y);
+    const h = n[d];
+    let c, g, p = -1, y = 0;
+    for (; y < h.length && (o.lastIndex = y, g = o.exec(h), g !== null); ) y = o.lastIndex, o === ee ? g[1] === "!--" ? o = ti : g[1] !== void 0 ? o = ii : g[2] !== void 0 ? (_i.test(g[2]) && (s = RegExp("</" + g[2], "g")), o = D) : g[3] !== void 0 && (o = D) : o === D ? g[0] === ">" ? (o = s ?? ee, p = -1) : g[1] === void 0 ? p = -2 : (p = o.lastIndex - g[2].length, c = g[1], o = g[3] === void 0 ? D : g[3] === '"' ? ai : si) : o === ai || o === si ? o = D : o === ti || o === ii ? o = ee : (o = D, s = void 0);
+    const $ = o === D && n[d + 1].startsWith("/>") ? " " : "";
+    r += o === ee ? h + Ki : p >= 0 ? (i.push(c), h.slice(0, p) + xi + h.slice(p) + j + $) : h + j + (p === -2 ? d : $);
   }
-  return [Li(r, n + (r[t] || "<?>") + (e === 2 ? "</svg>" : e === 3 ? "</math>" : "")), i];
+  return [Si(n, r + (n[t] || "<?>") + (e === 2 ? "</svg>" : e === 3 ? "</math>" : "")), i];
 };
-class ce {
+class he {
   constructor({ strings: e, _$litType$: t }, i) {
     let s;
     this.parts = [];
-    let n = 0, o = 0;
-    const d = e.length - 1, h = this.parts, [c, g] = is(e, t);
-    if (this.el = ce.createElement(c, i), I.currentNode = this.el.content, t === 2 || t === 3) {
+    let r = 0, o = 0;
+    const d = e.length - 1, h = this.parts, [c, g] = Gi(e, t);
+    if (this.el = he.createElement(c, i), I.currentNode = this.el.content, t === 2 || t === 3) {
       const p = this.el.content.firstChild;
       p.replaceWith(...p.childNodes);
     }
     for (; (s = I.nextNode()) !== null && h.length < d; ) {
       if (s.nodeType === 1) {
-        if (s.hasAttributes()) for (const p of s.getAttributeNames()) if (p.endsWith(qi)) {
-          const v = g[o++], y = s.getAttribute(p).split(j), E = /([.?@])?(.*)/.exec(v);
-          h.push({ type: 1, index: n, name: E[2], strings: y, ctor: E[1] === "." ? as : E[1] === "?" ? rs : E[1] === "@" ? ns : We }), s.removeAttribute(p);
-        } else p.startsWith(j) && (h.push({ type: 6, index: n }), s.removeAttribute(p));
-        if (Ri.test(s.tagName)) {
-          const p = s.textContent.split(j), v = p.length - 1;
-          if (v > 0) {
-            s.textContent = fe ? fe.emptyScript : "";
-            for (let y = 0; y < v; y++) s.append(p[y], de()), I.nextNode(), h.push({ type: 2, index: ++n });
-            s.append(p[v], de());
+        if (s.hasAttributes()) for (const p of s.getAttributeNames()) if (p.endsWith(xi)) {
+          const y = g[o++], $ = s.getAttribute(p).split(j), E = /([.?@])?(.*)/.exec(y);
+          h.push({ type: 1, index: r, name: E[2], strings: $, ctor: E[1] === "." ? Qi : E[1] === "?" ? Xi : E[1] === "@" ? es : Ve }), s.removeAttribute(p);
+        } else p.startsWith(j) && (h.push({ type: 6, index: r }), s.removeAttribute(p));
+        if (_i.test(s.tagName)) {
+          const p = s.textContent.split(j), y = p.length - 1;
+          if (y > 0) {
+            s.textContent = me ? me.emptyScript : "";
+            for (let $ = 0; $ < y; $++) s.append(p[$], le()), I.nextNode(), h.push({ type: 2, index: ++r });
+            s.append(p[y], le());
           }
         }
-      } else if (s.nodeType === 8) if (s.data === Ei) h.push({ type: 2, index: n });
+      } else if (s.nodeType === 8) if (s.data === ki) h.push({ type: 2, index: r });
       else {
         let p = -1;
-        for (; (p = s.data.indexOf(j, p + 1)) !== -1; ) h.push({ type: 7, index: n }), p += j.length - 1;
+        for (; (p = s.data.indexOf(j, p + 1)) !== -1; ) h.push({ type: 7, index: r }), p += j.length - 1;
       }
-      n++;
+      r++;
     }
   }
   static createElement(e, t) {
@@ -303,13 +303,13 @@ class ce {
     return i.innerHTML = e, i;
   }
 }
-function Z(r, e, t = r, i) {
+function Z(n, e, t = n, i) {
   if (e === L) return e;
   let s = i !== void 0 ? t._$Co?.[i] : t._$Cl;
-  const n = he(e) ? void 0 : e._$litDirective$;
-  return s?.constructor !== n && (s?._$AO?.(!1), n === void 0 ? s = void 0 : (s = new n(r), s._$AT(r, t, i)), i !== void 0 ? (t._$Co ??= [])[i] = s : t._$Cl = s), s !== void 0 && (e = Z(r, s._$AS(r, e.values), s, i)), e;
+  const r = de(e) ? void 0 : e._$litDirective$;
+  return s?.constructor !== r && (s?._$AO?.(!1), r === void 0 ? s = void 0 : (s = new r(n), s._$AT(n, t, i)), i !== void 0 ? (t._$Co ??= [])[i] = s : t._$Cl = s), s !== void 0 && (e = Z(n, s._$AS(n, e.values), s, i)), e;
 }
-class ss {
+class Zi {
   constructor(e, t) {
     this._$AV = [], this._$AN = void 0, this._$AD = e, this._$AM = t;
   }
@@ -322,13 +322,13 @@ class ss {
   u(e) {
     const { el: { content: t }, parts: i } = this._$AD, s = (e?.creationScope ?? B).importNode(t, !0);
     I.currentNode = s;
-    let n = I.nextNode(), o = 0, d = 0, h = i[0];
+    let r = I.nextNode(), o = 0, d = 0, h = i[0];
     for (; h !== void 0; ) {
       if (o === h.index) {
         let c;
-        h.type === 2 ? c = new Q(n, n.nextSibling, this, e) : h.type === 1 ? c = new h.ctor(n, h.name, h.strings, this, e) : h.type === 6 && (c = new os(n, this, e)), this._$AV.push(c), h = i[++d];
+        h.type === 2 ? c = new Q(r, r.nextSibling, this, e) : h.type === 1 ? c = new h.ctor(r, h.name, h.strings, this, e) : h.type === 6 && (c = new ts(r, this, e)), this._$AV.push(c), h = i[++d];
       }
-      o !== h?.index && (n = I.nextNode(), o++);
+      o !== h?.index && (r = I.nextNode(), o++);
     }
     return I.currentNode = B, s;
   }
@@ -356,7 +356,7 @@ class Q {
     return this._$AB;
   }
   _$AI(e, t = this) {
-    e = Z(this, e, t), he(e) ? e === l || e == null || e === "" ? (this._$AH !== l && this._$AR(), this._$AH = l) : e !== this._$AH && e !== L && this._(e) : e._$litType$ !== void 0 ? this.$(e) : e.nodeType !== void 0 ? this.T(e) : ts(e) ? this.k(e) : this._(e);
+    e = Z(this, e, t), de(e) ? e === l || e == null || e === "" ? (this._$AH !== l && this._$AR(), this._$AH = l) : e !== this._$AH && e !== L && this._(e) : e._$litType$ !== void 0 ? this.$(e) : e.nodeType !== void 0 ? this.T(e) : Yi(e) ? this.k(e) : this._(e);
   }
   O(e) {
     return this._$AA.parentNode.insertBefore(e, this._$AB);
@@ -365,55 +365,55 @@ class Q {
     this._$AH !== e && (this._$AR(), this._$AH = this.O(e));
   }
   _(e) {
-    this._$AH !== l && he(this._$AH) ? this._$AA.nextSibling.data = e : this.T(B.createTextNode(e)), this._$AH = e;
+    this._$AH !== l && de(this._$AH) ? this._$AA.nextSibling.data = e : this.T(B.createTextNode(e)), this._$AH = e;
   }
   $(e) {
-    const { values: t, _$litType$: i } = e, s = typeof i == "number" ? this._$AC(e) : (i.el === void 0 && (i.el = ce.createElement(Li(i.h, i.h[0]), this.options)), i);
+    const { values: t, _$litType$: i } = e, s = typeof i == "number" ? this._$AC(e) : (i.el === void 0 && (i.el = he.createElement(Si(i.h, i.h[0]), this.options)), i);
     if (this._$AH?._$AD === s) this._$AH.p(t);
     else {
-      const n = new ss(s, this), o = n.u(this.options);
-      n.p(t), this.T(o), this._$AH = n;
+      const r = new Zi(s, this), o = r.u(this.options);
+      r.p(t), this.T(o), this._$AH = r;
     }
   }
   _$AC(e) {
-    let t = hi.get(e.strings);
-    return t === void 0 && hi.set(e.strings, t = new ce(e)), t;
+    let t = ri.get(e.strings);
+    return t === void 0 && ri.set(e.strings, t = new he(e)), t;
   }
   k(e) {
-    Vt(this._$AH) || (this._$AH = [], this._$AR());
+    Mt(this._$AH) || (this._$AH = [], this._$AR());
     const t = this._$AH;
     let i, s = 0;
-    for (const n of e) s === t.length ? t.push(i = new Q(this.O(de()), this.O(de()), this, this.options)) : i = t[s], i._$AI(n), s++;
+    for (const r of e) s === t.length ? t.push(i = new Q(this.O(le()), this.O(le()), this, this.options)) : i = t[s], i._$AI(r), s++;
     s < t.length && (this._$AR(i && i._$AB.nextSibling, s), t.length = s);
   }
   _$AR(e = this._$AA.nextSibling, t) {
     for (this._$AP?.(!1, !0, t); e !== this._$AB; ) {
-      const i = ai(e).nextSibling;
-      ai(e).remove(), e = i;
+      const i = Xt(e).nextSibling;
+      Xt(e).remove(), e = i;
     }
   }
   setConnected(e) {
     this._$AM === void 0 && (this._$Cv = e, this._$AP?.(e));
   }
 }
-class We {
+class Ve {
   get tagName() {
     return this.element.tagName;
   }
   get _$AU() {
     return this._$AM._$AU;
   }
-  constructor(e, t, i, s, n) {
-    this.type = 1, this._$AH = l, this._$AN = void 0, this.element = e, this.name = t, this._$AM = s, this.options = n, i.length > 2 || i[0] !== "" || i[1] !== "" ? (this._$AH = Array(i.length - 1).fill(new String()), this.strings = i) : this._$AH = l;
+  constructor(e, t, i, s, r) {
+    this.type = 1, this._$AH = l, this._$AN = void 0, this.element = e, this.name = t, this._$AM = s, this.options = r, i.length > 2 || i[0] !== "" || i[1] !== "" ? (this._$AH = Array(i.length - 1).fill(new String()), this.strings = i) : this._$AH = l;
   }
   _$AI(e, t = this, i, s) {
-    const n = this.strings;
+    const r = this.strings;
     let o = !1;
-    if (n === void 0) e = Z(this, e, t, 0), o = !he(e) || e !== this._$AH && e !== L, o && (this._$AH = e);
+    if (r === void 0) e = Z(this, e, t, 0), o = !de(e) || e !== this._$AH && e !== L, o && (this._$AH = e);
     else {
       const d = e;
       let h, c;
-      for (e = n[0], h = 0; h < n.length - 1; h++) c = Z(this, d[i + h], t, h), c === L && (c = this._$AH[h]), o ||= !he(c) || c !== this._$AH[h], c === l ? e = l : e !== l && (e += (c ?? "") + n[h + 1]), this._$AH[h] = c;
+      for (e = r[0], h = 0; h < r.length - 1; h++) c = Z(this, d[i + h], t, h), c === L && (c = this._$AH[h]), o ||= !de(c) || c !== this._$AH[h], c === l ? e = l : e !== l && (e += (c ?? "") + r[h + 1]), this._$AH[h] = c;
     }
     o && !s && this.j(e);
   }
@@ -421,7 +421,7 @@ class We {
     e === l ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, e ?? "");
   }
 }
-class as extends We {
+class Qi extends Ve {
   constructor() {
     super(...arguments), this.type = 3;
   }
@@ -429,7 +429,7 @@ class as extends We {
     this.element[this.name] = e === l ? void 0 : e;
   }
 }
-class rs extends We {
+class Xi extends Ve {
   constructor() {
     super(...arguments), this.type = 4;
   }
@@ -437,20 +437,20 @@ class rs extends We {
     this.element.toggleAttribute(this.name, !!e && e !== l);
   }
 }
-class ns extends We {
-  constructor(e, t, i, s, n) {
-    super(e, t, i, s, n), this.type = 5;
+class es extends Ve {
+  constructor(e, t, i, s, r) {
+    super(e, t, i, s, r), this.type = 5;
   }
   _$AI(e, t = this) {
     if ((e = Z(this, e, t, 0) ?? l) === L) return;
-    const i = this._$AH, s = e === l && i !== l || e.capture !== i.capture || e.once !== i.once || e.passive !== i.passive, n = e !== l && (i === l || s);
-    s && this.element.removeEventListener(this.name, this, i), n && this.element.addEventListener(this.name, this, e), this._$AH = e;
+    const i = this._$AH, s = e === l && i !== l || e.capture !== i.capture || e.once !== i.once || e.passive !== i.passive, r = e !== l && (i === l || s);
+    s && this.element.removeEventListener(this.name, this, i), r && this.element.addEventListener(this.name, this, e), this._$AH = e;
   }
   handleEvent(e) {
     typeof this._$AH == "function" ? this._$AH.call(this.options?.host ?? this.element, e) : this._$AH.handleEvent(e);
   }
 }
-class os {
+class ts {
   constructor(e, t, i) {
     this.element = e, this.type = 6, this._$AN = void 0, this._$AM = t, this.options = i;
   }
@@ -461,18 +461,18 @@ class os {
     Z(this, e);
   }
 }
-const ls = { I: Q }, ds = Bt.litHtmlPolyfillSupport;
-ds?.(ce, Q), (Bt.litHtmlVersions ??= []).push("3.3.3");
-const hs = (r, e, t) => {
+const is = { I: Q }, ss = Dt.litHtmlPolyfillSupport;
+ss?.(he, Q), (Dt.litHtmlVersions ??= []).push("3.3.3");
+const as = (n, e, t) => {
   const i = t?.renderBefore ?? e;
   let s = i._$litPart$;
   if (s === void 0) {
-    const n = t?.renderBefore ?? null;
-    i._$litPart$ = s = new Q(e.insertBefore(de(), n), n, void 0, t ?? {});
+    const r = t?.renderBefore ?? null;
+    i._$litPart$ = s = new Q(e.insertBefore(le(), r), r, void 0, t ?? {});
   }
-  return s._$AI(r), s;
+  return s._$AI(n), s;
 };
-const Ht = globalThis;
+const Ot = globalThis;
 let x = class extends W {
   constructor() {
     super(...arguments), this.renderOptions = { host: this }, this._$Do = void 0;
@@ -483,7 +483,7 @@ let x = class extends W {
   }
   update(e) {
     const t = this.render();
-    this.hasUpdated || (this.renderOptions.isConnected = this.isConnected), super.update(e), this._$Do = hs(t, this.renderRoot, this.renderOptions);
+    this.hasUpdated || (this.renderOptions.isConnected = this.isConnected), super.update(e), this._$Do = as(t, this.renderRoot, this.renderOptions);
   }
   connectedCallback() {
     super.connectedCallback(), this._$Do?.setConnected(!0);
@@ -495,10 +495,10 @@ let x = class extends W {
     return L;
   }
 };
-x._$litElement$ = !0, x.finalized = !0, Ht.litElementHydrateSupport?.({ LitElement: x });
-const cs = Ht.litElementPolyfillSupport;
-cs?.({ LitElement: x });
-(Ht.litElementVersions ??= []).push("4.2.2");
+x._$litElement$ = !0, x.finalized = !0, Ot.litElementHydrateSupport?.({ LitElement: x });
+const rs = Ot.litElementPolyfillSupport;
+rs?.({ LitElement: x });
+(Ot.litElementVersions ??= []).push("4.2.2");
 const q = S`
   :host {
     display: block;
@@ -1259,29 +1259,29 @@ const q = S`
     }
   }
 `;
-function z(r) {
+function z(n) {
   const e = {
-    add: C`<path d="M12 4v16M4 12h16"/>`,
-    search: C`<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>`,
-    filter: C`<path d="M3 5h18l-7 8v6l-4 2v-8z"/>`,
-    clear: C`<path d="m6 6 12 12M18 6 6 18"/>`,
-    shuffle: C`<path d="M3 6h3c5 0 7 12 12 12h3m-4-4 4 4-4 4M3 18h3c2 0 4-3 6-6s4-6 6-6h3m-4-4 4 4-4 4"/>`,
-    ascending: C`<path d="M7 20V4m-4 4 4-4 4 4m3-1h7m-7 5h5m-5 5h3"/>`,
-    descending: C`<path d="M7 4v16m-4-4 4 4 4-4m3-9h3m-3 5h5m-5 5h7"/>`,
-    options: C`<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="var(--surface)"/><circle cx="15" cy="12" r="2" fill="var(--surface)"/><circle cx="8" cy="18" r="2" fill="var(--surface)"/>`,
-    first: C`<path d="M5 5v14m13-14-7 7 7 7"/>`,
-    previous: C`<path d="m15 5-7 7 7 7"/>`,
-    next: C`<path d="m9 5 7 7-7 7"/>`,
-    collection: C`<path fill="#ffca28" stroke="#ffca28" d="M6 2h12v20l-6-4-6 4z"/><path fill="#302b16" stroke="none" d="m12 5 1.5 3 3.3.5-2.4 2.3.6 3.3-3-1.6-3 1.6.6-3.3-2.4-2.3 3.3-.5z"/>`,
-    edit: C`<path d="m15 4 5 5M4 20l4-1 12-12a2.1 2.1 0 0 0-3-3L5 16zM4 20h8"/>`,
-    scrape: C`<path d="M3 9h15v4M3 9l-1-4 14-3 1 4zM6 4l3 4m3-5 3 4M3 9v11h8"/><circle cx="16" cy="16" r="4"/><path d="m19 19 3 3M6 13h3m-3 3h2"/>`,
-    artwork: C`<rect x="8" y="2" width="13" height="9" rx="1"/><path d="m10 9 3-3 2 2 2-3 2 2"/><rect x="3" y="14" width="13" height="9" rx="1"/><path d="m5 21 3-3 2 2 2-3 2 2M3 10V6h3m0 0L4 4m2 2L4 8m17 6v4h-3m0 0 2-2m-2 2 2 2"/>`,
-    power: C`<path d="M12 2v10M6 5a9 9 0 1 0 12 0"/>`,
-    play: C`<path fill="currentColor" stroke="none" d="M7 3v18l15-9z"/>`
+    add: k`<path d="M12 4v16M4 12h16"/>`,
+    search: k`<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>`,
+    filter: k`<path d="M3 5h18l-7 8v6l-4 2v-8z"/>`,
+    clear: k`<path d="m6 6 12 12M18 6 6 18"/>`,
+    shuffle: k`<path d="M3 6h3c5 0 7 12 12 12h3m-4-4 4 4-4 4M3 18h3c2 0 4-3 6-6s4-6 6-6h3m-4-4 4 4-4 4"/>`,
+    ascending: k`<path d="M7 20V4m-4 4 4-4 4 4m3-1h7m-7 5h5m-5 5h3"/>`,
+    descending: k`<path d="M7 4v16m-4-4 4 4 4-4m3-9h3m-3 5h5m-5 5h7"/>`,
+    options: k`<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="var(--surface)"/><circle cx="15" cy="12" r="2" fill="var(--surface)"/><circle cx="8" cy="18" r="2" fill="var(--surface)"/>`,
+    first: k`<path d="M5 5v14m13-14-7 7 7 7"/>`,
+    previous: k`<path d="m15 5-7 7 7 7"/>`,
+    next: k`<path d="m9 5 7 7-7 7"/>`,
+    collection: k`<path fill="#ffca28" stroke="#ffca28" d="M6 2h12v20l-6-4-6 4z"/><path fill="#302b16" stroke="none" d="m12 5 1.5 3 3.3.5-2.4 2.3.6 3.3-3-1.6-3 1.6.6-3.3-2.4-2.3 3.3-.5z"/>`,
+    edit: k`<path d="m15 4 5 5M4 20l4-1 12-12a2.1 2.1 0 0 0-3-3L5 16zM4 20h8"/>`,
+    scrape: k`<path d="M3 9h15v4M3 9l-1-4 14-3 1 4zM6 4l3 4m3-5 3 4M3 9v11h8"/><circle cx="16" cy="16" r="4"/><path d="m19 19 3 3M6 13h3m-3 3h2"/>`,
+    artwork: k`<rect x="8" y="2" width="13" height="9" rx="1"/><path d="m10 9 3-3 2 2 2-3 2 2"/><rect x="3" y="14" width="13" height="9" rx="1"/><path d="m5 21 3-3 2 2 2-3 2 2M3 10V6h3m0 0L4 4m2 2L4 8m17 6v4h-3m0 0 2-2m-2 2 2 2"/>`,
+    power: k`<path d="M12 2v10M6 5a9 9 0 1 0 12 0"/>`,
+    play: k`<path fill="currentColor" stroke="none" d="M7 3v18l15-9z"/>`
   };
-  return C`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${e[r]}</svg>`;
+  return k`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${e[n]}</svg>`;
 }
-const Wt = S`
+const Nt = S`
   .icon-action-wrap {
     position: relative;
     display: inline-flex;
@@ -1344,42 +1344,42 @@ const Wt = S`
     visibility: visible;
   }
 `;
-function Jt(r, e, t, i, s = "") {
+function It(n, e, t, i, s = "") {
   return a`<span
     class="icon-action-wrap"
-    @pointerenter=${(n) => n.currentTarget.removeAttribute("data-tooltip-dismissed")}
-    @focusin=${(n) => {
-    n.target.matches(":focus-visible") && n.currentTarget.removeAttribute(
+    @pointerenter=${(r) => r.currentTarget.removeAttribute("data-tooltip-dismissed")}
+    @focusin=${(r) => {
+    r.target.matches(":focus-visible") && r.currentTarget.removeAttribute(
       "data-tooltip-dismissed"
     );
   }}
     ><button
       type="button"
       class=${`icon-action ${s}`}
-      aria-label=${r}
+      aria-label=${n}
       aria-describedby="action-tooltip"
       ?disabled=${t}
-      @click=${(n) => {
-    n.currentTarget.parentElement.setAttribute(
+      @click=${(r) => {
+    r.currentTarget.parentElement.setAttribute(
       "data-tooltip-dismissed",
       ""
     ), i();
   }}
     >
-      ${z(e)}<span class="icon-action-label">${r}</span></button
+      ${z(e)}<span class="icon-action-label">${n}</span></button
     ><span class="action-tooltip" id="action-tooltip" role="tooltip"
-      >${r}</span
+      >${n}</span
     ></span
   >`;
 }
-function k(r, e = !1) {
+function _(n, e = !1) {
   return a`<button
     type="button"
     class="dialog-close"
     aria-label="Close"
     title="Close"
     ?disabled=${e}
-    @click=${r}
+    @click=${n}
   >
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path
@@ -1392,13 +1392,13 @@ function k(r, e = !1) {
     </svg>
   </button>`;
 }
-function _(r) {
-  const e = r.currentTarget;
-  if (r.target !== e) return;
+function C(n) {
+  const e = n.currentTarget;
+  if (n.target !== e) return;
   const t = e.getBoundingClientRect();
-  r.clientX >= t.left && r.clientX <= t.right && r.clientY >= t.top && r.clientY <= t.bottom || e.dispatchEvent(new Event("cancel", { cancelable: !0 })) && e.close();
+  n.clientX >= t.left && n.clientX <= t.right && n.clientY >= t.top && n.clientY <= t.bottom || e.dispatchEvent(new Event("cancel", { cancelable: !0 })) && e.close();
 }
-const ye = class ye extends x {
+const be = class be extends x {
   constructor() {
     super(...arguments), this.value = "", this.disabled = !1, this.allowAdd = !1, this.filtered = !1, this.filterLabel = "", this.scopeKey = "", this.draft = "", this.generation = 0;
   }
@@ -1462,12 +1462,12 @@ const ye = class ye extends x {
       </div>
       <dialog
         aria-labelledby="journal-search-title"
-        @click=${_}
+        @click=${C}
         @cancel=${this.close}
       >
         <div class="card-head">
           <h2 id="journal-search-title">Search Journal</h2>
-          ${k((e) => this.close(e))}
+          ${_((e) => this.close(e))}
         </div>
         ${this.filterLabel ? a`<p class="muted">${this.filterLabel}</p>` : ""}
         <form
@@ -1494,7 +1494,7 @@ const ye = class ye extends x {
       </dialog>`;
   }
 };
-ye.properties = {
+be.properties = {
   value: {},
   disabled: { type: Boolean },
   allowAdd: { type: Boolean },
@@ -1502,7 +1502,7 @@ ye.properties = {
   filterLabel: {},
   context: { attribute: !1 },
   scopeKey: {}
-}, ye.styles = [
+}, be.styles = [
   q,
   S`
       :host {
@@ -1542,27 +1542,27 @@ ye.properties = {
       }
     `
 ];
-let lt = ye;
-customElements.get("kaleidescape-journal-shortcuts") || customElements.define("kaleidescape-journal-shortcuts", lt);
+let rt = be;
+customElements.get("kaleidescape-journal-shortcuts") || customElements.define("kaleidescape-journal-shortcuts", rt);
 function G() {
-  const r = window.innerWidth;
-  return r <= 600 ? "mobile" : r <= 1024 ? "tablet" : "desktop";
+  const n = window.innerWidth;
+  return n <= 600 ? "mobile" : n <= 1024 ? "tablet" : "desktop";
 }
 class b extends Error {
   constructor(e) {
     super(e), this.code = e;
   }
 }
-const m = "kaleidescape_companion", ps = 15e3, f = ({ entry_id: r, dataset_id: e }) => ({
-  entry_id: r,
+const m = "kaleidescape_companion", ns = 15e3, f = ({ entry_id: n, dataset_id: e }) => ({
+  entry_id: n,
   dataset_id: e
-}), us = 256 * 1024 * 1024, ci = 5 * 1024 * 1024, gs = 32 * 1024 * 1024;
-function Je() {
-  const r = globalThis.crypto;
-  if (typeof r?.randomUUID == "function") return r.randomUUID();
-  if (typeof r?.getRandomValues != "function")
+}), os = 256 * 1024 * 1024, ni = 5 * 1024 * 1024, ls = 32 * 1024 * 1024;
+function He() {
+  const n = globalThis.crypto;
+  if (typeof n?.randomUUID == "function") return n.randomUUID();
+  if (typeof n?.getRandomValues != "function")
     throw new b("request_id_unavailable");
-  const e = r.getRandomValues(new Uint8Array(16));
+  const e = n.getRandomValues(new Uint8Array(16));
   e[6] = e[6] & 15 | 64, e[8] = e[8] & 63 | 128;
   const t = Array.from(
     e,
@@ -1570,16 +1570,16 @@ function Je() {
   ).join("");
   return `${t.slice(0, 8)}-${t.slice(8, 12)}-${t.slice(12, 16)}-${t.slice(16, 20)}-${t.slice(20)}`;
 }
-async function ge(r, e, t) {
-  const i = r.body?.getReader();
+async function ue(n, e, t) {
+  const i = n.body?.getReader();
   if (!i) throw new b("storage_error");
   const s = [];
-  let n = 0;
+  let r = 0;
   try {
     for (; ; ) {
       const { value: o, done: d } = await i.read();
       if (d) break;
-      if (n += o.byteLength, n > e) throw new b("export_too_large");
+      if (r += o.byteLength, r > e) throw new b("export_too_large");
       s.push(new Uint8Array(o));
     }
     return new Blob(s, { type: t });
@@ -1588,10 +1588,10 @@ async function ge(r, e, t) {
     }), i.releaseLock();
   }
 }
-function u(r) {
-  return typeof r == "object" && r !== null && "code" in r && typeof r.code == "string" ? r.code : "connection_lost";
+function u(n) {
+  return typeof n == "object" && n !== null && "code" in n && typeof n.code == "string" ? n.code : "connection_lost";
 }
-function w(r) {
+function w(n) {
   return {
     unauthorized: "Access to this operation is denied. Your journal has been cleared from this view.",
     not_ready: "The integration is not loaded. Reload the connection after it starts.",
@@ -1636,17 +1636,17 @@ function w(r) {
     provider_artwork_unavailable: "The selected image is no longer available from this provider.",
     provider_disabled: "The required provider or artwork feature is disabled.",
     metadata_disabled: "Enable and configure a scraper in Settings first.",
-    metadata_unavailable: "Metadata retrieval failed. Check the operation logs and try again.",
+    metadata_unavailable: "Metadata retrieval failed. Try again.",
     provider_identity_mismatch: "The provider could not verify this movie's title and release year.",
     tmdb_not_found: "TMDB did not find a matching title and release year.",
     tmdb_ambiguous: "TMDB returned more than one matching movie. No data was imported."
-  }[u(r)] ?? "The connection was interrupted. The result could not be confirmed.";
+  }[u(n)] ?? "The connection was interrupted. The result could not be confirmed.";
 }
-async function te(r, e = ps) {
+async function te(n, e = ns) {
   let t;
   try {
     return await Promise.race([
-      r,
+      n,
       new Promise((i, s) => {
         t = setTimeout(
           () => s(new b("connection_lost")),
@@ -1658,7 +1658,7 @@ async function te(r, e = ps) {
     clearTimeout(t);
   }
 }
-class Kt {
+class Ft {
   constructor(e) {
     this.transport = e;
   }
@@ -1722,7 +1722,7 @@ class Kt {
       title_id: t
     });
   }
-  titleScrapePreview(e, t, i, s = "", n = "") {
+  titleScrapePreview(e, t, i, s = "", r = "") {
     return te(
       this.transport.callWS({
         type: `${m}/metadata/title/preview`,
@@ -1730,7 +1730,7 @@ class Kt {
         title_id: t,
         provider: i,
         search_id: s,
-        choice: n
+        choice: r
       }),
       185e3
     );
@@ -1821,14 +1821,14 @@ class Kt {
       ...f(e)
     });
   }
-  prepareUIPreferences(e, t, i, s, n = "library", o = G()) {
+  prepareUIPreferences(e, t, i, s, r = "library", o = G()) {
     return this.prepareCommand(
       e,
       `ui/${t ? "shared" : "preferences"}/update`,
       {
         revision: i,
         patch: s,
-        ...n !== "library" ? { area: n } : {},
+        ...r !== "library" ? { area: r } : {},
         ...t ? {} : { profile: o }
       }
     );
@@ -1878,14 +1878,14 @@ class Kt {
   info() {
     return this.call({ type: `${m}/info` });
   }
-  list(e, t = "", i = "", s, n = "completed_at", o = !0, d = !1, h) {
+  list(e, t = "", i = "", s, r = "completed_at", o = !0, d = !1, h) {
     return this.call({
       type: `${m}/${h ? "library/viewings" : "journal/list"}`,
       ...h ? { title_id: h } : {},
       ...f(e),
       query: t,
       limit: 25,
-      sort: n,
+      sort: r,
       descending: o,
       fuzzy: d,
       ...i ? { status: i } : {},
@@ -1899,7 +1899,7 @@ class Kt {
       viewing_id: t
     });
   }
-  calendarMonth(e, t, i, s = "", n = "", o = !1, d) {
+  calendarMonth(e, t, i, s = "", r = "", o = !1, d) {
     return this.call({
       type: `${m}/journal/calendar`,
       ...f(e),
@@ -1907,7 +1907,7 @@ class Kt {
       end: i,
       query: s,
       fuzzy: o,
-      ...n ? { status: n } : {},
+      ...r ? { status: r } : {},
       ...d ? { title_id: d } : {}
     });
   }
@@ -2020,23 +2020,16 @@ class Kt {
     const s = i.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase();
     if (!s || !["image/jpeg", "image/png", "image/webp"].includes(s))
       throw await i.body?.cancel(), new b("invalid_request");
-    return ge(i, ci, s);
+    return ue(i, ni, s);
   }
-  logs(e, t, i = {}) {
-    return this.call({
-      ...i,
-      ...f(e),
-      type: `${m}/logs/${t}`
-    });
-  }
-  settingsTransfer(e, t, i, s = {}, n = "") {
+  settingsTransfer(e, t, i, s = {}, r = "") {
     return this.call({
       ...f(e),
       type: `${m}/settings/transfer`,
       operation: t,
       categories: i,
       data: s,
-      request_id: n
+      request_id: r
     });
   }
   settings(e, t, i = {}) {
@@ -2046,14 +2039,14 @@ class Kt {
       type: `${m}/settings/${t}`
     });
   }
-  inspect(e, t, i = 0, s, n) {
+  inspect(e, t, i = 0, s, r) {
     return this.call({
       type: `${m}/database/inspect`,
       ...f(e),
       table: t,
       offset: i,
       ...s == null ? {} : { revision: s },
-      ...n
+      ...r
     });
   }
   preparePurge(e, t) {
@@ -2095,9 +2088,9 @@ class Kt {
   async previewImport(e, t, i) {
     const s = /\.(sqlite|sqlite3|db)$/i.test(t.name) ? "sqlite" : /\.json$/i.test(t.name) ? "json" : null;
     if (!s) throw new b("invalid_request");
-    if (!t.size || t.size > gs)
+    if (!t.size || t.size > ls)
       throw new b("import_too_large");
-    const n = await this.transport.fetchWithAuth(
+    const r = await this.transport.fetchWithAuth(
       `/api/${m}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/import/preview?format=${s}`,
       {
         method: "POST",
@@ -2108,19 +2101,19 @@ class Kt {
         headers: { "Content-Type": "application/octet-stream" }
       }
     );
-    if (!n.ok) {
+    if (!r.ok) {
       const d = {
         401: "unauthorized",
         403: "unauthorized",
         413: "import_too_large",
         404: "not_found"
       };
-      if (d[n.status]) throw new b(d[n.status]);
-      const h = await n.json().catch(() => null);
+      if (d[r.status]) throw new b(d[r.status]);
+      const h = await r.json().catch(() => null);
       throw new b(h?.code ?? "connection_lost");
     }
-    const o = await ge(
-      n,
+    const o = await ue(
+      r,
       8 * 1024 * 1024,
       "application/json"
     );
@@ -2147,7 +2140,7 @@ class Kt {
       );
     }
     const s = i.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase();
-    return !s || !["image/jpeg", "image/png", "image/webp"].includes(s) ? (await i.body?.cancel(), null) : ge(i, ci, s);
+    return !s || !["image/jpeg", "image/png", "image/webp"].includes(s) ? (await i.body?.cancel(), null) : ue(i, ni, s);
   }
   librarySuggestions(e, t, i, s = !1) {
     return this.call({
@@ -2214,14 +2207,14 @@ class Kt {
   }
   async libraryAll(e, t, i) {
     let s;
-    const n = [];
+    const r = [];
     let o = 0;
     for (; i(); ) {
       const d = await this.libraryList(e, {
         ...t,
         grouped: !0,
         limit: 1e3,
-        offset: n.length,
+        offset: r.length,
         ...s ? {
           revision: s.revision,
           preferences_key: s.preferences_key,
@@ -2231,14 +2224,14 @@ class Kt {
       if (!i()) throw new b("not_ready");
       if (s && (d.revision !== s.revision || d.preferences_key !== s.preferences_key))
         throw new b("refresh_required");
-      if (o += new TextEncoder().encode(JSON.stringify(d.items)).byteLength, n.length + d.items.length > 1e4 || o > 32 * 1024 * 1024)
+      if (o += new TextEncoder().encode(JSON.stringify(d.items)).byteLength, r.length + d.items.length > 1e4 || o > 32 * 1024 * 1024)
         throw new b("library_page_too_large");
-      if (n.push(...d.items), s = d, !d.has_more)
+      if (r.push(...d.items), s = d, !d.has_more)
         return {
           ...d,
-          items: n,
+          items: r,
           offset: 0,
-          limit: n.length,
+          limit: r.length,
           has_more: !1
         };
       if (!d.items.length) throw new b("refresh_required");
@@ -2253,7 +2246,7 @@ class Kt {
       ...i,
       ...f(e),
       type: `${m}/${t}`,
-      request_id: Je()
+      request_id: He()
     });
     return { scope: f(e), message: Object.freeze(s) };
   }
@@ -2261,12 +2254,12 @@ class Kt {
     return this.call({ ...e.message });
   }
   async download(e, t, i) {
-    const s = `/api/${m}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/export?format=${t}`, n = await this.transport.fetchWithAuth(s, {
+    const s = `/api/${m}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/export?format=${t}`, r = await this.transport.fetchWithAuth(s, {
       signal: i,
       cache: "no-store",
       redirect: "error"
     });
-    if (!n.ok) {
+    if (!r.ok) {
       const o = {
         401: "unauthorized",
         403: "unauthorized",
@@ -2274,93 +2267,93 @@ class Kt {
         413: "export_too_large",
         503: "busy"
       };
-      throw new b(o[n.status] ?? "storage_error");
+      throw new b(o[r.status] ?? "storage_error");
     }
-    return ge(
-      n,
-      us,
+    return ue(
+      r,
+      os,
       t === "json" ? "application/json" : "application/vnd.sqlite3"
     );
   }
 }
-function $(r, e, t = `${e}s`) {
-  return `${r} ${r === 1 ? e : t}`;
+function v(n, e, t = `${e}s`) {
+  return `${n} ${n === 1 ? e : t}`;
 }
-function Qe(r = 0) {
-  const e = Math.floor(r / 60);
+function Ye(n = 0) {
+  const e = Math.floor(n / 60);
   return `${Math.floor(e / 60)}h ${e % 60}m`;
 }
-function Yt(r, e, t = !!e) {
-  const i = t ? e?.count : r?.month_viewing_count, s = t ? e?.watchedSeconds : r?.month_watched_seconds;
+function Bt(n, e, t = !!e) {
+  const i = t ? e?.count : n?.month_viewing_count, s = t ? e?.watchedSeconds : n?.month_watched_seconds;
   return a`<span class=${t ? "calendar-totals-full" : ""}
-      >Total Viewings ${r?.viewing_count ?? 0} ·
+      >Total Viewings ${n?.viewing_count ?? 0} ·
       ${t ? e?.month ?? "Selected Month" : "This Month"}
       ${i ?? "—"} · Watched Time: Total
-      ${Qe(r?.watched_seconds)} ·
+      ${Ye(n?.watched_seconds)} ·
       ${t ? "Selected Month" : "This Month"}
-      ${s === void 0 && t ? "—" : Qe(s)}</span
+      ${s === void 0 && t ? "—" : Ye(s)}</span
     >
-    ${t ? a`<span class="calendar-totals-compact">${i === void 0 ? "— viewings" : $(i, "viewing")} · ${s === void 0 ? "—" : Qe(s)} watched</span>` : l}`;
+    ${t ? a`<span class="calendar-totals-compact">${i === void 0 ? "— viewings" : v(i, "viewing")} · ${s === void 0 ? "—" : Ye(s)} watched</span>` : l}`;
 }
-function Gt(r, e) {
-  return r ? r.error ? a`<span class="error" role="alert"
-        >${r.error} <button @click=${e}>Retry month</button></span
-      >` : r.loading ? a`<span role="status">Loading month…</span>` : r.empty ? a`<span class="calendar-empty-notice" role="status"
+function Vt(n, e) {
+  return n ? n.error ? a`<span class="error" role="alert"
+        >${n.error} <button @click=${e}>Retry month</button></span
+      >` : n.loading ? a`<span role="status">Loading month…</span>` : n.empty ? a`<span class="calendar-empty-notice" role="status"
             >No viewings match this month</span
           >` : l : l;
 }
-function Ui(r, e, t, i = !1) {
-  const s = new Date(r.started_at), n = Number.isNaN(s.getTime()) ? "—" : s.toLocaleDateString();
+function qi(n, e, t, i = !1) {
+  const s = new Date(n.started_at), r = Number.isNaN(s.getTime()) ? "—" : s.toLocaleDateString();
   return a`<li
-    class=${e === r.id ? "journal-row selected" : "journal-row"}
+    class=${e === n.id ? "journal-row selected" : "journal-row"}
   >
     <button
       class="link entry-name"
-      title=${r.title}
-      aria-current=${e === r.id ? "true" : l}
+      title=${n.title}
+      aria-current=${e === n.id ? "true" : l}
       ?disabled=${i}
-      @click=${() => t(r.id)}
+      @click=${() => t(n.id)}
     >
-      ${r.title}
+      ${n.title}
     </button>
-    <time datetime=${r.started_at}>${n}</time
+    <time datetime=${n.started_at}>${r}</time
     ><span class="journal-row-status"
-      >${r.status === "completed" ? "Completed" : "Partial"}</span
+      >${n.status === "completed" ? "Completed" : "Partial"}</span
     >
   </li>`;
 }
-function Ai(r, e) {
-  return a`<h3 class="journal-title">${r.title}</h3>
+function Ei(n, e) {
+  return a`<h3 class="journal-title">${n.title}</h3>
     <dl class="journal-summary">
       <div>
         <dt>Status</dt>
-        <dd>${r.status === "completed" ? "Completed" : "Partial"}</dd>
+        <dd>${n.status === "completed" ? "Completed" : "Partial"}</dd>
       </div>
       <div>
         <dt>Started</dt>
-        <dd>${e(r.started_at)}</dd>
+        <dd>${e(n.started_at)}</dd>
       </div>
       <div>
         <dt>Ended</dt>
-        <dd>${e(r.ended_at)}</dd>
+        <dd>${e(n.ended_at)}</dd>
       </div>
       <div>
         <dt>Watched</dt>
-        <dd>${(r.watched_seconds / 60).toFixed(2)} min</dd>
+        <dd>${(n.watched_seconds / 60).toFixed(2)} min</dd>
       </div>
       <div>
         <dt>Runtime</dt>
         <dd>
-          ${r.duration_seconds === null ? "—" : `${(r.duration_seconds / 60).toFixed(2)} min`}
+          ${n.duration_seconds === null ? "—" : `${(n.duration_seconds / 60).toFixed(2)} min`}
         </dd>
       </div>
       <div>
         <dt>Origin</dt>
-        <dd>${r.origin === "observed" ? "Recorded" : "Manual"}</dd>
+        <dd>${n.origin === "observed" ? "Recorded" : "Manual"}</dd>
       </div>
     </dl>`;
 }
-const Ti = S`
+const Ri = S`
   .calendar-totals-compact {
     display: none;
   }
@@ -2374,8 +2367,8 @@ const Ti = S`
       white-space: nowrap;
     }
   }
-`, ji = S`
-  ${Ti}
+`, zi = S`
+  ${Ri}
   .journal [hidden] {
     display: none;
   }
@@ -2570,45 +2563,45 @@ const Ti = S`
       font-size: 18px;
     }
   }
-`, ms = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20type='positive'%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(1.33,%200)'%3e%3cg%20transform='translate(0,%2016.27)'%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0.000109100102%200.246970954%2077.0827837%200.246970954%2077.0827837%2063.7145228%200.000109100102%2063.7145228'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M77.0137759,27.0426556%20C76.2423237,14.6741909%2069.9521992,5.42041494%2060.4876349,0.246970954%20C60.5414108,0.548381743%2060.273195,0.925145228%2059.9678008,0.791701245%20C53.7772614,-1.91634855%2043.2753527,6.84780083%2035.9365975,2.25825726%20C35.9917012,3.90539419%2035.6700415,11.940249%2024.3515353,12.4063071%20C24.0843154,12.4172614%2023.9372614,12.1443983%2024.1062241,11.9512033%20C25.619917,10.2247303%2027.1482158,5.85360996%2024.9507054,3.5233195%20C20.2446473,7.74041494%2017.5117012,9.32746888%208.48829876,7.23319502%20C2.71103734,13.2740249%20-0.562655602,21.5419087%200.08,31.8413278%20C1.39120332,52.86639%2021.0848133,64.8846473%2040.9165145,63.6471369%20C60.746888,62.4106224%2078.3253112,48.0677178%2077.0137759,27.0426556'%20fill='%23FA320A'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M40.8717012,11.4648963%20C44.946722,10.49361%2056.6678838,11.3702905%2060.4232365,16.3518672%20C60.6486307,16.6506224%2060.3312863,17.2159336%2059.9678008,17.0572614%20C53.7772614,14.3492116%2043.2753527,23.113361%2035.9365975,18.5238174%20C35.9917012,20.1709544%2035.6700415,28.2058091%2024.3515353,28.6718672%20C24.0843154,28.6828216%2023.9372614,28.4099585%2024.1062241,28.2167635%20C25.619917,26.4902905%2027.1478838,22.1191701%2024.9507054,19.7888797%20C19.8243983,24.3827386%2017.0453112,25.8589212%205.91900415,22.8514523%20C5.55485477,22.753195%205.67900415,22.1679668%206.06639004,22.020249%20C8.16929461,21.2165975%2012.933444,17.6965975%2017.4406639,16.1450622%20C18.2987552,15.8499585%2019.1541909,15.6209129%2019.9890456,15.4878008%20C15.02639,15.0443154%2012.7893776,14.3541909%209.63286307,14.8302075%20C9.28697095,14.8823237%209.05195021,14.479668%209.26639004,14.2034855%20C13.5193361,8.7253112%2021.3540249,7.07087137%2026.1878838,9.98107884%20C23.2082988,6.28912863%2020.8743568,3.34473029%2020.8743568,3.34473029%20L26.4046473,0.203485477%20C26.4046473,0.203485477%2028.6894606,5.30821577%2030.3518672,9.02340249%20C34.4657261,2.94506224%2042.119834,2.38406639%2045.3536929,6.69676349%20C45.5455602,6.95302905%2045.3450622,7.31751037%2045.0247303,7.30987552%20C42.3926971,7.24580913%2040.9434025,9.63983402%2040.833527,11.4605809%20L40.8717012,11.4648963'%20fill='%2300912D'%3e%3c/path%3e%3c/g%3e%3c/svg%3e", fs = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20type='negative'%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(0,%201.23)'%3e%3cg%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0%200.161950465%2079.7417075%200.161950465%2079.7417075%2077.522807%200%2077.522807'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M71.4638596,70.225614%20C56.3459649,71.0192982%2053.2568421,53.7203509%2047.325614,53.8435088%20C44.7982456,53.8964912%2042.8063158,56.5389474%2043.6810526,59.6185965%20C44.1621053,61.3115789%2045.4964912,63.794386%2046.337193,65.3350877%20C49.302807,70.7719298%2044.9185965,76.9245614%2039.7880702,77.4449123%20C31.2621053,78.3098246%2027.705614,73.3638596%2027.925614,68.3007018%20C28.1729825,62.6168421%2032.9922807,56.8091228%2028.0494737,54.3378947%20C22.8694737,51.7480702%2018.6585965,61.8754386%2013.7017544,64.1357895%20C9.2154386,66.1817544%202.9877193,64.5954386%200.773684211,59.6136842%20C-0.781403509,56.1129825%20-0.498596491,49.3722807%206.42526316,46.8003509%20C10.7501754,45.1940351%2020.3880702,48.9010526%2020.8824561,44.205614%20C21.4522807,38.7929825%2010.7575439,38.3364912%207.53754386,37.0385965%20C1.84,34.7424561%20-1.52280702,29.8291228%201.11192982,24.5582456%20C3.08877193,20.6045614%208.90526316,18.9957895%2013.3449123,20.7277193%20C18.6635088,22.8024561%2019.517193,28.3189474%2022.2421053,30.6129825%20C24.5894737,32.5901754%2027.8021053,32.8375439%2029.9031579,31.4782456%20C31.4526316,30.4754386%2031.9684211,28.2729825%2031.3838596,26.2610526%20C30.6084211,23.5901754%2028.5505263,21.9235088%2026.542807,20.2905263%20C22.9698246,17.3859649%2017.925614,14.8884211%2020.9768421,6.96035088%20C23.4778947,0.463157895%2030.8133333,0.229122807%2030.8133333,0.229122807%20C33.7277193,-0.0985964912%2036.3375439,0.781403509%2038.4642105,2.68140351%20C41.3073684,5.22140351%2041.8610526,8.61649123%2041.3852632,12.2385965%20C40.9505263,15.5449123%2039.7803509,18.4407018%2039.1701754,21.7164912%20C38.4621053,25.5196491%2040.4947368,29.3519298%2044.3603509,29.5010526%20C49.4449123,29.6975439%2050.9694737,25.7894737%2051.5915789,23.3122807%20C52.5024561,19.6877193%2053.6978947,16.322807%2057.0617544,14.2035088%20C61.8894737,11.1617544%2068.5954386,11.8284211%2071.7066667,17.674386%20C74.1677193,22.3%2073.3775439,28.6677193%2069.6024561,32.1449123%20C67.9087719,33.7045614%2065.8722807,34.254386%2063.6694737,34.2698246%20C60.5105263,34.2922807%2057.3529825,34.2147368%2054.4207018,35.6929825%20C52.4245614,36.6989474%2051.5547368,38.3382456%2051.5550877,40.5354386%20C51.5550877,42.6768421%2052.6698246,44.0754386%2054.4761404,44.985614%20C57.8782456,46.7003509%2061.6336842,47.0508772%2065.3087719,47.694386%20C70.6382456,48.6277193%2075.3242105,50.5049123%2078.3326316,55.4505263%20C78.3596491,55.4940351%2078.3859649,55.5378947%2078.4115789,55.5821053%20C81.8666667,61.4375439%2078.2533333,69.8687719%2071.4638596,70.225614'%20fill='%230AC855'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3c/g%3e%3c/svg%3e", bs = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(10.1,%200)'%3e%3cg%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0.0178438662%200.124907063%2059.6019307%200.124907063%2059.6019307%2079.9821561%200.0178438662%2079.9821561'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M2.53115242,19.0988848%20C2.76163569,23.9952416%2014.8892193,27.8762825%2029.8007435,27.7912268%20C42.8237918,27.7168773%2053.6874349,24.6411896%2056.3485502,20.6004461%20C55.7421561,19.9265428%2054.904684,19.4643866%2053.9613383,19.3391822%20C53.9714498,19.220223%2053.9779926,19.1003717%2053.9773978,18.9787361%20C53.9663941,17.0423792%2052.5460223,15.4477323%2050.695316,15.1503346%20C50.7440892,14.8999257%2050.7696654,14.6408922%2050.7681784,14.3759108%20C50.7559851,12.2194796%2048.9977695,10.481487%2046.8413383,10.4936803%20C46.7925651,10.4939777%2046.7449814,10.4999257%2046.6965056,10.5020074%20C46.8344981,10.0987361%2046.9118216,9.66780669%2046.9094424,9.21784387%20C46.8969517,7.06141264%2045.1390335,5.32342007%2042.9826022,5.33561338%20C42.4877323,5.33858736%2042.0169517,5.43702602%2041.5821561,5.60743494%20C40.9653532,4.44639405%2039.7811152,3.63717472%2038.4002974,3.54379182%20C38.1597026,1.60743494%2036.5055762,0.113605948%2034.506171,0.124843367%20C33.247881,0.13204461%2032.1350186,0.736356877%2031.4263197,1.66453532%20C30.7075093,0.882379182%2029.6773234,0.391672862%2028.5314498,0.398215613%20C26.3750186,0.410408922%2024.637026,2.16862454%2024.6492193,4.32475836%20C24.6515985,4.73665428%2024.718513,5.13249071%2024.8386617,5.50453532%20C23.9586617,5.66780669%2023.1848327,6.12520446%2022.6191822,6.77144981%20C22.1701115,5.09888476%2020.642974,3.86973978%2018.8297398,3.8798513%20C17.1357621,3.88966543%2015.7040892,4.97873606%2015.172342,6.48981413%20C13.7332342,7.07182156%2012.7202974,8.48356877%2012.7298141,10.1302602%20C12.7318959,10.4960595%2012.7878067,10.8481784%2012.8838662,11.1836431%20C12.398513,10.9713011%2011.8634944,10.852342%2011.2996283,10.8556134%20C9.5994052,10.8654275%208.16327138,11.9622305%207.63598513,13.4822305%20C7.13040892,13.2472862%206.56832714,13.1137546%205.973829,13.1173234%20C3.81739777,13.1295167%202.07910781,14.8874349%202.09153162,17.0438662%20C2.09546468,17.7549442%202.29263941,18.4187361%202.62810409,18.9909294%20C2.59390335,19.0254275%202.56386617,19.063197%202.53115242,19.0988848'%20fill='%23F9D320'%20mask='url(%23mask-2)'%3e%3c/path%3e%3cpath%20d='M50.9736803,68.1576208%20C49.8275093,69.89829%2047.6002974,71.7008178%2045.2692937,72.9026022%20L49.2541264,32.4853532%20C51.7894424,31.6707807%2054.2634944,30.5915242%2056.085948,29.0438662%20L50.9736803,68.1576208%20Z%20M41.3037918,74.5885502%20C37.4450558,75.8655762%2035.201487,76.2614126%2031.9895911,76.5766543%20L32.4901115,35.0432714%20C36.0383643,34.9415613%2040.6301859,34.4606691%2044.5427509,33.6255762%20L41.3037918,74.5885502%20Z%20M18.29829,74.5885502%20L15.0596283,33.6255762%20C18.9718959,34.4606691%2023.5637175,34.9415613%2027.1119703,35.0432714%20L27.6124907,76.5766543%20C24.4005948,76.2614126%2022.1573234,75.8655762%2018.29829,74.5885502%20Z%20M8.62869888,68.1576208%20L3.51613383,29.0438662%20C5.33858736,30.5915242%207.81263941,31.6707807%2010.3479554,32.4853532%20L14.3327881,72.9026022%20C12.0017844,71.7008178%209.77457249,69.89829%208.62869888,68.1576208%20Z%20M50.687881,13.6110037%20C50.7384387,13.8578439%2050.7666914,14.1130112%2050.7681784,14.3750186%20C50.7696654,14.64%2050.7440892,14.8990335%2050.6950186,15.1494424%20C52.5460223,15.4465428%2053.9663941,17.0411896%2053.9773978,18.9778439%20C53.9779926,19.0991822%2053.9714498,19.2193309%2053.9613383,19.3379926%20C54.904684,19.463197%2055.7421561,19.9253532%2056.3485502,20.5992565%20C53.6877323,24.6402974%2042.8237918,27.7159851%2029.8010409,27.790632%20C14.8895167,27.8759851%202.76193309,23.9952416%202.53115242,19.0985874%20C2.56386617,19.063197%202.59390335,19.0251301%202.62810409,18.9909294%20C2.39791822,18.5983643%202.23910781,18.1608922%202.15702602,17.6966543%20C0.729219331,19.0518959%20-0.13472119,20.1445353%200.0172490706,21.7356134%20C0.0318215613,21.9482528%206.3339777,67.0709294%206.3339777,67.0709294%20C7.06111524,74.2173978%2017.4388104,79.9292193%2029.8010409,80%20C42.1632714,79.9292193%2052.5412639,74.2173978%2053.2681041,67.0709294%20C53.2681041,67.0709294%2059.5702602,21.9482528%2059.5848327,21.7356134%20C59.8866914,18.5531599%2056.162974,15.6642379%2050.687881,13.6110037%20L50.687881,13.6110037%20Z'%20fill='%23DB382A'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M15.0596283,33.6255762%20L18.29829,74.5885502%20C22.1573234,75.8655762%2024.4005948,76.2614126%2027.6124907,76.5766543%20L27.1119703,35.0432714%20C23.5637175,34.9415613%2018.9718959,34.4606691%2015.0596283,33.6255762'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M31.9895911,76.5766543%20C35.201487,76.2614126%2037.4447584,75.8655762%2041.3037918,74.5885502%20L44.5424535,33.6255762%20C40.6301859,34.4606691%2036.0383643,34.9415613%2032.4901115,35.0432714%20L31.9895911,76.5766543'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M45.2692937,72.9026022%20C47.6002974,71.7008178%2049.8275093,69.89829%2050.9733829,68.1576208%20L56.085948,29.0438662%20C54.2634944,30.5915242%2051.7894424,31.6707807%2049.2541264,32.4853532%20L45.2692937,72.9026022'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M3.51613383,29.0438662%20L8.62840149,68.1576208%20C9.77457249,69.89829%2012.0017844,71.7008178%2014.3327881,72.9026022%20L10.3479554,32.4853532%20C7.81263941,31.6707807%205.33858736,30.5915242%203.51613383,29.0438662'%20fill='%23FFFFFE'%3e%3c/path%3e%3c/g%3e%3c/svg%3e", ys = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(0,%2012.46)'%3e%3cg%3e%3cpath%20d='M45.4780328,39.6152131%20C45.9506885,38.4445902%2047.6259672,37.7314098%2048.8288525,37.8148197%20C50.114623,37.904%2051.4803934,39.2556066%2051.719082,40.584918%20C51.7634098,40.5366557%2051.8098361,40.4910164%2051.8570492,40.4461639%20C52.2699016,40.0516721%2052.7871475,39.7899016%2053.3531803,39.7177705%20C53.266623,39.3342951%2053.2459016,38.9238033%2053.3051803,38.5025574%20C53.5142295,37.0205902%2054.7034754,35.9092459%2056.0650492,35.9202623%20C56.9437377,35.9273443%2057.714623,36.376918%2058.216918,37.067541%20C58.2617705,37.0114098%2058.3113443,36.96%2058.3596066,36.907541%20C58.9340328,33.9152787%2059.2980984,30.5345574%2059.3809836,26.9468852%20C59.6655738,14.6103607%2056.5356066,4.53193443%2052.3902951,4.43645902%20C48.2447213,4.34072131%2044.653377,14.2638689%2044.3687869,26.6003934%20C44.3687869,26.6003934%2044.1492459,31.1000656%2045.4780328,39.6152131'%20id='Fill-1'%20fill='%23185A30'%3e%3c/path%3e%3cpath%20d='M73.5446557,53.1058361%20C73.7896393,52.696918%2073.9265574,52.2066885%2073.9171148,51.6857705%20C73.9965902,50.002623%2072.8411803,48.4768525%2071.2335738,48.6457705%20C71.28,48.4532459%2071.3104262,48.2531148%2071.3222295,48.0466885%20C71.4184918,46.3606557%2070.2557377,44.907541%2068.7249836,44.8013115%20C68.6914098,44.7992131%2068.6583607,44.7981639%2068.6250492,44.7971148%20C68.7842623,44.3787541%2068.8632131,43.9116066%2068.8351475,43.4166557%20C68.7559344,42.0139016%2067.7885902,40.832%2066.5300984,40.5993443%20C66.075541,40.5154098%2065.634623,40.5571148%2065.2309508,40.696918%20C64.8495738,39.757377%2064.0487869,39.060459%2063.074623,38.9133115%20C62.9975082,37.3878033%2061.8956066,36.1321967%2060.4768525,36.0338361%20C59.5847869,35.9719344%2058.7651148,36.3816393%2058.216918,37.067541%20C57.714623,36.376918%2056.9437377,35.9276066%2056.0650492,35.9204395%20C54.7034754,35.9092459%2053.5142295,37.0205902%2053.3051803,38.5028197%20C53.2459016,38.9238033%2053.266623,39.3342951%2053.3531803,39.7180328%20C52.7871475,39.7899016%2052.2699016,40.0519344%2051.8570492,40.4461639%20C51.8098361,40.4910164%2051.7634098,40.5366557%2051.719082,40.584918%20C51.4803934,39.2556066%2050.114623,37.9042623%2048.8288525,37.8148197%20C47.6259672,37.7314098%2045.928918,38.4621639%2045.4780328,39.6152131%20C45.6758033,41.6259672%2046.9327213,47.1071475%2051.4788197,52.0241311%20L51.5192131,52.0270164%20C51.9575082,52.4236066%2052.5298361,52.6420984%2053.1399344,52.5878033%20C53.5181639,52.5539672%2053.8664918,52.418623%2054.1665574,52.2098361%20L54.2397377,52.2148197%20C54.6397377,52.4925902%2055.1205246,52.6379016%2055.6285902,52.5927869%20C55.8226885,52.5754754%2056.0078689,52.5287869%2056.1838689,52.4621639%20C56.6192787,53.3623607%2057.5902951,53.9441311%2058.6740984,53.8486557%20C59.5134426,53.7746885%2060.2268852,53.3104262%2060.6462951,52.6570492%20L60.7821639,52.6664918%20C61.2010492,53.0817049%2061.7579016,53.323541%2062.3585574,53.3054426%20C62.855082,54.0566557%2063.767082,54.5188197%2064.7735082,54.4304262%20C65.1525246,54.3971148%2065.5063607,54.2874754%2065.8219016,54.1214426%20C66.3483279,54.7690492%2067.2123279,55.1540984%2068.1602623,55.0706885%20C69.0974426,54.9885902%2069.8890492,54.4689836%2070.3197377,53.7505574%20C70.7428197,54.0902295%2071.272918,54.2725246%2071.8358033,54.2224262%20C72.3819016,54.1736393%2072.8671475,53.9158033%2073.2317377,53.5257705%20L73.2925902,53.5299672%20C73.3754754,53.4098361%2073.4462951,53.2868197%2073.5121311,53.1627541%20C73.5137049,53.1603934%2073.5150164,53.1577705%2073.5163279,53.1554098%20C73.5252459,53.1388852%2073.5362623,53.122623%2073.5446557,53.1058361'%20fill='%23F9D320'%3e%3c/path%3e%3cpath%20d='M42.2090492,9.21232787%20L6.56209836,12.7268197%20C7.62203279,10.6709508%209.21206557,8.70662295%2010.7472787,7.6957377%20L45.2440656,3.18662295%20C43.8793443,4.79422951%2042.9272131,6.9762623%2042.2090492,9.21232787%20Z%20M45.2440656,49.5517377%20L10.7472787,45.042623%20C9.21206557,44.032%207.62203279,42.0674098%206.56209836,40.0118033%20L42.2090492,43.5262951%20C42.9272131,45.7620984%2043.8793443,47.9443934%2045.2440656,49.5517377%20Z%20M5.07514754,36.5143607%20C3.94885246,33.1108197%203.6,31.1323279%203.32170492,28.2992787%20L39.9527869,28.7409836%20C40.0427541,31.8701639%2040.4668852,35.9202623%2041.2031475,39.3707541%20L5.07514754,36.5143607%20Z%20M5.07514754,16.224%20L41.2031475,13.3676066%20C40.4668852,16.8180984%2040.0427541,20.8681967%2039.9527869,23.9976393%20L3.32170492,24.439082%20C3.6,21.6062951%203.94885246,19.627541%205.07514754,16.224%20Z%20M56.7186885,3.84865574%20C54.4333115,1.18767213%2052.7926557,-0.0616393443%2051.3872787,0.100721311%20C51.1252459,0.134032787%2011.4032787,5.67213115%2011.4032787,5.67213115%20C5.10006557,6.31318033%200.0624262295,15.4659672%200,26.3693115%20C0.0624262295,37.2723934%205.10006557,46.4251803%2011.4032787,47.0664918%20C11.4032787,47.0664918%2051.1997377,52.6247869%2051.3872787,52.6376393%20C51.7196066,52.635541%2052.0477377,52.5909508%2052.3711475,52.5080656%20C52.0563934,52.4144262%2051.7660328,52.2504918%2051.5192131,52.0270164%20L51.4788197,52.0241311%20C46.9327213,47.1074098%2045.6758033,41.6259672%2045.4780328,39.6152131%20C45.4785574,39.6136393%2045.4796066,39.6123279%2045.4801311,39.6107541%20C45.4796066,39.6123279%2045.4785574,39.6136393%2045.4780328,39.6152131%20C44.1492459,31.1000656%2044.3687869,26.6003934%2044.3687869,26.6003934%20C44.653377,14.2638689%2048.2447213,4.34072131%2052.3902951,4.43619672%20C56.5356066,4.53193443%2059.6655738,14.6103607%2059.3809836,26.9468852%20C59.2980984,30.5345574%2058.9340328,33.9152787%2058.3596066,36.907541%20C58.9497705,36.2562623%2059.741377,35.9819016%2060.4768525,36.0338361%20C60.6121967,36.043541%2060.7438689,36.0663607%2060.872918,36.096%20C63.3904262,22.3210492%2060.7512131,8.87029508%2056.7186885,3.84865574%20L56.7186885,3.84865574%20Z'%20fill='%23129B47'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M41.2031475,13.3676066%20L5.07514754,16.224%20C3.94885246,19.627541%203.6,21.6062951%203.32170492,24.439082%20L39.9527869,23.997377%20C40.0427541,20.8681967%2040.4668852,16.8180984%2041.2031475,13.3676066'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M45.2440656,3.18662295%20L10.7472787,7.6957377%20C9.21206557,8.70662295%207.62203279,10.6709508%206.56209836,12.7268197%20L42.2090492,9.21232787%20C42.9272131,6.9762623%2043.8793443,4.79422951%2045.2440656,3.18662295'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M6.56209836,40.011541%20C7.62203279,42.0674098%209.21206557,44.032%2010.7472787,45.042623%20L45.2440656,49.5517377%20C43.8793443,47.9443934%2042.9272131,45.7620984%2042.2090492,43.5262951%20L6.56209836,40.011541'%20fill='%23FFFFFE'%3e%3c/path%3e%3cg%20transform='translate(3.15,%2028)'%3e%3cpath%20d='M36.8052459,0.675409836%20L0.174163934,0.233704918%20C0.452459016,3.0664918%200.801311475,5.0452459%201.92760656,8.44878689%20L38.0556066,11.3051803%20C37.3193443,7.85468852%2036.8952131,3.80459016%2036.8052459,0.675409836'%20fill='%23FFFFFE'%3e%3c/path%3e%3c/g%3e%3c/g%3e%3c/svg%3e";
-function vs(r) {
-  const e = r.enrichment ?? {}, t = e.reviewed;
+`, ds = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20type='positive'%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(1.33,%200)'%3e%3cg%20transform='translate(0,%2016.27)'%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0.000109100102%200.246970954%2077.0827837%200.246970954%2077.0827837%2063.7145228%200.000109100102%2063.7145228'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M77.0137759,27.0426556%20C76.2423237,14.6741909%2069.9521992,5.42041494%2060.4876349,0.246970954%20C60.5414108,0.548381743%2060.273195,0.925145228%2059.9678008,0.791701245%20C53.7772614,-1.91634855%2043.2753527,6.84780083%2035.9365975,2.25825726%20C35.9917012,3.90539419%2035.6700415,11.940249%2024.3515353,12.4063071%20C24.0843154,12.4172614%2023.9372614,12.1443983%2024.1062241,11.9512033%20C25.619917,10.2247303%2027.1482158,5.85360996%2024.9507054,3.5233195%20C20.2446473,7.74041494%2017.5117012,9.32746888%208.48829876,7.23319502%20C2.71103734,13.2740249%20-0.562655602,21.5419087%200.08,31.8413278%20C1.39120332,52.86639%2021.0848133,64.8846473%2040.9165145,63.6471369%20C60.746888,62.4106224%2078.3253112,48.0677178%2077.0137759,27.0426556'%20fill='%23FA320A'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M40.8717012,11.4648963%20C44.946722,10.49361%2056.6678838,11.3702905%2060.4232365,16.3518672%20C60.6486307,16.6506224%2060.3312863,17.2159336%2059.9678008,17.0572614%20C53.7772614,14.3492116%2043.2753527,23.113361%2035.9365975,18.5238174%20C35.9917012,20.1709544%2035.6700415,28.2058091%2024.3515353,28.6718672%20C24.0843154,28.6828216%2023.9372614,28.4099585%2024.1062241,28.2167635%20C25.619917,26.4902905%2027.1478838,22.1191701%2024.9507054,19.7888797%20C19.8243983,24.3827386%2017.0453112,25.8589212%205.91900415,22.8514523%20C5.55485477,22.753195%205.67900415,22.1679668%206.06639004,22.020249%20C8.16929461,21.2165975%2012.933444,17.6965975%2017.4406639,16.1450622%20C18.2987552,15.8499585%2019.1541909,15.6209129%2019.9890456,15.4878008%20C15.02639,15.0443154%2012.7893776,14.3541909%209.63286307,14.8302075%20C9.28697095,14.8823237%209.05195021,14.479668%209.26639004,14.2034855%20C13.5193361,8.7253112%2021.3540249,7.07087137%2026.1878838,9.98107884%20C23.2082988,6.28912863%2020.8743568,3.34473029%2020.8743568,3.34473029%20L26.4046473,0.203485477%20C26.4046473,0.203485477%2028.6894606,5.30821577%2030.3518672,9.02340249%20C34.4657261,2.94506224%2042.119834,2.38406639%2045.3536929,6.69676349%20C45.5455602,6.95302905%2045.3450622,7.31751037%2045.0247303,7.30987552%20C42.3926971,7.24580913%2040.9434025,9.63983402%2040.833527,11.4605809%20L40.8717012,11.4648963'%20fill='%2300912D'%3e%3c/path%3e%3c/g%3e%3c/svg%3e", hs = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20type='negative'%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(0,%201.23)'%3e%3cg%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0%200.161950465%2079.7417075%200.161950465%2079.7417075%2077.522807%200%2077.522807'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M71.4638596,70.225614%20C56.3459649,71.0192982%2053.2568421,53.7203509%2047.325614,53.8435088%20C44.7982456,53.8964912%2042.8063158,56.5389474%2043.6810526,59.6185965%20C44.1621053,61.3115789%2045.4964912,63.794386%2046.337193,65.3350877%20C49.302807,70.7719298%2044.9185965,76.9245614%2039.7880702,77.4449123%20C31.2621053,78.3098246%2027.705614,73.3638596%2027.925614,68.3007018%20C28.1729825,62.6168421%2032.9922807,56.8091228%2028.0494737,54.3378947%20C22.8694737,51.7480702%2018.6585965,61.8754386%2013.7017544,64.1357895%20C9.2154386,66.1817544%202.9877193,64.5954386%200.773684211,59.6136842%20C-0.781403509,56.1129825%20-0.498596491,49.3722807%206.42526316,46.8003509%20C10.7501754,45.1940351%2020.3880702,48.9010526%2020.8824561,44.205614%20C21.4522807,38.7929825%2010.7575439,38.3364912%207.53754386,37.0385965%20C1.84,34.7424561%20-1.52280702,29.8291228%201.11192982,24.5582456%20C3.08877193,20.6045614%208.90526316,18.9957895%2013.3449123,20.7277193%20C18.6635088,22.8024561%2019.517193,28.3189474%2022.2421053,30.6129825%20C24.5894737,32.5901754%2027.8021053,32.8375439%2029.9031579,31.4782456%20C31.4526316,30.4754386%2031.9684211,28.2729825%2031.3838596,26.2610526%20C30.6084211,23.5901754%2028.5505263,21.9235088%2026.542807,20.2905263%20C22.9698246,17.3859649%2017.925614,14.8884211%2020.9768421,6.96035088%20C23.4778947,0.463157895%2030.8133333,0.229122807%2030.8133333,0.229122807%20C33.7277193,-0.0985964912%2036.3375439,0.781403509%2038.4642105,2.68140351%20C41.3073684,5.22140351%2041.8610526,8.61649123%2041.3852632,12.2385965%20C40.9505263,15.5449123%2039.7803509,18.4407018%2039.1701754,21.7164912%20C38.4621053,25.5196491%2040.4947368,29.3519298%2044.3603509,29.5010526%20C49.4449123,29.6975439%2050.9694737,25.7894737%2051.5915789,23.3122807%20C52.5024561,19.6877193%2053.6978947,16.322807%2057.0617544,14.2035088%20C61.8894737,11.1617544%2068.5954386,11.8284211%2071.7066667,17.674386%20C74.1677193,22.3%2073.3775439,28.6677193%2069.6024561,32.1449123%20C67.9087719,33.7045614%2065.8722807,34.254386%2063.6694737,34.2698246%20C60.5105263,34.2922807%2057.3529825,34.2147368%2054.4207018,35.6929825%20C52.4245614,36.6989474%2051.5547368,38.3382456%2051.5550877,40.5354386%20C51.5550877,42.6768421%2052.6698246,44.0754386%2054.4761404,44.985614%20C57.8782456,46.7003509%2061.6336842,47.0508772%2065.3087719,47.694386%20C70.6382456,48.6277193%2075.3242105,50.5049123%2078.3326316,55.4505263%20C78.3596491,55.4940351%2078.3859649,55.5378947%2078.4115789,55.5821053%20C81.8666667,61.4375439%2078.2533333,69.8687719%2071.4638596,70.225614'%20fill='%230AC855'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3c/g%3e%3c/svg%3e", cs = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(10.1,%200)'%3e%3cg%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0.0178438662%200.124907063%2059.6019307%200.124907063%2059.6019307%2079.9821561%200.0178438662%2079.9821561'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M2.53115242,19.0988848%20C2.76163569,23.9952416%2014.8892193,27.8762825%2029.8007435,27.7912268%20C42.8237918,27.7168773%2053.6874349,24.6411896%2056.3485502,20.6004461%20C55.7421561,19.9265428%2054.904684,19.4643866%2053.9613383,19.3391822%20C53.9714498,19.220223%2053.9779926,19.1003717%2053.9773978,18.9787361%20C53.9663941,17.0423792%2052.5460223,15.4477323%2050.695316,15.1503346%20C50.7440892,14.8999257%2050.7696654,14.6408922%2050.7681784,14.3759108%20C50.7559851,12.2194796%2048.9977695,10.481487%2046.8413383,10.4936803%20C46.7925651,10.4939777%2046.7449814,10.4999257%2046.6965056,10.5020074%20C46.8344981,10.0987361%2046.9118216,9.66780669%2046.9094424,9.21784387%20C46.8969517,7.06141264%2045.1390335,5.32342007%2042.9826022,5.33561338%20C42.4877323,5.33858736%2042.0169517,5.43702602%2041.5821561,5.60743494%20C40.9653532,4.44639405%2039.7811152,3.63717472%2038.4002974,3.54379182%20C38.1597026,1.60743494%2036.5055762,0.113605948%2034.506171,0.124843367%20C33.247881,0.13204461%2032.1350186,0.736356877%2031.4263197,1.66453532%20C30.7075093,0.882379182%2029.6773234,0.391672862%2028.5314498,0.398215613%20C26.3750186,0.410408922%2024.637026,2.16862454%2024.6492193,4.32475836%20C24.6515985,4.73665428%2024.718513,5.13249071%2024.8386617,5.50453532%20C23.9586617,5.66780669%2023.1848327,6.12520446%2022.6191822,6.77144981%20C22.1701115,5.09888476%2020.642974,3.86973978%2018.8297398,3.8798513%20C17.1357621,3.88966543%2015.7040892,4.97873606%2015.172342,6.48981413%20C13.7332342,7.07182156%2012.7202974,8.48356877%2012.7298141,10.1302602%20C12.7318959,10.4960595%2012.7878067,10.8481784%2012.8838662,11.1836431%20C12.398513,10.9713011%2011.8634944,10.852342%2011.2996283,10.8556134%20C9.5994052,10.8654275%208.16327138,11.9622305%207.63598513,13.4822305%20C7.13040892,13.2472862%206.56832714,13.1137546%205.973829,13.1173234%20C3.81739777,13.1295167%202.07910781,14.8874349%202.09153162,17.0438662%20C2.09546468,17.7549442%202.29263941,18.4187361%202.62810409,18.9909294%20C2.59390335,19.0254275%202.56386617,19.063197%202.53115242,19.0988848'%20fill='%23F9D320'%20mask='url(%23mask-2)'%3e%3c/path%3e%3cpath%20d='M50.9736803,68.1576208%20C49.8275093,69.89829%2047.6002974,71.7008178%2045.2692937,72.9026022%20L49.2541264,32.4853532%20C51.7894424,31.6707807%2054.2634944,30.5915242%2056.085948,29.0438662%20L50.9736803,68.1576208%20Z%20M41.3037918,74.5885502%20C37.4450558,75.8655762%2035.201487,76.2614126%2031.9895911,76.5766543%20L32.4901115,35.0432714%20C36.0383643,34.9415613%2040.6301859,34.4606691%2044.5427509,33.6255762%20L41.3037918,74.5885502%20Z%20M18.29829,74.5885502%20L15.0596283,33.6255762%20C18.9718959,34.4606691%2023.5637175,34.9415613%2027.1119703,35.0432714%20L27.6124907,76.5766543%20C24.4005948,76.2614126%2022.1573234,75.8655762%2018.29829,74.5885502%20Z%20M8.62869888,68.1576208%20L3.51613383,29.0438662%20C5.33858736,30.5915242%207.81263941,31.6707807%2010.3479554,32.4853532%20L14.3327881,72.9026022%20C12.0017844,71.7008178%209.77457249,69.89829%208.62869888,68.1576208%20Z%20M50.687881,13.6110037%20C50.7384387,13.8578439%2050.7666914,14.1130112%2050.7681784,14.3750186%20C50.7696654,14.64%2050.7440892,14.8990335%2050.6950186,15.1494424%20C52.5460223,15.4465428%2053.9663941,17.0411896%2053.9773978,18.9778439%20C53.9779926,19.0991822%2053.9714498,19.2193309%2053.9613383,19.3379926%20C54.904684,19.463197%2055.7421561,19.9253532%2056.3485502,20.5992565%20C53.6877323,24.6402974%2042.8237918,27.7159851%2029.8010409,27.790632%20C14.8895167,27.8759851%202.76193309,23.9952416%202.53115242,19.0985874%20C2.56386617,19.063197%202.59390335,19.0251301%202.62810409,18.9909294%20C2.39791822,18.5983643%202.23910781,18.1608922%202.15702602,17.6966543%20C0.729219331,19.0518959%20-0.13472119,20.1445353%200.0172490706,21.7356134%20C0.0318215613,21.9482528%206.3339777,67.0709294%206.3339777,67.0709294%20C7.06111524,74.2173978%2017.4388104,79.9292193%2029.8010409,80%20C42.1632714,79.9292193%2052.5412639,74.2173978%2053.2681041,67.0709294%20C53.2681041,67.0709294%2059.5702602,21.9482528%2059.5848327,21.7356134%20C59.8866914,18.5531599%2056.162974,15.6642379%2050.687881,13.6110037%20L50.687881,13.6110037%20Z'%20fill='%23DB382A'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M15.0596283,33.6255762%20L18.29829,74.5885502%20C22.1573234,75.8655762%2024.4005948,76.2614126%2027.6124907,76.5766543%20L27.1119703,35.0432714%20C23.5637175,34.9415613%2018.9718959,34.4606691%2015.0596283,33.6255762'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M31.9895911,76.5766543%20C35.201487,76.2614126%2037.4447584,75.8655762%2041.3037918,74.5885502%20L44.5424535,33.6255762%20C40.6301859,34.4606691%2036.0383643,34.9415613%2032.4901115,35.0432714%20L31.9895911,76.5766543'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M45.2692937,72.9026022%20C47.6002974,71.7008178%2049.8275093,69.89829%2050.9733829,68.1576208%20L56.085948,29.0438662%20C54.2634944,30.5915242%2051.7894424,31.6707807%2049.2541264,32.4853532%20L45.2692937,72.9026022'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M3.51613383,29.0438662%20L8.62840149,68.1576208%20C9.77457249,69.89829%2012.0017844,71.7008178%2014.3327881,72.9026022%20L10.3479554,32.4853532%20C7.81263941,31.6707807%205.33858736,30.5915242%203.51613383,29.0438662'%20fill='%23FFFFFE'%3e%3c/path%3e%3c/g%3e%3c/svg%3e", ps = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(0,%2012.46)'%3e%3cg%3e%3cpath%20d='M45.4780328,39.6152131%20C45.9506885,38.4445902%2047.6259672,37.7314098%2048.8288525,37.8148197%20C50.114623,37.904%2051.4803934,39.2556066%2051.719082,40.584918%20C51.7634098,40.5366557%2051.8098361,40.4910164%2051.8570492,40.4461639%20C52.2699016,40.0516721%2052.7871475,39.7899016%2053.3531803,39.7177705%20C53.266623,39.3342951%2053.2459016,38.9238033%2053.3051803,38.5025574%20C53.5142295,37.0205902%2054.7034754,35.9092459%2056.0650492,35.9202623%20C56.9437377,35.9273443%2057.714623,36.376918%2058.216918,37.067541%20C58.2617705,37.0114098%2058.3113443,36.96%2058.3596066,36.907541%20C58.9340328,33.9152787%2059.2980984,30.5345574%2059.3809836,26.9468852%20C59.6655738,14.6103607%2056.5356066,4.53193443%2052.3902951,4.43645902%20C48.2447213,4.34072131%2044.653377,14.2638689%2044.3687869,26.6003934%20C44.3687869,26.6003934%2044.1492459,31.1000656%2045.4780328,39.6152131'%20id='Fill-1'%20fill='%23185A30'%3e%3c/path%3e%3cpath%20d='M73.5446557,53.1058361%20C73.7896393,52.696918%2073.9265574,52.2066885%2073.9171148,51.6857705%20C73.9965902,50.002623%2072.8411803,48.4768525%2071.2335738,48.6457705%20C71.28,48.4532459%2071.3104262,48.2531148%2071.3222295,48.0466885%20C71.4184918,46.3606557%2070.2557377,44.907541%2068.7249836,44.8013115%20C68.6914098,44.7992131%2068.6583607,44.7981639%2068.6250492,44.7971148%20C68.7842623,44.3787541%2068.8632131,43.9116066%2068.8351475,43.4166557%20C68.7559344,42.0139016%2067.7885902,40.832%2066.5300984,40.5993443%20C66.075541,40.5154098%2065.634623,40.5571148%2065.2309508,40.696918%20C64.8495738,39.757377%2064.0487869,39.060459%2063.074623,38.9133115%20C62.9975082,37.3878033%2061.8956066,36.1321967%2060.4768525,36.0338361%20C59.5847869,35.9719344%2058.7651148,36.3816393%2058.216918,37.067541%20C57.714623,36.376918%2056.9437377,35.9276066%2056.0650492,35.9204395%20C54.7034754,35.9092459%2053.5142295,37.0205902%2053.3051803,38.5028197%20C53.2459016,38.9238033%2053.266623,39.3342951%2053.3531803,39.7180328%20C52.7871475,39.7899016%2052.2699016,40.0519344%2051.8570492,40.4461639%20C51.8098361,40.4910164%2051.7634098,40.5366557%2051.719082,40.584918%20C51.4803934,39.2556066%2050.114623,37.9042623%2048.8288525,37.8148197%20C47.6259672,37.7314098%2045.928918,38.4621639%2045.4780328,39.6152131%20C45.6758033,41.6259672%2046.9327213,47.1071475%2051.4788197,52.0241311%20L51.5192131,52.0270164%20C51.9575082,52.4236066%2052.5298361,52.6420984%2053.1399344,52.5878033%20C53.5181639,52.5539672%2053.8664918,52.418623%2054.1665574,52.2098361%20L54.2397377,52.2148197%20C54.6397377,52.4925902%2055.1205246,52.6379016%2055.6285902,52.5927869%20C55.8226885,52.5754754%2056.0078689,52.5287869%2056.1838689,52.4621639%20C56.6192787,53.3623607%2057.5902951,53.9441311%2058.6740984,53.8486557%20C59.5134426,53.7746885%2060.2268852,53.3104262%2060.6462951,52.6570492%20L60.7821639,52.6664918%20C61.2010492,53.0817049%2061.7579016,53.323541%2062.3585574,53.3054426%20C62.855082,54.0566557%2063.767082,54.5188197%2064.7735082,54.4304262%20C65.1525246,54.3971148%2065.5063607,54.2874754%2065.8219016,54.1214426%20C66.3483279,54.7690492%2067.2123279,55.1540984%2068.1602623,55.0706885%20C69.0974426,54.9885902%2069.8890492,54.4689836%2070.3197377,53.7505574%20C70.7428197,54.0902295%2071.272918,54.2725246%2071.8358033,54.2224262%20C72.3819016,54.1736393%2072.8671475,53.9158033%2073.2317377,53.5257705%20L73.2925902,53.5299672%20C73.3754754,53.4098361%2073.4462951,53.2868197%2073.5121311,53.1627541%20C73.5137049,53.1603934%2073.5150164,53.1577705%2073.5163279,53.1554098%20C73.5252459,53.1388852%2073.5362623,53.122623%2073.5446557,53.1058361'%20fill='%23F9D320'%3e%3c/path%3e%3cpath%20d='M42.2090492,9.21232787%20L6.56209836,12.7268197%20C7.62203279,10.6709508%209.21206557,8.70662295%2010.7472787,7.6957377%20L45.2440656,3.18662295%20C43.8793443,4.79422951%2042.9272131,6.9762623%2042.2090492,9.21232787%20Z%20M45.2440656,49.5517377%20L10.7472787,45.042623%20C9.21206557,44.032%207.62203279,42.0674098%206.56209836,40.0118033%20L42.2090492,43.5262951%20C42.9272131,45.7620984%2043.8793443,47.9443934%2045.2440656,49.5517377%20Z%20M5.07514754,36.5143607%20C3.94885246,33.1108197%203.6,31.1323279%203.32170492,28.2992787%20L39.9527869,28.7409836%20C40.0427541,31.8701639%2040.4668852,35.9202623%2041.2031475,39.3707541%20L5.07514754,36.5143607%20Z%20M5.07514754,16.224%20L41.2031475,13.3676066%20C40.4668852,16.8180984%2040.0427541,20.8681967%2039.9527869,23.9976393%20L3.32170492,24.439082%20C3.6,21.6062951%203.94885246,19.627541%205.07514754,16.224%20Z%20M56.7186885,3.84865574%20C54.4333115,1.18767213%2052.7926557,-0.0616393443%2051.3872787,0.100721311%20C51.1252459,0.134032787%2011.4032787,5.67213115%2011.4032787,5.67213115%20C5.10006557,6.31318033%200.0624262295,15.4659672%200,26.3693115%20C0.0624262295,37.2723934%205.10006557,46.4251803%2011.4032787,47.0664918%20C11.4032787,47.0664918%2051.1997377,52.6247869%2051.3872787,52.6376393%20C51.7196066,52.635541%2052.0477377,52.5909508%2052.3711475,52.5080656%20C52.0563934,52.4144262%2051.7660328,52.2504918%2051.5192131,52.0270164%20L51.4788197,52.0241311%20C46.9327213,47.1074098%2045.6758033,41.6259672%2045.4780328,39.6152131%20C45.4785574,39.6136393%2045.4796066,39.6123279%2045.4801311,39.6107541%20C45.4796066,39.6123279%2045.4785574,39.6136393%2045.4780328,39.6152131%20C44.1492459,31.1000656%2044.3687869,26.6003934%2044.3687869,26.6003934%20C44.653377,14.2638689%2048.2447213,4.34072131%2052.3902951,4.43619672%20C56.5356066,4.53193443%2059.6655738,14.6103607%2059.3809836,26.9468852%20C59.2980984,30.5345574%2058.9340328,33.9152787%2058.3596066,36.907541%20C58.9497705,36.2562623%2059.741377,35.9819016%2060.4768525,36.0338361%20C60.6121967,36.043541%2060.7438689,36.0663607%2060.872918,36.096%20C63.3904262,22.3210492%2060.7512131,8.87029508%2056.7186885,3.84865574%20L56.7186885,3.84865574%20Z'%20fill='%23129B47'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M41.2031475,13.3676066%20L5.07514754,16.224%20C3.94885246,19.627541%203.6,21.6062951%203.32170492,24.439082%20L39.9527869,23.997377%20C40.0427541,20.8681967%2040.4668852,16.8180984%2041.2031475,13.3676066'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M45.2440656,3.18662295%20L10.7472787,7.6957377%20C9.21206557,8.70662295%207.62203279,10.6709508%206.56209836,12.7268197%20L42.2090492,9.21232787%20C42.9272131,6.9762623%2043.8793443,4.79422951%2045.2440656,3.18662295'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M6.56209836,40.011541%20C7.62203279,42.0674098%209.21206557,44.032%2010.7472787,45.042623%20L45.2440656,49.5517377%20C43.8793443,47.9443934%2042.9272131,45.7620984%2042.2090492,43.5262951%20L6.56209836,40.011541'%20fill='%23FFFFFE'%3e%3c/path%3e%3cg%20transform='translate(3.15,%2028)'%3e%3cpath%20d='M36.8052459,0.675409836%20L0.174163934,0.233704918%20C0.452459016,3.0664918%200.801311475,5.0452459%201.92760656,8.44878689%20L38.0556066,11.3051803%20C37.3193443,7.85468852%2036.8952131,3.80459016%2036.8052459,0.675409836'%20fill='%23FFFFFE'%3e%3c/path%3e%3c/g%3e%3c/g%3e%3c/svg%3e";
+function us(n) {
+  const e = n.enrichment ?? {}, t = e.reviewed;
   return [
     {
       kind: "viewer",
       label: "TMDB viewer rating",
-      value: r.ratings ? r.ratings.audience_rating : t?.audience_rating ?? e.tmdb?.audience_rating,
+      value: n.ratings ? n.ratings.audience_rating : t?.audience_rating ?? e.tmdb?.audience_rating,
       max: 10
     },
     {
       kind: "critic",
       label: "Rotten Tomatoes critics",
-      value: r.ratings ? r.ratings.critic_score : t?.critic_score ?? e.kaleidescape?.critic_score,
+      value: n.ratings ? n.ratings.critic_score : t?.critic_score ?? e.kaleidescape?.critic_score,
       max: 100
     },
     {
       kind: "audience",
       label: "Rotten Tomatoes audience",
-      value: r.ratings ? r.ratings.audience_score : t?.audience_score ?? e.kaleidescape?.audience_score,
+      value: n.ratings ? n.ratings.audience_score : t?.audience_score ?? e.kaleidescape?.audience_score,
       max: 100
     }
   ].filter(
     ({ value: i, max: s }) => typeof i == "number" && Number.isFinite(i) && i >= 0 && i <= s
   );
 }
-function $s(r) {
-  const e = r ? vs(r) : [];
+function gs(n) {
+  const e = n ? us(n) : [];
   return e.length ? a`<div
     class="movie-ratings"
     slot="collection"
     aria-label="Viewer and critic ratings"
   >
-    ${e.map(({ kind: t, label: i, value: s, max: n }) => {
-    const o = Math.round(s / n * 100), d = t === "critic" ? o >= 60 ? ms : fs : o >= 60 ? bs : ys;
+    ${e.map(({ kind: t, label: i, value: s, max: r }) => {
+    const o = Math.round(s / r * 100), d = t === "critic" ? o >= 60 ? ds : hs : o >= 60 ? cs : ps;
     return a`<span
         class=${`score-chip score-${t}`}
         title=${`${i}: ${o}%`}
-        aria-label=${`${i}: ${o}%${n === 10 ? ` (${s}/10)` : ""}`}
+        aria-label=${`${i}: ${o}%${r === 10 ? ` (${s}/10)` : ""}`}
       >
         ${t === "viewer" ? a`<svg
                 class="score-ring"
@@ -2647,45 +2640,45 @@ function $s(r) {
   })}
   </div>` : l;
 }
-const ws = "data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%20viewBox='0%200%20273.42%2035.52'%3e%3cdefs%3e%3cstyle%3e.cls-1{fill:url(%23linear-gradient);}%3c/style%3e%3clinearGradient%20id='linear-gradient'%20y1='17.76'%20x2='273.42'%20y2='17.76'%20gradientUnits='userSpaceOnUse'%3e%3cstop%20offset='0'%20stop-color='%2390cea1'/%3e%3cstop%20offset='0.56'%20stop-color='%233cbec9'/%3e%3cstop%20offset='1'%20stop-color='%2300b3e5'/%3e%3c/linearGradient%3e%3c/defs%3e%3ctitle%3eAsset%203%3c/title%3e%3cg%20id='Layer_2'%20data-name='Layer%202'%3e%3cg%20id='Layer_1-2'%20data-name='Layer%201'%3e%3cpath%20class='cls-1'%20d='M191.85,35.37h63.9A17.67,17.67,0,0,0,273.42,17.7h0A17.67,17.67,0,0,0,255.75,0h-63.9A17.67,17.67,0,0,0,174.18,17.7h0A17.67,17.67,0,0,0,191.85,35.37ZM10.1,35.42h7.8V6.92H28V0H0v6.9H10.1Zm28.1,0H46V8.25h.1L55.05,35.4h6L70.3,8.25h.1V35.4h7.8V0H66.45l-8.2,23.1h-.1L50,0H38.2ZM89.14.12h11.7a33.56,33.56,0,0,1,8.08,1,18.52,18.52,0,0,1,6.67,3.08,15.09,15.09,0,0,1,4.53,5.52,18.5,18.5,0,0,1,1.67,8.25,16.91,16.91,0,0,1-1.62,7.58,16.3,16.3,0,0,1-4.38,5.5,19.24,19.24,0,0,1-6.35,3.37,24.53,24.53,0,0,1-7.55,1.15H89.14Zm7.8,28.2h4a21.66,21.66,0,0,0,5-.55A10.58,10.58,0,0,0,110,26a8.73,8.73,0,0,0,2.68-3.35,11.9,11.9,0,0,0,1-5.08,9.87,9.87,0,0,0-1-4.52,9.17,9.17,0,0,0-2.63-3.18A11.61,11.61,0,0,0,106.22,8a17.06,17.06,0,0,0-4.68-.63h-4.6ZM133.09.12h13.2a32.87,32.87,0,0,1,4.63.33,12.66,12.66,0,0,1,4.17,1.3,7.94,7.94,0,0,1,3,2.72,8.34,8.34,0,0,1,1.15,4.65,7.48,7.48,0,0,1-1.67,5,9.13,9.13,0,0,1-4.43,2.82V17a10.28,10.28,0,0,1,3.18,1,8.51,8.51,0,0,1,2.45,1.85,7.79,7.79,0,0,1,1.57,2.62,9.16,9.16,0,0,1,.55,3.2,8.52,8.52,0,0,1-1.2,4.68,9.32,9.32,0,0,1-3.1,3A13.38,13.38,0,0,1,152.32,35a22.5,22.5,0,0,1-4.73.5h-14.5Zm7.8,14.15h5.65a7.65,7.65,0,0,0,1.78-.2,4.78,4.78,0,0,0,1.57-.65,3.43,3.43,0,0,0,1.13-1.2,3.63,3.63,0,0,0,.42-1.8A3.3,3.3,0,0,0,151,8.6a3.42,3.42,0,0,0-1.23-1.13A6.07,6.07,0,0,0,148,6.9a9.9,9.9,0,0,0-1.85-.18h-5.3Zm0,14.65h7a8.27,8.27,0,0,0,1.83-.2,4.67,4.67,0,0,0,1.67-.7,3.93,3.93,0,0,0,1.23-1.3,3.8,3.8,0,0,0,.47-1.95,3.16,3.16,0,0,0-.62-2,4,4,0,0,0-1.58-1.18,8.23,8.23,0,0,0-2-.55,15.12,15.12,0,0,0-2.05-.15h-5.9Z'/%3e%3c/g%3e%3c/g%3e%3c/svg%3e";
-function Pi() {
+const ms = "data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%20viewBox='0%200%20273.42%2035.52'%3e%3cdefs%3e%3cstyle%3e.cls-1{fill:url(%23linear-gradient);}%3c/style%3e%3clinearGradient%20id='linear-gradient'%20y1='17.76'%20x2='273.42'%20y2='17.76'%20gradientUnits='userSpaceOnUse'%3e%3cstop%20offset='0'%20stop-color='%2390cea1'/%3e%3cstop%20offset='0.56'%20stop-color='%233cbec9'/%3e%3cstop%20offset='1'%20stop-color='%2300b3e5'/%3e%3c/linearGradient%3e%3c/defs%3e%3ctitle%3eAsset%203%3c/title%3e%3cg%20id='Layer_2'%20data-name='Layer%202'%3e%3cg%20id='Layer_1-2'%20data-name='Layer%201'%3e%3cpath%20class='cls-1'%20d='M191.85,35.37h63.9A17.67,17.67,0,0,0,273.42,17.7h0A17.67,17.67,0,0,0,255.75,0h-63.9A17.67,17.67,0,0,0,174.18,17.7h0A17.67,17.67,0,0,0,191.85,35.37ZM10.1,35.42h7.8V6.92H28V0H0v6.9H10.1Zm28.1,0H46V8.25h.1L55.05,35.4h6L70.3,8.25h.1V35.4h7.8V0H66.45l-8.2,23.1h-.1L50,0H38.2ZM89.14.12h11.7a33.56,33.56,0,0,1,8.08,1,18.52,18.52,0,0,1,6.67,3.08,15.09,15.09,0,0,1,4.53,5.52,18.5,18.5,0,0,1,1.67,8.25,16.91,16.91,0,0,1-1.62,7.58,16.3,16.3,0,0,1-4.38,5.5,19.24,19.24,0,0,1-6.35,3.37,24.53,24.53,0,0,1-7.55,1.15H89.14Zm7.8,28.2h4a21.66,21.66,0,0,0,5-.55A10.58,10.58,0,0,0,110,26a8.73,8.73,0,0,0,2.68-3.35,11.9,11.9,0,0,0,1-5.08,9.87,9.87,0,0,0-1-4.52,9.17,9.17,0,0,0-2.63-3.18A11.61,11.61,0,0,0,106.22,8a17.06,17.06,0,0,0-4.68-.63h-4.6ZM133.09.12h13.2a32.87,32.87,0,0,1,4.63.33,12.66,12.66,0,0,1,4.17,1.3,7.94,7.94,0,0,1,3,2.72,8.34,8.34,0,0,1,1.15,4.65,7.48,7.48,0,0,1-1.67,5,9.13,9.13,0,0,1-4.43,2.82V17a10.28,10.28,0,0,1,3.18,1,8.51,8.51,0,0,1,2.45,1.85,7.79,7.79,0,0,1,1.57,2.62,9.16,9.16,0,0,1,.55,3.2,8.52,8.52,0,0,1-1.2,4.68,9.32,9.32,0,0,1-3.1,3A13.38,13.38,0,0,1,152.32,35a22.5,22.5,0,0,1-4.73.5h-14.5Zm7.8,14.15h5.65a7.65,7.65,0,0,0,1.78-.2,4.78,4.78,0,0,0,1.57-.65,3.43,3.43,0,0,0,1.13-1.2,3.63,3.63,0,0,0,.42-1.8A3.3,3.3,0,0,0,151,8.6a3.42,3.42,0,0,0-1.23-1.13A6.07,6.07,0,0,0,148,6.9a9.9,9.9,0,0,0-1.85-.18h-5.3Zm0,14.65h7a8.27,8.27,0,0,0,1.83-.2,4.67,4.67,0,0,0,1.67-.7,3.93,3.93,0,0,0,1.23-1.3,3.8,3.8,0,0,0,.47-1.95,3.16,3.16,0,0,0-.62-2,4,4,0,0,0-1.58-1.18,8.23,8.23,0,0,0-2-.55,15.12,15.12,0,0,0-2.05-.15h-5.9Z'/%3e%3c/g%3e%3c/g%3e%3c/svg%3e";
+function Li() {
   return a`<a
       href="https://www.themoviedb.org"
       target="_blank"
       rel="noopener noreferrer"
-      ><img src=${ws} alt="TMDB" width="100"
+      ><img src=${ms} alt="TMDB" width="100"
     /></a>
     <p class="muted">
       This product uses the TMDB API but is not endorsed or certified by TMDB.
     </p>`;
 }
-function xs(r, e, t = 8) {
+function fs(n, e, t = 8) {
   const i = [
-    ["Full cast", r.actors.length > t ? r.actors : []],
-    ["Writers", r.writers],
-    ["Producers", r.producers ?? []],
-    ["Studios", r.studios]
+    ["Full cast", n.actors.length > t ? n.actors : []],
+    ["Writers", n.writers],
+    ["Producers", n.producers ?? []],
+    ["Studios", n.studios]
   ];
   return a`${i.some(([, s]) => s?.length) ? a`<details class="extra-credits">
           <summary>More credits</summary>
           <dl class="movie-credits">
             ${i.map(
-    ([s, n]) => n?.length ? a`<div>
+    ([s, r]) => r?.length ? a`<div>
                     <dt>${s}</dt>
                     <dd>
-                      ${n.map((o, d) => a`${d ? ", " : ""}${e(o)}`)}
+                      ${r.map((o, d) => a`${d ? ", " : ""}${e(o)}`)}
                     </dd>
                   </div>` : l
   )}
           </dl>
         </details>` : l}
-  ${r.enrichment && Object.keys(r.enrichment).length ? a`<details class="metadata-scores">
+  ${n.enrichment && Object.keys(n.enrichment).length ? a`<details class="metadata-scores">
           <summary>Ratings and metadata sources</summary>
-          ${Object.entries(r.enrichment).map(([s, n]) => a`<p class="muted">${s === "reviewed" ? "Reviewed metadata" : s === "tmdb" ? "TMDB" : "Kaleidescape store"}${n.critic_score != null ? a` · Rotten Tomatoes critics ${n.critic_score}%` : l}${n.audience_score != null ? a` · Rotten Tomatoes audience ${n.audience_score}%` : l}${n.audience_rating != null ? a` · TMDB audience ${n.audience_rating}/10 (${$(n.audience_votes ?? 0, "vote")})` : l}${n.distributor ? a` · Distributor: ${n.distributor}` : l}</p>`)}
-          ${r.enrichment.tmdb || r.enrichment.reviewed?.providers?.includes("tmdb") ? Pi() : l}
+          ${Object.entries(n.enrichment).map(([s, r]) => a`<p class="muted">${s === "reviewed" ? "Reviewed metadata" : s === "tmdb" ? "TMDB" : "Kaleidescape store"}${r.critic_score != null ? a` · Rotten Tomatoes critics ${r.critic_score}%` : l}${r.audience_score != null ? a` · Rotten Tomatoes audience ${r.audience_score}%` : l}${r.audience_rating != null ? a` · TMDB audience ${r.audience_rating}/10 (${v(r.audience_votes ?? 0, "vote")})` : l}${r.distributor ? a` · Distributor: ${r.distributor}` : l}</p>`)}
+          ${n.enrichment.tmdb || n.enrichment.reviewed?.providers?.includes("tmdb") ? Li() : l}
         </details>` : l}`;
 }
-class ks {
+class bs {
   constructor(e = 128 * 1024 * 1024, t = 1e3) {
     this.maxBytes = e, this.maxEntries = t, this.entries = /* @__PURE__ */ new Map(), this.readers = /* @__PURE__ */ new Map(), this.bytes = 0, this.closed = !1;
   }
@@ -2698,11 +2691,11 @@ class ks {
     const i = this.get(e);
     if (i) return i;
     for (; this.bytes + t.size > this.maxBytes || this.entries.size >= this.maxEntries; ) {
-      const n = [...this.entries.keys()], o = n.find(
+      const r = [...this.entries.keys()], o = r.find(
         (d) => ![...this.readers.get(d) ?? []].some(
           (h) => h.visible()
         )
-      ) ?? n[0];
+      ) ?? r[0];
       if (o === void 0) return;
       this.drop(o);
     }
@@ -2732,13 +2725,13 @@ class ks {
 }
 class A {
   constructor() {
-    this.cache = new ks(), this.active = 0, this.waiting = [];
+    this.cache = new bs(), this.active = 0, this.waiting = [];
   }
   acquire(e) {
     return new Promise((t, i) => {
       const s = () => {
-        this.waiting = this.waiting.filter((o) => o !== n), i(new DOMException("Aborted", "AbortError"));
-      }, n = () => {
+        this.waiting = this.waiting.filter((o) => o !== r), i(new DOMException("Aborted", "AbortError"));
+      }, r = () => {
         e.removeEventListener("abort", s), this.active++;
         let o = !1;
         t(() => {
@@ -2746,11 +2739,11 @@ class A {
         });
       };
       if (e.aborted) return s();
-      this.active < 3 ? n() : (this.waiting.push(n), e.addEventListener("abort", s, { once: !0 }));
+      this.active < 3 ? r() : (this.waiting.push(r), e.addEventListener("abort", s, { once: !0 }));
     });
   }
 }
-const ve = class ve extends x {
+const ye = class ye extends x {
   constructor() {
     super(...arguments), this.title = "", this.visible = !1, this.generation = 0, this.visibility = () => {
       document.hidden ? this.cancelLoad() : this.load();
@@ -2794,7 +2787,7 @@ const ve = class ve extends x {
       return;
     }
     const t = this.generation, i = this.controller = new AbortController();
-    let s, n;
+    let s, r;
     try {
       if (s = await this.queue.acquire(i.signal), i.signal.aborted) return;
       const o = this.queue.cache.get(this.cacheKey);
@@ -2802,7 +2795,7 @@ const ve = class ve extends x {
         this.url = o, this.requestUpdate();
         return;
       }
-      n = setTimeout(() => i.abort(), 5e3);
+      r = setTimeout(() => i.abort(), 5e3);
       const d = await this.client.libraryArtwork(
         this.scope,
         this.artworkKey,
@@ -2816,7 +2809,7 @@ const ve = class ve extends x {
         new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
       );
     } finally {
-      clearTimeout(n), s?.(), t === this.generation && (this.controller = void 0);
+      clearTimeout(r), s?.(), t === this.generation && (this.controller = void 0);
     }
   }
   render() {
@@ -2827,13 +2820,13 @@ const ve = class ve extends x {
         />` : a`<span>No cached artwork</span>`;
   }
 };
-ve.properties = {
+ye.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   queue: { attribute: !1 },
   artworkKey: { attribute: !1 },
   title: { type: String }
-}, ve.styles = S`
+}, ye.styles = S`
     :host {
       display: grid;
       width: 100%;
@@ -2853,9 +2846,9 @@ ve.properties = {
       font: inherit;
     }
   `;
-let dt = ve;
-customElements.get("kaleidescape-library-cover") || customElements.define("kaleidescape-library-cover", dt);
-const $e = class $e extends x {
+let nt = ye;
+customElements.get("kaleidescape-library-cover") || customElements.define("kaleidescape-library-cover", nt);
+const ve = class ve extends x {
   constructor() {
     super(...arguments), this.plan = "", this.choice = "", this.visible = !1, this.url = "", this.failed = !1;
   }
@@ -2902,13 +2895,13 @@ const $e = class $e extends x {
         >`;
   }
 };
-$e.properties = {
+ve.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   queue: { attribute: !1 },
   plan: {},
   choice: {}
-}, $e.styles = S`
+}, ve.styles = S`
     :host {
       display: grid;
       place-items: center;
@@ -2929,9 +2922,9 @@ $e.properties = {
       padding: 8px;
     }
   `;
-let ht = $e;
-customElements.get("kaleidescape-scrape-image") || customElements.define("kaleidescape-scrape-image", ht);
-const _s = {
+let ot = ve;
+customElements.get("kaleidescape-scrape-image") || customElements.define("kaleidescape-scrape-image", ot);
+const ys = {
   actors: "Cast",
   directors: "Directors",
   writers: "Writers",
@@ -2944,7 +2937,7 @@ const _s = {
   audience_score: "Audience score (%)",
   audience_rating: "TMDB audience rating (out of 10)",
   audience_votes: "Audience votes"
-}, we = class we extends x {
+}, $e = class $e extends x {
   constructor() {
     super(...arguments), this.versionId = "", this.blocked = !1, this.artworkOnly = !1, this.query = "", this.provider = "", this.fields = /* @__PURE__ */ new Set(), this.images = {}, this.pages = { poster: 0, backdrop: 0 }, this.tab = "metadata", this.busy = !1, this.error = "", this.generation = 0, this.queue = new A();
   }
@@ -3019,8 +3012,8 @@ const _s = {
         return;
       }
       this.review = i, this.fields = new Set(this.artworkOnly ? [] : Object.keys(i.fields)), this.images = {};
-      const s = i.images.find((n) => n.kind === "backdrop");
-      i.has_backdrop === !1 && s && (this.images.backdrop = s.id), this.tab = this.artworkOnly ? i.images.some((n) => n.kind === "poster") ? "poster" : "backdrop" : "metadata", this.pages = { poster: 0, backdrop: 0 };
+      const s = i.images.find((r) => r.kind === "backdrop");
+      i.has_backdrop === !1 && s && (this.images.backdrop = s.id), this.tab = this.artworkOnly ? i.images.some((r) => r.kind === "poster") ? "poster" : "backdrop" : "metadata", this.pages = { poster: 0, backdrop: 0 };
     } catch (i) {
       t === this.generation && this.report(i);
     } finally {
@@ -3111,14 +3104,14 @@ const _s = {
     );
   }
   summary(e) {
-    return typeof e == "string" && e.length > 90 ? $(e.length, "character") : Array.isArray(e) ? $(e.length, "name") : String(e ?? "Empty");
+    return typeof e == "string" && e.length > 90 ? v(e.length, "character") : Array.isArray(e) ? v(e.length, "name") : String(e ?? "Empty");
   }
   tabKey(e) {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return;
     const t = [
       ...e.currentTarget.querySelectorAll('[role="tab"]')
     ], i = t.findIndex(
-      (n) => n.getAttribute("aria-selected") === "true"
+      (r) => r.getAttribute("aria-selected") === "true"
     ), s = e.key === "Home" ? 0 : e.key === "End" ? t.length - 1 : (i + (e.key === "ArrowRight" ? 1 : -1) + t.length) % t.length;
     e.preventDefault(), t[s]?.click(), t[s]?.focus();
   }
@@ -3142,7 +3135,7 @@ const _s = {
       >
       <div class="image-grid" data-kind=${e}>
         ${t.slice(i, i + 6).map(
-      (s, n) => a`<label class="candidate"
+      (s, r) => a`<label class="candidate"
               ><kaleidescape-scrape-image
                 style=${Number.isFinite(s.width) && Number.isFinite(s.height) && s.width > 0 && s.height > 0 ? `aspect-ratio: ${s.width}/${s.height}` : ""}
                 .client=${this.client}
@@ -3161,7 +3154,7 @@ const _s = {
         this.images[e] = s.id, this.requestUpdate();
       }}
                 />${e === "poster" ? "Poster" : "Backdrop"}
-                ${i + n + 1}</span
+                ${i + r + 1}</span
               ><small
                 >${s.width ?? "?"} × ${s.height ?? "?"}</small
               ></label
@@ -3229,12 +3222,12 @@ const _s = {
       </div>` : l;
   }
   render() {
-    return this.scope?.permissions.edit ? a`${Jt(this.artworkOnly ? "Edit Artwork" : "Scrape title", this.artworkOnly ? "artwork" : "scrape", this.blocked || !!this.pending, () => this.open(), "scrape-button")}
+    return this.scope?.permissions.edit ? a`${It(this.artworkOnly ? "Edit Artwork" : "Scrape title", this.artworkOnly ? "artwork" : "scrape", this.blocked || !!this.pending, () => this.open(), "scrape-button")}
       <dialog
         data-admin-dialog
         class="inset-dialog"
         aria-labelledby="scrape-title"
-        @click=${_}
+        @click=${C}
         @cancel=${(e) => {
       e.preventDefault(), this.close();
     }}
@@ -3243,7 +3236,7 @@ const _s = {
           <h2 id="scrape-title">
             ${this.artworkOnly ? this.review ? `Edit Artwork: ${this.review.title}` : "Edit Artwork" : this.review ? `Review scrape: ${this.review.title}` : "Scrape title"}
           </h2>
-          ${k(() => this.close())}
+          ${_(() => this.close())}
         </div>
         ${this.error ? a`<p class="error" role="alert">${this.error}</p>` : l}
         ${this.busy ? a`<p role="status">${this.pending ? "Applying selected data…" : "Retrieving provider data…"}</p>` : l}
@@ -3325,7 +3318,7 @@ const _s = {
                                     @change=${(i) => {
         i.target.checked ? this.fields.add(e) : this.fields.delete(e), this.requestUpdate();
       }}
-                                  />${_s[e] ?? e} ·
+                                  />${ys[e] ?? e} ·
                                   ${this.summary(t.after)}</label
                                 >
                                 <details>
@@ -3433,15 +3426,15 @@ ${Array.isArray(t.after) ? t.after.join(", ") : String(t.after)}</pre>
         </section>` : l;
   }
 };
-we.properties = {
+$e.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   versionId: {},
   blocked: { type: Boolean },
   artworkOnly: { type: Boolean }
-}, we.styles = [
+}, $e.styles = [
   q,
-  Wt,
+  Nt,
   S`
       :host {
         display: inline-block;
@@ -3583,33 +3576,33 @@ we.properties = {
       }
     `
 ];
-let ct = we;
-customElements.get("kaleidescape-title-scrape") || customElements.define("kaleidescape-title-scrape", ct);
-function pi(r) {
-  return r.toLocaleLowerCase().normalize("NFKD").replace(new RegExp("\\p{M}", "gu"), "").match(/[\p{L}\p{N}_]+/gu)?.join(" ") ?? "";
+let lt = $e;
+customElements.get("kaleidescape-title-scrape") || customElements.define("kaleidescape-title-scrape", lt);
+function oi(n) {
+  return n.toLocaleLowerCase().normalize("NFKD").replace(new RegExp("\\p{M}", "gu"), "").match(/[\p{L}\p{N}_]+/gu)?.join(" ") ?? "";
 }
-function Cs(r, e) {
-  const t = Math.min(2, Math.max(1, Math.ceil(r.length / 4)));
-  if (r.length < 3 || Math.max(r.length, e.length) > 100 || Math.abs(r.length - e.length) > t)
+function vs(n, e) {
+  const t = Math.min(2, Math.max(1, Math.ceil(n.length / 4)));
+  if (n.length < 3 || Math.max(n.length, e.length) > 100 || Math.abs(n.length - e.length) > t)
     return !1;
-  let i = Array.from({ length: e.length + 1 }, (n, o) => o), s = i;
-  for (let n = 1; n <= r.length; n++) {
+  let i = Array.from({ length: e.length + 1 }, (r, o) => o), s = i;
+  for (let r = 1; r <= n.length; r++) {
     const o = Array(e.length + 1).fill(t + 1);
-    o[0] = n;
-    for (let d = Math.max(1, n - t); d <= Math.min(e.length, n + t); d++) {
+    o[0] = r;
+    for (let d = Math.max(1, r - t); d <= Math.min(e.length, r + t); d++) {
       let h = Math.min(
         i[d] + 1,
         o[d - 1] + 1,
-        i[d - 1] + +(r[n - 1] !== e[d - 1])
+        i[d - 1] + +(n[r - 1] !== e[d - 1])
       );
-      n > 1 && d > 1 && r[n - 1] === e[d - 2] && r[n - 2] === e[d - 1] && (h = Math.min(h, s[d - 2] + 1)), o[d] = h;
+      r > 1 && d > 1 && n[r - 1] === e[d - 2] && n[r - 2] === e[d - 1] && (h = Math.min(h, s[d - 2] + 1)), o[d] = h;
     }
     if (Math.min(...o) > t) return !1;
     s = i, i = o;
   }
   return i[e.length] <= t;
 }
-function pt(r, e, t = !1) {
+function dt(n, e, t = !1) {
   const i = e.trim();
   if (i.length >= 2 && i.startsWith('"') && i.endsWith('"')) {
     let h;
@@ -3623,21 +3616,21 @@ function pt(r, e, t = !1) {
     return new RegExp(
       "(?<![\\p{L}\\p{N}_])" + c.join("\\s+") + "(?![\\p{L}\\p{N}_])",
       "u"
-    ).test(r.toLocaleLowerCase());
+    ).test(n.toLocaleLowerCase());
   }
-  if (r.toLocaleLowerCase().includes(e.toLocaleLowerCase()))
+  if (n.toLocaleLowerCase().includes(e.toLocaleLowerCase()))
     return !0;
   if (!t) return !1;
-  const s = pi(e), n = pi(r);
+  const s = oi(e), r = oi(n);
   if (!s) return !1;
-  if (n.includes(s)) return !0;
-  const o = s.split(" "), d = n.split(" ");
+  if (r.includes(s)) return !0;
+  const o = s.split(" "), d = r.split(" ");
   return o.length <= 12 && o.every(
-    (h) => d.some((c) => c.includes(h) || Cs(h, c))
+    (h) => d.some((c) => c.includes(h) || vs(h, c))
   );
 }
-const O = { ATTRIBUTE: 1, CHILD: 2, PROPERTY: 3, BOOLEAN_ATTRIBUTE: 4 }, Di = (r) => (...e) => ({ _$litDirective$: r, values: e });
-let Mi = class {
+const O = { ATTRIBUTE: 1, CHILD: 2, PROPERTY: 3, BOOLEAN_ATTRIBUTE: 4 }, Ui = (n) => (...e) => ({ _$litDirective$: n, values: e });
+let Ai = class {
   constructor(e) {
   }
   get _$AU() {
@@ -3653,48 +3646,48 @@ let Mi = class {
     return this.render(...t);
   }
 };
-const { I: Ss } = ls, ui = (r) => r, qs = (r) => r.strings === void 0, gi = () => document.createComment(""), ie = (r, e, t) => {
-  const i = r._$AA.parentNode, s = e === void 0 ? r._$AB : e._$AA;
+const { I: $s } = is, li = (n) => n, ws = (n) => n.strings === void 0, di = () => document.createComment(""), ie = (n, e, t) => {
+  const i = n._$AA.parentNode, s = e === void 0 ? n._$AB : e._$AA;
   if (t === void 0) {
-    const n = i.insertBefore(gi(), s), o = i.insertBefore(gi(), s);
-    t = new Ss(n, o, r, r.options);
+    const r = i.insertBefore(di(), s), o = i.insertBefore(di(), s);
+    t = new $s(r, o, n, n.options);
   } else {
-    const n = t._$AB.nextSibling, o = t._$AM, d = o !== r;
+    const r = t._$AB.nextSibling, o = t._$AM, d = o !== n;
     if (d) {
       let h;
-      t._$AQ?.(r), t._$AM = r, t._$AP !== void 0 && (h = r._$AU) !== o._$AU && t._$AP(h);
+      t._$AQ?.(n), t._$AM = n, t._$AP !== void 0 && (h = n._$AU) !== o._$AU && t._$AP(h);
     }
-    if (n !== s || d) {
+    if (r !== s || d) {
       let h = t._$AA;
-      for (; h !== n; ) {
-        const c = ui(h).nextSibling;
-        ui(i).insertBefore(h, s), h = c;
+      for (; h !== r; ) {
+        const c = li(h).nextSibling;
+        li(i).insertBefore(h, s), h = c;
       }
     }
   }
   return t;
-}, M = (r, e, t = r) => (r._$AI(e, t), r), Es = {}, Oi = (r, e = Es) => r._$AH = e, Rs = (r) => r._$AH, Xe = (r) => {
-  r._$AR(), r._$AA.remove();
+}, M = (n, e, t = n) => (n._$AI(e, t), n), xs = {}, Ti = (n, e = xs) => n._$AH = e, ks = (n) => n._$AH, Ge = (n) => {
+  n._$AR(), n._$AA.remove();
 };
-const ut = Di(class extends Mi {
-  constructor(r) {
-    if (super(r), r.type !== O.PROPERTY && r.type !== O.ATTRIBUTE && r.type !== O.BOOLEAN_ATTRIBUTE) throw Error("The `live` directive is not allowed on child or event bindings");
-    if (!qs(r)) throw Error("`live` bindings can only contain a single expression");
+const hi = Ui(class extends Ai {
+  constructor(n) {
+    if (super(n), n.type !== O.PROPERTY && n.type !== O.ATTRIBUTE && n.type !== O.BOOLEAN_ATTRIBUTE) throw Error("The `live` directive is not allowed on child or event bindings");
+    if (!ws(n)) throw Error("`live` bindings can only contain a single expression");
   }
-  render(r) {
-    return r;
+  render(n) {
+    return n;
   }
-  update(r, [e]) {
+  update(n, [e]) {
     if (e === L || e === l) return e;
-    const t = r.element, i = r.name;
-    if (r.type === O.PROPERTY) {
+    const t = n.element, i = n.name;
+    if (n.type === O.PROPERTY) {
       if (e === t[i]) return L;
-    } else if (r.type === O.BOOLEAN_ATTRIBUTE) {
+    } else if (n.type === O.BOOLEAN_ATTRIBUTE) {
       if (!!e === t.hasAttribute(i)) return L;
-    } else if (r.type === O.ATTRIBUTE && t.getAttribute(i) === e + "") return L;
-    return Oi(r), e;
+    } else if (n.type === O.ATTRIBUTE && t.getAttribute(i) === e + "") return L;
+    return Ti(n), e;
   }
-}), Ke = S`
+}), We = S`
   .library-toolbar [hidden],
   .library-toolbar[hidden],
   .library-footer [hidden],
@@ -4693,7 +4686,7 @@ const ut = Di(class extends Mi {
     overflow: hidden;
     text-overflow: ellipsis;
   }
-`, zs = S`
+`, _s = S`
   .remote-dialog {
     width: min(390px, calc(100% - 24px));
     --dialog-gutter: 16px;
@@ -4813,20 +4806,20 @@ const ut = Di(class extends Mi {
     }
   }
 `;
-function mi(r, e, t, i) {
-  const s = (n, o, d, h = "") => a` <button
+function ci(n, e, t, i) {
+  const s = (r, o, d, h = "") => a` <button
       type="button"
       class=${h}
       aria-label=${o}
       title=${o}
-      ?disabled=${e || !t && !n.startsWith("power_")}
-      @click=${() => i(n)}
+      ?disabled=${e || !t && !r.startsWith("power_")}
+      @click=${() => i(r)}
     >
       <span aria-hidden="true">${d}</span>
     </button>`;
   return a`
     <div class="remote-top">
-      <p class="remote-player">${r}</p>
+      <p class="remote-player">${n}</p>
       ${s("power_on", "Power on", "⏻", "remote-round")}
       ${s("power_off", "Standby", "☾", "remote-round")}
     </div>
@@ -4864,13 +4857,13 @@ function mi(r, e, t, i) {
     </button>
   `;
 }
-const Ls = {
+const Cs = {
   state_observed: "The requested playback state was observed.",
   acknowledged: "The player accepted the command; its final state is not confirmed.",
   unconfirmed: "The command may have executed. An administrator must inspect the player before more commands can be sent. Nothing will be replayed automatically.",
   rejected: "The player rejected the command. Nothing was retried.",
   not_sent: "Settings or access changed before sending. The command was not sent."
-}, xe = class xe extends x {
+}, we = class we extends x {
   constructor() {
     super(...arguments), this.mode = "remote", this.versionId = "", this.playerId = "", this.inlineRemote = !1, this.value = "", this.configured = !0, this.generation = 0, this.key = "", this.waking = !1, this.wakeDeadline = 0, this.started = "", this.lastOperation = "", this.selectedPlayer = "", this.dialog = "players", this.acknowledge = "", this.busy = !1, this.error = "", this.notice = "", this.locked = !1;
   }
@@ -4994,7 +4987,7 @@ const Ls = {
     if (!this.pending) return;
     const e = this.generation, t = await this.client.controlExecute(this.pending);
     if (e !== this.generation) return;
-    this.notice = Ls[t.outcome], this.pending = void 0;
+    this.notice = Cs[t.outcome], this.pending = void 0;
     const i = this.lastOperation;
     if (["state_observed", "acknowledged"].includes(t.outcome) && (i === "power_on" ? (this.waking = !0, this.wakeDeadline = Date.now() + 12e4, this.wakeTimer = setTimeout(() => {
       this.pollWake();
@@ -5053,7 +5046,7 @@ const Ls = {
       return a`<slot name="collection"></slot>`;
     const t = e?.devices?.filter((o) => o.is_player) ?? [], i = e?.players.find(
       (o) => o.id === this.selectedPlayer
-    ), s = e?.blocked_players.includes(this.selectedPlayer), n = this.busy || this.waking || !e?.enabled || !this.selectedPlayer || !!this.pending || s;
+    ), s = e?.blocked_players.includes(this.selectedPlayer), r = this.busy || this.waking || !e?.enabled || !this.selectedPlayer || !!this.pending || s;
     return a`<section
       class=${this.mode === "remote" ? "card control-card" : "device-controls"}
     >
@@ -5061,7 +5054,7 @@ const Ls = {
               <h2>Player controls</h2>
               <button
                 type="button"
-                ?disabled=${n}
+                ?disabled=${r}
                 ?hidden=${this.inlineRemote}
                 @click=${this.openRemote}
               >
@@ -5118,7 +5111,7 @@ const Ls = {
                   <button
                     type="button"
                     class=${`primary play-movie ${this.status?.ready ? "is-play" : "is-power"}`}
-                    ?disabled=${n}
+                    ?disabled=${r}
                     aria-busy=${this.waking || this.busy}
                     title=${`${this.status?.ready ? "Play on" : "Power on"} ${i?.name || "the selected player"}`}
                     @click=${() => this.status && this.status.readiness !== "starting" ? this.prepare(this.status.ready ? "launch" : "power_on") : this.refresh()}
@@ -5138,7 +5131,7 @@ const Ls = {
               ` : e?.enabled ? a`
                   ${this.waking ? a`<span role="status">◌ Starting player…</span>` : l}
                 ` : a`<p class="muted">Playback controls are disabled.</p>`}
-      ${this.mode === "remote" && this.inlineRemote && e?.enabled ? mi(i?.name || "Kaleidescape player", !!n, !!this.status?.ready, (o) => {
+      ${this.mode === "remote" && this.inlineRemote && e?.enabled ? ci(i?.name || "Kaleidescape player", !!r, !!this.status?.ready, (o) => {
       this.prepare(o);
     }) : l}
       ${this.dialog !== "remote" || this.acknowledge ? this.feedback() : l}
@@ -5147,21 +5140,21 @@ const Ls = {
       <dialog
         ?data-admin-dialog=${!!this.acknowledge}
         class=${this.dialog === "remote" && !this.acknowledge ? "database-dialog remote-dialog" : "database-dialog"}
-        @click=${_}
+        @click=${C}
         @cancel=${this.close}
       >
         <div class="card-head">
           <h2>
             ${this.acknowledge ? "Review unconfirmed command" : this.dialog === "remote" ? "Theater Remote" : "Choose Player"}
           </h2>
-          ${k((o) => this.close(o))}
+          ${_((o) => this.close(o))}
         </div>
         ${this.acknowledge ? a`<p>
                 Confirm you inspected the physical player. This permits new
                 commands and does not resend the earlier command.
-              </p>` : this.dialog === "remote" ? a`${mi(
+              </p>` : this.dialog === "remote" ? a`${ci(
       i?.name || "Kaleidescape player",
-      !!n,
+      !!r,
       !!this.status?.ready,
       (o) => {
         this.prepare(o);
@@ -5198,7 +5191,7 @@ const Ls = {
     </section>`;
   }
 };
-xe.properties = {
+we.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   mode: {},
@@ -5207,9 +5200,9 @@ xe.properties = {
   inlineRemote: { type: Boolean },
   value: {},
   configured: { type: Boolean }
-}, xe.styles = [
+}, we.styles = [
   q,
-  zs,
+  _s,
   S`
       [hidden] {
         display: none !important;
@@ -5300,9 +5293,9 @@ xe.properties = {
       }
     `
 ];
-let gt = xe;
-customElements.get("kaleidescape-device-controls") || customElements.define("kaleidescape-device-controls", gt);
-const fi = [
+let ht = we;
+customElements.get("kaleidescape-device-controls") || customElements.define("kaleidescape-device-controls", ht);
+const pi = [
   "close",
   "cancel",
   "control-lock",
@@ -5310,7 +5303,7 @@ const fi = [
   "scrape-lock",
   "collection-lock"
 ];
-class Us {
+class Ss {
   constructor(e, t) {
     this.host = e, this.change = t, this.profile = G(), this.schedule = () => {
       this.frame !== void 0 || G() === this.profile || (this.frame = requestAnimationFrame(() => {
@@ -5322,7 +5315,7 @@ class Us {
   }
   hostConnected() {
     window.addEventListener("resize", this.schedule);
-    for (const e of fi)
+    for (const e of pi)
       this.host.renderRoot.addEventListener(e, this.schedule, !0);
   }
   hostUpdated() {
@@ -5330,17 +5323,17 @@ class Us {
   }
   hostDisconnected() {
     window.removeEventListener("resize", this.schedule);
-    for (const e of fi)
+    for (const e of pi)
       this.host.renderRoot.removeEventListener(e, this.schedule, !0);
     this.frame !== void 0 && cancelAnimationFrame(this.frame), this.frame = void 0;
   }
 }
-function ue(r, e) {
-  r.addController(new Us(r, e));
+function pe(n, e) {
+  n.addController(new Ss(n, e));
 }
 class P {
-  constructor(e, t, i, s, n = "library") {
-    this.client = e, this.scope = t, this.shared = i, this.error = s, this.area = n, this.values = {}, this.revision = 0, this.profile = G(), this.active = !0, this.inflight = 0, this.sequence = 0, this.versions = /* @__PURE__ */ new Map(), this.failed = {};
+  constructor(e, t, i, s, r = "library") {
+    this.client = e, this.scope = t, this.shared = i, this.error = s, this.area = r, this.values = {}, this.revision = 0, this.profile = G(), this.active = !0, this.inflight = 0, this.sequence = 0, this.versions = /* @__PURE__ */ new Map(), this.failed = {};
   }
   get unsettled() {
     return this.inflight > 0 || Object.keys(this.failed).length > 0;
@@ -5379,8 +5372,8 @@ class P {
       this.active && (this.revision = Math.max(this.revision, s.revision), Object.keys(this.failed).length || this.error(null));
     }).catch((s) => {
       if (this.active) {
-        for (const [n, o] of Object.entries(e))
-          this.versions.get(n) === t && (this.failed[n] = o);
+        for (const [r, o] of Object.entries(e))
+          this.versions.get(r) === t && (this.failed[r] = o);
         Object.keys(this.failed).length && this.error(s);
       }
     }).finally(() => {
@@ -5395,58 +5388,58 @@ class P {
     this.active = !1, this.values = {}, this.failed = {}, this.versions.clear();
   }
 }
-function As(r) {
-  const e = r.watched_status === "in_progress" ? { key: "progress", label: "In progress", symbol: "◔" } : r.watched_status === "watched" ? { key: "watched", label: "Watched", symbol: "✓" } : r.is_recently_added ? { key: "recent", label: "Recently added", symbol: "NEW" } : void 0;
+function qs(n) {
+  const e = n.watched_status === "in_progress" ? { key: "progress", label: "In progress", symbol: "◔" } : n.watched_status === "watched" ? { key: "watched", label: "Watched", symbol: "✓" } : n.is_recently_added ? { key: "recent", label: "Recently added", symbol: "NEW" } : void 0;
   return [
     ...e ? [e] : [],
-    ...r.is_favorite ? [{ key: "favorite", label: "Favorite", symbol: "★" }] : []
+    ...n.is_favorite ? [{ key: "favorite", label: "Favorite", symbol: "★" }] : []
   ];
 }
-function Zt(r) {
-  const e = (r.formats?.length ? r.formats : [r.edition ?? ""]).map(
+function Ht(n) {
+  const e = (n.formats?.length ? n.formats : [n.edition ?? ""]).map(
     (s) => s.toLowerCase()
-  ), t = (s) => e.some((n) => s.test(n)), i = [];
+  ), t = (s) => e.some((r) => s.test(r)), i = [];
   return e.some(
     (s) => /\b4k\b/.test(s) && !/\bcinematic\b/.test(s)
   ) && i.push({ key: "four-k", label: "4K" }), e.some((s) => /\b4k\b/.test(s) && /\bcinematic\b/.test(s)) && i.push({ key: "cinematic", label: "4K Cinematic" }), t(/\bhd\b|\b1080p\b/) && i.push({ key: "hd", label: "HD" }), t(/\bsd\b|\b(?:480|576)[pi]\b/) && i.push({ key: "sd", label: "SD" }), t(/\bsdr\b/) && i.push({ key: "sdr", label: "SDR" }), t(/\bhdr10\b/) && i.push({ key: "hdr10", label: "HDR10" }), t(/\bdolby\s*vision\b/) && i.push({ key: "vision", label: "Dolby Vision" }), t(/\bdolby\s*atmos\b/) && i.push({ key: "atmos", label: "Dolby Atmos" }), i;
 }
-function Ts(r) {
-  const e = Zt(r);
+function Es(n) {
+  const e = Ht(n);
   return ["cinematic", "four-k", "hd", "sd"].map((t) => e.find((i) => i.key === t)).find(Boolean);
 }
-function J(r, e = !1, t, i = !1) {
-  const s = e ? Ts(r) : void 0;
-  return (e ? s ? [s] : [] : Zt(r)).map((n) => {
-    const o = n.key === "cinematic" ? a`<b>4K</b><span class="cinematic-label">Cinematic</span>` : n.label;
+function J(n, e = !1, t, i = !1) {
+  const s = e ? Es(n) : void 0;
+  return (e ? s ? [s] : [] : Ht(n)).map((r) => {
+    const o = r.key === "cinematic" ? a`<b>4K</b><span class="cinematic-label">Cinematic</span>` : r.label;
     return t ? a`<button
           type="button"
-          class=${`format-badge format-${n.key}`}
-          aria-label=${`Filter by format: ${n.label}`}
+          class=${`format-badge format-${r.key}`}
+          aria-label=${`Filter by format: ${r.label}`}
           ?disabled=${i}
-          @click=${() => t(n.label)}
+          @click=${() => t(r.label)}
         >
           ${o}
         </button>` : a`<span
-          class=${`format-badge format-${n.key}`}
-          aria-label=${n.label}
+          class=${`format-badge format-${r.key}`}
+          aria-label=${r.label}
           >${o}</span
         >`;
   });
 }
-function et(r, e = !1, t = []) {
-  return As(r).filter((i) => !t.includes(i.key)).map(
+function Ze(n, e = !1, t = []) {
+  return qs(n).filter((i) => !t.includes(i.key)).map(
     (i) => a`<span
-          class=${e ? `cover-flag flag-${i.key}` : `status-badge collection-badge collection-${Ye(i.label)}`}
+          class=${e ? `cover-flag flag-${i.key}` : `status-badge collection-badge collection-${Je(i.label)}`}
           title=${i.label}
           aria-label=${i.label}
           role="img"
-          >${e ? a`<span class="badge-symbol" aria-hidden="true">${i.symbol}</span>` : a`${Qt(i.label)}<span>${i.label}</span>`}</span
+          >${e ? a`<span class="badge-symbol" aria-hidden="true">${i.symbol}</span>` : a`${Wt(i.label)}<span>${i.label}</span>`}</span
         >`
   );
 }
-function oe(r, e, t = !1) {
-  if (!r?.trim()) return l;
-  const i = r.trim(), s = i.toUpperCase().replaceAll(" ", ""), n = {
+function ne(n, e, t = !1) {
+  if (!n?.trim()) return l;
+  const i = n.trim(), s = i.toUpperCase().replaceAll(" ", ""), r = {
     G: "general",
     PG: "parental",
     "PG-13": "teen",
@@ -5457,23 +5450,23 @@ function oe(r, e, t = !1) {
   }[s] ?? "unrated";
   return e ? a`<button
       type="button"
-      class=${`rating-badge rating-${n}`}
+      class=${`rating-badge rating-${r}`}
       aria-label=${`Filter by rating: ${i}`}
       ?disabled=${t}
       @click=${() => e(i)}
     >
       ${i}
     </button>` : a`<span
-    class=${`rating-badge rating-${n}`}
+    class=${`rating-badge rating-${r}`}
     title=${`Rating: ${i}`}
     >${i}</span
   >`;
 }
-function F(r) {
-  return r.toLocaleLowerCase() === "played" ? "Watched" : r;
+function F(n) {
+  return n.toLocaleLowerCase() === "played" ? "Watched" : n;
 }
-function Ye(r) {
-  const e = r.toLowerCase();
+function Je(n) {
+  const e = n.toLowerCase();
   return {
     all: "all",
     new: "new",
@@ -5487,32 +5480,32 @@ function Ye(r) {
     "in progress": "progress"
   }[e] ?? "all";
 }
-function Qt(r) {
-  const e = Ye(r), t = {
-    all: C`<path d="m2 7 10-5 10 5-10 5zM2 12l10 5 10-5M2 17l10 5 10-5"/>`,
-    new: C`<path d="m12 1 3 2 4 1 1 4 3 4-3 3-1 4-4 1-3 3-3-3-4-1-1-4-3-3 3-4 1-4 4-1z"/><text x="12" y="14.5" text-anchor="middle" fill="currentColor" stroke="none" font-size="6" font-weight="800">NEW</text>`,
-    unwatched: C`<circle cx="12" cy="12" r="10"/><path fill="currentColor" stroke="none" d="m9 6 9 6-9 6z"/>`,
-    watched: C`<circle cx="12" cy="12" r="10"/><path d="m6 12 4 4 8-8"/>`,
-    favorite: C`<path d="M12 21 3 12C-3 4 6-1 12 6c6-7 15-2 9 6z"/>`,
-    progress: C`<circle cx="12" cy="12" r="10"/><path d="M9 7v10M15 7v10"/>`
+function Wt(n) {
+  const e = Je(n), t = {
+    all: k`<path d="m2 7 10-5 10 5-10 5zM2 12l10 5 10-5M2 17l10 5 10-5"/>`,
+    new: k`<path d="m12 1 3 2 4 1 1 4 3 4-3 3-1 4-4 1-3 3-3-3-4-1-1-4-3-3 3-4 1-4 4-1z"/><text x="12" y="14.5" text-anchor="middle" fill="currentColor" stroke="none" font-size="6" font-weight="800">NEW</text>`,
+    unwatched: k`<circle cx="12" cy="12" r="10"/><path fill="currentColor" stroke="none" d="m9 6 9 6-9 6z"/>`,
+    watched: k`<circle cx="12" cy="12" r="10"/><path d="m6 12 4 4 8-8"/>`,
+    favorite: k`<path d="M12 21 3 12C-3 4 6-1 12 6c6-7 15-2 9 6z"/>`,
+    progress: k`<circle cx="12" cy="12" r="10"/><path d="M9 7v10M15 7v10"/>`
   };
-  return C`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${t[e]}</svg>`;
+  return k`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${t[e]}</svg>`;
 }
-function tt(r, e, t = !1) {
-  const i = a`${Qt(r)}<span
-      >${F(r)}</span
-    >`, s = `collection-badge collection-${Ye(r)}`;
+function Qe(n, e, t = !1) {
+  const i = a`${Wt(n)}<span
+      >${F(n)}</span
+    >`, s = `collection-badge collection-${Je(n)}`;
   return e ? a`<button
         type="button"
         class=${s}
-        aria-label=${`Filter by collection: ${F(r)}`}
+        aria-label=${`Filter by collection: ${F(n)}`}
         ?disabled=${t}
         @click=${e}
       >
         ${i}
       </button>` : a`<span class=${s}>${i}</span>`;
 }
-const ke = class ke extends x {
+const xe = class xe extends x {
   constructor() {
     super(...arguments), this.revision = 0, this.enabled = !1, this.blocked = !1, this.generation = 0, this.choices = [], this.selected = "", this.loading = !1, this.busy = !1, this.error = "", this.notice = "";
   }
@@ -5622,18 +5615,18 @@ const ke = class ke extends x {
     }
   }
   render() {
-    return !this.scope?.permissions.edit || !this.version || !this.enabled ? l : a`${Jt("Collection", "collection", this.blocked || this.busy, () => this.open(), "collection-button")}
+    return !this.scope?.permissions.edit || !this.version || !this.enabled ? l : a`${It("Collection", "collection", this.blocked || this.busy, () => this.open(), "collection-button")}
       ${this.notice ? a`<p role="status">${this.notice}</p>` : l}
       <dialog
         data-admin-dialog
         class="database-dialog"
-        @click=${_}
+        @click=${C}
         @cancel=${this.close}
         aria-labelledby="collection-add-title"
       >
         <div class="card-head">
           <h2 id="collection-add-title">Add to Collection</h2>
-          ${k((e) => this.close(e))}
+          ${_((e) => this.close(e))}
         </div>
         <p>
           <strong>${this.version.title}</strong> ·
@@ -5670,16 +5663,16 @@ const ke = class ke extends x {
       </dialog>`;
   }
 };
-ke.properties = {
+xe.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   version: { attribute: !1 },
   revision: { type: Number },
   enabled: { type: Boolean },
   blocked: { type: Boolean }
-}, ke.styles = [
+}, xe.styles = [
   q,
-  Wt,
+  Nt,
   S`
       .collection-button {
         border-radius: 999px;
@@ -5695,12 +5688,12 @@ ke.properties = {
       }
     `
 ];
-let mt = ke;
+let ct = xe;
 customElements.get("kaleidescape-library-collection-add") || customElements.define(
   "kaleidescape-library-collection-add",
-  mt
+  ct
 );
-const bi = [
+const ui = [
   ["title", "Display title"],
   ["sort_title", "Sort title (blank uses display title)"],
   ["year", "Year"],
@@ -5712,14 +5705,14 @@ const bi = [
   ["producers", "Producers"],
   ["studios", "Studios"],
   ["genres", "Genres"]
-], it = /* @__PURE__ */ new Set([
+], Xe = /* @__PURE__ */ new Set([
   "actors",
   "directors",
   "writers",
   "producers",
   "studios",
   "genres"
-]), _e = class _e extends x {
+]), ke = class ke extends x {
   constructor() {
     super(...arguments), this.versionId = "", this.blocked = !1, this.draft = {}, this.busy = !1, this.opened = !1, this.restoring = !1, this.error = "", this.generation = 0;
   }
@@ -5774,11 +5767,11 @@ const bi = [
   }
   patch() {
     const e = {};
-    for (const [t] of bi) {
-      const i = it.has(t) ? this.draft[t].split(`
+    for (const [t] of ui) {
+      const i = Xe.has(t) ? this.draft[t].split(`
 `).map((s) => s.trim()).filter(Boolean) : t === "year" ? this.draft[t].trim() ? Number(this.draft[t]) : null : t === "sort_title" ? this.draft[t].trim() || null : this.draft[t];
       JSON.stringify(i) !== JSON.stringify(
-        this.review.values[t] ?? (it.has(t) ? [] : t === "sort_title" || t === "year" ? null : "")
+        this.review.values[t] ?? (Xe.has(t) ? [] : t === "sort_title" || t === "year" ? null : "")
       ) && (e[t] = i);
     }
     return e;
@@ -5816,19 +5809,19 @@ const bi = [
     }
   }
   render() {
-    return this.scope?.permissions.edit ? a`${Jt("Edit details", "edit", this.blocked || this.busy || !!this.pending, () => this.open())}
+    return this.scope?.permissions.edit ? a`${It("Edit details", "edit", this.blocked || this.busy || !!this.pending, () => this.open())}
       <dialog
         data-admin-dialog
         class="inset-dialog"
         aria-labelledby="library-edit-title"
-        @click=${_}
+        @click=${C}
         @cancel=${(e) => {
       e.preventDefault(), this.close();
     }}
       >
         <div class="card-head">
           <h2 id="library-edit-title">Edit Library details</h2>
-          ${k(() => this.close())}
+          ${_(() => this.close())}
         </div>
         ${this.error ? a`<p class="error" role="alert">${this.error}</p>` : l}
         ${this.busy ? a`<p role="status">${this.pending ? "Saving changes…" : "Loading details…"}</p>` : l}
@@ -5839,15 +5832,15 @@ const bi = [
                 remain intact. Background scraping stays paused for this movie
                 until you explicitly scrape and apply data again.
               </p>` : this.review ? a`<p class="muted">
-                    Applies to ${$(this.review.version_count, "version")}.
+                    Applies to ${v(this.review.version_count, "version")}.
                     Changes survive scans. Source IDs, runtime, formats,
                     purchases and viewing records are protected. Enter one name
                     per line for credits and genres.
                   </p>
                   <div class="edit-fields">
-                    ${bi.map(
+                    ${ui.map(
       ([e, t]) => a`<label
-                          >${t}${it.has(e) || e === "synopsis" ? a`<textarea
+                          >${t}${Xe.has(e) || e === "synopsis" ? a`<textarea
                                   name=${e}
                                   .value=${this.draft[e] ?? ""}
                                   ?disabled=${!!this.pending || this.busy}
@@ -5899,14 +5892,14 @@ const bi = [
       </dialog>` : l;
   }
 };
-_e.properties = {
+ke.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   versionId: {},
   blocked: { type: Boolean }
-}, _e.styles = [
+}, ke.styles = [
   q,
-  Wt,
+  Nt,
   S`
       :host {
         display: inline-block;
@@ -5924,8 +5917,8 @@ _e.properties = {
       }
     `
 ];
-let ft = _e;
-customElements.get("kaleidescape-title-edit") || customElements.define("kaleidescape-title-edit", ft);
+let pt = ke;
+customElements.get("kaleidescape-title-edit") || customElements.define("kaleidescape-title-edit", pt);
 const V = [
   ["collection", "Collection", "collections"],
   ["actor", "Actor", "actors"],
@@ -5934,7 +5927,7 @@ const V = [
   ["genre", "Genre", "genres"],
   ["year", "Year", "year"],
   ["format", "Viewing format", "format"]
-], st = [
+], et = [
   ["name", "Title"],
   ["year", "Year"],
   ["collection", "Collection"],
@@ -5942,7 +5935,7 @@ const V = [
   ["watched", "Status"],
   ["added", "Added on"],
   ["random", "Random"]
-], yi = [
+], gi = [
   ["show_titles", "Show titles on covers"],
   ["show_format", "Show format"],
   ["show_badges", "Show library badges"],
@@ -5953,7 +5946,7 @@ const V = [
   unwatched: "Unwatched",
   in_progress: "In progress",
   unknown: "Unknown"
-}, Ce = class Ce extends x {
+}, _e = class _e extends x {
   constructor() {
     super(), this.bound = "", this.generation = 0, this.listRequest = 0, this.statusRequest = 0, this.purchaseLoading = !1, this.purchaseError = "", this.purchaseDetailsOpen = !1, this.versionRequest = 0, this.versionsLoading = !1, this.versionsError = "", this.widths = [360, 90, 260, 150, 140, 210], this.collectionLocked = !1, this.controlLocked = !1, this.scrapeLocked = !1, this.artworkLocked = !1, this.editLocked = !1, this.castLimit = 8, this.checkingCollection = !1, this.filters = {
       query: "",
@@ -5967,7 +5960,7 @@ const V = [
       show_library_cost: !1
     }, this.entriesPerPage = 100, this.preferencesReady = !1, this.preferenceError = "", this.peopleTimers = {}, this.peopleSearch = {}, this.peopleChoices = {}, this.peopleRequests = {}, this.coverColumns = 1, this.gridWidth = 0, this.requestLimit = 50, this.requestedOffset = 0, this.draft = {}, this.facetSearch = "", this.visibility = () => {
       clearTimeout(this.timer), document.hidden ? (clearTimeout(this.layoutTimer), this.layoutTimer = void 0, this.pendingLimit = void 0) : (this.refreshStatus(), this.scheduleLayoutPage());
-    }, this.mobileQuery = "", ue(this, () => !this.preferencesReady || this.preferences?.unsettled || this.searchPreferences?.unsettled || this.loading || this.detailsLocked || this.resize || this.renderRoot.querySelector("dialog[open]") ? !1 : (this.clear(), this.initializePreferences(), this.refreshStatus(), !0));
+    }, this.mobileQuery = "", pe(this, () => !this.preferencesReady || this.preferences?.unsettled || this.searchPreferences?.unsettled || this.loading || this.detailsLocked || this.resize || this.renderRoot.querySelector("dialog[open]") ? !1 : (this.clear(), this.initializePreferences(), this.refreshStatus(), !0));
   }
   get detailsLocked() {
     return this.collectionLocked || this.controlLocked || this.scrapeLocked || this.artworkLocked || this.editLocked;
@@ -6028,25 +6021,25 @@ const V = [
         sort: "name",
         descending: !1,
         ...Object.fromEntries(
-          [...V.map(([n]) => n), "status"].map((n) => [
-            n,
+          [...V.map(([r]) => r), "status"].map((r) => [
+            r,
             []
           ])
         ),
         scraper_conflict: !1
       } : t;
       this.dashboard && (this.preferences?.dispose(), this.preferences = void 0, this.searchPreferences?.dispose(), this.searchPreferences = void 0, this.coverColumns = this.dashboard.columns), this.fuzzySearch = i.fuzzy_search, this.mode = s.view, this.entriesPerPage = s.page_size, this.coverSize = s.cover_size, this.castLimit = Number.isInteger(s.cast_limit) ? s.cast_limit : 8, this.display = Object.fromEntries(
-        yi.map(([n]) => [n, s[n]])
+        gi.map(([r]) => [r, s[r]])
       ), this.scope?.permissions.edit && this.display.show_library_cost && this.loadPurchaseTotals(), this.widths = [...s.widths], this.applied = Object.fromEntries(
         [
           "query",
           "sort",
           "random_seed",
           "descending",
-          ...V.map(([n]) => n),
+          ...V.map(([r]) => r),
           "status",
           "scraper_conflict"
-        ].map((n) => [n, s[n]])
+        ].map((r) => [r, s[r]])
       ), this.filters = structuredClone(this.applied), this.preferencesReady = !0, this.openCriterion ? this.fromDetails(this.openCriterion.key, this.openCriterion.value) : await this.load(), this.openTitleId && e === this.generation && this.openLinkedTitle(this.openTitleId);
     } catch (t) {
       e === this.generation && this.fail(t);
@@ -6148,8 +6141,8 @@ const V = [
   async load(e = 0, t = !1) {
     if (this.detailsLocked || !this.client || !this.scope?.library_enabled) return;
     clearTimeout(this.layoutTimer), this.layoutTimer = void 0, this.pendingLimit = void 0;
-    const i = this.generation, s = ++this.listRequest, n = this.pageSize;
-    this.requestLimit = n, this.requestedOffset = e, this.loading = !0, this.error = "", this.requestUpdate();
+    const i = this.generation, s = ++this.listRequest, r = this.pageSize;
+    this.requestLimit = r, this.requestedOffset = e, this.loading = !0, this.error = "", this.requestUpdate();
     try {
       const o = this.entriesPerPage === "all" ? await this.client.libraryAll(
         this.scope,
@@ -6159,14 +6152,14 @@ const V = [
         ...this.applied,
         fuzzy: this.fuzzySearch,
         grouped: !0,
-        limit: n,
+        limit: r,
         offset: e,
         ...e && this.page && !t ? {
           revision: this.page.revision,
           ...this.page.preferences_key ? { preferences_key: this.page.preferences_key } : {}
         } : {}
       });
-      if (i !== this.generation || s !== this.listRequest || n !== this.pageSize)
+      if (i !== this.generation || s !== this.listRequest || r !== this.pageSize)
         return;
       if (e && !o.items.length && o.total) {
         this.load(0, t);
@@ -6213,7 +6206,7 @@ const V = [
   }
   scraperSummary() {
     const e = this.info?.metadata;
-    return e ? `Scrapers ${e.enabled === !1 ? "off" : e.running || e.active ? `running · ${e.processed}/${e.total}` : e.failed || e.error ? "error · check logs" : "idle"} · ${e.cached_groups ?? 0} scraped` : "";
+    return e ? `Scrapers ${e.enabled === !1 ? "off" : e.running || e.active ? `running · ${e.processed}/${e.total}` : e.failed || e.error ? "error · check integration status" : "idle"} · ${e.cached_groups ?? 0} scraped` : "";
   }
   async sync() {
     if (!this.client || !this.scope?.permissions.edit || this.requesting)
@@ -6242,9 +6235,9 @@ const V = [
       const s = await this.client.libraryVersions(this.scope, e);
       if (t !== this.generation || i !== this.versionRequest)
         return;
-      const n = s.items[0];
-      if (!n) return;
-      this.selected = n, this.versions = s, this.activeVersion = n, this.requestUpdate(), await this.openDialog("title-dialog");
+      const r = s.items[0];
+      if (!r) return;
+      this.selected = r, this.versions = s, this.activeVersion = r, this.requestUpdate(), await this.openDialog("title-dialog");
     } catch (s) {
       t === this.generation && i === this.versionRequest && this.fail(s);
     }
@@ -6257,7 +6250,7 @@ const V = [
   }
   async loadVersions(e = 0) {
     if (this.detailsLocked || !this.client || !this.scope || !this.selected) return;
-    const t = this.generation, i = ++this.versionRequest, s = this.selected.id, n = this.activeVersion?.id;
+    const t = this.generation, i = ++this.versionRequest, s = this.selected.id, r = this.activeVersion?.id;
     this.versionsLoading = !0, this.versionsError = "", this.requestUpdate();
     try {
       const o = await this.client.libraryVersions(
@@ -6268,7 +6261,7 @@ const V = [
       );
       if (t !== this.generation || i !== this.versionRequest || this.selected?.id !== s)
         return;
-      this.versions = o, this.activeVersion = o.items.find((d) => d.id === n) ?? o.items[0], this.activeVersion && (this.selected = { ...this.selected, title: this.activeVersion.title });
+      this.versions = o, this.activeVersion = o.items.find((d) => d.id === r) ?? o.items[0], this.activeVersion && (this.selected = { ...this.selected, title: this.activeVersion.title });
     } catch (o) {
       t === this.generation && i === this.versionRequest && (["unauthorized", "library_disabled"].includes(u(o)) ? this.fail(o) : u(o) === "refresh_required" && e ? this.loadVersions() : this.versionsError = w(o));
     } finally {
@@ -6301,7 +6294,7 @@ const V = [
       return;
     e.preventDefault();
     const t = this.versions.items, i = t.findIndex(
-      (n) => n.id === this.activeVersion?.id
+      (r) => r.id === this.activeVersion?.id
     ), s = e.key === "Home" ? 0 : e.key === "End" ? t.length - 1 : (i + (e.key === "ArrowLeft" ? -1 : 1) + t.length) % t.length;
     this.activeVersion = t[s], this.requestUpdate(), this.updateComplete.then(
       () => this.renderRoot.querySelector(`#version-${s}`)?.focus()
@@ -6312,7 +6305,7 @@ const V = [
     if (e === "random") {
       let i;
       try {
-        i = Je().replaceAll("-", "");
+        i = He().replaceAll("-", "");
       } catch (s) {
         this.fail(s);
         return;
@@ -6375,15 +6368,15 @@ const V = [
     const s = this.generation;
     this.peopleTimers[e] = setTimeout(async () => {
       try {
-        const n = await this.client.librarySuggestions(
+        const r = await this.client.librarySuggestions(
           this.scope,
           e,
           t,
           this.fuzzySearch
         );
-        s === this.generation && this.peopleRequests[e] === i && this.renderRoot.querySelector("#filter-dialog")?.open && (this.peopleChoices[e] = n.items, this.requestUpdate());
-      } catch (n) {
-        s === this.generation && this.peopleRequests[e] === i && this.fail(n);
+        s === this.generation && this.peopleRequests[e] === i && this.renderRoot.querySelector("#filter-dialog")?.open && (this.peopleChoices[e] = r.items, this.requestUpdate());
+      } catch (r) {
+        s === this.generation && this.peopleRequests[e] === i && this.fail(r);
       }
     }, 200), this.requestUpdate();
   }
@@ -6398,11 +6391,11 @@ const V = [
       id="library-search"
       class="library-options"
       aria-labelledby="library-search-title"
-      @click=${_}
+      @click=${C}
     >
       <div class="card-head">
         <h2 id="library-search-title">Search Library</h2>
-        ${k(() => this.closeDialog("library-search"))}
+        ${_(() => this.closeDialog("library-search"))}
       </div>
       <form
         @submit=${(e) => {
@@ -6414,7 +6407,7 @@ const V = [
             type="search"
             name="library_mobile_query"
             maxlength="500"
-            .value=${ut(this.mobileQuery)}
+            .value=${hi(this.mobileQuery)}
             @input=${(e) => {
       this.mobileQuery = e.target.value;
     }}
@@ -6433,7 +6426,7 @@ const V = [
     return [
       .../* @__PURE__ */ new Set([...i, ...this.draft[e] ?? []])
     ].filter(
-      (s) => pt(
+      (s) => dt(
         e === "collection" ? F(s) : s,
         this.facetSearch,
         this.fuzzySearch
@@ -6520,14 +6513,14 @@ const V = [
                 <dd>${e.unique_transactions}</dd>
               </dl>
               <p class="muted">
-                ${$(e.purchase_count, "purchase record")}. Missing
+                ${v(e.purchase_count, "purchase record")}. Missing
                 prices are excluded. Savings use records with both prices in the
                 same currency.
               </p>
-              ${e.missing_purchase_prices || e.missing_retail_prices ? a`<p class="muted">${$(e.missing_purchase_prices, "missing paid price")} · ${$(e.missing_retail_prices, "missing retail price")}.</p>` : l}
-              ${e.unpaired_prices ? a`<p class="muted">${$(e.unpaired_prices, "purchase record")} excluded from savings because prices are missing or use different currencies.</p>` : l}
-              ${e.missing_order_ids ? a`<p class="muted">${$(e.missing_order_ids, "purchase record")} without an order ID; not included in the transaction count.</p>` : l}
-              ${e.duplicate_purchases ? a`<p class="muted">${$(e.duplicate_purchases, "duplicate purchase record")} counted only once.</p>` : l}` : l}
+              ${e.missing_purchase_prices || e.missing_retail_prices ? a`<p class="muted">${v(e.missing_purchase_prices, "missing paid price")} · ${v(e.missing_retail_prices, "missing retail price")}.</p>` : l}
+              ${e.unpaired_prices ? a`<p class="muted">${v(e.unpaired_prices, "purchase record")} excluded from savings because prices are missing or use different currencies.</p>` : l}
+              ${e.missing_order_ids ? a`<p class="muted">${v(e.missing_order_ids, "purchase record")} without an order ID; not included in the transaction count.</p>` : l}
+              ${e.duplicate_purchases ? a`<p class="muted">${v(e.duplicate_purchases, "duplicate purchase record")} counted only once.</p>` : l}` : l}
     </details>`;
   }
   renderOptionsDialog() {
@@ -6535,11 +6528,11 @@ const V = [
       id="library-options"
       class="database-dialog library-options"
       aria-labelledby="library-options-title"
-      @click=${_}
+      @click=${C}
     >
       <div class="card-head">
         <h2 id="library-options-title">Library options</h2>
-        ${k(() => this.closeDialog("library-options"))}
+        ${_(() => this.closeDialog("library-options"))}
       </div>
       <p class="muted">
         Changes save automatically for your HA user’s
@@ -6552,7 +6545,7 @@ const V = [
             .value=${String(this.applied.sort)}
             @change=${(e) => this.sort(e.target.value)}
           >
-            ${st.map(([e, t]) => a`<option value=${e} ?selected=${e === this.applied.sort}>${t}</option>`)}
+            ${et.map(([e, t]) => a`<option value=${e} ?selected=${e === this.applied.sort}>${t}</option>`)}
           </select></label
         >
         <label class="check"
@@ -6614,7 +6607,7 @@ const V = [
       ), this.fitGrid(this.gridWidth), this.requestUpdate();
     }}
               /></label>` : l}
-        ${yi.filter(
+        ${gi.filter(
       ([e]) => e !== "show_library_cost" || this.scope?.permissions.edit
     ).map(
       ([e, t]) => a`<label class="check"
@@ -6633,9 +6626,9 @@ const V = [
       ${this.info ? a`<details>
               <summary>Library details</summary>
               <p>
-                ${$(this.info.group_count, "movie")} ·
-                ${$(this.info.title_count, "individual version")} ·
-                ${$(this.info.collection_count, "collection")}.
+                ${v(this.info.group_count, "movie")} ·
+                ${v(this.info.title_count, "individual version")} ·
+                ${v(this.info.collection_count, "collection")}.
               </p>
               <p>
                 Catalog synced: ${this.date(this.info.last_synced_at)}<br />Collections
@@ -6661,13 +6654,13 @@ const V = [
   renderFilterDialog() {
     return a`<dialog
       id="filter-dialog"
-      @click=${_}
+      @click=${C}
       class="database-dialog library-dialog"
       aria-labelledby="filters-title"
     >
       <div class="card-head">
         <h2 id="filters-title">Library filters</h2>
-        ${k(() => this.closeDialog("filter-dialog"))}
+        ${_(() => this.closeDialog("filter-dialog"))}
       </div>
       <p>
         Match any checked value within a category and all selected categories.
@@ -6697,11 +6690,11 @@ const V = [
       ["status", "Watched status", "status"],
       ...V.filter(([e]) => e !== "actor" && e !== "director")
     ].map(([e, t, i]) => {
-      const s = this.draft[e] ?? [], n = this.choices(e, i);
+      const s = this.draft[e] ?? [], r = this.choices(e, i);
       return a`<fieldset>
             <legend>${t}</legend>
             <div class="facet-options">
-              ${n.length ? n.map(
+              ${r.length ? r.map(
         (o) => a`<label class="check"
                           ><input
                             type="checkbox"
@@ -6715,7 +6708,7 @@ const V = [
             [e]: d.target.checked ? [...s, o] : s.filter((h) => h !== o)
           }, this.requestUpdate();
         }}
-                          />${e === "status" ? tt(H[o]) : e === "rating" ? oe(o) : e === "collection" ? tt(o) : o}</label
+                          />${e === "status" ? Qe(H[o]) : e === "rating" ? ne(o) : e === "collection" ? Qe(o) : o}</label
                         >`
       ) : a`<p class="muted">No matching options</p>`}
             </div>
@@ -6727,8 +6720,8 @@ const V = [
       ["actor", "Actor", "actors"],
       ["director", "Director", "directors"]
     ].map(([e, t, i]) => {
-      const s = this.draft[e] ?? [], n = (this.peopleChoices[e] ?? (this.page?.facets[i] ?? []).filter(
-        (o) => pt(o, this.peopleSearch[e] ?? "", this.fuzzySearch)
+      const s = this.draft[e] ?? [], r = (this.peopleChoices[e] ?? (this.page?.facets[i] ?? []).filter(
+        (o) => dt(o, this.peopleSearch[e] ?? "", this.fuzzySearch)
       )).slice(0, 20);
       return a`<fieldset>
             <legend>${t}</legend>
@@ -6759,7 +6752,7 @@ const V = [
       )}
             </div>
             <div class="facet-options" aria-label=${`${t} suggestions`}>
-              ${n.map(
+              ${r.map(
         (o) => a`<label class="check"
                     ><input
                       type="checkbox"
@@ -6854,7 +6847,7 @@ const V = [
     ></kaleidescape-title-scrape>`;
   }
   renderTitleDialog() {
-    const e = this.selected, t = this.activeVersion, i = (this.versions?.total ?? e?.version_count ?? 1) > 1, s = this.scope?.permissions.edit, n = this.detailsLocked || this.checkingCollection, o = e?.content_ratings ?? [
+    const e = this.selected, t = this.activeVersion, i = (this.versions?.total ?? e?.version_count ?? 1) > 1, s = this.scope?.permissions.edit, r = this.detailsLocked || this.checkingCollection, o = e?.content_ratings ?? [
       ...new Set(
         [
           e?.rating,
@@ -6867,7 +6860,7 @@ const V = [
       @cancel=${(h) => {
       h.preventDefault(), this.closeDialog("title-dialog");
     }}
-      @click=${_}
+      @click=${C}
       class=${`database-dialog library-dialog movie-dialog inset-dialog${d ? " has-backdrop" : ""}`}
       aria-labelledby="library-title"
       @close=${() => {
@@ -6876,7 +6869,7 @@ const V = [
     >
       ${e ? a`
               <div class="movie-close">
-                ${k(() => this.closeDialog("title-dialog"))}
+                ${_(() => this.closeDialog("title-dialog"))}
               </div>
               <div class="movie-intro">
                 ${d && t ? a`<div class="movie-hero" aria-hidden="true">${this.cover(t, d)}</div>` : l}
@@ -6892,24 +6885,24 @@ const V = [
                   ${t?.genres.length ? a` · ${t.genres.map((h, c) => a`${c ? ", " : ""}${this.detailLink("genre", h)}`)}` : l}
                 </p>
                 <div class="detail-badges movie-heading-badges">
-                  ${J(i ? e : t ?? e, !1, (h) => this.fromDetails("format", h), n)}
-                  ${o.map((h) => oe(h, (c) => this.fromDetails("rating", c), n))}
+                  ${J(i ? e : t ?? e, !1, (h) => this.fromDetails("format", h), r)}
+                  ${o.map((h) => ne(h, (c) => this.fromDetails("rating", c), r))}
                   <button
-                    class=${`movie-status collection-badge collection-${Ye(H[t?.watched_status ?? e.watched_status])}`}
-                    ?disabled=${n}
+                    class=${`movie-status collection-badge collection-${Je(H[t?.watched_status ?? e.watched_status])}`}
+                    ?disabled=${r}
                     @click=${() => this.fromDetails("status", t?.watched_status ?? e.watched_status)}
                   >
-                    ${Qt(H[t?.watched_status ?? e.watched_status])}
+                    ${Wt(H[t?.watched_status ?? e.watched_status])}
                     <span
                       >${H[t?.watched_status ?? e.watched_status]}</span
                     >
                   </button>
-                  ${et(e, !1, ["watched", "progress"])}
+                  ${Ze(e, !1, ["watched", "progress"])}
                   ${e.collections.map(
-      (h) => tt(
+      (h) => Qe(
         h,
         () => this.fromDetails("collection", h),
-        n
+        r
       )
     )}
                 </div>
@@ -6938,7 +6931,7 @@ const V = [
     }}
                                 ></kaleidescape-title-edit>
                                 ${this.renderScrapeAction(t)}
-                                ${this.info?.metadata?.tmdb_enabled ? this.renderScrapeAction(t, !0) : l}` : l}${$s(t)}</kaleidescape-device-controls
+                                ${this.info?.metadata?.tmdb_enabled ? this.renderScrapeAction(t, !0) : l}` : l}${gs(t)}</kaleidescape-device-controls
                       >` : l}
                 ${this.versionsLoading ? a`<p role="status">Loading individual versions…</p>` : l}
                 ${this.versionsError ? a`<p class="error" role="alert">
@@ -6986,7 +6979,7 @@ const V = [
                     >
                       <div class="movie-aside">
                         <div class="cover movie-poster">${this.cover(t)}</div>
-                        ${i ? a`<div class="detail-badges version-format-badges">${J(t, !1, (h) => this.fromDetails("format", h), n)}</div>` : l}
+                        ${i ? a`<div class="detail-badges version-format-badges">${J(t, !1, (h) => this.fromDetails("format", h), r)}</div>` : l}
                         <details class="movie-record-details">
                           <summary>Library details</summary>
                           <p class="muted">
@@ -7021,12 +7014,12 @@ const V = [
       ([h, c, g]) => c.length ? a`<div>
                                   <dt>${h}</dt>
                                   <dd>
-                                    ${c.map((p, v) => a`${v ? ", " : ""}${this.detailLink(g, p, h === "Collections" ? F(p) : p)}`)}
+                                    ${c.map((p, y) => a`${y ? ", " : ""}${this.detailLink(g, p, h === "Collections" ? F(p) : p)}`)}
                                   </dd>
                                 </div>` : l
     )}
                         </dl>
-                        ${xs(t, (h) => this.detailLink("query", h), this.castLimit)}
+                        ${fs(t, (h) => this.detailLink("query", h), this.castLimit)}
                         <p>
                           <button
                             class="link"
@@ -7050,7 +7043,7 @@ const V = [
     const e = this.page?.limit ?? this.requestLimit, t = this.loading || !!this.layoutTimer, i = this.page?.items ?? [], s = this.mode === "covers" && !this.dashboard && this.page?.has_more && i.length >= this.coverColumns ? i.slice(
       0,
       i.length - i.length % this.coverColumns
-    ) : i, n = this.scope?.permissions.edit, o = [...V.map(([d]) => d), "status"].reduce(
+    ) : i, r = this.scope?.permissions.edit, o = [...V.map(([d]) => d), "status"].reduce(
       (d, h) => d + (this.applied[h]?.length ?? 0),
       +!!this.applied.scraper_conflict
     );
@@ -7070,11 +7063,11 @@ const V = [
                 Retry saving preferences
               </button>
             </p>` : l}
-      ${n && this.info?.phase && this.info.phase !== "idle" ? a`<p role="status">Syncing… ${this.info.processed ?? 0}/${this.info.total ?? "?"}</p>` : l}
-      ${n && this.info?.error ? a`<p class="warning" role="status">${w(new b(this.info.error))}</p>` : l}
+      ${r && this.info?.phase && this.info.phase !== "idle" ? a`<p role="status">Syncing… ${this.info.processed ?? 0}/${this.info.total ?? "?"}</p>` : l}
+      ${r && this.info?.error ? a`<p class="warning" role="status">${w(new b(this.info.error))}</p>` : l}
       ${this.error ? a`<p class="error" role="alert">${this.error}<button @click=${() => this.load()}>Refresh results</button></p>` : l}
       ${this.notice ? a`<p class="notice" role="status">${this.notice}</p>` : l}
-      ${n ? (this.info?.pending_adds ?? []).map(
+      ${r ? (this.info?.pending_adds ?? []).map(
       (d) => a`<div class="warning" role="status">
                   Unconfirmed collection add: <strong>${d.title}</strong> →
                   ${d.collection}. Checking never sends another add.
@@ -7170,7 +7163,7 @@ const V = [
                 name="library_query"
                 type="search"
                 maxlength="500"
-                .value=${ut(String(this.filters.query ?? ""))}
+                .value=${hi(String(this.filters.query ?? ""))}
                 @input=${(d) => {
       this.filters.query = d.target.value, clearTimeout(this.searchTimer), this.searchTimer = setTimeout(() => this.applySearch(), 300);
     }}
@@ -7197,7 +7190,7 @@ const V = [
                 .value=${String(this.applied.sort)}
                 @change=${(d) => this.sort(d.target.value)}
               >
-                ${st.map(([d, h]) => a`<option value=${d}>${h}</option>`)}
+                ${et.map(([d, h]) => a`<option value=${d}>${h}</option>`)}
               </select></label
             >
             <button
@@ -7229,9 +7222,9 @@ const V = [
                       @click=${() => this.select(d)}
                     >
                       <div class="cover-image">${this.cover(d)}</div>
-                      ${this.display.show_badges ? a`<div class="cover-flags">${et(d, !0)}</div>` : l}
+                      ${this.display.show_badges ? a`<div class="cover-flags">${Ze(d, !0)}</div>` : l}
                       ${this.display.show_format ? a`<div class="cover-formats">${J(d, !0)}</div>` : l}
-                      ${this.display.show_rating ? a`<div class="cover-rating">${oe(d.rating)}</div>` : l}
+                      ${this.display.show_rating ? a`<div class="cover-rating">${ne(d.rating)}</div>` : l}
                       ${this.conflictIcon(d)}
                       ${this.display.show_titles ? a`<span class="cover-caption">${d.title}${d.year ? ` (${d.year})` : ""}</span>` : l}
                     </button>`
@@ -7246,7 +7239,7 @@ const V = [
                   </colgroup>
                   <thead>
                     <tr>
-                      ${st.filter(([d]) => d !== "random").map(
+                      ${et.filter(([d]) => d !== "random").map(
       ([d, h], c) => a`<th
                             aria-sort=${this.applied.sort === d ? this.applied.descending ? "descending" : "ascending" : "none"}
                           >
@@ -7309,10 +7302,10 @@ const V = [
                               class="library-summary-line"
                               title=${this.format(d)}
                             >
-                              ${this.display.show_badges ? et(d) : l}
+                              ${this.display.show_badges ? Ze(d) : l}
                               ${this.display.show_format ? J(d) : l}
-                              ${this.display.show_format && !Zt(d).length ? a`<small>${this.format(d)}</small>` : l}
-                              ${(d.version_count ?? 1) > 1 ? a`<small>${$(d.version_count, "version")}</small>` : l}
+                              ${this.display.show_format && !Ht(d).length ? a`<small>${this.format(d)}</small>` : l}
+                              ${(d.version_count ?? 1) > 1 ? a`<small>${v(d.version_count, "version")}</small>` : l}
                             </div>
                           </td>
                           <td title=${this.years(d)}>${this.years(d)}</td>
@@ -7354,8 +7347,8 @@ const V = [
             ${this.info?.status_counts?.watched ?? 0} · Paused
             ${this.info?.status_counts?.in_progress ?? 0}
           </span>
-          ${n && this.info ? a`<span class="footer-admin">${$(this.info.collection_count, "collection")}${this.info.artwork_enabled ? ` · Artwork ${((this.info.artwork_bytes ?? 0) / 1048576).toFixed(1)} MiB` : ""}${this.display.show_library_cost ? ` · Library cost ${this.purchaseAmount("library_cost")}` : ""} · Synced ${this.date(this.info.last_synced_at)}</span>` : l}
-          ${n && this.info?.metadata ? a`<span class="scraper-status footer-admin">${this.scraperSummary()}</span>` : l}
+          ${r && this.info ? a`<span class="footer-admin">${v(this.info.collection_count, "collection")}${this.info.artwork_enabled ? ` · Artwork ${((this.info.artwork_bytes ?? 0) / 1048576).toFixed(1)} MiB` : ""}${this.display.show_library_cost ? ` · Library cost ${this.purchaseAmount("library_cost")}` : ""} · Synced ${this.date(this.info.last_synced_at)}</span>` : l}
+          ${r && this.info?.metadata ? a`<span class="scraper-status footer-admin">${this.scraperSummary()}</span>` : l}
         </div>
         <div
           class="footer-actions actions"
@@ -7392,29 +7385,29 @@ const V = [
     </section>`;
   }
 };
-Ce.properties = {
+_e.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   openTitleId: { attribute: !1 },
   openCriterion: { attribute: !1 },
   dashboard: { attribute: !1 }
-}, Ce.styles = [q, Ke];
-let bt = Ce;
-customElements.get("kaleidescape-library") || customElements.define("kaleidescape-library", bt);
-const js = {
+}, _e.styles = [q, We];
+let ut = _e;
+customElements.get("kaleidescape-library") || customElements.define("kaleidescape-library", ut);
+const Rs = {
   playing: "Playing",
   paused: "Paused",
   forward: "Scanning forward",
   reverse: "Scanning backward",
   stopped: "Stopped",
   none: "Stopped"
-}, Ps = {
+}, zs = {
   content: "Main content",
   credits: "Credits",
   intermission: "Intermission",
   disc_menu: "Disc menu",
   none: "No active content"
-}, Se = class Se extends x {
+}, Ce = class Ce extends x {
   constructor() {
     super(...arguments), this.playerId = "", this.compact = !1, this.showControls = !0, this.boundScope = "", this.generation = 0, this.player = null, this.loading = !1, this.denied = !1, this.error = "", this.image = "", this.imageKey = "", this.visibility = () => {
       this.reset(), document.hidden || this.refresh();
@@ -7451,12 +7444,12 @@ const js = {
       );
       if (i !== this.generation) return;
       this.player = s[0] ?? null;
-      const n = this.player, o = n?.available && n.artwork_key && n.entity_id ? `${n.entity_id}:${n.content_key ?? n.raw_content_id ?? ""}:${n.artwork_key}` : "";
+      const r = this.player, o = r?.available && r.artwork_key && r.entity_id ? `${r.entity_id}:${r.content_key ?? r.raw_content_id ?? ""}:${r.artwork_key}` : "";
       if (o !== this.imageKey && (this.clearImage(), this.imageKey = o, this.requestUpdate(), o)) {
         const d = this.abort = new AbortController(), h = setTimeout(() => d.abort(), 5e3);
         try {
           const c = await e.artwork(
-            n.entity_id,
+            r.entity_id,
             d.signal
           );
           i === this.generation && c && (this.image = URL.createObjectURL(c));
@@ -7476,7 +7469,7 @@ const js = {
     }
   }
   recordingStatus(e, t) {
-    return e.recording_error ? "Recording needs attention. Check HA diagnostics." : e.recording_paused ? "Recording paused for backup." : e.available ? t && e.recording_exclusion === "below_minimum_runtime" ? `Not recording: runtime is below the minimum of ${$(e.minimum_runtime_minutes, "minute")}.` : t && e.recording_exclusion === "runtime_unknown" ? "Waiting for a known runtime before recording." : "Recording enabled." : "Recording waiting for source entities.";
+    return e.recording_error ? "Recording needs attention. Check HA diagnostics." : e.recording_paused ? "Recording paused for backup." : e.available ? t && e.recording_exclusion === "below_minimum_runtime" ? `Not recording: runtime is below the minimum of ${v(e.minimum_runtime_minutes, "minute")}.` : t && e.recording_exclusion === "runtime_unknown" ? "Waiting for a known runtime before recording." : "Recording enabled." : "Recording waiting for source entities.";
   }
   render() {
     const e = this.player, t = e?.available && !["stopped", "none"].includes(e.play_status);
@@ -7508,7 +7501,7 @@ const js = {
                     <h3>
                       ${e.available ? t ? e.title ?? "Unknown title" : "No movie playing" : "Player unavailable"}
                     </h3>
-                    ${e.available ? a`<p>${js[e.play_status] ?? "Unknown playback state"} · ${Ps[e.location] ?? "Unknown location"}</p>` : l}
+                    ${e.available ? a`<p>${Rs[e.play_status] ?? "Unknown playback state"} · ${zs[e.location] ?? "Unknown location"}</p>` : l}
                     ${t && e.duration_seconds != null ? a`<p>Runtime · ${(e.duration_seconds / 60).toFixed(2)} min</p>` : l}
                     ${this.scope?.permissions.edit && t && e.session ? a`<p>
                               This session ·
@@ -7518,11 +7511,11 @@ const js = {
                             <small
                               >Pauses and scans are excluded.
                               ${e.session.credits_confirmed ? "Credits confirmed; journal completion also requires the configured watch threshold." : "Credits not yet confirmed."}
-                              ${e.session.gap_count ? a` ${$(e.session.gap_count, "timing gap")}.` : l}</small
+                              ${e.session.gap_count ? a` ${v(e.session.gap_count, "timing gap")}.` : l}</small
                             >` : l}
                     ${this.scope?.permissions.edit && e.recording_paused !== void 0 ? a`<p role="status">
                             ${this.recordingStatus(e, !!t)}
-                            ${e.buffered_observations ? a` ${$(e.buffered_observations, "update")} buffered.` : l}
+                            ${e.buffered_observations ? a` ${v(e.buffered_observations, "update")} buffered.` : l}
                           </p>` : l}
                     <small
                       >Live snapshot refreshes about every 5 seconds while
@@ -7543,13 +7536,13 @@ const js = {
             ></kaleidescape-device-controls>` : l}`;
   }
 };
-Se.properties = {
+Ce.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   playerId: {},
   compact: { type: Boolean, reflect: !0 },
   showControls: { type: Boolean }
-}, Se.styles = [
+}, Ce.styles = [
   q,
   S`
       :host([compact]) .now-playing {
@@ -7627,58 +7620,58 @@ Se.properties = {
       }
     `
 ];
-let yt = Se;
-customElements.get("kaleidescape-now-playing") || customElements.define("kaleidescape-now-playing", yt);
-const vi = (r, e, t) => {
+let gt = Ce;
+customElements.get("kaleidescape-now-playing") || customElements.define("kaleidescape-now-playing", gt);
+const mi = (n, e, t) => {
   const i = /* @__PURE__ */ new Map();
-  for (let s = e; s <= t; s++) i.set(r[s], s);
+  for (let s = e; s <= t; s++) i.set(n[s], s);
   return i;
-}, Ds = Di(class extends Mi {
-  constructor(r) {
-    if (super(r), r.type !== O.CHILD) throw Error("repeat() can only be used in text expressions");
+}, Ls = Ui(class extends Ai {
+  constructor(n) {
+    if (super(n), n.type !== O.CHILD) throw Error("repeat() can only be used in text expressions");
   }
-  dt(r, e, t) {
+  dt(n, e, t) {
     let i;
     t === void 0 ? t = e : e !== void 0 && (i = e);
-    const s = [], n = [];
+    const s = [], r = [];
     let o = 0;
-    for (const d of r) s[o] = i ? i(d, o) : o, n[o] = t(d, o), o++;
-    return { values: n, keys: s };
+    for (const d of n) s[o] = i ? i(d, o) : o, r[o] = t(d, o), o++;
+    return { values: r, keys: s };
   }
-  render(r, e, t) {
-    return this.dt(r, e, t).values;
+  render(n, e, t) {
+    return this.dt(n, e, t).values;
   }
-  update(r, [e, t, i]) {
-    const s = Rs(r), { values: n, keys: o } = this.dt(e, t, i);
-    if (!Array.isArray(s)) return this.ut = o, n;
+  update(n, [e, t, i]) {
+    const s = ks(n), { values: r, keys: o } = this.dt(e, t, i);
+    if (!Array.isArray(s)) return this.ut = o, r;
     const d = this.ut ??= [], h = [];
-    let c, g, p = 0, v = s.length - 1, y = 0, E = n.length - 1;
-    for (; p <= v && y <= E; ) if (s[p] === null) p++;
-    else if (s[v] === null) v--;
-    else if (d[p] === o[y]) h[y] = M(s[p], n[y]), p++, y++;
-    else if (d[v] === o[E]) h[E] = M(s[v], n[E]), v--, E--;
-    else if (d[p] === o[E]) h[E] = M(s[p], n[E]), ie(r, h[E + 1], s[p]), p++, E--;
-    else if (d[v] === o[y]) h[y] = M(s[v], n[y]), ie(r, s[p], s[v]), v--, y++;
-    else if (c === void 0 && (c = vi(o, y, E), g = vi(d, p, v)), c.has(d[p])) if (c.has(d[v])) {
-      const R = g.get(o[y]), U = R !== void 0 ? s[R] : null;
+    let c, g, p = 0, y = s.length - 1, $ = 0, E = r.length - 1;
+    for (; p <= y && $ <= E; ) if (s[p] === null) p++;
+    else if (s[y] === null) y--;
+    else if (d[p] === o[$]) h[$] = M(s[p], r[$]), p++, $++;
+    else if (d[y] === o[E]) h[E] = M(s[y], r[E]), y--, E--;
+    else if (d[p] === o[E]) h[E] = M(s[p], r[E]), ie(n, h[E + 1], s[p]), p++, E--;
+    else if (d[y] === o[$]) h[$] = M(s[y], r[$]), ie(n, s[p], s[y]), y--, $++;
+    else if (c === void 0 && (c = mi(o, $, E), g = mi(d, p, y)), c.has(d[p])) if (c.has(d[y])) {
+      const R = g.get(o[$]), U = R !== void 0 ? s[R] : null;
       if (U === null) {
-        const X = ie(r, s[p]);
-        M(X, n[y]), h[y] = X;
-      } else h[y] = M(U, n[y]), ie(r, s[p], U), s[R] = null;
-      y++;
-    } else Xe(s[v]), v--;
-    else Xe(s[p]), p++;
-    for (; y <= E; ) {
-      const R = ie(r, h[E + 1]);
-      M(R, n[y]), h[y++] = R;
+        const X = ie(n, s[p]);
+        M(X, r[$]), h[$] = X;
+      } else h[$] = M(U, r[$]), ie(n, s[p], U), s[R] = null;
+      $++;
+    } else Ge(s[y]), y--;
+    else Ge(s[p]), p++;
+    for (; $ <= E; ) {
+      const R = ie(n, h[E + 1]);
+      M(R, r[$]), h[$++] = R;
     }
-    for (; p <= v; ) {
+    for (; p <= y; ) {
       const R = s[p++];
-      R !== null && Xe(R);
+      R !== null && Ge(R);
     }
-    return this.ut = o, Oi(r, h), L;
+    return this.ut = o, Ti(n, h), L;
   }
-}), Ms = S`
+}), Us = S`
   :host {
     display: block;
     min-width: 0;
@@ -7910,33 +7903,33 @@ const vi = (r, e, t) => {
     }
   }
 `;
-function K(r) {
-  return `${r.getFullYear()}-${String(r.getMonth() + 1).padStart(2, "0")}-${String(r.getDate()).padStart(2, "0")}`;
+function K(n) {
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
 }
-function Os(r = location.search, e = /* @__PURE__ */ new Date()) {
-  const t = new URLSearchParams(r).get("companion_month") ?? "";
+function As(n = location.search, e = /* @__PURE__ */ new Date()) {
+  const t = new URLSearchParams(n).get("companion_month") ?? "";
   if (/^\d{4}-(0[1-9]|1[0-2])$/.test(t)) {
     const [i, s] = t.split("-").map(Number);
     if (i >= 100 && i <= 9998) return new Date(i, s - 1, 1);
   }
   return new Date(e.getFullYear(), e.getMonth(), 1);
 }
-function Ns(r) {
+function Ts(n) {
   return [
-    new Date(r.getFullYear(), r.getMonth(), 1).toISOString(),
-    new Date(r.getFullYear(), r.getMonth() + 1, 1).toISOString()
+    new Date(n.getFullYear(), n.getMonth(), 1).toISOString(),
+    new Date(n.getFullYear(), n.getMonth() + 1, 1).toISOString()
   ];
 }
-function Is(r) {
-  const e = K(new Date(r.started_at)), t = r.ended_at ? K(new Date(r.ended_at)) : e;
-  return r.status === "completed" && t !== e && r.ended_at && new Date(r.ended_at) > new Date(r.started_at) ? [
+function js(n) {
+  const e = K(new Date(n.started_at)), t = n.ended_at ? K(new Date(n.ended_at)) : e;
+  return n.status === "completed" && t !== e && n.ended_at && new Date(n.ended_at) > new Date(n.started_at) ? [
     { day: e, phase: "start" },
     { day: t, phase: "completion" }
   ] : [{ day: e, phase: "single" }];
 }
-const qe = class qe extends x {
+const Se = class Se extends x {
   constructor() {
-    super(...arguments), this.query = "", this.status = "", this.fuzzy = !0, this.daySize = 180, this.fitScreen = !1, this.disabled = !1, this.editable = !1, this.rememberUrl = !0, this.fittedSize = 180, this.month = Os(), this.items = [], this.loading = !1, this.error = "", this.generation = 0, this.signature = "", this.privacy = "", this.queue = new A(), this.selectedArtwork = null, this.movie = null, this.detailRequest = 0, this.detailLoading = !1, this.detailError = "", this.scheduleLayout = () => {
+    super(...arguments), this.query = "", this.status = "", this.fuzzy = !0, this.daySize = 180, this.fitScreen = !1, this.disabled = !1, this.editable = !1, this.rememberUrl = !0, this.fittedSize = 180, this.month = As(), this.items = [], this.loading = !1, this.error = "", this.generation = 0, this.signature = "", this.privacy = "", this.queue = new A(), this.selectedArtwork = null, this.movie = null, this.detailRequest = 0, this.detailLoading = !1, this.detailError = "", this.scheduleLayout = () => {
       !this.fitScreen || !this.isConnected || this.layoutFrame !== void 0 || (this.layoutFrame = requestAnimationFrame(() => {
         if (this.layoutFrame = void 0, !this.fitScreen || !this.isConnected) return;
         const e = window.visualViewport?.height ?? window.innerHeight, t = Math.max(
@@ -7946,7 +7939,7 @@ const qe = class qe extends x {
         ), i = this.closest("main"), s = [".month-bar", ".weekday"].reduce(
           (c, g) => c + (this.renderRoot.querySelector(g)?.getBoundingClientRect().height ?? 0),
           0
-        ) + (this.nextElementSibling?.getBoundingClientRect().height ?? 0) + (i && parseFloat(getComputedStyle(i).paddingBottom) || 0) + 16, n = new Date(
+        ) + (this.nextElementSibling?.getBoundingClientRect().height ?? 0) + (i && parseFloat(getComputedStyle(i).paddingBottom) || 0) + 16, r = new Date(
           this.month.getFullYear(),
           this.month.getMonth(),
           1
@@ -7954,7 +7947,7 @@ const qe = class qe extends x {
           this.month.getFullYear(),
           this.month.getMonth() + 1,
           0
-        ).getDate(), d = Math.ceil((n.getDay() + o) / 7), h = Math.max(48, Math.floor((e - t - s) / d));
+        ).getDate(), d = Math.ceil((r.getDay() + o) / 7), h = Math.max(48, Math.floor((e - t - s) / d));
         h !== this.fittedSize && (this.fittedSize = h, this.requestUpdate());
       }));
     };
@@ -7996,7 +7989,7 @@ const qe = class qe extends x {
     const e = ++this.generation;
     this.closeDetails(), this.items = [], this.totals = void 0, this.loading = !0, this.error = "", this.notifyStatus(), this.requestUpdate();
     try {
-      const [t, i] = Ns(this.month), s = await this.client.calendarMonth(
+      const [t, i] = Ts(this.month), s = await this.client.calendarMonth(
         this.scope,
         t,
         i,
@@ -8061,10 +8054,10 @@ const qe = class qe extends x {
     if (this.selected = e, this.selectedArtwork = t, this.movie = null, this.detailLoading = !0, this.detailError = "", this.requestUpdate(), await this.updateComplete, !(i !== this.generation || s !== this.detailRequest || !this.isConnected)) {
       this.renderRoot.querySelector("dialog")?.showModal();
       try {
-        const n = await this.client.calendarDetails(this.scope, e.id);
-        i === this.generation && s === this.detailRequest && (this.selected = n.viewing, this.movie = n.movie, this.selectedArtwork = n.movie?.artwork_key ?? t);
-      } catch (n) {
-        i === this.generation && s === this.detailRequest && (u(n) === "unauthorized" ? this.fail(n) : this.detailError = w(n));
+        const r = await this.client.calendarDetails(this.scope, e.id);
+        i === this.generation && s === this.detailRequest && (this.selected = r.viewing, this.movie = r.movie, this.selectedArtwork = r.movie?.artwork_key ?? t);
+      } catch (r) {
+        i === this.generation && s === this.detailRequest && (u(r) === "unauthorized" ? this.fail(r) : this.detailError = w(r));
       } finally {
         i === this.generation && s === this.detailRequest && (this.detailLoading = !1, this.requestUpdate());
       }
@@ -8101,11 +8094,11 @@ const qe = class qe extends x {
     </button>`;
   }
   renderDetails() {
-    const e = this.selected, t = this.movie, i = e ? new Date(e.started_at) : null, s = e?.ended_at ? new Date(e.ended_at) : null, n = i && s && K(i) !== K(s), o = t?.duration_seconds ?? e?.duration_seconds;
+    const e = this.selected, t = this.movie, i = e ? new Date(e.started_at) : null, s = e?.ended_at ? new Date(e.ended_at) : null, r = i && s && K(i) !== K(s), o = t?.duration_seconds ?? e?.duration_seconds;
     return a`<dialog
       class="database-dialog calendar-dialog"
       aria-labelledby="calendar-movie-title"
-      @click=${_}
+      @click=${C}
       @close=${(d) => {
       d.target.open || (this.closeDetails(), this.requestUpdate());
     }}
@@ -8114,7 +8107,7 @@ const qe = class qe extends x {
         <h2 id="calendar-movie-title">
           ${e && t ? this.detailLink("query", e.title) : e?.title ?? "Viewing details"}
         </h2>
-        ${k(() => {
+        ${_(() => {
       this.closeDetails(), this.requestUpdate();
     })}
       </div>
@@ -8131,7 +8124,7 @@ const qe = class qe extends x {
                 ${this.detailLoading ? a`<p role="status">Loading movie details…</p>` : l}
                 ${this.detailError ? a`<p class="error" role="alert">${this.detailError} <button @click=${() => this.select(e, this.selectedArtwork)}>Retry details</button></p>` : l}
                 ${t ? a`<div class="detail-badges">
-                          ${J(t, !1, (d) => this.browse("format", d))}${oe(t.rating ?? "", (d) => this.browse("rating", d))}
+                          ${J(t, !1, (d) => this.browse("format", d))}${ne(t.rating ?? "", (d) => this.browse("rating", d))}
                         </div>
                         ${t.year ? a`<p><strong>Year:</strong> ${this.detailLink("year", String(t.year))}</p>` : l}
                         ${[
@@ -8149,9 +8142,9 @@ const qe = class qe extends x {
                 ${o != null ? a`<p><strong>Runtime:</strong> ${(o / 60).toFixed(2)} min</p>` : l}
                 <p>
                   <strong
-                    >${n ? "Viewing dates" : "Viewing date"}:</strong
+                    >${r ? "Viewing dates" : "Viewing date"}:</strong
                   >
-                  ${i?.toLocaleDateString()}${n ? ` – ${s.toLocaleDateString()}` : ""}
+                  ${i?.toLocaleDateString()}${r ? ` – ${s.toLocaleDateString()}` : ""}
                 </p>
                 <p>
                   <strong>Watched:</strong>
@@ -8172,12 +8165,12 @@ const qe = class qe extends x {
     </dialog>`;
   }
   render() {
-    const e = this.month.getFullYear(), t = this.month.getMonth(), i = new Date(e, t, 1), s = new Date(e, t + 1, 0).getDate(), n = Math.ceil((i.getDay() + s) / 7) * 7, o = Array.from(
-      { length: n },
+    const e = this.month.getFullYear(), t = this.month.getMonth(), i = new Date(e, t, 1), s = new Date(e, t + 1, 0).getDate(), r = Math.ceil((i.getDay() + s) / 7) * 7, o = Array.from(
+      { length: r },
       (h, c) => new Date(e, t, c - i.getDay() + 1)
     ), d = /* @__PURE__ */ new Map();
     for (const h of this.items)
-      for (const { day: c, phase: g } of Is(h))
+      for (const { day: c, phase: g } of js(h))
         d.set(c, [...d.get(c) ?? [], { row: h, phase: g }]);
     return a`<div class="month-bar">
         <button
@@ -8217,13 +8210,13 @@ const qe = class qe extends x {
                       class="cover-stack"
                       style=${`--spread:${1 + (g.length - 1) * 0.15}`}
                     >
-                      ${Ds(
+                      ${Ls(
         g,
         ({ row: p }) => p.id,
-        ({ row: p, phase: v }, y) => a`<button
-                            class=${`poster poster-${v}`}
-                            style=${`--index:${y};--layer:${y + 1}`}
-                            aria-label=${`${p.title} · ${v === "start" ? "Started; completed on another day" : v === "completion" ? "Completed; started on another day" : p.status === "completed" ? "Completed" : "Partial"}`}
+        ({ row: p, phase: y }, $) => a`<button
+                            class=${`poster poster-${y}`}
+                            style=${`--index:${$};--layer:${$ + 1}`}
+                            aria-label=${`${p.title} · ${y === "start" ? "Started; completed on another day" : y === "completion" ? "Completed; started on another day" : p.status === "completed" ? "Completed" : "Partial"}`}
                             title=${p.title}
                             ?disabled=${this.disabled}
                             @click=${() => this.select(p, p.artwork_key)}
@@ -8249,7 +8242,7 @@ const qe = class qe extends x {
       ${this.renderDetails()}`;
   }
 };
-qe.properties = {
+Se.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   query: { type: String },
@@ -8261,10 +8254,10 @@ qe.properties = {
   disabled: { type: Boolean },
   editable: { type: Boolean },
   rememberUrl: { type: Boolean }
-}, qe.styles = [q, Ke, Ms];
-let vt = qe;
-customElements.get("kaleidescape-journal-calendar") || customElements.define("kaleidescape-journal-calendar", vt);
-const Fs = [
+}, Se.styles = [q, We, Us];
+let mt = Se;
+customElements.get("kaleidescape-journal-calendar") || customElements.define("kaleidescape-journal-calendar", mt);
+const Ps = [
   "remote",
   "now-playing",
   "library-covers",
@@ -8272,7 +8265,7 @@ const Fs = [
   "library",
   "journal-calendar"
 ];
-function Ni(r, e) {
+function ji(n, e) {
   const t = {
     title: "",
     entry_id: "",
@@ -8292,7 +8285,7 @@ function Ni(r, e) {
     show_controls: !0,
     calendar_size: 100,
     calendar_fit: !1,
-    ...r
+    ...n
   };
   for (const i of [
     "title",
@@ -8303,13 +8296,13 @@ function Ni(r, e) {
   ])
     if (typeof t[i] != "string" || t[i].length > (i === "title" ? 200 : 128))
       throw new Error(`Invalid ${i}`);
-  for (const [i, s, n] of [
+  for (const [i, s, r] of [
     ["columns", 1, 20],
     ["page_size", 1, 1e3],
     ["calendar_size", 60, 320]
   ])
-    if (!Number.isInteger(t[i]) || t[i] < s || t[i] > n)
-      throw new Error(`${i} must be between ${s} and ${n}`);
+    if (!Number.isInteger(t[i]) || t[i] < s || t[i] > r)
+      throw new Error(`${i} must be between ${s} and ${r}`);
   for (const i of [
     "show_filters",
     "show_sort",
@@ -8331,21 +8324,21 @@ function Ni(r, e) {
     show_sort: !1
   }), t;
 }
-function Bs(r) {
+function Ds(n) {
   const e = (o) => ({ name: o, selector: { text: {} } }), t = (o) => ({ name: o, selector: { boolean: {} } }), i = (o, d, h) => ({
     name: o,
     selector: { number: { min: d, max: h, step: 1, mode: "box" } }
-  }), s = r === "library" || r === "library-covers", n = Ni(
-    { type: `custom:kaleidescape-${r}-card` },
-    r
+  }), s = n === "library" || n === "library-covers", r = ji(
+    { type: `custom:kaleidescape-${n}-card` },
+    n
   );
   return {
     schema: [
       e("title"),
       e("entry_id"),
-      ...r === "remote" || r === "now-playing" ? [e("player_id")] : [],
-      ...r === "now-playing" ? [t("show_controls")] : [],
-      ...s || r === "library-search" ? [e("channel")] : [],
+      ...n === "remote" || n === "now-playing" ? [e("player_id")] : [],
+      ...n === "now-playing" ? [t("show_controls")] : [],
+      ...s || n === "library-search" ? [e("channel")] : [],
       ...s ? [
         i("columns", 1, 20),
         i("page_size", 1, 1e3),
@@ -8357,7 +8350,7 @@ function Bs(r) {
           "show_stats"
         ].map(t)
       ] : [],
-      ...r === "library" ? [
+      ...n === "library" ? [
         {
           name: "search_position",
           selector: { select: { options: ["top", "bottom", "off"] } }
@@ -8369,20 +8362,20 @@ function Bs(r) {
         t("show_filters"),
         t("show_sort")
       ] : [],
-      ...r === "journal-calendar" ? [
+      ...n === "journal-calendar" ? [
         i("calendar_size", 60, 320),
         t("calendar_fit"),
         e("channel")
       ] : []
     ].map((o) => ({
       ...o,
-      default: n[o.name]
+      default: r[o.name]
     })),
     computeLabel: (o) => o.name.replaceAll("_", " ").replace(/^./, (d) => d.toUpperCase()),
     computeHelper: (o) => o.name === "entry_id" ? "Leave blank for the loaded Companion integration." : o.name === "channel" ? "Search and Library cards with the same channel work together on this dashboard." : void 0
   };
 }
-const at = "kaleidescape-companion-card-search", le = class le extends x {
+const tt = "kaleidescape-companion-card-search", oe = class oe extends x {
   constructor() {
     super(...arguments), this.identity = "", this.generation = 0, this.error = "", this.query = "", this.locked = !1, this.visibility = () => {
       clearTimeout(this.timer), !document.hidden && this.api && this.refresh();
@@ -8400,7 +8393,7 @@ const at = "kaleidescape-companion-card-search", le = class le extends x {
     return { channel: "main" };
   }
   static getConfigForm() {
-    return Bs(this.kind);
+    return Ds(this.kind);
   }
   getCardSize() {
     return this.kind === "library-search" ? 2 : this.kind === "remote" ? 9 : 7;
@@ -8419,13 +8412,13 @@ const at = "kaleidescape-companion-card-search", le = class le extends x {
       );
     if (!e || typeof e != "object")
       throw new Error("Card configuration is required");
-    this.config = Ni(e, this.kind), this.reset(), this.requestUpdate("hass");
+    this.config = ji(e, this.kind), this.reset(), this.requestUpdate("hass");
   }
   connectedCallback() {
-    super.connectedCallback(), window.addEventListener(at, this.receiveSearch), document.addEventListener("visibilitychange", this.visibility), this.requestUpdate("hass");
+    super.connectedCallback(), window.addEventListener(tt, this.receiveSearch), document.addEventListener("visibilitychange", this.visibility), this.requestUpdate("hass");
   }
   disconnectedCallback() {
-    super.disconnectedCallback(), window.removeEventListener(at, this.receiveSearch), document.removeEventListener("visibilitychange", this.visibility), this.reset();
+    super.disconnectedCallback(), window.removeEventListener(tt, this.receiveSearch), document.removeEventListener("visibilitychange", this.visibility), this.reset();
   }
   reset() {
     this.generation++, clearTimeout(this.timer), this.api = void 0, this.scope = void 0, this.identity = "", this.boundConnection = void 0, this.criterion = this.popupCriterion = void 0, this.calendarStatus = void 0, this.query = this.error = "", this.locked = !1, this.renderRoot?.querySelector("dialog")?.close();
@@ -8433,7 +8426,7 @@ const at = "kaleidescape-companion-card-search", le = class le extends x {
   willUpdate(e) {
     if (!e.has("hass") || !this.config) return;
     const t = `${this.hass?.user?.id}:${this.hass?.user?.is_admin}:${this.hass?.connection.connected}`;
-    t === this.identity && this.hass?.connection === this.boundConnection || (this.reset(), this.identity = t, this.boundConnection = this.hass?.connection, !(!this.hass?.connection.connected || !this.hass.user) && (this.api = new Kt({
+    t === this.identity && this.hass?.connection === this.boundConnection || (this.reset(), this.identity = t, this.boundConnection = this.hass?.connection, !(!this.hass?.connection.connected || !this.hass.user) && (this.api = new Ft({
       callWS: (i) => this.hass.callWS(i),
       fetchWithAuth: (i, s) => this.hass.fetchWithAuth(i, s)
     }), this.refresh()));
@@ -8467,7 +8460,7 @@ const at = "kaleidescape-companion-card-search", le = class le extends x {
   }
   search(e) {
     e.preventDefault(), !(!this.scope || !this.config) && window.dispatchEvent(
-      new CustomEvent(at, {
+      new CustomEvent(tt, {
         detail: {
           entry: this.scope.entry_id,
           dataset: this.scope.dataset_id,
@@ -8558,8 +8551,8 @@ const at = "kaleidescape-companion-card-search", le = class le extends x {
                         ></kaleidescape-journal-calendar>
                         <footer class="calendar-footer">
                           <span
-                            >${Yt(this.scope, this.calendarStatus, !0)}</span
-                          >${Gt(this.calendarStatus, () => {
+                            >${Bt(this.scope, this.calendarStatus, !0)}</span
+                          >${Vt(this.calendarStatus, () => {
       this.renderRoot.querySelector("kaleidescape-journal-calendar")?.refresh();
     })}
                         </footer>` : this.scope.library_enabled ? t() : a`<p class="message">
@@ -8568,10 +8561,10 @@ const at = "kaleidescape-companion-card-search", le = class le extends x {
                         </p>` : a`<p class="message" role="status">
                 ${this.hass?.user ? "Loading Companion…" : "Sign in to Home Assistant to use this card."}
               </p>`}
-      ${this.popupCriterion && this.scope?.library_enabled ? a`<dialog @click=${_} @cancel=${this.closePopup}>
+      ${this.popupCriterion && this.scope?.library_enabled ? a`<dialog @click=${C} @cancel=${this.closePopup}>
               <div class="card-head">
                 <h2>Library</h2>
-                ${k((i) => this.closePopup(i), this.locked)}
+                ${_((i) => this.closePopup(i), this.locked)}
               </div>
               <kaleidescape-library
                 .client=${this.api}
@@ -8583,9 +8576,9 @@ const at = "kaleidescape-companion-card-search", le = class le extends x {
     </ha-card>`;
   }
 };
-le.kind = "library", le.properties = { hass: { attribute: !1 } }, le.styles = [
+oe.kind = "library", oe.properties = { hass: { attribute: !1 } }, oe.styles = [
   q,
-  Ti,
+  Ri,
   S`
       :host {
         display: block;
@@ -8646,33 +8639,33 @@ le.kind = "library", le.properties = { hass: { attribute: !1 } }, le.styles = [
       }
     `
 ];
-let $t = le;
-const $i = {
+let ft = oe;
+const fi = {
   remote: "Theater remote",
   "now-playing": "Now Playing",
   "library-covers": "Library covers",
   "library-search": "Library search",
   library: "Full Library",
   "journal-calendar": "Journal calendar"
-}, wt = window;
-wt.customCards ??= [];
-for (const r of Fs) {
-  const e = `kaleidescape-${r}-card`;
+}, bt = window;
+bt.customCards ??= [];
+for (const n of Ps) {
+  const e = `kaleidescape-${n}-card`;
   if (!customElements.get(e)) {
-    const i = class i extends $t {
+    const i = class i extends ft {
     };
-    i.kind = r;
+    i.kind = n;
     let t = i;
     customElements.define(e, t);
   }
-  wt.customCards.some((t) => t.type === e) || wt.customCards.push({
+  bt.customCards.some((t) => t.type === e) || bt.customCards.push({
     type: e,
-    name: `Kaleidescape · ${$i[r]}`,
-    description: $i[r],
+    name: `Kaleidescape · ${fi[n]}`,
+    description: fi[n],
     preview: !0
   });
 }
-class Vs {
+class Ms {
   constructor(e, t) {
     this.host = e, this.resized = t, this.observed = [], this.containers = [], this.schedule = () => {
       this.frame !== void 0 || !this.host.isConnected || (this.frame = requestAnimationFrame(() => {
@@ -8681,7 +8674,7 @@ class Vs {
           window.innerHeight,
           this.viewport?.height ?? window.innerHeight,
           document.documentElement.clientHeight || window.innerHeight
-        ), s = Math.max(0, this.viewport?.offsetTop ?? 0), n = Math.max(0, window.innerHeight - i - s), o = this.observed.reduce(
+        ), s = Math.max(0, this.viewport?.offsetTop ?? 0), r = Math.max(0, window.innerHeight - i - s), o = this.observed.reduce(
           (R, U) => R + U.getBoundingClientRect().height,
           0
         ), d = parseFloat(
@@ -8696,24 +8689,24 @@ class Vs {
           s + d + (h?.getBoundingClientRect().height ?? 0),
           g?.getBoundingClientRect().top ?? 0
         );
-        let v = s + i;
+        let y = s + i;
         for (const R of this.containers.slice(1)) {
           if (!/(auto|scroll|hidden|clip)/.test(getComputedStyle(R).overflowY))
             continue;
           const U = R.getBoundingClientRect();
-          U.height > 0 && (v = Math.min(v, U.bottom));
+          U.height > 0 && (y = Math.min(y, U.bottom));
         }
-        const y = {
+        const $ = {
           "--companion-viewport-height": i,
           "--companion-viewport-top": s,
-          "--companion-viewport-bottom": n,
+          "--companion-viewport-bottom": r,
           "--entries-height": Math.max(
             180,
-            g ? v - p - (c?.getBoundingClientRect().height ?? 0) - 16 : i - o - d - 16
+            g ? y - p - (c?.getBoundingClientRect().height ?? 0) - 16 : i - o - d - 16
           )
         };
         let E = !1;
-        for (const [R, U] of Object.entries(y)) {
+        for (const [R, U] of Object.entries($)) {
           const X = `${Math.round(U)}px`;
           this.host.style.getPropertyValue(R) !== X && (this.host.style.setProperty(R, X), E = !0);
         }
@@ -8734,16 +8727,16 @@ class Vs {
         ".entries-header, .entries-footer"
       )
     ];
-    (i.length !== this.observed.length || i.some((s, n) => s !== this.observed[n]) || e.length !== this.containers.length || e.some((s, n) => s !== this.containers[n])) && (this.observer?.disconnect(), [...i, ...e].forEach((s) => this.observer?.observe(s)), this.observed = i, this.containers = e), this.schedule();
+    (i.length !== this.observed.length || i.some((s, r) => s !== this.observed[r]) || e.length !== this.containers.length || e.some((s, r) => s !== this.containers[r])) && (this.observer?.disconnect(), [...i, ...e].forEach((s) => this.observer?.observe(s)), this.observed = i, this.containers = e), this.schedule();
   }
   hostDisconnected() {
     window.removeEventListener("resize", this.schedule), this.viewport?.removeEventListener("resize", this.schedule), this.viewport?.removeEventListener("scroll", this.schedule), this.viewport = void 0, this.observer?.disconnect(), this.observer = void 0, this.observed = [], this.containers = [], this.frame !== void 0 && cancelAnimationFrame(this.frame), this.frame = void 0;
   }
 }
-function Ge(r, e) {
-  r.addController(new Vs(r, e));
+function Jt(n, e) {
+  n.addController(new Ms(n, e));
 }
-const Ee = class Ee extends x {
+const qe = class qe extends x {
   constructor() {
     super(...arguments), this.viewingId = "", this.disabled = !1, this.queue = new A(), this.error = "", this.generation = 0, this.bound = "";
   }
@@ -8805,12 +8798,12 @@ const Ee = class Ee extends x {
     </div>` : l : l;
   }
 };
-Ee.properties = {
+qe.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   viewingId: { type: String },
   disabled: { type: Boolean }
-}, Ee.styles = [
+}, qe.styles = [
   q,
   S`
       :host {
@@ -8845,50 +8838,50 @@ Ee.properties = {
       }
     `
 ];
-let xt = Ee;
-customElements.get("kaleidescape-viewing-library") || customElements.define("kaleidescape-viewing-library", xt);
-function pe(r) {
-  const e = new Date(r);
+let yt = qe;
+customElements.get("kaleidescape-viewing-library") || customElements.define("kaleidescape-viewing-library", yt);
+function ce(n) {
+  const e = new Date(n);
   return new Date(e.getTime() - e.getTimezoneOffset() * 6e4).toISOString().slice(0, 19);
 }
-function wi(r) {
+function bi(n) {
   return {
-    title: r?.title ?? "",
-    started_at: pe(r?.started_at ?? (/* @__PURE__ */ new Date()).toISOString()),
-    ended_at: r?.ended_at ? pe(r.ended_at) : "",
-    duration_seconds: r?.duration_seconds == null ? "" : (r.duration_seconds / 60).toFixed(2),
-    watched_seconds: ((r?.watched_seconds ?? 0) / 60).toFixed(2),
-    status: r?.status ?? "partial",
-    notes: r?.notes ?? "",
-    source_id: r?.source_id ?? "",
-    player_id: r?.player_id ?? "",
-    raw_content_id: r?.raw_content_id ?? ""
+    title: n?.title ?? "",
+    started_at: ce(n?.started_at ?? (/* @__PURE__ */ new Date()).toISOString()),
+    ended_at: n?.ended_at ? ce(n.ended_at) : "",
+    duration_seconds: n?.duration_seconds == null ? "" : (n.duration_seconds / 60).toFixed(2),
+    watched_seconds: ((n?.watched_seconds ?? 0) / 60).toFixed(2),
+    status: n?.status ?? "partial",
+    notes: n?.notes ?? "",
+    source_id: n?.source_id ?? "",
+    player_id: n?.player_id ?? "",
+    raw_content_id: n?.raw_content_id ?? ""
   };
 }
-function Hs(r, e, t, i = r) {
-  const s = { ...r, [e]: t };
+function Os(n, e, t, i = n) {
+  const s = { ...n, [e]: t };
   if (e === "started_at") {
-    const n = new Date(t).getTime(), o = new Date(i.started_at).getTime(), d = new Date(i.ended_at).getTime();
-    t && i.ended_at && [n, o, d].every(Number.isFinite) && (s.ended_at = pe(
-      new Date(n + d - o).toISOString()
+    const r = new Date(t).getTime(), o = new Date(i.started_at).getTime(), d = new Date(i.ended_at).getTime();
+    t && i.ended_at && [r, o, d].every(Number.isFinite) && (s.ended_at = ce(
+      new Date(r + d - o).toISOString()
     ));
   }
   return s;
 }
-function Ws(r, e) {
+function Ns(n, e) {
   const t = {};
-  for (const [i, s] of Object.entries(r))
+  for (const [i, s] of Object.entries(n))
     e && s === e[i] || (i === "started_at" || i === "ended_at" ? t[i] = s ? new Date(s).toISOString() : null : i === "duration_seconds" || i === "watched_seconds" ? t[i] = s === "" ? null : Number(s) * 60 : ["source_id", "player_id", "raw_content_id"].includes(i) ? t[i] = s === "" ? null : s : t[i] = s);
   return t;
 }
-function Js(r, e, t) {
-  function i(s, n, o = "text", d = !1, h) {
+function Is(n, e, t) {
+  function i(s, r, o = "text", d = !1, h) {
     return a`<label
-      >${n}<input
+      >${r}<input
         id=${s === "title" ? "title" : s}
         name=${s}
         type=${o}
-        .value=${r[s]}
+        .value=${n[s]}
         ?required=${d}
         maxlength=${h ?? l}
         min=${o === "number" ? "0" : l}
@@ -8909,7 +8902,7 @@ function Js(r, e, t) {
       <label
         >Status<select
           name="record_status"
-          .value=${r.status}
+          .value=${n.status}
           @change=${(s) => e("status", s)}
         >
           <option value="partial">Partial</option>
@@ -8920,7 +8913,7 @@ function Js(r, e, t) {
         >Notes<textarea
           name="notes"
           maxlength="10000"
-          .value=${r.notes}
+          .value=${n.notes}
           @input=${(s) => e("notes", s)}
         ></textarea>
       </label>
@@ -8941,7 +8934,7 @@ function Js(r, e, t) {
     </details>
   `;
 }
-const Re = class Re extends x {
+const Ee = class Ee extends x {
   constructor() {
     super(...arguments), this.value = "", this.initialTitle = "", this.requireRuntime = !0, this.disabled = !1, this.fuzzySearch = !0, this.query = "", this.items = [], this.open = !1, this.active = 0, this.error = "", this.request = 0, this.bound = "";
   }
@@ -9022,11 +9015,11 @@ const Re = class Re extends x {
         ${this.open ? a`<div class="movie-suggestions" id="movie-suggestions" role="listbox">${this.items.map((e, t) => a`<button type="button" role="option" id=${`movie-option-${t}`} aria-selected=${this.active === t} ?disabled=${this.requireRuntime && !e.duration_seconds} @pointerdown=${(i) => i.preventDefault()} @click=${() => this.choose(e)}><strong>${e.title}</strong> · ${e.year ?? "Year unknown"} · ${(e.formats?.length ? e.formats : [e.edition]).filter(Boolean).join(", ")} · ${e.duration_seconds ? `${(e.duration_seconds / 60).toFixed(2)} min` : "Runtime unknown"}</button>`)}${this.items.length ? l : a`<small>Type a title; only cached Library movies can be selected.</small>`}</div>` : l}
       </div>
       ${this.error ? a`<p class="error" role="alert">${this.error}</p>` : l}
-      ${this.selected ? a`<p class="manual-metadata">${this.selected.year ?? ""} ${J(this.selected)} ${oe(this.selected.rating)} · ${((this.selected.duration_seconds ?? 0) / 60).toFixed(2)} min</p>` : l}
+      ${this.selected ? a`<p class="manual-metadata">${this.selected.year ?? ""} ${J(this.selected)} ${ne(this.selected.rating)} · ${((this.selected.duration_seconds ?? 0) / 60).toFixed(2)} min</p>` : l}
     </fieldset>`;
   }
 };
-Re.properties = {
+Ee.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   value: { type: String },
@@ -9034,53 +9027,53 @@ Re.properties = {
   requireRuntime: { type: Boolean },
   disabled: { type: Boolean },
   fuzzySearch: { attribute: !1 }
-}, Re.styles = [q, Ke];
-let kt = Re;
+}, Ee.styles = [q, We];
+let vt = Ee;
 customElements.get("kaleidescape-library-title-picker") || customElements.define(
   "kaleidescape-library-title-picker",
-  kt
+  vt
 );
-function be() {
-  const r = pe((/* @__PURE__ */ new Date()).toISOString());
+function fe() {
+  const n = ce((/* @__PURE__ */ new Date()).toISOString());
   return {
     library_title_id: "",
-    date: r.slice(0, 10),
-    time: r.slice(11, 16),
+    date: n.slice(0, 10),
+    time: n.slice(11, 16),
     status: "completed",
     watched_minutes: "",
     notes: ""
   };
 }
-function Ii(r) {
-  if (!/^[a-f0-9]{64}$/.test(r.library_title_id))
+function Pi(n) {
+  if (!/^[a-f0-9]{64}$/.test(n.library_title_id))
     throw new Error("Select a Library movie from the suggestions.");
-  const e = r.time.trim().match(/^(\d{1,2})(?::?(\d{2}))?\s*(am|pm)?$/i);
-  if (!e || !/^\d{4}-\d{2}-\d{2}$/.test(r.date))
+  const e = n.time.trim().match(/^(\d{1,2})(?::?(\d{2}))?\s*(am|pm)?$/i);
+  if (!e || !/^\d{4}-\d{2}-\d{2}$/.test(n.date))
     throw new Error("Enter a date and time such as 19:30 or 7:30 PM.");
   let t = Number(e[1]);
   const i = Number(e[2] ?? 0), s = e[3]?.toLowerCase();
   if (i > 59 || t > (s ? 12 : 23) || s && t < 1)
     throw new Error("Enter a valid local time.");
   s && (t = t % 12 + (s === "pm" ? 12 : 0));
-  const n = `${r.date}T${String(t).padStart(2, "0")}:${String(i).padStart(2, "0")}:00`, o = new Date(n);
-  if (!Number.isFinite(o.getTime()) || pe(o.toISOString()) !== n)
+  const r = `${n.date}T${String(t).padStart(2, "0")}:${String(i).padStart(2, "0")}:00`, o = new Date(r);
+  if (!Number.isFinite(o.getTime()) || ce(o.toISOString()) !== r)
     throw new Error(
       "That local date/time does not exist. Check the date or daylight-saving transition."
     );
-  const d = Number(r.watched_minutes) * 60;
-  if (r.status === "partial" && (!r.watched_minutes.trim() || !Number.isFinite(d) || d <= 0))
+  const d = Number(n.watched_minutes) * 60;
+  if (n.status === "partial" && (!n.watched_minutes.trim() || !Number.isFinite(d) || d <= 0))
     throw new Error("Enter positive watched minutes for a partial viewing.");
   return {
-    library_title_id: r.library_title_id,
+    library_title_id: n.library_title_id,
     started_at: o.toISOString(),
-    status: r.status,
-    notes: r.notes,
-    ...r.status === "partial" ? { watched_seconds: d } : {}
+    status: n.status,
+    notes: n.notes,
+    ...n.status === "partial" ? { watched_seconds: d } : {}
   };
 }
-const ze = class ze extends x {
+const Re = class Re extends x {
   constructor() {
-    super(...arguments), this.draft = be(), this.disabled = !1, this.fuzzySearch = !0, this.runtime = null;
+    super(...arguments), this.draft = fe(), this.disabled = !1, this.fuzzySearch = !0, this.runtime = null;
   }
   change(e) {
     this.dispatchEvent(
@@ -9147,16 +9140,16 @@ const ze = class ze extends x {
     </fieldset>`;
   }
 };
-ze.properties = {
+Re.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   draft: { attribute: !1 },
   disabled: { type: Boolean },
   fuzzySearch: { attribute: !1 }
-}, ze.styles = [q, Ke];
-let _t = ze;
-customElements.get("kaleidescape-manual-viewing") || customElements.define("kaleidescape-manual-viewing", _t);
-const Xt = S`
+}, Re.styles = [q, We];
+let $t = Re;
+customElements.get("kaleidescape-manual-viewing") || customElements.define("kaleidescape-manual-viewing", $t);
+const Kt = S`
   .entries-header {
     position: sticky;
     top: var(--companion-sticky-top, 0px);
@@ -9293,25 +9286,24 @@ const Xt = S`
       padding: 8px;
     }
   }
-`, Ks = [
+`, Fs = [
   "now-playing",
   "library",
   "journal",
   "database",
-  "logs",
   "settings"
 ];
-function Ct(r, e, t, i = !0) {
-  const s = (o) => Ks.includes(o) && (e || o === "now-playing" || o === "journal" || o === "library") && (o !== "library" || t), n = i ? new URL(location.href).searchParams.get("companion_page") : null;
-  return s(n) ? n : s(r) ? r : "journal";
+function wt(n, e, t, i = !0) {
+  const s = (o) => Fs.includes(o) && (e || o === "now-playing" || o === "journal" || o === "library") && (o !== "library" || t), r = i ? new URL(location.href).searchParams.get("companion_page") : null;
+  return s(r) ? r : s(n) ? n : "journal";
 }
-function N(r) {
+function N(n) {
   const e = new URL(location.href);
-  e.searchParams.set("companion_page", r), history.replaceState(history.state, "", e);
+  e.searchParams.set("companion_page", n), history.replaceState(history.state, "", e);
 }
-const Le = class Le extends x {
+const ze = class ze extends x {
   constructor() {
-    super(), this.disabled = !1, this.status = "", this.mobileCompact = !1, this.view = "list", this.calendarSize = 180, this.calendarFit = !1, this.bound = "", this.generation = 0, this.ready = !1, this.fuzzy = !0, this.error = "", ue(this, () => !this.ready || this.store?.unsettled || this.viewStore?.unsettled || this.disabled || this.renderRoot.querySelector("dialog[open]") ? !1 : (this.clear(), this.load(), !0));
+    super(), this.disabled = !1, this.status = "", this.mobileCompact = !1, this.view = "list", this.calendarSize = 180, this.calendarFit = !1, this.bound = "", this.generation = 0, this.ready = !1, this.fuzzy = !0, this.error = "", pe(this, () => !this.ready || this.store?.unsettled || this.viewStore?.unsettled || this.disabled || this.renderRoot.querySelector("dialog[open]") ? !1 : (this.clear(), this.load(), !0));
   }
   connectedCallback() {
     super.connectedCallback(), this.requestUpdate("client");
@@ -9397,11 +9389,11 @@ const Le = class Le extends x {
       <dialog
         class="database-dialog"
         aria-labelledby="journal-options-title"
-        @click=${_}
+        @click=${C}
       >
         <div class="card-head">
           <h2 id="journal-options-title">Journal options</h2>
-          ${k(() => this.renderRoot.querySelector("dialog")?.close())}
+          ${_(() => this.renderRoot.querySelector("dialog")?.close())}
         </div>
         <p>
           Changes save automatically for your HA user’s
@@ -9502,13 +9494,13 @@ const Le = class Le extends x {
       </dialog>`;
   }
 };
-Le.properties = {
+ze.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean },
   status: { type: String },
   mobileCompact: { type: Boolean }
-}, Le.styles = [
+}, ze.styles = [
   q,
   S`
       @media (max-width: 700px) {
@@ -9518,11 +9510,11 @@ Le.properties = {
       }
     `
 ];
-let St = Le;
-customElements.get("kaleidescape-journal-options") || customElements.define("kaleidescape-journal-options", St);
-const Ue = class Ue extends x {
+let xt = ze;
+customElements.get("kaleidescape-journal-options") || customElements.define("kaleidescape-journal-options", xt);
+const Le = class Le extends x {
   constructor() {
-    super(), this.narrow = !1, this.api = null, this.userKey = "", this.generation = 0, this.scope = null, this.rows = [], this.selected = null, this.detailLoading = !1, this.detailRequest = 0, this.loading = !1, this.error = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.next = null, this.history = [], this.page = 1, this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.controlLocked = !1, Ge(this);
+    super(), this.narrow = !1, this.api = null, this.userKey = "", this.generation = 0, this.scope = null, this.rows = [], this.selected = null, this.detailLoading = !1, this.detailRequest = 0, this.loading = !1, this.error = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.next = null, this.history = [], this.page = 1, this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.controlLocked = !1, Jt(this);
   }
   confirmNavigation() {
     return !this.controlLocked && (this.renderRoot.querySelector("kaleidescape-library")?.confirmNavigation() ?? !0);
@@ -9541,7 +9533,7 @@ const Ue = class Ue extends x {
       if (this.hass) {
         const t = `${this.hass.user?.id}:${this.hass.user?.is_admin}`;
         !this.hass.user || !this.hass.connection.connected ? this.bind(null) : (this.connection !== this.hass.connection || this.userKey !== t || !this.api) && (this.connection = this.hass.connection, this.userKey = t, this.bind(
-          new Kt({
+          new Ft({
             callWS: (i) => this.hass.callWS(i),
             fetchWithAuth: (i, s) => this.hass.fetchWithAuth(i, s)
           })
@@ -9576,7 +9568,7 @@ const Ue = class Ue extends x {
         ...t[0],
         permissions: { read: !0, edit: !1, export: !1 }
       }, !this.navigationReady) {
-        const i = Ct(
+        const i = wt(
           this.scope.ui_defaults?.default_landing_page,
           !1,
           !!this.scope.library_enabled
@@ -9827,7 +9819,7 @@ const Ue = class Ue extends x {
                                           tabindex="0"
                                           aria-label="Viewings"
                                         >
-                                          ${this.rows.map((e) => Ui(e, this.selected?.id, (t) => {
+                                          ${this.rows.map((e) => qi(e, this.selected?.id, (t) => {
       this.selectRecord(t);
     }))}
                                         </ul>` : a`<div class="empty">
@@ -9847,7 +9839,7 @@ const Ue = class Ue extends x {
                               </div>
                               ${this.detailLoading ? a`<div class="empty" role="status">
                                       Loading entry…
-                                    </div>` : this.selected ? a`${Ai(this.selected, (e) => this.date(e))}
+                                    </div>` : this.selected ? a`${Ei(this.selected, (e) => this.date(e))}
                                         <kaleidescape-viewing-library
                                           .client=${this.api ?? void 0}
                                           .scope=${this.scope ?? void 0}
@@ -9866,8 +9858,8 @@ const Ue = class Ue extends x {
                         `}
                   <footer class="entries-footer journal-status">
                     <span
-                      >${Yt(this.scope, this.journalView === "calendar" ? this.calendarStatus : void 0, this.journalView === "calendar")}</span
-                    >${this.journalView === "calendar" ? Gt(this.calendarStatus, () => {
+                      >${Bt(this.scope, this.journalView === "calendar" ? this.calendarStatus : void 0, this.journalView === "calendar")}</span
+                    >${this.journalView === "calendar" ? Vt(this.calendarStatus, () => {
       this.renderRoot.querySelector(
         "kaleidescape-journal-calendar"
       )?.refresh();
@@ -9911,23 +9903,23 @@ const Ue = class Ue extends x {
     </main>`;
   }
 };
-Ue.properties = {
+Le.properties = {
   hass: { attribute: !1 },
   client: { attribute: !1 },
   narrow: { type: Boolean }
-}, Ue.styles = [q, Xt, ji];
-let qt = Ue;
-customElements.get("kaleidescape-reader") || customElements.define("kaleidescape-reader", qt);
-function Ys(r, e) {
+}, Le.styles = [q, Kt, zi];
+let kt = Le;
+customElements.get("kaleidescape-reader") || customElements.define("kaleidescape-reader", kt);
+function Bs(n, e) {
   return a`<label class="check"
       ><input
         type="checkbox"
         name="calendar_full_sync"
-        .checked=${!!r.calendar_full_sync}
+        .checked=${!!n.calendar_full_sync}
         @change=${(t) => e({ calendar_full_sync: t.target.checked, calendar_full_sync_dedicated: !1 })}
       />Full Sync · maintain the assigned calendar</label
     >
-    ${r.calendar_full_sync ? a`
+    ${n.calendar_full_sync ? a`
             <p class="warning">
               <strong
                 >Full Sync requires its own separate calendar. Events in the
@@ -9940,7 +9932,7 @@ function Ys(r, e) {
                 type="checkbox"
                 name="calendar_full_sync_dedicated"
                 required
-                .checked=${!!r.calendar_full_sync_dedicated}
+                .checked=${!!n.calendar_full_sync_dedicated}
                 @change=${(t) => e({ calendar_full_sync_dedicated: t.target.checked })}
               />I assigned a separate dedicated calendar and understand
               unmatched events will be deleted.</label
@@ -9954,7 +9946,7 @@ function Ys(r, e) {
                   max="12"
                   step="1"
                   required
-                  .value=${String(r.calendar_full_sync_months ?? 3)}
+                  .value=${String(n.calendar_full_sync_months ?? 3)}
                   @input=${(t) => e({ calendar_full_sync_months: Number(t.target.value) })}
               /></label>
               <label
@@ -9962,7 +9954,7 @@ function Ys(r, e) {
                   name="calendar_full_sync_time"
                   type="time"
                   required
-                  .value=${String(r.calendar_full_sync_time ?? "03:00")}
+                  .value=${String(n.calendar_full_sync_time ?? "03:00")}
                   @input=${(t) => e({ calendar_full_sync_time: t.target.value })}
               /></label>
             </div>
@@ -9976,7 +9968,7 @@ function Ys(r, e) {
             </p>
           ` : l}`;
 }
-const Ae = class Ae extends x {
+const Ue = class Ue extends x {
   constructor() {
     super(...arguments), this.disabled = !1, this.working = !1, this.error = "", this.reviewToken = "", this.generation = 0, this.bound = "";
   }
@@ -10103,13 +10095,13 @@ const Ae = class Ae extends x {
       <p role="status">
         ${e.active ? "Syncing…" : "Last successful sync: " + (e.last_success ? new Date(e.last_success).toLocaleString() : "Not yet")}
         · Pending delete: ${e.quarantined} ·
-        ${$(e.uncertain, "unconfirmed write")}
+        ${v(e.uncertain, "unconfirmed write")}
       </p>
       ${e.quarantined ? a`<p class="muted">Replaced and unmatched events remain visible until two unchanged scans at least ten minutes apart confirm cleanup. Changes restart this grace period. A forced sync keeps these safeguards.</p>` : l}
       ${Object.keys(e.counts).length ? a`<p class="muted">
               ${Object.entries(e.counts).map(([t, i]) => `${i} ${t.replaceAll("_", " ")}`).join(" · ")}
             </p>` : l}
-      ${e.error ? a`<p class="warning">${e.error} ${e.failure_stage ? `Stage: ${e.failure_stage}. See Logs; enable DEBUG for content-free comparison details.` : ""}</p>` : l}
+      ${e.error ? a`<p class="warning">${e.error} ${e.failure_stage ? `Stage: ${e.failure_stage}. Review Full Sync status and the calendar before retrying.` : ""}</p>` : l}
       ${e.ready ? l : a`<p class="warning">The calendar must be available and support event reading, creation and deletion.</p>`}
       <div class="actions">
         <button
@@ -10134,7 +10126,7 @@ const Ae = class Ae extends x {
       <dialog
         id="maintenance-review"
         class="database-dialog"
-        @click=${_}
+        @click=${C}
         @cancel=${this.close}
         aria-labelledby="maintenance-review-title"
       >
@@ -10142,7 +10134,7 @@ const Ae = class Ae extends x {
           <h2 id="maintenance-review-title">
             Review unconfirmed calendar writes
           </h2>
-          ${k((t) => this.close(t))}
+          ${_((t) => this.close(t))}
         </div>
         <p>
           Inspect the assigned calendar first. A write may already have
@@ -10175,7 +10167,7 @@ const Ae = class Ae extends x {
       <dialog
         id="maintenance-run"
         class="database-dialog"
-        @click=${_}
+        @click=${C}
         @cancel=${this.close}
         aria-labelledby="maintenance-run-title"
       >
@@ -10183,11 +10175,11 @@ const Ae = class Ae extends x {
           <h2 id="maintenance-run-title">
             Run Full Sync with pending operations?
           </h2>
-          ${k((t) => this.close(t))}
+          ${_((t) => this.close(t))}
         </div>
         <p>
           Pending delete: ${e.quarantined} ·
-          ${$(e.uncertain, "unconfirmed write")}
+          ${v(e.uncertain, "unconfirmed write")}
         </p>
         <p class="warning">
           A forced sync rechecks pending operations. It does not bypass the
@@ -10230,7 +10222,7 @@ const Ae = class Ae extends x {
       </div>
       ${e ? a`<p role="status">
               ${e.finished ? "Export finished" : "Export in progress"} ·
-              ${$(e.total, "viewing")} ·
+              ${v(e.total, "viewing")} ·
               ${Object.entries(e.counts).map(([t, i]) => `${i} ${t}`).join(" · ")}
             </p>` : l}
       ${this.error ? a`<p role="alert" class="error">${this.error}</p>` : l}
@@ -10238,16 +10230,16 @@ const Ae = class Ae extends x {
         class="database-dialog"
         aria-labelledby="calendar-export-title"
         aria-describedby="calendar-export-summary"
-        @click=${_}
+        @click=${C}
         @cancel=${this.close}
       >
         <div class="card-head">
           <h2 id="calendar-export-title">Export Journal to calendar</h2>
-          ${k((t) => this.close(t))}
+          ${_((t) => this.close(t))}
         </div>
         <p id="calendar-export-summary">
           Create events for up to
-          ${$(this.status?.completed_viewings ?? 0, "completed viewing")}
+          ${v(this.status?.completed_viewings ?? 0, "completed viewing")}
           using the saved calendar and templates?
         </p>
         <p>
@@ -10289,21 +10281,20 @@ const Ae = class Ae extends x {
     </section>`;
   }
 };
-Ae.properties = {
+Ue.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, Ae.styles = q;
-let Et = Ae;
-customElements.get("kaleidescape-calendar-export") || customElements.define("kaleidescape-calendar-export", Et);
-const Gs = [
+}, Ue.styles = q;
+let _t = Ue;
+customElements.get("kaleidescape-calendar-export") || customElements.define("kaleidescape-calendar-export", _t);
+const Vs = [
   ["rules", "Runtime rules and feature enablement"],
   ["browsing", "Personal browsing preferences · may include searches/names"],
   ["shared", "Shared hidden collection names"],
-  ["logging", "Logging level and movie-value opt-in"],
   ["connections", "Network addresses, player and HA entity choices · private"],
   ["templates", "Custom calendar text templates · private"]
-], Te = class Te extends x {
+], Ae = class Ae extends x {
   constructor() {
     super(...arguments), this.disabled = !1, this.generation = 0, this.selected = /* @__PURE__ */ new Set(["rules", "browsing"]), this.request = "", this.busy = !1, this.pending = !1, this.error = "", this.notice = "";
   }
@@ -10344,7 +10335,7 @@ const Gs = [
     const t = this.generation;
     this.busy = !0, this.error = "", this.requestUpdate();
     try {
-      e === "apply" && (this.request ||= Je(), this.pending = !0);
+      e === "apply" && (this.request ||= He(), this.pending = !0);
       const i = await this.client.settingsTransfer(
         this.scope,
         e,
@@ -10358,15 +10349,15 @@ const Gs = [
           new Blob([JSON.stringify(i, null, 2)], {
             type: "application/json"
           })
-        ), n = document.createElement("a");
-        n.href = s, n.download = "companion-settings.json", n.click(), setTimeout(() => URL.revokeObjectURL(s), 1e3);
+        ), r = document.createElement("a");
+        r.href = s, r.download = "companion-settings.json", r.click(), setTimeout(() => URL.revokeObjectURL(s), 1e3);
       } else e === "preview" ? this.preview = i : (this.pending = !1, this.request = "", this.dispatchEvent(
         new CustomEvent("settings-imported", {
           detail: i.patch ?? {},
           bubbles: !0,
           composed: !0
         })
-      ), this.preview = void 0, this.notice = "Browsing/shared/logging choices applied. Runtime changes are staged below: review and click Save settings. Full Sync requires a fresh dedicated-calendar acknowledgement.", this.renderRoot.querySelector("dialog")?.close());
+      ), this.preview = void 0, this.notice = "Browsing/shared choices applied. Runtime changes are staged below: review and click Save settings. Full Sync requires a fresh dedicated-calendar acknowledgement.", this.renderRoot.querySelector("dialog")?.close());
     } catch (i) {
       t === this.generation && this.fail(i);
     } finally {
@@ -10386,19 +10377,19 @@ const Gs = [
       ${this.notice ? a`<p class="notice" role="status">${this.notice}</p>` : l}
       <dialog
         class="database-dialog"
-        @click=${_}
+        @click=${C}
         @cancel=${(t) => this.close(t)}
       >
         <div class="card-head">
           <h2>Export / import settings</h2>
-          ${k(() => this.close())}
+          ${_(() => this.close())}
         </div>
         <p>
           Choose the categories to transfer. Credentials are always excluded.
           Connection choices, searches, names and templates can contain private
           information; protect the downloaded file.
         </p>
-        ${Gs.map(
+        ${Vs.map(
       ([t, i]) => a`<label class="check"
               ><input
                 type="checkbox"
@@ -10437,10 +10428,9 @@ const Gs = [
         ${this.error ? a`<p class="error" role="alert">${this.error}</p>` : l}
         ${this.preview ? a`<h3>Review import</h3>
                 <p>
-                  Applying updates personal/shared/logging settings immediately.
-                  Runtime fields are staged on the Settings page for validation
-                  and Save settings. Credentials and database contents are
-                  unaffected.
+                  Applying updates personal/shared settings immediately. Runtime
+                  fields are staged on the Settings page for validation and Save
+                  settings. Credentials and database contents are unaffected.
                 </p>
                 <div style="max-height:35vh;overflow:auto">
                   ${Object.entries(this.preview.categories).map(
@@ -10469,19 +10459,19 @@ ${JSON.stringify(i, null, 2)}</pre>
       </dialog>`;
   }
 };
-Te.properties = {
+Ae.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, Te.styles = q;
-let Rt = Te;
-customElements.define("kaleidescape-settings-transfer", Rt);
-function Y(r) {
-  return Array.isArray(r) ? `[${r.map(Y).join(",")}]` : r && typeof r == "object" ? `{${Object.entries(r).sort(([e], [t]) => e.localeCompare(t)).map(([e, t]) => `${JSON.stringify(e)}:${Y(t)}`).join(",")}}` : JSON.stringify(r);
+}, Ae.styles = q;
+let Ct = Ae;
+customElements.define("kaleidescape-settings-transfer", Ct);
+function Y(n) {
+  return Array.isArray(n) ? `[${n.map(Y).join(",")}]` : n && typeof n == "object" ? `{${Object.entries(n).sort(([e], [t]) => e.localeCompare(t)).map(([e, t]) => `${JSON.stringify(e)}:${Y(t)}`).join(",")}}` : JSON.stringify(n);
 }
 class T extends Error {
 }
-class Zs {
+class Hs {
   constructor(e, t) {
     if (this.client = e, this.plan = t, this.attempted = !1, this.created = !1, !/^companion-test-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(
       t.url_path
@@ -10514,14 +10504,14 @@ class Zs {
         );
       this.attempted = !0, await this.client.createHATestDashboard(this.plan), t(), this.created = !0;
     }
-    let n;
+    let r;
     try {
-      n = await this.client.haTestDashboardConfig(this.plan.url_path), t();
+      r = await this.client.haTestDashboardConfig(this.plan.url_path), t();
     } catch (d) {
       if (t(), u(d) !== "config_not_found") throw d;
     }
-    if (n) {
-      if (Y(n) === Y(this.plan.config)) return;
+    if (r) {
+      if (Y(r) === Y(this.plan.config)) return;
       throw new T(
         "This dashboard already contains different content. It was not overwritten. Inspect it in HA dashboard settings."
       );
@@ -10538,7 +10528,7 @@ class Zs {
       );
   }
 }
-const je = class je extends x {
+const Te = class Te extends x {
   constructor() {
     super(...arguments), this.disabled = !1, this.name = "Kaleidescape test guide", this.request = "", this.generation = 0, this.busy = !1, this.pending = !1, this.complete = !1, this.error = "", this.bound = "";
   }
@@ -10576,21 +10566,21 @@ const je = class je extends x {
     const t = this.generation, i = () => t === this.generation && this.isConnected;
     this.busy = !0, this.error = "", this.signal(), this.requestUpdate();
     try {
-      if (this.request ||= Je(), !this.plan) {
+      if (this.request ||= He(), !this.plan) {
         const s = await this.client.testDashboard(
           this.scope,
           this.request,
           this.name.trim()
         );
         if (!i()) return;
-        this.installer = new Zs(this.client, s), this.plan = s;
+        this.installer = new Hs(this.client, s), this.plan = s;
       }
       if (this.pending = !0, await this.installer.install(i), !i() || (await this.client.verifyTestDashboard(this.scope, this.request), !i())) return;
       this.complete = !0, this.pending = !1;
     } catch (s) {
       if (!i()) return;
-      const n = u(s), o = s?.message;
-      this.error = typeof o == "string" && (n.startsWith("dashboard_") || s instanceof T) ? o : w(s), n === "unauthorized" && (this.reset(), this.dispatchEvent(
+      const r = u(s), o = s?.message;
+      this.error = typeof o == "string" && (r.startsWith("dashboard_") || s instanceof T) ? o : w(s), r === "unauthorized" && (this.reset(), this.dispatchEvent(
         new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
       ));
     } finally {
@@ -10624,12 +10614,12 @@ const je = class je extends x {
       <dialog
         data-admin-dialog
         class="database-dialog"
-        @click=${_}
+        @click=${C}
         @cancel=${this.close}
       >
         <div class="card-head">
           <h2>Generate test dashboard</h2>
-          ${k((e) => this.close(e))}
+          ${_((e) => this.close(e))}
         </div>
         <p>
           Creates a separate HA-managed dashboard visible to household users,
@@ -10684,14 +10674,14 @@ const je = class je extends x {
       </dialog>` : l;
   }
 };
-je.properties = {
+Te.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, je.styles = q;
-let zt = je;
-customElements.get("kaleidescape-test-dashboard") || customElements.define("kaleidescape-test-dashboard", zt);
-const Pe = class Pe extends x {
+}, Te.styles = q;
+let St = Te;
+customElements.get("kaleidescape-test-dashboard") || customElements.define("kaleidescape-test-dashboard", St);
+const je = class je extends x {
   constructor() {
     super(...arguments), this.disabled = !1, this.working = !1, this.error = "", this.generation = 0, this.bound = "";
   }
@@ -10779,19 +10769,19 @@ const Pe = class Pe extends x {
       >
         ${this.working ? "Checking…" : "Repair Journal Library metadata"}
       </button>
-      ${this.result ? a`<p role="status">Updated ${$(this.result.updated_count, "entry", "entries")} · ${this.result.unmatched_count} unmatched · ${this.result.active_count} active and skipped.</p>` : l}
+      ${this.result ? a`<p role="status">Updated ${v(this.result.updated_count, "entry", "entries")} · ${this.result.unmatched_count} unmatched · ${this.result.active_count} active and skipped.</p>` : l}
       ${this.error ? a`<p role="alert" class="error">${this.error}</p>` : l}
       <dialog
         class="database-dialog"
         aria-labelledby="metadata-repair-title"
-        @click=${_}
+        @click=${C}
         @cancel=${this.close}
       >
         <div class="card-head">
           <h2 id="metadata-repair-title">Repair Journal Library metadata</h2>
-          ${k((t) => this.close(t))}
+          ${_((t) => this.close(t))}
         </div>
-        ${e ? a`<p>${$(e.updated_count, "entry", "entries")} with missing details can be updated. ${e.unchanged_count} already up to date · ${e.unmatched_count} unmatched · ${e.active_count} active and skipped.</p>` : l}
+        ${e ? a`<p>${v(e.updated_count, "entry", "entries")} with missing details can be updated. ${e.unchanged_count} already up to date · ${e.unmatched_count} unmatched · ${e.active_count} active and skipped.</p>` : l}
         <p>
           Matches use version identifiers in the configured Library, including
           recognized playback handles. Movie names are never guessed. Existing
@@ -10831,14 +10821,14 @@ const Pe = class Pe extends x {
     </section>`;
   }
 };
-Pe.properties = {
+je.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, Pe.styles = q;
-let Lt = Pe;
-customElements.get("kaleidescape-metadata-repair") || customElements.define("kaleidescape-metadata-repair", Lt);
-const xi = [
+}, je.styles = q;
+let qt = je;
+customElements.get("kaleidescape-metadata-repair") || customElements.define("kaleidescape-metadata-repair", qt);
+const yi = [
   ["actors", "Cast", ["kaleidescape", "tmdb"]],
   ["directors", "Directors", ["kaleidescape", "tmdb"]],
   ["writers", "Writers", ["kaleidescape", "tmdb"]],
@@ -10852,12 +10842,12 @@ const xi = [
   ["audience_rating", "TMDB viewer rating", ["tmdb"]],
   ["artwork", "Cover artwork", ["kaleidescape", "tmdb"]],
   ["backdrop", "Landscape image", ["tmdb"]]
-], Qs = {
+], Ws = {
   auto: "Automatic",
   original: "Original library data",
   kaleidescape: "Kaleidescape store",
   tmdb: "TMDB"
-}, De = class De extends x {
+}, Pe = class Pe extends x {
   constructor() {
     super(...arguments), this.draft = {}, this.disabled = !1, this.generation = 0, this.bound = "", this.error = "", this.loading = !1;
   }
@@ -10966,7 +10956,7 @@ const xi = [
           ?disabled=${this.disabled || !this.draft.metadata_tmdb_enabled}
           @click=${() => {
       const e = Object.fromEntries(
-        xi.map(([t, , i]) => [
+        yi.map(([t, , i]) => [
           "metadata_source_" + t,
           t === "artwork" || t === "critic_score" || t === "audience_score" || t === "distributor" ? "kaleidescape" : i.some((s) => s === "tmdb") ? "tmdb" : "auto"
         ])
@@ -10983,16 +10973,16 @@ const xi = [
           Prefer TMDB · keep Kaleidescape covers and RT scores
         </button>
         <div class="grid settings-grid">
-          ${xi.map(([e, t, i]) => {
+          ${yi.map(([e, t, i]) => {
       const s = "metadata_source_" + e;
       return a`<label
               >${t}<select
                 name=${s}
                 .value=${String(this.draft[s] ?? "auto")}
                 ?disabled=${this.disabled}
-                @change=${(n) => this.change(s, n.target.value)}
+                @change=${(r) => this.change(s, r.target.value)}
               >
-                ${["auto", "original", ...i].map((n) => a`<option value=${n}>${e === "artwork" && n === "kaleidescape" ? "Kaleidescape library cover" : Qs[n]}</option>`)}
+                ${["auto", "original", ...i].map((r) => a`<option value=${r}>${e === "artwork" && r === "kaleidescape" ? "Kaleidescape library cover" : Ws[r]}</option>`)}
               </select></label
             >`;
     })}
@@ -11025,11 +11015,11 @@ const xi = [
           Check metadata status
         </button>
       </div>
-      ${this.status ? a`<p role="status">${this.status.running ? "Syncing" : "Idle"} · ${this.status.processed} of ${$(this.status.total, "movie")} · ${$(this.status.updated, "provider update")} · ${$(this.status.skipped, "skipped attempt")}${this.status.error ? ` · ${this.status.error}` : ""}</p>` : l}
+      ${this.status ? a`<p role="status">${this.status.running ? "Syncing" : "Idle"} · ${this.status.processed} of ${v(this.status.total, "movie")} · ${v(this.status.updated, "provider update")} · ${v(this.status.skipped, "skipped attempt")}${this.status.error ? ` · ${this.status.error}` : ""}</p>` : l}
       ${this.error ? a`<p class="error" role="alert">${this.error}</p>` : l}
       <details>
         <summary>Metadata credits</summary>
-        ${Pi()}
+        ${Li()}
         <p>
           Kaleidescape store metadata and Rotten Tomatoes scores remain
           attributed to their source. TMDB votes are a separate audience rating.
@@ -11038,15 +11028,15 @@ const xi = [
     </section>` : l;
   }
 };
-De.properties = {
+Pe.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   draft: { attribute: !1 },
   disabled: { type: Boolean }
-}, De.styles = q;
-let Ut = De;
-customElements.get("kaleidescape-enrichment-settings") || customElements.define("kaleidescape-enrichment-settings", Ut);
-const rt = [
+}, Pe.styles = q;
+let Et = Pe;
+customElements.get("kaleidescape-enrichment-settings") || customElements.define("kaleidescape-enrichment-settings", Et);
+const it = [
   ["media_player", "Kaleidescape media player", "text", "", ""],
   ["play_status", "Exact play-status sensor", "text", "", ""],
   ["media_location", "Media-location sensor", "text", "", ""],
@@ -11071,7 +11061,7 @@ const rt = [
     "0",
     "168"
   ]
-], ki = [
+], vi = [
   [
     "library_host",
     "Library hostname · blank uses my-kaleidescape.local",
@@ -11087,12 +11077,12 @@ const rt = [
     "32",
     "4096"
   ]
-], Fi = [
+], Di = [
   ["library_allow_collection_add", "Allow Add to Collection on the device"],
   ["library_sync_collections", "Sync collections and watched status"],
   ["library_sync_details", "Sync title details and credits"],
   ["library_sync_artwork", "Sync artwork"]
-], Xs = /* @__PURE__ */ new Set([
+], Js = /* @__PURE__ */ new Set([
   "calendar_enabled",
   "calendar_full_sync",
   "calendar_full_sync_dedicated",
@@ -11103,8 +11093,8 @@ const rt = [
   "metadata_store_enabled",
   "metadata_tmdb_enabled",
   "metadata_clear_tmdb_key",
-  ...Fi.map(([r]) => r)
-]), ea = {
+  ...Di.map(([n]) => n)
+]), Ks = {
   invalid_calendar_full_sync: "Use 1–12 whole months and a daily time in HH:MM format.",
   calendar_dedicated_required: "Acknowledge that Full Sync uses a separate calendar and deletes unmatched events.",
   calendar_full_sync_unsupported: "Full Sync requires a calendar with event creation and deletion support.",
@@ -11119,9 +11109,9 @@ const rt = [
   invalid_control_options: "Use a private LAN control hostname/IP and a valid player serial number.",
   invalid_library_host: "Enter a hostname or private LAN HTTP(S) origin without a path, credentials, or query.",
   invalid_library_options: "Choose a sync interval of 1–168 hours and an artwork cache limit of 32–4096 MiB."
-}, Me = class Me extends x {
+}, De = class De extends x {
   constructor() {
-    super(), this.tab = "home-assistant", this.personalReady = !1, this.personalError = "", this.generation = 0, this.draft = {}, this.initial = {}, this.collectionChoices = [], this.hiddenCollections = [], this.sharedReady = !1, this.sharedError = "", this.customCollection = "", this.loading = !1, this.saving = !1, this.uncertain = !1, this.dashboardBusy = !1, this.error = "", this.bound = "", ue(this, () => this.loading || this.saving || this.uncertain || this.personalPreferences?.unsettled ? !1 : (this.personalPreferences?.dispose(), this.personalPreferences = void 0, this.personalReady = !1, this.tab === "personal" && this.selectTab("personal"), !0));
+    super(), this.tab = "home-assistant", this.personalReady = !1, this.personalError = "", this.generation = 0, this.draft = {}, this.initial = {}, this.collectionChoices = [], this.hiddenCollections = [], this.sharedReady = !1, this.sharedError = "", this.customCollection = "", this.loading = !1, this.saving = !1, this.uncertain = !1, this.dashboardBusy = !1, this.error = "", this.bound = "", pe(this, () => this.loading || this.saving || this.uncertain || this.personalPreferences?.unsettled ? !1 : (this.personalPreferences?.dispose(), this.personalPreferences = void 0, this.personalReady = !1, this.tab === "personal" && this.selectTab("personal"), !0));
   }
   willUpdate(e) {
     if (!e.has("client") && !e.has("scope")) return;
@@ -11162,7 +11152,7 @@ const rt = [
       this.flow = s, this.draft = Object.fromEntries(
         (s.fields ?? []).map((o) => [
           o.name,
-          Xs.has(o.name) ? !!o.default : String(o.default ?? "")
+          Js.has(o.name) ? !!o.default : String(o.default ?? "")
         ])
       ), this.initial = { ...this.draft }, this.sharedPreferences = new P(
         e,
@@ -11172,9 +11162,9 @@ const rt = [
           i === this.generation && (o && u(o) === "unauthorized" ? this.fail(o) : (this.sharedError = o ? w(o) : "", this.requestUpdate()));
         }
       );
-      const n = await this.sharedPreferences.load();
+      const r = await this.sharedPreferences.load();
       if (i !== this.generation) return;
-      if (this.hiddenCollections = [...n.hidden_collections], this.sharedReady = !0, t.library_enabled) {
+      if (this.hiddenCollections = [...r.hidden_collections], this.sharedReady = !0, t.library_enabled) {
         const o = await e.libraryInfo(t);
         i === this.generation && (this.collectionChoices = o.collection_names ?? []);
       }
@@ -11213,10 +11203,10 @@ const rt = [
     const t = this.generation;
     this.saving = !0, this.busy(), this.error = "", this.requestUpdate();
     const i = { ...this.draft };
-    for (const [s, , n] of rt)
-      n === "number" ? i[s] = Number(i[s]) : i[s] || delete i[s];
-    for (const [s, , n] of ki)
-      n === "number" && (i[s] = Number(i[s]));
+    for (const [s, , r] of it)
+      r === "number" ? i[s] = Number(i[s]) : i[s] || delete i[s];
+    for (const [s, , r] of vi)
+      r === "number" && (i[s] = Number(i[s]));
     i.library_host = String(i.library_host ?? ""), i.calendar_full_sync_months !== void 0 && (i.calendar_full_sync_months = Number(i.calendar_full_sync_months)), i.calendar_entity || delete i.calendar_entity;
     try {
       const s = await this.client.settings(this.scope, "submit", {
@@ -11227,7 +11217,7 @@ const rt = [
       this.flow = s, s.type === "create_entry" ? (this.initial = { ...this.draft }, this.saving = !1, this.busy(), this.dispatchEvent(
         new CustomEvent("settings-saved", { bubbles: !0, composed: !0 })
       )) : s.type === "form" ? this.error = Object.values(s.errors ?? {}).map(
-        (n) => ea[n] ?? "Check the settings and try again."
+        (r) => Ks[r] ?? "Check the settings and try again."
       ).join(" ") : this.error = "The settings flow ended. Reload settings to continue.";
     } catch (s) {
       t === this.generation && (this.fail(s), this.uncertain = ![
@@ -11268,8 +11258,8 @@ const rt = [
       "personal",
       "ecosystem",
       "scrapers"
-    ], s = i.indexOf(t), n = e.key === "ArrowRight" ? i[(s + 1) % i.length] : e.key === "ArrowLeft" ? i[(s + i.length - 1) % i.length] : e.key === "Home" ? i[0] : e.key === "End" ? i.at(-1) : void 0;
-    n && (e.preventDefault(), this.selectTab(n), this.renderRoot.querySelector(`#settings-tab-${n}`)?.focus());
+    ], s = i.indexOf(t), r = e.key === "ArrowRight" ? i[(s + 1) % i.length] : e.key === "ArrowLeft" ? i[(s + i.length - 1) % i.length] : e.key === "Home" ? i[0] : e.key === "End" ? i.at(-1) : void 0;
+    r && (e.preventDefault(), this.selectTab(r), this.renderRoot.querySelector(`#settings-tab-${r}`)?.focus());
   }
   async submitForm() {
     const e = this.renderRoot.querySelector(
@@ -11287,7 +11277,7 @@ const rt = [
   }
   renderSources() {
     return a`<div class="grid settings-grid">
-      ${rt.filter(([, , e]) => e === "text").map(
+      ${it.filter(([, , e]) => e === "text").map(
       ([e, t]) => a` <label class="full"
               >${t}<input
                 name=${e}
@@ -11472,7 +11462,7 @@ const rt = [
                                 values are blank. Use double braces for literal
                                 braces.
                               </p>
-                              ${Ys(this.draft, (e) => {
+                              ${Bs(this.draft, (e) => {
       this.draft = { ...this.draft, ...e }, this.requestUpdate();
     })}` : l}
                       <kaleidescape-calendar-export
@@ -11508,13 +11498,13 @@ const rt = [
                         />Automatically record playback</label
                       >
                       <div class="grid settings-grid">
-                        ${rt.filter(([, , e]) => e === "number").map(
-      ([e, t, i, s, n]) => a`<label class=${i === "text" ? "full" : ""}
+                        ${it.filter(([, , e]) => e === "number").map(
+      ([e, t, i, s, r]) => a`<label class=${i === "text" ? "full" : ""}
                                 >${t}<input
                                   name=${e}
                                   type=${i}
                                   min=${s || l}
-                                  max=${n || l}
+                                  max=${r || l}
                                   step=${i === "number" ? "1" : l}
                                   maxlength=${i === "text" ? "255" : l}
                                   ?required=${i === "number" || !!this.draft.tracking_enabled}
@@ -11600,14 +11590,14 @@ const rt = [
                         device requests occur while disabled.
                       </p>
                       ${this.draft.library_enabled ? a`<div class="grid settings-grid">
-                                ${ki.map(
-      ([e, t, i, s, n]) => a`<label
+                                ${vi.map(
+      ([e, t, i, s, r]) => a`<label
                                       class=${i === "text" ? "full" : ""}
                                       >${t}<input
                                         name=${e}
                                         type=${i}
                                         min=${s || l}
-                                        max=${n || l}
+                                        max=${r || l}
                                         step=${i === "number" ? "1" : l}
                                         maxlength=${i === "text" ? "255" : l}
                                         ?required=${i === "number"}
@@ -11620,7 +11610,7 @@ const rt = [
       }}
                                     /></label>`
     )}
-                                ${Fi.map(
+                                ${Di.map(
       ([e, t]) => a`<label class="check full"
                                       ><input
                                         name=${e}
@@ -11843,7 +11833,7 @@ const rt = [
                 .checked=${e.includes(i)}
                 ?disabled=${e.length >= 200 && !e.includes(i)}
                 @change=${(s) => {
-        this.hiddenCollections = s.target.checked ? [...e, i] : e.filter((n) => n !== i), this.sharedPreferences?.set({
+        this.hiddenCollections = s.target.checked ? [...e, i] : e.filter((r) => r !== i), this.sharedPreferences?.set({
           hidden_collections: this.hiddenCollections
         }), this.requestUpdate();
       }}
@@ -11882,10 +11872,10 @@ const rt = [
     </fieldset>`;
   }
 };
-Me.properties = {
+De.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 }
-}, Me.styles = [
+}, De.styles = [
   q,
   S`
       [hidden] {
@@ -11924,599 +11914,9 @@ Me.properties = {
       }
     `
 ];
-let At = Me;
-customElements.get("kaleidescape-settings") || customElements.define("kaleidescape-settings", At);
-const ta = {
-  resource: "Resource",
-  target: "Backend",
-  actor: "User",
-  related: "Linked record",
-  trace: "Originating request",
-  trigger: "Triggered by",
-  revision: "Record revision",
-  command: "Protocol command",
-  failure: "Cause",
-  reason: "Explanation code",
-  stage: "Stage",
-  check: "Validation check",
-  count: "Count",
-  status: "Response code",
-  attempt: "Verification attempt",
-  elapsed_ms: "Elapsed milliseconds",
-  title_match: "Title",
-  interval_match: "Time interval",
-  description_match: "Description",
-  values: "Opt-in movie metadata"
-}, _i = {
-  provider: "The provider raised an error; its original text was withheld for privacy.",
-  missing_field: "A required field is missing. Check the API adapter's input mapping.",
-  invalid_type: "An argument or returned value has an unexpected type.",
-  timeout: "The operation exceeded its time limit.",
-  connection: "The connection failed or was interrupted.",
-  authorization: "Authentication or access was denied.",
-  unsupported: "The destination does not support this operation.",
-  validation: "The input or returned data failed validation."
-};
-function Bi(r) {
-  return typeof r.message == "string" && r.message ? r.message : `${`${String(r.logger ?? "Operation")}: ${String(r.operation ?? "operation")} ${String(r.outcome ?? "recorded")}.`}${typeof r.failure == "string" && _i[r.failure] ? " " + _i[r.failure] : ""}`;
-}
-function re(r, e = !1) {
-  const t = r.file, i = r.line;
-  return typeof i != "number" || !Number.isInteger(i) || i < 0 ? "Not recorded" : t === "external" ? `External caller:${i}` : typeof t != "string" || !/^[A-Za-z_][\w]*(?:\/[A-Za-z_][\w]*)*\.py$/.test(t) ? "Not recorded" : `${e ? t : t.split("/").at(-1)}:${i}`;
-}
-function Tt(r) {
-  return Object.entries(ta).flatMap(([e, t]) => {
-    const i = r[e];
-    return i == null ? [] : [
-      [
-        t,
-        typeof i == "boolean" ? i ? "Matches" : "Differs" : typeof i == "object" ? JSON.stringify(i, null, 2) : String(i).replaceAll("_", " ")
-      ]
-    ];
-  });
-}
-function ia(r) {
-  const e = Tt(r).map(([t, i]) => `  ${t}: ${i}`).join(`
-`);
-  return `${String(r.timestamp ?? "")} ${String(r.level ?? "")} [${re(r, !0)}] ${Bi(r)}${e ? `
-` + e : ""}`;
-}
-const Oe = class Oe extends x {
-  constructor() {
-    super(), this.level = "", this.logger = "", this.includeHidden = !1, this.reference = "", this.busy = !1, this.error = "", this.generation = 0, this.cursors = [], Ge(this);
-  }
-  willUpdate(e) {
-    (e.has("client") || e.has("scope")) && (this.generation++, this.page = void 0, this.cursors = [], this.beforeId = void 0, this.busy = !1, this.error = "", this.client && this.scope?.permissions.edit && this.load());
-  }
-  disconnectedCallback() {
-    super.disconnectedCallback(), this.generation++, this.page = void 0;
-  }
-  fail(e) {
-    this.error = w(e), u(e) === "unauthorized" && (this.page = void 0, this.dispatchEvent(
-      new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
-    ));
-  }
-  filters() {
-    return {
-      level: this.level,
-      logger: this.logger,
-      hidden: this.includeHidden,
-      reference: this.reference
-    };
-  }
-  async load(e) {
-    if (!this.client || !this.scope || this.busy) return;
-    const t = this.generation;
-    this.busy = !0, this.error = "", this.requestUpdate();
-    try {
-      const i = await this.client.logs(this.scope, "list", {
-        filters: { ...this.filters(), before: e }
-      });
-      t === this.generation && (this.page = i, this.beforeId = e);
-    } catch (i) {
-      t === this.generation && this.fail(i);
-    } finally {
-      t === this.generation && (this.busy = !1, this.requestUpdate());
-    }
-  }
-  async change(e, t) {
-    if (!this.client || !this.scope || this.busy) return;
-    const i = this.generation;
-    this.busy = !0, this.requestUpdate();
-    try {
-      const s = await this.client.logs(
-        this.scope,
-        e,
-        e === "configure" ? { data: t } : t
-      );
-      if (i === this.generation) {
-        const n = this.level || this.logger || this.includeHidden || this.reference ? await this.client.logs(this.scope, "list", {
-          filters: this.filters()
-        }) : s;
-        if (i !== this.generation) return;
-        this.page = n, this.cursors = [], this.beforeId = void 0, this.renderRoot.querySelector("#log-clear")?.close();
-      }
-    } catch (s) {
-      i === this.generation && this.fail(s);
-    } finally {
-      i === this.generation && (this.busy = !1, this.requestUpdate());
-    }
-  }
-  async download(e) {
-    if (!this.client || !this.scope || this.busy) return;
-    const t = this.generation, i = this.client, s = this.scope;
-    this.busy = !0, this.requestUpdate();
-    try {
-      let n, o;
-      const d = [];
-      let h = "", c = 0;
-      do {
-        const y = await i.logs(s, "export", {
-          filters: { ...this.filters(), before: n, through: o, limit: 500 }
-        });
-        if (t !== this.generation) return;
-        if (o ??= y.through, h = y.banner, c += new TextEncoder().encode(JSON.stringify(y.items)).length, c > 8 * 1024 * 1024 || d.length + y.items.length > 5e4)
-          throw new Error("Export exceeds limit");
-        d.push(...y.items), n = y.before ?? void 0;
-      } while (n !== void 0);
-      const g = e === "json" ? JSON.stringify({ banner: h, entries: d }, null, 2) : h + `
-
-` + d.map(ia).join(`
-
-`), p = URL.createObjectURL(
-        new Blob([g], {
-          type: e === "json" ? "application/json" : "text/plain"
-        })
-      ), v = document.createElement("a");
-      v.href = p, v.download = `companion-logs.${e === "json" ? "json" : "txt"}`, v.click(), setTimeout(() => URL.revokeObjectURL(p), 1e3);
-    } catch (n) {
-      t === this.generation && this.fail(n);
-    } finally {
-      t === this.generation && (this.busy = !1, this.requestUpdate());
-    }
-  }
-  render() {
-    return this.scope?.permissions.edit ? a`<section class="card">
-        <div class="entries-header log-header">
-          <div class="card-head">
-            <h2>Operational logs</h2>
-            <button
-              ?disabled=${this.busy}
-              @click=${() => {
-      this.cursors = [], this.load();
-    }}
-            >
-              Refresh
-            </button>
-            <button
-              ?disabled=${this.busy}
-              @click=${() => this.renderRoot.querySelector("#log-options")?.showModal()}
-            >
-              Options
-            </button>
-          </div>
-          <div class="log-body">
-            ${this.error ? a`<p class="error" role="alert">${this.error}</p>` : l}
-            <div class="filters">
-              <label
-                >Linked resource / request<input
-                  name="filter-reference"
-                  maxlength="64"
-                  placeholder="Paste an alias from Details"
-                  .value=${this.reference}
-                  ?disabled=${this.busy}
-                  @change=${(e) => {
-      this.reference = e.target.value.trim(), this.cursors = [], this.load();
-    }}
-              /></label>
-              <label
-                >Minimum level<select
-                  name="filter-level"
-                  .value=${this.level}
-                  ?disabled=${this.busy}
-                  @change=${(e) => {
-      this.level = e.target.value, this.cursors = [], this.load();
-    }}
-                >
-                  <option value="">All</option>
-                  ${["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"].map((e) => a`<option>${e}</option>`)}
-                </select></label
-              >
-              <label
-                >Subsystem<select
-                  name="filter-logger"
-                  .value=${this.logger}
-                  ?disabled=${this.busy}
-                  @change=${(e) => {
-      this.logger = e.target.value, this.cursors = [], this.load();
-    }}
-                >
-                  <option value="">All</option>
-                  ${this.page?.loggers.map((e) => a`<option>${e}</option>`)}
-                </select></label
-              >
-              <label class="check"
-                ><input
-                  name="show-hidden"
-                  type="checkbox"
-                  .checked=${this.includeHidden}
-                  ?disabled=${this.busy}
-                  @change=${(e) => {
-      this.includeHidden = e.target.checked, this.cursors = [], this.load();
-    }}
-                />Include cleared logs</label
-              >
-            </div>
-          </div>
-        </div>
-        <div class="log-body">
-          <div class="log-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Time</th>
-                  <th>Level</th>
-                  <th class="log-component-heading">Subsystem</th>
-                  <th>Message</th>
-                  <th class="log-source-heading">Source</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${this.page?.items.map(
-      (e) => a`<tr>
-                      <td class="log-time" title=${String(e.timestamp)}>
-                        ${new Date(String(e.timestamp)).toLocaleDateString()}<br />${new Date(String(e.timestamp)).toLocaleTimeString()}
-                      </td>
-                      <td class="log-level" data-level=${String(e.level)}>
-                        ${e.level}
-                      </td>
-                      <td class="log-component">
-                        <strong>${e.logger}</strong
-                        ><small>${e.operation}</small>
-                      </td>
-                      <td class="log-message">
-                        ${Bi(e)}
-                        <small
-                          class="log-inline-source"
-                          title=${re(e, !0)}
-                          >${re(e)}</small
-                        >
-                        ${Tt(e).length ? a`<details class="log-detail">
-                                <summary>Details</summary>
-                                <dl>
-                                  ${Tt(e).map(
-        ([t, i]) => a`<dt>${t}</dt>
-                                        <dd>
-                                          ${/^[a-z_]+-[0-9a-f]{24}$/.test(i) ? a`<button
-                                                  class="link"
-                                                  type="button"
-                                                  ?disabled=${this.busy}
-                                                  @click=${() => {
-          this.reference = i, this.cursors = [], this.load();
-        }}
-                                                >
-                                                  ${i}
-                                                </button>` : i}
-                                        </dd>`
-      )}
-                                </dl>
-                              </details>` : l}
-                      </td>
-                      <td class="log-source">
-                        <code title=${re(e, !0)}
-                          >${re(e)}</code
-                        >
-                      </td>
-                    </tr>`
-    )}
-              </tbody>
-            </table>
-          </div>
-          <footer class="entries-footer log-footer">
-            <p class="muted log-status">
-              ${this.page?.retained ?? 0} retained ·
-              ${((this.page?.bytes ?? 0) / 1048576).toFixed(2)} / 5 MiB ·
-              Dropped: ${this.page?.dropped ?? 0} · Storage/sink failures:
-              ${(this.page?.storage_failures ?? 0) + (this.page?.sink_failures ?? 0)}
-            </p>
-
-            <div class="actions">
-              <button
-                ?disabled=${this.busy || !this.cursors.length}
-                @click=${() => this.load(this.cursors.pop())}
-              >
-                Previous</button
-              ><button
-                ?disabled=${this.busy || !this.page?.before}
-                @click=${() => {
-      this.cursors.push(this.beforeId), this.load(this.page.before);
-    }}
-              >
-                Next</button
-              ><button
-                ?disabled=${this.busy || !this.page}
-                @click=${() => this.download("text")}
-              >
-                Export text</button
-              ><button
-                ?disabled=${this.busy || !this.page}
-                @click=${() => this.download("json")}
-              >
-                Export JSON</button
-              ><button
-                ?disabled=${this.busy || !this.page}
-                @click=${() => this.renderRoot.querySelector("#log-clear")?.showModal()}
-              >
-                Clear logs
-              </button>
-            </div>
-          </footer>
-        </div>
-      </section>
-      <dialog id="log-clear" class="database-dialog" @click=${_}>
-        <div class="card-head">
-          <h2>Clear logs?</h2>
-          ${k(() => this.renderRoot.querySelector("#log-clear")?.close())}
-        </div>
-        <p>
-          This hides retained entries through the last refresh. Include cleared
-          logs to see them again. Oldest entries are evicted when the 5 MiB
-          retention limit is reached.
-        </p>
-        <div class="dialog-footer">
-          <button
-            class="primary"
-            ?disabled=${this.busy}
-            @click=${() => this.change("clear", { through: this.page.through })}
-          >
-            Clear logs
-          </button>
-        </div>
-      </dialog>
-      <dialog
-        id="log-options"
-        class="database-dialog log-options"
-        @click=${_}
-      >
-        <div class="card-head">
-          <h2>Logging options</h2>
-          ${k(() => this.renderRoot.querySelector("#log-options")?.close())}
-        </div>
-        <p class="notice">
-          ${this.page?.banner ?? "Logs contain structured events and opaque resource IDs. No credentials or network identities."}
-        </p>
-        ${this.error ? a`<p class="error" role="alert">${this.error}</p>` : l}
-        <div class="grid">
-          <label
-            >Logging level · applies immediately<select
-              name="log-level"
-              .value=${ut(this.page?.config.level ?? "INFO")}
-              ?disabled=${this.busy || !this.page}
-              @change=${(e) => this.change("configure", { level: e.target.value })}
-            >
-              ${["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"].map((e) => a`<option value=${e} ?selected=${e === (this.page?.config.level ?? "INFO")}>${e}</option>`)}
-            </select></label
-          >
-          <label class="check"
-            ><input
-              name="log-values"
-              type="checkbox"
-              .checked=${this.page?.config.log_values ?? !1}
-              ?disabled=${this.busy || !this.page}
-              @change=${(e) => this.change("configure", { log_values: e.target.checked })}
-            />Log database values · movie metadata only</label
-          >
-        </div>
-        <p class="muted">
-          Value logging can retain movie titles/person metadata in logs and
-          exports. It never enables credentials, notes, account or network
-          values. Disabling does not erase prior logs.
-        </p>
-
-        <p class="muted">
-          Changes apply immediately. Exports use the active filters. Source
-          paths are package-relative; older entries may have no recorded source.
-        </p>
-      </dialog>` : l;
-  }
-};
-Oe.properties = {
-  client: { attribute: !1 },
-  scope: { attribute: !1 }
-}, Oe.styles = [
-  q,
-  S`
-      .log-body {
-        padding: 0 20px 20px;
-      }
-      section.card {
-        overflow: visible;
-      }
-      .log-header {
-        position: sticky;
-        top: var(--companion-sticky-top, 0px);
-        z-index: 15;
-        background: var(--surface);
-        border-radius: 12px 12px 0 0;
-      }
-      .log-header .log-body {
-        padding-bottom: 0;
-      }
-      .log-inline-source {
-        display: none;
-      }
-      th {
-        position: sticky;
-        top: 0;
-        z-index: 1;
-      }
-      .log-scroll {
-        overflow: auto;
-        max-height: var(--entries-height, 65dvh);
-        overscroll-behavior: contain;
-      }
-      .log-body .filters {
-        padding: 0 0 12px;
-        gap: 12px;
-      }
-      td,
-      th {
-        padding: 8px 10px;
-        vertical-align: top;
-      }
-      .log-time,
-      .log-source {
-        white-space: nowrap;
-        font-size: 12px;
-      }
-      .log-component {
-        min-width: 90px;
-      }
-      .log-component small {
-        display: block;
-      }
-      .log-message {
-        min-width: 250px;
-        line-height: 1.45;
-        overflow-wrap: anywhere;
-      }
-      .log-detail {
-        margin-top: 4px;
-        font-size: 12px;
-      }
-      .log-detail summary {
-        width: fit-content;
-        cursor: pointer;
-        color: var(--muted);
-      }
-      .log-detail .link {
-        font: inherit;
-        min-height: 24px;
-        overflow-wrap: anywhere;
-      }
-      .log-detail dl {
-        display: grid;
-        grid-template-columns: auto minmax(0, 1fr);
-        gap: 6px 12px;
-        margin: 10px 0;
-      }
-      .log-detail dt {
-        color: var(--muted);
-      }
-      .log-detail dd {
-        margin: 0;
-        overflow-wrap: anywhere;
-        white-space: pre-wrap;
-      }
-      .log-level {
-        font-size: 11px;
-        font-weight: 650;
-      }
-      .log-level[data-level="ERROR"],
-      .log-level[data-level="CRITICAL"] {
-        color: var(--error-color, #db4437);
-      }
-      .log-level[data-level="WARNING"] {
-        color: var(--warning-color, #d68d13);
-      }
-      .log-options .grid {
-        margin-top: 16px;
-      }
-      .log-status {
-        font-size: 12px;
-        margin: 12px 0;
-      }
-      .log-footer {
-        position: sticky;
-        bottom: 0;
-        z-index: 14;
-        background: var(--surface);
-        padding-block: 6px max(6px, env(safe-area-inset-bottom));
-        border-top: 1px solid var(--line);
-      }
-      .log-footer .actions {
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        padding-bottom: 2px;
-      }
-      .log-footer button {
-        flex-shrink: 0;
-      }
-      .log-footer .log-status {
-        margin: 0 0 6px;
-      }
-      @media (max-width: 600px) {
-        .log-body {
-          padding-inline: 10px;
-          padding-bottom: 10px;
-        }
-        .log-body .filters {
-          display: grid;
-          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-          gap: 6px 10px;
-        }
-        .log-body .filters > label:first-child,
-        .log-body .filters > .check {
-          grid-column: 1 / -1;
-          min-width: 0;
-        }
-        .log-body .filters > .check {
-          margin-block: 0;
-          min-height: 32px;
-        }
-        table {
-          table-layout: fixed;
-        }
-        td,
-        th {
-          padding: 8px 5px;
-        }
-        th:first-child,
-        td:first-child {
-          min-width: 0;
-          width: 76px;
-          max-width: none;
-        }
-        th:nth-child(2) {
-          width: 56px;
-        }
-        .log-component,
-        .log-component-heading,
-        .log-source,
-        .log-source-heading {
-          display: none;
-        }
-        .log-message {
-          min-width: 0;
-          font-size: 12px;
-        }
-        .log-time {
-          white-space: normal;
-          font-size: 11px;
-        }
-        .log-inline-source {
-          display: block;
-          font-size: 11px;
-          margin-top: 4px;
-          overflow-wrap: anywhere;
-        }
-        .log-detail dl {
-          grid-template-columns: minmax(0, 1fr);
-          gap: 4px;
-        }
-        .log-detail dd {
-          margin-bottom: 6px;
-        }
-        .log-footer button {
-          font-size: 12px;
-          padding-inline: 10px;
-        }
-      }
-    `
-];
-let jt = Oe;
-customElements.define("kaleidescape-logs", jt);
-const sa = S`
+let Rt = De;
+customElements.get("kaleidescape-settings") || customElements.define("kaleidescape-settings", Rt);
+const Ys = S`
   .database {
     overflow: visible;
     margin-top: 24px;
@@ -12658,7 +12058,7 @@ const sa = S`
       box-shadow: -8px 0 8px var(--surface);
     }
   }
-`, Ne = class Ne extends x {
+`, Me = class Me extends x {
   constructor() {
     super(...arguments), this.table = "viewings", this.value = "", this.fields = [], this.operators = [], this.disabled = !1, this.open = !1, this.active = 0, this.cursor = 0, this.message = "", this.invalid = !1, this.generation = 0;
   }
@@ -12684,12 +12084,12 @@ const sa = S`
         options: this.operators.filter((d) => d.toLowerCase().startsWith(o)).slice(0, 12)
       };
     }
-    let n;
-    return !i || /(?:\bAND|\bOR|\bNOT|\bWHERE|\()$/i.test(i) ? n = this.fields.map((o) => o.name) : this.fields.some(
+    let r;
+    return !i || /(?:\bAND|\bOR|\bNOT|\bWHERE|\()$/i.test(i) ? r = this.fields.map((o) => o.name) : this.fields.some(
       (o) => i.toLowerCase().endsWith(o.name.toLowerCase())
-    ) ? n = this.operators : /(?:NULL|'|\d|TRUE|FALSE)$/i.test(i) ? n = ["AND", "OR"] : n = ["''", "0", "TRUE", "FALSE"], {
+    ) ? r = this.operators : /(?:NULL|'|\d|TRUE|FALSE)$/i.test(i) ? r = ["AND", "OR"] : r = ["''", "0", "TRUE", "FALSE"], {
       start: this.cursor - t.length,
-      options: n.filter((o) => o.toLowerCase().startsWith(t.toLowerCase())).slice(0, 12)
+      options: r.filter((o) => o.toLowerCase().startsWith(t.toLowerCase())).slice(0, 12)
     };
   }
   changed() {
@@ -12781,7 +12181,7 @@ const sa = S`
       </details>`;
   }
 };
-Ne.properties = {
+Me.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   table: {},
@@ -12789,7 +12189,7 @@ Ne.properties = {
   fields: { attribute: !1 },
   operators: { attribute: !1 },
   disabled: { type: Boolean }
-}, Ne.styles = S`
+}, Me.styles = S`
     :host {
       display: block;
       min-width: 0;
@@ -12886,9 +12286,9 @@ Ne.properties = {
       color: var(--error-color, #b3261e);
     }
   `;
-let Pt = Ne;
-customElements.get("kaleidescape-database-search") || customElements.define("kaleidescape-database-search", Pt);
-const Ie = class Ie extends x {
+let zt = Me;
+customElements.get("kaleidescape-database-search") || customElements.define("kaleidescape-database-search", zt);
+const Oe = class Oe extends x {
   constructor() {
     super(...arguments), this.disabled = !1, this.bound = "", this.request = 0, this.query = "", this.items = [], this.active = -1, this.loading = !1, this.more = !1, this.error = "";
   }
@@ -12989,7 +12389,7 @@ const Ie = class Ie extends x {
               >
                 ${e.title} · ${e.year ?? "Year unknown"}<small
                   >${e.directors.join(", ") || "Director unknown"} ·
-                  ${$(e.version_count, "version")} · Source
+                  ${v(e.version_count, "version")} · Source
                   ${e.source_hint}</small
                 >
               </button>
@@ -13007,13 +12407,13 @@ const Ie = class Ie extends x {
       </div>`;
   }
 };
-Ie.properties = {
+Oe.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   review: { attribute: !1 },
   row: { attribute: !1 },
   disabled: { type: Boolean }
-}, Ie.styles = [
+}, Oe.styles = [
   q,
   S`
       :host {
@@ -13060,12 +12460,12 @@ Ie.properties = {
       }
     `
 ];
-let Dt = Ie;
+let Lt = Oe;
 customElements.get("kaleidescape-import-matcher") || customElements.define(
   "kaleidescape-import-matcher",
-  Dt
+  Lt
 );
-const Fe = class Fe extends x {
+const Ne = class Ne extends x {
   constructor() {
     super(...arguments), this.disabled = !1, this.bound = "", this.generation = 0, this.selected = /* @__PURE__ */ new Set(), this.query = "", this.changesOnly = !1, this.page = 0, this.pageSize = 100, this.working = !1, this.error = "", this.notice = "", this.dialog = null;
   }
@@ -13125,21 +12525,21 @@ const Fe = class Fe extends x {
     const t = this.generation, i = this.controller = new AbortController(), s = setTimeout(() => i.abort(), 65e3);
     this.working = !0, this.error = this.notice = "", this.busy(), this.requestUpdate();
     try {
-      const n = await this.client.download(
+      const r = await this.client.download(
         this.scope,
         e,
         i.signal
       );
       if (t !== this.generation) return;
-      const o = URL.createObjectURL(n), d = document.createElement("a");
+      const o = URL.createObjectURL(r), d = document.createElement("a");
       try {
         d.href = o, d.download = `kaleidescape-journal.${e}`, d.click();
       } finally {
         setTimeout(() => URL.revokeObjectURL(o), 1e3);
       }
       this.notice = "Export downloaded. Keep this private copy in a protected location.", this.hideDialog();
-    } catch (n) {
-      t === this.generation && this.fail(n);
+    } catch (r) {
+      t === this.generation && this.fail(r);
     } finally {
       clearTimeout(s), t === this.generation && (this.working = !1, this.controller = void 0, this.busy(), this.requestUpdate());
     }
@@ -13158,8 +12558,8 @@ const Fe = class Fe extends x {
       if (e !== this.generation) return;
       this.review = s, this.selected = new Set(
         s.rows.filter(
-          (n) => !n.needs_match && ["new", "merge"].includes(n.action) && n.selected_by_default !== !1
-        ).map((n) => n.key)
+          (r) => !r.needs_match && ["new", "merge"].includes(r.action) && r.selected_by_default !== !1
+        ).map((r) => r.key)
       ), this.page = 0, this.query = "", this.changesOnly = !1;
     } catch (s) {
       e === this.generation && this.fail(s);
@@ -13178,7 +12578,7 @@ const Fe = class Fe extends x {
     try {
       const t = await this.client.applyImport(this.pending);
       if (e !== this.generation) return;
-      this.pending = void 0, this.review = void 0, this.matching = void 0, this.file = void 0, this.selected.clear(), this.notice = `Imported ${$(t.imported_count, "new entry", "new entries")}; filled missing data in ${t.updated_count}; left ${t.skipped_count} unchanged or unselected.`, this.hideDialog(), this.dispatchEvent(
+      this.pending = void 0, this.review = void 0, this.matching = void 0, this.file = void 0, this.selected.clear(), this.notice = `Imported ${v(t.imported_count, "new entry", "new entries")}; filled missing data in ${t.updated_count}; left ${t.skipped_count} unchanged or unselected.`, this.hideDialog(), this.dispatchEvent(
         new CustomEvent("database-changed", { bubbles: !0, composed: !0 })
       );
     } catch (t) {
@@ -13210,12 +12610,12 @@ const Fe = class Fe extends x {
         e
       );
       if (t !== this.generation) return;
-      const { row: n, ...o } = s;
+      const { row: r, ...o } = s;
       this.review = {
         ...this.review,
         ...o,
         rows: this.review.rows.map(
-          (d) => d.key === i ? n : d
+          (d) => d.key === i ? r : d
         )
       }, this.matching = void 0, ["new", "merge"].includes(s.row.action) ? this.selected.add(i) : this.selected.delete(i), this.page = 0;
     } catch (s) {
@@ -13228,13 +12628,13 @@ const Fe = class Fe extends x {
   renderReview(e) {
     if (!this.review) return l;
     const t = this.review, i = this.query.trim().toLocaleLowerCase(), s = t.rows.filter(
-      (h) => (!this.changesOnly || h.needs_match || !h.needs_match && ["new", "merge"].includes(h.action)) && pt(
+      (h) => (!this.changesOnly || h.needs_match || !h.needs_match && ["new", "merge"].includes(h.action)) && dt(
         `${h.title} ${h.detail ?? ""} ${h.table} ${Object.keys(h.changes).join(" ")}`,
         i
       )
     ).sort(
       (h, c) => +!!c.needs_match - +!!h.needs_match
-    ), n = Math.max(0, Math.ceil(s.length / this.pageSize) - 1), o = Math.min(this.page, n), d = s.slice(
+    ), r = Math.max(0, Math.ceil(s.length / this.pageSize) - 1), o = Math.min(this.page, r), d = s.slice(
       o * this.pageSize,
       (o + 1) * this.pageSize
     );
@@ -13254,7 +12654,7 @@ const Fe = class Fe extends x {
         ${t.counts.new} new · ${t.counts.merge} mergeable ·
         ${t.counts.unchanged} unchanged · ${t.counts.skip} skipped.
         ${this.selected.size} selected.
-        ${t.rows.some((h) => h.needs_match) ? a`${$(t.rows.filter((h) => h.needs_match).length, "purchase requiring a match")} shown first.` : l}
+        ${t.rows.some((h) => h.needs_match) ? a`${v(t.rows.filter((h) => h.needs_match).length, "purchase requiring a match")} shown first.` : l}
       </p>
       ${t.rows.some((h) => h.key.startsWith("purchases:")) ? a`<p class="muted">
               Purchase records are attached to the matched existing Library
@@ -13377,7 +12777,7 @@ const Fe = class Fe extends x {
         >
           Previous</button
         ><button
-          ?disabled=${e || o >= n}
+          ?disabled=${e || o >= r}
           @click=${() => {
       this.page = o + 1, this.requestUpdate();
     }}
@@ -13475,7 +12875,7 @@ const Fe = class Fe extends x {
       ${!this.dialog && this.notice ? a`<p class="notice" role="status">${this.notice}</p>` : l}
       <dialog
         class="database-dialog"
-        @click=${_}
+        @click=${C}
         aria-labelledby="transfer-title"
         @cancel=${this.closeDialog}
       >
@@ -13483,7 +12883,7 @@ const Fe = class Fe extends x {
           <h2 id="transfer-title">
             ${this.dialog === "export" ? "Export database" : "Merge Import"}
           </h2>
-          ${k((t) => this.closeDialog(t))}
+          ${_((t) => this.closeDialog(t))}
         </div>
         ${this.error && this.dialog ? a`<p class="error" role="alert">${this.error}</p>` : l}
         ${this.dialog === "export" ? a`<p>
@@ -13491,16 +12891,16 @@ const Fe = class Fe extends x {
                 includes catalog and source metadata. Store downloads securely.
               </p> ` : this.dialog === "import" ? this.renderImport(e) : l}
         ${this.dialog === "export" || this.dialog === "import" && this.review ? a`<div class="actions dialog-footer">
-                ${this.dialog === "export" ? a`<button ?disabled=${e} @click=${() => this.exportData("json")}>Export JSON</button><button class="primary" ?disabled=${e} @click=${() => this.exportData("sqlite")}>Export SQLite</button>` : a`<button class="primary" ?disabled=${e || !!this.matching || !this.selected.size} @click=${this.importData}>Apply ${$(this.selected.size, "selected change")}</button>`}
+                ${this.dialog === "export" ? a`<button ?disabled=${e} @click=${() => this.exportData("json")}>Export JSON</button><button class="primary" ?disabled=${e} @click=${() => this.exportData("sqlite")}>Export SQLite</button>` : a`<button class="primary" ?disabled=${e || !!this.matching || !this.selected.size} @click=${this.importData}>Apply ${v(this.selected.size, "selected change")}</button>`}
               </div>` : l}
       </dialog>`;
   }
 };
-Fe.properties = {
+Ne.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, Fe.styles = [
+}, Ne.styles = [
   q,
   S`
       .database-dialog {
@@ -13559,8 +12959,8 @@ Fe.properties = {
       }
     `
 ];
-let Mt = Fe;
-customElements.get("kaleidescape-transfers") || customElements.define("kaleidescape-transfers", Mt);
+let Ut = Ne;
+customElements.get("kaleidescape-transfers") || customElements.define("kaleidescape-transfers", Ut);
 const se = {
   viewings: "Viewings",
   sessions: "Sessions",
@@ -13580,11 +12980,11 @@ const se = {
   calendar_publications: "Calendar publications",
   calendar_sync_jobs: "Calendar exports",
   calendar_sync_items: "Calendar export items"
-}, ae = ["viewings", "sessions", "library"], Be = class Be extends x {
+}, ae = ["viewings", "sessions", "library"], Ie = class Ie extends x {
   constructor() {
-    super(), this.bound = "", this.generation = 0, this.mutationEpoch = 0, this.request = 0, this.table = "viewings", this.filters = { limit: 25, query: "", descending: !1 }, this.fitPage = !0, this.showSystem = !1, this.sorts = {}, this.fuzzySearch = !0, this.ready = !1, this.preferenceError = "", this.loading = !1, this.saving = !1, this.transferBusy = !1, this.error = "", this.notice = "", this.search = "", this.selected = /* @__PURE__ */ new Set(), this.operation = null, this.draft = {}, this.nulls = /* @__PURE__ */ new Set(), this.original = "", this.createDraft = be(), this.confirmed = !1, this.deleteWord = "", this.covers = new A(), this.scheduleFit = () => {
+    super(), this.bound = "", this.generation = 0, this.mutationEpoch = 0, this.request = 0, this.table = "viewings", this.filters = { limit: 25, query: "", descending: !1 }, this.fitPage = !0, this.showSystem = !1, this.sorts = {}, this.fuzzySearch = !0, this.ready = !1, this.preferenceError = "", this.loading = !1, this.saving = !1, this.transferBusy = !1, this.error = "", this.notice = "", this.search = "", this.selected = /* @__PURE__ */ new Set(), this.operation = null, this.draft = {}, this.nulls = /* @__PURE__ */ new Set(), this.original = "", this.createDraft = fe(), this.confirmed = !1, this.deleteWord = "", this.covers = new A(), this.scheduleFit = () => {
       clearTimeout(this.fitTimer), !(!this.fitPage || !this.ready || !this.page || this.blocked || this.operation) && (this.fitTimer = setTimeout(() => this.resizePage(), 120));
-    }, Ge(this, () => this.scheduleFit()), ue(this, () => {
+    }, Jt(this, () => this.scheduleFit()), pe(this, () => {
       if (!this.ready || this.preferences?.unsettled || this.blocked || this.operation || this.renderRoot.querySelector("dialog[open]"))
         return !1;
       const e = this.detail && this.page ? {
@@ -13664,9 +13064,9 @@ const se = {
       Math.min(500, Math.floor((e.clientHeight - 8) / Math.max(...t)))
     );
     if (i === this.filters.limit) return;
-    const s = this.detail ? this.page.items.indexOf(this.detail) : -1, n = this.page.offset + Math.max(0, s), o = this.detail;
+    const s = this.detail ? this.page.items.indexOf(this.detail) : -1, r = this.page.offset + Math.max(0, s), o = this.detail;
     this.filters.limit = i, this.load(
-      Math.floor(n / i) * i,
+      Math.floor(r / i) * i,
       this.page.revision,
       o
     );
@@ -13692,7 +13092,7 @@ const se = {
   }
   async load(e = 0, t, i) {
     if (!this.client || !this.scope || !this.ready || this.pending) return;
-    const s = this.generation, n = ++this.request;
+    const s = this.generation, r = ++this.request;
     this.loading = !0, this.page?.table !== this.table && (this.page = void 0), this.error = "", i || (this.detail = void 0), this.selected.clear(), this.requestUpdate();
     try {
       const o = await this.client.inspect(
@@ -13702,7 +13102,7 @@ const se = {
         t,
         this.filters
       );
-      if (s !== this.generation || n !== this.request) return;
+      if (s !== this.generation || r !== this.request) return;
       if (this.page = o, i) {
         const d = o.schema?.filter((h) => h.primary).map((h) => h.name) ?? [];
         this.detail = o.items.find(
@@ -13711,9 +13111,9 @@ const se = {
       }
       this.filters.sort = o.sort;
     } catch (o) {
-      s === this.generation && n === this.request && this.fail(o);
+      s === this.generation && r === this.request && this.fail(o);
     } finally {
-      if (s === this.generation && n === this.request && (this.loading = !1, this.requestUpdate(), await this.updateComplete, s === this.generation && n === this.request)) {
+      if (s === this.generation && r === this.request && (this.loading = !1, this.requestUpdate(), await this.updateComplete, s === this.generation && r === this.request)) {
         const o = this.renderRoot.querySelector(".entry-list");
         o && (o.scrollTop = 0);
         const d = this.renderRoot.querySelector("li.selected");
@@ -13728,12 +13128,12 @@ const se = {
     if (this.blocked || !this.detail || !this.page?.tables || !(e.table in this.page.tables))
       return;
     const t = [];
-    for (const [n, o] of Object.entries(e.key)) {
+    for (const [r, o] of Object.entries(e.key)) {
       const d = this.detail[o];
-      if (d == null || !/^[a-z_]+$/.test(n) || !["string", "number"].includes(typeof d))
+      if (d == null || !/^[a-z_]+$/.test(r) || !["string", "number"].includes(typeof d))
         return;
       t.push(
-        `${n} = ${typeof d == "number" ? d : `'${String(d).replaceAll("'", "''")}'`}`
+        `${r} = ${typeof d == "number" ? d : `'${String(d).replaceAll("'", "''")}'`}`
       );
     }
     ae.includes(e.table) || (this.showSystem = !0, this.preferences?.set({ show_system: !0 })), this.table = e.table, this.search = `WHERE ${t.join(" AND ")}`, this.filters = {
@@ -13781,7 +13181,7 @@ const se = {
     }
   }
   newEntry() {
-    this.blocked || this.table !== "viewings" || (this.operation = "new", this.createDraft = be(), this.original = JSON.stringify(this.createDraft), this.confirmed = !1, this.open("database-edit"));
+    this.blocked || this.table !== "viewings" || (this.operation = "new", this.createDraft = fe(), this.original = JSON.stringify(this.createDraft), this.confirmed = !1, this.open("database-edit"));
   }
   deleteEntries() {
     this.blocked || !this.page?.deletable || !this.selectedRows().length || (this.operation = "delete", this.deleteWord = "", this.open("database-delete"));
@@ -13807,19 +13207,19 @@ const se = {
           if (!this.operation || !this.page || this.operation === "delete" && this.deleteWord !== "DELETE" || this.operation !== "delete" && !this.confirmed) return;
           if (this.operation === "new")
             this.pending = this.client.prepare(this.scope, "create", {
-              data: Ii(this.createDraft)
+              data: Pi(this.createDraft)
             });
           else {
             const s = {};
             if (this.operation === "edit") {
-              for (const n of this.page.schema ?? []) {
-                if (!n.editable) continue;
-                let o = this.nulls.has(n.name) ? null : this.draft[n.name];
-                if (o !== null && n.type === "number") {
+              for (const r of this.page.schema ?? []) {
+                if (!r.editable) continue;
+                let o = this.nulls.has(r.name) ? null : this.draft[r.name];
+                if (o !== null && r.type === "number") {
                   if (!String(o).trim()) throw new Error("invalid");
                   if (o = Number(o), !Number.isFinite(o)) throw new Error("invalid");
                 }
-                o !== null && n.type === "json" && (o = JSON.parse(String(o)), o = JSON.stringify(o)), JSON.stringify(o) !== JSON.stringify(this.detail[n.name]) && (s[n.name] = o);
+                o !== null && r.type === "json" && (o = JSON.parse(String(o)), o = JSON.stringify(o)), JSON.stringify(o) !== JSON.stringify(this.detail[r.name]) && (s[r.name] = o);
               }
               if (!Object.keys(s).length) {
                 this.close();
@@ -13829,7 +13229,7 @@ const se = {
             this.pending = this.client.prepareDatabaseMutation(this.scope, {
               table: this.table,
               operation: this.operation,
-              rows: (this.operation === "edit" ? [this.detail] : this.selectedRows()).map((n) => this.rowSelection(n)),
+              rows: (this.operation === "edit" ? [this.detail] : this.selectedRows()).map((r) => this.rowSelection(r)),
               patch: s,
               expected_revision: this.page.dataset_revision ?? this.page.revision,
               confirmation: this.operation === "delete" ? "DELETE" : "SAVE"
@@ -13916,11 +13316,11 @@ const se = {
     return a`<dialog
       id="database-options"
       class="database-dialog"
-      @click=${_}
+      @click=${C}
     >
       <div class="card-head">
         <h2>Database options</h2>
-        ${k(() => this.renderRoot.querySelector("#database-options")?.close())}
+        ${_(() => this.renderRoot.querySelector("#database-options")?.close())}
       </div>
       <p>View choices save automatically for your HA user.</p>
       <fieldset ?disabled=${this.blocked}>
@@ -14009,8 +13409,8 @@ const se = {
           role="tablist"
           aria-label="Database tables"
           @keydown=${(i) => {
-      const s = e.indexOf(this.table), n = i.key === "ArrowRight" ? (s + 1) % e.length : i.key === "ArrowLeft" ? (s + e.length - 1) % e.length : i.key === "Home" ? 0 : i.key === "End" ? e.length - 1 : -1;
-      n >= 0 && !this.blocked && (i.preventDefault(), this.changeTable(e[n]), this.updateComplete.then(
+      const s = e.indexOf(this.table), r = i.key === "ArrowRight" ? (s + 1) % e.length : i.key === "ArrowLeft" ? (s + e.length - 1) % e.length : i.key === "Home" ? 0 : i.key === "End" ? e.length - 1 : -1;
+      r >= 0 && !this.blocked && (i.preventDefault(), this.changeTable(e[r]), this.updateComplete.then(
         () => this.renderRoot.querySelector(`#table-${this.table}`)?.focus()
       ));
     }}
@@ -14074,8 +13474,8 @@ const se = {
                           aria-label=${`Select ${String(i.title ?? i.name ?? i.id ?? i.cache_key ?? i.owner ?? "row")}`}
                           .checked=${this.selected.has(s)}
                           ?disabled=${this.blocked || this.selected.size >= 100 && !this.selected.has(s)}
-                          @change=${(n) => {
-        n.target.checked ? this.selected.add(s) : this.selected.delete(s), this.requestUpdate();
+                          @change=${(r) => {
+        r.target.checked ? this.selected.add(s) : this.selected.delete(s), this.requestUpdate();
       }}
                         />` : l}<button
                     class="link entry-name"
@@ -14153,14 +13553,14 @@ const se = {
       <dialog
         id="database-edit"
         class="database-dialog"
-        @click=${_}
+        @click=${C}
         @cancel=${this.close}
       >
         <div class="card-head">
           <h2>
             ${this.operation === "new" ? "New viewing" : "Edit database entry"}
           </h2>
-          ${k((i) => this.close(i))}
+          ${_((i) => this.close(i))}
         </div>
         <p class="warning">
           Only supported fields can change. Source metadata may be restored by a
@@ -14243,15 +13643,15 @@ const se = {
       <dialog
         id="database-delete"
         class="database-dialog"
-        @click=${_}
+        @click=${C}
         @cancel=${this.close}
       >
         <div class="card-head">
           <h2>
             Permanently delete
-            ${$(this.selectedRows().length, "entry", "entries")}?
+            ${v(this.selectedRows().length, "entry", "entries")}?
           </h2>
-          ${k((i) => this.close(i))}
+          ${_((i) => this.close(i))}
         </div>
         <p>
           Database deletion is permanent. Associated memberships/session
@@ -14281,20 +13681,20 @@ const se = {
     </section>`;
   }
 };
-Be.properties = {
+Ie.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 }
-}, Be.styles = [q, Xt, sa];
-let Ot = Be;
-customElements.get("kaleidescape-database") || customElements.define("kaleidescape-database", Ot);
-function aa(r, e, t) {
+}, Ie.styles = [q, Kt, Ys];
+let At = Ie;
+customElements.get("kaleidescape-database") || customElements.define("kaleidescape-database", At);
+function Gs(n, e, t) {
   return a`<button
     type="button"
     class="view-mode-pill"
     role="switch"
     aria-label="Advanced view"
-    aria-checked=${r}
-    title=${r ? "Switch to Basic view" : "Switch to Advanced view"}
+    aria-checked=${n}
+    title=${n ? "Switch to Basic view" : "Switch to Advanced view"}
     ?disabled=${e}
     @click=${t}
   >
@@ -14303,7 +13703,7 @@ function aa(r, e, t) {
     ><span class="mode-label">Adv</span>
   </button>`;
 }
-const nt = [
+const st = [
   {
     id: "now-playing",
     label: "Now Playing",
@@ -14325,18 +13725,13 @@ const nt = [
     description: "Inspect entries and manage stored history."
   },
   {
-    id: "logs",
-    label: "Logs",
-    description: "Private operational diagnostics and logging settings."
-  },
-  {
     id: "settings",
     label: "Settings",
     description: "Configure playback recording and journal rules."
   }
-], Ve = class Ve extends x {
+], Fe = class Fe extends x {
   constructor() {
-    super(), this.narrow = !1, this.api = null, this.generation = 0, this.mutationEpoch = 0, this.listRequest = 0, this.detailRequest = 0, this.info = null, this.rows = [], this.selected = null, this.editMovieId = null, this.editTitleTouched = !1, this.draft = null, this.initial = null, this.manual = null, this.manualInitial = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.journalReady = !1, this.sessions = null, this.sessionError = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.nextCursor = null, this.history = [], this.page = 1, this.loading = !1, this.detailLoading = !1, this.saving = !1, this.pending = null, this.confirmDelete = !1, this.error = "", this.lastError = "", this.notice = "", this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.settingsBusy = !1, this.maintenanceBusy = !1, this.advancedView = !0, this.modeReady = !1, this.modeScope = "", this.modeError = "", this.controlLocked = !1, Ge(this), ue(this, () => {
+    super(), this.narrow = !1, this.api = null, this.generation = 0, this.mutationEpoch = 0, this.listRequest = 0, this.detailRequest = 0, this.info = null, this.rows = [], this.selected = null, this.editMovieId = null, this.editTitleTouched = !1, this.draft = null, this.initial = null, this.manual = null, this.manualInitial = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.journalReady = !1, this.sessions = null, this.sessionError = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.nextCursor = null, this.history = [], this.page = 1, this.loading = !1, this.detailLoading = !1, this.saving = !1, this.pending = null, this.confirmDelete = !1, this.error = "", this.lastError = "", this.notice = "", this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.settingsBusy = !1, this.maintenanceBusy = !1, this.advancedView = !0, this.modeReady = !1, this.modeScope = "", this.modeError = "", this.controlLocked = !1, Jt(this), pe(this, () => {
       const e = this.renderRoot.querySelector(
         "kaleidescape-reader"
       );
@@ -14345,7 +13740,7 @@ const nt = [
   }
   modeControl(e = !1) {
     return a`<div class="mode-control" slot="view-mode">
-      ${aa(this.advancedView, e, () => {
+      ${Gs(this.advancedView, e, () => {
       this.changeMode();
     })}
       ${this.modeError ? a`<small role="alert">Mode preference did not save. <button @click=${() => this.modePreferences?.retry()}>Retry</button></small>` : l}
@@ -14361,8 +13756,8 @@ const nt = [
       return;
     const e = this.renderRoot.querySelector(
       "kaleidescape-reader"
-    ), t = !this.advancedView, i = !t && (["database", "settings", "logs"].includes(this.activePage) || this.hasOpenDialog(this.renderRoot, !0));
-    (this.advancedView ? !this.discard() : !(e?.confirmNavigation() ?? !0)) || (this.generation++, this.listRequest++, this.detailRequest++, this.closeEditor(), this.rows = [], this.selected = this.sessions = null, this.cursor = void 0, this.history = [], this.nextCursor = null, this.page = 1, this.journalReady = !1, this.error = this.notice = "", i && (this.activePage = Ct(
+    ), t = !this.advancedView, i = !t && (["database", "settings"].includes(this.activePage) || this.hasOpenDialog(this.renderRoot, !0));
+    (this.advancedView ? !this.discard() : !(e?.confirmNavigation() ?? !0)) || (this.generation++, this.listRequest++, this.detailRequest++, this.closeEditor(), this.rows = [], this.selected = this.sessions = null, this.cursor = void 0, this.history = [], this.nextCursor = null, this.page = 1, this.journalReady = !1, this.error = this.notice = "", i && (this.activePage = wt(
       this.info.ui_defaults?.default_landing_page,
       !1,
       !!this.info.library_enabled,
@@ -14376,7 +13771,7 @@ const nt = [
           this.bind(null);
           return;
         }
-        (this.haConnection !== this.hass.connection || this.haUser !== this.hass.user.id) && (this.haConnection = this.hass.connection, this.haUser = this.hass.user.id, this.haClient = new Kt({
+        (this.haConnection !== this.hass.connection || this.haUser !== this.hass.user.id) && (this.haConnection = this.hass.connection, this.haUser = this.hass.user.id, this.haClient = new Ft({
           callWS: (t) => this.hass.callWS(t),
           fetchWithAuth: (t, i) => this.hass.fetchWithAuth(t, i)
         })), this.bind(this.haClient);
@@ -14408,7 +13803,7 @@ const nt = [
     e === "library" && !this.info?.library_enabled || e === this.activePage && !(e === "journal" && this.journalMovie) || this.loading || this.saving || this.pending || this.maintenanceBusy || this.settingsBusy || this.controlLocked || !this.discard() || (this.closeEditor(), this.libraryTitleId = t?.libraryTitleId, this.libraryCriterion = t?.libraryCriterion, e === "journal" && (this.journalMovie = t?.movie, this.query = this.searchText = "", this.status = this.filterStatus = ""), this.activePage = e, N(e), this.error = this.notice = "", this.requestUpdate(), e === "journal" && (this.page = 1, this.history = [], await this.loadList()));
   }
   pageKey(e) {
-    const t = nt.filter(
+    const t = st.filter(
       (o) => o.id !== "library" || this.info?.library_enabled
     ), i = t.findIndex((o) => o.id === this.activePage), s = e.key === "ArrowRight" ? (i + 1) % t.length : e.key === "ArrowLeft" ? (i + t.length - 1) % t.length : e.key === "Home" ? 0 : e.key === "End" ? t.length - 1 : -1;
     if (s < 0) return;
@@ -14430,8 +13825,8 @@ const nt = [
       if (!s.length) throw new b("not_ready");
       if (s[0].api_version !== 1) throw new b("not_ready");
       if (this.info = s[0], !this.info.permissions.edit) return;
-      const n = `${this.info.entry_id}:${this.info.dataset_id}`;
-      if (!this.modePreferences || !this.modeReady || this.modeScope !== n) {
+      const r = `${this.info.entry_id}:${this.info.dataset_id}`;
+      if (!this.modePreferences || !this.modeReady || this.modeScope !== r) {
         this.modeReady = !1, this.modePreferences?.dispose();
         const o = new P(
           t,
@@ -14442,12 +13837,12 @@ const nt = [
           },
           "interface"
         );
-        this.modePreferences = o, this.modeScope = n;
+        this.modePreferences = o, this.modeScope = r;
         const d = await o.load();
         if (i !== this.generation) return;
         this.advancedView = d.advanced_view === !0, this.modeReady = !0;
       }
-      this.navigationReady || (this.activePage = Ct(
+      this.navigationReady || (this.activePage = wt(
         this.info.ui_defaults?.default_landing_page,
         !0,
         !!this.info.library_enabled
@@ -14460,7 +13855,7 @@ const nt = [
   }
   async loadList(e) {
     if (!this.api || !this.info) return;
-    const t = this.api, i = this.info, s = this.generation, n = ++this.listRequest;
+    const t = this.api, i = this.info, s = this.generation, r = ++this.listRequest;
     this.loading = !0, this.error = "", this.requestUpdate();
     try {
       const o = await t.list(
@@ -14473,42 +13868,42 @@ const nt = [
         this.fuzzySearch,
         this.journalMovie?.id
       );
-      if (s !== this.generation || n !== this.listRequest)
+      if (s !== this.generation || r !== this.listRequest)
         return;
       this.rows = o.items, this.cursor = e, this.nextCursor = o.next_cursor, this.info = { ...this.info, revision: o.revision };
     } catch (o) {
-      s === this.generation && n === this.listRequest && (this.rows = [], this.nextCursor = null, this.fail(o));
+      s === this.generation && r === this.listRequest && (this.rows = [], this.nextCursor = null, this.fail(o));
     } finally {
-      s === this.generation && n === this.listRequest && (this.loading = !1, this.requestUpdate());
+      s === this.generation && r === this.listRequest && (this.loading = !1, this.requestUpdate());
     }
   }
   async selectRecord(e) {
     if (!this.api || !this.info || this.pending || !this.discard()) return;
     this.closeEditor();
-    const t = this.api, i = this.info, s = this.generation, n = ++this.detailRequest;
+    const t = this.api, i = this.info, s = this.generation, r = ++this.detailRequest;
     this.detailLoading = !0, this.error = "", this.notice = "", this.requestUpdate();
     try {
       const o = await t.get(i, e);
-      if (s !== this.generation || n !== this.detailRequest)
+      if (s !== this.generation || r !== this.detailRequest)
         return;
       this.selected = o, this.draft = this.initial = null, this.timingAnchor = void 0, this.detailLoading = !1, this.requestUpdate();
       try {
         const d = await t.sessions(i, e);
-        s === this.generation && n === this.detailRequest && (this.sessions = d);
+        s === this.generation && r === this.detailRequest && (this.sessions = d);
       } catch (d) {
-        s === this.generation && n === this.detailRequest && (u(d) === "unauthorized" ? this.fail(d) : this.sessionError = "Session details could not be loaded.");
+        s === this.generation && r === this.detailRequest && (u(d) === "unauthorized" ? this.fail(d) : this.sessionError = "Session details could not be loaded.");
       }
     } catch (o) {
-      s === this.generation && n === this.detailRequest && this.fail(o);
+      s === this.generation && r === this.detailRequest && this.fail(o);
     } finally {
-      s === this.generation && n === this.detailRequest && (this.detailLoading = !1, this.requestUpdate());
+      s === this.generation && r === this.detailRequest && (this.detailLoading = !1, this.requestUpdate());
     }
   }
   closeEditor() {
     this.timingAnchor = void 0, this.renderRoot.querySelectorAll("dialog").forEach((e) => e.close()), this.manual = null, this.manualInitial = "", this.detailRequest++, this.selected = null, this.editMovieId = null, this.editTitleTouched = !1, this.draft = null, this.initial = null, this.sessions = null, this.sessionError = "", this.confirmDelete = !1, this.detailLoading = !1;
   }
   newRecord() {
-    this.pending || !this.discard() || (this.closeEditor(), this.draft = wi(), this.initial = { ...this.draft }, this.manual = be(), this.manualInitial = JSON.stringify(this.manual), this.error = "", this.notice = "", this.requestUpdate(), this.updateComplete.then(async () => {
+    this.pending || !this.discard() || (this.closeEditor(), this.draft = bi(), this.initial = { ...this.draft }, this.manual = fe(), this.manualInitial = JSON.stringify(this.manual), this.error = "", this.notice = "", this.requestUpdate(), this.updateComplete.then(async () => {
       this.renderRoot.querySelector("#journal-editor")?.showModal();
       const e = this.renderRoot.querySelector(
         "kaleidescape-manual-viewing"
@@ -14521,7 +13916,7 @@ const nt = [
     }));
   }
   input(e, t) {
-    this.draft && (this.draft = Hs(
+    this.draft && (this.draft = Os(
       this.draft,
       e,
       t.target.value,
@@ -14541,8 +13936,8 @@ const nt = [
         return;
       }
       try {
-        const i = this.manual ? Ii(this.manual) : {
-          ...Ws(this.draft, this.selected ? this.initial : void 0),
+        const i = this.manual ? Pi(this.manual) : {
+          ...Ns(this.draft, this.selected ? this.initial : void 0),
           ...this.editTitleTouched ? { library_title_id: this.editMovieId } : {}
         };
         if (this.manual || delete i.title, this.selected && !Object.keys(i).length) {
@@ -14583,22 +13978,22 @@ const nt = [
     const e = this.api, t = this.pending, i = this.generation, s = this.mutationEpoch;
     this.saving = !0, this.error = "", this.notice = "", this.requestUpdate();
     try {
-      const n = await e.mutate(t);
+      const r = await e.mutate(t);
       if (i !== this.generation || s !== this.mutationEpoch)
         return;
-      this.pending = null, this.closeEditor(), this.notice = n.viewing.deleted_at ? "Entry removed from the journal. Stored history is retained." : "Entry saved.", n.viewing.deleted_at || (this.selected = n.viewing, this.manual = null), this.page = 1, this.history = [], await this.loadList();
+      this.pending = null, this.closeEditor(), this.notice = r.viewing.deleted_at ? "Entry removed from the journal. Stored history is retained." : "Entry saved.", r.viewing.deleted_at || (this.selected = r.viewing, this.manual = null), this.page = 1, this.history = [], await this.loadList();
       try {
         const { entries: o } = await e.info();
         i === this.generation && s === this.mutationEpoch && o[0]?.dataset_id === this.info?.dataset_id && (this.info = o[0]);
       } catch (o) {
         i === this.generation && s === this.mutationEpoch && this.fail(o);
       }
-    } catch (n) {
+    } catch (r) {
       if (i !== this.generation || s !== this.mutationEpoch)
         return;
       ["invalid_request", "conflict", "unauthorized"].includes(
-        u(n)
-      ) && (this.pending = null), this.fail(n);
+        u(r)
+      ) && (this.pending = null), this.fail(r);
     } finally {
       i === this.generation && s === this.mutationEpoch && (this.saving = !1, this.requestUpdate());
     }
@@ -14640,7 +14035,7 @@ const nt = [
       this.manual = e.detail, this.requestUpdate();
     }}
                 @access-denied=${() => this.fail(new b("unauthorized"))}
-              ></kaleidescape-manual-viewing>` : Js(
+              ></kaleidescape-manual-viewing>` : Is(
       this.draft,
       (e, t) => this.input(e, t),
       a`<kaleidescape-library-title-picker
@@ -14683,7 +14078,7 @@ const nt = [
     await i, t === this.generation && s === this.detailRequest && this.selected?.id === e && !this.draft && this.info?.permissions.edit && this.editRecord();
   }
   editRecord() {
-    !this.selected || this.pending || this.saving || (this.draft = wi(this.selected), this.timingAnchor = {
+    !this.selected || this.pending || this.saving || (this.draft = bi(this.selected), this.timingAnchor = {
       started_at: this.draft.started_at,
       ended_at: this.draft.ended_at
     }, this.editMovieId = null, this.editTitleTouched = !1, this.initial = { ...this.draft }, this.error = this.notice = "", this.requestUpdate(), this.updateComplete.then(
@@ -14716,7 +14111,7 @@ const nt = [
                 ${this.date(this.selected.updated_at)}<br />Completion:
                 ${this.selected.completion_reason ?? "Not completed"}
               </div>
-              ${this.sessionError ? a`<p>${this.sessionError}</p>` : this.sessions ? this.sessions.items.length ? a` ${this.sessions.items.map((e) => a`<div class="session">${this.date(e.started_at)}<br />${(e.watched_seconds / 60).toFixed(2)} min watched · ${e.credits_confirmed ? "Credits confirmed" : "Credits unconfirmed"} · ${$(e.gap_count, "timing gap")}<br />${e.end_reason ?? "Open session"}</div>`)}
+              ${this.sessionError ? a`<p>${this.sessionError}</p>` : this.sessions ? this.sessions.items.length ? a` ${this.sessions.items.map((e) => a`<div class="session">${this.date(e.started_at)}<br />${(e.watched_seconds / 60).toFixed(2)} min watched · ${e.credits_confirmed ? "Credits confirmed" : "Credits unconfirmed"} · ${v(e.gap_count, "timing gap")}<br />${e.end_reason ?? "Open session"}</div>`)}
                         ${this.sessions.has_more ? a`<small>Showing the latest 100 sessions.</small>` : l}` : a`<p class="muted">
                           No recorded sessions for this entry.
                         </p>` : a`<p class="muted">
@@ -14873,7 +14268,7 @@ const nt = [
                               tabindex="0"
                               aria-label="Viewings"
                             >
-                              ${this.rows.map((i) => Ui(i, this.selected?.id, (s) => {
+                              ${this.rows.map((i) => qi(i, this.selected?.id, (s) => {
       this.selectRecord(s);
     }, this.saving || !!this.pending))}
                             </ul>` : a`<div class="empty">
@@ -14896,7 +14291,7 @@ const nt = [
                     </div>
                     ${this.detailLoading ? a`<div class="empty" role="status">
                             Loading entry…
-                          </div>` : this.selected ? a`${Ai(this.selected, (i) => this.date(i))}
+                          </div>` : this.selected ? a`${Ei(this.selected, (i) => this.date(i))}
                               <kaleidescape-viewing-library
                                 .client=${this.api}
                                 .scope=${this.info}
@@ -14918,7 +14313,7 @@ const nt = [
               `}
         <footer class="entries-footer journal-status">
           <span>
-            ${Yt(this.info, this.journalView === "calendar" ? this.calendarStatus : void 0, this.journalView === "calendar")}
+            ${Bt(this.info, this.journalView === "calendar" ? this.calendarStatus : void 0, this.journalView === "calendar")}
             <span class="journal-system-details"
               >· ${this.bytes(this.info?.database_bytes ?? 0)} /
               ${this.bytes(this.info?.database_limit_bytes ?? 0)} database ·
@@ -14928,7 +14323,7 @@ const nt = [
               · Schema ${this.info?.schema_version} · Revision
               ${this.info?.revision}</span
             > </span
-          >${this.journalView === "calendar" ? Gt(this.calendarStatus, () => {
+          >${this.journalView === "calendar" ? Vt(this.calendarStatus, () => {
       this.renderRoot.querySelector(
         "kaleidescape-journal-calendar"
       )?.refresh();
@@ -14970,14 +14365,14 @@ const nt = [
         data-admin-dialog
         class="database-dialog journal-dialog"
         aria-labelledby="journal-editor-title"
-        @click=${_}
+        @click=${C}
         @cancel=${this.cancelEdit}
       >
         <div class="card-head">
           <h2 id="journal-editor-title">
             ${this.manual ? "New viewing" : "Edit viewing"}
           </h2>
-          ${k((i) => this.cancelEdit(i))}
+          ${_((i) => this.cancelEdit(i))}
         </div>
         ${this.notice ? a`<p class="notice" role="status">${this.notice}</p>` : l}
         ${this.error ? a`<p class="error" role="alert">${this.error}</p>` : l}
@@ -14989,12 +14384,12 @@ const nt = [
         data-admin-dialog
         class="database-dialog"
         aria-labelledby="journal-delete-title"
-        @click=${_}
+        @click=${C}
         @cancel=${this.cancelDelete}
       >
         <div class="card-head">
           <h2 id="journal-delete-title">Remove this entry from the journal?</h2>
-          ${k((i) => this.cancelDelete(i))}
+          ${_((i) => this.cancelDelete(i))}
         </div>
         <p>${this.selected?.title}</p>
         <p>
@@ -15046,7 +14441,7 @@ const nt = [
           <span class="eyebrow">Kaleidescape Companion · Administrator</span>
           <h1>Kaleidescape Companion</h1>
           <p>
-            ${nt.find((t) => t.id === this.activePage).description}
+            ${st.find((t) => t.id === this.activePage).description}
           </p>
         </div>
       </header>
@@ -15057,7 +14452,7 @@ const nt = [
                 aria-label="Companion pages"
                 @keydown=${(t) => this.pageKey(t)}
               >
-                ${nt.map((t) => a`<button id=${`page-${t.id}`} role="tab" aria-selected=${this.activePage === t.id} aria-controls="companion-page" tabindex=${this.activePage === t.id ? "0" : "-1"} ?disabled=${e || t.id === "library" && !this.info?.library_enabled} title=${t.id === "library" && !this.info?.library_enabled ? "Enable library sync in Settings" : l} @click=${() => this.switchPage(t.id)}>${t.label}</button>`)}
+                ${st.map((t) => a`<button id=${`page-${t.id}`} role="tab" aria-selected=${this.activePage === t.id} aria-controls="companion-page" tabindex=${this.activePage === t.id ? "0" : "-1"} ?disabled=${e || t.id === "library" && !this.info?.library_enabled} title=${t.id === "library" && !this.info?.library_enabled ? "Enable library sync in Settings" : l} @click=${() => this.switchPage(t.id)}>${t.label}</button>`)}
               </div>
               ${this.modeControl(e || this.controlLocked)}
             </div>` : l}
@@ -15092,29 +14487,25 @@ const nt = [
       this.maintenanceBusy !== t.detail && (this.maintenanceBusy = t.detail, this.requestUpdate());
     }}
                           @database-changed=${() => this.refreshInfo()}
-                        ></kaleidescape-database>` : this.activePage === "logs" ? a`<kaleidescape-logs
+                        ></kaleidescape-database>` : this.activePage === "settings" ? a`<kaleidescape-settings
                             .client=${this.api}
                             .scope=${this.info}
                             @access-denied=${() => this.fail(new b("unauthorized"))}
-                          ></kaleidescape-logs>` : this.activePage === "settings" ? a`<kaleidescape-settings
-                              .client=${this.api}
-                              .scope=${this.info}
-                              @access-denied=${() => this.fail(new b("unauthorized"))}
-                              @settings-busy=${(t) => {
+                            @settings-busy=${(t) => {
       this.settingsBusy !== t.detail && (this.settingsBusy = t.detail, this.requestUpdate());
     }}
-                              @settings-saved=${() => {
+                            @settings-saved=${() => {
       this.activePage = "settings", N("settings"), this.notice = "Settings saved. Reloading the integration…";
       const t = this.api;
       this.refresh(!0).then(() => {
         this.api === t && this.info && (this.notice = "Settings saved.", this.requestUpdate());
       });
     }}
-                            ></kaleidescape-settings>` : this.activePage === "now-playing" ? a`<kaleidescape-now-playing
-                                .playerId=${this.playbackPlayer}
-                                .client=${this.api}
-                                .scope=${this.info}
-                              ></kaleidescape-now-playing>` : this.renderJournal()}
+                          ></kaleidescape-settings>` : this.activePage === "now-playing" ? a`<kaleidescape-now-playing
+                              .playerId=${this.playbackPlayer}
+                              .client=${this.api}
+                              .scope=${this.info}
+                            ></kaleidescape-now-playing>` : this.renderJournal()}
               </section>` : a`<div class="empty" role="status">
                 <strong
                   >${this.loading ? "Connecting to the journal…" : "Journal unavailable"}</strong
@@ -15129,13 +14520,13 @@ const nt = [
     </main>`;
   }
 };
-Ve.properties = {
+Fe.properties = {
   hass: { attribute: !1 },
   client: { attribute: !1 },
   narrow: { type: Boolean }
-}, Ve.styles = [q, Xt, ji];
-let Nt = Ve;
-customElements.get("kaleidescape-panel") || customElements.define("kaleidescape-panel", Nt);
+}, Fe.styles = [q, Kt, zi];
+let Tt = Fe;
+customElements.get("kaleidescape-panel") || customElements.define("kaleidescape-panel", Tt);
 export {
-  Nt as KaleidescapePanel
+  Tt as KaleidescapePanel
 };

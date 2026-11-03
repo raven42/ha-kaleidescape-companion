@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from ..security import private_file
 
-SCHEMA_VERSION = 22
+SCHEMA_VERSION = 23
 
 MIGRATIONS = {
     1: (
@@ -363,18 +363,17 @@ MIGRATIONS[20] = (
 )
 
 
-MIGRATIONS[21] = (
-    "CREATE TABLE operation_logs (id INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "timestamp TEXT NOT NULL,level TEXT NOT NULL,logger TEXT NOT NULL,"
-    "body TEXT NOT NULL,bytes INTEGER NOT NULL)",
-    "CREATE INDEX operation_logs_filter ON operation_logs(logger,level,id)",
-    "CREATE TABLE log_state (singleton INTEGER PRIMARY KEY CHECK(singleton=1),"
-    "alias_key TEXT NOT NULL,level TEXT NOT NULL,log_values INTEGER NOT NULL,"
-    "hidden_through INTEGER NOT NULL)",
-)
+# Keep the migration slot so schema upgrades remain ordered.
+MIGRATIONS[21] = ()
 
 
 MIGRATIONS[22] = ("ALTER TABLE library ADD COLUMN sort_title TEXT",)
+
+# Remove tables created by older schema 21 releases.
+MIGRATIONS[23] = (
+    "DROP TABLE IF EXISTS operation_logs",
+    "DROP TABLE IF EXISTS log_state",
+)
 
 
 def migrate(connection: sqlite3.Connection, path: Path) -> None:

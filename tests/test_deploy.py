@@ -116,7 +116,7 @@ class DeployTest(unittest.TestCase):
         components.mkdir()
         modules = []
         with tarfile.open(fileobj=io.BytesIO(payload), mode="r:gz") as archive:
-            self.assertFalse(
+            self.assertTrue(
                 any("/_vendor/kaleidescape_api/" in member.name for member in archive)
             )
             archive.extractall(components, filter="data")
@@ -129,12 +129,14 @@ class DeployTest(unittest.TestCase):
         script = """
 import importlib, json, pathlib, sys
 root = pathlib.Path(sys.argv[1]).resolve()
-import kaleidescape_api
-assert not pathlib.Path(kaleidescape_api.__file__).resolve().is_relative_to(root)
 sys.path.insert(0, str(root))
 for name in json.loads(sys.argv[2]):
     module = importlib.import_module(name)
     assert pathlib.Path(module.__file__).resolve().is_relative_to(root), name
+import custom_components.kaleidescape_companion._vendor.kaleidescape_api as api
+assert pathlib.Path(api.__file__).resolve().is_relative_to(root)
+assert api.Client is not None
+assert 'kaleidescape_api' not in sys.modules
 assert not any(name == 'dev' or name.startswith('dev.') for name in sys.modules)
 """
         result = subprocess.run(

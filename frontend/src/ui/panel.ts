@@ -34,7 +34,6 @@ import type { JournalOptions, JournalOptionsValue } from "./journal-options";
 import type { LibraryCriterion } from "../library/criteria";
 import "../playback/now-playing";
 import "./settings";
-import "./logs";
 import "./database";
 import "../library/library";
 import type { KaleidescapeSettings } from "./settings";
@@ -66,11 +65,6 @@ const PAGES = [
     id: "database",
     label: "Database",
     description: "Inspect entries and manage stored history.",
-  },
-  {
-    id: "logs",
-    label: "Logs",
-    description: "Private operational diagnostics and logging settings.",
   },
   {
     id: "settings",
@@ -214,7 +208,7 @@ export class KaleidescapePanel extends LitElement {
     const advanced = !this.advancedView;
     const fallback =
       !advanced &&
-      (["database", "settings", "logs"].includes(this.activePage) ||
+      (["database", "settings"].includes(this.activePage) ||
         this.hasOpenDialog(this.renderRoot, true));
     if (
       this.advancedView
@@ -1493,45 +1487,37 @@ export class KaleidescapePanel extends LitElement {
                           }}
                           @database-changed=${() => this.refreshInfo()}
                         ></kaleidescape-database>`
-                      : this.activePage === "logs"
-                        ? html`<kaleidescape-logs
+                      : this.activePage === "settings"
+                        ? html`<kaleidescape-settings
                             .client=${this.api}
                             .scope=${this.info}
                             @access-denied=${() => this.fail(new ApiError("unauthorized"))}
-                          ></kaleidescape-logs>`
-                        : this.activePage === "settings"
-                          ? html`<kaleidescape-settings
+                            @settings-busy=${(event: CustomEvent<boolean>) => {
+                              if (this.settingsBusy === event.detail) return;
+                              this.settingsBusy = event.detail;
+                              this.requestUpdate();
+                            }}
+                            @settings-saved=${() => {
+                              this.activePage = "settings";
+                              rememberPage("settings");
+                              this.notice =
+                                "Settings saved. Reloading the integration…";
+                              const api = this.api;
+                              void this.refresh(true).then(() => {
+                                if (this.api === api && this.info) {
+                                  this.notice = "Settings saved.";
+                                  this.requestUpdate();
+                                }
+                              });
+                            }}
+                          ></kaleidescape-settings>`
+                        : this.activePage === "now-playing"
+                          ? html`<kaleidescape-now-playing
+                              .playerId=${this.playbackPlayer}
                               .client=${this.api}
                               .scope=${this.info}
-                              @access-denied=${() => this.fail(new ApiError("unauthorized"))}
-                              @settings-busy=${(
-                                event: CustomEvent<boolean>,
-                              ) => {
-                                if (this.settingsBusy === event.detail) return;
-                                this.settingsBusy = event.detail;
-                                this.requestUpdate();
-                              }}
-                              @settings-saved=${() => {
-                                this.activePage = "settings";
-                                rememberPage("settings");
-                                this.notice =
-                                  "Settings saved. Reloading the integration…";
-                                const api = this.api;
-                                void this.refresh(true).then(() => {
-                                  if (this.api === api && this.info) {
-                                    this.notice = "Settings saved.";
-                                    this.requestUpdate();
-                                  }
-                                });
-                              }}
-                            ></kaleidescape-settings>`
-                          : this.activePage === "now-playing"
-                            ? html`<kaleidescape-now-playing
-                                .playerId=${this.playbackPlayer}
-                                .client=${this.api}
-                                .scope=${this.info}
-                              ></kaleidescape-now-playing>`
-                            : this.renderJournal()
+                            ></kaleidescape-now-playing>`
+                          : this.renderJournal()
                 }
               </section>`
       }

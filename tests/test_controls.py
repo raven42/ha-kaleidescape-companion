@@ -6,9 +6,9 @@ from types import MappingProxyType, SimpleNamespace
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
-import kaleidescape_api as api
 import test_backend as backend
 
+from custom_components.kaleidescape_companion._vendor import kaleidescape_api as api
 from custom_components.kaleidescape_companion.backup import (
     async_post_backup,
     async_pre_backup,

@@ -120,13 +120,9 @@ class ObserverTest(unittest.IsolatedAsyncioTestCase):
             "custom_components.kaleidescape_companion.playback.observer.MAX_OBSERVATIONS",
             2,
         ):
-            with self.assertLogs(
-                "custom_components.kaleidescape_companion.playback.observer",
-                level="WARNING",
-            ):
-                await self.change(10, "sensor.example_status", "paused")
-                await self.change(20, "sensor.example_status", "playing")
-                await self.change(30, "sensor.example_location", "credits")
+            await self.change(10, "sensor.example_status", "paused")
+            await self.change(20, "sensor.example_status", "playing")
+            await self.change(30, "sensor.example_location", "credits")
         await self.repository.async_resume()
         await self.observer.async_resume()
         record = (await self.repository.async_list())["items"][0]
@@ -141,12 +137,8 @@ class ObserverTest(unittest.IsolatedAsyncioTestCase):
             "async_save_session",
             side_effect=JournalError("storage_error", "test"),
         ):
-            with self.assertLogs(
-                "custom_components.kaleidescape_companion.playback.observer",
-                level="ERROR",
-            ):
-                with self.assertRaises(JournalError):
-                    await self.tick(0.5)
+            with self.assertRaises(JournalError):
+                await self.tick(0.5)
             self.assertEqual(self.observer.last_error, "storage_error")
         await self.tick(1)
         self.assertIsNone(self.observer.last_error)

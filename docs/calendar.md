@@ -216,9 +216,8 @@ no cross-provider idempotency guarantee, and the event may already exist.
 Inspect the calendar and **Database → Options → Show system tables →
 calendar_publications**. This table is read-only. The explicit export below can
 resolve uncertainty when a matching remote event is found; it does not blindly
-repeat an unconfirmed attempt. Provider exceptions are logged without their
-private response text. A failed final receipt write can leave `sending`; inspect
-it before retrying, even if an event exists.
+repeat an unconfirmed attempt. A failed final receipt write can leave `sending`;
+inspect it before retrying, even if an event exists.
 
 Changing/disabling calendar options cancels unsent receipts on reload. Deleted
 or no-longer-completed viewings are cancelled before dispatch. Already accepted
@@ -345,9 +344,8 @@ silently truncates results or guarantee cross-provider exactly-once delivery.
 
 Backup/unload stops new work and drains accepted writes before pausing SQLite.
 Disabling/changing options revokes unstarted writes; already accepted calls can
-finish. Errors use a five-minute retry delay and safe status text, without
-logging provider messages or event contents. The single publisher lock
-serializes maintenance and all other calendar work.
+finish. Errors use a five-minute retry delay and safe status text. The single
+publisher lock serializes maintenance and all other calendar work.
 
 Operator review: use a disposable dedicated calendar. Verify the bold warning,
 required acknowledgement, 1–12 month limits and schedule; create/edit/delete a
@@ -376,29 +374,12 @@ not implemented by this feature.
 
 ## Diagnosing unconfirmed Full Sync writes
 
-Open **Logs**, set DEBUG temporarily, then request one Full Sync pass. Filter on
-calendar. Create/update/delete and verification events share a request alias. A
-write is verified with up to three reads (immediate, after one second, then
+A write is verified with up to three reads (immediate, after one second, then
 after three more seconds), using a one-minute boundary margin. No external write
-is retried by these reads. DEBUG comparisons report title/interval/description
-equality without their values; validation failures use owned check codes.
-Settings also shows the failed stage. Provider failures and ambiguous/absent
-results leave the durable uncertainty barrier intact. Inspect the actual
-calendar before acknowledgement; acknowledgement does not fix a provider that
-transforms or cannot confirm event content. Export the filtered logs for
-diagnosis.
-
-Full Sync create/update calls use HA's entity-contract `EVENT_START`/`EVENT_END`
-constants (`dtstart`/`dtend`) with datetime values. These differ from normalized
-comparison fields and the calendar service input names. The simulated calendar
-validates writes against HA's own event schema so a contract mismatch fails in
-tests. Earlier adapter versions sent `start`/`end`, which could cause an
-immediate missing-field failure and leave an unconfirmed receipt. Updating the
-adapter does not clear that receipt: inspect the provider calendar and
-acknowledge the existing pending write before another attempt if read-back
-cannot resolve it. The new diagnostics identify missing fields and the adapter
-source location without logging the event's title, dates or provider exception
-text.
+is retried by these reads. Provider failures and ambiguous or absent results
+leave the durable uncertainty barrier intact. Inspect the actual calendar before
+acknowledgement; acknowledgement does not fix a provider that transforms or
+cannot confirm event content.
 
 ## Edits, replacements and pending deletion
 
@@ -415,9 +396,8 @@ Journal/configuration/event changes restart quarantine.
 alongside unconfirmed writes. A successful pass can still have pending deletes.
 **Run Full Sync now** refreshes status and warns before proceeding when either
 count is nonzero. Continuing rechecks pending work; it does not waive the grace
-period or acknowledge uncertain writes. Logs explain the provider strategy and
-link the journal revision, request, user and calendar event through private
-keyed aliases.
+period or acknowledge uncertain writes. The status response reports the current
+pending-work counts.
 
 Cross-day completed viewings have two endpoint covers: the start-day cover has a
 diagonal lower-right cut, and the completion-day cover has a complementary

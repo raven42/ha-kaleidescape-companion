@@ -273,12 +273,12 @@ The administrator's single sticky Library footer shows compact **Scrapers**
 status: running/idle/off/error, processed groups during a pass, and distinct
 available movie groups with cached provider/reviewed scraper data. Detailed
 active/queued counts, provider updates and skips remain in Settings. A failed
-pass directs the operator to logs. A group scraped by both providers counts once
-in the cached total; provider updates/skips can exceed the number of titles.
-Cached counts survive restart; pass counters are in memory. A title preview
-counts as active work but only contributes to the cached total after Apply.
-Disabled scrapers retain the cached total. Regular-user responses omit all
-scraper status/count details.
+pass directs the operator to review scraper status. A group scraped by both
+providers counts once in the cached total; provider updates/skips can exceed the
+number of titles. Cached counts survive restart; pass counters are in memory. A
+title preview counts as active work but only contributes to the cached total
+after Apply. Disabled scrapers retain the cached total. Regular-user responses
+omit all scraper status/count details.
 
 Active work polls every five seconds; idle Library status polls every thirty
 seconds. Reads do not start scraping. Restoring a movie's original metadata

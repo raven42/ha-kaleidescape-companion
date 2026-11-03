@@ -10,7 +10,6 @@ const categories = [
   ["rules", "Runtime rules and feature enablement"],
   ["browsing", "Personal browsing preferences · may include searches/names"],
   ["shared", "Shared hidden collection names"],
-  ["logging", "Logging level and movie-value opt-in"],
   ["connections", "Network addresses, player and HA entity choices · private"],
   ["templates", "Custom calendar text templates · private"],
 ] as const;
@@ -125,7 +124,7 @@ export class SettingsTransferPanel extends LitElement {
         );
         this.preview = undefined;
         this.notice =
-          "Browsing/shared/logging choices applied. Runtime changes are staged below: review and click Save settings. Full Sync requires a fresh dedicated-calendar acknowledgement.";
+          "Browsing/shared choices applied. Runtime changes are staged below: review and click Save settings. Full Sync requires a fresh dedicated-calendar acknowledgement.";
         this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.close();
       }
     } catch (error) {
@@ -208,10 +207,9 @@ export class SettingsTransferPanel extends LitElement {
           this.preview
             ? html`<h3>Review import</h3>
                 <p>
-                  Applying updates personal/shared/logging settings immediately.
-                  Runtime fields are staged on the Settings page for validation
-                  and Save settings. Credentials and database contents are
-                  unaffected.
+                  Applying updates personal/shared settings immediately. Runtime
+                  fields are staged on the Settings page for validation and Save
+                  settings. Credentials and database contents are unaffected.
                 </p>
                 <div style="max-height:35vh;overflow:auto">
                   ${Object.entries(this.preview.categories).map(

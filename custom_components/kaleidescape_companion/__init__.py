@@ -1,6 +1,5 @@
 """Home Assistant journal backend for Kaleidescape Companion."""
 
-import logging
 from pathlib import Path
 
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
@@ -24,7 +23,6 @@ from .ui.http import JournalExportView, JournalImportView, LibraryArtworkView
 from .ui.panel import async_remove_panel, async_setup_panel
 from .ui.websocket import async_register_commands
 
-_LOGGER = logging.getLogger(__name__)
 PLATFORMS = [Platform.SENSOR]
 
 
@@ -43,10 +41,8 @@ async def _async_close_runtime(
             await runtime.library.async_stop()
         if runtime.observer:
             await runtime.observer.async_stop(close_reason)
-    except JournalError as error:
-        _LOGGER.error(
-            "Playback shutdown could not persist all observations: %s", error.code
-        )
+    except JournalError:
+        pass
     finally:
         await runtime.repository.async_close()
 

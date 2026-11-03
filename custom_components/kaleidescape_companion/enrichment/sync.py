@@ -12,21 +12,10 @@ from homeassistant.helpers.aiohttp_client import (
     DATA_RESOLVER,
     async_create_clientsession,
 )
-from kaleidescape_api.logging import (
-    Failure,
-    Level,
-    Operation,
-    Outcome,
-    Reason,
-    Resource,
-    Stage,
-    Subsystem,
-)
 from yarl import URL
 
 from .._vendor.kaleidescape_scrapers import MovieQuery, ProviderError, Providers
 from ..core.models import JournalError
-from ..core.operations import traced
 from ..core.security import is_active_admin
 from ..library.config import origin
 from ..library.store import image_type, source_id
@@ -134,12 +123,9 @@ class MetadataSync:
         try:
             self._ready()
             await self.repository.async_enrichment("activity", self.source, failed)
-        except JournalError as error:
-            self.repository.logger.emit_failure(
-                Subsystem.METADATA, Operation.SCRAPE, error
-            )
+        except JournalError:
+            pass
 
-    @traced(Subsystem.METADATA, Operation.REQUEST, debug=True)
     async def _get(self, url, headers):
         self._ready()
         parsed = urlsplit(url)
@@ -242,15 +228,7 @@ class MetadataSync:
                     r"/3/movie/[1-9][0-9]*", parsed.path
                 ):
                     raise ProviderError("tmdb_not_found")
-            self.repository.logger.emit(
-                Subsystem.METADATA,
-                Operation.REQUEST,
-                Outcome.SUCCEEDED if response.status == 200 else Outcome.REJECTED,
-                level=Level.DEBUG if response.status == 200 else Level.WARNING,
-                status=response.status,
-                resource=(Resource.REQUEST, url),
-                target=(Resource.PROVIDER, parsed.hostname),
-            )
+            pass
             if response.status == 429:
                 raise ProviderError("provider_rate_limited")
             if response.status in (401, 403):
@@ -280,16 +258,6 @@ class MetadataSync:
             else:
                 expected = {"application/json"}
             if response.content_type not in expected:
-                if parsed.hostname == "image.tmdb.org" or store_cover:
-                    self.repository.logger.emit(
-                        Subsystem.METADATA,
-                        Operation.READ,
-                        Outcome.REJECTED,
-                        level=Level.WARNING,
-                        reason=Reason.PROVIDER_IMAGE_HEADER,
-                        stage=Stage.VALIDATION,
-                        status=response.status,
-                    )
                 raise ProviderError("provider_content_type")
             if response.content_length and response.content_length > 4 * 1024 * 1024:
                 raise ProviderError("provider_response_too_large")
@@ -302,27 +270,7 @@ class MetadataSync:
             if parsed.hostname == "image.tmdb.org" or store_cover:
                 actual_type = image_type(body)
                 if actual_type is None:
-                    self.repository.logger.emit(
-                        Subsystem.METADATA,
-                        Operation.READ,
-                        Outcome.REJECTED,
-                        level=Level.WARNING,
-                        reason=Reason.PROVIDER_IMAGE_INVALID,
-                        stage=Stage.VALIDATION,
-                        status=response.status,
-                        count=len(body),
-                    )
                     raise ProviderError("provider_content_type")
-                if actual_type != response.content_type:
-                    self.repository.logger.emit(
-                        Subsystem.METADATA,
-                        Operation.READ,
-                        Outcome.CHANGED,
-                        reason=Reason.PROVIDER_IMAGE_NORMALIZED,
-                        stage=Stage.VALIDATION,
-                        status=response.status,
-                        count=len(body),
-                    )
         self._ready()
         return bytes(body)
 
@@ -337,9 +285,6 @@ class MetadataSync:
                 raise
 
     async def _run(self, force):
-        self.repository.logger.emit(
-            Subsystem.METADATA, Operation.SCRAPE, Outcome.STARTED
-        )
         self.error = None
         self.providers.robots = None
         self.processed = self.updated = self.skipped = 0
@@ -507,18 +452,6 @@ class MetadataSync:
             self.error = "metadata_format"
         finally:
             self.current_title = None
-            if failure:
-                self.repository.logger.emit_failure(
-                    Subsystem.METADATA, Operation.SCRAPE, failure, count=self.processed
-                )
-            else:
-                self.repository.logger.emit(
-                    Subsystem.METADATA,
-                    Operation.SCRAPE,
-                    Outcome.SKIPPED if cancelled else Outcome.SUCCEEDED,
-                    failure=Failure.CANCELLED if cancelled else None,
-                    count=self.processed,
-                )
             if self.session:
                 self.session.detach()
                 self.session = None

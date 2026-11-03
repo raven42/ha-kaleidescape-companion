@@ -4,29 +4,15 @@ import asyncio
 import json
 import sqlite3
 import tempfile
-import threading
 import time
-from collections import deque
 from collections.abc import AsyncIterator, Callable
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
-from contextvars import copy_context
 from datetime import UTC, datetime, timedelta
 from functools import partial
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
-
-from kaleidescape_api.logging import (
-    Level,
-    Operation,
-    Outcome,
-    Reason,
-    Resource,
-    SafeLogger,
-    Subsystem,
-    Trigger,
-)
 
 from ..library import browse as library_browse
 from ..library import collections as library_collections
@@ -35,7 +21,7 @@ from ..library.importing import portable_titles
 from ..library.summary import library_summary
 from ..playback.history import history_summary
 from ..playback.recording import save_session
-from . import import_merge, journal_store, logbook, preferences
+from . import import_merge, journal_store, preferences
 from .importing import MAX_IMPORT_BYTES
 from .maintenance import inspect_database, purge_database
 from .migrations import SCHEMA_VERSION, UnsupportedSchemaError, migrate
@@ -64,15 +50,6 @@ class JournalRepository:
 
     def __init__(self, path: Path) -> None:
         self.path = path
-        self.logger = SafeLogger()
-        self._log_queue = deque(maxlen=1024)
-        self._log_lock = threading.Lock()
-        self._log_scheduled = False
-        self._log_dropped = 0
-        self._log_failures = 0
-        self._log_values = False
-        self._unregister_log_sink = None
-        self._loop = None
 
         self._worker = ThreadPoolExecutor(
             max_workers=1, thread_name_prefix="kaleidescape"
@@ -93,71 +70,6 @@ class JournalRepository:
         self._metadata_sources = {}
         self._read_cache = ReadCache()
 
-    def _queue_log(self, event):
-        # Only sanitized DTOs created by SafeLogger/movie_value reach this queue.
-        with self._log_lock:
-            if len(self._log_queue) == self._log_queue.maxlen:
-                self._log_dropped += 1
-            self._log_queue.append(event)
-            if self._log_scheduled or self._closing or self._loop is None:
-                return
-            self._log_scheduled = True
-        self._loop.call_soon_threadsafe(self._schedule_logs)
-
-    def _schedule_logs(self):
-        if not self._closing:
-            task = self._loop.create_task(self._drain_logs())
-            task.add_done_callback(
-                lambda done: done.exception() if not done.cancelled() else None
-            )
-
-    async def _drain_logs(self):
-        try:
-            await self._call(self._flush_logs, control=True)
-        except JournalError:
-            self._log_failures += 1
-
-    def _flush_logs(self):
-        with self._log_lock:
-            rows = list(self._log_queue)
-            self._log_queue.clear()
-            self._log_scheduled = False
-        if self._connection and not self._paused:
-            try:
-                logbook.append(self._connection, rows)
-            except sqlite3.Error, OSError:
-                self._log_failures += 1
-                self._log_dropped += len(rows)
-        else:
-            self._log_dropped += len(rows)
-
-    async def async_logs(self, operation="list", data=None):
-        return await self._call(self._logs, operation, data or {})
-
-    def _logs(self, operation, data):
-        self._flush_logs()
-        db = self._db()
-        if operation in {"configure", "clear"} and self._paused:
-            raise JournalError("backup_in_progress", "Wait for the backup to finish")
-        if operation == "configure":
-            config = logbook.configure(db, data)
-            self.logger.set_level(Level(config["level"]))
-            self._log_values = config["log_values"]
-            self.logger.emit(Subsystem.SETTINGS, Operation.CONFIGURE, Outcome.SUCCEEDED)
-        elif operation == "clear":
-            logbook.clear(db, data.get("through"))
-            self.logger.emit(Subsystem.APPLICATION, Operation.CLEAR, Outcome.SUCCEEDED)
-        elif operation == "export":
-            self.logger.emit(Subsystem.EXPORT, Operation.EXPORT, Outcome.STARTED)
-        elif operation != "list":
-            raise invalid("Unknown log operation")
-        return {
-            **logbook.query(db, data if operation in {"list", "export"} else {}),
-            "dropped": self._log_dropped,
-            "storage_failures": self._log_failures,
-            "sink_failures": self.logger.sink_failures,
-        }
-
     async def async_transfer_settings(self, operation, actor, request, categories):
         return await self._call(
             self._transfer_settings, operation, actor, request, categories
@@ -170,12 +82,7 @@ class JournalRepository:
             self._paused or self._export_active or self._import_active
         ):
             raise JournalError("busy", "Wait for the active backup or transfer")
-        result = apply(self._db(), operation, self._actor(actor), request, categories)
-        if operation == "apply":
-            config = logbook.settings(self._db())
-            self.logger.set_level(Level(config["level"]))
-            self._log_values = config["log_values"]
-        return result
+        return apply(self._db(), operation, self._actor(actor), request, categories)
 
     @property
     def pending(self) -> int:
@@ -191,7 +98,7 @@ class JournalRepository:
             raise JournalError("busy", "Journal queue is full; retry later")
         self._pending += 1
         future = asyncio.get_running_loop().run_in_executor(
-            self._worker, partial(copy_context().run, self._execute, operation, *args)
+            self._worker, partial(self._execute, operation, *args)
         )
         future.add_done_callback(self._finished)
         # A disconnected caller must not cancel an already accepted database write.
@@ -204,51 +111,15 @@ class JournalRepository:
             future.exception()
 
     def _execute[T](self, operation: Callable[..., T], *args: Any) -> T:
-        db = self._connection
-        before = db.total_changes if db else 0
-        operation_name = getattr(operation, "__name__", "operation")
-        excluded = operation_name in {
-            "_logs",
-            "_flush_logs",
-            "_open",
-            "_close",
-            # These own more specific mutation/commit logs and retry semantics.
-            "_mutate",
-            "_create_library",
-            "_correct_library",
-        }
         try:
-            result = operation(*args)
-            if not excluded and db and db.total_changes > before:
-                identity = (
-                    str(result.get("id", operation_name))
-                    if isinstance(result, dict)
-                    else operation_name
-                )
-                self.logger.emit(
-                    Subsystem.DATABASE,
-                    Operation.WRITE,
-                    Outcome.SUCCEEDED,
-                    count=db.total_changes - before,
-                    resource=(Resource.TABLE, identity),
-                )
-                if self._log_values and isinstance(result, dict):
-                    record = result.get("viewing", result)
-                    row = logbook.movie_values(self.logger, identity, record)
-                    if row:
-                        self._queue_log(row)
-            return result
+            return operation(*args)
         except (sqlite3.Error, OSError) as error:
-            if not excluded:
-                self.logger.emit_failure(Subsystem.DATABASE, Operation.WRITE, error)
-
             raise JournalError(
                 "storage_error", "Journal storage operation failed"
             ) from error
 
     async def async_open(self) -> None:
         """Open and migrate on the connection's owning thread."""
-        self._loop = asyncio.get_running_loop()
         await self._call(self._open)
 
     def _open(self) -> None:
@@ -341,12 +212,6 @@ class JournalRepository:
         from ..enrichment.selection import read
 
         self._metadata_sources = read(connection)
-        self.logger = logbook.initialize(connection)
-        self._log_values = logbook.settings(connection)["log_values"]
-        self._unregister_log_sink = self.logger.register(
-            lambda event: self._queue_log(event.as_dict())
-        )
-        self.logger.emit(Subsystem.APPLICATION, Operation.CONNECT, Outcome.SUCCEEDED)
 
         from ..playback.control_store import recover
 
@@ -579,12 +444,7 @@ class JournalRepository:
         limit = max(pages, min(previous_limit, MAX_LIBRARY_DATABASE_BYTES // page_size))
         db.execute(f"PRAGMA max_page_count={limit}")
         try:
-            result = operation(db, *args)
-            if self._log_values and operation is library_store.save_details:
-                value = logbook.movie_values(self.logger, str(args[1]), args[2])
-                if value:
-                    self._queue_log(value)
-            return result
+            return operation(db, *args)
         finally:
             db.execute(f"PRAGMA max_page_count={previous_limit}")
 
@@ -664,20 +524,11 @@ class JournalRepository:
             await loop.run_in_executor(None, self._worker.shutdown, True)
 
     def _close(self) -> None:
-        try:
-            self._flush_logs()
-        finally:
-            # Detach the sink after draining: its closure otherwise retains this
-            # repository and its event loop until cyclic garbage collection.
-            if self._unregister_log_sink is not None:
-                self._unregister_log_sink()
-                self._unregister_log_sink = None
-            self._loop = None
-            self._import_plan = None
-            self._read_cache.clear()
-            if self._connection is not None:
-                self._connection.close()
-                self._connection = None
+        self._import_plan = None
+        self._read_cache.clear()
+        if self._connection is not None:
+            self._connection.close()
+            self._connection = None
 
     async def async_pause(self) -> None:
         """Drain writes before an HA backup; subsequent writes receive a retry error."""
@@ -690,11 +541,6 @@ class JournalRepository:
     def _set_paused(self, paused: bool) -> None:
         self._db()
         self._paused = paused
-        self.logger.emit(
-            Subsystem.BACKUP,
-            Operation.PAUSE if paused else Operation.RESUME,
-            Outcome.SUCCEEDED,
-        )
 
     async def async_info(self, timezone="UTC") -> dict:
         """Return non-content metadata for health and dataset selection."""
@@ -965,17 +811,9 @@ class JournalRepository:
         return await asyncio.shield(task)
 
     def _preview_import(self, payload, import_format, actor):
-        self.logger.emit(Subsystem.IMPORT, Operation.IMPORT, Outcome.STARTED)
-        try:
-            self._import_plan = import_merge.review(
-                self._db(), payload, import_format, actor
-            )
-        except Exception:
-            self.logger.emit(
-                Subsystem.IMPORT, Operation.IMPORT, Outcome.FAILED, level=Level.ERROR
-            )
-            raise
-        self.logger.emit(Subsystem.IMPORT, Operation.IMPORT, Outcome.SUCCEEDED)
+        self._import_plan = import_merge.review(
+            self._db(), payload, import_format, actor
+        )
         return self._import_plan["public"]
 
     async def async_import_match_search(self, plan_id, revision, key, query, actor_id):
@@ -1257,63 +1095,18 @@ class JournalRepository:
         return self._journal_mutation(operation, request_id, data, actor_id)
 
     def _journal_mutation(self, operation, request, data, actor, receipt=None):
-        """Log admission and committed identity, including idempotent replays."""
+        """Persist a mutation and its idempotency receipt atomically."""
         db = self._db()
-        viewing = data.get("viewing_id")
-        with self.logger.context(
-            actor=(Resource.USER, actor) if actor else None,
-            trace=(Resource.REQUEST, request),
-            resource=(Resource.VIEWING, viewing)
-            if viewing
-            else (Resource.REQUEST, request),
-            related=(Resource.VIEWING, viewing) if viewing else None,
-            trigger=Trigger.USER_REQUEST if actor else Trigger.JOURNAL_CHANGED,
-        ):
-            op = Operation(operation)
-            self.logger.emit(
-                Subsystem.DATABASE, op, Outcome.STARTED, reason=Reason.JOURNAL_WRITE
-            )
-            before = db.total_changes
-            try:
-                result = journal_store.mutate(
-                    db,
-                    operation,
-                    request,
-                    data,
-                    actor,
-                    self._paused,
-                    self._calendar,
-                    receipt,
-                )
-            except Exception as error:
-                self.logger.emit_failure(Subsystem.DATABASE, op, error)
-                raise
-            record = result["viewing"]
-            changed = db.total_changes != before
-            with self.logger.context(
-                resource=(Resource.VIEWING, record["id"]),
-                related=(Resource.VIEWING, record["id"]),
-                revision=record["revision"],
-            ):
-                self.logger.emit(
-                    Subsystem.DATABASE,
-                    op,
-                    Outcome.SUCCEEDED,
-                    reason=Reason.JOURNAL_SAVED if changed else Reason.REQUEST_REPLAYED,
-                )
-                if changed and self._calendar and self._calendar.get("full_sync"):
-                    self.logger.emit(
-                        Subsystem.CALENDAR,
-                        Operation.SYNC,
-                        Outcome.ACCEPTED,
-                        reason=Reason.JOURNAL_QUEUED,
-                        trigger=Trigger.JOURNAL_CHANGED,
-                    )
-                if changed and self._log_values:
-                    value = logbook.movie_values(self.logger, record["id"], record)
-                    if value:
-                        self._queue_log(value)
-            return result
+        return journal_store.mutate(
+            db,
+            operation,
+            request,
+            data,
+            actor,
+            self._paused,
+            self._calendar,
+            receipt,
+        )
 
     async def async_get(self, viewing_id: str) -> dict:
         """Retrieve one visible viewing."""
@@ -1378,20 +1171,6 @@ class JournalRepository:
             self._recording_library_source,
         )
 
-        self.logger.emit(
-            Subsystem.OBSERVER,
-            Operation.RECORD,
-            Outcome.SUCCEEDED,
-            level=Level.INFO if snapshot.get("closed_at") else Level.DEBUG,
-            resource=(Resource.VIEWING, viewing),
-            related=(Resource.SESSION, snapshot["id"]),
-            trace=(Resource.VIEWING, viewing),
-            trigger=Trigger.OBSERVATION,
-        )
-        if self._log_values:
-            value = logbook.movie_value(self.logger, viewing, snapshot.get("title"))
-            if value:
-                self._queue_log(value)
         return viewing
 
     async def async_open_session(self, player_id: str) -> dict | None:
@@ -1553,7 +1332,6 @@ class JournalRepository:
 
     def _export(self, export_format: str) -> Path:
         db = self._db()
-        self.logger.emit(Subsystem.EXPORT, Operation.EXPORT, Outcome.STARTED)
         started = time.monotonic()
         with tempfile.NamedTemporaryFile(
             prefix="kaleidescape-",
@@ -1573,9 +1351,6 @@ class JournalRepository:
                 try:
                     db.backup(destination, pages=256, progress=progress)
                     destination.execute("PRAGMA secure_delete=ON")
-                    with destination:
-                        destination.execute("DELETE FROM operation_logs")
-                        destination.execute("DELETE FROM log_state")
                     destination.execute("VACUUM")
                 finally:
                     destination.close()
@@ -1621,12 +1396,8 @@ class JournalRepository:
                         self._check_export(started, output.tell())
                     output.write("]}")
             self._check_export(started, path.stat().st_size)
-            self.logger.emit(Subsystem.EXPORT, Operation.EXPORT, Outcome.SUCCEEDED)
             return path
         except BaseException:
-            self.logger.emit(
-                Subsystem.EXPORT, Operation.EXPORT, Outcome.FAILED, level=Level.ERROR
-            )
             path.unlink(missing_ok=True)
             raise
 

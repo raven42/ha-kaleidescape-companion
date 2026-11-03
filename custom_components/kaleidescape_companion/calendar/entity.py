@@ -11,15 +11,6 @@ from homeassistant.components.calendar.const import (
     EVENT_END,
     EVENT_START,
 )
-from kaleidescape_api.logging import (
-    Check,
-    Level,
-    Operation,
-    Outcome,
-    Reason,
-    Stage,
-    Subsystem,
-)
 
 from .config import FULL_SYNC_FEATURES, target
 
@@ -44,7 +35,7 @@ def selected(publisher):
         or not entity.available
         or (entity.supported_features or 0) & FULL_SYNC_FEATURES != FULL_SYNC_FEATURES
     ):
-        raise CalendarValidationError(Check.CAPABILITY)
+        raise CalendarValidationError("capability")
     return entity
 
 
@@ -77,7 +68,7 @@ async def read(publisher, start, end):
     async with asyncio.timeout(30):
         events = await entity.async_get_events(publisher.hass, start, end)
     if not isinstance(events, list) or len(events) > 10000:
-        raise CalendarValidationError(Check.BOUNDS)
+        raise CalendarValidationError("bounds")
     result, size, ids = [], 0, set()
     for event in events:
         # Never infer a missing UID or mutate an entire recurring series.
@@ -90,7 +81,7 @@ async def read(publisher, start, end):
             or len(event.uid) > 1024
             or event.uid in ids
         ):
-            raise CalendarValidationError(Check.IDENTITY)
+            raise CalendarValidationError("identity")
         ids.add(event.uid)
         first, last = event.start_datetime_local, event.end_datetime_local
         if (
@@ -98,7 +89,7 @@ async def read(publisher, start, end):
             or not isinstance(event.summary, str)
             or len(event.summary) > 4096
         ):
-            raise CalendarValidationError(Check.INTERVAL)
+            raise CalendarValidationError("interval")
         data = {
             "summary": event.summary,
             "description": event.description or "",
@@ -109,7 +100,7 @@ async def read(publisher, start, end):
         normalized["all_day"] = event.all_day
         size += len(json.dumps(normalized).encode())
         if size > 8 * 1024 * 1024:
-            raise CalendarValidationError(Check.BOUNDS)
+            raise CalendarValidationError("bounds")
         result.append(
             {
                 "uid": event.uid,
@@ -150,54 +141,5 @@ async def write(publisher, kind, uid, data):
         elif kind == "delete":
             await entity.async_delete_event(uid)
         else:
-            raise CalendarValidationError(Check.CONFIGURATION)
+            raise CalendarValidationError("configuration")
     entity.async_update_event_listeners()
-
-
-def _instrument(function, operation):
-    async def run(publisher, *args, reason=None):
-        logger = publisher.repository.logger
-        logger.emit(
-            Subsystem.CALENDAR,
-            operation,
-            Outcome.STARTED,
-            level=Level.DEBUG,
-            reason=reason,
-        )
-        try:
-            result = await function(publisher, *args)
-        except Exception as error:
-            missing_time = (
-                isinstance(error, KeyError)
-                and len(error.args) == 1
-                and type(error.args[0]) is str
-                and error.args[0] in {EVENT_START, EVENT_END}
-            )
-            logger.emit_failure(
-                Subsystem.CALENDAR,
-                operation,
-                error,
-                stage=Stage.WRITE if operation == Operation.WRITE else Stage.READ,
-                check=error.check
-                if isinstance(error, CalendarValidationError)
-                else Check.INTERVAL
-                if missing_time
-                else None,
-                reason=Reason.SCHEMA_MISMATCH if missing_time else reason,
-            )
-            raise
-        logger.emit(
-            Subsystem.CALENDAR,
-            operation,
-            Outcome.SUCCEEDED,
-            level=Level.DEBUG,
-            count=len(result) if isinstance(result, list) else None,
-            reason=reason,
-        )
-        return result
-
-    return run
-
-
-read = _instrument(read, Operation.READ)
-write = _instrument(write, Operation.WRITE)

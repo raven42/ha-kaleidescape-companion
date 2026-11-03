@@ -56,7 +56,6 @@ CATEGORIES = {
         "interface",
     ],
     "shared": ["hidden_collections"],
-    "logging": ["level", "log_values"],
 }
 
 
@@ -94,11 +93,6 @@ async def transfer(hass, entry, repo, actor, operation, selected, data, request)
             categories["shared"] = (
                 await repo.async_ui_preferences(actor, shared=True)
             )["values"]
-        if "logging" in selected:
-            settings = (await repo.async_logs())["config"]
-            categories["logging"] = {
-                key: settings[key] for key in CATEGORIES["logging"]
-            }
         return {"format": "companion-settings", "version": 1, "categories": categories}
     try:
         size = len(json.dumps(data, allow_nan=False).encode())

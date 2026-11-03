@@ -66,9 +66,7 @@ it("saves Basic mode, hides management views, and restores Advanced mode", async
   expect(reader.shadowRoot!.textContent).not.toContain("Add viewing");
   expect(reader.shadowRoot!.querySelectorAll('[role="tab"]')).toHaveLength(3);
   expect(
-    root().querySelector(
-      "kaleidescape-settings,kaleidescape-database,kaleidescape-logs",
-    ),
+    root().querySelector("kaleidescape-settings,kaleidescape-database"),
   ).toBeNull();
   expect(transport.interfacePreferences.advanced_view).toBe(false);
   toggle().click();
@@ -78,7 +76,7 @@ it("saves Basic mode, hides management views, and restores Advanced mode", async
   expect(transport.interfacePreferences.advanced_view).toBe(true);
 });
 
-it.each(["database", "settings", "logs"])(
+it.each(["database", "settings"])(
   "returns from %s to the configured landing page in Basic mode",
   async (page) => {
     const transport = new FixtureTransport();

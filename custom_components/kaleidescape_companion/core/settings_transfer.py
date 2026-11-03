@@ -1,4 +1,4 @@
-"""Atomic UI/log-settings transfer; native HA changes use the options flow."""
+"""Atomic UI settings transfer; native HA changes use the options flow."""
 
 import hashlib
 import json
@@ -69,16 +69,6 @@ def apply(db, operation, actor, request, categories):
                 current["revision"] + 1,
             )
         )
-    logging = categories.get("logging")
-    if logging is not None:
-        from kaleidescape_api.logging import Level
-
-        if (
-            set(logging) - {"level", "log_values"}
-            or logging.get("level") not in [v.value for v in Level]
-            or type(logging.get("log_values")) is not bool
-        ):
-            raise invalid("Invalid logging settings")
     if operation == "preview":
         return {"applied": False}
     request = identifier(request)
@@ -107,11 +97,6 @@ def apply(db, operation, actor, request, categories):
                     revision,
                     datetime.now(UTC).isoformat(),
                 ),
-            )
-        if logging is not None:
-            db.execute(
-                "UPDATE log_state SET level=?,log_values=?",
-                (logging["level"], logging["log_values"]),
             )
         db.execute("UPDATE schema_metadata SET settings_revision=settings_revision+1")
         db.execute(

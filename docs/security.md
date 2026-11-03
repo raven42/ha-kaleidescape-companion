@@ -5,12 +5,9 @@ networking, imports, exports, or frontend rendering must preserve these rules
 and include tests for the affected boundary. This is a maintained security
 baseline, not a claim of independent security certification.
 
-Frontend tests retain Lit lifecycle diagnostics and fail on unexpected console
-warnings/errors; only the test build's expected development-mode banner is
-suppressed. Cover configuration changes clear stale image state before
-rendering, while preserving authenticated, visibility-triggered fetching and
-bounded cache retention. These logging controls do not suppress production
-diagnostics.
+Cover configuration changes clear stale image state before rendering, while
+preserving authenticated, visibility-triggered fetching and bounded cache
+retention.
 
 ## Trust boundaries
 
@@ -86,8 +83,9 @@ HA process against a journal directory.
    household credentials out of the development instance. Existing local YAML is
    retained: verify its bind address when reusing an older configuration.
 2. Keep `.ha-dev/`, `.env*`, databases, exports, tokens, device snapshots, and
-   private logs out of Git. Ignoring a file does not protect it on disk. The HA
-   launcher uses restrictive creation permissions and a private `.ha-dev/`.
+   private runtime data out of Git. Ignoring a file does not protect it on disk.
+   The HA launcher uses restrictive creation permissions and a private
+   `.ha-dev/`.
 3. The HA management panel uses HA's signed-in connection. The Vite adapter
    authenticates explicitly to the fixed local HA instance with a development
    token, held only in memory. Disconnect, page exit, or connection loss closes
@@ -132,10 +130,9 @@ data and is excluded from the packaged panel.
 
 Responsive toolbars, split panes and dialogs preserve those same actions,
 confirmations and retry protections. Their viewport measurements are transient
-CSS values; they add no storage, identifiers or network requests. Compact mobile
-logs retain structured details and exports behind the existing administrator
-checks. Rendered phone/tablet geometry still requires operator review; simulated
-layout tests do not prove that every browser keeps actions visible.
+CSS values; they add no storage, identifiers or network requests. Rendered
+phone/tablet geometry still requires operator review; simulated layout tests do
+not prove that every browser keeps actions visible.
 
 ## Household read access and sensors
 
@@ -248,7 +245,7 @@ image requests have a five-second browser budget. This is a browser limit; HA
 owns upstream fetching and caching. No new arbitrary-fetch endpoint, persistent
 image store, Python image decoder, or device connection is introduced by
 Companion. Missing or failed artwork has a placeholder. Raw picture URLs,
-tokens, and image bytes never enter the journal, exports, diagnostics, or logs.
+tokens, and image bytes never enter the journal, exports, or diagnostics.
 
 HA's existing media-player image route has its own authentication/token
 behavior; it is not a Companion administrator-only endpoint. Other HA users may
@@ -498,8 +495,8 @@ must satisfy the matching evidence; unknown exact IDs require manual matching.
   extensions. Its own
   [security policy](https://pypi.org/project/kaleidescape-api/) describes the
   general library boundary. It has no HA/application dependencies, storage or
-  handler registration. The integration imports the installed, pinned API
-  package; the standalone project is maintained separately. Its public command
+  handler registration. The integration bundles a generated copy of the API
+  runtime; the standalone project is maintained separately. Its public command
   API is a trusted Python/operator interface, not an authorization boundary or
   HA service. Importing the API opens no sockets. General clients require
   literal private LAN destinations on port 10000. The CLI additionally verifies
@@ -529,13 +526,12 @@ must satisfy the matching evidence; unknown exact IDs require manual matching.
   acknowledgement and existing title strings cannot prove a new launch or exact
   edition. The CLI event operation collects at most 256 events over 1–300
   seconds. Dry runs skip control/binary negotiation and redact passcode fields.
-  There is no raw wire logging; structured reports contain private movie/device
-  data and must remain outside Git/public logs. The implementation serializes
-  per client, without cross-process locking or durable receipts. Native HA
-  permissions, capability gates and durable actor-bound outcomes are implemented
-  by Companion's separate fixed-intent adapter, not the general library/CLI. The
-  earlier launch/stop result does not certify expanded commands, events or
-  binary mode on hardware.
+  Structured reports contain private movie/device data and must remain private.
+  The implementation serializes per client, without cross-process locking or
+  durable receipts. Native HA permissions, capability gates and durable
+  actor-bound outcomes are implemented by Companion's separate fixed-intent
+  adapter, not the general library/CLI. The earlier launch/stop result does not
+  certify expanded commands, events or binary mode on hardware.
 - Companion discovery/control opt-ins are separate from Library sync. The
   implementation below requires LAN validation, pinned destinations, verified
   direct serials and bounded read/write budgets. No general dispatcher is
@@ -543,7 +539,7 @@ must satisfy the matching evidence; unknown exact IDs require manual matching.
   Keep plain TCP on the trusted LAN without Internet exposure; HA authorization
   cannot protect a device from another host with direct network access.
 - Store necessary device credentials in HA config entries and redact them from
-  errors, diagnostics, logs, and exports. Do not assume config-entry storage is
+  errors, diagnostics, and exports. Do not assume config-entry storage is
   encrypted or inaccessible to other HA code.
 - Define household read/edit/export/control capabilities before adding sharing.
   Check relevant entity permissions as well as journal permissions.
@@ -728,8 +724,8 @@ username. Use process argument arrays locally, quote remote positional paths,
 and permit only fixed HA OS or named-container configuration-check/restart
 commands. Never accept an arbitrary remote shell command from settings. Runtime
 archives are constructed locally from approved Python/JSON/bundle files, capped
-at 32 MiB of file contents, and reject linked sources. They contain no journal,
-logs, environment files, or development credentials. Package hashes identify
+at 32 MiB of file contents, and reject linked sources. They contain no journal
+data, environment files, or development credentials. Package hashes identify
 bytes; they do not authenticate an untrusted build or establish target-version
 compatibility.
 
@@ -826,12 +822,12 @@ erasure from SSDs, snapshots, or external backup systems.
 
 Restrict access to the affected instance, revoke exposed HA/device credentials,
 and preserve a protected copy of relevant evidence. Review journal audit
-metadata and HA access logs, update affected code, and restore only from trusted
-backups. Do not post tokens, household records, full databases, or private
-diagnostics in public issues. There is not yet a published private reporting
-channel or supported release matrix; establish both before distribution. Use a
-private maintainer channel agreed for this repository for reports during
-development. HA Core vulnerabilities follow
+metadata, update affected code, and restore only from trusted backups. Do not
+post tokens, household records, full databases, or private diagnostics in public
+issues. There is not yet a published private reporting channel or supported
+release matrix; establish both before distribution. Use a private maintainer
+channel agreed for this repository for reports during development. HA Core
+vulnerabilities follow
 [HA's reporting policy](https://www.home-assistant.io/security/).
 
 ## Required review for future changes
@@ -1493,11 +1489,10 @@ and browser review remain operator steps.
 TMDB secrets use HA's native configuration storage, with a blank password
 selector, explicit removal and no prefilled credential in either settings UI.
 They stay outside journal storage, public responses, diagnostics, exports,
-fixtures and logs. Full HA backups can contain them. HTTP exceptions/URLs,
-headers and provider/account bootstrap bodies must never be logged. The locally
-bundled approved TMDB logo and notice add no remote browser image request.
-Public interfaces and API terms can change; unsupported responses fail closed.
-See the [provider guide](enrichment.md) for research and operator validation.
+fixtures. Full HA backups can contain them. The locally bundled approved TMDB
+logo and notice add no remote browser image request. Public interfaces and API
+terms can change; unsupported responses fail closed. See the
+[provider guide](enrichment.md) for research and operator validation.
 
 Shared field-source preferences are fixed per-field enums saved through the
 administrator configuration flow. A protected household settings row mirrors
@@ -1597,8 +1592,7 @@ identities remain unchanged. Missing/ambiguous identity and missing movie pages
 record static conflict codes, while transient failures do not imply a bad match.
 Household reads expose only a conflict boolean for currently desired enabled
 providers. Private SQLite backups retain bindings/conflicts; portable Library
-JSON excludes them. Original-source restoration clears them. Queries, candidate
-metadata, raw URLs and external response bodies must never enter logs.
+JSON excludes them. Original-source restoration clears them.
 
 Whole-search double quotes select an escaped, case-insensitive whole-word phrase
 and bypass fuzzy expansion. This uses the fixed `companion_matches` callback for
@@ -1657,35 +1651,6 @@ always appends its human-readable maintenance notice, without metadata IDs.
 Provider consistency/completeness cannot be proven through the generic API;
 external writers, restored snapshots or explicit acknowledgement of a still
 hidden event can still cause duplicates. Use only a dedicated calendar.
-
-## Private operational diagnostics
-
-The [operational logging policy](logging.md) applies to all future subsystems.
-Use positive structured event fields and keyed resource aliases before any
-buffering or sink callback. Never attach raw exceptions, SQL, payloads, device
-identities or credentials. Human-readable messages come only from static
-catalogued explanations. Bounded exception classification may inspect types and
-numeric HTTP status codes, never copy exception text, arguments or tracebacks.
-Source locations are derived from trusted module namespaces and line numbers;
-absolute filesystem paths and usernames are excluded. Untrusted callers use an
-`external` source label. Operational logging is administrator-only, bounded, and
-separate from functional audit/receipt storage. Optional movie metadata logging
-never enables credentials, account or network logging. Settings transfer
-requires category review and always excludes secrets.
-
-Cross-layer diagnostic context carries only keyed user/resource/request aliases,
-owned trigger codes and bounded revisions. Authenticate before binding a user;
-never put usernames, external IDs, payloads or free-form trigger text in events.
-Copy the safe context into worker calls and reset it for unrelated background
-work. Full Sync may consult the existing private mutation audit to recover an
-exact-revision cause after reload; this does not publish audit actors or request
-IDs. Alias filters are administrator-only, bounded, parameterized equality
-queries against positive log fields. Calendar pending-work warnings do not
-override quarantine, stale-data checks or unconfirmed-write barriers.
-
-Log-level query/export filters select the requested severity and all higher
-severities using fixed enum values and bound parameters. This does not alter
-administrator authorization, live logging levels, aliases or retention.
 
 ## Profile preferences and Library display corrections
 
@@ -1759,9 +1724,9 @@ recheck current user/runtime access after awaits. Preflight reads cached
 Library, Journal and HA source/configuration data only; it starts no discovery,
 device query, scrape or scan. YAML formatting runs outside the event loop and
 never reads a browser-supplied filename. Dashboard titles are bounded plain text
-and are not interpolated into Markdown or logs. View descriptions are static
-text. Generated examples include the selected entry/opaque player IDs, no
-credentials, addresses, serials, device labels, source paths or movie metadata.
+and are not interpolated into Markdown. View descriptions are static text.
+Generated examples include the selected entry/opaque player IDs, no credentials,
+addresses, serials, device labels, source paths or movie metadata.
 
 The browser uses HA's administrator-authorized native dashboard create/save
 commands for one cryptographically unique `companion-test-<UUID>` URL. It does
@@ -1779,9 +1744,7 @@ an interrupted setup can leave a new empty dashboard for inspection. There is no
 automatic rollback/delete. Settings guards cover pending setup, while account or
 dataset changes invalidate late responses and prevent further native phases.
 Verification reads HA's managed dashboard API and exposes only its known path
-and view count. Privacy-filtered prepare/verify logs contain hashed
-actor/request relationships, not generated YAML or dashboard names. No actual
-household HA instance is modified by automated tests.
+and view count. No actual household HA instance is modified by automated tests.
 
 ## Review dismissal and provider diagnostics
 
@@ -1800,11 +1763,8 @@ Administrator-only `metadata/title/cancel` removes an actor-owned ephemeral
 review and cancels its active image-download jobs. It cannot select another
 actor's job and cannot undo an accepted database commit. Plan expiry, access
 checks, fixed provider destinations, response bounds, and image validation still
-apply. Provider failures now attach only allowlisted, static reason codes to
-logs; URLs, response bodies, exception strings, image names and credentials are
-never copied. Apply-stage events retain hashed movie/request relationships and
-trusted file/line locations. Historical generic validation logs cannot reveal
-the exact provider rejection retroactively.
+apply. Provider failures return bounded error codes without exposing URLs,
+response bodies, exception strings, image names or credentials.
 
 The development-only `dev/validate_database.py` opens a locally selected SQLite
 file read-only and reports integrity, foreign-key and known JSON-column error
@@ -1817,12 +1777,12 @@ validation/default-host helper as playback. Both hostname fields may be blank;
 the usual default host is valid without performing DNS or device requests here.
 Now Playing source checks use the observation source, or the built-in
 integration's registry match for the saved default player when tracking is off.
-Individual unmet prerequisites emit static, privacy-safe `dashboard_*` reasons
-at the preflight stage; no hostname, serial, entity ID or saved setting value
-enters those diagnostics. Image validation logs distinguish unsupported MIME
-headers, unsupported signatures and safe raster MIME normalization without
-copying headers or body bytes. Signature checks are bounded format checks, not a
-full image decode or proof that a provider returned the intended artwork.
+Preflight results identify missing requirements without exposing hostnames,
+serials, entity IDs or saved setting values. Image validation distinguishes
+unsupported MIME headers, unsupported signatures and safe raster MIME
+normalization without copying headers or body bytes. Signature checks are
+bounded format checks, not a full image decode or proof that a provider returned
+the intended artwork.
 
 Mobile Library shortcuts reuse the existing authenticated search/filter/sort and
 preference operations. The popup query draft is transient and cleared on

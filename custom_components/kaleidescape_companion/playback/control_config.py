@@ -4,8 +4,7 @@ import hashlib
 import json
 from urllib.parse import urlsplit
 
-from kaleidescape_api import ProtocolError, serial_number
-
+from .._vendor.kaleidescape_api import ProtocolError, serial_number
 from ..library.config import origin
 
 DEFAULTS = {

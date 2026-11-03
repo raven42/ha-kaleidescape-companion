@@ -3,14 +3,6 @@
 from homeassistant.components.lovelace.const import LOVELACE_DATA, ConfigNotFound
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util import yaml as yaml_util
-from kaleidescape_api.logging import (
-    Level,
-    Operation,
-    Outcome,
-    Reason,
-    Stage,
-    Subsystem,
-)
 
 from ..core.models import JournalError, identifier, text
 from ..playback.control_config import host as control_host
@@ -337,64 +329,39 @@ async def prepare(hass, entry_id, runtime, name, request_id):
     entry = hass.config_entries.async_get_entry(entry_id)
     config = dict(entry.options or entry.data) if entry else {}
     missing = []
-    logger = runtime.repository.logger
-    logger.emit(
-        Subsystem.SETTINGS,
-        Operation.EXPORT,
-        Outcome.STARTED,
-        reason=Reason.DASHBOARD_PREFLIGHT,
-        stage=Stage.PREFLIGHT,
-    )
 
-    def require(condition, message, reason):
+    def require(condition, message):
         if not condition:
             missing.append(message)
-            logger.emit(
-                Subsystem.SETTINGS,
-                Operation.EXPORT,
-                Outcome.REJECTED,
-                level=Level.WARNING,
-                reason=reason,
-                stage=Stage.PREFLIGHT,
-            )
 
     require(
         LOVELACE_DATA in hass.data,
         "enable HA dashboards (Lovelace)",
-        Reason.DASHBOARD_LOVELACE,
     )
     if not config.get("library_enabled") or not runtime.library:
-        require(
-            False, "enable Library and run a successful sync", Reason.DASHBOARD_LIBRARY
-        )
+        require(False, "enable Library and run a successful sync")
     else:
         library = await runtime.repository.async_library_info(runtime.library.source)
         require(
             library["last_synced_at"] and library["group_count"],
             "sync at least one Library movie",
-            Reason.DASHBOARD_LIBRARY,
         )
     controls = runtime.controls
     require(
         config.get("control_enabled"),
         "enable playback controls",
-        Reason.DASHBOARD_CONTROLS_DISABLED,
     )
     require(
         controls is not None,
         "wait for the playback controls runtime to load",
-        Reason.DASHBOARD_CONTROLS_RUNTIME,
     )
     try:
         control_host(config, config.get("library_host", ""))
     except ValueError:
-        require(
-            False, "correct the saved control hostname", Reason.DASHBOARD_CONTROL_HOST
-        )
+        require(False, "correct the saved control hostname")
     require(
         config.get("control_player"),
         "select and save a default player",
-        Reason.DASHBOARD_DEFAULT_PLAYER,
     )
     entity = runtime.observer.entities.get("media_player") if runtime.observer else None
     if not entity and config.get("control_player"):
@@ -402,13 +369,11 @@ async def prepare(hass, entry_id, runtime, name, request_id):
     require(
         entity and hass.states.get(entity) is not None,
         "configure an existing HA media-player source for Now Playing",
-        Reason.DASHBOARD_SOURCE,
     )
     info = await runtime.repository.async_info()
     require(
         info["viewing_count"],
         "add or record at least one Journal viewing",
-        Reason.DASHBOARD_JOURNAL,
     )
     if missing:
         raise JournalError(
@@ -417,13 +382,6 @@ async def prepare(hass, entry_id, runtime, name, request_id):
             + "; ".join(missing)
             + ". Save settings first.",
         )
-    logger.emit(
-        Subsystem.SETTINGS,
-        Operation.EXPORT,
-        Outcome.SUCCEEDED,
-        reason=Reason.DASHBOARD_READY,
-        stage=Stage.PREFLIGHT,
-    )
     players = [row["id"] for row in controls.players()]
     if not players:
         raise JournalError(

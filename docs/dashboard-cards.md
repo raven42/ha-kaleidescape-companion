@@ -62,8 +62,8 @@ Pressing a remote or movie Play button in the resulting dashboard acts on a real
 configured player, as described on the guide's first view. Normal and uncertain
 setup states participate in the existing Settings navigation/write guards.
 Prepared YAML and native dashboard verification have privacy-filtered Settings
-log events linked by a hashed request alias; HA owns its dashboard storage
-writes.
+event status linked through protected request records; HA owns its dashboard
+storage writes.
 
 ## Cards
 

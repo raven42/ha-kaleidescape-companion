@@ -51,10 +51,8 @@
 - Mark enabled scrapers without saved movie-group data in the review picker,
   while retaining configured-provider selection and administrator access checks.
 
-## Unreleased — Library search and log filtering
+## Unreleased — Library search
 
-- Treat log filters as minimum severity, including higher levels in paging and
-  exports.
 - Evaluate distinct credits once per Library search, prepare matchers once per
   request, and reuse bounded private metadata/facet projections. Preserve
   source-policy invalidation, household projections and execution limits.

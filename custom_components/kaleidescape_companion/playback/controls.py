@@ -12,7 +12,8 @@ from dataclasses import asdict
 
 from homeassistant.helpers.aiohttp_client import DATA_RESOLVER
 from homeassistant.helpers.storage import Store
-from kaleidescape_api import (
+
+from .._vendor.kaleidescape_api import (
     Address,
     Client,
     PlaybackState,
@@ -21,12 +22,9 @@ from kaleidescape_api import (
     Status,
     device_address,
 )
-from kaleidescape_api.extensions import MovieCommands
-from kaleidescape_api.logging import Operation, Subsystem
-
+from .._vendor.kaleidescape_api.extensions import MovieCommands
 from ..const import DOMAIN
 from ..core.models import JournalError, invalid
-from ..core.operations import traced
 from ..core.security import async_finish_cleanup
 from ..library.config import origin
 from ..library.store import source_id
@@ -175,7 +173,7 @@ class PlaybackControls:
 
     @asynccontextmanager
     async def _client(self, ip):
-        client = Client(ip, timeout=3, logger=self.repository.logger)
+        client = Client(ip, timeout=3)
         self.clients.add(client)
         try:
             async with client:
@@ -183,7 +181,6 @@ class PlaybackControls:
         finally:
             self.clients.discard(client)
 
-    @traced(Subsystem.PLAYBACK, Operation.CONNECT, debug=True)
     async def _resolve(self, hostname):
         try:
             return device_address(hostname)
@@ -306,7 +303,6 @@ class PlaybackControls:
                 "control_unreachable", "Device query failed; no control was sent"
             ) from error
 
-    @traced(Subsystem.PLAYBACK, Operation.DISCOVER, debug=False)
     async def async_discover(self, authorize):
         async def discover():
             async with self._client(await self._seed()) as client:
@@ -425,7 +421,6 @@ class PlaybackControls:
 
         return await self._read(prepare, authorize)
 
-    @traced(Subsystem.PLAYBACK, Operation.CONTROL, debug=False, resource_index=1)
     async def async_execute(self, actor, request, token, authorize):
         cached = await self.repository.async_control("lookup", request, actor, token)
         if cached is not None:

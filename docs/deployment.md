@@ -7,9 +7,9 @@ test build. Confirm the target HA version and review the
 [security findings](security.md#known-dependency-findings-2026-10-25) before a
 household rollout. Take a full HA backup before the first installation.
 
-Home Assistant installs the pinned `kaleidescape-api` requirement from its
-package index. The API release must be available to that installation before
-deployment. Controls stay disabled until explicitly configured in HA.
+The built archive includes the generated API runtime inside the integration.
+Home Assistant does not need a separate package-index release to set up the
+integration. Controls stay disabled until explicitly configured in HA.
 
 ## Configure the target
 
@@ -98,11 +98,11 @@ reloading the entry alone does not replace already imported Python code or old
 static-path registrations.
 
 The archive contains only runtime Python files, manifest/setup/translation JSON,
-and the compiled `ui/assets/panel.js`. It excludes the development adapter
-source, environments, caches, databases, logs, and repository metadata.
-Symlinked or hard-linked runtime sources are rejected. The printed digest
-identifies the exact uploaded archive; it is not a signature or a compatibility
-guarantee.
+and the compiled `ui/assets/panel.js`, including generated API and provider
+modules under `_vendor/`. It excludes the development adapter source,
+environments, caches, databases, and repository metadata. Symlinked or
+hard-linked runtime sources are rejected. The printed digest identifies the
+exact uploaded archive; it is not a signature or a compatibility guarantee.
 
 Deployment stages files under `<HA config>/.kaleidescape-companion-deploy/`,
 then replaces `<HA config>/custom_components/kaleidescape_companion/`. It
@@ -156,8 +156,8 @@ administrator sidebar panel at `/kaleidescape-companion` and review:
 - With a deliberately selected player, the administrator Now Playing card:
   cover/placeholder, pause/scan/credits states, counted time, and
   unavailable/recording-health states.
-- HA logs for setup or storage failures, without posting private logs or
-  records.
+- HA status information for setup or storage failures, without posting private
+  data or records.
 
 Browser review is performed by the operator; automated checks use fictional
 records and never contact the target. Enable observation only for deliberately

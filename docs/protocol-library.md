@@ -16,11 +16,15 @@ official catalog. See the project's
 
 ## Development and compatibility utility
 
-From this repository root, build the API distributions in the sibling project
-first. The `--find-links` option also supports development before publication:
+From this repository root, install the standalone API project in editable mode
+for its CLI and development checks. Companion's runtime copy is synchronized
+from the same `src/kaleidescape_api/` tree by the build checks:
 
 ```sh
-python -m pip install --find-links ../kaleidescape-api/dist -e '.[dev]'
+python -m pip install -e '.[dev]'
+python -m pip install -e ../kaleidescape-api
+python dev/vendor_api.py
+python dev/vendor_api.py --check
 python ../kaleidescape-api/tools/check.py
 python -m build ../kaleidescape-api
 python ../kaleidescape-api/tools/check_distribution.py
@@ -35,16 +39,15 @@ loopback emulators and do not contact devices.
 
 ## Companion integration boundary
 
-Companion imports the installed API package pinned in its HA manifest and Python
-project metadata. The API distribution must be available to Home Assistant
-before deployment. The integration adapter exposes only fixed authenticated
-household intents and owns its configuration, serial/capability checks, durable
-receipts and UI. The standalone API still imports no application code and its
-generic `execute()` is never exposed through HA. See
-[Companion controls](playback-controls.md).
+Companion imports its generated API copy from the integration's `_vendor/`
+package. The API distribution does not need to be available to Home Assistant.
+The integration adapter exposes only fixed authenticated household intents and
+owns its configuration, serial/capability checks, durable receipts and UI. The
+standalone API still imports no application code and its generic `execute()` is
+never exposed through HA. See [Companion controls](playback-controls.md).
 
-Develop and test API changes in the separate project. Update the pinned package
-version and run Companion checks when adopting a release.
+Develop and test API changes in the separate project, then refresh the Companion
+vendor copy and run its checks before deployment.
 
 Current emulator coverage does not certify every request on hardware. The
 [reported launch/STOP validation](playback-controls.md#operator-validation--2026-10-30)

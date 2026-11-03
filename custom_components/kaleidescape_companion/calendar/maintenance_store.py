@@ -49,7 +49,7 @@ def dispatch(db, operation, config, *args):
                 )
             ),
             # Functional audit records reconnect delayed work to its originating
-            # request after reload. These private IDs only reach keyed log aliases.
+            # request after reload. These private IDs remain within protected storage.
             "causes": {
                 r["id"]: dict(r)
                 for r in db.execute(

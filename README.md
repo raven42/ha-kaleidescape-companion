@@ -42,7 +42,7 @@ custom_components/kaleidescape_companion/
   playback/   HA observation/recording, device discovery, controls and receipts
   enrichment/ Optional external metadata scheduling and cache storage
   calendar/   Opt-in publishing, dedicated-calendar Full Sync and durable receipts
-  _vendor/    Generated runtime subset of the provider library
+  _vendor/    Generated runtime copies of the API and provider libraries
   ui/         Authenticated APIs, panel/card registration and compiled assets
   brand/      Local transparent integration icons
   *.py        Required HA entry points and integration constants
@@ -58,8 +58,8 @@ docs/        Product, architecture, security and operator guides
 
 The `dev/` tools, standalone API CLI/docs/tests and frontend development sources
 are excluded from integration deployment. Only the integration directory,
-including its generated provider runtime, is installed into HA. Home Assistant
-installs the pinned API package separately.
+including its generated API and provider runtimes, is installed into HA. Home
+Assistant does not need to download the API package during integration setup.
 
 ## Development setup
 
@@ -69,7 +69,8 @@ Requires Python **3.14.2+** with SQLite **3.35+**, Node.js **22.13+ (22.x) or
 ```sh
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install --find-links ../kaleidescape-api/dist -e '.[dev]'
+python -m pip install -e '.[dev]'
+python -m pip install -e ../kaleidescape-api
 npm --prefix frontend ci
 bash dev/dev.sh check
 ```
@@ -163,7 +164,5 @@ External metadata setup, request limits and privacy are covered in the
 active users who can read the selected HA source entities; recording internals
 remain administrator-only.
 
-Administrator [operational logs](docs/logging.md) provide private structured
-diagnostics, text/JSON downloads, live levels and bounded retention. Settings
-export/import supports reviewed category selection and always excludes
+Settings export/import supports reviewed category selection and always excludes
 credentials.

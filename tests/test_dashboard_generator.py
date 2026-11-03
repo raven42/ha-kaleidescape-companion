@@ -193,20 +193,6 @@ class DashboardGeneratorTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(result["success"], result)
         entity.assert_called_once_with(self.hass, self.entry.options["control_player"])
 
-    async def test_prerequisite_logs_identify_the_exact_missing_setting(self):
-        await self.configure()
-        object.__setattr__(
-            self.entry, "options", {**self.entry.options, "control_player": ""}
-        )
-        result = await self.preview()
-        self.assertEqual(result["code"], "dashboard_prerequisites")
-        self.assertIn("select and save a default player", result["message"])
-        self.assertNotIn("enable playback controls", result["message"])
-        events = self.entry.runtime_data.repository.logger.snapshot()
-        reasons = [event.reason for event in events]
-        self.assertIn("dashboard_default_player", reasons)
-        self.assertNotIn("dashboard_controls_disabled", reasons)
-
 
 class GuideContentTest(unittest.TestCase):
     def test_examples_and_views_stay_bounded(self):

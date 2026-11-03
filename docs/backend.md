@@ -1,7 +1,7 @@
 # Journal backend
 
 The backend records manual journal entries and observed playback from one
-selected HA player. API version is `1`; SQLite schema is `22` and JSON export
+selected HA player. API version is `1`; SQLite schema is `23` and JSON export
 format is `5`. The household reader and administrator [management panel](ui.md)
 use this API. Live subscriptions remain planned; administrator discovery and
 [household device controls](playback-controls.md) are implemented;
@@ -60,7 +60,7 @@ existing schema retains the usual private migration backup; purging never
 removes that separate copy. JSON format 5 carries viewing/session snapshots,
 portable Library entries with private embedded purchase history, excluding the
 audit tables. SQLite exports include the schema and retained private records,
-but clear operational logs and their private alias key. Schema 5 adds a minimal
+but clear obsolete operational-log tables. Schema 5 adds a minimal
 `import_audit` record with authenticated actor, request UUID, imported/skipped
 counts, dataset revision, and time, without imported content or file names.
 
@@ -150,7 +150,6 @@ copies of the same movie.
 | `manual_audit`, `maintenance_audit`, `import_audit`                                      | Distinct mutation attribution/retention rules; import counts cover both title and viewing merges                  |
 | `library_collection_intents`                                                             | Durable recovery for an external collection write with an uncertain result                                        |
 | `playback_controls`                                                                      | Durable actor-bound device-command outcomes and uncertain-write barriers                                          |
-| `operation_logs`, `log_state`                                                            | Bounded private operational diagnostics, live thresholds and installation-keyed aliases                           |
 
 Flattening memberships or sessions into title rows would duplicate titles or
 require rewriting shared arrays; combining receipts/cache state with movie
@@ -241,7 +240,7 @@ Edges are processed in receipt order. Overflow discards the uncertain interval
 and records a timing gap rather than inventing watched seconds. Storage errors
 retain the pending checkpoint for retry; Now Playing and diagnostics show the
 recording error. Shutdown unsubscribes first and drains/checkpoints accepted
-work. If storage remains unavailable, shutdown logs the failure and recovery
+work. If storage remains unavailable, shutdown reports the failure and recovery
 retains only durable facts. If HA shuts down during a backup, writes remain
 paused and buffered events may be lost; the next recovery records a gap.
 

@@ -289,7 +289,7 @@ does not protect a device from another host that can reach its TCP port.
 ## Packaging and validation
 
 The standalone project stays application-independent. The integration imports
-the pinned API package installed by Home Assistant. See the
+API runtime bundled inside the integration. See the
 [protocol library guide](protocol-library.md) for package and validation
 details.
 

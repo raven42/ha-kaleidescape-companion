@@ -295,8 +295,6 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
             db.execute("DROP TABLE calendar_managed_events")
             db.execute("DROP TABLE calendar_reconcile_candidates")
             db.execute("DROP TABLE calendar_reconcile_intents")
-            db.execute("DROP TABLE IF EXISTS operation_logs")
-            db.execute("DROP TABLE IF EXISTS log_state")
             db.execute("PRAGMA user_version=9")
             db.commit()
         self.repository = JournalRepository(self.path)

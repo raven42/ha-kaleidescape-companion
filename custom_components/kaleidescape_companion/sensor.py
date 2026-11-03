@@ -31,6 +31,7 @@ from .library.config import origin
 from .library.store import source_id
 
 _LOGGER = logging.getLogger(__name__)
+
 HISTORY_DESCRIPTIONS = tuple(
     SensorEntityDescription(key=key, translation_key=key, icon=icon)
     for key, icon in (

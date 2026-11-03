@@ -453,67 +453,6 @@ it("displays whole-second dates and two-decimal minutes without rewriting untouc
   expect(transport.records[0].watched_seconds).toBe(115.37234567);
 });
 
-it("has administrator logs alongside the main tabs with Library opt-in disabled and limits creation controls to their pages", async () => {
-  const tabs = [...panel.shadowRoot!.querySelectorAll('[role="tab"]')];
-  expect(tabs.map((tab) => tab.textContent!.trim())).toEqual([
-    "Now Playing",
-    "Library",
-    "Journal",
-    "Database",
-    "Logs",
-    "Settings",
-  ]);
-  expect(panel.shadowRoot!.querySelector('input[type="radio"]')).toBeNull();
-  expect(
-    panel.shadowRoot!.querySelector<HTMLButtonElement>("#page-library")!
-      .disabled,
-  ).toBe(true);
-  page("library");
-  await settle();
-  expect(panel.shadowRoot!.querySelector("kaleidescape-library")).toBeNull();
-  expect(
-    panel.shadowRoot!.querySelector("kaleidescape-now-playing"),
-  ).toBeNull();
-  page("now-playing");
-  await settle();
-  expect(
-    panel.shadowRoot!.querySelector("kaleidescape-now-playing"),
-  ).not.toBeNull();
-  expect(panel.shadowRoot!.textContent).not.toContain("＋ Add viewing");
-  page("settings");
-  await settle();
-  const settings = panel.shadowRoot!.querySelector("kaleidescape-settings")!;
-  expect(settings).not.toBeNull();
-  expect(settings.shadowRoot!.querySelector("dialog")).toBeNull();
-  expect(panel.shadowRoot!.textContent).not.toContain("＋ Add viewing");
-  page("database");
-  await settle();
-  const database = panel.shadowRoot!.querySelector("kaleidescape-database")!;
-  expect(database).not.toBeNull();
-  expect(database.shadowRoot!.textContent).toContain("New Entry");
-  expect(
-    panel.shadowRoot!.querySelector(
-      "kaleidescape-settings,kaleidescape-now-playing",
-    ),
-  ).toBeNull();
-  page("journal");
-  await waitFor("The Lantern Voyage");
-  expect(button("＋ Add viewing")).toBeTruthy();
-  panel.client = undefined;
-  panel.hass = {
-    user: { id: "fictional-reader", is_admin: false },
-    connection: { connected: true },
-    callWS: transport.callWS.bind(transport),
-    fetchWithAuth: transport.fetchWithAuth.bind(transport),
-  };
-  await settle();
-  expect(
-    panel.shadowRoot!.querySelector(
-      '[role="tablist"],kaleidescape-settings,kaleidescape-database,kaleidescape-now-playing',
-    ),
-  ).toBeNull();
-});
-
 it("keeps unsaved journal and settings changes when a tab switch is cancelled", async () => {
   await selectViewing();
   input("notes", "Keep this draft");

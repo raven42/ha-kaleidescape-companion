@@ -126,8 +126,8 @@ The [Companion API adapter](playback-controls.md) adds separately opted-in,
 administrator seed discovery, household player selection and fixed
 transport/navigation/power commands and experimental exact-Library-version
 launch. Schema 18 records durable actor-bound outcomes and blocks uncertain
-writes pending physical review. HA installs the pinned API package; the
-independent Python 3.11+ project, CLI and tests remain separate. Built-in HA
+writes pending physical review. The API runtime is bundled with the integration;
+the independent Python 3.11+ project, CLI and tests remain separate. Built-in HA
 entities and recorder sources are preserved.
 
 Fictional API/UI tests cover permission/identity/state checks and
@@ -203,12 +203,3 @@ freshness and source-policy changes invalidate cached projections. Both roles
 retain the same search budget and positive response fields; see
 [search behavior](library.md#browsing) and the fictional enriched benchmark in
 [development](development.md#library-performance).
-
-## Operational diagnostics and transfer
-
-Schema 21 adds a bounded, administrator-only [log book](logging.md), private
-resource aliases, live levels shared with the independent protocol API, and
-privacy-safe instrumentation for external operations and database mutations.
-Calendar Full Sync retries verification reads without replaying writes and
-reports comparison bits/stages for diagnosis. Administrator settings files use
-selectable categories, credential exclusion and review before application.

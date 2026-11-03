@@ -29,7 +29,6 @@ export interface LogPage {
   bytes: number;
   limit_bytes: number;
   banner: string;
-  loggers: string[];
   config: { level: string; log_values: boolean; hidden_through: number };
   dropped: number;
   storage_failures: number;
@@ -707,8 +706,7 @@ export function errorMessage(error: unknown): string {
       "The selected image is no longer available from this provider.",
     provider_disabled: "The required provider or artwork feature is disabled.",
     metadata_disabled: "Enable and configure a scraper in Settings first.",
-    metadata_unavailable:
-      "Metadata retrieval failed. Check the operation logs and try again.",
+    metadata_unavailable: "Metadata retrieval failed. Try again.",
     provider_identity_mismatch:
       "The provider could not verify this movie's title and release year.",
     tmdb_not_found: "TMDB did not find a matching title and release year.",
@@ -1254,17 +1252,7 @@ export class JournalClient {
     }
     return boundedBlob(response, MAX_ARTWORK_BYTES, type);
   }
-  logs(
-    scope: Scope,
-    operation: "list" | "export" | "configure" | "clear",
-    values: Record<string, unknown> = {},
-  ): Promise<LogPage> {
-    return this.call({
-      ...values,
-      ...scopeFields(scope),
-      type: `${DOMAIN}/logs/${operation}`,
-    });
-  }
+
   settingsTransfer(
     scope: Scope,
     operation: "export" | "preview" | "apply",

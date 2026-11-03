@@ -5,8 +5,8 @@ from urllib.parse import urlsplit
 
 from homeassistant.auth.permissions.const import POLICY_READ
 from homeassistant.helpers import entity_registry as er
-from kaleidescape_api import ProtocolError, serial_number
 
+from .._vendor.kaleidescape_api import ProtocolError, serial_number
 from ..core.models import JournalError, seconds, text
 from ..core.security import is_active_admin
 

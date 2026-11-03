@@ -1,12 +1,11 @@
 /** URL contains an allowlisted tab and calendar month, never records, queries, or credentials. */
 export type Page =
-  "now-playing" | "journal" | "library" | "database" | "logs" | "settings";
+  "now-playing" | "journal" | "library" | "database" | "settings";
 const pages: Page[] = [
   "now-playing",
   "library",
   "journal",
   "database",
-  "logs",
   "settings",
 ];
 export function landingPage(

@@ -261,7 +261,7 @@ export class CalendarExport extends LitElement {
             </p>`
           : nothing
       }
-      ${state.error ? html`<p class="warning">${state.error} ${state.failure_stage ? `Stage: ${state.failure_stage}. See Logs; enable DEBUG for content-free comparison details.` : ""}</p>` : nothing}
+      ${state.error ? html`<p class="warning">${state.error} ${state.failure_stage ? `Stage: ${state.failure_stage}. Review Full Sync status and the calendar before retrying.` : ""}</p>` : nothing}
       ${!state.ready ? html`<p class="warning">The calendar must be available and support event reading, creation and deletion.</p>` : nothing}
       <div class="actions">
         <button

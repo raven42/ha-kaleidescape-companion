@@ -15,15 +15,17 @@ Keep HA-discovered entry points at the integration root. Put runtime internals
 in its `core/`, `library/`, `playback/` and `ui/` packages; add feature modules
 when their behavior is implemented. The independent `../kaleidescape-api/`
 project owns protocol code, extensions, packaging, documentation and tests; it
-must not import this integration or development tools. The independent
-`lib/scrapers/` package owns provider parsers/client code and must not import
-HA, the integration or development tools. Regenerate its vendored runtime with
-`dev/vendor_scrapers.py` after changes. Root `dev/` and `frontend/dev/` contain
-development tools only. The production UI must not import development code or
-test fixtures. Keep SQL on the repository's single worker.
+must not import this integration or development tools. Companion's generated
+copy is checked with `dev/vendor_api.py` and included in the runtime archive.
+The independent `lib/scrapers/` package owns provider parsers/client code and
+must not import HA, the integration or development tools. Regenerate its
+vendored runtime with `dev/vendor_scrapers.py` after changes. Root `dev/` and
+`frontend/dev/` contain development tools only. The production UI must not
+import development code or test fixtures. Keep SQL on the repository's single
+worker.
 
 Use isolated instances and fictional data. Keep household data and credentials
-out of source, fixtures, logs, and bundles. Device-control tests and deployment
+out of source, fixtures, and bundles. Device-control tests and deployment
 require explicit user authorization; normal checks must not contact devices.
 
 Run `bash dev/dev.sh check` for relevant code changes. Keep documentation

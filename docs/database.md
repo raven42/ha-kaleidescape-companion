@@ -27,8 +27,8 @@ personal database preferences. These use a separate settings row from Library
 preferences and require no HA reload. Initially the three main tables are
 visible: viewings, sessions and Library. Collections, artwork and sources are
 system tables. **Show system tables** exposes the full trusted inspection
-allowlist; private log configuration/alias keys are excluded. It does not remove
-write protections.
+allowlist; private operational state is excluded. It does not remove write
+protections.
 
 Fit to screen measures the rendered list area and row height, recalculates on
 viewport/list resize, and requests between 1 and 500 rows. The pane uses its
@@ -183,18 +183,6 @@ Provider enrichment is a protected JSON column on **Library** (schema 19). It is
 readable here but not manually editable/importable. The Library detail view
 augments source credits from that cache; raw Database fields continue to show
 their stored values. See [enrichment](enrichment.md).
-
-## Operational log book (schema 21)
-
-`operation_logs` retains sanitized structured events with monotonic IDs, time,
-level, subsystem and measured serialized byte size. `log_state` owns the private
-alias key, live logging options and clear-through marker. The generic Database
-view can inspect log events as a protected system table; the key/state table is
-intentionally absent. Dedicated administrator log APIs manage options and
-hiding. Neither table is imported; SQLite downloads clear both tables and
-compact their snapshot before delivery. JSON exports omit them. Full HA and
-migration backups retain private log state. The [logging policy](logging.md)
-describes the 5 MiB retention and privacy boundaries.
 
 ## Library sort titles (schema 22)
 

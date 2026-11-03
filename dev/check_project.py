@@ -10,8 +10,10 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 if __package__:
+    from .vendor_api import synchronize as synchronize_api
     from .vendor_utils import synchronize
 else:
+    from vendor_api import synchronize as synchronize_api
     from vendor_utils import synchronize
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -83,6 +85,7 @@ def validate() -> None:
         target=INTEGRATION / "_vendor/kaleidescape_scrapers",
         excluded=set(),
     )
+    synchronize_api(check=True)
 
     # Guard the contributor/security guides against accidental cross-file edits;
     # valid links alone cannot detect one guide replacing another's contents.
@@ -112,6 +115,8 @@ def validate() -> None:
         or strings["config"]["step"]["user"]["title"] != NAME
     ):
         raise ValueError(f"Display/project names must be {NAME}")
+    if manifest.get("requirements", []) or project.get("dependencies", []):
+        raise ValueError("Runtime dependencies must be bundled with the integration")
     if project["name"] != "kaleidescape" or frontend["name"] != "kaleidescape":
         raise ValueError("Package names must be kaleidescape")
 

@@ -26,7 +26,6 @@ it("offers category checkboxes with private connection/template categories unche
     false,
     false,
     false,
-    false,
   ]);
   expect(element.shadowRoot!.textContent).toContain(
     "Credentials are always excluded",

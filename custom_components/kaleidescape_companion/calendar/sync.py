@@ -4,16 +4,7 @@ import asyncio
 import json
 from datetime import UTC, datetime, timedelta
 
-from kaleidescape_api.logging import (
-    Level,
-    Operation,
-    Outcome,
-    Resource,
-    Subsystem,
-)
-
 from ..core.models import JournalError
-from ..core.operations import traced
 from ..core.security import async_finish_cleanup
 from .config import DEFAULTS, fingerprint, target
 
@@ -147,7 +138,6 @@ class JournalCalendarSync:
         if self.cancelled or p.stopping:
             await p.repository.async_calendar_sync("cancel", self.job)
 
-    @traced(Subsystem.CALENDAR, Operation.READ, debug=True)
     async def read_month(self, data):
         p = self.publisher
         start = datetime.fromisoformat(data["start_date_time"]).astimezone(UTC)
@@ -221,12 +211,6 @@ class JournalCalendarSync:
                     state = "skipped"
                 else:
                     state = "uncertain"
-                    p.repository.logger.emit(
-                        Subsystem.CALENDAR,
-                        Operation.CREATE,
-                        Outcome.STARTED,
-                        resource=(Resource.VIEWING, row["id"]),
-                    )
                     async with asyncio.timeout(30):
                         await p.hass.services.async_call(
                             "calendar",
@@ -238,26 +222,12 @@ class JournalCalendarSync:
                     self.remember(data)
             else:
                 state = "skipped"
-        except Exception as error:
-            p.repository.logger.emit_failure(
-                Subsystem.CALENDAR, Operation.CREATE, error
-            )
-            # Never expose private provider responses. A failed lookup must not
-            # be treated as an empty calendar and followed by blind creates.
+        except Exception:
+            # A failed lookup must not be treated as an empty calendar and followed
+            # by blind creates.
             if state == "failed":
                 self.cancelled = True
         finally:
-            p.repository.logger.emit(
-                Subsystem.CALENDAR,
-                Operation.CREATE,
-                Outcome.SUCCEEDED
-                if state in {"created", "matched"}
-                else Outcome.UNCERTAIN
-                if state == "uncertain"
-                else Outcome.SKIPPED,
-                level=Level.WARNING if state in {"uncertain", "failed"} else Level.INFO,
-                resource=(Resource.VIEWING, row["id"]),
-            )
             await async_finish_cleanup(
                 p.repository.async_calendar_sync("finish", self.job, row["id"], state)
             )

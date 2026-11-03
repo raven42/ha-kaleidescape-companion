@@ -8,15 +8,6 @@ from contextlib import asynccontextmanager
 from uuid import uuid4
 
 from aiohttp import ClientError
-from kaleidescape_api.logging import (
-    Operation,
-    Outcome,
-    Reason,
-    Resource,
-    Stage,
-    Subsystem,
-    Trigger,
-)
 
 from .._vendor.kaleidescape_scrapers import MovieQuery, ProviderError, Providers
 from ..core.models import JournalError, identifier, invalid
@@ -136,19 +127,14 @@ class TitleReviews:
             async with asyncio.timeout(180), self.slots:
                 self.ready(actor)
                 child.session = child.create_session()
-                with self.parent.repository.logger.context(
-                    actor=(Resource.USER, actor.id),
-                    resource=(Resource.MOVIE, title),
-                    trigger=Trigger.USER_REQUEST,
-                ):
-                    yield child
+                yield child
                 self.ready(actor)
                 completed = True
         except ProviderError as error:
             failed = True
             raise JournalError(
                 str(error),
-                "Provider data could not be retrieved; check the operation logs",
+                "Provider data could not be retrieved; check the configured source",
             ) from None
         except (
             ClientError,
@@ -161,7 +147,7 @@ class TitleReviews:
             failed = True
             raise JournalError(
                 "metadata_unavailable",
-                "Metadata retrieval failed; check the operation logs",
+                "Metadata retrieval failed; check the provider settings",
             ) from error
         finally:
             if child.session:
@@ -328,13 +314,6 @@ class TitleReviews:
             ):
                 child.stopped = True
                 task.cancel()
-        self.parent.repository.logger.emit(
-            Subsystem.METADATA,
-            Operation.PAUSE,
-            Outcome.SUCCEEDED,
-            reason=Reason.METADATA_CANCELLED,
-            resource=(Resource.MOVIE, plan["target"]["id"]),
-        )
         return {"cancelled": True}
 
     async def apply(self, actor, request, data):
@@ -348,16 +327,6 @@ class TitleReviews:
         plan = self.plan(actor, data["plan_id"])
         if plan.get("kind") != "review":
             raise invalid("Select a match and review its data first")
-        logger = self.parent.repository.logger
-        logger.emit(
-            Subsystem.METADATA,
-            Operation.UPDATE,
-            Outcome.STARTED,
-            reason=Reason.METADATA_APPLY,
-            stage=Stage.PREFLIGHT,
-            resource=(Resource.MOVIE, plan["target"]["id"]),
-            count=len(data["images"]),
-        )
         images = {}
         if data["images"]:
             if not self.parent.config.get("library_sync_artwork"):
@@ -368,25 +337,8 @@ class TitleReviews:
                     image = plan["images"].get(choice)
                     if image is None or image["kind"] != kind:
                         raise invalid("Image is not part of this review")
-                    logger.emit(
-                        Subsystem.METADATA,
-                        Operation.REQUEST,
-                        Outcome.STARTED,
-                        reason=Reason.METADATA_IMAGE,
-                        stage=Stage.READ,
-                        resource=(Resource.MOVIE, plan["target"]["id"]),
-                        target=(Resource.EVENT, choice),
-                    )
                     images[kind] = await client.providers.image(plan["provider"], image)
         self.plan(actor, data["plan_id"])
-        logger.emit(
-            Subsystem.METADATA,
-            Operation.WRITE,
-            Outcome.STARTED,
-            reason=Reason.METADATA_COMMIT,
-            stage=Stage.WRITE,
-            resource=(Resource.MOVIE, plan["target"]["id"]),
-        )
         result = await self.parent.repository.async_enrichment(
             "review_apply",
             self.parent.source,
@@ -396,15 +348,6 @@ class TitleReviews:
             plan,
             images,
             self.parent.config.get("library_artwork_cache_mb", 512) * 1024 * 1024,
-        )
-
-        logger.emit(
-            Subsystem.METADATA,
-            Operation.WRITE,
-            Outcome.SUCCEEDED,
-            reason=Reason.METADATA_SAVED,
-            stage=Stage.RECEIPT,
-            resource=(Resource.MOVIE, plan["target"]["id"]),
         )
         return result
 

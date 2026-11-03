@@ -1,7 +1,7 @@
 """Measure reusable title/year suggestions against a read-only exported Library.
 
 Print aggregate counts only. Optional row details go to a new private report,
-never to fixtures, runtime logs or modified input/database files.
+never to fixtures or modified input/database files.
 """
 
 import argparse

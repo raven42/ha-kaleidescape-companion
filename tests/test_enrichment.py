@@ -383,7 +383,6 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
                 "enrichment": {},
             }
             repository = SimpleNamespace(
-                logger=self.repo.logger,
                 async_enrichment=AsyncMock(
                     side_effect=[[row], None, None, None]
                     if artwork
@@ -588,7 +587,3 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
         response.content_type = "text/html"
         with self.assertRaisesRegex(ProviderError, "content_type"):
             await sync._get(url, {})
-        reasons = [event.reason for event in sync.repository.logger.snapshot()]
-        self.assertIn("provider_image_normalized", reasons)
-        self.assertIn("provider_image_invalid", reasons)
-        self.assertIn("provider_image_header", reasons)

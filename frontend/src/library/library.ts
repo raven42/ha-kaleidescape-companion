@@ -703,7 +703,7 @@ export class KaleidescapeLibrary extends LitElement {
   private scraperSummary() {
     const status = this.info?.metadata;
     if (!status) return "";
-    return `Scrapers ${status.enabled === false ? "off" : status.running || status.active ? `running · ${status.processed}/${status.total}` : status.failed || status.error ? "error · check logs" : "idle"} · ${status.cached_groups ?? 0} scraped`;
+    return `Scrapers ${status.enabled === false ? "off" : status.running || status.active ? `running · ${status.processed}/${status.total}` : status.failed || status.error ? "error · check integration status" : "idle"} · ${status.cached_groups ?? 0} scraped`;
   }
   private async sync() {
     if (!this.client || !this.scope?.permissions.edit || this.requesting)

@@ -105,9 +105,9 @@ runtimes first within each tier, with the highest-ranked selected initially.
 
 Journal and Database keep sticky controls and pagination around independently
 scrollable entries and details. Tablets retain side-by-side panes when there is
-room; phones stack them within the available height. Logs use a compact mobile
-table with source information inside the message and full fields under Details.
-Settings keep Save/Cancel and section tabs together in the sticky header.
+room; phones stack them within the available height. The mobile layout keeps
+calendar and database actions compact. Settings keep Save/Cancel and section
+tabs together in the sticky header.
 
 Dialogs have a sticky close header and, where applicable, sticky bottom actions.
 Their height follows the visible viewport, including on-screen keyboard changes
@@ -138,7 +138,7 @@ include phone widths around 360–390 pixels, tablet portrait/landscape around
   the on-screen keyboard open. Confirm list/detail panes remain usable.
 - As an administrator, review Database search, wide tables, edit/delete and
   import/export/matching dialogs, then Settings, calendar-sync/transfer dialogs
-  and Logs with long messages and expanded details.
+  and calendar status with pending-work warnings.
 - Check Now Playing and the remote in portrait and short landscape windows.
   Verify close/save actions remain reachable, including near device safe areas.
 
@@ -646,9 +646,9 @@ view tabs. The slider is gray and left-aligned for Basic, blue and right-aligned
 for Advanced; its accessible name remains Advanced view. Basic uses the
 household interface across all views, including Library, Journal/calendar and
 playback. Advanced adds editing, scraping, purchase and diagnostic information,
-Database, Logs and Settings. This replaces the old Library-only system-button
-option. Advanced is the default; the mode saves per HA user and screen profile.
-It grants no backend permission.
+Database and Settings. This replaces the old Library-only system-button option.
+Advanced is the default; the mode saves per HA user and screen profile. It
+grants no backend permission.
 
 Leaving Advanced while on an administrator-only page or with an admin-only
 dialog open returns to the configured landing page. An administrator-only
@@ -668,33 +668,7 @@ age to 1–12 months and offer a daily HA-local sweep time. Saved status provide
 Run Full Sync now and guarded inspection recovery. Journal's shared edit dialog
 moves end time by the start-time delta; end edits never move start.
 
-## Administrator logs and settings transfer
-
-The **Logs** tab provides subsystem/level filters, bounded paging, manual
-refresh and text/JSON export with a privacy banner. Compact rows show readable
-messages and file/line locations; **Details** expands labelled diagnostic
-fields. **Options** contains the live logging level and explicit movie-metadata
-value opt-in. Old records show **Not recorded** for missing source locations.
-Text exports use readable messages; JSON keeps structured fields. Clear logs
-hides rows through the displayed refresh; Include cleared logs reveals retained
-rows. Capacity eviction still removes the oldest records. Drop/storage/sink
-counters identify incomplete diagnostics.
-
-**Settings → Export / import settings** opens category checkboxes for runtime
-rules, personal browsing, shared hidden collections, logging, private
-connections and custom templates. Credentials never transfer. Review selected
-categories before applying; personal/shared/logging settings apply immediately
-and runtime changes are staged in the native Settings form for Save settings and
-validation. Imported Full Sync enablement requires a fresh dedicated-calendar
-acknowledgement. Protect files containing private categories.
-
-Operator browser review: check the Logs tab as an administrator, level/subsystem
-filters, a DEBUG change, export downloads and Clear/Include cleared behavior;
-verify a normal user cannot see the tab. Review settings category selection,
-import review, native Save validation and narrow-screen dialog actions.
-Automated component/API tests do not replace this browser review.
-
-## Settings categories and linked diagnostics
+## Settings categories
 
 Settings has five keyboard-accessible subtabs under the sticky Save/Cancel bar.
 Switching subtabs preserves unsaved integration changes. Saving reveals the
@@ -715,15 +689,11 @@ Full Sync shows **Pending delete: N** and warns before a forced pass with
 pending deletes or unconfirmed writes. This does not bypass the existing
 safeguards.
 
-In Logs, keyed user, viewing, event and originating-request aliases link layers.
-Click an alias under **Details**, or paste it into **Linked resource /
-request**, to follow related events. Export retains the active alias filter.
-
 Operator browser review: check all five settings subtabs at desktop/tablet
 widths, sticky actions, draft preservation, native validation navigation,
 personal immediate saves, pending-delete status and cancelling/continuing the
-pending-work warning. Review an edit's linked logs across subsystems. Automated
-component tests do not replace this browser review.
+pending-work warning. Automated component tests do not replace this browser
+review.
 
 ### Closing pending dialogs
 
@@ -742,7 +712,7 @@ including in test-dashboard prerequisite validation. Save Settings before
 running the dashboard generator.
 
 Test-dashboard prerequisite failures now identify each missing requirement in
-both the dialog and the operation logs. A blank control hostname uses the
+both in the dialog and status response. A blank control hostname uses the
 Library hostname; if both are blank, playback and dashboard validation use the
 normal `my-kaleidescape.local` default. Journal tracking does not need to be
 enabled if the default player has a matching built-in HA media-player entity.

@@ -23,14 +23,16 @@ From the repository root:
 ```sh
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install --find-links ../kaleidescape-api/dist -e '.[dev]'
+python -m pip install -e '.[dev]'
+python -m pip install -e ../kaleidescape-api
 npm --prefix frontend ci
 bash dev/dev.sh check
 ```
 
 The editable install reads the `dev` extra in `pyproject.toml`, which includes
 Home Assistant and Ruff. The separate editable API install provides its CLI and
-development tools. Frontend dependencies use the npm lockfile. `frontend/.npmrc`
+development tools and supplies the source used to refresh Companion's generated
+vendor copy. Frontend dependencies use the npm lockfile. `frontend/.npmrc`
 disables dependency lifecycle hooks; the SDK's development Husky hook is not
 needed. The explicit build commands still run, and esbuild uses its platform
 package. The optional `bash dev/dev.sh setup` performs the same installation
@@ -60,11 +62,11 @@ memory-only token from that local development account as described in the
 household journal and the enabled cached Library. Keep analytics off if you do
 not want development telemetry.
 
-HA uses `.ha-dev/`, including credentials, logs, and storage. That directory,
-`.venv/`, npm dependencies, and build intermediates are ignored by Git. The
-bundled integration panel remains tracked as a release asset. The launcher
-symlinks only `kaleidescape_companion` into the local HA config, so backend
-edits are available after restarting HA. Rebuild frontend edits with
+HA uses `.ha-dev/`, including credentials and storage. That directory, `.venv/`,
+npm dependencies, and build intermediates are ignored by Git. The bundled
+integration panel remains tracked as a release asset. The launcher symlinks only
+`kaleidescape_companion` into the local HA config, so backend edits are
+available after restarting HA. Rebuild frontend edits with
 `bash dev/dev.sh check`; Vite preview updates automatically.
 
 The initial HA YAML comes from `dev/ha-development.yaml` and is copied only when
@@ -113,6 +115,7 @@ With the virtual environment activated:
 
 ```sh
 python dev/vendor_scrapers.py --check
+python dev/vendor_api.py --check
 PYTHONPATH=lib/scrapers/src python -m unittest discover -s lib/scrapers/tests
 python -m unittest discover -s tests -v
 python dev/check_project.py
@@ -131,10 +134,10 @@ The setuptools backend explicitly includes the
 strings, translations, and bundled panel. `pip install -e '.[dev]'` exposes
 checkout changes without reinstalling Python source files. HA still loads the
 integration through its configuration directory's `custom_components` path; the
-local launcher creates that link for development. Runtime third-party
-requirements for the distributed integration belong in its `manifest.json`; Home
-Assistant itself and development tools belong in the project's `dev` extra. No
-additional runtime library is currently required.
+local launcher creates that link for development. Runtime API and provider code
+are generated into the integration's `_vendor/` directory and included in its
+archive. Home Assistant itself and development tools belong in the project's
+`dev` extra.
 
 The Vite development server binds to loopback. Its development adapter connects
 only to local HA and clears its token on disconnect; the adapter is excluded
@@ -173,8 +176,10 @@ accepts explicit IP/serial and probe/PLAY/STOP operands without starting HA.
 Handle launch is experimental. Normal checks use fictional loopback emulation;
 real device tests are operator actions, separate from build/test tasks. The
 [protocol library guide](protocol-library.md) explains the separate API project.
-Companion installs the pinned API distribution; API development, checks, and
-distribution builds run in the sibling `../kaleidescape-api` checkout.
+The API source is maintained and checked independently in the sibling
+`../kaleidescape-api` checkout. Companion copies its importable runtime modules
+into `_vendor/` before deployment; the standalone project retains its own CLI,
+docs, tests, and distribution build.
 
 ## Integration framework
 
@@ -333,8 +338,8 @@ temporary directory and use SQLite's backup API from a read-only source
 connection. Open only that disposable copy through the repository. Never open
 the source export through runtime setup, which may migrate it or tighten its
 permissions. Keep records, user identities, queries and private files out of
-benchmarks, fixtures and logs; report only aggregate counts/timings. Remove the
-copy afterward. A running scrape need not block read profiling, but take one
+benchmarks and fixtures; report only aggregate counts/timings. Remove the copy
+afterward. A running scrape need not block read profiling, but take one
 consistent snapshot for comparisons.
 
 ## Working practices
@@ -372,17 +377,10 @@ owns individual provider adapters/parsers, and `transport.py` owns the shared
 limiter. HA opt-ins, network allowlists and storage stay in the integration's
 `enrichment/` adapter. Regenerate its runtime subset with
 `python dev/vendor_scrapers.py`; full checks verify equality and run its offline
-tests without installing it. Do not use a household movie/page or real API
-credential as a fixture. Metadata setup and remaining operator validation are
-documented in [enrichment](enrichment.md).
-
-## Adding operational events
-
-Follow the [structured logging contract](logging.md): catalogued labels, safe
-counts and keyed aliases only. Never log exception strings, request/response
-payloads, wire frames, SQL, paths or credential-bearing configuration.
-Independent API changes belong in the sibling API project; run its isolated
-logging/privacy tests as well as the full Companion checks.
+tests without installing it. The API runtime is also copied from the sibling
+project and checked with `python dev/vendor_api.py --check`. Do not use a
+household movie/page or real API credential as a fixture. Metadata setup and
+remaining operator validation are documented in [enrichment](enrichment.md).
 
 ### Validate an exported database
 

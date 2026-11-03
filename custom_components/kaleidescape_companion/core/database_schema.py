@@ -1,7 +1,6 @@
 """Trusted table policies shared by inspection, safe queries and mutations."""
 
 TABLE_KEYS = {
-    "operation_logs": "id",
     "viewings": "id",
     "sessions": "id",
     "library": "id",

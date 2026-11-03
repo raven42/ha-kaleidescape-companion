@@ -1,19 +1,11 @@
 """Publish newly completed viewings via the fixed calendar.create_event action."""
 
 import asyncio
-import logging
 from datetime import datetime, timedelta
 
 from homeassistant.components.calendar import CalendarEntityFeature
 from homeassistant.core import callback
 from homeassistant.helpers.event import async_track_time_interval
-from kaleidescape_api.logging import (
-    Level,
-    Operation,
-    Outcome,
-    Resource,
-    Subsystem,
-)
 
 from ..core.models import JournalError
 from ..core.security import async_finish_cleanup
@@ -21,8 +13,6 @@ from ..library.config import origin
 from ..library.store import source_id
 from ..playback.metadata import metadata_text
 from .config import DEFAULTS, FIELDS, fingerprint, scope, target, template
-
-_LOGGER = logging.getLogger(__name__)
 
 
 def event_data(row, title_template, description_template=None):
@@ -173,12 +163,6 @@ class CalendarPublisher:
             # Persisted 'sending' precedes the external side effect. A timeout,
             # cancellation or crash may have committed: never repeat it blindly.
             state = "uncertain"
-            self.repository.logger.emit(
-                Subsystem.CALENDAR,
-                Operation.CREATE,
-                Outcome.STARTED,
-                resource=(Resource.VIEWING, row["id"]),
-            )
             async with asyncio.timeout(30):
                 await self.hass.services.async_call(
                     "calendar",
@@ -188,41 +172,18 @@ class CalendarPublisher:
                 )
             state = "sent"
             self.history.remember(data)
-        except (JournalError, ValueError, TimeoutError) as error:
-            self.repository.logger.emit_failure(
-                Subsystem.CALENDAR, Operation.CREATE, error
-            )
-            _LOGGER.warning("Calendar publication requires review; no automatic retry")
-        except Exception as error:
-            self.repository.logger.emit_failure(
-                Subsystem.CALENDAR, Operation.CREATE, error
-            )
-            # Provider errors can contain private event content or credentials.
-            _LOGGER.warning(
-                "Calendar provider did not confirm publication; "
-                "review the calendar before retrying"
-            )
+        except JournalError, ValueError, TimeoutError:
+            pass
+        except Exception:
+            pass
         finally:
             if row:
-                self.repository.logger.emit(
-                    Subsystem.CALENDAR,
-                    Operation.CREATE,
-                    Outcome.SUCCEEDED
-                    if state == "sent"
-                    else Outcome.UNCERTAIN
-                    if state == "uncertain"
-                    else Outcome.SKIPPED,
-                    level=Level.INFO if state == "sent" else Level.WARNING,
-                    resource=(Resource.VIEWING, row["id"]),
-                )
                 try:
                     await async_finish_cleanup(
                         self.repository.async_calendar_finish(row["id"], state)
                     )
                 except JournalError:
-                    _LOGGER.warning(
-                        "Calendar receipt could not be saved; review before retrying"
-                    )
+                    pass
 
     async def async_stop(self):
         self.stopping = True

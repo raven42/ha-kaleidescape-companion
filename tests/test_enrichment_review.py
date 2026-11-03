@@ -612,20 +612,6 @@ class TitleReviewTest(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn(review["plan_id"], self.manager.plans)
         self.assertFalse(self.manager.jobs)
 
-    def test_provider_failure_reasons_are_positive_static_codes(self):
-        from custom_components.kaleidescape_companion.core.operations import (
-            failure_reason,
-        )
-
-        self.assertEqual(
-            failure_reason(enrichment.ProviderError("provider_content_type")).value,
-            "provider_content_type",
-        )
-        self.assertIsNone(
-            failure_reason(enrichment.ProviderError("https://private.example/secret"))
-        )
-        self.assertIsNone(failure_reason(ValueError("provider_content_type")))
-
     async def test_png_review_preview_and_apply_store_the_verified_image_type(self):
         review = await self.setup_review()
         png = b"\x89PNG\r\n\x1a\nfictional-image"
