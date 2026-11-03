@@ -38,7 +38,7 @@ Settings has five keyboard-accessible subtabs below sticky Save/Cancel actions:
 | Home Assistant | Recording source entities, calendar selection/templates/Full Sync and test-dashboard generation |
 | Companion      | Recording rules, landing page, shared hidden collections, settings transfer and reload          |
 | Personal       | Fuzzy search and guidance to per-view Options                                                   |
-| Kaleidescape   | Local Library/cache, collection-add opt-in, discovery and playback controls                     |
+| Kaleidescape   | Loaded pyk version, local Library/cache, collection-add opt-in, discovery and playback controls |
 | Scrapers       | Provider opt-ins, credentials, rate limits, preferred sources and enrichment controls           |
 
 Switching subtabs preserves unsaved configuration. Invalid native form fields

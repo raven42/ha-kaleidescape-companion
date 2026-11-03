@@ -59,13 +59,30 @@ def members(db, source, title):
 
 
 def target(db, source, title):
-    from .availability import for_group
+    from .availability import artwork_for_group, for_group
 
     rows = members(db, source, title)
-    enrichment = [json.loads(row["enrichment"]) for row in rows]
+    # Completeness uses the same available, matched versions as Library sensors.
+    # Pending purchase matches remain in the review snapshot but do not count.
+    counted_rows = [row for row in rows if not row["purchase_match_pending"]]
+    enrichment = [json.loads(row["enrichment"]) for row in counted_rows]
     selected = next(row for row in rows if row["id"] == title)
-    current = library_versions(db, source, title)["items"]
-    current = next((row for row in current if row["id"] == title), current[0])
+    versions = library_versions(db, source, title)["items"]
+    current = next((row for row in versions if row["id"] == title), versions[0])
+    cached_images = {
+        row[0] for row in db.execute("SELECT cache_key FROM library_artwork")
+    }
+    counted_ids = {row["id"] for row in counted_rows}
+    artwork_present = {
+        "poster": any(
+            row["id"] in counted_ids and row.get("artwork_key") in cached_images
+            for row in versions
+        ),
+        "backdrop": any(
+            row["id"] in counted_ids and row.get("backdrop_key") in cached_images
+            for row in versions
+        ),
+    }
     href = next((row["href"] for row in rows if row["href"]), None)
     if href is None:
         href = next(
@@ -77,6 +94,29 @@ def target(db, source, title):
             ),
             "",
         )
+    provider_status = {
+        provider: {
+            "fetched_at": max(
+                (
+                    value.get(provider, {}).get("fetched_at")
+                    for value in enrichment
+                    if isinstance(value.get(provider, {}).get("fetched_at"), str)
+                ),
+                default=None,
+            ),
+            "fields": max(
+                (
+                    sum(
+                        value.get(provider, {}).get(key) not in (None, "", [])
+                        for key in REVIEW_FIELDS
+                    )
+                    for value in enrichment
+                ),
+                default=0,
+            ),
+        }
+        for provider in PROVIDERS
+    }
     return {
         "source": source,
         "id": title,
@@ -106,11 +146,21 @@ def target(db, source, title):
         "current": {key: current.get(key) for key in REVIEW_FIELDS},
         "has_backdrop": bool(current.get("backdrop_key")),
         "unavailable": sorted(for_group(db, source, selected["source_group"])),
+        "artwork_unavailable": sorted(
+            artwork_for_group(db, source, selected["source_group"])
+        ),
+        "artwork_present": artwork_present,
+        "provider_status": provider_status,
         "comparison": {
             "title": current["title"],
             "year": current.get("year"),
             "directors": (current.get("directors") or [])[:5],
             "actors": (current.get("actors") or [])[:5],
+            "edition": current.get("edition"),
+            "duration_seconds": current.get("duration_seconds"),
+            "metadata_synced_at": current.get("metadata_synced_at"),
+            "artwork_key": current.get("artwork_key"),
+            "backdrop_key": current.get("backdrop_key"),
         },
     }
 
@@ -216,6 +266,8 @@ def apply(db, directory, source, actor, request, data, plan, images, budget):
                     for kind, key in zip(ordered, keys, strict=True)
                 }
             )
+            for kind in ordered:
+                enrichment.get("unavailable_artwork", {}).pop(kind, None)
             reviewed["providers"] = sorted(
                 set(reviewed.get("providers", [])) | {plan["provider"]}
             )

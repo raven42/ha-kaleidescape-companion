@@ -1,5 +1,5 @@
 const ge = globalThis, jt = ge.ShadowRoot && (ge.ShadyCSS === void 0 || ge.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, Pt = /* @__PURE__ */ Symbol(), Yt = /* @__PURE__ */ new WeakMap();
-let $i = class {
+let wi = class {
   constructor(e, t, i) {
     if (this._$cssResult$ = !0, i !== Pt) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
     this.cssText = e, this.t = t;
@@ -17,13 +17,13 @@ let $i = class {
     return this.cssText;
   }
 };
-const Mi = (n) => new $i(typeof n == "string" ? n : n + "", void 0, Pt), S = (n, ...e) => {
+const Mi = (n) => new wi(typeof n == "string" ? n : n + "", void 0, Pt), S = (n, ...e) => {
   const t = n.length === 1 ? n[0] : e.reduce((i, s, r) => i + ((o) => {
     if (o._$cssResult$ === !0) return o.cssText;
     if (typeof o == "number") return o;
     throw Error("Value passed to 'css' function must be a 'css' function result: " + o + ". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.");
   })(s) + n[r + 1], n[0]);
-  return new $i(t, n, Pt);
+  return new wi(t, n, Pt);
 }, Oi = (n, e) => {
   if (jt) n.adoptedStyleSheets = e.map((t) => t instanceof CSSStyleSheet ? t : t.styleSheet);
   else for (const t of e) {
@@ -63,7 +63,7 @@ const { is: Ni, defineProperty: Ii, getOwnPropertyDescriptor: Fi, getOwnProperty
       }
   }
   return t;
-} }, wi = (n, e) => !Ni(n, e), Qt = { attribute: !0, type: String, converter: at, reflect: !1, useDefault: !1, hasChanged: wi };
+} }, $i = (n, e) => !Ni(n, e), Qt = { attribute: !0, type: String, converter: at, reflect: !1, useDefault: !1, hasChanged: $i };
 Symbol.metadata ??= /* @__PURE__ */ Symbol("metadata"), Be.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
 let W = class extends HTMLElement {
   static addInitializer(e) {
@@ -178,7 +178,7 @@ let W = class extends HTMLElement {
   requestUpdate(e, t, i, s = !1, r) {
     if (e !== void 0) {
       const o = this.constructor;
-      if (s === !1 && (r = this[e]), i ??= o.getPropertyOptions(e), !((i.hasChanged ?? wi)(r, t) || i.useDefault && i.reflect && r === this._$Ej?.get(e) && !this.hasAttribute(o._$Eu(e, i)))) return;
+      if (s === !1 && (r = this[e]), i ??= o.getPropertyOptions(e), !((i.hasChanged ?? $i)(r, t) || i.useDefault && i.reflect && r === this._$Ej?.get(e) && !this.hasAttribute(o._$Eu(e, i)))) return;
       this.C(e, t, i);
     }
     this.isUpdatePending === !1 && (this._$ES = this._$EP());
@@ -261,8 +261,8 @@ const Gi = (n, e) => {
     const h = n[d];
     let c, g, p = -1, y = 0;
     for (; y < h.length && (o.lastIndex = y, g = o.exec(h), g !== null); ) y = o.lastIndex, o === ee ? g[1] === "!--" ? o = ti : g[1] !== void 0 ? o = ii : g[2] !== void 0 ? (_i.test(g[2]) && (s = RegExp("</" + g[2], "g")), o = D) : g[3] !== void 0 && (o = D) : o === D ? g[0] === ">" ? (o = s ?? ee, p = -1) : g[1] === void 0 ? p = -2 : (p = o.lastIndex - g[2].length, c = g[1], o = g[3] === void 0 ? D : g[3] === '"' ? ai : si) : o === ai || o === si ? o = D : o === ti || o === ii ? o = ee : (o = D, s = void 0);
-    const $ = o === D && n[d + 1].startsWith("/>") ? " " : "";
-    r += o === ee ? h + Ki : p >= 0 ? (i.push(c), h.slice(0, p) + xi + h.slice(p) + j + $) : h + j + (p === -2 ? d : $);
+    const w = o === D && n[d + 1].startsWith("/>") ? " " : "";
+    r += o === ee ? h + Ki : p >= 0 ? (i.push(c), h.slice(0, p) + xi + h.slice(p) + j + w) : h + j + (p === -2 ? d : w);
   }
   return [Si(n, r + (n[t] || "<?>") + (e === 2 ? "</svg>" : e === 3 ? "</math>" : "")), i];
 };
@@ -279,14 +279,14 @@ class he {
     for (; (s = I.nextNode()) !== null && h.length < d; ) {
       if (s.nodeType === 1) {
         if (s.hasAttributes()) for (const p of s.getAttributeNames()) if (p.endsWith(xi)) {
-          const y = g[o++], $ = s.getAttribute(p).split(j), E = /([.?@])?(.*)/.exec(y);
-          h.push({ type: 1, index: r, name: E[2], strings: $, ctor: E[1] === "." ? Qi : E[1] === "?" ? Xi : E[1] === "@" ? es : Ve }), s.removeAttribute(p);
+          const y = g[o++], w = s.getAttribute(p).split(j), E = /([.?@])?(.*)/.exec(y);
+          h.push({ type: 1, index: r, name: E[2], strings: w, ctor: E[1] === "." ? Qi : E[1] === "?" ? Xi : E[1] === "@" ? es : Ve }), s.removeAttribute(p);
         } else p.startsWith(j) && (h.push({ type: 6, index: r }), s.removeAttribute(p));
         if (_i.test(s.tagName)) {
           const p = s.textContent.split(j), y = p.length - 1;
           if (y > 0) {
             s.textContent = me ? me.emptyScript : "";
-            for (let $ = 0; $ < y; $++) s.append(p[$], le()), I.nextNode(), h.push({ type: 2, index: ++r });
+            for (let w = 0; w < y; w++) s.append(p[w], le()), I.nextNode(), h.push({ type: 2, index: ++r });
             s.append(p[y], le());
           }
         }
@@ -1591,7 +1591,7 @@ async function ue(n, e, t) {
 function u(n) {
   return typeof n == "object" && n !== null && "code" in n && typeof n.code == "string" ? n.code : "connection_lost";
 }
-function w(n) {
+function $(n) {
   return {
     unauthorized: "Access to this operation is denied. Your journal has been cleared from this view.",
     not_ready: "The integration is not loaded. Reload the connection after it starts.",
@@ -1735,14 +1735,15 @@ class Ft {
       185e3
     );
   }
-  titleScrapeSearch(e, t, i, s) {
+  titleScrapeSearch(e, t, i, s, r) {
     return te(
       this.transport.callWS({
         type: `${m}/metadata/title/search`,
         ...f(e),
         title_id: t,
         provider: i,
-        query: s
+        query: s,
+        ...r !== void 0 ? { year: r } : {}
       }),
       185e3
     );
@@ -1751,6 +1752,12 @@ class Ft {
     return this.prepareCommand(e, "metadata/title/apply", { data: t });
   }
   prepareScraperAvailability(e, t) {
+    return this.prepareCommand(e, "metadata/title/availability", { data: t });
+  }
+  prepareArtworkAvailability(e, t) {
+    return this.prepareCommand(e, "metadata/title/availability", { data: t });
+  }
+  prepareScrapeExpectations(e, t) {
     return this.prepareCommand(e, "metadata/title/availability", { data: t });
   }
   cancelTitleScrape(e, t) {
@@ -2745,7 +2752,7 @@ class A {
 }
 const ye = class ye extends x {
   constructor() {
-    super(...arguments), this.title = "", this.visible = !1, this.generation = 0, this.visibility = () => {
+    super(...arguments), this.fit = "cover", this.title = "", this.visible = !1, this.generation = 0, this.visibility = () => {
       document.hidden ? this.cancelLoad() : this.load();
     };
   }
@@ -2816,6 +2823,7 @@ const ye = class ye extends x {
     return this.url ? a`<img
           src=${this.url}
           alt=${`Cover for ${this.title}`}
+          style=${`object-fit: ${this.fit}`}
           @error=${() => this.queue?.cache.drop(this.cacheKey)}
         />` : a`<span>No cached artwork</span>`;
   }
@@ -2825,6 +2833,7 @@ ye.properties = {
   scope: { attribute: !1 },
   queue: { attribute: !1 },
   artworkKey: { attribute: !1 },
+  fit: { type: String },
   title: { type: String }
 }, ye.styles = S`
     :host {
@@ -2937,9 +2946,9 @@ const ys = {
   audience_score: "Audience score (%)",
   audience_rating: "TMDB audience rating (out of 10)",
   audience_votes: "Audience votes"
-}, $e = class $e extends x {
+}, we = class we extends x {
   constructor() {
-    super(...arguments), this.versionId = "", this.blocked = !1, this.artworkOnly = !1, this.query = "", this.provider = "", this.fields = /* @__PURE__ */ new Set(), this.images = {}, this.pages = { poster: 0, backdrop: 0 }, this.tab = "metadata", this.busy = !1, this.error = "", this.generation = 0, this.queue = new A();
+    super(...arguments), this.versionId = "", this.blocked = !1, this.artworkOnly = !1, this.query = "", this.year = "", this.provider = "", this.sourceExpected = {}, this.artworkExpected = { poster: !0, backdrop: !0 }, this.fields = /* @__PURE__ */ new Set(), this.images = {}, this.pages = { poster: 0, backdrop: 0 }, this.tab = "metadata", this.view = "sources", this.busy = !1, this.error = "", this.generation = 0, this.queue = new A();
   }
   willUpdate(e) {
     ["client", "scope", "versionId", "artworkOnly"].some(
@@ -2959,12 +2968,16 @@ const ys = {
     );
   }
   reset() {
-    this.generation++, this.options = this.review = void 0, this.candidatesPage = void 0, this.query = "", this.fields.clear(), this.images = {}, this.pending = void 0, this.busy = !1, this.error = "", this.provider = "", this.tab = "metadata", this.pages = { poster: 0, backdrop: 0 }, this.queue.cache.dispose(), this.queue = new A(), this.renderRoot.querySelector("dialog")?.close(), this.lock();
+    this.generation++, this.options = this.review = void 0, this.candidatesPage = void 0, this.query = "", this.year = "", this.fields.clear(), this.images = {}, this.pending = void 0, this.busy = !1, this.error = "", this.provider = "", this.sourceExpected = {}, this.artworkExpected = { poster: !0, backdrop: !0 }, this.tab = "metadata", this.view = "sources", this.pages = { poster: 0, backdrop: 0 }, this.queue.cache.dispose(), this.queue = new A(), this.renderRoot.querySelector("dialog")?.close(), this.lock();
   }
   close() {
     const e = this.review?.plan_id ?? this.candidatesPage?.search_id;
     e && this.client && this.scope && this.client.cancelTitleScrape(this.scope, e).catch(() => {
     }), this.reset(), this.requestUpdate();
+  }
+  clearCandidates() {
+    this.candidatesPage && this.client && this.scope && this.client.cancelTitleScrape(this.scope, this.candidatesPage.search_id).catch(() => {
+    }), this.candidatesPage = void 0;
   }
   async open() {
     if (!this.client || !this.scope?.permissions.edit || this.blocked) return;
@@ -2976,18 +2989,48 @@ const ys = {
         this.versionId
       );
       if (e !== this.generation) return;
-      this.options = this.artworkOnly ? {
-        ...t,
-        providers: t.providers.filter(
-          (i) => i.id === "tmdb"
-        )
-      } : t, this.query = t.search_title ?? t.title ?? "", this.provider = this.options.providers.find((i) => i.available)?.id ?? "";
+      this.options = t, this.query = t.search_title ?? t.title ?? "", this.year = t.current?.year ? String(t.current.year) : "", this.sourceExpected = Object.fromEntries(
+        this.options.providers.map((i) => [
+          i.id,
+          !i.unavailable
+        ])
+      ), this.artworkExpected = {
+        poster: !t.artwork_unavailable?.includes("poster"),
+        backdrop: !t.artwork_unavailable?.includes("backdrop")
+      }, this.provider = this.visibleProviders.find(
+        (i) => i.available && !i.unavailable
+      )?.id ?? "";
     } catch (t) {
       e === this.generation && this.report(t);
     } finally {
       e === this.generation && (this.busy = !1, this.requestUpdate());
     }
-    e === this.generation && this.artworkOnly && this.provider && this.options?.artwork_enabled && await this.scrape();
+  }
+  get visibleProviders() {
+    return this.artworkOnly ? (this.options?.providers ?? []).filter(
+      (e) => e.supports_images
+    ) : this.options?.providers ?? [];
+  }
+  get validYear() {
+    return !this.year.trim() || Number.isInteger(Number(this.year)) && Number(this.year) >= 1800 && Number(this.year) <= 2100;
+  }
+  get expectationsChanged() {
+    return !!this.options && (this.options.providers.some(
+      (e) => this.sourceExpected[e.id] !== !e.unavailable
+    ) || ["poster", "backdrop"].some(
+      (e) => this.artworkExpected[e] !== !this.options.artwork_unavailable?.includes(e)
+    ));
+  }
+  statusLine(e, t) {
+    return a`<p class="status-line" data-complete=${t}>
+      <span class="status-icon" aria-hidden="true"
+        >${t ? "✓" : "⚠"}</span
+      >
+      ${e}: ${t ? "Complete" : "Missing"}
+    </p>`;
+  }
+  async inspect(e) {
+    this.expectationsChanged || !this.sourceExpected[e] || (this.provider = e, await this.search());
   }
   async scrape(e = "") {
     if (!this.client || !this.scope || !this.provider || this.pending) return;
@@ -3011,7 +3054,7 @@ const ys = {
         );
         return;
       }
-      this.review = i, this.fields = new Set(this.artworkOnly ? [] : Object.keys(i.fields)), this.images = {};
+      this.review = i, this.view = "mapping", this.fields = new Set(this.artworkOnly ? [] : Object.keys(i.fields)), this.images = {};
       const s = i.images.find((r) => r.kind === "backdrop");
       i.has_backdrop === !1 && s && (this.images.backdrop = s.id), this.tab = this.artworkOnly ? i.images.some((r) => r.kind === "poster") ? "poster" : "backdrop" : "metadata", this.pages = { poster: 0, backdrop: 0 };
     } catch (i) {
@@ -3021,7 +3064,7 @@ const ys = {
     }
   }
   async search() {
-    if (!this.client || !this.scope || !this.provider || !this.query.trim() || this.pending || this.busy)
+    if (!this.client || !this.scope || !this.provider || !this.sourceExpected[this.provider] || !this.query.trim() || !this.validYear || this.pending || this.busy)
       return;
     const e = this.generation;
     this.busy = !0, this.error = "", this.requestUpdate();
@@ -3030,53 +3073,55 @@ const ys = {
         this.scope,
         this.versionId,
         this.provider,
-        this.query
+        this.query,
+        this.year.trim() ? Number(this.year) : void 0
       );
-      e === this.generation && (this.candidatesPage = t, this.review = void 0);
+      e === this.generation && (this.candidatesPage = t, this.review = void 0, this.view = "sources");
     } catch (t) {
       e === this.generation && this.report(t);
     } finally {
       e === this.generation && (this.busy = !1, this.requestUpdate());
     }
   }
-  async apply(e) {
-    if (!this.client || !this.scope || !this.review && !this.pending && e === void 0 || this.busy)
+  async apply() {
+    if (!this.client || !this.scope || !this.review && !this.pending && !this.expectationsChanged || this.busy)
       return;
-    const t = this.generation;
+    const e = this.generation;
     this.busy = !0, this.error = "";
     try {
-      if (e !== void 0 && !this.pending) {
-        const s = await this.client.titleScrapeOptions(
+      if (!this.pending && !this.review) {
+        const i = await this.client.titleScrapeOptions(
           this.scope,
           this.versionId
         );
-        if (t !== this.generation) return;
-        if (!s.snapshot) throw new b("refresh_required");
-        this.pending = this.client.prepareScraperAvailability(this.scope, {
+        if (e !== this.generation) return;
+        if (!i.snapshot || i.snapshot !== this.options?.snapshot)
+          throw new b("refresh_required");
+        this.pending = this.client.prepareScrapeExpectations(this.scope, {
           title_id: this.versionId,
-          provider: this.provider,
-          snapshot: s.snapshot,
-          unavailable: e
+          snapshot: i.snapshot,
+          providers: this.sourceExpected,
+          artwork: this.artworkExpected
         });
       }
-      this.pending ??= this.client.prepareTitleScrape(this.scope, {
+      !this.pending && this.review && (this.pending = this.client.prepareTitleScrape(this.scope, {
         plan_id: this.review.plan_id,
         fields: [...this.fields],
         images: this.images,
         ...this.review.matched ? { save_match: !0 } : {}
-      }), this.lock(), this.requestUpdate();
-      const i = await this.client.applyTitleScrape(this.pending);
-      if (t !== this.generation) return;
+      })), this.lock(), this.requestUpdate();
+      const t = await this.client.applyTitleScrape(this.pending);
+      if (e !== this.generation) return;
       this.pending = void 0, this.lock(), this.close(), this.dispatchEvent(
         new CustomEvent("metadata-changed", {
-          detail: i,
+          detail: t,
           bubbles: !0,
           composed: !0
         })
       );
-    } catch (i) {
-      if (t !== this.generation) return;
-      this.report(i), [
+    } catch (t) {
+      if (e !== this.generation) return;
+      this.report(t), [
         "invalid_request",
         "conflict",
         "refresh_required",
@@ -3093,13 +3138,13 @@ const ys = {
         "provider_rate_limited",
         "provider_artwork_unavailable",
         "provider_disabled"
-      ].includes(u(i)) && (this.pending = void 0, this.lock());
+      ].includes(u(t)) && (this.pending = void 0, this.lock());
     } finally {
-      t === this.generation && (this.busy = !1, this.requestUpdate());
+      e === this.generation && (this.busy = !1, this.requestUpdate());
     }
   }
   report(e) {
-    this.error = w(e), u(e) === "unauthorized" && this.dispatchEvent(
+    this.error = $(e), u(e) === "unauthorized" && this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     );
   }
@@ -3221,6 +3266,101 @@ const ys = {
     )}
       </div>` : l;
   }
+  searchPanel() {
+    return this.options ? a`<section class="manager-section" aria-label="Search and match">
+      <h3>Search &amp; Match</h3>
+      <div class="match-search">
+        <label
+          >Title search<input
+            name="scraper_query"
+            type="search"
+            maxlength="200"
+            .value=${this.query}
+            ?disabled=${this.busy || !!this.pending}
+            @input=${(e) => {
+      this.query = e.target.value, this.review = void 0, this.clearCandidates(), this.view = "sources", this.requestUpdate();
+    }}
+        /></label>
+        <label class="year-field"
+          >Release year<input
+            name="scraper_year"
+            type="number"
+            min="1800"
+            max="2100"
+            step="1"
+            .value=${this.year}
+            ?disabled=${this.busy || !!this.pending}
+            @input=${(e) => {
+      this.year = e.target.value, this.review = void 0, this.clearCandidates(), this.view = "sources", this.requestUpdate();
+    }}
+        /></label>
+      </div>
+      ${this.review?.matched ? a`<p class="notice">
+              Selected match:
+              <strong
+                >${this.review.matched.title}
+                (${this.review.matched.year})</strong
+              >
+            </p>` : l}
+      ${this.matchResults()}
+    </section>` : l;
+  }
+  sourcePanel() {
+    return this.options ? a`<section class="manager-section" aria-label="Scraper sources">
+      <h3>Scraper Sources</h3>
+      ${this.artworkOnly && !this.options.artwork_enabled ? a`<p class="notice">Enable Sync artwork in Settings to retrieve image choices.</p>` : l}
+      <p class="muted">
+        Switch on sources expected for this movie. Inspect searches that source
+        using the title and year above. Save switch changes before inspecting.
+      </p>
+      <div class="source-list">
+        ${this.visibleProviders.map(
+      (e) => a`<div class="source-row" data-provider=${e.id}>
+              <label
+                class="switch"
+                title=${`Use ${e.label} for this movie`}
+                ><input
+                  type="checkbox"
+                  aria-label=${`Use ${e.label} for this movie`}
+                  .checked=${this.sourceExpected[e.id] ?? !1}
+                  ?disabled=${this.busy || !!this.pending || !!this.review || !this.options?.snapshot}
+                  @change=${(t) => {
+        this.clearCandidates(), this.sourceExpected = {
+          ...this.sourceExpected,
+          [e.id]: t.target.checked
+        }, this.requestUpdate();
+      }} /><span aria-hidden="true"></span
+              ></label>
+              <strong>${e.label}</strong>
+              <span class="source-detail"
+                >${e.has_data ? `${e.fields ?? 0} fields saved` : this.sourceExpected[e.id] ? "Metadata missing" : "No data saved"}<br /><small
+                  >${this.sourceExpected[e.id] ? e.available ? "Included" : "Needs configuration" : "Excluded from completeness"}${e.fetched_at ? ` · Updated ${new Date(e.fetched_at).toLocaleDateString()}` : ""}</small
+                ></span
+              >
+              <div class="actions">
+                <button
+                  ?disabled=${!e.available || !this.sourceExpected[e.id] || this.busy || !!this.pending || this.expectationsChanged || !this.query.trim() || !this.validYear}
+                  @click=${() => {
+        this.inspect(e.id);
+      }}
+                >
+                  Inspect
+                </button>
+              </div>
+            </div>`
+    )}
+      </div>
+      ${this.visibleProviders.some((e) => e.available) ? l : a`<p class="muted">Configure a scraper in Settings first.</p>`}
+    </section>` : l;
+  }
+  historyPanel() {
+    return this.options ? a`<section class="manager-section" aria-label="Source history">
+      <h3>Source History</h3>
+      <div class="source-list">
+        ${this.options.providers.map((e) => a`<div class="source-row" data-provider=${e.id}><strong>${e.label}</strong><span>${e.fetched_at ? `${e.fields ?? 0} fields saved` : "No saved metadata"}</span><small>${e.fetched_at ? `Last updated ${new Date(e.fetched_at).toLocaleString()}` : e.unavailable ? "No metadata expected" : "Not yet scraped"}</small></div>`)}
+      </div>
+    </section>` : l;
+  }
   render() {
     return this.scope?.permissions.edit ? a`${It(this.artworkOnly ? "Edit Artwork" : "Scrape title", this.artworkOnly ? "artwork" : "scrape", this.blocked || !!this.pending, () => this.open(), "scrape-button")}
       <dialog
@@ -3232,16 +3372,39 @@ const ys = {
       e.preventDefault(), this.close();
     }}
       >
-        <div class="card-head">
-          <h2 id="scrape-title">
-            ${this.artworkOnly ? this.review ? `Edit Artwork: ${this.review.title}` : "Edit Artwork" : this.review ? `Review scrape: ${this.review.title}` : "Scrape title"}
-          </h2>
+        <div class="card-head manager-head">
+          <div>
+            <h2 id="scrape-title">Movie Metadata Manager</h2>
+            <p>
+              Search, scrape and reconcile
+              metadata${this.artworkOnly ? " and artwork" : ""}.
+            </p>
+          </div>
           ${_(() => this.close())}
         </div>
         ${this.error ? a`<p class="error" role="alert">${this.error}</p>` : l}
         ${this.busy ? a`<p role="status">${this.pending ? "Applying selected data…" : "Retrieving provider data…"}</p>` : l}
-        ${this.currentMovie()}
-        ${this.review ? a`${this.review.matched ? a`<p class="notice">Matched: <strong>${this.review.matched.title} (${this.review.matched.year})</strong>. This source choice will be saved for future scrapes.</p>` : l}
+        ${this.currentMovie()} ${this.searchPanel()}
+        ${this.options ? a`<div
+                class="page-tabs manager-tabs"
+                role="tablist"
+                aria-label="Metadata manager sections"
+                @keydown=${this.tabKey}
+              >
+                ${["sources", "mapping", "history"].map(
+      (e) => a`<button
+                      role="tab"
+                      aria-selected=${this.view === e}
+                      tabindex=${this.view === e ? 0 : -1}
+                      @click=${() => {
+        this.view = e, this.requestUpdate();
+      }}
+                    >
+                      ${e === "sources" ? "Sources" : e === "mapping" ? "Field Mapping" : "History"}
+                    </button>`
+    )}
+              </div>` : l}
+        ${this.view === "mapping" && this.review ? a`<section class="manager-section" aria-label="Field mapping">
                 ${this.artworkOnly ? a`<p class="muted">
                         Choose a poster and backdrop. Only selected images are
                         applied; movie details are kept.
@@ -3332,107 +3495,141 @@ ${Array.isArray(t.after) ? t.after.join(", ") : String(t.after)}</pre>
                                 </details>
                               </div>`
     )}
-                        </div>` : this.gallery(this.tab)}${this.review.images.length ? l : a`<p class="muted">${this.review.artwork_enabled ? "This provider returned no image choices." : "Enable Sync artwork in Settings to retrieve image choices."}</p>`}` : this.options ? a`${this.artworkOnly && !this.options.artwork_enabled ? a`<p class="notice">Enable Sync artwork in Settings to retrieve image choices.</p>` : l}<label
-                    >Enabled scraper<select
-                      .value=${this.provider}
-                      ?disabled=${this.busy}
-                      @change=${(e) => {
-      this.provider = e.target.value, this.candidatesPage = void 0, this.error = "", this.requestUpdate();
-    }}
-                    >
-                      <option value="">Choose a scraper</option>
-                      ${this.options.providers.map(
-      (e) => a`<option
-                            value=${e.id}
-                            ?disabled=${!e.available}
-                            title=${e.missing_data ? "No saved data from this scraper" : ""}
-                            aria-label=${[e.label, e.unavailable ? "no data available" : e.missing_data ? "no saved data" : "", e.available ? "" : "missing credential"].filter(Boolean).join(" · ")}
-                          >
-                            ${e.label}${e.unavailable ? " · no data available" : e.missing_data ? " ⚠" : ""}${e.available ? "" : " · missing credential"}
-                          </option>`
-    )}
-                    </select></label
-                  >
-                  ${this.options.providers.some((e) => e.missing_data) ? a`<p class="muted">⚠ No saved data from this scraper.</p>` : l}
-                  ${this.options.providers.find((e) => e.id === this.provider)?.unavailable ? a`<p class="muted">No scraper data available for this provider. Automatic attempts and conflicts are excluded. You can still search manually, or clear the flag to resume automatic attempts.</p>` : l}
-                  <form
-                    class="match-search"
-                    @submit=${(e) => {
-      e.preventDefault(), this.search();
-    }}
-                  >
-                    <label
-                      >Title search<input
-                        name="scraper_query"
-                        type="search"
-                        maxlength="200"
-                        .value=${this.query}
-                        ?disabled=${this.busy || !!this.pending}
-                        @input=${(e) => {
-      this.query = e.target.value, this.requestUpdate();
-    }} /></label
-                    ><button
-                      type="submit"
-                      ?disabled=${this.busy || !this.provider || !this.query.trim()}
-                    >
-                      Search titles
-                    </button>
-                  </form>
-                  ${this.matchResults()}${this.options.providers.some((e) => e.available) ? l : a`<p class="muted">Enable and configure a scraper in Settings first.</p>`}` : l}
-        <div class="dialog-footer">
-          ${!this.artworkOnly && !this.review && !this.pending && this.options?.snapshot && this.provider ? a`<button class="availability-button" ?disabled=${this.busy} @click=${() => this.apply(!this.options?.providers.find((e) => e.id === this.provider)?.unavailable)}>${this.options.providers.find((e) => e.id === this.provider)?.unavailable ? "Clear no-data flag" : "Mark no scraper data available"}</button>` : l}
-          ${this.pending ? a`<button
-                  ?disabled=${this.busy}
-                  @click=${() => {
+                        </div>` : this.gallery(this.tab)}${this.review.images.length ? l : a`<p class="muted">${this.review.artwork_enabled ? "This provider returned no image choices." : "Enable Sync artwork in Settings to retrieve image choices."}</p>`}
+              </section>` : this.view === "sources" ? this.sourcePanel() : this.view === "history" ? this.historyPanel() : a`<section class="manager-section">
+                    <p class="muted">
+                      Choose a source and Inspect it to compare fields and
+                      images.
+                    </p>
+                  </section>`}
+        <div class="dialog-footer manager-actions">
+          <div class="actions">
+            ${this.pending ? a`<button
+                    ?disabled=${this.busy}
+                    @click=${() => {
       window.confirm(
         "Inspect the Library before discarding this unconfirmed apply. Discard retry?"
       ) && (this.pending = void 0, this.lock(), this.requestUpdate());
     }}
-                >
-                  Discard retry
-                </button>` : this.review ? a`<button
-                    ?disabled=${this.busy}
+                  >
+                    Discard retry
+                  </button>` : this.review ? a`<button
+                      ?disabled=${this.busy}
+                      @click=${() => {
+      this.review = void 0, this.candidatesPage = void 0, this.view = "sources", this.error = "", this.requestUpdate();
+    }}
+                    >
+                      Change match / scraper
+                    </button>` : l}${this.review && this.view !== "mapping" ? a`<button
                     @click=${() => {
-      this.review = void 0, this.error = "", this.requestUpdate();
+      this.view = "mapping", this.requestUpdate();
     }}
                   >
-                    Change match / scraper
+                    Review Data
                   </button>` : l}<button
-            class="primary"
-            ?disabled=${this.busy || this.artworkOnly && !this.options?.artwork_enabled || !this.review && !this.provider || !!this.review && (this.artworkOnly || !this.review.matched) && !this.fields.size && !Object.keys(this.images).length}
-            @click=${() => this.pending || this.review ? this.apply() : this.scrape()}
-          >
-            ${this.pending ? "Retry exact apply" : this.review ? this.artworkOnly ? "Apply images" : this.review.matched && !this.fields.size && !Object.keys(this.images).length ? "Save match" : "Apply selected data" : this.candidatesPage ? "Try automatic match" : "Scrape title"}
-          </button>
+              class="primary"
+              ?disabled=${this.busy || !this.pending && !this.review && (!this.expectationsChanged || !this.options?.snapshot) || !!this.review && (this.artworkOnly || !this.review.matched) && !this.fields.size && !Object.keys(this.images).length}
+              @click=${() => this.apply()}
+            >
+              ${this.pending ? "Retry exact save" : "Save"}
+            </button>
+          </div>
         </div>
       </dialog>` : l;
   }
   currentMovie() {
-    const e = this.options?.current;
-    return e ? a`<section class="current-movie" aria-label="Current Library movie">
-          <h3>Current Library movie</h3>
-          <p>
-            <strong>${e.title}</strong> ·
-            ${e.year ?? "Year unavailable"}
-          </p>
-          <p>
-            <strong>Director:</strong>
-            ${e.directors.join(", ") || "Unavailable"}
-          </p>
-          <p>
-            <strong>Top cast:</strong>
-            ${e.actors.join(", ") || "Unavailable"}
-          </p>
+    const e = this.options?.current, t = this.options?.artwork_present?.poster ?? !!e?.artwork_key, i = this.options?.artwork_present?.backdrop ?? !!e?.backdrop_key, s = this.options?.providers.every(
+      (r) => !this.sourceExpected[r.id] || r.has_data === !0
+    ) ?? !0;
+    return e ? a`<section
+          class="manager-section current-movie"
+          aria-label="Current Library movie"
+        >
+          <h3>
+            Current Library Info <small class="muted">Existing record</small>
+          </h3>
+          <div class="current-layout">
+            <div class="current-identity">
+              <div class="current-poster">
+                <kaleidescape-library-cover
+                  .client=${this.client}
+                  .scope=${this.scope}
+                  .queue=${this.queue}
+                  .artworkKey=${e.artwork_key}
+                  .title=${e.title}
+                ></kaleidescape-library-cover>
+                <div class="expectation">
+                  <label class="switch" title="Expect cover art for this movie"
+                    ><input
+                      type="checkbox"
+                      aria-label="Expect cover art"
+                      .checked=${this.artworkExpected.poster}
+                      ?disabled=${this.busy || !!this.pending || !!this.review || !this.options?.snapshot}
+                      @change=${(r) => {
+      this.artworkExpected.poster = r.target.checked, this.requestUpdate();
+    }} /><span aria-hidden="true"></span></label
+                  ><span>Cover</span>
+                </div>
+              </div>
+              <div>
+                <h3>${e.title}</h3>
+                <p>
+                  ${e.year ?? "Year unavailable"} ·
+                  ${e.duration_seconds ? `${Math.round(e.duration_seconds / 60)} min` : "Runtime unavailable"}
+                </p>
+                <dl class="current-meta">
+                  <dt>Edition</dt>
+                  <dd>${e.edition || "Unavailable"}</dd>
+                  <dt>Director</dt>
+                  <dd>${e.directors.join(", ") || "Unavailable"}</dd>
+                  <dt>Top cast</dt>
+                  <dd>${e.actors.join(", ") || "Unavailable"}</dd>
+                  <dt>Metadata updated</dt>
+                  <dd>
+                    ${e.metadata_synced_at ? new Date(e.metadata_synced_at).toLocaleDateString() : "Unavailable"}
+                  </dd>
+                </dl>
+              </div>
+            </div>
+            <div class="current-backdrop">
+              <kaleidescape-library-cover
+                .client=${this.client}
+                .scope=${this.scope}
+                .queue=${this.queue}
+                .artworkKey=${e.backdrop_key}
+                .title=${`${e.title} backdrop`}
+                .fit=${"contain"}
+              ></kaleidescape-library-cover>
+              <div class="expectation">
+                <label class="switch" title="Expect backdrop art for this movie"
+                  ><input
+                    type="checkbox"
+                    aria-label="Expect backdrop art"
+                    .checked=${this.artworkExpected.backdrop}
+                    ?disabled=${this.busy || !!this.pending || !!this.review || !this.options?.snapshot}
+                    @change=${(r) => {
+      this.artworkExpected.backdrop = r.target.checked, this.requestUpdate();
+    }} /><span aria-hidden="true"></span></label
+                ><span>Backdrop</span>
+              </div>
+            </div>
+            <div class="artwork-status">
+              <h3>Scraping status</h3>
+              ${this.statusLine("Artwork", !this.artworkExpected.poster || t)}
+              ${this.statusLine("Backdrop", !this.artworkExpected.backdrop || i)}
+              ${this.statusLine("Metadata", s)}
+            </div>
+          </div>
         </section>` : l;
   }
 };
-$e.properties = {
+we.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   versionId: {},
   blocked: { type: Boolean },
   artworkOnly: { type: Boolean }
-}, $e.styles = [
+}, we.styles = [
   q,
   Nt,
   S`
@@ -3443,8 +3640,191 @@ $e.properties = {
         border-radius: 999px;
         min-height: 44px;
       }
-      dialog {
-        width: min(800px, calc(100% - 24px));
+      dialog.inset-dialog {
+        --dialog-top-gap: max(24px, env(safe-area-inset-top));
+        width: min(900px, calc(100% - 24px));
+        max-height: min(88dvh, 900px);
+        overflow-y: auto;
+      }
+      .manager-head > div:first-child {
+        flex: 1;
+        min-width: 0;
+      }
+      .manager-head .dialog-close {
+        margin-left: auto;
+      }
+      .manager-head p {
+        margin: 2px 0 0;
+        color: var(--muted);
+      }
+      .manager-section {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 14px;
+        margin-block: 12px;
+        background: var(--card-background-color, transparent);
+      }
+      .manager-section h3 {
+        margin: 0 0 10px;
+      }
+      .current-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.3fr) minmax(220px, 0.85fr) minmax(
+            155px,
+            0.7fr
+          );
+        gap: 14px;
+        align-items: start;
+      }
+      .current-identity {
+        display: grid;
+        grid-template-columns: 84px minmax(0, 1fr);
+        gap: 12px;
+      }
+      .current-identity kaleidescape-library-cover {
+        width: 84px;
+        height: 126px;
+        aspect-ratio: 2 / 3;
+        border-radius: 8px;
+      }
+      .current-backdrop kaleidescape-library-cover {
+        width: min(100%, 224px);
+        height: 126px;
+        aspect-ratio: 16 / 9;
+        border-radius: 8px;
+      }
+      .current-meta {
+        margin: 0;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 4px 12px;
+      }
+      .current-meta dt {
+        color: var(--muted);
+      }
+      .current-meta dd {
+        margin: 0;
+      }
+      .expectation {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+        font-size: 13px;
+      }
+      .status-line {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin: 7px 0;
+        font-size: 13px;
+      }
+      .status-line[data-complete="true"] .status-icon {
+        color: var(--success-color, #4caf50);
+      }
+      .status-line[data-complete="false"] .status-icon {
+        color: var(--warning-color, #e2a600);
+      }
+      .switch {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        width: 38px;
+        height: 22px;
+        flex: none;
+        cursor: pointer;
+      }
+      .switch input {
+        position: absolute;
+        opacity: 0;
+        width: 1px;
+        height: 1px;
+      }
+      .switch span {
+        width: 38px;
+        height: 22px;
+        border-radius: 999px;
+        background: var(--divider-color, #666);
+        transition: background 0.15s;
+      }
+      .switch span::after {
+        content: "";
+        display: block;
+        width: 18px;
+        height: 18px;
+        margin: 2px;
+        border-radius: 50%;
+        background: #fff;
+        transition: transform 0.15s;
+      }
+      .switch input:checked + span {
+        background: var(--accent);
+      }
+      .switch input:checked + span::after {
+        transform: translateX(16px);
+      }
+      .switch input:focus-visible + span {
+        outline: 3px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .switch input:disabled + span {
+        opacity: 0.5;
+      }
+      .source-list {
+        display: grid;
+        gap: 8px;
+      }
+      .source-row {
+        display: grid;
+        grid-template-columns:
+          38px minmax(120px, 1fr) minmax(150px, 1.2fr)
+          auto;
+        gap: 10px;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px;
+      }
+      .source-row small {
+        color: var(--muted);
+      }
+      .manager-tabs {
+        margin-top: 12px;
+      }
+      .manager-actions {
+        justify-content: space-between;
+      }
+      .source-row .actions {
+        justify-content: flex-end;
+      }
+      @media (max-width: 850px) {
+        .current-layout {
+          grid-template-columns: minmax(0, 1fr) minmax(190px, 0.8fr);
+        }
+        .artwork-status {
+          grid-column: 1 / -1;
+        }
+        .source-row {
+          grid-template-columns: 38px minmax(0, 1fr) auto;
+        }
+        .source-row .source-detail {
+          grid-column: 2 / -1;
+        }
+      }
+      @media (max-width: 600px) {
+        .current-layout {
+          grid-template-columns: 1fr;
+        }
+        .artwork-status {
+          grid-column: auto;
+        }
+        .source-row {
+          grid-template-columns: 38px minmax(0, 1fr);
+        }
+        .source-row .actions {
+          grid-column: 2;
+          justify-content: flex-start;
+        }
       }
       .scrape-fields {
         display: grid;
@@ -3496,9 +3876,6 @@ $e.properties = {
         margin-top: 6px;
       }
       .current-movie {
-        padding: 8px 12px;
-        margin-block: 8px 12px;
-        border-left: 2px solid var(--line);
         overflow-wrap: anywhere;
       }
       .current-movie h3 {
@@ -3530,8 +3907,8 @@ $e.properties = {
         flex: 1;
         min-width: 0;
       }
-      .match-search button {
-        flex: none;
+      .match-search .year-field {
+        flex: 0 0 110px;
       }
       .candidate {
         min-width: 0;
@@ -3576,7 +3953,7 @@ $e.properties = {
       }
     `
 ];
-let lt = $e;
+let lt = we;
 customElements.get("kaleidescape-title-scrape") || customElements.define("kaleidescape-title-scrape", lt);
 function oi(n) {
   return n.toLocaleLowerCase().normalize("NFKD").replace(new RegExp("\\p{M}", "gu"), "").match(/[\p{L}\p{N}_]+/gu)?.join(" ") ?? "";
@@ -3646,11 +4023,11 @@ let Ai = class {
     return this.render(...t);
   }
 };
-const { I: $s } = is, li = (n) => n, ws = (n) => n.strings === void 0, di = () => document.createComment(""), ie = (n, e, t) => {
+const { I: ws } = is, li = (n) => n, $s = (n) => n.strings === void 0, di = () => document.createComment(""), ie = (n, e, t) => {
   const i = n._$AA.parentNode, s = e === void 0 ? n._$AB : e._$AA;
   if (t === void 0) {
     const r = i.insertBefore(di(), s), o = i.insertBefore(di(), s);
-    t = new $s(r, o, n, n.options);
+    t = new ws(r, o, n, n.options);
   } else {
     const r = t._$AB.nextSibling, o = t._$AM, d = o !== n;
     if (d) {
@@ -3672,7 +4049,7 @@ const { I: $s } = is, li = (n) => n, ws = (n) => n.strings === void 0, di = () =
 const hi = Ui(class extends Ai {
   constructor(n) {
     if (super(n), n.type !== O.PROPERTY && n.type !== O.ATTRIBUTE && n.type !== O.BOOLEAN_ATTRIBUTE) throw Error("The `live` directive is not allowed on child or event bindings");
-    if (!ws(n)) throw Error("`live` bindings can only contain a single expression");
+    if (!$s(n)) throw Error("`live` bindings can only contain a single expression");
   }
   render(n) {
     return n;
@@ -4863,7 +5240,7 @@ const Cs = {
   unconfirmed: "The command may have executed. An administrator must inspect the player before more commands can be sent. Nothing will be replayed automatically.",
   rejected: "The player rejected the command. Nothing was retried.",
   not_sent: "Settings or access changed before sending. The command was not sent."
-}, we = class we extends x {
+}, $e = class $e extends x {
   constructor() {
     super(...arguments), this.mode = "remote", this.versionId = "", this.playerId = "", this.inlineRemote = !1, this.value = "", this.configured = !0, this.generation = 0, this.key = "", this.waking = !1, this.wakeDeadline = 0, this.started = "", this.lastOperation = "", this.selectedPlayer = "", this.dialog = "players", this.acknowledge = "", this.busy = !1, this.error = "", this.notice = "", this.locked = !1;
   }
@@ -4901,7 +5278,7 @@ const Cs = {
       control_uncertain: "An administrator must inspect and acknowledge the previous uncertain command.",
       control_limit: "Control receipt storage is full. Administrator maintenance is required."
     };
-    this.error = i[t] ?? w(e), t === "unauthorized" && (this.generation++, this.info = this.pending = this.status = void 0, this.selectedPlayer = "", this.dispatchEvent(
+    this.error = i[t] ?? $(e), t === "unauthorized" && (this.generation++, this.info = this.pending = this.status = void 0, this.selectedPlayer = "", this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     ));
   }
@@ -5191,7 +5568,7 @@ const Cs = {
     </section>`;
   }
 };
-we.properties = {
+$e.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   mode: {},
@@ -5200,7 +5577,7 @@ we.properties = {
   inlineRemote: { type: Boolean },
   value: {},
   configured: { type: Boolean }
-}, we.styles = [
+}, $e.styles = [
   q,
   _s,
   S`
@@ -5293,7 +5670,7 @@ we.properties = {
       }
     `
 ];
-let ht = we;
+let ht = $e;
 customElements.get("kaleidescape-device-controls") || customElements.define("kaleidescape-device-controls", ht);
 const pi = [
   "close",
@@ -5534,7 +5911,7 @@ const xe = class xe extends x {
     e?.preventDefault(), this.clear(), this.requestUpdate();
   }
   fail(e) {
-    this.error = w(e), ["unauthorized", "library_disabled"].includes(u(e)) && (this.clear(), this.dispatchEvent(
+    this.error = $(e), ["unauthorized", "library_disabled"].includes(u(e)) && (this.clear(), this.dispatchEvent(
       new CustomEvent(
         u(e) === "unauthorized" ? "access-denied" : "library-disabled",
         { bubbles: !0, composed: !0 }
@@ -5741,7 +6118,7 @@ const ui = [
     return this.busy || this.pending ? !1 : !this.opened || !this.review || !this.restoring && !Object.keys(this.patch()).length || window.confirm("Discard your unsaved Library changes?");
   }
   report(e) {
-    this.error = w(e), u(e) === "unauthorized" && (this.reset(), this.dispatchEvent(
+    this.error = $(e), u(e) === "unauthorized" && (this.reset(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     ));
   }
@@ -5995,14 +6372,14 @@ const V = [
       this.scope,
       !1,
       (t) => {
-        e === this.generation && (t && u(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? w(t) : "", this.requestUpdate()));
+        e === this.generation && (t && u(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? $(t) : "", this.requestUpdate()));
       }
     ), this.searchPreferences = new P(
       this.client,
       this.scope,
       !1,
       (t) => {
-        e === this.generation && (t && u(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? w(t) : "", this.requestUpdate()));
+        e === this.generation && (t && u(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? $(t) : "", this.requestUpdate()));
       },
       "search"
     );
@@ -6136,7 +6513,7 @@ const V = [
         t === "unauthorized" ? "access-denied" : "library-disabled",
         { bubbles: !0, composed: !0 }
       )
-    )), this.error = w(e), this.requestUpdate();
+    )), this.error = $(e), this.requestUpdate();
   }
   async load(e = 0, t = !1) {
     if (this.detailsLocked || !this.client || !this.scope?.library_enabled) return;
@@ -6263,7 +6640,7 @@ const V = [
         return;
       this.versions = o, this.activeVersion = o.items.find((d) => d.id === r) ?? o.items[0], this.activeVersion && (this.selected = { ...this.selected, title: this.activeVersion.title });
     } catch (o) {
-      t === this.generation && i === this.versionRequest && (["unauthorized", "library_disabled"].includes(u(o)) ? this.fail(o) : u(o) === "refresh_required" && e ? this.loadVersions() : this.versionsError = w(o));
+      t === this.generation && i === this.versionRequest && (["unauthorized", "library_disabled"].includes(u(o)) ? this.fail(o) : u(o) === "refresh_required" && e ? this.loadVersions() : this.versionsError = $(o));
     } finally {
       t === this.generation && i === this.versionRequest && (this.versionsLoading = !1, this.requestUpdate());
     }
@@ -6477,7 +6854,7 @@ const V = [
       t === this.generation && (this.purchaseTotals = i);
     } catch (i) {
       if (t !== this.generation) return;
-      this.purchaseTotals = void 0, this.purchaseError = w(i), ["unauthorized", "library_disabled"].includes(u(i)) && this.fail(i);
+      this.purchaseTotals = void 0, this.purchaseError = $(i), ["unauthorized", "library_disabled"].includes(u(i)) && this.fail(i);
     } finally {
       t === this.generation && (this.purchaseLoading = !1, this.requestUpdate());
     }
@@ -7064,7 +7441,7 @@ const V = [
               </button>
             </p>` : l}
       ${r && this.info?.phase && this.info.phase !== "idle" ? a`<p role="status">Syncing… ${this.info.processed ?? 0}/${this.info.total ?? "?"}</p>` : l}
-      ${r && this.info?.error ? a`<p class="warning" role="status">${w(new b(this.info.error))}</p>` : l}
+      ${r && this.info?.error ? a`<p class="warning" role="status">${$(new b(this.info.error))}</p>` : l}
       ${this.error ? a`<p class="error" role="alert">${this.error}<button @click=${() => this.load()}>Refresh results</button></p>` : l}
       ${this.notice ? a`<p class="notice" role="status">${this.notice}</p>` : l}
       ${r ? (this.info?.pending_adds ?? []).map(
@@ -7645,25 +8022,25 @@ const mi = (n, e, t) => {
     const s = ks(n), { values: r, keys: o } = this.dt(e, t, i);
     if (!Array.isArray(s)) return this.ut = o, r;
     const d = this.ut ??= [], h = [];
-    let c, g, p = 0, y = s.length - 1, $ = 0, E = r.length - 1;
-    for (; p <= y && $ <= E; ) if (s[p] === null) p++;
+    let c, g, p = 0, y = s.length - 1, w = 0, E = r.length - 1;
+    for (; p <= y && w <= E; ) if (s[p] === null) p++;
     else if (s[y] === null) y--;
-    else if (d[p] === o[$]) h[$] = M(s[p], r[$]), p++, $++;
+    else if (d[p] === o[w]) h[w] = M(s[p], r[w]), p++, w++;
     else if (d[y] === o[E]) h[E] = M(s[y], r[E]), y--, E--;
     else if (d[p] === o[E]) h[E] = M(s[p], r[E]), ie(n, h[E + 1], s[p]), p++, E--;
-    else if (d[y] === o[$]) h[$] = M(s[y], r[$]), ie(n, s[p], s[y]), y--, $++;
-    else if (c === void 0 && (c = mi(o, $, E), g = mi(d, p, y)), c.has(d[p])) if (c.has(d[y])) {
-      const R = g.get(o[$]), U = R !== void 0 ? s[R] : null;
+    else if (d[y] === o[w]) h[w] = M(s[y], r[w]), ie(n, s[p], s[y]), y--, w++;
+    else if (c === void 0 && (c = mi(o, w, E), g = mi(d, p, y)), c.has(d[p])) if (c.has(d[y])) {
+      const R = g.get(o[w]), U = R !== void 0 ? s[R] : null;
       if (U === null) {
         const X = ie(n, s[p]);
-        M(X, r[$]), h[$] = X;
-      } else h[$] = M(U, r[$]), ie(n, s[p], U), s[R] = null;
-      $++;
+        M(X, r[w]), h[w] = X;
+      } else h[w] = M(U, r[w]), ie(n, s[p], U), s[R] = null;
+      w++;
     } else Ge(s[y]), y--;
     else Ge(s[p]), p++;
-    for (; $ <= E; ) {
+    for (; w <= E; ) {
       const R = ie(n, h[E + 1]);
-      M(R, r[$]), h[$++] = R;
+      M(R, r[w]), h[w++] = R;
     }
     for (; p <= y; ) {
       const R = s[p++];
@@ -7982,7 +8359,7 @@ const Se = class Se extends x {
   fail(e) {
     u(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
-    )), this.error = w(e), this.requestUpdate();
+    )), this.error = $(e), this.requestUpdate();
   }
   async load() {
     if (!this.client || !this.scope) return;
@@ -8057,7 +8434,7 @@ const Se = class Se extends x {
         const r = await this.client.calendarDetails(this.scope, e.id);
         i === this.generation && s === this.detailRequest && (this.selected = r.viewing, this.movie = r.movie, this.selectedArtwork = r.movie?.artwork_key ?? t);
       } catch (r) {
-        i === this.generation && s === this.detailRequest && (u(r) === "unauthorized" ? this.fail(r) : this.detailError = w(r));
+        i === this.generation && s === this.detailRequest && (u(r) === "unauthorized" ? this.fail(r) : this.detailError = $(r));
       } finally {
         i === this.generation && s === this.detailRequest && (this.detailLoading = !1, this.requestUpdate());
       }
@@ -8213,9 +8590,9 @@ const Se = class Se extends x {
                       ${Ls(
         g,
         ({ row: p }) => p.id,
-        ({ row: p, phase: y }, $) => a`<button
+        ({ row: p, phase: y }, w) => a`<button
                             class=${`poster poster-${y}`}
-                            style=${`--index:${$};--layer:${$ + 1}`}
+                            style=${`--index:${w};--layer:${w + 1}`}
                             aria-label=${`${p.title} · ${y === "start" ? "Started; completed on another day" : y === "completion" ? "Completed; started on another day" : p.status === "completed" ? "Completed" : "Partial"}`}
                             title=${p.title}
                             ?disabled=${this.disabled}
@@ -8448,7 +8825,7 @@ const tt = "kaleidescape-companion-card-search", oe = class oe extends x {
       }, this.error = "";
     } catch (t) {
       if (e !== this.generation) return;
-      this.scope = void 0, this.error = w(t);
+      this.scope = void 0, this.error = $(t);
     } finally {
       e === this.generation && (this.requestUpdate(), this.timer = setTimeout(() => {
         this.refresh();
@@ -8696,7 +9073,7 @@ class Ms {
           const U = R.getBoundingClientRect();
           U.height > 0 && (y = Math.min(y, U.bottom));
         }
-        const $ = {
+        const w = {
           "--companion-viewport-height": i,
           "--companion-viewport-top": s,
           "--companion-viewport-bottom": r,
@@ -8706,7 +9083,7 @@ class Ms {
           )
         };
         let E = !1;
-        for (const [R, U] of Object.entries($)) {
+        for (const [R, U] of Object.entries(w)) {
           const X = `${Math.round(U)}px`;
           this.host.style.getPropertyValue(R) !== X && (this.host.style.setProperty(R, X), E = !0);
         }
@@ -8761,7 +9138,7 @@ const qe = class qe extends x {
       e === this.generation && (this.link = t.library);
     } catch (t) {
       if (e !== this.generation) return;
-      this.error = w(t), u(t) === "unauthorized" && (this.clear(), this.requestUpdate(), this.dispatchEvent(
+      this.error = $(t), u(t) === "unauthorized" && (this.clear(), this.requestUpdate(), this.dispatchEvent(
         new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
       ));
     } finally {
@@ -8974,7 +9351,7 @@ const Ee = class Ee extends x {
         );
         t === this.request && this.isConnected && (this.items = i.items, this.requestUpdate());
       } catch (i) {
-        t === this.request && (this.error = w(i), this.requestUpdate(), u(i) === "unauthorized" && this.dispatchEvent(
+        t === this.request && (this.error = $(i), this.requestUpdate(), u(i) === "unauthorized" && this.dispatchEvent(
           new CustomEvent("access-denied", {
             bubbles: !0,
             composed: !0
@@ -9147,8 +9524,8 @@ Re.properties = {
   disabled: { type: Boolean },
   fuzzySearch: { attribute: !1 }
 }, Re.styles = [q, We];
-let $t = Re;
-customElements.get("kaleidescape-manual-viewing") || customElements.define("kaleidescape-manual-viewing", $t);
+let wt = Re;
+customElements.get("kaleidescape-manual-viewing") || customElements.define("kaleidescape-manual-viewing", wt);
 const Kt = S`
   .entries-header {
     position: sticky;
@@ -9293,7 +9670,7 @@ const Kt = S`
   "database",
   "settings"
 ];
-function wt(n, e, t, i = !0) {
+function $t(n, e, t, i = !0) {
   const s = (o) => Fs.includes(o) && (e || o === "now-playing" || o === "journal" || o === "library") && (o !== "library" || t), r = i ? new URL(location.href).searchParams.get("companion_page") : null;
   return s(r) ? r : s(n) ? n : "journal";
 }
@@ -9334,7 +9711,7 @@ const ze = class ze extends x {
     );
   }
   fail(e) {
-    this.error = w(e), u(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
+    this.error = $(e), u(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     )), this.requestUpdate();
   }
@@ -9553,7 +9930,7 @@ const Le = class Le extends x {
     e !== this.api && (this.clear(), this.api = e, this.requestUpdate(), e && this.refresh());
   }
   fail(e) {
-    u(e) === "unauthorized" && this.clear(), this.error = w(e), this.requestUpdate();
+    u(e) === "unauthorized" && this.clear(), this.error = $(e), this.requestUpdate();
   }
   async refresh() {
     if (!this.api) return;
@@ -9568,7 +9945,7 @@ const Le = class Le extends x {
         ...t[0],
         permissions: { read: !0, edit: !1, export: !1 }
       }, !this.navigationReady) {
-        const i = wt(
+        const i = $t(
           this.scope.ui_defaults?.default_landing_page,
           !1,
           !!this.scope.library_enabled
@@ -9995,7 +10372,7 @@ const Ue = class Ue extends x {
   fail(e) {
     u(e) === "unauthorized" ? (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
-    )) : this.error = w(e), this.requestUpdate();
+    )) : this.error = $(e), this.requestUpdate();
   }
   async refresh() {
     if (!this.client || !this.scope) return;
@@ -10311,7 +10688,7 @@ const Vs = [
     e?.preventDefault(), this.reset(), this.requestUpdate();
   }
   fail(e) {
-    this.error = w(e), u(e) === "unauthorized" && (this.reset(), this.dispatchEvent(
+    this.error = $(e), u(e) === "unauthorized" && (this.reset(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     ));
   }
@@ -10580,7 +10957,7 @@ const Te = class Te extends x {
     } catch (s) {
       if (!i()) return;
       const r = u(s), o = s?.message;
-      this.error = typeof o == "string" && (r.startsWith("dashboard_") || s instanceof T) ? o : w(s), r === "unauthorized" && (this.reset(), this.dispatchEvent(
+      this.error = typeof o == "string" && (r.startsWith("dashboard_") || s instanceof T) ? o : $(s), r === "unauthorized" && (this.reset(), this.dispatchEvent(
         new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
       ));
     } finally {
@@ -10705,7 +11082,7 @@ const je = class je extends x {
   fail(e) {
     u(e) === "unauthorized" ? (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
-    )) : this.error = w(e), this.requestUpdate();
+    )) : this.error = $(e), this.requestUpdate();
   }
   async open() {
     if (!this.client || !this.scope || this.disabled || this.working) return;
@@ -10881,7 +11258,7 @@ const yi = [
         this.refresh();
       }, 2e3));
     } catch (i) {
-      t === this.generation && (this.error = w(i));
+      t === this.generation && (this.error = $(i));
     } finally {
       t === this.generation && (this.loading = !1, this.requestUpdate());
     }
@@ -11135,7 +11512,7 @@ const it = [
     });
   }
   fail(e) {
-    this.error = w(e), u(e) === "unauthorized" && (this.personalPreferences?.dispose(), this.personalPreferences = void 0, this.personalReady = !1, this.sharedPreferences?.dispose(), this.sharedPreferences = void 0, this.sharedReady = !1, this.hiddenCollections = [], this.flow = void 0, this.draft = {}, this.initial = {}, this.dispatchEvent(
+    this.error = $(e), u(e) === "unauthorized" && (this.personalPreferences?.dispose(), this.personalPreferences = void 0, this.personalReady = !1, this.sharedPreferences?.dispose(), this.sharedPreferences = void 0, this.sharedReady = !1, this.hiddenCollections = [], this.flow = void 0, this.draft = {}, this.initial = {}, this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     )), this.requestUpdate();
   }
@@ -11159,7 +11536,7 @@ const it = [
         t,
         !0,
         (o) => {
-          i === this.generation && (o && u(o) === "unauthorized" ? this.fail(o) : (this.sharedError = o ? w(o) : "", this.requestUpdate()));
+          i === this.generation && (o && u(o) === "unauthorized" ? this.fail(o) : (this.sharedError = o ? $(o) : "", this.requestUpdate()));
         }
       );
       const r = await this.sharedPreferences.load();
@@ -11238,7 +11615,7 @@ const it = [
       this.scope,
       !1,
       (i) => {
-        t === this.generation && (i && u(i) === "unauthorized" ? this.fail(i) : (this.personalError = i ? w(i) : "", this.requestUpdate()));
+        t === this.generation && (i && u(i) === "unauthorized" ? this.fail(i) : (this.personalError = i ? $(i) : "", this.requestUpdate()));
       },
       "search"
     );
@@ -11247,7 +11624,7 @@ const it = [
       this.personalReady = !0;
     } catch (i) {
       if (t !== this.generation) return;
-      this.personalError = w(i), this.personalPreferences?.dispose(), this.personalPreferences = void 0, u(i) === "unauthorized" && this.fail(i);
+      this.personalError = $(i), this.personalPreferences?.dispose(), this.personalPreferences = void 0, u(i) === "unauthorized" && this.fail(i);
     }
     this.requestUpdate();
   }
@@ -11569,6 +11946,10 @@ const it = [
                       <p class="settings-scope">
                         Kaleidescape devices and metadata providers · shared ·
                         Save settings required
+                      </p>
+                      <p>
+                        Loaded pykaleidescape version:
+                        <strong>${this.scope?.pyk_version || "Unknown"}</strong>
                       </p>
                       <h3>Library sync</h3>
                       <label class="check"
@@ -12110,7 +12491,7 @@ const Ys = S`
         ), e === this.generation && (this.message = "", this.invalid = !1);
       } catch (t) {
         if (e !== this.generation) return;
-        this.invalid = !0, this.message = u(t) === "query_syntax" && typeof t.message == "string" ? t.message : w(t), u(t) === "unauthorized" && this.dispatchEvent(
+        this.invalid = !0, this.message = u(t) === "query_syntax" && typeof t.message == "string" ? t.message : $(t), u(t) === "unauthorized" && this.dispatchEvent(
           new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
         );
       } finally {
@@ -12321,7 +12702,7 @@ const Oe = class Oe extends x {
       this.items = t.items, this.more = t.has_more;
     } catch (t) {
       if (e !== this.request || !this.isConnected) return;
-      this.error = w(t), u(t) === "unauthorized" && this.dispatchEvent(
+      this.error = $(t), u(t) === "unauthorized" && this.dispatchEvent(
         new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
       );
     } finally {
@@ -12517,7 +12898,7 @@ const Ne = class Ne extends x {
   fail(e) {
     u(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
-    )), this.error = w(e), this.requestUpdate();
+    )), this.error = $(e), this.requestUpdate();
   }
   async exportData(e) {
     if (!this.client || !this.scope || this.working || this.pending || this.disabled)
@@ -13021,7 +13402,7 @@ const se = {
       this.scope,
       !1,
       (i) => {
-        t === this.generation && (i && u(i) === "unauthorized" ? this.fail(i) : (this.preferenceError = i ? w(i) : "", this.requestUpdate()));
+        t === this.generation && (i && u(i) === "unauthorized" ? this.fail(i) : (this.preferenceError = i ? $(i) : "", this.requestUpdate()));
       },
       "database"
     );
@@ -13088,7 +13469,7 @@ const se = {
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     ));
     const t = u(e), i = e?.message;
-    this.error = ["query_syntax", "conflict", "invalid_request", "busy"].includes(t) && typeof i == "string" && i !== t ? i : w(e), this.requestUpdate();
+    this.error = ["query_syntax", "conflict", "invalid_request", "busy"].includes(t) && typeof i == "string" && i !== t ? i : $(e), this.requestUpdate();
   }
   async load(e = 0, t, i) {
     if (!this.client || !this.scope || !this.ready || this.pending) return;
@@ -13757,7 +14138,7 @@ const st = [
     const e = this.renderRoot.querySelector(
       "kaleidescape-reader"
     ), t = !this.advancedView, i = !t && (["database", "settings"].includes(this.activePage) || this.hasOpenDialog(this.renderRoot, !0));
-    (this.advancedView ? !this.discard() : !(e?.confirmNavigation() ?? !0)) || (this.generation++, this.listRequest++, this.detailRequest++, this.closeEditor(), this.rows = [], this.selected = this.sessions = null, this.cursor = void 0, this.history = [], this.nextCursor = null, this.page = 1, this.journalReady = !1, this.error = this.notice = "", i && (this.activePage = wt(
+    (this.advancedView ? !this.discard() : !(e?.confirmNavigation() ?? !0)) || (this.generation++, this.listRequest++, this.detailRequest++, this.closeEditor(), this.rows = [], this.selected = this.sessions = null, this.cursor = void 0, this.history = [], this.nextCursor = null, this.page = 1, this.journalReady = !1, this.error = this.notice = "", i && (this.activePage = $t(
       this.info.ui_defaults?.default_landing_page,
       !1,
       !!this.info.library_enabled,
@@ -13791,7 +14172,7 @@ const st = [
     this.api !== e && (this.clearPrivate(), this.api = e, this.error = "", this.requestUpdate(), e && this.refresh());
   }
   fail(e) {
-    u(e) === "unauthorized" && this.clearPrivate(), this.lastError = u(e), this.error = w(e), this.requestUpdate();
+    u(e) === "unauthorized" && this.clearPrivate(), this.lastError = u(e), this.error = $(e), this.requestUpdate();
   }
   dirty() {
     return this.manual ? JSON.stringify(this.manual) !== this.manualInitial : this.draft && (this.editTitleTouched || JSON.stringify(this.draft) !== JSON.stringify(this.initial));
@@ -13833,7 +14214,7 @@ const st = [
           this.info,
           !1,
           (h) => {
-            this.modePreferences === o && (this.modeError = h ? w(h) : "", this.requestUpdate());
+            this.modePreferences === o && (this.modeError = h ? $(h) : "", this.requestUpdate());
           },
           "interface"
         );
@@ -13842,7 +14223,7 @@ const st = [
         if (i !== this.generation) return;
         this.advancedView = d.advanced_view === !0, this.modeReady = !0;
       }
-      this.navigationReady || (this.activePage = wt(
+      this.navigationReady || (this.activePage = $t(
         this.info.ui_defaults?.default_landing_page,
         !0,
         !!this.info.library_enabled

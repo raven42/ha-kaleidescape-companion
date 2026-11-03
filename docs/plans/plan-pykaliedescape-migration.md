@@ -4,7 +4,9 @@ Status: **temporary proof of concept**, 2026-11-03. Companion now uses the
 patched pykaleidescape checkout for device discovery, playback controls, title
 launch, and local server browser reads/writes. Its bundled device API has been
 removed. This has offline test coverage, but no hardware or HA OS validation in
-this change. It is not a supported release migration.
+the original migration. Subsequent HA OS logs exposed an identity-read bug now
+patched in phase 08a; a successful hardware retest is pending. This is not a
+supported release migration.
 
 ## Scope and ownership
 
@@ -45,6 +47,17 @@ provider. No Store hooks should be added to pyk for this migration.
   dependency install alone will not supply this code. Do not treat the overlay
   as an upstream release or a reproducible production dependency.
 
+HA OS discovery and status logs exposed a patched-pyk identity-read bug: the
+protocol discovery list uses 12-digit serials, while `GET_DEVICE_INFO` returns
+the same serial zero-padded to 16 digits. The new
+`phase-08a-device-info-serial-width.patch` normalizes both to the same routed
+identity, with an offline emulator regression test. The patch is committed on
+`08a-device-info-serial-width`. The following `08b-cmp-dev-version` branch
+labels the complete development build `1.2.0.dev1+cmp` in both Python package
+metadata and pyk's runtime version. HA OS validation still requires a fresh
+overlay from that final branch and a restart. The existing overlay is not
+updated by changing this source checkout.
+
 ## Compatibility and upstream path
 
 The patch series in the adjacent `pykaleidescape/patch/` directory adds focused
@@ -52,9 +65,9 @@ fixes and features, unit tests, optional player/server hardware tests, and
 examples. Pyk's existing `Device` constructor, async methods, dispatcher, state
 objects, reconnect behavior, Request subclass extension points, and ordinary
 return values remain the hard compatibility contract. New public interfaces are
-additive. The patched checkout reports version 1.2.0, but the HA shared
-dependency pin is 1.1.6; replacing metadata or changing the manifest before an
-accepted compatible release would risk the built-in HA integration.
+additive. The patched checkout reports version `1.2.0.dev1+cmp`, but the HA
+shared dependency pin is 1.1.6; replacing metadata or changing the manifest
+before an accepted compatible release would risk the built-in HA integration.
 
 Before release: obtain upstream review and merge/release the needed patches;
 verify built-in HA `kaleidescape` against that exact release; update the
@@ -82,7 +95,7 @@ player controls and launch. Stop on identity or capability mismatch. Test
 reconnect, interrupted replies, outcome uncertainty, and coexistence with HA's
 built-in integration before claiming hardware support. Available owner hardware:
 Strato K, Terra Compact 30 TB, and Terra Prime 120 TB; firmware is unrecorded.
-No hardware run is claimed here.
+No successful hardware run is claimed here.
 
 For the Companion PoC, verify on an explicitly selected HA instance: setup,
 Library catalog/details/artwork/collections, public Store metadata/search and

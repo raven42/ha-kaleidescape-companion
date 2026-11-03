@@ -410,6 +410,37 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
                 ("activity", sync.source, False),
             )
 
+    async def test_declared_unavailable_artwork_skips_automatic_image_requests(self):
+        await self.seed()
+        sync = self.sync(
+            library_sync_artwork=True,
+            metadata_source_artwork="tmdb",
+        )
+        row = {
+            "id": self.id,
+            "source_group": "movie",
+            "title": "Fictional Film",
+            "year": 2025,
+            "href": None,
+            "enrichment": {},
+            "unavailable_artwork": ["poster", "backdrop"],
+        }
+        sync.repository = SimpleNamespace(
+            async_enrichment=AsyncMock(side_effect=[[row], None, None])
+        )
+        sync.providers.metadata = AsyncMock(return_value=self.data)
+        sync.providers.artwork = AsyncMock(return_value=IMAGE)
+        sync.providers.poster = AsyncMock(return_value=IMAGE)
+        with patch(
+            "custom_components.kaleidescape_companion.enrichment.sync.async_create_clientsession",
+            return_value=SimpleNamespace(detach=Mock()),
+        ):
+            await sync._run(True)
+        self.assertIsNone(sync.error)
+        sync.providers.metadata.assert_awaited_once()
+        sync.providers.artwork.assert_not_awaited()
+        sync.providers.poster.assert_not_awaited()
+
     async def test_fixed_https_pins_dns_and_refuses_private_or_redirected_responses(
         self,
     ):

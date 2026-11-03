@@ -24,6 +24,7 @@ from kaleidescape.error import (
 )
 
 from ..const import DOMAIN
+from ..core.logging import safe_exception
 from ..core.models import JournalError, invalid
 from ..core.security import async_finish_cleanup
 from ..core.tasks import async_wait
@@ -33,6 +34,16 @@ from .control_config import COMMANDS, fingerprint, host
 from .identity import normalize_serial
 
 _LOGGER = logging.getLogger(__name__)
+
+
+async def pyk_call(stage, action):
+    """Name a fixed pyk interaction without logging its private arguments."""
+    try:
+        return await action()
+    except Exception as error:
+        if _LOGGER.isEnabledFor(logging.DEBUG):
+            _LOGGER.debug("Pyk %s failed: %s", stage, safe_exception(error))
+        raise
 
 
 @dataclass(frozen=True)
@@ -98,6 +109,7 @@ class PlaybackControls:
         self.task = None
         self.clients = set()
         self._devices_by_ip = {}
+        self._reported_read_failure = None
         self.paused = self.stopped = False
         self.device_store = Store(
             hass, 1, f"{DOMAIN}.control_devices", private=True, atomic_writes=True
@@ -212,15 +224,24 @@ class PlaybackControls:
             client = Device(ip, timeout=3, reconnect=True)
             self._devices_by_ip[ip] = client
             self.clients.add(client)
+        initialized = False
         try:
             if not client.is_connected:
-                await client.connect()
+                await pyk_call("connect", client.connect)
+                _LOGGER.debug("Pyk Device connection established")
+            initialized = True
             yield client
         except BaseException:
-            if not client.is_connected:
+            if not initialized or not client.is_connected:
                 self._devices_by_ip.pop(ip, None)
                 self.clients.discard(client)
-                await client.async_close()
+                try:
+                    await pyk_call(
+                        "close after failed connection", lambda: client.async_close()
+                    )
+                except Exception:
+                    # Preserve the original connection/read failure.
+                    pass
             raise
 
     async def _resolve(self, hostname):
@@ -228,18 +249,27 @@ class PlaybackControls:
             return reported_address(hostname)
         except ValueError:
             pass
-        async with asyncio.timeout(4):
-            resolver = self.hass.data.get(DATA_RESOLVER)
-            if resolver:
-                rows = await resolver.resolve(hostname, 10000, family=socket.AF_UNSPEC)
-                addresses = [row["host"] for row in rows]
-            else:
-                rows = await asyncio.get_running_loop().getaddrinfo(
-                    hostname, 10000, type=socket.SOCK_STREAM
+        try:
+            async with asyncio.timeout(4):
+                resolver = self.hass.data.get(DATA_RESOLVER)
+                if resolver:
+                    rows = await resolver.resolve(
+                        hostname, 10000, family=socket.AF_UNSPEC
+                    )
+                    addresses = [row["host"] for row in rows]
+                else:
+                    rows = await asyncio.get_running_loop().getaddrinfo(
+                        hostname, 10000, type=socket.SOCK_STREAM
+                    )
+                    addresses = [row[4][0] for row in rows]
+            # Reject mixed LAN/WAN answers, then connect to one literal address.
+            addresses = list(dict.fromkeys(reported_address(ip) for ip in addresses))
+        except (OSError, TimeoutError, ValueError, KeyError) as error:
+            if _LOGGER.isEnabledFor(logging.DEBUG):
+                _LOGGER.debug(
+                    "Control host resolution failed: %s", safe_exception(error)
                 )
-                addresses = [row[4][0] for row in rows]
-        # Reject mixed LAN/WAN answers, then connect to one literal pinned address.
-        addresses = list(dict.fromkeys(reported_address(ip) for ip in addresses))
+            raise
         if not addresses:
             raise JournalError(
                 "control_destination", "Control hostname has no private LAN address"
@@ -253,8 +283,13 @@ class PlaybackControls:
 
     async def _state(self, client, operation=""):
         """Project fresh pyk state and zone evidence into the existing UI shape."""
-        snapshot = await client.read_control_state()
-        reply = await one_response(client, pyk.GetDevicePowerState)
+        snapshot = await pyk_call(
+            "read control state", lambda: client.read_control_state()
+        )
+        reply = await pyk_call(
+            "read device power state",
+            lambda: one_response(client, pyk.GetDevicePowerState),
+        )
         zone_ready = not reply.field_zone or (
             reply.field_zone[0] == pyk_const.DEVICE_ZONE_STATE_AVAILABLE
         )
@@ -278,7 +313,9 @@ class PlaybackControls:
                     "control_not_ready", "Power on and wait for readiness"
                 )
             return power, PlaybackState("", -1, 0, 0)
-        status = await one_response(client, pyk.GetPlayStatus)
+        status = await pyk_call(
+            "read play status", lambda: one_response(client, pyk.GetPlayStatus)
+        )
         mode = {
             pyk_const.PLAY_STATUS_NONE: 0,
             pyk_const.PLAY_STATUS_PAUSED: 1,
@@ -308,16 +345,23 @@ class PlaybackControls:
         if ip is None:
             async with self._client(await self._seed()) as seed:
                 self._ready(authorize)
-                identity = await seed.read_identity(serial)
+                identity = await pyk_call(
+                    "read routed player identity", lambda: seed.read_identity(serial)
+                )
                 if normalize_serial(identity.serial_number) != serial:
                     raise JournalError(
                         "control_identity", "Discovered player identity changed"
                     )
-                info = await one_response(seed, pyk.GetDeviceInfo, serial=serial)
+                info = await pyk_call(
+                    "read routed player address",
+                    lambda: one_response(seed, pyk.GetDeviceInfo, serial=serial),
+                )
                 ip = reported_address(info.field_ip)
         self._ready(authorize)
         async with self._client(ip) as client:
-            identity = await client.read_identity()
+            identity = await pyk_call(
+                "read direct player identity", lambda: client.read_identity()
+            )
             if (
                 normalize_serial(identity.serial_number) != serial
                 or identity.movie_zones < 1
@@ -338,7 +382,7 @@ class PlaybackControls:
             "pending": await self.repository.async_control("pending"),
         }
 
-    async def _read(self, operation, authorize, seconds=12):
+    async def _read(self, label, operation, authorize, seconds=12):
         self._ready(authorize)
         if self.lock.locked():
             raise JournalError("busy", "Wait for the active device operation")
@@ -346,24 +390,53 @@ class PlaybackControls:
             async with self.lock, asyncio.timeout(seconds):
                 result = await operation()
                 self._ready(authorize)
-                return result
-        except (KaleidescapeError, OSError, TimeoutError, ValueError) as error:
+        except (
+            KaleidescapeError,
+            OSError,
+            TimeoutError,
+            ValueError,
+            AttributeError,
+        ) as error:
+            category = (label, type(error).__name__)
+            if self._reported_read_failure != category:
+                _LOGGER.warning(
+                    "Device %s read failed: %s", label, safe_exception(error)
+                )
+            elif _LOGGER.isEnabledFor(logging.DEBUG):
+                _LOGGER.debug(
+                    "Device %s read remains unavailable: %s",
+                    label,
+                    safe_exception(error),
+                )
+            self._reported_read_failure = category
             raise JournalError(
                 "control_unreachable", "Device query failed; no control was sent"
-            ) from error
+            ) from None
+        if self._reported_read_failure is not None:
+            _LOGGER.info("Device %s read recovered", label)
+            self._reported_read_failure = None
+        return result
 
     async def async_discover(self, authorize):
         async def discover():
             async with self._client(await self._seed()) as client:
-                identities = await client.discover_devices()
+                identities = await pyk_call(
+                    "discover devices", lambda: client.discover_devices()
+                )
                 devices = []
                 for identity in identities:
                     serial = normalize_serial(identity.serial_number)
-                    info = await one_response(client, pyk.GetDeviceInfo, serial=serial)
+                    info = await pyk_call(
+                        "read discovered device address",
+                        lambda: one_response(client, pyk.GetDeviceInfo, serial=serial),
+                    )
                     name = ""
                     if identity.movie_zones:
-                        friendly = await one_response(
-                            client, pyk.GetFriendlyName, serial=serial
+                        friendly = await pyk_call(
+                            "read discovered player name",
+                            lambda: one_response(
+                                client, pyk.GetFriendlyName, serial=serial
+                            ),
                         )
                         name = friendly.field
                     devices.append(
@@ -386,7 +459,7 @@ class PlaybackControls:
             )
             return await self.async_info()
 
-        return await self._read(discover, authorize, 65)
+        return await self._read("discovery", discover, authorize, 65)
 
     async def async_status(self, authorize, player_id=None):
         async def status():
@@ -400,7 +473,7 @@ class PlaybackControls:
                     "state": asdict(state),
                 }
 
-        return await self._read(status, authorize)
+        return await self._read("status", status, authorize)
 
     async def _movie(self, client, serial, title_id, authorize):
         if not self.config.get("control_allow_launch", False) or not self.config.get(
@@ -421,10 +494,15 @@ class PlaybackControls:
         source = source_id(origin(self.config.get("library_host", "")))
         row = await self.repository.async_control("library_version", source, title_id)
         self._ready(authorize)
-        prepared = await client.prepare_movie_launch(
-            playback_handle(row["source_handle"]), serial=serial
+        prepared = await pyk_call(
+            "prepare movie launch",
+            lambda: client.prepare_movie_launch(
+                playback_handle(row["source_handle"]), serial=serial
+            ),
         )
-        details = await client.get_content_details(prepared.handle)
+        details = await pyk_call(
+            "read movie details", lambda: client.get_content_details(prepared.handle)
+        )
         data = json.loads(row["data"])
         if " ".join(prepared.title.split()).casefold() != " ".join(
             row["title"].split()
@@ -481,7 +559,7 @@ class PlaybackControls:
                     "exact_version_confirmed": False,
                 }
 
-        return await self._read(prepare, authorize)
+        return await self._read("preflight", prepare, authorize)
 
     async def async_execute(self, actor, request, token, authorize):
         cached = await self.repository.async_control("lookup", request, actor, token)
@@ -555,9 +633,17 @@ class PlaybackControls:
                     self._ready(authorize)
                     sent = True
                     if movie:
-                        await client.send_movie_launch(movie, allow_experimental=True)
+                        await pyk_call(
+                            "send movie launch",
+                            lambda: client.send_movie_launch(
+                                movie, allow_experimental=True
+                            ),
+                        )
                     else:
-                        await getattr(client, COMMANDS[review["operation"]])()
+                        await pyk_call(
+                            "send control command",
+                            lambda: getattr(client, COMMANDS[review["operation"]])(),
+                        )
                     result.update(outcome="acknowledged", acknowledged=True)
                     # One bounded observation; acceptance cannot prove exact edition.
                     after_power, after = await self._state(client, "status")
@@ -593,7 +679,7 @@ class PlaybackControls:
                 )
                 raise JournalError(
                     "control_unreachable", "Player query was rejected"
-                ) from error
+                ) from None
             if not result["acknowledged"]:
                 result.update(outcome="rejected", status=error.code)
         except RequestNotSentError:

@@ -159,7 +159,15 @@ state events and automatic reconnect. Connection initialization is distinct from
 playback or power mutation; cached player discovery still opens no connection.
 Fresh verification remains required before a write, and automatic reconnect must
 never replay a user command. These capabilities require the patched pyk checkout
-until an accepted compatible release is available.
+until an accepted compatible release is available. An incomplete pyk connection
+is discarded even if its TCP socket opened before initialization failed; a later
+explicit read can establish a fresh client.
+
+Settings displays the version declared by the loaded pyk module. For a failed
+status read, Companion logs one warning by default and identifies the failed pyk
+stage at debug level, without device identifiers or raw exception text. A later
+successful read logs recovery. The version string alone cannot prove that a
+patched module with the same version number is installed.
 
 Offline tests cover opt-outs, roles, discovery, identity mismatch, live
 metadata, stale preflights, receipt deduplication, crash recovery, standby and

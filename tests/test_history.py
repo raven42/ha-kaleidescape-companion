@@ -275,12 +275,12 @@ class HistorySummaryTest(unittest.IsolatedAsyncioTestCase):
         entities = added.call_args.args[0]
         coordinator = entities[0].coordinator
         self.addAsyncCleanup(coordinator.async_shutdown)
-        self.addAsyncCleanup(entities[7].coordinator.async_shutdown)
-        self.assertEqual(len(entities), 18)
-        self.assertEqual(len({sensor.unique_id for sensor in entities}), 18)
+        self.addAsyncCleanup(entities[5].coordinator.async_shutdown)
+        self.assertEqual(len(entities), 16)
+        self.assertEqual(len({sensor.unique_id for sensor in entities}), 16)
         self.assertEqual(coordinator.update_interval.total_seconds(), 30)
         self.assertTrue(
-            all(entity.coordinator is coordinator for entity in entities[:7])
+            all(entity.coordinator is coordinator for entity in entities[:5])
         )
         await self.add("X" * 500, datetime.now(UTC) - timedelta(minutes=1))
         await coordinator.async_refresh()
@@ -289,6 +289,8 @@ class HistorySummaryTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(last.extra_state_attributes["movie"], "X" * 500)
         self.assertEqual(entities[1].native_value, 1)
         self.assertEqual(entities[1].extra_state_attributes["movies"], ["X" * 500])
+        self.assertEqual(entities[3].native_value, 1)
+        self.assertEqual(entities[3].extra_state_attributes, {})
         with (
             patch.object(
                 self.repository,

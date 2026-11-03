@@ -387,6 +387,7 @@ class MetadataSync:
                             and self.config.get("library_sync_artwork")
                             and self.config.get("metadata_source_backdrop")
                             != "original"
+                            and "backdrop" not in row.get("unavailable_artwork", [])
                         ):
                             image = await self.providers.artwork(provider, result)
                             self._ready()
@@ -411,6 +412,7 @@ class MetadataSync:
                             provider == "tmdb"
                             and self.config.get("library_sync_artwork")
                             and self.config.get("metadata_source_artwork") == "tmdb"
+                            and "poster" not in row.get("unavailable_artwork", [])
                         ):
                             poster = await self.providers.poster(provider, result)
                             self._ready()

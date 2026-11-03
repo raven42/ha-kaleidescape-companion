@@ -61,9 +61,12 @@ class TitleReviews:
                     "id": provider,
                     "label": label,
                     "available": self.enabled(provider),
+                    "supports_images": provider == "tmdb",
+                    "has_data": provider in target["cached_providers"],
                     "missing_data": provider not in target["cached_providers"]
                     and provider not in target["unavailable"],
                     "unavailable": provider in target["unavailable"],
+                    **target["provider_status"][provider],
                 }
                 for provider, label in (
                     ("kaleidescape", "Kaleidescape store"),
@@ -79,15 +82,41 @@ class TitleReviews:
             "title": target["title"],
             "search_title": search_title(target["comparison"]["title"]),
             "current": target["comparison"],
+            "artwork_unavailable": target["artwork_unavailable"],
+            "artwork_present": target["artwork_present"],
             "snapshot": target["snapshot"],
         }
 
     async def availability(self, actor, request, data):
         self.ready(actor)
+        if isinstance(data, dict) and "providers" in data:
+            if not isinstance(data["providers"], dict):
+                raise invalid("Choose supported scrapers")
+            for provider in data["providers"]:
+                if provider not in {
+                    "tmdb",
+                    "kaleidescape",
+                } or not self.parent.config.get(
+                    "metadata_tmdb_enabled"
+                    if provider == "tmdb"
+                    else "metadata_store_enabled"
+                ):
+                    raise JournalError("metadata_disabled", "Enable this scraper first")
+            return await self.parent.repository.async_enrichment(
+                "availability",
+                self.parent.source,
+                actor.id,
+                request,
+                data,
+                lambda: self.ready(actor),
+            )
         provider = data.get("provider") if isinstance(data, dict) else None
-        if not isinstance(provider, str) or provider not in {"tmdb", "kaleidescape"}:
+        kind = data.get("kind") if isinstance(data, dict) else None
+        if provider is None and kind in {"poster", "backdrop"}:
+            pass
+        elif not isinstance(provider, str) or provider not in {"tmdb", "kaleidescape"}:
             raise invalid("Choose a supported scraper")
-        if not self.parent.config.get(
+        if provider is not None and not self.parent.config.get(
             "metadata_tmdb_enabled" if provider == "tmdb" else "metadata_store_enabled"
         ):
             raise JournalError("metadata_disabled", "Enable this scraper first")
@@ -190,10 +219,10 @@ class TitleReviews:
         }
         return token
 
-    async def search(self, actor, title, provider, query):
+    async def search(self, actor, title, provider, query, year=None):
         from .review_matches import search
 
-        return await search(self, actor, title, provider, query)
+        return await search(self, actor, title, provider, query, year)
 
     async def preview(self, actor, title, provider, search_id="", choice=""):
         self.ready(actor)

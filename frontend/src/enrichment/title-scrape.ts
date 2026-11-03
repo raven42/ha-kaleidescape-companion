@@ -15,6 +15,7 @@ import { styles } from "../ui/styles";
 import { iconAction, iconActionStyles } from "../ui/action-icons";
 import { closeButton, dismissBackdrop } from "../ui/dialog";
 import { CoverQueue } from "../library/cover";
+import "../library/cover";
 import "./scrape-image";
 
 const LABELS: Record<string, string> = {
@@ -51,8 +52,191 @@ export class TitleScrape extends LitElement {
         border-radius: 999px;
         min-height: 44px;
       }
-      dialog {
-        width: min(800px, calc(100% - 24px));
+      dialog.inset-dialog {
+        --dialog-top-gap: max(24px, env(safe-area-inset-top));
+        width: min(900px, calc(100% - 24px));
+        max-height: min(88dvh, 900px);
+        overflow-y: auto;
+      }
+      .manager-head > div:first-child {
+        flex: 1;
+        min-width: 0;
+      }
+      .manager-head .dialog-close {
+        margin-left: auto;
+      }
+      .manager-head p {
+        margin: 2px 0 0;
+        color: var(--muted);
+      }
+      .manager-section {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 14px;
+        margin-block: 12px;
+        background: var(--card-background-color, transparent);
+      }
+      .manager-section h3 {
+        margin: 0 0 10px;
+      }
+      .current-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.3fr) minmax(220px, 0.85fr) minmax(
+            155px,
+            0.7fr
+          );
+        gap: 14px;
+        align-items: start;
+      }
+      .current-identity {
+        display: grid;
+        grid-template-columns: 84px minmax(0, 1fr);
+        gap: 12px;
+      }
+      .current-identity kaleidescape-library-cover {
+        width: 84px;
+        height: 126px;
+        aspect-ratio: 2 / 3;
+        border-radius: 8px;
+      }
+      .current-backdrop kaleidescape-library-cover {
+        width: min(100%, 224px);
+        height: 126px;
+        aspect-ratio: 16 / 9;
+        border-radius: 8px;
+      }
+      .current-meta {
+        margin: 0;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 4px 12px;
+      }
+      .current-meta dt {
+        color: var(--muted);
+      }
+      .current-meta dd {
+        margin: 0;
+      }
+      .expectation {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+        font-size: 13px;
+      }
+      .status-line {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin: 7px 0;
+        font-size: 13px;
+      }
+      .status-line[data-complete="true"] .status-icon {
+        color: var(--success-color, #4caf50);
+      }
+      .status-line[data-complete="false"] .status-icon {
+        color: var(--warning-color, #e2a600);
+      }
+      .switch {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        width: 38px;
+        height: 22px;
+        flex: none;
+        cursor: pointer;
+      }
+      .switch input {
+        position: absolute;
+        opacity: 0;
+        width: 1px;
+        height: 1px;
+      }
+      .switch span {
+        width: 38px;
+        height: 22px;
+        border-radius: 999px;
+        background: var(--divider-color, #666);
+        transition: background 0.15s;
+      }
+      .switch span::after {
+        content: "";
+        display: block;
+        width: 18px;
+        height: 18px;
+        margin: 2px;
+        border-radius: 50%;
+        background: #fff;
+        transition: transform 0.15s;
+      }
+      .switch input:checked + span {
+        background: var(--accent);
+      }
+      .switch input:checked + span::after {
+        transform: translateX(16px);
+      }
+      .switch input:focus-visible + span {
+        outline: 3px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .switch input:disabled + span {
+        opacity: 0.5;
+      }
+      .source-list {
+        display: grid;
+        gap: 8px;
+      }
+      .source-row {
+        display: grid;
+        grid-template-columns:
+          38px minmax(120px, 1fr) minmax(150px, 1.2fr)
+          auto;
+        gap: 10px;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px;
+      }
+      .source-row small {
+        color: var(--muted);
+      }
+      .manager-tabs {
+        margin-top: 12px;
+      }
+      .manager-actions {
+        justify-content: space-between;
+      }
+      .source-row .actions {
+        justify-content: flex-end;
+      }
+      @media (max-width: 850px) {
+        .current-layout {
+          grid-template-columns: minmax(0, 1fr) minmax(190px, 0.8fr);
+        }
+        .artwork-status {
+          grid-column: 1 / -1;
+        }
+        .source-row {
+          grid-template-columns: 38px minmax(0, 1fr) auto;
+        }
+        .source-row .source-detail {
+          grid-column: 2 / -1;
+        }
+      }
+      @media (max-width: 600px) {
+        .current-layout {
+          grid-template-columns: 1fr;
+        }
+        .artwork-status {
+          grid-column: auto;
+        }
+        .source-row {
+          grid-template-columns: 38px minmax(0, 1fr);
+        }
+        .source-row .actions {
+          grid-column: 2;
+          justify-content: flex-start;
+        }
       }
       .scrape-fields {
         display: grid;
@@ -104,9 +288,6 @@ export class TitleScrape extends LitElement {
         margin-top: 6px;
       }
       .current-movie {
-        padding: 8px 12px;
-        margin-block: 8px 12px;
-        border-left: 2px solid var(--line);
         overflow-wrap: anywhere;
       }
       .current-movie h3 {
@@ -138,8 +319,8 @@ export class TitleScrape extends LitElement {
         flex: 1;
         min-width: 0;
       }
-      .match-search button {
-        flex: none;
+      .match-search .year-field {
+        flex: 0 0 110px;
       }
       .candidate {
         min-width: 0;
@@ -193,11 +374,15 @@ export class TitleScrape extends LitElement {
   private review?: ScrapeReview;
   private candidatesPage?: ScrapeMatches;
   private query = "";
+  private year = "";
   private provider = "";
+  private sourceExpected: Record<string, boolean> = {};
+  private artworkExpected = { poster: true, backdrop: true };
   private fields = new Set<string>();
   private images: Record<string, string> = {};
   private pages: Record<string, number> = { poster: 0, backdrop: 0 };
   private tab = "metadata";
+  private view: "sources" | "mapping" | "history" = "sources";
   private busy = false;
   private pending?: PreparedMutation;
   private error = "";
@@ -229,13 +414,17 @@ export class TitleScrape extends LitElement {
     this.options = this.review = undefined;
     this.candidatesPage = undefined;
     this.query = "";
+    this.year = "";
     this.fields.clear();
     this.images = {};
     this.pending = undefined;
     this.busy = false;
     this.error = "";
     this.provider = "";
+    this.sourceExpected = {};
+    this.artworkExpected = { poster: true, backdrop: true };
     this.tab = "metadata";
+    this.view = "sources";
     this.pages = { poster: 0, backdrop: 0 };
     this.queue.cache.dispose();
     this.queue = new CoverQueue();
@@ -248,6 +437,13 @@ export class TitleScrape extends LitElement {
       void this.client.cancelTitleScrape(this.scope, plan).catch(() => {});
     this.reset();
     this.requestUpdate();
+  }
+  private clearCandidates() {
+    if (this.candidatesPage && this.client && this.scope)
+      void this.client
+        .cancelTitleScrape(this.scope, this.candidatesPage.search_id)
+        .catch(() => {});
+    this.candidatesPage = undefined;
   }
   private async open() {
     if (!this.client || !this.scope?.permissions.edit || this.blocked) return;
@@ -263,17 +459,23 @@ export class TitleScrape extends LitElement {
         this.versionId,
       );
       if (generation !== this.generation) return;
-      this.options = this.artworkOnly
-        ? {
-            ...options,
-            providers: options.providers.filter(
-              (provider) => provider.id === "tmdb",
-            ),
-          }
-        : options;
+      this.options = options;
       this.query = options.search_title ?? options.title ?? "";
+      this.year = options.current?.year ? String(options.current.year) : "";
+      this.sourceExpected = Object.fromEntries(
+        this.options.providers.map((source) => [
+          source.id,
+          !source.unavailable,
+        ]),
+      );
+      this.artworkExpected = {
+        poster: !options.artwork_unavailable?.includes("poster"),
+        backdrop: !options.artwork_unavailable?.includes("backdrop"),
+      };
       this.provider =
-        this.options.providers.find((provider) => provider.available)?.id ?? "";
+        this.visibleProviders.find(
+          (provider) => provider.available && !provider.unavailable,
+        )?.id ?? "";
     } catch (error) {
       if (generation === this.generation) this.report(error);
     } finally {
@@ -282,13 +484,47 @@ export class TitleScrape extends LitElement {
         this.requestUpdate();
       }
     }
-    if (
-      generation === this.generation &&
-      this.artworkOnly &&
-      this.provider &&
-      this.options?.artwork_enabled
-    )
-      await this.scrape();
+  }
+  private get visibleProviders() {
+    return this.artworkOnly
+      ? (this.options?.providers ?? []).filter(
+          (provider) => provider.supports_images,
+        )
+      : (this.options?.providers ?? []);
+  }
+  private get validYear() {
+    return (
+      !this.year.trim() ||
+      (Number.isInteger(Number(this.year)) &&
+        Number(this.year) >= 1800 &&
+        Number(this.year) <= 2100)
+    );
+  }
+  private get expectationsChanged() {
+    return (
+      !!this.options &&
+      (this.options.providers.some(
+        (source) => this.sourceExpected[source.id] !== !source.unavailable,
+      ) ||
+        (["poster", "backdrop"] as const).some(
+          (kind) =>
+            this.artworkExpected[kind] !==
+            !this.options!.artwork_unavailable?.includes(kind),
+        ))
+    );
+  }
+  private statusLine(label: string, complete: boolean) {
+    return html`<p class="status-line" data-complete=${complete}>
+      <span class="status-icon" aria-hidden="true"
+        >${complete ? "✓" : "⚠"}</span
+      >
+      ${label}: ${complete ? "Complete" : "Missing"}
+    </p>`;
+  }
+  private async inspect(provider: string) {
+    if (this.expectationsChanged || !this.sourceExpected[provider]) return;
+    this.provider = provider;
+    await this.search();
   }
   private async scrape(choice = "") {
     if (!this.client || !this.scope || !this.provider || this.pending) return;
@@ -318,6 +554,7 @@ export class TitleScrape extends LitElement {
         return;
       }
       this.review = review;
+      this.view = "mapping";
       this.fields = new Set(this.artworkOnly ? [] : Object.keys(review.fields));
       this.images = {};
       const backdrop = review.images.find((image) => image.kind === "backdrop");
@@ -343,7 +580,9 @@ export class TitleScrape extends LitElement {
       !this.client ||
       !this.scope ||
       !this.provider ||
+      !this.sourceExpected[this.provider] ||
       !this.query.trim() ||
+      !this.validYear ||
       this.pending ||
       this.busy
     )
@@ -358,10 +597,12 @@ export class TitleScrape extends LitElement {
         this.versionId,
         this.provider,
         this.query,
+        this.year.trim() ? Number(this.year) : undefined,
       );
       if (generation === this.generation) {
         this.candidatesPage = matches;
         this.review = undefined;
+        this.view = "sources";
       }
     } catch (error) {
       if (generation === this.generation) this.report(error);
@@ -372,11 +613,11 @@ export class TitleScrape extends LitElement {
       }
     }
   }
-  private async apply(unavailable?: boolean) {
+  private async apply() {
     if (
       !this.client ||
       !this.scope ||
-      (!this.review && !this.pending && unavailable === undefined) ||
+      (!this.review && !this.pending && !this.expectationsChanged) ||
       this.busy
     )
       return;
@@ -384,30 +625,31 @@ export class TitleScrape extends LitElement {
     this.busy = true;
     this.error = "";
     try {
-      if (unavailable !== undefined && !this.pending) {
-        // Searches may have recorded a conflict since the dialog opened.
+      if (!this.pending && !this.review) {
         const options = await this.client.titleScrapeOptions(
           this.scope,
           this.versionId,
         );
         if (generation !== this.generation) return;
-        if (!options.snapshot) throw new ApiError("refresh_required");
-        this.pending = this.client.prepareScraperAvailability(this.scope, {
+        if (!options.snapshot || options.snapshot !== this.options?.snapshot)
+          throw new ApiError("refresh_required");
+        this.pending = this.client.prepareScrapeExpectations(this.scope, {
           title_id: this.versionId,
-          provider: this.provider,
           snapshot: options.snapshot,
-          unavailable,
+          providers: this.sourceExpected,
+          artwork: this.artworkExpected,
         });
       }
-      this.pending ??= this.client.prepareTitleScrape(this.scope, {
-        plan_id: this.review!.plan_id,
-        fields: [...this.fields],
-        images: this.images,
-        ...(this.review!.matched ? { save_match: true } : {}),
-      });
+      if (!this.pending && this.review)
+        this.pending = this.client.prepareTitleScrape(this.scope, {
+          plan_id: this.review.plan_id,
+          fields: [...this.fields],
+          images: this.images,
+          ...(this.review.matched ? { save_match: true } : {}),
+        });
       this.lock();
       this.requestUpdate();
-      const result = await this.client.applyTitleScrape(this.pending);
+      const result = await this.client.applyTitleScrape(this.pending!);
       if (generation !== this.generation) return;
       this.pending = undefined;
       this.lock();
@@ -600,6 +842,117 @@ export class TitleScrape extends LitElement {
         )}
       </div>`;
   }
+  private searchPanel() {
+    if (!this.options) return nothing;
+    return html`<section class="manager-section" aria-label="Search and match">
+      <h3>Search &amp; Match</h3>
+      <div class="match-search">
+        <label
+          >Title search<input
+            name="scraper_query"
+            type="search"
+            maxlength="200"
+            .value=${this.query}
+            ?disabled=${this.busy || !!this.pending}
+            @input=${(event: Event) => {
+              this.query = (event.target as HTMLInputElement).value;
+              this.review = undefined;
+              this.clearCandidates();
+              this.view = "sources";
+              this.requestUpdate();
+            }}
+        /></label>
+        <label class="year-field"
+          >Release year<input
+            name="scraper_year"
+            type="number"
+            min="1800"
+            max="2100"
+            step="1"
+            .value=${this.year}
+            ?disabled=${this.busy || !!this.pending}
+            @input=${(event: Event) => {
+              this.year = (event.target as HTMLInputElement).value;
+              this.review = undefined;
+              this.clearCandidates();
+              this.view = "sources";
+              this.requestUpdate();
+            }}
+        /></label>
+      </div>
+      ${
+        this.review?.matched
+          ? html`<p class="notice">
+              Selected match:
+              <strong
+                >${this.review.matched.title}
+                (${this.review.matched.year})</strong
+              >
+            </p>`
+          : nothing
+      }
+      ${this.matchResults()}
+    </section>`;
+  }
+  private sourcePanel() {
+    if (!this.options) return nothing;
+    return html`<section class="manager-section" aria-label="Scraper sources">
+      <h3>Scraper Sources</h3>
+      ${this.artworkOnly && !this.options.artwork_enabled ? html`<p class="notice">Enable Sync artwork in Settings to retrieve image choices.</p>` : nothing}
+      <p class="muted">
+        Switch on sources expected for this movie. Inspect searches that source
+        using the title and year above. Save switch changes before inspecting.
+      </p>
+      <div class="source-list">
+        ${this.visibleProviders.map(
+          (source) =>
+            html`<div class="source-row" data-provider=${source.id}>
+              <label
+                class="switch"
+                title=${`Use ${source.label} for this movie`}
+                ><input
+                  type="checkbox"
+                  aria-label=${`Use ${source.label} for this movie`}
+                  .checked=${this.sourceExpected[source.id] ?? false}
+                  ?disabled=${this.busy || !!this.pending || !!this.review || !this.options?.snapshot}
+                  @change=${(event: Event) => {
+                    this.clearCandidates();
+                    this.sourceExpected = {
+                      ...this.sourceExpected,
+                      [source.id]: (event.target as HTMLInputElement).checked,
+                    };
+                    this.requestUpdate();
+                  }} /><span aria-hidden="true"></span
+              ></label>
+              <strong>${source.label}</strong>
+              <span class="source-detail"
+                >${source.has_data ? `${source.fields ?? 0} fields saved` : this.sourceExpected[source.id] ? "Metadata missing" : "No data saved"}<br /><small
+                  >${this.sourceExpected[source.id] ? (source.available ? "Included" : "Needs configuration") : "Excluded from completeness"}${source.fetched_at ? ` · Updated ${new Date(source.fetched_at).toLocaleDateString()}` : ""}</small
+                ></span
+              >
+              <div class="actions">
+                <button
+                  ?disabled=${!source.available || !this.sourceExpected[source.id] || this.busy || !!this.pending || this.expectationsChanged || !this.query.trim() || !this.validYear}
+                  @click=${() => void this.inspect(source.id)}
+                >
+                  Inspect
+                </button>
+              </div>
+            </div>`,
+        )}
+      </div>
+      ${!this.visibleProviders.some((source) => source.available) ? html`<p class="muted">Configure a scraper in Settings first.</p>` : nothing}
+    </section>`;
+  }
+  private historyPanel() {
+    if (!this.options) return nothing;
+    return html`<section class="manager-section" aria-label="Source history">
+      <h3>Source History</h3>
+      <div class="source-list">
+        ${this.options.providers.map((source) => html`<div class="source-row" data-provider=${source.id}><strong>${source.label}</strong><span>${source.fetched_at ? `${source.fields ?? 0} fields saved` : "No saved metadata"}</span><small>${source.fetched_at ? `Last updated ${new Date(source.fetched_at).toLocaleString()}` : source.unavailable ? "No metadata expected" : "Not yet scraped"}</small></div>`)}
+      </div>
+    </section>`;
+  }
   protected render() {
     if (!this.scope?.permissions.edit) return nothing;
     return html`${iconAction(this.artworkOnly ? "Edit Artwork" : "Scrape title", this.artworkOnly ? "artwork" : "scrape", this.blocked || !!this.pending, () => this.open(), "scrape-button")}
@@ -613,18 +966,47 @@ export class TitleScrape extends LitElement {
           this.close();
         }}
       >
-        <div class="card-head">
-          <h2 id="scrape-title">
-            ${this.artworkOnly ? (this.review ? `Edit Artwork: ${this.review.title}` : "Edit Artwork") : this.review ? `Review scrape: ${this.review.title}` : "Scrape title"}
-          </h2>
+        <div class="card-head manager-head">
+          <div>
+            <h2 id="scrape-title">Movie Metadata Manager</h2>
+            <p>
+              Search, scrape and reconcile
+              metadata${this.artworkOnly ? " and artwork" : ""}.
+            </p>
+          </div>
           ${closeButton(() => this.close())}
         </div>
         ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
         ${this.busy ? html`<p role="status">${this.pending ? "Applying selected data…" : "Retrieving provider data…"}</p>` : nothing}
-        ${this.currentMovie()}
+        ${this.currentMovie()} ${this.searchPanel()}
         ${
-          this.review
-            ? html`${this.review.matched ? html`<p class="notice">Matched: <strong>${this.review.matched.title} (${this.review.matched.year})</strong>. This source choice will be saved for future scrapes.</p>` : nothing}
+          this.options
+            ? html`<div
+                class="page-tabs manager-tabs"
+                role="tablist"
+                aria-label="Metadata manager sections"
+                @keydown=${this.tabKey}
+              >
+                ${(["sources", "mapping", "history"] as const).map(
+                  (view) =>
+                    html`<button
+                      role="tab"
+                      aria-selected=${this.view === view}
+                      tabindex=${this.view === view ? 0 : -1}
+                      @click=${() => {
+                        this.view = view;
+                        this.requestUpdate();
+                      }}
+                    >
+                      ${view === "sources" ? "Sources" : view === "mapping" ? "Field Mapping" : "History"}
+                    </button>`,
+                )}
+              </div>`
+            : nothing
+        }
+        ${
+          this.view === "mapping" && this.review
+            ? html`<section class="manager-section" aria-label="Field mapping">
                 ${
                   this.artworkOnly
                     ? html`<p class="muted">
@@ -738,124 +1120,171 @@ ${Array.isArray(value.after) ? value.after.join(", ") : String(value.after)}</pr
                           )}
                         </div>`
                     : this.gallery(this.tab as "poster" | "backdrop")
-                }${!this.review.images.length ? html`<p class="muted">${this.review.artwork_enabled ? "This provider returned no image choices." : "Enable Sync artwork in Settings to retrieve image choices."}</p>` : nothing}`
-            : this.options
-              ? html`${this.artworkOnly && !this.options.artwork_enabled ? html`<p class="notice">Enable Sync artwork in Settings to retrieve image choices.</p>` : nothing}<label
-                    >Enabled scraper<select
-                      .value=${this.provider}
+                }${!this.review.images.length ? html`<p class="muted">${this.review.artwork_enabled ? "This provider returned no image choices." : "Enable Sync artwork in Settings to retrieve image choices."}</p>` : nothing}
+              </section>`
+            : this.view === "sources"
+              ? this.sourcePanel()
+              : this.view === "history"
+                ? this.historyPanel()
+                : html`<section class="manager-section">
+                    <p class="muted">
+                      Choose a source and Inspect it to compare fields and
+                      images.
+                    </p>
+                  </section>`
+        }
+        <div class="dialog-footer manager-actions">
+          <div class="actions">
+            ${
+              this.pending
+                ? html`<button
+                    ?disabled=${this.busy}
+                    @click=${() => {
+                      if (
+                        window.confirm(
+                          "Inspect the Library before discarding this unconfirmed apply. Discard retry?",
+                        )
+                      ) {
+                        this.pending = undefined;
+                        this.lock();
+                        this.requestUpdate();
+                      }
+                    }}
+                  >
+                    Discard retry
+                  </button>`
+                : this.review
+                  ? html`<button
                       ?disabled=${this.busy}
-                      @change=${(event: Event) => {
-                        this.provider = (
-                          event.target as HTMLSelectElement
-                        ).value;
+                      @click=${() => {
+                        this.review = undefined;
                         this.candidatesPage = undefined;
+                        this.view = "sources";
                         this.error = "";
                         this.requestUpdate();
                       }}
                     >
-                      <option value="">Choose a scraper</option>
-                      ${this.options.providers.map(
-                        (provider) =>
-                          html`<option
-                            value=${provider.id}
-                            ?disabled=${!provider.available}
-                            title=${provider.missing_data ? "No saved data from this scraper" : ""}
-                            aria-label=${[provider.label, provider.unavailable ? "no data available" : provider.missing_data ? "no saved data" : "", provider.available ? "" : "missing credential"].filter(Boolean).join(" · ")}
-                          >
-                            ${provider.label}${provider.unavailable ? " · no data available" : provider.missing_data ? " ⚠" : ""}${provider.available ? "" : " · missing credential"}
-                          </option>`,
-                      )}
-                    </select></label
-                  >
-                  ${this.options.providers.some((provider) => provider.missing_data) ? html`<p class="muted">⚠ No saved data from this scraper.</p>` : nothing}
-                  ${this.options.providers.find((provider) => provider.id === this.provider)?.unavailable ? html`<p class="muted">No scraper data available for this provider. Automatic attempts and conflicts are excluded. You can still search manually, or clear the flag to resume automatic attempts.</p>` : nothing}
-                  <form
-                    class="match-search"
-                    @submit=${(event: Event) => {
-                      event.preventDefault();
-                      void this.search();
-                    }}
-                  >
-                    <label
-                      >Title search<input
-                        name="scraper_query"
-                        type="search"
-                        maxlength="200"
-                        .value=${this.query}
-                        ?disabled=${this.busy || !!this.pending}
-                        @input=${(event: Event) => {
-                          this.query = (event.target as HTMLInputElement).value;
-                          this.requestUpdate();
-                        }} /></label
-                    ><button
-                      type="submit"
-                      ?disabled=${this.busy || !this.provider || !this.query.trim()}
-                    >
-                      Search titles
-                    </button>
-                  </form>
-                  ${this.matchResults()}${!this.options.providers.some((provider) => provider.available) ? html`<p class="muted">Enable and configure a scraper in Settings first.</p>` : nothing}`
-              : nothing
-        }
-        <div class="dialog-footer">
-          ${!this.artworkOnly && !this.review && !this.pending && this.options?.snapshot && this.provider ? html`<button class="availability-button" ?disabled=${this.busy} @click=${() => this.apply(!this.options?.providers.find((provider) => provider.id === this.provider)?.unavailable)}>${this.options.providers.find((provider) => provider.id === this.provider)?.unavailable ? "Clear no-data flag" : "Mark no scraper data available"}</button>` : nothing}
-          ${
-            this.pending
-              ? html`<button
-                  ?disabled=${this.busy}
-                  @click=${() => {
-                    if (
-                      window.confirm(
-                        "Inspect the Library before discarding this unconfirmed apply. Discard retry?",
-                      )
-                    ) {
-                      this.pending = undefined;
-                      this.lock();
-                      this.requestUpdate();
-                    }
-                  }}
-                >
-                  Discard retry
-                </button>`
-              : this.review
+                      Change match / scraper
+                    </button>`
+                  : nothing
+            }${
+              this.review && this.view !== "mapping"
                 ? html`<button
-                    ?disabled=${this.busy}
                     @click=${() => {
-                      this.review = undefined;
-                      this.error = "";
+                      this.view = "mapping";
                       this.requestUpdate();
                     }}
                   >
-                    Change match / scraper
+                    Review Data
                   </button>`
                 : nothing
-          }<button
-            class="primary"
-            ?disabled=${this.busy || (this.artworkOnly && !this.options?.artwork_enabled) || (!this.review && !this.provider) || (!!this.review && (this.artworkOnly || !this.review.matched) && !this.fields.size && !Object.keys(this.images).length)}
-            @click=${() => (this.pending || this.review ? this.apply() : this.scrape())}
-          >
-            ${this.pending ? "Retry exact apply" : this.review ? (this.artworkOnly ? "Apply images" : this.review.matched && !this.fields.size && !Object.keys(this.images).length ? "Save match" : "Apply selected data") : this.candidatesPage ? "Try automatic match" : "Scrape title"}
-          </button>
+            }<button
+              class="primary"
+              ?disabled=${this.busy || (!this.pending && !this.review && (!this.expectationsChanged || !this.options?.snapshot)) || (!!this.review && (this.artworkOnly || !this.review.matched) && !this.fields.size && !Object.keys(this.images).length)}
+              @click=${() => this.apply()}
+            >
+              ${this.pending ? "Retry exact save" : "Save"}
+            </button>
+          </div>
         </div>
       </dialog>`;
   }
   private currentMovie() {
     const current = this.options?.current;
+    const posterPresent =
+      this.options?.artwork_present?.poster ?? !!current?.artwork_key;
+    const backdropPresent =
+      this.options?.artwork_present?.backdrop ?? !!current?.backdrop_key;
+    const metadataComplete =
+      this.options?.providers.every(
+        (source) => !this.sourceExpected[source.id] || source.has_data === true,
+      ) ?? true;
     return current
-      ? html`<section class="current-movie" aria-label="Current Library movie">
-          <h3>Current Library movie</h3>
-          <p>
-            <strong>${current.title}</strong> ·
-            ${current.year ?? "Year unavailable"}
-          </p>
-          <p>
-            <strong>Director:</strong>
-            ${current.directors.join(", ") || "Unavailable"}
-          </p>
-          <p>
-            <strong>Top cast:</strong>
-            ${current.actors.join(", ") || "Unavailable"}
-          </p>
+      ? html`<section
+          class="manager-section current-movie"
+          aria-label="Current Library movie"
+        >
+          <h3>
+            Current Library Info <small class="muted">Existing record</small>
+          </h3>
+          <div class="current-layout">
+            <div class="current-identity">
+              <div class="current-poster">
+                <kaleidescape-library-cover
+                  .client=${this.client}
+                  .scope=${this.scope}
+                  .queue=${this.queue}
+                  .artworkKey=${current.artwork_key}
+                  .title=${current.title}
+                ></kaleidescape-library-cover>
+                <div class="expectation">
+                  <label class="switch" title="Expect cover art for this movie"
+                    ><input
+                      type="checkbox"
+                      aria-label="Expect cover art"
+                      .checked=${this.artworkExpected.poster}
+                      ?disabled=${this.busy || !!this.pending || !!this.review || !this.options?.snapshot}
+                      @change=${(event: Event) => {
+                        this.artworkExpected.poster = (
+                          event.target as HTMLInputElement
+                        ).checked;
+                        this.requestUpdate();
+                      }} /><span aria-hidden="true"></span></label
+                  ><span>Cover</span>
+                </div>
+              </div>
+              <div>
+                <h3>${current.title}</h3>
+                <p>
+                  ${current.year ?? "Year unavailable"} ·
+                  ${current.duration_seconds ? `${Math.round(current.duration_seconds / 60)} min` : "Runtime unavailable"}
+                </p>
+                <dl class="current-meta">
+                  <dt>Edition</dt>
+                  <dd>${current.edition || "Unavailable"}</dd>
+                  <dt>Director</dt>
+                  <dd>${current.directors.join(", ") || "Unavailable"}</dd>
+                  <dt>Top cast</dt>
+                  <dd>${current.actors.join(", ") || "Unavailable"}</dd>
+                  <dt>Metadata updated</dt>
+                  <dd>
+                    ${current.metadata_synced_at ? new Date(current.metadata_synced_at).toLocaleDateString() : "Unavailable"}
+                  </dd>
+                </dl>
+              </div>
+            </div>
+            <div class="current-backdrop">
+              <kaleidescape-library-cover
+                .client=${this.client}
+                .scope=${this.scope}
+                .queue=${this.queue}
+                .artworkKey=${current.backdrop_key}
+                .title=${`${current.title} backdrop`}
+                .fit=${"contain"}
+              ></kaleidescape-library-cover>
+              <div class="expectation">
+                <label class="switch" title="Expect backdrop art for this movie"
+                  ><input
+                    type="checkbox"
+                    aria-label="Expect backdrop art"
+                    .checked=${this.artworkExpected.backdrop}
+                    ?disabled=${this.busy || !!this.pending || !!this.review || !this.options?.snapshot}
+                    @change=${(event: Event) => {
+                      this.artworkExpected.backdrop = (
+                        event.target as HTMLInputElement
+                      ).checked;
+                      this.requestUpdate();
+                    }} /><span aria-hidden="true"></span></label
+                ><span>Backdrop</span>
+              </div>
+            </div>
+            <div class="artwork-status">
+              <h3>Scraping status</h3>
+              ${this.statusLine("Artwork", !this.artworkExpected.poster || posterPresent)}
+              ${this.statusLine("Backdrop", !this.artworkExpected.backdrop || backdropPresent)}
+              ${this.statusLine("Metadata", metadataComplete)}
+            </div>
+          </div>
         </section>`
       : nothing;
   }

@@ -6,7 +6,7 @@ from ..core.models import JournalError, invalid
 from ..core.search import matches, phrase, quoted
 
 
-async def search(manager, actor, title, provider, query):
+async def search(manager, actor, title, provider, query, year=None):
     manager.ready(actor)
     if not manager.enabled(provider):
         raise JournalError(
@@ -19,12 +19,14 @@ async def search(manager, actor, title, provider, query):
         or "\x00" in query
     ):
         raise invalid("Enter a title search of at most 200 characters")
+    if year is not None and (type(year) is not int or not 1800 <= year <= 2100):
+        raise invalid("Choose a release year from 1800 through 2100")
     target = await manager.parent.repository.async_enrichment(
         "review_target", manager.parent.source, title
     )
     async with manager.worker(actor, title) as client:
         rows = await client.providers.search(
-            provider, phrase(query) if quoted(query) else query
+            provider, phrase(query) if quoted(query) else query, year
         )
     if len(json.dumps(rows).encode()) > 512 * 1024 or len(rows) > 8:
         raise JournalError(

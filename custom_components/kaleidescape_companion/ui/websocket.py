@@ -3,6 +3,7 @@
 import logging
 from typing import Any
 
+import kaleidescape
 import probatio as p
 from homeassistant.components import websocket_api
 from homeassistant.components.websocket_api.connection import REDACT_KEYS
@@ -25,6 +26,13 @@ from .settings import fingerprint, options_request
 from .settings_transfer import transfer as settings_transfer
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def pyk_version() -> str:
+    """Report the version declared by the loaded pyk module, not the HA pin."""
+    value = getattr(kaleidescape, "__version__", None)
+    return value if isinstance(value, str) and 0 < len(value) <= 64 else "Unknown"
+
 
 USER_OPERATIONS = frozenset(
     {
@@ -117,6 +125,7 @@ def async_register_commands(hass: HomeAssistant) -> None:
             p.Required("title_id"): str,
             p.Required("provider"): str,
             p.Required("query"): str,
+            p.Optional("year"): int,
         },
         "metadata/title/cancel": {**scoped, p.Required("plan_id"): str},
         "metadata/title/apply": {**mutations, p.Required("data"): dict},
@@ -361,6 +370,7 @@ async def async_handle(
                         **(
                             {
                                 "tracking_enabled": runtime.observer is not None,
+                                "pyk_version": pyk_version(),
                                 "features": {
                                     "manual_journal": True,
                                     "automatic_tracking": True,
@@ -449,7 +459,11 @@ async def async_handle(
                         )
                     elif operation.endswith("search"):
                         result = await manager.search(
-                            user, msg["title_id"], msg["provider"], msg["query"]
+                            user,
+                            msg["title_id"],
+                            msg["provider"],
+                            msg["query"],
+                            msg.get("year"),
                         )
                     elif operation.endswith("cancel"):
                         result = await manager.cancel(user, msg["plan_id"])

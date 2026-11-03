@@ -81,33 +81,52 @@ landscape downloads.
 
 ## Review a single title
 
-Administrators can open a Library title and choose **Scrape title**. The popup
-lists only enabled scrapers; TMDB requires a configured credential. Missing
-saved data is marked with **⚠** beside the scraper name. This indicates no
-cached or reviewed data from that provider for this exact movie group, rather
-than requiring every optional field to be populated. Configured scrapers remain
-selectable so the missing data can be retrieved. Missing Library years or store
-links can be resolved through manual title search. Choose a scraper, retrieve
-its data, then review the field checkboxes. Available fields include full cast,
-directors, writers, producers, studios, genres, synopsis and provider-specific
-scores. **Compare values** shows current and incoming data. No Library data
-changes until **Apply selected data**.
+Administrators can open a Library title and choose **Scrape title**. The Movie
+Metadata Manager shows current title facts, cover and backdrop, editable title
+and release-year search fields, and **Sources**, **Field Mapping** and
+**History** sections. The dialog also shows Artwork, Backdrop and Metadata
+completeness in its upper-right corner. Source rows come from the review API
+rather than a fixed frontend list, so newly registered providers appear without
+changing the dialog. The current sources are the public Kaleidescape Store and
+TMDB; TMDB requires a configured credential. Source availability is configured
+globally in Settings. Each row has a small left-hand switch for whether this
+movie expects data from that provider, its saved field count and update time,
+and an **Inspect** action. Inspect searches only that provider using the visible
+title and year, then lets the administrator choose a match and review its data.
+There is no separate all-provider search action. Missing data means no cached or
+reviewed data from that provider for this movie group, rather than requiring
+every optional field to be filled.
+
+Missing Library years or store links can be resolved through the title and year
+fields. Inspect a source, choose a match, then review field checkboxes and image
+choices in Field Mapping. Available fields include full cast, directors,
+writers, producers, studios, genres, synopsis and provider-specific scores.
+**Compare values** shows current and incoming data. No Library data changes
+until **Save**.
 
 The suggested **Title search** removes a trailing `(Director's Cut)` suffix
 (also accepting the typographic apostrophe) without changing the Library title.
 The dialog shows the current Library title, year, up to five directors and top
 five cast members above the results for comparison.
 
-For a provider that has no matching data, choose **Mark no scraper data
-available**. This administrator-only flag applies to that provider across the
-movie's versions, including returning versions. It clears that provider's
-conflicts and missing-data warning and skips future automatic attempts, so it
-does not create new scrape failures. Other providers and same-name remakes are
-unaffected. The provider remains selectable for an explicit manual search.
-**Clear no-data flag** resumes automatic attempts; a manual import does not
-silently clear the flag. Existing cached data is preserved, and the cumulative
-historical failure counter is not decremented. Availability saves require a
-current group snapshot and support exact retry after an uncertain response.
+If a provider has no matching data, turn its switch off and **Save**. The
+administrator-only choice applies across the movie's versions, including
+returning versions. It removes that provider from the Metadata completeness
+indicator and `missing_metadata` sensor, clears its conflicts, and skips future
+automatic attempts. Other providers and same-name remakes are unaffected.
+Turning the switch back on resumes automatic attempts. Existing cached data is
+preserved, and the historical failure counter is not decremented.
+
+The cover and backdrop each have an expectation switch below their preview.
+Turning either off makes that kind complete even without an image, removes it
+from the `missing_artwork` sensor's expectation, and skips automatic TMDB image
+requests for that kind. Existing cached images remain. Turning it back on
+restores the expectation. Metadata is complete only when every switched-on
+source has cached or reviewed data. All three indicators use the same grouped
+availability and cache rules as the sensors. **Save** writes the switches
+atomically with a current group snapshot and supports exact retry after an
+uncertain response. The source History section shows current saved field counts
+and update times; it is not a full audit log.
 
 With TMDB enabled, **Edit Artwork** opens the same review flow for images only.
 It still requires configured TMDB credentials and **Sync artwork**. **Poster**

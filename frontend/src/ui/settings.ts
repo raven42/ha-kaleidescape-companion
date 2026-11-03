@@ -860,6 +860,10 @@ export class KaleidescapeSettings extends LitElement {
                         Kaleidescape devices and metadata providers · shared ·
                         Save settings required
                       </p>
+                      <p>
+                        Loaded pykaleidescape version:
+                        <strong>${this.scope?.pyk_version || "Unknown"}</strong>
+                      </p>
                       <h3>Library sync</h3>
                       <label class="check"
                         ><input

@@ -387,6 +387,61 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
             self.entry.runtime_data.controls.player_id(SERIAL),
         )
 
+    async def test_status_failure_logs_safe_pyk_stage_and_recovers(self):
+        await self.configure()
+
+        async def fail_power(device, request, *, serial=None):
+            if request is pyk.GetDevicePowerState:
+                raise OSError("10.0.0.25 token=fictional-secret")
+            return await self.peer.response(device, request, serial=serial)
+
+        logger = "custom_components.kaleidescape_companion.playback.controls"
+        with patch.object(module, "one_response", fail_power):
+            with self.assertLogs(logger, level="DEBUG") as first:
+                response = await self.call("control/status", **self.scope)
+            self.assertEqual(response["code"], "control_unreachable")
+            self.assertIn(
+                "Pyk read device power state failed: OSError", "\n".join(first.output)
+            )
+            self.assertEqual(sum("WARNING" in line for line in first.output), 1)
+            with self.assertLogs(logger, level="DEBUG") as repeated:
+                response = await self.call("control/status", **self.scope)
+            self.assertEqual(response["code"], "control_unreachable")
+            self.assertEqual(sum("WARNING" in line for line in repeated.output), 0)
+        with self.assertLogs(logger, level="INFO") as recovered:
+            self.assertTrue(
+                (await self.call("control/status", **self.scope))["success"]
+            )
+        self.assertIn("Device status read recovered", "\n".join(recovered.output))
+        for record in [*first.output, *repeated.output, *recovered.output]:
+            self.assertNotIn("10.0.0.25", record)
+            self.assertNotIn("fictional-secret", record)
+
+    async def test_connect_failure_logs_safe_pyk_stage(self):
+        await self.configure()
+        device = self.peer.client(SEED)
+
+        async def fail_connect():
+            device.is_connected = True
+            raise TimeoutError("10.0.0.10 token=fictional-secret")
+
+        device.connect = fail_connect
+        with (
+            patch.object(module, "Device", return_value=device),
+            self.assertLogs(
+                "custom_components.kaleidescape_companion.playback.controls",
+                level="DEBUG",
+            ) as logs,
+        ):
+            response = await self.call("control/status", **self.scope)
+        self.assertEqual(response["code"], "control_unreachable")
+        output = "\n".join(logs.output)
+        self.assertIn("Pyk connect failed: TimeoutError", output)
+        self.assertNotIn("10.0.0.10", output)
+        self.assertNotIn("fictional-secret", output)
+        self.assertFalse(device.is_connected)
+        self.assertEqual(self.entry.runtime_data.controls.clients, set())
+
     async def test_preparation_is_read_only_and_exact_retry_does_not_replay(self):
         await self.configure()
         token = await self.prepare()

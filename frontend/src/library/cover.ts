@@ -42,6 +42,7 @@ export class LibraryCover extends LitElement {
     scope: { attribute: false },
     queue: { attribute: false },
     artworkKey: { attribute: false },
+    fit: { type: String },
     title: { type: String },
   };
   static styles = css`
@@ -68,6 +69,7 @@ export class LibraryCover extends LitElement {
   scope?: JournalInfo;
   queue?: CoverQueue;
   artworkKey?: string | null;
+  fit: "cover" | "contain" = "cover";
   title = "";
   private observer?: IntersectionObserver;
   private visible = false;
@@ -195,6 +197,7 @@ export class LibraryCover extends LitElement {
       ? html`<img
           src=${this.url}
           alt=${`Cover for ${this.title}`}
+          style=${`object-fit: ${this.fit}`}
           @error=${() => this.queue?.cache.drop(this.cacheKey)}
         />`
       : html`<span>No cached artwork</span>`;

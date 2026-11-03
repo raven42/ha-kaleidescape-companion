@@ -35,7 +35,7 @@ public Store/TMDB enrichment supports reviewed metadata and images.
 
 The shared panel includes **Now Playing | Library | Journal | Database |
 Settings**, with personal desktop/tablet/mobile preferences. HA dashboards have
-six cards, including a Journal calendar, and the integration exposes 18 sensors.
+six cards, including a Journal calendar, and the integration exposes 16 sensors.
 Administrator database tools support bounded inspection/edits and reviewed merge
 imports. HA calendar publishing and dedicated-calendar Full Sync are optional.
 

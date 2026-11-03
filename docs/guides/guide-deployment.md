@@ -22,6 +22,12 @@ too, so validate both integrations together. See the
 [migration plan](../plans/plan-pykaliedescape-migration.md). Controls remain
 disabled until configured. This guide's component upload does not install pyk.
 
+The current patched source branch is `08b-cmp-dev-version`. Its runtime and
+wheel metadata both report `1.2.0.dev1+cmp`, so the version shown in Companion
+Settings can distinguish this development build from the earlier overlay. HA's
+shared requirement remains pinned to 1.1.6; copying the reviewed package code
+into the existing override does not change that manifest requirement.
+
 ## Configure the target
 
 1. Set up an SSH host alias named `ha-test` in your SSH client configuration. It
@@ -162,7 +168,7 @@ administrator sidebar panel at `/kaleidescape-companion` and review:
 - JSON/SQLite downloads and record persistence after another restart.
 - A regular account’s read-only history, without notes, source/session details,
   or exports.
-- All 18 sensors: seven history sensors plus eleven Library/storage sensors.
+- All 16 sensors: five history sensors plus eleven Library/storage sensors.
   Check their bounded attributes/counts after the next refresh, the initial
   discovery baseline, unchanged-scan batch retention and unavailable/unknown
   behavior when Library/status data is disabled or missing.

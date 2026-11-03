@@ -79,6 +79,9 @@ def library_summary(db, source):
         "last_scrape_date": None,
         "scraper_failures": 0,
         "scraper_conflicts": None,
+        "missing_metadata": None,
+        "missing_metadata_movies": [],
+        "missing_metadata_truncated": False,
         "missing_artwork": None,
         "missing_artwork_movies": [],
         "missing_artwork_truncated": False,
@@ -119,6 +122,8 @@ def library_summary(db, source):
     projected = [
         "'conflicts',json(coalesce(json_extract(enrichment,'$.conflicts'),'{}'))",
         "'unavailable',json(coalesce(json_extract(enrichment,'$.unavailable'),'{}'))",
+        "'unavailable_artwork',json(coalesce(json_extract(enrichment,'$.unavailable_artwork'),'{}'))",
+        "'reviewed_providers',json(coalesce(json_extract(enrichment,'$.reviewed.providers'),'[]'))",
         *(
             f"'{provider}',json_object("
             + ",".join(
@@ -140,19 +145,59 @@ def library_summary(db, source):
         titles[row["source_group"]] = min(
             titles.get(row["source_group"], row["title"]), row["title"]
         )
-        images = groups.setdefault(row["source_group"], [False, False])
-        images[0] |= image(row["artwork_key"], enrichment, sources) in cached_images
-        images[1] |= image(None, enrichment, sources, "backdrop") in cached_images
+        group = groups.setdefault(
+            row["source_group"],
+            {
+                "images": [False, False],
+                "cached": set(),
+                "metadata_excluded": set(),
+                "artwork_excluded": set(),
+            },
+        )
+        group["images"][0] |= (
+            image(row["artwork_key"], enrichment, sources) in cached_images
+        )
+        group["images"][1] |= (
+            image(None, enrichment, sources, "backdrop") in cached_images
+        )
+        group["metadata_excluded"].update(
+            provider
+            for provider, value in enrichment["unavailable"].items()
+            if value is True
+        )
+        group["artwork_excluded"].update(
+            kind
+            for kind, value in enrichment["unavailable_artwork"].items()
+            if value is True
+        )
         if has_conflict(enrichment, sources):
             conflicts.add(row["source_group"])
         for provider in ("tmdb", "kaleidescape", "reviewed"):
             stamp = enrichment.get(provider, {}).get("fetched_at")
             if stamp:
                 stamps.append(stamp)
+                group["cached"].add(provider)
+            if provider == "reviewed":
+                group["cached"].update(
+                    item
+                    for item in enrichment["reviewed_providers"]
+                    if item in {"tmdb", "kaleidescape"}
+                )
     activity = scrape_activity(db, source)
     if activity["last_scrape_date"]:
         stamps.append(activity["last_scrape_date"])
-    missing = {group for group, images in groups.items() if not all(images)}
+    enabled = set(sources.get("_enabled", [])) & {"tmdb", "kaleidescape"}
+    missing_metadata = {
+        name
+        for name, group in groups.items()
+        if enabled - group["cached"] - group["metadata_excluded"]
+    }
+    missing = {
+        name
+        for name, group in groups.items()
+        if (not group["images"][0] and "poster" not in group["artwork_excluded"])
+        or (not group["images"][1] and "backdrop" not in group["artwork_excluded"])
+    }
 
     def names(selected):
         return sensor_titles(
@@ -162,12 +207,19 @@ def library_summary(db, source):
             )
         )
 
-    missing_names, conflict_names = names(missing), names(conflicts)
+    missing_names, metadata_names, conflict_names = (
+        names(missing),
+        names(missing_metadata),
+        names(conflicts),
+    )
     return {
         **result,
         **activity,
         "last_scrape_date": max(stamps, default=None),
         "scraper_conflicts": len(conflicts),
+        "missing_metadata": len(missing_metadata),
+        "missing_metadata_movies": metadata_names,
+        "missing_metadata_truncated": len(metadata_names) < len(missing_metadata),
         "missing_artwork": len(missing),
         "missing_artwork_movies": missing_names,
         "missing_artwork_truncated": len(missing_names) < len(missing),

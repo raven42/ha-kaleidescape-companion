@@ -52,6 +52,7 @@ export interface JournalInfo extends Scope {
   database_limit_bytes?: number;
   backup_in_progress?: boolean;
   tracking_enabled?: boolean;
+  pyk_version?: string;
   library_enabled?: boolean;
   ui_defaults?: {
     default_landing_page: string;
@@ -326,6 +327,11 @@ export interface ScrapeOptions {
     year: number | null;
     directors: string[];
     actors: string[];
+    edition?: string | null;
+    duration_seconds?: number | null;
+    metadata_synced_at?: string | null;
+    artwork_key?: string | null;
+    backdrop_key?: string | null;
   };
   providers: {
     id: string;
@@ -333,8 +339,14 @@ export interface ScrapeOptions {
     available: boolean;
     missing_data?: boolean;
     unavailable?: boolean;
+    has_data?: boolean;
+    supports_images?: boolean;
+    fetched_at?: string | null;
+    fields?: number;
   }[];
   artwork_enabled: boolean;
+  artwork_unavailable?: ("poster" | "backdrop")[];
+  artwork_present?: { poster: boolean; backdrop: boolean };
 }
 export interface ScrapeReview {
   has_backdrop?: boolean;
@@ -845,6 +857,7 @@ export class JournalClient {
     title_id: string,
     provider: string,
     query: string,
+    year?: number,
   ): Promise<ScrapeMatches> {
     return withRequestDeadline(
       this.transport.callWS({
@@ -853,6 +866,7 @@ export class JournalClient {
         title_id,
         provider,
         query,
+        ...(year !== undefined ? { year } : {}),
       }),
       185000,
     );
@@ -875,6 +889,28 @@ export class JournalClient {
       provider: string;
       snapshot: string;
       unavailable: boolean;
+    },
+  ) {
+    return this.prepareCommand(scope, "metadata/title/availability", { data });
+  }
+  prepareArtworkAvailability(
+    scope: Scope,
+    data: {
+      title_id: string;
+      kind: "poster" | "backdrop";
+      snapshot: string;
+      unavailable: boolean;
+    },
+  ) {
+    return this.prepareCommand(scope, "metadata/title/availability", { data });
+  }
+  prepareScrapeExpectations(
+    scope: Scope,
+    data: {
+      title_id: string;
+      snapshot: string;
+      providers: Record<string, boolean>;
+      artwork: { poster: boolean; backdrop: boolean };
     },
   ) {
     return this.prepareCommand(scope, "metadata/title/availability", { data });

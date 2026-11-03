@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 
 from ..core.models import JournalError
 from ..library.store import changed
-from .availability import for_group
+from .availability import artwork_for_group, for_group
 from .matching import bindings, reference
 
 PROVIDERS = {"kaleidescape", "tmdb"}
@@ -151,6 +151,7 @@ def candidates(db, source):
                 entry["enrichment"][provider] = {"fetched_at": row[field]}
     for group, entry in groups.items():
         entry["unavailable"] = sorted(for_group(db, source, group))
+        entry["unavailable_artwork"] = sorted(artwork_for_group(db, source, group))
     return list(groups.values())
 
 

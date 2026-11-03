@@ -106,6 +106,47 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
         await self.repository.async_library_trim(0)
         self.assertEqual((await self.summary())["missing_artwork"], 2)
 
+    async def test_missing_metadata_and_declared_artwork_expectations(self):
+        await self.repository.async_metadata_sources(
+            {"metadata_store_enabled": True, "metadata_tmdb_enabled": True}
+        )
+        await self.scan(collections={})
+        self.assertEqual((await self.summary())["missing_metadata"], 2)
+        with closing(sqlite3.connect(self.path)) as db, db:
+            db.execute(
+                "UPDATE library SET enrichment=? WHERE source_group=?",
+                (
+                    json.dumps(
+                        {
+                            "tmdb": {"fetched_at": "2026-01-01T00:00:00+00:00"},
+                            "unavailable": {"kaleidescape": True},
+                            "unavailable_artwork": {"poster": True, "backdrop": True},
+                        }
+                    ),
+                    "group-a",
+                ),
+            )
+        result = await self.summary()
+        self.assertEqual(result["missing_metadata"], 1)
+        self.assertEqual(result["missing_metadata_movies"], [library.ROWS[1]["title"]])
+        self.assertEqual(result["missing_artwork"], 1)
+        with closing(sqlite3.connect(self.path)) as db, db:
+            db.execute(
+                "UPDATE library SET enrichment=? WHERE source_group=?",
+                (
+                    json.dumps(
+                        {
+                            "reviewed": {"providers": ["tmdb", "kaleidescape"]},
+                            "unavailable_artwork": {"poster": True, "backdrop": True},
+                        }
+                    ),
+                    "group-b",
+                ),
+            )
+        result = await self.summary()
+        self.assertEqual(result["missing_metadata"], 0)
+        self.assertEqual(result["missing_artwork"], 0)
+
     async def test_problem_sensor_lists_bound_titles_without_private_metadata(self):
         rows = [
             movie(str(i), str(i), title="Fictional " + str(i) + "x" * 480)
@@ -392,9 +433,20 @@ class LibrarySensorTest(unittest.IsolatedAsyncioTestCase):
             len(sensors["missing_artwork"].extra_state_attributes["movies"]), 2
         )
         self.assertFalse(sensors["missing_artwork"].extra_state_attributes["truncated"])
-        self.assertEqual(sensors["scraper_failures"].native_value, 0)
+        self.assertNotIn("scraper_failures", sensors)
+        self.assertNotIn("completed_7_days", sensors)
+        self.assertNotIn("completed_30_days", sensors)
+        self.assertNotIn("completed_365_days", sensors)
+        self.assertIn("movies_365_days", sensors)
+        self.assertEqual(sensors["movies_365_days"].native_value, 0)
+        self.assertEqual(sensors["movies_365_days"].extra_state_attributes, {})
+        self.assertEqual(sensors["missing_metadata"].native_value, 0)
         self.assertEqual(
-            sensors["scraper_failures"].state_class, SensorStateClass.TOTAL_INCREASING
+            sensors["missing_metadata"].state_class, SensorStateClass.MEASUREMENT
+        )
+        self.assertEqual(
+            sensors["missing_metadata"].extra_state_attributes,
+            {"movies": [], "truncated": False},
         )
         self.assertEqual(
             sensors["last_scrape_date"].device_class, SensorDeviceClass.TIMESTAMP

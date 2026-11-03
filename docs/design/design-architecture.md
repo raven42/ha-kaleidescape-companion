@@ -62,7 +62,7 @@ version ID, stale edit or unsafe destination. See the
 SQLite and filesystem work run off the event loop on the repository worker or an
 executor. Sensor getters read coordinator caches; they perform no I/O. Two
 30-second coordinators refresh local summaries for the
-[18 sensors](design-sensors.md). Library and provider networking is
+[16 sensors](design-sensors.md). Library and provider networking is
 asynchronous. Pyk's current local-browser HTML parsing runs synchronously in its
 async methods; quantify event-loop impact on large libraries before release.
 Preserve HA responsiveness when adding features, consistent with HA's

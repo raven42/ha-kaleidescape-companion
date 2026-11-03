@@ -127,6 +127,93 @@ class TitleReviewTest(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(denied["code"], "unauthorized")
 
+    async def test_artwork_unavailable_is_group_scoped_and_reversible(self):
+        await self.setup_review()
+        options = await self.manager.options(self.admin, self.id)
+        data = {
+            "title_id": self.id,
+            "snapshot": options["snapshot"],
+            "kind": "backdrop",
+            "unavailable": True,
+        }
+        result = await self.manager.availability(self.admin, str(uuid4()), data)
+        self.assertEqual(result["updated_count"], 2)
+        options = await self.manager.options(self.admin, self.id)
+        self.assertEqual(options["artwork_unavailable"], ["backdrop"])
+        candidates = await self.repo.async_enrichment("candidates", self.source)
+        self.assertEqual(
+            next(row for row in candidates if row["source_group"] == "movie")[
+                "unavailable_artwork"
+            ],
+            ["backdrop"],
+        )
+        await self.manager.availability(
+            self.admin,
+            str(uuid4()),
+            {**data, "snapshot": options["snapshot"], "unavailable": False},
+        )
+        options = await self.manager.options(self.admin, self.id)
+        self.assertEqual(options["artwork_unavailable"], [])
+
+    async def test_expectation_switches_save_atomically_and_drive_group_counts(self):
+        await self.setup_review()
+        self.manager = self.sync(
+            library_host=enrichment.ORIGIN,
+            library_sync_artwork=True,
+            metadata_store_enabled=True,
+        ).title_reviews()
+        self.addAsyncCleanup(self.manager.parent.async_stop)
+        await self.repo.async_metadata_sources(
+            {"metadata_tmdb_enabled": True, "metadata_store_enabled": True}
+        )
+        options = await self.manager.options(self.admin, self.id)
+        self.assertEqual(
+            options["artwork_present"], {"poster": False, "backdrop": False}
+        )
+        self.assertFalse(options["providers"][0]["has_data"])
+        data = {
+            "title_id": self.id,
+            "snapshot": options["snapshot"],
+            "providers": {"tmdb": False, "kaleidescape": False},
+            "artwork": {"poster": False, "backdrop": False},
+        }
+        request = str(uuid4())
+        saved = await self.manager.availability(self.admin, request, data)
+        self.assertEqual(saved["updated_count"], 2)
+        self.assertEqual(
+            await self.manager.availability(self.admin, request, data), saved
+        )
+        summary = await self.repo.async_library_summary(self.source)
+        self.assertEqual(summary["missing_metadata"], 1)
+        self.assertEqual(summary["missing_artwork"], 1)
+        options = await self.manager.options(self.admin, self.id)
+        self.assertEqual(options["artwork_unavailable"], ["backdrop", "poster"])
+        self.assertTrue(all(row["unavailable"] for row in options["providers"]))
+        with self.assertRaises(JournalError) as error:
+            await self.manager.availability(
+                self.admin,
+                str(uuid4()),
+                {**data, "providers": {"unknown": False}},
+            )
+        self.assertEqual(error.exception.code, "metadata_disabled")
+
+    async def test_title_search_passes_an_explicit_release_year(self):
+        await self.setup_review()
+        search = AsyncMock(return_value=[])
+        with patch(
+            "custom_components.kaleidescape_companion.enrichment.review.Providers.search",
+            search,
+        ):
+            await self.manager.search(
+                self.admin, self.id, "tmdb", "Fictional Film", 2025
+            )
+            search.assert_awaited_once_with("tmdb", "Fictional Film", 2025)
+            with self.assertRaises(JournalError) as error:
+                await self.manager.search(
+                    self.admin, self.id, "tmdb", "Fictional Film", 2101
+                )
+            self.assertEqual(error.exception.code, "invalid_request")
+
     async def test_unavailable_groups_are_skipped_by_automatic_scraping(self):
         await self.setup_review()
         candidates = await self.repo.async_enrichment("candidates", self.source)

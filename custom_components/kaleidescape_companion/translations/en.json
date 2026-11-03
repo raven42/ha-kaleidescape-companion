@@ -192,14 +192,8 @@
       "movies_30_days": {
         "name": "Movies watched last 30 days"
       },
-      "completed_7_days": {
-        "name": "Movies watched last 7 days count"
-      },
-      "completed_30_days": {
-        "name": "Movies watched last 30 days count"
-      },
-      "completed_365_days": {
-        "name": "Movies watched last 365 days count"
+      "movies_365_days": {
+        "name": "Movies watched last 365 days"
       },
       "partial_movies": {
         "name": "Partially watched movies"
@@ -231,8 +225,8 @@
       "scraper_conflicts": {
         "name": "Scraper conflicts"
       },
-      "scraper_failures": {
-        "name": "Scraper failures"
+      "missing_metadata": {
+        "name": "Missing metadata"
       },
       "missing_artwork": {
         "name": "Missing artwork"

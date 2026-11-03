@@ -38,9 +38,7 @@ HISTORY_DESCRIPTIONS = tuple(
         ("last_watched_movie", "mdi:movie-check"),
         ("movies_7_days", "mdi:movie-open"),
         ("movies_30_days", "mdi:movie-open"),
-        ("completed_7_days", "mdi:counter"),
-        ("completed_30_days", "mdi:counter"),
-        ("completed_365_days", "mdi:counter"),
+        ("movies_365_days", "mdi:movie-open"),
         ("partial_movies", "mdi:movie-play-outline"),
     )
 )
@@ -60,15 +58,11 @@ LIBRARY_DESCRIPTIONS = (
             icon=icon,
             suggested_display_precision=0,
             entity_category=EntityCategory.DIAGNOSTIC,
-            state_class=(
-                SensorStateClass.TOTAL_INCREASING
-                if key == "scraper_failures"
-                else SensorStateClass.MEASUREMENT
-            ),
+            state_class=SensorStateClass.MEASUREMENT,
         )
         for key, icon in (
-            ("scraper_failures", "mdi:alert-circle-outline"),
             ("scraper_conflicts", "mdi:movie-search-outline"),
+            ("missing_metadata", "mdi:text-box-remove-outline"),
             ("missing_artwork", "mdi:image-off-outline"),
         )
     ),
@@ -310,7 +304,7 @@ class LibrarySensor(CompanionSensor):
             return {}
         data = self.coordinator.data
         key = self.entity_description.key
-        if key in {"missing_artwork", "scraper_conflicts"}:
+        if key in {"missing_artwork", "missing_metadata", "scraper_conflicts"}:
             return {
                 "movies": list(data[f"{key}_movies"]),
                 "truncated": data[f"{key}_truncated"],

@@ -9,6 +9,7 @@ from types import MappingProxyType, SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
+import kaleidescape
 import probatio
 from aiohttp import web
 from aiohttp.test_utils import make_mocked_request
@@ -161,6 +162,9 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
             info["result"]["entries"][0]["dataset_id"], self.scope["dataset_id"]
         )
         self.assertTrue(info["result"]["entries"][0]["features"]["automatic_tracking"])
+        self.assertEqual(
+            info["result"]["entries"][0]["pyk_version"], kaleidescape.__version__
+        )
         self.assertFalse(info["result"]["entries"][0]["tracking_enabled"])
         created = await self.create()
         self.assertTrue(created["success"])

@@ -76,6 +76,25 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+it("shows the loaded pyk version in Kaleidescape settings", async () => {
+  page("settings");
+  await settle();
+  const settings = panel.shadowRoot!.querySelector("kaleidescape-settings")!;
+  await vi.waitFor(() =>
+    expect(settings.shadowRoot!.textContent).toContain(
+      "Loaded pykaleidescape version",
+    ),
+  );
+  settings
+    .shadowRoot!.querySelector<HTMLButtonElement>("#settings-tab-ecosystem")!
+    .click();
+  const section = settings.shadowRoot!.querySelector<HTMLElement>(
+    "#settings-ecosystem",
+  )!;
+  await vi.waitFor(() => expect(section.hidden).toBe(false));
+  expect(section.textContent).toContain("1.1.6");
+});
+
 describe("journal management", () => {
   it("uses one split surface and keeps viewing details read-only until Edit", async () => {
     await selectViewing("The Lantern Voyage", false);

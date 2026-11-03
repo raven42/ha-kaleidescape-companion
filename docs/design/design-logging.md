@@ -35,6 +35,16 @@ troubleshoot Companion. Logs do not replace visible UI outcomes or durable
 receipts, and enabling them must not cause network work or change retry
 behavior.
 
+Control status, discovery and preflight failures emit one warning per operation
+and exception category until a successful read reports recovery. With Companion
+debug logging enabled, failed pyk calls identify the fixed stage (connection,
+identity, power state, play status, discovery or send) and a safe exception
+class and Companion code location. These records omit device identities,
+addresses, movie details, command arguments and raw pyk exception messages.
+Repeated failed polls use debug rather than repeated warnings. The Kaleidescape
+Settings tab shows the version declared by the loaded pyk module; it does not
+verify whether local patches were applied to that version.
+
 ## Severity and truthful outcomes
 
 | Level   | Intended use                                                                                                           |
