@@ -22,7 +22,7 @@ too, so validate both integrations together. See the
 [migration plan](../plans/plan-pykaliedescape-migration.md). Controls remain
 disabled until configured. This guide's component upload does not install pyk.
 
-The current patched source branch is `08b-cmp-dev-version`. Its runtime and
+The current patched source branch is `08a-cmp-dev-version`. Its runtime and
 wheel metadata both report `1.2.0.dev1+cmp`, so the version shown in Companion
 Settings can distinguish this development build from the earlier overlay. HA's
 shared requirement remains pinned to 1.1.6; copying the reviewed package code

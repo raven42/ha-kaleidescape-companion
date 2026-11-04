@@ -1,6 +1,7 @@
 """Private provider bindings and durable match conflicts, confined to the worker."""
 
 import json
+import re
 from datetime import UTC, datetime
 
 from ..core.models import JournalError
@@ -20,6 +21,55 @@ REASONS = {
 
 def reference(metadata):
     return {key: metadata[key] for key in ("provider_id", "title", "year", "url")}
+
+
+def same_provider_identity(left, right):
+    """Compare provider identities without treating missing IDs as a match."""
+    return (
+        isinstance(left, dict)
+        and isinstance(right, dict)
+        and isinstance(left.get("provider_id"), str)
+        and bool(left["provider_id"])
+        and left["provider_id"] == right.get("provider_id")
+    )
+
+
+def provider_url(provider, metadata):
+    """Build a public movie link from an approved provider identity or route."""
+    if not isinstance(metadata, dict):
+        return None
+    if provider == "tmdb":
+        movie_id = metadata.get("provider_id")
+        if isinstance(movie_id, str) and re.fullmatch(r"[1-9][0-9]{0,9}", movie_id):
+            return f"https://www.themoviedb.org/movie/{movie_id}"
+    elif provider == "kaleidescape":
+        from ..scrapers.providers.store import HOST, movie_path
+
+        try:
+            return HOST + movie_path(metadata.get("url"))
+        except ValueError:
+            return None
+    return None
+
+
+def has_provider_data(enrichment, provider):
+    """Recognize cached data whose timestamp was lost during an image edit."""
+    cache = enrichment.get(provider, {})
+    if not isinstance(cache, dict):
+        return False
+    if isinstance(cache.get("fetched_at"), str) and cache["fetched_at"]:
+        return True
+    matches = enrichment.get("matches", {})
+    return (
+        isinstance(matches, dict)
+        and same_provider_identity(cache, matches.get(provider))
+        and cache.get("provider") == provider
+        and isinstance(cache.get("title"), str)
+        and bool(cache["title"])
+        and type(cache.get("year")) is int
+        and isinstance(cache.get("url"), str)
+        and bool(cache["url"])
+    )
 
 
 def bindings(db, source, group):

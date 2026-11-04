@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from ..core.sensor_data import sensor_titles
 from ..enrichment.activity import read as scrape_activity
-from ..enrichment.matching import has_conflict
+from ..enrichment.matching import has_conflict, has_provider_data
 from ..enrichment.selection import image
 from ..enrichment.selection import read as source_preferences
 from .browse import STATUS_SQL
@@ -67,52 +67,8 @@ def record_additions(db, source, rows, seen):
     return batch, set(added)
 
 
-def library_summary(db, source):
-    """Use the same Paused > Played > unknown > unwatched grouping as browsing."""
-    result = {
-        "total_movies": None,
-        "unwatched_movies": None,
-        "watched_movies": None,
-        "unknown_movies": 0,
-        "collections_synced_at": None,
-        "last_library_sync": None,
-        "last_scrape_date": None,
-        "scraper_failures": 0,
-        "scraper_conflicts": None,
-        "missing_metadata": None,
-        "missing_metadata_movies": [],
-        "missing_metadata_truncated": False,
-        "missing_artwork": None,
-        "missing_artwork_movies": [],
-        "missing_artwork_truncated": False,
-        "scraper_conflicts_movies": [],
-        "scraper_conflicts_truncated": False,
-        "recently_added": None,
-        "recently_added_movies": [],
-        "recently_added_truncated": False,
-        "recently_added_at": None,
-        # Artwork files are deduplicated across sources; count the whole cache.
-        "artwork_cache_bytes": db.execute(
-            "SELECT coalesce(sum(byte_size),0) FROM library_artwork"
-        ).fetchone()[0],
-    }
-    if source is None:
-        return result
-    info = db.execute("SELECT * FROM library_sources WHERE id=?", (source,)).fetchone()
-    if info is None or info["last_synced_at"] is None:
-        return result
-    counts = db.execute(
-        f"""SELECT count(*),coalesce(sum(status_rank=3),0),
-            coalesce(sum(status_rank=2),0),coalesce(sum(status_rank=1),0) FROM (
-            SELECT t.source_group,min(CASE ({STATUS_SQL})
-                WHEN 'in_progress' THEN 0 WHEN 'watched' THEN 1
-                WHEN 'unknown' THEN 2 ELSE 3 END) status_rank
-            FROM library t JOIN library_sources s ON s.id=t.source_id
-            WHERE t.source_id=? AND t.available=1 GROUP BY t.source_group)""",
-        (source,),
-    ).fetchone()
-    status_known = info["collections_synced_at"] is not None and not counts[2]
-    movies = json.loads(info["recently_added_movies"])
+def completeness(db, source):
+    """Compute group-level missing data and conflict state for Library views."""
     sources = source_preferences(db)
     cached_images = {
         row[0] for row in db.execute("SELECT cache_key FROM library_artwork")
@@ -123,12 +79,21 @@ def library_summary(db, source):
         "'conflicts',json(coalesce(json_extract(enrichment,'$.conflicts'),'{}'))",
         "'unavailable',json(coalesce(json_extract(enrichment,'$.unavailable'),'{}'))",
         "'unavailable_artwork',json(coalesce(json_extract(enrichment,'$.unavailable_artwork'),'{}'))",
-        "'reviewed_providers',json(coalesce(json_extract(enrichment,'$.reviewed.providers'),'[]'))",
+        "'matches',json(coalesce(json_extract(enrichment,'$.matches'),'{}'))",
         *(
             f"'{provider}',json_object("
             + ",".join(
                 f"'{key}',json_extract(enrichment,'$.{provider}.{key}')"
-                for key in ("fetched_at", "poster_key", "backdrop_key")
+                for key in (
+                    "fetched_at",
+                    "poster_key",
+                    "backdrop_key",
+                    "provider",
+                    "provider_id",
+                    "title",
+                    "year",
+                    "url",
+                )
             )
             + ")"
             for provider in ("tmdb", "kaleidescape", "reviewed")
@@ -176,16 +141,8 @@ def library_summary(db, source):
             stamp = enrichment.get(provider, {}).get("fetched_at")
             if stamp:
                 stamps.append(stamp)
+            if provider != "reviewed" and has_provider_data(enrichment, provider):
                 group["cached"].add(provider)
-            if provider == "reviewed":
-                group["cached"].update(
-                    item
-                    for item in enrichment["reviewed_providers"]
-                    if item in {"tmdb", "kaleidescape"}
-                )
-    activity = scrape_activity(db, source)
-    if activity["last_scrape_date"]:
-        stamps.append(activity["last_scrape_date"])
     enabled = set(sources.get("_enabled", [])) & {"tmdb", "kaleidescape"}
     missing_metadata = {
         name
@@ -198,6 +155,60 @@ def library_summary(db, source):
         if (not group["images"][0] and "poster" not in group["artwork_excluded"])
         or (not group["images"][1] and "backdrop" not in group["artwork_excluded"])
     }
+
+    return missing_metadata, missing, conflicts, stamps, titles
+
+
+def library_summary(db, source):
+    """Use the same Paused > Played > unknown > unwatched grouping as browsing."""
+    result = {
+        "total_movies": None,
+        "unwatched_movies": None,
+        "watched_movies": None,
+        "unknown_movies": 0,
+        "collections_synced_at": None,
+        "last_library_sync": None,
+        "last_scrape_date": None,
+        "scraper_failures": 0,
+        "scraper_conflicts": None,
+        "missing_metadata": None,
+        "missing_metadata_movies": [],
+        "missing_metadata_truncated": False,
+        "missing_artwork": None,
+        "missing_artwork_movies": [],
+        "missing_artwork_truncated": False,
+        "scraper_conflicts_movies": [],
+        "scraper_conflicts_truncated": False,
+        "recently_added": None,
+        "recently_added_movies": [],
+        "recently_added_truncated": False,
+        "recently_added_at": None,
+        # Artwork files are deduplicated across sources; count the whole cache.
+        "artwork_cache_bytes": db.execute(
+            "SELECT coalesce(sum(byte_size),0) FROM library_artwork"
+        ).fetchone()[0],
+    }
+    if source is None:
+        return result
+    info = db.execute("SELECT * FROM library_sources WHERE id=?", (source,)).fetchone()
+    if info is None or info["last_synced_at"] is None:
+        return result
+    counts = db.execute(
+        f"""SELECT count(*),coalesce(sum(status_rank=3),0),
+            coalesce(sum(status_rank=2),0),coalesce(sum(status_rank=1),0) FROM (
+            SELECT t.source_group,min(CASE ({STATUS_SQL})
+                WHEN 'in_progress' THEN 0 WHEN 'watched' THEN 1
+                WHEN 'unknown' THEN 2 ELSE 3 END) status_rank
+            FROM library t JOIN library_sources s ON s.id=t.source_id
+            WHERE t.source_id=? AND t.available=1 GROUP BY t.source_group)""",
+        (source,),
+    ).fetchone()
+    status_known = info["collections_synced_at"] is not None and not counts[2]
+    movies = json.loads(info["recently_added_movies"])
+    missing_metadata, missing, conflicts, stamps, titles = completeness(db, source)
+    activity = scrape_activity(db, source)
+    if activity["last_scrape_date"]:
+        stamps.append(activity["last_scrape_date"])
 
     def names(selected):
         return sensor_titles(

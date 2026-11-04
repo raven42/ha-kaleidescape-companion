@@ -316,6 +316,7 @@ def library_list(db, source, filters, excluded="", cache=None):
     allowed = {
         "query",
         "scraper_conflict",
+        "missing_metadata_artwork",
         "fuzzy",
         "collection",
         "actor",
@@ -397,6 +398,9 @@ def library_list(db, source, filters, excluded="", cache=None):
         raise invalid("Invalid scraper conflict filter")
     if conflict:
         clauses.append("companion_conflict(t.enrichment)")
+    missing = filters.get("missing_metadata_artwork", False)
+    if type(missing) is not bool:
+        raise invalid("Invalid missing metadata or artwork filter")
     if not isinstance(query, str) or len(query) > 500 or "\x00" in query:
         raise invalid("Invalid library search")
     fuzzy = filters.get("fuzzy", False)
@@ -481,7 +485,13 @@ def library_list(db, source, filters, excluded="", cache=None):
                 raise invalid("Invalid library status")
             clauses.append(f"({STATUS_SQL}) IN ({placeholders})")
         values.append(json.dumps(selected))
-    # Validate all facets before doing the full-catalog people search.
+    # Validate all facets before doing full-catalog completeness or people work.
+    if missing:
+        from .summary import completeness
+
+        metadata_groups, artwork_groups, _, _, _ = completeness(db, source)
+        clauses.append("t.source_group IN (SELECT value FROM json_each(?))")
+        values.append(json.dumps(sorted(metadata_groups | artwork_groups)))
     if people_parameter is not None:
         values[people_parameter] = matching_people(db, source, query.casefold(), fuzzy)
     where = " AND ".join(clauses)

@@ -355,7 +355,7 @@ class TitleReviewTest(unittest.IsolatedAsyncioTestCase):
             )
         )
 
-    async def test_reviewed_provider_data_also_clears_missing_indicator(self):
+    async def test_reviewed_legacy_data_is_not_reported_as_provider_download(self):
         review = await self.setup_review()
         await self.manager.apply(
             self.admin,
@@ -363,7 +363,7 @@ class TitleReviewTest(unittest.IsolatedAsyncioTestCase):
             {"plan_id": review["plan_id"], "fields": ["actors"], "images": {}},
         )
         options = await self.manager.options(self.admin, self.id)
-        self.assertFalse(options["providers"][0]["missing_data"])
+        self.assertTrue(options["providers"][0]["missing_data"])
 
     async def setup_review(self):
         await self.seed()
@@ -414,6 +414,284 @@ class TitleReviewTest(unittest.IsolatedAsyncioTestCase):
             context.start()
             self.addCleanup(context.stop)
         return await self.manager.preview(self.admin, self.id, "tmdb")
+
+    async def test_cover_change_and_reset_preserve_matching_provider_data(self):
+        await self.setup_review()
+        await self.repo.async_metadata_sources({"metadata_tmdb_enabled": True})
+        await self.repo.async_enrichment(
+            "save", self.source, self.id, "tmdb", self.data
+        )
+        original = b"\xff\xd8\xfffictional-original"
+        await self.repo.async_library_artwork_save(
+            self.source, self.id, original, "image/jpeg", 1048576
+        )
+        review = await self.manager.preview(self.admin, self.id, "tmdb")
+        options = await self.manager.options(self.admin, self.id)
+        tmdb = next(row for row in options["providers"] if row["id"] == "tmdb")
+        fetched_at = tmdb["fetched_at"]
+        self.assertEqual(tmdb["match_url"], "https://www.themoviedb.org/movie/42")
+        missing_before = (await self.repo.async_library_summary(self.source))[
+            "missing_metadata"
+        ]
+        await self.manager.apply(
+            self.admin,
+            str(uuid4()),
+            {
+                "plan_id": review["plan_id"],
+                "fields": [],
+                "images": {"poster": review["images"][0]["id"]},
+                "save_match": True,
+            },
+        )
+        options = await self.manager.options(self.admin, self.id)
+        tmdb = next(row for row in options["providers"] if row["id"] == "tmdb")
+        self.assertTrue(tmdb["has_data"])
+        self.assertEqual(tmdb["fetched_at"], fetched_at)
+
+        # Reproduce the old image-edit bug for movies already affected.
+        def remove_timestamp(db):
+            with db:
+                db.execute(
+                    "UPDATE library SET enrichment=json_remove(enrichment,"
+                    "'$.tmdb.fetched_at') WHERE source_id=? AND source_group=?",
+                    (self.source, "movie"),
+                )
+
+        await self.repo._call(self.repo._library_write, remove_timestamp)
+        options = await self.manager.options(self.admin, self.id)
+        tmdb = next(row for row in options["providers"] if row["id"] == "tmdb")
+        self.assertTrue(tmdb["has_data"])
+        self.assertIsNone(tmdb["fetched_at"])
+        self.assertEqual(
+            (await self.repo.async_library_summary(self.source))["missing_metadata"],
+            missing_before,
+        )
+        await self.manager.action(
+            self.admin,
+            str(uuid4()),
+            {
+                "action": "reset_cover",
+                "title_id": self.id,
+                "snapshot": options["snapshot"],
+            },
+        )
+        options = await self.manager.options(self.admin, self.id)
+        self.assertTrue(
+            next(row for row in options["providers"] if row["id"] == "tmdb")["has_data"]
+        )
+        self.assertEqual(
+            options["current"]["artwork_key"], hashlib.sha256(original).hexdigest()
+        )
+
+        def change_match(db):
+            with db:
+                db.execute(
+                    "UPDATE library SET enrichment=json_set(enrichment,"
+                    "'$.matches.tmdb.provider_id',?) WHERE source_id=? "
+                    "AND source_group=?",
+                    ("43", self.source, "movie"),
+                )
+
+        await self.repo._call(self.repo._library_write, change_match)
+        options = await self.manager.options(self.admin, self.id)
+        self.assertFalse(
+            next(row for row in options["providers"] if row["id"] == "tmdb")["has_data"]
+        )
+        self.assertEqual(
+            (await self.repo.async_library_summary(self.source))["missing_metadata"],
+            missing_before + 1,
+        )
+
+    def test_provider_links_allow_only_supported_movie_destinations(self):
+        from custom_components.kaleidescape_companion.enrichment.matching import (
+            provider_url,
+        )
+
+        self.assertEqual(
+            provider_url("tmdb", {"provider_id": "42", "url": "https://evil.invalid"}),
+            "https://www.themoviedb.org/movie/42",
+        )
+        self.assertIsNone(provider_url("tmdb", {"provider_id": "42/evil"}))
+        good = "https://www.kaleidescape.com/movie-store/movie/fictional-film"
+        self.assertEqual(provider_url("kaleidescape", {"url": good}), good)
+        for bad in (
+            "https://www.kaleidescape.com.evil.invalid/movie-store/movie/fictional-film",
+            "https://www.kaleidescape.com/movie-store/movie/fictional-film?token=secret",
+            "javascript:alert(1)",
+        ):
+            self.assertIsNone(provider_url("kaleidescape", {"url": bad}))
+
+    async def test_image_match_change_invalidates_a_different_cached_movie(self):
+        await self.setup_review()
+        await self.repo.async_enrichment(
+            "save", self.source, self.id, "tmdb", self.data
+        )
+        self.metadata.return_value = {
+            **self.data,
+            "provider_id": "43",
+            "url": "https://www.themoviedb.org/movie/43",
+        }
+        review = await self.manager.preview(self.admin, self.id, "tmdb")
+        await self.manager.apply(
+            self.admin,
+            str(uuid4()),
+            {
+                "plan_id": review["plan_id"],
+                "fields": [],
+                "images": {"poster": review["images"][0]["id"]},
+                "save_match": True,
+            },
+        )
+        options = await self.manager.options(self.admin, self.id)
+        tmdb = next(row for row in options["providers"] if row["id"] == "tmdb")
+        self.assertFalse(tmdb["has_data"])
+        self.assertEqual(tmdb["match_url"], "https://www.themoviedb.org/movie/43")
+
+    async def test_refresh_checks_fresh_and_downloads_unique_provider_match(self):
+        await self.setup_review()
+        await self.repo.async_enrichment(
+            "save", self.source, self.id, "tmdb", self.data
+        )
+        candidate = {
+            "provider_id": "42",
+            "title": "Fictional Film",
+            "year": 2025,
+            "url": "https://www.themoviedb.org/movie/42",
+        }
+        search = AsyncMock(return_value=[candidate])
+        resolve = AsyncMock(return_value=self.data)
+        with (
+            patch(
+                "custom_components.kaleidescape_companion.enrichment.review.Providers.search",
+                search,
+            ),
+            patch(
+                "custom_components.kaleidescape_companion.enrichment.review.Providers.resolve",
+                resolve,
+            ),
+        ):
+            result = await self.manager.refresh(
+                self.admin, str(uuid4()), self.id, "tmdb", "Fictional Film", 2025
+            )
+        self.assertEqual(result["outcome"], "downloaded")
+        search.assert_awaited_once_with("tmdb", "Fictional Film", 2025)
+        resolve.assert_awaited_once_with("tmdb", candidate)
+        options = await self.manager.options(self.admin, self.id)
+        tmdb = next(row for row in options["providers"] if row["id"] == "tmdb")
+        self.assertTrue(tmdb["has_data"])
+        self.assertIsNotNone(tmdb["checked_at"])
+        self.assertGreater(tmdb["fields"], 0)
+        versions = await self.repo.async_library_versions(self.source, self.id)
+        self.assertTrue(all("tmdb" in row["enrichment"] for row in versions["items"]))
+
+    async def test_refresh_zero_and_multiple_results_require_no_implicit_match(self):
+        await self.setup_review()
+        candidate = {
+            "provider_id": "42",
+            "title": "Fictional Film",
+            "year": 2025,
+            "url": "https://www.themoviedb.org/movie/42",
+        }
+        search = AsyncMock(
+            side_effect=[[], [candidate, {**candidate, "provider_id": "43"}]]
+        )
+        resolve = AsyncMock(return_value=self.data)
+        with (
+            patch(
+                "custom_components.kaleidescape_companion.enrichment.review.Providers.search",
+                search,
+            ),
+            patch(
+                "custom_components.kaleidescape_companion.enrichment.review.Providers.resolve",
+                resolve,
+            ),
+        ):
+            empty = await self.manager.refresh(
+                self.admin, str(uuid4()), self.id, "tmdb", "Fictional Film"
+            )
+            self.assertEqual(empty["outcome"], "no_data")
+            options = await self.manager.options(self.admin, self.id)
+            tmdb = next(row for row in options["providers"] if row["id"] == "tmdb")
+            self.assertIsNotNone(tmdb["checked_at"])
+            self.assertFalse(tmdb["has_data"])
+            multiple = await self.manager.refresh(
+                self.admin, str(uuid4()), self.id, "tmdb", "Fictional Film"
+            )
+            self.assertEqual(multiple["outcome"], "matches")
+            self.assertEqual(len(multiple["candidates"]), 2)
+            resolve.assert_not_awaited()
+            chosen = await self.manager.refresh_choice(
+                self.admin,
+                str(uuid4()),
+                self.id,
+                "tmdb",
+                multiple["search_id"],
+                "match-0",
+            )
+            self.assertEqual(chosen["outcome"], "downloaded")
+            resolve.assert_awaited_once()
+
+    async def test_field_mapping_and_cover_reset_are_snapshot_bound(self):
+        await self.setup_review()
+        await self.repo.async_enrichment(
+            "save", self.source, self.id, "tmdb", self.data
+        )
+        options = await self.manager.options(self.admin, self.id)
+        self.assertIn("actors", {row["field"] for row in options["field_mapping"]})
+        mapped = await self.manager.action(
+            self.admin,
+            str(uuid4()),
+            {
+                "action": "mapping",
+                "title_id": self.id,
+                "snapshot": options["snapshot"],
+                "sources": {"actors": "original"},
+            },
+        )
+        self.assertEqual(mapped["updated_count"], 2)
+        options = await self.manager.options(self.admin, self.id)
+        actors = next(
+            row for row in options["field_mapping"] if row["field"] == "actors"
+        )
+        self.assertEqual(actors["selected"], "original")
+        versions = await self.repo.async_library_versions(self.source, self.id)
+        selected = next(row for row in versions["items"] if row["id"] == self.id)
+        self.assertEqual(selected["actors"], ["Original Actor"])
+        with self.assertRaises(JournalError):
+            await self.manager.action(
+                self.admin,
+                str(uuid4()),
+                {
+                    "action": "reset_cover",
+                    "title_id": self.id,
+                    "snapshot": "a" * 64,
+                },
+            )
+        with self.assertRaises(JournalError):
+            await self.manager.action(
+                self.admin,
+                str(uuid4()),
+                {
+                    "action": "download",
+                    "title_id": self.id,
+                    "snapshot": options["snapshot"],
+                    "provider": "tmdb",
+                    "metadata": self.data,
+                },
+            )
+        reader = SimpleNamespace(id="reader", is_active=True, is_admin=False)
+        denied = await self.call(
+            "metadata/title/action",
+            user=reader,
+            **self.scope,
+            request_id=str(uuid4()),
+            data={
+                "action": "reset_cover",
+                "title_id": self.id,
+                "snapshot": options["snapshot"],
+            },
+        )
+        self.assertEqual(denied["code"], "unauthorized")
 
     async def test_explicit_review_apply_reenables_a_restored_source_only_group(self):
         await self.setup_review()

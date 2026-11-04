@@ -357,6 +357,8 @@ class JournalRepository:
             return await self._call(self._library_write, self._save_backdrop, *args)
         if operation == "review_target":
             return await self._call(self._search_read, review_store.target, *args)
+        if operation == "review_action":
+            return await self._call(self._library_write, review_store.action, *args)
         if operation == "review_lookup":
             return await self._call(self._search_read, review_store.lookup, *args)
         if operation == "review_apply":

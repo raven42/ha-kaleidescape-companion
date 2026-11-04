@@ -331,6 +331,7 @@ export interface ScrapeOptions {
     duration_seconds?: number | null;
     metadata_synced_at?: string | null;
     artwork_key?: string | null;
+    original_artwork_key?: string | null;
     backdrop_key?: string | null;
   };
   providers: {
@@ -340,11 +341,26 @@ export interface ScrapeOptions {
     missing_data?: boolean;
     unavailable?: boolean;
     has_data?: boolean;
+    match_url?: string | null;
     supports_images?: boolean;
     fetched_at?: string | null;
+    checked_at?: string | null;
     fields?: number;
   }[];
+  field_mapping?: {
+    field: string;
+    label: string;
+    values: Record<string, unknown>;
+    selected: string;
+    override: boolean;
+  }[];
   artwork_enabled: boolean;
+  history?: {
+    provider: string;
+    checked_at: string;
+    outcome: "downloaded" | "no_data";
+    values: Record<string, unknown>;
+  }[];
   artwork_unavailable?: ("poster" | "backdrop")[];
   artwork_present?: { poster: boolean; backdrop: boolean };
 }
@@ -376,6 +392,9 @@ export interface ScrapeMatches {
     has_artwork: boolean;
   }[];
 }
+export type ScrapeRefresh =
+  | { outcome: "downloaded" | "no_data" }
+  | (ScrapeMatches & { outcome: "matches" });
 export interface MetadataStatus {
   tmdb_enabled?: boolean;
   enabled?: boolean;
@@ -870,6 +889,49 @@ export class JournalClient {
       }),
       185000,
     );
+  }
+  titleScrapeRefresh(
+    scope: Scope,
+    title_id: string,
+    provider: string,
+    query: string,
+    year?: number,
+  ): Promise<ScrapeRefresh> {
+    return withRequestDeadline(
+      this.transport.callWS({
+        type: `${DOMAIN}/metadata/title/refresh`,
+        ...scopeFields(scope),
+        request_id: randomId(),
+        title_id,
+        provider,
+        query,
+        ...(year !== undefined ? { year } : {}),
+      }),
+      185000,
+    );
+  }
+  titleScrapeRefreshChoice(
+    scope: Scope,
+    title_id: string,
+    provider: string,
+    search_id: string,
+    choice: string,
+  ): Promise<ScrapeRefresh> {
+    return withRequestDeadline(
+      this.transport.callWS({
+        type: `${DOMAIN}/metadata/title/refresh_choice`,
+        ...scopeFields(scope),
+        request_id: randomId(),
+        title_id,
+        provider,
+        search_id,
+        choice,
+      }),
+      185000,
+    );
+  }
+  prepareMetadataAction(scope: Scope, data: Record<string, unknown>) {
+    return this.prepareCommand(scope, "metadata/title/action", { data });
   }
   prepareTitleScrape(
     scope: Scope,

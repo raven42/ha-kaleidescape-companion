@@ -21,6 +21,7 @@ REVIEW_FIELDS = (
     "audience_rating",
     "audience_votes",
 )
+HISTORY_FIELDS = ("title", "year", "rating", *REVIEW_FIELDS)
 FIELDS = (
     "provider",
     "provider_id",
@@ -38,6 +39,27 @@ FIELDS = (
     "genres",
     "rating",
 )
+
+
+def history_values(metadata):
+    """Keep a bounded snapshot of values returned by a provider."""
+    if not isinstance(metadata, dict):
+        return {}
+    values = {}
+    for field in HISTORY_FIELDS:
+        value = metadata.get(field)
+        if value in (None, "", []):
+            continue
+        if isinstance(value, str):
+            value = value[:300]
+        elif isinstance(value, list):
+            value = [str(item)[:80] for item in value[:8]]
+            if len(metadata[field]) > 8:
+                value.append(f"… and {len(metadata[field]) - 8} more")
+        elif not isinstance(value, (int, float)) or isinstance(value, bool):
+            continue
+        values[field] = value
+    return values
 
 
 def public(value):
@@ -88,12 +110,20 @@ def effective(data, enrichment, sources=None):
             )
             data[key] = list(dict.fromkeys(values))[:500]
     for key in SOURCE_FIELDS.keys() - {"artwork", "backdrop"}:
-        preference = (sources or {}).get(key, "auto")
+        preference = enrichment.get("field_sources", {}).get(
+            key, (sources or {}).get(key, "auto")
+        )
         if preference != "auto":
             data[key] = choose(original, enrichment, key, preference)
         elif key not in CREDITS and data.get(key) in (None, "", []):
             data[key] = choose(original, enrichment, key, "kaleidescape")
-    if "audience_rating" in data:
+    if (
+        "audience_rating" in data
+        and enrichment.get("field_sources", {}).get(
+            "audience_votes", (sources or {}).get("audience_votes", "auto")
+        )
+        == "auto"
+    ):
         data["audience_votes"] = enrichment.get("tmdb", {}).get("audience_votes")
     for key in (*REVIEW_FIELDS, "year", "rating"):
         if key in enrichment.get("reviewed", {}):
@@ -158,7 +188,8 @@ def candidates(db, source):
 def save(db, source, title_id, provider, metadata):
     if provider not in PROVIDERS:
         raise JournalError("invalid_request", "Unknown metadata provider")
-    encoded = json.dumps({**metadata, "fetched_at": datetime.now(UTC).isoformat()})
+    fetched_at = datetime.now(UTC).isoformat()
+    encoded = json.dumps({**metadata, "fetched_at": fetched_at})
     if len(encoded.encode()) > 128 * 1024:
         raise JournalError("metadata_limit", "Provider metadata is too large")
     row = db.execute(
@@ -209,6 +240,15 @@ def save(db, source, title_id, provider, metadata):
                 for key in ("poster_key", "backdrop_key"):
                     if previous.get(key):
                         value[provider][key] = previous[key]
+            history = value.setdefault("provider_history", {}).setdefault(provider, [])
+            history.append(
+                {
+                    "checked_at": fetched_at,
+                    "outcome": "downloaded",
+                    "values": history_values(metadata),
+                }
+            )
+            del history[:-8]
             db.execute(
                 "UPDATE library SET enrichment=? WHERE id=?",
                 (json.dumps(value), member["id"]),

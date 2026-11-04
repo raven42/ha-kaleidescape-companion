@@ -56,6 +56,40 @@ it("creates secure mutation request UUIDs when randomUUID is unavailable", () =>
     vi.unstubAllGlobals();
   }
 });
+it("refreshes metadata on HTTP origins without randomUUID", async () => {
+  const getRandomValues = crypto.getRandomValues.bind(crypto);
+  vi.stubGlobal("crypto", { getRandomValues });
+  try {
+    const callWS = vi.fn().mockResolvedValue({ outcome: "downloaded" });
+    const client = new JournalClient({ callWS, fetchWithAuth: vi.fn() });
+    await client.titleScrapeRefresh(
+      info,
+      "a".repeat(64),
+      "tmdb",
+      "Fictional",
+      2025,
+    );
+    await client.titleScrapeRefreshChoice(
+      info,
+      "a".repeat(64),
+      "tmdb",
+      "search-id",
+      "match-0",
+    );
+    expect(callWS).toHaveBeenCalledTimes(2);
+    for (const [message] of callWS.mock.calls) {
+      expect(message.request_id).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+      );
+    }
+    expect(callWS.mock.calls[0][0].type).toContain("metadata/title/refresh");
+    expect(callWS.mock.calls[1][0].type).toContain(
+      "metadata/title/refresh_choice",
+    );
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
 it("refuses mutation preparation when secure randomness is unavailable", () => {
   vi.stubGlobal("crypto", undefined);
   try {

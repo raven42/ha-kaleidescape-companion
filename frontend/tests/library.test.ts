@@ -247,6 +247,7 @@ it("persists the visible cast limit while keeping the complete billed cast avail
     "Billed performer 12",
   );
   expect(root().querySelector("kaleidescape-title-scrape")).not.toBeNull();
+  expect(root().querySelectorAll("kaleidescape-title-scrape")).toHaveLength(1);
   element.scope = {
     ...info,
     library_enabled: true,
@@ -943,8 +944,9 @@ it("shows private purchase history only in administrator title details", async (
   expect(text()).not.toContain("Purchase history · Administrator");
 });
 
-it("overlays scraper conflicts independently of badges and persists a conflicts-only filter", async () => {
+it("overlays scraper conflicts independently of badges and persists the missing-data filter", async () => {
   transport.libraryTitles[0].scraper_conflict = true;
+  transport.missingMetadataArtwork.add(transport.libraryTitles[0].id);
   button("Refresh cached data").click();
   await flush();
   expect(root().querySelector("tbody .scraper-conflict-icon")).toBeTruthy();
@@ -965,14 +967,17 @@ it("overlays scraper conflicts independently of badges and persists a conflicts-
   modalClose(root()).click();
   button("Filters").click();
   await flush();
-  root().querySelector<HTMLInputElement>('[name="scraper_conflict"]')!.click();
+  expect(text()).toContain("Missing metadata/artwork");
+  root()
+    .querySelector<HTMLInputElement>('[name="missing_metadata_artwork"]')!
+    .click();
   button("Apply filters").click();
   await flush();
-  expect(transport.uiPreferences.scraper_conflict).toBe(true);
+  expect(transport.uiPreferences.missing_metadata_artwork).toBe(true);
   expect(root().querySelectorAll(".cover-tile")).toHaveLength(1);
   button("Clear Filter").click();
   await flush();
-  expect(transport.uiPreferences.scraper_conflict).toBe(false);
+  expect(transport.uiPreferences.missing_metadata_artwork).toBe(false);
 });
 
 it("hides conflict overlays and system-button options from standard users", async () => {

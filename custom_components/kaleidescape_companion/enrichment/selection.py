@@ -14,6 +14,7 @@ FIELDS = {
     "critic_score": "Rotten Tomatoes critics",
     "audience_score": "Rotten Tomatoes audience",
     "audience_rating": "TMDB viewer rating",
+    "audience_votes": "TMDB audience votes",
     "artwork": "Cover artwork",
     "backdrop": "Landscape image",
 }
@@ -25,7 +26,7 @@ OPTIONS = {
             ("kaleidescape",)
             if key in {"critic_score", "audience_score", "distributor"}
             else ("tmdb",)
-            if key in {"audience_rating", "backdrop"}
+            if key in {"audience_rating", "audience_votes", "backdrop"}
             else ("kaleidescape", "tmdb")
         ),
     )

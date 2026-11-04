@@ -39,7 +39,7 @@ LIBRARY_DEFAULTS = {
     "year": [],
     "format": [],
     "status": [],
-    "scraper_conflict": False,
+    "missing_metadata_artwork": False,
 }
 SORTS = {"name", "year", "collection", "length", "watched", "added", "random"}
 
@@ -65,12 +65,18 @@ def public_defaults(config):
 def validate_library(patch, previous=None):
     # Retire the Library-only switch without breaking older preference exports.
     if isinstance(patch, dict):
-        patch = {
-            key: value for key, value in patch.items() if key != "show_system_buttons"
-        }
+        patch = dict(patch)
+        patch.pop("show_system_buttons", None)
+        if "scraper_conflict" in patch:
+            patch.setdefault("missing_metadata_artwork", patch.pop("scraper_conflict"))
+    previous = dict(previous or {})
+    if "scraper_conflict" in previous:
+        previous.setdefault(
+            "missing_metadata_artwork", previous.pop("scraper_conflict")
+        )
     if not isinstance(patch, dict) or set(patch) - LIBRARY_DEFAULTS.keys():
         raise invalid("Unknown UI settings")
-    values = {**LIBRARY_DEFAULTS, **(previous or {}), **patch}
+    values = {**LIBRARY_DEFAULTS, **previous, **patch}
     values.pop("show_system_buttons", None)
     if values["view"] not in ("list", "covers") or values["sort"] not in tuple(SORTS):
         raise invalid("Invalid Library view/sort")
@@ -90,7 +96,7 @@ def validate_library(patch, previous=None):
             "show_badges",
             "show_rating",
             "show_library_cost",
-            "scraper_conflict",
+            "missing_metadata_artwork",
         )
     ):
         raise invalid("Invalid display toggle")

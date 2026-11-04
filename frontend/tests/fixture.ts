@@ -219,8 +219,9 @@ export class FixtureTransport implements Transport {
     year: [],
     format: [],
     status: [],
-    scraper_conflict: false,
+    missing_metadata_artwork: false,
   };
+  missingMetadataArtwork = new Set<string>();
   sharedPreferences: Record<string, unknown> = { hidden_collections: [] };
   searchPreferences: Record<string, unknown> = { fuzzy_search: true };
   interfacePreferences: Record<string, unknown> = { advanced_view: true };
@@ -538,6 +539,8 @@ export class FixtureTransport implements Transport {
       let rows = this.libraryTitles.filter(
         (row) =>
           (!filters.scraper_conflict || !!row.scraper_conflict) &&
+          (!filters.missing_metadata_artwork ||
+            this.missingMetadataArtwork.has(row.id)) &&
           (!filters.query ||
             [row.title, ...row.actors, ...row.directors].some((value) =>
               matches(value, String(filters.query), !!filters.fuzzy),

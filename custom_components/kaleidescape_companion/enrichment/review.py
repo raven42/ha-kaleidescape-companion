@@ -1,4 +1,4 @@
-"""Actor-bound, expiring title scrape previews; only an explicit apply writes data."""
+"""Actor-bound title searches, provider downloads, and artwork previews."""
 
 import asyncio
 import json
@@ -62,8 +62,7 @@ class TitleReviews:
                     "label": label,
                     "available": self.enabled(provider),
                     "supports_images": provider == "tmdb",
-                    "has_data": provider in target["cached_providers"],
-                    "missing_data": provider not in target["cached_providers"]
+                    "missing_data": not target["provider_status"][provider]["has_data"]
                     and provider not in target["unavailable"],
                     "unavailable": provider in target["unavailable"],
                     **target["provider_status"][provider],
@@ -85,7 +84,90 @@ class TitleReviews:
             "artwork_unavailable": target["artwork_unavailable"],
             "artwork_present": target["artwork_present"],
             "snapshot": target["snapshot"],
+            "field_mapping": target["field_mapping"],
+            "history": target["history"],
         }
+
+    async def action(self, actor, request, data):
+        self.ready(actor)
+        if not isinstance(data, dict) or data.get("action") not in {
+            "mapping",
+            "reset_cover",
+        }:
+            raise invalid("Choose a supported metadata action")
+        return await self._write_action(actor, request, data)
+
+    async def _write_action(self, actor, request, data):
+        self.ready(actor)
+        kind = data.get("action") if isinstance(data, dict) else None
+        if kind in {"checked", "download"} and not self.enabled(data.get("provider")):
+            raise JournalError(
+                "metadata_disabled", "Enable and configure this provider first"
+            )
+        result = await self.parent.repository.async_enrichment(
+            "review_action",
+            self.parent.source,
+            actor.id,
+            request,
+            data,
+            lambda: self.ready(actor),
+        )
+        self.ready(actor)
+        return result
+
+    async def refresh(self, actor, request, title, provider, query, year=None):
+        """Always search; commit a unique match immediately or return candidates."""
+        found = await self.search(actor, title, provider, query, year)
+        if not found["candidates"]:
+            target = self.plan(actor, found["search_id"])["target"]
+            await self._write_action(
+                actor,
+                request,
+                {
+                    "action": "checked",
+                    "title_id": title,
+                    "snapshot": target["snapshot"],
+                    "provider": provider,
+                },
+            )
+            return {"outcome": "no_data"}
+        if len(found["candidates"]) == 1:
+            return await self.refresh_choice(
+                actor,
+                request,
+                title,
+                provider,
+                found["search_id"],
+                found["candidates"][0]["id"],
+            )
+        return {"outcome": "matches", **found}
+
+    async def refresh_choice(self, actor, request, title, provider, search_id, choice):
+        from .review_matches import selected
+
+        staged, candidate = selected(self, actor, title, provider, search_id, choice)
+        current = await self.parent.repository.async_enrichment(
+            "review_target", self.parent.source, title
+        )
+        if current["snapshot"] != staged["snapshot"]:
+            raise JournalError("refresh_required", "Movie changed; search again")
+        async with self.worker(actor, title) as client:
+            result = await client.providers.resolve(provider, reference(candidate))
+        if len(json.dumps(result).encode()) > 128 * 1024:
+            raise JournalError("metadata_limit", "Provider metadata is too large")
+        await self._write_action(
+            actor,
+            request,
+            {
+                "action": "download",
+                "title_id": title,
+                "snapshot": staged["snapshot"],
+                "provider": provider,
+                "metadata": result,
+            },
+        )
+        self.plans.pop(search_id, None)
+        return {"outcome": "downloaded"}
 
     async def availability(self, actor, request, data):
         self.ready(actor)

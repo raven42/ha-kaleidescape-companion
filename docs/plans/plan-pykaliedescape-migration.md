@@ -5,7 +5,7 @@ patched pykaleidescape checkout for device discovery, playback controls, title
 launch, and local server browser reads/writes. Its bundled device API has been
 removed. This has offline test coverage, but no hardware or HA OS validation in
 the original migration. Subsequent HA OS logs exposed an identity-read bug now
-patched in phase 08a; a successful hardware retest is pending. This is not a
+included in phase 03a; a successful hardware retest is pending. This is not a
 supported release migration.
 
 ## Scope and ownership
@@ -50,13 +50,12 @@ provider. No Store hooks should be added to pyk for this migration.
 HA OS discovery and status logs exposed a patched-pyk identity-read bug: the
 protocol discovery list uses 12-digit serials, while `GET_DEVICE_INFO` returns
 the same serial zero-padded to 16 digits. The new
-`phase-08a-device-info-serial-width.patch` normalizes both to the same routed
-identity, with an offline emulator regression test. The patch is committed on
-`08a-device-info-serial-width`. The following `08b-cmp-dev-version` branch
-labels the complete development build `1.2.0.dev1+cmp` in both Python package
-metadata and pyk's runtime version. HA OS validation still requires a fresh
-overlay from that final branch and a restart. The existing overlay is not
-updated by changing this source checkout.
+`phase-03a-fresh-device-reads.patch` normalizes both to the same routed
+identity, with an offline emulator regression test. The final
+`08a-cmp-dev-version` branch labels the complete development build
+`1.2.0.dev1+cmp` in both Python package metadata and pyk's runtime version. HA
+OS validation still requires a fresh overlay from that final branch and a
+restart. The existing overlay is not updated by changing this source checkout.
 
 ## Compatibility and upstream path
 

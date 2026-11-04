@@ -314,7 +314,7 @@ export class KaleidescapeLibrary extends LitElement {
                 [],
               ]),
             ),
-            scraper_conflict: false,
+            missing_metadata_artwork: false,
           }
         : saved;
       if (this.dashboard) {
@@ -345,7 +345,7 @@ export class KaleidescapeLibrary extends LitElement {
           "descending",
           ...FILTERS.map(([key]) => key),
           "status",
-          "scraper_conflict",
+          "missing_metadata_artwork",
         ].map((key) => [key, values[key]]),
       ) as Filters;
       this.filters = structuredClone(this.applied);
@@ -366,11 +366,15 @@ export class KaleidescapeLibrary extends LitElement {
           "query",
           ...FILTERS.map(([key]) => key),
           "status",
-          "scraper_conflict",
+          "missing_metadata_artwork",
         ].map((key) => [
           key,
           this.applied[key] ??
-            (key === "query" ? "" : key === "scraper_conflict" ? false : []),
+            (key === "query"
+              ? ""
+              : key === "missing_metadata_artwork"
+                ? false
+                : []),
         ]),
       ),
     );
@@ -1402,16 +1406,16 @@ export class KaleidescapeLibrary extends LitElement {
       ${this.page?.truncated_facets.length ? html`<p class="muted">Each category shows up to 500 known names.</p>` : nothing}
       <label class="check"
         ><input
-          name="scraper_conflict"
+          name="missing_metadata_artwork"
           type="checkbox"
-          .checked=${!!this.draft.scraper_conflict}
+          .checked=${!!this.draft.missing_metadata_artwork}
           @change=${(event: Event) => {
-            this.draft.scraper_conflict = (
+            this.draft.missing_metadata_artwork = (
               event.target as HTMLInputElement
             ).checked;
             this.requestUpdate();
           }}
-        />Scraper conflicts only</label
+        />Missing metadata/artwork</label
       >
       <div class="facet-groups">
         ${[
@@ -1538,7 +1542,8 @@ export class KaleidescapeLibrary extends LitElement {
             const next = { ...this.applied };
             for (const key of [...FILTERS.map(([key]) => key), "status"])
               next[key] = this.draft[key] ?? [];
-            next.scraper_conflict = !!this.draft.scraper_conflict;
+            next.missing_metadata_artwork =
+              !!this.draft.missing_metadata_artwork;
             this.applied = next;
             this.saveFilters();
             this.closeDialog("filter-dialog");
@@ -1594,25 +1599,22 @@ export class KaleidescapeLibrary extends LitElement {
         >`
       : nothing;
   }
-  private renderScrapeAction(row: LibraryTitle, artworkOnly = false) {
+  private renderScrapeAction(row: LibraryTitle) {
     return html`<kaleidescape-title-scrape
       slot="collection"
       .client=${this.client}
       .scope=${this.scope}
       .versionId=${row.id}
-      .artworkOnly=${artworkOnly}
-      .blocked=${this.controlLocked || this.collectionLocked || this.editLocked || (artworkOnly ? this.scrapeLocked : this.artworkLocked)}
+      .blocked=${this.controlLocked || this.collectionLocked || this.editLocked || this.scrapeLocked || this.artworkLocked}
       @scrape-status-changed=${() => void this.load(this.page?.offset ?? 0, true)}
       @scrape-lock=${(event: CustomEvent<boolean>) => {
-        const key = artworkOnly ? "artworkLocked" : "scrapeLocked";
-        if (event.detail !== this[key]) {
-          this[key] = event.detail;
+        if (event.detail !== this.scrapeLocked) {
+          this.scrapeLocked = event.detail;
           this.requestUpdate();
         }
       }}
       @metadata-changed=${async () => {
-        if (artworkOnly) this.artworkLocked = false;
-        else this.scrapeLocked = false;
+        this.scrapeLocked = false;
         this.versions = undefined;
         await this.load(this.page?.offset ?? 0, true);
         await this.loadVersions();
@@ -1735,8 +1737,7 @@ export class KaleidescapeLibrary extends LitElement {
                                     void this.refreshStatus();
                                   }}
                                 ></kaleidescape-title-edit>
-                                ${this.renderScrapeAction(row)}
-                                ${this.info?.metadata?.tmdb_enabled ? this.renderScrapeAction(row, true) : nothing}`
+                                ${this.renderScrapeAction(row)}`
                             : nothing
                         }${renderRatings(row)}</kaleidescape-device-controls
                       >`
@@ -1889,7 +1890,7 @@ export class KaleidescapeLibrary extends LitElement {
     const activeFilters = [...FILTERS.map(([key]) => key), "status"].reduce(
       (count, key) =>
         count + ((this.applied[key] as string[] | undefined)?.length ?? 0),
-      Number(!!this.applied.scraper_conflict),
+      Number(!!this.applied.missing_metadata_artwork),
     );
     return html`<section
       class="library-page"

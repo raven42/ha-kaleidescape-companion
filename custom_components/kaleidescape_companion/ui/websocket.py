@@ -130,6 +130,21 @@ def async_register_commands(hass: HomeAssistant) -> None:
         "metadata/title/cancel": {**scoped, p.Required("plan_id"): str},
         "metadata/title/apply": {**mutations, p.Required("data"): dict},
         "metadata/title/availability": {**mutations, p.Required("data"): dict},
+        "metadata/title/action": {**mutations, p.Required("data"): dict},
+        "metadata/title/refresh": {
+            **mutations,
+            p.Required("title_id"): str,
+            p.Required("provider"): str,
+            p.Required("query"): str,
+            p.Optional("year"): int,
+        },
+        "metadata/title/refresh_choice": {
+            **mutations,
+            p.Required("title_id"): str,
+            p.Required("provider"): str,
+            p.Required("search_id"): str,
+            p.Required("choice"): str,
+        },
         "library/edit/reset": {
             **mutations,
             p.Required("title_id"): str,
@@ -439,6 +454,9 @@ async def async_handle(
                     | "metadata/title/cancel"
                     | "metadata/title/apply"
                     | "metadata/title/availability"
+                    | "metadata/title/action"
+                    | "metadata/title/refresh"
+                    | "metadata/title/refresh_choice"
                 ):
                     library = get_library(hass, msg["entry_id"], runtime)
                     if runtime.enrichment is None:
@@ -470,6 +488,28 @@ async def async_handle(
                     elif operation.endswith("availability"):
                         result = await manager.availability(
                             user, msg["request_id"], msg["data"]
+                        )
+                    elif operation.endswith("action"):
+                        result = await manager.action(
+                            user, msg["request_id"], msg["data"]
+                        )
+                    elif operation.endswith("refresh_choice"):
+                        result = await manager.refresh_choice(
+                            user,
+                            msg["request_id"],
+                            msg["title_id"],
+                            msg["provider"],
+                            msg["search_id"],
+                            msg["choice"],
+                        )
+                    elif operation.endswith("refresh"):
+                        result = await manager.refresh(
+                            user,
+                            msg["request_id"],
+                            msg["title_id"],
+                            msg["provider"],
+                            msg["query"],
+                            msg.get("year"),
                         )
                     else:
                         result = await manager.apply(

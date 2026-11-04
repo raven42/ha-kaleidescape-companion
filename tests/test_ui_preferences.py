@@ -44,6 +44,14 @@ class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn(
             "show_system_buttons", validate_library({"show_system_buttons": False})
         )
+        migrated = validate_library({}, {"scraper_conflict": True})
+        self.assertTrue(migrated["missing_metadata_artwork"])
+        self.assertNotIn("scraper_conflict", migrated)
+        self.assertFalse(
+            validate_library(
+                {"missing_metadata_artwork": False}, {"scraper_conflict": True}
+            )["missing_metadata_artwork"]
+        )
 
     async def test_profiles_inherit_legacy_then_isolate_all_choices_except_shuffle(
         self,

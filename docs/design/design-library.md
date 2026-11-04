@@ -427,10 +427,11 @@ search, manual title pickers, filter autocomplete, import review and plain
 Database search. Structured Database predicates keep their documented SQL style
 operators and single-quoted values.
 
-**Scraper conflicts only** selects movies with an unresolved identity problem
-for a desired enabled provider. Covers show a centered warning independently of
-Library badges; List view shows the same warning alongside the title. The
-boolean filter saves with other personal browsing preferences. See
+**Missing metadata/artwork** selects movies missing an expected provider's
+metadata or an expected cover or backdrop. It uses the same grouped availability
+rules as the missing-metadata and missing-artwork sensors. The filter saves with
+other personal browsing preferences. Covers and List view separately indicate
+unresolved scraper match conflicts. See
 [manual resolution](design-metadata.md#review-a-single-title).
 
 The filter panes use consistent inner heading padding, and their sticky action

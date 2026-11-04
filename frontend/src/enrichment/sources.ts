@@ -11,6 +11,7 @@ export const SOURCE_FIELDS = [
   ["critic_score", "Rotten Tomatoes critics", ["kaleidescape"]],
   ["audience_score", "Rotten Tomatoes audience", ["kaleidescape"]],
   ["audience_rating", "TMDB viewer rating", ["tmdb"]],
+  ["audience_votes", "TMDB audience votes", ["tmdb"]],
   ["artwork", "Cover artwork", ["kaleidescape", "tmdb"]],
   ["backdrop", "Landscape image", ["tmdb"]],
 ] as const;

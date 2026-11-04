@@ -144,7 +144,7 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
                 ),
             )
         result = await self.summary()
-        self.assertEqual(result["missing_metadata"], 0)
+        self.assertEqual(result["missing_metadata"], 1)
         self.assertEqual(result["missing_artwork"], 0)
 
     async def test_problem_sensor_lists_bound_titles_without_private_metadata(self):
@@ -166,6 +166,62 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
         )
         self.assertTrue(
             all(isinstance(title, str) for title in result["missing_artwork_movies"])
+        )
+
+    async def test_missing_filter_matches_metadata_and_artwork_sensor_rules(self):
+        await self.repository.async_metadata_sources({"metadata_tmdb_enabled": True})
+        await self.scan(
+            [
+                *library.ROWS,
+                movie(group="group-c", handle="fixture-c", title="Complete Film"),
+            ],
+            {},
+        )
+        stamp = "2026-01-01T00:00:00+00:00"
+        with closing(sqlite3.connect(self.path)) as db, db:
+            for group, value in (
+                (
+                    "group-a",
+                    {"unavailable_artwork": {"poster": True, "backdrop": True}},
+                ),
+                ("group-b", {"tmdb": {"fetched_at": stamp}}),
+                (
+                    "group-c",
+                    {
+                        "tmdb": {"fetched_at": stamp},
+                        "unavailable_artwork": {"poster": True, "backdrop": True},
+                        "conflicts": {"tmdb": {"reason": "tmdb_ambiguous"}},
+                    },
+                ),
+            ):
+                db.execute(
+                    "UPDATE library SET enrichment=? WHERE source_group=?",
+                    (json.dumps(value), group),
+                )
+        summary = await self.summary()
+        self.assertEqual(summary["missing_metadata"], 1)
+        self.assertEqual(summary["missing_artwork"], 1)
+        page = await self.repository.async_library_list(
+            library.SOURCE, {"grouped": True, "missing_metadata_artwork": True}
+        )
+        self.assertEqual(
+            {item["title"] for item in page["items"]},
+            {library.ROWS[0]["title"], library.ROWS[1]["title"]},
+        )
+        versions = await self.repository.async_library_list(
+            library.SOURCE, {"missing_metadata_artwork": True}
+        )
+        self.assertEqual(versions["total"], 3)
+        with closing(sqlite3.connect(self.path)) as db, db:
+            db.execute(
+                "UPDATE library SET enrichment=json_set(enrichment,"
+                "'$.unavailable.tmdb',json('true')) WHERE source_group='group-a'"
+            )
+        page = await self.repository.async_library_list(
+            library.SOURCE, {"grouped": True, "missing_metadata_artwork": True}
+        )
+        self.assertEqual(
+            [item["title"] for item in page["items"]], [library.ROWS[1]["title"]]
         )
 
     async def test_baseline_unique_groups_and_empty_catalog_are_not_initial_additions(

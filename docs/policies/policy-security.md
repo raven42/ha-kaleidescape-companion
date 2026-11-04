@@ -108,6 +108,14 @@ metadata providers can observe the queried movie and outbound host address; they
 do not receive journal history or private invoice data. Scraping private
 accounts is outside scope.
 
+An administrator's per-title Refresh searches the chosen public provider even
+when a match is cached. Unique or explicitly selected results are downloaded
+into that provider's cache; zero results record only a check time. Browser
+requests cannot submit provider metadata directly. Field-source choices and
+cover reset remain administrator-only, snapshot-checked Library writes. Provider
+match links use validated HTTPS movie routes and open without a referrer;
+arbitrary URLs from scraped metadata are not rendered.
+
 ## External mutations and recovery
 
 HA authentication alone cannot make a device or calendar mutation atomic with

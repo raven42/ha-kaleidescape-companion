@@ -48,12 +48,12 @@ in a full HA backup; secure those backups accordingly.
 
 **Settings → Scrapers → Preferred metadata sources** provides shared defaults
 for cast, directors, writers, producers, studios, synopsis, genres, distributor,
-each supported rating, cover art and landscape images. Save settings to apply.
-The **Prefer TMDB · keep Kaleidescape covers and RT scores** preset selects TMDB
-for descriptive fields and landscapes, retaining the player cover and store RT
-scores. Individual dropdowns can then be adjusted independently. These are
-backend settings, not personal browsing preferences, and belong to the Rules
-category in settings transfer.
+each supported rating, TMDB audience votes, cover art and landscape images. Save
+settings to apply. The **Prefer TMDB · keep Kaleidescape covers and RT scores**
+preset selects TMDB for descriptive fields and landscapes, retaining the player
+cover and store RT scores. Individual dropdowns can then be adjusted
+independently. These are backend settings, not personal browsing preferences,
+and belong to the Rules category in settings transfer.
 
 - **Automatic** retains the existing merged-credit behavior and fills missing
   descriptive facts from available cached providers.
@@ -81,134 +81,67 @@ landscape downloads.
 
 ## Review a single title
 
-Administrators can open a Library title and choose **Scrape title**. The Movie
-Metadata Manager shows current title facts, cover and backdrop, editable title
-and release-year search fields, and **Sources**, **Field Mapping** and
-**History** sections. The dialog also shows Artwork, Backdrop and Metadata
-completeness in its upper-right corner. Source rows come from the review API
-rather than a fixed frontend list, so newly registered providers appear without
-changing the dialog. The current sources are the public Kaleidescape Store and
-TMDB; TMDB requires a configured credential. Source availability is configured
-globally in Settings. Each row has a small left-hand switch for whether this
-movie expects data from that provider, its saved field count and update time,
-and an **Inspect** action. Inspect searches only that provider using the visible
-title and year, then lets the administrator choose a match and review its data.
-There is no separate all-provider search action. Missing data means no cached or
-reviewed data from that provider for this movie group, rather than requiring
-every optional field to be filled.
+Administrators open a Library title and choose **Scrape title**. The Movie
+Metadata Manager shows the scanned movie, source status, cover and backdrop,
+title and year search fields, and Sources, Field Mapping and History tabs. The
+source list comes from the review API, so the dialog can render additional
+providers without a frontend change. The currently supported sources are the
+public Kaleidescape Store and TMDB. Source credentials and network access are
+configured in Settings.
 
-Missing Library years or store links can be resolved through the title and year
-fields. Inspect a source, choose a match, then review field checkboxes and image
-choices in Field Mapping. Available fields include full cast, directors,
-writers, producers, studios, genres, synopsis and provider-specific scores.
-**Compare values** shows current and incoming data. No Library data changes
-until **Save**.
+**Refresh** always searches the selected provider with the visible title and
+year, including when a match is already cached. A unique match is resolved to
+full metadata and downloaded automatically into that provider's own cache for
+every available version in the movie group. Two or more matches open a separate
+choice dialog showing the current Library movie and the candidates. Selecting
+one downloads its full provider record. No result records a last-checked time
+without inventing metadata. Rows distinguish **Not yet scanned**, **No data
+available - Last Checked {date}**, and **Downloaded - Updated {date}** and show
+the saved field count. The original Library scan remains unchanged. Provider
+identities are stored in `enrichment.matches` so later automatic refreshes can
+revisit the chosen movie; a manual Refresh still searches anew.
 
-The suggested **Title search** removes a trailing `(Director's Cut)` suffix
-(also accepting the typographic apostrophe) without changing the Library title.
-The dialog shows the current Library title, year, up to five directors and top
-five cast members above the results for comparison.
+Each matched source offers a **View match** link to its public movie page. The
+link opens in a new tab without sending the Home Assistant page as a referrer.
+Only approved provider movie routes are exposed.
 
-If a provider has no matching data, turn its switch off and **Save**. The
-administrator-only choice applies across the movie's versions, including
-returning versions. It removes that provider from the Metadata completeness
-indicator and `missing_metadata` sensor, clears its conflicts, and skips future
-automatic attempts. Other providers and same-name remakes are unaffected.
-Turning the switch back on resumes automatic attempts. Existing cached data is
-preserved, and the historical failure counter is not decremented.
+The Field Mapping tab always lists the known metadata fields. Its first data
+column is the raw Library value from the server scan, followed by each
+configured provider's cached value. Administrators select the source for each
+visible field. Initial selections follow the shared preferred-source settings;
+saving a changed table stores per-title source choices across the movie group. A
+missing provider value cannot be selected. These choices affect the normal
+Library projection while preserving the raw scan and each provider cache.
+Previously reviewed field values for selected fields are cleared when the table
+is saved, so they cannot conceal a newly selected source.
 
-The cover and backdrop each have an expectation switch below their preview.
-Turning either off makes that kind complete even without an image, removes it
-from the `missing_artwork` sensor's expectation, and skips automatic TMDB image
-requests for that kind. Existing cached images remain. Turning it back on
-restores the expectation. Metadata is complete only when every switched-on
-source has cached or reviewed data. All three indicators use the same grouped
-availability and cache rules as the sensors. **Save** writes the switches
-atomically with a current group snapshot and supports exact retry after an
-uncertain response. The source History section shows current saved field counts
-and update times; it is not a full audit log.
+**Edit** beside either image opens TMDB image choices when TMDB credentials and
+artwork sync are enabled. Selecting an image saves it for the movie group.
+**Reset** beside the cover restores the original scanned cover. The cover and
+backdrop previews keep their respective aspect ratios.
 
-With TMDB enabled, **Edit Artwork** opens the same review flow for images only.
-It still requires configured TMDB credentials and **Sync artwork**. **Poster**
-and **Backdrop** previews preserve the entire image and its aspect ratio. If the
-movie has no current backdrop, its first available backdrop is selected by
-default; it is not saved until Apply. Existing backdrops default to keeping the
-current image. Image-only review leaves descriptive fields unchanged.
+The checkboxes below the cover and backdrop declare an image unavailable.
+Checking one makes that artwork complete without an image. Scraper switches
+specify which providers are expected for this movie. Turning a scraper off
+removes it from metadata completeness and future automatic attempts, while
+keeping cached data. The Artwork, Backdrop and Metadata indicators use these
+same boundaries as the `missing_artwork` and `missing_metadata` sensors. The
+lower-right **Save** persists switch and field-source changes with a current
+movie snapshot and an actor-bound request receipt. Refresh and image edits save
+their results when performed. History shows each recent check and the returned
+values saved for that provider. It retains up to eight entries per provider and
+is not a full audit log. The **Edit** and **Reset** text links sit below their
+images. The duplicate **Edit Artwork** action on the main Library details dialog
+has been removed.
 
-If automatic matching finds no unique movie, the popup offers up to **eight**
-candidate movies. **Title search** also accepts a different title at any time.
-Results show title/year, director, up to five cast members, genres and an
-optional cover preview. Cover previews require **Sync artwork**. Select **Use
-this match** to review that movie's data and image choices. A no-result search
-stays open so the title can be refined; it never silently chooses another movie.
-
-Applying the review saves that provider's identity/location for the entire
-Library source group, alongside the selected metadata. **Clear fields → Save
-match** saves only the binding. Future manual and automatic scrapes revisit the
-saved TMDB ID or store URL instead of searching the scanned title again. A new
-binding invalidates the old provider cache's freshness so the next pass can
-fetch it. **Change match / scraper** returns to search; original-source
-restoration also clears bindings. Scanned IDs, title/year, purchase links and
-viewings are preserved even if the explicitly chosen provider title/year
-differs.
-
-The private `enrichment.matches` and `enrichment.conflicts` objects use the
-existing Library table; no schema migration or separate table is required.
-SQLite backups retain them; portable Library JSON does not transfer provider
-caches/bindings. Match/search plans share the existing eight-review,
-twenty-minute limit. Each search allows at most eight detailed candidates and
-512 KiB of staged metadata. Requests have a three-minute budget, including the
-shared limiter and worker-slot wait; low configured rates may take longer to
-display results.
-
-No-match, ambiguous identity, missing scanned year/link and missing saved movie
-pages create a **scraper conflict**. These are recorded when a new scrape is
-attempted; older skipped attempts cannot be reconstructed. Transient network,
-credential, rate-limit and provider-format errors remain operational failures,
-without declaring a false identity conflict. A successful refresh or approved
-match clears that provider's conflict. The Library shows a centered warning
-overlay on affected covers and a warning in List view for administrators with
-**Advanced view** enabled, independently of badge toggles. Standard users see no
-warning overlay. **Filters → Scraper conflicts only** is a sticky personal
-filter. The indicator considers enabled providers needed by current field-source
-preferences; disabling a provider hides its unresolved indicator without erasing
-its record.
-
-Store title search uses its anonymous public search page and the public
-application headers needed by that page's JSON search route. It does not log in
-or send account data. Results exclude related-person groups, prices and
-ownership; fixed-size cover previews use the store's public image CDN. This
-interface is experimental and may change independently of movie-page parsing.
-
-TMDB also supplies a paged selection of posters and landscape images through its
-[images API](https://developer.themoviedb.org/reference/movie-images). Artwork
-sync must be enabled. Each image category starts at **Keep current image**;
-select one image per category to replace it. Only visible thumbnails are
-retrieved, through an authenticated administrator preview route. The store
-provider currently imports metadata only; candidate covers are preview-only.
-Unavailable image/field categories are not invented.
-
-Selected facts and images apply across the movie's source-group versions.
-Unselected fields remain unchanged; IDs, title/year identity, runtime, formats,
-collections, purchases and viewings are preserved. Reviewed choices live in the
-protected `enrichment.reviewed` JSON alongside provider caches. They take
-precedence over later automatic scans, including source cover refreshes. New
-versions can inherit those choices. No new table or schema migration is needed.
-Private SQLite snapshots/backups retain them; portable JSON exports continue to
-exclude enrichment and artwork files.
-
-TMDB cast is sorted by explicit billing order before import. The full bounded
-cast is retained (up to 500 distinct names); providers without verified billing
-order retain source order. **Library → Options → Visible cast members** saves a
-personal display limit of 1–30, initially 8. **More credits** shows the full
-cast.
-
-Reviews expire after 20 minutes; only the latest eight are retained. Each review
-supports up to 100 scanned versions of the same movie group. A changed movie
-group requires a fresh review. Metadata and selected cached images commit with
-an actor-bound request receipt on the database worker. An uncertain Apply keeps
-the exact selection/UUID for retry, without importing twice. Backup, unload and
-access/configuration changes cancel or reject unfinished requests.
+The suggested search title strips a trailing `(Director's Cut)` suffix while
+leaving the Library identity intact. A search returns at most eight candidates,
+and review plans expire after twenty minutes. Provider requests and images
+remain behind the existing administrator, destination, size and time limits. The
+Store supplies public metadata; image editing uses TMDB. Provider data, source
+choices, match bindings, checks and image selections remain in the existing
+private Library enrichment JSON, and SQLite backups retain them. Portable
+Library JSON does not transfer provider caches or artwork files.
 
 ## Stored and displayed data
 
@@ -292,14 +225,15 @@ active/queued counts, provider updates and skips remain in Settings. A failed
 pass directs the operator to review scraper status. A group scraped by both
 providers counts once in the cached total; provider updates/skips can exceed the
 number of titles. Cached counts survive restart; pass counters are in memory. A
-title preview counts as active work but only contributes to the cached total
-after Apply. Disabled scrapers retain the cached total. Regular-user responses
-omit all scraper status/count details.
+title image preview counts as active work without caching a provider record; a
+successful per-title Refresh contributes after download. Disabled scrapers
+retain the cached total. Regular-user responses omit all scraper status/count
+details.
 
 Active work polls every five seconds; idle Library status polls every thirty
 seconds. Reads do not start scraping. Restoring a movie's original metadata
 removes its cached contribution and pauses background enrichment for that group;
-an explicit title scrape and Apply reenables it. See the
+an explicit per-title Refresh reenables it. See the
 [administrator editor](design-library.md#movie-details-and-administrator-editing).
 
 ## Provider client interfaces

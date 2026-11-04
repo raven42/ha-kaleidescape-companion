@@ -1,30 +1,12 @@
-/** Simulated review dialogs with fictional metadata; no real browser/provider. */
+/** Fictional metadata-manager interactions; no provider or hardware calls. */
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../src/enrichment/title-scrape";
 import type { TitleScrape } from "../src/enrichment/title-scrape";
-import { ApiError } from "../src/core/api";
-import type { ScrapeReview } from "../src/core/api";
+import type { ScrapeOptions, ScrapeReview } from "../src/core/api";
 import { FixtureTransport, info } from "./fixture";
 
 let element: TitleScrape;
-const review: ScrapeReview = {
-  plan_id: "12345678-1234-4234-9234-123456789abc",
-  title: "Fictional Voyage",
-  fields: {
-    actors: {
-      before: ["Original Example"],
-      after: ["<script>Lead Example</script>", "Supporting Example"],
-    },
-    directors: { before: [], after: ["Director Example"] },
-  },
-  images: Array.from({ length: 8 }, (_, index) => ({
-    id: `poster-${index}`,
-    kind: "poster",
-    width: 500,
-    height: 750,
-  })),
-  artwork_enabled: true,
-};
+let options: ScrapeOptions;
 const root = () => element.shadowRoot!;
 const button = (label: string) =>
   [...root().querySelectorAll<HTMLButtonElement>("button")].find(
@@ -38,13 +20,24 @@ async function open() {
   root().querySelector<HTMLButtonElement>(".scrape-button")!.click();
   await flush();
 }
-async function scrape() {
-  await open();
-  button("Inspect").click();
-  await flush();
-  button("Use this match").click();
-  await flush();
-}
+const match = {
+  id: "match-0",
+  title: "Fictional Voyage",
+  year: 2025,
+  actors: ["Fictional Actor"],
+  directors: ["Fictional Director"],
+  genres: ["Adventure"],
+  has_artwork: false,
+};
+const review: ScrapeReview = {
+  plan_id: "12345678-1234-4234-9234-123456789abc",
+  title: "Fictional Voyage",
+  matched: { title: "Fictional Voyage", year: 2025 },
+  fields: {},
+  images: [{ id: "poster-0", kind: "poster", width: 500, height: 750 }],
+  artwork_enabled: true,
+};
+
 beforeEach(async () => {
   vi.stubGlobal(
     "IntersectionObserver",
@@ -59,50 +52,82 @@ beforeEach(async () => {
       disconnect() {}
     },
   );
-  element = document.createElement("kaleidescape-title-scrape") as TitleScrape;
-  element.client = new FixtureTransport().client();
-  element.scope = { ...info, library_enabled: true };
-  element.versionId = "a".repeat(64);
-  vi.spyOn(element.client, "titleScrapeOptions").mockResolvedValue({
+  options = {
     title: "Fictional Voyage",
     search_title: "Fictional Voyage",
     snapshot: "b".repeat(64),
     current: {
       title: "Fictional Voyage",
       year: 2025,
-      directors: [],
-      actors: [],
+      directors: ["Original Director"],
+      actors: ["Original Actor"],
+      original_artwork_key: "a".repeat(64),
+      artwork_key: "a".repeat(64),
+      backdrop_key: null,
     },
     providers: [
+      {
+        id: "kaleidescape",
+        label: "Kaleidescape store",
+        available: true,
+        has_data: false,
+        checked_at: null,
+        fields: 0,
+      },
       {
         id: "tmdb",
         label: "TMDB",
         available: true,
         supports_images: true,
         has_data: true,
+        fetched_at: "2026-11-03T12:00:00+00:00",
+        fields: 2,
       },
     ],
     artwork_enabled: true,
-  });
-  vi.spyOn(element.client, "titleScrapeSearch").mockResolvedValue({
-    search_id: "12345678-1234-4234-9234-123456789abc",
-    title: "Fictional Voyage",
-    query: "Fictional Voyage",
-    candidates: [
+    field_mapping: [
       {
-        id: "match-0",
-        title: "Fictional Voyage",
-        year: 2025,
-        actors: [],
-        directors: [],
-        genres: [],
-        has_artwork: false,
+        field: "actors",
+        label: "Cast",
+        values: {
+          original: ["Original Actor"],
+          kaleidescape: ["Store Actor"],
+          tmdb: ["TMDB Actor"],
+        },
+        selected: "tmdb",
+        override: false,
+      },
+      {
+        field: "synopsis",
+        label: "Synopsis",
+        values: {
+          original: null,
+          kaleidescape: null,
+          tmdb: "A fictional voyage",
+        },
+        selected: "tmdb",
+        override: false,
       },
     ],
-  });
-  vi.spyOn(element.client, "titleScrapePreview").mockResolvedValue(
-    structuredClone(review),
+  };
+  element = document.createElement("kaleidescape-title-scrape") as TitleScrape;
+  element.client = new FixtureTransport().client();
+  element.scope = { ...info, library_enabled: true };
+  element.versionId = "a".repeat(64);
+  vi.spyOn(element.client, "titleScrapeOptions").mockImplementation(async () =>
+    structuredClone(options),
   );
+  vi.spyOn(element.client, "titleScrapeRefresh").mockResolvedValue({
+    outcome: "downloaded",
+  });
+  vi.spyOn(element.client, "titleScrapeRefreshChoice").mockResolvedValue({
+    outcome: "downloaded",
+  });
+  vi.spyOn(element.client, "titleScrapePreview").mockResolvedValue(review);
+  vi.spyOn(element.client, "applyTitleScrape").mockResolvedValue({
+    title_id: element.versionId,
+    updated_count: 1,
+  });
   vi.spyOn(element.client, "titleScrapeImage").mockResolvedValue(
     new Blob(["fictional"], { type: "image/jpeg" }),
   );
@@ -117,560 +142,163 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it("prefills the cleaned search title and shows current Library credits for comparison", async () => {
-  vi.mocked(element.client!.titleScrapeOptions).mockResolvedValue({
-    title: "Fictional Voyage (Director's Cut)",
-    search_title: "Fictional Voyage",
-    current: {
-      title: "Fictional Voyage (Director's Cut)",
-      year: 2025,
-      directors: ["Example Director"],
-      actors: ["Lead Example", "Supporting Example"],
-    },
-    providers: [
-      { id: "tmdb", label: "TMDB", available: true, supports_images: true },
-    ],
-    artwork_enabled: true,
-  });
+it("keeps Save at the right and shows per-source download state", async () => {
   await open();
   expect(
-    root().querySelector<HTMLInputElement>('[name="scraper_query"]')!.value,
-  ).toBe("Fictional Voyage");
-  expect(
-    root().querySelector<HTMLInputElement>('[name="scraper_year"]')!.value,
-  ).toBe("2025");
-  const current = root().querySelector(".current-movie")!;
-  expect(current.textContent).toContain("Fictional Voyage (Director's Cut)");
-  expect(current.textContent).toContain("2025");
-  expect(current.textContent).toContain("Example Director");
-  expect(current.textContent).toContain("Lead Example, Supporting Example");
+    root().querySelector(".manager-actions")?.lastElementChild?.textContent,
+  ).toContain("Save");
+  expect(button("Inspect")).toBeUndefined();
+  expect(button("Refresh")).toBeTruthy();
+  expect(root().textContent).toContain("Not yet scanned");
+  expect(root().textContent).toContain("Downloaded - Updated");
+  expect(root().textContent).toContain("2 fields saved");
+  expect(root().textContent).not.toContain("Edition");
+  expect(root().textContent).toContain("Original Director");
 });
 
-it("renders future providers from options without a modal code change", async () => {
-  vi.mocked(element.client!.titleScrapeOptions).mockResolvedValue({
-    search_title: "Fictional Voyage",
-    current: {
-      title: "Fictional Voyage",
-      year: 2025,
-      actors: [],
-      directors: [],
-    },
-    providers: [
-      { id: "tmdb", label: "TMDB", available: true, has_data: true },
-      {
-        id: "future-provider",
-        label: "Future provider",
-        available: true,
-        fields: 7,
-        has_data: true,
-        fetched_at: "2026-11-01T00:00:00+00:00",
-      },
-    ],
-    artwork_enabled: true,
-  });
+it("links each provider match to its public movie page", async () => {
+  options.providers[0].match_url =
+    "https://www.kaleidescape.com/movie-store/movie/fictional-voyage";
+  options.providers[1].match_url = "https://www.themoviedb.org/movie/42";
   await open();
-  expect(root().querySelectorAll(".source-row[data-provider]")).toHaveLength(2);
-  const row = root().querySelector<HTMLElement>(
-    '[data-provider="future-provider"]',
-  )!;
-  expect(row.textContent).toContain("7 fields saved");
-  row.querySelector<HTMLButtonElement>("button")!.click();
+  const links = [
+    ...root().querySelectorAll<HTMLAnchorElement>(".source-name a"),
+  ];
+  expect(links.map((link) => link.href)).toEqual([
+    "https://www.kaleidescape.com/movie-store/movie/fictional-voyage",
+    "https://www.themoviedb.org/movie/42",
+  ]);
+  expect(
+    links.every(
+      (link) => link.target === "_blank" && link.rel === "noopener noreferrer",
+    ),
+  ).toBe(true);
+});
+
+it("does not render a dangerous provider link", async () => {
+  options.providers[0].match_url = "javascript:alert(1)";
+  await open();
+  expect(root().querySelector(".source-name a")).toBeNull();
+});
+
+it("refreshes a provider even when it already has cached metadata", async () => {
+  await open();
+  const refresh = [
+    ...root().querySelectorAll<HTMLButtonElement>(".source-row button"),
+  ].at(-1)!;
+  refresh.click();
   await flush();
-  expect(element.client!.titleScrapeSearch).toHaveBeenCalledWith(
+  expect(element.client!.titleScrapeRefresh).toHaveBeenCalledWith(
     element.scope,
     element.versionId,
-    "future-provider",
+    "tmdb",
     "Fictional Voyage",
     2025,
   );
-  button("Use this match").click();
+  expect(element.client!.titleScrapePreview).not.toHaveBeenCalled();
+  expect(element.client!.titleScrapeOptions).toHaveBeenCalledTimes(2);
+});
+
+it("shows a separate match dialog and downloads the selected result", async () => {
+  vi.mocked(element.client!.titleScrapeRefresh).mockResolvedValue({
+    outcome: "matches",
+    search_id: "12345678-1234-4234-9234-123456789abc",
+    title: "Fictional Voyage",
+    query: "Fictional Voyage",
+    candidates: [match, { ...match, id: "match-1", title: "Other Voyage" }],
+  });
+  await open();
+  root().querySelector<HTMLButtonElement>(".source-row button")!.click();
+  await flush();
+  expect(root().querySelector<HTMLDialogElement>(".choice-dialog")!.open).toBe(
+    true,
+  );
+  expect(root().querySelector(".choice-dialog")!.textContent).toContain(
+    "Current Library movie",
+  );
+  const matches = [
+    ...root().querySelectorAll<HTMLButtonElement>(".match-card button"),
+  ];
+  matches[1].click();
+  await flush();
+  expect(element.client!.titleScrapeRefreshChoice).toHaveBeenCalledWith(
+    element.scope,
+    element.versionId,
+    "kaleidescape",
+    "12345678-1234-4234-9234-123456789abc",
+    "match-1",
+  );
+});
+
+it("always shows known fields and saves selected source columns", async () => {
+  await open();
+  button("Field Mapping").click();
+  await flush();
+  expect(root().querySelectorAll(".mapping-table tbody tr")).toHaveLength(2);
+  expect(root().textContent).toContain("Raw Library");
+  expect(root().textContent).toContain("Store Actor");
+  const original = root().querySelector<HTMLInputElement>(
+    'input[aria-label="Use Raw Library for Cast"]',
+  )!;
+  original.click();
+  await flush();
+  button("Save").click();
+  await flush();
+  expect(element.client!.applyTitleScrape).toHaveBeenCalledOnce();
+  const call = vi.mocked(element.client!.applyTitleScrape).mock.calls[0][0];
+  expect(call.message.type).toContain("metadata/title/action");
+  expect(call.message.data).toMatchObject({
+    action: "mapping",
+    sources: { actors: "original" },
+  });
+});
+
+it("offers TMDB image editing and an original-cover reset", async () => {
+  await open();
+  const edit = [
+    ...root().querySelectorAll<HTMLButtonElement>(".image-links .text-link"),
+  ].find((node) => node.textContent!.trim() === "Edit")!;
+  edit.click();
   await flush();
   expect(element.client!.titleScrapePreview).toHaveBeenCalledWith(
     element.scope,
     element.versionId,
-    "future-provider",
-    "12345678-1234-4234-9234-123456789abc",
-    "match-0",
+    "tmdb",
   );
-  expect(
-    root().querySelector('[role="tab"][aria-selected="true"]')?.textContent,
-  ).toContain("Field Mapping");
-});
-
-it("saves an artwork expectation separately from provider metadata", async () => {
-  vi.mocked(element.client!.titleScrapeOptions).mockResolvedValue({
-    snapshot: "b".repeat(64),
-    search_title: "Fictional Voyage",
-    current: {
-      title: "Fictional Voyage",
-      year: 2025,
-      directors: [],
-      actors: [],
-      artwork_key: null,
-      backdrop_key: null,
-    },
-    artwork_unavailable: ["poster"],
-    providers: [{ id: "tmdb", label: "TMDB", available: true }],
-    artwork_enabled: true,
-  });
-  const prepare = vi.spyOn(element.client!, "prepareScrapeExpectations");
-  vi.spyOn(element.client!, "applyTitleScrape").mockResolvedValue({
-    title_id: element.versionId,
-    updated_count: 1,
-  });
-  await open();
-  const current = root().querySelector(".current-movie")!;
-  expect(current.textContent).toContain("Artwork: Complete");
-  const backdrop = current.querySelector<HTMLInputElement>(
-    'input[aria-label="Expect backdrop art"]',
-  )!;
-  backdrop.click();
-  await flush();
-  expect(current.textContent).toContain("Backdrop: Complete");
-  button("Save").click();
-  await flush();
-  expect(prepare).toHaveBeenCalledWith(element.scope, {
-    title_id: element.versionId,
-    snapshot: "b".repeat(64),
-    providers: { tmdb: true },
-    artwork: { poster: false, backdrop: false },
-  });
-});
-
-it("updates the three completeness indicators from the same switches used by sensors", async () => {
-  vi.mocked(element.client!.titleScrapeOptions).mockResolvedValue({
-    snapshot: "b".repeat(64),
-    current: {
-      title: "Fictional Voyage",
-      year: 2025,
-      actors: [],
-      directors: [],
-    },
-    artwork_present: { poster: false, backdrop: true },
-    providers: [
-      { id: "tmdb", label: "TMDB", available: true, has_data: true },
-      {
-        id: "future",
-        label: "Future source",
-        available: true,
-        has_data: false,
-      },
-    ],
-    artwork_enabled: true,
-  });
-  await open();
-  const status = root().querySelector(".artwork-status")!;
-  expect(status.textContent).toContain("Artwork: Missing");
-  expect(status.textContent).toContain("Backdrop: Complete");
-  expect(status.textContent).toContain("Metadata: Missing");
-  root()
-    .querySelector<HTMLInputElement>('[aria-label="Expect cover art"]')!
-    .click();
-  root()
-    .querySelector<HTMLInputElement>(
-      '[aria-label="Use Future source for this movie"]',
-    )!
-    .click();
-  await flush();
-  expect(status.textContent).toContain("Artwork: Complete");
-  expect(status.textContent).toContain("Metadata: Complete");
-  expect(button("Inspect").disabled).toBe(true);
-});
-
-it("lets an administrator exclude a source after its search finds no match", async () => {
-  const cancel = vi.spyOn(element.client!, "cancelTitleScrape");
-  vi.mocked(element.client!.titleScrapeSearch).mockResolvedValue({
-    search_id: "12345678-1234-4234-9234-123456789abc",
-    title: "Fictional Voyage",
-    query: "Fictional Voyage",
-    candidates: [],
-  });
-  vi.mocked(element.client!.titleScrapeOptions).mockResolvedValue({
-    snapshot: "b".repeat(64),
-    search_title: "Fictional Voyage",
-    current: {
-      title: "Fictional Voyage",
-      year: 2025,
-      actors: [],
-      directors: [],
-    },
-    providers: [
-      { id: "tmdb", label: "TMDB", available: true, has_data: false },
-    ],
-    artwork_enabled: true,
-  });
-  await open();
-  button("Inspect").click();
-  await flush();
-  expect(root().textContent).toContain("No matching movies found");
-  root()
-    .querySelector<HTMLInputElement>('[aria-label="Use TMDB for this movie"]')!
-    .click();
-  await flush();
-  expect(root().querySelector(".artwork-status")!.textContent).toContain(
-    "Metadata: Complete",
+  expect(root().querySelector<HTMLDialogElement>(".choice-dialog")!.open).toBe(
+    true,
   );
-  expect(root().textContent).not.toContain("No matching movies found");
-  expect(cancel).toHaveBeenCalled();
-  expect(button("Save").disabled).toBe(false);
+  expect(root().textContent).toContain("Reset");
 });
 
-it.each([false, true])(
-  "saves a source switch with exact retry (previously excluded: %s)",
-  async (marked) => {
-    vi.mocked(element.client!.titleScrapeOptions).mockResolvedValue({
-      snapshot: "b".repeat(64),
-      providers: [
-        {
-          id: "tmdb",
-          label: "TMDB",
-          available: true,
-          unavailable: marked,
-          missing_data: false,
-        },
-      ],
-      artwork_enabled: true,
-    });
-    const apply = vi
-      .spyOn(element.client!, "applyTitleScrape")
-      .mockRejectedValueOnce(new ApiError("connection_lost"))
-      .mockResolvedValue({ title_id: element.versionId, updated_count: 2 });
-    await open();
-    root()
-      .querySelector<HTMLInputElement>(
-        '[data-provider="tmdb"] input[type="checkbox"]',
-      )!
-      .click();
-    await flush();
-    button("Save").click();
-    await flush();
-    const pending = apply.mock.calls[0][0];
-    expect(pending.message.type).toContain("metadata/title/availability");
-    expect(pending.message.data).toEqual({
-      title_id: element.versionId,
-      snapshot: "b".repeat(64),
-      providers: { tmdb: marked },
-      artwork: { poster: true, backdrop: true },
-    });
-    expect(
-      root().querySelector<HTMLButtonElement>(".dialog-close")!.disabled,
-    ).toBe(false);
-    button("Retry exact save").click();
-    await flush();
-    expect(apply.mock.calls[1][0]).toBe(pending);
-    expect(root().querySelector<HTMLDialogElement>("dialog")!.open).toBe(false);
-    expect(element.client!.titleScrapePreview).not.toHaveBeenCalled();
-  },
-);
-
-it.each([false, true])(
-  "defaults a missing backdrop only (existing: %s)",
-  async (existing) => {
-    vi.mocked(element.client!.titleScrapePreview).mockResolvedValue({
-      ...structuredClone(review),
-      has_backdrop: existing,
-      images: [
-        ...review.images,
-        { id: "backdrop-1", kind: "backdrop", width: 780, height: 439 },
-      ],
-    });
-    const prepare = vi.spyOn(element.client!, "prepareTitleScrape");
-    await scrape();
-    button("Backdrop (1)").click();
-    await flush();
-    expect(
-      root().querySelector<HTMLInputElement>(".candidate input")!.checked,
-    ).toBe(!existing);
-    button("Save").click();
-    await flush();
-    expect(prepare.mock.calls[0][1].images).toEqual(
-      existing ? {} : { backdrop: "backdrop-1" },
-    );
-  },
-);
-
-it("opens a TMDB image-only review without selecting metadata", async () => {
-  element.artworkOnly = true;
-  await flush();
-  const prepare = vi.spyOn(element.client!, "prepareTitleScrape");
-  await scrape();
-  expect(element.client!.titleScrapePreview).toHaveBeenCalled();
-  expect(root().querySelector(".scrape-fields")).toBeNull();
-  expect(root().textContent).not.toContain("Metadata (2)");
-  expect(button("Save").disabled).toBe(true);
-  root().querySelector<HTMLInputElement>(".candidate input")!.click();
-  await flush();
-  button("Save").click();
-  await flush();
-  expect(prepare.mock.calls[0][1].fields).toEqual([]);
-  expect(prepare.mock.calls[0][1].images).toEqual({ poster: "poster-0" });
-});
-
-it("does not fetch image choices without the artwork opt-in", async () => {
-  element.artworkOnly = true;
-  vi.mocked(element.client!.titleScrapeOptions).mockResolvedValue({
-    providers: [
-      { id: "tmdb", label: "TMDB", available: true, supports_images: true },
-    ],
-    artwork_enabled: false,
-  });
-  await flush();
+it("saves a selected TMDB cover without changing metadata fields", async () => {
   await open();
-  expect(element.client!.titleScrapePreview).not.toHaveBeenCalled();
-  expect(root().textContent).toContain("Enable Sync artwork");
-  expect(
-    root().querySelector<HTMLButtonElement>(".dialog-footer .primary")!
-      .disabled,
-  ).toBe(true);
-});
-
-it("reviews fields and paged images, then retries the exact selected apply", async () => {
-  const apply = vi
-    .spyOn(element.client!, "applyTitleScrape")
-    .mockRejectedValueOnce(new ApiError("connection_lost"))
-    .mockResolvedValue({ title_id: element.versionId, updated_count: 2 });
-  const changed = vi.fn();
-  element.addEventListener("metadata-changed", changed);
-  await scrape();
-  expect(root().querySelector("script")).toBeNull();
-  expect(root().textContent).toContain("<script>Lead Example</script>");
-  const rows = [...root().querySelectorAll(".scrape-field")];
-  rows
-    .find((row) => row.textContent!.includes("Directors"))!
-    .querySelector<HTMLInputElement>("input")!
-    .click();
-  button("Poster (8)").click();
+  const edit = [
+    ...root().querySelectorAll<HTMLButtonElement>(".image-links .text-link"),
+  ].find((node) => node.textContent!.trim() === "Edit")!;
+  edit.click();
   await flush();
-  expect(root().querySelectorAll(".candidate")).toHaveLength(6);
-  button("Next images").click();
+  root().querySelector<HTMLInputElement>('[name="artwork-choice"]')!.click();
   await flush();
-  expect(root().querySelectorAll(".candidate")).toHaveLength(2);
-  root().querySelectorAll<HTMLInputElement>(".candidate input")[1].click();
+  button("Use image").click();
   await flush();
-  button("Save").click();
-  await flush();
-  const pending = apply.mock.calls[0][0];
-  expect(pending.message.data).toEqual({
-    plan_id: review.plan_id,
-    fields: ["actors"],
-    images: { poster: "poster-7" },
-  });
-  expect(
-    root().querySelector<HTMLButtonElement>(".dialog-close")!.disabled,
-  ).toBe(false);
-  button("Retry exact save").click();
-  await flush();
-  expect(apply.mock.calls[1][0]).toBe(pending);
-  expect(changed).toHaveBeenCalledTimes(1);
-  expect(root().querySelector<HTMLDialogElement>("dialog")!.open).toBe(false);
-  expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:fictional-preview");
-});
-
-it("ignores a late readonly preview after closing and hides actions from readers", async () => {
-  let resolve!: (value: ScrapeReview) => void;
-  vi.mocked(element.client!.titleScrapePreview).mockReturnValue(
-    new Promise((done) => {
-      resolve = done;
-    }),
-  );
-  await open();
-  button("Inspect").click();
-  await flush();
-  button("Use this match").click();
-  await flush();
-  root().querySelector<HTMLButtonElement>(".dialog-close")!.click();
-  await flush();
-  resolve(structuredClone(review));
-  await flush();
-  expect(root().querySelector(".scrape-fields")).toBeNull();
-  expect(root().querySelector<HTMLDialogElement>("dialog")!.open).toBe(false);
-  element.scope = {
-    ...info,
-    library_enabled: true,
-    permissions: { read: true, edit: false, export: false },
-  };
-  await flush();
-  expect(root().querySelector("button")).toBeNull();
-});
-
-it("keeps image downloads lazy and clears private selections on account changes", async () => {
-  await scrape();
-  expect(element.client!.titleScrapeImage).not.toHaveBeenCalled();
-  button("Poster (8)").click();
-  await flush();
-  expect(element.client!.titleScrapeImage).toHaveBeenCalled();
-  element.client = new FixtureTransport().client();
-  await flush();
-  expect(root().querySelector(".scrape-fields")).toBeNull();
-  expect(root().querySelector("kaleidescape-scrape-image")).toBeNull();
-  expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:fictional-preview");
-});
-
-it("shows only enabled providers and makes unavailable providers unselectable", async () => {
-  vi.mocked(element.client!.titleScrapeOptions).mockResolvedValue({
-    providers: [{ id: "tmdb", label: "TMDB", available: false }],
-    artwork_enabled: false,
-  });
-  await open();
-  expect(root().textContent).not.toContain("Kaleidescape store");
-  expect(
-    root().querySelector<HTMLButtonElement>('[data-provider="tmdb"] button')!
-      .disabled,
-  ).toBe(true);
-  expect(
-    root().querySelector<HTMLButtonElement>(".dialog-footer .primary")!
-      .disabled,
-  ).toBe(true);
-});
-
-it("marks scrapers without saved data while leaving configured scrapers selectable", async () => {
-  vi.mocked(element.client!.titleScrapeOptions).mockResolvedValue({
-    snapshot: "b".repeat(64),
-    providers: [
-      {
-        id: "tmdb",
-        label: "TMDB",
-        available: true,
-        has_data: false,
-        missing_data: true,
-      },
-      {
-        id: "kaleidescape",
-        label: "Kaleidescape store",
-        available: true,
-        has_data: true,
-        missing_data: false,
-      },
-    ],
-    artwork_enabled: false,
-  });
-  await open();
-  const missing = root().querySelector<HTMLElement>('[data-provider="tmdb"]')!;
-  expect(missing.textContent).toContain("Metadata missing");
-  expect(
-    missing.querySelector<HTMLInputElement>('input[type="checkbox"]')!.disabled,
-  ).toBe(false);
-  expect(
-    root().querySelector<HTMLElement>('[data-provider="kaleidescape"]')!
-      .textContent,
-  ).not.toContain("Metadata missing");
-  expect(
-    root().querySelector<HTMLButtonElement>(".dialog-footer .primary")!
-      .disabled,
-  ).toBe(true);
-});
-
-it("offers detailed candidates, permits a replacement title search, and saves the chosen match", async () => {
-  const choices = {
-    search_id: "12345678-1234-4234-9234-123456789abc",
-    title: "Fictional Voyage",
-    query: "Voyage",
-    candidates: [
-      {
-        id: "match-0",
-        title: "Fictional Voyage",
-        year: 2025,
-        actors: ["Lead Example", "Second Example", "Third Example"],
-        directors: ["Director Example"],
-        genres: ["Adventure"],
-        has_artwork: true,
-      },
-    ],
-  };
-  vi.mocked(element.client!.titleScrapePreview).mockResolvedValue({
-    ...review,
-    matched: { title: "Fictional Voyage", year: 2025 },
-  });
-  const search = vi
-    .spyOn(element.client!, "titleScrapeSearch")
-    .mockResolvedValueOnce(choices)
-    .mockResolvedValueOnce({ ...choices, candidates: [] })
-    .mockResolvedValue(choices);
-  const apply = vi
-    .spyOn(element.client!, "applyTitleScrape")
-    .mockResolvedValue({ title_id: element.versionId, updated_count: 1 });
-  await open();
-  button("Inspect").click();
-  await flush();
-  expect(root().querySelectorAll(".match-card")).toHaveLength(1);
-  expect(root().textContent).toContain("Director Example");
-  expect(root().textContent).toContain("Third Example");
-  expect(root().textContent).toContain("Adventure");
-  expect(root().querySelector("kaleidescape-scrape-image")).toBeTruthy();
-  const input = root().querySelector<HTMLInputElement>(
-    '[name="scraper_query"]',
-  )!;
-  input.value = "Alternate title";
-  input.dispatchEvent(new Event("input", { bubbles: true }));
-  button("Inspect").click();
-  await flush();
-  expect(search.mock.calls[1].at(-2)).toBe("Alternate title");
-  expect(root().textContent).toContain("No matching movies found");
-  button("Inspect").click();
-  await flush();
-  button("Use this match").click();
-  await flush();
-  expect(
-    vi.mocked(element.client!.titleScrapePreview).mock.calls.at(-1)!.slice(-2),
-  ).toEqual([choices.search_id, "match-0"]);
-  expect(root().textContent).toContain("Selected match");
-  button("Clear fields").click();
-  await flush();
-  button("Save").click();
-  await flush();
-  expect(apply.mock.calls[0][0].message.data).toMatchObject({
+  const call = vi.mocked(element.client!.applyTitleScrape).mock.calls[0][0];
+  expect(call.message.type).toContain("metadata/title/apply");
+  expect(call.message.data).toMatchObject({
     fields: [],
-    images: {},
-    save_match: true,
+    images: { poster: "poster-0" },
   });
 });
 
-it.each([false, true])(
-  "allows close during an outstanding apply or uncertain retry (reply rejected: %s)",
-  async (rejected) => {
-    const cancel = vi
-      .spyOn(element.client!, "cancelTitleScrape")
-      .mockResolvedValue({ cancelled: true });
-    let done!: (value: { title_id: string; updated_count: number }) => void;
-    const apply = vi.spyOn(element.client!, "applyTitleScrape");
-    if (rejected) apply.mockRejectedValue(new ApiError("connection_lost"));
-    else
-      apply.mockReturnValue(
-        new Promise((resolve) => {
-          done = resolve;
-        }),
-      );
-    const changed = vi.fn();
-    element.addEventListener("metadata-changed", changed);
-    await scrape();
-    button("Save").click();
-    await flush();
-    const close = root().querySelector<HTMLButtonElement>(".dialog-close")!;
-    expect(close.disabled).toBe(false);
-    close.click();
-    await flush();
-    expect(root().querySelector<HTMLDialogElement>("dialog")!.open).toBe(false);
-    expect(cancel).toHaveBeenCalledWith(element.scope, review.plan_id);
-    expect(root().textContent).not.toContain("Retry exact save");
-    if (!rejected) {
-      done({ title_id: element.versionId, updated_count: 1 });
-      await flush();
-    }
-    expect(changed).not.toHaveBeenCalled();
-    expect(apply).toHaveBeenCalledTimes(1);
-  },
-);
-
-it("reports a provider rejection as a confirmed error and releases the apply selection", async () => {
-  vi.spyOn(element.client!, "applyTitleScrape").mockRejectedValue(
-    new ApiError("provider_content_type"),
-  );
-  await scrape();
-  button("Save").click();
+it("resets the original cover through a snapshot-checked action", async () => {
+  await open();
+  button("Reset").click();
   await flush();
-  expect(root().textContent).toContain("unsupported content type");
-  expect(root().textContent).not.toContain("Retry exact save");
-  expect(
-    root().querySelector<HTMLButtonElement>(".dialog-close")!.disabled,
-  ).toBe(false);
+  const call = vi.mocked(element.client!.applyTitleScrape).mock.calls[0][0];
+  expect(call.message.type).toContain("metadata/title/action");
+  expect(call.message.data).toMatchObject({
+    action: "reset_cover",
+    title_id: element.versionId,
+    snapshot: options.snapshot,
+  });
 });
