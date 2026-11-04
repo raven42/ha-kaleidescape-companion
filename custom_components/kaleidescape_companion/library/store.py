@@ -282,7 +282,16 @@ def save_artwork(
 
 
 def save_backdrop(
-    db, directory, source, id, metadata, data, budget, *, kind="backdrop"
+    db,
+    directory,
+    source,
+    id,
+    metadata,
+    data,
+    budget,
+    *,
+    kind="backdrop",
+    only_if_missing=False,
 ):
     """Link TMDB artwork to the verified movie group, preserving edition covers."""
     from ..enrichment.availability import for_group
@@ -308,6 +317,32 @@ def save_backdrop(
     ):
         raise JournalError("refresh_required", "Library changed during artwork sync")
 
+    if kind == "backdrop" and only_if_missing:
+        from ..enrichment.availability import artwork_for_group
+        from ..enrichment.selection import image, read
+
+        preferences = read(db)
+        cached = {
+            item[0] for item in db.execute("SELECT cache_key FROM library_artwork")
+        }
+        group = db.execute(
+            "SELECT enrichment FROM library WHERE source_id=? AND source_group=? "
+            "AND available=1 AND purchase_match_pending=0",
+            (source, row["source_group"]),
+        ).fetchall()
+        if (
+            preferences.get("backdrop") == "original"
+            or "backdrop" in artwork_for_group(db, source, row["source_group"])
+            or any(
+                (value := json.loads(member["enrichment"]))
+                .get("reviewed", {})
+                .get("backdrop_removed")
+                or image(None, value, preferences, "backdrop") in cached
+                for member in group
+            )
+        ):
+            raise JournalError("refresh_required", "Backdrop selection changed")
+
     def link(key):
         db.execute(
             "UPDATE library SET enrichment=json_set(enrichment,"
@@ -332,7 +367,7 @@ def _save_image(db, directory, source, data, content_type, budget, link):
     )
 
 
-def save_images(db, directory, source, images, budget, link):
+def save_images(db, directory, source, images, budget, link, *, keep=()):
     """Commit images, links and an optional receipt atomically; roll back files too."""
     if not 0 <= len(images) <= 2:
         raise invalid("Select at most two images")
@@ -360,10 +395,21 @@ def save_images(db, directory, source, images, budget, link):
                 ).fetchone()
             )
             evicted = (
-                cache_trim(db, directory, budget, incoming, keep=set(keys))
+                cache_trim(db, directory, budget, incoming, keep=set(keys) | set(keep))
                 if images
                 else []
             )
+            if (
+                images
+                and db.execute(
+                    "SELECT coalesce(sum(byte_size),0) FROM library_artwork"
+                ).fetchone()[0]
+                + incoming
+                > budget
+            ):
+                raise JournalError(
+                    "library_artwork", "Selected images exceed the cache budget"
+                )
             for key, (data, content_type) in values.items():
                 path = directory / f"{key}.img"
                 private_file(path)
@@ -406,7 +452,8 @@ def read_artwork(db, directory: Path, source: str, key: str):
             json_extract(enrichment,'$.tmdb.backdrop_key')=a.cache_key OR
             json_extract(enrichment,'$.tmdb.poster_key')=a.cache_key OR
             json_extract(enrichment,'$.reviewed.poster_key')=a.cache_key OR
-            json_extract(enrichment,'$.reviewed.backdrop_key')=a.cache_key))""",
+            json_extract(enrichment,'$.reviewed.backdrop_key')=a.cache_key OR
+            json_extract(enrichment,'$.backdrop_previous.key')=a.cache_key))""",
         (key, source),
     ).fetchone()
     if row is None:

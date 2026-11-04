@@ -584,6 +584,90 @@ class TitleReviewTest(unittest.IsolatedAsyncioTestCase):
         versions = await self.repo.async_library_versions(self.source, self.id)
         self.assertTrue(all("tmdb" in row["enrichment"] for row in versions["items"]))
 
+    async def test_draft_refresh_is_atomic_and_selects_first_backdrop(self):
+        await self.setup_review()
+        candidate = {
+            "provider_id": "42",
+            "title": "Fictional Film",
+            "year": 2025,
+            "url": "https://www.themoviedb.org/movie/42",
+        }
+        options = await self.manager.options(self.admin, self.id)
+        with (
+            patch(
+                "custom_components.kaleidescape_companion.enrichment.review.Providers.search",
+                AsyncMock(return_value=[candidate]),
+            ),
+            patch(
+                "custom_components.kaleidescape_companion.enrichment.review.Providers.resolve",
+                AsyncMock(return_value=self.data),
+            ),
+        ):
+            staged = await self.manager.refresh(
+                self.admin, str(uuid4()), self.id, "tmdb", "Fictional Film", 2025, True
+            )
+        self.assertEqual(staged["outcome"], "staged")
+        before = await self.manager.options(self.admin, self.id)
+        self.assertEqual(before["snapshot"], options["snapshot"])
+        self.assertFalse(
+            next(row for row in before["providers"] if row["id"] == "tmdb")["has_data"]
+        )
+        data = {
+            "title_id": self.id,
+            "snapshot": options["snapshot"],
+            "providers": {"tmdb": staged["plan_id"]},
+            "sources": {"actors": "tmdb"},
+            "expectations": None,
+            "image_plan": "",
+            "images": {},
+            "resets": [],
+        }
+        request = str(uuid4())
+        saved = await self.manager.save_draft(self.admin, request, data)
+        self.assertEqual(
+            await self.manager.save_draft(self.admin, request, data), saved
+        )
+        after = await self.manager.options(self.admin, self.id)
+        self.assertTrue(
+            next(row for row in after["providers"] if row["id"] == "tmdb")["has_data"]
+        )
+        self.assertTrue(after["artwork_present"]["backdrop"])
+        self.assertEqual(
+            next(row for row in after["field_mapping"] if row["field"] == "actors")[
+                "selected"
+            ],
+            "tmdb",
+        )
+
+    async def test_reset_backdrop_restores_previous_or_removes_it(self):
+        review = await self.setup_review()
+        options = await self.manager.options(self.admin, self.id)
+        await self.manager.apply(
+            self.admin,
+            str(uuid4()),
+            {
+                "plan_id": review["plan_id"],
+                "fields": [],
+                "images": {"backdrop": "backdrop-1"},
+                "save_match": True,
+            },
+        )
+        after = await self.manager.options(self.admin, self.id)
+        self.assertTrue(after["artwork_present"]["backdrop"])
+        result = await self.manager.action(
+            self.admin,
+            str(uuid4()),
+            {
+                "action": "reset_backdrop",
+                "title_id": self.id,
+                "snapshot": after["snapshot"],
+            },
+        )
+        self.assertGreater(result["updated_count"], 0)
+        after_reset = await self.manager.options(self.admin, self.id)
+        self.assertFalse(after_reset["artwork_present"]["backdrop"])
+        self.assertNotEqual(options["snapshot"], after_reset["snapshot"])
+
     async def test_refresh_zero_and_multiple_results_require_no_implicit_match(self):
         await self.setup_review()
         candidate = {

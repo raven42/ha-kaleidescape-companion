@@ -82,6 +82,7 @@ const booleanFields = new Set([
   "control_allow_launch",
   "metadata_store_enabled",
   "metadata_tmdb_enabled",
+  "metadata_auto_save",
   "metadata_clear_tmdb_key",
   ...libraryChecks.map(([key]) => key),
 ]);

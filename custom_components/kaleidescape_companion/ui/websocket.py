@@ -137,6 +137,7 @@ def async_register_commands(hass: HomeAssistant) -> None:
             p.Required("provider"): str,
             p.Required("query"): str,
             p.Optional("year"): int,
+            p.Optional("stage", default=False): bool,
         },
         "metadata/title/refresh_choice": {
             **mutations,
@@ -144,7 +145,9 @@ def async_register_commands(hass: HomeAssistant) -> None:
             p.Required("provider"): str,
             p.Required("search_id"): str,
             p.Required("choice"): str,
+            p.Optional("stage", default=False): bool,
         },
+        "metadata/title/draft": {**mutations, p.Required("data"): dict},
         "library/edit/reset": {
             **mutations,
             p.Required("title_id"): str,
@@ -457,6 +460,7 @@ async def async_handle(
                     | "metadata/title/action"
                     | "metadata/title/refresh"
                     | "metadata/title/refresh_choice"
+                    | "metadata/title/draft"
                 ):
                     library = get_library(hass, msg["entry_id"], runtime)
                     if runtime.enrichment is None:
@@ -493,6 +497,10 @@ async def async_handle(
                         result = await manager.action(
                             user, msg["request_id"], msg["data"]
                         )
+                    elif operation.endswith("draft"):
+                        result = await manager.save_draft(
+                            user, msg["request_id"], msg["data"]
+                        )
                     elif operation.endswith("refresh_choice"):
                         result = await manager.refresh_choice(
                             user,
@@ -501,6 +509,7 @@ async def async_handle(
                             msg["provider"],
                             msg["search_id"],
                             msg["choice"],
+                            msg["stage"],
                         )
                     elif operation.endswith("refresh"):
                         result = await manager.refresh(
@@ -510,6 +519,7 @@ async def async_handle(
                             msg["provider"],
                             msg["query"],
                             msg.get("year"),
+                            msg["stage"],
                         )
                     else:
                         result = await manager.apply(

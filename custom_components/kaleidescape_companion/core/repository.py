@@ -359,6 +359,14 @@ class JournalRepository:
             return await self._call(self._search_read, review_store.target, *args)
         if operation == "review_action":
             return await self._call(self._library_write, review_store.action, *args)
+        if operation == "draft_lookup":
+            from ..enrichment.draft import lookup
+
+            return await self._call(self._search_read, lookup, *args)
+        if operation == "draft_apply":
+            return await self._call(
+                self._library_write, self._apply_metadata_draft, *args
+            )
         if operation == "review_lookup":
             return await self._call(self._search_read, review_store.lookup, *args)
         if operation == "review_apply":
@@ -369,6 +377,11 @@ class JournalRepository:
 
     def _apply_metadata_review(self, db, *args):
         from ..enrichment.review_store import apply
+
+        return apply(db, self._artwork_directory, *args)
+
+    def _apply_metadata_draft(self, db, *args):
+        from ..enrichment.draft import apply
 
         return apply(db, self._artwork_directory, *args)
 
@@ -385,10 +398,19 @@ class JournalRepository:
             kind="poster",
         )
 
-    def _save_backdrop(self, db, source, id, metadata, data, budget):
+    def _save_backdrop(
+        self, db, source, id, metadata, data, budget, only_if_missing=False
+    ):
         private_directory(self._artwork_directory)
         library_store.save_backdrop(
-            db, self._artwork_directory, source, id, metadata, data, budget
+            db,
+            self._artwork_directory,
+            source,
+            id,
+            metadata,
+            data,
+            budget,
+            only_if_missing=only_if_missing,
         )
 
     async def async_control(self, operation, *args):

@@ -70,6 +70,12 @@ class MetadataSync:
             },
         )
 
+    async def first_backdrop(self, metadata):
+        """Fetch the first available TMDB backdrop through the normal image gate."""
+        images = await self.providers.images("tmdb", metadata)
+        first = next((item for item in images if item.get("kind") == "backdrop"), None)
+        return await self.providers.image("tmdb", first) if first else None
+
     def title_reviews(self):
         from .review import TitleReviews
 
@@ -193,9 +199,7 @@ class MetadataSync:
                 r"/3/(?:search/movie|movie/[1-9][0-9]*(?:/images)?)", parsed.path
             ) or (
                 parsed.path.endswith("/images")
-                and not (
-                    self.review_network and self.config.get("library_sync_artwork")
-                )
+                and not self.config.get("library_sync_artwork")
             ):
                 raise ProviderError("provider_destination")
         answers = await self.hass.data[DATA_RESOLVER].resolve(
@@ -388,8 +392,10 @@ class MetadataSync:
                             and self.config.get("metadata_source_backdrop")
                             != "original"
                             and "backdrop" not in row.get("unavailable_artwork", [])
+                            and not row.get("backdrop_selected")
+                            and not row.get("backdrop_removed")
                         ):
-                            image = await self.providers.artwork(provider, result)
+                            image = await self.first_backdrop(result)
                             self._ready()
                             if image is not None:
                                 try:
@@ -402,6 +408,7 @@ class MetadataSync:
                                         self.config.get("library_artwork_cache_mb", 512)
                                         * 1024
                                         * 1024,
+                                        True,
                                     )
                                 except JournalError as error:
                                     if error.code != "refresh_required":

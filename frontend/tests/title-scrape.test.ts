@@ -118,13 +118,25 @@ beforeEach(async () => {
     structuredClone(options),
   );
   vi.spyOn(element.client, "titleScrapeRefresh").mockResolvedValue({
-    outcome: "downloaded",
+    outcome: "staged",
+    plan_id: review.plan_id,
+    provider: "tmdb",
+    has_data: true,
+    matched: review.matched ?? null,
+    values: { actors: ["TMDB Actor"] },
+    images: review.images,
   });
   vi.spyOn(element.client, "titleScrapeRefreshChoice").mockResolvedValue({
-    outcome: "downloaded",
+    outcome: "staged",
+    plan_id: review.plan_id,
+    provider: "kaleidescape",
+    has_data: true,
+    matched: review.matched ?? null,
+    values: {},
+    images: [],
   });
   vi.spyOn(element.client, "titleScrapePreview").mockResolvedValue(review);
-  vi.spyOn(element.client, "applyTitleScrape").mockResolvedValue({
+  vi.spyOn(element.client, "applyMetadataDraft").mockResolvedValue({
     title_id: element.versionId,
     updated_count: 1,
   });
@@ -194,9 +206,11 @@ it("refreshes a provider even when it already has cached metadata", async () => 
     "tmdb",
     "Fictional Voyage",
     2025,
+    true,
   );
   expect(element.client!.titleScrapePreview).not.toHaveBeenCalled();
-  expect(element.client!.titleScrapeOptions).toHaveBeenCalledTimes(2);
+  expect(element.client!.titleScrapeOptions).toHaveBeenCalledTimes(1);
+  expect(element.client!.applyMetadataDraft).not.toHaveBeenCalled();
 });
 
 it("shows a separate match dialog and downloads the selected result", async () => {
@@ -227,6 +241,7 @@ it("shows a separate match dialog and downloads the selected result", async () =
     "kaleidescape",
     "12345678-1234-4234-9234-123456789abc",
     "match-1",
+    true,
   );
 });
 
@@ -244,11 +259,10 @@ it("always shows known fields and saves selected source columns", async () => {
   await flush();
   button("Save").click();
   await flush();
-  expect(element.client!.applyTitleScrape).toHaveBeenCalledOnce();
-  const call = vi.mocked(element.client!.applyTitleScrape).mock.calls[0][0];
-  expect(call.message.type).toContain("metadata/title/action");
+  expect(element.client!.applyMetadataDraft).toHaveBeenCalledOnce();
+  const call = vi.mocked(element.client!.applyMetadataDraft).mock.calls[0][0];
+  expect(call.message.type).toContain("metadata/title/draft");
   expect(call.message.data).toMatchObject({
-    action: "mapping",
     sources: { actors: "original" },
   });
 });
@@ -282,10 +296,12 @@ it("saves a selected TMDB cover without changing metadata fields", async () => {
   await flush();
   button("Use image").click();
   await flush();
-  const call = vi.mocked(element.client!.applyTitleScrape).mock.calls[0][0];
-  expect(call.message.type).toContain("metadata/title/apply");
+  expect(element.client!.applyMetadataDraft).not.toHaveBeenCalled();
+  button("Save").click();
+  await flush();
+  const call = vi.mocked(element.client!.applyMetadataDraft).mock.calls[0][0];
+  expect(call.message.type).toContain("metadata/title/draft");
   expect(call.message.data).toMatchObject({
-    fields: [],
     images: { poster: "poster-0" },
   });
 });
@@ -294,11 +310,48 @@ it("resets the original cover through a snapshot-checked action", async () => {
   await open();
   button("Reset").click();
   await flush();
-  const call = vi.mocked(element.client!.applyTitleScrape).mock.calls[0][0];
-  expect(call.message.type).toContain("metadata/title/action");
+  expect(element.client!.applyMetadataDraft).not.toHaveBeenCalled();
+  button("Save").click();
+  await flush();
+  const call = vi.mocked(element.client!.applyMetadataDraft).mock.calls[0][0];
+  expect(call.message.type).toContain("metadata/title/draft");
   expect(call.message.data).toMatchObject({
-    action: "reset_cover",
+    resets: ["poster"],
     title_id: element.versionId,
     snapshot: options.snapshot,
   });
+});
+
+it("saves changes immediately when auto-save is enabled", async () => {
+  options.auto_save = true;
+  await open();
+  expect(button("Save")).toBeUndefined();
+  expect(root().querySelector(".inset-dialog > .manager-actions")).toBeNull();
+  button("Reset").click();
+  await flush();
+  expect(element.client!.applyMetadataDraft).toHaveBeenCalledOnce();
+});
+
+it("suggests removing the year when refresh finds no data", async () => {
+  vi.mocked(element.client!.titleScrapeRefresh).mockResolvedValue({
+    outcome: "staged",
+    plan_id: review.plan_id,
+    provider: "tmdb",
+    has_data: false,
+    matched: null,
+    values: {},
+    images: [],
+  });
+  await open();
+  [...root().querySelectorAll<HTMLButtonElement>(".source-row button")]
+    .at(-1)!
+    .click();
+  await flush();
+  const tmdb = root().querySelector('[data-provider="tmdb"]')!;
+  const store = root().querySelector('[data-provider="kaleidescape"]')!;
+  expect(tmdb.querySelector(".source-actions")!.textContent).toContain(
+    "Try again with no year",
+  );
+  expect(store.textContent).not.toContain("Try again with no year");
+  expect(element.client!.applyMetadataDraft).not.toHaveBeenCalled();
 });

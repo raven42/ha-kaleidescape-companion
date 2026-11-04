@@ -110,11 +110,14 @@ accounts is outside scope.
 
 An administrator's per-title Refresh searches the chosen public provider even
 when a match is cached. Unique or explicitly selected results are downloaded
-into that provider's cache; zero results record only a check time. Browser
-requests cannot submit provider metadata directly. Field-source choices and
-cover reset remain administrator-only, snapshot-checked Library writes. Provider
-match links use validated HTTPS movie routes and open without a referrer;
-arbitrary URLs from scraped metadata are not rendered.
+into that provider's cache; zero results record only a check time. With
+auto-save disabled, these updates and image edits are staged until a single
+snapshot-checked commit. Browser requests cannot submit provider metadata
+directly. Field-source choices and image resets remain administrator-only,
+snapshot-checked Library writes. Provider match links use validated HTTPS movie
+routes and open without a referrer; arbitrary URLs from scraped metadata are not
+rendered. When artwork sync is enabled, a metadata pass may request TMDB's fixed
+movie image-list route and one validated backdrop to fill an empty selection.
 
 ## External mutations and recovery
 

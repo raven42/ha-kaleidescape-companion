@@ -7,6 +7,7 @@ DEFAULTS = {
     **SOURCE_DEFAULTS,
     "metadata_store_enabled": False,
     "metadata_tmdb_enabled": False,
+    "metadata_auto_save": False,
     "metadata_requests_per_second": 2,
     "metadata_tmdb_credential": "",
 }
@@ -18,7 +19,11 @@ def validate(values, previous):
         for key, default in DEFAULTS.items()
     }
     configured(result)
-    for key in ("metadata_store_enabled", "metadata_tmdb_enabled"):
+    for key in (
+        "metadata_store_enabled",
+        "metadata_tmdb_enabled",
+        "metadata_auto_save",
+    ):
         if type(result[key]) is not bool:
             raise ValueError("invalid_metadata_options")
     rate = result["metadata_requests_per_second"]

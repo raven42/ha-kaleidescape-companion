@@ -392,7 +392,8 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
             )
             sync.repository = repository
             sync.providers.metadata = AsyncMock(return_value=self.data)
-            sync.providers.artwork = AsyncMock(return_value=IMAGE)
+            sync.providers.images = AsyncMock(return_value=[{"kind": "backdrop"}])
+            sync.providers.image = AsyncMock(return_value=IMAGE)
             session = SimpleNamespace(detach=Mock())
             with patch(
                 "custom_components.kaleidescape_companion.enrichment.sync.async_create_clientsession",
@@ -400,7 +401,8 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
             ):
                 await sync._run(True)
             self.assertIsNone(sync.error)
-            self.assertEqual(sync.providers.artwork.await_count, int(artwork))
+            self.assertEqual(sync.providers.images.await_count, int(artwork))
+            self.assertEqual(sync.providers.image.await_count, int(artwork))
             if artwork:
                 self.assertEqual(
                     repository.async_enrichment.await_args_list[-2].args[0], "artwork"

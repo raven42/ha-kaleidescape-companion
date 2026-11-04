@@ -333,6 +333,8 @@ export interface ScrapeOptions {
     artwork_key?: string | null;
     original_artwork_key?: string | null;
     backdrop_key?: string | null;
+    previous_backdrop_key?: string | null;
+    backdrop_reset_available?: boolean;
   };
   providers: {
     id: string;
@@ -355,6 +357,7 @@ export interface ScrapeOptions {
     override: boolean;
   }[];
   artwork_enabled: boolean;
+  auto_save?: boolean;
   history?: {
     provider: string;
     checked_at: string;
@@ -392,8 +395,18 @@ export interface ScrapeMatches {
     has_artwork: boolean;
   }[];
 }
+export interface ScrapeStaged {
+  outcome: "staged";
+  plan_id: string;
+  provider: string;
+  has_data: boolean;
+  matched: { title: string; year: number } | null;
+  values: Record<string, unknown>;
+  images: ScrapeReview["images"];
+}
 export type ScrapeRefresh =
   | { outcome: "downloaded" | "no_data" }
+  | ScrapeStaged
   | (ScrapeMatches & { outcome: "matches" });
 export interface MetadataStatus {
   tmdb_enabled?: boolean;
@@ -896,6 +909,7 @@ export class JournalClient {
     provider: string,
     query: string,
     year?: number,
+    stage = false,
   ): Promise<ScrapeRefresh> {
     return withRequestDeadline(
       this.transport.callWS({
@@ -906,6 +920,7 @@ export class JournalClient {
         provider,
         query,
         ...(year !== undefined ? { year } : {}),
+        stage,
       }),
       185000,
     );
@@ -916,6 +931,7 @@ export class JournalClient {
     provider: string,
     search_id: string,
     choice: string,
+    stage = false,
   ): Promise<ScrapeRefresh> {
     return withRequestDeadline(
       this.transport.callWS({
@@ -926,12 +942,24 @@ export class JournalClient {
         provider,
         search_id,
         choice,
+        stage,
       }),
       185000,
     );
   }
   prepareMetadataAction(scope: Scope, data: Record<string, unknown>) {
     return this.prepareCommand(scope, "metadata/title/action", { data });
+  }
+  prepareMetadataDraft(scope: Scope, data: Record<string, unknown>) {
+    return this.prepareCommand(scope, "metadata/title/draft", { data });
+  }
+  applyMetadataDraft(
+    pending: PreparedMutation,
+  ): Promise<{ title_id: string; updated_count: number }> {
+    return withRequestDeadline(
+      this.transport.callWS({ ...pending.message }),
+      185000,
+    );
   }
   prepareTitleScrape(
     scope: Scope,

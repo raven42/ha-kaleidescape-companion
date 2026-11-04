@@ -101,6 +101,15 @@ export class EnrichmentSettings extends LitElement {
             />Enable ${label}</label
           >`,
       )}
+      <label class="check"
+        ><input
+          name="metadata_auto_save"
+          type="checkbox"
+          .checked=${!!this.draft.metadata_auto_save}
+          ?disabled=${this.disabled}
+          @change=${(event: Event) => this.change("metadata_auto_save", (event.target as HTMLInputElement).checked)}
+        />Auto-save metadata manager changes</label
+      >
       <div class="grid settings-grid">
         <label
           >Requests per second · shared limit<input

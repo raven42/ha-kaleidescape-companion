@@ -1,13 +1,13 @@
-const me = globalThis, Pt = me.ShadowRoot && (me.ShadyCSS === void 0 || me.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, jt = /* @__PURE__ */ Symbol(), Yt = /* @__PURE__ */ new WeakMap();
+const me = globalThis, Dt = me.ShadowRoot && (me.ShadyCSS === void 0 || me.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, Pt = /* @__PURE__ */ Symbol(), Yt = /* @__PURE__ */ new WeakMap();
 let $i = class {
   constructor(e, t, i) {
-    if (this._$cssResult$ = !0, i !== jt) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
+    if (this._$cssResult$ = !0, i !== Pt) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
     this.cssText = e, this.t = t;
   }
   get styleSheet() {
     let e = this.o;
     const t = this.t;
-    if (Pt && e === void 0) {
+    if (Dt && e === void 0) {
       const i = t !== void 0 && t.length === 1;
       i && (e = Yt.get(t)), e === void 0 && ((this.o = e = new CSSStyleSheet()).replaceSync(this.cssText), i && Yt.set(t, e));
     }
@@ -17,20 +17,20 @@ let $i = class {
     return this.cssText;
   }
 };
-const Oi = (n) => new $i(typeof n == "string" ? n : n + "", void 0, jt), S = (n, ...e) => {
+const Oi = (n) => new $i(typeof n == "string" ? n : n + "", void 0, Pt), S = (n, ...e) => {
   const t = n.length === 1 ? n[0] : e.reduce((i, s, r) => i + ((o) => {
     if (o._$cssResult$ === !0) return o.cssText;
     if (typeof o == "number") return o;
     throw Error("Value passed to 'css' function must be a 'css' function result: " + o + ". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.");
   })(s) + n[r + 1], n[0]);
-  return new $i(t, n, jt);
+  return new $i(t, n, Pt);
 }, Ni = (n, e) => {
-  if (Pt) n.adoptedStyleSheets = e.map((t) => t instanceof CSSStyleSheet ? t : t.styleSheet);
+  if (Dt) n.adoptedStyleSheets = e.map((t) => t instanceof CSSStyleSheet ? t : t.styleSheet);
   else for (const t of e) {
     const i = document.createElement("style"), s = me.litNonce;
     s !== void 0 && i.setAttribute("nonce", s), i.textContent = t.cssText, n.appendChild(i);
   }
-}, Zt = Pt ? (n) => n : (n) => n instanceof CSSStyleSheet ? ((e) => {
+}, Zt = Dt ? (n) => n : (n) => n instanceof CSSStyleSheet ? ((e) => {
   let t = "";
   for (const i of e.cssRules) t += i.cssText;
   return Oi(t);
@@ -247,9 +247,9 @@ let J = class extends HTMLElement {
   }
 };
 J.elementStyles = [], J.shadowRootOptions = { mode: "open" }, J[ne("elementProperties")] = /* @__PURE__ */ new Map(), J[ne("finalized")] = /* @__PURE__ */ new Map(), Ki?.({ ReactiveElement: J }), (Ve.reactiveElementVersions ??= []).push("2.1.2");
-const Dt = globalThis, Xt = (n) => n, fe = Dt.trustedTypes, ei = fe ? fe.createPolicy("lit-html", { createHTML: (n) => n }) : void 0, ki = "$lit$", P = `lit$${Math.random().toFixed(9).slice(2)}$`, _i = "?" + P, Yi = `<${_i}>`, V = document, de = () => V.createComment(""), he = (n) => n === null || typeof n != "object" && typeof n != "function", Mt = Array.isArray, Zi = (n) => Mt(n) || typeof n?.[Symbol.iterator] == "function", Ke = `[ 	
-\f\r]`, ie = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, ti = /-->/g, ii = />/g, D = RegExp(`>|${Ke}(?:([^\\s"'>=/]+)(${Ke}*=${Ke}*(?:[^ 	
-\f\r"'\`<>=]|("|')|))|$)`, "g"), si = /'/g, ai = /"/g, Ci = /^(?:script|style|textarea|title)$/i, Si = (n) => (e, ...t) => ({ _$litType$: n, strings: e, values: t }), a = Si(1), _ = Si(2), z = /* @__PURE__ */ Symbol.for("lit-noChange"), l = /* @__PURE__ */ Symbol.for("lit-nothing"), ri = /* @__PURE__ */ new WeakMap(), F = V.createTreeWalker(V, 129);
+const jt = globalThis, Xt = (n) => n, fe = jt.trustedTypes, ei = fe ? fe.createPolicy("lit-html", { createHTML: (n) => n }) : void 0, ki = "$lit$", P = `lit$${Math.random().toFixed(9).slice(2)}$`, _i = "?" + P, Yi = `<${_i}>`, V = document, de = () => V.createComment(""), he = (n) => n === null || typeof n != "object" && typeof n != "function", Mt = Array.isArray, Zi = (n) => Mt(n) || typeof n?.[Symbol.iterator] == "function", Ke = `[ 	
+\f\r]`, ie = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, ti = /-->/g, ii = />/g, M = RegExp(`>|${Ke}(?:([^\\s"'>=/]+)(${Ke}*=${Ke}*(?:[^ 	
+\f\r"'\`<>=]|("|')|))|$)`, "g"), si = /'/g, ai = /"/g, Ci = /^(?:script|style|textarea|title)$/i, Si = (n) => (e, ...t) => ({ _$litType$: n, strings: e, values: t }), a = Si(1), _ = Si(2), L = /* @__PURE__ */ Symbol.for("lit-noChange"), l = /* @__PURE__ */ Symbol.for("lit-nothing"), ri = /* @__PURE__ */ new WeakMap(), F = V.createTreeWalker(V, 129);
 function qi(n, e) {
   if (!Mt(n) || !n.hasOwnProperty("raw")) throw Error("invalid template strings array");
   return ei !== void 0 ? ei.createHTML(e) : e;
@@ -260,8 +260,8 @@ const Gi = (n, e) => {
   for (let d = 0; d < t; d++) {
     const h = n[d];
     let c, m, p = -1, y = 0;
-    for (; y < h.length && (o.lastIndex = y, m = o.exec(h), m !== null); ) y = o.lastIndex, o === ie ? m[1] === "!--" ? o = ti : m[1] !== void 0 ? o = ii : m[2] !== void 0 ? (Ci.test(m[2]) && (s = RegExp("</" + m[2], "g")), o = D) : m[3] !== void 0 && (o = D) : o === D ? m[0] === ">" ? (o = s ?? ie, p = -1) : m[1] === void 0 ? p = -2 : (p = o.lastIndex - m[2].length, c = m[1], o = m[3] === void 0 ? D : m[3] === '"' ? ai : si) : o === ai || o === si ? o = D : o === ti || o === ii ? o = ie : (o = D, s = void 0);
-    const v = o === D && n[d + 1].startsWith("/>") ? " " : "";
+    for (; y < h.length && (o.lastIndex = y, m = o.exec(h), m !== null); ) y = o.lastIndex, o === ie ? m[1] === "!--" ? o = ti : m[1] !== void 0 ? o = ii : m[2] !== void 0 ? (Ci.test(m[2]) && (s = RegExp("</" + m[2], "g")), o = M) : m[3] !== void 0 && (o = M) : o === M ? m[0] === ">" ? (o = s ?? ie, p = -1) : m[1] === void 0 ? p = -2 : (p = o.lastIndex - m[2].length, c = m[1], o = m[3] === void 0 ? M : m[3] === '"' ? ai : si) : o === ai || o === si ? o = M : o === ti || o === ii ? o = ie : (o = M, s = void 0);
+    const v = o === M && n[d + 1].startsWith("/>") ? " " : "";
     r += o === ie ? h + Yi : p >= 0 ? (i.push(c), h.slice(0, p) + ki + h.slice(p) + P + v) : h + P + (p === -2 ? d : v);
   }
   return [qi(n, r + (n[t] || "<?>") + (e === 2 ? "</svg>" : e === 3 ? "</math>" : "")), i];
@@ -304,7 +304,7 @@ class ce {
   }
 }
 function X(n, e, t = n, i) {
-  if (e === z) return e;
+  if (e === L) return e;
   let s = i !== void 0 ? t._$Co?.[i] : t._$Cl;
   const r = he(e) ? void 0 : e._$litDirective$;
   return s?.constructor !== r && (s?._$AO?.(!1), r === void 0 ? s = void 0 : (s = new r(n), s._$AT(n, t, i)), i !== void 0 ? (t._$Co ??= [])[i] = s : t._$Cl = s), s !== void 0 && (e = X(n, s._$AS(n, e.values), s, i)), e;
@@ -356,7 +356,7 @@ class ee {
     return this._$AB;
   }
   _$AI(e, t = this) {
-    e = X(this, e, t), he(e) ? e === l || e == null || e === "" ? (this._$AH !== l && this._$AR(), this._$AH = l) : e !== this._$AH && e !== z && this._(e) : e._$litType$ !== void 0 ? this.$(e) : e.nodeType !== void 0 ? this.T(e) : Zi(e) ? this.k(e) : this._(e);
+    e = X(this, e, t), he(e) ? e === l || e == null || e === "" ? (this._$AH !== l && this._$AR(), this._$AH = l) : e !== this._$AH && e !== L && this._(e) : e._$litType$ !== void 0 ? this.$(e) : e.nodeType !== void 0 ? this.T(e) : Zi(e) ? this.k(e) : this._(e);
   }
   O(e) {
     return this._$AA.parentNode.insertBefore(e, this._$AB);
@@ -409,11 +409,11 @@ class He {
   _$AI(e, t = this, i, s) {
     const r = this.strings;
     let o = !1;
-    if (r === void 0) e = X(this, e, t, 0), o = !he(e) || e !== this._$AH && e !== z, o && (this._$AH = e);
+    if (r === void 0) e = X(this, e, t, 0), o = !he(e) || e !== this._$AH && e !== L, o && (this._$AH = e);
     else {
       const d = e;
       let h, c;
-      for (e = r[0], h = 0; h < r.length - 1; h++) c = X(this, d[i + h], t, h), c === z && (c = this._$AH[h]), o ||= !he(c) || c !== this._$AH[h], c === l ? e = l : e !== l && (e += (c ?? "") + r[h + 1]), this._$AH[h] = c;
+      for (e = r[0], h = 0; h < r.length - 1; h++) c = X(this, d[i + h], t, h), c === L && (c = this._$AH[h]), o ||= !he(c) || c !== this._$AH[h], c === l ? e = l : e !== l && (e += (c ?? "") + r[h + 1]), this._$AH[h] = c;
     }
     o && !s && this.j(e);
   }
@@ -442,7 +442,7 @@ class ts extends He {
     super(e, t, i, s, r), this.type = 5;
   }
   _$AI(e, t = this) {
-    if ((e = X(this, e, t, 0) ?? l) === z) return;
+    if ((e = X(this, e, t, 0) ?? l) === L) return;
     const i = this._$AH, s = e === l && i !== l || e.capture !== i.capture || e.once !== i.once || e.passive !== i.passive, r = e !== l && (i === l || s);
     s && this.element.removeEventListener(this.name, this, i), r && this.element.addEventListener(this.name, this, e), this._$AH = e;
   }
@@ -461,8 +461,8 @@ class is {
     X(this, e);
   }
 }
-const ss = { I: ee }, as = Dt.litHtmlPolyfillSupport;
-as?.(ce, ee), (Dt.litHtmlVersions ??= []).push("3.3.3");
+const ss = { I: ee }, as = jt.litHtmlPolyfillSupport;
+as?.(ce, ee), (jt.litHtmlVersions ??= []).push("3.3.3");
 const rs = (n, e, t) => {
   const i = t?.renderBefore ?? e;
   let s = i._$litPart$;
@@ -492,7 +492,7 @@ let x = class extends J {
     super.disconnectedCallback(), this._$Do?.setConnected(!1);
   }
   render() {
-    return z;
+    return L;
   }
 };
 x._$litElement$ = !0, x.finalized = !0, Ot.litElementHydrateSupport?.({ LitElement: x });
@@ -1259,7 +1259,7 @@ const q = S`
     }
   }
 `;
-function L(n) {
+function z(n) {
   const e = {
     add: _`<path d="M12 4v16M4 12h16"/>`,
     search: _`<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>`,
@@ -1366,7 +1366,7 @@ function It(n, e, t, i, s = "") {
     ), i();
   }}
     >
-      ${L(e)}<span class="icon-action-label">${n}</span></button
+      ${z(e)}<span class="icon-action-label">${n}</span></button
     ><span class="action-tooltip" id="action-tooltip" role="tooltip"
       >${n}</span
     ></span
@@ -1436,7 +1436,7 @@ const ye = class ye extends x {
           class=${this.value ? "active" : ""}
           @click=${this.search}
         >
-          ${L("search")}
+          ${z("search")}
         </button>
         <button
           type="button"
@@ -1445,9 +1445,9 @@ const ye = class ye extends x {
           ?disabled=${this.disabled}
           @click=${() => this.signal("journal-clear")}
         >
-          ${L("clear")}
+          ${z("clear")}
         </button>
-        ${this.allowAdd ? a`<button type="button" aria-label="Add viewing" title="Add viewing" ?disabled=${this.disabled} @click=${() => this.signal("journal-add")}>${L("add")}</button>` : ""}
+        ${this.allowAdd ? a`<button type="button" aria-label="Add viewing" title="Add viewing" ?disabled=${this.disabled} @click=${() => this.signal("journal-add")}>${z("add")}</button>` : ""}
         <button
           type="button"
           aria-label="Journal options"
@@ -1457,7 +1457,7 @@ const ye = class ye extends x {
           class=${this.filtered ? "active" : ""}
           @click=${() => this.signal("journal-open-options")}
         >
-          ${L("options")}
+          ${z("options")}
         </button>
       </div>
       <dialog
@@ -1642,7 +1642,7 @@ function w(n) {
     tmdb_ambiguous: "TMDB returned more than one matching movie. No data was imported."
   }[u(n)] ?? "The connection was interrupted. The result could not be confirmed.";
 }
-async function M(n, e = os) {
+async function D(n, e = os) {
   let t;
   try {
     return await Promise.race([
@@ -1663,13 +1663,13 @@ class Ft {
     this.transport = e;
   }
   call(e) {
-    return M(this.transport.callWS(e));
+    return D(this.transport.callWS(e));
   }
   controlInfo(e) {
     return this.call({ type: `${g}/control/info`, ...f(e) });
   }
   controlDiscover(e) {
-    return M(
+    return D(
       this.transport.callWS({
         type: `${g}/control/discover`,
         ...f(e)
@@ -1723,7 +1723,7 @@ class Ft {
     });
   }
   titleScrapePreview(e, t, i, s = "", r = "") {
-    return M(
+    return D(
       this.transport.callWS({
         type: `${g}/metadata/title/preview`,
         ...f(e),
@@ -1736,7 +1736,7 @@ class Ft {
     );
   }
   titleScrapeSearch(e, t, i, s, r) {
-    return M(
+    return D(
       this.transport.callWS({
         type: `${g}/metadata/title/search`,
         ...f(e),
@@ -1748,8 +1748,8 @@ class Ft {
       185e3
     );
   }
-  titleScrapeRefresh(e, t, i, s, r) {
-    return M(
+  titleScrapeRefresh(e, t, i, s, r, o = !1) {
+    return D(
       this.transport.callWS({
         type: `${g}/metadata/title/refresh`,
         ...f(e),
@@ -1757,13 +1757,14 @@ class Ft {
         title_id: t,
         provider: i,
         query: s,
-        ...r !== void 0 ? { year: r } : {}
+        ...r !== void 0 ? { year: r } : {},
+        stage: o
       }),
       185e3
     );
   }
-  titleScrapeRefreshChoice(e, t, i, s, r) {
-    return M(
+  titleScrapeRefreshChoice(e, t, i, s, r, o = !1) {
+    return D(
       this.transport.callWS({
         type: `${g}/metadata/title/refresh_choice`,
         ...f(e),
@@ -1771,13 +1772,23 @@ class Ft {
         title_id: t,
         provider: i,
         search_id: s,
-        choice: r
+        choice: r,
+        stage: o
       }),
       185e3
     );
   }
   prepareMetadataAction(e, t) {
     return this.prepareCommand(e, "metadata/title/action", { data: t });
+  }
+  prepareMetadataDraft(e, t) {
+    return this.prepareCommand(e, "metadata/title/draft", { data: t });
+  }
+  applyMetadataDraft(e) {
+    return D(
+      this.transport.callWS({ ...e.message }),
+      185e3
+    );
   }
   prepareTitleScrape(e, t) {
     return this.prepareCommand(e, "metadata/title/apply", { data: t });
@@ -1799,7 +1810,7 @@ class Ft {
     });
   }
   applyTitleScrape(e) {
-    return M(
+    return D(
       this.transport.callWS({ ...e.message }),
       8e4
     );
@@ -2391,7 +2402,7 @@ function Ri(n, e) {
       </div>
     </dl>`;
 }
-const Li = S`
+const zi = S`
   .calendar-totals-compact {
     display: none;
   }
@@ -2405,8 +2416,8 @@ const Li = S`
       white-space: nowrap;
     }
   }
-`, zi = S`
-  ${Li}
+`, Li = S`
+  ${zi}
   .journal [hidden] {
     display: none;
   }
@@ -2978,10 +2989,13 @@ const $e = class $e extends x {
     super(...arguments), this.versionId = "", this.blocked = !1, this.matchMode = "refresh", this.matchProvider = "", this.query = "", this.year = "", this.sourceExpected = {}, this.artworkExpected = {
       poster: !0,
       backdrop: !0
-    }, this.fieldSources = {}, this.initialSources = {}, this.mappingTouched = !1, this.imageChoice = "", this.imagePage = 0, this.busy = !1, this.error = "", this.generation = 0, this.view = "sources", this.queue = new T();
+    }, this.fieldSources = {}, this.initialSources = {}, this.mappingTouched = !1, this.imageChoice = "", this.imagePage = 0, this.providerDrafts = {}, this.imageDraft = {}, this.resetDraft = /* @__PURE__ */ new Set(), this.busy = !1, this.error = "", this.hints = /* @__PURE__ */ new Set(), this.generation = 0, this.view = "sources", this.queue = new T();
   }
   get writePending() {
-    return !!(this.pending || this.imagePending || this.resetPending);
+    return !!this.pending;
+  }
+  get hasDraft() {
+    return !!Object.keys(this.providerDrafts).length || !!Object.keys(this.imageDraft).length || !!this.resetDraft.size || this.mappingTouched || this.changedExpectations();
   }
   willUpdate(e) {
     ["client", "scope", "versionId"].some((t) => e.has(t)) && this.reset();
@@ -3005,17 +3019,25 @@ const $e = class $e extends x {
     );
   }
   reset() {
-    this.generation++, this.mainDialog()?.close(), this.choiceDialog()?.close(), this.options = this.review = void 0, this.candidatePage = void 0, this.query = this.year = this.matchProvider = this.imageChoice = "", this.sourceExpected = {}, this.artworkExpected = { poster: !0, backdrop: !0 }, this.fieldSources = {}, this.initialSources = {}, this.mappingTouched = !1, this.imageKind = void 0, this.imagePage = 0, this.pending = void 0, this.imagePending = void 0, this.resetPending = void 0, this.busy = !1, this.error = "", this.view = "sources", this.queue.cache.dispose(), this.queue = new T(), this.lock();
+    this.generation++, this.mainDialog()?.close(), this.choiceDialog()?.close(), this.options = this.review = void 0, this.candidatePage = void 0, this.query = this.year = this.matchProvider = this.imageChoice = "", this.sourceExpected = {}, this.artworkExpected = { poster: !0, backdrop: !0 }, this.fieldSources = {}, this.initialSources = {}, this.mappingTouched = !1, this.providerDrafts = {}, this.imageDraft = {}, this.resetDraft.clear(), this.imageKind = void 0, this.imagePage = 0, this.pending = void 0, this.busy = !1, this.error = "", this.hints.clear(), this.view = "sources", this.queue.cache.dispose(), this.queue = new T(), this.lock();
   }
   close() {
-    this.pending || this.imagePending || this.resetPending || this.busy || (this.candidatePage && this.client && this.scope && this.client.cancelTitleScrape(this.scope, this.candidatePage.search_id).catch(() => {
-    }), this.review && this.client && this.scope && this.client.cancelTitleScrape(this.scope, this.review.plan_id).catch(() => {
-    }), this.reset(), this.requestUpdate());
+    if (!(this.pending || this.busy)) {
+      if (this.candidatePage && this.client && this.scope && this.client.cancelTitleScrape(this.scope, this.candidatePage.search_id).catch(() => {
+      }), this.review && this.client && this.scope && this.client.cancelTitleScrape(this.scope, this.review.plan_id).catch(() => {
+      }), this.client && this.scope)
+        for (const e of Object.values(this.providerDrafts))
+          this.client.cancelTitleScrape(this.scope, e.plan_id).catch(() => {
+          });
+      this.reset(), this.requestUpdate();
+    }
   }
-  closeChoice(e = !1) {
-    !e && (this.imagePending || this.busy) || (this.candidatePage && this.client && this.scope && this.client.cancelTitleScrape(this.scope, this.candidatePage.search_id).catch(() => {
-    }), this.review && this.client && this.scope && this.client.cancelTitleScrape(this.scope, this.review.plan_id).catch(() => {
-    }), this.choiceDialog()?.close(), this.candidatePage = void 0, this.imageKind = void 0, this.imageChoice = "", this.requestUpdate());
+  closeChoice(e = !1, t = !1) {
+    !e && this.busy || (this.candidatePage && this.client && this.scope && this.client.cancelTitleScrape(this.scope, this.candidatePage.search_id).catch(() => {
+    }), this.review && !t && !Object.keys(this.imageDraft).length && !Object.values(this.providerDrafts).some(
+      (i) => i.plan_id === this.review?.plan_id
+    ) && this.client && this.scope && this.client.cancelTitleScrape(this.scope, this.review.plan_id).catch(() => {
+    }), !t && !Object.keys(this.imageDraft).length && (this.review = void 0), this.choiceDialog()?.close(), this.candidatePage = void 0, this.imageKind = void 0, this.imageChoice = "", this.requestUpdate());
   }
   async loadOptions(e = !1) {
     if (!this.client || !this.scope) return;
@@ -3068,9 +3090,9 @@ const $e = class $e extends x {
     );
   }
   async refresh(e) {
-    if (!this.client || !this.scope || !this.options || !this.sourceExpected[e] || this.changedExpectations() || this.mappingTouched || this.busy || this.writePending || !this.query.trim() || !this.validYear())
+    if (!this.client || !this.scope || !this.options || !this.sourceExpected[e] || this.busy || this.writePending || !this.query.trim() || !this.validYear())
       return;
-    this.busy = !0, this.error = "", this.requestUpdate();
+    this.busy = !0, this.error = "", this.hints.delete(e), this.requestUpdate();
     const t = this.generation;
     try {
       const i = await this.client.titleScrapeRefresh(
@@ -3078,14 +3100,15 @@ const $e = class $e extends x {
         this.versionId,
         e,
         this.query,
-        this.year.trim() ? Number(this.year) : void 0
+        this.year.trim() ? Number(this.year) : void 0,
+        !0
       );
       if (t !== this.generation) return;
-      i.outcome === "matches" ? (this.candidatePage = i, this.matchMode = "refresh", this.matchProvider = e, this.requestUpdate(), await this.updateComplete, this.choiceDialog()?.showModal()) : (await this.loadOptions(), this.emitChange());
+      i.outcome === "matches" ? (this.candidatePage = i, this.matchMode = "refresh", this.matchProvider = e, this.requestUpdate(), await this.updateComplete, this.choiceDialog()?.showModal()) : i.outcome === "staged" && (this.providerDrafts = { ...this.providerDrafts, [e]: i }, i.has_data || this.hints.add(e));
     } catch (i) {
       t === this.generation && this.report(i);
     } finally {
-      t === this.generation && (this.busy = !1, this.requestUpdate());
+      t === this.generation && (this.busy = !1, this.requestUpdate(), this.options?.auto_save && this.hasDraft && !this.candidatePage && this.save());
     }
   }
   async useMatch(e) {
@@ -3094,14 +3117,20 @@ const $e = class $e extends x {
     this.busy = !0, this.error = "", this.requestUpdate();
     try {
       if (this.matchMode === "refresh") {
-        if (await this.client.titleScrapeRefreshChoice(
+        const i = await this.client.titleScrapeRefreshChoice(
           this.scope,
           this.versionId,
           this.matchProvider,
           this.candidatePage.search_id,
-          e
-        ), t !== this.generation) return;
-        this.closeChoice(!0), await this.loadOptions(), this.emitChange();
+          e,
+          !0
+        );
+        if (t !== this.generation) return;
+        if (i.outcome !== "staged") throw new b("refresh_required");
+        this.providerDrafts = {
+          ...this.providerDrafts,
+          [this.matchProvider]: i
+        }, i.has_data || this.hints.add(this.matchProvider), this.closeChoice(!0);
       } else {
         const i = await this.client.titleScrapePreview(
           this.scope,
@@ -3117,22 +3146,28 @@ const $e = class $e extends x {
     } catch (i) {
       t === this.generation && this.report(i);
     } finally {
-      t === this.generation && (this.busy = !1, this.requestUpdate());
+      t === this.generation && (this.busy = !1, this.requestUpdate(), this.options?.auto_save && this.hasDraft && !this.candidatePage && !this.imageKind && this.save());
     }
   }
   async editImage(e) {
-    if (!this.client || !this.scope || this.busy || this.writePending || this.mappingTouched || this.changedExpectations())
-      return;
+    if (!this.client || !this.scope || this.busy || this.writePending) return;
     this.busy = !0, this.error = "", this.imageKind = e, this.requestUpdate();
     const t = this.generation;
     try {
-      const i = await this.client.titleScrapePreview(
+      const i = this.providerDrafts.tmdb, s = this.review ?? (i?.has_data ? {
+        plan_id: i.plan_id,
+        title: this.options?.title ?? "",
+        matched: i.matched ?? void 0,
+        fields: {},
+        images: i.images,
+        artwork_enabled: !!this.options?.artwork_enabled
+      } : await this.client.titleScrapePreview(
         this.scope,
         this.versionId,
         "tmdb"
-      );
+      ));
       if (t !== this.generation) return;
-      this.imageChoice = "", this.imagePage = 0, "search_id" in i ? (this.candidatePage = i, this.matchMode = "image", this.matchProvider = "tmdb") : this.review = i, this.requestUpdate(), await this.updateComplete, this.choiceDialog()?.showModal();
+      this.imageChoice = "", this.imagePage = 0, "search_id" in s ? (this.candidatePage = s, this.matchMode = "image", this.matchProvider = "tmdb") : this.review = s, this.requestUpdate(), await this.updateComplete, this.choiceDialog()?.showModal();
     } catch (i) {
       t === this.generation && (this.imageKind = void 0, this.report(i));
     } finally {
@@ -3140,80 +3175,49 @@ const $e = class $e extends x {
     }
   }
   async useImage() {
-    if (!this.client || !this.scope || !this.review || !this.imageKind || !this.imageChoice || this.busy)
-      return;
-    this.busy = !0, this.error = "", this.requestUpdate();
-    const e = this.generation;
-    try {
-      if (this.imagePending ??= this.client.prepareTitleScrape(this.scope, {
-        plan_id: this.review.plan_id,
-        fields: [],
-        images: { [this.imageKind]: this.imageChoice },
-        save_match: !0
-      }), this.lock(), await this.client.applyTitleScrape(this.imagePending), e !== this.generation) return;
-      this.imagePending = void 0, this.lock(), this.closeChoice(!0), this.review = void 0, await this.loadOptions(), this.emitChange();
-    } catch (t) {
-      e === this.generation && (this.report(t), ["invalid_request", "refresh_required", "not_found"].includes(
-        u(t)
-      ) && (this.imagePending = void 0, this.lock()));
-    } finally {
-      e === this.generation && (this.busy = !1, this.requestUpdate());
-    }
+    !this.review || !this.imageKind || !this.imageChoice || this.busy || (this.imageDraft = {
+      ...this.imageDraft,
+      [this.imageKind]: this.imageChoice
+    }, this.resetDraft.delete(this.imageKind), this.closeChoice(!0, !0), this.options?.auto_save && await this.save());
   }
-  async resetCover() {
-    if (!this.client || !this.scope || !this.options?.snapshot || this.busy || this.pending || this.imagePending || this.mappingTouched || this.changedExpectations())
-      return;
-    this.busy = !0, this.error = "";
-    const e = this.generation;
-    try {
-      if (this.resetPending ??= this.client.prepareMetadataAction(this.scope, {
-        action: "reset_cover",
-        title_id: this.versionId,
-        snapshot: this.options.snapshot
-      }), this.lock(), await this.client.applyTitleScrape(this.resetPending), e !== this.generation) return;
-      this.resetPending = void 0, this.lock(), await this.loadOptions(), this.emitChange();
-    } catch (t) {
-      e === this.generation && (this.report(t), ["invalid_request", "refresh_required", "not_found"].includes(
-        u(t)
-      ) && (this.resetPending = void 0, this.lock()));
-    } finally {
-      e === this.generation && (this.busy = !1, this.requestUpdate());
-    }
+  async resetArtwork(e) {
+    this.busy || this.writePending || (e === "backdrop" && this.imageDraft.backdrop ? (delete this.imageDraft.backdrop, this.resetDraft.delete(e)) : (delete this.imageDraft[e], this.resetDraft.add(e)), this.requestUpdate(), this.options?.auto_save && this.hasDraft && await this.save());
   }
   async save() {
-    if (!this.client || !this.scope || !this.options?.snapshot || this.busy || this.resetPending || this.imagePending || !this.changedExpectations() && !this.mappingTouched && !this.pending)
+    if (!this.client || !this.scope || !this.options?.snapshot || this.busy || !this.hasDraft && !this.pending)
       return;
     this.busy = !0, this.error = "", this.requestUpdate();
     const e = this.generation;
     try {
-      if (this.changedExpectations()) {
-        if (this.pending ??= this.client.prepareScrapeExpectations(this.scope, {
-          title_id: this.versionId,
-          snapshot: this.options.snapshot,
-          providers: this.sourceExpected,
-          artwork: this.artworkExpected
-        }), this.lock(), await this.client.applyTitleScrape(this.pending), e !== this.generation) return;
-        this.pending = void 0, this.lock(), await this.loadOptions();
-      }
-      if (this.mappingTouched) {
-        const t = Object.fromEntries(
-          (this.options.field_mapping ?? []).filter(
-            (i) => i.override || this.fieldSources[i.field] !== this.initialSources[i.field]
-          ).map((i) => [i.field, this.fieldSources[i.field]])
-        );
-        if (this.pending ??= this.client.prepareMetadataAction(this.scope, {
-          action: "mapping",
-          title_id: this.versionId,
-          snapshot: this.options.snapshot,
-          sources: t
-        }), this.lock(), await this.client.applyTitleScrape(this.pending), e !== this.generation) return;
-        this.pending = void 0, this.lock();
-      }
-      this.emitChange(), this.reset(), this.requestUpdate();
+      const t = this.mappingTouched ? Object.fromEntries(
+        (this.options.field_mapping ?? []).filter(
+          (i) => i.override || this.fieldSources[i.field] !== this.initialSources[i.field]
+        ).map((i) => [i.field, this.fieldSources[i.field]])
+      ) : null;
+      if (this.pending ??= this.client.prepareMetadataDraft(this.scope, {
+        title_id: this.versionId,
+        snapshot: this.options.snapshot,
+        providers: Object.fromEntries(
+          Object.entries(this.providerDrafts).map(([i, s]) => [
+            i,
+            s.plan_id
+          ])
+        ),
+        sources: t,
+        expectations: this.changedExpectations() ? { providers: this.sourceExpected, artwork: this.artworkExpected } : null,
+        image_plan: Object.keys(this.imageDraft).length ? this.review?.plan_id ?? "" : "",
+        images: this.imageDraft,
+        resets: [...this.resetDraft]
+      }), this.lock(), await this.client.applyMetadataDraft(this.pending), e !== this.generation) return;
+      this.pending = void 0, this.lock(), this.emitChange(), this.options.auto_save ? (this.providerDrafts = {}, this.imageDraft = {}, this.resetDraft.clear(), this.review = void 0, await this.loadOptions(!0)) : this.reset();
     } catch (t) {
-      e === this.generation && (this.report(t), ["invalid_request", "refresh_required", "metadata_disabled"].includes(
-        u(t)
-      ) && (this.pending = void 0, this.lock()));
+      e === this.generation && (this.report(t), [
+        "invalid_request",
+        "refresh_required",
+        "metadata_disabled",
+        "not_found",
+        "library_artwork"
+      ].includes(u(t)) && (this.pending = void 0, this.lock()));
     } finally {
       e === this.generation && (this.busy = !1, this.requestUpdate());
     }
@@ -3232,15 +3236,15 @@ const $e = class $e extends x {
         .checked=${t}
         ?disabled=${this.busy || this.writePending || !this.options?.snapshot}
         @change=${(s) => {
-      i(s.target.checked), this.requestUpdate();
+      i(s.target.checked), this.requestUpdate(), this.options?.auto_save && this.save();
     }} /><span aria-hidden="true"></span
     ></label>`;
   }
   currentMovie() {
     const e = this.options?.current;
     if (!e) return l;
-    const t = this.options?.artwork_present?.poster ?? !!e.artwork_key, i = this.options?.artwork_present?.backdrop ?? !!e.backdrop_key, s = this.options?.providers.every(
-      (o) => !this.sourceExpected[o.id] || o.has_data
+    const t = !!this.imageDraft.poster || (this.resetDraft.has("poster") ? !!e.original_artwork_key : this.options?.artwork_present?.poster ?? !!e.artwork_key), i = !!this.imageDraft.backdrop || (this.resetDraft.has("backdrop") ? !!e.previous_backdrop_key : this.options?.artwork_present?.backdrop ?? !!e.backdrop_key), s = this.options?.providers.every(
+      (o) => !this.sourceExpected[o.id] || o.has_data || !!this.providerDrafts[o.id]?.has_data
     ) ?? !0, r = this.options?.providers.some(
       (o) => o.id === "tmdb" && o.available
     );
@@ -3252,32 +3256,38 @@ const $e = class $e extends x {
       <div class="current-layout">
         <div class="current-identity">
           <div class="current-poster">
-            <kaleidescape-library-cover
-              .client=${this.client}
-              .scope=${this.scope}
-              .queue=${this.queue}
-              .artworkKey=${e.artwork_key}
-              .title=${e.title}
-            ></kaleidescape-library-cover>
+            ${this.imageDraft.poster && this.review ? a`<kaleidescape-scrape-image
+                    .client=${this.client}
+                    .scope=${this.scope}
+                    .queue=${this.queue}
+                    .plan=${this.review.plan_id}
+                    .choice=${this.imageDraft.poster}
+                  ></kaleidescape-scrape-image>` : a`<kaleidescape-library-cover
+                    .client=${this.client}
+                    .scope=${this.scope}
+                    .queue=${this.queue}
+                    .artworkKey=${this.resetDraft.has("poster") ? e.original_artwork_key : e.artwork_key}
+                    .title=${e.title}
+                  ></kaleidescape-library-cover>`}
             <div class="image-links">
-              ${r && this.options?.artwork_enabled ? a`<button class="text-link" ?disabled=${this.busy || this.writePending || this.mappingTouched || this.changedExpectations()} @click=${() => {
+              ${r && this.options?.artwork_enabled ? a`<button class="text-link" ?disabled=${this.busy || this.writePending} @click=${() => {
       this.editImage("poster");
     }}>Edit</button>` : l}
-              ${e.original_artwork_key ? a`<button class="text-link" ?disabled=${this.busy || !!this.pending || !!this.imagePending || this.mappingTouched || this.changedExpectations()} @click=${() => {
-      this.resetCover();
-    }}>${this.resetPending ? "Retry reset" : "Reset"}</button>` : l}
+              ${e.original_artwork_key ? a`<button class="text-link" ?disabled=${this.busy || this.writePending} @click=${() => {
+      this.resetArtwork("poster");
+    }}>Reset</button>` : l}
             </div>
           </div>
           <div>
             <h2 class="movie-title">${e.title}</h2>
-            <p>
+            <p class="movie-details">
               ${e.year ?? "Year unavailable"} ·
               ${e.duration_seconds ? `${Math.round(e.duration_seconds / 60)} min` : "Runtime unavailable"}
             </p>
             <dl class="current-meta">
               <dt>Director</dt>
               <dd>${e.directors.join(", ") || "Unavailable"}</dd>
-              <dt>Top cast</dt>
+              <dt>Cast</dt>
               <dd>${e.actors.join(", ") || "Unavailable"}</dd>
               <dt>Metadata updated</dt>
               <dd>
@@ -3287,17 +3297,25 @@ const $e = class $e extends x {
           </div>
         </div>
         <div class="current-backdrop">
-          <kaleidescape-library-cover
-            .client=${this.client}
-            .scope=${this.scope}
-            .queue=${this.queue}
-            .artworkKey=${e.backdrop_key}
-            .title=${`${e.title} backdrop`}
-            .fit=${"contain"}
-          ></kaleidescape-library-cover>
-          ${r && this.options?.artwork_enabled ? a`<div class="image-links"><button class="text-link" ?disabled=${this.busy || this.writePending || this.mappingTouched || this.changedExpectations()} @click=${() => {
+          ${this.imageDraft.backdrop && this.review ? a`<kaleidescape-scrape-image
+                  .client=${this.client}
+                  .scope=${this.scope}
+                  .queue=${this.queue}
+                  .plan=${this.review.plan_id}
+                  .choice=${this.imageDraft.backdrop}
+                ></kaleidescape-scrape-image>` : a`<kaleidescape-library-cover
+                  .client=${this.client}
+                  .scope=${this.scope}
+                  .queue=${this.queue}
+                  .artworkKey=${this.resetDraft.has("backdrop") ? e.previous_backdrop_key : e.backdrop_key}
+                  .title=${`${e.title} backdrop`}
+                  .fit=${"contain"}
+                ></kaleidescape-library-cover>`}
+          ${r && this.options?.artwork_enabled ? a`<div class="image-links"><button class="text-link" ?disabled=${this.busy || this.writePending} @click=${() => {
       this.editImage("backdrop");
-    }}>Edit</button></div>` : l}
+    }}>Edit</button>${e.backdrop_key || e.backdrop_reset_available || this.imageDraft.backdrop ? a`<button class="text-link" ?disabled=${this.busy || this.writePending} @click=${() => {
+      this.resetArtwork("backdrop");
+    }}>Reset</button>` : l}</div>` : l}
         </div>
         <div class="artwork-status">
           <h3>Scraping status</h3>
@@ -3316,7 +3334,7 @@ const $e = class $e extends x {
               .checked=${!this.artworkExpected.poster}
               ?disabled=${this.busy || this.writePending || !this.options?.snapshot}
               @change=${(o) => {
-      this.artworkExpected.poster = !o.target.checked, this.requestUpdate();
+      this.artworkExpected.poster = !o.target.checked, this.requestUpdate(), this.options?.auto_save && this.save();
     }}
             />
             Cover art unavailable
@@ -3328,7 +3346,7 @@ const $e = class $e extends x {
               .checked=${!this.artworkExpected.backdrop}
               ?disabled=${this.busy || this.writePending || !this.options?.snapshot}
               @change=${(o) => {
-      this.artworkExpected.backdrop = !o.target.checked, this.requestUpdate();
+      this.artworkExpected.backdrop = !o.target.checked, this.requestUpdate(), this.options?.auto_save && this.save();
     }}
             />
             Backdrop art unavailable
@@ -3342,8 +3360,8 @@ const $e = class $e extends x {
       <h3>Scraper Sources</h3>
       <p class="muted">
         Refresh searches this source using the title and year above. A unique
-        match is downloaded automatically. Save changed switches or field
-        choices before refreshing.
+        match is downloaded automatically.
+        ${this.options.auto_save ? "Changes are saved immediately." : "Changes remain in draft until you select Save."}
       </p>
       <div class="source-list">
         ${this.options.providers.map(
@@ -3363,19 +3381,22 @@ const $e = class $e extends x {
                 ${oi(e.match_url) ? a`<a href=${oi(e.match_url)} target="_blank" rel="noopener noreferrer" aria-label=${`View ${e.label} match`}>View match</a>` : l}
               </div>
               <span class="source-detail">
-                ${e.has_data ? e.fetched_at ? `Downloaded - Updated ${new Date(e.fetched_at).toLocaleDateString()}` : "Downloaded - Update date unavailable" : e.checked_at ? `No data available - Last Checked ${new Date(e.checked_at).toLocaleDateString()}` : "Not yet scanned"}
+                ${this.providerDrafts[e.id] ? this.providerDrafts[e.id].has_data ? "Downloaded - Ready to save" : "No data available - Ready to save" : e.has_data ? e.fetched_at ? `Downloaded - Updated ${new Date(e.fetched_at).toLocaleDateString()}` : "Downloaded - Update date unavailable" : e.checked_at ? `No data available - Last Checked ${new Date(e.checked_at).toLocaleDateString()}` : "Not yet scanned"}
                 <br /><small
-                  >${e.has_data ? `${e.fields ?? 0} fields saved · ` : ""}${this.sourceExpected[e.id] ? e.available ? "Included" : "Needs configuration" : "Excluded from completeness"}</small
+                  >${this.providerDrafts[e.id]?.has_data ? `${Object.keys(this.providerDrafts[e.id].values).length} fields ready · ` : e.has_data ? `${e.fields ?? 0} fields saved · ` : ""}${this.sourceExpected[e.id] ? e.available ? "Included" : "Needs configuration" : "Excluded from completeness"}</small
                 >
               </span>
-              <button
-                ?disabled=${!e.available || !this.sourceExpected[e.id] || this.busy || this.writePending || this.mappingTouched || this.changedExpectations() || !this.query.trim() || !this.validYear()}
-                @click=${() => {
+              <div class="source-actions">
+                ${this.hints.has(e.id) ? a`<span class="source-hint" role="status">⚠ Try again with no year</span>` : l}
+                <button
+                  ?disabled=${!e.available || !this.sourceExpected[e.id] || this.busy || this.writePending || !this.query.trim() || !this.validYear()}
+                  @click=${() => {
         this.refresh(e.id);
       }}
-              >
-                Refresh
-              </button>
+                >
+                  Refresh
+                </button>
+              </div>
             </div>`
     )}
       </div>
@@ -3426,7 +3447,7 @@ const $e = class $e extends x {
         "original",
         ...this.options.providers.map((t) => t.id)
       ].map((t) => {
-        const i = e.values[t], s = i != null && i !== "" && (!Array.isArray(i) || i.length > 0);
+        const i = this.providerDrafts[t]?.has_data ? this.providerDrafts[t].values[e.field] : e.values[t], s = i != null && i !== "" && (!Array.isArray(i) || i.length > 0);
         return a`<td>
                       <label
                         ><input
@@ -3434,12 +3455,12 @@ const $e = class $e extends x {
                           name=${`field-${e.field}`}
                           aria-label=${`Use ${t === "original" ? "Raw Library" : this.options.providers.find((r) => r.id === t)?.label} for ${e.label}`}
                           .checked=${this.fieldSources[e.field] === t}
-                          ?disabled=${this.busy || this.writePending || !s || !(t in e.values)}
+                          ?disabled=${this.busy || this.writePending || !s}
                           @change=${() => {
           this.fieldSources = {
             ...this.fieldSources,
             [e.field]: t
-          }, this.mappingTouched = !0, this.requestUpdate();
+          }, this.mappingTouched = !0, this.requestUpdate(), this.options?.auto_save && this.save();
         }}
                         />
                         <span class="mapping-value"
@@ -3560,7 +3581,7 @@ const $e = class $e extends x {
         <h2 id="choice-title">
           Choose ${this.imageKind === "poster" ? "cover art" : "backdrop art"}
         </h2>
-        ${k(() => this.closeChoice(), this.busy || !!this.imagePending)}
+        ${k(() => this.closeChoice(), this.busy)}
       </div>
       <p class="muted">
         Images from TMDB for
@@ -3581,7 +3602,7 @@ const $e = class $e extends x {
                 type="radio"
                 name="artwork-choice"
                 .checked=${this.imageChoice === i.id}
-                ?disabled=${!!this.imagePending}
+                ?disabled=${this.busy}
                 @change=${() => {
         this.imageChoice = i.id, this.requestUpdate();
       }}
@@ -3611,16 +3632,6 @@ const $e = class $e extends x {
               </button>
             </div>` : l}
       <div class="dialog-footer manager-actions">
-        ${this.imagePending ? a`<button
-                ?disabled=${this.busy}
-                @click=${() => {
-      window.confirm(
-        "Inspect the Library before discarding an unconfirmed image save. Discard retry?"
-      ) && (this.imagePending = void 0, this.lock(), this.requestUpdate());
-    }}
-              >
-                Discard retry
-              </button>` : l}
         <button
           class="primary"
           ?disabled=${!this.imageChoice || this.busy}
@@ -3628,7 +3639,7 @@ const $e = class $e extends x {
       this.useImage();
     }}
         >
-          ${this.imagePending ? "Retry exact image save" : "Use image"}
+          Use image
         </button>
       </div>
     </div>`;
@@ -3676,26 +3687,26 @@ const $e = class $e extends x {
     )}
               </div>` : l}
         ${this.view === "sources" ? this.sourcesPanel() : this.view === "mapping" ? this.mappingPanel() : this.historyPanel()}
-        <div class="dialog-footer manager-actions">
-          ${this.pending || this.resetPending ? a`<button
-                  @click=${() => {
+        ${this.options && (!this.options.auto_save || this.pending) ? a`<div class="dialog-footer manager-actions">
+                ${this.pending ? a`<button
+                        @click=${() => {
       window.confirm(
         "Inspect the Library before discarding an unconfirmed save. Discard retry?"
-      ) && (this.pending = void 0, this.resetPending = void 0, this.lock(), this.requestUpdate());
+      ) && (this.pending = void 0, this.lock(), this.requestUpdate());
     }}
-                >
-                  Discard retry
-                </button>` : l}
-          <button
-            class="primary"
-            ?disabled=${this.busy || !!this.resetPending || !!this.imagePending || !this.pending && !this.changedExpectations() && !this.mappingTouched}
-            @click=${() => {
+                      >
+                        Discard retry
+                      </button>` : l}
+                ${!this.options?.auto_save || this.pending ? a`<button
+                        class="primary"
+                        ?disabled=${this.busy || !this.pending && !this.hasDraft}
+                        @click=${() => {
       this.save();
     }}
-          >
-            ${this.pending ? "Retry exact save" : "Save"}
-          </button>
-        </div>
+                      >
+                        ${this.pending ? "Retry exact save" : "Save"}
+                      </button>` : l}
+              </div>` : l}
       </dialog>
       <dialog
         data-admin-dialog
@@ -3729,7 +3740,7 @@ $e.properties = {
       dialog.inset-dialog {
         width: min(1180px, calc(100% - 24px));
         max-height: min(
-          880px,
+          912px,
           calc(var(--companion-viewport-height, 100dvh) - 32px)
         );
         overflow-y: auto;
@@ -3789,6 +3800,12 @@ $e.properties = {
         aspect-ratio: 2/3;
         border-radius: 8px;
       }
+      .current-identity kaleidescape-scrape-image {
+        width: 84px;
+        height: 126px;
+        aspect-ratio: 2/3;
+        border-radius: 8px;
+      }
       .current-backdrop {
         position: relative;
         padding-inline: 14px;
@@ -3816,14 +3833,24 @@ $e.properties = {
         aspect-ratio: 16/9;
         border-radius: 8px;
       }
+      .current-backdrop kaleidescape-scrape-image {
+        width: 100%;
+        max-width: 224px;
+        height: 126px;
+        aspect-ratio: 16/9;
+        border-radius: 8px;
+      }
       .movie-title {
         font-size: 20px;
         line-height: 1.2;
-        margin: 0 0 6px;
+        margin: 0 0 4px;
         overflow-wrap: anywhere;
       }
+      .movie-details {
+        margin: 0 0 4px;
+      }
       .current-meta {
-        margin: 6px 0 0;
+        margin: 4px 0 0;
         display: grid;
         grid-template-columns: auto 1fr;
         gap: 4px 10px;
@@ -3949,6 +3976,15 @@ $e.properties = {
       }
       .source-row button {
         min-height: 36px;
+      }
+      .source-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .source-hint {
+        color: var(--warning-color, #e6a700);
+        font-size: 12px;
       }
       .match-search {
         display: flex;
@@ -4166,7 +4202,7 @@ $e.properties = {
         .source-row {
           grid-template-columns: 38px minmax(0, 1fr);
         }
-        .source-row button {
+        .source-actions {
           grid-column: 2;
           justify-self: start;
         }
@@ -4269,7 +4305,7 @@ const { I: ws } = ss, di = (n) => n, $s = (n) => n.strings === void 0, hi = () =
     }
   }
   return t;
-}, O = (n, e, t = n) => (n._$AI(e, t), n), xs = {}, Pi = (n, e = xs) => n._$AH = e, ks = (n) => n._$AH, Ze = (n) => {
+}, O = (n, e, t = n) => (n._$AI(e, t), n), xs = {}, Di = (n, e = xs) => n._$AH = e, ks = (n) => n._$AH, Ze = (n) => {
   n._$AR(), n._$AA.remove();
 };
 const ci = Ti(class extends Ai {
@@ -4281,14 +4317,14 @@ const ci = Ti(class extends Ai {
     return n;
   }
   update(n, [e]) {
-    if (e === z || e === l) return e;
+    if (e === L || e === l) return e;
     const t = n.element, i = n.name;
     if (n.type === N.PROPERTY) {
-      if (e === t[i]) return z;
+      if (e === t[i]) return L;
     } else if (n.type === N.BOOLEAN_ATTRIBUTE) {
-      if (!!e === t.hasAttribute(i)) return z;
-    } else if (n.type === N.ATTRIBUTE && t.getAttribute(i) === e + "") return z;
-    return Pi(n), e;
+      if (!!e === t.hasAttribute(i)) return L;
+    } else if (n.type === N.ATTRIBUTE && t.getAttribute(i) === e + "") return L;
+    return Di(n), e;
   }
 }), We = S`
   .library-toolbar [hidden],
@@ -5719,7 +5755,7 @@ const Cs = {
                     title=${`${this.status?.ready ? "Play on" : "Power on"} ${i?.name || "the selected player"}`}
                     @click=${() => this.status && this.status.readiness !== "starting" ? this.prepare(this.status.ready ? "launch" : "power_on") : this.refresh()}
                   >
-                    ${L(this.status?.ready && !this.waking ? "play" : "power")}
+                    ${z(this.status?.ready && !this.waking ? "play" : "power")}
                     ${this.waking ? a`<span class="spinner" aria-hidden="true">◌</span> Starting player…` : !this.status || this.status.readiness === "starting" ? "Check player" : this.status.ready ? "Play" : "Power On"}</button
                   ><button
                     type="button"
@@ -7706,7 +7742,7 @@ const H = [
               ?hidden=${this.dashboard?.search_position === "off"}
               @click=${this.openSearch}
             >
-              ${L("search")}
+              ${z("search")}
             </button>
             <button
               type="button"
@@ -7718,7 +7754,7 @@ const H = [
               ?hidden=${this.dashboard?.show_filters === !1}
               @click=${this.openFilters}
             >
-              ${L("filter")}
+              ${z("filter")}
             </button>
             <button
               type="button"
@@ -7728,7 +7764,7 @@ const H = [
               ?disabled=${this.loading}
               @click=${this.clearFilters}
             >
-              ${L("clear")}
+              ${z("clear")}
             </button>
             <button
               type="button"
@@ -7737,7 +7773,7 @@ const H = [
               ?hidden=${this.dashboard?.show_sort === !1}
               @click=${() => this.sort(String(this.applied.sort))}
             >
-              ${L(this.applied.sort === "random" ? "shuffle" : this.applied.descending ? "descending" : "ascending")}
+              ${z(this.applied.sort === "random" ? "shuffle" : this.applied.descending ? "descending" : "ascending")}
             </button>
             <button
               type="button"
@@ -7748,7 +7784,7 @@ const H = [
               ?hidden=${!!this.dashboard}
               @click=${() => this.openDialog("library-options")}
             >
-              ${L("options")}
+              ${z("options")}
             </button>
           </div>
           <form
@@ -7960,7 +7996,7 @@ const H = [
                     @click=${() => this.load()}
                   >
                     <span class="paging-label">First</span
-                    ><span class="paging-icon">${L("first")}</span>
+                    ><span class="paging-icon">${z("first")}</span>
                   </button>
                   <button
                     aria-label="Previous page"
@@ -7968,7 +8004,7 @@ const H = [
                     @click=${() => this.load(Math.max(0, (this.page?.offset ?? 0) - e))}
                   >
                     <span class="paging-label">Previous</span
-                    ><span class="paging-icon">${L("previous")}</span>
+                    ><span class="paging-icon">${z("previous")}</span>
                   </button>
                   <button
                     aria-label="Next page"
@@ -7976,7 +8012,7 @@ const H = [
                     @click=${() => this.load((this.page?.offset ?? 0) + e)}
                   >
                     <span class="paging-label">Next</span
-                    ><span class="paging-icon">${L("next")}</span>
+                    ><span class="paging-icon">${z("next")}</span>
                   </button>` : l}
         </div>
       </footer>
@@ -8001,7 +8037,7 @@ const Rs = {
   reverse: "Scanning backward",
   stopped: "Stopped",
   none: "Stopped"
-}, Ls = {
+}, zs = {
   content: "Main content",
   credits: "Credits",
   intermission: "Intermission",
@@ -8101,7 +8137,7 @@ const Rs = {
                     <h3>
                       ${e.available ? t ? e.title ?? "Unknown title" : "No movie playing" : "Player unavailable"}
                     </h3>
-                    ${e.available ? a`<p>${Rs[e.play_status] ?? "Unknown playback state"} · ${Ls[e.location] ?? "Unknown location"}</p>` : l}
+                    ${e.available ? a`<p>${Rs[e.play_status] ?? "Unknown playback state"} · ${zs[e.location] ?? "Unknown location"}</p>` : l}
                     ${t && e.duration_seconds != null ? a`<p>Runtime · ${(e.duration_seconds / 60).toFixed(2)} min</p>` : l}
                     ${this.scope?.permissions.edit && t && e.session ? a`<p>
                               This session ·
@@ -8226,7 +8262,7 @@ const fi = (n, e, t) => {
   const i = /* @__PURE__ */ new Map();
   for (let s = e; s <= t; s++) i.set(n[s], s);
   return i;
-}, zs = Ti(class extends Ai {
+}, Ls = Ti(class extends Ai {
   constructor(n) {
     if (super(n), n.type !== N.CHILD) throw Error("repeat() can only be used in text expressions");
   }
@@ -8269,7 +8305,7 @@ const fi = (n, e, t) => {
       const R = s[p++];
       R !== null && Ze(R);
     }
-    return this.ut = o, Pi(n, h), z;
+    return this.ut = o, Di(n, h), L;
   }
 }), Us = S`
   :host {
@@ -8520,7 +8556,7 @@ function As(n) {
     new Date(n.getFullYear(), n.getMonth() + 1, 1).toISOString()
   ];
 }
-function Ps(n) {
+function Ds(n) {
   const e = Y(new Date(n.started_at)), t = n.ended_at ? Y(new Date(n.ended_at)) : e;
   return n.status === "completed" && t !== e && n.ended_at && new Date(n.ended_at) > new Date(n.started_at) ? [
     { day: e, phase: "start" },
@@ -8770,7 +8806,7 @@ const qe = class qe extends x {
       (h, c) => new Date(e, t, c - i.getDay() + 1)
     ), d = /* @__PURE__ */ new Map();
     for (const h of this.items)
-      for (const { day: c, phase: m } of Ps(h))
+      for (const { day: c, phase: m } of Ds(h))
         d.set(c, [...d.get(c) ?? [], { row: h, phase: m }]);
     return a`<div class="month-bar">
         <button
@@ -8810,7 +8846,7 @@ const qe = class qe extends x {
                       class="cover-stack"
                       style=${`--spread:${1 + (m.length - 1) * 0.15}`}
                     >
-                      ${zs(
+                      ${Ls(
         m,
         ({ row: p }) => p.id,
         ({ row: p, phase: y }, v) => a`<button
@@ -8857,7 +8893,7 @@ qe.properties = {
 }, qe.styles = [q, We, Us];
 let mt = qe;
 customElements.get("kaleidescape-journal-calendar") || customElements.define("kaleidescape-journal-calendar", mt);
-const js = [
+const Ps = [
   "remote",
   "now-playing",
   "library-covers",
@@ -8865,7 +8901,7 @@ const js = [
   "library",
   "journal-calendar"
 ];
-function ji(n, e) {
+function Pi(n, e) {
   const t = {
     title: "",
     entry_id: "",
@@ -8924,11 +8960,11 @@ function ji(n, e) {
     show_sort: !1
   }), t;
 }
-function Ds(n) {
+function js(n) {
   const e = (o) => ({ name: o, selector: { text: {} } }), t = (o) => ({ name: o, selector: { boolean: {} } }), i = (o, d, h) => ({
     name: o,
     selector: { number: { min: d, max: h, step: 1, mode: "box" } }
-  }), s = n === "library" || n === "library-covers", r = ji(
+  }), s = n === "library" || n === "library-covers", r = Pi(
     { type: `custom:kaleidescape-${n}-card` },
     n
   );
@@ -8993,7 +9029,7 @@ const tt = "kaleidescape-companion-card-search", le = class le extends x {
     return { channel: "main" };
   }
   static getConfigForm() {
-    return Ds(this.kind);
+    return js(this.kind);
   }
   getCardSize() {
     return this.kind === "library-search" ? 2 : this.kind === "remote" ? 9 : 7;
@@ -9012,7 +9048,7 @@ const tt = "kaleidescape-companion-card-search", le = class le extends x {
       );
     if (!e || typeof e != "object")
       throw new Error("Card configuration is required");
-    this.config = ji(e, this.kind), this.reset(), this.requestUpdate("hass");
+    this.config = Pi(e, this.kind), this.reset(), this.requestUpdate("hass");
   }
   connectedCallback() {
     super.connectedCallback(), window.addEventListener(tt, this.receiveSearch), document.addEventListener("visibilitychange", this.visibility), this.requestUpdate("hass");
@@ -9178,7 +9214,7 @@ const tt = "kaleidescape-companion-card-search", le = class le extends x {
 };
 le.kind = "library", le.properties = { hass: { attribute: !1 } }, le.styles = [
   q,
-  Li,
+  zi,
   S`
       :host {
         display: block;
@@ -9249,7 +9285,7 @@ const bi = {
   "journal-calendar": "Journal calendar"
 }, bt = window;
 bt.customCards ??= [];
-for (const n of js) {
+for (const n of Ps) {
   const e = `kaleidescape-${n}-card`;
   if (!customElements.get(e)) {
     const i = class i extends ft {
@@ -9644,7 +9680,7 @@ function be() {
     notes: ""
   };
 }
-function Di(n) {
+function ji(n) {
   if (!/^[a-f0-9]{64}$/.test(n.library_title_id))
     throw new Error("Select a Library movie from the suggestions.");
   const e = n.time.trim().match(/^(\d{1,2})(?::?(\d{2}))?\s*(am|pm)?$/i);
@@ -9671,7 +9707,7 @@ function Di(n) {
     ...n.status === "partial" ? { watched_seconds: d } : {}
   };
 }
-const Le = class Le extends x {
+const ze = class ze extends x {
   constructor() {
     super(...arguments), this.draft = be(), this.disabled = !1, this.fuzzySearch = !0, this.runtime = null;
   }
@@ -9740,14 +9776,14 @@ const Le = class Le extends x {
     </fieldset>`;
   }
 };
-Le.properties = {
+ze.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   draft: { attribute: !1 },
   disabled: { type: Boolean },
   fuzzySearch: { attribute: !1 }
-}, Le.styles = [q, We];
-let wt = Le;
+}, ze.styles = [q, We];
+let wt = ze;
 customElements.get("kaleidescape-manual-viewing") || customElements.define("kaleidescape-manual-viewing", wt);
 const Kt = S`
   .entries-header {
@@ -9901,7 +9937,7 @@ function I(n) {
   const e = new URL(location.href);
   e.searchParams.set("companion_page", n), history.replaceState(history.state, "", e);
 }
-const ze = class ze extends x {
+const Le = class Le extends x {
   constructor() {
     super(), this.disabled = !1, this.status = "", this.mobileCompact = !1, this.view = "list", this.calendarSize = 180, this.calendarFit = !1, this.bound = "", this.generation = 0, this.ready = !1, this.fuzzy = !0, this.error = "", ue(this, () => !this.ready || this.store?.unsettled || this.viewStore?.unsettled || this.disabled || this.renderRoot.querySelector("dialog[open]") ? !1 : (this.clear(), this.load(), !0));
   }
@@ -10094,13 +10130,13 @@ const ze = class ze extends x {
       </dialog>`;
   }
 };
-ze.properties = {
+Le.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean },
   status: { type: String },
   mobileCompact: { type: Boolean }
-}, ze.styles = [
+}, Le.styles = [
   q,
   S`
       @media (max-width: 700px) {
@@ -10110,7 +10146,7 @@ ze.properties = {
       }
     `
 ];
-let xt = ze;
+let xt = Le;
 customElements.get("kaleidescape-journal-options") || customElements.define("kaleidescape-journal-options", xt);
 const Ue = class Ue extends x {
   constructor() {
@@ -10507,7 +10543,7 @@ Ue.properties = {
   hass: { attribute: !1 },
   client: { attribute: !1 },
   narrow: { type: Boolean }
-}, Ue.styles = [q, Kt, zi];
+}, Ue.styles = [q, Kt, Li];
 let kt = Ue;
 customElements.get("kaleidescape-reader") || customElements.define("kaleidescape-reader", kt);
 function Bs(n, e) {
@@ -11128,7 +11164,7 @@ class Hs {
       );
   }
 }
-const Pe = class Pe extends x {
+const De = class De extends x {
   constructor() {
     super(...arguments), this.disabled = !1, this.name = "Kaleidescape test guide", this.request = "", this.generation = 0, this.busy = !1, this.pending = !1, this.complete = !1, this.error = "", this.bound = "";
   }
@@ -11274,14 +11310,14 @@ const Pe = class Pe extends x {
       </dialog>` : l;
   }
 };
-Pe.properties = {
+De.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, Pe.styles = q;
-let St = Pe;
+}, De.styles = q;
+let St = De;
 customElements.get("kaleidescape-test-dashboard") || customElements.define("kaleidescape-test-dashboard", St);
-const je = class je extends x {
+const Pe = class Pe extends x {
   constructor() {
     super(...arguments), this.disabled = !1, this.working = !1, this.error = "", this.generation = 0, this.bound = "";
   }
@@ -11421,12 +11457,12 @@ const je = class je extends x {
     </section>`;
   }
 };
-je.properties = {
+Pe.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, je.styles = q;
-let qt = je;
+}, Pe.styles = q;
+let qt = Pe;
 customElements.get("kaleidescape-metadata-repair") || customElements.define("kaleidescape-metadata-repair", qt);
 const vi = [
   ["actors", "Cast", ["kaleidescape", "tmdb"]],
@@ -11448,7 +11484,7 @@ const vi = [
   original: "Original library data",
   kaleidescape: "Kaleidescape store",
   tmdb: "TMDB"
-}, De = class De extends x {
+}, je = class je extends x {
   constructor() {
     super(...arguments), this.draft = {}, this.disabled = !1, this.generation = 0, this.bound = "", this.error = "", this.loading = !1;
   }
@@ -11510,6 +11546,15 @@ const vi = [
             />Enable ${t}</label
           >`
     )}
+      <label class="check"
+        ><input
+          name="metadata_auto_save"
+          type="checkbox"
+          .checked=${!!this.draft.metadata_auto_save}
+          ?disabled=${this.disabled}
+          @change=${(e) => this.change("metadata_auto_save", e.target.checked)}
+        />Auto-save metadata manager changes</label
+      >
       <div class="grid settings-grid">
         <label
           >Requests per second · shared limit<input
@@ -11629,13 +11674,13 @@ const vi = [
     </section>` : l;
   }
 };
-De.properties = {
+je.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   draft: { attribute: !1 },
   disabled: { type: Boolean }
-}, De.styles = q;
-let Et = De;
+}, je.styles = q;
+let Et = je;
 customElements.get("kaleidescape-enrichment-settings") || customElements.define("kaleidescape-enrichment-settings", Et);
 const it = [
   ["media_player", "Kaleidescape media player", "text", "", ""],
@@ -11693,6 +11738,7 @@ const it = [
   "control_allow_launch",
   "metadata_store_enabled",
   "metadata_tmdb_enabled",
+  "metadata_auto_save",
   "metadata_clear_tmdb_key",
   ...Mi.map(([n]) => n)
 ]), Ks = {
@@ -12891,8 +12937,8 @@ Oe.properties = {
       color: var(--error-color, #b3261e);
     }
   `;
-let Lt = Oe;
-customElements.get("kaleidescape-database-search") || customElements.define("kaleidescape-database-search", Lt);
+let zt = Oe;
+customElements.get("kaleidescape-database-search") || customElements.define("kaleidescape-database-search", zt);
 const Ne = class Ne extends x {
   constructor() {
     super(...arguments), this.disabled = !1, this.bound = "", this.request = 0, this.query = "", this.items = [], this.active = -1, this.loading = !1, this.more = !1, this.error = "";
@@ -13065,10 +13111,10 @@ Ne.properties = {
       }
     `
 ];
-let zt = Ne;
+let Lt = Ne;
 customElements.get("kaleidescape-import-matcher") || customElements.define(
   "kaleidescape-import-matcher",
-  zt
+  Lt
 );
 const Ie = class Ie extends x {
   constructor() {
@@ -13812,7 +13858,7 @@ const ae = {
           if (!this.operation || !this.page || this.operation === "delete" && this.deleteWord !== "DELETE" || this.operation !== "delete" && !this.confirmed) return;
           if (this.operation === "new")
             this.pending = this.client.prepare(this.scope, "create", {
-              data: Di(this.createDraft)
+              data: ji(this.createDraft)
             });
           else {
             const s = {};
@@ -14541,7 +14587,7 @@ const st = [
         return;
       }
       try {
-        const i = this.manual ? Di(this.manual) : {
+        const i = this.manual ? ji(this.manual) : {
           ...Ns(this.draft, this.selected ? this.initial : void 0),
           ...this.editTitleTouched ? { library_title_id: this.editMovieId } : {}
         };
@@ -15129,7 +15175,7 @@ Be.properties = {
   hass: { attribute: !1 },
   client: { attribute: !1 },
   narrow: { type: Boolean }
-}, Be.styles = [q, Kt, zi];
+}, Be.styles = [q, Kt, Li];
 let At = Be;
 customElements.get("kaleidescape-panel") || customElements.define("kaleidescape-panel", At);
 export {

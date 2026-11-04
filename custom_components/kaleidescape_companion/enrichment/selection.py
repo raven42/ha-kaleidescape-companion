@@ -82,7 +82,10 @@ def image(original, enrichment, sources, kind="artwork"):
         enrichment = json.loads(enrichment)
     enrichment = enrichment or {}
     key = "poster_key" if kind == "artwork" else "backdrop_key"
-    reviewed = enrichment.get("reviewed", {}).get(key)
+    reviewed_data = enrichment.get("reviewed", {})
+    if kind == "backdrop" and reviewed_data.get("backdrop_removed"):
+        return None
+    reviewed = reviewed_data.get(key)
     if reviewed:
         return reviewed
     preferred = sources.get(kind, "auto")

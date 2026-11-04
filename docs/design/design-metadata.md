@@ -91,10 +91,11 @@ configured in Settings.
 
 **Refresh** always searches the selected provider with the visible title and
 year, including when a match is already cached. A unique match is resolved to
-full metadata and downloaded automatically into that provider's own cache for
-every available version in the movie group. Two or more matches open a separate
-choice dialog showing the current Library movie and the candidates. Selecting
-one downloads its full provider record. No result records a last-checked time
+full metadata and downloaded into that provider's own cache for every available
+version in the movie group when changes are saved. Two or more matches open a
+separate choice dialog showing the current Library movie and the candidates.
+Selecting one downloads its full provider record. An empty result suggests
+retrying without the year. Saving an empty result records a last-checked time
 without inventing metadata. Rows distinguish **Not yet scanned**, **No data
 available - Last Checked {date}**, and **Downloaded - Updated {date}** and show
 the saved field count. The original Library scan remains unchanged. Provider
@@ -116,8 +117,11 @@ Previously reviewed field values for selected fields are cleared when the table
 is saved, so they cannot conceal a newly selected source.
 
 **Edit** beside either image opens TMDB image choices when TMDB credentials and
-artwork sync are enabled. Selecting an image saves it for the movie group.
-**Reset** beside the cover restores the original scanned cover. The cover and
+artwork sync are enabled. Selecting an image applies it to the movie group when
+changes are saved. **Reset** beside the cover restores the original scanned
+cover; backdrop Reset restores the previously selected backdrop or removes it if
+there was no previous selection. On the first TMDB download, the first available
+backdrop is selected when no backdrop has already been selected. The cover and
 backdrop previews keep their respective aspect ratios.
 
 The checkboxes below the cover and backdrop declare an image unavailable.
@@ -126,13 +130,15 @@ specify which providers are expected for this movie. Turning a scraper off
 removes it from metadata completeness and future automatic attempts, while
 keeping cached data. The Artwork, Backdrop and Metadata indicators use these
 same boundaries as the `missing_artwork` and `missing_metadata` sensors. The
-lower-right **Save** persists switch and field-source changes with a current
-movie snapshot and an actor-bound request receipt. Refresh and image edits save
-their results when performed. History shows each recent check and the returned
-values saved for that provider. It retains up to eight entries per provider and
-is not a full audit log. The **Edit** and **Reset** text links sit below their
-images. The duplicate **Edit Artwork** action on the main Library details dialog
-has been removed.
+When **Auto-save metadata manager changes** is disabled (the default), the
+lower-right **Save** commits Refresh results, image selections and resets,
+switches, and field choices together using a current movie snapshot and an
+actor-bound request receipt. Closing the manager discards the draft. When
+auto-save is enabled, each change is saved immediately and the Save button is
+hidden. History shows each recent check and the returned values saved for that
+provider. It retains up to eight entries per provider and is not a full audit
+log. The **Edit** and **Reset** text links sit below their images. The duplicate
+**Edit Artwork** action on the main Library details dialog has been removed.
 
 The suggested search title strips a trailing `(Director's Cut)` suffix while
 leaving the Library identity intact. A search returns at most eight candidates,

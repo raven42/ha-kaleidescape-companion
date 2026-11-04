@@ -84,6 +84,11 @@ def public(value):
                 if provider == "reviewed"
                 else {}
             ),
+            **(
+                {"backdrop_removed": True}
+                if provider == "reviewed" and item.get("backdrop_removed") is True
+                else {}
+            ),
         }
         for provider, item in value.items()
         if provider in PROVIDERS | {"reviewed"} and isinstance(item, dict)
@@ -140,6 +145,10 @@ def candidates(db, source):
                 WHERE json_extract(value,'$.href') IS NOT NULL LIMIT 1)) href,
             json_extract(enrichment,'$.kaleidescape.fetched_at') store_fetched,
             json_extract(enrichment,'$.tmdb.fetched_at') tmdb_fetched,
+            json_extract(enrichment,'$.reviewed.backdrop_removed') backdrop_removed,
+            EXISTS (SELECT 1 FROM library_artwork a WHERE a.cache_key=
+                companion_artwork(NULL,library.enrichment,
+                    'backdrop')) backdrop_selected,
             json_extract(enrichment,'$.matches') matched_refs
         FROM library WHERE source_id=? AND available=1
         AND purchase_match_pending=0
@@ -167,12 +176,16 @@ def candidates(db, source):
                 "href": None,
                 "enrichment": {},
                 "matches": {},
+                "backdrop_selected": False,
+                "backdrop_removed": False,
             },
         )
         if not entry["year"]:
             entry["year"] = row["year"]
         entry["matches"].update(json.loads(row["matched_refs"] or "{}"))
         entry["href"] = entry["href"] or row["href"]
+        entry["backdrop_selected"] |= bool(row["backdrop_selected"])
+        entry["backdrop_removed"] |= bool(row["backdrop_removed"])
         for provider, field in (
             ("kaleidescape", "store_fetched"),
             ("tmdb", "tmdb_fetched"),

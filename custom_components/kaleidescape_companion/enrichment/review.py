@@ -78,6 +78,7 @@ class TitleReviews:
                 )
             ],
             "artwork_enabled": bool(self.parent.config.get("library_sync_artwork")),
+            "auto_save": bool(self.parent.config.get("metadata_auto_save")),
             "title": target["title"],
             "search_title": search_title(target["comparison"]["title"]),
             "current": target["comparison"],
@@ -93,6 +94,7 @@ class TitleReviews:
         if not isinstance(data, dict) or data.get("action") not in {
             "mapping",
             "reset_cover",
+            "reset_backdrop",
         }:
             raise invalid("Choose a supported metadata action")
         return await self._write_action(actor, request, data)
@@ -115,22 +117,19 @@ class TitleReviews:
         self.ready(actor)
         return result
 
-    async def refresh(self, actor, request, title, provider, query, year=None):
+    async def refresh(
+        self, actor, request, title, provider, query, year=None, stage=False
+    ):
         """Always search; commit a unique match immediately or return candidates."""
         found = await self.search(actor, title, provider, query, year)
         if not found["candidates"]:
             target = self.plan(actor, found["search_id"])["target"]
-            await self._write_action(
-                actor,
-                request,
-                {
-                    "action": "checked",
-                    "title_id": title,
-                    "snapshot": target["snapshot"],
-                    "provider": provider,
-                },
+            staged = await self.stage_result(actor, target, provider, None)
+            return (
+                staged
+                if stage
+                else await self.commit_refresh(actor, request, staged, target)
             )
-            return {"outcome": "no_data"}
         if len(found["candidates"]) == 1:
             return await self.refresh_choice(
                 actor,
@@ -139,10 +138,13 @@ class TitleReviews:
                 provider,
                 found["search_id"],
                 found["candidates"][0]["id"],
+                stage,
             )
         return {"outcome": "matches", **found}
 
-    async def refresh_choice(self, actor, request, title, provider, search_id, choice):
+    async def refresh_choice(
+        self, actor, request, title, provider, search_id, choice, stage=False
+    ):
         from .review_matches import selected
 
         staged, candidate = selected(self, actor, title, provider, search_id, choice)
@@ -155,19 +157,187 @@ class TitleReviews:
             result = await client.providers.resolve(provider, reference(candidate))
         if len(json.dumps(result).encode()) > 128 * 1024:
             raise JournalError("metadata_limit", "Provider metadata is too large")
-        await self._write_action(
+        prepared = await self.stage_result(actor, staged, provider, result)
+        self.plans.pop(search_id, None)
+        return (
+            prepared
+            if stage
+            else await self.commit_refresh(actor, request, prepared, staged)
+        )
+
+    async def stage_result(self, actor, target, provider, metadata):
+        images = []
+        if (
+            metadata
+            and provider == "tmdb"
+            and self.parent.config.get("library_sync_artwork")
+        ):
+            async with self.worker(actor, target["id"]) as client:
+                images = await client.providers.images(provider, metadata)
+        choices = {
+            f"{image['kind']}-{index}": image for index, image in enumerate(images)
+        }
+        token = self.remember(
+            actor,
+            target,
+            provider,
+            kind="download",
+            metadata=metadata,
+            match=reference(metadata) if metadata else None,
+            images=choices,
+        )
+        return {
+            "outcome": "staged",
+            "plan_id": token,
+            "provider": provider,
+            "has_data": bool(metadata),
+            "matched": {"title": metadata["title"], "year": metadata["year"]}
+            if metadata
+            else None,
+            "values": {key: metadata[key] for key in REVIEW_FIELDS if key in metadata}
+            if metadata
+            else {},
+            "images": [
+                {
+                    "id": key,
+                    **{
+                        field: image.get(field) for field in ("kind", "width", "height")
+                    },
+                }
+                for key, image in choices.items()
+            ],
+        }
+
+    async def commit_refresh(self, actor, request, staged, target):
+        await self.save_draft(
             actor,
             request,
             {
-                "action": "download",
-                "title_id": title,
-                "snapshot": staged["snapshot"],
-                "provider": provider,
-                "metadata": result,
+                "title_id": target["id"],
+                "snapshot": target["snapshot"],
+                "providers": {staged["provider"]: staged["plan_id"]},
+                "sources": None,
+                "expectations": None,
+                "image_plan": "",
+                "images": {},
+                "resets": [],
             },
         )
-        self.plans.pop(search_id, None)
-        return {"outcome": "downloaded"}
+        return {"outcome": "downloaded" if staged["has_data"] else "no_data"}
+
+    async def save_draft(self, actor, request, data):
+        from .draft import selection
+        from .matching import same_provider_identity
+
+        self.ready(actor)
+        data = selection(data)
+        cached = await self.parent.repository.async_enrichment(
+            "draft_lookup", self.parent.source, actor.id, request, data
+        )
+        if cached is not None:
+            return cached
+        plans = {}
+        for provider, token in data["providers"].items():
+            plan = self.plan(actor, token)
+            if plan.get("kind") != "download" or plan["provider"] != provider:
+                raise invalid("Choose a staged scraper result")
+            plans[provider] = plan
+        image_plan = (
+            self.plan(actor, data["image_plan"]) if data["image_plan"] else None
+        )
+        if image_plan and (
+            image_plan.get("kind") not in {"review", "download"}
+            or image_plan["provider"] != "tmdb"
+            or not image_plan.get("metadata")
+        ):
+            raise invalid("Choose artwork from a TMDB movie")
+        for plan in [*plans.values(), *([image_plan] if image_plan else [])]:
+            if (
+                plan["target"]["id"] != data["title_id"]
+                or plan["target"]["source"] != self.parent.source
+                or plan["target"]["snapshot"] != data["snapshot"]
+            ):
+                raise JournalError(
+                    "refresh_required", "Movie changed; reopen metadata manager"
+                )
+        if (
+            image_plan
+            and plans.get("tmdb", {}).get("metadata")
+            and not same_provider_identity(
+                image_plan["metadata"], plans["tmdb"]["metadata"]
+            )
+        ):
+            raise invalid("Choose artwork for the staged TMDB match")
+        if data["expectations"]:
+            for provider, enabled in data["expectations"]["providers"].items():
+                key = (
+                    "metadata_tmdb_enabled"
+                    if provider == "tmdb"
+                    else "metadata_store_enabled"
+                )
+                if enabled and not self.parent.config.get(key):
+                    raise JournalError("metadata_disabled", "Enable this scraper first")
+        choices = {}
+        for kind, choice in data["images"].items():
+            image = image_plan["images"].get(choice)
+            if not image or image.get("kind") != kind:
+                raise invalid("Image is not part of this review")
+            choices[kind] = image
+        tmdb = plans.get("tmdb")
+        if (
+            tmdb
+            and tmdb.get("metadata")
+            and "backdrop" not in choices
+            and "backdrop" not in data["resets"]
+        ):
+            target = tmdb["target"]
+            expected = (
+                (data["expectations"] or {})
+                .get("artwork", {})
+                .get("backdrop", "backdrop" not in target["artwork_unavailable"])
+            )
+            if (
+                expected
+                and not target["artwork_present"]["backdrop"]
+                and not target["backdrop_removed"]
+                and self.parent.config.get("library_sync_artwork")
+                and self.parent.config.get("metadata_source_backdrop") != "original"
+            ):
+                first = next(
+                    (
+                        image
+                        for image in tmdb["images"].values()
+                        if image.get("kind") == "backdrop"
+                    ),
+                    None,
+                )
+                if first:
+                    choices["auto"] = first
+        images = {}
+        if choices:
+            if not self.parent.config.get("library_sync_artwork"):
+                raise invalid("Enable artwork sync first")
+            async with self.worker(actor, data["title_id"]) as client:
+                for kind, choice in choices.items():
+                    images[kind] = await client.providers.image("tmdb", choice)
+        for token in [
+            *data["providers"].values(),
+            *([data["image_plan"]] if data["image_plan"] else []),
+        ]:
+            self.plan(actor, token)
+        result = await self.parent.repository.async_enrichment(
+            "draft_apply",
+            self.parent.source,
+            actor.id,
+            request,
+            data,
+            plans,
+            image_plan,
+            images,
+            self.parent.config.get("library_artwork_cache_mb", 512) * 1024 * 1024,
+            lambda: self.ready(actor),
+        )
+        return result
 
     async def availability(self, actor, request, data):
         self.ready(actor)

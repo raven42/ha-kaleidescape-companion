@@ -88,6 +88,7 @@ def completeness(db, source):
                     "fetched_at",
                     "poster_key",
                     "backdrop_key",
+                    "backdrop_removed",
                     "provider",
                     "provider_id",
                     "title",

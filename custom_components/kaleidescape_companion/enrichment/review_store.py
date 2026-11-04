@@ -261,6 +261,9 @@ def target(db, source, title):
             artwork_for_group(db, source, selected["source_group"])
         ),
         "artwork_present": artwork_present,
+        "backdrop_removed": any(
+            value.get("reviewed", {}).get("backdrop_removed") for value in enrichment
+        ),
         "provider_status": provider_status,
         "field_mapping": field_mapping,
         "history": sorted(
@@ -281,6 +284,14 @@ def target(db, source, title):
                 else None
             ),
             "backdrop_key": current.get("backdrop_key"),
+            "backdrop_reset_available": bool(current.get("backdrop_key"))
+            or any("backdrop_previous" in value for value in enrichment),
+            "previous_backdrop_key": (
+                selected_enrichment.get("backdrop_previous", {}).get("key")
+                if isinstance(selected_enrichment.get("backdrop_previous"), dict)
+                and selected_enrichment["backdrop_previous"].get("key") in cached_images
+                else None
+            ),
         },
     }
 
@@ -339,6 +350,7 @@ def action(db, source, actor, request, data, ready):
         "download",
         "mapping",
         "reset_cover",
+        "reset_backdrop",
     }:
         raise invalid("Choose a supported metadata action")
     kind = data["action"]
@@ -347,6 +359,7 @@ def action(db, source, actor, request, data, ready):
         "download": {"action", "title_id", "snapshot", "provider", "metadata"},
         "mapping": {"action", "title_id", "snapshot", "sources"},
         "reset_cover": {"action", "title_id", "snapshot"},
+        "reset_backdrop": {"action", "title_id", "snapshot"},
     }[kind]
     if set(data) != allowed:
         raise invalid("Invalid metadata action")
@@ -402,6 +415,19 @@ def action(db, source, actor, request, data, ready):
             ).fetchone()
         ):
             raise JournalError("not_found", "Original cover is unavailable")
+    if kind == "reset_backdrop":
+        for row in rows:
+            previous = json.loads(row["enrichment"]).get("backdrop_previous", {})
+            key = previous.get("key") if isinstance(previous, dict) else None
+            if (
+                key
+                and not db.execute(
+                    "SELECT 1 FROM library_artwork WHERE cache_key=?", (key,)
+                ).fetchone()
+            ):
+                raise JournalError(
+                    "library_artwork", "Previous backdrop is unavailable"
+                )
     now = datetime.now(UTC).isoformat()
     result = {"title_id": title, "updated_count": len(rows), "checked_at": now}
     with db:
@@ -451,11 +477,21 @@ def action(db, source, actor, request, data, ready):
                 value["field_sources"] = data["sources"]
                 for field in data["sources"]:
                     value.get("reviewed", {}).pop(field, None)
-            else:
+            elif kind == "reset_cover":
                 original_key = row["artwork_key"]
                 value.setdefault("reviewed", {}).pop("poster_key", None)
                 if original_key:
                     value["reviewed"]["poster_key"] = original_key
+            else:
+                previous = value.pop("backdrop_previous", {})
+                key = previous.get("key") if isinstance(previous, dict) else None
+                reviewed = value.setdefault("reviewed", {})
+                if key:
+                    reviewed["backdrop_key"] = key
+                    reviewed.pop("backdrop_removed", None)
+                else:
+                    reviewed.pop("backdrop_key", None)
+                    reviewed["backdrop_removed"] = True
             encoded = json.dumps(value)
             if len(encoded.encode()) > 512 * 1024:
                 raise JournalError("metadata_limit", "Movie metadata is too large")
@@ -495,6 +531,16 @@ def apply(db, directory, source, actor, request, data, plan, images, budget):
         raise invalid("Image selection changed")
     ordered = sorted(images)
     result = {"title_id": plan["target"]["id"], "updated_count": len(rows)}
+    previous_backdrop = None
+    if "backdrop" in ordered:
+        key = plan["target"]["comparison"].get("backdrop_key")
+        if (
+            key
+            and db.execute(
+                "SELECT 1 FROM library_artwork WHERE cache_key=?", (key,)
+            ).fetchone()
+        ):
+            previous_backdrop = key
 
     def commit(keys):
         # An explicit reviewed apply reenables the complete group, including
@@ -522,6 +568,9 @@ def apply(db, directory, source, actor, request, data, plan, images, budget):
                 enrichment.setdefault("matches", {})[plan["provider"]] = plan["match"]
                 enrichment.setdefault("conflicts", {}).pop(plan["provider"], None)
             reviewed = enrichment.setdefault("reviewed", {})
+            if "backdrop" in ordered:
+                enrichment["backdrop_previous"] = {"key": previous_backdrop}
+                reviewed.pop("backdrop_removed", None)
             reviewed.update({key: plan["metadata"][key] for key in data["fields"]})
             reviewed.update(
                 {
@@ -556,5 +605,6 @@ def apply(db, directory, source, actor, request, data, plan, images, budget):
         [(images[kind], image_type(images[kind])) for kind in ordered],
         budget,
         commit,
+        keep={previous_backdrop} if previous_backdrop else set(),
     )
     return result
