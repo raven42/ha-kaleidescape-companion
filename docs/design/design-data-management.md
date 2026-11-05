@@ -475,13 +475,9 @@ fetched. JSON and SQLite exports are private administrator downloads.
 
 ### Formats, limits and APIs
 
-Current limitation: a schema-25 SQLite merge input with a manual/public retail
-or paid price but no linked invoice is interpreted by the legacy flat-invoice
-reader. Without a purchase date, preview rejects it with **Expected a purchase
-date**; with a date, review can propose an invoice that was never stored. Use a
-JSON export for portable merging of these values: its explicit empty history
-preserves the distinction. SQLite backups still retain the full database for
-offline restore. Review any proposed invoice before applying a SQLite merge.
+SQLite merge reads schema-25 purchase records from the separate ledger. Manual
+or public prices on a Library version remain title fields and do not create an
+invoice. Older exports with embedded or flat purchase fields remain supported.
 
 Limits are 32 MiB per file, 10,000 combined viewing/title/purchase records, an 8
 MiB review response, and a 30-second upload/validation/review budget. Oversized

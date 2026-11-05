@@ -405,6 +405,52 @@ class PurchaseImportTest(unittest.IsolatedAsyncioTestCase):
             with self.assert_error("invalid_request"):
                 await self.preview(db.serialize(), "sqlite")
 
+    async def test_sqlite_ledger_preserves_manual_prices_without_inventing_invoices(
+        self,
+    ):
+        target = await self.seed_library()
+        for date in (None, "2020-01-02"):
+            for paid, retail in (
+                ("$0.00", None),
+                (None, "$25.00"),
+                ("$9.99", "$25.00"),
+            ):
+                with self.subTest(date=date, paid=paid, retail=retail):
+                    review = await self.repository.async_library_edit(
+                        library.SOURCE, target
+                    )
+                    await self.repository.async_library_edit(
+                        library.SOURCE,
+                        target,
+                        "admin",
+                        str(uuid4()),
+                        review["snapshot"],
+                        {
+                            "purchased_on": date,
+                            "purchase_price": paid,
+                            "retail_price": retail,
+                        },
+                    )
+                    for kind in ("json", "sqlite"):
+                        async with self.repository.async_export_snapshot(kind) as path:
+                            original = path.read_bytes()
+                            parsed = parse_bundle(original, kind)
+                            self.assertEqual(path.read_bytes(), original)
+                            self.assertEqual(parsed["purchases"], [])
+                            title = next(
+                                row for row in parsed["library"] if row["id"] == target
+                            )
+                            self.assertEqual(title.get("purchase_price"), paid)
+                            self.assertEqual(title.get("retail_price"), retail)
+                            self.assertEqual(title["purchased_on"], date)
+                        plan = await self.preview(original, kind)
+                        self.assertFalse(
+                            any(
+                                row["key"].startswith("purchases:")
+                                for row in plan["rows"]
+                            )
+                        )
+
     async def test_prices_edit_history_in_same_row_and_delete_cannot_orphan(self):
         await self.seed_library()
         await self.apply(await self.preview(payload(purchase())))

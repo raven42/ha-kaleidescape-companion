@@ -242,6 +242,9 @@ def parse_bundle(payload: bytes, import_format: str) -> dict:
             or len(document["library"]) > MAX_IMPORT_ROWS
         ):
             raise invalid("Import requires at most 10000 Library entries")
+        # Schema-25 SQLite snapshots carry invoices in the separate ledger.
+        # Older snapshots may still carry embedded or flat purchase information.
+        ledger_snapshot = import_format == "sqlite" and "purchase_records" in document
         for row in document["library"]:
             if time.monotonic() > deadline:
                 raise invalid("Import validation exceeded its time budget")
@@ -251,7 +254,12 @@ def parse_bundle(payload: bytes, import_format: str) -> dict:
                 row.get("purchase_match_pending", 0), (bool, int)
             ) or row.get("purchase_match_pending", 0) not in (0, 1):
                 raise invalid("Invalid pending purchase marker")
-            for invoice in embedded_history(row, decode_json):
+            history = (
+                []
+                if ledger_snapshot and "purchase_history" not in row
+                else embedded_history(row, decode_json)
+            )
+            for invoice in history:
                 if len(purchases) >= MAX_IMPORT_ROWS:
                     raise invalid("Import requires at most 10000 purchases")
                 purchases.append(

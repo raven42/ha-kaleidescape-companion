@@ -122,10 +122,12 @@ Database condition search compiles a restricted grammar with bound parameters;
 it does not accept arbitrary SQL. Imports are size/time/row bounded, reviewed
 before applying, and cannot introduce network configuration or executable data.
 Raw database files are opened defensively; application writes never execute SQL
-from an import. Purchase-only reconciliation can run while recording is active:
-the server validates that the uploaded bundle contains only purchases and binds
-subsequent review and apply operations to that validated plan. General imports
-still require recording disabled. The
+from an import. A SQLite snapshot with the current purchase ledger takes invoice
+records from that ledger rather than inferring them from flat Library prices.
+Purchase-only reconciliation can run while recording is active: the server
+validates that the uploaded bundle contains only purchases and binds subsequent
+review and apply operations to that validated plan. General imports still
+require recording disabled. The
 [data-management design](../design/design-data-management.md) owns field rules,
 limits and import/restore procedures.
 
