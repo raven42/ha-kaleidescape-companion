@@ -70,9 +70,9 @@ responses.
 The Library inspection response overlays linked purchase history and its
 earliest invoice summary on the Library row, including the invoice date when
 there is no explicit Library date. These are compatibility projections, not
-duplicate stored histories. Database conditions and sort keys still operate on
-the underlying Library columns, so a price/date predicate can differ from the
-displayed derived value. Query **Purchases** for stored invoice fields.
+duplicate stored histories. Database conditions and sort keys use those same
+visible values. The `stored_` fields show the underlying Library values, and
+**Purchases** shows the individual stored invoice fields.
 
 Source-owned values may be replaced or recreated by later synchronization.
 Deleting cached collection membership does not remove it on the device.

@@ -98,6 +98,96 @@ class DatabaseStorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("expression", json.dumps(page["query_fields"]))
         self.assertEqual((await self.page("library"))["total"], len(library.ROWS))
 
+    async def test_library_queries_and_sorts_match_visible_invoice_projection(self):
+        await self.seed()
+        page = await self.page("library", limit=100)
+        ids = sorted(row["id"] for row in page["items"])
+
+        def seed_invoices():
+            with self.repository._db() as db:
+                db.execute(
+                    "UPDATE library SET purchase_price='$88.88' WHERE id=?", (ids[0],)
+                )
+                db.executemany(
+                    "INSERT INTO purchase_records "
+                    "(id,title,purchased_on,purchase_price,retail_price,order_id,"
+                    "href,imported_at,library_id) "
+                    "VALUES (?,?,?,?,?,?,?,?,?)",
+                    [
+                        (
+                            "a",
+                            "Fictional",
+                            "2020-01-02",
+                            "$9.99",
+                            None,
+                            "order-a",
+                            None,
+                            "2020-01-02",
+                            ids[0],
+                        ),
+                        (
+                            "b",
+                            "Fictional",
+                            "2021-01-02",
+                            "$1.00",
+                            "$12.00",
+                            "order-b",
+                            None,
+                            "2021-01-02",
+                            ids[0],
+                        ),
+                        (
+                            "c",
+                            "Fictional",
+                            "2019-01-02",
+                            None,
+                            "$20.00",
+                            "order-c",
+                            None,
+                            "2019-01-02",
+                            ids[1],
+                        ),
+                    ],
+                )
+
+        await self.repository._call(seed_invoices)
+        for query, expected in (
+            ("purchase_price = '$9.99'", {ids[0]}),
+            ("purchase_price = '$88.88'", set()),
+            ("stored_purchase_price = '$88.88'", {ids[0]}),
+            ("purchase_price IS NULL", {ids[1], ids[2]}),
+            ("retail_price IS NULL", {ids[0], ids[2]}),
+            ("purchased_on = '2020-01-02'", {ids[0]}),
+            ("order_id = 'order-a'", {ids[0]}),
+        ):
+            with self.subTest(query=query):
+                result = await self.page("library", query=query)
+                self.assertEqual({row["id"] for row in result["items"]}, expected)
+        ordered = await self.page("library", sort="purchase_price", limit=1)
+        seen = []
+        while True:
+            seen.extend(ordered["items"])
+            if not ordered["has_more"]:
+                break
+            ordered = await self.repository.async_inspect(
+                "library",
+                offset=ordered["offset"] + 1,
+                revision=ordered["revision"],
+                limit=1,
+                sort="purchase_price",
+            )
+        self.assertEqual([row["id"] for row in seen], [ids[1], ids[2], ids[0]])
+        self.assertEqual([row["purchase_price"] for row in seen], [None, None, "$9.99"])
+        page = await self.page("library", query="purchase_price = '$9.99'")
+        self.assertEqual(page["items"][0]["stored_purchase_price"], "$88.88")
+        await self.mutate(page, patch_data={"title": "Corrected fictional title"})
+        self.assertEqual(
+            (await self.page("library", query="purchase_price = '$9.99'"))["items"][0][
+                "title"
+            ],
+            "Corrected fictional title",
+        )
+
     async def test_viewing_edit_delete_exact_retry_audit_and_stale_snapshot(self):
         original = await self.repository.async_create(str(uuid4()), viewing())
         page = await self.page()
