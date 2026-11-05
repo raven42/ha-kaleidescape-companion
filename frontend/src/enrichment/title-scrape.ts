@@ -213,6 +213,13 @@ export class TitleScrape extends LitElement {
       }
       .artwork-flags .check {
         margin: 0;
+        font-size: 11px;
+        gap: 6px;
+      }
+      .artwork-flags .check input {
+        width: 16px;
+        height: 16px;
+        min-height: 16px;
       }
       .status-line[data-complete="true"] span {
         color: var(--success-color, #4caf50);

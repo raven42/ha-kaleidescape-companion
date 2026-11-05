@@ -1,5 +1,39 @@
 # Changelog
 
+## Unreleased — Calendar search and Watch Soon
+
+- Show search results in the Journal list and restore the selected view when
+  clearing the search; add a mobile search chip and a Today button.
+- Show a Watch Soon corner clock for movies in the WatchSoon collection.
+
+## Unreleased — Library and reconciliation refinements
+
+- Align reconciliation pagination and show available cached covers while
+  matching.
+- Fix stale purchase totals after database edits and refresh details on opening.
+- Exclude partly rated movies from the Unrated filter when a known rating
+  exists.
+- Add the desktop header icon and improve credit and artwork-control layouts.
+
+## Unreleased — Forwarded receipt cover links
+
+- Recognize repeated cover and title links as one purchase and retain duplicate
+  detection for separate items. Update the purchase receipt blueprint to
+  version 6.
+
+## Unreleased — Original purchase receipts
+
+- Parse original plain-text receipts without links and fetch the HTML part to
+  recover uniquely matching Store movie IDs. Use the Home Assistant local date
+  when falling back to an original email's timestamp.
+- Update the purchase receipt blueprint to version 5.
+
+## Unreleased — Forwarded purchase receipts
+
+- Handle quote markers on forwarded receipts and use the original store date.
+- Update the purchase receipt blueprint to version 4.
+- Record blueprint version histories in their YAML files and show them in About.
+
 ## Unreleased — Database purchase reconciliation
 
 - Move existing invoice histories into a purchase table and save unmatched email

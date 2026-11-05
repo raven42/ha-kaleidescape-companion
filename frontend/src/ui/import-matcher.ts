@@ -10,6 +10,7 @@ import type {
 } from "../core/api";
 import { counted } from "../core/text";
 import { styles } from "./styles";
+import { CoverQueue } from "../library/cover";
 
 export class KaleidescapeImportMatcher extends LitElement {
   static properties = {
@@ -17,6 +18,7 @@ export class KaleidescapeImportMatcher extends LitElement {
     scope: { attribute: false },
     review: { attribute: false },
     row: { attribute: false },
+    queue: { attribute: false },
     disabled: { type: Boolean },
   };
   static styles = [
@@ -48,6 +50,18 @@ export class KaleidescapeImportMatcher extends LitElement {
         text-align: left;
         margin-block: 2px;
         overflow-wrap: anywhere;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .suggestions button > span {
+        min-width: 0;
+      }
+      .suggestions kaleidescape-library-cover {
+        width: 40px;
+        height: 60px;
+        flex: 0 0 40px;
+        border-radius: 4px;
       }
       .suggestions button[aria-selected="true"] {
         border-color: var(--accent);
@@ -70,6 +84,7 @@ export class KaleidescapeImportMatcher extends LitElement {
   scope?: JournalInfo;
   review?: ImportReview;
   row?: ImportReviewRow;
+  queue?: CoverQueue;
   disabled = false;
   private bound = "";
   private boundClient?: JournalClient;
@@ -246,10 +261,24 @@ export class KaleidescapeImportMatcher extends LitElement {
                 ?disabled=${this.disabled}
                 @click=${() => this.choose(item.id)}
               >
-                ${item.title} · ${item.year ?? "Year unknown"}<small
-                  >${item.directors.join(", ") || "Director unknown"} ·
-                  ${counted(item.version_count, "version")} · Source
-                  ${item.source_hint}</small
+                ${
+                  item.artwork_key
+                    ? html`<kaleidescape-library-cover
+                        .client=${this.client}
+                        .scope=${this.scope}
+                        .queue=${this.queue}
+                        .artworkKey=${item.artwork_key}
+                        .title=${item.title}
+                        aria-hidden="true"
+                      ></kaleidescape-library-cover>`
+                    : nothing
+                }
+                <span
+                  >${item.title} · ${item.year ?? "Year unknown"}<small
+                    >${item.directors.join(", ") || "Director unknown"} ·
+                    ${counted(item.version_count, "version")} · Source
+                    ${item.source_hint}</small
+                  ></span
                 >
               </button>
             </li>`,

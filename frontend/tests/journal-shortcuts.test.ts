@@ -20,15 +20,12 @@ beforeEach(async () => {
   await element.updateComplete;
 });
 afterEach(() => element.remove());
-it("shows household shortcuts without an Add viewing action and delegates Options/Clear", () => {
+it("shows household shortcuts without an Add or unconditional Clear action", () => {
   expect(button("Add viewing")).toBeNull();
-  const clear = vi.fn(),
-    options = vi.fn();
-  element.addEventListener("journal-clear", clear);
+  expect(button("Clear Journal search and filters")).toBeNull();
+  const options = vi.fn();
   element.addEventListener("journal-open-options", options);
-  button("Clear Journal search and filters").click();
   button("Journal options").click();
-  expect(clear).toHaveBeenCalledOnce();
   expect(options).toHaveBeenCalledOnce();
 });
 it("submits popup search only on apply and clears it on context changes", async () => {
@@ -70,6 +67,16 @@ it("delegates Add viewing only when offered and disables all actions while block
       (b) => (b as HTMLButtonElement).disabled,
     ),
   ).toBe(true);
+});
+it("offers a separate way to leave a movie-filtered calendar", async () => {
+  const clear = vi.fn();
+  element.addEventListener("journal-clear-movie", clear);
+  expect(button("Show all viewings")).toBeNull();
+  element.filterLabel = "Viewings for a fictional movie";
+  await element.updateComplete;
+  button("Show all viewings").click();
+  expect(clear).toHaveBeenCalledOnce();
+  expect(button("Clear Journal search and filters")).toBeNull();
 });
 it("keeps mobile calendar totals to the selected month's count and watched time, including loading and singular forms", () => {
   const target = document.createElement("div");

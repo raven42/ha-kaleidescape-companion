@@ -3,14 +3,21 @@ import { html, nothing, svg } from "lit";
 import type { LibrarySummary } from "../core/api";
 type VideoMetadata = { formats?: string[] | null; edition?: string | null };
 export function statusBadges(row: LibrarySummary) {
+  const watchSoon =
+    row.is_watch_soon ??
+    row.collections.some(
+      (name) => name.toLowerCase().replace(/[\s_-]+/g, "") === "watchsoon",
+    );
   const status =
     row.watched_status === "in_progress"
       ? { key: "progress", label: "In progress", symbol: "◔" }
       : row.watched_status === "watched"
         ? { key: "watched", label: "Watched", symbol: "✓" }
-        : row.is_recently_added
-          ? { key: "recent", label: "Recently added", symbol: "NEW" }
-          : undefined;
+        : watchSoon
+          ? { key: "watch-soon", label: "Watch Soon", symbol: "" }
+          : row.is_recently_added
+            ? { key: "recent", label: "Recently added", symbol: "NEW" }
+            : undefined;
   return [
     ...(status ? [status] : []),
     ...(row.is_favorite
@@ -53,6 +60,10 @@ export function highestVideoFormat(row: VideoMetadata) {
 }
 const dolbySymbol = svg`<svg class="dolby-symbol" viewBox="0 0 24 16" aria-hidden="true" focusable="false">
   <path fill="currentColor" d="M1 1h3.1c4.1 0 7 2.9 7 7s-2.9 7-7 7H1V1Zm22 0h-3.1c-4.1 0-7 2.9-7 7s2.9 7 7 7H23V1Z" />
+</svg>`;
+const watchSoonSymbol = svg`<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" />
+  <path d="M12 6v6h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
 </svg>`;
 const hdrSymbol = svg`<svg class="hdr-symbol" viewBox="0 0 27 16" aria-hidden="true" focusable="false">
   <path fill="#e94637" d="M1 4 7 3v10l-6-1z" />
@@ -108,7 +119,7 @@ export function renderStatusBadges(
           title=${badge.label}
           aria-label=${badge.label}
           role="img"
-          >${flags ? html`<span class="badge-symbol" aria-hidden="true">${badge.symbol}</span>` : html`${collectionSymbol(badge.label)}<span>${badge.label}</span>`}</span
+          >${flags ? html`<span class="badge-symbol" aria-hidden="true">${badge.key === "watch-soon" ? watchSoonSymbol : badge.symbol}</span>` : html`${collectionSymbol(badge.label)}<span>${badge.label}</span>`}</span
         >`,
     );
 }
@@ -151,11 +162,17 @@ export function renderRatingBadge(
 }
 
 export function collectionLabel(value: string) {
-  return value.toLocaleLowerCase() === "played" ? "Watched" : value;
+  const key = value.toLowerCase().replace(/[\s_-]+/g, "");
+  return key === "played"
+    ? "Watched"
+    : key === "watchsoon"
+      ? "Watch Soon"
+      : value;
 }
 
 export function collectionKind(value: string) {
   const key = value.toLowerCase();
+  if (key.replace(/[\s_-]+/g, "") === "watchsoon") return "watch-soon";
   return (
     (
       {
@@ -183,6 +200,7 @@ export function collectionSymbol(value: string) {
     watched: svg`<circle cx="12" cy="12" r="10"/><path d="m6 12 4 4 8-8"/>`,
     favorite: svg`<path d="M12 21 3 12C-3 4 6-1 12 6c6-7 15-2 9 6z"/>`,
     progress: svg`<circle cx="12" cy="12" r="10"/><path d="M9 7v10M15 7v10"/>`,
+    "watch-soon": svg`<circle cx="12" cy="12" r="10"/><path d="M12 6v6h5"/>`,
   };
   return svg`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${shapes[kind as keyof typeof shapes]}</svg>`;
 }

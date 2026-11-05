@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
+from zoneinfo import ZoneInfo
 
 import test_backend as backend
 from homeassistant import loader
@@ -40,6 +41,36 @@ Second Movie <https://www.kaleidescape.com/movie-store/movie/details/456> Includ
 Subtotal $19.99
 Taxes $1.00
 Total $20.99"""
+
+UNLINKED_BODY = """Order Information
+Order ID EXAMPLE123
+Item
+
+Quality
+
+Price
+The Fictional Voyage
+
+    $19.99
+
+    $9.99
+
+Another Fictional Movie
+
+    $14.99
+
+    $4.99
+
+The Last Example
+
+    $9.99
+
+    $9.99
+
+    &nbsp;
+Subtotal $24.97
+Taxes $2.00
+Total $26.97"""
 
 
 class BlueprintTest(unittest.IsolatedAsyncioTestCase):
@@ -141,7 +172,7 @@ class BlueprintTest(unittest.IsolatedAsyncioTestCase):
         doc = load_yaml(str(TEMPLATE_DIR / TEMPLATES["purchase_email"]))
         sequence = doc["actions"][-1]["choose"][0]["sequence"]
         self.assertEqual(
-            sequence[0]["action"], "kaleidescape_companion.import_purchase_email"
+            sequence[1]["action"], "kaleidescape_companion.import_purchase_email"
         )
         self.assertNotIn("system_log.write", str(doc))
 
@@ -169,10 +200,26 @@ class BlueprintTest(unittest.IsolatedAsyncioTestCase):
             )
 
         current_body = [BODY]
+        parts = [{}]
 
         async def fetch(call):
             self.assertEqual(call.data["entry"], "fictional-imap")
-            return {"text": current_body[0], "date": None}
+            return {
+                "text": current_body[0],
+                "date": "2026-10-13T12:30:00+00:00",
+                "parts": parts[0],
+            }
+
+        async def fetch_part(call):
+            self.assertEqual(str(call.data["part"]), "1")
+            return {
+                "content_type": "text/html",
+                "content_transfer_encoding": "quoted-printable",
+                "part_data": (
+                    '<a href=3D"https://store.kaleidescape.com/movie-store/'
+                    'movie/details/123">The Fictional Voyage</a>'
+                ),
+            }
 
         notifications = []
         self.hass.services.async_register(
@@ -182,6 +229,9 @@ class BlueprintTest(unittest.IsolatedAsyncioTestCase):
         )
         self.hass.services.async_register(
             "imap", "fetch", fetch, supports_response=SupportsResponse.ONLY
+        )
+        self.hass.services.async_register(
+            "imap", "fetch_part", fetch_part, supports_response=SupportsResponse.ONLY
         )
         async_register_services(self.hass)
         repo = SimpleNamespace(
@@ -219,12 +269,25 @@ class BlueprintTest(unittest.IsolatedAsyncioTestCase):
             self.assertIn("2 purchases imported", notifications[0]["message"])
             self.assertIn("1 need review", notifications[0]["message"])
             self.assertNotIn("Private title", notifications[0]["message"])
+            current_body[0] = UNLINKED_BODY
+            parts[0] = {"1": {"content_type": "text/html"}}
+            await script.async_run(
+                {"trigger": SimpleNamespace(event=event)}, context=Context()
+            )
+            payload = repo.async_purchase_email.await_args.args[0]
+            result = normalize(payload)
+            self.assertEqual(
+                next(row for row in result if row["title"] == "The Fictional Voyage")[
+                    "href"
+                ],
+                "/movie-store/movie/details/123",
+            )
             current_body[0] = BODY.replace("Total $20.99", "Total $21.00")
             await script.async_run(
                 {"trigger": SimpleNamespace(event=event)}, context=Context()
             )
-        self.assertEqual(repo.async_purchase_email.await_count, 2)
-        self.assertEqual(len(notifications), 2)
+        self.assertEqual(repo.async_purchase_email.await_count, 3)
+        self.assertEqual(len(notifications), 3)
 
     async def test_incomplete_duplicate_or_one_cent_disagreement_is_rejected(self):
         for body in (
@@ -267,6 +330,34 @@ class BlueprintTest(unittest.IsolatedAsyncioTestCase):
             )
         )
 
+    async def test_original_receipt_without_links_imports_complete_price_pairs(self):
+        values = await self.render(UNLINKED_BODY, date="2026-10-13T12:30:00+00:00")
+        self.assertTrue(values["receipt_valid"])
+        self.assertEqual(values["purchased_on"], "2026-10-13")
+        purchases = values["purchases"]
+        self.assertEqual(
+            [item["title"] for item in purchases],
+            ["The Fictional Voyage", "Another Fictional Movie", "The Last Example"],
+        )
+        self.assertEqual(
+            [item["purchase_price"] for item in purchases],
+            ["$9.99", "$4.99", "$9.99"],
+        )
+        self.assertTrue(all(item["href"] is None for item in purchases))
+        self.assertEqual(len(normalize(values["receipt"])), 3)
+
+    async def test_original_receipt_without_links_rejects_ambiguous_items(self):
+        for body in (
+            UNLINKED_BODY.replace("    $19.99\n", "", 1),
+            UNLINKED_BODY.replace("    $9.99\n\n    &nbsp;", "\n    &nbsp;", 1),
+            UNLINKED_BODY.replace("The Last Example", "The Fictional Voyage"),
+            UNLINKED_BODY.replace("The Last Example", "The Last Example Included"),
+            UNLINKED_BODY.replace("Subtotal $24.97", "Subtotal $24.98"),
+        ):
+            with self.subTest(body=body):
+                values = await self.render(body, date="2026-10-13T12:30:00+00:00")
+                self.assertFalse(values["receipt_valid"])
+
     async def test_iso_date_fallback_and_forward_does_not_use_forward_date(self):
         body = BODY.replace("Order Date: October 13, 2026\n", "")
         values = await self.render(body, date="2026-10-13T12:30:00+00:00")
@@ -278,6 +369,116 @@ class BlueprintTest(unittest.IsolatedAsyncioTestCase):
         )
         self.assertIsNone(forward["purchased_on"])
         self.assertFalse(forward["receipt_valid"])
+
+    async def test_original_utc_email_date_uses_home_assistant_timezone(self):
+        body = BODY.replace("Order Date: October 13, 2026\n", "")
+        with patch(
+            "homeassistant.util.dt.DEFAULT_TIME_ZONE", ZoneInfo("America/Chicago")
+        ):
+            values = await self.render(body, date="2026-10-14T04:35:00+00:00")
+        self.assertTrue(values["receipt_valid"])
+        self.assertEqual(values["purchased_on"], "2026-10-13")
+
+    async def test_nested_forward_strips_quotes_and_uses_original_receipt_date(self):
+        receipt = """From: Kaleidescape Movie Store <store@kaleidescape.com>
+Date: Tue, Oct 13, 2026 at 9:01\u202fAM
+Subject: Kaleidescape Store Receipt (Order ID EXAMPLE123)
+
+Order Information - 2 Items Order ID EXAMPLE123
+Item Quality Price
+The Fictional Voyage
+<https://store.kaleidescape.com/movie-store/movie/details/123> [image:
+HD] $19.99 $9.99
+Another Fictional Movie <https://store.kaleidescape.com/movie-store/movie/details/456>
+[image:
+4K] $14.99 $4.99
+    Subtotal $14.98
+    Taxes $1.00
+    Total $15.98"""
+        for prefix in ("> ", "> > "):
+            with self.subTest(prefix=prefix):
+                quoted = "\r\n".join(prefix + line for line in receipt.splitlines())
+                body = (
+                    "From: Forwarder <forwarder@example.invalid>\r\n"
+                    "Date: Wed, Oct 14, 2026 at 8:08\u202fPM\r\n"
+                    "Subject: Fwd: Kaleidescape Store Receipt\r\n\r\n" + quoted
+                )
+                values = await self.render(
+                    body,
+                    subject="Fwd: Kaleidescape Store Receipt",
+                    date="2026-10-15T12:30:00+00:00",
+                )
+                self.assertTrue(values["receipt_valid"])
+                self.assertEqual(values["purchased_on"], "2026-10-13")
+                self.assertEqual(values["total"], 15.98)
+                self.assertEqual(
+                    [item["title"] for item in values["purchases"]],
+                    ["The Fictional Voyage", "Another Fictional Movie"],
+                )
+                self.assertEqual(
+                    [item["purchase_price"] for item in values["purchases"]],
+                    ["$9.99", "$4.99"],
+                )
+
+    async def test_forward_with_cover_and_title_links_for_each_movie(self):
+        body = """From: Kaleidescape Movie Store <store@kaleidescape.com>
+Date: Tue, Oct 13, 2026 at 9:01 AM
+Subject: Kaleidescape Store Receipt (Order ID EXAMPLE123)
+
+Item Quality Price
+[image: Cover]
+<https://store.kaleidescape.com/movie-store/movie/details/123> The Fictional
+Voyage Beyond
+<https://store.kaleidescape.com/movie-store/movie/details/123> [image:
+HD] $19.99 $9.99
+[image: Cover]
+<https://store.kaleidescape.com/movie-store/movie/details/456> Another Fictional
+Film <https://store.kaleidescape.com/movie-store/movie/details/456>
+[image:
+HD] $14.99 $4.99
+[image: Cover]
+<https://store.kaleidescape.com/movie-store/movie/details/789> The Last
+Example
+<https://store.kaleidescape.com/movie-store/movie/details/789> [image:
+4K] $9.99 $9.99
+Subtotal $24.97
+Taxes $2.00
+Total $26.97"""
+        values = await self.render(body, subject="Fwd: Kaleidescape Store Receipt")
+        self.assertTrue(values["receipt_valid"])
+        self.assertEqual(
+            [item["title"] for item in values["purchases"]],
+            [
+                "The Fictional Voyage Beyond",
+                "Another Fictional Film",
+                "The Last Example",
+            ],
+        )
+        self.assertEqual(
+            [item["purchase_price"] for item in values["purchases"]],
+            ["$9.99", "$4.99", "$9.99"],
+        )
+        self.assertEqual(len(normalize(values["receipt"])), 3)
+        duplicate = body.replace("details/789", "details/123")
+        values = await self.render(duplicate, subject="Fwd: Kaleidescape Store Receipt")
+        self.assertTrue(values["parsed"]["duplicate_movie"])
+        self.assertFalse(values["receipt_valid"])
+
+    async def test_forward_without_original_receipt_date_is_rejected(self):
+        body = (
+            "From: Forwarder <forwarder@example.invalid>\n"
+            "Date: Wed, Oct 14, 2026 at 8:08 PM\n"
+            "Subject: Fwd: Kaleidescape Store Receipt\n\n"
+            + "\n".join(
+                "> " + line
+                for line in BODY.replace(
+                    "Order Date: October 13, 2026\n", ""
+                ).splitlines()
+            )
+        )
+        values = await self.render(body, subject="Fwd: Kaleidescape Store Receipt")
+        self.assertIsNone(values["purchased_on"])
+        self.assertFalse(values["receipt_valid"])
 
 
 class BlueprintAccessTest(unittest.IsolatedAsyncioTestCase):

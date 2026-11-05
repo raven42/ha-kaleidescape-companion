@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
 
 import test_backend as backend
+import test_database_admin as database
 import test_importing as importing
 import test_library as library
 from test_purchase_importing import payload, purchase
@@ -16,6 +17,19 @@ class PurchaseTotalsTest(unittest.IsolatedAsyncioTestCase):
     preview = importing.ImportStorageTest.preview
     apply = importing.ImportStorageTest.apply
     assert_error = importing.ImportStorageTest.assert_error
+    mutate = database.DatabaseStorageTest.mutate
+
+    async def test_database_price_edit_updates_ledger_and_library_revision(self):
+        target = await self.seed_library()
+        await self.apply(await self.preview(payload(purchase(purchase_price=None))))
+        before = await self.repository.async_purchase_totals(library.SOURCE)
+        self.assertEqual(before["missing_purchase_prices"], 1)
+        page = await self.repository.async_inspect("library", limit=100)
+        index = next(i for i, row in enumerate(page["items"]) if row["id"] == target)
+        await self.mutate(page, patch_data={"purchase_price": "$12.99"}, index=index)
+        after = await self.repository.async_purchase_totals(library.SOURCE)
+        self.assertGreater(after["revision"], before["revision"])
+        self.assertEqual(after["missing_purchase_prices"], 0)
 
     async def test_exact_cents_repeat_orders_missing_prices_and_mixed_currencies(self):
         await self.seed_library()

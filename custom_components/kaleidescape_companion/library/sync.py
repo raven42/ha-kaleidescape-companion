@@ -515,7 +515,15 @@ class LibrarySync:
                         self._manual_sync
                         or (self.error, failed) != self._reported_error
                     ):
-                        if failed:
+                        if failed and self.error == "library_changed":
+                            _LOGGER.error(
+                                "Library sync conflict (library_changed): a collection "
+                                "referenced a movie absent from the catalog snapshot; "
+                                "catalog and collection updates were rolled back. "
+                                "Retry the sync (operation_id=%s)",
+                                operation_id,
+                            )
+                        elif failed:
                             _LOGGER.error(
                                 "Library synchronization failed; processed %s of %s "
                                 "detail candidates (operation_id=%s)",
@@ -539,7 +547,22 @@ class LibrarySync:
                         )
                     self._reported_error = (self.error, failed)
                 else:
-                    if self._reported_error is not None:
+                    if self._reported_error == ("library_changed", True):
+                        if self.config["library_sync_collections"]:
+                            _LOGGER.warning(
+                                "Library sync conflict (library_changed) resolved: "
+                                "a later catalog and collection sync succeeded "
+                                "(operation_id=%s)",
+                                operation_id,
+                            )
+                        else:
+                            _LOGGER.warning(
+                                "Library sync resumed after conflict "
+                                "(library_changed), but collection sync was disabled; "
+                                "the conflict was not rechecked (operation_id=%s)",
+                                operation_id,
+                            )
+                    elif self._reported_error is not None:
                         _LOGGER.info("Library synchronization recovered")
                     self._reported_error = None
                     _LOGGER.info(

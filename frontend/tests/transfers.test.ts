@@ -132,6 +132,7 @@ it("puts unresolved purchases first and uses the revised token after choosing a 
         directors: ["Fictional Director"],
         version_count: 2,
         source_hint: "fictional",
+        artwork_key: "a".repeat(64),
       },
     ],
     has_more: false,
@@ -142,6 +143,7 @@ it("puts unresolved purchases first and uses the revised token after choosing a 
     action: "merge" as const,
     detail: "Selected Library movie: Known remake · 2026",
     changes: { source_group: { before: null, after: "known-group" } },
+    artwork_key: "a".repeat(64),
   };
   vi.spyOn(element.client!, "matchImportPurchase").mockResolvedValue({
     plan_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
@@ -168,12 +170,25 @@ it("puts unresolved purchases first and uses the revised token after choosing a 
   await matcher.updateComplete;
   expect(button("Apply 2 selected changes").disabled).toBe(true);
   expect(matcher.shadowRoot!.textContent).toContain("2026");
+  expect(
+    matcher.shadowRoot!.querySelector("kaleidescape-library-cover"),
+  ).not.toBeNull();
+  expect(
+    (
+      matcher.shadowRoot!.querySelector(
+        "kaleidescape-library-cover",
+      ) as HTMLElement & { artworkKey: string }
+    ).artworkKey,
+  ).toBe("a".repeat(64));
   matcher
     .shadowRoot!.querySelector<HTMLButtonElement>('[role="option"]')!
     .click();
   await flush();
   expect(apply).not.toHaveBeenCalled();
   expect(root().querySelector("kaleidescape-import-matcher")).toBeNull();
+  expect(
+    root().querySelector("tbody kaleidescape-library-cover"),
+  ).not.toBeNull();
   button("Apply 3 selected changes").click();
   await flush();
   expect(apply.mock.calls[0][0].message).toMatchObject({

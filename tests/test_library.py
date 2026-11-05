@@ -554,6 +554,48 @@ class LibrarySyncTest(unittest.IsolatedAsyncioTestCase):
         )
         return sync
 
+    async def test_collection_conflict_logs_rollback_and_later_recovery_privately(self):
+        await self.seed()
+        before = await self.page()
+        sync = await self.connector(
+            library_sync_details=False, library_sync_artwork=False
+        )
+        sync.browser.collection = AsyncMock(
+            return_value=[{"source_handle": "private-missing-handle"}]
+        )
+        with self.assertLogs(
+            "custom_components.kaleidescape_companion.library.sync", level="WARNING"
+        ) as logs:
+            await sync._run()
+            self.assertEqual(sync.error, "library_changed")
+            self.assertEqual(await self.page(), before)
+            await sync._run()
+            sync.browser.collection = AsyncMock(return_value=[])
+            await sync._run()
+        self.assertIsNone(sync.error)
+        self.assertEqual(len(logs.output), 2)
+        self.assertIn("absent from the catalog snapshot", logs.output[0])
+        self.assertIn("updates were rolled back", logs.output[0])
+        self.assertIn("collection sync succeeded", logs.output[1])
+        self.assertNotIn("private-missing-handle", str(logs.output))
+        self.assertNotIn(ROWS[0]["title"], str(logs.output))
+
+    async def test_collection_conflict_is_not_claimed_resolved_when_disabled(self):
+        sync = await self.connector(
+            library_sync_details=False, library_sync_artwork=False
+        )
+        sync.browser.collection = AsyncMock(
+            return_value=[{"source_handle": "private-missing-handle"}]
+        )
+        with self.assertLogs(
+            "custom_components.kaleidescape_companion.library.sync", level="WARNING"
+        ) as logs:
+            await sync._run()
+            sync.config["library_sync_collections"] = False
+            await sync._run()
+        self.assertIn("conflict was not rechecked", logs.output[-1])
+        self.assertNotIn("resolved", logs.output[-1])
+
     async def test_sync_toggles_skip_detail_artwork_and_collection_requests(self):
         sync = await self.connector(
             library_sync_details=False,

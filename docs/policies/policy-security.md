@@ -48,6 +48,8 @@ purchase prices/orders/store references and recorder diagnostics. Purchase dates
 and shared viewing/movie facts are visible where the feature permits them. Now
 Playing also respects source entity read permission. Administrators and HA
 backups can access the full stored dataset; tombstones are not secure erasure.
+The Watch Soon indicator, like Favorite, exposes source collection membership
+for available movie groups even when that collection name is hidden from lists.
 
 Companion's HA configuration switches and sync buttons can be operated by users
 and automations allowed to control those entities by Home Assistant. They
@@ -64,11 +66,13 @@ values are not overwritten; conflicts are returned for review. Unique proposed
 matches are applied without human review and are not proof of identity. An
 administrator can reconcile saved unmatched purchases while recording remains
 active; choices are actor- and revision-bound and require an available scanned
-Library entry. HA automation traces and action responses may contain private
-invoice data and need appropriate access controls. Public store refresh may fill
-a missing retail price, but never a purchase price. The missing purchase
-information sensor exposes its count and bounded movie names to HA entity
-readers. Its Library filter and purchase editing are limited to administrators.
+Library entry. Match results include only cached artwork keys; cover images use
+the existing authenticated Library artwork endpoint. HA automation traces and
+action responses may contain private invoice data and need appropriate access
+controls. Public store refresh may fill a missing retail price, but never a
+purchase price. The missing purchase information sensor exposes its count and
+bounded movie names to HA entity readers. Its Library filter and purchase
+editing are limited to administrators.
 
 When HA automations are available, Companion installs missing packaged
 blueprints through HA's blueprint manager. It does not create or enable an
@@ -85,11 +89,19 @@ action uses the same dedicated calendar and reconciliation checks as its button.
 The purchase-email blueprint filters a selected IMAP entry and can filter sender
 text, which does not authenticate the sender. Receipt values and action
 responses can appear in HA automation traces; the blueprint does not write them
-to the system log or notifications. The metadata refresh action accepts known
-provider names and only contacts enabled providers. Calendar Full Sync remains
-restricted to an explicitly acknowledged dedicated calendar, with its existing
-snapshot, grace and uncertainty checks. Its optional automation requests the
-second check; no in-process schedule performs it.
+to the system log or notifications. The receipt parser strips email quote
+markers and, for a forward without an explicit purchase date, requires a date
+adjacent to a Kaleidescape Store sender header instead of using the forward
+date. That header is not authentication; forwarded receipts without a usable
+original date are rejected. For linkless plain-text receipts the blueprint may
+fetch the HTML part of the same IMAP message. Import uses bounded decoding and
+only associates a uniquely titled movie link on the fixed Store host; missing or
+ambiguous links remain unset. The fetched part can appear in HA traces and is
+not logged by Companion. The metadata refresh action accepts known provider
+names and only contacts enabled providers. Calendar Full Sync remains restricted
+to an explicitly acknowledged dedicated calendar, with its existing snapshot,
+grace and uncertainty checks. Its optional automation requests the second check;
+no in-process schedule performs it.
 
 ## Storage, imports and rendering
 

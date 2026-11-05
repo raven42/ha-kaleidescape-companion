@@ -40,6 +40,7 @@ import type { KaleidescapeSettings } from "./settings";
 import type { KaleidescapeDatabase } from "./database";
 import type { KaleidescapeLibrary } from "../library/library";
 import type { ViewingSummary } from "../core/api";
+import companionIcon from "./assets/companion-icon.png?inline";
 import type { KaleidescapeReader } from "./reader";
 import { PreferenceStore } from "./preference-store";
 import { viewModeSwitch } from "./view-mode";
@@ -1003,7 +1004,15 @@ export class KaleidescapePanel extends LitElement {
       }
     `;
   }
+  private clearJournalSearch() {
+    this.query = this.searchText = "";
+    this.page = 1;
+    this.history = [];
+    void this.loadList();
+    this.requestUpdate();
+  }
   private renderJournal() {
+    const calendarView = this.journalView === "calendar" && !this.query.trim();
     const blocked = this.loading || this.saving || !!this.pending;
     const retry =
       this.pending && !this.saving
@@ -1019,12 +1028,12 @@ export class KaleidescapePanel extends LitElement {
             </div>`
         : nothing;
     return html`<section
-        class=${`card journal${this.journalView === "calendar" ? " journal-calendar-mode" : ""}`}
+        class=${`card journal${calendarView ? " journal-calendar-mode" : ""}`}
         aria-label="Journal"
       >
         <div class="entries-header">
           ${
-            this.journalView === "calendar"
+            calendarView
               ? html`<kaleidescape-journal-shortcuts
                   .context=${this.api}
                   .scopeKey=${`${this.info?.entry_id}:${this.info?.dataset_id}`}
@@ -1034,33 +1043,24 @@ export class KaleidescapePanel extends LitElement {
                   .filtered=${!!this.status || !!this.journalMovie}
                   .filterLabel=${this.journalMovie ? `Viewings for ${this.journalMovie.title}` : ""}
                   @journal-search=${(event: CustomEvent<string>) => {
-                    this.query = this.searchText = event.detail;
-                    this.page = 1;
-                    this.history = [];
-                    void this.loadList();
-                  }}
-                  @journal-clear=${() => {
-                    this.query =
-                      this.searchText =
-                      this.status =
-                      this.filterStatus =
-                        "";
-                    this.journalMovie = undefined;
+                    this.query = this.searchText = event.detail.trim();
                     this.page = 1;
                     this.history = [];
                     void this.loadList();
                   }}
                   @journal-add=${this.newRecord}
+                  @journal-clear-movie=${() => this.switchPage("journal")}
                   @journal-open-options=${() => this.renderRoot.querySelector<JournalOptions>("kaleidescape-journal-options")?.open()}
                 ></kaleidescape-journal-shortcuts>`
               : nothing
           }
           ${this.journalMovie ? html`<p class="journal-movie-filter">Viewings for ${this.journalMovie.title} <button ?disabled=${blocked} @click=${() => this.switchPage("journal")}>Show all viewings</button></p>` : nothing}
+          ${this.query.trim() ? html`<button type="button" class="journal-search-chip" aria-label=${`Clear search: ${this.query}`} ?disabled=${blocked} @click=${this.clearJournalSearch}><span>${this.query}</span><span aria-hidden="true">×</span></button>` : nothing}
           <form
             class="filters journal-filters"
             @submit=${(event: Event) => {
               event.preventDefault();
-              this.query = this.searchText;
+              this.query = this.searchText = this.searchText.trim();
               this.status = this.filterStatus;
               this.page = 1;
               this.history = [];
@@ -1068,18 +1068,23 @@ export class KaleidescapePanel extends LitElement {
             }}
           >
             <label
-              >Search titles<input
-                name="search"
-                type="search"
-                maxlength="500"
-                .value=${this.searchText}
-                ?disabled=${blocked}
-                @input=${(event: Event) => {
-                  this.searchText = (event.target as HTMLInputElement).value;
-                }}
-            /></label>
+              >Search titles<span class="journal-search-input"
+                ><input
+                  name="search"
+                  type="search"
+                  maxlength="500"
+                  .value=${this.searchText}
+                  ?disabled=${blocked}
+                  @input=${(event: Event) => {
+                    this.searchText = (event.target as HTMLInputElement).value;
+                    if (!this.searchText && this.query)
+                      this.clearJournalSearch();
+                  }}
+                />${this.query.trim() ? html`<button type="button" class="journal-clear-search" aria-label="Clear Journal search" title="Clear search" ?disabled=${blocked} @click=${this.clearJournalSearch}>×</button>` : nothing}</span
+              ></label
+            >
             <div class="journal-filter-tools">
-              <label ?hidden=${this.journalView === "calendar"}
+              <label ?hidden=${calendarView}
                 >Sort by<select
                   name="journal_sort"
                   .value=${this.sort}
@@ -1099,7 +1104,7 @@ export class KaleidescapePanel extends LitElement {
               >
               <button
                 type="button"
-                ?hidden=${this.journalView === "calendar"}
+                ?hidden=${calendarView}
                 ?disabled=${blocked}
                 @click=${() => {
                   this.descending = !this.descending;
@@ -1131,7 +1136,7 @@ export class KaleidescapePanel extends LitElement {
                 Refresh
               </button>
               <kaleidescape-journal-options
-                .mobileCompact=${this.journalView === "calendar"}
+                .mobileCompact=${calendarView}
                 @journal-refresh=${() => this.refresh()}
                 .status=${this.status}
                 @journal-status=${(event: CustomEvent<string>) => {
@@ -1167,7 +1172,7 @@ export class KaleidescapePanel extends LitElement {
           </form>
         </div>
         ${
-          this.journalView === "calendar"
+          calendarView
             ? html`<kaleidescape-journal-calendar
                 @calendar-status=${(event: CustomEvent<CalendarStatus>) => {
                   this.calendarStatus = event.detail;
@@ -1260,7 +1265,7 @@ export class KaleidescapePanel extends LitElement {
         }
         <footer class="entries-footer journal-status">
           <span>
-            ${journalTotals(this.info, this.journalView === "calendar" ? this.calendarStatus : undefined, this.journalView === "calendar")}
+            ${journalTotals(this.info, calendarView ? this.calendarStatus : undefined, calendarView)}
             <span class="journal-system-details"
               >· ${this.bytes(this.info?.database_bytes ?? 0)} /
               ${this.bytes(this.info?.database_limit_bytes ?? 0)} database ·
@@ -1271,7 +1276,7 @@ export class KaleidescapePanel extends LitElement {
               ${this.info?.revision}</span
             > </span
           >${
-            this.journalView === "calendar"
+            calendarView
               ? calendarNotice(this.calendarStatus, () => {
                   void this.renderRoot
                     .querySelector<JournalCalendar>(
@@ -1282,7 +1287,7 @@ export class KaleidescapePanel extends LitElement {
               : nothing
           }
 
-          <div class="pagination" ?hidden=${this.journalView === "calendar"}>
+          <div class="pagination" ?hidden=${calendarView}>
             <small>Page ${this.page} · Up to 25 entries</small>
             <div class="actions">
               <button
@@ -1408,6 +1413,12 @@ export class KaleidescapePanel extends LitElement {
     return html`<main>
       <header>
         ${this.hass && this.narrow ? html`<button class="menu" aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: true, composed: true }))}>☰</button>` : nothing}
+        <img
+          class="companion-icon"
+          src=${companionIcon}
+          alt=""
+          aria-hidden="true"
+        />
         <div class="grow">
           <span class="eyebrow">Kaleidescape Companion · Administrator</span>
           <h1>Kaleidescape Companion</h1>

@@ -118,6 +118,13 @@ omission, not a universal scrubber for arbitrary strings.
 | HTTP/WebSocket/UI services          | Safe owned operation failures, authorization/scope handling and cleanup                                         |
 | Backup/diagnostics/sensors          | Pause/resume, unavailable snapshots and local refresh failures                                                  |
 
+When a collection references a handle missing from the catalog snapshot, Library
+sync logs the `library_changed` conflict and the rollback of that generation. A
+subsequent successful catalog and collection sync logs recovery; if collection
+sync was disabled, it reports that the conflict was not rechecked. Repeated
+automatic failures remain bounded. Logs do not identify the affected collection
+or movie, so they cannot establish which source change caused the mismatch.
+
 Ordinary transport activity must not produce unbounded per-frame logs. Keep
 formatting cheap and avoid synchronous I/O on HA's event loop. Existing bounded
 queues and persisted receipts serve their application purpose, not a second

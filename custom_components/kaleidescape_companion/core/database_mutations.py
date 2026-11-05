@@ -107,6 +107,8 @@ def mutation(db, directory, request, actor, data, calendar=None):
                     "conflict", "Selected row changed; reload before applying"
                 )
             source = row.get("source_id") if table.startswith("library_") else None
+            if table == "library" and row.get("source_id"):
+                sources.add(row["source_id"])
             if table == "library_sources":
                 source = row["id"]
             if source:

@@ -1,7 +1,9 @@
 """Purchase email actions, atomic matching, and bundle allocation."""
 
+import base64
 import json
 import unittest
+from contextlib import closing
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
 
@@ -38,6 +40,32 @@ class EmailTest(unittest.IsolatedAsyncioTestCase):
     seed_library = importing.ImportStorageTest.seed_library
     assert_error = importing.ImportStorageTest.assert_error
 
+    async def test_html_links_are_used_only_for_unique_exact_store_titles(self):
+        document = """
+          <a href="https://store.kaleidescape.com/movie-store/movie/details/123"><img></a>
+          <a href="/movie-store/movie/details/123">Film &amp; Example</a>
+          <a href="https://store.kaleidescape.com/movie-store/movie/details/456">Ambiguous</a>
+          <a href="https://store.kaleidescape.com/movie-store/movie/details/789">Ambiguous</a>
+          <a href="https://attacker.invalid/movie-store/movie/details/999">
+            Wrong Host</a>
+        """
+        email = invoice(
+            movie("Film & Example"), movie("Ambiguous"), movie("Wrong Host")
+        )
+        email["html_part"] = {
+            "content_type": "text/html",
+            "content_transfer_encoding": "base64",
+            "part_data": base64.b64encode(document.encode()).decode(),
+        }
+        records = {row["title"]: row for row in normalize(email)}
+        self.assertEqual(
+            records["Film & Example"]["href"], "/movie-store/movie/details/123"
+        )
+        self.assertIsNone(records["Ambiguous"]["href"])
+        self.assertIsNone(records["Wrong Host"]["href"])
+        email["purchases"][0]["href"] = "/movie-store/movie/details/999"
+        self.assertEqual(normalize(email)[0]["href"], "/movie-store/movie/details/999")
+
     async def test_unmatched_receipt_is_saved_then_linked_after_library_sync(self):
         email = invoice(movie(library.ROWS[0]["title"]))
         result = await self.repository.async_purchase_email(email)
@@ -69,6 +97,23 @@ class EmailTest(unittest.IsolatedAsyncioTestCase):
             await self.repository.async_purchase_reconciliation("admin"),
             {"empty": True},
         )
+
+    async def test_receipt_with_html_link_can_be_replayed_without_duplicate(self):
+        email = invoice(movie("Unscanned title"))
+        email["html_part"] = {
+            "content_type": "text/html",
+            "content_transfer_encoding": "quoted-printable",
+            "part_data": (
+                '<a href=3D"https://store.kaleidescape.com/movie-store/'
+                'movie/details/123">Unscanned title</a>'
+            ),
+        }
+        await self.repository.async_purchase_email(email)
+        result = await self.repository.async_purchase_email(email)
+        rows = (await self.repository.async_inspect("purchase_records"))["items"]
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["href"], "/movie-store/movie/details/123")
+        self.assertEqual(result["status"], "needs_review")
 
     async def test_unmatched_receipt_is_in_both_backup_formats(self):
         from custom_components.kaleidescape_companion.core.importing import parse_bundle
@@ -111,7 +156,7 @@ class EmailTest(unittest.IsolatedAsyncioTestCase):
         )
         stored = {key: item[key] for key in keys}
         await self.repository.async_close()
-        with sqlite3.connect(self.path) as db:
+        with closing(sqlite3.connect(self.path)) as db, db:
             db.execute("DROP TABLE purchase_records")
             db.execute(
                 "ALTER TABLE library ADD COLUMN purchase_history "

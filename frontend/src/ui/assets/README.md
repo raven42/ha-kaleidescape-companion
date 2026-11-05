@@ -27,3 +27,6 @@ The rating component embeds these assets as local image data URLs. They add no
 third-party browser request and contain no executable markup or external links.
 TMDB's circular percentage display is a CSS/SVG score visualization; the
 separate approved TMDB logo and attribution remain in the metadata credits.
+`companion-icon.png` is the packaged Companion icon copied from
+`custom_components/kaleidescape_companion/brand/icon.png`. It is bundled into
+the panel for the desktop header.

@@ -1,0 +1,728 @@
+# Version history:
+# v5: Parse linkless receipts, recover HTML links, and localize email dates.
+# v4: Parse quoted forwards and use the original receipt date.
+# v3: Store unmatched purchases for database reconciliation.
+# v2: Import matched purchases while returning unresolved records for review.
+# v1: Introduce validated purchase receipt parsing and import.
+# End version history
+blueprint:
+  name: Kaleidescape Companion - Import purchase receipts
+  description: >-
+    Parse purchase receipts from a selected IMAP integration and import validated
+    purchases. Review unmatched purchases in Companion's Database.
+    Blueprint version: 5.
+  domain: automation
+  input:
+    imap_entry:
+      name: IMAP account
+      description: Select the IMAP integration that receives purchase receipts.
+      selector:
+        config_entry:
+          integration: imap
+    sender_filter:
+      name: Sender contains (optional)
+      description: Filter the IMAP sender address; this does not authenticate the sender.
+      default: ""
+      selector:
+        text:
+variables:
+  sender_filter: !input sender_filter
+triggers:
+  - trigger: event
+    event_type: imap_content
+    event_data:
+      entry_id: !input imap_entry
+conditions:
+  - condition: template
+    value_template: |-
+      {{ 'kaleidescape store receipt' in
+         (trigger.event.data.get('subject') | default('', true) | string | lower)
+         and (not sender_filter or
+           (sender_filter | lower) in
+           (trigger.event.data.get('sender') | default('', true) | string | lower)) }}
+actions:
+  - action: imap.fetch
+    data:
+      entry: '{{ trigger.event.data[''entry_id''] }}'
+      uid: '{{ trigger.event.data[''uid''] }}'
+    response_variable: email
+  - variables:
+      body: |-
+        {{ email.get('text', '') | string |
+           regex_replace('(?m)^[ \\t]*(?:>[ \\t]*)+', '') }}
+  - variables:
+      order_id: |-
+        {{ (
+          body |
+          regex_findall('Order ID\\s+([A-Z0-9]+)') |
+          first | default('', true)
+        ) | string }}
+      subtotal: |-
+        {{ (
+          body |
+          regex_findall('Subtotal\\s+\\$([\\d,]+\\.\\d{2})') |
+          first | default('', true) |
+          replace(',', '')
+        ) | float(-1) }}
+      taxes: |-
+        {{ (
+          body |
+          regex_findall('Taxes\\s+\\$([\\d,]+\\.\\d{2})') |
+          first | default('', true) |
+          replace(',', '')
+        ) | float(-1) }}
+      total: |-
+        {{ (
+          body |
+          regex_findall(
+            '(?m)^\\s*Total\\s+\\$([\\d,]+\\.\\d{2})'
+          ) |
+          first | default('', true) |
+          replace(',', '')
+        ) | float(-1) }}
+  - variables:
+      purchased_on: |-
+        {% set ns = namespace(
+          candidates=[],
+          result=none
+        ) %}
+        {% set labeled = body | regex_findall(
+          '(?im)^\\s*(?:Order Date|Purchase Date)\\s*:\\s*([^\\r\\n]+)'
+        ) %}
+        {% set headers = body | regex_findall(
+          '(?im)^\\s*Date:\\s*([^\\r\\n]+)'
+        ) %}
+        {% set forwarded = trigger.event.data.get('subject') | default('', true) | string | regex_search('(?i)^\\s*(?:fwd?|forwarded):') %}
+        {% if forwarded %}
+          {% set original_headers = body | regex_findall(
+            '(?im)^[ \\t]*From:[^\\r\\n]*\\bstore@kaleidescape[.]com\\b[^\\r\\n]*\\r?\\n[ \\t]*Date:[ \\t]*([^\\r\\n]+)'
+          ) %}
+          {% set ns.candidates = labeled + (original_headers | reverse | list) %}
+        {% else %}
+          {% set ns.candidates = labeled + (headers | reverse | list) %}
+          {% if email.get('date') %}
+            {% set ns.candidates =
+              ns.candidates +
+              [email.get('date') | string] %}
+          {% endif %}
+        {% endif %}
+        {% set formats = [
+          '%Y-%m-%d',
+          '%Y-%m-%dT%H:%M:%S%z',
+          '%Y-%m-%dT%H:%M:%S.%f%z',
+          '%B %d, %Y',
+          '%b %d, %Y',
+          '%a, %d %b %Y %H:%M:%S %z',
+          '%a, %d %b %Y %H:%M %z',
+          '%d %b %Y %H:%M:%S %z',
+          '%a, %d %b %Y %H:%M:%S',
+          '%a, %d %b %Y %H:%M',
+          '%a, %b %d, %Y %I:%M %p',
+          '%a, %b %d, %Y at %I:%M %p'
+        ] %}
+        {% for candidate in ns.candidates %}
+          {% if ns.result is none %}
+            {% set value = candidate | trim %}
+
+            {% for fmt in formats %}
+              {% if ns.result is none %}
+                {% set dt = strptime(value, fmt, none) %}
+                {% if dt is not none %}
+                  {% if not forwarded and email.get('date') and
+                        value == (email.get('date') | string) and dt.tzinfo is not none %}
+                    {% set dt = as_local(dt) %}
+                  {% endif %}
+                  {% set ns.result =
+                    dt.strftime('%Y-%m-%d') %}
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.result }}
+  - variables:
+      item_section: |-
+        {{ body | regex_findall('(?is)item\\s+quality\\s+price(.*?)\\bsubtotal\\b')
+           | first | default('', true) }}
+  - variables:
+      parsed: |-
+        {% set ns = namespace(
+          movies=[],
+          collections=[],
+          seen_movies=[],
+          seen_collections=[],
+          active_collection='',
+          pending_title='',
+          pending_movie=-1,
+          pending_collection=-1,
+          pending_kind='',
+          collection_title_open=false,
+          duplicate_movie=false
+        ) %}
+        {% for raw in item_section.splitlines() %}
+          {% set line = raw | trim %}
+
+          {% set line = line |
+            replace('&amp;', '&') |
+            replace('&#039;', "'") |
+            replace('&quot;', '"') |
+            replace('&nbsp;', ' ') %}
+
+          {% set set_ids = line | regex_findall(
+            '/movie-store/set/([A-Za-z0-9_-]+)'
+          ) %}
+
+          {% set movie_links = line | regex_findall(
+            '(https?://[^>\\s]*/movie-store/movie/[^>\\s]+)'
+          ) %}
+
+          {% set movie_ids = line | regex_findall(
+            '/movie/details/(\\d+)'
+          ) %}
+
+          {% set prices = line | regex_findall(
+            '\\$([\\d,]+\\.\\d{2})'
+          ) %}
+
+          {% set leading = line |
+            regex_replace(
+              '<https?://[^>]+>.*$',
+              ''
+            ) |
+            regex_replace('\\[image:[^\\]]+\\]', '') |
+            trim %}
+
+          {% set trailing = line |
+            regex_replace(
+              '^.*?<https?://[^>]+>',
+              ''
+            ) |
+            regex_replace('\\[image:[^\\]]+\\]', '') |
+            trim %}
+
+          {% set trailing_title = trailing |
+            regex_replace('\\$[\\d,]+\\.\\d{2}', '') |
+            trim %}
+
+          {% if not line %}
+            {# Empty line #}
+
+          {% elif line == '[image: Cover]' %}
+            {# A new cover identifies a new top-level item #}
+            {% set ns.active_collection = '' %}
+            {% set ns.pending_movie = -1 %}
+            {% set ns.pending_kind = '' %}
+            {% set ns.pending_title = '' %}
+            {% set ns.collection_title_open = false %}
+
+          {% elif set_ids | length > 0 %}
+            {% set sid = set_ids[0] %}
+
+            {% set ns.active_collection = sid %}
+            {% set ns.pending_kind = 'collection' %}
+            {% set ns.pending_movie = -1 %}
+
+            {% set title_part = (
+              leading if leading
+              else trailing_title
+            ) | trim %}
+
+            {% if sid not in ns.seen_collections %}
+              {% set ns.collections =
+                ns.collections + [{
+                  'collection_id': sid,
+                  'title': title_part,
+                  'retail_price': none,
+                  'purchase_price': none
+                }] %}
+
+              {% set ns.seen_collections =
+                ns.seen_collections + [sid] %}
+
+              {% set ns.pending_collection =
+                ns.collections | length - 1 %}
+
+              {% set ns.collection_title_open = true %}
+
+            {% elif ns.pending_collection >= 0
+                    and ns.collection_title_open
+                    and title_part %}
+
+              {% set idx = ns.pending_collection %}
+              {% set c = ns.collections[idx] %}
+
+              {% if title_part not in c.title %}
+                {% set updated = dict(
+                  c,
+                  title=(c.title ~ ' ' ~ title_part) | trim
+                ) %}
+
+                {% set ns.collections =
+                  ns.collections[:idx] +
+                  [updated] +
+                  ns.collections[idx + 1:] %}
+              {% endif %}
+            {% endif %}
+
+            {% if prices | length > 0
+                  and ns.pending_collection >= 0 %}
+
+              {% set idx = ns.pending_collection %}
+              {% set c = ns.collections[idx] %}
+
+              {% set retail =
+                prices[0] |
+                replace(',', '') | float %}
+
+              {% set purchase = (
+                prices[-1] if prices | length > 1
+                else prices[0]
+              ) | replace(',', '') | float %}
+
+              {% set updated = dict(
+                c,
+                retail_price=retail,
+                purchase_price=purchase
+              ) %}
+
+              {% set ns.collections =
+                ns.collections[:idx] +
+                [updated] +
+                ns.collections[idx + 1:] %}
+
+              {% set ns.collection_title_open = false %}
+            {% endif %}
+
+            {% set ns.pending_title = '' %}
+
+          {% elif movie_links | length > 0
+                  or movie_ids | length > 0 %}
+
+            {% set mid = (
+              movie_ids[0] if movie_ids | length > 0
+              else none
+            ) %}
+
+            {% set href = none %}
+
+            {% if movie_links | length > 0 %}
+              {% set href = movie_links[0] |
+                regex_replace('^https?://[^/]+', '') %}
+            {% endif %}
+
+            {% set title = leading %}
+
+            {% if not title or title.startswith('<') %}
+              {% set title = ns.pending_title %}
+            {% endif %}
+
+            {% set title = title | trim %}
+
+            {% set key = mid if mid is not none
+              else href %}
+
+            {% if key not in ns.seen_movies %}
+              {% set ns.movies = ns.movies + [{
+                'movie_id': mid,
+                'title': title,
+                'href': href,
+                'collection_id':
+                  ns.active_collection or none,
+                'included': 'Included' in line,
+                'retail_price': none,
+                'purchase_price': none
+              }] %}
+
+              {% set ns.seen_movies =
+                ns.seen_movies + [key] %}
+
+              {% set ns.pending_movie =
+                ns.movies | length - 1 %}
+            {% else %}
+              {% set ns.duplicate_movie = true %}
+              {% set ns.pending_movie = -1 %}
+            {% endif %}
+
+            {% set ns.pending_kind = 'movie' %}
+            {% set ns.collection_title_open = false %}
+            {% set ns.pending_title = '' %}
+
+            {% if prices | length > 0
+                  and ns.pending_movie >= 0 %}
+
+              {% set idx = ns.pending_movie %}
+              {% set m = ns.movies[idx] %}
+
+              {% set retail =
+                prices[0] |
+                replace(',', '') | float %}
+
+              {% set purchase = (
+                prices[-1] if prices | length > 1
+                else prices[0]
+              ) | replace(',', '') | float %}
+
+              {% set updated = dict(
+                m,
+                retail_price=retail,
+                purchase_price=purchase,
+                included=false
+              ) %}
+
+              {% set ns.movies =
+                ns.movies[:idx] +
+                [updated] +
+                ns.movies[idx + 1:] %}
+            {% endif %}
+
+          {% elif 'Included' in line %}
+            {% if ns.pending_movie >= 0 %}
+              {% set idx = ns.pending_movie %}
+              {% set m = ns.movies[idx] %}
+
+              {% set updated = dict(
+                m,
+                included=true
+              ) %}
+
+              {% set ns.movies =
+                ns.movies[:idx] +
+                [updated] +
+                ns.movies[idx + 1:] %}
+            {% endif %}
+
+          {% elif prices | length > 0 %}
+            {% set retail =
+              prices[0] |
+              replace(',', '') | float %}
+
+            {% set purchase = (
+              prices[-1] if prices | length > 1
+              else prices[0]
+            ) | replace(',', '') | float %}
+
+            {% if ns.pending_kind == 'collection'
+                  and ns.pending_collection >= 0 %}
+
+              {% set idx = ns.pending_collection %}
+              {% set c = ns.collections[idx] %}
+
+              {% set updated = dict(
+                c,
+                retail_price=retail,
+                purchase_price=purchase
+              ) %}
+
+              {% set ns.collections =
+                ns.collections[:idx] +
+                [updated] +
+                ns.collections[idx + 1:] %}
+
+              {% set ns.collection_title_open = false %}
+
+            {% elif ns.pending_kind == 'movie'
+                    and ns.pending_movie >= 0 %}
+
+              {% set idx = ns.pending_movie %}
+              {% set m = ns.movies[idx] %}
+
+              {% set updated = dict(
+                m,
+                retail_price=retail,
+                purchase_price=purchase,
+                included=false
+              ) %}
+
+              {% set ns.movies =
+                ns.movies[:idx] +
+                [updated] +
+                ns.movies[idx + 1:] %}
+            {% endif %}
+
+          {% elif line.startswith('[image:') %}
+            {# Quality image or other decoration #}
+
+          {% elif line.startswith('<http') %}
+            {# Unrelated URL #}
+
+          {% elif ns.collection_title_open
+                  and ns.pending_collection >= 0 %}
+
+            {% set idx = ns.pending_collection %}
+            {% set c = ns.collections[idx] %}
+
+            {% if line not in c.title %}
+              {% set updated = dict(
+                c,
+                title=(c.title ~ ' ' ~ line) | trim
+              ) %}
+
+              {% set ns.collections =
+                ns.collections[:idx] +
+                [updated] +
+                ns.collections[idx + 1:] %}
+            {% endif %}
+
+          {% else %}
+            {% set ns.pending_title =
+              (ns.pending_title ~ ' ' ~ line) | trim %}
+          {% endif %}
+        {% endfor %}
+        {# Some original receipts omit all links from their plain-text part.
+           Accept only complete title / retail price / paid price groups. #}
+        {% set unlinked = namespace(title='', prices=[], seen=[], invalid=false) %}
+        {% if not ns.movies and not ns.collections and
+              not (item_section | regex_search('(?i)https?://|/movie-store/')) %}
+          {% for raw in item_section.splitlines() %}
+            {% set line = raw | replace('&amp;', '&') |
+              replace('&#039;', "'") | replace('&quot;', '"') |
+              replace('&nbsp;', ' ') | trim %}
+            {% set prices = line | regex_findall('\\$([\\d,]+\\.\\d{2})') %}
+            {% if not line %}
+            {% elif 'Included' in line or line.startswith('[image:') %}
+              {% set unlinked.invalid = true %}
+            {% elif prices %}
+              {% set rest = line |
+                regex_replace('\\$[\\d,]+\\.\\d{2}', '') | trim %}
+              {% if rest or not unlinked.title or
+                    (unlinked.prices | count + prices | count > 2) %}
+                {% set unlinked.invalid = true %}
+              {% else %}
+                {% set unlinked.prices = unlinked.prices + prices %}
+                {% if unlinked.prices | count == 2 %}
+                  {% set key = unlinked.title | lower %}
+                  {% if key in unlinked.seen %}
+                    {% set unlinked.invalid = true %}
+                  {% endif %}
+                  {% set unlinked.seen = unlinked.seen + [key] %}
+                  {% set ns.movies = ns.movies + [{
+                    'movie_id': none,
+                    'title': unlinked.title,
+                    'href': none,
+                    'collection_id': none,
+                    'included': false,
+                    'retail_price': unlinked.prices[0] | replace(',', '') | float,
+                    'purchase_price': unlinked.prices[1] | replace(',', '') | float
+                  }] %}
+                  {% set unlinked.title = '' %}
+                  {% set unlinked.prices = [] %}
+                {% endif %}
+              {% endif %}
+            {% elif unlinked.prices %}
+              {% set unlinked.invalid = true %}
+            {% else %}
+              {% set unlinked.title = (unlinked.title ~ ' ' ~ line) | trim %}
+            {% endif %}
+          {% endfor %}
+          {% if unlinked.title or unlinked.prices %}
+            {% set unlinked.invalid = true %}
+          {% endif %}
+        {% endif %}
+        {{ {
+          'collections': ns.collections,
+          'movies': ns.movies,
+          'duplicate_movie': ns.duplicate_movie,
+          'invalid_unlinked': unlinked.invalid
+        } }}
+  - variables:
+      purchases: >-
+        {% set ns = namespace(items=[]) %}
+
+        {# Standalone movie purchases #} {% for movie in parsed.movies %}
+          {% if not movie.collection_id %}
+            {% set item = {
+              'title': movie.title,
+              'purchased_on': purchased_on,
+              'purchase_price':
+                ('$%.2f' | format(movie.purchase_price))
+                if movie.purchase_price is not none
+                else none,
+              'retail_price':
+                ('$%.2f' | format(movie.retail_price))
+                if movie.retail_price is not none
+                else none,
+              'order_id': order_id | string,
+              'href': movie.href
+            } %}
+
+            {% set ns.items = ns.items + [item] %}
+          {% endif %}
+        {% endfor %}
+
+        {# Collections with included titles #} {% for collection in
+        parsed.collections %}
+          {% set included = namespace(items=[]) %}
+
+          {% for movie in parsed.movies %}
+            {% if movie.collection_id ==
+                  collection.collection_id %}
+
+              {% set included.items =
+                included.items + [{
+                  'title': movie.title,
+                  'href': movie.href
+                }] %}
+            {% endif %}
+          {% endfor %}
+
+          {% set item = {
+            'title': collection.title,
+            'purchased_on': purchased_on,
+            'purchase_price':
+              ('$%.2f' | format(collection.purchase_price))
+              if collection.purchase_price is not none
+              else none,
+            'retail_price':
+              ('$%.2f' | format(collection.retail_price))
+              if collection.retail_price is not none
+              else none,
+            'order_id': order_id | string,
+            'href':
+              '/movie-store/set/' ~ collection.collection_id,
+            'included_titles': included.items
+          } %}
+
+          {% set ns.items = ns.items + [item] %}
+        {% endfor %}
+
+        {{ ns.items }}
+  - variables:
+      calculated_subtotal: |-
+        {% set ns = namespace(total=0) %}
+        {% for movie in parsed.movies %}
+          {% if movie.purchase_price is not none %}
+            {% set ns.total =
+              ns.total + movie.purchase_price %}
+          {% endif %}
+        {% endfor %}
+        {% for collection in parsed.collections %}
+          {% if collection.purchase_price is not none %}
+            {% set ns.total =
+              ns.total + collection.purchase_price %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.total | round(2) }}
+      retail_subtotal: |-
+        {% set ns = namespace(total=0) %}
+        {% for movie in parsed.movies %}
+          {% if movie.retail_price is not none %}
+            {% set ns.total =
+              ns.total + movie.retail_price %}
+          {% endif %}
+        {% endfor %}
+        {% for collection in parsed.collections %}
+          {% if collection.retail_price is not none %}
+            {% set ns.total =
+              ns.total + collection.retail_price %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.total | round(2) }}
+  - variables:
+      prices_reconciled: |-
+        {{ ((calculated_subtotal | float(0) * 100) | round(0) | int) ==
+           ((subtotal | float(-1) * 100) | round(0) | int) }}
+      savings: |-
+        {{ (
+          (retail_subtotal | float(0)) -
+          (calculated_subtotal | float(0))
+        ) | round(2) }}
+  - variables:
+      receipt: |-
+        {{ {
+          'source': 'kaleidescape',
+          'order_id': order_id | string,
+          'purchased_on': purchased_on,
+          'subtotal': subtotal | float(-1),
+          'taxes': taxes | float(-1),
+          'total': total | float(-1),
+          'calculated_subtotal':
+            calculated_subtotal | float(0),
+          'retail_subtotal':
+            retail_subtotal | float(0),
+          'savings': savings | float(0),
+          'prices_reconciled': prices_reconciled,
+          'purchases': purchases,
+          'collection_count': parsed.collections | count,
+          'movie_count': parsed.movies | count,
+          'purchase_count': purchases | count
+        } }}
+  - variables:
+      receipt_valid: |-
+        {% set checked = namespace(ok=true) %}
+        {% for item in purchases %}
+          {% if not item.title | trim or item.purchase_price is none %}
+            {% set checked.ok = false %}
+          {% endif %}
+          {% if item.included_titles is defined %}
+            {% if not item.included_titles %}
+              {% set checked.ok = false %}
+            {% endif %}
+            {% for member in item.included_titles %}
+              {% if not member.title | trim %}
+                {% set checked.ok = false %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        {% endfor %}
+        {{ checked.ok and not parsed.duplicate_movie and not parsed.invalid_unlinked
+           and (order_id | string | length > 0)
+           and (purchased_on is not none)
+           and (subtotal | float(-1) >= 0)
+           and (taxes | float(-1) >= 0)
+           and (total | float(-1) >= 0)
+           and (purchases | count > 0)
+           and (((subtotal | float(0) * 100) | round(0) | int) +
+                ((taxes | float(0) * 100) | round(0) | int)) ==
+               ((total | float(0) * 100) | round(0) | int)
+           and prices_reconciled
+           and (
+             parsed.collections |
+             selectattr('purchase_price', 'none') |
+             list | count == 0
+           ) }}
+  - variables:
+      html_key: |-
+        {% set ns = namespace(value=none) %}
+        {% for key, part in email.get('parts', {}).items() %}
+          {% if ns.value is none and part.get('content_type') == 'text/html' %}
+            {% set ns.value = key %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.value }}
+      html_part: "{{ {} }}"
+  - choose:
+      - conditions: "{{ receipt_valid }}"
+        sequence:
+          - if: "{{ html_key is not none and parsed.movies | selectattr('href', 'none') | list | count > 0 }}"
+            then:
+              - action: imap.fetch_part
+                data:
+                  entry: '{{ trigger.event.data[''entry_id''] }}'
+                  uid: '{{ trigger.event.data[''uid''] }}'
+                  part: "{{ html_key }}"
+                response_variable: html_part
+          - action: kaleidescape_companion.import_purchase_email
+            data:
+              invoice: "{{ dict(receipt, html_part=html_part) }}"
+            response_variable: purchase_import
+          - if: "{{ purchase_import.status == 'needs_review' }}"
+            then:
+              - action: persistent_notification.create
+                data:
+                  title: Kaleidescape purchase needs review
+                  message: >-
+                    {{ purchase_import.imported_count | default(0) }} purchases
+                    imported, {{ purchase_import.updated_count | default(0) }}
+                    updated, and {{ purchase_import.unchanged_count | default(0) }}
+                    unchanged. {{ purchase_import.issues | count }} need review.
+                    Open Kaleidescape Companion → Database → Reconcile purchases
+                    to match the saved purchases.
+    default:
+      - action: persistent_notification.create
+        data:
+          title: Kaleidescape receipt could not be parsed
+          message: >-
+            The receipt did not pass validation and was not imported. Check the
+            automation trace and the original email before trying again.
+mode: queued
+max: 10

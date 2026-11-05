@@ -110,16 +110,8 @@ export class JournalShortcuts extends LitElement {
         >
           ${actionIcon("search")}
         </button>
-        <button
-          type="button"
-          aria-label="Clear Journal search and filters"
-          title="Clear search and filters"
-          ?disabled=${this.disabled}
-          @click=${() => this.signal("journal-clear")}
-        >
-          ${actionIcon("clear")}
-        </button>
         ${this.allowAdd ? html`<button type="button" aria-label="Add viewing" title="Add viewing" ?disabled=${this.disabled} @click=${() => this.signal("journal-add")}>${actionIcon("add")}</button>` : ""}
+        ${this.filterLabel ? html`<button type="button" aria-label="Show all viewings" title="Show all viewings" ?disabled=${this.disabled} @click=${() => this.signal("journal-clear-movie")}>All</button>` : ""}
         <button
           type="button"
           aria-label="Journal options"

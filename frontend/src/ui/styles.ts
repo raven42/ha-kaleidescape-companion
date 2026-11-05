@@ -34,6 +34,12 @@ export const styles = css`
     border-bottom: 1px solid var(--line);
     flex-wrap: wrap;
   }
+  header .companion-icon {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    flex: 0 0 60px;
+  }
   h1 {
     margin: 4px 0 6px;
     font-size: clamp(24px, 3vw, 32px);
@@ -633,6 +639,9 @@ export const styles = css`
     }
   }
   @media (max-width: 600px) {
+    header .companion-icon {
+      display: none;
+    }
     button,
     input,
     select {

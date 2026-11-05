@@ -27,6 +27,26 @@ class GroupedLibraryTest(unittest.IsolatedAsyncioTestCase):
     page = library_tests.LibraryStorageTest.page
     assert_error = library_tests.LibraryStorageTest.assert_error
 
+    async def test_watch_soon_follows_group_even_when_collection_is_hidden(self):
+        await self.repository.async_library_catalog(
+            ORIGIN, ROWS, {"WatchSoon": ["fixture-a2"]}
+        )
+        grouped = await self.repository.async_library_list(
+            SOURCE, {"grouped": True}, "WatchSoon"
+        )
+        movie = next(row for row in grouped["items"] if row["version_count"] == 2)
+        self.assertTrue(movie["is_watch_soon"])
+        self.assertNotIn("WatchSoon", movie["collections"])
+        self.assertFalse(
+            next(row for row in grouped["items"] if row["version_count"] == 1)[
+                "is_watch_soon"
+            ]
+        )
+        versions = await self.repository.async_library_versions(SOURCE, movie["id"])
+        self.assertTrue(all(row["is_watch_soon"] for row in versions["items"]))
+        search = await self.repository.async_library_search(SOURCE, "Voyage", "")
+        self.assertTrue(all(row["is_watch_soon"] for row in search["items"]))
+
     async def test_group_ratings_include_versions_beyond_the_current_detail_page(self):
         await self.repository.async_library_catalog(
             ORIGIN,
@@ -193,6 +213,25 @@ class GroupedLibraryTest(unittest.IsolatedAsyncioTestCase):
         ]:
             with self.assert_error("invalid_request"):
                 await self.page(**filters)
+
+    async def test_unrated_ignores_missing_ratings_in_partly_rated_groups(self):
+        rows = [ROWS[0], {**ROWS[2], "rating": ""}, {**ROWS[1], "rating": ""}]
+        await self.repository.async_library_catalog(ORIGIN, rows, {})
+        for grouped in (False, True):
+            result = await self.page(grouped=grouped, rating=["Unrated"])
+            self.assertEqual(result["total"], 1)
+            self.assertEqual(result["items"][0]["title"], ROWS[1]["title"])
+            self.assertIn("Unrated", result["facets"]["rating"])
+
+        await self.repository.async_library_catalog(
+            ORIGIN, [rows[0], rows[1], {**rows[2], "rating": "R"}], {}
+        )
+        result = await self.page(grouped=True, rating=["Unrated"])
+        self.assertEqual(result["total"], 0)
+        self.assertNotIn("Unrated", result["facets"]["rating"])
+        self.assertEqual(
+            (await self.page(grouped=True, rating=["Unrated", "PG"]))["total"], 1
+        )
 
     async def test_science_fiction_variants_share_one_genre_facet(self):
         rows = [

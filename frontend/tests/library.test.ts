@@ -238,11 +238,18 @@ it("persists the visible cast limit while keeping the complete billed cast avail
     (row) => row.querySelector("dt")?.textContent === "Cast",
   )!;
   expect(cast.querySelectorAll(".detail-link")).toHaveLength(4);
+  const names = [...cast.querySelectorAll(".credit-name")];
+  expect(names).toHaveLength(4);
+  expect(names[0].textContent!.trim()).toBe("Billed performer 1,");
+  expect(names[3].textContent!.trim()).toBe("Billed performer 4");
   expect(cast.textContent).toContain("Billed performer 1");
   expect(cast.textContent).not.toContain("Billed performer 5");
   expect(root().querySelector(".extra-credits")!.textContent).toContain(
     "Billed performer 12",
   );
+  expect(
+    root().querySelector(".extra-credits .credit-name")!.textContent!.trim(),
+  ).toBe("Billed performer 1,");
   expect(root().querySelector("kaleidescape-title-scrape")).not.toBeNull();
   expect(root().querySelectorAll("kaleidescape-title-scrape")).toHaveLength(1);
   element.scope = {

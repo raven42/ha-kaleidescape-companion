@@ -34,6 +34,7 @@ def review(db, payload, import_format, actor, *, purchase_only=False):
     revision = db.execute("SELECT revision FROM schema_metadata").fetchone()[0]
     sources = {row[0] for row in db.execute("SELECT id FROM library_sources")}
     rows, operations, purchase_matches = [], {}, {}
+    artwork_cache = {}
     purchase_index = purchases.index(db)
     deadline = time.monotonic() + 30
     matcher = (
@@ -68,6 +69,10 @@ def review(db, payload, import_format, actor, *, purchase_only=False):
                 old = purchase_index.get(record["id"])
                 target, detail = purchases.propose_link(db, record, old, matcher)
                 row, operation = purchase_proposal(key, record, old, target, detail)
+                if target:
+                    if target not in artwork_cache:
+                        artwork_cache[target] = purchase_artwork(db, target)
+                    row["artwork_key"] = artwork_cache[target]
                 if (old is None or old["pending"]) and target:
                     existing = db.execute(
                         "SELECT purchase_price,retail_price,EXISTS "
@@ -308,6 +313,19 @@ def checked_review(db, plan, plan_id, revision, actor):
         raise JournalError("conflict", "Database changed; review the file again")
 
 
+def purchase_artwork(db, title_id):
+    """Find selected cached cover, falling back to an available group version."""
+    row = db.execute(
+        "SELECT coalesce(companion_artwork(t.artwork_key,t.enrichment,'artwork'), "
+        "(SELECT max(companion_artwork(g.artwork_key,g.enrichment,'artwork')) "
+        "FROM library g WHERE g.source_id=t.source_id AND "
+        "g.source_group=t.source_group AND g.available=1 "
+        "AND g.purchase_match_pending=0)) artwork_key FROM library t WHERE t.id=?",
+        (title_id,),
+    ).fetchone()
+    return row["artwork_key"] if row else None
+
+
 def search_matches(db, plan, plan_id, revision, key, query, actor):
     checked_review(db, plan, plan_id, revision, actor)
     if (
@@ -329,6 +347,7 @@ def search_matches(db, plan, plan_id, revision, key, query, actor):
             "WHERE library_id=library.id) THEN id END),"
             "min(id)) id,min(title) title,min(json_extract(data,'$.year')) year,"
             "max(json_extract(data,'$.directors')) directors,count(*) version_count,"
+            "max(companion_artwork(artwork_key,enrichment,'artwork')) artwork_key,"
             "source_id FROM library WHERE available=1 AND purchase_match_pending=0 "
             "AND companion_matches(title_search,?,0) GROUP BY source_id,source_group "
             "ORDER BY min(title_search),source_id,source_group LIMIT 21",
@@ -345,6 +364,7 @@ def search_matches(db, plan, plan_id, revision, key, query, actor):
                 "directors": json.loads(row["directors"] or "[]"),
                 "version_count": row["version_count"],
                 "source_hint": row["source_id"][-8:],
+                "artwork_key": row["artwork_key"],
             }
             for row in rows[:20]
         ],
@@ -379,6 +399,7 @@ def match_purchase(db, plan, plan_id, revision, key, title_id, actor):
             f"{target['year'] or 'year unknown'}"
         )
     row, operation = purchase_proposal(key, record, old, title_id, detail)
+    row["artwork_key"] = purchase_artwork(db, title_id) if title_id else None
     if title_id is not None and (old is None or old["pending"]):
         existing = db.execute(
             "SELECT purchase_price,retail_price,EXISTS "

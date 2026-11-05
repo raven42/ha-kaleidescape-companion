@@ -62,7 +62,10 @@ it("renders titles and timing as text without management controls or private met
   transport.records[0].title = '<img src=x onerror="alert(1)">';
   button("Refresh").click();
   await waitFor("<img");
-  expect(reader.shadowRoot!.querySelector("img")).toBeNull();
+  expect(reader.shadowRoot!.querySelectorAll("img")).toHaveLength(1);
+  expect(
+    reader.shadowRoot!.querySelector("header img.companion-icon"),
+  ).not.toBeNull();
   expect(
     transport.calls.every(
       (call) =>

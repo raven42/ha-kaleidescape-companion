@@ -19,6 +19,11 @@ FAVORITE_SQL = """EXISTS (SELECT 1 FROM library ft JOIN library_memberships fm
     ON fm.title_id=ft.id WHERE ft.source_id=t.source_id
     AND ft.source_group=t.source_group
     AND ft.available=1 AND lower(fm.collection)='favorites')"""
+WATCH_SOON_SQL = """EXISTS (SELECT 1 FROM library wt JOIN library_memberships wm
+    ON wm.title_id=wt.id WHERE wt.source_id=t.source_id
+    AND wt.source_group=t.source_group AND wt.available=1
+    AND lower(replace(replace(replace(wm.collection,' ',''),'-',''),'_',''))
+        ='watchsoon')"""
 RECENT_SQL = """s.recently_added_batch IS NOT NULL AND EXISTS
     (SELECT 1 FROM library rt WHERE rt.source_id=t.source_id
     AND rt.source_group=t.source_group AND rt.addition_batch=s.recently_added_batch)"""
@@ -68,7 +73,7 @@ def scalar_sql(field, prefix=""):
     intentional override, so COALESCE would incorrectly restore the old value.
     Keep this fixed allowlist aligned with enrichment.store.effective.
     """
-    if field not in {"year", "rating"} or prefix not in {"", "t."}:
+    if field not in {"year", "rating"} or prefix not in {"", "t.", "g."}:
         raise ValueError("Unsupported display scalar")
     return (
         f"CASE WHEN json_type({prefix}enrichment,'$.reviewed.{field}') IS NOT NULL "
@@ -179,6 +184,7 @@ def public_title(row, memberships, shared=None):
         },
         "scraper_conflict": has_conflict(json.loads(row["enrichment"]), sources),
         "is_favorite": bool(row["is_favorite"]),
+        "is_watch_soon": bool(row["is_watch_soon"]),
         "is_recently_added": bool(row["is_recently_added"]),
         "formats": formats(data),
         "collections": memberships,
@@ -474,9 +480,17 @@ def library_list(db, source, filters, excluded="", cache=None):
                 f"WHERE value IN ({placeholders}))"
             )
         elif key == "rating":
+            rating = f"coalesce(nullif(({scalar_sql('rating', 't.')}),''),'Unrated')"
+            group_rating = (
+                f"coalesce(nullif(({scalar_sql('rating', 'g.')}),''),'Unrated')"
+            )
             clauses.append(
-                f"coalesce(nullif(({scalar_sql('rating', 't.')}),''),'Unrated') "
-                f"IN ({placeholders})"
+                f"(CASE WHEN lower({rating})='unrated' THEN "
+                "CASE WHEN EXISTS (SELECT 1 FROM library g "
+                "WHERE g.source_id=t.source_id AND g.source_group=t.source_group "
+                "AND g.available=1 AND g.purchase_match_pending=0 "
+                f"AND lower({group_rating})!='unrated') THEN NULL ELSE 'Unrated' END "
+                f"ELSE {rating} END) IN ({placeholders})"
             )
         elif key == "year":
             if any(not re.fullmatch(r"[0-9]{1,4}", value) for value in selected):
@@ -536,7 +550,8 @@ def library_list(db, source, filters, excluded="", cache=None):
     rows = db.execute(
         f"""SELECT t.*,({STATUS_SQL}) watched_status,
             {PURCHASE_SQL} effective_purchased_on,
-            ({FAVORITE_SQL}) is_favorite,({RECENT_SQL}) is_recently_added
+            ({FAVORITE_SQL}) is_favorite,({WATCH_SOON_SQL}) is_watch_soon,
+            ({RECENT_SQL}) is_recently_added
         FROM {join} WHERE {where}
         ORDER BY {order},t.id LIMIT ? OFFSET ?""",
         (*values, *sort_values, limit + 1, offset),
@@ -587,8 +602,8 @@ def library_facets(db, source, hidden, _revision=None):
     facets = {key: [] for key in ("actors", "directors", "genres", "rating", "year")}
     for row in db.execute(
         """WITH metadata AS MATERIALIZED (
-            SELECT companion_metadata(data,enrichment) data FROM library
-            WHERE source_id=? AND available=1
+            SELECT source_group,companion_metadata(data,enrichment) data FROM library
+            WHERE source_id=? AND available=1 AND purchase_match_pending=0
         ), options AS (
             SELECT roles.key field,person.value value FROM metadata,
                 json_each(metadata.data) roles,
@@ -596,8 +611,14 @@ def library_facets(db, source, hidden, _revision=None):
                     THEN roles.value ELSE '[]' END) person
                 WHERE roles.key IN ('actors','directors','genres')
                 AND person.type='text'
-            UNION SELECT 'rating',coalesce(nullif(json_extract(data,'$.rating'),''),
-                'Unrated') FROM metadata
+            UNION SELECT 'rating',json_extract(data,'$.rating') FROM metadata
+                WHERE nullif(json_extract(data,'$.rating'),'') IS NOT NULL
+                AND lower(json_extract(data,'$.rating'))!='unrated'
+            UNION SELECT 'rating','Unrated' FROM metadata GROUP BY source_group
+                HAVING max(CASE WHEN
+                nullif(json_extract(data,'$.rating'),'') IS NOT NULL
+                AND lower(json_extract(data,'$.rating'))!='unrated'
+                THEN 1 ELSE 0 END)=0
             UNION SELECT 'year',json_extract(data,'$.year') FROM metadata
                 WHERE json_extract(data,'$.year') IS NOT NULL
         ), ranked AS (
@@ -674,7 +695,8 @@ def grouped_page(
         SELECT DISTINCT t.source_group FROM {join} WHERE {where}
     ), versions AS (
         SELECT t.*,({STATUS_SQL}) watched_status,{collection_sql} collection_sort,
-        ({FAVORITE_SQL}) is_favorite,({RECENT_SQL}) is_recently_added,
+        ({FAVORITE_SQL}) is_favorite,({WATCH_SOON_SQL}) is_watch_soon,
+        ({RECENT_SQL}) is_recently_added,
         {PURCHASE_SQL} effective_purchased_on
         FROM {join} WHERE t.source_id=? AND t.available=1
     ) SELECT source_group,min(title_search) title_search,min(id) id,
@@ -684,7 +706,8 @@ def grouped_page(
             min(title_search)) sort_title,
         count(*) version_count,
         max(companion_conflict(enrichment)) scraper_conflict,
-        max(is_favorite) is_favorite,max(is_recently_added) is_recently_added,
+        max(is_favorite) is_favorite,max(is_watch_soon) is_watch_soon,
+        max(is_recently_added) is_recently_added,
         min({scalar_sql("year")}) year,
         min(json_extract(data,'$.duration_seconds')) duration_seconds,
         max(json_extract(data,'$.duration_seconds')) maximum_duration_seconds,
@@ -772,6 +795,7 @@ def grouped_page(
                 {
                     "collections": collections,
                     "is_favorite": bool(group["is_favorite"]),
+                    "is_watch_soon": bool(group["is_watch_soon"]),
                     "is_recently_added": bool(group["is_recently_added"]),
                     "scraper_conflict": bool(group["scraper_conflict"]),
                     "year": group["year"],
@@ -875,7 +899,8 @@ def library_versions(
     rows = db.execute(
         f"""SELECT t.*,({STATUS_SQL}) watched_status,
             {PURCHASE_SQL} effective_purchased_on,
-            ({FAVORITE_SQL}) is_favorite,({RECENT_SQL}) is_recently_added
+            ({FAVORITE_SQL}) is_favorite,({WATCH_SOON_SQL}) is_watch_soon,
+            ({RECENT_SQL}) is_recently_added
         FROM library t
         JOIN library_sources s ON s.id=t.source_id WHERE t.source_id=?
         AND t.available=1 AND t.source_group=? ORDER BY

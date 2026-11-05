@@ -10,6 +10,7 @@ import { LitElement, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
 import { ApiError, JournalClient, errorCode, errorMessage } from "../core/api";
 import type { Hass, JournalInfo, ViewingSummary } from "../core/api";
+import companionIcon from "./assets/companion-icon.png?inline";
 import { styles } from "./styles";
 import { entryLayoutStyles } from "./entry-layout.styles";
 import { journalStyles, viewingDetails, viewingListRow } from "./journal-view";
@@ -325,10 +326,24 @@ export class KaleidescapeReader extends LitElement {
         ?.focus(),
     );
   }
+  private clearJournalSearch() {
+    this.query = this.searchText = "";
+    this.page = 1;
+    this.history = [];
+    void this.load();
+    this.requestUpdate();
+  }
   protected render() {
+    const calendarView = this.journalView === "calendar" && !this.query.trim();
     return html`<main>
       <header>
         ${this.hass && this.narrow ? html`<button aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: true, composed: true }))}>☰</button>` : nothing}
+        <img
+          class="companion-icon"
+          src=${companionIcon}
+          alt=""
+          aria-hidden="true"
+        />
         <div>
           <span class="eyebrow">Kaleidescape Companion</span>
           <h1>Viewing history</h1>
@@ -385,12 +400,12 @@ export class KaleidescapeReader extends LitElement {
                   }}
                 ></kaleidescape-library>`
               : html`<section
-                  class=${`card journal${this.journalView === "calendar" ? " journal-calendar-mode" : ""}`}
+                  class=${`card journal${calendarView ? " journal-calendar-mode" : ""}`}
                   aria-label="Viewing history"
                 >
                   <div class="entries-header">
                     ${
-                      this.journalView === "calendar"
+                      calendarView
                         ? html`<kaleidescape-journal-shortcuts
                             .context=${this.api}
                             .scopeKey=${`${this.scope?.entry_id}:${this.scope?.dataset_id}`}
@@ -400,32 +415,24 @@ export class KaleidescapeReader extends LitElement {
                             .filtered=${!!this.status || !!this.journalMovie}
                             .filterLabel=${this.journalMovie ? `Viewings for ${this.journalMovie.title}` : ""}
                             @journal-search=${(event: CustomEvent<string>) => {
-                              this.query = this.searchText = event.detail;
-                              this.page = 1;
-                              this.history = [];
-                              void this.load();
-                            }}
-                            @journal-clear=${() => {
-                              this.query =
-                                this.searchText =
-                                this.status =
-                                this.filterStatus =
-                                  "";
-                              this.journalMovie = undefined;
+                              this.query = this.searchText =
+                                event.detail.trim();
                               this.page = 1;
                               this.history = [];
                               void this.load();
                             }}
                             @journal-open-options=${() => this.renderRoot.querySelector<JournalOptions>("kaleidescape-journal-options")?.open()}
+                            @journal-clear-movie=${() => this.selectPage("journal")}
                           ></kaleidescape-journal-shortcuts>`
                         : nothing
                     }
                     ${this.journalMovie ? html`<p class="journal-movie-filter">Viewings for ${this.journalMovie.title} <button @click=${() => this.selectPage("journal")}>Show all viewings</button></p>` : nothing}
+                    ${this.query.trim() ? html`<button type="button" class="journal-search-chip" aria-label=${`Clear search: ${this.query}`} ?disabled=${this.loading || !this.scope} @click=${this.clearJournalSearch}><span>${this.query}</span><span aria-hidden="true">×</span></button>` : nothing}
                     <form
                       class="filters journal-filters"
                       @submit=${(event: Event) => {
                         event.preventDefault();
-                        this.query = this.searchText;
+                        this.query = this.searchText = this.searchText.trim();
                         this.status = this.filterStatus;
                         this.history = [];
                         this.page = 1;
@@ -433,20 +440,25 @@ export class KaleidescapeReader extends LitElement {
                       }}
                     >
                       <label
-                        >Search titles<input
-                          name="search"
-                          type="search"
-                          maxlength="500"
-                          .value=${this.searchText}
-                          ?disabled=${this.loading || !this.scope}
-                          @input=${(event: Event) => {
-                            this.searchText = (
-                              event.target as HTMLInputElement
-                            ).value;
-                          }}
-                      /></label>
+                        >Search titles<span class="journal-search-input"
+                          ><input
+                            name="search"
+                            type="search"
+                            maxlength="500"
+                            .value=${this.searchText}
+                            ?disabled=${this.loading || !this.scope}
+                            @input=${(event: Event) => {
+                              this.searchText = (
+                                event.target as HTMLInputElement
+                              ).value;
+                              if (!this.searchText && this.query)
+                                this.clearJournalSearch();
+                            }}
+                          />${this.query.trim() ? html`<button type="button" class="journal-clear-search" aria-label="Clear Journal search" title="Clear search" ?disabled=${this.loading || !this.scope} @click=${this.clearJournalSearch}>×</button>` : nothing}</span
+                        ></label
+                      >
                       <div class="journal-filter-tools">
-                        <label ?hidden=${this.journalView === "calendar"}
+                        <label ?hidden=${calendarView}
                           >Sort by<select
                             name="journal_sort"
                             .value=${this.sort}
@@ -468,7 +480,7 @@ export class KaleidescapeReader extends LitElement {
                         >
                         <button
                           type="button"
-                          ?hidden=${this.journalView === "calendar"}
+                          ?hidden=${calendarView}
                           ?disabled=${this.loading || !this.scope}
                           @click=${() => {
                             this.descending = !this.descending;
@@ -494,7 +506,7 @@ export class KaleidescapeReader extends LitElement {
                         >
                           Refresh</button
                         ><kaleidescape-journal-options
-                          .mobileCompact=${this.journalView === "calendar"}
+                          .mobileCompact=${calendarView}
                           @journal-refresh=${() => this.refresh()}
                           .status=${this.status}
                           @journal-status=${(event: CustomEvent<string>) => {
@@ -529,7 +541,7 @@ export class KaleidescapeReader extends LitElement {
                     </form>
                   </div>
                   ${
-                    this.journalView === "calendar"
+                    calendarView
                       ? html`<kaleidescape-journal-calendar
                           @calendar-status=${(
                             event: CustomEvent<CalendarStatus>,
@@ -618,9 +630,9 @@ export class KaleidescapeReader extends LitElement {
                   }
                   <footer class="entries-footer journal-status">
                     <span
-                      >${journalTotals(this.scope, this.journalView === "calendar" ? this.calendarStatus : undefined, this.journalView === "calendar")}</span
+                      >${journalTotals(this.scope, calendarView ? this.calendarStatus : undefined, calendarView)}</span
                     >${
-                      this.journalView === "calendar"
+                      calendarView
                         ? calendarNotice(this.calendarStatus, () => {
                             void this.renderRoot
                               .querySelector<JournalCalendar>(
@@ -631,10 +643,7 @@ export class KaleidescapeReader extends LitElement {
                         : nothing
                     }
 
-                    <div
-                      class="pagination"
-                      ?hidden=${this.journalView === "calendar"}
-                    >
+                    <div class="pagination" ?hidden=${calendarView}>
                       <small>Page ${this.page} · Up to 25 entries</small>
                       <div class="actions">
                         <button

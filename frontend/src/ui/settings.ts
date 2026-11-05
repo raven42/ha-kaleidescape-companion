@@ -1115,7 +1115,7 @@ export class KaleidescapeSettings extends LitElement {
                         <li>
                           Purchase receipts save unmatched purchases for later
                           reconciliation from the database. Update the receipt
-                          blueprint to version 3 for accurate notifications.
+                          blueprint to version 4 to handle quoted forwards.
                         </li>
                       </ul>
                     </section>

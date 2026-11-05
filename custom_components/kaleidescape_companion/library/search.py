@@ -9,6 +9,7 @@ from .browse import (
     PURCHASE_SQL,
     RECENT_SQL,
     STATUS_SQL,
+    WATCH_SOON_SQL,
     bounded_page,
     group_metadata,
     hidden_names,
@@ -56,7 +57,8 @@ def search(db, source, query, excluded, fuzzy=True):
     for key in keys:
         row = db.execute(
             f"SELECT t.*,({STATUS_SQL}) watched_status,({FAVORITE_SQL}) "
-            f"is_favorite,({RECENT_SQL}) is_recently_added,"
+            f"is_favorite,({WATCH_SOON_SQL}) is_watch_soon,"
+            f"({RECENT_SQL}) is_recently_added,"
             f"{PURCHASE_SQL} effective_purchased_on FROM library t "
             f"JOIN library_sources s ON s.id=t.source_id WHERE t.id=? AND "
             f"t.source_id=?",

@@ -287,6 +287,12 @@ export class JournalCalendar extends LitElement {
     this.rememberMonth();
     this.requestUpdate();
   }
+  private today() {
+    const now = new Date();
+    this.month = new Date(now.getFullYear(), now.getMonth(), 1);
+    this.rememberMonth();
+    this.requestUpdate();
+  }
   private rememberMonth() {
     if (!this.rememberUrl) return;
     const url = new URL(location.href);
@@ -511,6 +517,14 @@ export class JournalCalendar extends LitElement {
           @click=${() => this.move(1)}
         >
           →
+        </button>
+        <button
+          type="button"
+          aria-label="Go to current month"
+          ?disabled=${this.disabled}
+          @click=${this.today}
+        >
+          Today
         </button>
       </div>
       <div class="calendar-scroll">

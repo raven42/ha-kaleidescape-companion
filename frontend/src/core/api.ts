@@ -443,6 +443,7 @@ export interface LibraryTitle {
   purchase_history?: LibraryPurchase[];
   purchased_on?: string | null;
   is_favorite?: boolean;
+  is_watch_soon?: boolean;
   is_recently_added?: boolean;
   id: string;
   title: string;
@@ -473,6 +474,7 @@ export type LibrarySummary = Pick<
   LibraryTitle,
   | "id"
   | "is_favorite"
+  | "is_watch_soon"
   | "is_recently_added"
   | "scraper_conflict"
   | "rating"
@@ -561,6 +563,7 @@ export interface LibraryPurchaseTotals {
   }[];
 }
 export interface ImportReviewRow {
+  artwork_key?: string | null;
   needs_match?: boolean;
   can_match?: boolean;
   detail?: string;
@@ -581,6 +584,7 @@ export interface ImportReview {
   counts: Record<ImportReviewRow["action"], number>;
 }
 export interface ImportMatchTitle {
+  artwork_key?: string | null;
   id: string;
   title: string;
   year: number | null;

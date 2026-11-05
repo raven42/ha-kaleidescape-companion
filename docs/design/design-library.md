@@ -394,9 +394,10 @@ Format options include source labels and positive badge categories: SD, HD, 4K,
 4K Cinematic, SDR, HDR10, Dolby Vision and Dolby Atmos when present. The 4K
 category represents non-Cinematic 4K metadata; Cinematic has its own category.
 HDR, Cinematic and audio badges require their own positive metadata; resolution
-alone does not supply them. Blank/missing ratings appear as Unrated. Years are
-string values such as `2025` in API filters and preferences. Unknown years are
-not linked or fabricated.
+alone does not supply them. Unrated selects movie groups without a known rating
+on any available version; a missing rating on one version of a rated movie does
+not make that movie Unrated. Years are string values such as `2025` in API
+filters and preferences. Unknown years are not linked or fabricated.
 
 All facet selections, including clicked criteria, retain the existing
 100-value/500-character bounds. SQL uses one bound JSON array per selected
@@ -473,8 +474,9 @@ and saved immediately in personal Library preferences. Administrators also have
 an expandable **Purchase details** section showing total library cost, total
 retail price, savings and unique transactions. Totals load only when that
 section opens or the footer option is enabled, then refresh with source revision
-changes. Household readers have neither the purchase-display toggle nor purchase
-totals.
+changes. Reopening the section refreshes the totals even when a revision has not
+yet changed. Household readers have neither the purchase-display toggle nor
+purchase totals.
 
 These are totals of recorded purchase history for the configured Library source,
 including invoices owned by unavailable versions. Search/filters, page size and
@@ -696,18 +698,21 @@ check. Removal will need its own verified contract and security review.
 
 ## Badge meanings
 
-| Badge                    | Criterion and cover placement                                                                                |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| Watched · green check    | Source Played status, unless Paused takes priority; top-left triangle                                        |
-| In progress · amber ring | Source Paused status; top-left triangle, with no invented completion percentage                              |
-| New · blue label         | Retained `recently_added` sensor batch membership, only when neither In progress nor Watched; top-left label |
-| Favorite · gold star     | An available version belongs to Favorites; independent top-right bookmark                                    |
+| Badge                    | Criterion and cover placement                                                                            |
+| ------------------------ | -------------------------------------------------------------------------------------------------------- |
+| Watched · green check    | Source Played status, unless Paused takes priority; top-left triangle                                    |
+| In progress · amber ring | Source Paused status; top-left triangle, with no invented completion percentage                          |
+| Watch Soon · blue clock  | An available version belongs to WatchSoon; top-left triangle when neither In progress nor Watched        |
+| New · blue label         | Retained `recently_added` sensor batch membership, unless a higher-priority flag applies; top-left label |
+| Favorite · gold star     | An available version belongs to Favorites; independent top-right bookmark                                |
 
-Watched, In progress and New are mutually exclusive. Progress/completion
-suppresses New even while the movie remains in the sensor batch; the sensor
-batch itself is unchanged. These use cached source statuses and refresh with
-collection sync, rather than adding playback polling or treating journal facts
-as device collection membership. Favorite can accompany any of the statuses.
+Watched, In progress, Watch Soon and New are mutually exclusive. Progress or
+completion takes precedence, followed by Watch Soon and then New. A higher
+priority badge suppresses New even while the movie remains in the sensor batch;
+the sensor batch itself is unchanged. These use cached source statuses and
+refresh with collection sync, rather than adding playback polling or treating
+journal facts as device collection membership. Favorite can accompany any of the
+statuses.
 
 Text collection/status badges use compact outlined gradient pills: All in slate,
 New in blue, Unwatched in gold, Watched in green, Favorites in purple and In
@@ -717,11 +722,11 @@ height as the format and rating buttons. Movie-detail filter links and filter
 checkboxes retain their existing actions. Cover corner flags retain their layout
 and mutually exclusive status behavior.
 
-Hidden collection names affect labels and filters, not status/favorite
-classification. Recent identity uses the source-scoped group, never title text,
-so remakes remain distinct. The first scan establishes a baseline. Unchanged
-scans, metadata imports and new formats of known groups do not replace the
-batch. Schema 11 stores an internal source batch marker and matching version
+Hidden collection names affect labels and filters, not status/favorite/Watch
+Soon classification. Recent identity uses the source-scoped group, never title
+text, so remakes remain distinct. The first scan establishes a baseline.
+Unchanged scans, metadata imports and new formats of known groups do not replace
+the batch. Schema 11 stores an internal source batch marker and matching version
 markers. Older title-only sensor snapshots cannot safely identify groups; their
 sensor values remain intact, and recent badges start with the next batch of
 newly discovered groups.

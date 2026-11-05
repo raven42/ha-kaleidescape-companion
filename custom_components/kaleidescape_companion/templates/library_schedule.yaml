@@ -1,3 +1,6 @@
+# Version history:
+# v1: Introduce a scheduled Library sync automation.
+# End version history
 blueprint:
   name: Kaleidescape Companion - Schedule library sync
   description: >-

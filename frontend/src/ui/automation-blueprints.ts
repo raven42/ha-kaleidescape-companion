@@ -3,6 +3,7 @@ import { LitElement, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
 import type { JournalClient, JournalInfo } from "../core/api";
 import { errorCode, errorMessage } from "../core/api";
+import { closeButton, dismissBackdrop } from "./dialog";
 import { styles } from "./styles";
 
 const OPTIONS = [
@@ -31,6 +32,17 @@ const STATUS_LABELS: Record<BlueprintState, string> = {
   unavailable: "Unable to check",
 };
 
+function versionHistory(yaml: string): string[] {
+  const lines = yaml.split(/\r?\n/);
+  const start = lines.indexOf("# Version history:");
+  const end = lines.indexOf("# End version history", start + 1);
+  if (start < 0 || end < 0) return [];
+  return lines
+    .slice(start + 1, end)
+    .filter((line) => /^# v\d+: /.test(line))
+    .map((line) => line.slice(2));
+}
+
 export class AutomationBlueprints extends LitElement {
   static properties = {
     client: { attribute: false },
@@ -47,6 +59,13 @@ export class AutomationBlueprints extends LitElement {
   private statuses?: Statuses;
   private checking = false;
   private generation = 0;
+  private historyRequest = 0;
+  private history?: {
+    label: string;
+    loading: boolean;
+    entries: string[];
+    error?: string;
+  };
   private pendingUpdate?: {
     kind: string;
     label: string;
@@ -56,6 +75,7 @@ export class AutomationBlueprints extends LitElement {
   protected willUpdate(changed: PropertyValues) {
     if (changed.has("client") || changed.has("scope")) {
       this.generation++;
+      this.closeHistory();
       this.statuses = undefined;
       this.pendingUpdate = undefined;
       if (this.client && this.scope?.permissions.edit) void this.refresh();
@@ -63,7 +83,45 @@ export class AutomationBlueprints extends LitElement {
   }
   disconnectedCallback() {
     this.generation++;
+    this.closeHistory();
     super.disconnectedCallback();
+  }
+  private closeHistory() {
+    this.historyRequest++;
+    this.history = undefined;
+    this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.close();
+    this.requestUpdate();
+  }
+  private async showHistory(kind: string, label: string) {
+    if (!this.client || !this.scope?.permissions.edit) return;
+    const request = ++this.historyRequest;
+    const generation = this.generation;
+    this.history = { label, loading: true, entries: [] };
+    this.requestUpdate();
+    await this.updateComplete;
+    if (request !== this.historyRequest || generation !== this.generation)
+      return;
+    this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.showModal();
+    try {
+      const template = await this.client.automationTemplate(this.scope, kind);
+      if (request !== this.historyRequest || generation !== this.generation)
+        return;
+      this.history = {
+        label,
+        loading: false,
+        entries: versionHistory(template.yaml),
+      };
+    } catch (error) {
+      if (request !== this.historyRequest || generation !== this.generation)
+        return;
+      this.history = {
+        label,
+        loading: false,
+        entries: [],
+        error: errorMessage(error),
+      };
+    }
+    this.requestUpdate();
   }
   private async refresh() {
     if (!this.client || !this.scope?.permissions.edit) return;
@@ -160,6 +218,7 @@ export class AutomationBlueprints extends LitElement {
                       <th>Installed</th>
                       <th>Latest</th>
                       <th>Status</th>
+                      <th>History</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -180,6 +239,15 @@ export class AutomationBlueprints extends LitElement {
                           ${item?.latest_version != null ? `v${item.latest_version}` : "Unknown"}
                         </td>
                         <td>${STATUS_LABELS[item?.status ?? "unavailable"]}</td>
+                        <td>
+                          <button
+                            type="button"
+                            aria-label=${"View " + label + " version history"}
+                            @click=${() => this.showHistory(kind, label)}
+                          >
+                            View history
+                          </button>
+                        </td>
                       </tr>`;
                     })}
                   </tbody>
@@ -194,6 +262,39 @@ export class AutomationBlueprints extends LitElement {
         <button type="button" ?disabled=${this.checking} @click=${this.refresh}>
           Check again
         </button>
+        <dialog
+          class="database-dialog"
+          aria-labelledby="blueprint-history-title"
+          @click=${dismissBackdrop}
+          @close=${this.closeHistory}
+        >
+          <div class="card-head">
+            <h2 id="blueprint-history-title">
+              ${this.history?.label ?? ""} version history
+            </h2>
+            ${closeButton(() => this.closeHistory())}
+          </div>
+          <p class="muted">
+            History for the blueprint bundled with Companion. Locally modified
+            blueprints may differ.
+          </p>
+          ${this.history?.loading ? html`<p role="status">Loading history…</p>` : nothing}
+          ${this.history?.error ? html`<p role="alert" class="error">${this.history.error}</p>` : nothing}
+          ${
+            this.history && !this.history.loading && !this.history.error
+              ? this.history.entries.length
+                ? html`<ul>
+                    ${this.history.entries.map((entry) => html`<li>${entry}</li>`)}
+                  </ul>`
+                : html`<p>
+                    No version history is available for this blueprint.
+                  </p>`
+              : nothing
+          }
+          <div class="dialog-footer">
+            <button type="button" @click=${this.closeHistory}>Close</button>
+          </div>
+        </dialog>
       </section>`;
     return html`<section aria-label="Optional automations">
       <h3>Optional automations</h3>

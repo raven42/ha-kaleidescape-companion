@@ -325,7 +325,11 @@ describe("journal management", () => {
     transport.records[0].title = payload;
     button("Refresh").click();
     await waitFor(payload);
-    expect(panel.shadowRoot!.querySelector("img,script,iframe")).toBeNull();
+    expect(panel.shadowRoot!.querySelectorAll("img")).toHaveLength(1);
+    expect(
+      panel.shadowRoot!.querySelector("header img.companion-icon"),
+    ).not.toBeNull();
+    expect(panel.shadowRoot!.querySelector("script,iframe")).toBeNull();
     await selectViewing(payload);
     expect(
       titlePicker(panel.shadowRoot!).querySelector<HTMLInputElement>(

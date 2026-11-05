@@ -1,3 +1,6 @@
+# Version history:
+# v1: Introduce a scheduled metadata refresh automation.
+# End version history
 blueprint:
   name: Kaleidescape Companion - Schedule metadata refresh
   description: >-

@@ -1,7 +1,11 @@
 /** Local collection symbols preserve filter actions and inert custom labels. */
 import { expect, it, vi } from "vitest";
 import { render } from "lit";
-import { renderCollectionBadge } from "../src/library/badges";
+import {
+  renderCollectionBadge,
+  renderStatusBadges,
+} from "../src/library/badges";
+import { libraryTitle } from "./fixture";
 
 it("renders themed collection pills and retains the original filter action", () => {
   const host = document.createElement("div");
@@ -39,4 +43,19 @@ it("renders themed collection pills and retains the original filter action", () 
   expect(host.querySelector("script")).toBeNull();
   expect(host.textContent).toContain("<script>custom</script>");
   expect(host.querySelector("button")!.disabled).toBe(true);
+});
+
+it("renders the Watch Soon flag as an accessible corner clock", () => {
+  const host = document.createElement("div");
+  render(
+    renderStatusBadges(
+      libraryTitle({ collections: ["WatchSoon"], watched_status: "unwatched" }),
+      true,
+    ),
+    host,
+  );
+  const badge = host.querySelector('.cover-flag.flag-watch-soon[role="img"]')!;
+  expect(badge.getAttribute("aria-label")).toBe("Watch Soon");
+  expect(badge.querySelector("svg circle")).not.toBeNull();
+  expect(host.querySelectorAll(".cover-flag")).toHaveLength(1);
 });

@@ -283,7 +283,15 @@ versions produce a startup warning and a persistent HA notification. Review and
 explicitly update existing files in Settings; HA reloads automations that use
 them and sends an update notification. Customized files are never replaced
 automatically. The Settings About tab compares installed and bundled blueprint
-versions and displays release notes.
+versions and offers a version history for each bundled blueprint. Each history
+is maintained in the YAML comments between the version-history markers; it
+describes the bundled file, which may differ from a locally modified blueprint.
+
+For forwarded receipts, quote markers are removed before parsing. An explicit
+purchase date is preferred; otherwise, the parser requires the original
+Kaleidescape Store sender header immediately followed by its Date header. It
+does not use the forward's date as the purchase date. If the original date is
+missing or uses an unsupported layout, the receipt is rejected for review.
 
 The `kaleidescape_companion.import_purchase_email` action accepts the parsed
 email object, or its JSON string, in `invoice`. Configure the integration and
@@ -324,7 +332,7 @@ remain unlinked until an administrator reviews them. Replaying a receipt does
 not duplicate an invoice. Existing populated values are not replaced. A changed
 value for an existing invoice is reported as a conflict in the action response;
 it is not applied automatically. Existing blueprint installations should be
-updated to version 3 so their notifications describe the database workflow.
+updated to version 4 to handle quoted forwards and use the database workflow.
 
 HA automations without a user context and active administrators can call this
 action; a user context must belong to an active administrator. The payload and
@@ -358,10 +366,12 @@ remain on the Library entry until an invoice is linked.
 
 Open **Database → Reconcile purchases** to review unlinked database records and
 choose a scanned Library entry. No receipt JSON is required, and automatic
-tracking may remain on. A new Library scan makes entries available for manual
-matching. JSON exports contain linked invoices in the compatible Library export
-and unlinked purchases separately; SQLite backups retain the purchase table.
-General merge imports still require an explicit Library match for each purchase.
+tracking may remain on. Match choices and selected entries show a cached Library
+cover when available, using the authenticated artwork endpoint. A new Library
+scan makes entries available for manual matching. JSON exports contain linked
+invoices in the compatible Library export and unlinked purchases separately;
+SQLite backups retain the purchase table. General merge imports still require an
+explicit Library match for each purchase.
 
 The optional offline helper's `purchases.json` can also be reviewed using
 **Database → Merge Import**.

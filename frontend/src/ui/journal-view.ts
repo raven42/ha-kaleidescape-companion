@@ -165,6 +165,31 @@ export const journalStyles = css`
   .journal-filter-tools {
     display: contents;
   }
+  .journal-search-input {
+    position: relative;
+    display: block;
+  }
+  .journal-search-input input {
+    padding-inline-end: 40px;
+  }
+  .journal-search-input input::-webkit-search-cancel-button {
+    display: none;
+  }
+  .journal-clear-search {
+    position: absolute;
+    inset-inline-end: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    min-height: 36px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-size: 22px;
+  }
+  .journal-search-chip {
+    display: none;
+  }
   .journal .card-head {
     padding: 0;
     margin-bottom: 16px;
@@ -231,6 +256,21 @@ export const journalStyles = css`
     order: 0;
   }
   @media (max-width: 700px) {
+    .journal-clear-search {
+      display: none;
+    }
+    .journal-search-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      max-width: calc(100% - 20px);
+      margin: 8px 10px 0;
+    }
+    .journal-search-chip span:first-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     .journal-calendar-mode {
       --calendar-sticky-top: calc(
         max(

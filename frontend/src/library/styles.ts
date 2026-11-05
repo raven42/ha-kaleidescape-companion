@@ -143,13 +143,15 @@ export const libraryStyles = css`
     left: 0;
   }
   .cover-flag.flag-watched,
-  .cover-flag.flag-progress {
+  .cover-flag.flag-progress,
+  .cover-flag.flag-watch-soon {
     width: 52px;
     height: 52px;
     clip-path: polygon(0 0, 100% 0, 0 100%);
   }
   .cover-flag.flag-watched .badge-symbol,
-  .cover-flag.flag-progress .badge-symbol {
+  .cover-flag.flag-progress .badge-symbol,
+  .cover-flag.flag-watch-soon .badge-symbol {
     position: absolute;
     top: 6px;
     left: 6px;
@@ -171,6 +173,10 @@ export const libraryStyles = css`
     border: 4px solid #ffde8a;
     border-top-color: #fff;
     box-shadow: 0 1px 3px #9a5c00;
+  }
+  .cover-flag.flag-watch-soon .badge-symbol svg {
+    width: 25px;
+    height: 25px;
   }
   .cover-flag.flag-recent {
     top: 8px;
@@ -199,6 +205,10 @@ export const libraryStyles = css`
   }
   .flag-progress {
     background: #d98c06;
+    color: #fff;
+  }
+  .flag-watch-soon {
+    background: linear-gradient(135deg, #008bef, #005499);
     color: #fff;
   }
   .flag-recent {
@@ -561,6 +571,10 @@ export const libraryStyles = css`
     --badge-color: #ffa94d;
     --badge-tint: #86501b;
   }
+  .collection-watch-soon {
+    --badge-color: #39baff;
+    --badge-tint: #075793;
+  }
   .movie-dialog .movie-body {
     grid-template-columns: minmax(130px, 190px) minmax(0, 1fr);
     align-items: start;
@@ -604,6 +618,11 @@ export const libraryStyles = css`
   .movie-credits dd {
     margin: 0;
     line-height: 1.7;
+  }
+  .movie-credits .credit-name {
+    display: inline-block;
+    white-space: nowrap;
+    max-width: 100%;
   }
   .movie-record-details {
     margin-top: 12px;

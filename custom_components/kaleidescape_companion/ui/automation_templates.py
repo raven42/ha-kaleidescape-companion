@@ -41,6 +41,9 @@ KNOWN_OLDER = {
             "925bc82fe753e27278c10cd7ec6ba26d5d7e8a38d276717c0ee40e4b5b5bc037",
             "b2f6345aea2b34759dfe4407ae4a00ef6e7ec521139426be21acae84cecff96a",
             "1334182ffcd69152fea57679a9a110d685fbeeaeccab0094e8a8c242409a8304",
+            "d7608b1806576d6c738dab89d300ac4e9cd98c7dfdd09e08a005e1ba38d95a0c",
+            "c923ea9718cbffcbbf938bc2b209add004b72b9a710604a032cefbf9c7762695",
+            "51b8ee74d1f4441987affbbb553265255f364755d9e1977e696fd7246bc884a8",
         }
     ),
     "library_schedule": frozenset(
@@ -65,7 +68,7 @@ KNOWN_OLDER = {
 # These fingerprints also make future template changes visible to tests.
 CURRENT = {
     "purchase_email": (
-        "d7608b1806576d6c738dab89d300ac4e9cd98c7dfdd09e08a005e1ba38d95a0c"
+        "81ec1523ea41bd2f3820bc915d64d8a5aeeab8df36865008b41507496ff0db2c"
     ),
     "library_schedule": (
         "46dc751ba272241dcc67768b0fe4ba8ed994088696339e0d27ab5f203e91a43b"
@@ -79,7 +82,7 @@ CURRENT = {
 }
 MAX_TEMPLATE_BYTES = 128 * 1024
 NOTICE_ID = "kaleidescape_companion_blueprints_outdated"
-LATEST_VERSION = {kind: 3 if kind == "purchase_email" else 1 for kind in TEMPLATES}
+LATEST_VERSION = {kind: 6 if kind == "purchase_email" else 1 for kind in TEMPLATES}
 
 
 def read_template(kind):

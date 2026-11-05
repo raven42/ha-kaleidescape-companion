@@ -1,3 +1,6 @@
+# Version history:
+# v1: Introduce a guarded scheduled calendar full sync automation.
+# End version history
 blueprint:
   name: Kaleidescape Companion - Schedule calendar full sync
   description: >-

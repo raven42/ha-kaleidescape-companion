@@ -76,8 +76,12 @@ it("browses complete local months, applies filters, and stacks same-day viewings
   await vi.waitFor(() => expect(root().textContent).toContain("November 2026"));
   await vi.waitFor(() => expect(posters()).toHaveLength(0));
   expect(root().textContent).not.toContain("No viewings match this month");
-  button("Previous month").click();
+  button("Go to current month").click();
   await vi.waitFor(() => expect(posters()).toHaveLength(3));
+  expect(root().textContent).toContain("October 2026");
+  expect(new URLSearchParams(location.search).get("companion_month")).toBe(
+    "2026-10",
+  );
   calendar.status = "partial";
   calendar.query = "Quiet";
   calendar.fuzzy = false;
@@ -256,6 +260,178 @@ it.each(["kaleidescape-panel", "kaleidescape-reader"])(
       ).not.toBeNull(),
     );
     expect(transport.journalPreferences.view).toBe("list");
+  },
+);
+
+it.each(["kaleidescape-panel", "kaleidescape-reader"])(
+  "temporarily shows the list for %s search and restores the preferred calendar",
+  async (tag) => {
+    const transport = new FixtureTransport();
+    transport.journalPreferences.view = "calendar";
+    parent = document.createElement(tag) as
+      KaleidescapePanel | KaleidescapeReader;
+    parent.client = transport.client();
+    document.body.append(parent);
+    await vi.waitFor(() =>
+      expect(
+        parent!.shadowRoot!.querySelector("kaleidescape-journal-calendar"),
+      ).not.toBeNull(),
+    );
+    const root = parent.shadowRoot!;
+    expect(root.querySelector(".journal-search-chip")).toBeNull();
+    expect(root.querySelector(".journal-clear-search")).toBeNull();
+    const month = root.querySelector("kaleidescape-journal-calendar")!;
+    await vi.waitFor(() =>
+      expect(
+        month.shadowRoot!.querySelector<HTMLButtonElement>(
+          '[aria-label="Next month"]',
+        )?.disabled,
+      ).toBe(false),
+    );
+    month
+      .shadowRoot!.querySelector<HTMLButtonElement>(
+        '[aria-label="Next month"]',
+      )!
+      .click();
+    await vi.waitFor(() =>
+      expect(month.shadowRoot!.textContent).toContain("November 2026"),
+    );
+    const options = root.querySelector("kaleidescape-journal-options")!;
+    options.dispatchEvent(
+      new CustomEvent("journal-status", { detail: "partial" }),
+    );
+    await vi.waitFor(() =>
+      expect(
+        root.querySelector<HTMLInputElement>('input[name="search"]')!.disabled,
+      ).toBe(false),
+    );
+    const input = root.querySelector<HTMLInputElement>('input[name="search"]')!;
+    input.value = "Lantern";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input
+      .closest("form")!
+      .dispatchEvent(new Event("submit", { cancelable: true }));
+    await vi.waitFor(() =>
+      expect(root.querySelector(".entries-layout")).not.toBeNull(),
+    );
+    await vi.waitFor(() =>
+      expect(
+        root.querySelector<HTMLButtonElement>(".journal-clear-search")!
+          .disabled,
+      ).toBe(false),
+    );
+    expect(root.querySelector("kaleidescape-journal-calendar")).toBeNull();
+    expect(root.querySelector(".journal-search-chip")!.textContent).toContain(
+      "Lantern",
+    );
+    expect(transport.journalPreferences.view).toBe("calendar");
+    root.querySelector<HTMLButtonElement>(".journal-search-chip")!.click();
+    await vi.waitFor(() =>
+      expect(
+        root.querySelector("kaleidescape-journal-calendar"),
+      ).not.toBeNull(),
+    );
+    expect(
+      root.querySelector("kaleidescape-journal-calendar")!.shadowRoot!
+        .textContent,
+    ).toContain("November 2026");
+    expect(root.querySelector(".journal-search-chip")).toBeNull();
+    expect(root.querySelector(".journal-clear-search")).toBeNull();
+    expect(transport.journalPreferences.view).toBe("calendar");
+    expect(
+      transport.calls
+        .filter((call) => call.type.endsWith("journal/list"))
+        .at(-1),
+    ).toMatchObject({ query: "", status: "partial" });
+  },
+);
+
+it.each(["kaleidescape-panel", "kaleidescape-reader"])(
+  "keeps the selected list view when clearing a %s search",
+  async (tag) => {
+    const transport = new FixtureTransport();
+    transport.journalPreferences.view = "list";
+    parent = document.createElement(tag) as
+      KaleidescapePanel | KaleidescapeReader;
+    parent.client = transport.client();
+    document.body.append(parent);
+    await vi.waitFor(() =>
+      expect(
+        parent!.shadowRoot!.querySelector(".entries-layout"),
+      ).not.toBeNull(),
+    );
+    const root = parent.shadowRoot!;
+    const input = root.querySelector<HTMLInputElement>('input[name="search"]')!;
+    input.value = "Lantern";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input
+      .closest("form")!
+      .dispatchEvent(new Event("submit", { cancelable: true }));
+    await vi.waitFor(() =>
+      expect(
+        root.querySelector<HTMLButtonElement>(".journal-clear-search")
+          ?.disabled,
+      ).toBe(false),
+    );
+    root.querySelector<HTMLButtonElement>(".journal-clear-search")!.click();
+    await vi.waitFor(() =>
+      expect(root.querySelector(".journal-clear-search")).toBeNull(),
+    );
+    expect(root.querySelector(".entries-layout")).not.toBeNull();
+    expect(root.querySelector("kaleidescape-journal-calendar")).toBeNull();
+    expect(transport.journalPreferences.view).toBe("list");
+  },
+);
+
+it.each(["kaleidescape-panel", "kaleidescape-reader"])(
+  "switches %s to list results after a mobile calendar search",
+  async (tag) => {
+    const transport = new FixtureTransport();
+    transport.journalPreferences.view = "calendar";
+    parent = document.createElement(tag) as
+      KaleidescapePanel | KaleidescapeReader;
+    parent.client = transport.client();
+    document.body.append(parent);
+    await vi.waitFor(() =>
+      expect(
+        parent!.shadowRoot!.querySelector("kaleidescape-journal-shortcuts"),
+      ).not.toBeNull(),
+    );
+    const root = parent.shadowRoot!;
+    const shortcuts = root.querySelector("kaleidescape-journal-shortcuts")!;
+    shortcuts
+      .shadowRoot!.querySelector<HTMLButtonElement>(
+        '[aria-label="Search Journal"]',
+      )!
+      .click();
+    await vi.waitFor(() =>
+      expect(shortcuts.shadowRoot!.querySelector("dialog")!.open).toBe(true),
+    );
+    const input = shortcuts.shadowRoot!.querySelector<HTMLInputElement>(
+      '[name="journal_mobile_search"]',
+    )!;
+    input.value = "Quiet";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input
+      .closest("form")!
+      .dispatchEvent(new Event("submit", { cancelable: true }));
+    await vi.waitFor(() =>
+      expect(root.querySelector(".journal-search-chip")?.textContent).toContain(
+        "Quiet",
+      ),
+    );
+    expect(root.querySelector(".entries-layout")).not.toBeNull();
+    await vi.waitFor(() =>
+      expect(
+        root.querySelector<HTMLButtonElement>(".journal-search-chip")!.disabled,
+      ).toBe(false),
+    );
+    root.querySelector<HTMLButtonElement>(".journal-search-chip")!.click();
+    await vi.waitFor(() =>
+      expect(
+        root.querySelector("kaleidescape-journal-calendar"),
+      ).not.toBeNull(),
+    );
   },
 );
 

@@ -620,6 +620,14 @@ export class FixtureTransport implements Transport {
                   (name) => name.toLowerCase() === "favorites",
                 ),
             ),
+            is_watch_soon: versions.some(
+              (row) =>
+                row.is_watch_soon ||
+                row.collections.some(
+                  (name) =>
+                    name.toLowerCase().replace(/[\s_-]+/g, "") === "watchsoon",
+                ),
+            ),
             is_recently_added: versions.some((row) => row.is_recently_added),
             formats: [
               ...new Set(

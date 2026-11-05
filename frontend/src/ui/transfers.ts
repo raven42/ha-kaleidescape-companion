@@ -13,6 +13,7 @@ import type {
 } from "../core/api";
 import { styles } from "./styles";
 import { closeButton, dismissBackdrop } from "./dialog";
+import { CoverQueue } from "../library/cover";
 import "./import-matcher";
 import type { KaleidescapeImportMatcher } from "./import-matcher";
 
@@ -71,6 +72,30 @@ export class KaleidescapeTransfers extends LitElement {
         position: sticky;
         top: 0;
       }
+      .review-entry {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .review-entry > div {
+        min-width: 0;
+      }
+      .review-entry kaleidescape-library-cover {
+        width: 42px;
+        height: 63px;
+        flex: 0 0 42px;
+        border-radius: 4px;
+      }
+      .pagination {
+        align-items: flex-end;
+      }
+      .pagination label {
+        margin: 0;
+      }
+      .pagination select {
+        width: auto;
+        min-width: 86px;
+      }
       @media (max-width: 600px) {
         .database-dialog {
           width: calc(100% - 16px);
@@ -102,9 +127,10 @@ export class KaleidescapeTransfers extends LitElement {
   private notice = "";
   private dialog: "import" | "export" | null = null;
   private purchaseReview = false;
+  private covers = new CoverQueue();
   protected willUpdate(changed: PropertyValues) {
     if (!changed.has("client") && !changed.has("scope")) return;
-    const key = `${this.scope?.entry_id}:${this.scope?.dataset_id}`;
+    const key = `${this.scope?.entry_id}:${this.scope?.dataset_id}:${this.scope?.permissions.edit}:${this.scope?.library_enabled}`;
     if (this.boundClient === this.client && this.bound === key) return;
     this.clear();
     this.bound = key;
@@ -117,6 +143,8 @@ export class KaleidescapeTransfers extends LitElement {
   }
   private clear() {
     this.generation++;
+    this.covers.cache.dispose();
+    this.covers = new CoverQueue();
     this.controller?.abort();
     this.controller = undefined;
     this.file = undefined;
@@ -476,6 +504,7 @@ export class KaleidescapeTransfers extends LitElement {
               .scope=${this.scope}
               .review=${review}
               .row=${this.matching}
+              .queue=${this.covers}
               .disabled=${blocked}
               @match-choice=${(event: CustomEvent<string | null>) => this.chooseMatch(event.detail)}
               @match-cancel=${() => {
@@ -591,11 +620,29 @@ export class KaleidescapeTransfers extends LitElement {
                   />
                 </td>
                 <td>
-                  ${row.title}<small class="muted" title=${row.key}
-                    >${row.detail}</small
-                  ><small class="muted"
-                    >${purchase ? "Purchase history on Library entry" : row.table}</small
-                  >
+                  <div class="review-entry">
+                    ${
+                      row.artwork_key
+                        ? html`<kaleidescape-library-cover
+                            .client=${this.client}
+                            .scope=${this.scope}
+                            .queue=${this.covers}
+                            .artworkKey=${row.artwork_key}
+                            .title=${row.title}
+                            aria-hidden="true"
+                            @access-denied=${() => this.fail({ code: "unauthorized" })}
+                          ></kaleidescape-library-cover>`
+                        : nothing
+                    }
+                    <div>
+                      ${row.title}<small class="muted" title=${row.key}
+                        >${row.detail}</small
+                      >
+                      <small class="muted"
+                        >${purchase ? "Purchase history on Library entry" : row.table}</small
+                      >
+                    </div>
+                  </div>
                 </td>
                 <td>${action}</td>
                 <td>
@@ -633,7 +680,7 @@ export class KaleidescapeTransfers extends LitElement {
         ${rows.length ? page * this.pageSize + 1 : 0}–${Math.min((page + 1) * this.pageSize, rows.length)}
         of ${rows.length}. Selection covers all review pages.
       </p>
-      <div class="actions">
+      <div class="actions pagination">
         <button
           ?disabled=${blocked || !page}
           @click=${() => {

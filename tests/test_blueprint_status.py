@@ -41,8 +41,11 @@ class BlueprintStatusTest(unittest.IsolatedAsyncioTestCase):
     async def test_fingerprints_match_packaged_and_previous_versions(self):
         for kind in templates.TEMPLATES:
             content = templates.read_template(kind)["yaml"]
-            version = 3 if kind == "purchase_email" else 1
+            version = 6 if kind == "purchase_email" else 1
             self.assertIn(f"Blueprint version: {version}.", content)
+            self.assertIn("# Version history:\n", content)
+            self.assertIn(f"# v{version}: ", content)
+            self.assertIn("# End version history\n", content)
             self.assertEqual(templates.fingerprint(content), templates.CURRENT[kind])
             self.assertEqual(
                 templates.fingerprint(templates.blueprint(content).yaml()),
@@ -52,6 +55,21 @@ class BlueprintStatusTest(unittest.IsolatedAsyncioTestCase):
                 templates.fingerprint(self.old(kind)), templates.KNOWN_OLDER[kind]
             )
         previous_receipts = (FIXTURES / "purchase_email_parser_v2.yaml").read_text()
+        self.assertIn(
+            templates.fingerprint(previous_receipts),
+            templates.KNOWN_OLDER["purchase_email"],
+        )
+        previous_receipts = (FIXTURES / "purchase_email_parser_v3.yaml").read_text()
+        self.assertIn(
+            templates.fingerprint(previous_receipts),
+            templates.KNOWN_OLDER["purchase_email"],
+        )
+        previous_receipts = (FIXTURES / "purchase_email_parser_v4.yaml").read_text()
+        self.assertIn(
+            templates.fingerprint(previous_receipts),
+            templates.KNOWN_OLDER["purchase_email"],
+        )
+        previous_receipts = (FIXTURES / "purchase_email_parser_v5.yaml").read_text()
         self.assertIn(
             templates.fingerprint(previous_receipts),
             templates.KNOWN_OLDER["purchase_email"],
@@ -79,8 +97,8 @@ class BlueprintStatusTest(unittest.IsolatedAsyncioTestCase):
             ],
         )
         state = await templates.async_status(self.hass, notify=False)
-        self.assertEqual(state["purchase_email"]["installed_version"], 3)
-        self.assertEqual(state["purchase_email"]["latest_version"], 3)
+        self.assertEqual(state["purchase_email"]["installed_version"], 6)
+        self.assertEqual(state["purchase_email"]["latest_version"], 6)
         self.assertIsNone(state["library_schedule"]["installed_version"])
         self.assertEqual(state["library_schedule"]["latest_version"], 1)
         self.assertEqual(

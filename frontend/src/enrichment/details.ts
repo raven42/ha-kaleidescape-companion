@@ -7,7 +7,7 @@ import { tmdbCredits } from "./credits";
 
 export function metadataDetails(
   row: LibraryTitle,
-  personLink: (name: string) => TemplateResult,
+  personLink: (name: string, label: string) => TemplateResult,
   castLimit = 8,
 ) {
   const extra = [
@@ -26,7 +26,7 @@ export function metadataDetails(
                 ? html`<div>
                     <dt>${label}</dt>
                     <dd>
-                      ${values.map((name, index) => html`${index ? ", " : ""}${personLink(name)}`)}
+                      ${values.map((name, index) => html`<span class="credit-name">${personLink(name, name + (index < values.length - 1 ? "," : ""))}</span>${index < values.length - 1 ? " " : ""}`)}
                     </dd>
                   </div>`
                 : nothing,

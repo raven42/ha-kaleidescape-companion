@@ -182,6 +182,39 @@ it("shows admin purchase details and persists the optional footer cost", async (
   ).toBe(true);
 });
 
+it("refreshes purchase totals when reopening details even if the revision is unchanged", async () => {
+  const transport = new FixtureTransport();
+  transport.purchaseTotals = {
+    ...transport.purchaseTotals,
+    purchase_count: 2,
+    missing_purchase_prices: 2,
+  };
+  const root = await mount(transport);
+  button(root, "Options").click();
+  const details = root.querySelector<HTMLDetailsElement>(".purchase-details")!;
+  details.open = true;
+  details.dispatchEvent(new Event("toggle"));
+  await vi.waitFor(() =>
+    expect(details.textContent).toContain("2 missing paid prices"),
+  );
+  details.open = false;
+  details.dispatchEvent(new Event("toggle"));
+  transport.purchaseTotals = {
+    ...transport.purchaseTotals,
+    missing_purchase_prices: 0,
+  };
+  details.open = true;
+  details.dispatchEvent(new Event("toggle"));
+  await vi.waitFor(() =>
+    expect(details.textContent).not.toContain("2 missing paid prices"),
+  );
+  expect(
+    transport.calls.filter((call) =>
+      call.type.endsWith("library/purchases/summary"),
+    ).length,
+  ).toBeGreaterThanOrEqual(2);
+});
+
 it("never exposes or requests financial totals for readers, even with a saved footer flag", async () => {
   const transport = new FixtureTransport();
   transport.uiPreferences.show_library_cost = true;
@@ -542,6 +575,38 @@ it("keeps Favorite independent and replaces New with source progress or completi
   expect(
     highestVideoFormat(libraryTitle({ formats: ["SDR HDR10 Dolby Atmos"] })),
   ).toBeUndefined();
+});
+
+it("shows a Watch Soon clock in the status corner for the WatchSoon collection", () => {
+  for (const collection of ["WatchSoon", "Watch Soon", "watch-soon"]) {
+    const item = libraryTitle({
+      collections: [collection],
+      watched_status: "unwatched",
+      is_recently_added: true,
+      is_favorite: true,
+    });
+    expect(statusBadges(item).map((badge) => badge.key)).toEqual([
+      "watch-soon",
+      "favorite",
+    ]);
+  }
+  for (const watched_status of ["in_progress", "watched"] as const) {
+    const item = libraryTitle({
+      collections: ["WatchSoon"],
+      watched_status,
+    });
+    expect(statusBadges(item)[0].key).toBe(
+      watched_status === "watched" ? "watched" : "progress",
+    );
+  }
+  expect(
+    statusBadges(
+      libraryTitle({
+        collections: ["WatchSooner"],
+        watched_status: "unwatched",
+      }),
+    ),
+  ).toEqual([]);
 });
 it("saves Options toggles immediately and restores them after remount", async () => {
   const transport = new FixtureTransport();

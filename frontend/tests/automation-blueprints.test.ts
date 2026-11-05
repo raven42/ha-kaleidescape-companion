@@ -106,3 +106,81 @@ it("does not redefine its custom element when the module is loaded again", async
     registered,
   );
 });
+
+it("opens bundled version history for the selected blueprint as text", async () => {
+  const client = new FixtureTransport().client();
+  vi.spyOn(client, "automationStatuses").mockResolvedValue({
+    purchase_email: { status: "outdated", label: "Email", revision: "old" },
+  });
+  const template = vi.spyOn(client, "automationTemplate").mockResolvedValue({
+    path: "example.yaml",
+    yaml: "# Version history:\n# v4: Handle forwards\n# v3: <img src=x>\n# End version history\nblueprint: {}",
+  });
+  element = document.createElement(
+    "kaleidescape-automation-blueprints",
+  ) as AutomationBlueprints;
+  element.client = client;
+  element.scope = info;
+  element.versionsOnly = true;
+  document.body.append(element);
+  await vi.waitFor(() =>
+    expect(element.shadowRoot!.querySelector("tbody tr button")).not.toBeNull(),
+  );
+  element
+    .shadowRoot!.querySelector<HTMLButtonElement>("tbody tr button")!
+    .click();
+  await vi.waitFor(() =>
+    expect(element.shadowRoot!.querySelector("dialog")!.textContent).toContain(
+      "v4: Handle forwards",
+    ),
+  );
+  const dialog = element.shadowRoot!.querySelector("dialog")!;
+  expect(dialog.open).toBe(true);
+  expect(dialog.textContent).toContain("v3: <img src=x>");
+  expect(dialog.querySelector("img")).toBeNull();
+  expect(template).toHaveBeenCalledWith(info, "purchase_email");
+  [...dialog.querySelectorAll("button")]
+    .find((button) => button.textContent!.trim() === "Close")!
+    .click();
+  expect(dialog.open).toBe(false);
+});
+
+it("discards history responses after administrator access changes", async () => {
+  const client = new FixtureTransport().client();
+  vi.spyOn(client, "automationStatuses").mockResolvedValue({
+    purchase_email: { status: "current", label: "Email", revision: "current" },
+  });
+  let resolve!: (value: { path: string; yaml: string }) => void;
+  vi.spyOn(client, "automationTemplate").mockReturnValue(
+    new Promise((done) => {
+      resolve = done;
+    }),
+  );
+  element = document.createElement(
+    "kaleidescape-automation-blueprints",
+  ) as AutomationBlueprints;
+  element.client = client;
+  element.scope = info;
+  element.versionsOnly = true;
+  document.body.append(element);
+  await vi.waitFor(() =>
+    expect(element.shadowRoot!.querySelector("tbody tr button")).not.toBeNull(),
+  );
+  element
+    .shadowRoot!.querySelector<HTMLButtonElement>("tbody tr button")!
+    .click();
+  await vi.waitFor(() => expect(resolve).toBeDefined());
+  element.scope = {
+    ...info,
+    permissions: { ...info.permissions, edit: false },
+  };
+  await element.updateComplete;
+  resolve({
+    path: "example.yaml",
+    yaml: "# Version history:\n# v1: Late history\n# End version history",
+  });
+  await Promise.resolve();
+  await element.updateComplete;
+  expect(element.shadowRoot!.textContent).not.toContain("Late history");
+  expect(element.shadowRoot!.querySelector("dialog")).toBeNull();
+});

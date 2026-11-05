@@ -126,6 +126,33 @@ class PurchaseImportTest(unittest.IsolatedAsyncioTestCase):
         plan = await self.preview(payload(purchase()))
         self.assertTrue(plan["rows"][0]["needs_match"])
 
+    async def test_purchase_matching_returns_cached_cover_from_movie_group(self):
+        target = await self.seed_library()
+        other_version = library.title_id(library.SOURCE, "fixture-a2")
+        key = "a" * 64
+
+        def set_artwork():
+            db = self.repository._db()
+            with db:
+                db.execute(
+                    "UPDATE library SET artwork_key=? WHERE id=?", (key, other_version)
+                )
+
+        await self.repository._call(set_artwork)
+        plan = await self.preview(payload(purchase(title="Unknown wording")))
+        purchase_key = plan["rows"][0]["key"]
+        self.assertIsNone(plan["rows"][0].get("artwork_key"))
+        options = await self.repository.async_import_match_search(
+            plan["plan_id"], plan["revision"], purchase_key, "Voyage", "fictional-admin"
+        )
+        self.assertEqual(options["items"][0]["artwork_key"], key)
+        matched = await self.match_review(plan, purchase_key, target)
+        self.assertEqual(matched["rows"][0]["artwork_key"], key)
+        cleared = await self.match_review(matched, purchase_key, None)
+        self.assertIsNone(cleared["rows"][0]["artwork_key"])
+        auto = await self.preview(payload(purchase()))
+        self.assertEqual(auto["rows"][0]["artwork_key"], key)
+
     async def test_review_role_revision_and_search_bounds(self):
         target = await self.seed_library()
         plan = await self.preview(payload(purchase(title="Unknown")))

@@ -1,12 +1,87 @@
 """Convert bounded purchase-email payloads into existing invoice records."""
 
+import base64
+import binascii
 import json
+import quopri
+import re
+from html.parser import HTMLParser
+from urllib.parse import urlsplit
 
 from ..core.models import invalid
 from .purchases import money, price_cents, purchase_record
 
 MAX_BYTES = 1024 * 1024
 MAX_MOVIES = 1000
+
+
+def _title_key(value):
+    return " ".join(value.split()).casefold()
+
+
+class _MovieLinks(HTMLParser):
+    """Collect visible store movie links; cover-image links have no text."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.links = {}
+        self.href = None
+        self.label = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag != "a":
+            return
+        self.href, self.label = None, []
+        href = dict(attrs).get("href")
+        if not href or len(href) > 2048:
+            return
+        try:
+            url = urlsplit(href)
+            if url.scheme not in ("", "https") or url.netloc not in (
+                "",
+                "store.kaleidescape.com",
+            ):
+                return
+            if re.fullmatch(r"/movie-store/movie/details/\d+", url.path):
+                self.href = url.path
+        except ValueError:
+            return
+
+    def handle_data(self, data):
+        if self.href is not None:
+            self.label.append(data)
+
+    def handle_endtag(self, tag):
+        if tag == "a" and self.href is not None:
+            title = _title_key("".join(self.label))
+            if title:
+                self.links.setdefault(title, set()).add(self.href)
+            self.href = None
+
+
+def _html_links(part):
+    if not isinstance(part, dict) or part.get("content_type") != "text/html":
+        return {}
+    data = part.get("part_data")
+    if not isinstance(data, str) or len(data) > MAX_BYTES:
+        return {}
+    encoding = str(part.get("content_transfer_encoding") or "").lower()
+    try:
+        if encoding == "quoted-printable":
+            raw = quopri.decodestring(data.encode("utf-8"))
+        elif encoding == "base64":
+            raw = base64.b64decode(data, validate=False)
+        elif encoding in ("", "7bit", "8bit", "binary"):
+            raw = data.encode("utf-8")
+        else:
+            return {}
+        if len(raw) > MAX_BYTES:
+            return {}
+        parser = _MovieLinks()
+        parser.feed(raw.decode("utf-8"))
+        return parser.links
+    except ValueError, UnicodeError, binascii.Error, RecursionError:
+        return {}
 
 
 def _object(pairs):
@@ -45,6 +120,7 @@ def normalize(payload):
     items = payload.get("purchases")
     if not isinstance(items, list) or not 1 <= len(items) <= MAX_MOVIES:
         raise invalid("Purchase email requires 1–1000 purchases")
+    html_links = _html_links(payload.get("html_part"))
     records, seen = [], set()
     for item in items:
         if not isinstance(item, dict):
@@ -57,7 +133,16 @@ def normalize(payload):
             raise invalid("Purchase date or order differs from its email")
         members = item.get("included_titles")
         if members is None:
-            members = [{"title": item.get("title"), "href": item.get("href")}]
+            href = item.get("href")
+            title = item.get("title")
+            candidates = (
+                html_links.get(_title_key(title), set())
+                if isinstance(title, str)
+                else set()
+            )
+            if href is None and len(candidates) == 1:
+                href = next(iter(candidates))
+            members = [{"title": title, "href": href}]
         if (
             not isinstance(members, list)
             or not members

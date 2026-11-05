@@ -131,6 +131,7 @@ export class KaleidescapeLibrary extends LitElement {
   private info?: LibraryInfo;
   private purchaseTotals?: LibraryPurchaseTotals;
   private purchaseLoading = false;
+  private purchaseReload = false;
   private purchaseError = "";
   private purchaseDetailsOpen = false;
   private selected?: LibrarySummary;
@@ -401,6 +402,7 @@ export class KaleidescapeLibrary extends LitElement {
     this.mobileQuery = "";
     this.purchaseTotals = undefined;
     this.purchaseLoading = false;
+    this.purchaseReload = false;
     this.purchaseError = "";
     this.purchaseDetailsOpen = false;
     const details =
@@ -1131,12 +1133,15 @@ export class KaleidescapeLibrary extends LitElement {
       !this.client ||
       !this.scope?.library_enabled ||
       !this.scope.permissions.edit ||
-      this.purchaseLoading ||
       (!force &&
         this.purchaseTotals &&
         this.purchaseTotals.revision === this.info?.revision)
     )
       return;
+    if (this.purchaseLoading) {
+      this.purchaseReload = true;
+      return;
+    }
     const generation = this.generation;
     this.purchaseLoading = true;
     this.purchaseError = "";
@@ -1153,6 +1158,10 @@ export class KaleidescapeLibrary extends LitElement {
     } finally {
       if (generation === this.generation) {
         this.purchaseLoading = false;
+        if (this.purchaseReload) {
+          this.purchaseReload = false;
+          void this.loadPurchaseTotals(true);
+        }
         this.requestUpdate();
       }
     }
@@ -1175,14 +1184,14 @@ export class KaleidescapeLibrary extends LitElement {
       class="purchase-details"
       @toggle=${(event: Event) => {
         this.purchaseDetailsOpen = (event.target as HTMLDetailsElement).open;
-        if (this.purchaseDetailsOpen) void this.loadPurchaseTotals();
+        if (this.purchaseDetailsOpen) void this.loadPurchaseTotals(true);
       }}
     >
       <summary>Purchase details</summary>
       <p class="muted">
-        Recorded purchases for this Library source, including unavailable
-        titles. Filters do not change these totals. Currencies are kept
-        separate.
+        Recorded purchases for this Library source include older orders and
+        unavailable titles. Unlinked purchases are excluded until matched.
+        Filters do not change these totals. Currencies are kept separate.
       </p>
       ${this.purchaseLoading ? html`<p role="status">Loading purchase totals…</p>` : nothing}
       ${this.purchaseError ? html`<p class="error" role="alert">${this.purchaseError} <button @click=${() => this.loadPurchaseTotals(true)}>Retry purchase totals</button></p>` : nothing}
@@ -1642,7 +1651,7 @@ export class KaleidescapeLibrary extends LitElement {
                       >${STATUS[row?.watched_status ?? group.watched_status]}</span
                     >
                   </button>
-                  ${renderStatusBadges(group, false, ["watched", "progress"])}
+                  ${renderStatusBadges(group, false, ["watched", "progress", "watch-soon"])}
                   ${group.collections.map((collection) =>
                     renderCollectionBadge(
                       collection,
@@ -1796,13 +1805,13 @@ export class KaleidescapeLibrary extends LitElement {
                               ? html`<div>
                                   <dt>${label}</dt>
                                   <dd>
-                                    ${(values as string[]).map((value, index) => html`${index ? ", " : ""}${this.detailLink(key as string, value, label === "Collections" ? collectionLabel(value) : value)}`)}
+                                    ${(values as string[]).map((value, index, all) => html`<span class="credit-name">${this.detailLink(key as string, value, (label === "Collections" ? collectionLabel(value) : value) + (index < all.length - 1 ? "," : ""))}</span>${index < all.length - 1 ? " " : ""}`)}
                                   </dd>
                                 </div>`
                               : nothing,
                           )}
                         </dl>
-                        ${metadataDetails(row, (name) => this.detailLink("query", name), this.castLimit)}
+                        ${metadataDetails(row, (name, label) => this.detailLink("query", name, label), this.castLimit)}
                         <p>
                           <button
                             class="link"

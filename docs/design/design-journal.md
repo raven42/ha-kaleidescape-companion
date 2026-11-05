@@ -130,9 +130,12 @@ Playing reads permitted HA entities; recorder internals are administrator-only.
 Lists are paginated with bounded results and revision/filter/sort-bound cursors.
 Search supports case-folded literal matching and the saved fuzzy option. Sorts
 include completion date (partials first) and title. A stale content revision
-requires refresh; personal preference writes do not change that revision.
-User-facing error codes distinguish stale, busy, storage and permission
-failures. The command schemas in
+requires refresh; personal preference writes do not change that revision. An
+active search temporarily displays the list without changing the saved Journal
+view. Clear the search in the desktop input or with the mobile search chip to
+return to the selected view; other filters remain active. Calendar's Today
+button returns to the current local month. User-facing error codes distinguish
+stale, busy, storage and permission failures. The command schemas in
 [ui/websocket.py](../../custom_components/kaleidescape_companion/ui/websocket.py)
 are the exact request reference. Continuous journal push subscriptions remain
 future work; do not promise real-time updates on every mounted screen.
