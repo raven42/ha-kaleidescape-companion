@@ -107,6 +107,7 @@ class PlaybackControls:
         self.reviews = {}
         self.lock = asyncio.Lock()
         self.task = None
+        self.read_tasks = set()
         self.clients = set()
         self._devices_by_ip = {}
         self._reported_read_failure = None
@@ -194,21 +195,41 @@ class PlaybackControls:
     async def async_pause(self):
         self.paused = True
         self.reviews.clear()
-        if self.task and not self.task.done():
+        await async_finish_cleanup(self._pause())
 
-            async def drain():
+    async def _pause(self):
+        failure = None
+        try:
+            reads = tuple(self.read_tasks)
+            for task in reads:
+                if not task.cancelling():
+                    task.cancel()
+            if reads:
+                await asyncio.gather(*reads, return_exceptions=True)
+            if self.task and not self.task.done():
                 try:
                     await async_wait(self.task)
                 except JournalError:
-                    # Pausing can invalidate a preflight before it reserves a write.
-                    # That safe cancellation must not prevent a backup/unload.
+                    # A pause can invalidate a preflight before a write is reserved.
                     pass
-
-            await async_finish_cleanup(drain())
+        except BaseException as error:
+            failure = error
         for client in tuple(self.clients):
-            await client.async_close()
-        self.clients.clear()
-        self._devices_by_ip.clear()
+            try:
+                await client.async_close()
+            except BaseException as error:
+                _LOGGER.error("Control client close failed: %s", safe_exception(error))
+                if failure is None or isinstance(error, asyncio.CancelledError):
+                    failure = error
+            else:
+                self.clients.discard(client)
+                self._devices_by_ip = {
+                    ip: existing
+                    for ip, existing in self._devices_by_ip.items()
+                    if existing is not client
+                }
+        if failure is not None:
+            raise failure
 
     async def async_stop(self):
         self.stopped = True
@@ -219,6 +240,8 @@ class PlaybackControls:
 
     @asynccontextmanager
     async def _client(self, ip):
+        if self.paused or self.stopped:
+            raise JournalError("not_ready", "Device controls are paused")
         client = self._devices_by_ip.get(ip)
         if client is None:
             client = Device(ip, timeout=3, reconnect=True)
@@ -233,15 +256,16 @@ class PlaybackControls:
             yield client
         except BaseException:
             if not initialized or not client.is_connected:
-                self._devices_by_ip.pop(ip, None)
-                self.clients.discard(client)
                 try:
                     await pyk_call(
                         "close after failed connection", lambda: client.async_close()
                     )
                 except Exception:
-                    # Preserve the original connection/read failure.
+                    # Retain the client so pause/stop can retry its close.
                     pass
+                else:
+                    self._devices_by_ip.pop(ip, None)
+                    self.clients.discard(client)
             raise
 
     async def _resolve(self, hostname):
@@ -386,8 +410,33 @@ class PlaybackControls:
         self._ready(authorize)
         if self.lock.locked():
             raise JournalError("busy", "Wait for the active device operation")
+        task = asyncio.create_task(
+            self._execute_read(label, operation, authorize, seconds)
+        )
+        self.read_tasks.add(task)
+        try:
+            return await asyncio.shield(task)
+        except asyncio.CancelledError:
+            caller = asyncio.current_task()
+            if caller and caller.cancelling():
+                if not task.done() and not task.cancelling():
+                    task.cancel()
+
+                async def drain_read():
+                    await asyncio.gather(task, return_exceptions=True)
+
+                await async_finish_cleanup(drain_read())
+                raise
+            if self.paused or self.stopped:
+                raise JournalError("not_ready", "Device controls are paused") from None
+            raise
+        finally:
+            self.read_tasks.discard(task)
+
+    async def _execute_read(self, label, operation, authorize, seconds):
         try:
             async with self.lock, asyncio.timeout(seconds):
+                self._ready(authorize)
                 result = await operation()
                 self._ready(authorize)
         except (

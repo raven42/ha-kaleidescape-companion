@@ -190,9 +190,11 @@ again. Calendar publishing/reconciliation has provider-specific evidence and
 uncertainty rules. See each feature design for recovery and operator controls.
 
 Backup/unload barriers stop new work and drain accepted operations before
-storage closes. A failed observation after acknowledgement does not turn the
-command into an unsent failure. Reconnect must not replay user writes. Protocol
-ACKs do not prove physical outcome or exact movie edition.
+storage closes. Control reads are owned and cancelled or drained before their
+clients are closed; accepted control writes retain their outcome handling. A
+failed observation after acknowledgement does not turn the command into an
+unsent failure. Reconnect must not replay user writes. Protocol ACKs do not
+prove physical outcome or exact movie edition.
 
 The PoC's persistent pyk workflow includes ordinary initialization, local
 events, version identification and automatic reconnect. These are compatible

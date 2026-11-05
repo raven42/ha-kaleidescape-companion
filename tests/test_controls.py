@@ -20,6 +20,7 @@ from custom_components.kaleidescape_companion.backup import (
     async_post_backup,
     async_pre_backup,
 )
+from custom_components.kaleidescape_companion.core.models import JournalError
 from custom_components.kaleidescape_companion.core.repository import JournalRepository
 from custom_components.kaleidescape_companion.library.store import source_id, title_id
 from custom_components.kaleidescape_companion.playback import controls as module
@@ -612,6 +613,88 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
         await backup
         self.assertEqual(self.peer.commands, [])
         await async_post_backup(self.hass)
+
+    async def test_stop_drains_delayed_discovery_before_creating_client(self):
+        await self.configure()
+        controls = self.entry.runtime_data.controls
+        entered, release = asyncio.Event(), asyncio.Event()
+
+        async def delayed_seed():
+            entered.set()
+            try:
+                await release.wait()
+            except asyncio.CancelledError:
+                # A resolver may finish after cancellation has been requested.
+                await release.wait()
+            return SEED
+
+        with patch.object(controls, "_seed", delayed_seed):
+            read = asyncio.create_task(controls.async_discover(lambda: None))
+            await entered.wait()
+            stop = asyncio.create_task(controls.async_stop())
+            await asyncio.sleep(0)
+            await asyncio.sleep(0)
+            self.assertFalse(stop.done())
+            release.set()
+            await stop
+            with self.assertRaises(JournalError) as caught:
+                await read
+        self.assertEqual(caught.exception.code, "not_ready")
+        self.assertEqual(self.peer.connections, [])
+        self.assertFalse(controls.clients)
+        self.assertFalse(controls.read_tasks)
+
+    async def test_pause_cancels_and_closes_inflight_status_and_preflight(self):
+        for operation in ("status", "preflight"):
+            with self.subTest(operation=operation):
+                await self.configure()
+                controls = self.entry.runtime_data.controls
+                self.peer.read_hold = asyncio.Event()
+                if operation == "status":
+                    read = asyncio.create_task(controls.async_status(lambda: None))
+                else:
+                    read = asyncio.create_task(
+                        controls.async_prepare("admin", "pause", None, lambda: None)
+                    )
+                await self.peer.read_started.wait()
+                clients = list(controls.clients)
+                await controls.async_pause()
+                with self.assertRaises(JournalError) as caught:
+                    await read
+                self.assertEqual(caught.exception.code, "not_ready")
+                self.assertTrue(all(not client.is_connected for client in clients))
+                self.assertFalse(controls.clients)
+                self.assertFalse(controls.read_tasks)
+                self.assertEqual(self.peer.commands, [])
+
+    async def test_pause_closes_cancelled_connection_attempt(self):
+        await self.configure()
+        controls = self.entry.runtime_data.controls
+        entered = asyncio.Event()
+        clients = []
+
+        def delayed_client(ip, **kwargs):
+            client = self.peer.client(ip, **kwargs)
+            clients.append(client)
+
+            async def connect():
+                client.is_connected = True
+                entered.set()
+                await asyncio.Future()
+
+            client.connect = connect
+            return client
+
+        with patch.object(module, "Device", delayed_client):
+            read = asyncio.create_task(controls.async_discover(lambda: None))
+            await entered.wait()
+            await controls.async_pause()
+            with self.assertRaises(JournalError) as caught:
+                await read
+        self.assertEqual(caught.exception.code, "not_ready")
+        self.assertTrue(clients)
+        self.assertTrue(all(not client.is_connected for client in clients))
+        self.assertFalse(controls.clients)
 
     async def test_title_launch_uses_exact_cached_version_and_verified_metadata(self):
         await self.configure()
