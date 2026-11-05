@@ -8,9 +8,10 @@ is
 The logo is TMDB branding, used according to its attribution/branding terms; it
 is not project-owned artwork.
 
-The shared credits component bundles it inline so displaying attribution makes
-no browser request to a third party. Keep the required attribution notice and
-provider link with it. Do not recolor or distort the logo.
+The shared credits component bundles it as a local image data URL so displaying
+attribution makes no browser request to a third party. Keep the required
+attribution notice and provider link with it. Do not recolor or distort the
+logo.
 
 `rt-critics-{positive,negative}.svg` and `rt-audience-{positive,negative}.svg`
 are Rotten Tomatoes' standard Fresh, Rotten, positive-audience and
@@ -26,7 +27,13 @@ status from a percentage. The standard positive icons apply at 60% and above.
 The rating component embeds these assets as local image data URLs. They add no
 third-party browser request and contain no executable markup or external links.
 TMDB's circular percentage display is a CSS/SVG score visualization; the
-separate approved TMDB logo and attribution remain in the metadata credits.
+separate approved TMDB logo and attribution remain in the metadata credits. It
+converts the supplied TMDB score out of ten to a rounded percentage. The
+source-labelled Rotten Tomatoes scores retain their percentage scale. Missing,
+non-finite and out-of-range scores are omitted; an explicit empty current score
+does not resurrect a cached provider value. These score displays are distinct
+from the movie's content-rating badge and format badges.
+
 `companion-icon.png` is the packaged Companion icon copied from
 `custom_components/kaleidescape_companion/brand/icon.png`. It is bundled into
 the panel for the desktop header.

@@ -4,10 +4,11 @@
 
 Open **Journal → Options → Calendar view** to switch between the entry list and
 a monthly calendar. This choice saves immediately for your HA user. Previous and
-next arrows move one month; the selected `companion_month=YYYY-MM` stays in the
-URL across reloads and reopening. Invalid/missing months start at the current
-month. This view reads the local Journal and needs no HA calendar entity or
-publishing opt-in. Administrator and household readers share the same calendar.
+next arrows move one month; **Today** returns to the current local month. The
+selected `companion_month=YYYY-MM` stays in the URL across reloads and
+reopening. Invalid/missing months start at the current month. This view reads
+the local Journal and needs no HA calendar entity or publishing opt-in.
+Administrator and household readers share the same calendar.
 
 With Calendar view enabled, Options also offers **Calendar size** (60–320 px day
 rows, initially 180 px) and **Fit month to screen**. Dragging the slider updates
@@ -15,15 +16,29 @@ covers immediately and saves when released. Fit sizes the rows to the available
 viewport height, accounting for the header, footer and number of weeks; it
 follows window resizing and month navigation. Turning Fit off restores the saved
 slider size. Extremely small screens may still require scrolling to keep dates
-and covers usable. These choices save separately for each HA user.
+and covers usable. These choices save separately for each HA user and display
+profile.
 
 Viewings appear on their browser-local start date, including partial viewings
-unless excluded by the Journal status filter. Search, fuzzy-search mode and a
-Library movie filter apply to the month. Deleted entries are excluded. Each
-viewing has a poster; same-day posters overlap diagonally with about 15% of each
-rear cover exposed. Hover or keyboard focus brings that poster forward. Poster
-stacks fill the day vertically with 5 px top/bottom insets. The date sits above
-the artwork as a small readable overlay instead of reserving a separate row.
+unless excluded by the Journal status or Library movie filter. An active search
+temporarily displays list results, using the saved fuzzy-search preference,
+without changing the saved Calendar view. Clear it with the desktop input's
+clear button or the mobile search chip to return to the selected month; other
+filters remain active. Deleted entries are excluded. Each viewing has a poster;
+same-day posters overlap diagonally with about 15% of each rear cover exposed.
+Hover or keyboard focus brings that poster forward. Poster stacks keep portrait
+proportions within the available day width and height, with 5 px insets. All
+seven weekday columns fit the container, including narrow dashboard cards. The
+date sits above the artwork as a small readable overlay instead of reserving a
+separate row.
+
+Cross-day completed viewings have two endpoint covers: the start-day cover has a
+diagonal lower-right cut, and the completion-day cover has a complementary
+upper-left cut. Both open the same viewing details/editor. Intermediate days are
+not filled. Same-day viewings and partial entries retain whole covers. Month
+reads include either endpoint, so a prior-month start still appears on its
+completion date. Local dates and half-open month bounds include timezone and DST
+changes.
 
 The single sticky Journal footer shows all-time totals and the selected month's
 viewing count and watched time. Month totals ignore search/status filters and
@@ -31,7 +46,8 @@ count each viewing once by completion date (partial: start date), assigning its
 whole watched time to that month rather than splitting it across days. A viewing
 spanning two months can have posters in both while contributing totals only
 once. Loading, no-matches and error/retry messages also live in that footer; the
-calendar has no separate status labels above or below the grid.
+calendar has no separate status labels above or below the grid. On phones, the
+compact footer shows only the selected month's count and watched time.
 
 Click a poster to open compact viewing/movie details: artwork, rating, cast,
 directors, genres, runtime, year, format/version badges, watched minutes and
@@ -69,14 +85,15 @@ source. Missing metadata or artwork uses a placeholder. Images use the existing
 visibility-loaded authenticated cache, retained while this calendar is mounted
 and cleared on account/scope changes or departure. No device or calendar
 provider is contacted. A month read is limited to 1000 viewings and a two-second
-SQLite budget; narrow the search/status filter if that limit is exceeded.
+SQLite budget; narrow the status or Library movie filter if that limit is
+exceeded.
 
 Operator browser review: check a month with multiple same-day viewings, hover
-and keyboard focus on rear posters, previous/next navigation, same-day versus
-overnight date labels, missing artwork, mobile horizontal scrolling and popup
-dismissal. Check the slider, Fit on five- and six-week months, and detail links
-replacing old Library criteria. Automated component tests do not establish
-rendered browser geometry.
+and keyboard focus on rear posters, previous/next/Today navigation, search clear
+and month restoration, same-day versus overnight date labels, missing artwork,
+all seven columns at mobile widths and popup dismissal. Check the slider, Fit on
+five- and six-week months, and detail links replacing old Library criteria.
+Automated component tests do not establish rendered browser geometry.
 
 Also review Edit viewing, X, Save, and Delete entry → X/Confirm deletion on
 fictional entries, including the nested confirmation and editor button
@@ -195,15 +212,15 @@ details remain independent of local deletion.
 
 ## Delivery and recovery
 
-Schema 13 adds a private `calendar_publications` outbox. Completion and its
-queued receipt commit in the same worker transaction. A viewing ID has only one
-publication receipt, including across restarts, status changes and calendar
-configuration changes. Receipts contain target/state/timestamps and a config
-fingerprint, not copied titles, notes, templates or event descriptions. The two
-protected viewing columns hold an exact version reference and bounded public
-metadata snapshot for manual and observed entries. They are not part of
-household viewing responses or portable JSON imports/exports; SQLite backups
-preserve them.
+Schema migration 13 introduced the private `calendar_publications` outbox.
+Completion and its queued receipt commit in the same worker transaction. A
+viewing ID has only one publication receipt, including across restarts, status
+changes and calendar configuration changes. Receipts contain
+target/state/timestamps and a config fingerprint, not copied titles, notes,
+templates or event descriptions. The two protected viewing columns hold an exact
+version reference and bounded public metadata snapshot for manual and observed
+entries. They are not part of household viewing responses or portable JSON
+imports/exports; SQLite backups preserve them.
 
 The publisher checks for queued work every ten seconds, at most one event per
 tick. An unavailable calendar/service leaves work queued. Before an external
@@ -266,16 +283,16 @@ another export. Backup pauses between items, drains accepted calls and resumes
 after storage returns. Restart/reload cancels pending items and preserves
 uncertain attempts for review; jobs are not automatically resumed after restart.
 
-Schema **14** adds protected `calendar_sync_jobs` and `calendar_sync_items`
-system tables. They retain actor, target/configuration fingerprint, viewing IDs,
-times and states without copied event content. Completed/matched items suppress
-pending automatic publication for the same configuration. A provider failure or
-interrupted write is uncertain; a later explicit export may match it remotely,
-but never repeats an unconfirmed write with unchanged configuration. Different
-configurations can generate another event. Retained retry/job receipts are not
-purged automatically and count toward the database limit. A stale restored
-database or an external writer can still produce duplicates; this is not
-cross-provider exactly-once delivery.
+Schema migration **14** introduced protected `calendar_sync_jobs` and
+`calendar_sync_items` system tables. They retain actor, target/configuration
+fingerprint, viewing IDs, times and states without copied event content.
+Completed/matched items suppress pending automatic publication for the same
+configuration. A provider failure or interrupted write is uncertain; a later
+explicit export may match it remotely, but never repeats an unconfirmed write
+with unchanged configuration. Different configurations can generate another
+event. Retained retry/job receipts are not purged automatically and count toward
+the database limit. A stale restored database or an external writer can still
+produce duplicates; this is not cross-provider exactly-once delivery.
 
 ## Full Sync for a dedicated calendar
 
@@ -324,13 +341,14 @@ most 10,000 events / 8 MiB, the window at most 10,000 Journal rows, calls have
 30-second budgets and a pass five minutes. Viewing intervals over seven days
 stop the pass rather than authorizing cleanup.
 
-Schema **20** adds protected system tables: `calendar_managed_events` holds
-UID/viewing links, `calendar_reconcile_candidates` holds quarantine hashes and
-observation times, and `calendar_reconcile_intents` holds durable operation
-receipts. They contain no copied titles or event descriptions.
-Confirmed/reviewed receipts are pruned in batches when the 10,000-receipt limit
-is reached; unconfirmed intents are retained. These tables stay separate from
-Library and Journal facts and cannot be manually edited/deleted/imported.
+Schema migration **20** introduced protected system tables:
+`calendar_managed_events` holds UID/viewing links,
+`calendar_reconcile_candidates` holds quarantine hashes and observation times,
+and `calendar_reconcile_intents` holds durable operation receipts. They contain
+no copied titles or event descriptions. Confirmed/reviewed receipts are pruned
+in batches when the 10,000-receipt limit is reached; unconfirmed intents are
+retained. These tables stay separate from Library and Journal facts and cannot
+be manually edited/deleted/imported.
 
 Before each external write, a `sending` intent commits. Timeout, failure,
 interruption or delayed read-back leaves an uncertain barrier; subsequent passes
@@ -401,11 +419,3 @@ alongside unconfirmed writes. A successful pass can still have pending deletes.
 count is nonzero. Continuing rechecks pending work; it does not waive the grace
 period or acknowledge uncertain writes. The status response reports the current
 pending-work counts.
-
-Cross-day completed viewings have two endpoint covers: the start-day cover has a
-diagonal lower-right cut, and the completion-day cover has a complementary
-upper-left cut. Both open the same viewing details/editor. Intermediate days are
-not filled. Same-day viewings and partial entries retain whole covers. Month
-reads include either endpoint, so a prior-month start still appears on its
-completion date. Local dates and half-open month bounds include timezone and DST
-changes.

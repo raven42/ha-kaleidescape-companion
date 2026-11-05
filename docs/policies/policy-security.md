@@ -1,7 +1,7 @@
 # Security policy and hardening
 
 This policy describes current boundaries and development expectations, reviewed
-2026-11-03. It is not a claim of isolation from Home Assistant itself. The
+2026-11-04. It is not a claim of isolation from Home Assistant itself. The
 patched-pyk PoC and release gates are described in the
 [pyk migration plan](../plans/plan-pykaliedescape-migration.md). A documentation
 change does not remove a guard enforced by the current code.
@@ -209,8 +209,9 @@ content-free.
 Run dependency audits for the candidate Python and frontend lock/pin set; record
 versions, exposure, mitigations and review decisions. Reconcile updates with
 HA's constraints rather than force-installing incompatible versions. Historical
-advisory totals are not current release evidence. No audit or removal of a
-specific dependency finding is claimed by this documentation review.
+advisory totals are not current release evidence. Keep current findings and
+dispositions in [dated audit reports](../../audit/README.md); a policy update
+alone does not resolve a dependency finding.
 
 ## Development, deployment and reporting
 

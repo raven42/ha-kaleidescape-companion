@@ -121,9 +121,11 @@ omission, not a universal scrubber for arbitrary strings.
 When a collection references a handle missing from the catalog snapshot, Library
 sync logs the `library_changed` conflict and the rollback of that generation. A
 subsequent successful catalog and collection sync logs recovery; if collection
-sync was disabled, it reports that the conflict was not rechecked. Repeated
-automatic failures remain bounded. Logs do not identify the affected collection
-or movie, so they cannot establish which source change caused the mismatch.
+sync was disabled, it reports that the conflict was not rechecked. This specific
+recovery is a warning so it remains visible at HA's normal warning threshold;
+routine successful syncs remain informational. Repeated automatic failures
+remain bounded. Logs do not identify the affected collection or movie, so they
+cannot establish which source change caused the mismatch.
 
 Ordinary transport activity must not produce unbounded per-frame logs. Keep
 formatting cheap and avoid synchronous I/O on HA's event loop. Existing bounded

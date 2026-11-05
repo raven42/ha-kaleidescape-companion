@@ -8,11 +8,13 @@ tombstone; Database Delete permanently removes supported stored entries.
 
 ## Browse, options and edit
 
-Select a row to see its raw stored values in the right-hand pane. **Edit entry**
-opens a separate dialog containing only supported fields; IDs and relationship
-keys are omitted. JSON metadata uses a JSON text editor. Nullable fields have an
-explicit NULL checkbox so empty text and a missing value remain distinct. Review
-the changes and check the save confirmation before applying them.
+Select a row to inspect its stored values in the right-hand pane. Library
+purchase summaries are projected from linked invoices as described below. **Edit
+entry** opens a separate dialog containing only supported fields; IDs and
+relationship keys are omitted. JSON metadata uses a JSON text editor. Nullable
+fields have an explicit NULL checkbox so empty text and a missing value remain
+distinct. Review the changes and check the save confirmation before applying
+them.
 
 The header/search controls and footer stay visible while browsing. The row list
 and selected details have separate, keyboard-focusable scroll areas; scrolling
@@ -24,11 +26,11 @@ starts its details at the top.
 **Options** saves rows per page (default **Fit to screen**, or 10/25/100/500),
 system-table visibility, the selected table and each table's sort field/order as
 personal database preferences. These use a separate settings row from Library
-preferences and require no HA reload. Initially the three main tables are
-visible: viewings, sessions and Library. Collections, artwork and sources are
-system tables. **Show system tables** exposes the full trusted inspection
-allowlist; private operational state is excluded. It does not remove write
-protections.
+preferences and require no HA reload. Initially the four main tables are
+visible: viewings, sessions, Library and Purchases (`purchase_records`).
+Collections, artwork and sources are system tables. **Show system tables**
+exposes the full trusted inspection allowlist; private operational state is
+excluded. It does not remove write protections.
 
 Fit to screen measures the rendered list area and row height, recalculates on
 viewport/list resize, and requests between 1 and 500 rows. The pane uses its
@@ -42,24 +44,35 @@ page-size choices remain unchanged. Resize requests use the current snapshot
 revision, so concurrent database changes can require a refresh instead of
 silently selecting a different row.
 
-| Table                                                                          | Supported editing/deletion                                                                                                                                                           |
-| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `viewings`                                                                     | Correct title/times/runtime/watched time/status/notes; permanently delete closed entries and their session references                                                                |
-| `sessions`                                                                     | Correct title/runtime/watched time or delete closed sessions; viewing summaries are not automatically recalculated                                                                   |
-| `library`                                                                      | Correct title, known descriptive metadata JSON, purchase/detection dates, paid/retail summary prices and availability; delete versions, owned purchase history and local memberships |
-| `library_collections`                                                          | Correct detection dates/availability; delete a local collection and its memberships                                                                                                  |
-| `library_sources`                                                              | Correct the source detection date while keeping sync state protected; delete a source and its local versions/collections/memberships when receipts permit                            |
-| `library_artwork`                                                              | Delete a managed cache entry, clear all title references, then unlink its private managed file; byte size/type/hash are protected                                                    |
-| `library_memberships`                                                          | Delete a local membership; relationship keys cannot be edited                                                                                                                        |
-| `settings`                                                                     | Validate/edit recognized personal/shared UI preference JSON or delete an allowed row to restore defaults                                                                             |
-| Audit, request, dataset metadata, calendar and collection-write receipt tables | Inspect/search/sort only; identity, attribution and replay barriers remain protected                                                                                                 |
+| Table                                                                          | Supported editing/deletion                                                                                                                                                                      |
+| ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `viewings`                                                                     | Correct title/times/runtime/watched time/status/notes; permanently delete closed entries and their session references                                                                           |
+| `sessions`                                                                     | Correct title/runtime/watched time or delete closed sessions; viewing summaries are not automatically recalculated                                                                              |
+| `library`                                                                      | Correct title, known descriptive metadata JSON, purchase/detection dates, paid/retail summary prices and availability; delete versions and local memberships; retained invoices become unlinked |
+| `purchase_records`                                                             | Inspect/search/sort only; invoice identity and Library links are protected; edit linked invoice prices through the Library entry                                                                |
+| `library_collections`                                                          | Correct detection dates/availability; delete a local collection and its memberships                                                                                                             |
+| `library_sources`                                                              | Correct the source detection date while keeping sync state protected; delete a source and its local versions/collections/memberships when receipts permit                                       |
+| `library_artwork`                                                              | Delete a managed cache entry, clear all title references, then unlink its private managed file; byte size/type/hash are protected                                                               |
+| `library_memberships`                                                          | Delete a local membership; relationship keys cannot be edited                                                                                                                                   |
+| `settings`                                                                     | Validate/edit recognized personal/shared UI preference JSON or delete an allowed row to restore defaults                                                                                        |
+| Audit, request, dataset metadata, calendar and collection-write receipt tables | Inspect/search/sort only; identity, attribution and replay barriers remain protected                                                                                                            |
 
 The private purchase table keeps each invoice once and links it to its Library
 version when matched. Library price and history views are derived from it; price
-edits update the invoice. A manually entered price without an invoice remains on
-the Library version. Deleting a Library version or source leaves its purchase
-records unlinked for reconciliation. Prices, orders, links and history never
-enter standard-user responses.
+edits update the earliest linked invoice. A manually entered price without an
+invoice remains on the Library version. Deleting a Library version or source
+leaves its purchase records unlinked for reconciliation. Purchases cannot be
+edited or deleted directly in Database. Library price edits in Database require
+a linked invoice; use **Library → Edit details** to enter prices before an
+invoice exists. Prices, orders, links and history never enter standard-user
+responses.
+
+The Library inspection response overlays linked purchase history and its
+earliest invoice summary on the Library row, including the invoice date when
+there is no explicit Library date. These are compatibility projections, not
+duplicate stored histories. Database conditions and sort keys still operate on
+the underlying Library columns, so a price/date predicate can differ from the
+displayed derived value. Query **Purchases** for stored invoice fields.
 
 Source-owned values may be replaced or recreated by later synchronization.
 Deleting cached collection membership does not remove it on the device.
@@ -147,9 +160,9 @@ contracts; see [imports](design-data-management.md#reviewed-merge-imports).
 SQLite exports/backups contain private preferences, source identities, audit
 actors and retry state. JSON format 5 contains portable viewing/Library metadata
 and private purchase history; it excludes UI/audit operational rows. Purchase
-JSON arrays can be uploaded directly for reviewed import. Enable **Show system
-tables** to inspect Library purchases; prices are editable, while invoice
-identity fields and Library associations are protected. See the
+JSON arrays can be uploaded directly for reviewed import. **Purchases** is a
+default main table for inspecting invoice records. Its fields and associations
+are protected; linked prices can be edited through the Library entry. See the
 [purchase import rules](design-data-management.md#import-purchase-history-json).
 
 Run `bash dev/dev.sh preview` and open
@@ -183,9 +196,9 @@ still apply. Edit/delete dialogs use a common action footer with adjacent Cancel
 and Save/Delete buttons and space for focus outlines.
 
 Provider enrichment is a protected JSON column on **Library** (schema 19). It is
-readable here but not manually editable/importable. The Library detail view
-augments source credits from that cache; raw Database fields continue to show
-their stored values. See [enrichment](design-metadata.md).
+readable here but not manually editable or merged from portable imports. The
+Library detail view augments source credits from that cache; raw Database fields
+continue to show their stored values. See [enrichment](design-metadata.md).
 
 ## Library sort titles
 
@@ -201,9 +214,11 @@ are introduced.
 ## Reviewed merge imports
 
 Use **Database → Merge Import** to merge a private `.json`, `.sqlite`,
-`.sqlite3`, or `.db` export into the current database. Disable automatic
-recording first. This is an administrator operation. It never replaces the live
-database or contacts Kaleidescape.
+`.sqlite3`, or `.db` export into the current database. General merge imports
+require automatic recording disabled. The separate **Reconcile purchases**
+workflow and validated purchase-only uploads may run while recording is active.
+These are administrator operations. They never replace the live database or
+contact Kaleidescape.
 
 1. Select the file and choose **Review import**. Uploading and reviewing do not
    write records.
@@ -266,26 +281,29 @@ saved purchase HTML.
 
 ### Import a purchase email from an automation
 
-To set up the optional IMAP receipt automation, open **Companion Settings → Home
-Assistant → Optional automations**, choose **Purchase receipt email**, then open
-**Home Assistant Blueprints**, select the installed blueprint, choose an IMAP
-integration, and save an automation. The optional sender text filter helps
-narrow matching mail; it does not authenticate the sender. An invalid receipt or
-an unresolved import produces a generic notification. Open **Database →
-Reconcile purchases** to link saved purchases to scanned Library entries. The
-parser expects a text receipt with an `Item Quality Price` section and
-reconciled dollar amounts; other layouts must be reviewed or adapted. The IMAP
-integration must be configured separately. Missing blueprints are installed at
-startup when HA automations are available; no automation is enabled for you.
-Each blueprint description has a version number. Settings shows whether each
-file is current, outdated, modified, missing or unavailable. Known outdated
-versions produce a startup warning and a persistent HA notification. Review and
-explicitly update existing files in Settings; HA reloads automations that use
-them and sends an update notification. Customized files are never replaced
-automatically. The Settings About tab compares installed and bundled blueprint
-versions and offers a version history for each bundled blueprint. Each history
-is maintained in the YAML comments between the version-history markers; it
-describes the bundled file, which may differ from a locally modified blueprint.
+The [automation design](design-automations.md) owns blueprint installation,
+updates, receipt parsing and operator retry steps. The bundled purchase-receipt
+blueprint is version **6**. To set up the optional IMAP automation, open
+**Companion Settings → Home Assistant → Optional automations**, choose
+**Purchase receipt email**, then open **Home Assistant Blueprints**, select the
+installed blueprint, choose an IMAP integration, and save an automation. The
+optional sender text filter helps narrow matching mail; it does not authenticate
+the sender. An invalid receipt or an unresolved import produces a generic
+notification. Open **Database → Reconcile purchases** to link saved purchases to
+scanned Library entries. The parser expects a text receipt with an
+`Item Quality Price` section and reconciled dollar amounts; other layouts must
+be reviewed or adapted. The IMAP integration must be configured separately.
+Missing blueprints are installed at startup when HA automations are available;
+no automation is enabled for you. Each blueprint description has a version
+number. Settings shows whether each file is current, outdated, modified, missing
+or unavailable. Known outdated versions produce a startup warning and a
+persistent HA notification. Review and explicitly update existing files in
+Settings; HA reloads automations that use them and sends an update notification.
+Customized files are never replaced automatically. The Settings About tab
+compares installed and bundled blueprint versions and offers a version history
+for each bundled blueprint. Each history is maintained in the YAML comments
+between the version-history markers; it describes the bundled file, which may
+differ from a locally modified blueprint.
 
 For forwarded receipts, quote markers are removed before parsing. An explicit
 purchase date is preferred; otherwise, the parser requires the original
@@ -328,11 +346,16 @@ manual import when that risk is unacceptable.
 
 The response status is `imported`, `unchanged`, or `needs_review`, with counts.
 Unambiguous matches and unmatched purchases are saved together; unmatched rows
-remain unlinked until an administrator reviews them. Replaying a receipt does
-not duplicate an invoice. Existing populated values are not replaced. A changed
-value for an existing invoice is reported as a conflict in the action response;
-it is not applied automatically. Existing blueprint installations should be
-updated to version 4 to handle quoted forwards and use the database workflow.
+remain unlinked until an administrator reviews them. Replaying unchanged
+normalized receipt records does not duplicate an invoice; changed title, date,
+order or link evidence can produce a different identity. See
+[receipt retry guidance](design-automations.md#troubleshooting-and-retry).
+Existing populated values are not replaced. A changed value for an existing
+invoice is reported as a conflict in the action response; it is not applied
+automatically. Reconciliation lists unlinked purchases; it does not replace
+conflicting invoice values. For a linked invoice, review the existing Library
+price before explicitly editing it. Keep the original receipt and action
+response for conflicts that cannot yet be resolved in the editor.
 
 HA automations without a user context and active administrators can call this
 action; a user context must belong to an active administrator. The payload and
@@ -359,10 +382,16 @@ of the historical price at purchase.
 ### Import purchase-history JSON
 
 Receipt imports store each invoice once in the private `purchase_records` table,
-with a nullable Library link. Schema 25 moves embedded invoice histories to that
-table and retains an upgrade backup. Library summaries and purchase history
-views are derived from these records. Manually entered prices without an invoice
-remain on the Library entry until an invoice is linked.
+with a nullable Library link. Schema **24** added the per-movie purchase
+information-unavailable flag; schema **25** creates the purchase table and moves
+embedded invoice histories into it. The migration clears derived invoice fields
+from Library, drops its old `purchase_history` column and retains an upgrade
+backup. Matching invoice identities are retained once; conflicting duplicates or
+multiple Library owners abort the migration. Safe unlinked legacy placeholder
+Library rows are removed when no membership, viewing or collection intent still
+references them. Library summaries and purchase history views are derived from
+these records. Manually entered prices without an invoice remain on the Library
+entry until an invoice is linked.
 
 Open **Database → Reconcile purchases** to review unlinked database records and
 choose a scanned Library entry. No receipt JSON is required, and automatic
@@ -370,8 +399,9 @@ tracking may remain on. Match choices and selected entries show a cached Library
 cover when available, using the authenticated artwork endpoint. A new Library
 scan makes entries available for manual matching. JSON exports contain linked
 invoices in the compatible Library export and unlinked purchases separately;
-SQLite backups retain the purchase table. General merge imports still require an
-explicit Library match for each purchase.
+SQLite backups retain the purchase table. Manual import/reconciliation still
+requires a Library match for every selected purchase. The automation can save
+unmatched purchases without one.
 
 The optional offline helper's `purchases.json` can also be reviewed using
 **Database → Merge Import**.
@@ -387,7 +417,7 @@ purchase belongs to one representative version. Compatible flat exports remain
 accepted and supplied summary values must agree with embedded history.
 
 Purchase rows start unchecked. Auto-matching compares the purchase title, cached
-`title_search`/display titles and the title/year inferred from the movie-store
+`title_search`/scanned titles and the title/year inferred from the movie-store
 `href`. Normalized keys handle punctuation, accents, articles, common edition
 suffixes, written numbers and numbered franchise subtitles. Store paths are
 parsed as passive text; no link is fetched. The release year must match a known
@@ -402,12 +432,13 @@ for that invoice, including `title`. The matched Library title appears
 separately in the entry details; adding an invoice preserves that Library title.
 
 Only a single source/group can become a proposal. Conflicting title hints,
-different explicit sequel numbers, unknown/conflicting release years and
-multiple candidates remain unresolved. Existing stored links and exact entry IDs
-retain their prior identity rules. A match rate counts proposals, not
-independently verified accuracy; review before applying. Matching builds one
-index per review, bounded to 20,000 available versions and the existing review
-time budget.
+different explicit sequel numbers, an inferred year absent from the candidate
+group, and multiple candidates remain unresolved. When there is no inferred
+year, a unique normalized-title group can still be proposed. Existing stored
+links and exact entry IDs retain their prior identity rules. A match rate counts
+proposals, not independently verified accuracy; review before applying. Matching
+builds one index per review, bounded to 20,000 available versions and the
+existing review time budget.
 
 Unmatched purchases appear first and cannot be selected/applied. Choose **Match
 title…**, search a partial name, then choose the intended movie using its year,
@@ -431,11 +462,11 @@ Upgrade backups retain the original data.
 Library **Purchased/Added on** uses an explicit version date, otherwise the
 earliest purchase in its movie group. Existing explicit dates keep priority.
 Administrator title details show purchase history; **Database → Library** shows
-its raw columns and supports confirmed price edits. Editing summary prices also
-updates the earliest invoice. Identity/order/link/history fields remain
-protected. Deleting a Library entry or source permanently deletes its owned
-purchases too; export first if they must be retained. Sync preserves purchase
-columns/history.
+its fields plus derived invoice summaries and supports confirmed price edits.
+Editing summary prices also updates the earliest invoice.
+Identity/order/link/history fields remain protected. Deleting a Library entry or
+source preserves its invoice records with a null Library link for later
+reconciliation. Sync preserves purchases and manual purchase fields.
 
 Standard-user APIs omit prices, orders, store links and the complete history;
 only the date is shared. Sensors, viewing snapshots and calendar templates never
@@ -444,22 +475,31 @@ fetched. JSON and SQLite exports are private administrator downloads.
 
 ### Formats, limits and APIs
 
+Current limitation: a schema-25 SQLite merge input with a manual/public retail
+or paid price but no linked invoice is interpreted by the legacy flat-invoice
+reader. Without a purchase date, preview rejects it with **Expected a purchase
+date**; with a date, review can propose an invoice that was never stored. Use a
+JSON export for portable merging of these values: its explicit empty history
+preserves the distinction. SQLite backups still retain the full database for
+offline restore. Review any proposed invoice before applying a SQLite merge.
+
 Limits are 32 MiB per file, 10,000 combined viewing/title/purchase records, an 8
 MiB review response, and a 30-second upload/validation/review budget. Oversized
 reviews must be split into smaller files. Older viewing JSON arrays and objects
 with `viewings` remain supported. JSON format 5 includes portable `library`
-entries with embedded purchase history. Legacy `library_titles`, schema-15
-`library_purchases`, and schema-7/8 purchase-date tables remain readable.
-Recognized keys are validated regardless of schema/version; unknown keys are
-ignored. UI settings, actor preferences and operational recent-batch markers are
-never merged from exports. SQLite snapshots still contain these private rows;
-see
+entries with derived embedded purchase history; unlinked records are exported
+separately as `library_purchases`. Imports also accept `purchase_records`.
+Legacy `library_titles`, schema-15 `library_purchases`, and schema-7/8
+purchase-date tables remain readable. Recognized keys are validated regardless
+of schema/version; unknown keys are ignored. UI settings, actor preferences and
+operational recent-batch markers are never merged from exports. SQLite snapshots
+still contain these private rows; see
 [UI preference storage](design-user-interface.md#personal-and-shared-preferences).
 Every viewing needs `id`, `title`, and an ISO `started_at` with timezone. Titles
 need exact ID/source/handle/group/title keys. Purchase records need title/date;
 optional prices must be nonnegative currency strings with two decimal places,
-and order IDs/links are bounded validated text. Each entry supports up to 1000
-invoices and 2 MiB of embedded history. Scan the source before importing
+and order IDs/links are bounded validated text. Each embedded import history
+supports up to 1000 invoices and 2 MiB. Scan the source before importing
 purchase history; new metadata rows imported in the same review do not qualify
 as scanned targets. SQLite imports read only known columns from regular
 allowlisted tables in a defensive, query-only in-memory connection; SQL text,
@@ -472,6 +512,13 @@ Upload the raw file to the scoped, authenticated preview route:
 POST /api/kaleidescape_companion/{entry_id}/{dataset_id}/import/preview?format=json
 POST /api/kaleidescape_companion/{entry_id}/{dataset_id}/import/preview?format=sqlite
 ```
+
+Append `&purchase_only=true` for a purchase-only upload while recording is
+active. The server rejects any bundle containing viewing or Library rows (or no
+purchases), and binds search, matching and apply to that validated purchase-only
+plan. A caller-provided flag cannot convert a general review into this mode.
+`kaleidescape_companion/purchases/reconcile` creates the same kind of review
+directly from saved unlinked purchases, up to 10,000 records.
 
 The result contains `plan_id`, dataset `revision`, `expires_in`, `counts` and
 compact `rows` with selection keys, action, changes, preserved conflicts and a
@@ -530,10 +577,11 @@ the API, manifest format and commands.
 ## Purchase history preparation
 
 Purchase-history HTML processing is an offline development tool. The integration
-has no HTML upload, Library purchase-import button, or purchase-specific API.
-The scripts remain in `dev/`; they are excluded from the runtime package. The
-helper can extract saved purchases as JSON or prepare a corrected SQLite copy.
-Both use the general
+has no saved purchase-history HTML upload or Library purchase-import button.
+Receipt automation and database reconciliation use their separate supported
+action/API contracts above. The scripts remain in `dev/`; they are excluded from
+the runtime package. The helper can extract saved purchases as JSON or prepare a
+corrected SQLite copy. Both use the general
 [reviewed merge import](design-data-management.md#reviewed-merge-imports),
 without replacing the live database.
 
@@ -587,31 +635,31 @@ It refuses existing outputs and creates the file with owner-only permissions,
 without changing an existing output directory's permissions. Root
 `purchases.json` is ignored by Git; keep outputs elsewhere private too. Import
 this array directly with **Database → Merge Import**, review the proposed
-Library matches, then explicitly select the purchases to apply. Schema 16 stores
-the invoice fields and repeat orders in the matched Library entry's private
-`purchase_history`, with flat summary columns for its earliest invoice. The
-exported `year` is a matching hint derived from `href`, rather than an
-additional invoice field stored in `purchase_history`. Ambiguous or unmatched
-names require a known-title choice before import; they cannot be stored as
-disconnected purchases. See the
+Library matches, then explicitly select the purchases to apply. Current storage
+keeps invoice fields and repeat orders in `purchase_records`; Library history
+and earliest-invoice summaries are derived on read. Schema 16 formerly embedded
+that history in Library; schema 25 moves it out. The exported `year` is a
+matching hint derived from `href`, not an additional stored invoice field.
+Ambiguous or unmatched names require a known-title choice before this manual
+import. Receipt automation can instead save unmatched records for later
+reconciliation. See the
 [purchase import rules](design-data-management.md#import-purchase-history-json).
 
 ### Import an existing corrected copy
 
-Open **Database → Import**, select the private SQLite copy and choose **Review
-import**. Approve the proposed missing purchase-date changes using the normal
-review workflow. The reader supports older separate purchase-date tables as well
-as current embedded purchase history; it never modifies the source file. Current
-storage is the `library` table, and ordinary catalog sync preserves purchase
-data.
+Open **Database → Merge Import**, select the private SQLite copy and choose
+**Review import**. Approve the proposed missing purchase-date changes using the
+normal review workflow. The reader supports older separate purchase-date tables
+as well as legacy embedded purchase history and current `purchase_records`; it
+never modifies the source file. Ordinary catalog sync preserves purchase data.
 
 **Added on** uses the calendar purchase date when present, otherwise first
 detection; grouped titles use their earliest known purchase date. Version
 details show purchase date and detection separately. Purchase dates are not
 download/viewing times. Importing them does not rewrite detection or journal
-facts. Schema 16 additionally derives dates from embedded purchase history where
-an explicit version date is missing. JSON format 5, SQLite exports and HA
-backups include the dates and private purchase records.
+facts. When an explicit version date is missing, the earliest linked invoice in
+the movie group supplies the date. JSON format 5, SQLite exports and HA backups
+include the dates and private purchase records.
 
 ### Prepare another corrected SQLite copy
 

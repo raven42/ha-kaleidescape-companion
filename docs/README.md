@@ -33,9 +33,10 @@ that its implementation or hardware validation has shipped.
 | [Player controls](design/design-playback-controls.md) | Discovery, permissions, player/title verification, remote/launch and uncertainty recovery   |
 | [User interface](design/design-user-interface.md)     | Shared UI structure, roles, settings/preferences/profiles and response recovery             |
 | [Dashboard cards](design/design-dashboard-cards.md)   | Six HA cards, YAML/visual configuration and test-dashboard generation                       |
-| [Sensors](design/design-sensors.md)                   | 16 HA sensor values, attributes and update semantics                                        |
+| [Sensors](design/design-sensors.md)                   | 17 HA sensor values, attributes and update semantics                                        |
 | [Calendar](design/design-calendar.md)                 | Local month view, HA publishing, historical export and Full Sync                            |
 | [Logging](design/design-logging.md)                   | Native HA logging, safe exception summaries, severity/privacy and diagnostics               |
+| [Automations](design/design-automations.md)           | HA actions, blueprint installation/versions/history, schedules and receipt troubleshooting  |
 
 ## Guides and policy
 

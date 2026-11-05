@@ -16,8 +16,8 @@ household devices or external metadata providers.
 ## Focused checks
 
 ```sh
-PYTHONPATH=custom_components/kaleidescape_companion python -m unittest discover -s tests/scrapers
-python -m unittest discover -s tests
+PYTHONPATH=../pykaleidescape:custom_components/kaleidescape_companion .venv/bin/python -m unittest discover -s tests/scrapers
+PYTHONPATH=../pykaleidescape .venv/bin/python -m unittest discover -s tests
 npm --prefix frontend test
 npm --prefix frontend run build
 ```
@@ -27,6 +27,12 @@ npm --prefix frontend run build
   roles.
 - Library, purchases, matching and preferences suites cover exact identities,
   cache preservation, browsing, financial field privacy and sticky UI settings.
+- Purchase tests cover schema-25 movement of embedded invoice history, retained
+  unmatched records, later correlation, replay/conflict handling and
+  purchase-only reconciliation during recording. Blueprint tests exercise quoted
+  forwards, original receipt dates, optional HTML identity recovery, cover/title
+  duplicate links, version fingerprints and comment histories with fictional
+  inputs.
 - `test_read_cache` checks distinct-credit work, household/admin search parity,
   cache bounds/invalidation and cleanup after interrupted queries. The offline
   [enriched Library benchmark](../docs/guides/guide-development.md#library-performance)
@@ -39,6 +45,10 @@ npm --prefix frontend run build
   matching, throttling, networking policy, cancellation and storage boundaries.
 - `frontend/tests` uses a simulated DOM and fictional API transport. Unexpected
   console warnings/errors fail tests. Tests never automate a real browser.
+  Coverage includes purchase reconciliation/artwork, rating and format filters,
+  calendar search/view restoration, Watch Soon badges and repeated
+  custom-element module loading. Simulated layout assertions are not visual
+  browser validation.
 
 Keep credentials, household exports, saved store pages and player addresses out
 of fixtures and tracked files. Add regression tests when changing a trust

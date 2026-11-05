@@ -12,21 +12,28 @@ owner's approval, not a condition that overrides functional migration.
 
 ## Implemented
 
-| Aspect          | Delivered scope                                                                                                                   | Authoritative document                                                                                                             |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Journal         | Single-player HA observation, session/restart recovery, manual entries, corrections, deletion and exports                         | [Journal](../design/design-journal.md)                                                                                             |
-| Data management | Worker-owned SQLite, schema-aware administration, reviewed merge imports and offline purchase-history preparation                 | [Data management](../design/design-data-management.md)                                                                             |
-| Library         | Opt-in local catalog/details/collections/artwork, grouped versions, cached browsing, filters and explicit collection addition     | [Library](../design/design-library.md)                                                                                             |
-| Metadata        | Optional public Store/TMDB providers, reviewed matches/fields/images, cache and source preferences                                | [Metadata](../design/design-metadata.md)                                                                                           |
-| Controls        | Opt-in discovery, selected-player remote, explicit power/pause/resume and experimental movie launch, durable uncertainty recovery | [Controls](../design/design-playback-controls.md)                                                                                  |
-| UI              | Household and administrator surfaces, personal responsive profiles, settings transfer and management                              | [UI](../design/design-user-interface.md)                                                                                           |
-| HA surfaces     | 16 sensors, six dashboard cards and an explicit test-dashboard generator                                                          | [Sensors](../design/design-sensors.md), [cards](../design/design-dashboard-cards.md)                                               |
-| Calendar        | Local Journal month view, optional publishing/history export and dedicated-calendar Full Sync                                     | [Calendar](../design/design-calendar.md)                                                                                           |
-| Operations      | Native module logging, bounded diagnostics, backup coordination, local checks, runtime packaging and explicit SSH deployment      | [Logging](../design/design-logging.md), [development](../guides/guide-development.md), [deployment](../guides/guide-deployment.md) |
+| Aspect          | Delivered scope                                                                                                                                                          | Authoritative document                                                                                                             |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Journal         | Single-player HA observation, session/restart recovery, manual entries, corrections, deletion and exports                                                                | [Journal](../design/design-journal.md)                                                                                             |
+| Data management | Worker-owned SQLite, schema-25 durable purchase records, migration without duplicate invoice history, reviewed merge imports and database-backed purchase reconciliation | [Data management](../design/design-data-management.md)                                                                             |
+| Library         | Opt-in local catalog/details/collections/artwork, grouped versions, cached browsing, filters and explicit collection addition                                            | [Library](../design/design-library.md)                                                                                             |
+| Metadata        | Optional public Store/TMDB providers, reviewed matches/fields/images, cache and source preferences                                                                       | [Metadata](../design/design-metadata.md)                                                                                           |
+| Controls        | Opt-in discovery, selected-player remote, explicit power/pause/resume and experimental movie launch, durable uncertainty recovery                                        | [Controls](../design/design-playback-controls.md)                                                                                  |
+| UI              | Household and administrator surfaces, personal responsive profiles, settings transfer and management                                                                     | [UI](../design/design-user-interface.md)                                                                                           |
+| HA surfaces     | 17 sensors, six dashboard cards and an explicit test-dashboard generator                                                                                                 | [Sensors](../design/design-sensors.md), [cards](../design/design-dashboard-cards.md)                                               |
+| Calendar        | Local Journal month view, optional publishing/history export and dedicated-calendar Full Sync                                                                            | [Calendar](../design/design-calendar.md)                                                                                           |
+| Operations      | Native module logging, bounded diagnostics, backup coordination, local checks, runtime packaging and explicit SSH deployment                                             | [Logging](../design/design-logging.md), [development](../guides/guide-development.md), [deployment](../guides/guide-deployment.md) |
+| Automations     | Three HA buttons/switches each, four versioned blueprints, About/history, explicit updates, receipt parsing and scheduled jobs                                           | [Automations](../design/design-automations.md)                                                                                     |
 
 Implemented means present in code with offline tests; it does not mean every
 model, firmware, browser size or HA release is qualified. The dashboard calendar
 card, native logging and metadata review are implemented features, not backlog.
+Recent Library/UI work includes canonical Science Fiction genres, individual
+resolution/dynamic-range/audio badges, general-audience-first rating filters,
+known-rating exclusion from Unrated, cached covers in reconciliation, calendar
+search/view restoration, Today navigation and the Watch Soon corner badge.
+Receipt blueprint v6 handles repeated cover/title links after v4 added quoted
+forwards and v5 added linkless original receipts with optional HTML ID recovery.
 
 ## Next delivery gates
 

@@ -31,15 +31,16 @@ Advanced mode. The calendar card is implemented, independent of HA publishing.
 
 ## Settings and persistence ownership
 
-Settings has five keyboard-accessible subtabs below sticky Save/Cancel actions:
+Settings has six keyboard-accessible subtabs below sticky Save/Cancel actions:
 
-| Subtab         | Scope                                                                                           |
-| -------------- | ----------------------------------------------------------------------------------------------- |
-| Home Assistant | Recording source entities, calendar selection/templates/Full Sync and test-dashboard generation |
-| Companion      | Recording rules, landing page, shared hidden collections, settings transfer and reload          |
-| Personal       | Fuzzy search and guidance to per-view Options                                                   |
-| Kaleidescape   | Loaded pyk version, local Library/cache, collection-add opt-in, discovery and playback controls |
-| Scrapers       | Provider opt-ins, credentials, rate limits, preferred sources and enrichment controls           |
+| Subtab         | Scope                                                                                                                           |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Home Assistant | Recording source entities, calendar selection/templates/Full Sync, optional automations and test-dashboard generation           |
+| Companion      | Recording rules, landing page, shared hidden collections, settings transfer and reload                                          |
+| Personal       | Fuzzy search and guidance to per-view Options                                                                                   |
+| Kaleidescape   | Local Library/cache, collection-add opt-in, discovery and playback controls                                                     |
+| Scrapers       | Provider opt-ins, credentials, rate limits, preferred sources and enrichment controls                                           |
+| About          | Companion/pyk/API/schema versions, installed/latest blueprint versions, bundled blueprint history and development release notes |
 
 Switching subtabs preserves unsaved configuration. Invalid native form fields
 reveal their subtab before validation. Native integration settings require Save;
@@ -52,6 +53,40 @@ secrets. It is distinct from journal/Library merge imports, which exclude
 settings and operational receipts. Save settings before discovery-dependent
 dashboard creation; the [card guide](design-dashboard-cards.md) owns its
 prerequisites and lost-response recovery.
+
+**Home Assistant → Optional automations** shows blueprint status and offers
+installation or review of an update. **About → View history** displays the
+selected bundled blueprint's version history; it does not describe local edits.
+The [automation design](design-automations.md) owns installation, version
+checks, updates and the actions behind these optional schedules.
+
+## Database and per-title management
+
+Database shows Viewings, Sessions, Library and Purchases by default. Options
+exposes protected system tables and fixed or viewport-fitted row counts. Its
+entry list and details have separate keyboard-scrollable regions, with a shared
+footer showing row range, total, selection count and First/Previous/Next
+navigation. Library and artwork rows can preview authenticated cached covers;
+relationship links open the referenced row. Protected records remain read-only.
+
+**Reconcile purchases** loads unmatched purchases already saved in the database.
+Review starts with no purchases selected; unresolved purchases appear first and
+**Match title…** selects an available Library movie. The review and match picker
+use cached covers when available. Review search, 25/100/500-row pages and
+selection across pages help manage larger sets. Purchase reconciliation remains
+available while automatic recording is enabled; general Merge Import requires
+recording disabled. See [data management](design-data-management.md) for
+revision checks, conflict preservation, limits and retry behavior.
+
+The administrator's Library metadata dialog separates **Scraper Sources**,
+**Field Mapping** and **History**. Refresh searches the selected source even if
+it has cached data; multiple candidates require a choice. Per-field source
+choices, source-use switches and cover/backdrop availability declarations follow
+the configured auto-save mode: immediate save when enabled, otherwise a draft
+until Save. Available TMDB image choices can replace covers/backdrops, with
+reset actions where an earlier image is retained. These controls use the
+[metadata review contract](design-metadata.md), not unrestricted image URLs or
+browser-supplied provider data.
 
 ## Personal and shared preferences
 
@@ -113,6 +148,12 @@ selection is retained as `companion_month=YYYY-MM` in the panel URL, falling
 back to the current local month; it is not a personal settings field. Dashboard
 month navigation remains local to the card. Search/status state and displayed
 month must not be confused with persisted layout.
+
+An active Journal search temporarily shows list results without changing the
+saved view. The desktop search field has a clear button; mobile exposes the
+active query as a dismissible search chip. Clearing restores the preferred
+list/calendar view and the selected month while retaining other filters.
+Calendar's **Today** button returns to the current local month.
 
 Library badges, filters, pagination and browser image retention are specified
 once in the [Library design](design-library.md). Personal Options save accepted

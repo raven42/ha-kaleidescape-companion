@@ -28,13 +28,27 @@ caller's existing representative entry within a group; it grants no write
 access. The matcher indexes at most 20,000 available versions within the review
 deadline.
 
+The index uses the available scanned Library title, `title_search` and raw
+release year within each source group; display overrides and provider-enriched
+names are not additional identity evidence. Pending legacy purchase placeholders
+are excluded. Normalization handles typography, accents, articles, bounded
+edition suffixes and written-number/franchise aliases; it does not use the
+Library fuzzy-search preference. An inferred year must occur among the group's
+known years. Without year evidence, a unique normalized-title group can still be
+proposed, so missing years alone do not force manual review. Different explicit
+sequel numbers and contradictory title hints remain unresolved.
+
 Adapters own source-format validation, identities, record fields, permissions,
 review and atomic writes. The purchase adapter in `library/purchases.py`
 converts its passive store link into title/year evidence and retains invoice
-identity and ownership. Future adapters can supply other metadata through the
-same contract. Viewing imports retain exact UUIDs; Library metadata imports
-retain exact source/version IDs. A title suggestion does not replace these
-integrity rules.
+identity and the optional durable `purchase_records.library_id` association.
+Receipt automation applies unique nonconflicting proposals without a human
+selection and saves unmatched records for later administrator reconciliation.
+Manual purchase reviews require the user to select eligible matches. These
+policies belong to the adapters, not to `TitleMatcher`. Future adapters can
+supply other metadata through the same contract. Viewing imports retain exact
+UUIDs; Library metadata imports retain exact source/version IDs. A title
+suggestion does not replace these integrity rules.
 
 ## Read-only comparison tool
 
@@ -71,6 +85,8 @@ invoice or viewing records:
 
 Manifest rows allow only the five `TitleQuery` fields. Inputs retain the 32 MiB
 and 10,000-record limits. Coverage counts proposals, not verified accuracy.
+Movie Store numeric detail links contain no title/year slug; those purchases
+rely on the supplied title unless the adapter has other evidence.
 
 The reference database opens read-only; the tool starts no HA process, import,
 migration or device request. Both input hashes are checked for changes. Standard

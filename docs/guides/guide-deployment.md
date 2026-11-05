@@ -115,11 +115,21 @@ reloading the entry alone does not replace already imported Python code or old
 static-path registrations.
 
 The archive contains the integration's runtime Python, supported JSON files,
-compiled `ui/assets/panel.js` and local PNG branding. It excludes development
-sources outside the integration, environments, caches, databases and repository
+`services.yaml`, four YAML automation blueprints under `templates/`, compiled
+`ui/assets/panel.js` and local PNG branding. It excludes development sources
+outside the integration, environments, caches, databases and repository
 metadata. Symlinked or hard-linked runtime sources are rejected. The printed
 digest identifies the exact uploaded archive; it is not a signature or a
 compatibility guarantee.
+
+Packaged templates and installed HA blueprints are separate files. After a code
+update/restart, review **Settings → About → Automation blueprint versions** and
+each **View history** dialog. **Latest** means bundled with this Companion
+build; it is not an Internet release check. Update existing files through
+**Settings → Home Assistant → Optional automations → Review update**. An
+accepted update replaces that blueprint and reloads its dependent automations;
+review local customizations first. Installing new component files alone does not
+update existing blueprints. See [automations](../design/design-automations.md).
 
 Deployment stages files under `<HA config>/.kaleidescape-companion-deploy/`,
 then replaces `<HA config>/custom_components/kaleidescape_companion/`. It
@@ -168,7 +178,7 @@ administrator sidebar panel at `/kaleidescape-companion` and review:
 - JSON/SQLite downloads and record persistence after another restart.
 - A regular account’s read-only history, without notes, source/session details,
   or exports.
-- All 16 sensors: five history sensors plus eleven Library/storage sensors.
+- All 17 sensors: five history sensors plus twelve Library/storage sensors.
   Check their bounded attributes/counts after the next refresh, the initial
   discovery baseline, unchanged-scan batch retention and unavailable/unknown
   behavior when Library/status data is disabled or missing.
@@ -177,6 +187,9 @@ administrator sidebar panel at `/kaleidescape-companion` and review:
   unavailable/recording-health states.
 - HA status information for setup or storage failures, without posting private
   data or records.
+- The three HA configuration switches, three action buttons and optional
+  blueprints. With a fictional receipt fixture, verify saved purchases,
+  unmatched reconciliation and matching without disabling tracking.
 
 Browser review is performed by the operator; automated checks use fictional
 records and never contact the target. Enable observation only for deliberately

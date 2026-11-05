@@ -106,10 +106,12 @@ optional `player_id`, the opaque Companion player ID (not an IP, serial number
 or HA media-player entity ID); omit it to use the household default.
 
 Calendar uses the local database and cached artwork, independently of HA
-calendar publishing. It has previous/next month navigation, 60–320 px sizing and
-optional screen fitting. Clicking person/genre/year/rating links opens a
-household Library popup within the card. Dashboard month navigation does not
-change the HA URL.
+calendar publishing. It has previous/next month navigation, **Today** to return
+to the current local month, 60–320 px sizing and optional screen fitting.
+Cross-day completed viewings show complementary cut posters on their start and
+completion dates. Clicking person/genre/year/rating links opens a household
+Library popup within the card. Dashboard month navigation does not change the HA
+URL.
 
 ## Linked search and covers
 
@@ -140,7 +142,12 @@ Covers per row (`columns`, 1–20) and covers per page (`page_size`, 1–1000) a
 explicit counts, including partial last rows. Smaller screens may benefit from
 2–3 columns. Cached images retain the same visibility-triggered loading and
 bounded cache as the panel. Pagination remains available when statistics are
-hidden; opening a cover uses the existing movie detail dialog.
+hidden; opening a cover uses the existing movie detail dialog. Status flags use
+the same priority as the panel: In progress, Watched, Watch Soon, then Recently
+added, with Favorite independent of that choice. Watch Soon uses a clock icon.
+The format overlay shows the highest known video format; it does not infer HDR
+or audio capabilities. The [Library design](design-library.md) owns the complete
+badge and metadata display rules.
 
 ## Full Library
 
@@ -165,11 +172,11 @@ show_stats: true
 
 `search_position` is `top`, `bottom` or `off`. Filter/clear controls and sort
 controls are independently configurable. `view` is `covers` or `list`. Format,
-Library status/favorite/recent, rating, title overlay and footer statistics have
-separate toggles. Card options are independent of saved desktop/tablet/mobile
-Library settings. Sort/filter changes while browsing are local to that mounted
-card; the visual editor/YAML controls its initial layout. It uses the user's
-shared random seed if Random is chosen.
+Library status/Watch Soon/favorite/recent, content rating, title overlay and
+footer statistics have separate toggles. Card options are independent of saved
+desktop/tablet/mobile Library settings. Sort/filter changes while browsing are
+local to that mounted card; the visual editor/YAML controls its initial layout.
+It uses the user's shared random seed if Random is chosen.
 
 All cards accept optional `title`. Optional `entry_id` selects a loaded
 Companion entry; leaving it blank uses the loaded integration. These are

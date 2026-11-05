@@ -72,7 +72,7 @@ documentation cleanup did not run an audit or certify dependency safety.
 Run in separate terminals:
 
 ```sh
-bash dev/dev.sh ha       # http://127.0.0.1:8123
+PYTHONPATH=../pykaleidescape bash dev/dev.sh ha  # http://127.0.0.1:8123
 bash dev/dev.sh preview  # http://127.0.0.1:5173
 ```
 
@@ -82,6 +82,11 @@ overwrite an unexpected component target. Complete HA onboarding, add
 **Kaleidescape Companion** through Devices & services, and open
 `/kaleidescape-companion`. Keep the built-in Kaleidescape integration for actual
 observation. A manual journal alone needs no player connection.
+
+The explicit `PYTHONPATH` above is required for the current local PoC: the HA
+launcher does not add the patched source itself. Run from this repository root
+with the reviewed adjacent checkout present. This local environment setting does
+not install or update the separate HA OS overlay.
 
 The HA panel uses the signed-in session. Standalone Vite uses a memory-only
 token from the development HA instance and a restricted local proxy; no wildcard

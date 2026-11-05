@@ -116,19 +116,22 @@ Multiple checked values match **any** value within that category; different
 categories must **all** match on the **same version**. A matching group still
 opens all its versions, including those that did not match. An unchecked
 category is unrestricted. Filter-option search narrows available filter values,
-not the titles. Rating choices are ordered from general audiences to more
-restrictive ratings and reuse the badges from title details. Viewing formats use
-individual format badges, including HDR10 separately from resolution. SD
-resolution and SDR dynamic range remain separate; SDR has a distinct badge.
-Existing selected people can be removed using their chips; search handles actor
-and director lookup. Sci-Fi and Science Fiction share the Science Fiction genre
-label. **Apply filters** applies the draft and returns to page one; Closing with
-X discards it. The toolbar **Clear Filter** clears search and all checkbox
-filters, including unsubmitted search text, and returns to page one. It
-preserves view, sort and page size. Each category offers up to 500 known names
-(collections up to 200), with at most 100 selections per category. Writers,
-producers and studios are searchable when available, without separate facet
-controls.
+not the titles. Rating choices put G/NR-G first, then unclassified values
+(including Unrated), then PG, PG-13, R and NC-17, with NR-prefixed equivalents
+beside the corresponding rating and alphabetical ties. They reuse the badges
+from title details. Viewing formats use individual format badges, including
+HDR10 separately from resolution. SD resolution and SDR dynamic range remain
+separate; SDR has a distinct badge. Actor/director filter inputs have been
+removed from the dialog; the main search handles people. Existing saved
+actor/director selections can still be removed using their chips, and the API
+retains those facets for compatible clients. Sci-Fi and Science Fiction share
+the Science Fiction genre label. **Apply filters** applies the draft and returns
+to page one; Closing with X discards it. The toolbar **Clear Filter** clears
+search and all checkbox filters, including unsubmitted search text, and returns
+to page one. It preserves view, sort and page size. Each category offers up to
+500 known names (collections up to 200), with at most 100 selections per
+category. Writers, producers and studios are searchable when available, without
+separate facet controls.
 
 Search and display projections run on the same worker for both household roles.
 One search evaluates each distinct credited name once, then resolves matches to
@@ -164,11 +167,12 @@ preferences; main-tab navigation remains in the URL. See
 [preference limits and badge criteria](design-user-interface.md#personal-and-shared-preferences).
 
 The summary shows the union of visible collections/formats/content
-ratings/years, minimum–maximum known runtime, earliest detection, and a source
-status priority of In progress, Watched, Unknown, then Unwatched. Sorts use the
-earliest year, minimum known runtime, first visible collection name, and
-earliest detection as applicable. Browsing preferences restore from the database
-when Library is reopened.
+ratings/years, minimum–maximum known runtime, earliest detection and known
+purchase date, and a source status priority of In progress, Watched, Unknown,
+then Unwatched. Sorts use the earliest year, minimum known runtime, first
+visible collection name, and purchase date with detection as fallback, as
+applicable. Browsing preferences restore from the database when Library is
+reopened.
 
 Statuses reflect source collection membership, independently for exact source
 handles: **Paused → In progress**, otherwise **Played → Watched**, otherwise
@@ -251,32 +255,33 @@ without raw source IDs, origins, or paths. Access, role, scope/readiness, and
 opt-out are checked again after awaited work.
 
 List `filters` accepts `query`, `fuzzy`, `collection`, `actor`, `director`,
-`rating`, `genre`, `year`, `format`, `status`, `sort`, `descending`,
+`rating`, `genre`, `year`, `format`, `status`, `missing_metadata_artwork`,
+`missing_purchase_information` (administrator-only), `sort`, `descending`,
 `random_seed`, `offset`, optional `revision`, `grouped`, and `limit`. `limit`
 must be an integer from 1 to 1000 (default 50); list responses echo it.
 `grouped=true` is used by the UI; omitted/false preserves the original
 version-list API. Grouped responses contain compact display summaries; full
 synopses/credits are fetched only through `library/versions`. Group summaries
 include `version_count`, `formats` (up to 100 with a truncation flag), `years`
-(up to 100), and maximum known runtime. A group's opaque ID is a representative
-current version key; it is not a permanent film identity. `library/versions`
-accepts `title_id`, `offset`, and optional source `revision`, returning at most
-50 positively projected versions sharing the selected source group. Regular-user
-info also includes the name count and an opaque `preferences_key`. List pages
-include that key; subsequent pages can send it to reject stale display
-preferences without changing the source revision. Visible Library polling uses
-it to refresh hidden labels after an external shared-preference change. Facets
-take arrays of at most 100 strings; a single string is retained for existing
-clients. `status` values are `watched`, `unwatched`, `in_progress`, and
-`unknown`. `sort` is one of `name`, `year`, `collection`, `length`, `watched`,
-`added`, or `random`. Random uses the validated `random_seed` so pages and
-personal display profiles share one stable shuffle until Randomize is clicked.
-List pages use source/preference revisions, a 1000-entry ceiling, and an 8 MiB
-conservative serialized JSON payload budget (including facets). Oversized pages
-fail with `library_page_too_large`; reduce the target and retry. Internal lookup
-batches stay below 999 SQLite parameters. Individual-version pages share the
-byte budget and remain capped at 50. Fixed sort expressions and bound values
-accept no client SQL or paths.
+(up to 100), and minimum/maximum known runtime. A group's opaque ID is a
+representative current version key; it is not a permanent film identity.
+`library/versions` accepts `title_id`, `offset`, and optional source `revision`,
+returning at most 50 positively projected versions sharing the selected source
+group. Regular-user info also includes the name count and an opaque
+`preferences_key`. List pages include that key; subsequent pages can send it to
+reject stale display preferences without changing the source revision. Visible
+Library polling uses it to refresh hidden labels after an external
+shared-preference change. Facets take arrays of at most 100 strings; a single
+string is retained for existing clients. `status` values are `watched`,
+`unwatched`, `in_progress`, and `unknown`. `sort` is one of `name`, `year`,
+`collection`, `length`, `watched`, `added`, or `random`. Random uses the
+validated `random_seed` so pages and personal display profiles share one stable
+shuffle until Randomize is clicked. List pages use source/preference revisions,
+a 1000-entry ceiling, and an 8 MiB conservative serialized JSON payload budget
+(including facets). Oversized pages fail with `library_page_too_large`; reduce
+the target and retry. Internal lookup batches stay below 999 SQLite parameters.
+Individual-version pages share the byte budget and remain capped at 50. Fixed
+sort expressions and bound values accept no client SQL or paths.
 
 ## Storage, artwork, and recovery
 
@@ -350,7 +355,9 @@ role changes. The fictional review page also links to `?library=1` and
 editions and separate same-name remake demonstrate source-group browsing and
 detail tabs. The fictional page can enable Library in Settings without
 contacting any device. Canonical work/edition identity and historical artwork
-associations and library-specific import/export remain follow-ups. The
+associations remain follow-ups. Reviewed Library metadata/purchase imports and
+private exports are implemented as described in
+[data management](design-data-management.md). The
 [Add to Collection action](design-library.md#add-to-collection) adds a separate,
 explicit administrator-only POST capability; automatic synchronization remains
 GET-only. Removal remains deferred.
@@ -387,17 +394,20 @@ household readers as well as administrators and do not contact the device.
 Pending collection writes block detail navigation until resolved.
 
 Filters now offer genre, known year and viewing format alongside status,
-collection and rating. Names retain actor/director completion. Each category
-matches any selected value, with all populated categories required on the same
-matching version; grouped results still show every version of a matching work.
-Format options include source labels and positive badge categories: SD, HD, 4K,
-4K Cinematic, SDR, HDR10, Dolby Vision and Dolby Atmos when present. The 4K
-category represents non-Cinematic 4K metadata; Cinematic has its own category.
-HDR, Cinematic and audio badges require their own positive metadata; resolution
-alone does not supply them. Unrated selects movie groups without a known rating
-on any available version; a missing rating on one version of a rated movie does
-not make that movie Unrated. Years are string values such as `2025` in API
-filters and preferences. Unknown years are not linked or fabricated.
+collection and rating. The main search covers actors/directors; the dialog has
+no separate people lookup controls. Each category matches any selected value,
+with all populated categories required on the same matching version; grouped
+results still show every version of a matching work. Format choices split
+recognized combined source labels into individual positive badge categories: SD,
+HD, 4K, 4K Cinematic, SDR, HDR10, Dolby Vision and Dolby Atmos when present.
+Wholly unknown source labels remain filterable. Existing API/source-label
+filters remain accepted. The 4K category represents non-Cinematic 4K metadata;
+Cinematic has its own category. HDR, Cinematic and audio badges require their
+own positive metadata; resolution alone does not supply them. Unrated selects
+movie groups without a known rating on any available version; a missing rating
+on one version of a rated movie does not make that movie Unrated. Years are
+string values such as `2025` in API filters and preferences. Unknown years are
+not linked or fabricated.
 
 All facet selections, including clicked criteria, retain the existing
 100-value/500-character bounds. SQL uses one bound JSON array per selected
@@ -411,15 +421,15 @@ reload.
 **Library → Options → Fuzzy search** saves immediately to the signed-in user's
 global search preferences. The same option appears in Journal Options. It starts
 enabled in the UI and applies to the main title/cast/director search, the
-filter-values search, and actor/director autocomplete. Turning it off requires
-the entered text to occur continuously, ignoring case; literal partial matches
-still work, and punctuation/wildcard characters remain ordinary text. Turning it
-on also tolerates small word misspellings/transpositions, word-order differences
-and diacritics. Selected facet values remain exact in either mode. Mode changes
-invalidate pending suggestions and refresh results from page one, including
-All/Covers views. Other users are unaffected; Journal and manual-viewing pickers
-use the same saved mode. Direct list/suggestion API calls retain a literal
-default when `fuzzy` is omitted.
+filter-values search and compatible actor/director suggestion API calls. Turning
+it off requires the entered text to occur continuously, ignoring case; literal
+partial matches still work, and punctuation/wildcard characters remain ordinary
+text. Turning it on also tolerates small word misspellings/transpositions,
+word-order differences and diacritics. Selected facet values remain exact in
+either mode. Mode changes invalidate pending suggestions and refresh results
+from page one, including All/Covers views. Other users are unaffected; Journal
+and manual-viewing pickers use the same saved mode. Direct list/suggestion API
+calls retain a literal default when `fuzzy` is omitted.
 
 Enclosing the entire search in double quotes requires a case-insensitive,
 whole-word phrase, regardless of the fuzzy toggle. `"Tom Holland"` matches that
@@ -434,8 +444,12 @@ operators and single-quoted values.
 **Missing metadata/artwork** selects movies missing an expected provider's
 metadata or an expected cover or backdrop. It uses the same grouped availability
 rules as the missing-metadata and missing-artwork sensors. The filter saves with
-other personal browsing preferences. Covers and List view separately indicate
-unresolved scraper match conflicts. See
+other personal browsing preferences. Administrators also have **Missing purchase
+information**, using the same group-level date/paid/retail completeness rules as
+its sensor. It adds no warning badge and omits movies explicitly marked
+**Purchase information unavailable**. A role change clears this private filter
+from reader requests. Covers and List view separately indicate unresolved
+scraper match conflicts. See
 [manual resolution](design-metadata.md#review-a-single-title).
 
 The filter panes use consistent inner heading padding, and their sticky action
@@ -478,12 +492,15 @@ changes. Reopening the section refreshes the totals even when a revision has not
 yet changed. Household readers have neither the purchase-display toggle nor
 purchase totals.
 
-These are totals of recorded purchase history for the configured Library source,
-including invoices owned by unavailable versions. Search/filters, page size and
-hidden collection names do not change them. Each stable invoice identity is
-counted once across versions; repeat purchases with different identities remain
-separate. Allocated bundle prices are used as imported. Flat earliest-invoice
-summary columns are not added again.
+These are totals of linked purchase records for the configured Library source,
+including invoices linked to unavailable versions. They also include a Library
+version with a manually entered paid price and no linked invoices; a retail-only
+manual value does not contribute. Unlinked purchases have no source and are
+excluded until reconciled. Search/filters, page size and hidden collection names
+do not change them. Each stable invoice identity is counted once across
+versions; repeat purchases with different identities remain separate. Allocated
+bundle prices are used as imported. Flat earliest-invoice summary columns are
+not added again.
 
 Amounts use exact integer-cent arithmetic and stay separated by their recorded
 currency prefix. Missing paid/retail prices are excluded, with coverage counts
@@ -527,10 +544,20 @@ because metadata can legitimately change active filters and some sort fields.
 Administrators can select **Edit details**. It edits display title, sort title,
 year, rating, synopsis, cast, directors, writers, producers, studios and genres
 across the source group's available versions. Credits use one name per line.
-Source identity, runtime, formats, file/cache paths, memberships, purchases,
-watched state and viewing records cannot be edited here. Raw scan identity
-remains unchanged; display overrides survive future scans. Edits check the movie
-snapshot and preserve the exact request after an uncertain save.
+Purchase date, paid price and retail price apply to the selected version. The
+**Purchase information unavailable** checkbox applies across every version of
+the group, including temporarily unavailable versions. It suppresses the
+missing-purchase-information sensor/filter without clearing stored values or
+adding a badge. Prices use a currency prefix and two decimal places; zero is a
+known value. Linked price edits update the earliest invoice in
+`purchase_records`; without an invoice, manual prices remain on Library. A date
+edit is a Library date override and does not rewrite invoice identity.
+
+Source identity, runtime, formats, file/cache paths, memberships, invoice
+identity/order/link, watched state and viewing records cannot be edited here.
+Raw scan identity remains unchanged; display overrides survive future scans.
+Edits check the movie snapshot and preserve the exact request after an uncertain
+save.
 
 Schema 22 adds nullable `library.sort_title`. Alphabetical sorting uses this
 value, then the display title, then the scanned title. A blank sort title resets
@@ -581,9 +608,10 @@ The
 [official control protocol, revision 17](https://www.kaleidescape.com/wp-content/uploads/Kaleidescape-System-Control-Protocol-Reference-Manual.pdf)
 was rechecked on 2026-10-31. `GO_MOVIE_COLLECTION` and `GO_MOVIE_COLLECTIONS`
 select onscreen views; they do not change membership. The command catalog has no
-movie collection membership add/remove command. Pyk would need an accepted HTTP
-client capability to provide this operation; TCP view commands cannot replace
-the HTTP add path. Removal still needs an observed, verified web request
+movie collection membership add/remove command. The temporary patched-pyk
+`LocalLibrary` provides the HTTP add capability used by Companion; an accepted
+upstream release remains part of the migration gate. TCP view commands cannot
+replace the HTTP add path. Removal still needs an observed, verified web request
 contract and its own guarded mutation/recovery path; no guessed command or
 removal request is sent.
 

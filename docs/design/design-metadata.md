@@ -139,8 +139,8 @@ Checking one makes that artwork complete without an image. Scraper switches
 specify which providers are expected for this movie. Turning a scraper off
 removes it from metadata completeness and future automatic attempts, while
 keeping cached data. The Artwork, Backdrop and Metadata indicators use these
-same boundaries as the `missing_artwork` and `missing_metadata` sensors. The
-When **Auto-save metadata manager changes** is disabled (the default), the
+same boundaries as the `missing_artwork` and `missing_metadata` sensors. When
+**Auto-save metadata manager changes** is disabled (the default), the
 lower-right **Save** commits Refresh results, image selections and resets,
 switches, and field choices together using a current movie snapshot and an
 actor-bound request receipt. Closing the manager discards the draft. When
@@ -165,10 +165,11 @@ Schema **19** adds an `enrichment` JSON column to the existing **Library**
 table. It stores provider identity/provenance, fetch time, credits and available
 ratings. Results are linked through the existing source/group identity and
 shared across available versions of that movie. Source identities, edition,
-runtime, edition covers, watched status, purchases and raw scan metadata are
-preserved. Later device scans retain the provider cache. No new metadata table
-or sensor is required. Cache writes share the Library's storage budget and
-SQLite worker.
+runtime, edition covers, watched status, purchase identity and raw scan metadata
+are preserved. The Store can fill an absent retail price under the restricted
+rules below; it never changes a paid price. Later device scans retain the
+provider cache. No new metadata table or sensor is required. Cache writes share
+the Library's storage budget and SQLite worker.
 
 When **TMDB** and **Sync artwork** are both enabled, enrichment also retrieves
 the matched movie's widescreen backdrop. TMDB supplies the image reference in
@@ -191,19 +192,22 @@ a prior backdrop until a replacement succeeds. New formats can inherit the same
 group backdrop. Edition covers are preserved. Backdrops span Library details
 with a dark fade. Desktop also keeps its poster; mobile uses only the backdrop.
 Without one, the small-poster layout remains. Enable both options and use
-**Refresh metadata** to populate existing movies immediately; otherwise the
-normal seven-day metadata refresh applies.
+**Refresh metadata** to populate existing movies immediately. There is no
+in-process recurring metadata schedule; an HA automation or explicit refresh
+starts subsequent passes. A non-forced pass can reuse provider records fetched
+within seven days.
 
 Details initially keep the first eight cast names visible (configurable per
 display profile); **More credits** reveals the full cast and additional credits.
 **Ratings and metadata sources** expands the source-specific scores and
 attribution. Details show expanded cast, directors, writers, producers and
-studios, plus source-labelled review scores. People search and actor/director
-facets include enriched credits. A distributor/licensor is labelled separately
-from a studio. Rotten Tomatoes critic/audience percentages from the store and
-TMDB's audience rating out of ten remain separate. Metadata credits include the
-approved, locally bundled TMDB logo and its required attribution for both
-account roles.
+studios, plus source-labelled review scores. People search includes enriched
+credits; compatible actor/director API facets also use them, though the filter
+dialog no longer has people lookup controls. A distributor/licensor is labelled
+separately from a studio. Rotten Tomatoes critic/audience percentages from the
+store and TMDB's audience rating out of ten remain separate. Metadata credits
+include the approved, locally bundled TMDB logo and its required attribution for
+both account roles.
 
 The compact score row shares the Play/Collection/Edit controls above version
 details. TMDB votes display as a circular percentage (with the original /10
@@ -218,6 +222,23 @@ SQLite snapshots/HA backups; portable JSON imports/exports keep their existing
 projection and do not transfer provider caches or credentials. Disable providers
 to stop future requests; already cached metadata stays readable while Library is
 enabled. A manually deleted Library row can return on a later scan.
+
+### Retail price and genre normalization
+
+A saved Store refresh may fill a missing retail price on the selected Library
+version, or on its earliest linked invoice when one exists. It preserves every
+populated retail price and never changes the purchase price. Without an invoice,
+the price remains a manual Library value and can later transfer into the first
+linked invoice. This is the current public base price, not evidence of the price
+on the purchase date. It can satisfy the retail portion of the missing purchase
+information check; the purchase date and paid price are still required. Receipt
+imports and reconciliation retain the
+[data-management rules](design-data-management.md#import-purchase-history-json).
+
+Displayed genres normalize Sci-Fi and Science Fiction to **Science Fiction** and
+deduplicate that label across scanned, provider and reviewed metadata. Search
+filters accept the legacy spelling, and saved Library genre selections normalize
+on load. The raw source/provider facts are retained; no migration is needed.
 
 ## Validation and remaining review
 
@@ -369,9 +390,10 @@ landscape images.
 
 Matching requires one normalized title and release year. Ambiguous TMDB search
 results, missing years and mismatched store pages fail closed. No provider ID,
-poster, price, title or edition replaces the caller's existing identity. Results
-contain bounded credits, provider reference and source-specific scores; TMDB
-audience votes are not Rotten Tomatoes percentages.
+poster, price, title or edition replaces the caller's existing identity. A valid
+public retail price is optional metadata, separate from any purchase charge.
+Results contain bounded credits, provider reference and source-specific scores;
+TMDB audience votes are not Rotten Tomatoes percentages.
 
 `Providers.search(provider, query, year=None)` is a separate, explicit manual
 workflow. It accepts 1–200 characters and returns up to eight detailed movie
@@ -413,11 +435,14 @@ rates can require a longer application timeout.
 The public Kaleidescape store currently embeds movie JSON in an inline
 `window.preloadedAjaxData` assignment. The parser decodes that JSON without
 executing scripts and selects only the requested edition. Account/session,
-ownership, orders, prices and recommendations are ignored. Credit role IDs were
-checked against the public store application's role map. Production companies
-and the licensor/distributor stay separate. This interface is undocumented and
-may change; unfamiliar markup stops the pass. No login, private store API,
-trailer fetch or account scraping is supported.
+ownership, orders, sale/rental prices and recommendations are ignored. The
+parser accepts one unambiguous public `est_base_price` across supported purchase
+packages (USD, GBP, EUR or CAD); differing prices/currencies or malformed
+amounts leave retail price unknown. Credit role IDs were checked against the
+public store application's role map. Production companies and the
+licensor/distributor stay separate. This interface is undocumented and may
+change; unfamiliar markup stops the pass. No login, private store API, trailer
+fetch or account scraping is supported.
 
 TMDB uses its
 [official API](https://developer.themoviedb.org/reference/intro/getting-started):

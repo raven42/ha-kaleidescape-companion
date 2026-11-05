@@ -42,7 +42,8 @@ there is no automatic history purge or filesystem-wide quota.
 | `viewings`, `sessions`                                                                   | Household viewing snapshots and separate playback evidence; rewatches/resumptions remain distinct from catalog versions |
 | `schema_metadata`, `requests`                                                            | Dataset identity, revisions and durable mutation deduplication                                                          |
 | `manual_audit`, `maintenance_audit`, `import_audit`, `database_audit`                    | Attribution and operation/count/field metadata with distinct retention rules                                            |
-| `library`, `library_sources`                                                             | Source/version metadata, purchase history, catalog generation and freshness                                             |
+| `library`, `library_sources`                                                             | Source/version metadata, catalog generation and freshness                                                               |
+| `purchase_records`                                                                       | Separate purchase history, including unmatched receipts and validated Library links                                     |
 | `library_collections`, `library_memberships`, `library_artwork`                          | Membership relations and file-cache index; image bytes are outside SQLite                                               |
 | `settings`                                                                               | Personal/display-profile preferences and shared UI defaults                                                             |
 | `library_collection_intents`, `playback_controls`                                        | Durable external command outcomes and uncertainty barriers                                                              |
@@ -50,11 +51,13 @@ there is no automatic history purge or filesystem-wide quota.
 | `calendar_sync_jobs`, `calendar_sync_items`                                              | Explicit historical export progress and receipts                                                                        |
 | `calendar_managed_events`, `calendar_reconcile_candidates`, `calendar_reconcile_intents` | Dedicated-calendar links, delayed cleanup and Full Sync intents                                                         |
 
-A version's descriptive metadata remains bounded JSON on that row; memberships,
-sessions and recovery records are separate relationships. Do not flatten them
-into repeated movie rows or import operational receipts as movie metadata.
-Schema history lives in the migration code; this design describes the current
-model rather than a chronological list of every schema change.
+A version's descriptive metadata remains bounded JSON on that row; purchases,
+memberships, sessions and recovery records are separate relationships. Purchase
+history is projected from `purchase_records`, not embedded in Library JSON. Do
+not flatten them into repeated movie rows or import operational receipts as
+movie metadata. Schema history lives in the migration code; this design
+describes the current model rather than a chronological list of every schema
+change.
 
 ## Automatic tracking
 
@@ -117,8 +120,9 @@ has its own [data-management contract](design-data-management.md).
 Worker-owned Library snapshots preserve display facts for historical viewings
 without relying on the current catalog. Explicit
 [metadata repair](design-calendar.md#repair-existing-journal-metadata) fills
-missing fields from exact cached identities, skips active/deleted rows, and does
-not rewrite already published calendar events.
+missing fields from exact cached identities and skips active/deleted rows. It
+does not itself publish or rewrite calendar events; a later Full Sync can
+refresh managed events from the repaired metadata.
 
 ## Reading and API access
 

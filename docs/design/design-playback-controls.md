@@ -13,7 +13,7 @@ registers no replacement media player and never forwards arbitrary HA services.
 ## Companion setup and use
 
 Controls are disabled by default. Administrators configure them in Companion's
-**Settings → Device discovery and controls**:
+**Settings → Kaleidescape → Device discovery and controls**:
 
 1. Enable playback controls and choose a trusted system seed hostname/private
    LAN address. Blank uses the Library host or `my-kaleidescape.local`. The
@@ -26,17 +26,21 @@ Controls are disabled by default. Administrators configure them in Companion's
 4. Optionally enable experimental Library-title playback separately.
 
 Once enabled, **all active signed-in HA users** can use **Now Playing → Player
-controls** and Library **Play Movie**. A command click runs identity/state
-preflight and sends once, without a confirmation prompt. This can interrupt
-content, power down a player and trigger theater automations. Pause/resume use
-explicit state commands. There is no automatic wake or retry.
+controls** and Library **Play**. A command click runs identity/state preflight
+and sends once, without a confirmation prompt. This can interrupt content, power
+down a player and trigger theater automations. Pause/resume use explicit state
+commands. There is no automatic wake or retry.
 
-In Library, the combined movie dialog has a title/metadata/badge header, **Play
-Movie** and **Choose Player**, followed by poster, synopsis and clickable
-credits/collections. Version tabs appear only for multiple versions. Discovery
-supplies the player picker; choosing another player affects this dialog/control
-card, not the shared default or Journal recording sources. Only administrators
-see Collection actions, discovery/configuration and purchase history. Library
+In Library, the combined movie dialog has a title/metadata/badge header,
+**Play** and **Choose Player**, followed by poster, synopsis and clickable
+credits/collections. It opens the first quality-ranked version unless an exact
+version has already been selected; version tabs appear only for multiple
+versions. The header aggregates known group formats and content ratings, while
+version details retain the selected version's formats. Source-labelled viewer
+and critic scores are separate from content ratings. Discovery supplies the
+player picker; choosing another player affects this dialog/control card, not the
+shared default or Journal recording sources. Only administrators see Collection
+actions, discovery/configuration and purchase history. Library
 detection/purchase dates remain available under expandable **Library details**.
 
 The native integration **Configure** flow exposes the same settings and cached
@@ -50,9 +54,9 @@ chapter, directional navigation, Select, Back, Kaleidescape menu, Movie covers,
 Power on and Standby. Controls verify direct serial identity and a movie zone
 before every operation. Older hardware, Co-Star and individual command support
 need operator validation; a rejected command is reported without fallback. There
-is no automatic wake, command retry, event subscription, HA service forwarding
-or generic raw-command endpoint. Enabled views read readiness on load and poll
-briefly after an explicit wake. Existing HA entities/actions are preserved; no
+is no automatic wake, command retry, HA service forwarding or generic
+raw-command endpoint. Enabled views read readiness on load and poll briefly
+after an explicit wake. Existing HA entities/actions are preserved; no
 replacement media player or new control service is registered.
 
 ## Library identity and launch limits
@@ -138,12 +142,13 @@ playback read. Device/zone identity is still verified before an explicit wake.
 Launch and transport preflight reject unready players; power operations and
 read-only status remain available. A readiness change invalidates a preflight.
 
-The Library action reads state on opening, offers Power On when standby/idle,
-then polls read-only readiness for at most two minutes. Connection resets defer
-another read for 30 seconds. It never retries a wake or automatically launches
-once ready. Play Movie requires a new click. Successful acknowledged/observed
-play, resume and movie launch navigate to Now Playing for the chosen player.
-Unknown/uncertain outcomes preserve recovery and never trigger navigation.
+The Library action reads state on opening, offers **Check player** while state
+is unknown/starting and **Power On** when standby/idle, then polls read-only
+readiness for at most two minutes. Connection resets defer another read for 30
+seconds. It never retries a wake or automatically launches once ready. **Play**
+requires a new click. Successful acknowledged/observed play, resume and movie
+launch navigate to Now Playing for the chosen player. Unknown/uncertain outcomes
+preserve recovery and never trigger navigation.
 
 The Now Playing snapshot itself only reads HA states. Both account roles get
 artwork/display context with source read permission; recorder internals remain
@@ -163,11 +168,11 @@ until an accepted compatible release is available. An incomplete pyk connection
 is discarded even if its TCP socket opened before initialization failed; a later
 explicit read can establish a fresh client.
 
-Settings displays the version declared by the loaded pyk module. For a failed
-status read, Companion logs one warning by default and identifies the failed pyk
-stage at debug level, without device identifiers or raw exception text. A later
-successful read logs recovery. The version string alone cannot prove that a
-patched module with the same version number is installed.
+**Settings → About** displays the version declared by the loaded pyk module. For
+a failed status read, Companion logs one warning by default and identifies the
+failed pyk stage at debug level, without device identifiers or raw exception
+text. A later successful read logs recovery. The version string alone cannot
+prove that a patched module with the same version number is installed.
 
 Offline tests cover opt-outs, roles, discovery, identity mismatch, live
 metadata, stale preflights, receipt deduplication, crash recovery, standby and

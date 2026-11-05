@@ -1,8 +1,8 @@
 # Companion architecture
 
-Status: temporary patched-pyk proof of concept as of 2026-11-03. The
-[migration plan](../plans/plan-pykaliedescape-migration.md) tracks upstream
-release and hardware qualification.
+Status: temporary patched-pyk proof of concept; documentation reviewed
+2026-11-04. The [migration plan](../plans/plan-pykaliedescape-migration.md)
+tracks upstream release and hardware qualification.
 
 Companion is a single-entry Home Assistant service integration with domain
 `kaleidescape_companion`. It adds a household journal, cached movie Library,
@@ -12,15 +12,15 @@ Companion does not replace it or access its private runtime objects.
 
 ## Runtime ownership
 
-| Location                      | Responsibility                                                                                        | Detailed contract                                                                                        |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Integration root              | Config/options flows, setup/unload, backup hooks, diagnostics, HA entities, translations and manifest | This document                                                                                            |
-| `core/`                       | One SQLite worker, migrations, requests, settings, permissions and safe logging helpers               | [Journal](design-journal.md), [data management](design-data-management.md), [logging](design-logging.md) |
-| `playback/`                   | HA observation, recording, selected-player discovery/control and durable command outcomes             | [Journal](design-journal.md#automatic-tracking), [controls](design-playback-controls.md)                 |
-| `library/`                    | Local browser transport/sync, catalog identity, artwork, collections and matching                     | [Library](design-library.md), [matching](design-title-matching.md)                                       |
-| `enrichment/` and `scrapers/` | HA scheduling/authorization/storage and standalone metadata provider clients respectively             | [Metadata](design-metadata.md)                                                                           |
-| `calendar/`                   | Publishing, reconciliation and dedicated-calendar Full Sync through HA                                | [Calendar](design-calendar.md)                                                                           |
-| `ui/` and `frontend/src/`     | Authenticated HTTP/WebSocket interfaces, panel/cards and typed frontend                               | [UI](design-user-interface.md), [cards](design-dashboard-cards.md)                                       |
+| Location                      | Responsibility                                                                                                | Detailed contract                                                                                        |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Integration root              | Config/options flows, setup/unload, backup hooks, diagnostics, HA entities/actions, translations and manifest | This document, [automations](design-automations.md)                                                      |
+| `core/`                       | One SQLite worker, migrations, requests, settings, permissions and safe logging helpers                       | [Journal](design-journal.md), [data management](design-data-management.md), [logging](design-logging.md) |
+| `playback/`                   | HA observation, recording, selected-player discovery/control and durable command outcomes                     | [Journal](design-journal.md#automatic-tracking), [controls](design-playback-controls.md)                 |
+| `library/`                    | Local browser transport/sync, catalog identity, artwork, collections and matching                             | [Library](design-library.md), [matching](design-title-matching.md)                                       |
+| `enrichment/` and `scrapers/` | HA scheduling/authorization/storage and standalone metadata provider clients respectively                     | [Metadata](design-metadata.md)                                                                           |
+| `calendar/`                   | Publishing, reconciliation and dedicated-calendar Full Sync through HA                                        | [Calendar](design-calendar.md)                                                                           |
+| `ui/` and `frontend/src/`     | Authenticated HTTP/WebSocket interfaces, panel/cards and typed frontend                                       | [UI](design-user-interface.md), [cards](design-dashboard-cards.md)                                       |
 
 Feature state belongs to the typed config entry's `runtime_data`. A small
 `hass.data` marker prevents duplicate HTTP registration. Data is stored under
@@ -55,6 +55,11 @@ enrichment requires a separately enabled provider and Library. Disabled
 connectors do not initiate their network work. Setup is therefore not
 unconditionally network-free when optional work has already been enabled.
 
+When HA's automation blueprint manager is available, setup installs missing
+packaged blueprints. It preserves existing files and does not create or enable
+automations. The [automation design](design-automations.md) owns version checks,
+reviewed updates, schedules and purchase receipt ingestion.
+
 Storage availability errors use `ConfigEntryNotReady`; an unsupported database
 schema uses `ConfigEntryError` without disclosing private exception text.
 Options changes reload the entry. Accepted work is drained, listeners/timers and
@@ -79,7 +84,7 @@ version ID, stale edit or unsafe destination. See the
 SQLite and filesystem work run off the event loop on the repository worker or an
 executor. Sensor getters read coordinator caches; they perform no I/O. Two
 30-second coordinators refresh local summaries for the
-[16 sensors](design-sensors.md). Library and provider networking is
+[17 sensors](design-sensors.md). Library and provider networking is
 asynchronous. Pyk's current local-browser HTML parsing runs synchronously in its
 async methods; quantify event-loop impact on large libraries before release.
 Preserve HA responsiveness when adding features, consistent with HA's
@@ -96,9 +101,9 @@ fetch interface independent of HA.
 
 The current manifest pins `pykaleidescape==1.1.6`, matching development HA
 2026.10.4. Required HA dependencies are `frontend`, `http`, and `websocket_api`;
-`kaleidescape` and `calendar` are optional ordering dependencies via
-`after_dependencies`. A manual journal does not require a configured player or
-calendar. Automatic recording needs selected existing HA entities.
+`kaleidescape`, `calendar`, and `automation` are optional ordering dependencies
+via `after_dependencies`. A manual journal does not require a configured player
+or calendar. Automatic recording needs selected existing HA entities.
 
 The PoC owns lazy, persistent pyk `Device` objects and uses public methods and
 requests while preserving application preflight and durable outcomes. Pyk's

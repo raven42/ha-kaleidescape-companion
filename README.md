@@ -25,6 +25,11 @@ per aspect, organized into designs, plans, guides and policies.
 - [Development](docs/guides/guide-development.md) and
   [installation/deployment](docs/guides/guide-deployment.md).
 - [Logging and diagnostics](docs/design/design-logging.md).
+- [Automations and receipt imports](docs/design/design-automations.md):
+  blueprint installation, versions/history, scheduled jobs and email
+  troubleshooting.
+- [Engineering audits](audit/README.md): dated evidence and the current review
+  procedure.
 
 ## Current capabilities
 
@@ -35,9 +40,21 @@ public Store/TMDB enrichment supports reviewed metadata and images.
 
 The shared panel includes **Now Playing | Library | Journal | Database |
 Settings**, with personal desktop/tablet/mobile preferences. HA dashboards have
-six cards, including a Journal calendar, and the integration exposes 16 sensors.
+six cards, including a Journal calendar, and the integration exposes 17 sensors.
 Administrator database tools support bounded inspection/edits and reviewed merge
 imports. HA calendar publishing and dedicated-calendar Full Sync are optional.
+
+Receipt imports retain purchases in their own table, including purchases that
+arrive before a Library scan. Administrators reconcile saved unmatched purchases
+against Library entries without a JSON file or pausing recording. Schema 25
+moves existing invoice histories into that table rather than keeping duplicate
+copies.
+
+Three HA buttons, three configuration switches and four optional automation
+blueprints expose synchronization, recording/calendar settings and receipt
+imports. Settings → About compares installed blueprints with the versions
+bundled with Companion and shows each blueprint's history. Existing blueprints
+are updated explicitly under Settings → Home Assistant → Optional automations.
 
 Controls include discovery, remote/power actions, explicit pause/resume and
 experimental selected-title launch with durable uncertainty recovery. This

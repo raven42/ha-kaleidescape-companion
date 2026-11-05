@@ -1,6 +1,6 @@
 # Home Assistant sensors
 
-The integration creates sixteen read-only sensors under a **Kaleidescape
+The integration creates seventeen read-only sensors under a **Kaleidescape
 Companion** service device. Restart/reload the integration after updating its
 files. Find the actual entity IDs under **Settings → Devices & services →
 Kaleidescape Companion**; names/IDs can vary if you rename entities or already
@@ -82,13 +82,14 @@ adds them to the same service device; existing history unique IDs are unchanged.
 
 Sizes use HA's data-size device class, measurement state class and two-decimal
 display precision. Timestamps use the timestamp device class. Sizes, timestamps,
-conflicts, missing metadata and missing artwork are diagnostic entities. Counts
-are integers; conflict and missing counts use the measurement state class. Size
-sensors remain available when Library sync is disabled, because retained storage
-still occupies space. Other Library sensors become unavailable when disabled.
-With Library enabled but no successful catalog yet, movie counts and timestamps
-are unknown. Failed storage reads make the whole Library/storage coordinator
-unavailable; they do not publish zeroes. History failures are independent.
+conflicts, missing metadata, missing artwork and missing purchase information
+are diagnostic entities. Counts are integers; conflict and missing counts use
+the measurement state class. Size sensors remain available when Library sync is
+disabled, because retained storage still occupies space. Other Library sensors
+become unavailable when disabled. With Library enabled but no successful catalog
+yet, movie counts and timestamps are unknown. Failed storage reads make the
+whole Library/storage coordinator unavailable; they do not publish zeroes.
+History failures are independent.
 
 Only the configured source is counted. Unavailable old versions and inactive
 versions added by imports are excluded. Same-name remakes with different source
@@ -180,14 +181,25 @@ preferences. This API returns positive display fields and opaque title keys; it
 does not expose source handles/groups, private paths or journal notes. All
 sensors retain the wider HA entity/Recorder privacy boundary above.
 
-Missing-artwork and scraper-conflict sensors include `movies` (title strings)
-and `truncated`, matching the history-list attribute shape. Lists sort
-alphabetically, count each source movie group once across versions, and are
-bounded to 50 titles and 8 KiB of UTF-8 JSON. Their state always retains the
-exact affected-group count. Poster and backdrop absence together still count
-once. Explicit provider no-data markers continue to exclude that provider from
-conflicts. Attributes contain no provider IDs, credentials, device identities,
-invoice data or filesystem paths.
+Missing-artwork, missing-metadata, missing-purchase-information and
+scraper-conflict sensors include `movies` (title strings) and `truncated`,
+matching the history-list attribute shape. Lists sort alphabetically, count each
+source movie group once across versions, and are bounded to 50 titles and 8 KiB
+of UTF-8 JSON. Their state always retains the exact affected-group count. Poster
+and backdrop absence together still count once. Explicit provider no-data
+markers continue to exclude that provider from conflicts. Attributes contain no
+provider IDs, credentials, device identities, invoice data or filesystem paths.
+
+The purchase information check evaluates each available scanned group once. For
+each required field, a value on any available version suffices: an explicit
+Library date or linked invoice date, a manual/earliest-invoice paid price, and a
+manual/earliest-invoice retail price. These fields may come from different
+versions; zero prices are present values. A missing price on a later repeat
+invoice does not make a complete earliest-invoice summary incomplete. Unlinked
+purchase records have no Library group and do not contribute. Marking any
+available version's group as purchase-information-unavailable suppresses the
+check. A public Store refresh can fill retail price only; it cannot supply the
+paid price or historical purchase date.
 
 The purchase information sensor does not add a warning badge. HA entity readers
 can see its count and bounded movie-name attributes; the matching Library filter

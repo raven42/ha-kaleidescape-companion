@@ -14,4 +14,7 @@ Eight individual background-free PNGs derived from the supplied icon sheet:
 `transparent-icon-set.png` preserves the edited source sheet. PNG alpha, rather
 than a painted background/checkerboard, defines transparency. The integration
 packages only the first mark's 256 px and 512 px copies under its `brand/`
-folder; the alternate/project source images are not deployed.
+folder. The 256 px icon is also copied to
+`frontend/src/ui/assets/companion-icon.png` for the bundled desktop panel
+header; keep that copy in sync when updating the primary mark. The
+alternate/project source images are not deployed.
