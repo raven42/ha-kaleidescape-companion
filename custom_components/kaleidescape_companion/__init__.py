@@ -1,5 +1,6 @@
 """Home Assistant journal backend for Kaleidescape Companion."""
 
+import asyncio
 import logging
 from pathlib import Path
 
@@ -15,6 +16,7 @@ from .core.migrations import UnsupportedSchemaError
 from .core.models import JournalError
 from .core.repository import JournalRepository
 from .core.runtime import KaleidescapeConfigEntry, KaleidescapeRuntime, loaded_runtimes
+from .core.security import async_finish_cleanup
 from .enrichment.http import MetadataImageView
 from .enrichment.sync import MetadataSync
 from .library.config import origin
@@ -42,21 +44,43 @@ async def _async_close_runtime(
     runtime: KaleidescapeRuntime, close_reason: str | None = None
 ) -> None:
     runtime.ready = False
-    try:
-        if runtime.controls:
-            await runtime.controls.async_stop()
-        if runtime.calendar:
-            await runtime.calendar.async_stop()
-        if runtime.enrichment:
-            await runtime.enrichment.async_stop()
-        if runtime.library:
-            await runtime.library.async_stop()
-        if runtime.observer:
-            await runtime.observer.async_stop(close_reason)
-    except JournalError as error:
-        _LOGGER.error("Runtime cleanup did not complete: %s", safe_exception(error))
-    finally:
-        await runtime.repository.async_close()
+
+    async def close_all() -> None:
+        failures = []
+        cancelled = False
+        owners = (
+            ("controls", runtime.controls, ()),
+            ("calendar", runtime.calendar, ()),
+            ("enrichment", runtime.enrichment, ()),
+            ("library", runtime.library, ()),
+            ("observer", runtime.observer, (close_reason,)),
+            ("repository", runtime.repository, ()),
+        )
+        for name, owner, args in owners:
+            if owner is None:
+                continue
+            try:
+                await (
+                    owner.async_close(*args)
+                    if name == "repository"
+                    else owner.async_stop(*args)
+                )
+            except asyncio.CancelledError:
+                cancelled = True
+                failures.append(name)
+            except Exception as error:
+                failures.append(name)
+                _LOGGER.error(
+                    "Runtime cleanup failed at %s: %s", name, safe_exception(error)
+                )
+        if failures:
+            _LOGGER.error("Runtime cleanup incomplete at: %s", ", ".join(failures))
+        if cancelled:
+            raise asyncio.CancelledError
+        if failures:
+            raise RuntimeError("Companion runtime cleanup incomplete") from None
+
+    await async_finish_cleanup(close_all())
 
 
 async def async_setup_entry(
@@ -110,6 +134,7 @@ async def async_setup_entry(
     runtime = entry.runtime_data = KaleidescapeRuntime(repository, info["dataset_id"])
     panel_registered = False
     platforms_started = False
+    stop_listener = None
     try:
         if not hass.data.get(f"{DOMAIN}.api_registered"):
             async_register_commands(hass)
@@ -139,25 +164,60 @@ async def async_setup_entry(
                 runtime.enrichment = MetadataSync(hass, repository, entry)
             runtime.library = LibrarySync(hass, repository, config)
             await runtime.library.async_start()
+
+        async def async_stop(_event) -> None:
+            await _async_close_runtime(runtime)
+
+        stop_listener = hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, async_stop)
         # HA publishes entity availability as platforms start. Initialize the
         # optional workers first so the initial button states are accurate.
         platforms_started = True
         await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-        async def async_stop(_event) -> None:
-            await _async_close_runtime(runtime)
+        async_register_services(hass)
 
-        entry.async_on_unload(
-            hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, async_stop)
-        )
+        async def setup_blueprints(_hass, _component):
+            if runtime.ready and getattr(entry, "runtime_data", None) is runtime:
+                await async_install_missing(hass)
+
+        if hass.data.get("blueprint", {}).get("automation") is not None:
+            await setup_blueprints(hass, "automation")
+        else:
+            # HA may load automation after this integration, or not load it at all.
+            async_when_setup(hass, "automation", setup_blueprints)
+        entry.async_on_unload(stop_listener)
     except BaseException as error:
-        try:
+
+        async def rollback() -> None:
             if platforms_started:
-                await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-        finally:
-            if panel_registered:
-                async_remove_panel(hass)
-            await _async_close_runtime(runtime)
+                try:
+                    unloaded = await hass.config_entries.async_unload_platforms(
+                        entry, PLATFORMS
+                    )
+                except BaseException as rollback_error:
+                    _LOGGER.error(
+                        "Platform rollback failed: %s", safe_exception(rollback_error)
+                    )
+                    return
+                if not unloaded:
+                    _LOGGER.error(
+                        "Platform rollback was refused; retaining the runtime"
+                    )
+                    return
+            if stop_listener:
+                stop_listener()
+            try:
+                if panel_registered:
+                    async_remove_panel(hass)
+            finally:
+                await _async_close_runtime(runtime)
+
+        try:
+            await async_finish_cleanup(rollback())
+        except BaseException as rollback_error:
+            _LOGGER.error(
+                "Companion rollback failed: %s", safe_exception(rollback_error)
+            )
         if isinstance(error, Exception):
             _LOGGER.debug("Companion initialization fault: %s", safe_exception(error))
             if isinstance(error, ConfigEntryNotReady):
@@ -170,17 +230,6 @@ async def async_setup_entry(
                 raise RuntimeError("Companion initialization failed") from None
             raise ConfigEntryError("Companion initialization failed") from None
         raise
-    async_register_services(hass)
-
-    async def setup_blueprints(_hass, _component):
-        if runtime.ready and getattr(entry, "runtime_data", None) is runtime:
-            await async_install_missing(hass)
-
-    if hass.data.get("blueprint", {}).get("automation") is not None:
-        await setup_blueprints(hass, "automation")
-    else:
-        # HA may load automation after this integration, or not load it at all.
-        async_when_setup(hass, "automation", setup_blueprints)
     _LOGGER.info("Kaleidescape Companion is ready")
     return True
 
