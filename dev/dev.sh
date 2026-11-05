@@ -4,6 +4,12 @@ set -euo pipefail
 umask 077
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
+PYK_SOURCE="${COMPANION_PYK_PATH:-$ROOT/../pykaleidescape}"
+
+use_pyk() {
+  .venv/bin/python dev/check_pyk.py "$PYK_SOURCE"
+  export PYTHONPATH="$PYK_SOURCE${PYTHONPATH:+:$PYTHONPATH}"
+}
 
 case "${1:-help}" in
   setup)
@@ -14,11 +20,7 @@ case "${1:-help}" in
     (cd frontend && npm ci)
     ;;
   check)
-    if [[ ! -f "$ROOT/../pykaleidescape/kaleidescape/local_browser.py" ]]; then
-      echo "The patched pykaleidescape checkout is required beside this PoC checkout" >&2
-      exit 1
-    fi
-    export PYTHONPATH="$ROOT/../pykaleidescape${PYTHONPATH:+:$PYTHONPATH}"
+    use_pyk
     PYTHONPATH="$ROOT/custom_components/kaleidescape_companion:$PYTHONPATH" .venv/bin/python -m unittest discover -s tests/scrapers
     .venv/bin/python -m unittest discover -s tests
     .venv/bin/python dev/check_project.py
@@ -35,6 +37,10 @@ case "${1:-help}" in
       npm run build
     )
     ;;
+  python-test)
+    use_pyk
+    exec .venv/bin/python -m unittest discover -s tests -v
+    ;;
   preview)
     cd frontend
     exec npm run dev
@@ -47,6 +53,7 @@ case "${1:-help}" in
     exit "$audit_status"
     ;;
   ha)
+    use_pyk
     if [[ -L .ha-dev || -L .ha-dev/custom_components ]]; then
       echo "Refusing linked development configuration directories" >&2
       exit 1
@@ -69,6 +76,6 @@ case "${1:-help}" in
     exec .venv/bin/hass --config "$ROOT/.ha-dev" --debug
     ;;
   *)
-    echo "Usage: bash dev/dev.sh {setup|check|audit|preview|ha}"
+    echo "Usage: bash dev/dev.sh {setup|check|python-test|audit|preview|ha}"
     ;;
 esac

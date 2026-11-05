@@ -2,6 +2,7 @@ __pycache__/
 *.py[cod]
 .venv/
 .ha-dev/
+.pyk-source/
 *.egg-info/
 build/
 dist/

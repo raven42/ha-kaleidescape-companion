@@ -122,14 +122,10 @@
     {
       "label": "Test Python",
       "type": "process",
-      "command": "${workspaceFolder}/.venv/bin/python",
+      "command": "bash",
       "args": [
-        "-m",
-        "unittest",
-        "discover",
-        "-s",
-        "tests",
-        "-v"
+        "dev/dev.sh",
+        "python-test"
       ],
       "problemMatcher": [],
       "group": "test"

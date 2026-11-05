@@ -21,12 +21,24 @@ bash dev/dev.sh setup
 bash dev/dev.sh check
 ```
 
-The setup/check scripts currently assume the prepared multi-repository developer
-workspace. `check` requires `../pykaleidescape` with the reviewed patch series
-applied and sets `PYTHONPATH` for offline tests. `setup` alone installs the
-released HA-pinned package, which lacks the PoC interfaces. A standalone
-clean-checkout workflow is a migration release gate. The shared HA dependency
-must remain compatible with the built-in integration.
+The Python tests and local HA launcher require the reviewed pyk source. By
+default they use `../pykaleidescape`; set `COMPANION_PYK_PATH` to choose another
+checkout. They verify its package files against the recorded hashes before use.
+To prepare the source in a clean checkout, run:
+
+```sh
+git clone https://github.com/SteveEasley/pykaleidescape.git .pyk-source
+git -C .pyk-source checkout --detach 50df2869349667d1e68d429b9b619e32ede9879b
+git -C .pyk-source apply ../dev/pyk-overlay/companion.patch
+export COMPANION_PYK_PATH="$PWD/.pyk-source"
+```
+
+The patch is the runtime portion of reviewed local commit
+`bfbe789ffaf297f4aad7d1ac64328796456b4ed2` against the stated upstream base; its
+MIT license is included beside it. `setup` installs HA's released pinned
+dependency separately. The source overlay is for this PoC and is not a supported
+release or a replacement for compatibility testing with the built-in
+integration.
 
 The complete check validates workspace/runtime consistency, standalone provider
 contracts, Python integration tests, project structure and documentation links,
@@ -38,7 +50,7 @@ checks do not contact household devices or external providers.
 Focused checks, using the prepared virtual environment:
 
 ```sh
-PYTHONPATH=../pykaleidescape .venv/bin/python -m unittest discover -s tests
+bash dev/dev.sh python-test
 PYTHONPATH=../pykaleidescape:custom_components/kaleidescape_companion .venv/bin/python -m unittest discover -s tests/scrapers
 .venv/bin/python dev/check_project.py
 .venv/bin/ruff check .
@@ -51,15 +63,12 @@ npm --prefix frontend run format:docs:check
 
 Use `npm --prefix frontend run format:docs` to format Markdown. The source of
 truth for task composition is `dev/dev.sh` and `.vscode/tasks.json`; focused
-checks do not replace a required full check for an implementation change. The
-current VS Code **Test Python** task and Python CI job do not inject the patched
-checkout. Use the focused commands above or the aggregate local check for this
-PoC; aligning the other entry points is tracked in the
-[current audit](../../audit/2026-11-04/AUDIT_FINDINGS.md#a26-06--ci-and-focused-python-task-omit-the-required-patched-pyk).
-Expected warnings from failure-injection cases do not mean compilation failed;
-inspect the process exit and test summary. Unexpected frontend console output is
-tested separately. Logging behavior is specified in
-[logging and diagnostics](../design/design-logging.md).
+checks do not replace a required full check for an implementation change. The VS
+Code **Test Python** task uses the same checked source, and CI reconstructs it
+from the pinned base and bundled patch. Expected warnings from failure-injection
+cases do not mean compilation failed; inspect the process exit and test summary.
+Unexpected frontend console output is tested separately. Logging behavior is
+specified in [logging and diagnostics](../design/design-logging.md).
 
 Network advisory scans are deliberately separate:
 
@@ -78,7 +87,7 @@ not certify dependency safety.
 Run in separate terminals:
 
 ```sh
-PYTHONPATH=../pykaleidescape bash dev/dev.sh ha  # http://127.0.0.1:8123
+bash dev/dev.sh ha  # http://127.0.0.1:8123
 bash dev/dev.sh preview  # http://127.0.0.1:5173
 ```
 
@@ -89,10 +98,8 @@ overwrite an unexpected component target. Complete HA onboarding, add
 `/kaleidescape-companion`. Keep the built-in Kaleidescape integration for actual
 observation. A manual journal alone needs no player connection.
 
-The explicit `PYTHONPATH` above is required for the current local PoC: the HA
-launcher does not add the patched source itself. Run from this repository root
-with the reviewed adjacent checkout present. This local environment setting does
-not install or update the separate HA OS overlay.
+The local HA launcher uses the same verified source overlay as the tests. It
+does not install or update the separate HA OS overlay.
 
 The HA panel uses the signed-in session. Standalone Vite uses a memory-only
 token from the development HA instance and a restricted local proxy; no wildcard
