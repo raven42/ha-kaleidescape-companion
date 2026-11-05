@@ -70,6 +70,12 @@ cases do not mean compilation failed; inspect the process exit and test summary.
 Unexpected frontend console output is tested separately. Logging behavior is
 specified in [logging and diagnostics](../design/design-logging.md).
 
+The frontend lockfile temporarily overrides transitive minimatch 10 with 11.0.4
+for the glob amplification advisory. ESLint and TypeScript tooling still declare
+the 10.x range; the project checks exercise the override, but it is outside
+those packages' declared dependency ranges. Reassess it when those tools adopt a
+fixed version. This affects development tooling, not the production bundle.
+
 Network advisory scans are deliberately separate:
 
 ```sh

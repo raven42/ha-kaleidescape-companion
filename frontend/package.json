@@ -38,6 +38,7 @@
     "markdownlint-cli2": {
       "katex": "^0.18.2",
       "re2js": "^2.8.7"
-    }
+    },
+    "minimatch@10": "11.0.4"
   }
 }
