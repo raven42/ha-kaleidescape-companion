@@ -56,10 +56,13 @@ def async_register_services(hass: HomeAssistant) -> None:
                 "Companion changed while importing; purchases may have been saved"
             )
         if result["status"] == "needs_review" and not call.return_response:
-            if any(issue["reason"] == "conflict" for issue in result["issues"]):
+            if any(
+                issue["reason"] in {"conflict", "possible_duplicate"}
+                for issue in result["issues"]
+            ):
                 raise HomeAssistantError(
-                    "Some purchases were saved; conflicting values require a "
-                    "response variable for review"
+                    "Some purchases may have been saved; conflicts or possible "
+                    "duplicates require a response variable for review"
                 )
             from homeassistant.components import persistent_notification
 

@@ -566,6 +566,7 @@ export interface ImportReviewRow {
   artwork_key?: string | null;
   needs_match?: boolean;
   can_match?: boolean;
+  possible_duplicate?: boolean;
   detail?: string;
   key: string;
   table: "viewings" | "library";

@@ -13859,7 +13859,7 @@ const Fe = class Fe extends k {
           </thead>
           <tbody>
             ${d.map((h) => {
-      const c = h.key.startsWith("purchases:"), f = c ? h.needs_match ? "Choose Library match" : {
+      const c = h.key.startsWith("purchases:"), f = c ? h.possible_duplicate ? "Review possible duplicate" : h.needs_match ? "Choose Library match" : {
         new: "Add purchase to Library entry",
         merge: "Update purchase record",
         unchanged: "Purchase already imported",
@@ -13901,7 +13901,7 @@ const Fe = class Fe extends k {
                 <td>${f}</td>
                 <td>
                   ${h.reason || Object.keys(h.changes).join(", ") || "No missing data"}
-                  ${h.needs_match ? a`<small class="warning">No Library match selected</small>` : l}
+                  ${h.possible_duplicate ? a`<small class="warning">Check the existing purchase first. Choosing a match allows this to be imported as a separate purchase.</small>` : h.needs_match ? a`<small class="warning">No Library match selected</small>` : l}
                   ${h.can_match ? a`<button
                           ?disabled=${e || !!this.matching || !!this.scope?.tracking_enabled && !this.purchaseReview}
                           @click=${() => this.openMatch(h)}

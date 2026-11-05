@@ -36,6 +36,16 @@ def review(db, payload, import_format, actor, *, purchase_only=False):
     rows, operations, purchase_matches = [], {}, {}
     artwork_cache = {}
     purchase_index = purchases.index(db)
+    # Candidate lookup is bounded by the import limit and never changes records.
+    by_order, by_link, by_title_date = {}, {}, {}
+    for existing_id, item in purchase_index.items():
+        prior = item["record"]
+        if prior.get("order_id"):
+            by_order.setdefault(prior["order_id"], []).append(existing_id)
+        if prior.get("href"):
+            by_link.setdefault(prior["href"], []).append(existing_id)
+        key = (prior["title"].casefold(), prior["purchased_on"])
+        by_title_date.setdefault(key, []).append(existing_id)
     deadline = time.monotonic() + 30
     matcher = (
         TitleMatcher(
@@ -69,6 +79,57 @@ def review(db, payload, import_format, actor, *, purchase_only=False):
                 old = purchase_index.get(record["id"])
                 target, detail = purchases.propose_link(db, record, old, matcher)
                 row, operation = purchase_proposal(key, record, old, target, detail)
+                possible = False
+                if old is None:
+                    candidates = set(by_order.get(record["order_id"], ()))
+                    candidates.update(by_link.get(record["href"], ()))
+                    candidates.update(
+                        by_title_date.get(
+                            (record["title"].casefold(), record["purchased_on"]), ()
+                        )
+                    )
+                    for existing_id in candidates:
+                        if time.monotonic() > deadline:
+                            raise invalid("Import review exceeded its time budget")
+                        prior = purchase_index[existing_id]["record"]
+                        same_title = (
+                            prior["title"].casefold() == record["title"].casefold()
+                        )
+                        same_date = prior["purchased_on"] == record["purchased_on"]
+                        same_order = bool(
+                            record["order_id"]
+                            and prior["order_id"] == record["order_id"]
+                        )
+                        same_link = bool(
+                            record["href"] and prior["href"] == record["href"]
+                        )
+                        if (
+                            (same_order and (same_title or same_date or same_link))
+                            or (same_link and (same_title or same_date))
+                            or (
+                                same_title
+                                and same_date
+                                and not (
+                                    record["order_id"]
+                                    and prior["order_id"]
+                                    and record["order_id"] != prior["order_id"]
+                                )
+                            )
+                        ):
+                            possible = True
+                            break
+                if possible:
+                    row.update(
+                        action="skip",
+                        needs_match=True,
+                        can_match=True,
+                        possible_duplicate=True,
+                        reason=(
+                            "Possible duplicate receipt; review before adding "
+                            "a separate purchase"
+                        ),
+                    )
+                    operation = None
                 if target:
                     if target not in artwork_cache:
                         artwork_cache[target] = purchase_artwork(db, target)
@@ -96,7 +157,7 @@ def review(db, payload, import_format, actor, *, purchase_only=False):
                 rows.append(row)
                 if operation:
                     operations[key] = operation
-                if target is None or (old and old["pending"]):
+                if possible or target is None or (old and old["pending"]):
                     row["can_match"] = True
                     purchase_matches[key] = {"record": dict(record), "old": old}
                 continue

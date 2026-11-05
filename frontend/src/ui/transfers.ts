@@ -596,14 +596,16 @@ export class KaleidescapeTransfers extends LitElement {
               const purchase = row.key.startsWith("purchases:");
               const action = !purchase
                 ? row.action
-                : row.needs_match
-                  ? "Choose Library match"
-                  : {
-                      new: "Add purchase to Library entry",
-                      merge: "Update purchase record",
-                      unchanged: "Purchase already imported",
-                      skip: "Skip purchase",
-                    }[row.action];
+                : row.possible_duplicate
+                  ? "Review possible duplicate"
+                  : row.needs_match
+                    ? "Choose Library match"
+                    : {
+                        new: "Add purchase to Library entry",
+                        merge: "Update purchase record",
+                        unchanged: "Purchase already imported",
+                        skip: "Skip purchase",
+                      }[row.action];
               return html`<tr>
                 <td>
                   <input
@@ -647,7 +649,7 @@ export class KaleidescapeTransfers extends LitElement {
                 <td>${action}</td>
                 <td>
                   ${row.reason || Object.keys(row.changes).join(", ") || "No missing data"}
-                  ${row.needs_match ? html`<small class="warning">No Library match selected</small>` : nothing}
+                  ${row.possible_duplicate ? html`<small class="warning">Check the existing purchase first. Choosing a match allows this to be imported as a separate purchase.</small>` : row.needs_match ? html`<small class="warning">No Library match selected</small>` : nothing}
                   ${
                     row.can_match
                       ? html`<button

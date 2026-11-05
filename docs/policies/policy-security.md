@@ -64,9 +64,11 @@ The `import_purchase_email` action accepts private purchase data from HA
 automations with no user context or active administrators. It validates and
 bounds the input, saves unmatched purchases with no Library link, and applies
 unambiguous, nonconflicting matches in one transaction. Existing populated
-values are not overwritten; conflicts are returned for review. Unique proposed
-matches are applied without human review and are not proof of identity. An
-administrator can reconcile saved unmatched purchases while recording remains
+values are not overwritten; conflicts are returned for review. Possible receipt
+duplicates are held without being saved for administrator review; the heuristic
+is not proof of identity and does not repair existing duplicates. Unique
+proposed matches are applied without human review and are not proof of identity.
+An administrator can reconcile saved unmatched purchases while recording remains
 active; choices are actor- and revision-bound and require an available scanned
 Library entry. Match results include only cached artwork keys; cover images use
 the existing authenticated Library artwork endpoint. HA automation traces and

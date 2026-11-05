@@ -321,6 +321,22 @@ class PurchaseImportTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(raw["purchased_on"], "2020-01-02")
         self.assertEqual(len(await self.invoices()), 1)
 
+    async def test_possible_duplicate_requires_explicit_match_before_import(self):
+        target = await self.seed_library()
+        first = await self.preview(payload(purchase(href=None)))
+        await self.apply(first)
+        changed = purchase(href="/movie-store/movie/details/123")
+        plan = await self.preview(payload(changed))
+        row = next(row for row in plan["rows"] if row["key"].startswith("purchases:"))
+        self.assertTrue(row["possible_duplicate"])
+        self.assertTrue(row["needs_match"])
+        with self.assert_error("invalid_request"):
+            await self.apply(plan, [row["key"]])
+        reviewed = await self.match_review(plan, row["key"], target)
+        self.assertFalse(reviewed["rows"][0]["needs_match"])
+        await self.apply(reviewed, [row["key"]])
+        self.assertEqual(len(await self.invoices()), 2)
+
     async def test_flat_purchase_fields_import_and_summary_validation(
         self,
     ):

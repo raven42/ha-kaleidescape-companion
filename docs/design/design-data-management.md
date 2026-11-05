@@ -348,7 +348,13 @@ The response status is `imported`, `unchanged`, or `needs_review`, with counts.
 Unambiguous matches and unmatched purchases are saved together; unmatched rows
 remain unlinked until an administrator reviews them. Replaying unchanged
 normalized receipt records does not duplicate an invoice; changed title, date,
-order or link evidence can produce a different identity. See
+order or link evidence can produce a different identity. Similar receipts are
+held for review without being saved when their order, title, date or link
+suggests an existing invoice. Review the original invoice before explicitly
+choosing a Library match and importing the receipt as a separate purchase. The
+heuristic can miss duplicates or flag legitimate repeat purchases. It does not
+correct or remove duplicates already in the ledger; retain the source receipt
+and review the ledger before changing data. See
 [receipt retry guidance](design-automations.md#troubleshooting-and-retry).
 Existing populated values are not replaced. A changed value for an existing
 invoice is reported as a conflict in the action response; it is not applied

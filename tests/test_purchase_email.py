@@ -430,6 +430,59 @@ class EmailTest(unittest.IsolatedAsyncioTestCase):
             )
         self.assertEqual(plan["counts"]["merge"], 0)
 
+    async def test_enriched_receipt_requires_review_without_storing_duplicate(self):
+        from custom_components.kaleidescape_companion.core.importing import parse_bundle
+
+        await self.seed_library()
+        original = invoice(movie(library.ROWS[1]["title"]))
+        first = await self.repository.async_purchase_email(original)
+        self.assertEqual(first["status"], "imported")
+        self.assertEqual(
+            (await self.repository.async_purchase_email(original))["status"],
+            "unchanged",
+        )
+        enriched = invoice(
+            movie(library.ROWS[1]["title"], href="/movie-store/movie/details/123")
+        )
+        result = await self.repository.async_purchase_email(enriched)
+        self.assertEqual(result["status"], "needs_review")
+        self.assertEqual(result["issues"][0]["reason"], "possible_duplicate")
+        self.assertEqual(result["imported_count"], 0)
+        self.assertEqual(
+            (await self.repository.async_inspect("purchase_records"))["total"], 1
+        )
+        self.assertEqual(
+            result["review_records"][0]["href"], "/movie-store/movie/details/123"
+        )
+        # A different order for the same title/date remains a separate purchase.
+        repeat = {**enriched, "order_id": "ORDER-2"}
+        repeated = await self.repository.async_purchase_email(repeat)
+        self.assertEqual(repeated["status"], "imported")
+        async with self.repository.async_export_snapshot("sqlite") as path:
+            self.assertEqual(
+                len(parse_bundle(path.read_bytes(), "sqlite")["purchases"]), 2
+            )
+
+    async def test_changed_receipt_evidence_is_held_for_review(self):
+        await self.seed_library()
+        title = library.ROWS[1]["title"]
+        base = invoice(movie(title))
+        self.assertEqual(
+            (await self.repository.async_purchase_email(base))["status"], "imported"
+        )
+        variants = (
+            invoice(movie("Changed fictional title")),
+            {**invoice(movie(title)), "purchased_on": "2020-01-03"},
+            invoice(movie(title, href="/movie-store/movie/details/456")),
+        )
+        for changed in variants:
+            with self.subTest(changed=changed):
+                result = await self.repository.async_purchase_email(changed)
+                self.assertEqual(result["issues"][0]["reason"], "possible_duplicate")
+        self.assertEqual(
+            (await self.repository.async_inspect("purchase_records"))["total"], 1
+        )
+
     async def test_invalid_or_unreconciled_rejected_without_write(self):
         await self.seed_library()
         for email in (

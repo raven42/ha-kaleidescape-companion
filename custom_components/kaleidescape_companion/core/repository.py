@@ -862,7 +862,9 @@ class JournalRepository:
             and not row["conflicts"]
             and row["action"] in {"new", "merge"}
         ]
-        unmatched_keys = {row["key"] for row in problems}
+        unmatched_keys = {
+            row["key"] for row in problems if not row.get("possible_duplicate")
+        }
         from ..library.purchases import index as purchase_index
 
         existing = purchase_index(db)
@@ -907,7 +909,11 @@ class JournalRepository:
                 "issues": [
                     {
                         "title": row["title"],
-                        "reason": "conflict" if row["conflicts"] else "unmatched",
+                        "reason": "possible_duplicate"
+                        if row.get("possible_duplicate")
+                        else "conflict"
+                        if row["conflicts"]
+                        else "unmatched",
                     }
                     for row in problems
                 ],
