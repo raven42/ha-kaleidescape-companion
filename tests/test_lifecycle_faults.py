@@ -101,7 +101,7 @@ class LifecycleFaultTest(unittest.IsolatedAsyncioTestCase):
         item = runtime(events, "observer")
         item.calendar.async_pause.side_effect = ValueError("preparation")
         with patch(f"{PREFIX}.backup.loaded_runtimes", return_value=[("entry", item)]):
-            with self.assertRaisesRegex(ValueError, "preparation"):
+            with self.assertRaisesRegex(RuntimeError, "preparation failed"):
                 await async_pre_backup(None)
         self.assertEqual(
             events,

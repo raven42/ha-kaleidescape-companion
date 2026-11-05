@@ -10,10 +10,11 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
 
+from homeassistant.components.backup.manager import BackupManager
 from homeassistant.exceptions import ConfigEntryNotReady, HomeAssistantError
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
-from custom_components.kaleidescape_companion import async_setup_entry
+from custom_components.kaleidescape_companion import async_setup_entry, backup
 from custom_components.kaleidescape_companion.calendar.publisher import (
     CalendarPublisher,
 )
@@ -102,7 +103,7 @@ class LoggingTest(unittest.IsolatedAsyncioTestCase):
         )
         controls = SimpleNamespace(
             async_start=AsyncMock(side_effect=RuntimeError(SECRET)),
-            async_stop=AsyncMock(),
+            async_stop=AsyncMock(side_effect=OSError(SECRET)),
         )
         hass = SimpleNamespace(
             config=SimpleNamespace(path=Mock(return_value=SECRET)),
@@ -121,6 +122,66 @@ class LoggingTest(unittest.IsolatedAsyncioTestCase):
                 await async_setup_entry(hass, entry)
         rendered = "".join(traceback.format_exception(caught.exception))
         self.assertNotIn(SECRET, rendered + repr([r.__dict__ for r in logs.records]))
+
+    async def test_setup_suppresses_start_and_cleanup_failures(self):
+        repository = SimpleNamespace(
+            async_open=AsyncMock(side_effect=OSError(SECRET)),
+            async_close=AsyncMock(side_effect=OSError(SECRET)),
+        )
+        hass = SimpleNamespace(
+            config=SimpleNamespace(path=Mock(return_value="/tmp/fictional"))
+        )
+        entry = SimpleNamespace(title="Companion", options={}, data={})
+        with (
+            patch(f"{NAMESPACE}.loaded_runtimes", return_value=[]),
+            patch(f"{NAMESPACE}.JournalRepository", return_value=repository),
+            self.assertLogs(NAMESPACE, level=logging.DEBUG) as logs,
+        ):
+            with self.assertRaises(Exception) as caught:
+                await async_setup_entry(hass, entry)
+        self.assertNotIn(
+            SECRET,
+            "".join(traceback.format_exception(caught.exception)) + str(logs.output),
+        )
+        repository.async_close.assert_awaited_once()
+
+    async def test_backup_framework_messages_and_tracebacks_suppress_private_failures(
+        self,
+    ):
+        for phase in ("pre", "post"):
+            with self.subTest(phase=phase):
+                repository = SimpleNamespace(
+                    async_pause=AsyncMock(), async_resume=AsyncMock()
+                )
+                controls = SimpleNamespace(
+                    async_pause=AsyncMock(), async_resume=AsyncMock()
+                )
+                getattr(
+                    controls, f"async_{'pause' if phase == 'pre' else 'resume'}"
+                ).side_effect = OSError(SECRET)
+                runtime = SimpleNamespace(
+                    repository=repository,
+                    controls=controls,
+                    calendar=None,
+                    enrichment=None,
+                    library=None,
+                    observer=None,
+                )
+                manager = SimpleNamespace(hass=None, platforms={"companion": backup})
+                method = getattr(BackupManager, f"async_{phase}_backup_actions")
+                with (
+                    patch.object(
+                        backup, "loaded_runtimes", return_value=[("entry", runtime)]
+                    ),
+                    self.assertLogs(NAMESPACE, level=logging.DEBUG) as logs,
+                ):
+                    with self.assertRaises(Exception) as caught:
+                        await method(manager)
+                rendered = "".join(traceback.format_exception(caught.exception))
+                self.assertNotIn(
+                    SECRET, str(caught.exception) + rendered + str(logs.output)
+                )
+                repository.async_resume.assert_awaited_once()
 
     async def test_calendar_repeated_claim_failure_is_bounded_and_recovers(self):
         repository = SimpleNamespace(

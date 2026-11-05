@@ -66,12 +66,18 @@ async def async_pre_backup(hass: HomeAssistant) -> None:
                     "Backup preparation failed; attempting to resume Companion: %s",
                     safe_exception(error),
                 )
+            cancelled = isinstance(error, asyncio.CancelledError)
             try:
                 await _resume(runtime)
             except BaseException as resume_error:
+                cancelled |= isinstance(resume_error, asyncio.CancelledError)
                 _LOGGER.error(
                     "Backup recovery incomplete: %s", safe_exception(resume_error)
                 )
+            if cancelled:
+                raise asyncio.CancelledError from None
+            if isinstance(error, Exception):
+                raise RuntimeError("Companion backup preparation failed") from None
             raise
         _LOGGER.info("Companion backup preparation completed; writes are paused")
 
@@ -86,5 +92,5 @@ async def async_post_backup(hass: HomeAssistant) -> None:
             raise
         except Exception as error:
             _LOGGER.error("Companion backup resume failed: %s", safe_exception(error))
-            raise
+            raise RuntimeError("Companion backup resume failed") from None
         _LOGGER.info("Companion resumed after backup")

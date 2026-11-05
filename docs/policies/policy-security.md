@@ -205,11 +205,12 @@ agreement; Companion does not impose its household policy on all pyk callers.
 
 [Logging and diagnostics](../design/design-logging.md) is the authoritative
 logging mechanism and privacy policy. Use native module loggers and safe
-exception summaries at owned boundaries. No raw credentials, household content,
-protocol frames or request bodies belong in Companion logs at any severity. Its
-diagnostic projection is bounded operational metadata, not a database export.
-This policy does not guarantee that unrelated HA or dependency logs are
-content-free.
+exception summaries at owned boundaries. Setup and backup hooks suppress raw
+exception chains in framework-facing errors after attempting cleanup. No raw
+credentials, household content, protocol frames or request bodies belong in
+Companion logs at any severity. Its diagnostic projection is bounded operational
+metadata, not a database export. This policy does not guarantee that unrelated
+HA or dependency logs are content-free.
 
 Run dependency audits for the candidate Python and frontend lock/pin set; record
 versions, exposure, mitigations and review decisions. Reconcile updates with

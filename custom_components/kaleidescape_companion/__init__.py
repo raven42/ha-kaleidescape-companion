@@ -109,27 +109,33 @@ async def async_setup_entry(
                 options={k: v for k, v in entry.options.items() if k not in ui_keys},
             )
         info = await repository.async_info()
-    except UnsupportedSchemaError as error:
-        await repository.async_close()
-        _LOGGER.debug("Journal setup failed: %s", safe_exception(error))
-        message = str(error)
-        if message not in {
-            "SQLite 3.35 or newer is required",
-            "Journal schema is newer than this integration",
-            "Unrecognized journal database; left unchanged",
-        }:
-            message = "Journal schema is unsupported"
-        raise ConfigEntryError(message) from None
-    except JournalError as error:
-        await repository.async_close()
-        _LOGGER.debug("Journal setup failed: %s", safe_exception(error))
-        raise ConfigEntryNotReady("Could not open the journal database") from None
-    except Exception as error:
-        await repository.async_close()
-        _LOGGER.debug("Journal setup fault: %s", safe_exception(error))
-        raise ConfigEntryError("Unexpected journal setup failure") from None
-    except BaseException:
-        await repository.async_close()
+    except BaseException as error:
+        try:
+            await async_finish_cleanup(repository.async_close())
+        except asyncio.CancelledError:
+            raise asyncio.CancelledError from None
+        except Exception as close_error:
+            _LOGGER.error(
+                "Journal setup cleanup failed: %s", safe_exception(close_error)
+            )
+        if isinstance(error, asyncio.CancelledError):
+            raise asyncio.CancelledError from None
+        if isinstance(error, UnsupportedSchemaError):
+            _LOGGER.debug("Journal setup failed: %s", safe_exception(error))
+            message = str(error)
+            if message not in {
+                "SQLite 3.35 or newer is required",
+                "Journal schema is newer than this integration",
+                "Unrecognized journal database; left unchanged",
+            }:
+                message = "Journal schema is unsupported"
+            raise ConfigEntryError(message) from None
+        if isinstance(error, JournalError):
+            _LOGGER.debug("Journal setup failed: %s", safe_exception(error))
+            raise ConfigEntryNotReady("Could not open the journal database") from None
+        if isinstance(error, Exception):
+            _LOGGER.debug("Journal setup fault: %s", safe_exception(error))
+            raise ConfigEntryError("Unexpected journal setup failure") from None
         raise
     runtime = entry.runtime_data = KaleidescapeRuntime(repository, info["dataset_id"])
     panel_registered = False
@@ -212,12 +218,16 @@ async def async_setup_entry(
             finally:
                 await _async_close_runtime(runtime)
 
+        cancelled = isinstance(error, asyncio.CancelledError)
         try:
             await async_finish_cleanup(rollback())
         except BaseException as rollback_error:
+            cancelled |= isinstance(rollback_error, asyncio.CancelledError)
             _LOGGER.error(
                 "Companion rollback failed: %s", safe_exception(rollback_error)
             )
+        if cancelled:
+            raise asyncio.CancelledError from None
         if isinstance(error, Exception):
             _LOGGER.debug("Companion initialization fault: %s", safe_exception(error))
             if isinstance(error, ConfigEntryNotReady):
