@@ -301,7 +301,7 @@ class MetadataSync:
         operation_id = uuid4().hex[:16]
         _LOGGER.info("Metadata refresh started (operation_id=%s)", operation_id)
         self.error = None
-        self.providers.robots = None
+        self.providers.refresh_adapters()
         self.processed = self.updated = self.skipped = 0
         failure, cancelled = None, False
         try:

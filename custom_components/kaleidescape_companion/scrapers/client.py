@@ -45,10 +45,16 @@ class Providers:
         budget: RequestBudget | None = None,
     ):
         self.transport = Transport(fetch, requests_per_second, budget=budget)
+        self._tmdb_credential = tmdb_credential
+        self._extra_adapters = dict(adapters or {})
+        self.refresh_adapters()
+
+    def refresh_adapters(self) -> None:
+        """Refresh provider policy while retaining the shared transport budget."""
         self.adapters: dict[str, MetadataProvider] = {
             "kaleidescape": StoreProvider(self.transport),
-            "tmdb": TMDBProvider(self.transport, tmdb_credential),
-            **(adapters or {}),
+            "tmdb": TMDBProvider(self.transport, self._tmdb_credential),
+            **self._extra_adapters,
         }
 
     async def metadata(self, provider: str, movie: MovieQuery) -> Metadata:
