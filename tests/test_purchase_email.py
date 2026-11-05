@@ -484,3 +484,61 @@ class ServiceTest(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(HomeAssistantError):
                 await handler(call)
             self.assertEqual(repo.async_purchase_email.await_count, 2)
+            hass.auth.async_get_user.return_value = SimpleNamespace(
+                is_active=True, is_admin=True
+            )
+            call.return_response = True
+            self.assertEqual((await handler(call))["status"], "needs_review")
+            self.assertEqual(hass.auth.async_get_user.await_count, 3)
+
+    async def test_action_withholds_private_result_when_actor_or_runtime_changes(self):
+        for change in ("inactive", "downgrade", "deleted", "unloaded", "replaced"):
+            with self.subTest(change=change):
+                user = SimpleNamespace(is_active=True, is_admin=True)
+                hass = SimpleNamespace(
+                    services=SimpleNamespace(async_register=Mock()),
+                    auth=SimpleNamespace(async_get_user=AsyncMock(return_value=user)),
+                )
+                async_register_services(hass)
+                handler = hass.services.async_register.call_args.args[2]
+                current = []
+
+                async def write(*args, **kwargs):
+                    if change == "inactive":
+                        user.is_active = False
+                    elif change == "downgrade":
+                        user.is_admin = False
+                    elif change == "deleted":
+                        hass.auth.async_get_user.return_value = None
+                    elif change == "unloaded":
+                        current.clear()
+                    else:
+                        current[:] = [("entry", SimpleNamespace())]
+                    return {
+                        "status": "needs_review",
+                        "review_records": [{"title": "private"}],
+                        "issues": [],
+                    }
+
+                repo = SimpleNamespace(
+                    async_purchase_email=AsyncMock(side_effect=write)
+                )
+                runtime = SimpleNamespace(repository=repo)
+                current.append(("entry", runtime))
+                call = ServiceCall(
+                    hass,
+                    "kaleidescape_companion",
+                    "import_purchase_email",
+                    {"invoice": {}},
+                    context=Context(user_id="fictional"),
+                    return_response=True,
+                )
+                with patch(
+                    "custom_components.kaleidescape_companion.services.loaded_runtimes",
+                    side_effect=lambda _: list(current),
+                ):
+                    with self.assertRaises(HomeAssistantError) as caught:
+                        await handler(call)
+                self.assertIn("may have been saved", str(caught.exception))
+                self.assertNotIn("private", str(caught.exception))
+                repo.async_purchase_email.assert_awaited_once()

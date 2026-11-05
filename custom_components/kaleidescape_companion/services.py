@@ -28,8 +28,9 @@ def async_register_services(hass: HomeAssistant) -> None:
         runtimes = loaded_runtimes(hass)
         if len(runtimes) != 1:
             raise HomeAssistantError("Kaleidescape Companion is not ready")
+        entry_id, runtime = runtimes[0]
         try:
-            result = await runtimes[0][1].repository.async_purchase_email(
+            result = await runtime.repository.async_purchase_email(
                 call.data["invoice"],
                 actor_id=call.context.user_id,
                 allow_partial=call.return_response
@@ -37,6 +38,23 @@ def async_register_services(hass: HomeAssistant) -> None:
             )
         except JournalError as error:
             raise HomeAssistantError(str(error)) from None
+        # Accepted writes may already have committed; do not disclose their
+        # private result after the actor or runtime changes while awaiting them.
+        if call.context.user_id:
+            user = await hass.auth.async_get_user(call.context.user_id)
+            if not user or not user.is_active or not user.is_admin:
+                raise HomeAssistantError(
+                    "Access changed while importing; purchases may have been saved"
+                )
+        current = loaded_runtimes(hass)
+        if (
+            len(current) != 1
+            or current[0][0] != entry_id
+            or current[0][1] is not runtime
+        ):
+            raise HomeAssistantError(
+                "Companion changed while importing; purchases may have been saved"
+            )
         if result["status"] == "needs_review" and not call.return_response:
             if any(issue["reason"] == "conflict" for issue in result["issues"]):
                 raise HomeAssistantError(
