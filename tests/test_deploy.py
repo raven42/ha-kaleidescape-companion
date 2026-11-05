@@ -13,6 +13,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import kaleidescape
+
 from dev import deploy
 
 
@@ -159,7 +161,7 @@ assert not any(name == 'dev' or name.startswith('dev.') for name in sys.modules)
                 script,
                 str(destination),
                 json.dumps(modules),
-                str(Path(__file__).resolve().parents[2] / "pykaleidescape"),
+                str(Path(kaleidescape.__file__).resolve().parent.parent),
             ],
             capture_output=True,
             text=True,
