@@ -573,6 +573,36 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.peer.connections, [])
         self.assertEqual(self.peer.commands, [])
 
+    async def test_read_recovery_is_tracked_per_operation(self):
+        await self.configure()
+        controls = self.entry.runtime_data.controls
+        logger = "custom_components.kaleidescape_companion.playback.controls"
+        failure = AsyncMock(side_effect=TimeoutError("fictional private"))
+        success = AsyncMock(return_value=[])
+        with self.assertLogs(logger, level="DEBUG") as logs:
+            for label, operation in (
+                ("status", failure),
+                ("discovery", success),
+                ("status", failure),
+                ("preflight", failure),
+                ("discovery", success),
+                ("status", success),
+            ):
+                try:
+                    await controls._read(label, operation, lambda: None)
+                except JournalError:
+                    pass
+        messages = "\n".join(logs.output)
+        self.assertEqual(messages.count("Device status read failed"), 1)
+        self.assertEqual(messages.count("Device preflight read failed"), 1)
+        self.assertEqual(messages.count("Device status read recovered"), 1)
+        self.assertNotIn("Device discovery read recovered", messages)
+        self.assertNotIn("Device preflight read recovered", messages)
+        self.assertNotIn("fictional private", messages)
+        self.assertEqual(
+            set(controls._reported_read_failure), {"status", "discovery", "preflight"}
+        )
+
     async def test_revoked_actor_and_changed_settings_are_rechecked_across_awaits(self):
         await self.configure()
         token = await self.prepare()

@@ -110,7 +110,9 @@ class PlaybackControls:
         self.read_tasks = set()
         self.clients = set()
         self._devices_by_ip = {}
-        self._reported_read_failure = None
+        self._reported_read_failure = dict.fromkeys(
+            ("status", "discovery", "preflight")
+        )
         self.paused = self.stopped = False
         self.device_store = Store(
             hass, 1, f"{DOMAIN}.control_devices", private=True, atomic_writes=True
@@ -446,8 +448,8 @@ class PlaybackControls:
             ValueError,
             AttributeError,
         ) as error:
-            category = (label, type(error).__name__)
-            if self._reported_read_failure != category:
+            category = type(error).__name__
+            if self._reported_read_failure[label] != category:
                 _LOGGER.warning(
                     "Device %s read failed: %s", label, safe_exception(error)
                 )
@@ -457,13 +459,13 @@ class PlaybackControls:
                     label,
                     safe_exception(error),
                 )
-            self._reported_read_failure = category
+            self._reported_read_failure[label] = category
             raise JournalError(
                 "control_unreachable", "Device query failed; no control was sent"
             ) from None
-        if self._reported_read_failure is not None:
+        if self._reported_read_failure[label] is not None:
             _LOGGER.info("Device %s read recovered", label)
-            self._reported_read_failure = None
+            self._reported_read_failure[label] = None
         return result
 
     async def async_discover(self, authorize):
