@@ -79,7 +79,7 @@ privacy enhancements remain optional and require the pyk owner's approval.
 Preserve Companion's native HA logging safeguards regardless.
 
 The
-[historical 206-request inventory](../../audit/PYK_COMMAND_INVENTORY_2026-11-03.md)
+[historical 206-request inventory](../../audit/2026-11-03/PYK_COMMAND_INVENTORY_2026-11-03.md)
 is a planning snapshot for future feature decisions, not a list of commands this
 PoC claims to implement. Modern features may be expanded incrementally after
 owned-hardware evidence. Legacy music, disc/vault and alternate framing remain
