@@ -1,6 +1,6 @@
 # Companion delivery roadmap
 
-Reviewed against the implementation on 2026-11-03. This is the single product
+Reviewed against the implementation on 2026-11-04. This is the single product
 status and remaining-work list. Feature designs describe implemented behavior;
 the [pyk migration plan](plan-pykaliedescape-migration.md) owns the current PoC,
 upstream compatibility and hardware qualification.
@@ -36,6 +36,14 @@ Receipt blueprint v6 handles repeated cover/title links after v4 added quoted
 forwards and v5 added linkless original receipts with optional HTML ID recovery.
 
 ## Next delivery gates
+
+The [2026-11-04 independent audit](../../audit/2026-11-04/AUDIT_FINDINGS.md)
+adds confirmed correctness, lifecycle and privacy fixes to the delivery work.
+Use its [prioritized plan](../../audit/2026-11-04/REFACTORING_PLAN.md) for
+evidence and acceptance checks, including purchase identity/import/query
+behavior and reproducible developer/CI entry points. Documentation of a
+limitation is not its resolution. The upstream and qualification gates below
+remain in force.
 
 1. Review and upstream the local pyk patches while preserving its existing
    `Device` workflow. Verify the released package with HA's built-in integration

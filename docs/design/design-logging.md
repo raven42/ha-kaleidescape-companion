@@ -35,15 +35,18 @@ troubleshoot Companion. Logs do not replace visible UI outcomes or durable
 receipts, and enabling them must not cause network work or change retry
 behavior.
 
-Control status, discovery and preflight failures emit one warning per operation
-and exception category until a successful read reports recovery. With Companion
-debug logging enabled, failed pyk calls identify the fixed stage (connection,
-identity, power state, play status, discovery or send) and a safe exception
-class and Companion code location. These records omit device identities,
-addresses, movie details, command arguments and raw pyk exception messages.
-Repeated failed polls use debug rather than repeated warnings. The Kaleidescape
-Settings tab shows the version declared by the loaded pyk module; it does not
-verify whether local patches were applied to that version.
+Control status, discovery and preflight failures suppress repeated warnings for
+the same operation and exception category. The current shared failure slot can
+be reset by another operation, producing a false recovery or repeated warning;
+this
+[supportability defect](../../audit/2026-11-04/AUDIT_FINDINGS.md#a26-13--successful-discovery-falsely-clears-failed-status-read-diagnostics)
+remains open. With Companion debug logging enabled, failed pyk calls identify
+the fixed stage (connection, identity, power state, play status, discovery or
+send) and a safe exception class and Companion code location. These records omit
+device identities, addresses, movie details, command arguments and raw pyk
+exception messages. Repeated failed polls use debug rather than repeated
+warnings. Settings → About shows the version declared by the loaded pyk module;
+it does not verify whether local patches were applied to that version.
 
 ## Severity and truthful outcomes
 
@@ -103,6 +106,13 @@ Without eligible frames the result is just `OSError`. Avoid `logger.exception`,
 framework-facing exception chains. Preserve programmatic cancellation/typed
 error behavior while making owned user/log messages safe. This is deliberate
 omission, not a universal scrubber for arbitrary strings.
+
+The
+[2026-11-04 audit](../../audit/2026-11-04/AUDIT_FINDINGS.md#a26-10--safe-local-logs-do-not-contain-framework-facing-exception-chains)
+reproduced exceptions escaping through backup hooks and failed setup cleanup
+despite safe local logging. Closing those framework boundaries remains open; the
+policy above is the required behavior, not a guarantee about every current
+failure path.
 
 ## Coverage and ownership
 

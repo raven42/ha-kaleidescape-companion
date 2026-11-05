@@ -51,7 +51,11 @@ npm --prefix frontend run format:docs:check
 
 Use `npm --prefix frontend run format:docs` to format Markdown. The source of
 truth for task composition is `dev/dev.sh` and `.vscode/tasks.json`; focused
-checks do not replace a required full check for an implementation change.
+checks do not replace a required full check for an implementation change. The
+current VS Code **Test Python** task and Python CI job do not inject the patched
+checkout. Use the focused commands above or the aggregate local check for this
+PoC; aligning the other entry points is tracked in the
+[current audit](../../audit/2026-11-04/AUDIT_FINDINGS.md#a26-06--ci-and-focused-python-task-omit-the-required-patched-pyk).
 Expected warnings from failure-injection cases do not mean compilation failed;
 inspect the process exit and test summary. Unexpected frontend console output is
 tested separately. Logging behavior is specified in
@@ -64,8 +68,10 @@ bash dev/dev.sh audit
 ```
 
 Record audit versions and assess findings for the actual release target. An old
-advisory count must not be copied forward as a current assertion. This
-documentation cleanup did not run an audit or certify dependency safety.
+advisory count must not be copied forward as a current assertion. Keep command
+results, dependency versions, limitations and dispositions in a dated audit; see
+the [audit index and procedure](../../audit/README.md). An offline check does
+not certify dependency safety.
 
 ## Local HA and frontend preview
 

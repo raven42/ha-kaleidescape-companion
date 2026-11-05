@@ -38,10 +38,13 @@ permission ceremony is required for ordinary enabled household actions.
 
 The Basic/Advanced UI switch changes presentation, not authorization. The
 backend derives actor identity from HA, validates entry/dataset/runtime scope,
-and rechecks authorization across awaited work. User role changes clear browser
-state and suppress late private responses. Requests cannot select another user's
-preference owner or receipt. Accepted external actions cannot be recalled by
-closing a dialog or revoking access after transmission.
+and must recheck authorization across awaited work. The
+[2026-11-04 review](../../audit/2026-11-04/AUDIT_FINDINGS.md#a26-11--purchase-action-returns-its-response-after-actor-revocation)
+identifies a remaining post-await response check in the purchase HA action. User
+role changes clear browser state and suppress late private responses. Requests
+cannot select another user's preference owner or receipt. Accepted external
+actions cannot be recalled by closing a dialog or revoking access after
+transmission.
 
 Household summaries exclude private notes, raw source/player identities,
 purchase prices/orders/store references and recorder diagnostics. Purchase dates

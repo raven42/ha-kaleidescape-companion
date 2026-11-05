@@ -242,6 +242,13 @@ on load. The raw source/provider facts are retained; no migration is needed.
 
 ## Validation and remaining review
 
+The
+[2026-11-04 audit](../../audit/2026-11-04/AUDIT_FINDINGS.md#a26-02--automatic-metadata-passes-retain-obsolete-robots-policy)
+found that successive automatic metadata passes can reuse stale Store robots
+policy. Recreating the provider adapters at the pass boundary remains an open
+fix; the transport policy below describes the required boundary and must not be
+read as proof that current long-lived adapters refresh it each pass.
+
 Offline tests cover fictional provider responses, conservative matching,
 credentials, robots directives, rate limiting, response bounds, fixed HTTPS
 origins, public DNS pinning, cache preservation, permissions and revocation.

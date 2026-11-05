@@ -68,6 +68,16 @@ closed last. Platform unload must succeed before releasing its runtime.
 Unloading/removing the entry retains household data. Backup hooks coordinate
 writers and resume after HA finishes or fails its backup.
 
+The
+[2026-11-04 audit](../../audit/2026-11-04/AUDIT_FINDINGS.md#a26-01--one-failing-cleanup-or-resume-skips-later-owners)
+found that a failing cleanup/resume can skip later owners. The sequence above
+describes the normal path; failure isolation and framework-facing exception
+privacy remain open fixes. Do not treat a failed unload or backup recovery as
+proof that every subsystem stopped or resumed. The same review found an
+[in-flight control discovery race](../../audit/2026-11-04/AUDIT_FINDINGS.md#a26-12--control-discovery-can-create-a-connection-after-stop)
+that can create a client after stop returns; the existing write-task drain does
+not cover every control read.
+
 This follows HA's
 [config-entry lifecycle and runtime ownership guidance](https://contributors.home-assistant.io/core/integrations/config-entries/).
 Use APIs supported by the actual target HA release when evolving cleanup.

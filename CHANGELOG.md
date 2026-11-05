@@ -1,5 +1,16 @@
 # Changelog
 
+Entries record development history. Later entries can supersede earlier
+behavior; the [documentation index](docs/README.md) owns current contracts.
+
+## Unreleased — Documentation and audit refresh
+
+- Refresh operator and developer docs for durable purchases, receipt blueprint
+  v6, version histories, current UI/filter/calendar behavior and packaging.
+- Separate historical audits from current evidence and update the independent
+  audit procedure for the patched-pyk runtime and native HA logging.
+- Document collection-sync conflict preservation and subsequent recovery logs.
+
 ## Unreleased — Calendar search and Watch Soon
 
 - Show search results in the Journal list and restore the selected view when

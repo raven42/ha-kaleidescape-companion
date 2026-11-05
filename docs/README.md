@@ -48,6 +48,8 @@ that its implementation or hardware validation has shipped.
 
 Maintain the owning document when code changes. Keep implementation details in
 the design, remaining delivery gates in a plan, and commands/procedures in a
-guide. Historical release notes belong in [CHANGELOG.md](../CHANGELOG.md).
-Logging decisions come from the logging design; transport migration decisions
-come from the pyk plan. All other designs continue to govern their own aspects.
+guide. Historical release notes belong in [CHANGELOG.md](../CHANGELOG.md). The
+[audit index](../audit/README.md) separates dated findings from the current
+review procedure and maintained product documentation. Logging decisions come
+from the logging design; transport migration decisions come from the pyk plan.
+All other designs continue to govern their own aspects.

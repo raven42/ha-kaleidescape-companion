@@ -32,7 +32,10 @@ provider. No Store hooks should be added to pyk for this migration.
 - `playback/controls.py` creates persistent, lazy pyk `Device` instances for
   verified private IPs and uses public `Device` methods and Request classes.
   Companion still validates seed/player identity and requires fresh state before
-  sending a user command. Connections close on pause/unload.
+  sending a user command. Pause/unload closes owned clients, but the
+  [2026-11-04 audit](../../audit/2026-11-04/AUDIT_FINDINGS.md#a26-12--control-discovery-can-create-a-connection-after-stop)
+  found an in-flight discovery path that can create a client after stop; closing
+  that ownership gap remains necessary.
 - `library/sync.py` uses pyk `LocalLibrary` for catalog, collections, details,
   artwork, and add-only form handling. Companion retains its bounded HA HTTP
   session and SQLite reconciliation. Collection additions keep durable receipts
