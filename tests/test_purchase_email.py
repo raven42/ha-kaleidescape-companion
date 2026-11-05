@@ -483,6 +483,22 @@ class EmailTest(unittest.IsolatedAsyncioTestCase):
             (await self.repository.async_inspect("purchase_records"))["total"], 1
         )
 
+    async def test_link_enrichment_without_order_does_not_double_count(self):
+        await self.seed_library()
+        title = library.ROWS[1]["title"]
+        original = {**invoice(movie(title)), "order_id": None}
+        first = await self.repository.async_purchase_email(original)
+        self.assertEqual(first["status"], "imported")
+        changed = {
+            **invoice(movie(title, href="/movie-store/movie/details/321")),
+            "order_id": None,
+        }
+        result = await self.repository.async_purchase_email(changed)
+        self.assertEqual(result["issues"][0]["reason"], "possible_duplicate")
+        totals = await self.repository.async_purchase_totals(library.SOURCE)
+        self.assertEqual(totals["purchase_count"], 1)
+        self.assertEqual(totals["currencies"][0]["library_cost"], "$9.99")
+
     async def test_invalid_or_unreconciled_rejected_without_write(self):
         await self.seed_library()
         for email in (
