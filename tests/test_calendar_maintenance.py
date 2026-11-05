@@ -197,6 +197,15 @@ class MaintenanceTest(unittest.IsolatedAsyncioTestCase):
         await self.run_sync(601)
         self.assertEqual(set(self.entity.events), {"old"})
 
+    async def test_quarantined_event_needs_a_requested_follow_up(self):
+        self.extra()
+        await self.run_sync()
+        self.now += timedelta(minutes=11)
+        await self.publisher.async_publish_one()
+        self.assertIn("orphan", self.entity.events)
+        await self.run_sync()
+        self.assertNotIn("orphan", self.entity.events)
+
     @expected_log(
         "custom_components.kaleidescape_companion.calendar.maintenance",
         "Calendar maintenance failed",
@@ -332,7 +341,7 @@ class MaintenanceTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.entity.writes, [])
         await self.repository.async_resume()
 
-    async def test_polling_detects_journal_edits_without_refetching_unchanged_calendar(
+    async def test_calendar_edits_wait_for_explicit_check(
         self,
     ):
         row = (await self.create())["viewing"]
@@ -346,6 +355,8 @@ class MaintenanceTest(unittest.IsolatedAsyncioTestCase):
                 str(uuid4()), row["id"], row["revision"], {"watched_seconds": 3600}
             )
             await self.publisher.async_publish_one()
+            read.assert_not_called()
+            await self.run_sync()
             self.assertGreater(read.call_count, 0)
             self.assertEqual(self.entity.writes[-1][0], "update")
 
@@ -437,13 +448,7 @@ class MaintenanceTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             window(datetime(2024, 3, 31, tzinfo=UTC), 1)[0], "2024-02-29T00:00:00+00:00"
         )
-        with patch(
-            "custom_components.kaleidescape_companion.calendar.maintenance.async_track_time_change"
-        ) as schedule:
-            self.manager.start()
-            self.assertEqual(
-                schedule.call_args.kwargs, {"hour": 3, "minute": 0, "second": 0}
-            )
+        self.assertFalse(self.manager.requested)
 
     async def test_delayed_visibility_reads_again_without_repeating_write(self):
         await self.create()

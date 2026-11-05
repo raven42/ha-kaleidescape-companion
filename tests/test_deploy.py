@@ -71,6 +71,7 @@ class DeployTest(unittest.TestCase):
             "journal.sqlite3",
             "private.log",
             "frontend/dev.ts",
+            "templates/private.yaml",
             "__pycache__/x.pyc",
         ):
             path = self.source / name

@@ -12,7 +12,7 @@ from homeassistant.exceptions import HomeAssistantError, Unauthorized
 from homeassistant.helpers.redact import async_redact_data
 from probatio.humanize import humanize_error
 
-from ..const import DOMAIN
+from ..const import DOMAIN, VERSION
 from ..core.journal_store import public_viewing
 from ..core.logging import safe_exception
 from ..core.models import JournalError
@@ -187,6 +187,7 @@ def async_register_commands(hass: HomeAssistant) -> None:
         },
         "library/viewing": {**scoped, p.Required("viewing_id"): str},
         "library/purchases/summary": scoped,
+        "purchases/reconcile": scoped,
         "library/viewings": {
             **scoped,
             p.Required("title_id"): str,
@@ -228,6 +229,30 @@ def async_register_commands(hass: HomeAssistant) -> None:
             p.Required("patch"): dict,
         },
         "settings/start": scoped,
+        "automations/status": scoped,
+        "automations/update": {
+            **scoped,
+            p.Required("template"): p.In(
+                [
+                    "purchase_email",
+                    "library_schedule",
+                    "metadata_schedule",
+                    "calendar_schedule",
+                ]
+            ),
+            p.Required("revision"): str,
+        },
+        "automations/template": {
+            **scoped,
+            p.Required("template"): p.In(
+                [
+                    "purchase_email",
+                    "library_schedule",
+                    "metadata_schedule",
+                    "calendar_schedule",
+                ]
+            ),
+        },
         "calendar/status": scoped,
         "calendar/sync": {
             **mutations,
@@ -389,6 +414,7 @@ async def async_handle(
                             {
                                 "tracking_enabled": runtime.observer is not None,
                                 "pyk_version": pyk_version(),
+                                "integration_version": VERSION,
                                 "features": {
                                     "manual_journal": True,
                                     "automatic_tracking": True,
@@ -767,6 +793,10 @@ async def async_handle(
                         )
                     else:
                         filters = dict(msg["filters"])
+                        if filters.get("missing_purchase_information") and not admin:
+                            raise JournalError(
+                                "unauthorized", "Administrator access is required"
+                            )
                         if filters.get("sort") == "random":
                             # Resolve the actor seed on every page read, including
                             # profiles opened before another device shuffled.
@@ -892,6 +922,37 @@ async def async_handle(
                     else:
                         await history.cancel(msg["job_id"])
                         result = await history.status()
+                case "automations/status":
+                    from .automation_templates import async_status
+
+                    result = await async_status(hass)
+                case "automations/update":
+                    from .automation_templates import async_update
+
+                    def authorized_blueprint_update():
+                        return (
+                            is_active_admin(user)
+                            and runtime.ready
+                            and getattr(
+                                hass.config_entries.async_get_entry(msg["entry_id"]),
+                                "runtime_data",
+                                None,
+                            )
+                            is runtime
+                        )
+
+                    result = await async_update(
+                        hass,
+                        msg["template"],
+                        msg["revision"],
+                        authorized_blueprint_update,
+                    )
+                case "automations/template":
+                    from .automation_templates import read_template
+
+                    result = await hass.async_add_executor_job(
+                        read_template, msg["template"]
+                    )
                 case "settings/start" | "settings/submit" | "settings/cancel":
                     result = await options_request(
                         hass,
@@ -918,18 +979,17 @@ async def async_handle(
                         sort=msg.get("sort"),
                         descending=msg["descending"],
                     )
+                case "purchases/reconcile":
+                    result = await repository.async_purchase_reconciliation(user.id)
                 case (
                     "database/import"
                     | "database/import/search"
                     | "database/import/match"
                 ):
                     entry = hass.config_entries.async_get_entry(msg["entry_id"])
-                    if runtime.observer is not None or (
+                    tracking = runtime.observer is not None or (
                         entry.options or entry.data
-                    ).get("tracking_enabled"):
-                        raise JournalError(
-                            "tracking_enabled", "Disable recording before importing"
-                        )
+                    ).get("tracking_enabled")
                     if operation == "database/import/search":
                         result = await repository.async_import_match_search(
                             msg["plan_id"],
@@ -937,6 +997,7 @@ async def async_handle(
                             msg["purchase_key"],
                             msg["query"],
                             user.id,
+                            purchase_only_required=bool(tracking),
                         )
                     elif operation == "database/import/match":
                         result = await repository.async_import_match(
@@ -945,6 +1006,7 @@ async def async_handle(
                             msg["purchase_key"],
                             msg["title_id"],
                             user.id,
+                            purchase_only_required=bool(tracking),
                         )
                     else:
                         result = await repository.async_import_apply(
@@ -953,6 +1015,7 @@ async def async_handle(
                             msg["revision"],
                             msg["selected"],
                             actor_id=user.id,
+                            purchase_only_required=bool(tracking),
                         )
                 case "database/purge":
                     entry = hass.config_entries.async_get_entry(msg["entry_id"])

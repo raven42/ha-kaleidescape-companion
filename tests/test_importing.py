@@ -452,7 +452,7 @@ class ImportApiTest(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = backend.BackendTest.asyncSetUp
     call = backend.BackendTest.call
 
-    def request(self, data, user=None, on_read=None):
+    def request(self, data, user=None, on_read=None, *, purchase_only=False):
         async def chunks(_size):
             yield data
             if on_read:
@@ -464,7 +464,11 @@ class ImportApiTest(unittest.IsolatedAsyncioTestCase):
         app = web.Application()
         app[KEY_HASS] = self.hass
         request = make_mocked_request(
-            "POST", "/import/preview?format=json", app=app, payload=Body()
+            "POST",
+            "/import/preview?format=json"
+            + ("&purchase_only=true" if purchase_only else ""),
+            app=app,
+            payload=Body(),
         )
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", NotAppKeyWarning)
@@ -473,6 +477,91 @@ class ImportApiTest(unittest.IsolatedAsyncioTestCase):
 
     async def post(self, request):
         return await JournalImportView().post(request, **self.scope)
+
+    async def test_purchase_only_review_and_match_with_tracking_enabled(self):
+        repo = self.entry.runtime_data.repository
+        await repo.async_library_catalog(library.ORIGIN, library.ROWS, {})
+        self.entry.runtime_data.observer = object()
+        self.addCleanup(setattr, self.entry.runtime_data, "observer", None)
+        purchase = {
+            "title": "Unknown fictional title",
+            "purchased_on": "2020-01-02",
+            "purchase_price": "$9.99",
+        }
+        response = await self.post(
+            self.request(json.dumps([purchase]).encode(), purchase_only=True)
+        )
+        self.assertEqual(response.status, 200)
+        plan = json.loads(response.body)
+        key = plan["rows"][0]["key"]
+        args = {
+            **self.scope,
+            "plan_id": plan["plan_id"],
+            "revision": plan["revision"],
+            "purchase_key": key,
+        }
+        search = await self.call("database/import/search", **args, query="Voyage")
+        self.assertTrue(search["success"])
+        target = title_id(library.SOURCE, library.ROWS[0]["source_handle"])
+        match = await self.call("database/import/match", **args, title_id=target)
+        self.assertTrue(match["success"])
+        updated = match["result"]
+        result = await self.call(
+            "database/import",
+            **self.scope,
+            request_id=str(uuid4()),
+            plan_id=updated["plan_id"],
+            revision=updated["revision"],
+            selected=[key],
+        )
+        self.assertEqual(result["result"]["imported_count"], 1)
+
+    async def test_tracking_purchase_mode_rejects_mixed_data_and_old_plans(self):
+        self.entry.runtime_data.observer = None
+        old = await self.post(self.request(payload(record())))
+        plan = json.loads(old.body)
+        self.entry.runtime_data.observer = object()
+        self.addCleanup(setattr, self.entry.runtime_data, "observer", None)
+        mixed = payload(
+            record(),
+            library_purchases=[{"title": "Fictional", "purchased_on": "2020-01-02"}],
+        )
+        rejected = await self.post(self.request(mixed, purchase_only=True))
+        self.assertEqual(rejected.status, 400)
+        result = await self.call(
+            "database/import",
+            **self.scope,
+            request_id=str(uuid4()),
+            plan_id=plan["plan_id"],
+            revision=plan["revision"],
+            selected=[plan["rows"][0]["key"]],
+        )
+        self.assertEqual(result["code"], "tracking_enabled")
+
+    async def test_recording_change_invalidates_purchase_review(self):
+        repo = self.entry.runtime_data.repository
+        await repo.async_library_catalog(library.ORIGIN, library.ROWS, {})
+        self.entry.runtime_data.observer = object()
+        self.addCleanup(setattr, self.entry.runtime_data, "observer", None)
+        purchase = {
+            "title": library.ROWS[0]["title"],
+            "purchased_on": "2020-01-02",
+            "purchase_price": "$9.99",
+        }
+        response = await self.post(
+            self.request(json.dumps([purchase]).encode(), purchase_only=True)
+        )
+        plan = json.loads(response.body)
+        await repo.async_create(str(uuid4()), repository.viewing())
+        result = await self.call(
+            "database/import",
+            **self.scope,
+            request_id=str(uuid4()),
+            plan_id=plan["plan_id"],
+            revision=plan["revision"],
+            selected=[plan["rows"][0]["key"]],
+        )
+        self.assertEqual(result["code"], "conflict")
 
     async def test_preview_apply_admin_scope_and_revocation(
         self,

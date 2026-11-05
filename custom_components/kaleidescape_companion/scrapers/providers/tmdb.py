@@ -9,6 +9,7 @@ from ..models import (
     Metadata,
     MovieQuery,
     ProviderError,
+    genre_names,
     label,
     names,
     same_movie,
@@ -112,7 +113,7 @@ def parse(data, movie_id, title, year):
         "backdrop_path": backdrop_path(data.get("backdrop_path")),
         "poster_path": backdrop_path(data.get("poster_path")),
         "synopsis": label(data.get("overview"), 10000),
-        "genres": names(
+        "genres": genre_names(
             [
                 item.get("name")
                 for item in data.get("genres", [])

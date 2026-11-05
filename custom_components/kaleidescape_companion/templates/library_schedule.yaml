@@ -1,0 +1,18 @@
+blueprint:
+  name: Kaleidescape Companion - Schedule library sync
+  description: >-
+    Run a Companion library sync at a chosen local time.
+    Blueprint version: 1.
+  domain: automation
+  input:
+    time:
+      name: Local time
+      default: "03:00:00"
+      selector:
+        time:
+triggers:
+  - trigger: time
+    at: !input time
+actions:
+  - action: kaleidescape_companion.library_sync
+mode: single

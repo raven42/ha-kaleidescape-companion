@@ -32,9 +32,8 @@ _LOGGER = logging.getLogger(__name__)
 class MetadataSync:
     """No construction/networking when providers or Library are disabled.
 
-    Automatic passes follow successful catalog scans. Valid cache entries are
-    reused for seven days. A manual pass refreshes them; it never changes a
-    device or provider account. An HTTP failure stops the pass, including 429.
+    Passes run when requested. A refresh never changes a device or provider
+    account. An HTTP failure stops the pass, including 429.
     """
 
     def __init__(self, hass, repository, entry):
@@ -94,13 +93,17 @@ class MetadataSync:
         ):
             raise JournalError("not_ready", "Metadata settings or access changed")
 
-    def request_sync(self, actor=None, *, force=False):
+    def request_sync(
+        self, actor=None, *, force=False, providers=None, only_missing=False
+    ):
         self._ready()
         if self.task and not self.task.done():
+            if providers is not None or only_missing:
+                raise JournalError("busy", "Metadata refresh is already running")
             return
         self.actor = actor
         self.task = self.hass.async_create_background_task(
-            self._run(force), "Companion metadata enrichment"
+            self._run(force, providers, only_missing), "Companion metadata enrichment"
         )
 
     def status(self):
@@ -294,7 +297,7 @@ class MetadataSync:
             if error.code != "refresh_required":
                 raise
 
-    async def _run(self, force):
+    async def _run(self, force, providers=None, only_missing=False):
         operation_id = uuid4().hex[:16]
         _LOGGER.info("Metadata refresh started (operation_id=%s)", operation_id)
         self.error = None
@@ -313,9 +316,36 @@ class MetadataSync:
                         ("kaleidescape", self.config["metadata_store_enabled"]),
                         ("tmdb", self.config["metadata_tmdb_enabled"]),
                     ):
-                        if not enabled:
+                        if not enabled or (providers and provider not in providers):
                             continue
                         if provider in row.get("unavailable", []):
+                            self.skipped += 1
+                            continue
+                        missing_artwork = (
+                            provider == "tmdb"
+                            and self.config.get("library_sync_artwork")
+                            and (
+                                (
+                                    self.config.get("metadata_source_backdrop")
+                                    != "original"
+                                    and "backdrop"
+                                    not in row.get("unavailable_artwork", [])
+                                    and not row.get("backdrop_selected")
+                                    and not row.get("backdrop_removed")
+                                )
+                                or (
+                                    self.config.get("metadata_source_artwork") == "tmdb"
+                                    and "poster"
+                                    not in row.get("unavailable_artwork", [])
+                                    and not row.get("poster_selected")
+                                )
+                            )
+                        )
+                        if (
+                            only_missing
+                            and provider in row.get("cached_providers", [])
+                            and not missing_artwork
+                        ):
                             self.skipped += 1
                             continue
                         reference = row.get("matches", {}).get(provider)

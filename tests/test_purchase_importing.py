@@ -408,6 +408,11 @@ class PurchaseImportTest(unittest.IsolatedAsyncioTestCase):
         target = await self.seed_library()
         await self.repository.async_close()
         with closing(sqlite3.connect(self.path)) as db:
+            db.execute("DROP TABLE purchase_records")
+            db.execute(
+                "ALTER TABLE library ADD COLUMN purchase_history "
+                "TEXT NOT NULL DEFAULT '[]'"
+            )
             db.execute("ALTER TABLE library RENAME TO library_titles")
             for column in (
                 "sort_title",
@@ -460,22 +465,26 @@ class PurchaseImportTest(unittest.IsolatedAsyncioTestCase):
             db.execute("DROP TABLE IF EXISTS calendar_managed_events")
             db.execute("DROP TABLE IF EXISTS calendar_reconcile_candidates")
             db.execute("DROP TABLE IF EXISTS calendar_reconcile_intents")
+            db.execute(
+                "ALTER TABLE library_titles DROP COLUMN "
+                "purchase_information_unavailable"
+            )
             db.execute("PRAGMA user_version=15")
             db.commit()
         self.repository = JournalRepository(self.path)
         self.addAsyncCleanup(self.repository.async_close)
         await self.repository.async_open()
-        self.assertEqual((await self.repository.async_info())["schema_version"], 23)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 25)
         invoices = await self.invoices()
-        self.assertEqual(len(invoices), 2)
-        pending = next(row for row, _ in invoices if row["purchase_match_pending"])
-        self.assertEqual(pending["available"], 0)
+        self.assertEqual(len(invoices), 1)
+        ledger = (await self.repository.async_inspect("purchase_records"))["items"]
+        self.assertEqual(len(ledger), 2)
+        pending = next(row for row in ledger if row["library_id"] is None)
+        self.assertEqual(pending["title"], "Old unmatched spelling")
         backups = list(self.path.parent.glob(self.path.name + ".v15.*.bak"))
         self.assertEqual(len(backups), 1)
         self.assertEqual(backups[0].stat().st_mode & 0o777, 0o600)
-        async with self.repository.async_export_snapshot("json") as path:
-            exported = path.read_bytes()
-        plan = await self.preview(exported)
+        plan = await self.repository.async_purchase_reconciliation("fictional-admin")
         unresolved = next(row for row in plan["rows"] if row["needs_match"])
         matched = await self.match_review(plan, unresolved["key"], target)
         await self.apply(matched, [unresolved["key"]])

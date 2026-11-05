@@ -1,0 +1,31 @@
+blueprint:
+  name: Kaleidescape Companion - Schedule metadata refresh
+  description: Refresh enabled metadata providers for all movies or only missing metadata or expected artwork.
+  domain: automation
+  input:
+    time:
+      name: Local time
+      default: "04:00:00"
+      selector:
+        time:
+    providers:
+      name: Scraper names
+      description: Empty means all enabled scrapers. Use kaleidescape and/or tmdb.
+      default: []
+      selector:
+        object:
+    only_missing:
+      name: Only missing metadata or artwork
+      description: Skip providers with data unless configured artwork is missing.
+      default: true
+      selector:
+        boolean:
+triggers:
+  - trigger: time
+    at: !input time
+actions:
+  - action: kaleidescape_companion.refresh_metadata
+    data:
+      providers: !input providers
+      only_missing: !input only_missing
+mode: single

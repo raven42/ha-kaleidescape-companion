@@ -75,13 +75,14 @@ class JournalImportView(HomeAssistantView):
     requires_auth = True
 
     @staticmethod
-    def _authorize(request, runtime, entry):
+    def _authorize(request, runtime, entry, *, purchase_only=False):
         if not is_active_admin(request.get("hass_user")):
             raise web.HTTPForbidden
         if not runtime.ready:
             raise JournalError("not_ready", "Journal integration unloaded")
-        if runtime.observer is not None or (entry.options or entry.data).get(
-            "tracking_enabled"
+        if not purchase_only and (
+            runtime.observer is not None
+            or (entry.options or entry.data).get("tracking_enabled")
         ):
             raise JournalError("tracking_enabled", "Disable recording before importing")
 
@@ -95,14 +96,16 @@ class JournalImportView(HomeAssistantView):
         try:
             runtime = get_runtime(hass, entry_id, dataset_id)
             entry = hass.config_entries.async_get_entry(entry_id)
-            self._authorize(request, runtime, entry)
             query = request.query
             if (
-                len(query) != 1
-                or set(query) != {"format"}
+                len(query) != len(set(query))
+                or set(query) not in ({"format"}, {"format", "purchase_only"})
                 or query["format"] not in {"json", "sqlite"}
+                or ("purchase_only" in query and query["purchase_only"] != "true")
             ):
                 raise invalid("Invalid import options")
+            purchase_only = query.get("purchase_only") == "true"
+            self._authorize(request, runtime, entry, purchase_only=purchase_only)
             import_format = query["format"]
             if (
                 request.content_length is not None
@@ -121,15 +124,20 @@ class JournalImportView(HomeAssistantView):
                         parts.append(chunk)
                     if request.get("hass_user") is not user:
                         raise web.HTTPForbidden
-                    self._authorize(request, runtime, entry)
+                    self._authorize(
+                        request, runtime, entry, purchase_only=purchase_only
+                    )
                     result = await runtime.repository.async_import_preview(
                         b"".join(parts),
                         import_format,
                         actor_id=user.id,
+                        purchase_only=purchase_only,
                     )
                     if request.get("hass_user") is not user:
                         raise web.HTTPForbidden
-                    self._authorize(request, runtime, entry)
+                    self._authorize(
+                        request, runtime, entry, purchase_only=purchase_only
+                    )
                     _LOGGER.info("Journal import preview completed")
                     return self.json(result, headers={"Cache-Control": "no-store"})
         except TimeoutError:

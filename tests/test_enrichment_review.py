@@ -584,6 +584,64 @@ class TitleReviewTest(unittest.IsolatedAsyncioTestCase):
         versions = await self.repo.async_library_versions(self.source, self.id)
         self.assertTrue(all("tmdb" in row["enrichment"] for row in versions["items"]))
 
+    async def test_store_retail_waits_for_draft_save(self):
+        await self.setup_review()
+        self.manager.parent.config["metadata_store_enabled"] = True
+        self.manager.parent.entry.data["metadata_store_enabled"] = True
+        candidate = {
+            "provider_id": "42",
+            "title": "Fictional Film",
+            "year": 2025,
+            "url": "https://www.kaleidescape.com/movie-store/movie/fictional-film-2025",
+        }
+        metadata = {**candidate, "provider": "kaleidescape", "retail_price": "$19.99"}
+        options = await self.manager.options(self.admin, self.id)
+        with (
+            patch(
+                "custom_components.kaleidescape_companion.enrichment.review.Providers.search",
+                AsyncMock(return_value=[candidate]),
+            ),
+            patch(
+                "custom_components.kaleidescape_companion.enrichment.review.Providers.resolve",
+                AsyncMock(return_value=metadata),
+            ),
+        ):
+            staged = await self.manager.refresh(
+                self.admin,
+                str(uuid4()),
+                self.id,
+                "kaleidescape",
+                "Fictional Film",
+                2025,
+                True,
+            )
+
+        async def selected():
+            return next(
+                row
+                for row in (await self.repo.async_inspect("library"))["items"]
+                if row["id"] == self.id
+            )
+
+        self.assertIsNone((await selected())["retail_price"])
+        await self.manager.save_draft(
+            self.admin,
+            str(uuid4()),
+            {
+                "title_id": self.id,
+                "snapshot": options["snapshot"],
+                "providers": {"kaleidescape": staged["plan_id"]},
+                "sources": None,
+                "expectations": None,
+                "image_plan": "",
+                "images": {},
+                "resets": [],
+            },
+        )
+        row = await selected()
+        self.assertEqual(row["retail_price"], "$19.99")
+        self.assertIsNone(row["purchase_price"])
+
     async def test_draft_refresh_is_atomic_and_selects_first_backdrop(self):
         await self.setup_review()
         candidate = {

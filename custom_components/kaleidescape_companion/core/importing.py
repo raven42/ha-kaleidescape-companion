@@ -56,6 +56,7 @@ def _sqlite_bundle(payload: bytes, deadline: float) -> dict:
         "library": TITLE_COLUMNS,
         "library_titles": TITLE_COLUMNS,
         "library_purchases": PURCHASE_COLUMNS,
+        "purchase_records": PURCHASE_COLUMNS,
         "library_purchase_dates": {"title_id", "purchased_on"},
     }
     with closing(sqlite3.connect(":memory:")) as db:
@@ -87,13 +88,20 @@ def _sqlite_bundle(payload: bytes, deadline: float) -> dict:
                     "source_group",
                 },
                 "library_purchases": {"id", "title", "purchased_on"},
+                "purchase_records": {"id", "title", "purchased_on"},
                 "library_purchase_dates": {"title_id", "purchased_on"},
             }["library" if name == "library_titles" else name]
             if not required <= names:
                 raise invalid("Import is missing required columns")
             columns[name] = sorted(names & keys)
         if not (
-            {"viewings", "library", "library_titles", "library_purchases"}
+            {
+                "viewings",
+                "library",
+                "library_titles",
+                "library_purchases",
+                "purchase_records",
+            }
             & columns.keys()
         ):
             raise invalid("Import requires viewing, Library title or purchase records")
@@ -203,12 +211,22 @@ def parse_bundle(payload: bytes, import_format: str) -> dict:
             document = {"library_purchases" if purchases else "viewings": document}
         if (
             not isinstance(document, dict)
-            or not {"viewings", "library", "library_titles", "library_purchases"}
+            or not {
+                "viewings",
+                "library",
+                "library_titles",
+                "library_purchases",
+                "purchase_records",
+            }
             & document.keys()
         ):
             raise invalid("Import requires viewing, Library title or purchase records")
         if "library" in document and "library_titles" in document:
             raise invalid("Import contains both current and legacy Library tables")
+        if "library_purchases" in document and "purchase_records" in document:
+            raise invalid("Import contains multiple purchase tables")
+        if "purchase_records" in document:
+            document["library_purchases"] = document["purchase_records"]
         document["library"] = document.get(
             "library", document.get("library_titles", [])
         )

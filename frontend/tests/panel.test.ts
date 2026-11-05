@@ -76,21 +76,20 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-it("shows the loaded pyk version in Kaleidescape settings", async () => {
+it("shows the loaded pyk version in About settings", async () => {
   page("settings");
   await settle();
   const settings = panel.shadowRoot!.querySelector("kaleidescape-settings")!;
   await vi.waitFor(() =>
     expect(settings.shadowRoot!.textContent).toContain(
-      "Loaded pykaleidescape version",
+      "pykaleidescape version",
     ),
   );
   settings
-    .shadowRoot!.querySelector<HTMLButtonElement>("#settings-tab-ecosystem")!
+    .shadowRoot!.querySelector<HTMLButtonElement>("#settings-tab-about")!
     .click();
-  const section = settings.shadowRoot!.querySelector<HTMLElement>(
-    "#settings-ecosystem",
-  )!;
+  const section =
+    settings.shadowRoot!.querySelector<HTMLElement>("#settings-about")!;
   await vi.waitFor(() => expect(section.hidden).toBe(false));
   expect(section.textContent).toContain("1.1.6");
 });

@@ -34,6 +34,27 @@ SUMMARY_FIELDS = ("purchase_price", "retail_price", "order_id", "href")
 MAX_HISTORY = 1000
 
 
+def missing_information(db, source):
+    """Find movie groups missing a date or price, unless marked unavailable."""
+    return {
+        row[0]
+        for row in db.execute(
+            "SELECT source_group FROM library WHERE source_id=? AND available=1 "
+            "AND purchase_match_pending=0 GROUP BY source_group "
+            "HAVING max(purchase_information_unavailable)=0 AND "
+            "(max(coalesce(purchased_on,(SELECT min(purchased_on) FROM "
+            "purchase_records WHERE library_id=library.id)) IS NOT NULL)=0 "
+            "OR max(coalesce(purchase_price,(SELECT purchase_price FROM "
+            "purchase_records WHERE library_id=library.id "
+            "ORDER BY purchased_on,id LIMIT 1)) IS NOT NULL)=0 "
+            "OR max(coalesce(retail_price,(SELECT retail_price FROM "
+            "purchase_records WHERE library_id=library.id "
+            "ORDER BY purchased_on,id LIMIT 1)) IS NOT NULL)=0)",
+            (source,),
+        )
+    }
+
+
 def totals(db, source):
     """Sum recorded invoices once, using integer cents and separate currencies."""
     deadline = time.monotonic() + 2
@@ -51,10 +72,16 @@ def totals(db, source):
     )
     for index, row in enumerate(
         db.execute(
-            "SELECT invoice.value FROM library t,json_each(t.purchase_history) invoice "
-            "WHERE t.source_id=? AND t.purchase_match_pending=0 ORDER BY t.id "
-            "LIMIT 100001",
-            (source,),
+            "SELECT json_object('id',p.id,'order_id',p.order_id,"
+            "'purchase_price',p.purchase_price,'retail_price',p.retail_price) "
+            "FROM purchase_records p JOIN library t ON t.id=p.library_id "
+            "WHERE t.source_id=? AND t.purchase_match_pending=0 "
+            "UNION ALL SELECT json_object('id',t.id,'order_id',NULL,"
+            "'purchase_price',t.purchase_price,'retail_price',t.retail_price) "
+            "FROM library t WHERE t.source_id=? AND t.purchase_match_pending=0 "
+            "AND NOT EXISTS (SELECT 1 FROM purchase_records p WHERE p.library_id=t.id) "
+            "AND t.purchase_price IS NOT NULL LIMIT 100001",
+            (source, source),
         )
     ):
         if index == 100000 or time.monotonic() > deadline:
@@ -234,7 +261,10 @@ def embedded_history(row, decode):
         expected = summary(records)
         if any(key in row and value != expected[key] for key, value in flat.items()):
             raise invalid("Library purchase summary differs from its invoice history")
-    elif any(value is not None for value in flat.values()):
+    elif any(value is not None for value in flat.values()) and not (
+        "purchase_history" in row
+        and all(flat[key] is None for key in ("order_id", "href"))
+    ):
         records = history(
             [
                 {
@@ -253,19 +283,41 @@ def summary(records):
     return {key: first.get(key) for key in SUMMARY_FIELDS}
 
 
+def history_for(db, title_id):
+    return [
+        {key: row[key] for key in ("id", *INVOICE_FIELDS, "imported_at")}
+        for row in db.execute(
+            "SELECT * FROM purchase_records WHERE library_id=? "
+            "ORDER BY purchased_on,id",
+            (title_id,),
+        )
+    ]
+
+
 def index(db):
-    result = {}
-    for row in db.execute(
-        "SELECT id,purchase_history,purchase_match_pending FROM library "
-        "WHERE purchase_history!='[]'"
-    ):
-        for record in json.loads(row["purchase_history"]):
-            result[record["id"]] = {
-                "record": record,
-                "owner": row["id"],
-                "pending": bool(row["purchase_match_pending"]),
-            }
-    return result
+    if not db.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='purchase_records'"
+    ).fetchone():
+        result = {}
+        for row in db.execute(
+            "SELECT id,purchase_history,purchase_match_pending FROM library "
+            "WHERE purchase_history!='[]'"
+        ):
+            for record in json.loads(row["purchase_history"]):
+                result[record["id"]] = {
+                    "record": record,
+                    "owner": row["id"],
+                    "pending": bool(row["purchase_match_pending"]),
+                }
+        return result
+    return {
+        row["id"]: {
+            "record": {key: row[key] for key in ("id", *INVOICE_FIELDS, "imported_at")},
+            "owner": row["library_id"],
+            "pending": row["library_id"] is None,
+        }
+        for row in db.execute("SELECT * FROM purchase_records")
+    }
 
 
 def title_query(record) -> TitleQuery:
@@ -337,75 +389,79 @@ def proposal(record, old, target):
     )
 
 
+def fill_missing_price(db, title_id, field, value):
+    """Fill an absent price on the earliest invoice or the manual Library value."""
+    if field not in {"purchase_price", "retail_price"} or value is None:
+        return
+    try:
+        value = price(value)
+    except JournalError:
+        return
+    invoice = db.execute(
+        "SELECT id,purchase_price,retail_price FROM purchase_records "
+        "WHERE library_id=? "
+        "ORDER BY purchased_on,id LIMIT 1",
+        (title_id,),
+    ).fetchone()
+    if invoice:
+        if invoice[field] is None:
+            db.execute(
+                f"UPDATE purchase_records SET {field}=? WHERE id=?",
+                (value, invoice["id"]),
+            )
+    else:
+        db.execute(
+            f"UPDATE library SET {field}=? WHERE id=? AND {field} IS NULL",
+            (value, title_id),
+        )
+
+
+def fill_retail_price(db, title_id, value):
+    """Fill missing retail only; a public store price never changes what was paid."""
+    fill_missing_price(db, title_id, "retail_price", value)
+
+
 def merge_into(db, record, target, now, old_owner=None):
-    """Keep the association inseparable from the row, including repeated orders."""
+    """Link one ledger record to an existing scanned Library entry."""
     row = db.execute(
-        "SELECT * FROM library WHERE id=? AND purchase_match_pending=0", (target,)
+        "SELECT * FROM library WHERE id=? AND available=1 AND purchase_match_pending=0",
+        (target,),
     ).fetchone()
     if row is None:
         raise invalid("Purchase requires an existing matched Library entry")
-    records = json.loads(row["purchase_history"])
-    previous_date = records[0]["purchased_on"] if records else None
-    previous = next((item for item in records if item["id"] == record["id"]), None)
-    if previous is None:
-        imported_at = now
-        if old_owner and old_owner != target:
-            old = db.execute(
-                "SELECT purchase_history FROM library WHERE id=? "
-                "AND purchase_match_pending=1",
-                (old_owner,),
-            ).fetchone()
-            if old:
-                imported_at = next(
-                    (
-                        item.get("imported_at", now)
-                        for item in json.loads(old[0])
-                        if item["id"] == record["id"]
-                    ),
-                    now,
-                )
-        records.append(
-            {
-                **{key: record[key] for key in ("id", *INVOICE_FIELDS)},
-                "imported_at": imported_at,
-            }
-        )
-    else:
+    previous = db.execute(
+        "SELECT * FROM purchase_records WHERE id=?", (record["id"],)
+    ).fetchone()
+    if previous and previous["library_id"] not in (None, target):
+        raise JournalError("conflict", "Purchase already belongs to another movie")
+    existing = history_for(db, target)
+    previous_date = existing[0]["purchased_on"] if existing else record["purchased_on"]
+    values = {key: record[key] for key in INVOICE_FIELDS}
+    if previous:
         for key in INVOICE_FIELDS:
-            if previous.get(key) in (None, "") and record[key] not in (None, ""):
-                previous[key] = record[key]
-    records = history(records)
-    private = summary(records)
+            if previous[key] is not None:
+                values[key] = previous[key]
+    if not existing:
+        for key in ("purchase_price", "retail_price"):
+            if row[key] is not None:
+                values[key] = row[key]
     db.execute(
-        "UPDATE library SET "
-        "purchase_history=?,purchase_price=?,retail_price=?,order_id=?,href=?,"
-        "purchased_on=?,purchase_imported_at=? WHERE id=?",
+        "INSERT INTO purchase_records (id,title,purchased_on,purchase_price,"
+        "retail_price,order_id,href,imported_at,library_id,issue) "
+        "VALUES (?,?,?,?,?,?,?,?,?,NULL) ON CONFLICT(id) DO UPDATE SET "
+        "purchase_price=excluded.purchase_price,retail_price=excluded.retail_price,library_id=excluded.library_id,issue=NULL",
         (
-            json.dumps(records),
-            *private.values(),
-            records[0]["purchased_on"]
-            if row["purchased_on"] in (None, previous_date)
-            else row["purchased_on"],
-            now,
+            record["id"],
+            *(values[key] for key in INVOICE_FIELDS),
+            previous["imported_at"] if previous else now,
             target,
         ),
     )
-    if old_owner and old_owner != target:
-        old = db.execute(
-            "SELECT purchase_history,purchase_match_pending FROM library WHERE id=?",
-            (old_owner,),
-        ).fetchone()
-        if old and old["purchase_match_pending"]:
-            remaining = [
-                item
-                for item in json.loads(old["purchase_history"])
-                if item["id"] != record["id"]
-            ]
-            if not remaining:
-                db.execute("DELETE FROM library WHERE id=?", (old_owner,))
-            else:
-                db.execute(
-                    "UPDATE library SET purchase_history=? WHERE id=?",
-                    (json.dumps(remaining), old_owner),
-                )
+    purchased_on = None if row["purchased_on"] == previous_date else row["purchased_on"]
+    db.execute(
+        "UPDATE library SET purchase_price=NULL,retail_price=NULL,"
+        "order_id=NULL,href=NULL,"
+        "purchased_on=?,purchase_imported_at=? WHERE id=?",
+        (purchased_on, now, target),
+    )
     return row["source_id"]

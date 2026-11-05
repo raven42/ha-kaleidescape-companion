@@ -1,0 +1,25 @@
+blueprint:
+  name: Kaleidescape Companion - Schedule library sync
+  description: Run the selected Companion library sync button at a chosen local time.
+  domain: automation
+  input:
+    sync_button:
+      name: Library sync button
+      selector:
+        entity:
+          filter:
+            - domain: button
+              integration: kaleidescape_companion
+    time:
+      name: Local time
+      default: "03:00:00"
+      selector:
+        time:
+triggers:
+  - trigger: time
+    at: !input time
+actions:
+  - action: button.press
+    target:
+      entity_id: !input sync_button
+mode: single

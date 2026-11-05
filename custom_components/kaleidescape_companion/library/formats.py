@@ -43,3 +43,19 @@ def quality(encoded):
         ),
         0,
     )
+
+
+def facet_labels(encoded):
+    """List individual known badges, retaining only wholly unknown source labels."""
+    values = json.loads(labels(encoded))
+    canonical = {label for label, _ in PATTERNS} | {"4K", "4K Cinematic"}
+    result = [
+        value
+        for value in values
+        if value in canonical
+        or not (
+            re.search(r"\b4k\b", value, re.I)
+            or any(pattern.search(value) for _, pattern in COMPILED)
+        )
+    ]
+    return json.dumps(result)

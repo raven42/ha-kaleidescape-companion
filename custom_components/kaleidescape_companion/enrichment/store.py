@@ -5,9 +5,11 @@ import re
 from datetime import UTC, datetime
 
 from ..core.models import JournalError
+from ..library.purchases import fill_retail_price
 from ..library.store import changed
+from ..scrapers.models import genre_name
 from .availability import artwork_for_group, for_group
-from .matching import bindings, reference
+from .matching import bindings, has_provider_data, reference
 
 PROVIDERS = {"kaleidescape", "tmdb"}
 CREDITS = ("actors", "directors", "writers", "producers", "studios")
@@ -66,7 +68,15 @@ def public(value):
     """Never project arbitrary imported/system JSON keys into household responses."""
     return {
         provider: {
-            **{key: item[key] for key in FIELDS if key in item},
+            **{
+                key: (
+                    normalize_genres({"genres": item[key]})["genres"]
+                    if key == "genres"
+                    else item[key]
+                )
+                for key in FIELDS
+                if key in item
+            },
             **(
                 {
                     key: item[key]
@@ -97,9 +107,9 @@ def public(value):
 
 def effective(data, enrichment, sources=None):
     """Augment credits, preserving raw identities and version-specific facts."""
-    if not enrichment or enrichment == "{}":
-        return data if isinstance(data, str) else json.dumps(data)
     data = json.loads(data) if isinstance(data, str) else dict(data)
+    if not enrichment or enrichment == "{}":
+        return json.dumps(normalize_genres(data))
     enrichment = json.loads(enrichment) if isinstance(enrichment, str) else enrichment
     from .selection import FIELDS as SOURCE_FIELDS
     from .selection import choose
@@ -133,23 +143,44 @@ def effective(data, enrichment, sources=None):
     for key in (*REVIEW_FIELDS, "year", "rating"):
         if key in enrichment.get("reviewed", {}):
             data[key] = enrichment["reviewed"][key]
-    return json.dumps(data)
+    return json.dumps(normalize_genres(data))
+
+
+def normalize_genres(data):
+    """Unify equivalent genre labels for display, filtering and suggestions."""
+    values = data.get("genres")
+    if isinstance(values, list):
+        normalized = []
+        for value in values:
+            value = genre_name(value)
+            if value not in normalized:
+                normalized.append(value)
+        data["genres"] = normalized
+    return data
 
 
 def candidates(db, source):
     """Choose scanned movie groups, excluding purchase-only placeholders."""
     rows = db.execute(
         """SELECT id,source_group,title,json_extract(data,'$.year') year,
-            coalesce(href,(SELECT json_extract(value,'$.href')
-                FROM json_each(purchase_history)
-                WHERE json_extract(value,'$.href') IS NOT NULL LIMIT 1)) href,
+            coalesce(href,(SELECT p.href FROM purchase_records p
+                WHERE p.library_id=library.id AND p.href IS NOT NULL
+                ORDER BY p.purchased_on,p.id LIMIT 1)) href,
             json_extract(enrichment,'$.kaleidescape.fetched_at') store_fetched,
             json_extract(enrichment,'$.tmdb.fetched_at') tmdb_fetched,
             json_extract(enrichment,'$.reviewed.backdrop_removed') backdrop_removed,
             EXISTS (SELECT 1 FROM library_artwork a WHERE a.cache_key=
+                companion_artwork(library.artwork_key,library.enrichment,
+                    'artwork')) poster_selected,
+            EXISTS (SELECT 1 FROM library_artwork a WHERE a.cache_key=
                 companion_artwork(NULL,library.enrichment,
                     'backdrop')) backdrop_selected,
-            json_extract(enrichment,'$.matches') matched_refs
+            json_extract(enrichment,'$.matches') matched_refs,
+            CASE WHEN json_type(enrichment,'$.kaleidescape')='object'
+                THEN json_extract(enrichment,'$.kaleidescape')
+                ELSE '{}' END store_cache,
+            CASE WHEN json_type(enrichment,'$.tmdb')='object'
+                THEN json_extract(enrichment,'$.tmdb') ELSE '{}' END tmdb_cache
         FROM library WHERE source_id=? AND available=1
         AND purchase_match_pending=0
         AND NOT EXISTS (SELECT 1 FROM library locked
@@ -176,15 +207,26 @@ def candidates(db, source):
                 "href": None,
                 "enrichment": {},
                 "matches": {},
+                "cached_providers": set(),
                 "backdrop_selected": False,
+                "poster_selected": False,
                 "backdrop_removed": False,
             },
         )
         if not entry["year"]:
             entry["year"] = row["year"]
         entry["matches"].update(json.loads(row["matched_refs"] or "{}"))
+        cache = {
+            "matches": json.loads(row["matched_refs"] or "{}"),
+            "kaleidescape": json.loads(row["store_cache"] or "{}"),
+            "tmdb": json.loads(row["tmdb_cache"] or "{}"),
+        }
+        entry["cached_providers"].update(
+            name for name in PROVIDERS if has_provider_data(cache, name)
+        )
         entry["href"] = entry["href"] or row["href"]
         entry["backdrop_selected"] |= bool(row["backdrop_selected"])
+        entry["poster_selected"] |= bool(row["poster_selected"])
         entry["backdrop_removed"] |= bool(row["backdrop_removed"])
         for provider, field in (
             ("kaleidescape", "store_fetched"),
@@ -193,6 +235,7 @@ def candidates(db, source):
             if row[field]:
                 entry["enrichment"][provider] = {"fetched_at": row[field]}
     for group, entry in groups.items():
+        entry["cached_providers"] = sorted(entry["cached_providers"])
         entry["unavailable"] = sorted(for_group(db, source, group))
         entry["unavailable_artwork"] = sorted(artwork_for_group(db, source, group))
     return list(groups.values())
@@ -234,6 +277,8 @@ def save(db, source, title_id, provider, metadata):
     ):
         raise JournalError("refresh_required", "Library changed during enrichment")
     with db:
+        if provider == "kaleidescape":
+            fill_retail_price(db, title_id, metadata.get("retail_price"))
         for member in db.execute(
             "SELECT id,enrichment FROM library "
             "WHERE source_id=? AND source_group=? AND available=1",

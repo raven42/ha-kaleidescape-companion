@@ -13,6 +13,7 @@ import { styles } from "./styles";
 import { collectionLabel } from "../library/badges";
 import { fullSyncSettings } from "./calendar-settings";
 import "./calendar-export";
+import "./automation-blueprints";
 import "./settings-transfer";
 import "./test-dashboard";
 import type { TestDashboard } from "./test-dashboard";
@@ -57,7 +58,6 @@ const libraryFields = [
     "",
     "",
   ],
-  ["library_interval_hours", "Sync interval · hours", "number", "1", "168"],
   [
     "library_artwork_cache_mb",
     "Artwork cache limit · MiB",
@@ -87,8 +87,7 @@ const booleanFields = new Set([
   ...libraryChecks.map(([key]) => key),
 ]);
 const validation: Record<string, string> = {
-  invalid_calendar_full_sync:
-    "Use 1–12 whole months and a daily time in HH:MM format.",
+  invalid_calendar_full_sync: "Use an age window of 1–12 whole months.",
   calendar_dedicated_required:
     "Acknowledge that Full Sync uses a separate calendar and deletes unmatched events.",
   calendar_full_sync_unsupported:
@@ -109,8 +108,7 @@ const validation: Record<string, string> = {
     "Use a private LAN control hostname/IP and a valid player serial number.",
   invalid_library_host:
     "Enter a hostname or private LAN HTTP(S) origin without a path, credentials, or query.",
-  invalid_library_options:
-    "Choose a sync interval of 1–168 hours and an artwork cache limit of 32–4096 MiB.",
+  invalid_library_options: "Choose an artwork cache limit of 32–4096 MiB.",
 };
 
 export class KaleidescapeSettings extends LitElement {
@@ -487,6 +485,7 @@ export class KaleidescapeSettings extends LitElement {
       "personal",
       "ecosystem",
       "scrapers",
+      "about",
     ];
     const index = keys.indexOf(current);
     const next =
@@ -585,6 +584,7 @@ export class KaleidescapeSettings extends LitElement {
             ["personal", "Personal"],
             ["ecosystem", "Kaleidescape"],
             ["scrapers", "Scrapers"],
+            ["about", "About"],
           ].map(
             ([key, label]) =>
               html` <button
@@ -632,6 +632,10 @@ export class KaleidescapeSettings extends LitElement {
                         Home Assistant integration · shared · Save settings
                         required
                       </p>
+                      <kaleidescape-automation-blueprints
+                        .client=${this.client}
+                        .scope=${this.scope}
+                      ></kaleidescape-automation-blueprints>
                       <kaleidescape-test-dashboard
                         .client=${this.client}
                         .scope=${this.scope}
@@ -861,10 +865,6 @@ export class KaleidescapeSettings extends LitElement {
                         Kaleidescape devices and metadata providers · shared ·
                         Save settings required
                       </p>
-                      <p>
-                        Loaded pykaleidescape version:
-                        <strong>${this.scope?.pyk_version || "Unknown"}</strong>
-                      </p>
                       <h3>Library sync</h3>
                       <label class="check"
                         ><input
@@ -1064,6 +1064,60 @@ export class KaleidescapeSettings extends LitElement {
                           this.requestUpdate();
                         }}
                       ></kaleidescape-enrichment-settings>
+                    </section>
+                    <section
+                      class="settings-section"
+                      role="tabpanel"
+                      id="settings-about"
+                      aria-labelledby="settings-tab-about"
+                      data-settings-tab="about"
+                      ?hidden=${this.tab !== "about"}
+                    >
+                      <h3>About Kaleidescape Companion</h3>
+                      <p>
+                        Companion version:
+                        <strong
+                          >${this.scope?.integration_version || "Unknown"}</strong
+                        ><br />
+                        pykaleidescape version:
+                        <strong>${this.scope?.pyk_version || "Unknown"}</strong
+                        ><br />
+                        Companion API version:
+                        <strong>${this.scope?.api_version ?? "Unknown"}</strong
+                        ><br />
+                        Database schema version:
+                        <strong
+                          >${this.scope?.schema_version ?? "Unknown"}</strong
+                        >
+                      </p>
+                      <kaleidescape-automation-blueprints
+                        .client=${this.client}
+                        .scope=${this.scope}
+                        .versionsOnly=${true}
+                      ></kaleidescape-automation-blueprints>
+                      <h3>Release notes · current development build</h3>
+                      <ul>
+                        <li>
+                          Missing automation blueprints are installed
+                          automatically. Settings shows blueprint status and
+                          offers explicit updates; Home Assistant notifies you
+                          about outdated and updated blueprints.
+                        </li>
+                        <li>
+                          Library sync and calendar full sync actions support
+                          opt-in schedules. Calendar full sync also schedules a
+                          safeguard recheck.
+                        </li>
+                        <li>
+                          Metadata refresh schedules can select providers and
+                          limit work to titles with missing data.
+                        </li>
+                        <li>
+                          Purchase receipts save unmatched purchases for later
+                          reconciliation from the database. Update the receipt
+                          blueprint to version 3 for accurate notifications.
+                        </li>
+                      </ul>
                     </section>
                   </fieldset>
                 </form>

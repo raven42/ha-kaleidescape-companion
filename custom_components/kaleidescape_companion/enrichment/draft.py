@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 from ..core.database_mutations import replay
 from ..core.models import JournalError, identifier, invalid
 from ..core.security import private_directory
+from ..library.purchases import fill_retail_price
 from ..library.store import image_type, save_images
 from .matching import reference, same_provider_identity
 from .selection import FIELDS, OPTIONS
@@ -179,6 +180,9 @@ def apply(
     def commit(keys):
         ready()
         image_keys = dict(zip(ordered, keys, strict=True))
+        store_metadata = plans.get("kaleidescape", {}).get("metadata")
+        if store_metadata:
+            fill_retail_price(db, data["title_id"], store_metadata.get("retail_price"))
         for row in rows:
             value = json.loads(
                 db.execute(

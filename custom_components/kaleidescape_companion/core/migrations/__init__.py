@@ -9,7 +9,7 @@ from uuid import uuid4
 
 from ..security import private_file
 
-SCHEMA_VERSION = 23
+SCHEMA_VERSION = 25
 _LOGGER = logging.getLogger(__name__)
 
 MIGRATIONS = {
@@ -378,6 +378,25 @@ MIGRATIONS[23] = (
 )
 
 
+MIGRATIONS[24] = (
+    "ALTER TABLE library ADD COLUMN purchase_information_unavailable INTEGER NOT NULL "
+    "DEFAULT 0 CHECK(purchase_information_unavailable IN (0,1))",
+)
+
+MIGRATIONS[25] = (
+    """CREATE TABLE purchase_records (
+        id TEXT PRIMARY KEY, title TEXT NOT NULL, purchased_on TEXT NOT NULL,
+        purchase_price TEXT, retail_price TEXT, order_id TEXT, href TEXT,
+        imported_at TEXT NOT NULL, library_id TEXT REFERENCES library(id)
+            ON DELETE SET NULL, issue TEXT
+    )""",
+    "CREATE INDEX purchase_records_library "
+    "ON purchase_records(library_id,purchased_on,id)",
+    "CREATE INDEX purchase_records_unmatched "
+    "ON purchase_records(purchased_on,id) WHERE library_id IS NULL",
+)
+
+
 def migrate(connection: sqlite3.Connection, path: Path) -> None:
     """Upgrade atomically; retain a consistent copy before existing DB upgrades."""
     version = connection.execute("PRAGMA user_version").fetchone()[0]
@@ -411,6 +430,10 @@ def migrate(connection: sqlite3.Connection, path: Path) -> None:
                 from .journal import link_viewings
 
                 link_viewings(connection)
+            if target == 25:
+                from .purchases import move_history
+
+                move_history(connection)
             if target == 1:
                 connection.execute(
                     "INSERT INTO schema_metadata VALUES (1, ?, ?, 0)",

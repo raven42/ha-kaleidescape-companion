@@ -53,6 +53,7 @@ export interface JournalInfo extends Scope {
   backup_in_progress?: boolean;
   tracking_enabled?: boolean;
   pyk_version?: string;
+  integration_version?: string;
   library_enabled?: boolean;
   ui_defaults?: {
     default_landing_page: string;
@@ -426,7 +427,7 @@ export interface MetadataStatus {
 }
 export interface LibraryEdit {
   snapshot: string;
-  values: Record<string, string | string[] | number | null>;
+  values: Record<string, string | string[] | number | boolean | null>;
   version_count: number;
 }
 export interface LibraryTitle {
@@ -537,7 +538,6 @@ export interface LibraryInfo {
   processed?: number;
   total?: number;
   last_attempt?: string | null;
-  interval_hours?: number;
   collections_enabled?: boolean;
   details_enabled?: boolean;
   artwork_enabled?: boolean;
@@ -799,6 +799,58 @@ export class JournalClient {
 
   call<T>(message: ApiMessage): Promise<T> {
     return withRequestDeadline(this.transport.callWS<T>(message));
+  }
+  automationStatuses(scope: Scope): Promise<
+    Record<
+      string,
+      {
+        status: "current" | "outdated" | "modified" | "missing" | "unavailable";
+        label: string;
+        revision: string | null;
+        installed_version?: number | null;
+        latest_version?: number;
+      }
+    >
+  > {
+    return this.call({
+      type: `${DOMAIN}/automations/status`,
+      ...scopeFields(scope),
+    });
+  }
+  updateAutomationBlueprint(
+    scope: Scope,
+    template: string,
+    revision: string,
+  ): Promise<unknown> {
+    return this.call({
+      type: `${DOMAIN}/automations/update`,
+      ...scopeFields(scope),
+      template,
+      revision,
+    });
+  }
+  automationTemplate(
+    scope: Scope,
+    template: string,
+  ): Promise<{ path: string; yaml: string }> {
+    return this.call({
+      type: `${DOMAIN}/automations/template`,
+      ...scopeFields(scope),
+      template,
+    });
+  }
+  installAutomationBlueprint(
+    path: string,
+    yaml: string,
+    allowOverride = false,
+  ): Promise<{ overrides_existing: boolean }> {
+    return this.call({
+      type: "blueprint/save",
+      domain: "automation",
+      path,
+      yaml,
+      ...(allowOverride ? { allow_override: true } : {}),
+    });
   }
   controlInfo(scope: Scope): Promise<ControlInfo> {
     return this.call({ type: `${DOMAIN}/control/info`, ...scopeFields(scope) });
@@ -1482,6 +1534,7 @@ export class JournalClient {
     scope: Scope,
     file: File,
     signal: AbortSignal,
+    purchaseOnly = false,
   ): Promise<ImportReview> {
     const format = /\.(sqlite|sqlite3|db)$/i.test(file.name)
       ? "sqlite"
@@ -1492,7 +1545,7 @@ export class JournalClient {
     if (!file.size || file.size > MAX_IMPORT_BYTES)
       throw new ApiError("import_too_large");
     const response = await this.transport.fetchWithAuth(
-      `/api/${DOMAIN}/${encodeURIComponent(scope.entry_id)}/${encodeURIComponent(scope.dataset_id)}/import/preview?format=${format}`,
+      `/api/${DOMAIN}/${encodeURIComponent(scope.entry_id)}/${encodeURIComponent(scope.dataset_id)}/import/preview?format=${format}${purchaseOnly ? "&purchase_only=true" : ""}`,
       {
         method: "POST",
         body: file,
@@ -1521,6 +1574,12 @@ export class JournalClient {
       "application/json",
     );
     return JSON.parse(await blob.text()) as ImportReview;
+  }
+  reconcilePurchases(scope: Scope): Promise<ImportReview | { empty: true }> {
+    return this.call({
+      type: `${DOMAIN}/purchases/reconcile`,
+      ...scopeFields(scope),
+    });
   }
   purge(pending: PreparedMutation): Promise<PurgeResult> {
     return this.call({ ...pending.message });

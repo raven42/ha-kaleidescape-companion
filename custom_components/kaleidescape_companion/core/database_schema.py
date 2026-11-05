@@ -4,6 +4,7 @@ TABLE_KEYS = {
     "viewings": "id",
     "sessions": "id",
     "library": "id",
+    "purchase_records": "id",
     "library_collections": "source_id,name",
     "library_sources": "id",
     "library_artwork": "cache_key",
@@ -28,6 +29,7 @@ MAIN_TABLES = (
     "viewings",
     "sessions",
     "library",
+    "purchase_records",
 )
 EDITABLE = {
     "viewings": {

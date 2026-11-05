@@ -241,4 +241,8 @@ ${JSON.stringify(values, null, 2)}</pre>
       </dialog>`;
   }
 }
-customElements.define("kaleidescape-settings-transfer", SettingsTransferPanel);
+if (!customElements.get("kaleidescape-settings-transfer"))
+  customElements.define(
+    "kaleidescape-settings-transfer",
+    SettingsTransferPanel,
+  );

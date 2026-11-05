@@ -408,6 +408,65 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
                 await request
         self.assertFalse(paths[0].exists())
 
+    async def test_native_sync_actions_use_the_active_entry_and_unload(self):
+        from unittest.mock import Mock
+
+        runtime = self.entry.runtime_data
+        object.__setattr__(self.entry, "data", {"library_enabled": True})
+        runtime.library = SimpleNamespace(request_sync=Mock(), async_stop=AsyncMock())
+        maintenance = SimpleNamespace(check=Mock(), request=Mock())
+        runtime.calendar = SimpleNamespace(
+            maintenance=maintenance, _tick=Mock(), async_stop=AsyncMock()
+        )
+        await self.hass.services.async_call(DOMAIN, "library_sync", {}, blocking=True)
+        await self.hass.services.async_call(
+            DOMAIN, "calendar_full_sync", {}, blocking=True
+        )
+        runtime.library.request_sync.assert_called_once_with()
+        maintenance.check.assert_called_once_with()
+        maintenance.request.assert_called_once_with()
+        runtime.calendar._tick.assert_called_once_with()
+        self.assertTrue(self.hass.services.has_service(DOMAIN, "library_sync"))
+        await async_unload_entry(self.hass, self.entry)
+        self.assertFalse(self.hass.services.has_service(DOMAIN, "library_sync"))
+        self.assertFalse(self.hass.services.has_service(DOMAIN, "calendar_full_sync"))
+
+    async def test_library_buttons_are_available_when_platform_is_forwarded(self):
+        from custom_components.kaleidescape_companion.button import (
+            async_setup_entry as setup_buttons,
+        )
+
+        await async_unload_entry(self.hass, self.entry)
+        object.__setattr__(
+            self.entry,
+            "data",
+            {"library_enabled": True, "metadata_store_enabled": True},
+        )
+        observed = {}
+
+        async def forward(entry, _platforms):
+            def add_entities(entities):
+                observed.update(
+                    {
+                        entity.entity_description.key: entity.available
+                        for entity in entities
+                    }
+                )
+
+            await setup_buttons(self.hass, entry, add_entities)
+
+        self.hass.config_entries.async_forward_entry_setups.side_effect = forward
+        with patch(
+            "custom_components.kaleidescape_companion.library.sync.LibrarySync.async_start",
+            new_callable=AsyncMock,
+        ):
+            await async_setup_entry(self.hass, self.entry)
+        self.addAsyncCleanup(self.entry.runtime_data.repository.async_close)
+        self.assertTrue(observed["library_sync"])
+        self.assertTrue(observed["refresh_metadata"])
+        self.assertFalse(observed["calendar_full_sync"])
+        await async_unload_entry(self.hass, self.entry)
+
     async def test_failed_setup_releases_worker_and_exposes_clear_error(self):
         await async_unload_entry(self.hass, self.entry)
         for error, expected in (

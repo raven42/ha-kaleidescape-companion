@@ -22,9 +22,20 @@ EXAMPLE_CONFIG = ROOT / ".vscode" / "ha-deploy.example.json"
 MAX_PACKAGE_BYTES = 32 * 1024 * 1024
 REQUIRED = {
     "core/settings_transfer.py",
+    "core/sync_actions.py",
     "ui/settings_transfer.py",
     "__init__.py",
     "config_flow.py",
+    "button.py",
+    "switch.py",
+    "services.py",
+    "services.yaml",
+    "library/purchase_email.py",
+    "ui/automation_templates.py",
+    "templates/purchase_email_parser.yaml",
+    "templates/library_schedule.yaml",
+    "templates/metadata_schedule.yaml",
+    "templates/calendar_schedule.yaml",
     "const.py",
     "manifest.json",
     "strings.json",
@@ -234,7 +245,7 @@ def runtime_package(root: Path = ROOT) -> bytes:
         name = relative.as_posix()
         allowed = (
             path.suffix == ".py"
-            or name in {"manifest.json", "strings.json", "ui/assets/panel.js"}
+            or name in REQUIRED
             or (relative.parent.as_posix() == "translations" and path.suffix == ".json")
             or name in {"brand/icon.png", "brand/icon@2x.png"}
         )

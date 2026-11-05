@@ -106,6 +106,67 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
         page = await self.repo.async_library_versions(self.source, self.id)
         self.assertIn("Expanded Actor", page["items"][0]["actors"])
 
+    async def test_store_refresh_fills_retail_only_for_selected_version(self):
+        await self.seed()
+        data = {**self.data, "provider": "kaleidescape", "retail_price": "$19.99"}
+        await self.repo.async_enrichment(
+            "save", self.source, self.id, "kaleidescape", data
+        )
+        rows = (await self.repo.async_inspect("library"))["items"]
+        selected = next(row for row in rows if row["id"] == self.id)
+        self.assertEqual(selected["retail_price"], "$19.99")
+        self.assertIsNone(selected["purchase_price"])
+        self.assertEqual(selected["purchase_history"], "[]")
+        other = next(row for row in rows if row["source_handle"] == "other")
+        self.assertIsNone(other["retail_price"])
+        await self.repo.async_enrichment(
+            "save",
+            self.source,
+            self.id,
+            "kaleidescape",
+            {**data, "retail_price": "$29.99"},
+        )
+        rows = (await self.repo.async_inspect("library"))["items"]
+        self.assertEqual(
+            next(row for row in rows if row["id"] == self.id)["retail_price"], "$19.99"
+        )
+
+    async def test_store_refresh_fills_invoice_retail_without_touching_paid_price(self):
+        await self.seed()
+        result = await self.repo.async_purchase_email(
+            {
+                "source": "kaleidescape",
+                "order_id": "ORDER",
+                "purchased_on": "2020-01-02",
+                "purchases": [
+                    {
+                        "title": "Fictional Film",
+                        "href": "/movie-store/movie/fictional-film-2025",
+                        "purchase_price": "$9.99",
+                    }
+                ],
+            }
+        )
+        self.assertEqual(result["status"], "imported")
+        rows = (await self.repo.async_inspect("library"))["items"]
+        target = next(row["id"] for row in rows if row["purchase_price"] == "$9.99")
+        data = {**self.data, "provider": "kaleidescape", "retail_price": "$19.99"}
+        await self.repo.async_enrichment(
+            "save", self.source, target, "kaleidescape", data
+        )
+        row = next(
+            row
+            for row in (await self.repo.async_inspect("library"))["items"]
+            if row["id"] == target
+        )
+        self.assertEqual(
+            (row["purchase_price"], row["retail_price"]), ("$9.99", "$19.99")
+        )
+        invoice = json.loads(row["purchase_history"])[0]
+        self.assertEqual(
+            (invoice["purchase_price"], invoice["retail_price"]), ("$9.99", "$19.99")
+        )
+
     async def test_new_format_inherits_cached_group_metadata_without_rescraping(self):
         await self.seed()
         await self.repo.async_enrichment(
@@ -370,6 +431,75 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
         response.content.iter_chunked = invalid
         with self.assertRaisesRegex(ProviderError, "content_type"):
             await sync._get(url, {})
+
+    async def test_scheduled_refresh_respects_provider_and_missing_data(self):
+        await self.seed()
+        row = {
+            "id": "fictional-id",
+            "source_group": "movie",
+            "title": "Fictional Film",
+            "year": 2025,
+            "href": "/movie-store/movie/fictional-film-2025",
+            "enrichment": {},
+            "cached_providers": ["tmdb"],
+        }
+        sync = self.sync(metadata_store_enabled=True)
+        sync.repository = SimpleNamespace(
+            async_enrichment=AsyncMock(side_effect=[[row], None])
+        )
+        sync.providers.metadata = AsyncMock(return_value=self.data)
+        with patch(
+            "custom_components.kaleidescape_companion.enrichment.sync.async_create_clientsession",
+            return_value=SimpleNamespace(detach=Mock()),
+        ):
+            await sync._run(True, ("tmdb",), True)
+        sync.providers.metadata.assert_not_awaited()
+        self.assertEqual(sync.skipped, 1)
+        sync.repository = SimpleNamespace(
+            async_enrichment=AsyncMock(side_effect=[[row], None, None])
+        )
+        with patch(
+            "custom_components.kaleidescape_companion.enrichment.sync.async_create_clientsession",
+            return_value=SimpleNamespace(detach=Mock()),
+        ):
+            await sync._run(True, ("kaleidescape",), True)
+        self.assertEqual(sync.providers.metadata.await_args.args[0], "kaleidescape")
+        sync.providers.metadata.reset_mock()
+        sync.repository = SimpleNamespace(
+            async_enrichment=AsyncMock(side_effect=[[row], None, None])
+        )
+        with patch(
+            "custom_components.kaleidescape_companion.enrichment.sync.async_create_clientsession",
+            return_value=SimpleNamespace(detach=Mock()),
+        ):
+            await sync._run(True, ("tmdb",), False)
+        self.assertEqual(sync.providers.metadata.await_args.args[0], "tmdb")
+
+    async def test_missing_backdrop_refreshes_even_with_cached_metadata(self):
+        await self.seed()
+        sync = self.sync(library_sync_artwork=True)
+        row = {
+            "id": "fictional-id",
+            "source_group": "movie",
+            "title": "Fictional Film",
+            "year": 2025,
+            "href": None,
+            "enrichment": {},
+            "cached_providers": ["tmdb"],
+        }
+        sync.repository = SimpleNamespace(
+            async_enrichment=AsyncMock(side_effect=[[row], None, None, None])
+        )
+        sync.providers.metadata = AsyncMock(return_value=self.data)
+        sync.providers.images = AsyncMock(return_value=[{"kind": "backdrop"}])
+        sync.providers.image = AsyncMock(return_value=IMAGE)
+        with patch(
+            "custom_components.kaleidescape_companion.enrichment.sync.async_create_clientsession",
+            return_value=SimpleNamespace(detach=Mock()),
+        ):
+            await sync._run(True, ("tmdb",), True)
+        sync.providers.metadata.assert_awaited_once()
+        sync.providers.image.assert_awaited_once()
 
     async def test_sync_fetches_backdrops_only_when_artwork_enabled(self):
         await self.seed()

@@ -7,6 +7,7 @@ from contextlib import closing
 from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
+from uuid import uuid4
 
 import test_backend as backend
 import test_library as library
@@ -41,6 +42,64 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
 
     async def summary(self):
         return await self.repository.async_library_summary(library.SOURCE)
+
+    async def test_purchase_information_filter_counts_groups_and_unavailable_override(
+        self,
+    ):
+        await self.scan(collections={})
+        self.assertEqual((await self.summary())["missing_purchase_information"], 2)
+        id = title_id(library.SOURCE, "fixture-a")
+        review = await self.repository.async_library_edit(library.SOURCE, id)
+        await self.repository.async_library_edit(
+            library.SOURCE,
+            id,
+            "admin",
+            str(uuid4()),
+            review["snapshot"],
+            {
+                "purchased_on": "2020-01-02",
+                "purchase_price": "$10.00",
+                "retail_price": "$20.00",
+            },
+        )
+        result = await self.summary()
+        self.assertEqual(result["missing_purchase_information"], 1)
+        page = await self.repository.async_library_list(
+            library.SOURCE, {"grouped": True, "missing_purchase_information": True}
+        )
+        self.assertEqual(
+            [item["title"] for item in page["items"]], [library.ROWS[1]["title"]]
+        )
+        other = title_id(library.SOURCE, "fixture-b")
+        review = await self.repository.async_library_edit(library.SOURCE, other)
+        await self.repository.async_library_edit(
+            library.SOURCE,
+            other,
+            "admin",
+            str(uuid4()),
+            review["snapshot"],
+            {"purchase_information_unavailable": True},
+        )
+        self.assertEqual((await self.summary())["missing_purchase_information"], 0)
+        self.assertEqual(
+            (
+                await self.repository.async_library_list(
+                    library.SOURCE,
+                    {"grouped": True, "missing_purchase_information": True},
+                )
+            )["total"],
+            0,
+        )
+        review = await self.repository.async_library_edit(library.SOURCE, other)
+        await self.repository.async_library_edit(
+            library.SOURCE,
+            other,
+            "admin",
+            str(uuid4()),
+            review["snapshot"],
+            {"purchase_information_unavailable": False},
+        )
+        self.assertEqual((await self.summary())["missing_purchase_information"], 1)
 
     async def test_scrape_activity_is_durable_and_source_scoped(self):
         await self.scan(collections={})
@@ -376,6 +435,11 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
             db.execute("DROP INDEX viewings_library_title")
             db.execute("ALTER TABLE viewings DROP COLUMN library_title_id")
             db.execute("ALTER TABLE viewings DROP COLUMN library_metadata")
+            db.execute("DROP TABLE purchase_records")
+            db.execute(
+                "ALTER TABLE library ADD COLUMN purchase_history "
+                "TEXT NOT NULL DEFAULT '[]'"
+            )
             db.execute("ALTER TABLE library RENAME TO library_titles")
             for column in (
                 "sort_title",
@@ -386,6 +450,7 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
                 "order_id",
                 "href",
                 "purchase_match_pending",
+                "purchase_information_unavailable",
             ):
                 db.execute(f"ALTER TABLE library_titles DROP COLUMN {column}")
             db.execute("DROP TABLE playback_controls")
@@ -479,6 +544,13 @@ class LibrarySensorTest(unittest.IsolatedAsyncioTestCase):
         await watched.coordinator.async_refresh()
         self.assertEqual(watched.native_value, 1)
         self.assertEqual(sensors["recently_added"].native_value, 0)
+        self.assertEqual(sensors["missing_purchase_information"].native_value, 2)
+        self.assertEqual(
+            len(
+                sensors["missing_purchase_information"].extra_state_attributes["movies"]
+            ),
+            2,
+        )
         self.assertEqual(sensors["missing_artwork"].native_value, 2)
         self.assertEqual(sensors["scraper_conflicts"].native_value, 0)
         self.assertEqual(

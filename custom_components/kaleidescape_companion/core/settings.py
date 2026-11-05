@@ -87,6 +87,8 @@ def form(hass: HomeAssistant, config: dict) -> p.Schema:
         )
     )
     for key, default in LIBRARY_DEFAULTS.items():
+        if key == "library_interval_hours":
+            continue  # Legacy option; schedules are now owned by HA automations.
         marker = (p.Optional if isinstance(default, str) else p.Required)(
             key, default=config.get(key, default)
         )
@@ -97,8 +99,8 @@ def form(hass: HomeAssistant, config: dict) -> p.Schema:
         else:
             properties[marker] = selector.NumberSelector(
                 selector.NumberSelectorConfig(
-                    min=1 if key == "library_interval_hours" else 32,
-                    max=168 if key == "library_interval_hours" else 4096,
+                    min=32,
+                    max=4096,
                     step=1,
                     mode=selector.NumberSelectorMode.BOX,
                 )
@@ -157,12 +159,6 @@ def form(hass: HomeAssistant, config: dict) -> p.Schema:
             min=1, max=12, step=1, mode=selector.NumberSelectorMode.BOX
         )
     )
-    properties[
-        p.Required(
-            "calendar_full_sync_time",
-            default=config.get("calendar_full_sync_time", "03:00"),
-        )
-    ] = selector.TextSelector()
     choices = {"": "No default player selected"}
     for entry in hass.config_entries.async_entries(DOMAIN):
         controls = getattr(getattr(entry, "runtime_data", None), "controls", None)

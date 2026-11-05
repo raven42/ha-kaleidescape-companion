@@ -67,6 +67,52 @@ beforeEach(async () => {
 });
 afterEach(() => element.remove());
 
+it("opens the purchase reconciliation dialog from the database", async () => {
+  modalClose(root()).click();
+  await flush();
+  button("Reconcile purchases").click();
+  await flush();
+  expect(root().querySelector("dialog")!.open).toBe(true);
+  expect(root().querySelector("h2")!.textContent).toContain(
+    "Reconcile purchases",
+  );
+  expect(text()).toContain("There are no unmatched purchases");
+  expect(root().querySelector('input[type="file"]')).toBeNull();
+});
+
+it("loads unmatched purchases from the database for review", async () => {
+  modalClose(root()).click();
+  await flush();
+  const plan = review(1);
+  plan.rows[0] = {
+    ...plan.rows[0],
+    key: "purchases:fixture",
+    title: "Unmatched fictional purchase",
+    needs_match: true,
+    can_match: true,
+  };
+  const load = vi
+    .spyOn(element.client!, "reconcilePurchases")
+    .mockResolvedValue(plan);
+  button("Reconcile purchases").click();
+  await vi.waitFor(() =>
+    expect(text()).toContain("Unmatched fictional purchase"),
+  );
+  expect(load).toHaveBeenCalledWith(element.scope);
+  expect(text()).toContain("Match title");
+});
+
+it("allows purchase-only reconciliation while automatic tracking is enabled", async () => {
+  modalClose(root()).click();
+  element.scope = { ...info, tracking_enabled: true };
+  await flush();
+  button("Reconcile purchases").click();
+  await flush();
+  expect(text()).not.toContain("Disable automatic tracking");
+  expect(text()).toContain("There are no unmatched purchases");
+  expect(root().querySelector('input[type="file"]')).toBeNull();
+});
+
 it("puts unresolved purchases first and uses the revised token after choosing a known movie", async () => {
   const value = review();
   value.rows[1] = {

@@ -40,6 +40,7 @@ LIBRARY_DEFAULTS = {
     "format": [],
     "status": [],
     "missing_metadata_artwork": False,
+    "missing_purchase_information": False,
 }
 SORTS = {"name", "year", "collection", "length", "watched", "added", "random"}
 
@@ -97,6 +98,7 @@ def validate_library(patch, previous=None):
             "show_rating",
             "show_library_cost",
             "missing_metadata_artwork",
+            "missing_purchase_information",
         )
     ):
         raise invalid("Invalid display toggle")

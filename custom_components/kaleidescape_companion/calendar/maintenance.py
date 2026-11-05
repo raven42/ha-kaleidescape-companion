@@ -7,14 +7,12 @@ from datetime import UTC, datetime, timedelta
 
 from homeassistant.components.calendar import CalendarEntityFeature
 from homeassistant.core import callback
-from homeassistant.helpers.event import async_track_time_change
 
 from ..core.logging import safe_exception
 from ..core.models import JournalError
 from ..core.security import async_finish_cleanup
 from . import entity
 from .config import DEFAULTS, fingerprint
-from .maintenance_store import GRACE_SECONDS
 from .publisher import event_data
 
 _LOGGER = logging.getLogger(__name__)
@@ -45,15 +43,11 @@ class CalendarMaintenance:
 
     def __init__(self, publisher):
         self.publisher = publisher
-        self.requested = True
-        self.last_signature = None
+        self.requested = False
         self.last_success = None
-        self.retry_after = None
-        self.candidate_due = None
         self.active = False
         self.error = ""
         self.counts = {}
-        self.cancel_schedule = None
         self.clock = lambda: datetime.now(UTC)
         self.snapshot = None
         self.bounds = None
@@ -68,26 +62,9 @@ class CalendarMaintenance:
             and config.get("calendar_full_sync_dedicated")
         )
 
-    def start(self):
-        if self.enabled:
-            hour, minute = map(
-                int,
-                self.publisher.config.get("calendar_full_sync_time", "03:00").split(
-                    ":"
-                ),
-            )
-            self.cancel_schedule = async_track_time_change(
-                self.publisher.hass, self.request, hour=hour, minute=minute, second=0
-            )
-
-    def stop(self):
-        if self.cancel_schedule:
-            self.cancel_schedule()
-
     @callback
     def request(self, _now=None):
         self.requested = True
-        self.retry_after = None
 
     def check(self):
         p = self.publisher
@@ -124,25 +101,14 @@ class CalendarMaintenance:
         }
 
     async def tick(self):
-        if not self.enabled:
+        if not self.enabled or not self.requested:
             return
         now = self.clock()
-        if self.retry_after and now < self.retry_after:
-            return
         p = self.publisher
         self.active = True
         try:
             self.check()
             self.bounds = window(now, p.config.get("calendar_full_sync_months", 3))
-            signature = await p.repository.async_calendar_maintenance(
-                "signature", self.bounds
-            )
-            if (
-                not self.requested
-                and signature == self.last_signature
-                and (not self.candidate_due or now < self.candidate_due)
-            ):
-                return
             self.requested = False
             self.failure_stage = "read"
             async with asyncio.timeout(300):
@@ -156,15 +122,13 @@ class CalendarMaintenance:
             reason = error.reason if isinstance(error, SyncStopped) else None
             next_error = reason if reason else type(error).__name__
             if reason in {"paused", "snapshot_changed"}:
-                _LOGGER.debug("Calendar maintenance deferred; retry is scheduled")
+                _LOGGER.debug("Calendar maintenance deferred; request another check")
             elif self.error != next_error:
                 _LOGGER.error(
-                    "Calendar maintenance failed; retry is scheduled: %s",
+                    "Calendar maintenance failed; request another check: %s",
                     safe_exception(error),
                 )
             self.error = next_error
-            self.retry_after = now + timedelta(minutes=5)
-            self.requested = True
         finally:
             self.active = False
             self.snapshot = self.bounds = None
@@ -280,12 +244,6 @@ class CalendarMaintenance:
         for extra in extras:
             if extra["uid"] in eligible:
                 await self.mutate("delete", None, extra, None)
-        self.last_signature = self.snapshot["signature"]
-        state = await repo.async_calendar_maintenance("status")
-        # Recheck quarantined events before the next daily sweep.
-        self.candidate_due = (
-            now + timedelta(seconds=GRACE_SECONDS) if state["quarantined"] else None
-        )
 
     async def mutate(self, kind, viewing, previous, data):
         p, repo = self.publisher, self.publisher.repository

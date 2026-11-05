@@ -1,0 +1,42 @@
+import_purchase_email:
+  name: Import purchase email
+  description: Import a parsed Kaleidescape purchase email into the library.
+  fields:
+    invoice:
+      name: Purchase email
+      description: Parsed email object or JSON string containing the purchases array.
+      required: true
+      selector:
+        object:
+refresh_metadata:
+  name: Refresh metadata
+  description: Refresh selected enabled scrapers for all movies or only missing data.
+  fields:
+    providers:
+      name: Scrapers
+      description: >-
+        Provide a list such as ["tmdb", "kaleidescape"]. Omit or use [] to
+        refresh all enabled scrapers; a comma-separated string is not accepted.
+      selector:
+        select:
+          multiple: true
+          custom_value: true
+          options:
+            - label: Kaleidescape store
+              value: kaleidescape
+            - label: TMDB
+              value: tmdb
+    only_missing:
+      name: Only missing metadata
+      description: Skip scrapers that already have data for a movie.
+      default: false
+      selector:
+        boolean:
+library_sync:
+  name: Sync library
+  description: Request a library sync when library sync is enabled.
+calendar_full_sync:
+  name: Run calendar full sync
+  description: >-
+    Request one guarded Full Sync pass on the configured dedicated calendar.
+    Unmatched events can be deleted after repeated checks and a grace period.

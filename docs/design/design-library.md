@@ -29,9 +29,8 @@ It is a firmware-dependent HTML interface, not a promised public JSON API.
 
 | Setting                 | Default | Behavior                                                                                                           |
 | ----------------------- | ------- | ------------------------------------------------------------------------------------------------------------------ |
-| Enable library sync     | Off     | Starts a read-only sync after setup, then schedules further syncs                                                  |
+| Enable library sync     | Off     | Starts a read-only sync after setup; recurring sync requires an HA automation                                      |
 | Library hostname        | Blank   | Attempts `http://my-kaleidescape.local`; an explicit value overrides discovery                                     |
-| Sync interval           | 6 hours | Whole hours, 1–168; measured after the preceding scan finishes                                                     |
 | Allow Add to Collection | Off     | Administrators may explicitly add one selected version to an existing offered target; requires collection sync     |
 | Sync collections        | On      | Cache available collections and exact title memberships                                                            |
 | Sync title details      | On      | Fetch available cast/director/writer/studio, genres, synopsis, and runtime                                         |
@@ -57,11 +56,12 @@ Requests are sequential; details refresh when basic metadata changes or after
 seven days. Missing covers are retried during subsequent scans. A scan has a
 30-minute budget, up to 10,000 source handles, 200 collections, and 100,000
 combined memberships, a 15-second request timeout, and an 8 MiB HTML response
-limit. Transient transfer/backup barriers retry after at most a minute; other
-failures wait for the configured interval or an explicit Sync now. A failed page
-or collection generation retains previous data. A complete validated main
-listing may mark missing versions unavailable; it does not delete identities or
-journal records.
+limit. Failed scans wait for an explicit Sync now, the HA button, or a
+user-created automation; there is no built-in recurring schedule. The
+`kaleidescape_companion.library_sync` action and Library sync button invoke the
+same operation. A failed page or collection generation retains previous data. A
+complete validated main listing may mark missing versions unavailable; it does
+not delete identities or journal records.
 
 Hidden collection names are matched without case sensitivity (up to 200 names,
 256 characters each). They affect shared Library labels, collection filters,
@@ -111,21 +111,24 @@ text. Input debounces for 300 ms; Search/Enter applies immediately. Literal mode
 uses Unicode case folding; the global personal fuzzy-search option additionally
 tolerates bounded word/typo differences, including credits from another
 available version in the same exact source group. Open **Filters** to select
-collection, actor, director, rating, genre, year, viewing-format and
-watched-status checkboxes. Multiple checked values match **any** value within
-that category; different categories must **all** match on the **same version**.
-A matching group still opens all its versions, including those that did not
-match. An unchecked category is unrestricted. Filter-option search narrows
-available filter values, not the titles. Primary filters appear as Watched
-status, Collection, Rating; actor/director fields below use typed suggestions
-(up to 20 from the full cached source) and removable selected-name chips. Rating
-choices reuse the same badges as title details. **Apply filters** applies the
-draft and returns to page one; Closing with X discards it. The toolbar **Clear
-Filter** clears search and all checkbox filters, including unsubmitted search
-text, and returns to page one. It preserves view, sort and page size. Each
-category offers up to 500 known names (collections up to 200), with at most 100
-selections per category. Writers, producers and studios are searchable when
-available, without separate facet controls.
+collection, rating, genre, year, viewing-format and watched-status checkboxes.
+Multiple checked values match **any** value within that category; different
+categories must **all** match on the **same version**. A matching group still
+opens all its versions, including those that did not match. An unchecked
+category is unrestricted. Filter-option search narrows available filter values,
+not the titles. Rating choices are ordered from general audiences to more
+restrictive ratings and reuse the badges from title details. Viewing formats use
+individual format badges, including HDR10 separately from resolution. SD
+resolution and SDR dynamic range remain separate; SDR has a distinct badge.
+Existing selected people can be removed using their chips; search handles actor
+and director lookup. Sci-Fi and Science Fiction share the Science Fiction genre
+label. **Apply filters** applies the draft and returns to page one; Closing with
+X discards it. The toolbar **Clear Filter** clears search and all checkbox
+filters, including unsubmitted search text, and returns to page one. It
+preserves view, sort and page size. Each category offers up to 500 known names
+(collections up to 200), with at most 100 selections per category. Writers,
+producers and studios are searchable when available, without separate facet
+controls.
 
 Search and display projections run on the same worker for both household roles.
 One search evaluates each distinct credited name once, then resolves matches to
@@ -204,12 +207,12 @@ eviction revokes URLs, preferring offscreen images; leaving Library or an
 account/access/scope change clears all retained covers. See
 [cover retention and layout options](design-user-interface.md#personal-and-shared-preferences).
 Regular users poll cached counts/revisions/timestamps every 30 seconds, without
-administrator sync progress, settings, errors, or storage details. Background
-scheduled sync continues independently when enabled. Separately enabled
-household [Library playback](design-playback-controls.md) can launch an exact
-cached version through the protocol extension, with edition limitations. The
-separately opted-in [Add to Collection](design-library.md#add-to-collection)
-action is the only supported vendor edit.
+administrator sync progress, settings, errors, or storage details. User-created
+HA automations can schedule sync independently. Separately enabled household
+[Library playback](design-playback-controls.md) can launch an exact cached
+version through the protocol extension, with edition limitations. The separately
+opted-in [Add to Collection](design-library.md#add-to-collection) action is the
+only supported vendor edit.
 
 The search toolbar sticks to the top of the scrolling Library. On phones it
 becomes square Search, Filters, Clear, Sort/Randomize and Options shortcuts,

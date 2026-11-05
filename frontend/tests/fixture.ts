@@ -220,8 +220,10 @@ export class FixtureTransport implements Transport {
     format: [],
     status: [],
     missing_metadata_artwork: false,
+    missing_purchase_information: false,
   };
   missingMetadataArtwork = new Set<string>();
+  missingPurchaseInformation = new Set<string>();
   sharedPreferences: Record<string, unknown> = { hidden_collections: [] };
   searchPreferences: Record<string, unknown> = { fuzzy_search: true };
   interfacePreferences: Record<string, unknown> = { advanced_view: true };
@@ -259,7 +261,21 @@ export class FixtureTransport implements Transport {
     if (this.failure) throw new ApiError(this.failure);
     const operation = message.type.split("/").slice(1).join("/");
     let result: unknown;
-    if (operation.startsWith("ui/")) {
+    if (operation === "purchases/reconcile") {
+      result = { empty: true };
+    } else if (operation === "automations/status") {
+      result = Object.fromEntries(
+        [
+          "purchase_email",
+          "library_schedule",
+          "metadata_schedule",
+          "calendar_schedule",
+        ].map((kind) => [
+          kind,
+          { status: "current", label: kind, revision: "fixture" },
+        ]),
+      );
+    } else if (operation.startsWith("ui/")) {
       const shared = operation.startsWith("ui/shared/");
       const values = shared
         ? this.sharedPreferences
@@ -541,6 +557,8 @@ export class FixtureTransport implements Transport {
           (!filters.scraper_conflict || !!row.scraper_conflict) &&
           (!filters.missing_metadata_artwork ||
             this.missingMetadataArtwork.has(row.id)) &&
+          (!filters.missing_purchase_information ||
+            this.missingPurchaseInformation.has(row.id)) &&
           (!filters.query ||
             [row.title, ...row.actors, ...row.directors].some((value) =>
               matches(value, String(filters.query), !!filters.fuzzy),

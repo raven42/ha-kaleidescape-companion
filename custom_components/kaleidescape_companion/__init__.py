@@ -6,6 +6,7 @@ from pathlib import Path
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
+from homeassistant.setup import async_when_setup
 
 from .calendar.publisher import CalendarPublisher
 from .const import DOMAIN, NAME
@@ -21,11 +22,19 @@ from .library.store import source_id
 from .library.sync import LibrarySync
 from .playback.controls import PlaybackControls
 from .playback.observer import PlaybackObserver
+from .services import (
+    CALENDAR_SERVICE,
+    LIBRARY_SERVICE,
+    METADATA_SERVICE,
+    SERVICE,
+    async_register_services,
+)
+from .ui.automation_templates import async_install_missing
 from .ui.http import JournalExportView, JournalImportView, LibraryArtworkView
 from .ui.panel import async_remove_panel, async_setup_panel
 from .ui.websocket import async_register_commands
 
-PLATFORMS = [Platform.SENSOR]
+PLATFORMS = [Platform.SENSOR, Platform.BUTTON, Platform.SWITCH]
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -123,17 +132,17 @@ async def async_setup_entry(
             runtime.observer = PlaybackObserver(hass, repository, config)
             await runtime.observer.async_start()
         panel_registered = await async_setup_panel(hass)
-        platforms_started = True
-        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
         if config.get("library_enabled", False):
             if config.get("metadata_store_enabled") or config.get(
                 "metadata_tmdb_enabled"
             ):
                 runtime.enrichment = MetadataSync(hass, repository, entry)
             runtime.library = LibrarySync(hass, repository, config)
-            if runtime.enrichment:
-                runtime.library.after_sync = runtime.enrichment.request_sync
             await runtime.library.async_start()
+        # HA publishes entity availability as platforms start. Initialize the
+        # optional workers first so the initial button states are accurate.
+        platforms_started = True
+        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
         async def async_stop(_event) -> None:
             await _async_close_runtime(runtime)
@@ -161,6 +170,17 @@ async def async_setup_entry(
                 raise RuntimeError("Companion initialization failed") from None
             raise ConfigEntryError("Companion initialization failed") from None
         raise
+    async_register_services(hass)
+
+    async def setup_blueprints(_hass, _component):
+        if runtime.ready and getattr(entry, "runtime_data", None) is runtime:
+            await async_install_missing(hass)
+
+    if hass.data.get("blueprint", {}).get("automation") is not None:
+        await setup_blueprints(hass, "automation")
+    else:
+        # HA may load automation after this integration, or not load it at all.
+        async_when_setup(hass, "automation", setup_blueprints)
     _LOGGER.info("Kaleidescape Companion is ready")
     return True
 
@@ -180,6 +200,10 @@ async def async_unload_entry(
             reason = "tracking_disabled"
         elif config.get("player_id") != runtime.observer.config["player_id"]:
             reason = "player_changed"
+    hass.services.async_remove(DOMAIN, SERVICE)
+    hass.services.async_remove(DOMAIN, METADATA_SERVICE)
+    hass.services.async_remove(DOMAIN, LIBRARY_SERVICE)
+    hass.services.async_remove(DOMAIN, CALENDAR_SERVICE)
     await _async_close_runtime(runtime, reason)
     if not runtime.preserve_panel_on_reload or entry.disabled_by is not None:
         async_remove_panel(hass)

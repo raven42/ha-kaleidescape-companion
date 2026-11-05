@@ -261,9 +261,32 @@ export const libraryStyles = css`
     color: #fff;
     border-color: #236d9e;
   }
+  .format-sdr {
+    background: #176d68;
+    color: #fff;
+    border-color: #176d68;
+  }
   .format-vision,
   .format-atmos {
     font-weight: 500;
+    gap: 3px;
+  }
+  .dolby-symbol {
+    width: 16px;
+    height: 11px;
+    flex: none;
+  }
+  .format-hdr10 {
+    gap: 3px;
+    background: #f1f3f7;
+    color: #181d27;
+    border-color: #aeb9c8;
+    letter-spacing: 0.02em;
+  }
+  .hdr-symbol {
+    width: 19px;
+    height: 12px;
+    flex: none;
   }
   .cover-formats .format-badge {
     font-size: 9px;

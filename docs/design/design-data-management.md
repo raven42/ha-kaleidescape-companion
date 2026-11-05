@@ -54,12 +54,12 @@ silently selecting a different row.
 | `settings`                                                                     | Validate/edit recognized personal/shared UI preference JSON or delete an allowed row to restore defaults                                                                             |
 | Audit, request, dataset metadata, calendar and collection-write receipt tables | Inspect/search/sort only; identity, attribution and replay barriers remain protected                                                                                                 |
 
-Library `purchase_history` keeps all orders on the owning version. Flat order,
-link and price fields summarize its earliest invoice. Price edits update both
-representations. Order/link/identity/raw history are protected; purchase dates
-remain editable. Deleting a version/source removes its purchases with it, so
-export before deletion if that history must be retained. Prices, orders, links
-and history never enter standard-user responses.
+The private purchase table keeps each invoice once and links it to its Library
+version when matched. Library price and history views are derived from it; price
+edits update the invoice. A manually entered price without an invoice remains on
+the Library version. Deleting a Library version or source leaves its purchase
+records unlinked for reconciliation. Prices, orders, links and history never
+enter standard-user responses.
 
 Source-owned values may be replaced or recreated by later synchronization.
 Deleting cached collection membership does not remove it on the device.
@@ -84,8 +84,11 @@ returns a conflict before applying changes; refresh and review again. Open
 playback sessions and their viewings cannot be edited/deleted. Backup and
 import/export barriers also apply. Library edits retain reserved journal space.
 This prevents overwriting an unreviewed change; it does not stop future source
-sync from restoring authoritative metadata. Bulk imports and the legacy purge
-API still require recording disabled.
+sync from restoring authoritative metadata. General bulk imports and the legacy
+purge API still require recording disabled. Purchase-only reconciliation can run
+while recording is enabled; the server rejects files containing Library or
+viewing records in that mode. A recording change can invalidate a review, which
+must then be reopened.
 
 Every new database operation records a schema-12 `database_audit` row with
 actor, request UUID, operation/table, changed field names, count, revision and
@@ -261,27 +264,117 @@ never modified. Use the
 [offline preparation workflow](#purchase-history-preparation) when starting from
 saved purchase HTML.
 
+### Import a purchase email from an automation
+
+To set up the optional IMAP receipt automation, open **Companion Settings → Home
+Assistant → Optional automations**, choose **Purchase receipt email**, then open
+**Home Assistant Blueprints**, select the installed blueprint, choose an IMAP
+integration, and save an automation. The optional sender text filter helps
+narrow matching mail; it does not authenticate the sender. An invalid receipt or
+an unresolved import produces a generic notification. Open **Database →
+Reconcile purchases** to link saved purchases to scanned Library entries. The
+parser expects a text receipt with an `Item Quality Price` section and
+reconciled dollar amounts; other layouts must be reviewed or adapted. The IMAP
+integration must be configured separately. Missing blueprints are installed at
+startup when HA automations are available; no automation is enabled for you.
+Each blueprint description has a version number. Settings shows whether each
+file is current, outdated, modified, missing or unavailable. Known outdated
+versions produce a startup warning and a persistent HA notification. Review and
+explicitly update existing files in Settings; HA reloads automations that use
+them and sends an update notification. Customized files are never replaced
+automatically. The Settings About tab compares installed and bundled blueprint
+versions and displays release notes.
+
+The `kaleidescape_companion.import_purchase_email` action accepts the parsed
+email object, or its JSON string, in `invoice`. Configure the integration and
+optionally sync the Library first. For example, if an earlier automation step
+provides a `parsed_purchase_email` variable:
+
+```yaml
+- action: kaleidescape_companion.import_purchase_email
+  data:
+    invoice: "{{ parsed_purchase_email }}"
+  response_variable: purchase_import
+- if: "{{ purchase_import.status == 'needs_review' }}"
+  then:
+    # Open Database → Reconcile purchases for unmatched saved purchases.
+    - stop: "Purchase email needs manual review"
+```
+
+The object has `source: kaleidescape`, the order ID and purchase date, and a
+`purchases` array with title, date, order ID, paid and retail currency strings,
+store link, and optional `included_titles` containing movie titles and links.
+The item date and order may be omitted when supplied at the top level; if both
+are present they must agree. A `prices_reconciled: false` email is rejected.
+Inputs are limited to 1 MiB and 1,000 movies. Totals and taxes from the email
+are not stored separately.
+
+A set is expanded to its included movies. Its paid and retail prices are
+**estimates** split evenly in cents among those movies, with any remaining cents
+assigned in stable identity order. They add up exactly to the set price; the
+individual allocations are not actual itemized charges. Matching uses the same
+Library title/group rules as the manual importer. This automated action accepts
+a unique proposal without human review, so a uniquely named but incorrectly
+identified title can still be matched incorrectly. Check the results and use
+manual import when that risk is unacceptable.
+
+The response status is `imported`, `unchanged`, or `needs_review`, with counts.
+Unambiguous matches and unmatched purchases are saved together; unmatched rows
+remain unlinked until an administrator reviews them. Replaying a receipt does
+not duplicate an invoice. Existing populated values are not replaced. A changed
+value for an existing invoice is reported as a conflict in the action response;
+it is not applied automatically. Existing blueprint installations should be
+updated to version 3 so their notifications describe the database workflow.
+
+HA automations without a user context and active administrators can call this
+action; a user context must belong to an active administrator. The payload and
+response include private orders and prices: protect automation traces and any
+saved review records using HA's normal access and retention settings.
+
+In **Library → movie → Edit details**, administrators can edit the purchase
+date, purchase price, and retail price for the selected version. Enter prices
+with a currency symbol and two decimal places, such as `$9.99`. The **Purchase
+information unavailable** checkbox applies to the whole movie and removes it
+from the missing-purchase-information sensor and filter until unchecked. It does
+not change its stored purchase fields or add a warning badge. Manual prices can
+be saved before an invoice is available; when an email later conflicts with
+them, the automation returns the email for review.
+
+When a Kaleidescape store metadata refresh finds the same valid public base
+price across its purchase packages, it fills a missing retail price on the
+selected Library version. Existing retail prices and all purchase prices remain
+untouched. Differing or unsupported package prices are skipped. A retail price
+can exist before an invoice; later invoice imports preserve it when the invoice
+does not include a retail price. The price is current store metadata, not proof
+of the historical price at purchase.
+
 ### Import purchase-history JSON
 
-Select `purchases.json` using **Database → Merge Import**. The purchase-record
-array from the offline helper is accepted directly. Purchases are merged into
-the existing **Library** table, not a separate purchase table. Every imported
-purchase must belong to an existing scanned Library entry; Library entries
-without purchases remain valid.
+Receipt imports store each invoice once in the private `purchase_records` table,
+with a nullable Library link. Schema 25 moves embedded invoice histories to that
+table and retains an upgrade backup. Library summaries and purchase history
+views are derived from these records. Manually entered prices without an invoice
+remain on the Library entry until an invoice is linked.
+
+Open **Database → Reconcile purchases** to review unlinked database records and
+choose a scanned Library entry. No receipt JSON is required, and automatic
+tracking may remain on. A new Library scan makes entries available for manual
+matching. JSON exports contain linked invoices in the compatible Library export
+and unlinked purchases separately; SQLite backups retain the purchase table.
+General merge imports still require an explicit Library match for each purchase.
+
+The optional offline helper's `purchases.json` can also be reviewed using
+**Database → Merge Import**.
 
 The helper also exports a separate release `year` inferred from `href`, or
 `null` when unknown. The importer derives the same year from the link; the
 additional field does not change invoice identity or the stored invoice fields.
 
-Each Library row has `purchase_history`, containing the title, purchase date,
-paid/retail prices, order ID, store reference and stable invoice identity for
-every purchase. Flat `purchase_price`, `retail_price`, `order_id` and `href`
-columns summarize its earliest invoice. Repeat orders are retained; a
-movie-group purchase belongs to one stable representative version, rather than
-being copied across all formats. Bundle allocations are retained as supplied.
-Invoice import times are retained as private provenance. Compatible flat Library
-exports with purchase columns are also accepted; supplied summary values must
-agree with embedded history when both are present.
+Portable Library JSON presents `purchase_history` and flat summary values for
+compatibility. They are views of the earliest and other linked invoice records,
+not separate editable database copies. Repeat orders are retained; a movie-group
+purchase belongs to one representative version. Compatible flat exports remain
+accepted and supplied summary values must agree with embedded history.
 
 Purchase rows start unchecked. Auto-matching compares the purchase title, cached
 `title_search`/display titles and the title/year inferred from the movie-store
@@ -321,12 +414,9 @@ reimporting fills missing prices while preserving populated conflicts. Changing
 an identity field describes another purchase. Exact entry IDs embedded in new
 exports preserve reviewed store-name aliases when that entry exists locally.
 
-An upgrade from schema 15 preserves previously unlinked purchases as unavailable
-Library entries with `purchase_match_pending=1`. They never appear in the
-scanned Library or sensors. Export JSON, review that export, and use **Match
-title…** on those purchases to move their history onto real scanned entries.
-Empty pending entries are removed after the move. Upgrade backups retain the
-original data.
+An upgrade from schema 15 moves legacy unlinked invoices into the purchase table
+without a Library link. Use the database reconciliation dialog to link them.
+Upgrade backups retain the original data.
 
 Library **Purchased/Added on** uses an explicit version date, otherwise the
 earliest purchase in its movie group. Existing explicit dates keep priority.

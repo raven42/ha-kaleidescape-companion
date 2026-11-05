@@ -31,6 +31,7 @@ const LABELS: Record<string, string> = {
   library_sources: "Library sources",
   library_artwork: "Library artwork",
   settings: "UI settings",
+  purchase_records: "Purchases",
   library_memberships: "Library memberships",
   requests: "Write requests",
   schema_metadata: "Metadata",
@@ -43,7 +44,7 @@ const LABELS: Record<string, string> = {
   calendar_sync_jobs: "Calendar exports",
   calendar_sync_items: "Calendar export items",
 };
-const MAIN = ["viewings", "sessions", "library"];
+const MAIN = ["viewings", "sessions", "library", "purchase_records"];
 type Row = Record<string, unknown>;
 interface ResizeAnchor {
   row: Row;

@@ -73,7 +73,7 @@ def inspect_database(
         else counts[table]
     )
     order = quoted(sort) + " COLLATE NOCASE " + ("DESC" if descending else "ASC")
-    items, byte_size, has_more = [], 0, False
+    items, tokens, byte_size, has_more = [], [], 0, False
     for row in db.execute(
         f"SELECT * FROM {table}{where} ORDER BY {order},{TABLE_KEYS[table]} "
         "LIMIT ? OFFSET ?",
@@ -83,6 +83,17 @@ def inspect_database(
             has_more = True
             break
         item = dict(row)
+        tokens.append(row_token(item))
+        if table == "library":
+            from ..library.purchases import history_for, summary
+
+            history = history_for(db, item["id"])
+            item["purchase_history"] = json.dumps(history)
+            if history:
+                item.update(summary(history))
+                item["purchased_on"] = (
+                    item["purchased_on"] or history[0]["purchased_on"]
+                )
         byte_size += len(json.dumps(item, ensure_ascii=True).encode())
         if byte_size > MAX_PAGE_BYTES:
             raise JournalError(
@@ -112,7 +123,7 @@ def inspect_database(
         ],
         "operators": OPERATORS,
         "deletable": table in DELETABLE,
-        "row_tokens": [row_token(item) for item in items],
+        "row_tokens": tokens,
     }
     if len(json.dumps(page, ensure_ascii=True).encode()) > MAX_PAGE_BYTES:
         raise JournalError(

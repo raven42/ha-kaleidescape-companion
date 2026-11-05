@@ -516,12 +516,13 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
             db.execute("DROP TABLE calendar_managed_events")
             db.execute("DROP TABLE calendar_reconcile_candidates")
             db.execute("DROP TABLE calendar_reconcile_intents")
+            db.execute("DROP TABLE IF EXISTS purchase_records")
             db.execute("PRAGMA user_version=5")
             db.commit()
         self.repository = JournalRepository(self.path)
         self.addAsyncCleanup(self.repository.async_close)
         await self.repository.async_open()
-        self.assertEqual((await self.repository.async_info())["schema_version"], 23)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 25)
         self.assertEqual(
             await self.repository.async_get(created["viewing"]["id"]),
             created["viewing"],
@@ -703,6 +704,15 @@ class LibrarySyncTest(unittest.IsolatedAsyncioTestCase):
         with self.assert_error("library_destination"):
             await sync._get("/settings")
 
+    async def test_completed_scan_does_not_schedule_another_scan(self):
+        sync = await self.connector()
+        sync._sync = AsyncMock()
+        loop = asyncio.get_running_loop()
+        with patch.object(loop, "call_later", wraps=loop.call_later) as schedule:
+            await sync._run()
+        sync._sync.assert_awaited_once()
+        schedule.assert_not_called()
+
     async def test_coalescing_pause_resume_and_unload_cancel_pending_work(self):
         sync = await self.connector()
         sync.hass.async_create_background_task = lambda coroutine, name: (
@@ -722,14 +732,12 @@ class LibrarySyncTest(unittest.IsolatedAsyncioTestCase):
         self.assertIs(sync.task, first)
         await sync.async_pause()
         self.assertTrue(first.cancelled())
-        self.assertIsNone(sync.timer)
         with self.assert_error("not_ready"):
             sync.request_sync()
         await sync.async_resume()
         self.assertIsNotNone(sync.task)
         await sync.async_stop()
         self.assertIsNone(sync.task)
-        self.assertIsNone(sync.timer)
 
 
 class LibraryApiTest(unittest.IsolatedAsyncioTestCase):

@@ -423,7 +423,7 @@ it("renders known format badges and named status flags in both views", async () 
     root.querySelector('.library-summary-line [aria-label="Favorite"]'),
   ).toBeTruthy();
   expect(
-    [...root.querySelectorAll(".format-badge")].map((node) =>
+    [...root.querySelectorAll(".library-table .format-badge")].map((node) =>
       node.getAttribute("aria-label"),
     ),
   ).toEqual([
@@ -434,6 +434,24 @@ it("renders known format badges and named status flags in both views", async () 
     "Dolby Vision",
     "Dolby Atmos",
   ]);
+  expect(
+    root.querySelector(".library-table .format-hdr10 .hdr-symbol"),
+  ).toBeTruthy();
+  expect(
+    root.querySelector(".library-table .format-vision .dolby-symbol"),
+  ).toBeTruthy();
+  expect(
+    root.querySelector(".library-table .format-atmos .dolby-symbol"),
+  ).toBeTruthy();
+  expect(root.querySelector(".library-table .format-sdr")).toBeTruthy();
+  expect(
+    formatBadges(libraryTitle({ formats: ["SD"] })).map((badge) => badge.label),
+  ).toEqual(["SD"]);
+  expect(
+    formatBadges(libraryTitle({ formats: ["4K SDR"] })).map(
+      (badge) => badge.label,
+    ),
+  ).toEqual(["4K", "SDR"]);
   root
     .querySelector<HTMLInputElement>(
       'input[name="library_view"][value="covers"]',
@@ -622,9 +640,8 @@ it("debounces title/actor/director search, reuses detail badges, and saves optio
     "Played",
   );
 });
-it("orders primary filters before people and completes people names from the full cached catalog", async () => {
-  const transport = new FixtureTransport();
-  const root = await mount(transport);
+it("shows primary filters without actor or director lookup", async () => {
+  const root = await mount(new FixtureTransport());
   button(root, "Filters").click();
   await flush();
   const legends = [...root.querySelectorAll("#filter-dialog legend")].map(
@@ -637,57 +654,41 @@ it("orders primary filters before people and completes people names from the ful
     "Genre",
     "Year",
     "Viewing format",
-    "Actor",
-    "Director",
   ]);
-  expect(root.querySelector("#filter-dialog .rating-badge")).toBeTruthy();
-  const actor = root.querySelector<HTMLInputElement>('[name="actor_search"]')!;
-  actor.value = "Fictional";
-  actor.dispatchEvent(new Event("input"));
-  await vi.waitFor(() =>
-    expect(
-      transport.calls.some((call) => call.type.endsWith("/library/suggest")),
-    ).toBe(true),
-  );
-  const suggestion = root.querySelector<HTMLInputElement>(
-    'input[name="actor"]',
-  )!;
-  suggestion.click();
-  await flush();
-  expect(root.querySelector(".person-chip")!.textContent).toContain(
-    "Fictional Actor",
-  );
-  button(root, "Apply filters").click();
-  await flush();
-  expect(transport.uiPreferences.actor).toEqual(["Fictional Actor"]);
+  expect(
+    root.querySelector('[name="actor_search"], [name="director_search"]'),
+  ).toBeNull();
+  expect(root.querySelector("#filter-dialog .format-badge")).toBeTruthy();
 });
 
-it("keeps Unicode casefold matches returned by people completion", async () => {
-  const root = await mount(new FixtureTransport());
-  const suggest = vi
-    .spyOn(element!.client!, "librarySuggestions")
-    .mockResolvedValue({ items: ["Fictional Straße"], has_more: false });
+it("orders ratings by age with general audiences at the top", async () => {
+  const transport = new FixtureTransport();
+  transport.libraryTitles = [
+    "G",
+    "NR-G",
+    "PG",
+    "PG-13",
+    "R",
+    "NR-R",
+    "NC-17",
+  ].map((rating, index) =>
+    libraryTitle({
+      id: `rating-${index}`,
+      rating,
+    }),
+  );
+  const root = await mount(transport);
   button(root, "Filters").click();
   await flush();
-  change(root, "actor_search", "STRASSE");
-  await vi.waitFor(() =>
-    expect(
-      root.querySelector<HTMLInputElement>('input[name="actor"]')?.value,
-    ).toBe("Fictional Straße"),
-  );
-  expect(suggest).toHaveBeenCalledWith(
-    element!.scope,
-    "actor",
-    "STRASSE",
-    true,
-  );
-  suggest.mockResolvedValue({ items: [], has_more: false });
-  change(root, "actor_search", "Other");
-  await flush();
-  expect(root.querySelector('input[name="actor"]')).toBeNull();
+  const values = [
+    ...root.querySelectorAll<HTMLInputElement>(
+      '#filter-dialog input[name="rating"]',
+    ),
+  ].map((input) => input.value);
+  expect(values).toEqual(["G", "NR-G", "PG", "PG-13", "NR-R", "R", "NC-17"]);
 });
 
-it("applies the Library fuzzy toggle to main search, people completion and local facet search", async () => {
+it("applies the Library fuzzy toggle to main search and local facet search", async () => {
   const transport = new FixtureTransport();
   const root = await mount(transport);
   const field = root.querySelector<HTMLInputElement>('[name="library_query"]')!;
@@ -716,16 +717,6 @@ it("applies the Library fuzzy toggle to main search, people completion and local
   await flush();
   button(root, "Filters").click();
   await flush();
-  const actor = root.querySelector<HTMLInputElement>('[name="actor_search"]')!;
-  actor.value = "Actro";
-  actor.dispatchEvent(new Event("input"));
-  await vi.waitFor(() =>
-    expect(
-      transport.calls
-        .filter((call) => call.type.endsWith("library/suggest"))
-        .at(-1),
-    ).toMatchObject({ query: "Actro", fuzzy: false }),
-  );
   modalClose(root).click();
   await flush();
   root
@@ -743,16 +734,4 @@ it("applies the Library fuzzy toggle to main search, people completion and local
       '[name="collection"][value="Science Fiction"]',
     ),
   ).toBeTruthy();
-  const nextActor = root.querySelector<HTMLInputElement>(
-    '[name="actor_search"]',
-  )!;
-  nextActor.value = "Actro";
-  nextActor.dispatchEvent(new Event("input"));
-  await vi.waitFor(() =>
-    expect(
-      transport.calls
-        .filter((call) => call.type.endsWith("library/suggest"))
-        .at(-1),
-    ).toMatchObject({ query: "Actro", fuzzy: true }),
-  );
 });

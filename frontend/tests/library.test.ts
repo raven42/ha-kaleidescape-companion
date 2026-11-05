@@ -85,8 +85,6 @@ it("uses checkbox filters with multiple values, discards cancelled drafts, and r
   await flush();
   check("status", "watched");
   await flush();
-  check("actor", "Fictional Actor");
-  await flush();
   button("Apply filters").click();
   await flush();
   field("library_query", "Midnight");
@@ -99,18 +97,17 @@ it("uses checkbox filters with multiple values, discards cancelled drafts, and r
   ).toMatchObject({
     query: "Midnight",
     status: ["in_progress", "watched"],
-    actor: ["Fictional Actor"],
     offset: 0,
   });
   expect(root().querySelectorAll("tbody tr")).toHaveLength(1);
-  button("Filters (3)").click();
+  button("Filters (2)").click();
   await flush();
   button("Clear filters").click();
   modalClose(root()).click();
-  button("Filters (3)").click();
+  button("Filters (2)").click();
   await flush();
   expect(root().querySelectorAll("#filter-dialog input:checked")).toHaveLength(
-    3,
+    2,
   );
 });
 
@@ -978,6 +975,23 @@ it("overlays scraper conflicts independently of badges and persists the missing-
   button("Clear Filter").click();
   await flush();
   expect(transport.uiPreferences.missing_metadata_artwork).toBe(false);
+});
+
+it("filters missing purchase information without adding a warning", async () => {
+  transport.missingPurchaseInformation.add(transport.libraryTitles[0].id);
+  button("Filters").click();
+  await flush();
+  root()
+    .querySelector<HTMLInputElement>('[name="missing_purchase_information"]')!
+    .click();
+  button("Apply filters").click();
+  await flush();
+  expect(transport.uiPreferences.missing_purchase_information).toBe(true);
+  expect(root().querySelectorAll("tbody tr")).toHaveLength(1);
+  expect(root().querySelector(".scraper-conflict-icon")).toBeNull();
+  button("Clear Filter").click();
+  await flush();
+  expect(transport.uiPreferences.missing_purchase_information).toBe(false);
 });
 
 it("hides conflict overlays and system-button options from standard users", async () => {

@@ -182,6 +182,8 @@ class GroupedLibraryTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(facets["genres"], ["Adventure", "Drama"])
         self.assertIn("HDR10", facets["format"])
         self.assertIn("4K Cinematic", facets["format"])
+        self.assertNotIn("4K HDR10 Dolby Atmos", facets["format"])
+        self.assertNotIn("4K Cinematic Dolby Vision", facets["format"])
         self.assertIn("Unrated", facets["rating"])
         for filters in [
             {"year": ["2025 OR 1=1"]},
@@ -191,6 +193,18 @@ class GroupedLibraryTest(unittest.IsolatedAsyncioTestCase):
         ]:
             with self.assert_error("invalid_request"):
                 await self.page(**filters)
+
+    async def test_science_fiction_variants_share_one_genre_facet(self):
+        rows = [
+            {**ROWS[0], "genres": ["Sci-Fi", "Science Fiction"]},
+            {**ROWS[1], "genres": ["Science Fiction"]},
+        ]
+        await self.repository.async_library_catalog(ORIGIN, rows, {})
+        page = await self.page(genre=["Science Fiction"])
+        self.assertEqual(page["total"], 2)
+        self.assertEqual((await self.page(genre=["Sci-Fi"]))["total"], 2)
+        self.assertIn("Science Fiction", page["facets"]["genres"])
+        self.assertNotIn("Sci-Fi", page["facets"]["genres"])
 
     async def test_expanded_filters_stay_below_legacy_sqlite_parameter_limit(self):
         await self.seed()
@@ -620,6 +634,13 @@ class GroupedLibraryApiTest(unittest.IsolatedAsyncioTestCase):
         message = {**self.scope, "title_id": title_id(SOURCE, "fixture-a")}
         result = await self.call("library/versions", user=reader, **message)
         self.assertEqual(result["result"]["total"], 2)
+        denied = await self.call(
+            "library/list",
+            user=reader,
+            **self.scope,
+            filters={"missing_purchase_information": True},
+        )
+        self.assertEqual(denied["code"], "unauthorized")
         self.assertNotIn("Favorites", str(result))
         reader.is_active = False
         with patch.object(

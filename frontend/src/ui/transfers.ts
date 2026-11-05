@@ -101,6 +101,7 @@ export class KaleidescapeTransfers extends LitElement {
   private error = "";
   private notice = "";
   private dialog: "import" | "export" | null = null;
+  private purchaseReview = false;
   protected willUpdate(changed: PropertyValues) {
     if (!changed.has("client") && !changed.has("scope")) return;
     const key = `${this.scope?.entry_id}:${this.scope?.dataset_id}`;
@@ -131,7 +132,10 @@ export class KaleidescapeTransfers extends LitElement {
     this.error = this.notice = "";
     this.busy();
   }
-  private async openDialog(dialog: "import" | "export") {
+  private async openDialog(
+    dialog: "import" | "export",
+    purchaseReview = false,
+  ) {
     if (this.disabled || this.working || this.pending) return;
     if (
       !this.dispatchEvent(
@@ -145,12 +149,38 @@ export class KaleidescapeTransfers extends LitElement {
     )
       return;
     const generation = this.generation;
+    this.purchaseReview = purchaseReview;
     this.dialog = dialog;
     this.error = this.notice = "";
     this.requestUpdate();
     await this.updateComplete;
     if (generation !== this.generation || !this.isConnected) return;
     this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.showModal();
+    if (purchaseReview && this.client && this.scope) {
+      this.working = true;
+      this.busy();
+      this.requestUpdate();
+      try {
+        const review = await this.client.reconcilePurchases(this.scope);
+        if (generation !== this.generation) return;
+        if ("empty" in review)
+          this.notice = "There are no unmatched purchases.";
+        else {
+          this.review = review;
+          this.selected.clear();
+          this.page = 0;
+          this.query = "";
+        }
+      } catch (error) {
+        if (generation === this.generation) this.fail(error);
+      } finally {
+        if (generation === this.generation) {
+          this.working = false;
+          this.busy();
+          this.requestUpdate();
+        }
+      }
+    }
   }
   private hideDialog() {
     this.matching = undefined;
@@ -160,6 +190,7 @@ export class KaleidescapeTransfers extends LitElement {
   private closeDialog(event?: Event) {
     event?.preventDefault();
     const dialog = this.dialog;
+    const focusTarget = this.purchaseReview ? "purchases" : dialog;
     this.clear();
     this.file = undefined;
     this.review = undefined;
@@ -170,7 +201,7 @@ export class KaleidescapeTransfers extends LitElement {
     if (input) input.value = "";
     this.requestUpdate();
     this.renderRoot
-      .querySelector<HTMLButtonElement>(`[data-transfer="${dialog}"]`)
+      .querySelector<HTMLButtonElement>(`[data-transfer="${focusTarget}"]`)
       ?.focus();
   }
   private busy() {
@@ -246,7 +277,7 @@ export class KaleidescapeTransfers extends LitElement {
       !this.file ||
       this.working ||
       this.disabled ||
-      this.scope.tracking_enabled
+      (this.scope.tracking_enabled && !this.purchaseReview)
     )
       return;
     const generation = this.generation;
@@ -264,6 +295,7 @@ export class KaleidescapeTransfers extends LitElement {
         this.scope,
         this.file,
         controller.signal,
+        this.purchaseReview,
       );
       if (generation !== this.generation) return;
       this.review = review;
@@ -300,7 +332,7 @@ export class KaleidescapeTransfers extends LitElement {
       this.matching ||
       this.working ||
       this.disabled ||
-      this.scope.tracking_enabled
+      (this.scope.tracking_enabled && !this.purchaseReview)
     )
       return;
     this.pending ??= this.client.prepareImport(this.scope, this.review, [
@@ -350,7 +382,7 @@ export class KaleidescapeTransfers extends LitElement {
     }
   }
   private async openMatch(row: ImportReviewRow) {
-    if (this.scope?.tracking_enabled) return;
+    if (this.scope?.tracking_enabled && !this.purchaseReview) return;
     this.matching = row;
     this.requestUpdate();
     await this.updateComplete;
@@ -365,7 +397,7 @@ export class KaleidescapeTransfers extends LitElement {
       !this.scope ||
       !this.review ||
       !this.matching ||
-      this.scope.tracking_enabled ||
+      (this.scope.tracking_enabled && !this.purchaseReview) ||
       this.working ||
       this.pending ||
       this.disabled
@@ -463,8 +495,8 @@ export class KaleidescapeTransfers extends LitElement {
       ${
         review.rows.some((row) => row.key.startsWith("purchases:"))
           ? html`<p class="muted">
-              Purchase records are attached to the matched existing Library
-              entry. New means a new purchase record, not a new movie. Purchase
+              Purchase records can be saved without a Library match and linked
+              later. New means a new purchase record, not a new movie. Purchase
               titles preserve the store's wording; Library titles are kept
               unchanged.
             </p>`
@@ -572,7 +604,7 @@ export class KaleidescapeTransfers extends LitElement {
                   ${
                     row.can_match
                       ? html`<button
-                          ?disabled=${blocked || !!this.matching || !!this.scope?.tracking_enabled}
+                          ?disabled=${blocked || !!this.matching || (!!this.scope?.tracking_enabled && !this.purchaseReview)}
                           @click=${() => this.openMatch(row)}
                         >
                           Match title…
@@ -635,6 +667,15 @@ export class KaleidescapeTransfers extends LitElement {
       </div>`;
   }
   private renderImport(blocked: boolean) {
+    if (this.purchaseReview)
+      return html`
+        <p>
+          Choose a Library match for each purchase, then apply the selected
+          changes.
+        </p>
+        ${this.notice ? html`<p role="status">${this.notice}</p>` : nothing}
+        ${this.renderReview(blocked)}
+      `;
     return html`<p>
         Add new IDs and fill missing data in existing viewings and Library
         versions. Populated values, manual corrections and deletion status are
@@ -647,12 +688,12 @@ export class KaleidescapeTransfers extends LitElement {
         unlinked. Purchase rows start unchecked; select the purchases and links
         you approve.
       </p>
-      ${this.scope?.tracking_enabled ? html`<p class="warning">Disable automatic tracking in Settings before importing.</p>` : nothing}
+      ${this.scope?.tracking_enabled && !this.purchaseReview ? html`<p class="warning">Disable automatic tracking in Settings before importing.</p>` : nothing}
       <label
         >JSON or SQLite file<input
           type="file"
           accept=".json,.sqlite,.sqlite3,.db"
-          ?disabled=${blocked || !!this.scope?.tracking_enabled}
+          ?disabled=${blocked || (!!this.scope?.tracking_enabled && !this.purchaseReview)}
           @change=${(event: Event) => {
             this.file = (event.target as HTMLInputElement).files?.[0];
             this.review = undefined;
@@ -665,7 +706,7 @@ export class KaleidescapeTransfers extends LitElement {
       ${this.file ? html`<p>${this.file.name} · ${(this.file.size / 1024).toFixed(1)} KiB</p>` : nothing}
       <div class="actions">
         <button
-          ?disabled=${blocked || !this.file || !!this.scope?.tracking_enabled}
+          ?disabled=${blocked || !this.file || (!!this.scope?.tracking_enabled && !this.purchaseReview)}
           @click=${this.previewData}
         >
           Review import
@@ -722,6 +763,13 @@ export class KaleidescapeTransfers extends LitElement {
           Merge Import
         </button>
         <button
+          data-transfer="purchases"
+          ?disabled=${blocked}
+          @click=${() => this.openDialog("import", true)}
+        >
+          Reconcile purchases
+        </button>
+        <button
           data-transfer="export"
           ?disabled=${blocked}
           @click=${() => this.openDialog("export")}
@@ -739,7 +787,7 @@ export class KaleidescapeTransfers extends LitElement {
       >
         <div class="card-head">
           <h2 id="transfer-title">
-            ${this.dialog === "export" ? "Export database" : "Merge Import"}
+            ${this.dialog === "export" ? "Export database" : this.purchaseReview ? "Reconcile purchases" : "Merge Import"}
           </h2>
           ${closeButton((event) => this.closeDialog(event))}
         </div>

@@ -286,23 +286,25 @@ match a completed, nondeleted database Journal entry will be permanently
 deleted.** Partial viewings are not calendar events. No live provider writes
 occur during development checks.
 
-Configure **Full Sync age window** to 1–12 whole months (default **3**) and
-**Daily sweep** in HA local time (default **03:00**). The rolling window uses
-calendar months, ending at the current instant. Older and future events stay
-outside maintenance. Recurring events are skipped, including their instances, to
-avoid deleting a series. The calendar must expose stable event UIDs and support
-reading, creation and deletion. When it also supports updating, edits keep the
-event UID; otherwise a verified replacement is created first and the old event
-enters normal deletion quarantine.
+Configure **Full Sync age window** to 1–12 whole months (default **3**). The
+rolling window uses calendar months, ending at the current instant. Older and
+future events stay outside maintenance. Recurring events are skipped, including
+their instances, to avoid deleting a series. The calendar must expose stable
+event UIDs and support reading, creation and deletion. When it also supports
+updating, edits keep the event UID; otherwise a verified replacement is created
+first and the old event enters normal deletion quarantine.
 
-A first pass runs after startup/reload. Completed Journal changes are checked
-about every ten seconds; the daily sweep also finds provider-side changes. **Run
-Full Sync now** requests another pass without changing the saved schedule. This
-mode replaces the create-only publisher/export for that target. Existing events
-are adopted by rendered title and UTC whole-second start/end instants; private
-UID links then identify them across title, interval and description edits.
-Changing a start in the shared Journal editor moves its end by the same elapsed
-interval. Manual end edits do not move the start.
+No Full Sync pass is scheduled automatically. **Run Full Sync now**, the
+**Calendar full sync** HA button, and the
+`kaleidescape_companion.calendar_full_sync` action request one guarded pass. The
+optional calendar blueprint requests a pass at the chosen local time and another
+11 minutes later; HA restart or automation cancellation during the delay can
+prevent the second pass, so the next manual or scheduled check must complete it.
+This mode replaces the create-only publisher/export for that target. Existing
+events are adopted by rendered title and UTC whole-second start/end instants;
+private UID links then identify them across title, interval and description
+edits. Changing a start in the shared Journal editor moves its end by the same
+elapsed interval. Manual end edits do not move the start.
 
 Descriptions always append **Maintained by Kaleidescape Companion via Home
 Assistant**, even with an empty description template. There are no appended
@@ -311,12 +313,12 @@ privacy otherwise follow the same rules as ordinary publishing.
 
 Unmatched events need **two successful scans** with the same
 Journal/configuration and unchanged event contents, at least **ten minutes**
-apart, before deletion. The grace period also triggers another scan without
-waiting for the daily sweep. Changed Journal data, changed event contents or
-settings restart the quarantine. Reads that fail, exceed bounds, lack UIDs or
-contain ambiguous IDs stop the pass; they are never treated as an empty
-calendar. Creates/updates must be read back before cleanup. A final narrow read
-checks each candidate before its UID is deleted, and
+apart, before deletion. A later user-requested pass must perform the recheck;
+the integration does not schedule one itself. Changed Journal data, changed
+event contents or settings restart the quarantine. Reads that fail, exceed
+bounds, lack UIDs or contain ambiguous IDs stop the pass; they are never treated
+as an empty calendar. Creates/updates must be read back before cleanup. A final
+narrow read checks each candidate before its UID is deleted, and
 Journal/settings/capabilities are rechecked before every write. Reads support at
 most 10,000 events / 8 MiB, the window at most 10,000 Journal rows, calls have
 30-second budgets and a pass five minutes. Viewing intervals over seven days
@@ -344,16 +346,17 @@ silently truncates results or guarantee cross-provider exactly-once delivery.
 
 Backup/unload stops new work and drains accepted writes before pausing SQLite.
 Disabling/changing options revokes unstarted writes; already accepted calls can
-finish. Errors use a five-minute retry delay and safe status text. The single
-publisher lock serializes maintenance and all other calendar work.
+finish. Errors use safe status text and require a later user-requested check.
+The single publisher lock serializes maintenance and all other calendar work.
 
 Operator review: use a disposable dedicated calendar. Verify the bold warning,
-required acknowledgement, 1–12 month limits and schedule; create/edit/delete a
-fictional completed viewing, confirm its maintenance note, then add an unrelated
-event within the window and check it survives initial scans but disappears after
-the grace period. Verify older, future and recurring events remain. Check
-unavailable-calendar recovery and uncertainty review without a duplicate send.
-Automated tests use simulated HA entities; no live calendar has been modified.
+required acknowledgement, 1–12 month limits and optional automation schedule;
+create/edit/delete a fictional completed viewing, confirm its maintenance note,
+then add an unrelated event within the window and check it survives initial
+scans but disappears after the grace period. Verify older, future and recurring
+events remain. Check unavailable-calendar recovery and uncertainty review
+without a duplicate send. Automated tests use simulated HA entities; no live
+calendar has been modified.
 
 ## Verification and next steps
 

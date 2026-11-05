@@ -81,20 +81,20 @@ class PurchaseTotalsTest(unittest.IsolatedAsyncioTestCase):
             )
         )
 
+        # The ledger's primary key prevents recording one invoice twice.
+        import sqlite3
+
         def duplicate(db):
-            with db:
-                history = db.execute(
-                    "SELECT purchase_history FROM library WHERE purchase_history!='[]'"
-                ).fetchone()[0]
+            with self.assertRaises(sqlite3.IntegrityError):
                 db.execute(
-                    "UPDATE library SET purchase_history=? WHERE source_handle=?",
-                    (history, library.ROWS[2]["source_handle"]),
+                    "INSERT INTO purchase_records "
+                    "SELECT * FROM purchase_records LIMIT 1"
                 )
 
         await self.repository._call(duplicate, self.repository._db())
         result = await self.repository.async_purchase_totals(library.SOURCE)
         self.assertEqual(result["purchase_count"], 2)
-        self.assertEqual(result["duplicate_purchases"], 2)
+        self.assertEqual(result["duplicate_purchases"], 0)
         self.assertEqual(result["currencies"][0]["savings"], "-$1.00")
         from custom_components.kaleidescape_companion.library import purchases
 

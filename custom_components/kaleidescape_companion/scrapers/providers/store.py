@@ -11,6 +11,7 @@ from ..models import (
     Metadata,
     MovieQuery,
     ProviderError,
+    genre_names,
     label,
     names,
     same_movie,
@@ -84,6 +85,34 @@ def movie_data(page, href):
     return found[0]
 
 
+def retail_price(movie):
+    """Accept an unambiguous public base price, never a sale or rental price."""
+    packages = movie.get("packages")
+    if not isinstance(packages, list) or len(packages) > 100:
+        return None
+    values = set()
+    currencies = {"USD": "$", "GBP": "£", "EUR": "€", "CAD": "CA$"}
+    for package in packages:
+        if not isinstance(package, dict) or package.get("est_base_price") is None:
+            continue
+        value = package["est_base_price"]
+        if not isinstance(value, dict):
+            return None
+        currency = currencies.get(value.get("currency_code"))
+        dollars, cents = value.get("dollars"), value.get("cents")
+        if (
+            currency is None
+            or type(dollars) is not int
+            or not 0 <= dollars <= 999999999
+            or type(cents) is not int
+            or not 0 <= cents <= 99
+            or value.get("is_negative") is not False
+        ):
+            return None
+        values.add(f"{currency}{dollars}.{cents:02d}")
+    return next(iter(values)) if len(values) == 1 else None
+
+
 def parse(page, href, title, year):
     path = movie_path(href)
     movie = movie_data(page, href)
@@ -122,11 +151,12 @@ def parse(page, href, title, year):
         tomato = {}
     return {
         "provider": "kaleidescape",
+        "retail_price": retail_price(movie),
         "provider_id": label(str(movie.get("movie_edition_id", "")), 100),
         "url": HOST + path,
         "title": label(movie.get("title")),
         "year": year,
-        "genres": names(
+        "genres": genre_names(
             [
                 item.get("name") if isinstance(item, dict) else item
                 for item in movie.get("genres", [])

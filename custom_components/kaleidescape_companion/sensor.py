@@ -64,6 +64,7 @@ LIBRARY_DESCRIPTIONS = (
             ("scraper_conflicts", "mdi:movie-search-outline"),
             ("missing_metadata", "mdi:text-box-remove-outline"),
             ("missing_artwork", "mdi:image-off-outline"),
+            ("missing_purchase_information", "mdi:receipt-text-remove-outline"),
         )
     ),
     SensorEntityDescription(
@@ -304,7 +305,12 @@ class LibrarySensor(CompanionSensor):
             return {}
         data = self.coordinator.data
         key = self.entity_description.key
-        if key in {"missing_artwork", "missing_metadata", "scraper_conflicts"}:
+        if key in {
+            "missing_artwork",
+            "missing_metadata",
+            "scraper_conflicts",
+            "missing_purchase_information",
+        }:
             return {
                 "movies": list(data[f"{key}_movies"]),
                 "truncated": data[f"{key}_truncated"],

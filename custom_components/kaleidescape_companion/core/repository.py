@@ -158,11 +158,14 @@ class JournalRepository:
         connection.create_function(
             "companion_shuffle", 2, library_browse.shuffle_key, deterministic=True
         )
+        from ..library.formats import facet_labels, quality
         from ..library.formats import labels as format_labels
-        from ..library.formats import quality
 
         connection.create_function(
             "companion_formats", 1, format_labels, deterministic=True
+        )
+        connection.create_function(
+            "companion_format_facets", 1, facet_labels, deterministic=True
         )
         connection.create_function("companion_quality", 1, quality, deterministic=True)
         from ..enrichment.store import effective
@@ -828,7 +831,105 @@ class JournalRepository:
                 self._import_task = None
                 self._import_active = False
 
-    async def async_import_preview(self, payload, import_format, *, actor_id=None):
+    async def async_purchase_email(self, payload, *, actor_id=None, allow_partial=True):
+        """Import an automation email using the same serialized import boundary."""
+        async with self.async_import_slot():
+            task = self._import_task = asyncio.create_task(
+                self._call(
+                    self._purchase_email, payload, self._actor(actor_id), allow_partial
+                )
+            )
+            return await async_wait(task)
+
+    def _purchase_email(self, payload, actor, allow_partial):
+        from uuid import uuid4
+
+        from ..library.purchase_email import normalize
+
+        if self._paused:
+            raise JournalError("backup_in_progress", "Journal writes paused for backup")
+        records = normalize(payload)
+        db = self._db()
+        plan = import_merge.review(
+            db, json.dumps(records).encode(), "json", actor, purchase_only=True
+        )
+        rows = plan["public"]["rows"]
+        problems = [row for row in rows if row["needs_match"] or row["conflicts"]]
+        selected = [
+            row["key"]
+            for row in rows
+            if not row["needs_match"]
+            and not row["conflicts"]
+            and row["action"] in {"new", "merge"}
+        ]
+        unmatched_keys = {row["key"] for row in problems}
+        from ..library.purchases import index as purchase_index
+
+        existing = purchase_index(db)
+        pending_records = [
+            record
+            for record in records
+            if f"purchases:{record['id']}" in unmatched_keys
+            and record["id"] not in existing
+        ]
+        unchanged_count = sum(
+            row["action"] == "unchanged"
+            for row in rows
+            if not row["needs_match"] and not row["conflicts"]
+        )
+        if not selected and not pending_records:
+            result = {"imported_count": 0, "updated_count": 0}
+        else:
+            page_size = db.execute("PRAGMA page_size").fetchone()[0]
+            pages = db.execute("PRAGMA page_count").fetchone()[0]
+            previous = db.execute("PRAGMA max_page_count").fetchone()[0]
+            limit = max(pages, min(previous, MAX_LIBRARY_DATABASE_BYTES // page_size))
+            db.execute(f"PRAGMA max_page_count={limit}")
+            try:
+                result = import_merge.apply(
+                    db,
+                    plan,
+                    str(uuid4()),
+                    plan["public"]["plan_id"],
+                    plan["public"]["revision"],
+                    selected,
+                    actor,
+                    pending_records,
+                )
+            finally:
+                db.execute(f"PRAGMA max_page_count={previous}")
+        if problems:
+            problem_keys = {row["key"] for row in problems}
+            return {
+                "status": "needs_review",
+                **result,
+                "unchanged_count": unchanged_count,
+                "issues": [
+                    {
+                        "title": row["title"],
+                        "reason": "conflict" if row["conflicts"] else "unmatched",
+                    }
+                    for row in problems
+                ],
+                "review_records": (
+                    [
+                        record
+                        for record in records
+                        if f"purchases:{record['id']}" in problem_keys
+                    ]
+                    if allow_partial
+                    else records
+                ),
+            }
+        return {
+            "status": "imported" if selected else "unchanged",
+            **result,
+            "unchanged_count": unchanged_count,
+        }
+
+    async def async_import_preview(
+        self, payload, import_format, *, actor_id=None, purchase_only=False
+    ):
         """Validate an upload without writes; retain one bounded review."""
         if not self._import_active or self._import_task:
             raise JournalError("busy", "Import slot is not available")
@@ -836,20 +937,49 @@ class JournalRepository:
             raise invalid("Import exceeds 32 MiB")
         task = self._import_task = asyncio.create_task(
             self._call(
-                self._preview_import, payload, import_format, self._actor(actor_id)
+                self._preview_import,
+                payload,
+                import_format,
+                self._actor(actor_id),
+                purchase_only,
             )
         )
         return await async_wait(task)
 
-    def _preview_import(self, payload, import_format, actor):
+    def _preview_import(self, payload, import_format, actor, purchase_only):
         self._import_plan = import_merge.review(
-            self._db(), payload, import_format, actor
+            self._db(), payload, import_format, actor, purchase_only=purchase_only
         )
         return self._import_plan["public"]
 
-    async def async_import_match_search(self, plan_id, revision, key, query, actor_id):
+    async def async_purchase_reconciliation(self, actor_id):
+        """Create an administrator review of durable unmatched purchases."""
+        return await self._call(self._purchase_reconciliation, self._actor(actor_id))
+
+    def _purchase_reconciliation(self, actor):
+        db = self._db()
+        rows = [
+            dict(row)
+            for row in db.execute(
+                "SELECT * FROM purchase_records WHERE library_id IS NULL "
+                "ORDER BY purchased_on,id LIMIT 10001"
+            )
+        ]
+        if len(rows) > 10000:
+            raise invalid("Purchase reconciliation is limited to 10000 records")
+        if not rows:
+            return {"empty": True}
+        self._import_plan = import_merge.review(
+            db, json.dumps(rows).encode(), "json", actor, purchase_only=True
+        )
+        return self._import_plan["public"]
+
+    async def async_import_match_search(
+        self, plan_id, revision, key, query, actor_id, *, purchase_only_required=False
+    ):
         return await self._call(
             self._import_review_action,
+            purchase_only_required,
             import_merge.search_matches,
             identifier(plan_id),
             revision,
@@ -858,9 +988,19 @@ class JournalRepository:
             self._actor(actor_id),
         )
 
-    async def async_import_match(self, plan_id, revision, key, title_id, actor_id):
+    async def async_import_match(
+        self,
+        plan_id,
+        revision,
+        key,
+        title_id,
+        actor_id,
+        *,
+        purchase_only_required=False,
+    ):
         return await self._call(
             self._import_review_action,
+            purchase_only_required,
             import_merge.match_purchase,
             identifier(plan_id),
             revision,
@@ -869,11 +1009,25 @@ class JournalRepository:
             self._actor(actor_id),
         )
 
-    def _import_review_action(self, operation, *args):
+    def _import_review_action(self, purchase_only_required, operation, *args):
+        self._require_purchase_review(purchase_only_required)
         return operation(self._db(), self._import_plan, *args)
 
+    def _require_purchase_review(self, required):
+        if required and not (
+            self._import_plan and self._import_plan.get("purchase_only")
+        ):
+            raise JournalError("tracking_enabled", "Disable recording before importing")
+
     async def async_import_apply(
-        self, request_id, plan_id, revision, selected, *, actor_id=None
+        self,
+        request_id,
+        plan_id,
+        revision,
+        selected,
+        *,
+        actor_id=None,
+        purchase_only_required=False,
     ):
         if type(revision) is not int or revision < 0:
             raise invalid("Invalid import revision")
@@ -886,13 +1040,25 @@ class JournalRepository:
                     revision,
                     selected,
                     self._actor(actor_id),
+                    purchase_only_required,
                 )
             )
             result = await async_wait(task)
             _LOGGER.info("Journal import application completed")
             return result
 
-    def _apply_import(self, request_id, plan_id, revision, selected, actor):
+    def _apply_import(
+        self, request_id, plan_id, revision, selected, actor, purchase_only_required
+    ):
+        # Existing request receipts are read-only; apply verifies their actor
+        # and fingerprint before returning an already committed result.
+        cached = (
+            self._db()
+            .execute("SELECT 1 FROM requests WHERE request_id=?", (request_id,))
+            .fetchone()
+        )
+        if not cached:
+            self._require_purchase_review(purchase_only_required)
         if self._paused:
             raise JournalError("backup_in_progress", "Journal writes paused for backup")
         db = self._db()
@@ -1429,7 +1595,22 @@ class JournalRepository:
                         json.dump(row, output, allow_nan=False)
                         first = False
                         self._check_export(started, output.tell())
-                    output.write("]}")
+                    output.write("]")
+                    first = True
+                    for row in db.execute(
+                        "SELECT * FROM purchase_records WHERE library_id IS NULL "
+                        "ORDER BY purchased_on,id"
+                    ):
+                        if first:
+                            output.write(', "library_purchases": [')
+                        else:
+                            output.write(",")
+                        json.dump(dict(row), output, allow_nan=False)
+                        first = False
+                        self._check_export(started, output.tell())
+                    if not first:
+                        output.write("]")
+                    output.write("}")
             self._check_export(started, path.stat().st_size)
             return path
         except BaseException:

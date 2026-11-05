@@ -12,15 +12,15 @@ Companion does not replace it or access its private runtime objects.
 
 ## Runtime ownership
 
-| Location                      | Responsibility                                                                                    | Detailed contract                                                                                        |
-| ----------------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Integration root              | Config/options flows, setup/unload, backup hooks, diagnostics, sensors, translations and manifest | This document                                                                                            |
-| `core/`                       | One SQLite worker, migrations, requests, settings, permissions and safe logging helpers           | [Journal](design-journal.md), [data management](design-data-management.md), [logging](design-logging.md) |
-| `playback/`                   | HA observation, recording, selected-player discovery/control and durable command outcomes         | [Journal](design-journal.md#automatic-tracking), [controls](design-playback-controls.md)                 |
-| `library/`                    | Local browser transport/sync, catalog identity, artwork, collections and matching                 | [Library](design-library.md), [matching](design-title-matching.md)                                       |
-| `enrichment/` and `scrapers/` | HA scheduling/authorization/storage and standalone metadata provider clients respectively         | [Metadata](design-metadata.md)                                                                           |
-| `calendar/`                   | Publishing, reconciliation and dedicated-calendar Full Sync through HA                            | [Calendar](design-calendar.md)                                                                           |
-| `ui/` and `frontend/src/`     | Authenticated HTTP/WebSocket interfaces, panel/cards and typed frontend                           | [UI](design-user-interface.md), [cards](design-dashboard-cards.md)                                       |
+| Location                      | Responsibility                                                                                        | Detailed contract                                                                                        |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Integration root              | Config/options flows, setup/unload, backup hooks, diagnostics, HA entities, translations and manifest | This document                                                                                            |
+| `core/`                       | One SQLite worker, migrations, requests, settings, permissions and safe logging helpers               | [Journal](design-journal.md), [data management](design-data-management.md), [logging](design-logging.md) |
+| `playback/`                   | HA observation, recording, selected-player discovery/control and durable command outcomes             | [Journal](design-journal.md#automatic-tracking), [controls](design-playback-controls.md)                 |
+| `library/`                    | Local browser transport/sync, catalog identity, artwork, collections and matching                     | [Library](design-library.md), [matching](design-title-matching.md)                                       |
+| `enrichment/` and `scrapers/` | HA scheduling/authorization/storage and standalone metadata provider clients respectively             | [Metadata](design-metadata.md)                                                                           |
+| `calendar/`                   | Publishing, reconciliation and dedicated-calendar Full Sync through HA                                | [Calendar](design-calendar.md)                                                                           |
+| `ui/` and `frontend/src/`     | Authenticated HTTP/WebSocket interfaces, panel/cards and typed frontend                               | [UI](design-user-interface.md), [cards](design-dashboard-cards.md)                                       |
 
 Feature state belongs to the typed config entry's `runtime_data`. A small
 `hass.data` marker prevents duplicate HTTP registration. Data is stored under
@@ -28,13 +28,30 @@ HA's configuration directory, with a private SQLite journal and artwork cache;
 HA storage owns the seed-bound discovery cache. The integration doesn't install
 a second database service, web server or logging framework.
 
+## Home Assistant controls
+
+The Companion service device exposes **Library sync**, **Refresh metadata**, and
+**Calendar full sync** buttons. They request the same background jobs as the
+panel and are unavailable when the corresponding feature is disabled. The
+configuration switches **Add watched movies to calendar**, **Automatically
+record playback**, and **Enable library sync** change the corresponding
+integration settings and reload the entry. Existing configuration validation
+still applies: recording requires configured playback entities, and calendar
+publishing requires a supported calendar. Changes preserve all other options.
+
+Home Assistant entity permissions govern who can operate these controls,
+including through automations. Calendar publishing can share movie details with
+people who have access to the configured calendar.
+
 ## Setup, reload and unload
 
 Setup opens the repository, validates/upgrades its schema, restores the control
-cache without opening sockets, registers UI services and forwards the sensor
-platform. Enabled features start their owned tasks: observation subscribes to HA
-states, Library starts its scheduled sync, and calendars start their queues.
-External enrichment requires a separately enabled provider and Library. Disabled
+cache without opening sockets, registers UI services and forwards the sensor,
+button, and switch platforms. Enabled features start their owned tasks:
+observation subscribes to HA states, Library starts its initial sync, and
+calendars start their queues. Recurring Library, metadata and calendar Full Sync
+schedules are optional HA automations, not integration timers. External
+enrichment requires a separately enabled provider and Library. Disabled
 connectors do not initiate their network work. Setup is therefore not
 unconditionally network-free when optional work has already been enabled.
 

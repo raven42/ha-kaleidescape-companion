@@ -9,6 +9,7 @@ from ..enrichment.matching import has_conflict, has_provider_data
 from ..enrichment.selection import image
 from ..enrichment.selection import read as source_preferences
 from .browse import STATUS_SQL
+from .purchases import missing_information
 
 
 def record_additions(db, source, rows, seen):
@@ -175,6 +176,9 @@ def library_summary(db, source):
         "missing_metadata": None,
         "missing_metadata_movies": [],
         "missing_metadata_truncated": False,
+        "missing_purchase_information": None,
+        "missing_purchase_information_movies": [],
+        "missing_purchase_information_truncated": False,
         "missing_artwork": None,
         "missing_artwork_movies": [],
         "missing_artwork_truncated": False,
@@ -207,6 +211,7 @@ def library_summary(db, source):
     status_known = info["collections_synced_at"] is not None and not counts[2]
     movies = json.loads(info["recently_added_movies"])
     missing_metadata, missing, conflicts, stamps, titles = completeness(db, source)
+    missing_purchases = missing_information(db, source)
     activity = scrape_activity(db, source)
     if activity["last_scrape_date"]:
         stamps.append(activity["last_scrape_date"])
@@ -224,9 +229,14 @@ def library_summary(db, source):
         names(missing_metadata),
         names(conflicts),
     )
+    purchase_names = names(missing_purchases)
     return {
         **result,
         **activity,
+        "missing_purchase_information": len(missing_purchases),
+        "missing_purchase_information_movies": purchase_names,
+        "missing_purchase_information_truncated": len(purchase_names)
+        < len(missing_purchases),
         "last_scrape_date": max(stamps, default=None),
         "scraper_conflicts": len(conflicts),
         "missing_metadata": len(missing_metadata),

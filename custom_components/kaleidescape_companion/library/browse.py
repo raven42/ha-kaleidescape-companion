@@ -10,8 +10,9 @@ from .config import excluded_collections
 MAX_PAGE_SIZE = 1000
 MAX_PAGE_BYTES = 8 * 1024 * 1024
 PURCHASE_SQL = """coalesce(t.purchased_on,(SELECT
-    min(json_extract(p.purchase_history,'$[0].purchased_on'))
-    FROM library p WHERE p.source_id=t.source_id
+    min(pr.purchased_on)
+    FROM library p JOIN purchase_records pr ON pr.library_id=p.id
+    WHERE p.source_id=t.source_id
     AND p.source_group=t.source_group))"""
 
 FAVORITE_SQL = """EXISTS (SELECT 1 FROM library ft JOIN library_memberships fm
@@ -317,6 +318,7 @@ def library_list(db, source, filters, excluded="", cache=None):
         "query",
         "scraper_conflict",
         "missing_metadata_artwork",
+        "missing_purchase_information",
         "fuzzy",
         "collection",
         "actor",
@@ -401,6 +403,9 @@ def library_list(db, source, filters, excluded="", cache=None):
     missing = filters.get("missing_metadata_artwork", False)
     if type(missing) is not bool:
         raise invalid("Invalid missing metadata or artwork filter")
+    missing_purchases = filters.get("missing_purchase_information", False)
+    if type(missing_purchases) is not bool:
+        raise invalid("Invalid missing purchase information filter")
     if not isinstance(query, str) or len(query) > 500 or "\x00" in query:
         raise invalid("Invalid library search")
     fuzzy = filters.get("fuzzy", False)
@@ -442,6 +447,10 @@ def library_list(db, source, filters, excluded="", cache=None):
         ):
             raise invalid("Invalid library filter")
         selected = list(dict.fromkeys(selected))
+        if key == "genre":
+            from ..enrichment.store import normalize_genres
+
+            selected = normalize_genres({"genres": selected})["genres"]
         if not selected:
             continue
         if key == "collection":
@@ -492,6 +501,11 @@ def library_list(db, source, filters, excluded="", cache=None):
         metadata_groups, artwork_groups, _, _, _ = completeness(db, source)
         clauses.append("t.source_group IN (SELECT value FROM json_each(?))")
         values.append(json.dumps(sorted(metadata_groups | artwork_groups)))
+    if missing_purchases:
+        from .purchases import missing_information
+
+        clauses.append("t.source_group IN (SELECT value FROM json_each(?))")
+        values.append(json.dumps(sorted(missing_information(db, source))))
     if people_parameter is not None:
         values[people_parameter] = matching_people(db, source, query.casefold(), fuzzy)
     where = " AND ".join(clauses)
@@ -603,7 +617,7 @@ def library_facets(db, source, hidden, _revision=None):
         row[0]
         for row in db.execute(
             "SELECT DISTINCT value FROM library t,"
-            "json_each(companion_formats(t.data)) "
+            "json_each(companion_format_facets(t.data)) "
             "WHERE source_id=? AND available=1 ORDER BY value LIMIT 501",
             (source,),
         )
@@ -832,6 +846,8 @@ def library_versions(
     db, source, title, offset=0, revision=None, excluded="", admin=False
 ):
     """An opaque version key selects its source-defined group in this source only."""
+    from .purchases import history_for
+
     if (
         not isinstance(title, str)
         or not re.fullmatch(r"[a-f0-9]{64}", title)
@@ -881,7 +897,7 @@ def library_versions(
                 {
                     **public_title(row, memberships.get(row["id"], []), shared),
                     **(
-                        {"purchase_history": json.loads(row["purchase_history"])}
+                        {"purchase_history": history_for(db, row["id"])}
                         if admin
                         else {}
                     ),

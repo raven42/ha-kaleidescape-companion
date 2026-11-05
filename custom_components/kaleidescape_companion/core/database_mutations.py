@@ -315,13 +315,18 @@ def validated_patch(db, table, row, patch, now):
             elif key != "available":
                 result[key] = checked[key]
         if {"purchase_price", "retail_price"} & patch.keys():
-            records = json.loads(row["purchase_history"])
+            from ..library.purchases import history_for
+
+            records = history_for(db, row["id"])
             if not records:
                 raise invalid("Import a matched purchase before editing its prices")
             for key in ("purchase_price", "retail_price"):
                 if key in patch:
-                    records[0][key] = result[key]
-            result["purchase_history"] = json.dumps(records)
+                    db.execute(
+                        f"UPDATE purchase_records SET {key}=? WHERE id=?",
+                        (result[key], records[0]["id"]),
+                    )
+                    result[key] = None
         if "title" in patch:
             result["title_search"] = checked["title"].casefold()
     elif table == "settings":

@@ -1,15 +1,15 @@
-const me = globalThis, Dt = me.ShadowRoot && (me.ShadyCSS === void 0 || me.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, Pt = /* @__PURE__ */ Symbol(), Yt = /* @__PURE__ */ new WeakMap();
-let $i = class {
+const me = globalThis, jt = me.ShadowRoot && (me.ShadyCSS === void 0 || me.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, Mt = /* @__PURE__ */ Symbol(), Gt = /* @__PURE__ */ new WeakMap();
+let _i = class {
   constructor(e, t, i) {
-    if (this._$cssResult$ = !0, i !== Pt) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
+    if (this._$cssResult$ = !0, i !== Mt) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
     this.cssText = e, this.t = t;
   }
   get styleSheet() {
     let e = this.o;
     const t = this.t;
-    if (Dt && e === void 0) {
+    if (jt && e === void 0) {
       const i = t !== void 0 && t.length === 1;
-      i && (e = Yt.get(t)), e === void 0 && ((this.o = e = new CSSStyleSheet()).replaceSync(this.cssText), i && Yt.set(t, e));
+      i && (e = Gt.get(t)), e === void 0 && ((this.o = e = new CSSStyleSheet()).replaceSync(this.cssText), i && Gt.set(t, e));
     }
     return e;
   }
@@ -17,28 +17,28 @@ let $i = class {
     return this.cssText;
   }
 };
-const Oi = (n) => new $i(typeof n == "string" ? n : n + "", void 0, Pt), S = (n, ...e) => {
+const Bi = (n) => new _i(typeof n == "string" ? n : n + "", void 0, Mt), q = (n, ...e) => {
   const t = n.length === 1 ? n[0] : e.reduce((i, s, r) => i + ((o) => {
     if (o._$cssResult$ === !0) return o.cssText;
     if (typeof o == "number") return o;
     throw Error("Value passed to 'css' function must be a 'css' function result: " + o + ". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.");
   })(s) + n[r + 1], n[0]);
-  return new $i(t, n, Pt);
-}, Ni = (n, e) => {
-  if (Dt) n.adoptedStyleSheets = e.map((t) => t instanceof CSSStyleSheet ? t : t.styleSheet);
+  return new _i(t, n, Mt);
+}, Hi = (n, e) => {
+  if (jt) n.adoptedStyleSheets = e.map((t) => t instanceof CSSStyleSheet ? t : t.styleSheet);
   else for (const t of e) {
     const i = document.createElement("style"), s = me.litNonce;
     s !== void 0 && i.setAttribute("nonce", s), i.textContent = t.cssText, n.appendChild(i);
   }
-}, Zt = Dt ? (n) => n : (n) => n instanceof CSSStyleSheet ? ((e) => {
+}, Zt = jt ? (n) => n : (n) => n instanceof CSSStyleSheet ? ((e) => {
   let t = "";
   for (const i of e.cssRules) t += i.cssText;
-  return Oi(t);
+  return Bi(t);
 })(n) : n;
-const { is: Ii, defineProperty: Fi, getOwnPropertyDescriptor: Bi, getOwnPropertyNames: Vi, getOwnPropertySymbols: Hi, getPrototypeOf: Wi } = Object, Ve = globalThis, Gt = Ve.trustedTypes, Ji = Gt ? Gt.emptyScript : "", Ki = Ve.reactiveElementPolyfillSupport, ne = (n, e) => n, at = { toAttribute(n, e) {
+const { is: Vi, defineProperty: Wi, getOwnPropertyDescriptor: Ji, getOwnPropertyNames: Ki, getOwnPropertySymbols: Yi, getPrototypeOf: Gi } = Object, We = globalThis, Qt = We.trustedTypes, Zi = Qt ? Qt.emptyScript : "", Qi = We.reactiveElementPolyfillSupport, ne = (n, e) => n, nt = { toAttribute(n, e) {
   switch (e) {
     case Boolean:
-      n = n ? Ji : null;
+      n = n ? Zi : null;
       break;
     case Object:
     case Array:
@@ -63,23 +63,23 @@ const { is: Ii, defineProperty: Fi, getOwnPropertyDescriptor: Bi, getOwnProperty
       }
   }
   return t;
-} }, xi = (n, e) => !Ii(n, e), Qt = { attribute: !0, type: String, converter: at, reflect: !1, useDefault: !1, hasChanged: xi };
-Symbol.metadata ??= /* @__PURE__ */ Symbol("metadata"), Ve.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
-let J = class extends HTMLElement {
+} }, Ci = (n, e) => !Vi(n, e), Xt = { attribute: !0, type: String, converter: nt, reflect: !1, useDefault: !1, hasChanged: Ci };
+Symbol.metadata ??= /* @__PURE__ */ Symbol("metadata"), We.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
+let K = class extends HTMLElement {
   static addInitializer(e) {
     this._$Ei(), (this.l ??= []).push(e);
   }
   static get observedAttributes() {
     return this.finalize(), this._$Eh && [...this._$Eh.keys()];
   }
-  static createProperty(e, t = Qt) {
+  static createProperty(e, t = Xt) {
     if (t.state && (t.attribute = !1), this._$Ei(), this.prototype.hasOwnProperty(e) && ((t = Object.create(t)).wrapped = !0), this.elementProperties.set(e, t), !t.noAccessor) {
       const i = /* @__PURE__ */ Symbol(), s = this.getPropertyDescriptor(e, i, t);
-      s !== void 0 && Fi(this.prototype, e, s);
+      s !== void 0 && Wi(this.prototype, e, s);
     }
   }
   static getPropertyDescriptor(e, t, i) {
-    const { get: s, set: r } = Bi(this.prototype, e) ?? { get() {
+    const { get: s, set: r } = Ji(this.prototype, e) ?? { get() {
       return this[t];
     }, set(o) {
       this[t] = o;
@@ -90,17 +90,17 @@ let J = class extends HTMLElement {
     }, configurable: !0, enumerable: !0 };
   }
   static getPropertyOptions(e) {
-    return this.elementProperties.get(e) ?? Qt;
+    return this.elementProperties.get(e) ?? Xt;
   }
   static _$Ei() {
     if (this.hasOwnProperty(ne("elementProperties"))) return;
-    const e = Wi(this);
+    const e = Gi(this);
     e.finalize(), e.l !== void 0 && (this.l = [...e.l]), this.elementProperties = new Map(e.elementProperties);
   }
   static finalize() {
     if (this.hasOwnProperty(ne("finalized"))) return;
     if (this.finalized = !0, this._$Ei(), this.hasOwnProperty(ne("properties"))) {
-      const t = this.properties, i = [...Vi(t), ...Hi(t)];
+      const t = this.properties, i = [...Ki(t), ...Yi(t)];
       for (const s of i) this.createProperty(s, t[s]);
     }
     const e = this[Symbol.metadata];
@@ -146,7 +146,7 @@ let J = class extends HTMLElement {
   }
   createRenderRoot() {
     const e = this.shadowRoot ?? this.attachShadow(this.constructor.shadowRootOptions);
-    return Ni(e, this.constructor.elementStyles), e;
+    return Hi(e, this.constructor.elementStyles), e;
   }
   connectedCallback() {
     this.renderRoot ??= this.createRenderRoot(), this.enableUpdating(!0), this._$EO?.forEach((e) => e.hostConnected?.());
@@ -162,14 +162,14 @@ let J = class extends HTMLElement {
   _$ET(e, t) {
     const i = this.constructor.elementProperties.get(e), s = this.constructor._$Eu(e, i);
     if (s !== void 0 && i.reflect === !0) {
-      const r = (i.converter?.toAttribute !== void 0 ? i.converter : at).toAttribute(t, i.type);
+      const r = (i.converter?.toAttribute !== void 0 ? i.converter : nt).toAttribute(t, i.type);
       this._$Em = e, r == null ? this.removeAttribute(s) : this.setAttribute(s, r), this._$Em = null;
     }
   }
   _$AK(e, t) {
     const i = this.constructor, s = i._$Eh.get(e);
     if (s !== void 0 && this._$Em !== s) {
-      const r = i.getPropertyOptions(s), o = typeof r.converter == "function" ? { fromAttribute: r.converter } : r.converter?.fromAttribute !== void 0 ? r.converter : at;
+      const r = i.getPropertyOptions(s), o = typeof r.converter == "function" ? { fromAttribute: r.converter } : r.converter?.fromAttribute !== void 0 ? r.converter : nt;
       this._$Em = s;
       const d = o.fromAttribute(t, r.type);
       this[s] = d ?? this._$Ej?.get(s) ?? d, this._$Em = null;
@@ -178,7 +178,7 @@ let J = class extends HTMLElement {
   requestUpdate(e, t, i, s = !1, r) {
     if (e !== void 0) {
       const o = this.constructor;
-      if (s === !1 && (r = this[e]), i ??= o.getPropertyOptions(e), !((i.hasChanged ?? xi)(r, t) || i.useDefault && i.reflect && r === this._$Ej?.get(e) && !this.hasAttribute(o._$Eu(e, i)))) return;
+      if (s === !1 && (r = this[e]), i ??= o.getPropertyOptions(e), !((i.hasChanged ?? Ci)(r, t) || i.useDefault && i.reflect && r === this._$Ej?.get(e) && !this.hasAttribute(o._$Eu(e, i)))) return;
       this.C(e, t, i);
     }
     this.isUpdatePending === !1 && (this._$ES = this._$EP());
@@ -246,54 +246,54 @@ let J = class extends HTMLElement {
   firstUpdated(e) {
   }
 };
-J.elementStyles = [], J.shadowRootOptions = { mode: "open" }, J[ne("elementProperties")] = /* @__PURE__ */ new Map(), J[ne("finalized")] = /* @__PURE__ */ new Map(), Ki?.({ ReactiveElement: J }), (Ve.reactiveElementVersions ??= []).push("2.1.2");
-const jt = globalThis, Xt = (n) => n, fe = jt.trustedTypes, ei = fe ? fe.createPolicy("lit-html", { createHTML: (n) => n }) : void 0, ki = "$lit$", P = `lit$${Math.random().toFixed(9).slice(2)}$`, _i = "?" + P, Yi = `<${_i}>`, V = document, de = () => V.createComment(""), he = (n) => n === null || typeof n != "object" && typeof n != "function", Mt = Array.isArray, Zi = (n) => Mt(n) || typeof n?.[Symbol.iterator] == "function", Ke = `[ 	
-\f\r]`, ie = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, ti = /-->/g, ii = />/g, M = RegExp(`>|${Ke}(?:([^\\s"'>=/]+)(${Ke}*=${Ke}*(?:[^ 	
-\f\r"'\`<>=]|("|')|))|$)`, "g"), si = /'/g, ai = /"/g, Ci = /^(?:script|style|textarea|title)$/i, Si = (n) => (e, ...t) => ({ _$litType$: n, strings: e, values: t }), a = Si(1), _ = Si(2), L = /* @__PURE__ */ Symbol.for("lit-noChange"), l = /* @__PURE__ */ Symbol.for("lit-nothing"), ri = /* @__PURE__ */ new WeakMap(), F = V.createTreeWalker(V, 129);
-function qi(n, e) {
-  if (!Mt(n) || !n.hasOwnProperty("raw")) throw Error("invalid template strings array");
-  return ei !== void 0 ? ei.createHTML(e) : e;
+K.elementStyles = [], K.shadowRootOptions = { mode: "open" }, K[ne("elementProperties")] = /* @__PURE__ */ new Map(), K[ne("finalized")] = /* @__PURE__ */ new Map(), Qi?.({ ReactiveElement: K }), (We.reactiveElementVersions ??= []).push("2.1.2");
+const Ot = globalThis, ei = (n) => n, fe = Ot.trustedTypes, ti = fe ? fe.createPolicy("lit-html", { createHTML: (n) => n }) : void 0, Si = "$lit$", D = `lit$${Math.random().toFixed(9).slice(2)}$`, qi = "?" + D, Xi = `<${qi}>`, V = document, de = () => V.createComment(""), he = (n) => n === null || typeof n != "object" && typeof n != "function", Nt = Array.isArray, es = (n) => Nt(n) || typeof n?.[Symbol.iterator] == "function", Ge = `[ 	
+\f\r]`, ie = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, ii = /-->/g, si = />/g, M = RegExp(`>|${Ge}(?:([^\\s"'>=/]+)(${Ge}*=${Ge}*(?:[^ 	
+\f\r"'\`<>=]|("|')|))|$)`, "g"), ai = /'/g, ri = /"/g, Ei = /^(?:script|style|textarea|title)$/i, Ri = (n) => (e, ...t) => ({ _$litType$: n, strings: e, values: t }), a = Ri(1), k = Ri(2), U = /* @__PURE__ */ Symbol.for("lit-noChange"), l = /* @__PURE__ */ Symbol.for("lit-nothing"), ni = /* @__PURE__ */ new WeakMap(), B = V.createTreeWalker(V, 129);
+function zi(n, e) {
+  if (!Nt(n) || !n.hasOwnProperty("raw")) throw Error("invalid template strings array");
+  return ti !== void 0 ? ti.createHTML(e) : e;
 }
-const Gi = (n, e) => {
+const ts = (n, e) => {
   const t = n.length - 1, i = [];
   let s, r = e === 2 ? "<svg>" : e === 3 ? "<math>" : "", o = ie;
   for (let d = 0; d < t; d++) {
     const h = n[d];
-    let c, m, p = -1, y = 0;
-    for (; y < h.length && (o.lastIndex = y, m = o.exec(h), m !== null); ) y = o.lastIndex, o === ie ? m[1] === "!--" ? o = ti : m[1] !== void 0 ? o = ii : m[2] !== void 0 ? (Ci.test(m[2]) && (s = RegExp("</" + m[2], "g")), o = M) : m[3] !== void 0 && (o = M) : o === M ? m[0] === ">" ? (o = s ?? ie, p = -1) : m[1] === void 0 ? p = -2 : (p = o.lastIndex - m[2].length, c = m[1], o = m[3] === void 0 ? M : m[3] === '"' ? ai : si) : o === ai || o === si ? o = M : o === ti || o === ii ? o = ie : (o = M, s = void 0);
-    const v = o === M && n[d + 1].startsWith("/>") ? " " : "";
-    r += o === ie ? h + Yi : p >= 0 ? (i.push(c), h.slice(0, p) + ki + h.slice(p) + P + v) : h + P + (p === -2 ? d : v);
+    let c, f, p = -1, v = 0;
+    for (; v < h.length && (o.lastIndex = v, f = o.exec(h), f !== null); ) v = o.lastIndex, o === ie ? f[1] === "!--" ? o = ii : f[1] !== void 0 ? o = si : f[2] !== void 0 ? (Ei.test(f[2]) && (s = RegExp("</" + f[2], "g")), o = M) : f[3] !== void 0 && (o = M) : o === M ? f[0] === ">" ? (o = s ?? ie, p = -1) : f[1] === void 0 ? p = -2 : (p = o.lastIndex - f[2].length, c = f[1], o = f[3] === void 0 ? M : f[3] === '"' ? ri : ai) : o === ri || o === ai ? o = M : o === ii || o === si ? o = ie : (o = M, s = void 0);
+    const w = o === M && n[d + 1].startsWith("/>") ? " " : "";
+    r += o === ie ? h + Xi : p >= 0 ? (i.push(c), h.slice(0, p) + Si + h.slice(p) + D + w) : h + D + (p === -2 ? d : w);
   }
-  return [qi(n, r + (n[t] || "<?>") + (e === 2 ? "</svg>" : e === 3 ? "</math>" : "")), i];
+  return [zi(n, r + (n[t] || "<?>") + (e === 2 ? "</svg>" : e === 3 ? "</math>" : "")), i];
 };
 class ce {
   constructor({ strings: e, _$litType$: t }, i) {
     let s;
     this.parts = [];
     let r = 0, o = 0;
-    const d = e.length - 1, h = this.parts, [c, m] = Gi(e, t);
-    if (this.el = ce.createElement(c, i), F.currentNode = this.el.content, t === 2 || t === 3) {
+    const d = e.length - 1, h = this.parts, [c, f] = ts(e, t);
+    if (this.el = ce.createElement(c, i), B.currentNode = this.el.content, t === 2 || t === 3) {
       const p = this.el.content.firstChild;
       p.replaceWith(...p.childNodes);
     }
-    for (; (s = F.nextNode()) !== null && h.length < d; ) {
+    for (; (s = B.nextNode()) !== null && h.length < d; ) {
       if (s.nodeType === 1) {
-        if (s.hasAttributes()) for (const p of s.getAttributeNames()) if (p.endsWith(ki)) {
-          const y = m[o++], v = s.getAttribute(p).split(P), E = /([.?@])?(.*)/.exec(y);
-          h.push({ type: 1, index: r, name: E[2], strings: v, ctor: E[1] === "." ? Xi : E[1] === "?" ? es : E[1] === "@" ? ts : He }), s.removeAttribute(p);
-        } else p.startsWith(P) && (h.push({ type: 6, index: r }), s.removeAttribute(p));
-        if (Ci.test(s.tagName)) {
-          const p = s.textContent.split(P), y = p.length - 1;
-          if (y > 0) {
+        if (s.hasAttributes()) for (const p of s.getAttributeNames()) if (p.endsWith(Si)) {
+          const v = f[o++], w = s.getAttribute(p).split(D), E = /([.?@])?(.*)/.exec(v);
+          h.push({ type: 1, index: r, name: E[2], strings: w, ctor: E[1] === "." ? ss : E[1] === "?" ? as : E[1] === "@" ? rs : Je }), s.removeAttribute(p);
+        } else p.startsWith(D) && (h.push({ type: 6, index: r }), s.removeAttribute(p));
+        if (Ei.test(s.tagName)) {
+          const p = s.textContent.split(D), v = p.length - 1;
+          if (v > 0) {
             s.textContent = fe ? fe.emptyScript : "";
-            for (let v = 0; v < y; v++) s.append(p[v], de()), F.nextNode(), h.push({ type: 2, index: ++r });
-            s.append(p[y], de());
+            for (let w = 0; w < v; w++) s.append(p[w], de()), B.nextNode(), h.push({ type: 2, index: ++r });
+            s.append(p[v], de());
           }
         }
-      } else if (s.nodeType === 8) if (s.data === _i) h.push({ type: 2, index: r });
+      } else if (s.nodeType === 8) if (s.data === qi) h.push({ type: 2, index: r });
       else {
         let p = -1;
-        for (; (p = s.data.indexOf(P, p + 1)) !== -1; ) h.push({ type: 7, index: r }), p += P.length - 1;
+        for (; (p = s.data.indexOf(D, p + 1)) !== -1; ) h.push({ type: 7, index: r }), p += D.length - 1;
       }
       r++;
     }
@@ -304,12 +304,12 @@ class ce {
   }
 }
 function X(n, e, t = n, i) {
-  if (e === L) return e;
+  if (e === U) return e;
   let s = i !== void 0 ? t._$Co?.[i] : t._$Cl;
   const r = he(e) ? void 0 : e._$litDirective$;
   return s?.constructor !== r && (s?._$AO?.(!1), r === void 0 ? s = void 0 : (s = new r(n), s._$AT(n, t, i)), i !== void 0 ? (t._$Co ??= [])[i] = s : t._$Cl = s), s !== void 0 && (e = X(n, s._$AS(n, e.values), s, i)), e;
 }
-class Qi {
+class is {
   constructor(e, t) {
     this._$AV = [], this._$AN = void 0, this._$AD = e, this._$AM = t;
   }
@@ -321,16 +321,16 @@ class Qi {
   }
   u(e) {
     const { el: { content: t }, parts: i } = this._$AD, s = (e?.creationScope ?? V).importNode(t, !0);
-    F.currentNode = s;
-    let r = F.nextNode(), o = 0, d = 0, h = i[0];
+    B.currentNode = s;
+    let r = B.nextNode(), o = 0, d = 0, h = i[0];
     for (; h !== void 0; ) {
       if (o === h.index) {
         let c;
-        h.type === 2 ? c = new ee(r, r.nextSibling, this, e) : h.type === 1 ? c = new h.ctor(r, h.name, h.strings, this, e) : h.type === 6 && (c = new is(r, this, e)), this._$AV.push(c), h = i[++d];
+        h.type === 2 ? c = new ee(r, r.nextSibling, this, e) : h.type === 1 ? c = new h.ctor(r, h.name, h.strings, this, e) : h.type === 6 && (c = new ns(r, this, e)), this._$AV.push(c), h = i[++d];
       }
-      o !== h?.index && (r = F.nextNode(), o++);
+      o !== h?.index && (r = B.nextNode(), o++);
     }
-    return F.currentNode = V, s;
+    return B.currentNode = V, s;
   }
   p(e) {
     let t = 0;
@@ -356,7 +356,7 @@ class ee {
     return this._$AB;
   }
   _$AI(e, t = this) {
-    e = X(this, e, t), he(e) ? e === l || e == null || e === "" ? (this._$AH !== l && this._$AR(), this._$AH = l) : e !== this._$AH && e !== L && this._(e) : e._$litType$ !== void 0 ? this.$(e) : e.nodeType !== void 0 ? this.T(e) : Zi(e) ? this.k(e) : this._(e);
+    e = X(this, e, t), he(e) ? e === l || e == null || e === "" ? (this._$AH !== l && this._$AR(), this._$AH = l) : e !== this._$AH && e !== U && this._(e) : e._$litType$ !== void 0 ? this.$(e) : e.nodeType !== void 0 ? this.T(e) : es(e) ? this.k(e) : this._(e);
   }
   O(e) {
     return this._$AA.parentNode.insertBefore(e, this._$AB);
@@ -368,19 +368,19 @@ class ee {
     this._$AH !== l && he(this._$AH) ? this._$AA.nextSibling.data = e : this.T(V.createTextNode(e)), this._$AH = e;
   }
   $(e) {
-    const { values: t, _$litType$: i } = e, s = typeof i == "number" ? this._$AC(e) : (i.el === void 0 && (i.el = ce.createElement(qi(i.h, i.h[0]), this.options)), i);
+    const { values: t, _$litType$: i } = e, s = typeof i == "number" ? this._$AC(e) : (i.el === void 0 && (i.el = ce.createElement(zi(i.h, i.h[0]), this.options)), i);
     if (this._$AH?._$AD === s) this._$AH.p(t);
     else {
-      const r = new Qi(s, this), o = r.u(this.options);
+      const r = new is(s, this), o = r.u(this.options);
       r.p(t), this.T(o), this._$AH = r;
     }
   }
   _$AC(e) {
-    let t = ri.get(e.strings);
-    return t === void 0 && ri.set(e.strings, t = new ce(e)), t;
+    let t = ni.get(e.strings);
+    return t === void 0 && ni.set(e.strings, t = new ce(e)), t;
   }
   k(e) {
-    Mt(this._$AH) || (this._$AH = [], this._$AR());
+    Nt(this._$AH) || (this._$AH = [], this._$AR());
     const t = this._$AH;
     let i, s = 0;
     for (const r of e) s === t.length ? t.push(i = new ee(this.O(de()), this.O(de()), this, this.options)) : i = t[s], i._$AI(r), s++;
@@ -388,15 +388,15 @@ class ee {
   }
   _$AR(e = this._$AA.nextSibling, t) {
     for (this._$AP?.(!1, !0, t); e !== this._$AB; ) {
-      const i = Xt(e).nextSibling;
-      Xt(e).remove(), e = i;
+      const i = ei(e).nextSibling;
+      ei(e).remove(), e = i;
     }
   }
   setConnected(e) {
     this._$AM === void 0 && (this._$Cv = e, this._$AP?.(e));
   }
 }
-class He {
+class Je {
   get tagName() {
     return this.element.tagName;
   }
@@ -409,11 +409,11 @@ class He {
   _$AI(e, t = this, i, s) {
     const r = this.strings;
     let o = !1;
-    if (r === void 0) e = X(this, e, t, 0), o = !he(e) || e !== this._$AH && e !== L, o && (this._$AH = e);
+    if (r === void 0) e = X(this, e, t, 0), o = !he(e) || e !== this._$AH && e !== U, o && (this._$AH = e);
     else {
       const d = e;
       let h, c;
-      for (e = r[0], h = 0; h < r.length - 1; h++) c = X(this, d[i + h], t, h), c === L && (c = this._$AH[h]), o ||= !he(c) || c !== this._$AH[h], c === l ? e = l : e !== l && (e += (c ?? "") + r[h + 1]), this._$AH[h] = c;
+      for (e = r[0], h = 0; h < r.length - 1; h++) c = X(this, d[i + h], t, h), c === U && (c = this._$AH[h]), o ||= !he(c) || c !== this._$AH[h], c === l ? e = l : e !== l && (e += (c ?? "") + r[h + 1]), this._$AH[h] = c;
     }
     o && !s && this.j(e);
   }
@@ -421,7 +421,7 @@ class He {
     e === l ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, e ?? "");
   }
 }
-class Xi extends He {
+class ss extends Je {
   constructor() {
     super(...arguments), this.type = 3;
   }
@@ -429,7 +429,7 @@ class Xi extends He {
     this.element[this.name] = e === l ? void 0 : e;
   }
 }
-class es extends He {
+class as extends Je {
   constructor() {
     super(...arguments), this.type = 4;
   }
@@ -437,12 +437,12 @@ class es extends He {
     this.element.toggleAttribute(this.name, !!e && e !== l);
   }
 }
-class ts extends He {
+class rs extends Je {
   constructor(e, t, i, s, r) {
     super(e, t, i, s, r), this.type = 5;
   }
   _$AI(e, t = this) {
-    if ((e = X(this, e, t, 0) ?? l) === L) return;
+    if ((e = X(this, e, t, 0) ?? l) === U) return;
     const i = this._$AH, s = e === l && i !== l || e.capture !== i.capture || e.once !== i.once || e.passive !== i.passive, r = e !== l && (i === l || s);
     s && this.element.removeEventListener(this.name, this, i), r && this.element.addEventListener(this.name, this, e), this._$AH = e;
   }
@@ -450,7 +450,7 @@ class ts extends He {
     typeof this._$AH == "function" ? this._$AH.call(this.options?.host ?? this.element, e) : this._$AH.handleEvent(e);
   }
 }
-class is {
+class ns {
   constructor(e, t, i) {
     this.element = e, this.type = 6, this._$AN = void 0, this._$AM = t, this.options = i;
   }
@@ -461,9 +461,9 @@ class is {
     X(this, e);
   }
 }
-const ss = { I: ee }, as = jt.litHtmlPolyfillSupport;
-as?.(ce, ee), (jt.litHtmlVersions ??= []).push("3.3.3");
-const rs = (n, e, t) => {
+const os = { I: ee }, ls = Ot.litHtmlPolyfillSupport;
+ls?.(ce, ee), (Ot.litHtmlVersions ??= []).push("3.3.3");
+const ds = (n, e, t) => {
   const i = t?.renderBefore ?? e;
   let s = i._$litPart$;
   if (s === void 0) {
@@ -472,8 +472,8 @@ const rs = (n, e, t) => {
   }
   return s._$AI(n), s;
 };
-const Ot = globalThis;
-let x = class extends J {
+const It = globalThis;
+let x = class extends K {
   constructor() {
     super(...arguments), this.renderOptions = { host: this }, this._$Do = void 0;
   }
@@ -483,7 +483,7 @@ let x = class extends J {
   }
   update(e) {
     const t = this.render();
-    this.hasUpdated || (this.renderOptions.isConnected = this.isConnected), super.update(e), this._$Do = rs(t, this.renderRoot, this.renderOptions);
+    this.hasUpdated || (this.renderOptions.isConnected = this.isConnected), super.update(e), this._$Do = ds(t, this.renderRoot, this.renderOptions);
   }
   connectedCallback() {
     super.connectedCallback(), this._$Do?.setConnected(!0);
@@ -492,14 +492,14 @@ let x = class extends J {
     super.disconnectedCallback(), this._$Do?.setConnected(!1);
   }
   render() {
-    return L;
+    return U;
   }
 };
-x._$litElement$ = !0, x.finalized = !0, Ot.litElementHydrateSupport?.({ LitElement: x });
-const ns = Ot.litElementPolyfillSupport;
-ns?.({ LitElement: x });
-(Ot.litElementVersions ??= []).push("4.2.2");
-const q = S`
+x._$litElement$ = !0, x.finalized = !0, It.litElementHydrateSupport?.({ LitElement: x });
+const hs = It.litElementPolyfillSupport;
+hs?.({ LitElement: x });
+(It.litElementVersions ??= []).push("4.2.2");
+const S = q`
   :host {
     display: block;
     min-height: 0;
@@ -1261,27 +1261,27 @@ const q = S`
 `;
 function z(n) {
   const e = {
-    add: _`<path d="M12 4v16M4 12h16"/>`,
-    search: _`<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>`,
-    filter: _`<path d="M3 5h18l-7 8v6l-4 2v-8z"/>`,
-    clear: _`<path d="m6 6 12 12M18 6 6 18"/>`,
-    shuffle: _`<path d="M3 6h3c5 0 7 12 12 12h3m-4-4 4 4-4 4M3 18h3c2 0 4-3 6-6s4-6 6-6h3m-4-4 4 4-4 4"/>`,
-    ascending: _`<path d="M7 20V4m-4 4 4-4 4 4m3-1h7m-7 5h5m-5 5h3"/>`,
-    descending: _`<path d="M7 4v16m-4-4 4 4 4-4m3-9h3m-3 5h5m-5 5h7"/>`,
-    options: _`<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="var(--surface)"/><circle cx="15" cy="12" r="2" fill="var(--surface)"/><circle cx="8" cy="18" r="2" fill="var(--surface)"/>`,
-    first: _`<path d="M5 5v14m13-14-7 7 7 7"/>`,
-    previous: _`<path d="m15 5-7 7 7 7"/>`,
-    next: _`<path d="m9 5 7 7-7 7"/>`,
-    collection: _`<path fill="#ffca28" stroke="#ffca28" d="M6 2h12v20l-6-4-6 4z"/><path fill="#302b16" stroke="none" d="m12 5 1.5 3 3.3.5-2.4 2.3.6 3.3-3-1.6-3 1.6.6-3.3-2.4-2.3 3.3-.5z"/>`,
-    edit: _`<path d="m15 4 5 5M4 20l4-1 12-12a2.1 2.1 0 0 0-3-3L5 16zM4 20h8"/>`,
-    scrape: _`<path d="M3 9h15v4M3 9l-1-4 14-3 1 4zM6 4l3 4m3-5 3 4M3 9v11h8"/><circle cx="16" cy="16" r="4"/><path d="m19 19 3 3M6 13h3m-3 3h2"/>`,
-    artwork: _`<rect x="8" y="2" width="13" height="9" rx="1"/><path d="m10 9 3-3 2 2 2-3 2 2"/><rect x="3" y="14" width="13" height="9" rx="1"/><path d="m5 21 3-3 2 2 2-3 2 2M3 10V6h3m0 0L4 4m2 2L4 8m17 6v4h-3m0 0 2-2m-2 2 2 2"/>`,
-    power: _`<path d="M12 2v10M6 5a9 9 0 1 0 12 0"/>`,
-    play: _`<path fill="currentColor" stroke="none" d="M7 3v18l15-9z"/>`
+    add: k`<path d="M12 4v16M4 12h16"/>`,
+    search: k`<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>`,
+    filter: k`<path d="M3 5h18l-7 8v6l-4 2v-8z"/>`,
+    clear: k`<path d="m6 6 12 12M18 6 6 18"/>`,
+    shuffle: k`<path d="M3 6h3c5 0 7 12 12 12h3m-4-4 4 4-4 4M3 18h3c2 0 4-3 6-6s4-6 6-6h3m-4-4 4 4-4 4"/>`,
+    ascending: k`<path d="M7 20V4m-4 4 4-4 4 4m3-1h7m-7 5h5m-5 5h3"/>`,
+    descending: k`<path d="M7 4v16m-4-4 4 4 4-4m3-9h3m-3 5h5m-5 5h7"/>`,
+    options: k`<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="var(--surface)"/><circle cx="15" cy="12" r="2" fill="var(--surface)"/><circle cx="8" cy="18" r="2" fill="var(--surface)"/>`,
+    first: k`<path d="M5 5v14m13-14-7 7 7 7"/>`,
+    previous: k`<path d="m15 5-7 7 7 7"/>`,
+    next: k`<path d="m9 5 7 7-7 7"/>`,
+    collection: k`<path fill="#ffca28" stroke="#ffca28" d="M6 2h12v20l-6-4-6 4z"/><path fill="#302b16" stroke="none" d="m12 5 1.5 3 3.3.5-2.4 2.3.6 3.3-3-1.6-3 1.6.6-3.3-2.4-2.3 3.3-.5z"/>`,
+    edit: k`<path d="m15 4 5 5M4 20l4-1 12-12a2.1 2.1 0 0 0-3-3L5 16zM4 20h8"/>`,
+    scrape: k`<path d="M3 9h15v4M3 9l-1-4 14-3 1 4zM6 4l3 4m3-5 3 4M3 9v11h8"/><circle cx="16" cy="16" r="4"/><path d="m19 19 3 3M6 13h3m-3 3h2"/>`,
+    artwork: k`<rect x="8" y="2" width="13" height="9" rx="1"/><path d="m10 9 3-3 2 2 2-3 2 2"/><rect x="3" y="14" width="13" height="9" rx="1"/><path d="m5 21 3-3 2 2 2-3 2 2M3 10V6h3m0 0L4 4m2 2L4 8m17 6v4h-3m0 0 2-2m-2 2 2 2"/>`,
+    power: k`<path d="M12 2v10M6 5a9 9 0 1 0 12 0"/>`,
+    play: k`<path fill="currentColor" stroke="none" d="M7 3v18l15-9z"/>`
   };
-  return _`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${e[n]}</svg>`;
+  return k`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${e[n]}</svg>`;
 }
-const Nt = S`
+const Ft = q`
   .icon-action-wrap {
     position: relative;
     display: inline-flex;
@@ -1344,7 +1344,7 @@ const Nt = S`
     visibility: visible;
   }
 `;
-function It(n, e, t, i, s = "") {
+function Bt(n, e, t, i, s = "") {
   return a`<span
     class="icon-action-wrap"
     @pointerenter=${(r) => r.currentTarget.removeAttribute("data-tooltip-dismissed")}
@@ -1372,7 +1372,7 @@ function It(n, e, t, i, s = "") {
     ></span
   >`;
 }
-function k(n, e = !1) {
+function _(n, e = !1) {
   return a`<button
     type="button"
     class="dialog-close"
@@ -1398,7 +1398,7 @@ function C(n) {
   const t = e.getBoundingClientRect();
   n.clientX >= t.left && n.clientX <= t.right && n.clientY >= t.top && n.clientY <= t.bottom || e.dispatchEvent(new Event("cancel", { cancelable: !0 })) && e.close();
 }
-const ye = class ye extends x {
+const ve = class ve extends x {
   constructor() {
     super(...arguments), this.value = "", this.disabled = !1, this.allowAdd = !1, this.filtered = !1, this.filterLabel = "", this.scopeKey = "", this.draft = "", this.generation = 0;
   }
@@ -1467,7 +1467,7 @@ const ye = class ye extends x {
       >
         <div class="card-head">
           <h2 id="journal-search-title">Search Journal</h2>
-          ${k((e) => this.close(e))}
+          ${_((e) => this.close(e))}
         </div>
         ${this.filterLabel ? a`<p class="muted">${this.filterLabel}</p>` : ""}
         <form
@@ -1494,7 +1494,7 @@ const ye = class ye extends x {
       </dialog>`;
   }
 };
-ye.properties = {
+ve.properties = {
   value: {},
   disabled: { type: Boolean },
   allowAdd: { type: Boolean },
@@ -1502,9 +1502,9 @@ ye.properties = {
   filterLabel: {},
   context: { attribute: !1 },
   scopeKey: {}
-}, ye.styles = [
-  q,
-  S`
+}, ve.styles = [
+  S,
+  q`
       :host {
         display: none;
       }
@@ -1542,9 +1542,9 @@ ye.properties = {
       }
     `
 ];
-let rt = ye;
-customElements.get("kaleidescape-journal-shortcuts") || customElements.define("kaleidescape-journal-shortcuts", rt);
-function G() {
+let ot = ve;
+customElements.get("kaleidescape-journal-shortcuts") || customElements.define("kaleidescape-journal-shortcuts", ot);
+function Z() {
   const n = window.innerWidth;
   return n <= 600 ? "mobile" : n <= 1024 ? "tablet" : "desktop";
 }
@@ -1553,10 +1553,10 @@ class b extends Error {
     super(e), this.code = e;
   }
 }
-const g = "kaleidescape_companion", os = 15e3, f = ({ entry_id: n, dataset_id: e }) => ({
+const u = "kaleidescape_companion", cs = 15e3, m = ({ entry_id: n, dataset_id: e }) => ({
   entry_id: n,
   dataset_id: e
-}), ls = 256 * 1024 * 1024, ni = 5 * 1024 * 1024, ds = 32 * 1024 * 1024;
+}), ps = 256 * 1024 * 1024, oi = 5 * 1024 * 1024, us = 32 * 1024 * 1024;
 function Q() {
   const n = globalThis.crypto;
   if (typeof n?.randomUUID == "function") return n.randomUUID();
@@ -1588,10 +1588,10 @@ async function ge(n, e, t) {
     }), i.releaseLock();
   }
 }
-function u(n) {
+function g(n) {
   return typeof n == "object" && n !== null && "code" in n && typeof n.code == "string" ? n.code : "connection_lost";
 }
-function w(n) {
+function y(n) {
   return {
     unauthorized: "Access to this operation is denied. Your journal has been cleared from this view.",
     not_ready: "The integration is not loaded. Reload the connection after it starts.",
@@ -1640,9 +1640,9 @@ function w(n) {
     provider_identity_mismatch: "The provider could not verify this movie's title and release year.",
     tmdb_not_found: "TMDB did not find a matching title and release year.",
     tmdb_ambiguous: "TMDB returned more than one matching movie. No data was imported."
-  }[u(n)] ?? "The connection was interrupted. The result could not be confirmed.";
+  }[g(n)] ?? "The connection was interrupted. The result could not be confirmed.";
 }
-async function D(n, e = os) {
+async function P(n, e = cs) {
   let t;
   try {
     return await Promise.race([
@@ -1658,36 +1658,66 @@ async function D(n, e = os) {
     clearTimeout(t);
   }
 }
-class Ft {
+class Ht {
   constructor(e) {
     this.transport = e;
   }
   call(e) {
-    return D(this.transport.callWS(e));
+    return P(this.transport.callWS(e));
+  }
+  automationStatuses(e) {
+    return this.call({
+      type: `${u}/automations/status`,
+      ...m(e)
+    });
+  }
+  updateAutomationBlueprint(e, t, i) {
+    return this.call({
+      type: `${u}/automations/update`,
+      ...m(e),
+      template: t,
+      revision: i
+    });
+  }
+  automationTemplate(e, t) {
+    return this.call({
+      type: `${u}/automations/template`,
+      ...m(e),
+      template: t
+    });
+  }
+  installAutomationBlueprint(e, t, i = !1) {
+    return this.call({
+      type: "blueprint/save",
+      domain: "automation",
+      path: e,
+      yaml: t,
+      ...i ? { allow_override: !0 } : {}
+    });
   }
   controlInfo(e) {
-    return this.call({ type: `${g}/control/info`, ...f(e) });
+    return this.call({ type: `${u}/control/info`, ...m(e) });
   }
   controlDiscover(e) {
-    return D(
+    return P(
       this.transport.callWS({
-        type: `${g}/control/discover`,
-        ...f(e)
+        type: `${u}/control/discover`,
+        ...m(e)
       }),
       7e4
     );
   }
   controlStatus(e, t) {
     return this.call({
-      type: `${g}/control/status`,
-      ...f(e),
+      type: `${u}/control/status`,
+      ...m(e),
       ...t ? { player_id: t } : {}
     });
   }
   controlPrepare(e, t, i, s) {
     return this.call({
-      type: `${g}/control/prepare`,
-      ...f(e),
+      type: `${u}/control/prepare`,
+      ...m(e),
       operation: t,
       ...i ? { title_id: i } : {},
       ...s ? { player_id: s } : {}
@@ -1703,30 +1733,30 @@ class Ft {
   }
   controlAcknowledge(e, t) {
     return this.call({
-      type: `${g}/control/acknowledge`,
-      ...f(e),
+      type: `${u}/control/acknowledge`,
+      ...m(e),
       request_id: t,
       confirmation: "REVIEWED"
     });
   }
   metadataStatus(e, t = !1) {
     return this.call({
-      type: `${g}/metadata/${t ? "sync" : "status"}`,
-      ...f(e)
+      type: `${u}/metadata/${t ? "sync" : "status"}`,
+      ...m(e)
     });
   }
   titleScrapeOptions(e, t) {
     return this.call({
-      type: `${g}/metadata/title/options`,
-      ...f(e),
+      type: `${u}/metadata/title/options`,
+      ...m(e),
       title_id: t
     });
   }
   titleScrapePreview(e, t, i, s = "", r = "") {
-    return D(
+    return P(
       this.transport.callWS({
-        type: `${g}/metadata/title/preview`,
-        ...f(e),
+        type: `${u}/metadata/title/preview`,
+        ...m(e),
         title_id: t,
         provider: i,
         search_id: s,
@@ -1736,10 +1766,10 @@ class Ft {
     );
   }
   titleScrapeSearch(e, t, i, s, r) {
-    return D(
+    return P(
       this.transport.callWS({
-        type: `${g}/metadata/title/search`,
-        ...f(e),
+        type: `${u}/metadata/title/search`,
+        ...m(e),
         title_id: t,
         provider: i,
         query: s,
@@ -1749,10 +1779,10 @@ class Ft {
     );
   }
   titleScrapeRefresh(e, t, i, s, r, o = !1) {
-    return D(
+    return P(
       this.transport.callWS({
-        type: `${g}/metadata/title/refresh`,
-        ...f(e),
+        type: `${u}/metadata/title/refresh`,
+        ...m(e),
         request_id: Q(),
         title_id: t,
         provider: i,
@@ -1764,10 +1794,10 @@ class Ft {
     );
   }
   titleScrapeRefreshChoice(e, t, i, s, r, o = !1) {
-    return D(
+    return P(
       this.transport.callWS({
-        type: `${g}/metadata/title/refresh_choice`,
-        ...f(e),
+        type: `${u}/metadata/title/refresh_choice`,
+        ...m(e),
         request_id: Q(),
         title_id: t,
         provider: i,
@@ -1785,7 +1815,7 @@ class Ft {
     return this.prepareCommand(e, "metadata/title/draft", { data: t });
   }
   applyMetadataDraft(e) {
-    return D(
+    return P(
       this.transport.callWS({ ...e.message }),
       185e3
     );
@@ -1804,13 +1834,13 @@ class Ft {
   }
   cancelTitleScrape(e, t) {
     return this.call({
-      type: `${g}/metadata/title/cancel`,
-      ...f(e),
+      type: `${u}/metadata/title/cancel`,
+      ...m(e),
       plan_id: t
     });
   }
   applyTitleScrape(e) {
-    return D(
+    return P(
       this.transport.callWS({ ...e.message }),
       8e4
     );
@@ -1819,14 +1849,14 @@ class Ft {
     if (!/^[a-f0-9-]{36}$/.test(t) || !/^(poster|backdrop|match)-[0-9]{1,3}$/.test(i))
       throw new b("invalid_request");
     return this.raster(
-      `/api/${g}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/metadata/review/${t}/image/${i}`,
+      `/api/${u}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/metadata/review/${t}/image/${i}`,
       s
     );
   }
   metadataPreview(e) {
     return this.call({
-      type: `${g}/journal/metadata/preview`,
-      ...f(e)
+      type: `${u}/journal/metadata/preview`,
+      ...m(e)
     });
   }
   prepareMetadataRepair(e, t) {
@@ -1847,8 +1877,8 @@ class Ft {
   }
   libraryEdit(e, t) {
     return this.call({
-      type: `${g}/library/edit/get`,
-      ...f(e),
+      type: `${u}/library/edit/get`,
+      ...m(e),
       title_id: t
     });
   }
@@ -1862,15 +1892,15 @@ class Ft {
   saveLibraryEdit(e) {
     return this.call({ ...e.message });
   }
-  uiPreferences(e, t = !1, i = "library", s = G()) {
+  uiPreferences(e, t = !1, i = "library", s = Z()) {
     return this.call({
-      type: `${g}/ui/${t ? "shared" : "preferences"}/get`,
+      type: `${u}/ui/${t ? "shared" : "preferences"}/get`,
       ...i !== "library" ? { area: i } : {},
       ...t ? {} : { profile: s },
-      ...f(e)
+      ...m(e)
     });
   }
-  prepareUIPreferences(e, t, i, s, r = "library", o = G()) {
+  prepareUIPreferences(e, t, i, s, r = "library", o = Z()) {
     return this.prepareCommand(
       e,
       `ui/${t ? "shared" : "preferences"}/update`,
@@ -1887,16 +1917,16 @@ class Ft {
   }
   testDashboard(e, t, i) {
     return this.call({
-      type: `${g}/dashboard/preview`,
-      ...f(e),
+      type: `${u}/dashboard/preview`,
+      ...m(e),
       request_id: t,
       name: i
     });
   }
   verifyTestDashboard(e, t) {
     return this.call({
-      type: `${g}/dashboard/verify`,
-      ...f(e),
+      type: `${u}/dashboard/verify`,
+      ...m(e),
       request_id: t
     });
   }
@@ -1925,13 +1955,13 @@ class Ft {
     });
   }
   info() {
-    return this.call({ type: `${g}/info` });
+    return this.call({ type: `${u}/info` });
   }
   list(e, t = "", i = "", s, r = "completed_at", o = !0, d = !1, h) {
     return this.call({
-      type: `${g}/${h ? "library/viewings" : "journal/list"}`,
+      type: `${u}/${h ? "library/viewings" : "journal/list"}`,
       ...h ? { title_id: h } : {},
-      ...f(e),
+      ...m(e),
       query: t,
       limit: 25,
       sort: r,
@@ -1943,15 +1973,15 @@ class Ft {
   }
   get(e, t) {
     return this.call({
-      type: `${g}/journal/get`,
-      ...f(e),
+      type: `${u}/journal/get`,
+      ...m(e),
       viewing_id: t
     });
   }
   calendarMonth(e, t, i, s = "", r = "", o = !1, d) {
     return this.call({
-      type: `${g}/journal/calendar`,
-      ...f(e),
+      type: `${u}/journal/calendar`,
+      ...m(e),
       start: t,
       end: i,
       query: s,
@@ -1962,64 +1992,64 @@ class Ft {
   }
   calendarDetails(e, t) {
     return this.call({
-      type: `${g}/journal/calendar/get`,
-      ...f(e),
+      type: `${u}/journal/calendar/get`,
+      ...m(e),
       viewing_id: t
     });
   }
   viewingLibrary(e, t) {
     return this.call({
-      type: `${g}/library/viewing`,
-      ...f(e),
+      type: `${u}/library/viewing`,
+      ...m(e),
       viewing_id: t
     });
   }
   sessions(e, t) {
     return this.call({
-      type: `${g}/journal/sessions`,
-      ...f(e),
+      type: `${u}/journal/sessions`,
+      ...m(e),
       viewing_id: t
     });
   }
   nowPlaying(e, t) {
     return this.call({
-      type: `${g}/now_playing`,
-      ...f(e),
+      type: `${u}/now_playing`,
+      ...m(e),
       ...t ? { player_id: t } : {}
     });
   }
   libraryInfo(e) {
-    return this.call({ type: `${g}/library/info`, ...f(e) });
+    return this.call({ type: `${u}/library/info`, ...m(e) });
   }
   libraryPurchaseTotals(e) {
     return this.call({
-      type: `${g}/library/purchases/summary`,
-      ...f(e)
+      type: `${u}/library/purchases/summary`,
+      ...m(e)
     });
   }
   libraryList(e, t = {}) {
     return this.call({
-      type: `${g}/library/list`,
-      ...f(e),
+      type: `${u}/library/list`,
+      ...m(e),
       filters: t
     });
   }
   libraryVersions(e, t, i = 0, s) {
     return this.call({
-      type: `${g}/library/versions`,
-      ...f(e),
+      type: `${u}/library/versions`,
+      ...m(e),
       title_id: t,
       offset: i,
       ...s === void 0 ? {} : { revision: s }
     });
   }
   librarySync(e) {
-    return this.call({ type: `${g}/library/sync`, ...f(e) });
+    return this.call({ type: `${u}/library/sync`, ...m(e) });
   }
   collectionTargets(e, t, i) {
     return this.call({
-      type: `${g}/library/collections/targets`,
-      ...f(e),
+      type: `${u}/library/collections/targets`,
+      ...m(e),
       title_id: t,
       revision: i
     });
@@ -2036,15 +2066,15 @@ class Ft {
   }
   collectionCheck(e, t) {
     return this.call({
-      type: `${g}/library/collections/check`,
-      ...f(e),
+      type: `${u}/library/collections/check`,
+      ...m(e),
       request_id: t
     });
   }
   collectionAcknowledge(e, t) {
     return this.call({
-      type: `${g}/library/collections/acknowledge`,
-      ...f(e),
+      type: `${u}/library/collections/acknowledge`,
+      ...m(e),
       request_id: t,
       confirmation: "ACKNOWLEDGE"
     });
@@ -2052,7 +2082,7 @@ class Ft {
   async libraryArtwork(e, t, i) {
     if (!/^[a-f0-9]{64}$/.test(t)) throw new b("invalid_request");
     return this.raster(
-      `/api/${g}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/library/artwork/${t}`,
+      `/api/${u}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/library/artwork/${t}`,
       i
     );
   }
@@ -2069,12 +2099,12 @@ class Ft {
     const s = i.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase();
     if (!s || !["image/jpeg", "image/png", "image/webp"].includes(s))
       throw await i.body?.cancel(), new b("invalid_request");
-    return ge(i, ni, s);
+    return ge(i, oi, s);
   }
   settingsTransfer(e, t, i, s = {}, r = "") {
     return this.call({
-      ...f(e),
-      type: `${g}/settings/transfer`,
+      ...m(e),
+      type: `${u}/settings/transfer`,
       operation: t,
       categories: i,
       data: s,
@@ -2084,14 +2114,14 @@ class Ft {
   settings(e, t, i = {}) {
     return this.call({
       ...i,
-      ...f(e),
-      type: `${g}/settings/${t}`
+      ...m(e),
+      type: `${u}/settings/${t}`
     });
   }
   inspect(e, t, i = 0, s, r) {
     return this.call({
-      type: `${g}/database/inspect`,
-      ...f(e),
+      type: `${u}/database/inspect`,
+      ...m(e),
       table: t,
       offset: i,
       ...s == null ? {} : { revision: s },
@@ -2106,8 +2136,8 @@ class Ft {
   }
   searchImportMatches(e, t, i, s) {
     return this.call({
-      type: `${g}/database/import/search`,
-      ...f(e),
+      type: `${u}/database/import/search`,
+      ...m(e),
       plan_id: t.plan_id,
       revision: t.revision,
       purchase_key: i,
@@ -2116,8 +2146,8 @@ class Ft {
   }
   matchImportPurchase(e, t, i, s) {
     return this.call({
-      type: `${g}/database/import/match`,
-      ...f(e),
+      type: `${u}/database/import/match`,
+      ...m(e),
       plan_id: t.plan_id,
       revision: t.revision,
       purchase_key: i,
@@ -2134,13 +2164,13 @@ class Ft {
   applyImport(e) {
     return this.call({ ...e.message });
   }
-  async previewImport(e, t, i) {
-    const s = /\.(sqlite|sqlite3|db)$/i.test(t.name) ? "sqlite" : /\.json$/i.test(t.name) ? "json" : null;
-    if (!s) throw new b("invalid_request");
-    if (!t.size || t.size > ds)
+  async previewImport(e, t, i, s = !1) {
+    const r = /\.(sqlite|sqlite3|db)$/i.test(t.name) ? "sqlite" : /\.json$/i.test(t.name) ? "json" : null;
+    if (!r) throw new b("invalid_request");
+    if (!t.size || t.size > us)
       throw new b("import_too_large");
-    const r = await this.transport.fetchWithAuth(
-      `/api/${g}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/import/preview?format=${s}`,
+    const o = await this.transport.fetchWithAuth(
+      `/api/${u}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/import/preview?format=${r}${s ? "&purchase_only=true" : ""}`,
       {
         method: "POST",
         body: t,
@@ -2150,23 +2180,29 @@ class Ft {
         headers: { "Content-Type": "application/octet-stream" }
       }
     );
-    if (!r.ok) {
-      const d = {
+    if (!o.ok) {
+      const h = {
         401: "unauthorized",
         403: "unauthorized",
         413: "import_too_large",
         404: "not_found"
       };
-      if (d[r.status]) throw new b(d[r.status]);
-      const h = await r.json().catch(() => null);
-      throw new b(h?.code ?? "connection_lost");
+      if (h[o.status]) throw new b(h[o.status]);
+      const c = await o.json().catch(() => null);
+      throw new b(c?.code ?? "connection_lost");
     }
-    const o = await ge(
-      r,
+    const d = await ge(
+      o,
       8 * 1024 * 1024,
       "application/json"
     );
-    return JSON.parse(await o.text());
+    return JSON.parse(await d.text());
+  }
+  reconcilePurchases(e) {
+    return this.call({
+      type: `${u}/purchases/reconcile`,
+      ...m(e)
+    });
   }
   purge(e) {
     return this.call({ ...e.message });
@@ -2189,12 +2225,12 @@ class Ft {
       );
     }
     const s = i.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase();
-    return !s || !["image/jpeg", "image/png", "image/webp"].includes(s) ? (await i.body?.cancel(), null) : ge(i, ni, s);
+    return !s || !["image/jpeg", "image/png", "image/webp"].includes(s) ? (await i.body?.cancel(), null) : ge(i, oi, s);
   }
   librarySuggestions(e, t, i, s = !1) {
     return this.call({
-      type: `${g}/library/suggest`,
-      ...f(e),
+      type: `${u}/library/suggest`,
+      ...m(e),
       field: t,
       query: i,
       fuzzy: s
@@ -2202,16 +2238,16 @@ class Ft {
   }
   librarySearch(e, t, i = !0) {
     return this.call({
-      type: `${g}/library/search`,
-      ...f(e),
+      type: `${u}/library/search`,
+      ...m(e),
       query: t,
       fuzzy: i
     });
   }
   calendarStatus(e) {
     return this.call({
-      type: `${g}/calendar/status`,
-      ...f(e)
+      type: `${u}/calendar/status`,
+      ...m(e)
     });
   }
   prepareCalendarSync(e, t) {
@@ -2225,8 +2261,8 @@ class Ft {
   }
   calendarMaintain(e, t, i, s = "") {
     return this.call({
-      type: `${g}/calendar/maintain`,
-      ...f(e),
+      type: `${u}/calendar/maintain`,
+      ...m(e),
       action: t,
       fingerprint: i,
       review_token: s,
@@ -2235,15 +2271,15 @@ class Ft {
   }
   calendarCancel(e, t) {
     return this.call({
-      type: `${g}/calendar/cancel`,
-      ...f(e),
+      type: `${u}/calendar/cancel`,
+      ...m(e),
       job_id: t
     });
   }
   validateDatabaseQuery(e, t, i) {
     return this.call({
-      type: `${g}/database/validate_query`,
-      ...f(e),
+      type: `${u}/database/validate_query`,
+      ...m(e),
       table: t,
       query: i
     });
@@ -2293,17 +2329,17 @@ class Ft {
   prepareCommand(e, t, i) {
     const s = structuredClone({
       ...i,
-      ...f(e),
-      type: `${g}/${t}`,
+      ...m(e),
+      type: `${u}/${t}`,
       request_id: Q()
     });
-    return { scope: f(e), message: Object.freeze(s) };
+    return { scope: m(e), message: Object.freeze(s) };
   }
   mutate(e) {
     return this.call({ ...e.message });
   }
   async download(e, t, i) {
-    const s = `/api/${g}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/export?format=${t}`, r = await this.transport.fetchWithAuth(s, {
+    const s = `/api/${u}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/export?format=${t}`, r = await this.transport.fetchWithAuth(s, {
       signal: i,
       cache: "no-store",
       redirect: "error"
@@ -2320,7 +2356,7 @@ class Ft {
     }
     return ge(
       r,
-      ls,
+      ps,
       t === "json" ? "application/json" : "application/vnd.sqlite3"
     );
   }
@@ -2328,30 +2364,30 @@ class Ft {
 function $(n, e, t = `${e}s`) {
   return `${n} ${n === 1 ? e : t}`;
 }
-function Ye(n = 0) {
+function Ze(n = 0) {
   const e = Math.floor(n / 60);
   return `${Math.floor(e / 60)}h ${e % 60}m`;
 }
-function Bt(n, e, t = !!e) {
+function Vt(n, e, t = !!e) {
   const i = t ? e?.count : n?.month_viewing_count, s = t ? e?.watchedSeconds : n?.month_watched_seconds;
   return a`<span class=${t ? "calendar-totals-full" : ""}
       >Total Viewings ${n?.viewing_count ?? 0} ·
       ${t ? e?.month ?? "Selected Month" : "This Month"}
       ${i ?? "—"} · Watched Time: Total
-      ${Ye(n?.watched_seconds)} ·
+      ${Ze(n?.watched_seconds)} ·
       ${t ? "Selected Month" : "This Month"}
-      ${s === void 0 && t ? "—" : Ye(s)}</span
+      ${s === void 0 && t ? "—" : Ze(s)}</span
     >
-    ${t ? a`<span class="calendar-totals-compact">${i === void 0 ? "— viewings" : $(i, "viewing")} · ${s === void 0 ? "—" : Ye(s)} watched</span>` : l}`;
+    ${t ? a`<span class="calendar-totals-compact">${i === void 0 ? "— viewings" : $(i, "viewing")} · ${s === void 0 ? "—" : Ze(s)} watched</span>` : l}`;
 }
-function Vt(n, e) {
+function Wt(n, e) {
   return n ? n.error ? a`<span class="error" role="alert"
         >${n.error} <button @click=${e}>Retry month</button></span
       >` : n.loading ? a`<span role="status">Loading month…</span>` : n.empty ? a`<span class="calendar-empty-notice" role="status"
             >No viewings match this month</span
           >` : l : l;
 }
-function Ei(n, e, t, i = !1) {
+function Ui(n, e, t, i = !1) {
   const s = new Date(n.started_at), r = Number.isNaN(s.getTime()) ? "—" : s.toLocaleDateString();
   return a`<li
     class=${e === n.id ? "journal-row selected" : "journal-row"}
@@ -2371,7 +2407,7 @@ function Ei(n, e, t, i = !1) {
     >
   </li>`;
 }
-function Ri(n, e) {
+function Li(n, e) {
   return a`<h3 class="journal-title">${n.title}</h3>
     <dl class="journal-summary">
       <div>
@@ -2402,7 +2438,7 @@ function Ri(n, e) {
       </div>
     </dl>`;
 }
-const zi = S`
+const Ai = q`
   .calendar-totals-compact {
     display: none;
   }
@@ -2416,8 +2452,8 @@ const zi = S`
       white-space: nowrap;
     }
   }
-`, Li = S`
-  ${zi}
+`, Ti = q`
+  ${Ai}
   .journal [hidden] {
     display: none;
   }
@@ -2612,8 +2648,8 @@ const zi = S`
       font-size: 18px;
     }
   }
-`, hs = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20type='positive'%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(1.33,%200)'%3e%3cg%20transform='translate(0,%2016.27)'%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0.000109100102%200.246970954%2077.0827837%200.246970954%2077.0827837%2063.7145228%200.000109100102%2063.7145228'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M77.0137759,27.0426556%20C76.2423237,14.6741909%2069.9521992,5.42041494%2060.4876349,0.246970954%20C60.5414108,0.548381743%2060.273195,0.925145228%2059.9678008,0.791701245%20C53.7772614,-1.91634855%2043.2753527,6.84780083%2035.9365975,2.25825726%20C35.9917012,3.90539419%2035.6700415,11.940249%2024.3515353,12.4063071%20C24.0843154,12.4172614%2023.9372614,12.1443983%2024.1062241,11.9512033%20C25.619917,10.2247303%2027.1482158,5.85360996%2024.9507054,3.5233195%20C20.2446473,7.74041494%2017.5117012,9.32746888%208.48829876,7.23319502%20C2.71103734,13.2740249%20-0.562655602,21.5419087%200.08,31.8413278%20C1.39120332,52.86639%2021.0848133,64.8846473%2040.9165145,63.6471369%20C60.746888,62.4106224%2078.3253112,48.0677178%2077.0137759,27.0426556'%20fill='%23FA320A'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M40.8717012,11.4648963%20C44.946722,10.49361%2056.6678838,11.3702905%2060.4232365,16.3518672%20C60.6486307,16.6506224%2060.3312863,17.2159336%2059.9678008,17.0572614%20C53.7772614,14.3492116%2043.2753527,23.113361%2035.9365975,18.5238174%20C35.9917012,20.1709544%2035.6700415,28.2058091%2024.3515353,28.6718672%20C24.0843154,28.6828216%2023.9372614,28.4099585%2024.1062241,28.2167635%20C25.619917,26.4902905%2027.1478838,22.1191701%2024.9507054,19.7888797%20C19.8243983,24.3827386%2017.0453112,25.8589212%205.91900415,22.8514523%20C5.55485477,22.753195%205.67900415,22.1679668%206.06639004,22.020249%20C8.16929461,21.2165975%2012.933444,17.6965975%2017.4406639,16.1450622%20C18.2987552,15.8499585%2019.1541909,15.6209129%2019.9890456,15.4878008%20C15.02639,15.0443154%2012.7893776,14.3541909%209.63286307,14.8302075%20C9.28697095,14.8823237%209.05195021,14.479668%209.26639004,14.2034855%20C13.5193361,8.7253112%2021.3540249,7.07087137%2026.1878838,9.98107884%20C23.2082988,6.28912863%2020.8743568,3.34473029%2020.8743568,3.34473029%20L26.4046473,0.203485477%20C26.4046473,0.203485477%2028.6894606,5.30821577%2030.3518672,9.02340249%20C34.4657261,2.94506224%2042.119834,2.38406639%2045.3536929,6.69676349%20C45.5455602,6.95302905%2045.3450622,7.31751037%2045.0247303,7.30987552%20C42.3926971,7.24580913%2040.9434025,9.63983402%2040.833527,11.4605809%20L40.8717012,11.4648963'%20fill='%2300912D'%3e%3c/path%3e%3c/g%3e%3c/svg%3e", cs = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20type='negative'%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(0,%201.23)'%3e%3cg%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0%200.161950465%2079.7417075%200.161950465%2079.7417075%2077.522807%200%2077.522807'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M71.4638596,70.225614%20C56.3459649,71.0192982%2053.2568421,53.7203509%2047.325614,53.8435088%20C44.7982456,53.8964912%2042.8063158,56.5389474%2043.6810526,59.6185965%20C44.1621053,61.3115789%2045.4964912,63.794386%2046.337193,65.3350877%20C49.302807,70.7719298%2044.9185965,76.9245614%2039.7880702,77.4449123%20C31.2621053,78.3098246%2027.705614,73.3638596%2027.925614,68.3007018%20C28.1729825,62.6168421%2032.9922807,56.8091228%2028.0494737,54.3378947%20C22.8694737,51.7480702%2018.6585965,61.8754386%2013.7017544,64.1357895%20C9.2154386,66.1817544%202.9877193,64.5954386%200.773684211,59.6136842%20C-0.781403509,56.1129825%20-0.498596491,49.3722807%206.42526316,46.8003509%20C10.7501754,45.1940351%2020.3880702,48.9010526%2020.8824561,44.205614%20C21.4522807,38.7929825%2010.7575439,38.3364912%207.53754386,37.0385965%20C1.84,34.7424561%20-1.52280702,29.8291228%201.11192982,24.5582456%20C3.08877193,20.6045614%208.90526316,18.9957895%2013.3449123,20.7277193%20C18.6635088,22.8024561%2019.517193,28.3189474%2022.2421053,30.6129825%20C24.5894737,32.5901754%2027.8021053,32.8375439%2029.9031579,31.4782456%20C31.4526316,30.4754386%2031.9684211,28.2729825%2031.3838596,26.2610526%20C30.6084211,23.5901754%2028.5505263,21.9235088%2026.542807,20.2905263%20C22.9698246,17.3859649%2017.925614,14.8884211%2020.9768421,6.96035088%20C23.4778947,0.463157895%2030.8133333,0.229122807%2030.8133333,0.229122807%20C33.7277193,-0.0985964912%2036.3375439,0.781403509%2038.4642105,2.68140351%20C41.3073684,5.22140351%2041.8610526,8.61649123%2041.3852632,12.2385965%20C40.9505263,15.5449123%2039.7803509,18.4407018%2039.1701754,21.7164912%20C38.4621053,25.5196491%2040.4947368,29.3519298%2044.3603509,29.5010526%20C49.4449123,29.6975439%2050.9694737,25.7894737%2051.5915789,23.3122807%20C52.5024561,19.6877193%2053.6978947,16.322807%2057.0617544,14.2035088%20C61.8894737,11.1617544%2068.5954386,11.8284211%2071.7066667,17.674386%20C74.1677193,22.3%2073.3775439,28.6677193%2069.6024561,32.1449123%20C67.9087719,33.7045614%2065.8722807,34.254386%2063.6694737,34.2698246%20C60.5105263,34.2922807%2057.3529825,34.2147368%2054.4207018,35.6929825%20C52.4245614,36.6989474%2051.5547368,38.3382456%2051.5550877,40.5354386%20C51.5550877,42.6768421%2052.6698246,44.0754386%2054.4761404,44.985614%20C57.8782456,46.7003509%2061.6336842,47.0508772%2065.3087719,47.694386%20C70.6382456,48.6277193%2075.3242105,50.5049123%2078.3326316,55.4505263%20C78.3596491,55.4940351%2078.3859649,55.5378947%2078.4115789,55.5821053%20C81.8666667,61.4375439%2078.2533333,69.8687719%2071.4638596,70.225614'%20fill='%230AC855'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3c/g%3e%3c/svg%3e", ps = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(10.1,%200)'%3e%3cg%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0.0178438662%200.124907063%2059.6019307%200.124907063%2059.6019307%2079.9821561%200.0178438662%2079.9821561'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M2.53115242,19.0988848%20C2.76163569,23.9952416%2014.8892193,27.8762825%2029.8007435,27.7912268%20C42.8237918,27.7168773%2053.6874349,24.6411896%2056.3485502,20.6004461%20C55.7421561,19.9265428%2054.904684,19.4643866%2053.9613383,19.3391822%20C53.9714498,19.220223%2053.9779926,19.1003717%2053.9773978,18.9787361%20C53.9663941,17.0423792%2052.5460223,15.4477323%2050.695316,15.1503346%20C50.7440892,14.8999257%2050.7696654,14.6408922%2050.7681784,14.3759108%20C50.7559851,12.2194796%2048.9977695,10.481487%2046.8413383,10.4936803%20C46.7925651,10.4939777%2046.7449814,10.4999257%2046.6965056,10.5020074%20C46.8344981,10.0987361%2046.9118216,9.66780669%2046.9094424,9.21784387%20C46.8969517,7.06141264%2045.1390335,5.32342007%2042.9826022,5.33561338%20C42.4877323,5.33858736%2042.0169517,5.43702602%2041.5821561,5.60743494%20C40.9653532,4.44639405%2039.7811152,3.63717472%2038.4002974,3.54379182%20C38.1597026,1.60743494%2036.5055762,0.113605948%2034.506171,0.124843367%20C33.247881,0.13204461%2032.1350186,0.736356877%2031.4263197,1.66453532%20C30.7075093,0.882379182%2029.6773234,0.391672862%2028.5314498,0.398215613%20C26.3750186,0.410408922%2024.637026,2.16862454%2024.6492193,4.32475836%20C24.6515985,4.73665428%2024.718513,5.13249071%2024.8386617,5.50453532%20C23.9586617,5.66780669%2023.1848327,6.12520446%2022.6191822,6.77144981%20C22.1701115,5.09888476%2020.642974,3.86973978%2018.8297398,3.8798513%20C17.1357621,3.88966543%2015.7040892,4.97873606%2015.172342,6.48981413%20C13.7332342,7.07182156%2012.7202974,8.48356877%2012.7298141,10.1302602%20C12.7318959,10.4960595%2012.7878067,10.8481784%2012.8838662,11.1836431%20C12.398513,10.9713011%2011.8634944,10.852342%2011.2996283,10.8556134%20C9.5994052,10.8654275%208.16327138,11.9622305%207.63598513,13.4822305%20C7.13040892,13.2472862%206.56832714,13.1137546%205.973829,13.1173234%20C3.81739777,13.1295167%202.07910781,14.8874349%202.09153162,17.0438662%20C2.09546468,17.7549442%202.29263941,18.4187361%202.62810409,18.9909294%20C2.59390335,19.0254275%202.56386617,19.063197%202.53115242,19.0988848'%20fill='%23F9D320'%20mask='url(%23mask-2)'%3e%3c/path%3e%3cpath%20d='M50.9736803,68.1576208%20C49.8275093,69.89829%2047.6002974,71.7008178%2045.2692937,72.9026022%20L49.2541264,32.4853532%20C51.7894424,31.6707807%2054.2634944,30.5915242%2056.085948,29.0438662%20L50.9736803,68.1576208%20Z%20M41.3037918,74.5885502%20C37.4450558,75.8655762%2035.201487,76.2614126%2031.9895911,76.5766543%20L32.4901115,35.0432714%20C36.0383643,34.9415613%2040.6301859,34.4606691%2044.5427509,33.6255762%20L41.3037918,74.5885502%20Z%20M18.29829,74.5885502%20L15.0596283,33.6255762%20C18.9718959,34.4606691%2023.5637175,34.9415613%2027.1119703,35.0432714%20L27.6124907,76.5766543%20C24.4005948,76.2614126%2022.1573234,75.8655762%2018.29829,74.5885502%20Z%20M8.62869888,68.1576208%20L3.51613383,29.0438662%20C5.33858736,30.5915242%207.81263941,31.6707807%2010.3479554,32.4853532%20L14.3327881,72.9026022%20C12.0017844,71.7008178%209.77457249,69.89829%208.62869888,68.1576208%20Z%20M50.687881,13.6110037%20C50.7384387,13.8578439%2050.7666914,14.1130112%2050.7681784,14.3750186%20C50.7696654,14.64%2050.7440892,14.8990335%2050.6950186,15.1494424%20C52.5460223,15.4465428%2053.9663941,17.0411896%2053.9773978,18.9778439%20C53.9779926,19.0991822%2053.9714498,19.2193309%2053.9613383,19.3379926%20C54.904684,19.463197%2055.7421561,19.9253532%2056.3485502,20.5992565%20C53.6877323,24.6402974%2042.8237918,27.7159851%2029.8010409,27.790632%20C14.8895167,27.8759851%202.76193309,23.9952416%202.53115242,19.0985874%20C2.56386617,19.063197%202.59390335,19.0251301%202.62810409,18.9909294%20C2.39791822,18.5983643%202.23910781,18.1608922%202.15702602,17.6966543%20C0.729219331,19.0518959%20-0.13472119,20.1445353%200.0172490706,21.7356134%20C0.0318215613,21.9482528%206.3339777,67.0709294%206.3339777,67.0709294%20C7.06111524,74.2173978%2017.4388104,79.9292193%2029.8010409,80%20C42.1632714,79.9292193%2052.5412639,74.2173978%2053.2681041,67.0709294%20C53.2681041,67.0709294%2059.5702602,21.9482528%2059.5848327,21.7356134%20C59.8866914,18.5531599%2056.162974,15.6642379%2050.687881,13.6110037%20L50.687881,13.6110037%20Z'%20fill='%23DB382A'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M15.0596283,33.6255762%20L18.29829,74.5885502%20C22.1573234,75.8655762%2024.4005948,76.2614126%2027.6124907,76.5766543%20L27.1119703,35.0432714%20C23.5637175,34.9415613%2018.9718959,34.4606691%2015.0596283,33.6255762'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M31.9895911,76.5766543%20C35.201487,76.2614126%2037.4447584,75.8655762%2041.3037918,74.5885502%20L44.5424535,33.6255762%20C40.6301859,34.4606691%2036.0383643,34.9415613%2032.4901115,35.0432714%20L31.9895911,76.5766543'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M45.2692937,72.9026022%20C47.6002974,71.7008178%2049.8275093,69.89829%2050.9733829,68.1576208%20L56.085948,29.0438662%20C54.2634944,30.5915242%2051.7894424,31.6707807%2049.2541264,32.4853532%20L45.2692937,72.9026022'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M3.51613383,29.0438662%20L8.62840149,68.1576208%20C9.77457249,69.89829%2012.0017844,71.7008178%2014.3327881,72.9026022%20L10.3479554,32.4853532%20C7.81263941,31.6707807%205.33858736,30.5915242%203.51613383,29.0438662'%20fill='%23FFFFFE'%3e%3c/path%3e%3c/g%3e%3c/svg%3e", us = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(0,%2012.46)'%3e%3cg%3e%3cpath%20d='M45.4780328,39.6152131%20C45.9506885,38.4445902%2047.6259672,37.7314098%2048.8288525,37.8148197%20C50.114623,37.904%2051.4803934,39.2556066%2051.719082,40.584918%20C51.7634098,40.5366557%2051.8098361,40.4910164%2051.8570492,40.4461639%20C52.2699016,40.0516721%2052.7871475,39.7899016%2053.3531803,39.7177705%20C53.266623,39.3342951%2053.2459016,38.9238033%2053.3051803,38.5025574%20C53.5142295,37.0205902%2054.7034754,35.9092459%2056.0650492,35.9202623%20C56.9437377,35.9273443%2057.714623,36.376918%2058.216918,37.067541%20C58.2617705,37.0114098%2058.3113443,36.96%2058.3596066,36.907541%20C58.9340328,33.9152787%2059.2980984,30.5345574%2059.3809836,26.9468852%20C59.6655738,14.6103607%2056.5356066,4.53193443%2052.3902951,4.43645902%20C48.2447213,4.34072131%2044.653377,14.2638689%2044.3687869,26.6003934%20C44.3687869,26.6003934%2044.1492459,31.1000656%2045.4780328,39.6152131'%20id='Fill-1'%20fill='%23185A30'%3e%3c/path%3e%3cpath%20d='M73.5446557,53.1058361%20C73.7896393,52.696918%2073.9265574,52.2066885%2073.9171148,51.6857705%20C73.9965902,50.002623%2072.8411803,48.4768525%2071.2335738,48.6457705%20C71.28,48.4532459%2071.3104262,48.2531148%2071.3222295,48.0466885%20C71.4184918,46.3606557%2070.2557377,44.907541%2068.7249836,44.8013115%20C68.6914098,44.7992131%2068.6583607,44.7981639%2068.6250492,44.7971148%20C68.7842623,44.3787541%2068.8632131,43.9116066%2068.8351475,43.4166557%20C68.7559344,42.0139016%2067.7885902,40.832%2066.5300984,40.5993443%20C66.075541,40.5154098%2065.634623,40.5571148%2065.2309508,40.696918%20C64.8495738,39.757377%2064.0487869,39.060459%2063.074623,38.9133115%20C62.9975082,37.3878033%2061.8956066,36.1321967%2060.4768525,36.0338361%20C59.5847869,35.9719344%2058.7651148,36.3816393%2058.216918,37.067541%20C57.714623,36.376918%2056.9437377,35.9276066%2056.0650492,35.9204395%20C54.7034754,35.9092459%2053.5142295,37.0205902%2053.3051803,38.5028197%20C53.2459016,38.9238033%2053.266623,39.3342951%2053.3531803,39.7180328%20C52.7871475,39.7899016%2052.2699016,40.0519344%2051.8570492,40.4461639%20C51.8098361,40.4910164%2051.7634098,40.5366557%2051.719082,40.584918%20C51.4803934,39.2556066%2050.114623,37.9042623%2048.8288525,37.8148197%20C47.6259672,37.7314098%2045.928918,38.4621639%2045.4780328,39.6152131%20C45.6758033,41.6259672%2046.9327213,47.1071475%2051.4788197,52.0241311%20L51.5192131,52.0270164%20C51.9575082,52.4236066%2052.5298361,52.6420984%2053.1399344,52.5878033%20C53.5181639,52.5539672%2053.8664918,52.418623%2054.1665574,52.2098361%20L54.2397377,52.2148197%20C54.6397377,52.4925902%2055.1205246,52.6379016%2055.6285902,52.5927869%20C55.8226885,52.5754754%2056.0078689,52.5287869%2056.1838689,52.4621639%20C56.6192787,53.3623607%2057.5902951,53.9441311%2058.6740984,53.8486557%20C59.5134426,53.7746885%2060.2268852,53.3104262%2060.6462951,52.6570492%20L60.7821639,52.6664918%20C61.2010492,53.0817049%2061.7579016,53.323541%2062.3585574,53.3054426%20C62.855082,54.0566557%2063.767082,54.5188197%2064.7735082,54.4304262%20C65.1525246,54.3971148%2065.5063607,54.2874754%2065.8219016,54.1214426%20C66.3483279,54.7690492%2067.2123279,55.1540984%2068.1602623,55.0706885%20C69.0974426,54.9885902%2069.8890492,54.4689836%2070.3197377,53.7505574%20C70.7428197,54.0902295%2071.272918,54.2725246%2071.8358033,54.2224262%20C72.3819016,54.1736393%2072.8671475,53.9158033%2073.2317377,53.5257705%20L73.2925902,53.5299672%20C73.3754754,53.4098361%2073.4462951,53.2868197%2073.5121311,53.1627541%20C73.5137049,53.1603934%2073.5150164,53.1577705%2073.5163279,53.1554098%20C73.5252459,53.1388852%2073.5362623,53.122623%2073.5446557,53.1058361'%20fill='%23F9D320'%3e%3c/path%3e%3cpath%20d='M42.2090492,9.21232787%20L6.56209836,12.7268197%20C7.62203279,10.6709508%209.21206557,8.70662295%2010.7472787,7.6957377%20L45.2440656,3.18662295%20C43.8793443,4.79422951%2042.9272131,6.9762623%2042.2090492,9.21232787%20Z%20M45.2440656,49.5517377%20L10.7472787,45.042623%20C9.21206557,44.032%207.62203279,42.0674098%206.56209836,40.0118033%20L42.2090492,43.5262951%20C42.9272131,45.7620984%2043.8793443,47.9443934%2045.2440656,49.5517377%20Z%20M5.07514754,36.5143607%20C3.94885246,33.1108197%203.6,31.1323279%203.32170492,28.2992787%20L39.9527869,28.7409836%20C40.0427541,31.8701639%2040.4668852,35.9202623%2041.2031475,39.3707541%20L5.07514754,36.5143607%20Z%20M5.07514754,16.224%20L41.2031475,13.3676066%20C40.4668852,16.8180984%2040.0427541,20.8681967%2039.9527869,23.9976393%20L3.32170492,24.439082%20C3.6,21.6062951%203.94885246,19.627541%205.07514754,16.224%20Z%20M56.7186885,3.84865574%20C54.4333115,1.18767213%2052.7926557,-0.0616393443%2051.3872787,0.100721311%20C51.1252459,0.134032787%2011.4032787,5.67213115%2011.4032787,5.67213115%20C5.10006557,6.31318033%200.0624262295,15.4659672%200,26.3693115%20C0.0624262295,37.2723934%205.10006557,46.4251803%2011.4032787,47.0664918%20C11.4032787,47.0664918%2051.1997377,52.6247869%2051.3872787,52.6376393%20C51.7196066,52.635541%2052.0477377,52.5909508%2052.3711475,52.5080656%20C52.0563934,52.4144262%2051.7660328,52.2504918%2051.5192131,52.0270164%20L51.4788197,52.0241311%20C46.9327213,47.1074098%2045.6758033,41.6259672%2045.4780328,39.6152131%20C45.4785574,39.6136393%2045.4796066,39.6123279%2045.4801311,39.6107541%20C45.4796066,39.6123279%2045.4785574,39.6136393%2045.4780328,39.6152131%20C44.1492459,31.1000656%2044.3687869,26.6003934%2044.3687869,26.6003934%20C44.653377,14.2638689%2048.2447213,4.34072131%2052.3902951,4.43619672%20C56.5356066,4.53193443%2059.6655738,14.6103607%2059.3809836,26.9468852%20C59.2980984,30.5345574%2058.9340328,33.9152787%2058.3596066,36.907541%20C58.9497705,36.2562623%2059.741377,35.9819016%2060.4768525,36.0338361%20C60.6121967,36.043541%2060.7438689,36.0663607%2060.872918,36.096%20C63.3904262,22.3210492%2060.7512131,8.87029508%2056.7186885,3.84865574%20L56.7186885,3.84865574%20Z'%20fill='%23129B47'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M41.2031475,13.3676066%20L5.07514754,16.224%20C3.94885246,19.627541%203.6,21.6062951%203.32170492,24.439082%20L39.9527869,23.997377%20C40.0427541,20.8681967%2040.4668852,16.8180984%2041.2031475,13.3676066'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M45.2440656,3.18662295%20L10.7472787,7.6957377%20C9.21206557,8.70662295%207.62203279,10.6709508%206.56209836,12.7268197%20L42.2090492,9.21232787%20C42.9272131,6.9762623%2043.8793443,4.79422951%2045.2440656,3.18662295'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M6.56209836,40.011541%20C7.62203279,42.0674098%209.21206557,44.032%2010.7472787,45.042623%20L45.2440656,49.5517377%20C43.8793443,47.9443934%2042.9272131,45.7620984%2042.2090492,43.5262951%20L6.56209836,40.011541'%20fill='%23FFFFFE'%3e%3c/path%3e%3cg%20transform='translate(3.15,%2028)'%3e%3cpath%20d='M36.8052459,0.675409836%20L0.174163934,0.233704918%20C0.452459016,3.0664918%200.801311475,5.0452459%201.92760656,8.44878689%20L38.0556066,11.3051803%20C37.3193443,7.85468852%2036.8952131,3.80459016%2036.8052459,0.675409836'%20fill='%23FFFFFE'%3e%3c/path%3e%3c/g%3e%3c/g%3e%3c/svg%3e";
-function gs(n) {
+`, gs = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20type='positive'%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(1.33,%200)'%3e%3cg%20transform='translate(0,%2016.27)'%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0.000109100102%200.246970954%2077.0827837%200.246970954%2077.0827837%2063.7145228%200.000109100102%2063.7145228'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M77.0137759,27.0426556%20C76.2423237,14.6741909%2069.9521992,5.42041494%2060.4876349,0.246970954%20C60.5414108,0.548381743%2060.273195,0.925145228%2059.9678008,0.791701245%20C53.7772614,-1.91634855%2043.2753527,6.84780083%2035.9365975,2.25825726%20C35.9917012,3.90539419%2035.6700415,11.940249%2024.3515353,12.4063071%20C24.0843154,12.4172614%2023.9372614,12.1443983%2024.1062241,11.9512033%20C25.619917,10.2247303%2027.1482158,5.85360996%2024.9507054,3.5233195%20C20.2446473,7.74041494%2017.5117012,9.32746888%208.48829876,7.23319502%20C2.71103734,13.2740249%20-0.562655602,21.5419087%200.08,31.8413278%20C1.39120332,52.86639%2021.0848133,64.8846473%2040.9165145,63.6471369%20C60.746888,62.4106224%2078.3253112,48.0677178%2077.0137759,27.0426556'%20fill='%23FA320A'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M40.8717012,11.4648963%20C44.946722,10.49361%2056.6678838,11.3702905%2060.4232365,16.3518672%20C60.6486307,16.6506224%2060.3312863,17.2159336%2059.9678008,17.0572614%20C53.7772614,14.3492116%2043.2753527,23.113361%2035.9365975,18.5238174%20C35.9917012,20.1709544%2035.6700415,28.2058091%2024.3515353,28.6718672%20C24.0843154,28.6828216%2023.9372614,28.4099585%2024.1062241,28.2167635%20C25.619917,26.4902905%2027.1478838,22.1191701%2024.9507054,19.7888797%20C19.8243983,24.3827386%2017.0453112,25.8589212%205.91900415,22.8514523%20C5.55485477,22.753195%205.67900415,22.1679668%206.06639004,22.020249%20C8.16929461,21.2165975%2012.933444,17.6965975%2017.4406639,16.1450622%20C18.2987552,15.8499585%2019.1541909,15.6209129%2019.9890456,15.4878008%20C15.02639,15.0443154%2012.7893776,14.3541909%209.63286307,14.8302075%20C9.28697095,14.8823237%209.05195021,14.479668%209.26639004,14.2034855%20C13.5193361,8.7253112%2021.3540249,7.07087137%2026.1878838,9.98107884%20C23.2082988,6.28912863%2020.8743568,3.34473029%2020.8743568,3.34473029%20L26.4046473,0.203485477%20C26.4046473,0.203485477%2028.6894606,5.30821577%2030.3518672,9.02340249%20C34.4657261,2.94506224%2042.119834,2.38406639%2045.3536929,6.69676349%20C45.5455602,6.95302905%2045.3450622,7.31751037%2045.0247303,7.30987552%20C42.3926971,7.24580913%2040.9434025,9.63983402%2040.833527,11.4605809%20L40.8717012,11.4648963'%20fill='%2300912D'%3e%3c/path%3e%3c/g%3e%3c/svg%3e", ms = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20type='negative'%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(0,%201.23)'%3e%3cg%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0%200.161950465%2079.7417075%200.161950465%2079.7417075%2077.522807%200%2077.522807'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M71.4638596,70.225614%20C56.3459649,71.0192982%2053.2568421,53.7203509%2047.325614,53.8435088%20C44.7982456,53.8964912%2042.8063158,56.5389474%2043.6810526,59.6185965%20C44.1621053,61.3115789%2045.4964912,63.794386%2046.337193,65.3350877%20C49.302807,70.7719298%2044.9185965,76.9245614%2039.7880702,77.4449123%20C31.2621053,78.3098246%2027.705614,73.3638596%2027.925614,68.3007018%20C28.1729825,62.6168421%2032.9922807,56.8091228%2028.0494737,54.3378947%20C22.8694737,51.7480702%2018.6585965,61.8754386%2013.7017544,64.1357895%20C9.2154386,66.1817544%202.9877193,64.5954386%200.773684211,59.6136842%20C-0.781403509,56.1129825%20-0.498596491,49.3722807%206.42526316,46.8003509%20C10.7501754,45.1940351%2020.3880702,48.9010526%2020.8824561,44.205614%20C21.4522807,38.7929825%2010.7575439,38.3364912%207.53754386,37.0385965%20C1.84,34.7424561%20-1.52280702,29.8291228%201.11192982,24.5582456%20C3.08877193,20.6045614%208.90526316,18.9957895%2013.3449123,20.7277193%20C18.6635088,22.8024561%2019.517193,28.3189474%2022.2421053,30.6129825%20C24.5894737,32.5901754%2027.8021053,32.8375439%2029.9031579,31.4782456%20C31.4526316,30.4754386%2031.9684211,28.2729825%2031.3838596,26.2610526%20C30.6084211,23.5901754%2028.5505263,21.9235088%2026.542807,20.2905263%20C22.9698246,17.3859649%2017.925614,14.8884211%2020.9768421,6.96035088%20C23.4778947,0.463157895%2030.8133333,0.229122807%2030.8133333,0.229122807%20C33.7277193,-0.0985964912%2036.3375439,0.781403509%2038.4642105,2.68140351%20C41.3073684,5.22140351%2041.8610526,8.61649123%2041.3852632,12.2385965%20C40.9505263,15.5449123%2039.7803509,18.4407018%2039.1701754,21.7164912%20C38.4621053,25.5196491%2040.4947368,29.3519298%2044.3603509,29.5010526%20C49.4449123,29.6975439%2050.9694737,25.7894737%2051.5915789,23.3122807%20C52.5024561,19.6877193%2053.6978947,16.322807%2057.0617544,14.2035088%20C61.8894737,11.1617544%2068.5954386,11.8284211%2071.7066667,17.674386%20C74.1677193,22.3%2073.3775439,28.6677193%2069.6024561,32.1449123%20C67.9087719,33.7045614%2065.8722807,34.254386%2063.6694737,34.2698246%20C60.5105263,34.2922807%2057.3529825,34.2147368%2054.4207018,35.6929825%20C52.4245614,36.6989474%2051.5547368,38.3382456%2051.5550877,40.5354386%20C51.5550877,42.6768421%2052.6698246,44.0754386%2054.4761404,44.985614%20C57.8782456,46.7003509%2061.6336842,47.0508772%2065.3087719,47.694386%20C70.6382456,48.6277193%2075.3242105,50.5049123%2078.3326316,55.4505263%20C78.3596491,55.4940351%2078.3859649,55.5378947%2078.4115789,55.5821053%20C81.8666667,61.4375439%2078.2533333,69.8687719%2071.4638596,70.225614'%20fill='%230AC855'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3c/g%3e%3c/svg%3e", fs = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(10.1,%200)'%3e%3cg%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0.0178438662%200.124907063%2059.6019307%200.124907063%2059.6019307%2079.9821561%200.0178438662%2079.9821561'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M2.53115242,19.0988848%20C2.76163569,23.9952416%2014.8892193,27.8762825%2029.8007435,27.7912268%20C42.8237918,27.7168773%2053.6874349,24.6411896%2056.3485502,20.6004461%20C55.7421561,19.9265428%2054.904684,19.4643866%2053.9613383,19.3391822%20C53.9714498,19.220223%2053.9779926,19.1003717%2053.9773978,18.9787361%20C53.9663941,17.0423792%2052.5460223,15.4477323%2050.695316,15.1503346%20C50.7440892,14.8999257%2050.7696654,14.6408922%2050.7681784,14.3759108%20C50.7559851,12.2194796%2048.9977695,10.481487%2046.8413383,10.4936803%20C46.7925651,10.4939777%2046.7449814,10.4999257%2046.6965056,10.5020074%20C46.8344981,10.0987361%2046.9118216,9.66780669%2046.9094424,9.21784387%20C46.8969517,7.06141264%2045.1390335,5.32342007%2042.9826022,5.33561338%20C42.4877323,5.33858736%2042.0169517,5.43702602%2041.5821561,5.60743494%20C40.9653532,4.44639405%2039.7811152,3.63717472%2038.4002974,3.54379182%20C38.1597026,1.60743494%2036.5055762,0.113605948%2034.506171,0.124843367%20C33.247881,0.13204461%2032.1350186,0.736356877%2031.4263197,1.66453532%20C30.7075093,0.882379182%2029.6773234,0.391672862%2028.5314498,0.398215613%20C26.3750186,0.410408922%2024.637026,2.16862454%2024.6492193,4.32475836%20C24.6515985,4.73665428%2024.718513,5.13249071%2024.8386617,5.50453532%20C23.9586617,5.66780669%2023.1848327,6.12520446%2022.6191822,6.77144981%20C22.1701115,5.09888476%2020.642974,3.86973978%2018.8297398,3.8798513%20C17.1357621,3.88966543%2015.7040892,4.97873606%2015.172342,6.48981413%20C13.7332342,7.07182156%2012.7202974,8.48356877%2012.7298141,10.1302602%20C12.7318959,10.4960595%2012.7878067,10.8481784%2012.8838662,11.1836431%20C12.398513,10.9713011%2011.8634944,10.852342%2011.2996283,10.8556134%20C9.5994052,10.8654275%208.16327138,11.9622305%207.63598513,13.4822305%20C7.13040892,13.2472862%206.56832714,13.1137546%205.973829,13.1173234%20C3.81739777,13.1295167%202.07910781,14.8874349%202.09153162,17.0438662%20C2.09546468,17.7549442%202.29263941,18.4187361%202.62810409,18.9909294%20C2.59390335,19.0254275%202.56386617,19.063197%202.53115242,19.0988848'%20fill='%23F9D320'%20mask='url(%23mask-2)'%3e%3c/path%3e%3cpath%20d='M50.9736803,68.1576208%20C49.8275093,69.89829%2047.6002974,71.7008178%2045.2692937,72.9026022%20L49.2541264,32.4853532%20C51.7894424,31.6707807%2054.2634944,30.5915242%2056.085948,29.0438662%20L50.9736803,68.1576208%20Z%20M41.3037918,74.5885502%20C37.4450558,75.8655762%2035.201487,76.2614126%2031.9895911,76.5766543%20L32.4901115,35.0432714%20C36.0383643,34.9415613%2040.6301859,34.4606691%2044.5427509,33.6255762%20L41.3037918,74.5885502%20Z%20M18.29829,74.5885502%20L15.0596283,33.6255762%20C18.9718959,34.4606691%2023.5637175,34.9415613%2027.1119703,35.0432714%20L27.6124907,76.5766543%20C24.4005948,76.2614126%2022.1573234,75.8655762%2018.29829,74.5885502%20Z%20M8.62869888,68.1576208%20L3.51613383,29.0438662%20C5.33858736,30.5915242%207.81263941,31.6707807%2010.3479554,32.4853532%20L14.3327881,72.9026022%20C12.0017844,71.7008178%209.77457249,69.89829%208.62869888,68.1576208%20Z%20M50.687881,13.6110037%20C50.7384387,13.8578439%2050.7666914,14.1130112%2050.7681784,14.3750186%20C50.7696654,14.64%2050.7440892,14.8990335%2050.6950186,15.1494424%20C52.5460223,15.4465428%2053.9663941,17.0411896%2053.9773978,18.9778439%20C53.9779926,19.0991822%2053.9714498,19.2193309%2053.9613383,19.3379926%20C54.904684,19.463197%2055.7421561,19.9253532%2056.3485502,20.5992565%20C53.6877323,24.6402974%2042.8237918,27.7159851%2029.8010409,27.790632%20C14.8895167,27.8759851%202.76193309,23.9952416%202.53115242,19.0985874%20C2.56386617,19.063197%202.59390335,19.0251301%202.62810409,18.9909294%20C2.39791822,18.5983643%202.23910781,18.1608922%202.15702602,17.6966543%20C0.729219331,19.0518959%20-0.13472119,20.1445353%200.0172490706,21.7356134%20C0.0318215613,21.9482528%206.3339777,67.0709294%206.3339777,67.0709294%20C7.06111524,74.2173978%2017.4388104,79.9292193%2029.8010409,80%20C42.1632714,79.9292193%2052.5412639,74.2173978%2053.2681041,67.0709294%20C53.2681041,67.0709294%2059.5702602,21.9482528%2059.5848327,21.7356134%20C59.8866914,18.5531599%2056.162974,15.6642379%2050.687881,13.6110037%20L50.687881,13.6110037%20Z'%20fill='%23DB382A'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M15.0596283,33.6255762%20L18.29829,74.5885502%20C22.1573234,75.8655762%2024.4005948,76.2614126%2027.6124907,76.5766543%20L27.1119703,35.0432714%20C23.5637175,34.9415613%2018.9718959,34.4606691%2015.0596283,33.6255762'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M31.9895911,76.5766543%20C35.201487,76.2614126%2037.4447584,75.8655762%2041.3037918,74.5885502%20L44.5424535,33.6255762%20C40.6301859,34.4606691%2036.0383643,34.9415613%2032.4901115,35.0432714%20L31.9895911,76.5766543'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M45.2692937,72.9026022%20C47.6002974,71.7008178%2049.8275093,69.89829%2050.9733829,68.1576208%20L56.085948,29.0438662%20C54.2634944,30.5915242%2051.7894424,31.6707807%2049.2541264,32.4853532%20L45.2692937,72.9026022'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M3.51613383,29.0438662%20L8.62840149,68.1576208%20C9.77457249,69.89829%2012.0017844,71.7008178%2014.3327881,72.9026022%20L10.3479554,32.4853532%20C7.81263941,31.6707807%205.33858736,30.5915242%203.51613383,29.0438662'%20fill='%23FFFFFE'%3e%3c/path%3e%3c/g%3e%3c/svg%3e", bs = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(0,%2012.46)'%3e%3cg%3e%3cpath%20d='M45.4780328,39.6152131%20C45.9506885,38.4445902%2047.6259672,37.7314098%2048.8288525,37.8148197%20C50.114623,37.904%2051.4803934,39.2556066%2051.719082,40.584918%20C51.7634098,40.5366557%2051.8098361,40.4910164%2051.8570492,40.4461639%20C52.2699016,40.0516721%2052.7871475,39.7899016%2053.3531803,39.7177705%20C53.266623,39.3342951%2053.2459016,38.9238033%2053.3051803,38.5025574%20C53.5142295,37.0205902%2054.7034754,35.9092459%2056.0650492,35.9202623%20C56.9437377,35.9273443%2057.714623,36.376918%2058.216918,37.067541%20C58.2617705,37.0114098%2058.3113443,36.96%2058.3596066,36.907541%20C58.9340328,33.9152787%2059.2980984,30.5345574%2059.3809836,26.9468852%20C59.6655738,14.6103607%2056.5356066,4.53193443%2052.3902951,4.43645902%20C48.2447213,4.34072131%2044.653377,14.2638689%2044.3687869,26.6003934%20C44.3687869,26.6003934%2044.1492459,31.1000656%2045.4780328,39.6152131'%20id='Fill-1'%20fill='%23185A30'%3e%3c/path%3e%3cpath%20d='M73.5446557,53.1058361%20C73.7896393,52.696918%2073.9265574,52.2066885%2073.9171148,51.6857705%20C73.9965902,50.002623%2072.8411803,48.4768525%2071.2335738,48.6457705%20C71.28,48.4532459%2071.3104262,48.2531148%2071.3222295,48.0466885%20C71.4184918,46.3606557%2070.2557377,44.907541%2068.7249836,44.8013115%20C68.6914098,44.7992131%2068.6583607,44.7981639%2068.6250492,44.7971148%20C68.7842623,44.3787541%2068.8632131,43.9116066%2068.8351475,43.4166557%20C68.7559344,42.0139016%2067.7885902,40.832%2066.5300984,40.5993443%20C66.075541,40.5154098%2065.634623,40.5571148%2065.2309508,40.696918%20C64.8495738,39.757377%2064.0487869,39.060459%2063.074623,38.9133115%20C62.9975082,37.3878033%2061.8956066,36.1321967%2060.4768525,36.0338361%20C59.5847869,35.9719344%2058.7651148,36.3816393%2058.216918,37.067541%20C57.714623,36.376918%2056.9437377,35.9276066%2056.0650492,35.9204395%20C54.7034754,35.9092459%2053.5142295,37.0205902%2053.3051803,38.5028197%20C53.2459016,38.9238033%2053.266623,39.3342951%2053.3531803,39.7180328%20C52.7871475,39.7899016%2052.2699016,40.0519344%2051.8570492,40.4461639%20C51.8098361,40.4910164%2051.7634098,40.5366557%2051.719082,40.584918%20C51.4803934,39.2556066%2050.114623,37.9042623%2048.8288525,37.8148197%20C47.6259672,37.7314098%2045.928918,38.4621639%2045.4780328,39.6152131%20C45.6758033,41.6259672%2046.9327213,47.1071475%2051.4788197,52.0241311%20L51.5192131,52.0270164%20C51.9575082,52.4236066%2052.5298361,52.6420984%2053.1399344,52.5878033%20C53.5181639,52.5539672%2053.8664918,52.418623%2054.1665574,52.2098361%20L54.2397377,52.2148197%20C54.6397377,52.4925902%2055.1205246,52.6379016%2055.6285902,52.5927869%20C55.8226885,52.5754754%2056.0078689,52.5287869%2056.1838689,52.4621639%20C56.6192787,53.3623607%2057.5902951,53.9441311%2058.6740984,53.8486557%20C59.5134426,53.7746885%2060.2268852,53.3104262%2060.6462951,52.6570492%20L60.7821639,52.6664918%20C61.2010492,53.0817049%2061.7579016,53.323541%2062.3585574,53.3054426%20C62.855082,54.0566557%2063.767082,54.5188197%2064.7735082,54.4304262%20C65.1525246,54.3971148%2065.5063607,54.2874754%2065.8219016,54.1214426%20C66.3483279,54.7690492%2067.2123279,55.1540984%2068.1602623,55.0706885%20C69.0974426,54.9885902%2069.8890492,54.4689836%2070.3197377,53.7505574%20C70.7428197,54.0902295%2071.272918,54.2725246%2071.8358033,54.2224262%20C72.3819016,54.1736393%2072.8671475,53.9158033%2073.2317377,53.5257705%20L73.2925902,53.5299672%20C73.3754754,53.4098361%2073.4462951,53.2868197%2073.5121311,53.1627541%20C73.5137049,53.1603934%2073.5150164,53.1577705%2073.5163279,53.1554098%20C73.5252459,53.1388852%2073.5362623,53.122623%2073.5446557,53.1058361'%20fill='%23F9D320'%3e%3c/path%3e%3cpath%20d='M42.2090492,9.21232787%20L6.56209836,12.7268197%20C7.62203279,10.6709508%209.21206557,8.70662295%2010.7472787,7.6957377%20L45.2440656,3.18662295%20C43.8793443,4.79422951%2042.9272131,6.9762623%2042.2090492,9.21232787%20Z%20M45.2440656,49.5517377%20L10.7472787,45.042623%20C9.21206557,44.032%207.62203279,42.0674098%206.56209836,40.0118033%20L42.2090492,43.5262951%20C42.9272131,45.7620984%2043.8793443,47.9443934%2045.2440656,49.5517377%20Z%20M5.07514754,36.5143607%20C3.94885246,33.1108197%203.6,31.1323279%203.32170492,28.2992787%20L39.9527869,28.7409836%20C40.0427541,31.8701639%2040.4668852,35.9202623%2041.2031475,39.3707541%20L5.07514754,36.5143607%20Z%20M5.07514754,16.224%20L41.2031475,13.3676066%20C40.4668852,16.8180984%2040.0427541,20.8681967%2039.9527869,23.9976393%20L3.32170492,24.439082%20C3.6,21.6062951%203.94885246,19.627541%205.07514754,16.224%20Z%20M56.7186885,3.84865574%20C54.4333115,1.18767213%2052.7926557,-0.0616393443%2051.3872787,0.100721311%20C51.1252459,0.134032787%2011.4032787,5.67213115%2011.4032787,5.67213115%20C5.10006557,6.31318033%200.0624262295,15.4659672%200,26.3693115%20C0.0624262295,37.2723934%205.10006557,46.4251803%2011.4032787,47.0664918%20C11.4032787,47.0664918%2051.1997377,52.6247869%2051.3872787,52.6376393%20C51.7196066,52.635541%2052.0477377,52.5909508%2052.3711475,52.5080656%20C52.0563934,52.4144262%2051.7660328,52.2504918%2051.5192131,52.0270164%20L51.4788197,52.0241311%20C46.9327213,47.1074098%2045.6758033,41.6259672%2045.4780328,39.6152131%20C45.4785574,39.6136393%2045.4796066,39.6123279%2045.4801311,39.6107541%20C45.4796066,39.6123279%2045.4785574,39.6136393%2045.4780328,39.6152131%20C44.1492459,31.1000656%2044.3687869,26.6003934%2044.3687869,26.6003934%20C44.653377,14.2638689%2048.2447213,4.34072131%2052.3902951,4.43619672%20C56.5356066,4.53193443%2059.6655738,14.6103607%2059.3809836,26.9468852%20C59.2980984,30.5345574%2058.9340328,33.9152787%2058.3596066,36.907541%20C58.9497705,36.2562623%2059.741377,35.9819016%2060.4768525,36.0338361%20C60.6121967,36.043541%2060.7438689,36.0663607%2060.872918,36.096%20C63.3904262,22.3210492%2060.7512131,8.87029508%2056.7186885,3.84865574%20L56.7186885,3.84865574%20Z'%20fill='%23129B47'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M41.2031475,13.3676066%20L5.07514754,16.224%20C3.94885246,19.627541%203.6,21.6062951%203.32170492,24.439082%20L39.9527869,23.997377%20C40.0427541,20.8681967%2040.4668852,16.8180984%2041.2031475,13.3676066'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M45.2440656,3.18662295%20L10.7472787,7.6957377%20C9.21206557,8.70662295%207.62203279,10.6709508%206.56209836,12.7268197%20L42.2090492,9.21232787%20C42.9272131,6.9762623%2043.8793443,4.79422951%2045.2440656,3.18662295'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M6.56209836,40.011541%20C7.62203279,42.0674098%209.21206557,44.032%2010.7472787,45.042623%20L45.2440656,49.5517377%20C43.8793443,47.9443934%2042.9272131,45.7620984%2042.2090492,43.5262951%20L6.56209836,40.011541'%20fill='%23FFFFFE'%3e%3c/path%3e%3cg%20transform='translate(3.15,%2028)'%3e%3cpath%20d='M36.8052459,0.675409836%20L0.174163934,0.233704918%20C0.452459016,3.0664918%200.801311475,5.0452459%201.92760656,8.44878689%20L38.0556066,11.3051803%20C37.3193443,7.85468852%2036.8952131,3.80459016%2036.8052459,0.675409836'%20fill='%23FFFFFE'%3e%3c/path%3e%3c/g%3e%3c/g%3e%3c/svg%3e";
+function ys(n) {
   const e = n.enrichment ?? {}, t = e.reviewed;
   return [
     {
@@ -2638,15 +2674,15 @@ function gs(n) {
     ({ value: i, max: s }) => typeof i == "number" && Number.isFinite(i) && i >= 0 && i <= s
   );
 }
-function ms(n) {
-  const e = n ? gs(n) : [];
+function vs(n) {
+  const e = n ? ys(n) : [];
   return e.length ? a`<div
     class="movie-ratings"
     slot="collection"
     aria-label="Viewer and critic ratings"
   >
     ${e.map(({ kind: t, label: i, value: s, max: r }) => {
-    const o = Math.round(s / r * 100), d = t === "critic" ? o >= 60 ? hs : cs : o >= 60 ? ps : us;
+    const o = Math.round(s / r * 100), d = t === "critic" ? o >= 60 ? gs : ms : o >= 60 ? fs : bs;
     return a`<span
         class=${`score-chip score-${t}`}
         title=${`${i}: ${o}%`}
@@ -2689,19 +2725,19 @@ function ms(n) {
   })}
   </div>` : l;
 }
-const fs = "data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%20viewBox='0%200%20273.42%2035.52'%3e%3cdefs%3e%3cstyle%3e.cls-1{fill:url(%23linear-gradient);}%3c/style%3e%3clinearGradient%20id='linear-gradient'%20y1='17.76'%20x2='273.42'%20y2='17.76'%20gradientUnits='userSpaceOnUse'%3e%3cstop%20offset='0'%20stop-color='%2390cea1'/%3e%3cstop%20offset='0.56'%20stop-color='%233cbec9'/%3e%3cstop%20offset='1'%20stop-color='%2300b3e5'/%3e%3c/linearGradient%3e%3c/defs%3e%3ctitle%3eAsset%203%3c/title%3e%3cg%20id='Layer_2'%20data-name='Layer%202'%3e%3cg%20id='Layer_1-2'%20data-name='Layer%201'%3e%3cpath%20class='cls-1'%20d='M191.85,35.37h63.9A17.67,17.67,0,0,0,273.42,17.7h0A17.67,17.67,0,0,0,255.75,0h-63.9A17.67,17.67,0,0,0,174.18,17.7h0A17.67,17.67,0,0,0,191.85,35.37ZM10.1,35.42h7.8V6.92H28V0H0v6.9H10.1Zm28.1,0H46V8.25h.1L55.05,35.4h6L70.3,8.25h.1V35.4h7.8V0H66.45l-8.2,23.1h-.1L50,0H38.2ZM89.14.12h11.7a33.56,33.56,0,0,1,8.08,1,18.52,18.52,0,0,1,6.67,3.08,15.09,15.09,0,0,1,4.53,5.52,18.5,18.5,0,0,1,1.67,8.25,16.91,16.91,0,0,1-1.62,7.58,16.3,16.3,0,0,1-4.38,5.5,19.24,19.24,0,0,1-6.35,3.37,24.53,24.53,0,0,1-7.55,1.15H89.14Zm7.8,28.2h4a21.66,21.66,0,0,0,5-.55A10.58,10.58,0,0,0,110,26a8.73,8.73,0,0,0,2.68-3.35,11.9,11.9,0,0,0,1-5.08,9.87,9.87,0,0,0-1-4.52,9.17,9.17,0,0,0-2.63-3.18A11.61,11.61,0,0,0,106.22,8a17.06,17.06,0,0,0-4.68-.63h-4.6ZM133.09.12h13.2a32.87,32.87,0,0,1,4.63.33,12.66,12.66,0,0,1,4.17,1.3,7.94,7.94,0,0,1,3,2.72,8.34,8.34,0,0,1,1.15,4.65,7.48,7.48,0,0,1-1.67,5,9.13,9.13,0,0,1-4.43,2.82V17a10.28,10.28,0,0,1,3.18,1,8.51,8.51,0,0,1,2.45,1.85,7.79,7.79,0,0,1,1.57,2.62,9.16,9.16,0,0,1,.55,3.2,8.52,8.52,0,0,1-1.2,4.68,9.32,9.32,0,0,1-3.1,3A13.38,13.38,0,0,1,152.32,35a22.5,22.5,0,0,1-4.73.5h-14.5Zm7.8,14.15h5.65a7.65,7.65,0,0,0,1.78-.2,4.78,4.78,0,0,0,1.57-.65,3.43,3.43,0,0,0,1.13-1.2,3.63,3.63,0,0,0,.42-1.8A3.3,3.3,0,0,0,151,8.6a3.42,3.42,0,0,0-1.23-1.13A6.07,6.07,0,0,0,148,6.9a9.9,9.9,0,0,0-1.85-.18h-5.3Zm0,14.65h7a8.27,8.27,0,0,0,1.83-.2,4.67,4.67,0,0,0,1.67-.7,3.93,3.93,0,0,0,1.23-1.3,3.8,3.8,0,0,0,.47-1.95,3.16,3.16,0,0,0-.62-2,4,4,0,0,0-1.58-1.18,8.23,8.23,0,0,0-2-.55,15.12,15.12,0,0,0-2.05-.15h-5.9Z'/%3e%3c/g%3e%3c/g%3e%3c/svg%3e";
-function Ui() {
+const ws = "data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%20viewBox='0%200%20273.42%2035.52'%3e%3cdefs%3e%3cstyle%3e.cls-1{fill:url(%23linear-gradient);}%3c/style%3e%3clinearGradient%20id='linear-gradient'%20y1='17.76'%20x2='273.42'%20y2='17.76'%20gradientUnits='userSpaceOnUse'%3e%3cstop%20offset='0'%20stop-color='%2390cea1'/%3e%3cstop%20offset='0.56'%20stop-color='%233cbec9'/%3e%3cstop%20offset='1'%20stop-color='%2300b3e5'/%3e%3c/linearGradient%3e%3c/defs%3e%3ctitle%3eAsset%203%3c/title%3e%3cg%20id='Layer_2'%20data-name='Layer%202'%3e%3cg%20id='Layer_1-2'%20data-name='Layer%201'%3e%3cpath%20class='cls-1'%20d='M191.85,35.37h63.9A17.67,17.67,0,0,0,273.42,17.7h0A17.67,17.67,0,0,0,255.75,0h-63.9A17.67,17.67,0,0,0,174.18,17.7h0A17.67,17.67,0,0,0,191.85,35.37ZM10.1,35.42h7.8V6.92H28V0H0v6.9H10.1Zm28.1,0H46V8.25h.1L55.05,35.4h6L70.3,8.25h.1V35.4h7.8V0H66.45l-8.2,23.1h-.1L50,0H38.2ZM89.14.12h11.7a33.56,33.56,0,0,1,8.08,1,18.52,18.52,0,0,1,6.67,3.08,15.09,15.09,0,0,1,4.53,5.52,18.5,18.5,0,0,1,1.67,8.25,16.91,16.91,0,0,1-1.62,7.58,16.3,16.3,0,0,1-4.38,5.5,19.24,19.24,0,0,1-6.35,3.37,24.53,24.53,0,0,1-7.55,1.15H89.14Zm7.8,28.2h4a21.66,21.66,0,0,0,5-.55A10.58,10.58,0,0,0,110,26a8.73,8.73,0,0,0,2.68-3.35,11.9,11.9,0,0,0,1-5.08,9.87,9.87,0,0,0-1-4.52,9.17,9.17,0,0,0-2.63-3.18A11.61,11.61,0,0,0,106.22,8a17.06,17.06,0,0,0-4.68-.63h-4.6ZM133.09.12h13.2a32.87,32.87,0,0,1,4.63.33,12.66,12.66,0,0,1,4.17,1.3,7.94,7.94,0,0,1,3,2.72,8.34,8.34,0,0,1,1.15,4.65,7.48,7.48,0,0,1-1.67,5,9.13,9.13,0,0,1-4.43,2.82V17a10.28,10.28,0,0,1,3.18,1,8.51,8.51,0,0,1,2.45,1.85,7.79,7.79,0,0,1,1.57,2.62,9.16,9.16,0,0,1,.55,3.2,8.52,8.52,0,0,1-1.2,4.68,9.32,9.32,0,0,1-3.1,3A13.38,13.38,0,0,1,152.32,35a22.5,22.5,0,0,1-4.73.5h-14.5Zm7.8,14.15h5.65a7.65,7.65,0,0,0,1.78-.2,4.78,4.78,0,0,0,1.57-.65,3.43,3.43,0,0,0,1.13-1.2,3.63,3.63,0,0,0,.42-1.8A3.3,3.3,0,0,0,151,8.6a3.42,3.42,0,0,0-1.23-1.13A6.07,6.07,0,0,0,148,6.9a9.9,9.9,0,0,0-1.85-.18h-5.3Zm0,14.65h7a8.27,8.27,0,0,0,1.83-.2,4.67,4.67,0,0,0,1.67-.7,3.93,3.93,0,0,0,1.23-1.3,3.8,3.8,0,0,0,.47-1.95,3.16,3.16,0,0,0-.62-2,4,4,0,0,0-1.58-1.18,8.23,8.23,0,0,0-2-.55,15.12,15.12,0,0,0-2.05-.15h-5.9Z'/%3e%3c/g%3e%3c/g%3e%3c/svg%3e";
+function Pi() {
   return a`<a
       href="https://www.themoviedb.org"
       target="_blank"
       rel="noopener noreferrer"
-      ><img src=${fs} alt="TMDB" width="100"
+      ><img src=${ws} alt="TMDB" width="100"
     /></a>
     <p class="muted">
       This product uses the TMDB API but is not endorsed or certified by TMDB.
     </p>`;
 }
-function bs(n, e, t = 8) {
+function $s(n, e, t = 8) {
   const i = [
     ["Full cast", n.actors.length > t ? n.actors : []],
     ["Writers", n.writers],
@@ -2724,10 +2760,10 @@ function bs(n, e, t = 8) {
   ${n.enrichment && Object.keys(n.enrichment).length ? a`<details class="metadata-scores">
           <summary>Ratings and metadata sources</summary>
           ${Object.entries(n.enrichment).map(([s, r]) => a`<p class="muted">${s === "reviewed" ? "Reviewed metadata" : s === "tmdb" ? "TMDB" : "Kaleidescape store"}${r.critic_score != null ? a` · Rotten Tomatoes critics ${r.critic_score}%` : l}${r.audience_score != null ? a` · Rotten Tomatoes audience ${r.audience_score}%` : l}${r.audience_rating != null ? a` · TMDB audience ${r.audience_rating}/10 (${$(r.audience_votes ?? 0, "vote")})` : l}${r.distributor ? a` · Distributor: ${r.distributor}` : l}</p>`)}
-          ${n.enrichment.tmdb || n.enrichment.reviewed?.providers?.includes("tmdb") ? Ui() : l}
+          ${n.enrichment.tmdb || n.enrichment.reviewed?.providers?.includes("tmdb") ? Pi() : l}
         </details>` : l}`;
 }
-class ys {
+class xs {
   constructor(e = 128 * 1024 * 1024, t = 1e3) {
     this.maxBytes = e, this.maxEntries = t, this.entries = /* @__PURE__ */ new Map(), this.readers = /* @__PURE__ */ new Map(), this.bytes = 0, this.closed = !1;
   }
@@ -2772,9 +2808,9 @@ class ys {
     this.readers.clear();
   }
 }
-class T {
+class A {
   constructor() {
-    this.cache = new ys(), this.active = 0, this.waiting = [];
+    this.cache = new xs(), this.active = 0, this.waiting = [];
   }
   acquire(e) {
     return new Promise((t, i) => {
@@ -2792,7 +2828,7 @@ class T {
     });
   }
 }
-const ve = class ve extends x {
+const we = class we extends x {
   constructor() {
     super(...arguments), this.fit = "cover", this.title = "", this.visible = !1, this.generation = 0, this.visibility = () => {
       document.hidden ? this.cancelLoad() : this.load();
@@ -2854,7 +2890,7 @@ const ve = class ve extends x {
         return;
       this.url = this.queue.cache.put(this.cacheKey, d), this.requestUpdate();
     } catch (o) {
-      t === this.generation && u(o) === "unauthorized" && this.dispatchEvent(
+      t === this.generation && g(o) === "unauthorized" && this.dispatchEvent(
         new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
       );
     } finally {
@@ -2870,14 +2906,14 @@ const ve = class ve extends x {
         />` : a`<span>No cached artwork</span>`;
   }
 };
-ve.properties = {
+we.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   queue: { attribute: !1 },
   artworkKey: { attribute: !1 },
   fit: { type: String },
   title: { type: String }
-}, ve.styles = S`
+}, we.styles = q`
     :host {
       display: grid;
       width: 100%;
@@ -2897,9 +2933,9 @@ ve.properties = {
       font: inherit;
     }
   `;
-let nt = ve;
-customElements.get("kaleidescape-library-cover") || customElements.define("kaleidescape-library-cover", nt);
-const we = class we extends x {
+let lt = we;
+customElements.get("kaleidescape-library-cover") || customElements.define("kaleidescape-library-cover", lt);
+const $e = class $e extends x {
   constructor() {
     super(...arguments), this.plan = "", this.choice = "", this.visible = !1, this.url = "", this.failed = !1;
   }
@@ -2933,7 +2969,7 @@ const we = class we extends x {
       );
       !e.signal.aborted && this.isConnected && (this.url = URL.createObjectURL(s));
     } catch (s) {
-      e.signal.aborted || (this.failed = !0, u(s) === "unauthorized" && this.dispatchEvent(
+      e.signal.aborted || (this.failed = !0, g(s) === "unauthorized" && this.dispatchEvent(
         new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
       ));
     } finally {
@@ -2946,13 +2982,13 @@ const we = class we extends x {
         >`;
   }
 };
-we.properties = {
+$e.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   queue: { attribute: !1 },
   plan: {},
   choice: {}
-}, we.styles = S`
+}, $e.styles = q`
     :host {
       display: grid;
       place-items: center;
@@ -2973,9 +3009,9 @@ we.properties = {
       padding: 8px;
     }
   `;
-let ot = we;
-customElements.get("kaleidescape-scrape-image") || customElements.define("kaleidescape-scrape-image", ot);
-function oi(n) {
+let dt = $e;
+customElements.get("kaleidescape-scrape-image") || customElements.define("kaleidescape-scrape-image", dt);
+function li(n) {
   if (n)
     try {
       const e = new URL(n);
@@ -2984,12 +3020,12 @@ function oi(n) {
       return;
     }
 }
-const $e = class $e extends x {
+const xe = class xe extends x {
   constructor() {
     super(...arguments), this.versionId = "", this.blocked = !1, this.matchMode = "refresh", this.matchProvider = "", this.query = "", this.year = "", this.sourceExpected = {}, this.artworkExpected = {
       poster: !0,
       backdrop: !0
-    }, this.fieldSources = {}, this.initialSources = {}, this.mappingTouched = !1, this.imageChoice = "", this.imagePage = 0, this.providerDrafts = {}, this.imageDraft = {}, this.resetDraft = /* @__PURE__ */ new Set(), this.busy = !1, this.error = "", this.hints = /* @__PURE__ */ new Set(), this.generation = 0, this.view = "sources", this.queue = new T();
+    }, this.fieldSources = {}, this.initialSources = {}, this.mappingTouched = !1, this.imageChoice = "", this.imagePage = 0, this.providerDrafts = {}, this.imageDraft = {}, this.resetDraft = /* @__PURE__ */ new Set(), this.busy = !1, this.error = "", this.hints = /* @__PURE__ */ new Set(), this.generation = 0, this.view = "sources", this.queue = new A();
   }
   get writePending() {
     return !!this.pending;
@@ -3019,7 +3055,7 @@ const $e = class $e extends x {
     );
   }
   reset() {
-    this.generation++, this.mainDialog()?.close(), this.choiceDialog()?.close(), this.options = this.review = void 0, this.candidatePage = void 0, this.query = this.year = this.matchProvider = this.imageChoice = "", this.sourceExpected = {}, this.artworkExpected = { poster: !0, backdrop: !0 }, this.fieldSources = {}, this.initialSources = {}, this.mappingTouched = !1, this.providerDrafts = {}, this.imageDraft = {}, this.resetDraft.clear(), this.imageKind = void 0, this.imagePage = 0, this.pending = void 0, this.busy = !1, this.error = "", this.hints.clear(), this.view = "sources", this.queue.cache.dispose(), this.queue = new T(), this.lock();
+    this.generation++, this.mainDialog()?.close(), this.choiceDialog()?.close(), this.options = this.review = void 0, this.candidatePage = void 0, this.query = this.year = this.matchProvider = this.imageChoice = "", this.sourceExpected = {}, this.artworkExpected = { poster: !0, backdrop: !0 }, this.fieldSources = {}, this.initialSources = {}, this.mappingTouched = !1, this.providerDrafts = {}, this.imageDraft = {}, this.resetDraft.clear(), this.imageKind = void 0, this.imagePage = 0, this.pending = void 0, this.busy = !1, this.error = "", this.hints.clear(), this.view = "sources", this.queue.cache.dispose(), this.queue = new A(), this.lock();
   }
   close() {
     if (!(this.pending || this.busy)) {
@@ -3070,7 +3106,7 @@ const $e = class $e extends x {
     }
   }
   report(e) {
-    this.error = w(e), u(e) === "unauthorized" && this.dispatchEvent(
+    this.error = y(e), g(e) === "unauthorized" && this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     );
   }
@@ -3217,7 +3253,7 @@ const $e = class $e extends x {
         "metadata_disabled",
         "not_found",
         "library_artwork"
-      ].includes(u(t)) && (this.pending = void 0, this.lock()));
+      ].includes(g(t)) && (this.pending = void 0, this.lock()));
     } finally {
       e === this.generation && (this.busy = !1, this.requestUpdate());
     }
@@ -3378,7 +3414,7 @@ const $e = class $e extends x {
       )}
               <div class="source-name">
                 <strong>${e.label}</strong>
-                ${oi(e.match_url) ? a`<a href=${oi(e.match_url)} target="_blank" rel="noopener noreferrer" aria-label=${`View ${e.label} match`}>View match</a>` : l}
+                ${li(e.match_url) ? a`<a href=${li(e.match_url)} target="_blank" rel="noopener noreferrer" aria-label=${`View ${e.label} match`}>View match</a>` : l}
               </div>
               <span class="source-detail">
                 ${this.providerDrafts[e.id] ? this.providerDrafts[e.id].has_data ? "Downloaded - Ready to save" : "No data available - Ready to save" : e.has_data ? e.fetched_at ? `Downloaded - Updated ${new Date(e.fetched_at).toLocaleDateString()}` : "Downloaded - Update date unavailable" : e.checked_at ? `No data available - Last Checked ${new Date(e.checked_at).toLocaleDateString()}` : "Not yet scanned"}
@@ -3538,7 +3574,7 @@ const $e = class $e extends x {
       return a`<div>
         <div class="card-head">
           <h2 id="choice-title">Choose a movie match</h2>
-          ${k(() => this.closeChoice(), this.busy)}
+          ${_(() => this.closeChoice(), this.busy)}
         </div>
         <p>
           Current Library movie:
@@ -3581,7 +3617,7 @@ const $e = class $e extends x {
         <h2 id="choice-title">
           Choose ${this.imageKind === "poster" ? "cover art" : "backdrop art"}
         </h2>
-        ${k(() => this.closeChoice(), this.busy)}
+        ${_(() => this.closeChoice(), this.busy)}
       </div>
       <p class="muted">
         Images from TMDB for
@@ -3645,7 +3681,7 @@ const $e = class $e extends x {
     </div>`;
   }
   render() {
-    return this.scope?.permissions.edit ? a`${It("Scrape title", "scrape", this.blocked || this.writePending, () => {
+    return this.scope?.permissions.edit ? a`${Bt("Scrape title", "scrape", this.blocked || this.writePending, () => {
       this.open();
     }, "scrape-button")}
       <dialog
@@ -3662,7 +3698,7 @@ const $e = class $e extends x {
             <h2 id="scrape-title">Movie Metadata Manager</h2>
             <p>Search, scrape and reconcile metadata.</p>
           </div>
-          ${k(() => this.close(), this.busy || this.writePending)}
+          ${_(() => this.close(), this.busy || this.writePending)}
         </div>
         ${this.error ? a`<p class="error" role="alert">${this.error}</p>` : l}
         ${this.busy ? a`<p role="status">Updating movie metadata…</p>` : l}
@@ -3721,15 +3757,15 @@ const $e = class $e extends x {
       </dialog>` : l;
   }
 };
-$e.properties = {
+xe.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   versionId: {},
   blocked: { type: Boolean }
-}, $e.styles = [
-  q,
-  Nt,
-  S`
+}, xe.styles = [
+  S,
+  Ft,
+  q`
       :host {
         display: inline-block;
       }
@@ -4215,12 +4251,12 @@ $e.properties = {
       }
     `
 ];
-let lt = $e;
-customElements.get("kaleidescape-title-scrape") || customElements.define("kaleidescape-title-scrape", lt);
-function li(n) {
+let ht = xe;
+customElements.get("kaleidescape-title-scrape") || customElements.define("kaleidescape-title-scrape", ht);
+function di(n) {
   return n.toLocaleLowerCase().normalize("NFKD").replace(new RegExp("\\p{M}", "gu"), "").match(/[\p{L}\p{N}_]+/gu)?.join(" ") ?? "";
 }
-function vs(n, e) {
+function ks(n, e) {
   const t = Math.min(2, Math.max(1, Math.ceil(n.length / 4)));
   if (n.length < 3 || Math.max(n.length, e.length) > 100 || Math.abs(n.length - e.length) > t)
     return !1;
@@ -4241,7 +4277,7 @@ function vs(n, e) {
   }
   return i[e.length] <= t;
 }
-function dt(n, e, t = !1) {
+function Di(n, e, t = !1) {
   const i = e.trim();
   if (i.length >= 2 && i.startsWith('"') && i.endsWith('"')) {
     let h;
@@ -4251,7 +4287,7 @@ function dt(n, e, t = !1) {
       h = i.slice(1, -1).trim();
     }
     if (!h) return !1;
-    const c = h.toLocaleLowerCase().split(/\s+/).map((m) => m.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    const c = h.toLocaleLowerCase().split(/\s+/).map((f) => f.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
     return new RegExp(
       "(?<![\\p{L}\\p{N}_])" + c.join("\\s+") + "(?![\\p{L}\\p{N}_])",
       "u"
@@ -4260,16 +4296,16 @@ function dt(n, e, t = !1) {
   if (n.toLocaleLowerCase().includes(e.toLocaleLowerCase()))
     return !0;
   if (!t) return !1;
-  const s = li(e), r = li(n);
+  const s = di(e), r = di(n);
   if (!s) return !1;
   if (r.includes(s)) return !0;
   const o = s.split(" "), d = r.split(" ");
   return o.length <= 12 && o.every(
-    (h) => d.some((c) => c.includes(h) || vs(h, c))
+    (h) => d.some((c) => c.includes(h) || ks(h, c))
   );
 }
-const N = { ATTRIBUTE: 1, CHILD: 2, PROPERTY: 3, BOOLEAN_ATTRIBUTE: 4 }, Ti = (n) => (...e) => ({ _$litDirective$: n, values: e });
-let Ai = class {
+const N = { ATTRIBUTE: 1, CHILD: 2, PROPERTY: 3, BOOLEAN_ATTRIBUTE: 4 }, ji = (n) => (...e) => ({ _$litDirective$: n, values: e });
+let Mi = class {
   constructor(e) {
   }
   get _$AU() {
@@ -4285,11 +4321,11 @@ let Ai = class {
     return this.render(...t);
   }
 };
-const { I: ws } = ss, di = (n) => n, $s = (n) => n.strings === void 0, hi = () => document.createComment(""), se = (n, e, t) => {
+const { I: _s } = os, hi = (n) => n, Cs = (n) => n.strings === void 0, ci = () => document.createComment(""), se = (n, e, t) => {
   const i = n._$AA.parentNode, s = e === void 0 ? n._$AB : e._$AA;
   if (t === void 0) {
-    const r = i.insertBefore(hi(), s), o = i.insertBefore(hi(), s);
-    t = new ws(r, o, n, n.options);
+    const r = i.insertBefore(ci(), s), o = i.insertBefore(ci(), s);
+    t = new _s(r, o, n, n.options);
   } else {
     const r = t._$AB.nextSibling, o = t._$AM, d = o !== n;
     if (d) {
@@ -4299,34 +4335,34 @@ const { I: ws } = ss, di = (n) => n, $s = (n) => n.strings === void 0, hi = () =
     if (r !== s || d) {
       let h = t._$AA;
       for (; h !== r; ) {
-        const c = di(h).nextSibling;
-        di(i).insertBefore(h, s), h = c;
+        const c = hi(h).nextSibling;
+        hi(i).insertBefore(h, s), h = c;
       }
     }
   }
   return t;
-}, O = (n, e, t = n) => (n._$AI(e, t), n), xs = {}, Di = (n, e = xs) => n._$AH = e, ks = (n) => n._$AH, Ze = (n) => {
+}, O = (n, e, t = n) => (n._$AI(e, t), n), Ss = {}, Oi = (n, e = Ss) => n._$AH = e, qs = (n) => n._$AH, Qe = (n) => {
   n._$AR(), n._$AA.remove();
 };
-const ci = Ti(class extends Ai {
+const pi = ji(class extends Mi {
   constructor(n) {
     if (super(n), n.type !== N.PROPERTY && n.type !== N.ATTRIBUTE && n.type !== N.BOOLEAN_ATTRIBUTE) throw Error("The `live` directive is not allowed on child or event bindings");
-    if (!$s(n)) throw Error("`live` bindings can only contain a single expression");
+    if (!Cs(n)) throw Error("`live` bindings can only contain a single expression");
   }
   render(n) {
     return n;
   }
   update(n, [e]) {
-    if (e === L || e === l) return e;
+    if (e === U || e === l) return e;
     const t = n.element, i = n.name;
     if (n.type === N.PROPERTY) {
-      if (e === t[i]) return L;
+      if (e === t[i]) return U;
     } else if (n.type === N.BOOLEAN_ATTRIBUTE) {
-      if (!!e === t.hasAttribute(i)) return L;
-    } else if (n.type === N.ATTRIBUTE && t.getAttribute(i) === e + "") return L;
-    return Di(n), e;
+      if (!!e === t.hasAttribute(i)) return U;
+    } else if (n.type === N.ATTRIBUTE && t.getAttribute(i) === e + "") return U;
+    return Oi(n), e;
   }
-}), We = S`
+}), Ke = q`
   .library-toolbar [hidden],
   .library-toolbar[hidden],
   .library-footer [hidden],
@@ -4586,9 +4622,32 @@ const ci = Ti(class extends Ai {
     color: #fff;
     border-color: #236d9e;
   }
+  .format-sdr {
+    background: #176d68;
+    color: #fff;
+    border-color: #176d68;
+  }
   .format-vision,
   .format-atmos {
     font-weight: 500;
+    gap: 3px;
+  }
+  .dolby-symbol {
+    width: 16px;
+    height: 11px;
+    flex: none;
+  }
+  .format-hdr10 {
+    gap: 3px;
+    background: #f1f3f7;
+    color: #181d27;
+    border-color: #aeb9c8;
+    letter-spacing: 0.02em;
+  }
+  .hdr-symbol {
+    width: 19px;
+    height: 12px;
+    flex: none;
   }
   .cover-formats .format-badge {
     font-size: 9px;
@@ -5325,7 +5384,7 @@ const ci = Ti(class extends Ai {
     overflow: hidden;
     text-overflow: ellipsis;
   }
-`, _s = S`
+`, Es = q`
   .remote-dialog {
     width: min(390px, calc(100% - 24px));
     --dialog-gutter: 16px;
@@ -5445,7 +5504,7 @@ const ci = Ti(class extends Ai {
     }
   }
 `;
-function pi(n, e, t, i) {
+function ui(n, e, t, i) {
   const s = (r, o, d, h = "") => a` <button
       type="button"
       class=${h}
@@ -5496,13 +5555,13 @@ function pi(n, e, t, i) {
     </button>
   `;
 }
-const Cs = {
+const Rs = {
   state_observed: "The requested playback state was observed.",
   acknowledged: "The player accepted the command; its final state is not confirmed.",
   unconfirmed: "The command may have executed. An administrator must inspect the player before more commands can be sent. Nothing will be replayed automatically.",
   rejected: "The player rejected the command. Nothing was retried.",
   not_sent: "Settings or access changed before sending. The command was not sent."
-}, xe = class xe extends x {
+}, ke = class ke extends x {
   constructor() {
     super(...arguments), this.mode = "remote", this.versionId = "", this.playerId = "", this.inlineRemote = !1, this.value = "", this.configured = !0, this.generation = 0, this.key = "", this.waking = !1, this.wakeDeadline = 0, this.started = "", this.lastOperation = "", this.selectedPlayer = "", this.dialog = "players", this.acknowledge = "", this.busy = !1, this.error = "", this.notice = "", this.locked = !1;
   }
@@ -5528,7 +5587,7 @@ const Cs = {
     super.disconnectedCallback(), this.generation++, this.stopWaking(), this.pending = this.info = void 0;
   }
   fail(e) {
-    const t = u(e), i = {
+    const t = g(e), i = {
       control_disabled: "Playback controls are disabled. Ask an administrator to enable them.",
       control_player: "No player is configured. Ask an administrator to discover and select one.",
       control_not_ready: "The player is not ready. Power it on and wait for readiness before playing.",
@@ -5540,7 +5599,7 @@ const Cs = {
       control_uncertain: "An administrator must inspect and acknowledge the previous uncertain command.",
       control_limit: "Control receipt storage is full. Administrator maintenance is required."
     };
-    this.error = i[t] ?? w(e), t === "unauthorized" && (this.generation++, this.info = this.pending = this.status = void 0, this.selectedPlayer = "", this.dispatchEvent(
+    this.error = i[t] ?? y(e), t === "unauthorized" && (this.generation++, this.info = this.pending = this.status = void 0, this.selectedPlayer = "", this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     ));
   }
@@ -5626,7 +5685,7 @@ const Cs = {
     if (!this.pending) return;
     const e = this.generation, t = await this.client.controlExecute(this.pending);
     if (e !== this.generation) return;
-    this.notice = Cs[t.outcome], this.pending = void 0;
+    this.notice = Rs[t.outcome], this.pending = void 0;
     const i = this.lastOperation;
     if (["state_observed", "acknowledged"].includes(t.outcome) && (i === "power_on" ? (this.waking = !0, this.wakeDeadline = Date.now() + 12e4, this.wakeTimer = setTimeout(() => {
       this.pollWake();
@@ -5770,7 +5829,7 @@ const Cs = {
               ` : e?.enabled ? a`
                   ${this.waking ? a`<span role="status">◌ Starting player…</span>` : l}
                 ` : a`<p class="muted">Playback controls are disabled.</p>`}
-      ${this.mode === "remote" && this.inlineRemote && e?.enabled ? pi(i?.name || "Kaleidescape player", !!r, !!this.status?.ready, (o) => {
+      ${this.mode === "remote" && this.inlineRemote && e?.enabled ? ui(i?.name || "Kaleidescape player", !!r, !!this.status?.ready, (o) => {
       this.prepare(o);
     }) : l}
       ${this.dialog !== "remote" || this.acknowledge ? this.feedback() : l}
@@ -5786,12 +5845,12 @@ const Cs = {
           <h2>
             ${this.acknowledge ? "Review unconfirmed command" : this.dialog === "remote" ? "Theater Remote" : "Choose Player"}
           </h2>
-          ${k((o) => this.close(o))}
+          ${_((o) => this.close(o))}
         </div>
         ${this.acknowledge ? a`<p>
                 Confirm you inspected the physical player. This permits new
                 commands and does not resend the earlier command.
-              </p>` : this.dialog === "remote" ? a`${pi(
+              </p>` : this.dialog === "remote" ? a`${ui(
       i?.name || "Kaleidescape player",
       !!r,
       !!this.status?.ready,
@@ -5830,7 +5889,7 @@ const Cs = {
     </section>`;
   }
 };
-xe.properties = {
+ke.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   mode: {},
@@ -5839,10 +5898,10 @@ xe.properties = {
   inlineRemote: { type: Boolean },
   value: {},
   configured: { type: Boolean }
-}, xe.styles = [
-  q,
-  _s,
-  S`
+}, ke.styles = [
+  S,
+  Es,
+  q`
       [hidden] {
         display: none !important;
       }
@@ -5932,9 +5991,9 @@ xe.properties = {
       }
     `
 ];
-let ht = xe;
-customElements.get("kaleidescape-device-controls") || customElements.define("kaleidescape-device-controls", ht);
-const ui = [
+let ct = ke;
+customElements.get("kaleidescape-device-controls") || customElements.define("kaleidescape-device-controls", ct);
+const gi = [
   "close",
   "cancel",
   "control-lock",
@@ -5942,19 +6001,19 @@ const ui = [
   "scrape-lock",
   "collection-lock"
 ];
-class Ss {
+class zs {
   constructor(e, t) {
-    this.host = e, this.change = t, this.profile = G(), this.schedule = () => {
-      this.frame !== void 0 || G() === this.profile || (this.frame = requestAnimationFrame(() => {
+    this.host = e, this.change = t, this.profile = Z(), this.schedule = () => {
+      this.frame !== void 0 || Z() === this.profile || (this.frame = requestAnimationFrame(() => {
         this.frame = void 0;
-        const i = G();
+        const i = Z();
         this.host.isConnected && i !== this.profile && this.change() && (this.profile = i);
       }));
     };
   }
   hostConnected() {
     window.addEventListener("resize", this.schedule);
-    for (const e of ui)
+    for (const e of gi)
       this.host.renderRoot.addEventListener(e, this.schedule, !0);
   }
   hostUpdated() {
@@ -5962,17 +6021,17 @@ class Ss {
   }
   hostDisconnected() {
     window.removeEventListener("resize", this.schedule);
-    for (const e of ui)
+    for (const e of gi)
       this.host.renderRoot.removeEventListener(e, this.schedule, !0);
     this.frame !== void 0 && cancelAnimationFrame(this.frame), this.frame = void 0;
   }
 }
 function ue(n, e) {
-  n.addController(new Ss(n, e));
+  n.addController(new zs(n, e));
 }
 class j {
   constructor(e, t, i, s, r = "library") {
-    this.client = e, this.scope = t, this.shared = i, this.error = s, this.area = r, this.values = {}, this.revision = 0, this.profile = G(), this.active = !0, this.inflight = 0, this.sequence = 0, this.versions = /* @__PURE__ */ new Map(), this.failed = {};
+    this.client = e, this.scope = t, this.shared = i, this.error = s, this.area = r, this.values = {}, this.revision = 0, this.profile = Z(), this.active = !0, this.inflight = 0, this.sequence = 0, this.versions = /* @__PURE__ */ new Map(), this.failed = {};
   }
   get unsettled() {
     return this.inflight > 0 || Object.keys(this.failed).length > 0;
@@ -6027,14 +6086,14 @@ class j {
     this.active = !1, this.values = {}, this.failed = {}, this.versions.clear();
   }
 }
-function qs(n) {
+function Us(n) {
   const e = n.watched_status === "in_progress" ? { key: "progress", label: "In progress", symbol: "◔" } : n.watched_status === "watched" ? { key: "watched", label: "Watched", symbol: "✓" } : n.is_recently_added ? { key: "recent", label: "Recently added", symbol: "NEW" } : void 0;
   return [
     ...e ? [e] : [],
     ...n.is_favorite ? [{ key: "favorite", label: "Favorite", symbol: "★" }] : []
   ];
 }
-function Ht(n) {
+function be(n) {
   const e = (n.formats?.length ? n.formats : [n.edition ?? ""]).map(
     (s) => s.toLowerCase()
   ), t = (s) => e.some((r) => s.test(r)), i = [];
@@ -6042,14 +6101,23 @@ function Ht(n) {
     (s) => /\b4k\b/.test(s) && !/\bcinematic\b/.test(s)
   ) && i.push({ key: "four-k", label: "4K" }), e.some((s) => /\b4k\b/.test(s) && /\bcinematic\b/.test(s)) && i.push({ key: "cinematic", label: "4K Cinematic" }), t(/\bhd\b|\b1080p\b/) && i.push({ key: "hd", label: "HD" }), t(/\bsd\b|\b(?:480|576)[pi]\b/) && i.push({ key: "sd", label: "SD" }), t(/\bsdr\b/) && i.push({ key: "sdr", label: "SDR" }), t(/\bhdr10\b/) && i.push({ key: "hdr10", label: "HDR10" }), t(/\bdolby\s*vision\b/) && i.push({ key: "vision", label: "Dolby Vision" }), t(/\bdolby\s*atmos\b/) && i.push({ key: "atmos", label: "Dolby Atmos" }), i;
 }
-function Es(n) {
-  const e = Ht(n);
+function Ls(n) {
+  const e = be(n);
   return ["cinematic", "four-k", "hd", "sd"].map((t) => e.find((i) => i.key === t)).find(Boolean);
 }
-function K(n, e = !1, t, i = !1) {
-  const s = e ? Es(n) : void 0;
-  return (e ? s ? [s] : [] : Ht(n)).map((r) => {
-    const o = r.key === "cinematic" ? a`<b>4K</b><span class="cinematic-label">Cinematic</span>` : r.label;
+const As = k`<svg class="dolby-symbol" viewBox="0 0 24 16" aria-hidden="true" focusable="false">
+  <path fill="currentColor" d="M1 1h3.1c4.1 0 7 2.9 7 7s-2.9 7-7 7H1V1Zm22 0h-3.1c-4.1 0-7 2.9-7 7s2.9 7 7 7H23V1Z" />
+</svg>`, Ts = k`<svg class="hdr-symbol" viewBox="0 0 27 16" aria-hidden="true" focusable="false">
+  <path fill="#e94637" d="M1 4 7 3v10l-6-1z" />
+  <path fill="#f28c28" d="M6 3 12 2v12l-6-1z" />
+  <path fill="#edc13b" d="M11 2 17 1v14l-6-1z" />
+  <path fill="#72ad69" d="M16 1 22 0v16l-6-1z" />
+  <path fill="#298a98" d="M21 1 26 0v16l-5-1z" />
+</svg>`;
+function I(n, e = !1, t, i = !1) {
+  const s = e ? Ls(n) : void 0;
+  return (e ? s ? [s] : [] : be(n)).map((r) => {
+    const o = r.key === "cinematic" ? a`<b>4K</b><span class="cinematic-label">Cinematic</span>` : r.key === "vision" || r.key === "atmos" ? a`${As}<span>${r.label}</span>` : r.key === "hdr10" ? a`${Ts}<b>HDR10</b>` : r.label;
     return t ? a`<button
           type="button"
           class=${`format-badge format-${r.key}`}
@@ -6065,14 +6133,14 @@ function K(n, e = !1, t, i = !1) {
         >`;
   });
 }
-function Ge(n, e = !1, t = []) {
-  return qs(n).filter((i) => !t.includes(i.key)).map(
+function Xe(n, e = !1, t = []) {
+  return Us(n).filter((i) => !t.includes(i.key)).map(
     (i) => a`<span
-          class=${e ? `cover-flag flag-${i.key}` : `status-badge collection-badge collection-${Je(i.label)}`}
+          class=${e ? `cover-flag flag-${i.key}` : `status-badge collection-badge collection-${Ye(i.label)}`}
           title=${i.label}
           aria-label=${i.label}
           role="img"
-          >${e ? a`<span class="badge-symbol" aria-hidden="true">${i.symbol}</span>` : a`${Wt(i.label)}<span>${i.label}</span>`}</span
+          >${e ? a`<span class="badge-symbol" aria-hidden="true">${i.symbol}</span>` : a`${Jt(i.label)}<span>${i.label}</span>`}</span
         >`
   );
 }
@@ -6101,10 +6169,10 @@ function oe(n, e, t = !1) {
     >${i}</span
   >`;
 }
-function B(n) {
+function H(n) {
   return n.toLocaleLowerCase() === "played" ? "Watched" : n;
 }
-function Je(n) {
+function Ye(n) {
   const e = n.toLowerCase();
   return {
     all: "all",
@@ -6119,32 +6187,32 @@ function Je(n) {
     "in progress": "progress"
   }[e] ?? "all";
 }
-function Wt(n) {
-  const e = Je(n), t = {
-    all: _`<path d="m2 7 10-5 10 5-10 5zM2 12l10 5 10-5M2 17l10 5 10-5"/>`,
-    new: _`<path d="m12 1 3 2 4 1 1 4 3 4-3 3-1 4-4 1-3 3-3-3-4-1-1-4-3-3 3-4 1-4 4-1z"/><text x="12" y="14.5" text-anchor="middle" fill="currentColor" stroke="none" font-size="6" font-weight="800">NEW</text>`,
-    unwatched: _`<circle cx="12" cy="12" r="10"/><path fill="currentColor" stroke="none" d="m9 6 9 6-9 6z"/>`,
-    watched: _`<circle cx="12" cy="12" r="10"/><path d="m6 12 4 4 8-8"/>`,
-    favorite: _`<path d="M12 21 3 12C-3 4 6-1 12 6c6-7 15-2 9 6z"/>`,
-    progress: _`<circle cx="12" cy="12" r="10"/><path d="M9 7v10M15 7v10"/>`
+function Jt(n) {
+  const e = Ye(n), t = {
+    all: k`<path d="m2 7 10-5 10 5-10 5zM2 12l10 5 10-5M2 17l10 5 10-5"/>`,
+    new: k`<path d="m12 1 3 2 4 1 1 4 3 4-3 3-1 4-4 1-3 3-3-3-4-1-1-4-3-3 3-4 1-4 4-1z"/><text x="12" y="14.5" text-anchor="middle" fill="currentColor" stroke="none" font-size="6" font-weight="800">NEW</text>`,
+    unwatched: k`<circle cx="12" cy="12" r="10"/><path fill="currentColor" stroke="none" d="m9 6 9 6-9 6z"/>`,
+    watched: k`<circle cx="12" cy="12" r="10"/><path d="m6 12 4 4 8-8"/>`,
+    favorite: k`<path d="M12 21 3 12C-3 4 6-1 12 6c6-7 15-2 9 6z"/>`,
+    progress: k`<circle cx="12" cy="12" r="10"/><path d="M9 7v10M15 7v10"/>`
   };
-  return _`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${t[e]}</svg>`;
+  return k`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${t[e]}</svg>`;
 }
-function Qe(n, e, t = !1) {
-  const i = a`${Wt(n)}<span
-      >${B(n)}</span
-    >`, s = `collection-badge collection-${Je(n)}`;
+function et(n, e, t = !1) {
+  const i = a`${Jt(n)}<span
+      >${H(n)}</span
+    >`, s = `collection-badge collection-${Ye(n)}`;
   return e ? a`<button
         type="button"
         class=${s}
-        aria-label=${`Filter by collection: ${B(n)}`}
+        aria-label=${`Filter by collection: ${H(n)}`}
         ?disabled=${t}
         @click=${e}
       >
         ${i}
       </button>` : a`<span class=${s}>${i}</span>`;
 }
-const ke = class ke extends x {
+const _e = class _e extends x {
   constructor() {
     super(...arguments), this.revision = 0, this.enabled = !1, this.blocked = !1, this.generation = 0, this.choices = [], this.selected = "", this.loading = !1, this.busy = !1, this.error = "", this.notice = "";
   }
@@ -6173,9 +6241,9 @@ const ke = class ke extends x {
     e?.preventDefault(), this.clear(), this.requestUpdate();
   }
   fail(e) {
-    this.error = w(e), ["unauthorized", "library_disabled"].includes(u(e)) && (this.clear(), this.dispatchEvent(
+    this.error = y(e), ["unauthorized", "library_disabled"].includes(g(e)) && (this.clear(), this.dispatchEvent(
       new CustomEvent(
-        u(e) === "unauthorized" ? "access-denied" : "library-disabled",
+        g(e) === "unauthorized" ? "access-denied" : "library-disabled",
         { bubbles: !0, composed: !0 }
       )
     ));
@@ -6248,13 +6316,13 @@ const ke = class ke extends x {
       );
       e === this.generation && this.complete(t);
     } catch (t) {
-      e === this.generation && (u(t) === "not_found" ? (this.pending = void 0, this.error = "No accepted add request was found. Refresh title details before starting another add.") : this.fail(t));
+      e === this.generation && (g(t) === "not_found" ? (this.pending = void 0, this.error = "No accepted add request was found. Refresh title details before starting another add.") : this.fail(t));
     } finally {
       e === this.generation && (this.busy = !1, this.requestUpdate());
     }
   }
   render() {
-    return !this.scope?.permissions.edit || !this.version || !this.enabled ? l : a`${It("Collection", "collection", this.blocked || this.busy, () => this.open(), "collection-button")}
+    return !this.scope?.permissions.edit || !this.version || !this.enabled ? l : a`${Bt("Collection", "collection", this.blocked || this.busy, () => this.open(), "collection-button")}
       ${this.notice ? a`<p role="status">${this.notice}</p>` : l}
       <dialog
         data-admin-dialog
@@ -6265,7 +6333,7 @@ const ke = class ke extends x {
       >
         <div class="card-head">
           <h2 id="collection-add-title">Add to Collection</h2>
-          ${k((e) => this.close(e))}
+          ${_((e) => this.close(e))}
         </div>
         <p>
           <strong>${this.version.title}</strong> ·
@@ -6302,17 +6370,17 @@ const ke = class ke extends x {
       </dialog>`;
   }
 };
-ke.properties = {
+_e.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   version: { attribute: !1 },
   revision: { type: Number },
   enabled: { type: Boolean },
   blocked: { type: Boolean }
-}, ke.styles = [
-  q,
-  Nt,
-  S`
+}, _e.styles = [
+  S,
+  Ft,
+  q`
       .collection-button {
         border-radius: 999px;
         padding: 9px;
@@ -6327,12 +6395,12 @@ ke.properties = {
       }
     `
 ];
-let ct = ke;
+let pt = _e;
 customElements.get("kaleidescape-library-collection-add") || customElements.define(
   "kaleidescape-library-collection-add",
-  ct
+  pt
 );
-const gi = [
+const mi = [
   ["title", "Display title"],
   ["sort_title", "Sort title (blank uses display title)"],
   ["year", "Year"],
@@ -6343,15 +6411,18 @@ const gi = [
   ["writers", "Writers"],
   ["producers", "Producers"],
   ["studios", "Studios"],
-  ["genres", "Genres"]
-], Xe = /* @__PURE__ */ new Set([
+  ["genres", "Genres"],
+  ["purchased_on", "Purchase date"],
+  ["purchase_price", "Purchase price"],
+  ["retail_price", "Retail price"]
+], tt = /* @__PURE__ */ new Set([
   "actors",
   "directors",
   "writers",
   "producers",
   "studios",
   "genres"
-]), _e = class _e extends x {
+]), Ce = class Ce extends x {
   constructor() {
     super(...arguments), this.versionId = "", this.blocked = !1, this.draft = {}, this.busy = !1, this.opened = !1, this.restoring = !1, this.error = "", this.generation = 0;
   }
@@ -6380,7 +6451,7 @@ const gi = [
     return this.busy || this.pending ? !1 : !this.opened || !this.review || !this.restoring && !Object.keys(this.patch()).length || window.confirm("Discard your unsaved Library changes?");
   }
   report(e) {
-    this.error = w(e), u(e) === "unauthorized" && (this.reset(), this.dispatchEvent(
+    this.error = y(e), g(e) === "unauthorized" && (this.reset(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     ));
   }
@@ -6406,14 +6477,26 @@ const gi = [
   }
   patch() {
     const e = {};
-    for (const [t] of gi) {
-      const i = Xe.has(t) ? this.draft[t].split(`
-`).map((s) => s.trim()).filter(Boolean) : t === "year" ? this.draft[t].trim() ? Number(this.draft[t]) : null : t === "sort_title" ? this.draft[t].trim() || null : this.draft[t];
-      JSON.stringify(i) !== JSON.stringify(
-        this.review.values[t] ?? (Xe.has(t) ? [] : t === "sort_title" || t === "year" ? null : "")
-      ) && (e[t] = i);
+    for (const [i] of mi) {
+      const s = this.draft[i] ?? "", r = tt.has(i) ? s.split(`
+`).map((o) => o.trim()).filter(Boolean) : i === "year" ? s.trim() ? Number(s) : null : [
+        "sort_title",
+        "purchased_on",
+        "purchase_price",
+        "retail_price"
+      ].includes(i) ? s.trim() || null : s;
+      JSON.stringify(r) !== JSON.stringify(
+        this.review.values[i] ?? (tt.has(i) ? [] : [
+          "sort_title",
+          "year",
+          "purchased_on",
+          "purchase_price",
+          "retail_price"
+        ].includes(i) ? null : "")
+      ) && (e[i] = r);
     }
-    return e;
+    const t = this.draft.purchase_information_unavailable === "true";
+    return t !== !!this.review.values.purchase_information_unavailable && (e.purchase_information_unavailable = t), e;
   }
   async save() {
     if (!this.client || !this.scope?.permissions.edit || !this.review || this.busy)
@@ -6442,13 +6525,13 @@ const gi = [
         "not_found",
         "backup_in_progress",
         "busy"
-      ].includes(u(t)) && (this.pending = void 0), this.report(t);
+      ].includes(g(t)) && (this.pending = void 0), this.report(t);
     } finally {
       e === this.generation && (this.busy = !1, this.lock(), this.requestUpdate());
     }
   }
   render() {
-    return this.scope?.permissions.edit ? a`${It("Edit details", "edit", this.blocked || this.busy || !!this.pending, () => this.open())}
+    return this.scope?.permissions.edit ? a`${Bt("Edit details", "edit", this.blocked || this.busy || !!this.pending, () => this.open())}
       <dialog
         data-admin-dialog
         class="inset-dialog"
@@ -6460,7 +6543,7 @@ const gi = [
       >
         <div class="card-head">
           <h2 id="library-edit-title">Edit Library details</h2>
-          ${k(() => this.close())}
+          ${_(() => this.close())}
         </div>
         ${this.error ? a`<p class="error" role="alert">${this.error}</p>` : l}
         ${this.busy ? a`<p role="status">${this.pending ? "Saving changes…" : "Loading details…"}</p>` : l}
@@ -6477,9 +6560,9 @@ const gi = [
                     per line for credits and genres.
                   </p>
                   <div class="edit-fields">
-                    ${gi.map(
+                    ${mi.map(
       ([e, t]) => a`<label
-                          >${t}${Xe.has(e) || e === "synopsis" ? a`<textarea
+                          >${t}${tt.has(e) || e === "synopsis" ? a`<textarea
                                   name=${e}
                                   .value=${this.draft[e] ?? ""}
                                   ?disabled=${!!this.pending || this.busy}
@@ -6488,7 +6571,7 @@ const gi = [
       }}
                                 ></textarea>` : a`<input
                                   name=${e}
-                                  type=${e === "year" ? "number" : "text"}
+                                  type=${e === "year" ? "number" : e === "purchased_on" ? "date" : "text"}
                                   .value=${this.draft[e] ?? ""}
                                   ?disabled=${!!this.pending || this.busy}
                                   @input=${(i) => {
@@ -6497,6 +6580,23 @@ const gi = [
                                 />`}</label
                         >`
     )}
+                    <label class="check"
+                      ><input
+                        name="purchase_information_unavailable"
+                        type="checkbox"
+                        .checked=${this.draft.purchase_information_unavailable === "true"}
+                        ?disabled=${!!this.pending || this.busy}
+                        @change=${(e) => {
+      this.draft.purchase_information_unavailable = String(
+        e.target.checked
+      ), this.requestUpdate();
+    }}
+                      />Purchase information unavailable</label
+                    >
+                    <p class="muted">
+                      Purchase date and prices apply to this version. The
+                      unavailable option applies to the whole movie.
+                    </p>
                   </div>` : l}
         <div class="dialog-footer">
           <button ?disabled=${this.busy || !!this.pending} @click=${this.close}>
@@ -6531,15 +6631,15 @@ const gi = [
       </dialog>` : l;
   }
 };
-_e.properties = {
+Ce.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   versionId: {},
   blocked: { type: Boolean }
-}, _e.styles = [
-  q,
-  Nt,
-  S`
+}, Ce.styles = [
+  S,
+  Ft,
+  q`
       :host {
         display: inline-block;
       }
@@ -6556,9 +6656,9 @@ _e.properties = {
       }
     `
 ];
-let pt = _e;
-customElements.get("kaleidescape-title-edit") || customElements.define("kaleidescape-title-edit", pt);
-const H = [
+let ut = Ce;
+customElements.get("kaleidescape-title-edit") || customElements.define("kaleidescape-title-edit", ut);
+const W = [
   ["collection", "Collection", "collections"],
   ["actor", "Actor", "actors"],
   ["director", "Director", "directors"],
@@ -6566,7 +6666,7 @@ const H = [
   ["genre", "Genre", "genres"],
   ["year", "Year", "year"],
   ["format", "Viewing format", "format"]
-], et = [
+], it = [
   ["name", "Title"],
   ["year", "Year"],
   ["collection", "Collection"],
@@ -6574,30 +6674,30 @@ const H = [
   ["watched", "Status"],
   ["added", "Added on"],
   ["random", "Random"]
-], mi = [
+], fi = [
   ["show_titles", "Show titles on covers"],
   ["show_format", "Show format"],
   ["show_badges", "Show library badges"],
   ["show_rating", "Show rating on covers"],
   ["show_library_cost", "Show total library cost in footer"]
-], W = {
+], J = {
   watched: "Watched",
   unwatched: "Unwatched",
   in_progress: "In progress",
   unknown: "Unknown"
-}, Ce = class Ce extends x {
+}, Se = class Se extends x {
   constructor() {
     super(), this.bound = "", this.generation = 0, this.listRequest = 0, this.statusRequest = 0, this.purchaseLoading = !1, this.purchaseError = "", this.purchaseDetailsOpen = !1, this.versionRequest = 0, this.versionsLoading = !1, this.versionsError = "", this.widths = [360, 90, 260, 150, 140, 210], this.collectionLocked = !1, this.controlLocked = !1, this.scrapeLocked = !1, this.artworkLocked = !1, this.editLocked = !1, this.castLimit = 8, this.checkingCollection = !1, this.filters = {
       query: "",
       sort: "name",
       descending: !1
-    }, this.applied = { ...this.filters }, this.loading = !1, this.requesting = !1, this.error = "", this.notice = "", this.covers = new T(), this.fuzzySearch = !0, this.mode = "list", this.coverSize = 150, this.display = {
+    }, this.applied = { ...this.filters }, this.loading = !1, this.requesting = !1, this.error = "", this.notice = "", this.covers = new A(), this.fuzzySearch = !0, this.mode = "list", this.coverSize = 150, this.display = {
       show_titles: !0,
       show_format: !0,
       show_badges: !0,
       show_rating: !1,
       show_library_cost: !1
-    }, this.entriesPerPage = 100, this.preferencesReady = !1, this.preferenceError = "", this.peopleTimers = {}, this.peopleSearch = {}, this.peopleChoices = {}, this.peopleRequests = {}, this.coverColumns = 1, this.gridWidth = 0, this.requestLimit = 50, this.requestedOffset = 0, this.draft = {}, this.facetSearch = "", this.visibility = () => {
+    }, this.entriesPerPage = 100, this.preferencesReady = !1, this.preferenceError = "", this.coverColumns = 1, this.gridWidth = 0, this.requestLimit = 50, this.requestedOffset = 0, this.draft = {}, this.facetSearch = "", this.visibility = () => {
       clearTimeout(this.timer), document.hidden ? (clearTimeout(this.layoutTimer), this.layoutTimer = void 0, this.pendingLimit = void 0) : (this.refreshStatus(), this.scheduleLayoutPage());
     }, this.mobileQuery = "", ue(this, () => !this.preferencesReady || this.preferences?.unsettled || this.searchPreferences?.unsettled || this.loading || this.detailsLocked || this.resize || this.renderRoot.querySelector("dialog[open]") ? !1 : (this.clear(), this.initializePreferences(), this.refreshStatus(), !0));
   }
@@ -6634,14 +6734,14 @@ const H = [
       this.scope,
       !1,
       (t) => {
-        e === this.generation && (t && u(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? w(t) : "", this.requestUpdate()));
+        e === this.generation && (t && g(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? y(t) : "", this.requestUpdate()));
       }
     ), this.searchPreferences = new j(
       this.client,
       this.scope,
       !1,
       (t) => {
-        e === this.generation && (t && u(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? w(t) : "", this.requestUpdate()));
+        e === this.generation && (t && g(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? y(t) : "", this.requestUpdate()));
       },
       "search"
     );
@@ -6660,26 +6760,36 @@ const H = [
         sort: "name",
         descending: !1,
         ...Object.fromEntries(
-          [...H.map(([r]) => r), "status"].map((r) => [
+          [...W.map(([r]) => r), "status"].map((r) => [
             r,
             []
           ])
         ),
-        missing_metadata_artwork: !1
+        missing_metadata_artwork: !1,
+        missing_purchase_information: !1
       } : t;
       this.dashboard && (this.preferences?.dispose(), this.preferences = void 0, this.searchPreferences?.dispose(), this.searchPreferences = void 0, this.coverColumns = this.dashboard.columns), this.fuzzySearch = i.fuzzy_search, this.mode = s.view, this.entriesPerPage = s.page_size, this.coverSize = s.cover_size, this.castLimit = Number.isInteger(s.cast_limit) ? s.cast_limit : 8, this.display = Object.fromEntries(
-        mi.map(([r]) => [r, s[r]])
+        fi.map(([r]) => [r, s[r]])
       ), this.scope?.permissions.edit && this.display.show_library_cost && this.loadPurchaseTotals(), this.widths = [...s.widths], this.applied = Object.fromEntries(
         [
           "query",
           "sort",
           "random_seed",
           "descending",
-          ...H.map(([r]) => r),
+          ...W.map(([r]) => r),
           "status",
-          "missing_metadata_artwork"
+          "missing_metadata_artwork",
+          "missing_purchase_information"
         ].map((r) => [r, s[r]])
-      ), this.filters = structuredClone(this.applied), this.preferencesReady = !0, this.openCriterion ? this.fromDetails(this.openCriterion.key, this.openCriterion.value) : await this.load(), this.openTitleId && e === this.generation && this.openLinkedTitle(this.openTitleId);
+      ), Array.isArray(this.applied.genre) && (this.applied.genre = [
+        ...new Set(
+          this.applied.genre.map(
+            (r) => ["sci-fi", "sci fi", "science fiction"].includes(
+              r.trim().toLowerCase()
+            ) ? "Science Fiction" : r
+          )
+        )
+      ]), this.scope?.permissions.edit || (this.applied.missing_purchase_information = !1), this.filters = structuredClone(this.applied), this.preferencesReady = !0, this.openCriterion ? this.fromDetails(this.openCriterion.key, this.openCriterion.value) : await this.load(), this.openTitleId && e === this.generation && this.openLinkedTitle(this.openTitleId);
     } catch (t) {
       e === this.generation && this.fail(t);
     }
@@ -6689,12 +6799,13 @@ const H = [
       Object.fromEntries(
         [
           "query",
-          ...H.map(([e]) => e),
+          ...W.map(([e]) => e),
           "status",
-          "missing_metadata_artwork"
+          "missing_metadata_artwork",
+          "missing_purchase_information"
         ].map((e) => [
           e,
-          this.applied[e] ?? (e === "query" ? "" : e === "missing_metadata_artwork" ? !1 : [])
+          this.applied[e] ?? (e === "query" ? "" : e === "missing_metadata_artwork" || e === "missing_purchase_information" ? !1 : [])
         ])
       )
     );
@@ -6705,10 +6816,10 @@ const H = [
   clear() {
     this.mobileQuery = "", this.purchaseTotals = void 0, this.purchaseLoading = !1, this.purchaseError = "", this.purchaseDetailsOpen = !1;
     const e = this.renderRoot.querySelector(".purchase-details");
-    e && (e.open = !1), clearTimeout(this.searchTimer), this.clearPeople(), this.preferences?.dispose(), this.preferences = void 0, this.searchPreferences?.dispose(), this.searchPreferences = void 0, this.preferencesReady = !1, this.preferenceError = "", this.generation++, this.listRequest++, clearTimeout(this.timer), clearTimeout(this.layoutTimer), this.layoutTimer = void 0, this.pendingLimit = void 0, this.gridObserver?.disconnect(), this.gridObserver = void 0, this.grid = void 0, this.gridWidth = 0, this.coverColumns = 1, this.entriesPerPage = this.requestLimit = 100, this.requestedOffset = 0;
+    e && (e.open = !1), clearTimeout(this.searchTimer), this.preferences?.dispose(), this.preferences = void 0, this.searchPreferences?.dispose(), this.searchPreferences = void 0, this.preferencesReady = !1, this.preferenceError = "", this.generation++, this.listRequest++, clearTimeout(this.timer), clearTimeout(this.layoutTimer), this.layoutTimer = void 0, this.pendingLimit = void 0, this.gridObserver?.disconnect(), this.gridObserver = void 0, this.grid = void 0, this.gridWidth = 0, this.coverColumns = 1, this.entriesPerPage = this.requestLimit = 100, this.requestedOffset = 0;
     for (const t of this.renderRoot.querySelectorAll("dialog"))
       t.close();
-    this.covers.cache.dispose(), this.covers = new T(), this.fuzzySearch = !0, this.castLimit = 8, this.display = {
+    this.covers.cache.dispose(), this.covers = new A(), this.fuzzySearch = !0, this.castLimit = 8, this.display = {
       show_titles: !0,
       show_format: !0,
       show_badges: !0,
@@ -6769,13 +6880,13 @@ const H = [
     i !== "all" && ![25, 100, 1e3].includes(i) || (this.entriesPerPage = i, this.preferences?.set({ page_size: i }), this.requestUpdate(), this.scheduleLayoutPage());
   }
   fail(e) {
-    const t = u(e);
+    const t = g(e);
     (t === "unauthorized" || t === "library_disabled") && (this.clear(), this.dispatchEvent(
       new CustomEvent(
         t === "unauthorized" ? "access-denied" : "library-disabled",
         { bubbles: !0, composed: !0 }
       )
-    )), this.error = w(e), this.requestUpdate();
+    )), this.error = y(e), this.requestUpdate();
   }
   async load(e = 0, t = !1) {
     if (this.detailsLocked || !this.client || !this.scope?.library_enabled) return;
@@ -6833,7 +6944,7 @@ const H = [
         collections_synced_at: s.collections_synced_at
       }, (this.display.show_library_cost || this.purchaseDetailsOpen) && this.loadPurchaseTotals(), this.page && (this.page.revision !== s.revision || this.page.preferences_key !== s.preferences_key) && !this.loading && (this.selected ? !this.detailsLocked && (this.versions?.revision !== s.revision || this.versions?.preferences_key !== s.preferences_key) && this.loadVersions() : this.load(this.page.offset, !0));
     } catch (s) {
-      i = u(s) === "unauthorized", e === this.generation && t === this.statusRequest && this.fail(s);
+      i = g(s) === "unauthorized", e === this.generation && t === this.statusRequest && this.fail(s);
     } finally {
       e === this.generation && t === this.statusRequest && this.isConnected && !i && !document.hidden && (this.timer = setTimeout(
         () => {
@@ -6865,7 +6976,7 @@ const H = [
     this.requestUpdate(), await this.updateComplete, this.isConnected && this.renderRoot.querySelector(`#${e}`)?.showModal();
   }
   closeDialog(e) {
-    e === "library-search" && (this.mobileQuery = String(this.filters.query ?? "")), e === "filter-dialog" && this.clearPeople(), this.renderRoot.querySelector(`#${e}`)?.close(), e === "title-dialog" && (this.selected = void 0, this.clearVersions()), this.requestUpdate();
+    e === "library-search" && (this.mobileQuery = String(this.filters.query ?? "")), this.renderRoot.querySelector(`#${e}`)?.close(), e === "title-dialog" && (this.selected = void 0, this.clearVersions()), this.requestUpdate();
   }
   async openLinkedTitle(e) {
     if (!this.client || !this.scope?.library_enabled) return;
@@ -6902,7 +7013,7 @@ const H = [
         return;
       this.versions = o, this.activeVersion = o.items.find((d) => d.id === r) ?? o.items[0], this.activeVersion && (this.selected = { ...this.selected, title: this.activeVersion.title });
     } catch (o) {
-      t === this.generation && i === this.versionRequest && (["unauthorized", "library_disabled"].includes(u(o)) ? this.fail(o) : u(o) === "refresh_required" && e ? this.loadVersions() : this.versionsError = w(o));
+      t === this.generation && i === this.versionRequest && (["unauthorized", "library_disabled"].includes(g(o)) ? this.fail(o) : g(o) === "refresh_required" && e ? this.loadVersions() : this.versionsError = y(o));
     } finally {
       t === this.generation && i === this.versionRequest && (this.versionsLoading = !1, this.requestUpdate());
     }
@@ -6963,7 +7074,7 @@ const H = [
     }), this.load();
   }
   openFilters() {
-    this.clearPeople(), this.draft = structuredClone(this.applied), this.facetSearch = "", this.openDialog("filter-dialog");
+    this.draft = structuredClone(this.applied), this.facetSearch = "", this.openDialog("filter-dialog");
   }
   clearFilters() {
     clearTimeout(this.searchTimer), this.filters = {
@@ -6974,7 +7085,7 @@ const H = [
     }, this.applied = { ...this.filters }, this.draft = {}, this.facetSearch = "", this.saveFilters(), this.load();
   }
   fromDetails(e, t) {
-    this.detailsLocked || this.checkingCollection || (clearTimeout(this.searchTimer), this.clearPeople(), this.filters = {
+    this.detailsLocked || this.checkingCollection || (clearTimeout(this.searchTimer), this.filters = {
       query: e === "query" ? t : "",
       sort: this.applied.sort,
       descending: this.applied.descending,
@@ -6994,31 +7105,6 @@ const H = [
       ${i}
     </button>`;
   }
-  clearPeople() {
-    for (const e of Object.values(this.peopleTimers)) clearTimeout(e);
-    this.peopleTimers = {}, this.peopleSearch = {}, this.peopleChoices = {};
-    for (const e of ["actor", "director"])
-      this.peopleRequests[e] = (this.peopleRequests[e] ?? 0) + 1;
-  }
-  completePeople(e, t) {
-    this.peopleSearch[e] = t, delete this.peopleChoices[e], clearTimeout(this.peopleTimers[e]);
-    const i = (this.peopleRequests[e] ?? 0) + 1;
-    this.peopleRequests[e] = i;
-    const s = this.generation;
-    this.peopleTimers[e] = setTimeout(async () => {
-      try {
-        const r = await this.client.librarySuggestions(
-          this.scope,
-          e,
-          t,
-          this.fuzzySearch
-        );
-        s === this.generation && this.peopleRequests[e] === i && this.renderRoot.querySelector("#filter-dialog")?.open && (this.peopleChoices[e] = r.items, this.requestUpdate());
-      } catch (r) {
-        s === this.generation && this.peopleRequests[e] === i && this.fail(r);
-      }
-    }, 200), this.requestUpdate();
-  }
   async openSearch() {
     this.mobileQuery = String(this.filters.query ?? ""), await this.openDialog("library-search"), this.renderRoot.querySelector('[name="library_mobile_query"]')?.focus();
   }
@@ -7034,7 +7120,7 @@ const H = [
     >
       <div class="card-head">
         <h2 id="library-search-title">Search Library</h2>
-        ${k(() => this.closeDialog("library-search"))}
+        ${_(() => this.closeDialog("library-search"))}
       </div>
       <form
         @submit=${(e) => {
@@ -7046,7 +7132,7 @@ const H = [
             type="search"
             name="library_mobile_query"
             maxlength="500"
-            .value=${ci(this.mobileQuery)}
+            .value=${pi(this.mobileQuery)}
             @input=${(e) => {
       this.mobileQuery = e.target.value;
     }}
@@ -7061,12 +7147,28 @@ const H = [
     clearTimeout(this.searchTimer), this.applied = { ...this.applied, query: this.filters.query }, this.preferences?.set({ query: this.applied.query }), this.load();
   }
   choices(e, t) {
-    const i = e === "status" ? Object.keys(W) : this.page?.facets[t] ?? [];
-    return [
+    const i = e === "status" ? Object.keys(J) : this.page?.facets[t] ?? [], s = [
       .../* @__PURE__ */ new Set([...i, ...this.draft[e] ?? []])
-    ].filter(
-      (s) => dt(
-        e === "collection" ? B(s) : s,
+    ];
+    if (e === "rating") {
+      const r = {
+        "NC-17": 8,
+        "NR-R": 7,
+        R: 7,
+        "NR-PG-13": 6,
+        "PG-13": 6,
+        "NR-PG": 5,
+        PG: 5,
+        "NR-G": 1,
+        G: 1
+      };
+      s.sort(
+        (o, d) => (r[o.toUpperCase()] ?? 3) - (r[d.toUpperCase()] ?? 3) || o.localeCompare(d)
+      );
+    }
+    return s.filter(
+      (r) => Di(
+        e === "collection" ? H(r) : r,
         this.facetSearch,
         this.fuzzySearch
       )
@@ -7116,7 +7218,7 @@ const H = [
       t === this.generation && (this.purchaseTotals = i);
     } catch (i) {
       if (t !== this.generation) return;
-      this.purchaseTotals = void 0, this.purchaseError = w(i), ["unauthorized", "library_disabled"].includes(u(i)) && this.fail(i);
+      this.purchaseTotals = void 0, this.purchaseError = y(i), ["unauthorized", "library_disabled"].includes(g(i)) && this.fail(i);
     } finally {
       t === this.generation && (this.purchaseLoading = !1, this.requestUpdate());
     }
@@ -7171,7 +7273,7 @@ const H = [
     >
       <div class="card-head">
         <h2 id="library-options-title">Library options</h2>
-        ${k(() => this.closeDialog("library-options"))}
+        ${_(() => this.closeDialog("library-options"))}
       </div>
       <p class="muted">
         Changes save automatically for your HA user’s
@@ -7184,7 +7286,7 @@ const H = [
             .value=${String(this.applied.sort)}
             @change=${(e) => this.sort(e.target.value)}
           >
-            ${et.map(([e, t]) => a`<option value=${e} ?selected=${e === this.applied.sort}>${t}</option>`)}
+            ${it.map(([e, t]) => a`<option value=${e} ?selected=${e === this.applied.sort}>${t}</option>`)}
           </select></label
         >
         <label class="check"
@@ -7193,7 +7295,7 @@ const H = [
             name="library_fuzzy_search"
             .checked=${this.fuzzySearch}
             @change=${(e) => {
-      this.fuzzySearch = e.target.checked, this.clearPeople(), clearTimeout(this.searchTimer), this.applied = { ...this.applied, query: this.filters.query }, this.searchPreferences?.set({ fuzzy_search: this.fuzzySearch }), this.preferences?.set({ query: this.applied.query }), this.load();
+      this.fuzzySearch = e.target.checked, clearTimeout(this.searchTimer), this.applied = { ...this.applied, query: this.filters.query }, this.searchPreferences?.set({ fuzzy_search: this.fuzzySearch }), this.preferences?.set({ query: this.applied.query }), this.load();
     }}
           />Fuzzy search</label
         ><small
@@ -7246,7 +7348,7 @@ const H = [
       ), this.fitGrid(this.gridWidth), this.requestUpdate();
     }}
               /></label>` : l}
-        ${mi.filter(
+        ${fi.filter(
       ([e]) => e !== "show_library_cost" || this.scope?.permissions.edit
     ).map(
       ([e, t]) => a`<label class="check"
@@ -7299,7 +7401,7 @@ const H = [
     >
       <div class="card-head">
         <h2 id="filters-title">Library filters</h2>
-        ${k(() => this.closeDialog("filter-dialog"))}
+        ${_(() => this.closeDialog("filter-dialog"))}
       </div>
       <p>
         Match any checked value within a category and all selected categories.
@@ -7324,10 +7426,20 @@ const H = [
     }}
         />Missing metadata/artwork</label
       >
+      ${this.scope?.permissions.edit ? a`<label class="check"
+              ><input
+                name="missing_purchase_information"
+                type="checkbox"
+                .checked=${!!this.draft.missing_purchase_information}
+                @change=${(e) => {
+      this.draft.missing_purchase_information = e.target.checked, this.requestUpdate();
+    }}
+              />Missing purchase information</label
+            >` : l}
       <div class="facet-groups">
         ${[
       ["status", "Watched status", "status"],
-      ...H.filter(([e]) => e !== "actor" && e !== "director")
+      ...W.filter(([e]) => e !== "actor" && e !== "director")
     ].map(([e, t, i]) => {
       const s = this.draft[e] ?? [], r = this.choices(e, i);
       return a`<fieldset>
@@ -7347,71 +7459,31 @@ const H = [
             [e]: d.target.checked ? [...s, o] : s.filter((h) => h !== o)
           }, this.requestUpdate();
         }}
-                          />${e === "status" ? Qe(W[o]) : e === "rating" ? oe(o) : e === "collection" ? Qe(o) : o}</label
+                          />${e === "status" ? et(J[o]) : e === "rating" ? oe(o) : e === "collection" ? et(o) : e === "format" && be({ formats: [o] }).length === 1 ? I({ formats: [o] }) : o}</label
                         >`
       ) : a`<p class="muted">No matching options</p>`}
             </div>
           </fieldset>`;
     })}
       </div>
-      <div class="people-filters">
-        ${[
-      ["actor", "Actor", "actors"],
-      ["director", "Director", "directors"]
-    ].map(([e, t, i]) => {
-      const s = this.draft[e] ?? [], r = (this.peopleChoices[e] ?? (this.page?.facets[i] ?? []).filter(
-        (o) => dt(o, this.peopleSearch[e] ?? "", this.fuzzySearch)
-      )).slice(0, 20);
-      return a`<fieldset>
-            <legend>${t}</legend>
-            <label
-              >Find ${t.toLowerCase()}<input
-                type="search"
-                name=${`${e}_search`}
-                maxlength="100"
-                autocomplete="off"
-                .value=${this.peopleSearch[e] ?? ""}
-                @input=${(o) => this.completePeople(e, o.target.value)}
-            /></label>
-            <div class="selected-people">
-              ${s.map(
-        (o) => a`<button
-                    type="button"
-                    class="person-chip"
-                    aria-label=${`Remove ${o}`}
-                    @click=${() => {
+      ${["actor", "director"].map((e) => {
+      const t = this.draft[e] ?? [];
+      return t.map(
+        (i) => a`<button
+              type="button"
+              class="person-chip"
+              aria-label=${`Remove ${i}`}
+              @click=${() => {
           this.draft = {
             ...this.draft,
-            [e]: s.filter((d) => d !== o)
+            [e]: t.filter((s) => s !== i)
           }, this.requestUpdate();
         }}
-                  >
-                    ${o} ×
-                  </button>`
-      )}
-            </div>
-            <div class="facet-options" aria-label=${`${t} suggestions`}>
-              ${r.map(
-        (o) => a`<label class="check"
-                    ><input
-                      type="checkbox"
-                      name=${e}
-                      value=${o}
-                      .checked=${s.includes(o)}
-                      ?disabled=${s.length >= 100 && !s.includes(o)}
-                      @change=${(d) => {
-          this.draft = {
-            ...this.draft,
-            [e]: d.target.checked ? [...s, o] : s.filter((h) => h !== o)
-          }, this.requestUpdate();
-        }}
-                    />${o}</label
-                  >`
-      )}
-            </div>
-          </fieldset>`;
+            >
+              ${i} ×
+            </button>`
+      );
     })}
-      </div>
       <div class="actions dialog-footer">
         <button
           @click=${() => {
@@ -7424,9 +7496,9 @@ const H = [
           class="primary"
           @click=${() => {
       const e = { ...this.applied };
-      for (const t of [...H.map(([i]) => i), "status"])
+      for (const t of [...W.map(([i]) => i), "status"])
         e[t] = this.draft[t] ?? [];
-      e.missing_metadata_artwork = !!this.draft.missing_metadata_artwork, this.applied = e, this.saveFilters(), this.closeDialog("filter-dialog"), this.load();
+      e.missing_metadata_artwork = !!this.draft.missing_metadata_artwork, e.missing_purchase_information = !!this.draft.missing_purchase_information, this.applied = e, this.saveFilters(), this.closeDialog("filter-dialog"), this.load();
     }}
         >
           Apply filters
@@ -7506,7 +7578,7 @@ const H = [
     >
       ${e ? a`
               <div class="movie-close">
-                ${k(() => this.closeDialog("title-dialog"))}
+                ${_(() => this.closeDialog("title-dialog"))}
               </div>
               <div class="movie-intro">
                 ${d && t ? a`<div class="movie-hero" aria-hidden="true">${this.cover(t, d)}</div>` : l}
@@ -7522,21 +7594,21 @@ const H = [
                   ${t?.genres.length ? a` · ${t.genres.map((h, c) => a`${c ? ", " : ""}${this.detailLink("genre", h)}`)}` : l}
                 </p>
                 <div class="detail-badges movie-heading-badges">
-                  ${K(i ? e : t ?? e, !1, (h) => this.fromDetails("format", h), r)}
+                  ${I(i ? e : t ?? e, !1, (h) => this.fromDetails("format", h), r)}
                   ${o.map((h) => oe(h, (c) => this.fromDetails("rating", c), r))}
                   <button
-                    class=${`movie-status collection-badge collection-${Je(W[t?.watched_status ?? e.watched_status])}`}
+                    class=${`movie-status collection-badge collection-${Ye(J[t?.watched_status ?? e.watched_status])}`}
                     ?disabled=${r}
                     @click=${() => this.fromDetails("status", t?.watched_status ?? e.watched_status)}
                   >
-                    ${Wt(W[t?.watched_status ?? e.watched_status])}
+                    ${Jt(J[t?.watched_status ?? e.watched_status])}
                     <span
-                      >${W[t?.watched_status ?? e.watched_status]}</span
+                      >${J[t?.watched_status ?? e.watched_status]}</span
                     >
                   </button>
-                  ${Ge(e, !1, ["watched", "progress"])}
+                  ${Xe(e, !1, ["watched", "progress"])}
                   ${e.collections.map(
-      (h) => Qe(
+      (h) => et(
         h,
         () => this.fromDetails("collection", h),
         r
@@ -7567,7 +7639,7 @@ const H = [
       ), await this.loadVersions(), this.refreshStatus();
     }}
                                 ></kaleidescape-title-edit>
-                                ${this.renderScrapeAction(t)}` : l}${ms(t)}</kaleidescape-device-controls
+                                ${this.renderScrapeAction(t)}` : l}${vs(t)}</kaleidescape-device-controls
                       >` : l}
                 ${this.versionsLoading ? a`<p role="status">Loading individual versions…</p>` : l}
                 ${this.versionsError ? a`<p class="error" role="alert">
@@ -7615,7 +7687,7 @@ const H = [
                     >
                       <div class="movie-aside">
                         <div class="cover movie-poster">${this.cover(t)}</div>
-                        ${i ? a`<div class="detail-badges version-format-badges">${K(t, !1, (h) => this.fromDetails("format", h), r)}</div>` : l}
+                        ${i ? a`<div class="detail-badges version-format-badges">${I(t, !1, (h) => this.fromDetails("format", h), r)}</div>` : l}
                         <details class="movie-record-details">
                           <summary>Library details</summary>
                           <p class="muted">
@@ -7647,15 +7719,15 @@ const H = [
       ["Genres", t.genres, "genre"],
       ["Collections", t.collections, "collection"]
     ].map(
-      ([h, c, m]) => c.length ? a`<div>
+      ([h, c, f]) => c.length ? a`<div>
                                   <dt>${h}</dt>
                                   <dd>
-                                    ${c.map((p, y) => a`${y ? ", " : ""}${this.detailLink(m, p, h === "Collections" ? B(p) : p)}`)}
+                                    ${c.map((p, v) => a`${v ? ", " : ""}${this.detailLink(f, p, h === "Collections" ? H(p) : p)}`)}
                                   </dd>
                                 </div>` : l
     )}
                         </dl>
-                        ${bs(t, (h) => this.detailLink("query", h), this.castLimit)}
+                        ${$s(t, (h) => this.detailLink("query", h), this.castLimit)}
                         <p>
                           <button
                             class="link"
@@ -7679,9 +7751,9 @@ const H = [
     const e = this.page?.limit ?? this.requestLimit, t = this.loading || !!this.layoutTimer, i = this.page?.items ?? [], s = this.mode === "covers" && !this.dashboard && this.page?.has_more && i.length >= this.coverColumns ? i.slice(
       0,
       i.length - i.length % this.coverColumns
-    ) : i, r = this.scope?.permissions.edit, o = [...H.map(([d]) => d), "status"].reduce(
+    ) : i, r = this.scope?.permissions.edit, o = [...W.map(([d]) => d), "status"].reduce(
       (d, h) => d + (this.applied[h]?.length ?? 0),
-      +!!this.applied.missing_metadata_artwork
+      +!!this.applied.missing_metadata_artwork + +!!this.applied.missing_purchase_information
     );
     return a`<section
       class="library-page"
@@ -7700,7 +7772,7 @@ const H = [
               </button>
             </p>` : l}
       ${r && this.info?.phase && this.info.phase !== "idle" ? a`<p role="status">Syncing… ${this.info.processed ?? 0}/${this.info.total ?? "?"}</p>` : l}
-      ${r && this.info?.error ? a`<p class="warning" role="status">${w(new b(this.info.error))}</p>` : l}
+      ${r && this.info?.error ? a`<p class="warning" role="status">${y(new b(this.info.error))}</p>` : l}
       ${this.error ? a`<p class="error" role="alert">${this.error}<button @click=${() => this.load()}>Refresh results</button></p>` : l}
       ${this.notice ? a`<p class="notice" role="status">${this.notice}</p>` : l}
       ${r ? (this.info?.pending_adds ?? []).map(
@@ -7799,7 +7871,7 @@ const H = [
                 name="library_query"
                 type="search"
                 maxlength="500"
-                .value=${ci(String(this.filters.query ?? ""))}
+                .value=${pi(String(this.filters.query ?? ""))}
                 @input=${(d) => {
       this.filters.query = d.target.value, clearTimeout(this.searchTimer), this.searchTimer = setTimeout(() => this.applySearch(), 300);
     }}
@@ -7826,7 +7898,7 @@ const H = [
                 .value=${String(this.applied.sort)}
                 @change=${(d) => this.sort(d.target.value)}
               >
-                ${et.map(([d, h]) => a`<option value=${d}>${h}</option>`)}
+                ${it.map(([d, h]) => a`<option value=${d}>${h}</option>`)}
               </select></label
             >
             <button
@@ -7858,8 +7930,8 @@ const H = [
                       @click=${() => this.select(d)}
                     >
                       <div class="cover-image">${this.cover(d)}</div>
-                      ${this.display.show_badges ? a`<div class="cover-flags">${Ge(d, !0)}</div>` : l}
-                      ${this.display.show_format ? a`<div class="cover-formats">${K(d, !0)}</div>` : l}
+                      ${this.display.show_badges ? a`<div class="cover-flags">${Xe(d, !0)}</div>` : l}
+                      ${this.display.show_format ? a`<div class="cover-formats">${I(d, !0)}</div>` : l}
                       ${this.display.show_rating ? a`<div class="cover-rating">${oe(d.rating)}</div>` : l}
                       ${this.conflictIcon(d)}
                       ${this.display.show_titles ? a`<span class="cover-caption">${d.title}${d.year ? ` (${d.year})` : ""}</span>` : l}
@@ -7875,7 +7947,7 @@ const H = [
                   </colgroup>
                   <thead>
                     <tr>
-                      ${et.filter(([d]) => d !== "random").map(
+                      ${it.filter(([d]) => d !== "random").map(
       ([d, h], c) => a`<th
                             aria-sort=${this.applied.sort === d ? this.applied.descending ? "descending" : "ascending" : "none"}
                           >
@@ -7898,20 +7970,20 @@ const H = [
                               aria-valuenow=${this.widths[c]}
                               tabindex="0"
                               title="Drag or use Left/Right to resize; Home resets"
-                              @keydown=${(m) => this.resizeColumn(m, c)}
-                              @pointerdown=${(m) => {
-        m.preventDefault(), this.resize = {
+                              @keydown=${(f) => this.resizeColumn(f, c)}
+                              @pointerdown=${(f) => {
+        f.preventDefault(), this.resize = {
           index: c,
-          start: m.clientX,
+          start: f.clientX,
           width: this.widths[c]
-        }, m.currentTarget.setPointerCapture(m.pointerId);
+        }, f.currentTarget.setPointerCapture(f.pointerId);
       }}
-                              @pointermove=${(m) => {
+                              @pointermove=${(f) => {
         this.resize?.index === c && (this.widths[c] = Math.max(
           80,
           Math.min(
             800,
-            this.resize.width + m.clientX - this.resize.start
+            this.resize.width + f.clientX - this.resize.start
           )
         ), this.requestUpdate());
       }}
@@ -7938,9 +8010,9 @@ const H = [
                               class="library-summary-line"
                               title=${this.format(d)}
                             >
-                              ${this.display.show_badges ? Ge(d) : l}
-                              ${this.display.show_format ? K(d) : l}
-                              ${this.display.show_format && !Ht(d).length ? a`<small>${this.format(d)}</small>` : l}
+                              ${this.display.show_badges ? Xe(d) : l}
+                              ${this.display.show_format ? I(d) : l}
+                              ${this.display.show_format && !be(d).length ? a`<small>${this.format(d)}</small>` : l}
                               ${(d.version_count ?? 1) > 1 ? a`<small>${$(d.version_count, "version")}</small>` : l}
                             </div>
                           </td>
@@ -7948,12 +8020,12 @@ const H = [
                           <td>
                             <span
                               class="collection-cell"
-                              title=${d.collections.map(B).join(", ")}
-                              >${d.collections.map(B).join(", ") || "—"}</span
+                              title=${d.collections.map(H).join(", ")}
+                              >${d.collections.map(H).join(", ") || "—"}</span
                             >
                           </td>
                           <td>${this.runtime(d)}</td>
-                          <td>${W[d.watched_status]}</td>
+                          <td>${J[d.watched_status]}</td>
                           <td
                             title=${d.purchased_on ? "Imported purchase date" : "First detected by Companion"}
                           >
@@ -8021,29 +8093,29 @@ const H = [
     </section>`;
   }
 };
-Ce.properties = {
+Se.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   openTitleId: { attribute: !1 },
   openCriterion: { attribute: !1 },
   dashboard: { attribute: !1 }
-}, Ce.styles = [q, We];
-let ut = Ce;
-customElements.get("kaleidescape-library") || customElements.define("kaleidescape-library", ut);
-const Rs = {
+}, Se.styles = [S, Ke];
+let gt = Se;
+customElements.get("kaleidescape-library") || customElements.define("kaleidescape-library", gt);
+const Ps = {
   playing: "Playing",
   paused: "Paused",
   forward: "Scanning forward",
   reverse: "Scanning backward",
   stopped: "Stopped",
   none: "Stopped"
-}, zs = {
+}, Ds = {
   content: "Main content",
   credits: "Credits",
   intermission: "Intermission",
   disc_menu: "Disc menu",
   none: "No active content"
-}, Se = class Se extends x {
+}, qe = class qe extends x {
   constructor() {
     super(...arguments), this.playerId = "", this.compact = !1, this.showControls = !0, this.boundScope = "", this.generation = 0, this.player = null, this.loading = !1, this.denied = !1, this.error = "", this.image = "", this.imageKey = "", this.visibility = () => {
       this.reset(), document.hidden || this.refresh();
@@ -8090,14 +8162,14 @@ const Rs = {
           );
           i === this.generation && c && (this.image = URL.createObjectURL(c));
         } catch (c) {
-          if (u(c) === "unauthorized") throw c;
+          if (g(c) === "unauthorized") throw c;
         } finally {
           clearTimeout(h), this.abort === d && (this.abort = void 0);
         }
       }
     } catch (s) {
       if (i !== this.generation) return;
-      this.player = null, this.clearImage(), this.denied = u(s) === "unauthorized", this.error = this.denied ? "Now Playing access is unavailable. Check your account and source permissions." : "Now Playing could not refresh. Check the connection or refresh again.";
+      this.player = null, this.clearImage(), this.denied = g(s) === "unauthorized", this.error = this.denied ? "Now Playing access is unavailable. Check your account and source permissions." : "Now Playing could not refresh. Check the connection or refresh again.";
     } finally {
       i === this.generation && (this.loading = !1, this.requestUpdate(), !this.denied && this.isConnected && !document.hidden && (this.timer = setTimeout(() => {
         this.refresh();
@@ -8137,7 +8209,7 @@ const Rs = {
                     <h3>
                       ${e.available ? t ? e.title ?? "Unknown title" : "No movie playing" : "Player unavailable"}
                     </h3>
-                    ${e.available ? a`<p>${Rs[e.play_status] ?? "Unknown playback state"} · ${zs[e.location] ?? "Unknown location"}</p>` : l}
+                    ${e.available ? a`<p>${Ps[e.play_status] ?? "Unknown playback state"} · ${Ds[e.location] ?? "Unknown location"}</p>` : l}
                     ${t && e.duration_seconds != null ? a`<p>Runtime · ${(e.duration_seconds / 60).toFixed(2)} min</p>` : l}
                     ${this.scope?.permissions.edit && t && e.session ? a`<p>
                               This session ·
@@ -8172,15 +8244,15 @@ const Rs = {
             ></kaleidescape-device-controls>` : l}`;
   }
 };
-Se.properties = {
+qe.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   playerId: {},
   compact: { type: Boolean, reflect: !0 },
   showControls: { type: Boolean }
-}, Se.styles = [
-  q,
-  S`
+}, qe.styles = [
+  S,
+  q`
       :host([compact]) .now-playing {
         min-height: 0;
         margin: 0;
@@ -8256,13 +8328,13 @@ Se.properties = {
       }
     `
 ];
-let gt = Se;
-customElements.get("kaleidescape-now-playing") || customElements.define("kaleidescape-now-playing", gt);
-const fi = (n, e, t) => {
+let mt = qe;
+customElements.get("kaleidescape-now-playing") || customElements.define("kaleidescape-now-playing", mt);
+const bi = (n, e, t) => {
   const i = /* @__PURE__ */ new Map();
   for (let s = e; s <= t; s++) i.set(n[s], s);
   return i;
-}, Ls = Ti(class extends Ai {
+}, js = ji(class extends Mi {
   constructor(n) {
     if (super(n), n.type !== N.CHILD) throw Error("repeat() can only be used in text expressions");
   }
@@ -8278,36 +8350,36 @@ const fi = (n, e, t) => {
     return this.dt(n, e, t).values;
   }
   update(n, [e, t, i]) {
-    const s = ks(n), { values: r, keys: o } = this.dt(e, t, i);
+    const s = qs(n), { values: r, keys: o } = this.dt(e, t, i);
     if (!Array.isArray(s)) return this.ut = o, r;
     const d = this.ut ??= [], h = [];
-    let c, m, p = 0, y = s.length - 1, v = 0, E = r.length - 1;
-    for (; p <= y && v <= E; ) if (s[p] === null) p++;
-    else if (s[y] === null) y--;
-    else if (d[p] === o[v]) h[v] = O(s[p], r[v]), p++, v++;
-    else if (d[y] === o[E]) h[E] = O(s[y], r[E]), y--, E--;
+    let c, f, p = 0, v = s.length - 1, w = 0, E = r.length - 1;
+    for (; p <= v && w <= E; ) if (s[p] === null) p++;
+    else if (s[v] === null) v--;
+    else if (d[p] === o[w]) h[w] = O(s[p], r[w]), p++, w++;
+    else if (d[v] === o[E]) h[E] = O(s[v], r[E]), v--, E--;
     else if (d[p] === o[E]) h[E] = O(s[p], r[E]), se(n, h[E + 1], s[p]), p++, E--;
-    else if (d[y] === o[v]) h[v] = O(s[y], r[v]), se(n, s[p], s[y]), y--, v++;
-    else if (c === void 0 && (c = fi(o, v, E), m = fi(d, p, y)), c.has(d[p])) if (c.has(d[y])) {
-      const R = m.get(o[v]), U = R !== void 0 ? s[R] : null;
-      if (U === null) {
+    else if (d[v] === o[w]) h[w] = O(s[v], r[w]), se(n, s[p], s[v]), v--, w++;
+    else if (c === void 0 && (c = bi(o, w, E), f = bi(d, p, v)), c.has(d[p])) if (c.has(d[v])) {
+      const R = f.get(o[w]), L = R !== void 0 ? s[R] : null;
+      if (L === null) {
         const te = se(n, s[p]);
-        O(te, r[v]), h[v] = te;
-      } else h[v] = O(U, r[v]), se(n, s[p], U), s[R] = null;
-      v++;
-    } else Ze(s[y]), y--;
-    else Ze(s[p]), p++;
-    for (; v <= E; ) {
+        O(te, r[w]), h[w] = te;
+      } else h[w] = O(L, r[w]), se(n, s[p], L), s[R] = null;
+      w++;
+    } else Qe(s[v]), v--;
+    else Qe(s[p]), p++;
+    for (; w <= E; ) {
       const R = se(n, h[E + 1]);
-      O(R, r[v]), h[v++] = R;
+      O(R, r[w]), h[w++] = R;
     }
-    for (; p <= y; ) {
+    for (; p <= v; ) {
       const R = s[p++];
-      R !== null && Ze(R);
+      R !== null && Qe(R);
     }
-    return this.ut = o, Di(n, h), L;
+    return this.ut = o, Oi(n, h), U;
   }
-}), Us = S`
+}), Ms = q`
   :host {
     display: block;
     min-width: 0;
@@ -8542,7 +8614,7 @@ const fi = (n, e, t) => {
 function Y(n) {
   return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
 }
-function Ts(n = location.search, e = /* @__PURE__ */ new Date()) {
+function Os(n = location.search, e = /* @__PURE__ */ new Date()) {
   const t = new URLSearchParams(n).get("companion_month") ?? "";
   if (/^\d{4}-(0[1-9]|1[0-2])$/.test(t)) {
     const [i, s] = t.split("-").map(Number);
@@ -8550,22 +8622,22 @@ function Ts(n = location.search, e = /* @__PURE__ */ new Date()) {
   }
   return new Date(e.getFullYear(), e.getMonth(), 1);
 }
-function As(n) {
+function Ns(n) {
   return [
     new Date(n.getFullYear(), n.getMonth(), 1).toISOString(),
     new Date(n.getFullYear(), n.getMonth() + 1, 1).toISOString()
   ];
 }
-function Ds(n) {
+function Is(n) {
   const e = Y(new Date(n.started_at)), t = n.ended_at ? Y(new Date(n.ended_at)) : e;
   return n.status === "completed" && t !== e && n.ended_at && new Date(n.ended_at) > new Date(n.started_at) ? [
     { day: e, phase: "start" },
     { day: t, phase: "completion" }
   ] : [{ day: e, phase: "single" }];
 }
-const qe = class qe extends x {
+const Ee = class Ee extends x {
   constructor() {
-    super(...arguments), this.query = "", this.status = "", this.fuzzy = !0, this.daySize = 180, this.fitScreen = !1, this.disabled = !1, this.editable = !1, this.rememberUrl = !0, this.fittedSize = 180, this.month = Ts(), this.items = [], this.loading = !1, this.error = "", this.generation = 0, this.signature = "", this.privacy = "", this.queue = new T(), this.selectedArtwork = null, this.movie = null, this.detailRequest = 0, this.detailLoading = !1, this.detailError = "", this.scheduleLayout = () => {
+    super(...arguments), this.query = "", this.status = "", this.fuzzy = !0, this.daySize = 180, this.fitScreen = !1, this.disabled = !1, this.editable = !1, this.rememberUrl = !0, this.fittedSize = 180, this.month = Os(), this.items = [], this.loading = !1, this.error = "", this.generation = 0, this.signature = "", this.privacy = "", this.queue = new A(), this.selectedArtwork = null, this.movie = null, this.detailRequest = 0, this.detailLoading = !1, this.detailError = "", this.scheduleLayout = () => {
       !this.fitScreen || !this.isConnected || this.layoutFrame !== void 0 || (this.layoutFrame = requestAnimationFrame(() => {
         if (this.layoutFrame = void 0, !this.fitScreen || !this.isConnected) return;
         const e = window.visualViewport?.height ?? window.innerHeight, t = Math.max(
@@ -8573,7 +8645,7 @@ const qe = class qe extends x {
           this.getBoundingClientRect().top,
           this.previousElementSibling?.getBoundingClientRect().bottom ?? 0
         ), i = this.closest("main"), s = [".month-bar", ".weekday"].reduce(
-          (c, m) => c + (this.renderRoot.querySelector(m)?.getBoundingClientRect().height ?? 0),
+          (c, f) => c + (this.renderRoot.querySelector(f)?.getBoundingClientRect().height ?? 0),
           0
         ) + (this.nextElementSibling?.getBoundingClientRect().height ?? 0) + (i && parseFloat(getComputedStyle(i).paddingBottom) || 0) + 16, r = new Date(
           this.month.getFullYear(),
@@ -8613,19 +8685,19 @@ const qe = class qe extends x {
     super.disconnectedCallback(), window.removeEventListener("resize", this.scheduleLayout), window.visualViewport?.removeEventListener("resize", this.scheduleLayout), this.resizeObserver?.disconnect(), this.resizeObserver = void 0, this.layoutFrame !== void 0 && cancelAnimationFrame(this.layoutFrame), this.layoutFrame = void 0, this.clear(), this.signature = this.privacy = "", this.boundClient = void 0;
   }
   clear() {
-    this.generation++, this.closeDetails(), this.items = [], this.error = "", this.loading = !1, this.queue.cache.dispose(), this.queue = new T();
+    this.generation++, this.closeDetails(), this.items = [], this.error = "", this.loading = !1, this.queue.cache.dispose(), this.queue = new A();
   }
   fail(e) {
-    u(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
+    g(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
-    )), this.error = w(e), this.requestUpdate();
+    )), this.error = y(e), this.requestUpdate();
   }
   async load() {
     if (!this.client || !this.scope) return;
     const e = ++this.generation;
     this.closeDetails(), this.items = [], this.totals = void 0, this.loading = !0, this.error = "", this.notifyStatus(), this.requestUpdate();
     try {
-      const [t, i] = As(this.month), s = await this.client.calendarMonth(
+      const [t, i] = Ns(this.month), s = await this.client.calendarMonth(
         this.scope,
         t,
         i,
@@ -8693,7 +8765,7 @@ const qe = class qe extends x {
         const r = await this.client.calendarDetails(this.scope, e.id);
         i === this.generation && s === this.detailRequest && (this.selected = r.viewing, this.movie = r.movie, this.selectedArtwork = r.movie?.artwork_key ?? t);
       } catch (r) {
-        i === this.generation && s === this.detailRequest && (u(r) === "unauthorized" ? this.fail(r) : this.detailError = w(r));
+        i === this.generation && s === this.detailRequest && (g(r) === "unauthorized" ? this.fail(r) : this.detailError = y(r));
       } finally {
         i === this.generation && s === this.detailRequest && (this.detailLoading = !1, this.requestUpdate());
       }
@@ -8743,7 +8815,7 @@ const qe = class qe extends x {
         <h2 id="calendar-movie-title">
           ${e && t ? this.detailLink("query", e.title) : e?.title ?? "Viewing details"}
         </h2>
-        ${k(() => {
+        ${_(() => {
       this.closeDetails(), this.requestUpdate();
     })}
       </div>
@@ -8760,7 +8832,7 @@ const qe = class qe extends x {
                 ${this.detailLoading ? a`<p role="status">Loading movie details…</p>` : l}
                 ${this.detailError ? a`<p class="error" role="alert">${this.detailError} <button @click=${() => this.select(e, this.selectedArtwork)}>Retry details</button></p>` : l}
                 ${t ? a`<div class="detail-badges">
-                          ${K(t, !1, (d) => this.browse("format", d))}${oe(t.rating ?? "", (d) => this.browse("rating", d))}
+                          ${I(t, !1, (d) => this.browse("format", d))}${oe(t.rating ?? "", (d) => this.browse("rating", d))}
                         </div>
                         ${t.year ? a`<p><strong>Year:</strong> ${this.detailLink("year", String(t.year))}</p>` : l}
                         ${[
@@ -8770,7 +8842,7 @@ const qe = class qe extends x {
     ].map(
       ([d, h]) => h?.length ? a`<p>
                                 <strong>${d}:</strong>
-                                ${h.map((c, m) => a`${m ? ", " : ""}${this.detailLink(d === "Genres" ? "genre" : "query", c)}`)}
+                                ${h.map((c, f) => a`${f ? ", " : ""}${this.detailLink(d === "Genres" ? "genre" : "query", c)}`)}
                               </p>` : l
     )}` : !this.detailLoading && !this.detailError ? a`<p class="muted">
                           No linked Library metadata is available.
@@ -8806,8 +8878,8 @@ const qe = class qe extends x {
       (h, c) => new Date(e, t, c - i.getDay() + 1)
     ), d = /* @__PURE__ */ new Map();
     for (const h of this.items)
-      for (const { day: c, phase: m } of Ds(h))
-        d.set(c, [...d.get(c) ?? [], { row: h, phase: m }]);
+      for (const { day: c, phase: f } of Is(h))
+        d.set(c, [...d.get(c) ?? [], { row: h, phase: f }]);
     return a`<div class="month-bar">
         <button
           aria-label="Previous month"
@@ -8836,23 +8908,23 @@ const qe = class qe extends x {
         >
           ${Array.from({ length: 7 }, (h, c) => a`<div class="weekday">${new Date(2023, 0, 1 + c).toLocaleDateString(void 0, { weekday: "short" })}</div>`)}
           ${o.map((h) => {
-      const c = Y(h), m = d.get(c) ?? [];
+      const c = Y(h), f = d.get(c) ?? [];
       return a`<section
               class=${`day${h.getMonth() !== t ? " other-month" : ""}${c === Y(/* @__PURE__ */ new Date()) ? " today" : ""}`}
               aria-label=${h.toLocaleDateString()}
             >
               <time datetime=${c}>${h.getDate()}</time>
-              ${m.length ? a`<div
+              ${f.length ? a`<div
                       class="cover-stack"
-                      style=${`--spread:${1 + (m.length - 1) * 0.15}`}
+                      style=${`--spread:${1 + (f.length - 1) * 0.15}`}
                     >
-                      ${Ls(
-        m,
+                      ${js(
+        f,
         ({ row: p }) => p.id,
-        ({ row: p, phase: y }, v) => a`<button
-                            class=${`poster poster-${y}`}
-                            style=${`--index:${v};--layer:${v + 1}`}
-                            aria-label=${`${p.title} · ${y === "start" ? "Started; completed on another day" : y === "completion" ? "Completed; started on another day" : p.status === "completed" ? "Completed" : "Partial"}`}
+        ({ row: p, phase: v }, w) => a`<button
+                            class=${`poster poster-${v}`}
+                            style=${`--index:${w};--layer:${w + 1}`}
+                            aria-label=${`${p.title} · ${v === "start" ? "Started; completed on another day" : v === "completion" ? "Completed; started on another day" : p.status === "completed" ? "Completed" : "Partial"}`}
                             title=${p.title}
                             ?disabled=${this.disabled}
                             @click=${() => this.select(p, p.artwork_key)}
@@ -8878,7 +8950,7 @@ const qe = class qe extends x {
       ${this.renderDetails()}`;
   }
 };
-qe.properties = {
+Ee.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   query: { type: String },
@@ -8890,10 +8962,10 @@ qe.properties = {
   disabled: { type: Boolean },
   editable: { type: Boolean },
   rememberUrl: { type: Boolean }
-}, qe.styles = [q, We, Us];
-let mt = qe;
-customElements.get("kaleidescape-journal-calendar") || customElements.define("kaleidescape-journal-calendar", mt);
-const Ps = [
+}, Ee.styles = [S, Ke, Ms];
+let ft = Ee;
+customElements.get("kaleidescape-journal-calendar") || customElements.define("kaleidescape-journal-calendar", ft);
+const Fs = [
   "remote",
   "now-playing",
   "library-covers",
@@ -8901,7 +8973,7 @@ const Ps = [
   "library",
   "journal-calendar"
 ];
-function Pi(n, e) {
+function Ni(n, e) {
   const t = {
     title: "",
     entry_id: "",
@@ -8960,11 +9032,11 @@ function Pi(n, e) {
     show_sort: !1
   }), t;
 }
-function js(n) {
+function Bs(n) {
   const e = (o) => ({ name: o, selector: { text: {} } }), t = (o) => ({ name: o, selector: { boolean: {} } }), i = (o, d, h) => ({
     name: o,
     selector: { number: { min: d, max: h, step: 1, mode: "box" } }
-  }), s = n === "library" || n === "library-covers", r = Pi(
+  }), s = n === "library" || n === "library-covers", r = Ni(
     { type: `custom:kaleidescape-${n}-card` },
     n
   );
@@ -9011,7 +9083,7 @@ function js(n) {
     computeHelper: (o) => o.name === "entry_id" ? "Leave blank for the loaded Companion integration." : o.name === "channel" ? "Search and Library cards with the same channel work together on this dashboard." : void 0
   };
 }
-const tt = "kaleidescape-companion-card-search", le = class le extends x {
+const st = "kaleidescape-companion-card-search", le = class le extends x {
   constructor() {
     super(...arguments), this.identity = "", this.generation = 0, this.error = "", this.query = "", this.locked = !1, this.visibility = () => {
       clearTimeout(this.timer), !document.hidden && this.api && this.refresh();
@@ -9029,7 +9101,7 @@ const tt = "kaleidescape-companion-card-search", le = class le extends x {
     return { channel: "main" };
   }
   static getConfigForm() {
-    return js(this.kind);
+    return Bs(this.kind);
   }
   getCardSize() {
     return this.kind === "library-search" ? 2 : this.kind === "remote" ? 9 : 7;
@@ -9048,13 +9120,13 @@ const tt = "kaleidescape-companion-card-search", le = class le extends x {
       );
     if (!e || typeof e != "object")
       throw new Error("Card configuration is required");
-    this.config = Pi(e, this.kind), this.reset(), this.requestUpdate("hass");
+    this.config = Ni(e, this.kind), this.reset(), this.requestUpdate("hass");
   }
   connectedCallback() {
-    super.connectedCallback(), window.addEventListener(tt, this.receiveSearch), document.addEventListener("visibilitychange", this.visibility), this.requestUpdate("hass");
+    super.connectedCallback(), window.addEventListener(st, this.receiveSearch), document.addEventListener("visibilitychange", this.visibility), this.requestUpdate("hass");
   }
   disconnectedCallback() {
-    super.disconnectedCallback(), window.removeEventListener(tt, this.receiveSearch), document.removeEventListener("visibilitychange", this.visibility), this.reset();
+    super.disconnectedCallback(), window.removeEventListener(st, this.receiveSearch), document.removeEventListener("visibilitychange", this.visibility), this.reset();
   }
   reset() {
     this.generation++, clearTimeout(this.timer), this.api = void 0, this.scope = void 0, this.identity = "", this.boundConnection = void 0, this.criterion = this.popupCriterion = void 0, this.calendarStatus = void 0, this.query = this.error = "", this.locked = !1, this.renderRoot?.querySelector("dialog")?.close();
@@ -9062,7 +9134,7 @@ const tt = "kaleidescape-companion-card-search", le = class le extends x {
   willUpdate(e) {
     if (!e.has("hass") || !this.config) return;
     const t = `${this.hass?.user?.id}:${this.hass?.user?.is_admin}:${this.hass?.connection.connected}`;
-    t === this.identity && this.hass?.connection === this.boundConnection || (this.reset(), this.identity = t, this.boundConnection = this.hass?.connection, !(!this.hass?.connection.connected || !this.hass.user) && (this.api = new Ft({
+    t === this.identity && this.hass?.connection === this.boundConnection || (this.reset(), this.identity = t, this.boundConnection = this.hass?.connection, !(!this.hass?.connection.connected || !this.hass.user) && (this.api = new Ht({
       callWS: (i) => this.hass.callWS(i),
       fetchWithAuth: (i, s) => this.hass.fetchWithAuth(i, s)
     }), this.refresh()));
@@ -9084,7 +9156,7 @@ const tt = "kaleidescape-companion-card-search", le = class le extends x {
       }, this.error = "";
     } catch (t) {
       if (e !== this.generation) return;
-      this.scope = void 0, this.error = w(t);
+      this.scope = void 0, this.error = y(t);
     } finally {
       e === this.generation && (this.requestUpdate(), this.timer = setTimeout(() => {
         this.refresh();
@@ -9096,7 +9168,7 @@ const tt = "kaleidescape-companion-card-search", le = class le extends x {
   }
   search(e) {
     e.preventDefault(), !(!this.scope || !this.config) && window.dispatchEvent(
-      new CustomEvent(tt, {
+      new CustomEvent(st, {
         detail: {
           entry: this.scope.entry_id,
           dataset: this.scope.dataset_id,
@@ -9187,8 +9259,8 @@ const tt = "kaleidescape-companion-card-search", le = class le extends x {
                         ></kaleidescape-journal-calendar>
                         <footer class="calendar-footer">
                           <span
-                            >${Bt(this.scope, this.calendarStatus, !0)}</span
-                          >${Vt(this.calendarStatus, () => {
+                            >${Vt(this.scope, this.calendarStatus, !0)}</span
+                          >${Wt(this.calendarStatus, () => {
       this.renderRoot.querySelector("kaleidescape-journal-calendar")?.refresh();
     })}
                         </footer>` : this.scope.library_enabled ? t() : a`<p class="message">
@@ -9200,7 +9272,7 @@ const tt = "kaleidescape-companion-card-search", le = class le extends x {
       ${this.popupCriterion && this.scope?.library_enabled ? a`<dialog @click=${C} @cancel=${this.closePopup}>
               <div class="card-head">
                 <h2>Library</h2>
-                ${k((i) => this.closePopup(i), this.locked)}
+                ${_((i) => this.closePopup(i), this.locked)}
               </div>
               <kaleidescape-library
                 .client=${this.api}
@@ -9213,9 +9285,9 @@ const tt = "kaleidescape-companion-card-search", le = class le extends x {
   }
 };
 le.kind = "library", le.properties = { hass: { attribute: !1 } }, le.styles = [
-  q,
-  zi,
-  S`
+  S,
+  Ai,
+  q`
       :host {
         display: block;
         min-width: 0;
@@ -9275,33 +9347,33 @@ le.kind = "library", le.properties = { hass: { attribute: !1 } }, le.styles = [
       }
     `
 ];
-let ft = le;
-const bi = {
+let bt = le;
+const yi = {
   remote: "Theater remote",
   "now-playing": "Now Playing",
   "library-covers": "Library covers",
   "library-search": "Library search",
   library: "Full Library",
   "journal-calendar": "Journal calendar"
-}, bt = window;
-bt.customCards ??= [];
-for (const n of Ps) {
+}, yt = window;
+yt.customCards ??= [];
+for (const n of Fs) {
   const e = `kaleidescape-${n}-card`;
   if (!customElements.get(e)) {
-    const i = class i extends ft {
+    const i = class i extends bt {
     };
     i.kind = n;
     let t = i;
     customElements.define(e, t);
   }
-  bt.customCards.some((t) => t.type === e) || bt.customCards.push({
+  yt.customCards.some((t) => t.type === e) || yt.customCards.push({
     type: e,
-    name: `Kaleidescape · ${bi[n]}`,
-    description: bi[n],
+    name: `Kaleidescape · ${yi[n]}`,
+    description: yi[n],
     preview: !0
   });
 }
-class Ms {
+class Hs {
   constructor(e, t) {
     this.host = e, this.resized = t, this.observed = [], this.containers = [], this.schedule = () => {
       this.frame !== void 0 || !this.host.isConnected || (this.frame = requestAnimationFrame(() => {
@@ -9311,7 +9383,7 @@ class Ms {
           this.viewport?.height ?? window.innerHeight,
           document.documentElement.clientHeight || window.innerHeight
         ), s = Math.max(0, this.viewport?.offsetTop ?? 0), r = Math.max(0, window.innerHeight - i - s), o = this.observed.reduce(
-          (R, U) => R + U.getBoundingClientRect().height,
+          (R, L) => R + L.getBoundingClientRect().height,
           0
         ), d = parseFloat(
           getComputedStyle(this.host).getPropertyValue(
@@ -9321,29 +9393,29 @@ class Ms {
           (R) => R.classList.contains("entries-header")
         ), c = this.observed.find(
           (R) => R.classList.contains("entries-footer")
-        ), m = this.host.renderRoot.querySelector(".entries-layout"), p = Math.max(
+        ), f = this.host.renderRoot.querySelector(".entries-layout"), p = Math.max(
           s + d + (h?.getBoundingClientRect().height ?? 0),
-          m?.getBoundingClientRect().top ?? 0
+          f?.getBoundingClientRect().top ?? 0
         );
-        let y = s + i;
+        let v = s + i;
         for (const R of this.containers.slice(1)) {
           if (!/(auto|scroll|hidden|clip)/.test(getComputedStyle(R).overflowY))
             continue;
-          const U = R.getBoundingClientRect();
-          U.height > 0 && (y = Math.min(y, U.bottom));
+          const L = R.getBoundingClientRect();
+          L.height > 0 && (v = Math.min(v, L.bottom));
         }
-        const v = {
+        const w = {
           "--companion-viewport-height": i,
           "--companion-viewport-top": s,
           "--companion-viewport-bottom": r,
           "--entries-height": Math.max(
             180,
-            m ? y - p - (c?.getBoundingClientRect().height ?? 0) - 16 : i - o - d - 16
+            f ? v - p - (c?.getBoundingClientRect().height ?? 0) - 16 : i - o - d - 16
           )
         };
         let E = !1;
-        for (const [R, U] of Object.entries(v)) {
-          const te = `${Math.round(U)}px`;
+        for (const [R, L] of Object.entries(w)) {
+          const te = `${Math.round(L)}px`;
           this.host.style.getPropertyValue(R) !== te && (this.host.style.setProperty(R, te), E = !0);
         }
         E && this.resized?.();
@@ -9369,12 +9441,12 @@ class Ms {
     window.removeEventListener("resize", this.schedule), this.viewport?.removeEventListener("resize", this.schedule), this.viewport?.removeEventListener("scroll", this.schedule), this.viewport = void 0, this.observer?.disconnect(), this.observer = void 0, this.observed = [], this.containers = [], this.frame !== void 0 && cancelAnimationFrame(this.frame), this.frame = void 0;
   }
 }
-function Jt(n, e) {
-  n.addController(new Ms(n, e));
+function Kt(n, e) {
+  n.addController(new Hs(n, e));
 }
-const Ee = class Ee extends x {
+const Re = class Re extends x {
   constructor() {
-    super(...arguments), this.viewingId = "", this.disabled = !1, this.queue = new T(), this.error = "", this.generation = 0, this.bound = "";
+    super(...arguments), this.viewingId = "", this.disabled = !1, this.queue = new A(), this.error = "", this.generation = 0, this.bound = "";
   }
   willUpdate() {
     const e = `${this.scope?.entry_id}:${this.scope?.dataset_id}:${this.scope?.library_enabled}:${this.viewingId}`;
@@ -9384,7 +9456,7 @@ const Ee = class Ee extends x {
     super.disconnectedCallback(), this.clear(), this.bound = "", this.boundClient = void 0;
   }
   clear() {
-    this.generation++, this.queue.cache.dispose(), this.queue = new T(), this.link = void 0, this.error = "";
+    this.generation++, this.queue.cache.dispose(), this.queue = new A(), this.link = void 0, this.error = "";
   }
   async load() {
     if (!this.client || !this.scope?.library_enabled || !this.viewingId) return;
@@ -9397,7 +9469,7 @@ const Ee = class Ee extends x {
       e === this.generation && (this.link = t.library);
     } catch (t) {
       if (e !== this.generation) return;
-      this.error = w(t), u(t) === "unauthorized" && (this.clear(), this.requestUpdate(), this.dispatchEvent(
+      this.error = y(t), g(t) === "unauthorized" && (this.clear(), this.requestUpdate(), this.dispatchEvent(
         new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
       ));
     } finally {
@@ -9434,14 +9506,14 @@ const Ee = class Ee extends x {
     </div>` : l : l;
   }
 };
-Ee.properties = {
+Re.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   viewingId: { type: String },
   disabled: { type: Boolean }
-}, Ee.styles = [
-  q,
-  S`
+}, Re.styles = [
+  S,
+  q`
       :host {
         display: block;
       }
@@ -9474,13 +9546,13 @@ Ee.properties = {
       }
     `
 ];
-let yt = Ee;
-customElements.get("kaleidescape-viewing-library") || customElements.define("kaleidescape-viewing-library", yt);
+let vt = Re;
+customElements.get("kaleidescape-viewing-library") || customElements.define("kaleidescape-viewing-library", vt);
 function pe(n) {
   const e = new Date(n);
   return new Date(e.getTime() - e.getTimezoneOffset() * 6e4).toISOString().slice(0, 19);
 }
-function yi(n) {
+function vi(n) {
   return {
     title: n?.title ?? "",
     started_at: pe(n?.started_at ?? (/* @__PURE__ */ new Date()).toISOString()),
@@ -9494,7 +9566,7 @@ function yi(n) {
     raw_content_id: n?.raw_content_id ?? ""
   };
 }
-function Os(n, e, t, i = n) {
+function Vs(n, e, t, i = n) {
   const s = { ...n, [e]: t };
   if (e === "started_at") {
     const r = new Date(t).getTime(), o = new Date(i.started_at).getTime(), d = new Date(i.ended_at).getTime();
@@ -9504,13 +9576,13 @@ function Os(n, e, t, i = n) {
   }
   return s;
 }
-function Ns(n, e) {
+function Ws(n, e) {
   const t = {};
   for (const [i, s] of Object.entries(n))
     e && s === e[i] || (i === "started_at" || i === "ended_at" ? t[i] = s ? new Date(s).toISOString() : null : i === "duration_seconds" || i === "watched_seconds" ? t[i] = s === "" ? null : Number(s) * 60 : ["source_id", "player_id", "raw_content_id"].includes(i) ? t[i] = s === "" ? null : s : t[i] = s);
   return t;
 }
-function Is(n, e, t) {
+function Js(n, e, t) {
   function i(s, r, o = "text", d = !1, h) {
     return a`<label
       >${r}<input
@@ -9570,7 +9642,7 @@ function Is(n, e, t) {
     </details>
   `;
 }
-const Re = class Re extends x {
+const ze = class ze extends x {
   constructor() {
     super(...arguments), this.value = "", this.initialTitle = "", this.requireRuntime = !0, this.disabled = !1, this.fuzzySearch = !0, this.query = "", this.items = [], this.open = !1, this.active = 0, this.error = "", this.request = 0, this.bound = "";
   }
@@ -9610,7 +9682,7 @@ const Re = class Re extends x {
         );
         t === this.request && this.isConnected && (this.items = i.items, this.requestUpdate());
       } catch (i) {
-        t === this.request && (this.error = w(i), this.requestUpdate(), u(i) === "unauthorized" && this.dispatchEvent(
+        t === this.request && (this.error = y(i), this.requestUpdate(), g(i) === "unauthorized" && this.dispatchEvent(
           new CustomEvent("access-denied", {
             bubbles: !0,
             composed: !0
@@ -9651,11 +9723,11 @@ const Re = class Re extends x {
         ${this.open ? a`<div class="movie-suggestions" id="movie-suggestions" role="listbox">${this.items.map((e, t) => a`<button type="button" role="option" id=${`movie-option-${t}`} aria-selected=${this.active === t} ?disabled=${this.requireRuntime && !e.duration_seconds} @pointerdown=${(i) => i.preventDefault()} @click=${() => this.choose(e)}><strong>${e.title}</strong> · ${e.year ?? "Year unknown"} · ${(e.formats?.length ? e.formats : [e.edition]).filter(Boolean).join(", ")} · ${e.duration_seconds ? `${(e.duration_seconds / 60).toFixed(2)} min` : "Runtime unknown"}</button>`)}${this.items.length ? l : a`<small>Type a title; only cached Library movies can be selected.</small>`}</div>` : l}
       </div>
       ${this.error ? a`<p class="error" role="alert">${this.error}</p>` : l}
-      ${this.selected ? a`<p class="manual-metadata">${this.selected.year ?? ""} ${K(this.selected)} ${oe(this.selected.rating)} · ${((this.selected.duration_seconds ?? 0) / 60).toFixed(2)} min</p>` : l}
+      ${this.selected ? a`<p class="manual-metadata">${this.selected.year ?? ""} ${I(this.selected)} ${oe(this.selected.rating)} · ${((this.selected.duration_seconds ?? 0) / 60).toFixed(2)} min</p>` : l}
     </fieldset>`;
   }
 };
-Re.properties = {
+ze.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   value: { type: String },
@@ -9663,13 +9735,13 @@ Re.properties = {
   requireRuntime: { type: Boolean },
   disabled: { type: Boolean },
   fuzzySearch: { attribute: !1 }
-}, Re.styles = [q, We];
-let vt = Re;
+}, ze.styles = [S, Ke];
+let wt = ze;
 customElements.get("kaleidescape-library-title-picker") || customElements.define(
   "kaleidescape-library-title-picker",
-  vt
+  wt
 );
-function be() {
+function ye() {
   const n = pe((/* @__PURE__ */ new Date()).toISOString());
   return {
     library_title_id: "",
@@ -9680,7 +9752,7 @@ function be() {
     notes: ""
   };
 }
-function ji(n) {
+function Ii(n) {
   if (!/^[a-f0-9]{64}$/.test(n.library_title_id))
     throw new Error("Select a Library movie from the suggestions.");
   const e = n.time.trim().match(/^(\d{1,2})(?::?(\d{2}))?\s*(am|pm)?$/i);
@@ -9707,9 +9779,9 @@ function ji(n) {
     ...n.status === "partial" ? { watched_seconds: d } : {}
   };
 }
-const ze = class ze extends x {
+const Ue = class Ue extends x {
   constructor() {
-    super(...arguments), this.draft = be(), this.disabled = !1, this.fuzzySearch = !0, this.runtime = null;
+    super(...arguments), this.draft = ye(), this.disabled = !1, this.fuzzySearch = !0, this.runtime = null;
   }
   change(e) {
     this.dispatchEvent(
@@ -9776,16 +9848,16 @@ const ze = class ze extends x {
     </fieldset>`;
   }
 };
-ze.properties = {
+Ue.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   draft: { attribute: !1 },
   disabled: { type: Boolean },
   fuzzySearch: { attribute: !1 }
-}, ze.styles = [q, We];
-let wt = ze;
-customElements.get("kaleidescape-manual-viewing") || customElements.define("kaleidescape-manual-viewing", wt);
-const Kt = S`
+}, Ue.styles = [S, Ke];
+let $t = Ue;
+customElements.get("kaleidescape-manual-viewing") || customElements.define("kaleidescape-manual-viewing", $t);
+const Yt = q`
   .entries-header {
     position: sticky;
     top: var(--companion-sticky-top, 0px);
@@ -9922,18 +9994,18 @@ const Kt = S`
       padding: 8px;
     }
   }
-`, Fs = [
+`, Ks = [
   "now-playing",
   "library",
   "journal",
   "database",
   "settings"
 ];
-function $t(n, e, t, i = !0) {
-  const s = (o) => Fs.includes(o) && (e || o === "now-playing" || o === "journal" || o === "library") && (o !== "library" || t), r = i ? new URL(location.href).searchParams.get("companion_page") : null;
+function xt(n, e, t, i = !0) {
+  const s = (o) => Ks.includes(o) && (e || o === "now-playing" || o === "journal" || o === "library") && (o !== "library" || t), r = i ? new URL(location.href).searchParams.get("companion_page") : null;
   return s(r) ? r : s(n) ? n : "journal";
 }
-function I(n) {
+function F(n) {
   const e = new URL(location.href);
   e.searchParams.set("companion_page", n), history.replaceState(history.state, "", e);
 }
@@ -9970,7 +10042,7 @@ const Le = class Le extends x {
     );
   }
   fail(e) {
-    this.error = w(e), u(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
+    this.error = y(e), g(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     )), this.requestUpdate();
   }
@@ -10029,7 +10101,7 @@ const Le = class Le extends x {
       >
         <div class="card-head">
           <h2 id="journal-options-title">Journal options</h2>
-          ${k(() => this.renderRoot.querySelector("dialog")?.close())}
+          ${_(() => this.renderRoot.querySelector("dialog")?.close())}
         </div>
         <p>
           Changes save automatically for your HA user’s
@@ -10137,8 +10209,8 @@ Le.properties = {
   status: { type: String },
   mobileCompact: { type: Boolean }
 }, Le.styles = [
-  q,
-  S`
+  S,
+  q`
       @media (max-width: 700px) {
         .desktop-options {
           display: none;
@@ -10146,11 +10218,11 @@ Le.properties = {
       }
     `
 ];
-let xt = Le;
-customElements.get("kaleidescape-journal-options") || customElements.define("kaleidescape-journal-options", xt);
-const Ue = class Ue extends x {
+let kt = Le;
+customElements.get("kaleidescape-journal-options") || customElements.define("kaleidescape-journal-options", kt);
+const Ae = class Ae extends x {
   constructor() {
-    super(), this.narrow = !1, this.api = null, this.userKey = "", this.generation = 0, this.scope = null, this.rows = [], this.selected = null, this.detailLoading = !1, this.detailRequest = 0, this.loading = !1, this.error = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.next = null, this.history = [], this.page = 1, this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.controlLocked = !1, Jt(this);
+    super(), this.narrow = !1, this.api = null, this.userKey = "", this.generation = 0, this.scope = null, this.rows = [], this.selected = null, this.detailLoading = !1, this.detailRequest = 0, this.loading = !1, this.error = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.next = null, this.history = [], this.page = 1, this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.controlLocked = !1, Kt(this);
   }
   confirmNavigation() {
     return !this.controlLocked && (this.renderRoot.querySelector("kaleidescape-library")?.confirmNavigation() ?? !0);
@@ -10169,7 +10241,7 @@ const Ue = class Ue extends x {
       if (this.hass) {
         const t = `${this.hass.user?.id}:${this.hass.user?.is_admin}`;
         !this.hass.user || !this.hass.connection.connected ? this.bind(null) : (this.connection !== this.hass.connection || this.userKey !== t || !this.api) && (this.connection = this.hass.connection, this.userKey = t, this.bind(
-          new Ft({
+          new Ht({
             callWS: (i) => this.hass.callWS(i),
             fetchWithAuth: (i, s) => this.hass.fetchWithAuth(i, s)
           })
@@ -10189,7 +10261,7 @@ const Ue = class Ue extends x {
     e !== this.api && (this.clear(), this.api = e, this.requestUpdate(), e && this.refresh());
   }
   fail(e) {
-    u(e) === "unauthorized" && this.clear(), this.error = w(e), this.requestUpdate();
+    g(e) === "unauthorized" && this.clear(), this.error = y(e), this.requestUpdate();
   }
   async refresh() {
     if (!this.api) return;
@@ -10204,14 +10276,14 @@ const Ue = class Ue extends x {
         ...t[0],
         permissions: { read: !0, edit: !1, export: !1 }
       }, !this.navigationReady) {
-        const i = $t(
+        const i = xt(
           this.scope.ui_defaults?.default_landing_page,
           !1,
           !!this.scope.library_enabled
         );
         this.activePage = i === "library" || i === "now-playing" ? i : "journal", this.navigationReady = !0;
       }
-      this.activePage === "library" && !this.scope.library_enabled && (this.activePage = "journal"), I(this.activePage), this.announcePage(), await this.load(void 0, e);
+      this.activePage === "library" && !this.scope.library_enabled && (this.activePage = "journal"), F(this.activePage), this.announcePage(), await this.load(void 0, e);
     } catch (t) {
       e === this.generation && this.fail(t);
     } finally {
@@ -10260,7 +10332,7 @@ const Ue = class Ue extends x {
     return Number.isNaN(t.getTime()) ? "—" : t.toLocaleString();
   }
   selectPage(e, t) {
-    this.controlLocked || e === "library" && !this.scope?.library_enabled || (this.selected = null, this.detailLoading = !1, this.detailRequest++, this.libraryTitleId = t?.libraryTitleId, this.libraryCriterion = t?.libraryCriterion, this.activePage = e, e === "journal" && (this.journalMovie = t?.movie, this.query = this.searchText = this.status = this.filterStatus = "", this.page = 1, this.history = [], this.load()), I(e), this.announcePage(), this.requestUpdate());
+    this.controlLocked || e === "library" && !this.scope?.library_enabled || (this.selected = null, this.detailLoading = !1, this.detailRequest++, this.libraryTitleId = t?.libraryTitleId, this.libraryCriterion = t?.libraryCriterion, this.activePage = e, e === "journal" && (this.journalMovie = t?.movie, this.query = this.searchText = this.status = this.filterStatus = "", this.page = 1, this.history = [], this.load()), F(e), this.announcePage(), this.requestUpdate());
   }
   tabKey(e) {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return;
@@ -10455,7 +10527,7 @@ const Ue = class Ue extends x {
                                           tabindex="0"
                                           aria-label="Viewings"
                                         >
-                                          ${this.rows.map((e) => Ei(e, this.selected?.id, (t) => {
+                                          ${this.rows.map((e) => Ui(e, this.selected?.id, (t) => {
       this.selectRecord(t);
     }))}
                                         </ul>` : a`<div class="empty">
@@ -10475,7 +10547,7 @@ const Ue = class Ue extends x {
                               </div>
                               ${this.detailLoading ? a`<div class="empty" role="status">
                                       Loading entry…
-                                    </div>` : this.selected ? a`${Ri(this.selected, (e) => this.date(e))}
+                                    </div>` : this.selected ? a`${Li(this.selected, (e) => this.date(e))}
                                         <kaleidescape-viewing-library
                                           .client=${this.api ?? void 0}
                                           .scope=${this.scope ?? void 0}
@@ -10494,8 +10566,8 @@ const Ue = class Ue extends x {
                         `}
                   <footer class="entries-footer journal-status">
                     <span
-                      >${Bt(this.scope, this.journalView === "calendar" ? this.calendarStatus : void 0, this.journalView === "calendar")}</span
-                    >${this.journalView === "calendar" ? Vt(this.calendarStatus, () => {
+                      >${Vt(this.scope, this.journalView === "calendar" ? this.calendarStatus : void 0, this.journalView === "calendar")}</span
+                    >${this.journalView === "calendar" ? Wt(this.calendarStatus, () => {
       this.renderRoot.querySelector(
         "kaleidescape-journal-calendar"
       )?.refresh();
@@ -10539,14 +10611,14 @@ const Ue = class Ue extends x {
     </main>`;
   }
 };
-Ue.properties = {
+Ae.properties = {
   hass: { attribute: !1 },
   client: { attribute: !1 },
   narrow: { type: Boolean }
-}, Ue.styles = [q, Kt, Li];
-let kt = Ue;
-customElements.get("kaleidescape-reader") || customElements.define("kaleidescape-reader", kt);
-function Bs(n, e) {
+}, Ae.styles = [S, Yt, Ti];
+let _t = Ae;
+customElements.get("kaleidescape-reader") || customElements.define("kaleidescape-reader", _t);
+function Ys(n, e) {
   return a`<label class="check"
       ><input
         type="checkbox"
@@ -10585,22 +10657,14 @@ function Bs(n, e) {
                   .value=${String(n.calendar_full_sync_months ?? 3)}
                   @input=${(t) => e({ calendar_full_sync_months: Number(t.target.value) })}
               /></label>
-              <label
-                >Daily sweep · HA local time<input
-                  name="calendar_full_sync_time"
-                  type="time"
-                  required
-                  .value=${String(n.calendar_full_sync_time ?? "03:00")}
-                  @input=${(t) => e({ calendar_full_sync_time: t.target.value })}
-              /></label>
             </div>
             <p class="muted">
-              Saved Journal edits are checked about every 10 seconds. The daily
-              sweep finds external calendar changes. Unmatched events require
-              repeated successful scans and at least 10 minutes of grace before
-              deletion. Older and future events are left outside this window;
-              recurring events are skipped. Providers without event editing
-              receive a verified replacement before the old event is removed.
+              Run Full Sync using its button or install the optional calendar
+              automation below. Unmatched events require repeated successful
+              scans and at least 10 minutes of grace before deletion. Older and
+              future events are left outside this window; recurring events are
+              skipped. Providers without event editing receive a verified
+              replacement before the old event is removed.
             </p>
           ` : l}`;
 }
@@ -10629,9 +10693,9 @@ const Te = class Te extends x {
     return !this.working && !this.pending;
   }
   fail(e) {
-    u(e) === "unauthorized" ? (this.clear(), this.dispatchEvent(
+    g(e) === "unauthorized" ? (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
-    )) : this.error = w(e), this.requestUpdate();
+    )) : this.error = y(e), this.requestUpdate();
   }
   async refresh() {
     if (!this.client || !this.scope) return;
@@ -10675,7 +10739,7 @@ const Te = class Te extends x {
         "conflict",
         "busy",
         "not_ready"
-      ].includes(u(t)) && (this.pending = void 0), this.fail(t);
+      ].includes(g(t)) && (this.pending = void 0), this.fail(t);
     } finally {
       e === this.generation && (this.working = !1, this.requestUpdate());
     }
@@ -10770,7 +10834,7 @@ const Te = class Te extends x {
           <h2 id="maintenance-review-title">
             Review unconfirmed calendar writes
           </h2>
-          ${k((t) => this.close(t))}
+          ${_((t) => this.close(t))}
         </div>
         <p>
           Inspect the assigned calendar first. A write may already have
@@ -10811,7 +10875,7 @@ const Te = class Te extends x {
           <h2 id="maintenance-run-title">
             Run Full Sync with pending operations?
           </h2>
-          ${k((t) => this.close(t))}
+          ${_((t) => this.close(t))}
         </div>
         <p>
           Pending delete: ${e.quarantined} ·
@@ -10871,7 +10935,7 @@ const Te = class Te extends x {
       >
         <div class="card-head">
           <h2 id="calendar-export-title">Export Journal to calendar</h2>
-          ${k((t) => this.close(t))}
+          ${_((t) => this.close(t))}
         </div>
         <p id="calendar-export-summary">
           Create events for up to
@@ -10921,16 +10985,180 @@ Te.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, Te.styles = q;
-let _t = Te;
-customElements.get("kaleidescape-calendar-export") || customElements.define("kaleidescape-calendar-export", _t);
-const Vs = [
+}, Te.styles = S;
+let Ct = Te;
+customElements.get("kaleidescape-calendar-export") || customElements.define("kaleidescape-calendar-export", Ct);
+const wi = [
+  ["purchase_email", "Purchase receipt email"],
+  ["library_schedule", "Schedule library sync"],
+  ["metadata_schedule", "Schedule metadata refresh"],
+  ["calendar_schedule", "Schedule calendar full sync"]
+], $i = {
+  current: "Up to date",
+  outdated: "Update available",
+  modified: "Modified or unrecognized",
+  missing: "Not installed",
+  unavailable: "Unable to check"
+}, Pe = class Pe extends x {
+  constructor() {
+    super(...arguments), this.versionsOnly = !1, this.busy = "", this.message = "", this.error = "", this.checking = !1, this.generation = 0;
+  }
+  willUpdate(e) {
+    (e.has("client") || e.has("scope")) && (this.generation++, this.statuses = void 0, this.pendingUpdate = void 0, this.client && this.scope?.permissions.edit && this.refresh());
+  }
+  disconnectedCallback() {
+    this.generation++, super.disconnectedCallback();
+  }
+  async refresh() {
+    if (!this.client || !this.scope?.permissions.edit) return;
+    const e = this.generation;
+    this.checking = !0, this.requestUpdate();
+    try {
+      const t = await this.client.automationStatuses(this.scope);
+      e === this.generation && (this.statuses = t);
+    } catch (t) {
+      e === this.generation && (this.error = y(t));
+    } finally {
+      e === this.generation && (this.checking = !1, this.requestUpdate());
+    }
+  }
+  async install(e, t, i) {
+    if (!(!this.client || !this.scope?.permissions.edit || this.busy)) {
+      this.busy = e, this.message = this.error = "", this.pendingUpdate = void 0, this.requestUpdate();
+      try {
+        if (i) {
+          const s = this.statuses?.[e]?.revision;
+          if (!s)
+            throw new Error("Blueprint status changed; check again.");
+          this.pendingUpdate = { kind: e, label: t, revision: s }, this.message = `${t}: replacing this blueprint reloads its automations and may discard local edits.`;
+        } else {
+          const s = await this.client.automationTemplate(this.scope, e);
+          await this.client.installAutomationBlueprint(
+            s.path,
+            s.yaml
+          ), this.message = `${t} blueprint installed. Create an automation in Home Assistant Blueprints.`, await this.refresh();
+        }
+      } catch (s) {
+        g(s) === "already_exists" ? (this.message = `${t} was installed while checking. Its status has been refreshed.`, await this.refresh()) : this.error = y(s);
+      } finally {
+        this.busy = "", this.requestUpdate();
+      }
+    }
+  }
+  async updateInstalled() {
+    if (!this.client || !this.scope?.permissions.edit || this.busy || !this.pendingUpdate)
+      return;
+    const e = this.pendingUpdate;
+    this.busy = e.kind, this.message = this.error = "", this.requestUpdate();
+    try {
+      await this.client.updateAutomationBlueprint(
+        this.scope,
+        e.kind,
+        e.revision
+      ), this.message = `${e.label} blueprint updated. Review its automations in Home Assistant.`, this.pendingUpdate = void 0, await this.refresh();
+    } catch (t) {
+      this.error = y(t), this.pendingUpdate = void 0, await this.refresh();
+    } finally {
+      this.busy = "", this.requestUpdate();
+    }
+  }
+  render() {
+    return this.scope?.permissions.edit ? this.versionsOnly ? a`<section aria-label="Blueprint versions">
+        <h3>Automation blueprint versions</h3>
+        ${this.checking && !this.statuses ? a`<p>Checking blueprints…</p>` : l}
+        ${this.statuses ? a`<table>
+                  <thead>
+                    <tr>
+                      <th>Blueprint</th>
+                      <th>Installed</th>
+                      <th>Latest</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${wi.map(([e, t]) => {
+      const i = this.statuses?.[e], s = i?.status === "missing" ? "Not installed" : i?.status === "unavailable" ? "Unknown" : i?.installed_version != null ? `v${i.installed_version}` : "Unversioned";
+      return a`<tr>
+                        <td>${t}</td>
+                        <td>${s}</td>
+                        <td>
+                          ${i?.latest_version != null ? `v${i.latest_version}` : "Unknown"}
+                        </td>
+                        <td>${$i[i?.status ?? "unavailable"]}</td>
+                      </tr>`;
+    })}
+                  </tbody>
+                </table>
+                <p class="muted">
+                  Versions on modified blueprints are self-reported. Review
+                  updates under Home Assistant → Optional automations.
+                </p>` : l}
+        ${this.error ? a`<p class="error" role="alert">${this.error}</p>` : l}
+        <button type="button" ?disabled=${this.checking} @click=${this.refresh}>
+          Check again
+        </button>
+      </section>` : a`<section aria-label="Optional automations">
+      <h3>Optional automations</h3>
+      <p>
+        Companion installs missing blueprints automatically when Home
+        Assistant's automation integration is available. Create and enable an
+        automation in Home Assistant to use one.
+      </p>
+      ${this.checking && !this.statuses ? a`<p role="status">Checking blueprints…</p>` : l}
+      ${this.statuses ? a`<div class="blueprint-statuses">
+              ${wi.map(([e, t]) => {
+      const i = this.statuses?.[e]?.status ?? "unavailable";
+      return a`<div class="actions" data-blueprint=${e}>
+                  <strong>${t}</strong>
+                  <span
+                    class=${i === "outdated" || i === "modified" ? "warning" : "muted"}
+                    >${$i[i]}</span
+                  >
+                  ${i === "missing" ? a`<button type="button" ?disabled=${!!this.busy} @click=${() => this.install(e, t, !1)}>Install</button>` : l}
+                  ${i === "outdated" || i === "modified" ? a`<button type="button" ?disabled=${!!this.busy} @click=${() => this.install(e, t, !0)}>Review update</button>` : l}
+                </div>`;
+    })}
+            </div>` : l}
+      ${this.message ? a`<p role="status">${this.message}</p>` : l}
+      ${this.pendingUpdate ? a`<button type="button" ?disabled=${!!this.busy} @click=${this.updateInstalled}>Update installed blueprint</button>` : l}
+      ${this.error ? a`<p class="error" role="alert">${this.error}</p>` : l}
+      <div class="actions">
+        <button
+          type="button"
+          ?disabled=${this.checking || !!this.busy}
+          @click=${this.refresh}
+        >
+          Check again</button
+        ><a href="/config/blueprint/dashboard"
+          >Open Home Assistant Blueprints</a
+        >
+      </div>
+      <p>
+        If a status cannot be checked, ensure Home Assistant automations are
+        enabled and the blueprint file is readable. Modified or unrecognized
+        blueprints are never replaced automatically. Calendar Full Sync requires
+        a dedicated calendar and can delete unmatched events.
+      </p>
+    </section>` : l;
+  }
+};
+Pe.properties = {
+  client: { attribute: !1 },
+  scope: { attribute: !1 },
+  versionsOnly: { type: Boolean }
+}, Pe.styles = [S];
+let St = Pe;
+customElements.get("kaleidescape-automation-blueprints") || customElements.define(
+  "kaleidescape-automation-blueprints",
+  St
+);
+const Gs = [
   ["rules", "Runtime rules and feature enablement"],
   ["browsing", "Personal browsing preferences · may include searches/names"],
   ["shared", "Shared hidden collection names"],
   ["connections", "Network addresses, player and HA entity choices · private"],
   ["templates", "Custom calendar text templates · private"]
-], Ae = class Ae extends x {
+], De = class De extends x {
   constructor() {
     super(...arguments), this.disabled = !1, this.generation = 0, this.selected = /* @__PURE__ */ new Set(["rules", "browsing"]), this.request = "", this.busy = !1, this.pending = !1, this.error = "", this.notice = "";
   }
@@ -10947,7 +11175,7 @@ const Vs = [
     e?.preventDefault(), this.reset(), this.requestUpdate();
   }
   fail(e) {
-    this.error = w(e), u(e) === "unauthorized" && (this.reset(), this.dispatchEvent(
+    this.error = y(e), g(e) === "unauthorized" && (this.reset(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     ));
   }
@@ -11018,14 +11246,14 @@ const Vs = [
       >
         <div class="card-head">
           <h2>Export / import settings</h2>
-          ${k(() => this.close())}
+          ${_(() => this.close())}
         </div>
         <p>
           Choose the categories to transfer. Credentials are always excluded.
           Connection choices, searches, names and templates can contain private
           information; protect the downloaded file.
         </p>
-        ${Vs.map(
+        ${Gs.map(
       ([t, i]) => a`<label class="check"
               ><input
                 type="checkbox"
@@ -11095,29 +11323,32 @@ ${JSON.stringify(i, null, 2)}</pre>
       </dialog>`;
   }
 };
-Ae.properties = {
+De.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, Ae.styles = q;
-let Ct = Ae;
-customElements.define("kaleidescape-settings-transfer", Ct);
-function Z(n) {
-  return Array.isArray(n) ? `[${n.map(Z).join(",")}]` : n && typeof n == "object" ? `{${Object.entries(n).sort(([e], [t]) => e.localeCompare(t)).map(([e, t]) => `${JSON.stringify(e)}:${Z(t)}`).join(",")}}` : JSON.stringify(n);
+}, De.styles = S;
+let qt = De;
+customElements.get("kaleidescape-settings-transfer") || customElements.define(
+  "kaleidescape-settings-transfer",
+  qt
+);
+function G(n) {
+  return Array.isArray(n) ? `[${n.map(G).join(",")}]` : n && typeof n == "object" ? `{${Object.entries(n).sort(([e], [t]) => e.localeCompare(t)).map(([e, t]) => `${JSON.stringify(e)}:${G(t)}`).join(",")}}` : JSON.stringify(n);
 }
-class A extends Error {
+class T extends Error {
 }
-class Hs {
+class Zs {
   constructor(e, t) {
     if (this.client = e, this.plan = t, this.attempted = !1, this.created = !1, !/^companion-test-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(
       t.url_path
     ) || new TextEncoder().encode(t.yaml).length > 262144)
-      throw new A("Invalid generated dashboard artifact");
+      throw new T("Invalid generated dashboard artifact");
   }
   async install(e) {
     const t = () => {
       if (!e())
-        throw new A(
+        throw new T(
           "Dashboard setup stopped because the HA account or dataset changed."
         );
     }, i = await this.client.haDashboards();
@@ -11126,16 +11357,16 @@ class Hs {
       (d) => d.url_path === this.plan.url_path
     );
     if (s && (!this.attempted || s.title !== this.plan.title || s.mode !== "storage" || s.icon !== "mdi:test-tube" || s.require_admin !== !1 || s.show_in_sidebar !== !0))
-      throw new A(
+      throw new T(
         "The dashboard URL already exists or its settings changed. Existing dashboards are never replaced."
       );
     if (!s) {
       if (this.created)
-        throw new A(
+        throw new T(
           "The newly created dashboard was removed. Start a new generation request."
         );
       if (this.attempted)
-        throw new A(
+        throw new T(
           "Creation was already attempted, but HA has not exposed the result. Wait and check again or inspect Dashboards; no second create was sent."
         );
       this.attempted = !0, await this.client.createHATestDashboard(this.plan), t(), this.created = !0;
@@ -11144,27 +11375,27 @@ class Hs {
     try {
       r = await this.client.haTestDashboardConfig(this.plan.url_path), t();
     } catch (d) {
-      if (t(), u(d) !== "config_not_found") throw d;
+      if (t(), g(d) !== "config_not_found") throw d;
     }
     if (r) {
-      if (Z(r) === Z(this.plan.config)) return;
-      throw new A(
+      if (G(r) === G(this.plan.config)) return;
+      throw new T(
         "This dashboard already contains different content. It was not overwritten. Inspect it in HA dashboard settings."
       );
     }
     if (!this.created && !s)
-      throw new A("Could not verify the new dashboard");
+      throw new T("Could not verify the new dashboard");
     await this.client.saveHATestDashboard(this.plan), t();
     const o = await this.client.haTestDashboardConfig(
       this.plan.url_path
     );
-    if (t(), Z(o) !== Z(this.plan.config))
-      throw new A(
+    if (t(), G(o) !== G(this.plan.config))
+      throw new T(
         "The saved dashboard could not be verified. Inspect it before continuing."
       );
   }
 }
-const De = class De extends x {
+const je = class je extends x {
   constructor() {
     super(...arguments), this.disabled = !1, this.name = "Kaleidescape test guide", this.request = "", this.generation = 0, this.busy = !1, this.pending = !1, this.complete = !1, this.error = "", this.bound = "";
   }
@@ -11209,14 +11440,14 @@ const De = class De extends x {
           this.name.trim()
         );
         if (!i()) return;
-        this.installer = new Hs(this.client, s), this.plan = s;
+        this.installer = new Zs(this.client, s), this.plan = s;
       }
       if (this.pending = !0, await this.installer.install(i), !i() || (await this.client.verifyTestDashboard(this.scope, this.request), !i())) return;
       this.complete = !0, this.pending = !1;
     } catch (s) {
       if (!i()) return;
-      const r = u(s), o = s?.message;
-      this.error = typeof o == "string" && (r.startsWith("dashboard_") || s instanceof A) ? o : w(s), r === "unauthorized" && (this.reset(), this.dispatchEvent(
+      const r = g(s), o = s?.message;
+      this.error = typeof o == "string" && (r.startsWith("dashboard_") || s instanceof T) ? o : y(s), r === "unauthorized" && (this.reset(), this.dispatchEvent(
         new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
       ));
     } finally {
@@ -11255,7 +11486,7 @@ const De = class De extends x {
       >
         <div class="card-head">
           <h2>Generate test dashboard</h2>
-          ${k((e) => this.close(e))}
+          ${_((e) => this.close(e))}
         </div>
         <p>
           Creates a separate HA-managed dashboard visible to household users,
@@ -11310,14 +11541,14 @@ const De = class De extends x {
       </dialog>` : l;
   }
 };
-De.properties = {
+je.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, De.styles = q;
-let St = De;
-customElements.get("kaleidescape-test-dashboard") || customElements.define("kaleidescape-test-dashboard", St);
-const Pe = class Pe extends x {
+}, je.styles = S;
+let Et = je;
+customElements.get("kaleidescape-test-dashboard") || customElements.define("kaleidescape-test-dashboard", Et);
+const Me = class Me extends x {
   constructor() {
     super(...arguments), this.disabled = !1, this.working = !1, this.error = "", this.generation = 0, this.bound = "";
   }
@@ -11339,9 +11570,9 @@ const Pe = class Pe extends x {
     e?.preventDefault(), this.clear(), this.requestUpdate();
   }
   fail(e) {
-    u(e) === "unauthorized" ? (this.clear(), this.dispatchEvent(
+    g(e) === "unauthorized" ? (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
-    )) : this.error = w(e), this.requestUpdate();
+    )) : this.error = y(e), this.requestUpdate();
   }
   async open() {
     if (!this.client || !this.scope || this.disabled || this.working) return;
@@ -11384,7 +11615,7 @@ const Pe = class Pe extends x {
         "backup_in_progress",
         "library_disabled",
         "repair_limit"
-      ].includes(u(t)) && (this.pending = void 0, this.review = void 0), this.fail(t);
+      ].includes(g(t)) && (this.pending = void 0, this.review = void 0), this.fail(t);
     } finally {
       e === this.generation && (this.working = !1, this.requestUpdate());
     }
@@ -11415,7 +11646,7 @@ const Pe = class Pe extends x {
       >
         <div class="card-head">
           <h2 id="metadata-repair-title">Repair Journal Library metadata</h2>
-          ${k((t) => this.close(t))}
+          ${_((t) => this.close(t))}
         </div>
         ${e ? a`<p>${$(e.updated_count, "entry", "entries")} with missing details can be updated. ${e.unchanged_count} already up to date · ${e.unmatched_count} unmatched · ${e.active_count} active and skipped.</p>` : l}
         <p>
@@ -11457,14 +11688,14 @@ const Pe = class Pe extends x {
     </section>`;
   }
 };
-Pe.properties = {
+Me.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, Pe.styles = q;
-let qt = Pe;
-customElements.get("kaleidescape-metadata-repair") || customElements.define("kaleidescape-metadata-repair", qt);
-const vi = [
+}, Me.styles = S;
+let Rt = Me;
+customElements.get("kaleidescape-metadata-repair") || customElements.define("kaleidescape-metadata-repair", Rt);
+const xi = [
   ["actors", "Cast", ["kaleidescape", "tmdb"]],
   ["directors", "Directors", ["kaleidescape", "tmdb"]],
   ["writers", "Writers", ["kaleidescape", "tmdb"]],
@@ -11479,12 +11710,12 @@ const vi = [
   ["audience_votes", "TMDB audience votes", ["tmdb"]],
   ["artwork", "Cover artwork", ["kaleidescape", "tmdb"]],
   ["backdrop", "Landscape image", ["tmdb"]]
-], Ws = {
+], Qs = {
   auto: "Automatic",
   original: "Original library data",
   kaleidescape: "Kaleidescape store",
   tmdb: "TMDB"
-}, je = class je extends x {
+}, Oe = class Oe extends x {
   constructor() {
     super(...arguments), this.draft = {}, this.disabled = !1, this.generation = 0, this.bound = "", this.error = "", this.loading = !1;
   }
@@ -11518,7 +11749,7 @@ const vi = [
         this.refresh();
       }, 2e3));
     } catch (i) {
-      t === this.generation && (this.error = w(i));
+      t === this.generation && (this.error = y(i));
     } finally {
       t === this.generation && (this.loading = !1, this.requestUpdate());
     }
@@ -11602,7 +11833,7 @@ const vi = [
           ?disabled=${this.disabled || !this.draft.metadata_tmdb_enabled}
           @click=${() => {
       const e = Object.fromEntries(
-        vi.map(([t, , i]) => [
+        xi.map(([t, , i]) => [
           "metadata_source_" + t,
           t === "artwork" || t === "critic_score" || t === "audience_score" || t === "distributor" ? "kaleidescape" : i.some((s) => s === "tmdb") ? "tmdb" : "auto"
         ])
@@ -11619,7 +11850,7 @@ const vi = [
           Prefer TMDB · keep Kaleidescape covers and RT scores
         </button>
         <div class="grid settings-grid">
-          ${vi.map(([e, t, i]) => {
+          ${xi.map(([e, t, i]) => {
       const s = "metadata_source_" + e;
       return a`<label
               >${t}<select
@@ -11628,7 +11859,7 @@ const vi = [
                 ?disabled=${this.disabled}
                 @change=${(r) => this.change(s, r.target.value)}
               >
-                ${["auto", "original", ...i].map((r) => a`<option value=${r}>${e === "artwork" && r === "kaleidescape" ? "Kaleidescape library cover" : Ws[r]}</option>`)}
+                ${["auto", "original", ...i].map((r) => a`<option value=${r}>${e === "artwork" && r === "kaleidescape" ? "Kaleidescape library cover" : Qs[r]}</option>`)}
               </select></label
             >`;
     })}
@@ -11665,7 +11896,7 @@ const vi = [
       ${this.error ? a`<p class="error" role="alert">${this.error}</p>` : l}
       <details>
         <summary>Metadata credits</summary>
-        ${Ui()}
+        ${Pi()}
         <p>
           Kaleidescape store metadata and Rotten Tomatoes scores remain
           attributed to their source. TMDB votes are a separate audience rating.
@@ -11674,15 +11905,15 @@ const vi = [
     </section>` : l;
   }
 };
-je.properties = {
+Oe.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   draft: { attribute: !1 },
   disabled: { type: Boolean }
-}, je.styles = q;
-let Et = je;
-customElements.get("kaleidescape-enrichment-settings") || customElements.define("kaleidescape-enrichment-settings", Et);
-const it = [
+}, Oe.styles = S;
+let zt = Oe;
+customElements.get("kaleidescape-enrichment-settings") || customElements.define("kaleidescape-enrichment-settings", zt);
+const at = [
   ["media_player", "Kaleidescape media player", "text", "", ""],
   ["play_status", "Exact play-status sensor", "text", "", ""],
   ["media_location", "Media-location sensor", "text", "", ""],
@@ -11707,7 +11938,7 @@ const it = [
     "0",
     "168"
   ]
-], wi = [
+], ki = [
   [
     "library_host",
     "Library hostname · blank uses my-kaleidescape.local",
@@ -11715,7 +11946,6 @@ const it = [
     "",
     ""
   ],
-  ["library_interval_hours", "Sync interval · hours", "number", "1", "168"],
   [
     "library_artwork_cache_mb",
     "Artwork cache limit · MiB",
@@ -11723,12 +11953,12 @@ const it = [
     "32",
     "4096"
   ]
-], Mi = [
+], Fi = [
   ["library_allow_collection_add", "Allow Add to Collection on the device"],
   ["library_sync_collections", "Sync collections and watched status"],
   ["library_sync_details", "Sync title details and credits"],
   ["library_sync_artwork", "Sync artwork"]
-], Js = /* @__PURE__ */ new Set([
+], Xs = /* @__PURE__ */ new Set([
   "calendar_enabled",
   "calendar_full_sync",
   "calendar_full_sync_dedicated",
@@ -11740,9 +11970,9 @@ const it = [
   "metadata_tmdb_enabled",
   "metadata_auto_save",
   "metadata_clear_tmdb_key",
-  ...Mi.map(([n]) => n)
-]), Ks = {
-  invalid_calendar_full_sync: "Use 1–12 whole months and a daily time in HH:MM format.",
+  ...Fi.map(([n]) => n)
+]), ea = {
+  invalid_calendar_full_sync: "Use an age window of 1–12 whole months.",
   calendar_dedicated_required: "Acknowledge that Full Sync uses a separate calendar and deletes unmatched events.",
   calendar_full_sync_unsupported: "Full Sync requires a calendar with event creation and deletion support.",
   invalid_calendar: "Choose an existing calendar that supports creating events.",
@@ -11755,8 +11985,8 @@ const it = [
   invalid_metadata_options: "Use a valid provider credential and a request rate from 0.1 to 10 per second.",
   invalid_control_options: "Use a private LAN control hostname/IP and a valid player serial number.",
   invalid_library_host: "Enter a hostname or private LAN HTTP(S) origin without a path, credentials, or query.",
-  invalid_library_options: "Choose a sync interval of 1–168 hours and an artwork cache limit of 32–4096 MiB."
-}, Me = class Me extends x {
+  invalid_library_options: "Choose an artwork cache limit of 32–4096 MiB."
+}, Ne = class Ne extends x {
   constructor() {
     super(), this.tab = "home-assistant", this.personalReady = !1, this.personalError = "", this.generation = 0, this.draft = {}, this.initial = {}, this.collectionChoices = [], this.hiddenCollections = [], this.sharedReady = !1, this.sharedError = "", this.customCollection = "", this.loading = !1, this.saving = !1, this.uncertain = !1, this.dashboardBusy = !1, this.error = "", this.bound = "", ue(this, () => this.loading || this.saving || this.uncertain || this.personalPreferences?.unsettled ? !1 : (this.personalPreferences?.dispose(), this.personalPreferences = void 0, this.personalReady = !1, this.tab === "personal" && this.selectTab("personal"), !0));
   }
@@ -11782,7 +12012,7 @@ const it = [
     });
   }
   fail(e) {
-    this.error = w(e), u(e) === "unauthorized" && (this.personalPreferences?.dispose(), this.personalPreferences = void 0, this.personalReady = !1, this.sharedPreferences?.dispose(), this.sharedPreferences = void 0, this.sharedReady = !1, this.hiddenCollections = [], this.flow = void 0, this.draft = {}, this.initial = {}, this.dispatchEvent(
+    this.error = y(e), g(e) === "unauthorized" && (this.personalPreferences?.dispose(), this.personalPreferences = void 0, this.personalReady = !1, this.sharedPreferences?.dispose(), this.sharedPreferences = void 0, this.sharedReady = !1, this.hiddenCollections = [], this.flow = void 0, this.draft = {}, this.initial = {}, this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     )), this.requestUpdate();
   }
@@ -11799,14 +12029,14 @@ const it = [
       this.flow = s, this.draft = Object.fromEntries(
         (s.fields ?? []).map((o) => [
           o.name,
-          Js.has(o.name) ? !!o.default : String(o.default ?? "")
+          Xs.has(o.name) ? !!o.default : String(o.default ?? "")
         ])
       ), this.initial = { ...this.draft }, this.sharedPreferences = new j(
         e,
         t,
         !0,
         (o) => {
-          i === this.generation && (o && u(o) === "unauthorized" ? this.fail(o) : (this.sharedError = o ? w(o) : "", this.requestUpdate()));
+          i === this.generation && (o && g(o) === "unauthorized" ? this.fail(o) : (this.sharedError = o ? y(o) : "", this.requestUpdate()));
         }
       );
       const r = await this.sharedPreferences.load();
@@ -11850,9 +12080,9 @@ const it = [
     const t = this.generation;
     this.saving = !0, this.busy(), this.error = "", this.requestUpdate();
     const i = { ...this.draft };
-    for (const [s, , r] of it)
+    for (const [s, , r] of at)
       r === "number" ? i[s] = Number(i[s]) : i[s] || delete i[s];
-    for (const [s, , r] of wi)
+    for (const [s, , r] of ki)
       r === "number" && (i[s] = Number(i[s]));
     i.library_host = String(i.library_host ?? ""), i.calendar_full_sync_months !== void 0 && (i.calendar_full_sync_months = Number(i.calendar_full_sync_months)), i.calendar_entity || delete i.calendar_entity;
     try {
@@ -11864,14 +12094,14 @@ const it = [
       this.flow = s, s.type === "create_entry" ? (this.initial = { ...this.draft }, this.saving = !1, this.busy(), this.dispatchEvent(
         new CustomEvent("settings-saved", { bubbles: !0, composed: !0 })
       )) : s.type === "form" ? this.error = Object.values(s.errors ?? {}).map(
-        (r) => Ks[r] ?? "Check the settings and try again."
+        (r) => ea[r] ?? "Check the settings and try again."
       ).join(" ") : this.error = "The settings flow ended. Reload settings to continue.";
     } catch (s) {
       t === this.generation && (this.fail(s), this.uncertain = ![
         "unauthorized",
         "invalid_request",
         "conflict"
-      ].includes(u(s)));
+      ].includes(g(s)));
     } finally {
       t === this.generation && (this.saving = !1, this.busy(), this.requestUpdate());
     }
@@ -11885,7 +12115,7 @@ const it = [
       this.scope,
       !1,
       (i) => {
-        t === this.generation && (i && u(i) === "unauthorized" ? this.fail(i) : (this.personalError = i ? w(i) : "", this.requestUpdate()));
+        t === this.generation && (i && g(i) === "unauthorized" ? this.fail(i) : (this.personalError = i ? y(i) : "", this.requestUpdate()));
       },
       "search"
     );
@@ -11894,7 +12124,7 @@ const it = [
       this.personalReady = !0;
     } catch (i) {
       if (t !== this.generation) return;
-      this.personalError = w(i), this.personalPreferences?.dispose(), this.personalPreferences = void 0, u(i) === "unauthorized" && this.fail(i);
+      this.personalError = y(i), this.personalPreferences?.dispose(), this.personalPreferences = void 0, g(i) === "unauthorized" && this.fail(i);
     }
     this.requestUpdate();
   }
@@ -11904,7 +12134,8 @@ const it = [
       "companion",
       "personal",
       "ecosystem",
-      "scrapers"
+      "scrapers",
+      "about"
     ], s = i.indexOf(t), r = e.key === "ArrowRight" ? i[(s + 1) % i.length] : e.key === "ArrowLeft" ? i[(s + i.length - 1) % i.length] : e.key === "Home" ? i[0] : e.key === "End" ? i.at(-1) : void 0;
     r && (e.preventDefault(), this.selectTab(r), this.renderRoot.querySelector(`#settings-tab-${r}`)?.focus());
   }
@@ -11924,7 +12155,7 @@ const it = [
   }
   renderSources() {
     return a`<div class="grid settings-grid">
-      ${it.filter(([, , e]) => e === "text").map(
+      ${at.filter(([, , e]) => e === "text").map(
       ([e, t]) => a` <label class="full"
               >${t}<input
                 name=${e}
@@ -11974,7 +12205,8 @@ const it = [
       ["companion", "Companion"],
       ["personal", "Personal"],
       ["ecosystem", "Kaleidescape"],
-      ["scrapers", "Scrapers"]
+      ["scrapers", "Scrapers"],
+      ["about", "About"]
     ].map(
       ([e, t]) => a` <button
                 type="button"
@@ -12017,6 +12249,10 @@ const it = [
                         Home Assistant integration · shared · Save settings
                         required
                       </p>
+                      <kaleidescape-automation-blueprints
+                        .client=${this.client}
+                        .scope=${this.scope}
+                      ></kaleidescape-automation-blueprints>
                       <kaleidescape-test-dashboard
                         .client=${this.client}
                         .scope=${this.scope}
@@ -12109,7 +12345,7 @@ const it = [
                                 values are blank. Use double braces for literal
                                 braces.
                               </p>
-                              ${Bs(this.draft, (e) => {
+                              ${Ys(this.draft, (e) => {
       this.draft = { ...this.draft, ...e }, this.requestUpdate();
     })}` : l}
                       <kaleidescape-calendar-export
@@ -12145,7 +12381,7 @@ const it = [
                         />Automatically record playback</label
                       >
                       <div class="grid settings-grid">
-                        ${it.filter(([, , e]) => e === "number").map(
+                        ${at.filter(([, , e]) => e === "number").map(
       ([e, t, i, s, r]) => a`<label class=${i === "text" ? "full" : ""}
                                 >${t}<input
                                   name=${e}
@@ -12217,10 +12453,6 @@ const it = [
                         Kaleidescape devices and metadata providers · shared ·
                         Save settings required
                       </p>
-                      <p>
-                        Loaded pykaleidescape version:
-                        <strong>${this.scope?.pyk_version || "Unknown"}</strong>
-                      </p>
                       <h3>Library sync</h3>
                       <label class="check"
                         ><input
@@ -12241,7 +12473,7 @@ const it = [
                         device requests occur while disabled.
                       </p>
                       ${this.draft.library_enabled ? a`<div class="grid settings-grid">
-                                ${wi.map(
+                                ${ki.map(
       ([e, t, i, s, r]) => a`<label
                                       class=${i === "text" ? "full" : ""}
                                       >${t}<input
@@ -12261,7 +12493,7 @@ const it = [
       }}
                                     /></label>`
     )}
-                                ${Mi.map(
+                                ${Fi.map(
       ([e, t]) => a`<label class="check full"
                                       ><input
                                         name=${e}
@@ -12390,6 +12622,60 @@ const it = [
     }}
                       ></kaleidescape-enrichment-settings>
                     </section>
+                    <section
+                      class="settings-section"
+                      role="tabpanel"
+                      id="settings-about"
+                      aria-labelledby="settings-tab-about"
+                      data-settings-tab="about"
+                      ?hidden=${this.tab !== "about"}
+                    >
+                      <h3>About Kaleidescape Companion</h3>
+                      <p>
+                        Companion version:
+                        <strong
+                          >${this.scope?.integration_version || "Unknown"}</strong
+                        ><br />
+                        pykaleidescape version:
+                        <strong>${this.scope?.pyk_version || "Unknown"}</strong
+                        ><br />
+                        Companion API version:
+                        <strong>${this.scope?.api_version ?? "Unknown"}</strong
+                        ><br />
+                        Database schema version:
+                        <strong
+                          >${this.scope?.schema_version ?? "Unknown"}</strong
+                        >
+                      </p>
+                      <kaleidescape-automation-blueprints
+                        .client=${this.client}
+                        .scope=${this.scope}
+                        .versionsOnly=${!0}
+                      ></kaleidescape-automation-blueprints>
+                      <h3>Release notes · current development build</h3>
+                      <ul>
+                        <li>
+                          Missing automation blueprints are installed
+                          automatically. Settings shows blueprint status and
+                          offers explicit updates; Home Assistant notifies you
+                          about outdated and updated blueprints.
+                        </li>
+                        <li>
+                          Library sync and calendar full sync actions support
+                          opt-in schedules. Calendar full sync also schedules a
+                          safeguard recheck.
+                        </li>
+                        <li>
+                          Metadata refresh schedules can select providers and
+                          limit work to titles with missing data.
+                        </li>
+                        <li>
+                          Purchase receipts save unmatched purchases for later
+                          reconciliation from the database. Update the receipt
+                          blueprint to version 3 for accurate notifications.
+                        </li>
+                      </ul>
+                    </section>
                   </fieldset>
                 </form>
                 <section
@@ -12488,7 +12774,7 @@ const it = [
           hidden_collections: this.hiddenCollections
         }), this.requestUpdate();
       }}
-              />${B(i)}</label
+              />${H(i)}</label
             >`
     )}
       </div>
@@ -12523,12 +12809,12 @@ const it = [
     </fieldset>`;
   }
 };
-Me.properties = {
+Ne.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 }
-}, Me.styles = [
-  q,
-  S`
+}, Ne.styles = [
+  S,
+  q`
       [hidden] {
         display: none !important;
       }
@@ -12565,9 +12851,9 @@ Me.properties = {
       }
     `
 ];
-let Rt = Me;
-customElements.get("kaleidescape-settings") || customElements.define("kaleidescape-settings", Rt);
-const Ys = S`
+let Ut = Ne;
+customElements.get("kaleidescape-settings") || customElements.define("kaleidescape-settings", Ut);
+const ta = q`
   .database {
     overflow: visible;
     margin-top: 24px;
@@ -12709,7 +12995,7 @@ const Ys = S`
       box-shadow: -8px 0 8px var(--surface);
     }
   }
-`, Oe = class Oe extends x {
+`, Ie = class Ie extends x {
   constructor() {
     super(...arguments), this.table = "viewings", this.value = "", this.fields = [], this.operators = [], this.disabled = !1, this.open = !1, this.active = 0, this.cursor = 0, this.message = "", this.invalid = !1, this.generation = 0;
   }
@@ -12761,7 +13047,7 @@ const Ys = S`
         ), e === this.generation && (this.message = "", this.invalid = !1);
       } catch (t) {
         if (e !== this.generation) return;
-        this.invalid = !0, this.message = u(t) === "query_syntax" && typeof t.message == "string" ? t.message : w(t), u(t) === "unauthorized" && this.dispatchEvent(
+        this.invalid = !0, this.message = g(t) === "query_syntax" && typeof t.message == "string" ? t.message : y(t), g(t) === "unauthorized" && this.dispatchEvent(
           new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
         );
       } finally {
@@ -12832,7 +13118,7 @@ const Ys = S`
       </details>`;
   }
 };
-Oe.properties = {
+Ie.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   table: {},
@@ -12840,7 +13126,7 @@ Oe.properties = {
   fields: { attribute: !1 },
   operators: { attribute: !1 },
   disabled: { type: Boolean }
-}, Oe.styles = S`
+}, Ie.styles = q`
     :host {
       display: block;
       min-width: 0;
@@ -12937,9 +13223,9 @@ Oe.properties = {
       color: var(--error-color, #b3261e);
     }
   `;
-let zt = Oe;
-customElements.get("kaleidescape-database-search") || customElements.define("kaleidescape-database-search", zt);
-const Ne = class Ne extends x {
+let Lt = Ie;
+customElements.get("kaleidescape-database-search") || customElements.define("kaleidescape-database-search", Lt);
+const Fe = class Fe extends x {
   constructor() {
     super(...arguments), this.disabled = !1, this.bound = "", this.request = 0, this.query = "", this.items = [], this.active = -1, this.loading = !1, this.more = !1, this.error = "";
   }
@@ -12972,7 +13258,7 @@ const Ne = class Ne extends x {
       this.items = t.items, this.more = t.has_more;
     } catch (t) {
       if (e !== this.request || !this.isConnected) return;
-      this.error = w(t), u(t) === "unauthorized" && this.dispatchEvent(
+      this.error = y(t), g(t) === "unauthorized" && this.dispatchEvent(
         new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
       );
     } finally {
@@ -13058,15 +13344,15 @@ const Ne = class Ne extends x {
       </div>`;
   }
 };
-Ne.properties = {
+Fe.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   review: { attribute: !1 },
   row: { attribute: !1 },
   disabled: { type: Boolean }
-}, Ne.styles = [
-  q,
-  S`
+}, Fe.styles = [
+  S,
+  q`
       :host {
         display: block;
         border: 1px solid var(--line);
@@ -13111,14 +13397,14 @@ Ne.properties = {
       }
     `
 ];
-let Lt = Ne;
+let At = Fe;
 customElements.get("kaleidescape-import-matcher") || customElements.define(
   "kaleidescape-import-matcher",
-  Lt
+  At
 );
-const Ie = class Ie extends x {
+const Be = class Be extends x {
   constructor() {
-    super(...arguments), this.disabled = !1, this.bound = "", this.generation = 0, this.selected = /* @__PURE__ */ new Set(), this.query = "", this.changesOnly = !1, this.page = 0, this.pageSize = 100, this.working = !1, this.error = "", this.notice = "", this.dialog = null;
+    super(...arguments), this.disabled = !1, this.bound = "", this.generation = 0, this.selected = /* @__PURE__ */ new Set(), this.query = "", this.changesOnly = !1, this.page = 0, this.pageSize = 100, this.working = !1, this.error = "", this.notice = "", this.dialog = null, this.purchaseReview = !1;
   }
   willUpdate(e) {
     if (!e.has("client") && !e.has("scope")) return;
@@ -13133,7 +13419,7 @@ const Ie = class Ie extends x {
     const e = this.renderRoot.querySelector('input[type="file"]');
     e && (e.value = ""), this.pending = void 0, this.working = !1, this.hideDialog(), this.error = this.notice = "", this.busy();
   }
-  async openDialog(e) {
+  async openDialog(e, t = !1) {
     if (this.disabled || this.working || this.pending || !this.dispatchEvent(
       new CustomEvent("transfer-open", {
         detail: e,
@@ -13143,18 +13429,29 @@ const Ie = class Ie extends x {
       })
     ))
       return;
-    const t = this.generation;
-    this.dialog = e, this.error = this.notice = "", this.requestUpdate(), await this.updateComplete, !(t !== this.generation || !this.isConnected) && this.renderRoot.querySelector("dialog")?.showModal();
+    const i = this.generation;
+    if (this.purchaseReview = t, this.dialog = e, this.error = this.notice = "", this.requestUpdate(), await this.updateComplete, !(i !== this.generation || !this.isConnected) && (this.renderRoot.querySelector("dialog")?.showModal(), t && this.client && this.scope)) {
+      this.working = !0, this.busy(), this.requestUpdate();
+      try {
+        const s = await this.client.reconcilePurchases(this.scope);
+        if (i !== this.generation) return;
+        "empty" in s ? this.notice = "There are no unmatched purchases." : (this.review = s, this.selected.clear(), this.page = 0, this.query = "");
+      } catch (s) {
+        i === this.generation && this.fail(s);
+      } finally {
+        i === this.generation && (this.working = !1, this.busy(), this.requestUpdate());
+      }
+    }
   }
   hideDialog() {
     this.matching = void 0, this.renderRoot.querySelector("dialog")?.close(), this.dialog = null;
   }
   closeDialog(e) {
     e?.preventDefault();
-    const t = this.dialog;
+    const t = this.dialog, i = this.purchaseReview ? "purchases" : t;
     this.clear(), this.file = void 0, this.review = void 0, this.matching = void 0, this.selected.clear();
-    const i = this.renderRoot.querySelector('input[type="file"]');
-    i && (i.value = ""), this.requestUpdate(), this.renderRoot.querySelector(`[data-transfer="${t}"]`)?.focus();
+    const s = this.renderRoot.querySelector('input[type="file"]');
+    s && (s.value = ""), this.requestUpdate(), this.renderRoot.querySelector(`[data-transfer="${i}"]`)?.focus();
   }
   busy() {
     this.dispatchEvent(
@@ -13166,9 +13463,9 @@ const Ie = class Ie extends x {
     );
   }
   fail(e) {
-    u(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
+    g(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
-    )), this.error = w(e), this.requestUpdate();
+    )), this.error = y(e), this.requestUpdate();
   }
   async exportData(e) {
     if (!this.client || !this.scope || this.working || this.pending || this.disabled)
@@ -13196,7 +13493,7 @@ const Ie = class Ie extends x {
     }
   }
   async previewData() {
-    if (!this.client || !this.scope || !this.file || this.working || this.disabled || this.scope.tracking_enabled)
+    if (!this.client || !this.scope || !this.file || this.working || this.disabled || this.scope.tracking_enabled && !this.purchaseReview)
       return;
     const e = this.generation, t = this.controller = new AbortController(), i = setTimeout(() => t.abort(), 65e3);
     this.working = !0, this.error = this.notice = "", this.review = void 0, this.matching = void 0, this.selected.clear(), this.busy(), this.requestUpdate();
@@ -13204,7 +13501,8 @@ const Ie = class Ie extends x {
       const s = await this.client.previewImport(
         this.scope,
         this.file,
-        t.signal
+        t.signal,
+        this.purchaseReview
       );
       if (e !== this.generation) return;
       this.review = s, this.selected = new Set(
@@ -13219,7 +13517,7 @@ const Ie = class Ie extends x {
     }
   }
   async importData() {
-    if (!this.client || !this.scope || !this.review || this.matching || this.working || this.disabled || this.scope.tracking_enabled)
+    if (!this.client || !this.scope || !this.review || this.matching || this.working || this.disabled || this.scope.tracking_enabled && !this.purchaseReview)
       return;
     this.pending ??= this.client.prepareImport(this.scope, this.review, [
       ...this.selected
@@ -13240,16 +13538,16 @@ const Ie = class Ie extends x {
         "conflict",
         "not_found",
         "tracking_enabled"
-      ].includes(u(t)) && (this.pending = void 0, this.review = void 0, this.matching = void 0, this.selected.clear()), this.fail(t);
+      ].includes(g(t)) && (this.pending = void 0, this.review = void 0, this.matching = void 0, this.selected.clear()), this.fail(t);
     } finally {
       e === this.generation && (this.working = !1, this.busy(), this.requestUpdate());
     }
   }
   async openMatch(e) {
-    this.scope?.tracking_enabled || (this.matching = e, this.requestUpdate(), await this.updateComplete, this.matching === e && await this.renderRoot.querySelector("kaleidescape-import-matcher")?.focusSearch());
+    this.scope?.tracking_enabled && !this.purchaseReview || (this.matching = e, this.requestUpdate(), await this.updateComplete, this.matching === e && await this.renderRoot.querySelector("kaleidescape-import-matcher")?.focusSearch());
   }
   async chooseMatch(e) {
-    if (!this.client || !this.scope || !this.review || !this.matching || this.scope.tracking_enabled || this.working || this.pending || this.disabled)
+    if (!this.client || !this.scope || !this.review || !this.matching || this.scope.tracking_enabled && !this.purchaseReview || this.working || this.pending || this.disabled)
       return;
     const t = this.generation, i = this.matching.key;
     this.working = !0, this.error = "", this.busy(), this.requestUpdate();
@@ -13279,7 +13577,7 @@ const Ie = class Ie extends x {
   renderReview(e) {
     if (!this.review) return l;
     const t = this.review, i = this.query.trim().toLocaleLowerCase(), s = t.rows.filter(
-      (h) => (!this.changesOnly || h.needs_match || !h.needs_match && ["new", "merge"].includes(h.action)) && dt(
+      (h) => (!this.changesOnly || h.needs_match || !h.needs_match && ["new", "merge"].includes(h.action)) && Di(
         `${h.title} ${h.detail ?? ""} ${h.table} ${Object.keys(h.changes).join(" ")}`,
         i
       )
@@ -13308,8 +13606,8 @@ const Ie = class Ie extends x {
         ${t.rows.some((h) => h.needs_match) ? a`${$(t.rows.filter((h) => h.needs_match).length, "purchase requiring a match")} shown first.` : l}
       </p>
       ${t.rows.some((h) => h.key.startsWith("purchases:")) ? a`<p class="muted">
-              Purchase records are attached to the matched existing Library
-              entry. New means a new purchase record, not a new movie. Purchase
+              Purchase records can be saved without a Library match and linked
+              later. New means a new purchase record, not a new movie. Purchase
               titles preserve the store's wording; Library titles are kept
               unchanged.
             </p>` : l}
@@ -13366,7 +13664,7 @@ const Ie = class Ie extends x {
           </thead>
           <tbody>
             ${d.map((h) => {
-      const c = h.key.startsWith("purchases:"), m = c ? h.needs_match ? "Choose Library match" : {
+      const c = h.key.startsWith("purchases:"), f = c ? h.needs_match ? "Choose Library match" : {
         new: "Add purchase to Library entry",
         merge: "Update purchase record",
         unchanged: "Purchase already imported",
@@ -13391,12 +13689,12 @@ const Ie = class Ie extends x {
                     >${c ? "Purchase history on Library entry" : h.table}</small
                   >
                 </td>
-                <td>${m}</td>
+                <td>${f}</td>
                 <td>
                   ${h.reason || Object.keys(h.changes).join(", ") || "No missing data"}
                   ${h.needs_match ? a`<small class="warning">No Library match selected</small>` : l}
                   ${h.can_match ? a`<button
-                          ?disabled=${e || !!this.matching || !!this.scope?.tracking_enabled}
+                          ?disabled=${e || !!this.matching || !!this.scope?.tracking_enabled && !this.purchaseReview}
                           @click=${() => this.openMatch(h)}
                         >
                           Match title…
@@ -13449,7 +13747,14 @@ const Ie = class Ie extends x {
       </div>`;
   }
   renderImport(e) {
-    return a`<p>
+    return this.purchaseReview ? a`
+        <p>
+          Choose a Library match for each purchase, then apply the selected
+          changes.
+        </p>
+        ${this.notice ? a`<p role="status">${this.notice}</p>` : l}
+        ${this.renderReview(e)}
+      ` : a`<p>
         Add new IDs and fill missing data in existing viewings and Library
         versions. Populated values, manual corrections and deletion status are
         kept. Only known Library sources match. Newly imported versions stay
@@ -13461,12 +13766,12 @@ const Ie = class Ie extends x {
         unlinked. Purchase rows start unchecked; select the purchases and links
         you approve.
       </p>
-      ${this.scope?.tracking_enabled ? a`<p class="warning">Disable automatic tracking in Settings before importing.</p>` : l}
+      ${this.scope?.tracking_enabled && !this.purchaseReview ? a`<p class="warning">Disable automatic tracking in Settings before importing.</p>` : l}
       <label
         >JSON or SQLite file<input
           type="file"
           accept=".json,.sqlite,.sqlite3,.db"
-          ?disabled=${e || !!this.scope?.tracking_enabled}
+          ?disabled=${e || !!this.scope?.tracking_enabled && !this.purchaseReview}
           @change=${(t) => {
       this.file = t.target.files?.[0], this.review = void 0, this.matching = void 0, this.selected.clear(), this.error = this.notice = "", this.requestUpdate();
     }}
@@ -13474,7 +13779,7 @@ const Ie = class Ie extends x {
       ${this.file ? a`<p>${this.file.name} · ${(this.file.size / 1024).toFixed(1)} KiB</p>` : l}
       <div class="actions">
         <button
-          ?disabled=${e || !this.file || !!this.scope?.tracking_enabled}
+          ?disabled=${e || !this.file || !!this.scope?.tracking_enabled && !this.purchaseReview}
           @click=${this.previewData}
         >
           Review import
@@ -13515,6 +13820,13 @@ const Ie = class Ie extends x {
           Merge Import
         </button>
         <button
+          data-transfer="purchases"
+          ?disabled=${e}
+          @click=${() => this.openDialog("import", !0)}
+        >
+          Reconcile purchases
+        </button>
+        <button
           data-transfer="export"
           ?disabled=${e}
           @click=${() => this.openDialog("export")}
@@ -13532,9 +13844,9 @@ const Ie = class Ie extends x {
       >
         <div class="card-head">
           <h2 id="transfer-title">
-            ${this.dialog === "export" ? "Export database" : "Merge Import"}
+            ${this.dialog === "export" ? "Export database" : this.purchaseReview ? "Reconcile purchases" : "Merge Import"}
           </h2>
-          ${k((t) => this.closeDialog(t))}
+          ${_((t) => this.closeDialog(t))}
         </div>
         ${this.error && this.dialog ? a`<p class="error" role="alert">${this.error}</p>` : l}
         ${this.dialog === "export" ? a`<p>
@@ -13547,13 +13859,13 @@ const Ie = class Ie extends x {
       </dialog>`;
   }
 };
-Ie.properties = {
+Be.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, Ie.styles = [
-  q,
-  S`
+}, Be.styles = [
+  S,
+  q`
       .database-dialog {
         width: min(1100px, calc(100% - 32px));
       }
@@ -13610,8 +13922,8 @@ Ie.properties = {
       }
     `
 ];
-let Ut = Ie;
-customElements.get("kaleidescape-transfers") || customElements.define("kaleidescape-transfers", Ut);
+let Tt = Be;
+customElements.get("kaleidescape-transfers") || customElements.define("kaleidescape-transfers", Tt);
 const ae = {
   viewings: "Viewings",
   sessions: "Sessions",
@@ -13620,6 +13932,7 @@ const ae = {
   library_sources: "Library sources",
   library_artwork: "Library artwork",
   settings: "UI settings",
+  purchase_records: "Purchases",
   library_memberships: "Library memberships",
   requests: "Write requests",
   schema_metadata: "Metadata",
@@ -13631,11 +13944,11 @@ const ae = {
   calendar_publications: "Calendar publications",
   calendar_sync_jobs: "Calendar exports",
   calendar_sync_items: "Calendar export items"
-}, re = ["viewings", "sessions", "library"], Fe = class Fe extends x {
+}, re = ["viewings", "sessions", "library", "purchase_records"], He = class He extends x {
   constructor() {
-    super(), this.bound = "", this.generation = 0, this.mutationEpoch = 0, this.request = 0, this.table = "viewings", this.filters = { limit: 25, query: "", descending: !1 }, this.fitPage = !0, this.showSystem = !1, this.sorts = {}, this.fuzzySearch = !0, this.ready = !1, this.preferenceError = "", this.loading = !1, this.saving = !1, this.transferBusy = !1, this.error = "", this.notice = "", this.search = "", this.selected = /* @__PURE__ */ new Set(), this.operation = null, this.draft = {}, this.nulls = /* @__PURE__ */ new Set(), this.original = "", this.createDraft = be(), this.confirmed = !1, this.deleteWord = "", this.covers = new T(), this.scheduleFit = () => {
+    super(), this.bound = "", this.generation = 0, this.mutationEpoch = 0, this.request = 0, this.table = "viewings", this.filters = { limit: 25, query: "", descending: !1 }, this.fitPage = !0, this.showSystem = !1, this.sorts = {}, this.fuzzySearch = !0, this.ready = !1, this.preferenceError = "", this.loading = !1, this.saving = !1, this.transferBusy = !1, this.error = "", this.notice = "", this.search = "", this.selected = /* @__PURE__ */ new Set(), this.operation = null, this.draft = {}, this.nulls = /* @__PURE__ */ new Set(), this.original = "", this.createDraft = ye(), this.confirmed = !1, this.deleteWord = "", this.covers = new A(), this.scheduleFit = () => {
       clearTimeout(this.fitTimer), !(!this.fitPage || !this.ready || !this.page || this.blocked || this.operation) && (this.fitTimer = setTimeout(() => this.resizePage(), 120));
-    }, Jt(this, () => this.scheduleFit()), ue(this, () => {
+    }, Kt(this, () => this.scheduleFit()), ue(this, () => {
       if (!this.ready || this.preferences?.unsettled || this.blocked || this.operation || this.renderRoot.querySelector("dialog[open]"))
         return !1;
       const e = this.detail && this.page ? {
@@ -13660,7 +13973,7 @@ const ae = {
     super.disconnectedCallback(), window.removeEventListener("resize", this.scheduleFit), window.visualViewport?.removeEventListener("resize", this.scheduleFit), this.fitObserver?.disconnect(), this.fitObserver = void 0, this.fitList = void 0, clearTimeout(this.fitTimer), this.clear(), this.boundClient = void 0, this.bound = "";
   }
   clear() {
-    this.covers.cache.dispose(), this.covers = new T(), this.generation++, this.request++, this.preferences?.dispose(), this.preferences = void 0, this.fuzzySearch = !0, this.ready = !1, this.page = void 0, this.table = "viewings", this.fitPage = !0, this.filters = { limit: 25, query: "", descending: !1 }, this.showSystem = !1, this.sorts = {}, this.detail = void 0, this.selected.clear(), this.pending = void 0, this.operation = null, this.draft = {}, this.original = "", this.search = "", this.confirmed = !1, this.deleteWord = "", this.loading = this.saving = this.transferBusy = !1, this.error = this.notice = this.preferenceError = "";
+    this.covers.cache.dispose(), this.covers = new A(), this.generation++, this.request++, this.preferences?.dispose(), this.preferences = void 0, this.fuzzySearch = !0, this.ready = !1, this.page = void 0, this.table = "viewings", this.fitPage = !0, this.filters = { limit: 25, query: "", descending: !1 }, this.showSystem = !1, this.sorts = {}, this.detail = void 0, this.selected.clear(), this.pending = void 0, this.operation = null, this.draft = {}, this.original = "", this.search = "", this.confirmed = !1, this.deleteWord = "", this.loading = this.saving = this.transferBusy = !1, this.error = this.notice = this.preferenceError = "";
     for (const e of this.renderRoot.querySelectorAll("dialog"))
       e.close();
     this.busy(), this.requestUpdate();
@@ -13672,7 +13985,7 @@ const ae = {
       this.scope,
       !1,
       (i) => {
-        t === this.generation && (i && u(i) === "unauthorized" ? this.fail(i) : (this.preferenceError = i ? w(i) : "", this.requestUpdate()));
+        t === this.generation && (i && g(i) === "unauthorized" ? this.fail(i) : (this.preferenceError = i ? y(i) : "", this.requestUpdate()));
       },
       "database"
     );
@@ -13735,11 +14048,11 @@ const ae = {
     );
   }
   fail(e) {
-    u(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
+    g(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     ));
-    const t = u(e), i = e?.message;
-    this.error = ["query_syntax", "conflict", "invalid_request", "busy"].includes(t) && typeof i == "string" && i !== t ? i : w(e), this.requestUpdate();
+    const t = g(e), i = e?.message;
+    this.error = ["query_syntax", "conflict", "invalid_request", "busy"].includes(t) && typeof i == "string" && i !== t ? i : y(e), this.requestUpdate();
   }
   async load(e = 0, t, i) {
     if (!this.client || !this.scope || !this.ready || this.pending) return;
@@ -13832,7 +14145,7 @@ const ae = {
     }
   }
   newEntry() {
-    this.blocked || this.table !== "viewings" || (this.operation = "new", this.createDraft = be(), this.original = JSON.stringify(this.createDraft), this.confirmed = !1, this.open("database-edit"));
+    this.blocked || this.table !== "viewings" || (this.operation = "new", this.createDraft = ye(), this.original = JSON.stringify(this.createDraft), this.confirmed = !1, this.open("database-edit"));
   }
   deleteEntries() {
     this.blocked || !this.page?.deletable || !this.selectedRows().length || (this.operation = "delete", this.deleteWord = "", this.open("database-delete"));
@@ -13858,7 +14171,7 @@ const ae = {
           if (!this.operation || !this.page || this.operation === "delete" && this.deleteWord !== "DELETE" || this.operation !== "delete" && !this.confirmed) return;
           if (this.operation === "new")
             this.pending = this.client.prepare(this.scope, "create", {
-              data: ji(this.createDraft)
+              data: Ii(this.createDraft)
             });
           else {
             const s = {};
@@ -13914,7 +14227,7 @@ const ae = {
             "busy",
             "backup_in_progress",
             "library_storage_limit"
-          ].includes(u(s)) && (this.pending = void 0), this.fail(s);
+          ].includes(g(s)) && (this.pending = void 0), this.fail(s);
         } finally {
           t === this.generation && i === this.mutationEpoch && (this.saving = !1, this.busy(), this.requestUpdate());
         }
@@ -13971,7 +14284,7 @@ const ae = {
     >
       <div class="card-head">
         <h2>Database options</h2>
-        ${k(() => this.renderRoot.querySelector("#database-options")?.close())}
+        ${_(() => this.renderRoot.querySelector("#database-options")?.close())}
       </div>
       <p>View choices save automatically for your HA user.</p>
       <fieldset ?disabled=${this.blocked}>
@@ -14211,7 +14524,7 @@ const ae = {
           <h2>
             ${this.operation === "new" ? "New viewing" : "Edit database entry"}
           </h2>
-          ${k((i) => this.close(i))}
+          ${_((i) => this.close(i))}
         </div>
         <p class="warning">
           Only supported fields can change. Source metadata may be restored by a
@@ -14302,7 +14615,7 @@ const ae = {
             Permanently delete
             ${$(this.selectedRows().length, "entry", "entries")}?
           </h2>
-          ${k((i) => this.close(i))}
+          ${_((i) => this.close(i))}
         </div>
         <p>
           Database deletion is permanent. Associated memberships/session
@@ -14332,13 +14645,13 @@ const ae = {
     </section>`;
   }
 };
-Fe.properties = {
+He.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 }
-}, Fe.styles = [q, Kt, Ys];
-let Tt = Fe;
-customElements.get("kaleidescape-database") || customElements.define("kaleidescape-database", Tt);
-function Zs(n, e, t) {
+}, He.styles = [S, Yt, ta];
+let Pt = He;
+customElements.get("kaleidescape-database") || customElements.define("kaleidescape-database", Pt);
+function ia(n, e, t) {
   return a`<button
     type="button"
     class="view-mode-pill"
@@ -14354,7 +14667,7 @@ function Zs(n, e, t) {
     ><span class="mode-label">Adv</span>
   </button>`;
 }
-const st = [
+const rt = [
   {
     id: "now-playing",
     label: "Now Playing",
@@ -14380,9 +14693,9 @@ const st = [
     label: "Settings",
     description: "Configure playback recording and journal rules."
   }
-], Be = class Be extends x {
+], Ve = class Ve extends x {
   constructor() {
-    super(), this.narrow = !1, this.api = null, this.generation = 0, this.mutationEpoch = 0, this.listRequest = 0, this.detailRequest = 0, this.info = null, this.rows = [], this.selected = null, this.editMovieId = null, this.editTitleTouched = !1, this.draft = null, this.initial = null, this.manual = null, this.manualInitial = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.journalReady = !1, this.sessions = null, this.sessionError = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.nextCursor = null, this.history = [], this.page = 1, this.loading = !1, this.detailLoading = !1, this.saving = !1, this.pending = null, this.confirmDelete = !1, this.error = "", this.lastError = "", this.notice = "", this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.settingsBusy = !1, this.maintenanceBusy = !1, this.advancedView = !0, this.modeReady = !1, this.modeScope = "", this.modeError = "", this.controlLocked = !1, Jt(this), ue(this, () => {
+    super(), this.narrow = !1, this.api = null, this.generation = 0, this.mutationEpoch = 0, this.listRequest = 0, this.detailRequest = 0, this.info = null, this.rows = [], this.selected = null, this.editMovieId = null, this.editTitleTouched = !1, this.draft = null, this.initial = null, this.manual = null, this.manualInitial = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.journalReady = !1, this.sessions = null, this.sessionError = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.nextCursor = null, this.history = [], this.page = 1, this.loading = !1, this.detailLoading = !1, this.saving = !1, this.pending = null, this.confirmDelete = !1, this.error = "", this.lastError = "", this.notice = "", this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.settingsBusy = !1, this.maintenanceBusy = !1, this.advancedView = !0, this.modeReady = !1, this.modeScope = "", this.modeError = "", this.controlLocked = !1, Kt(this), ue(this, () => {
       const e = this.renderRoot.querySelector(
         "kaleidescape-reader"
       );
@@ -14391,7 +14704,7 @@ const st = [
   }
   modeControl(e = !1) {
     return a`<div class="mode-control" slot="view-mode">
-      ${Zs(this.advancedView, e, () => {
+      ${ia(this.advancedView, e, () => {
       this.changeMode();
     })}
       ${this.modeError ? a`<small role="alert">Mode preference did not save. <button @click=${() => this.modePreferences?.retry()}>Retry</button></small>` : l}
@@ -14408,12 +14721,12 @@ const st = [
     const e = this.renderRoot.querySelector(
       "kaleidescape-reader"
     ), t = !this.advancedView, i = !t && (["database", "settings"].includes(this.activePage) || this.hasOpenDialog(this.renderRoot, !0));
-    (this.advancedView ? !this.discard() : !(e?.confirmNavigation() ?? !0)) || (this.generation++, this.listRequest++, this.detailRequest++, this.closeEditor(), this.rows = [], this.selected = this.sessions = null, this.cursor = void 0, this.history = [], this.nextCursor = null, this.page = 1, this.journalReady = !1, this.error = this.notice = "", i && (this.activePage = $t(
+    (this.advancedView ? !this.discard() : !(e?.confirmNavigation() ?? !0)) || (this.generation++, this.listRequest++, this.detailRequest++, this.closeEditor(), this.rows = [], this.selected = this.sessions = null, this.cursor = void 0, this.history = [], this.nextCursor = null, this.page = 1, this.journalReady = !1, this.error = this.notice = "", i && (this.activePage = xt(
       this.info.ui_defaults?.default_landing_page,
       !1,
       !!this.info.library_enabled,
       !1
-    )), I(this.activePage), this.advancedView = t, this.modePreferences?.set({ advanced_view: t }), this.requestUpdate(), t && await this.loadList(), await this.updateComplete, this.renderRoot.querySelector(".view-mode-pill")?.focus());
+    )), F(this.activePage), this.advancedView = t, this.modePreferences?.set({ advanced_view: t }), this.requestUpdate(), t && await this.loadList(), await this.updateComplete, this.renderRoot.querySelector(".view-mode-pill")?.focus());
   }
   willUpdate(e) {
     if (!(!e.has("hass") && !e.has("client")))
@@ -14422,7 +14735,7 @@ const st = [
           this.bind(null);
           return;
         }
-        (this.haConnection !== this.hass.connection || this.haUser !== this.hass.user.id) && (this.haConnection = this.hass.connection, this.haUser = this.hass.user.id, this.haClient = new Ft({
+        (this.haConnection !== this.hass.connection || this.haUser !== this.hass.user.id) && (this.haConnection = this.hass.connection, this.haUser = this.hass.user.id, this.haClient = new Ht({
           callWS: (t) => this.hass.callWS(t),
           fetchWithAuth: (t, i) => this.hass.fetchWithAuth(t, i)
         })), this.bind(this.haClient);
@@ -14442,7 +14755,7 @@ const st = [
     this.api !== e && (this.clearPrivate(), this.api = e, this.error = "", this.requestUpdate(), e && this.refresh());
   }
   fail(e) {
-    u(e) === "unauthorized" && this.clearPrivate(), this.lastError = u(e), this.error = w(e), this.requestUpdate();
+    g(e) === "unauthorized" && this.clearPrivate(), this.lastError = g(e), this.error = y(e), this.requestUpdate();
   }
   dirty() {
     return this.manual ? JSON.stringify(this.manual) !== this.manualInitial : this.draft && (this.editTitleTouched || JSON.stringify(this.draft) !== JSON.stringify(this.initial));
@@ -14451,10 +14764,10 @@ const st = [
     return (!this.dirty() || window.confirm("Discard your unsaved changes?")) && (this.activePage !== "library" || (this.renderRoot.querySelector("kaleidescape-library")?.confirmNavigation() ?? !0)) && (this.activePage !== "database" || (this.renderRoot.querySelector("kaleidescape-database")?.confirmNavigation() ?? !0)) && (this.activePage !== "settings" || (this.renderRoot.querySelector("kaleidescape-settings")?.confirmNavigation() ?? !0));
   }
   async switchPage(e, t) {
-    e === "library" && !this.info?.library_enabled || e === this.activePage && !(e === "journal" && this.journalMovie) || this.loading || this.saving || this.pending || this.maintenanceBusy || this.settingsBusy || this.controlLocked || !this.discard() || (this.closeEditor(), this.libraryTitleId = t?.libraryTitleId, this.libraryCriterion = t?.libraryCriterion, e === "journal" && (this.journalMovie = t?.movie, this.query = this.searchText = "", this.status = this.filterStatus = ""), this.activePage = e, I(e), this.error = this.notice = "", this.requestUpdate(), e === "journal" && (this.page = 1, this.history = [], await this.loadList()));
+    e === "library" && !this.info?.library_enabled || e === this.activePage && !(e === "journal" && this.journalMovie) || this.loading || this.saving || this.pending || this.maintenanceBusy || this.settingsBusy || this.controlLocked || !this.discard() || (this.closeEditor(), this.libraryTitleId = t?.libraryTitleId, this.libraryCriterion = t?.libraryCriterion, e === "journal" && (this.journalMovie = t?.movie, this.query = this.searchText = "", this.status = this.filterStatus = ""), this.activePage = e, F(e), this.error = this.notice = "", this.requestUpdate(), e === "journal" && (this.page = 1, this.history = [], await this.loadList()));
   }
   pageKey(e) {
-    const t = st.filter(
+    const t = rt.filter(
       (o) => o.id !== "library" || this.info?.library_enabled
     ), i = t.findIndex((o) => o.id === this.activePage), s = e.key === "ArrowRight" ? (i + 1) % t.length : e.key === "ArrowLeft" ? (i + t.length - 1) % t.length : e.key === "Home" ? 0 : e.key === "End" ? t.length - 1 : -1;
     if (s < 0) return;
@@ -14484,7 +14797,7 @@ const st = [
           this.info,
           !1,
           (h) => {
-            this.modePreferences === o && (this.modeError = h ? w(h) : "", this.requestUpdate());
+            this.modePreferences === o && (this.modeError = h ? y(h) : "", this.requestUpdate());
           },
           "interface"
         );
@@ -14493,11 +14806,11 @@ const st = [
         if (i !== this.generation) return;
         this.advancedView = d.advanced_view === !0, this.modeReady = !0;
       }
-      this.navigationReady || (this.activePage = $t(
+      this.navigationReady || (this.activePage = xt(
         this.info.ui_defaults?.default_landing_page,
         !0,
         !!this.info.library_enabled
-      ), this.navigationReady = !0, I(this.activePage)), this.activePage === "library" && !this.info.library_enabled && (this.activePage = "journal", I(this.activePage)), this.history = [], this.cursor = void 0, this.page = 1, this.advancedView && await this.loadList();
+      ), this.navigationReady = !0, F(this.activePage)), this.activePage === "library" && !this.info.library_enabled && (this.activePage = "journal", F(this.activePage)), this.history = [], this.cursor = void 0, this.page = 1, this.advancedView && await this.loadList();
     } catch (s) {
       i === this.generation && this.fail(s);
     } finally {
@@ -14542,7 +14855,7 @@ const st = [
         const d = await t.sessions(i, e);
         s === this.generation && r === this.detailRequest && (this.sessions = d);
       } catch (d) {
-        s === this.generation && r === this.detailRequest && (u(d) === "unauthorized" ? this.fail(d) : this.sessionError = "Session details could not be loaded.");
+        s === this.generation && r === this.detailRequest && (g(d) === "unauthorized" ? this.fail(d) : this.sessionError = "Session details could not be loaded.");
       }
     } catch (o) {
       s === this.generation && r === this.detailRequest && this.fail(o);
@@ -14554,7 +14867,7 @@ const st = [
     this.timingAnchor = void 0, this.renderRoot.querySelectorAll("dialog").forEach((e) => e.close()), this.manual = null, this.manualInitial = "", this.detailRequest++, this.selected = null, this.editMovieId = null, this.editTitleTouched = !1, this.draft = null, this.initial = null, this.sessions = null, this.sessionError = "", this.confirmDelete = !1, this.detailLoading = !1;
   }
   newRecord() {
-    this.pending || !this.discard() || (this.closeEditor(), this.draft = yi(), this.initial = { ...this.draft }, this.manual = be(), this.manualInitial = JSON.stringify(this.manual), this.error = "", this.notice = "", this.requestUpdate(), this.updateComplete.then(async () => {
+    this.pending || !this.discard() || (this.closeEditor(), this.draft = vi(), this.initial = { ...this.draft }, this.manual = ye(), this.manualInitial = JSON.stringify(this.manual), this.error = "", this.notice = "", this.requestUpdate(), this.updateComplete.then(async () => {
       this.renderRoot.querySelector("#journal-editor")?.showModal();
       const e = this.renderRoot.querySelector(
         "kaleidescape-manual-viewing"
@@ -14567,7 +14880,7 @@ const st = [
     }));
   }
   input(e, t) {
-    this.draft && (this.draft = Os(
+    this.draft && (this.draft = Vs(
       this.draft,
       e,
       t.target.value,
@@ -14587,8 +14900,8 @@ const st = [
         return;
       }
       try {
-        const i = this.manual ? ji(this.manual) : {
-          ...Ns(this.draft, this.selected ? this.initial : void 0),
+        const i = this.manual ? Ii(this.manual) : {
+          ...Ws(this.draft, this.selected ? this.initial : void 0),
           ...this.editTitleTouched ? { library_title_id: this.editMovieId } : {}
         };
         if (this.manual || delete i.title, this.selected && !Object.keys(i).length) {
@@ -14609,7 +14922,7 @@ const st = [
           } : { data: i }
         ), await this.commit();
       } catch (i) {
-        u(i) === "request_id_unavailable" ? this.fail(i) : (this.error = this.manual && i instanceof Error ? i.message : "Check the dates and numeric fields before saving.", this.requestUpdate());
+        g(i) === "request_id_unavailable" ? this.fail(i) : (this.error = this.manual && i instanceof Error ? i.message : "Check the dates and numeric fields before saving.", this.requestUpdate());
       }
     }
   }
@@ -14643,7 +14956,7 @@ const st = [
       if (i !== this.generation || s !== this.mutationEpoch)
         return;
       ["invalid_request", "conflict", "unauthorized"].includes(
-        u(r)
+        g(r)
       ) && (this.pending = null), this.fail(r);
     } finally {
       i === this.generation && s === this.mutationEpoch && (this.saving = !1, this.requestUpdate());
@@ -14686,7 +14999,7 @@ const st = [
       this.manual = e.detail, this.requestUpdate();
     }}
                 @access-denied=${() => this.fail(new b("unauthorized"))}
-              ></kaleidescape-manual-viewing>` : Is(
+              ></kaleidescape-manual-viewing>` : Js(
       this.draft,
       (e, t) => this.input(e, t),
       a`<kaleidescape-library-title-picker
@@ -14729,7 +15042,7 @@ const st = [
     await i, t === this.generation && s === this.detailRequest && this.selected?.id === e && !this.draft && this.info?.permissions.edit && this.editRecord();
   }
   editRecord() {
-    !this.selected || this.pending || this.saving || (this.draft = yi(this.selected), this.timingAnchor = {
+    !this.selected || this.pending || this.saving || (this.draft = vi(this.selected), this.timingAnchor = {
       started_at: this.draft.started_at,
       ended_at: this.draft.ended_at
     }, this.editMovieId = null, this.editTitleTouched = !1, this.initial = { ...this.draft }, this.error = this.notice = "", this.requestUpdate(), this.updateComplete.then(
@@ -14919,7 +15232,7 @@ const st = [
                               tabindex="0"
                               aria-label="Viewings"
                             >
-                              ${this.rows.map((i) => Ei(i, this.selected?.id, (s) => {
+                              ${this.rows.map((i) => Ui(i, this.selected?.id, (s) => {
       this.selectRecord(s);
     }, this.saving || !!this.pending))}
                             </ul>` : a`<div class="empty">
@@ -14942,7 +15255,7 @@ const st = [
                     </div>
                     ${this.detailLoading ? a`<div class="empty" role="status">
                             Loading entry…
-                          </div>` : this.selected ? a`${Ri(this.selected, (i) => this.date(i))}
+                          </div>` : this.selected ? a`${Li(this.selected, (i) => this.date(i))}
                               <kaleidescape-viewing-library
                                 .client=${this.api}
                                 .scope=${this.info}
@@ -14964,7 +15277,7 @@ const st = [
               `}
         <footer class="entries-footer journal-status">
           <span>
-            ${Bt(this.info, this.journalView === "calendar" ? this.calendarStatus : void 0, this.journalView === "calendar")}
+            ${Vt(this.info, this.journalView === "calendar" ? this.calendarStatus : void 0, this.journalView === "calendar")}
             <span class="journal-system-details"
               >· ${this.bytes(this.info?.database_bytes ?? 0)} /
               ${this.bytes(this.info?.database_limit_bytes ?? 0)} database ·
@@ -14974,7 +15287,7 @@ const st = [
               · Schema ${this.info?.schema_version} · Revision
               ${this.info?.revision}</span
             > </span
-          >${this.journalView === "calendar" ? Vt(this.calendarStatus, () => {
+          >${this.journalView === "calendar" ? Wt(this.calendarStatus, () => {
       this.renderRoot.querySelector(
         "kaleidescape-journal-calendar"
       )?.refresh();
@@ -15023,7 +15336,7 @@ const st = [
           <h2 id="journal-editor-title">
             ${this.manual ? "New viewing" : "Edit viewing"}
           </h2>
-          ${k((i) => this.cancelEdit(i))}
+          ${_((i) => this.cancelEdit(i))}
         </div>
         ${this.notice ? a`<p class="notice" role="status">${this.notice}</p>` : l}
         ${this.error ? a`<p class="error" role="alert">${this.error}</p>` : l}
@@ -15040,7 +15353,7 @@ const st = [
       >
         <div class="card-head">
           <h2 id="journal-delete-title">Remove this entry from the journal?</h2>
-          ${k((i) => this.cancelDelete(i))}
+          ${_((i) => this.cancelDelete(i))}
         </div>
         <p>${this.selected?.title}</p>
         <p>
@@ -15092,7 +15405,7 @@ const st = [
           <span class="eyebrow">Kaleidescape Companion · Administrator</span>
           <h1>Kaleidescape Companion</h1>
           <p>
-            ${st.find((t) => t.id === this.activePage).description}
+            ${rt.find((t) => t.id === this.activePage).description}
           </p>
         </div>
       </header>
@@ -15103,7 +15416,7 @@ const st = [
                 aria-label="Companion pages"
                 @keydown=${(t) => this.pageKey(t)}
               >
-                ${st.map((t) => a`<button id=${`page-${t.id}`} role="tab" aria-selected=${this.activePage === t.id} aria-controls="companion-page" tabindex=${this.activePage === t.id ? "0" : "-1"} ?disabled=${e || t.id === "library" && !this.info?.library_enabled} title=${t.id === "library" && !this.info?.library_enabled ? "Enable library sync in Settings" : l} @click=${() => this.switchPage(t.id)}>${t.label}</button>`)}
+                ${rt.map((t) => a`<button id=${`page-${t.id}`} role="tab" aria-selected=${this.activePage === t.id} aria-controls="companion-page" tabindex=${this.activePage === t.id ? "0" : "-1"} ?disabled=${e || t.id === "library" && !this.info?.library_enabled} title=${t.id === "library" && !this.info?.library_enabled ? "Enable library sync in Settings" : l} @click=${() => this.switchPage(t.id)}>${t.label}</button>`)}
               </div>
               ${this.modeControl(e || this.controlLocked)}
             </div>` : l}
@@ -15146,7 +15459,7 @@ const st = [
       this.settingsBusy !== t.detail && (this.settingsBusy = t.detail, this.requestUpdate());
     }}
                             @settings-saved=${() => {
-      this.activePage = "settings", I("settings"), this.notice = "Settings saved. Reloading the integration…";
+      this.activePage = "settings", F("settings"), this.notice = "Settings saved. Reloading the integration…";
       const t = this.api;
       this.refresh(!0).then(() => {
         this.api === t && this.info && (this.notice = "Settings saved.", this.requestUpdate());
@@ -15171,13 +15484,13 @@ const st = [
     </main>`;
   }
 };
-Be.properties = {
+Ve.properties = {
   hass: { attribute: !1 },
   client: { attribute: !1 },
   narrow: { type: Boolean }
-}, Be.styles = [q, Kt, Li];
-let At = Be;
-customElements.get("kaleidescape-panel") || customElements.define("kaleidescape-panel", At);
+}, Ve.styles = [S, Yt, Ti];
+let Dt = Ve;
+customElements.get("kaleidescape-panel") || customElements.define("kaleidescape-panel", Dt);
 export {
-  At as KaleidescapePanel
+  Dt as KaleidescapePanel
 };

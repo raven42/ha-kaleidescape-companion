@@ -25,6 +25,9 @@ const FIELDS = [
   ["producers", "Producers"],
   ["studios", "Studios"],
   ["genres", "Genres"],
+  ["purchased_on", "Purchase date"],
+  ["purchase_price", "Purchase price"],
+  ["retail_price", "Retail price"],
 ];
 const LISTS = new Set([
   "actors",
@@ -161,31 +164,46 @@ export class TitleEdit extends LitElement {
   private patch() {
     const patch: Record<string, unknown> = {};
     for (const [key] of FIELDS) {
+      const current = this.draft[key] ?? "";
       const value = LISTS.has(key)
-        ? this.draft[key]
+        ? current
             .split("\n")
             .map((item) => item.trim())
             .filter(Boolean)
         : key === "year"
-          ? this.draft[key].trim()
-            ? Number(this.draft[key])
+          ? current.trim()
+            ? Number(current)
             : null
-          : key === "sort_title"
-            ? this.draft[key].trim() || null
-            : this.draft[key];
+          : [
+                "sort_title",
+                "purchased_on",
+                "purchase_price",
+                "retail_price",
+              ].includes(key)
+            ? current.trim() || null
+            : current;
       if (
         JSON.stringify(value) !==
         JSON.stringify(
           this.review!.values[key] ??
             (LISTS.has(key)
               ? []
-              : key === "sort_title" || key === "year"
+              : [
+                    "sort_title",
+                    "year",
+                    "purchased_on",
+                    "purchase_price",
+                    "retail_price",
+                  ].includes(key)
                 ? null
                 : ""),
         )
       )
         patch[key] = value;
     }
+    const unavailable = this.draft.purchase_information_unavailable === "true";
+    if (unavailable !== !!this.review!.values.purchase_information_unavailable)
+      patch.purchase_information_unavailable = unavailable;
     return patch;
   }
   private async save() {
@@ -298,7 +316,7 @@ export class TitleEdit extends LitElement {
                                 ></textarea>`
                               : html`<input
                                   name=${key}
-                                  type=${key === "year" ? "number" : "text"}
+                                  type=${key === "year" ? "number" : key === "purchased_on" ? "date" : "text"}
                                   .value=${this.draft[key] ?? ""}
                                   ?disabled=${!!this.pending || this.busy}
                                   @input=${(e: Event) => {
@@ -311,6 +329,24 @@ export class TitleEdit extends LitElement {
                           }</label
                         >`,
                     )}
+                    <label class="check"
+                      ><input
+                        name="purchase_information_unavailable"
+                        type="checkbox"
+                        .checked=${this.draft.purchase_information_unavailable === "true"}
+                        ?disabled=${!!this.pending || this.busy}
+                        @change=${(e: Event) => {
+                          this.draft.purchase_information_unavailable = String(
+                            (e.target as HTMLInputElement).checked,
+                          );
+                          this.requestUpdate();
+                        }}
+                      />Purchase information unavailable</label
+                    >
+                    <p class="muted">
+                      Purchase date and prices apply to this version. The
+                      unavailable option applies to the whole movie.
+                    </p>
                   </div>`
               : nothing
         }

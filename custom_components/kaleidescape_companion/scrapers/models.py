@@ -32,6 +32,7 @@ class Metadata(TypedDict, total=False):
     """Display-only fields; provider scores retain their original scale."""
 
     provider: str
+    retail_price: str | None
     provider_id: str
     url: str
     title: str
@@ -63,6 +64,21 @@ def names(values):
     if not isinstance(values, list):
         return []
     return list(dict.fromkeys(value for item in values[:500] if (value := label(item))))
+
+
+def genre_name(value):
+    """Use one label for the common science-fiction synonyms."""
+    if isinstance(value, str) and value.strip().casefold() in {
+        "sci-fi",
+        "sci fi",
+        "science fiction",
+    }:
+        return "Science Fiction"
+    return value
+
+
+def genre_names(values):
+    return list(dict.fromkeys(genre_name(value) for value in names(values)))
 
 
 def normalized(value):

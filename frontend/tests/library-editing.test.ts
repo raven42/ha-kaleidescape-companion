@@ -94,6 +94,35 @@ it("restricts editing to display fields, locks drafts, and retries exactly after
     expect(root.querySelector<HTMLDialogElement>("dialog")!.open).toBe(false),
   );
 });
+it("edits purchase details and the group unavailable option", async () => {
+  const { client, root } = await editor();
+  const save = vi
+    .spyOn(client, "saveLibraryEdit")
+    .mockResolvedValue({ title_id: "a".repeat(64), updated_count: 2 });
+  for (const [key, value] of [
+    ["purchased_on", "2020-01-02"],
+    ["purchase_price", "$9.99"],
+    ["retail_price", "$19.99"],
+  ]) {
+    const input = root.querySelector<HTMLInputElement>(`[name="${key}"]`)!;
+    input.value = value;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+  root
+    .querySelector<HTMLInputElement>(
+      '[name="purchase_information_unavailable"]',
+    )!
+    .click();
+  await element.updateComplete;
+  button(root, "Save changes").click();
+  await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+  expect(save.mock.calls[0][0].message.patch).toEqual({
+    purchased_on: "2020-01-02",
+    purchase_price: "$9.99",
+    retail_price: "$19.99",
+    purchase_information_unavailable: true,
+  });
+});
 it("offers a confirmed source restore and never exposes the editor to readers", async () => {
   const { client, root } = await editor();
   const save = vi

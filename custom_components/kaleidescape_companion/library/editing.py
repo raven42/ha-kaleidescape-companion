@@ -9,18 +9,41 @@ from ..core.database_mutations import replay
 from ..core.models import JournalError, identifier, invalid, text
 from ..enrichment.review_store import members, signature
 from .browse import library_versions
+from .importing import purchase_date
+from .purchases import price
 from .store import changed
 
 LISTS = {"actors", "directors", "writers", "producers", "studios", "genres"}
 FIELDS = ("title", "sort_title", "year", "rating", "synopsis", *sorted(LISTS))
+PURCHASE_FIELDS = {
+    "purchased_on",
+    "purchase_price",
+    "retail_price",
+    "purchase_information_unavailable",
+}
 
 
 def validate(patch):
-    if not isinstance(patch, dict) or not patch or set(patch) - set(FIELDS):
+    if (
+        not isinstance(patch, dict)
+        or not patch
+        or set(patch) - (set(FIELDS) | PURCHASE_FIELDS)
+    ):
         raise invalid("Choose supported display fields")
     result = {}
     for key, value in patch.items():
-        if key in LISTS:
+        if key == "purchase_information_unavailable":
+            if type(value) is not bool:
+                raise invalid("Choose whether purchase information is unavailable")
+            result[key] = value
+        elif key == "purchased_on":
+            try:
+                result[key] = purchase_date(value) if value is not None else None
+            except ValueError as error:
+                raise invalid("Enter a valid purchase date") from error
+        elif key in {"purchase_price", "retail_price"}:
+            result[key] = price(value)
+        elif key in LISTS:
             if not isinstance(value, list) or len(value) > 500:
                 raise invalid("Metadata lists support up to 500 names")
             result[key] = list(dict.fromkeys(text(item, 500) for item in value))
@@ -52,7 +75,16 @@ def inspect(db, source, title):
     )
     return {
         "snapshot": signature(rows),
-        "values": {key: current.get(key) for key in FIELDS},
+        "values": {
+            **{key: current.get(key) for key in FIELDS},
+            **{
+                key: next(row for row in rows if row["id"] == title)[key]
+                for key in ("purchased_on", "purchase_price", "retail_price")
+            },
+            "purchase_information_unavailable": any(
+                row["purchase_information_unavailable"] for row in rows
+            ),
+        },
         "version_count": len(rows),
     }
 
@@ -77,11 +109,62 @@ def apply(db, source, actor, request, title, snapshot, patch):
         )
     result = {"title_id": title, "updated_count": len(rows)}
     with db:
-        for row in rows:
+        if "purchase_information_unavailable" in patch:
+            db.execute(
+                "UPDATE library SET purchase_information_unavailable=? "
+                "WHERE source_id=? AND source_group=? AND purchase_match_pending=0",
+                (
+                    int(patch["purchase_information_unavailable"]),
+                    source,
+                    rows[0]["source_group"],
+                ),
+            )
+        selected = next(row for row in rows if row["id"] == title)
+        price_changes = {
+            key: patch[key]
+            for key in ("purchased_on", "purchase_price", "retail_price")
+            if key in patch
+        }
+        if price_changes:
+            invoices = json.loads(selected["purchase_history"])
+            raw_date = db.execute(
+                "SELECT purchased_on FROM library WHERE id=?", (title,)
+            ).fetchone()[0]
+            new_date = price_changes.get("purchased_on", raw_date)
+            if invoices and new_date == invoices[0]["purchased_on"]:
+                new_date = None
+            if invoices:
+                for key in ("purchase_price", "retail_price"):
+                    if key in price_changes:
+                        db.execute(
+                            f"UPDATE purchase_records SET {key}=? WHERE id=?",
+                            (price_changes[key], invoices[0]["id"]),
+                        )
+            db.execute(
+                "UPDATE library SET purchased_on=?,purchase_price=?,retail_price=? "
+                "WHERE id=?",
+                (
+                    new_date,
+                    None
+                    if invoices
+                    else price_changes.get(
+                        "purchase_price", selected["purchase_price"]
+                    ),
+                    None
+                    if invoices
+                    else price_changes.get("retail_price", selected["retail_price"]),
+                    title,
+                ),
+            )
+        for row in rows if set(patch) - PURCHASE_FIELDS else []:
             enrichment = json.loads(row["enrichment"])
             reviewed = enrichment.setdefault("reviewed", {})
             reviewed.update(
-                {key: value for key, value in patch.items() if key != "sort_title"}
+                {
+                    key: value
+                    for key, value in patch.items()
+                    if key != "sort_title" and key not in PURCHASE_FIELDS
+                }
             )
             reviewed["provider"] = "reviewed"
             reviewed["fetched_at"] = datetime.now(UTC).isoformat()

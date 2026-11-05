@@ -15,7 +15,6 @@
           "resume_hours": "Merge partial viewings within (hours; 0 disables)",
           "library_enabled": "Enable library sync",
           "library_host": "Library hostname (blank uses my-kaleidescape.local)",
-          "library_interval_hours": "Library sync interval (hours)",
           "library_sync_collections": "Sync collections and watched status",
           "library_sync_details": "Sync title details and credits",
           "library_sync_artwork": "Sync artwork",
@@ -39,7 +38,6 @@
           "calendar_full_sync": "Full Sync (deletes unmatched events)",
           "calendar_full_sync_dedicated": "I assigned a separate dedicated calendar; unmatched events will be deleted",
           "calendar_full_sync_months": "Full Sync age window · months (1–12)",
-          "calendar_full_sync_time": "Daily Full Sync time · HA local time (HH:MM)",
           "metadata_source_actors": "Preferred source: Cast",
           "metadata_source_directors": "Preferred source: Directors",
           "metadata_source_writers": "Preferred source: Writers",
@@ -68,8 +66,7 @@
           "control_host": "Blank uses the Library hostname or my-kaleidescape.local. TCP port 10000; private LAN addresses only.",
           "control_player": "Discover devices on the Companion Settings page and save a default player. Users can choose another discovered movie player for playback without changing this default or Journal tracking.",
           "control_allow_launch": "Separately opted-in unsupported movie launch. The selected title is verified against live metadata; exact edition is not guaranteed.",
-          "calendar_full_sync": "WARNING: Within the age window, events that do not match a completed Journal entry will be permanently deleted. Requires a separate dedicated calendar. Repeated complete scans and a 10-minute grace period precede deletion.",
-          "calendar_full_sync_time": "Edits are reconciled shortly after they are saved. This scheduled sweep also checks for external changes."
+          "calendar_full_sync": "WARNING: Within the age window, events that do not match a completed Journal entry will be permanently deleted. Requires a separate dedicated calendar. Repeated complete scans and a 10-minute grace period precede deletion."
         }
       }
     },
@@ -108,7 +105,6 @@
           "resume_hours": "Merge partial viewings within (hours; 0 disables)",
           "library_enabled": "Enable library sync",
           "library_host": "Library hostname (blank uses my-kaleidescape.local)",
-          "library_interval_hours": "Library sync interval (hours)",
           "library_sync_collections": "Sync collections and watched status",
           "library_sync_details": "Sync title details and credits",
           "library_sync_artwork": "Sync artwork",
@@ -132,7 +128,6 @@
           "calendar_full_sync": "Full Sync (deletes unmatched events)",
           "calendar_full_sync_dedicated": "I assigned a separate dedicated calendar; unmatched events will be deleted",
           "calendar_full_sync_months": "Full Sync age window · months (1–12)",
-          "calendar_full_sync_time": "Daily Full Sync time · HA local time (HH:MM)",
           "metadata_source_actors": "Preferred source: Cast",
           "metadata_source_directors": "Preferred source: Directors",
           "metadata_source_writers": "Preferred source: Writers",
@@ -161,8 +156,7 @@
           "control_host": "Blank uses the Library hostname or my-kaleidescape.local. TCP port 10000; private LAN addresses only.",
           "control_player": "Discover devices on the Companion Settings page and save a default player. Users can choose another discovered movie player for playback without changing this default or Journal tracking.",
           "control_allow_launch": "Separately opted-in unsupported movie launch. The selected title is verified against live metadata; exact edition is not guaranteed.",
-          "calendar_full_sync": "WARNING: Within the age window, events that do not match a completed Journal entry will be permanently deleted. Requires a separate dedicated calendar. Repeated complete scans and a 10-minute grace period precede deletion.",
-          "calendar_full_sync_time": "Edits are reconciled shortly after they are saved. This scheduled sweep also checks for external changes."
+          "calendar_full_sync": "WARNING: Within the age window, events that do not match a completed Journal entry will be permanently deleted. Requires a separate dedicated calendar. Repeated complete scans and a 10-minute grace period precede deletion."
         }
       }
     },
@@ -232,6 +226,31 @@
       },
       "missing_artwork": {
         "name": "Missing artwork"
+      },
+      "missing_purchase_information": {
+        "name": "Missing purchase information"
+      }
+    },
+    "button": {
+      "library_sync": {
+        "name": "Library sync"
+      },
+      "refresh_metadata": {
+        "name": "Refresh metadata"
+      },
+      "calendar_full_sync": {
+        "name": "Calendar full sync"
+      }
+    },
+    "switch": {
+      "calendar_enabled": {
+        "name": "Add watched movies to calendar"
+      },
+      "tracking_enabled": {
+        "name": "Automatically record playback"
+      },
+      "library_enabled": {
+        "name": "Enable library sync"
       }
     }
   }

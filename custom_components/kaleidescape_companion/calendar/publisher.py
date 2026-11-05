@@ -110,7 +110,6 @@ class CalendarPublisher:
             }
         await self.repository.async_calendar_configure(config)
         if config:
-            self.maintenance.start()
             self.cancel = async_track_time_interval(
                 self.hass, self._tick, timedelta(seconds=10)
             )
@@ -226,7 +225,6 @@ class CalendarPublisher:
 
     async def async_stop(self):
         self.stopping = True
-        self.maintenance.stop()
         if self.cancel:
             self.cancel()
         if self.running:

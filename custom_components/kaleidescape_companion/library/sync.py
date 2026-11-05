@@ -41,7 +41,6 @@ class LibrarySync:
         self.source = source_id(self.origin)
         self.session = None
         self.task = None
-        self.timer = None
         self.stopped = False
         self.paused = False
         self.error = None
@@ -52,7 +51,6 @@ class LibrarySync:
         self.address = None
         self.operation_lock = asyncio.Lock()
         self.collection_task = None
-        self.after_sync = None
         self._reported_error = None
         self._manual_sync = False
         self.browser = LocalLibrary(self)
@@ -74,18 +72,12 @@ class LibrarySync:
             raise JournalError("not_ready", "Library sync is paused")
         if self.task and not self.task.done():
             return
-        if self.timer:
-            self.timer.cancel()
-            self.timer = None
         self._manual_sync = manual
         self.task = self.hass.async_create_background_task(
             self._run(), "Kaleidescape library sync"
         )
 
     async def _cancel(self):
-        if self.timer:
-            self.timer.cancel()
-            self.timer = None
         if self.task and not self.task.done():
             self.task.cancel()
             try:
@@ -371,7 +363,6 @@ class LibrarySync:
             "processed": self.processed,
             "total": self.total,
             "last_attempt": self.last_attempt,
-            "interval_hours": self.config["library_interval_hours"],
             "collections_enabled": self.config["library_sync_collections"],
             "details_enabled": self.config["library_sync_details"],
             "artwork_enabled": self.config["library_sync_artwork"],
@@ -491,12 +482,6 @@ class LibrarySync:
             async with asyncio.timeout(1800):
                 async with self.operation_lock:
                     await self._sync()
-                    if self.after_sync:
-                        try:
-                            self.after_sync()
-                        except JournalError:
-                            # Optional provider readiness must not fail a device scan.
-                            pass
         except asyncio.CancelledError:
             _LOGGER.debug(
                 "Library synchronization cancelled (operation_id=%s)", operation_id
@@ -563,16 +548,6 @@ class LibrarySync:
                         self.processed,
                         operation_id,
                     )
-            if not self.stopped and not self.paused:
-                delay = self.config["library_interval_hours"] * 3600
-                if self.error in {"busy", "backup_in_progress"}:
-                    delay = min(delay, 60)
-                self.timer = asyncio.get_running_loop().call_later(
-                    delay, self._scheduled_sync
-                )
-
-    def _scheduled_sync(self):
-        self.request_sync(manual=False)
 
     async def _sync(self):
         self.phase = "catalog"

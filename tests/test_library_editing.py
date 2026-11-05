@@ -82,6 +82,46 @@ class LibraryEditingTest(unittest.IsolatedAsyncioTestCase):
         exported = await self.repo._call(lambda: list(portable_titles(self.repo._db())))
         self.assertEqual(exported[0]["sort_title"], "A Voyage")
 
+    async def test_purchase_edits_preserve_provider_metadata_and_export(self):
+        await self.seed()
+        before = await self.repo.async_library_edit(self.source, self.id)
+        changes = {
+            "purchased_on": "2020-01-02",
+            "purchase_price": "$7.99",
+            "retail_price": "$19.99",
+            "purchase_information_unavailable": True,
+        }
+        await self.repo.async_library_edit(
+            self.source,
+            self.id,
+            self.admin.id,
+            str(uuid4()),
+            before["snapshot"],
+            changes,
+        )
+        after = await self.repo.async_library_edit(self.source, self.id)
+        for key, value in changes.items():
+            self.assertEqual(after["values"][key], value)
+        raw = next(
+            row
+            for row in (await self.repo.async_inspect("library"))["items"]
+            if row["id"] == self.id
+        )
+        self.assertEqual(json.loads(raw["enrichment"]), {})
+        async with self.repo.async_export_snapshot("json") as path:
+            from custom_components.kaleidescape_companion.core.importing import (
+                parse_bundle,
+            )
+
+            parsed = parse_bundle(path.read_bytes(), "json")
+        row = next(row for row in parsed["library"] if row["id"] == self.id)
+        self.assertEqual(row["purchase_price"], "$7.99")
+        self.assertEqual(row["retail_price"], "$19.99")
+        self.assertEqual(row["purchase_information_unavailable"], 1)
+        self.assertEqual(parsed["purchases"], [])
+        totals = await self.repo.async_purchase_totals(self.source)
+        self.assertEqual(totals["currencies"][0]["library_cost"], "$7.99")
+
     async def test_stale_and_protected_fields_fail_without_writes(self):
         await self.seed()
         review = await self.repo.async_library_edit(self.source, self.id)

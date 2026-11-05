@@ -22,7 +22,11 @@ package-dir = {"" = "."}
 include = ["custom_components", "custom_components.kaleidescape_companion*"]
 
 [tool.setuptools.package-data]
-"custom_components.kaleidescape_companion" = ["*.json", "translations/*.json", "ui/assets/*.js"]
+"custom_components.kaleidescape_companion" = [
+    "*.json", "services.yaml", "translations/*.json", "ui/assets/*.js",
+    "templates/purchase_email_parser.yaml", "templates/library_schedule.yaml",
+    "templates/metadata_schedule.yaml", "templates/calendar_schedule.yaml",
+]
 
 [tool.ruff]
 target-version = "py314"

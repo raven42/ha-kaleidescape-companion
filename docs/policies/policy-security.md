@@ -49,6 +49,48 @@ and shared viewing/movie facts are visible where the feature permits them. Now
 Playing also respects source entity read permission. Administrators and HA
 backups can access the full stored dataset; tombstones are not secure erasure.
 
+Companion's HA configuration switches and sync buttons can be operated by users
+and automations allowed to control those entities by Home Assistant. They
+validate the same integration settings and invoke the same background sync
+operations as the administrator panel. Enabling calendar publishing can expose
+movie information to the configured calendar's users. Restrict entity control
+permissions accordingly.
+
+The `import_purchase_email` action accepts private purchase data from HA
+automations with no user context or active administrators. It validates and
+bounds the input, saves unmatched purchases with no Library link, and applies
+unambiguous, nonconflicting matches in one transaction. Existing populated
+values are not overwritten; conflicts are returned for review. Unique proposed
+matches are applied without human review and are not proof of identity. An
+administrator can reconcile saved unmatched purchases while recording remains
+active; choices are actor- and revision-bound and require an available scanned
+Library entry. HA automation traces and action responses may contain private
+invoice data and need appropriate access controls. Public store refresh may fill
+a missing retail price, but never a purchase price. The missing purchase
+information sensor exposes its count and bounded movie names to HA entity
+readers. Its Library filter and purchase editing are limited to administrators.
+
+When HA automations are available, Companion installs missing packaged
+blueprints through HA's blueprint manager. It does not create or enable an
+automation or automatically replace existing files. A status check compares
+normalized contents with known versions; unrecognized files are treated as
+modified. Known outdated files trigger a startup warning and an HA persistent
+notification. Administrators can explicitly replace a reviewed blueprint; its
+revision and administrator access are checked again before HA writes it and
+reloads dependent automations. HA is notified after an update, including when a
+write may have succeeded but the reload could not be confirmed. Blueprint checks
+do not log file contents. The library and calendar sync actions accept trusted
+automation calls without a user context or active administrators; the calendar
+action uses the same dedicated calendar and reconciliation checks as its button.
+The purchase-email blueprint filters a selected IMAP entry and can filter sender
+text, which does not authenticate the sender. Receipt values and action
+responses can appear in HA automation traces; the blueprint does not write them
+to the system log or notifications. The metadata refresh action accepts known
+provider names and only contacts enabled providers. Calendar Full Sync remains
+restricted to an explicitly acknowledged dedicated calendar, with its existing
+snapshot, grace and uncertainty checks. Its optional automation requests the
+second check; no in-process schedule performs it.
+
 ## Storage, imports and rendering
 
 Companion keeps its private data under HA's configuration directory. Its owned
@@ -65,7 +107,10 @@ Database condition search compiles a restricted grammar with bound parameters;
 it does not accept arbitrary SQL. Imports are size/time/row bounded, reviewed
 before applying, and cannot introduce network configuration or executable data.
 Raw database files are opened defensively; application writes never execute SQL
-from an import. The
+from an import. Purchase-only reconciliation can run while recording is active:
+the server validates that the uploaded bundle contains only purchases and binds
+subsequent review and apply operations to that validated plan. General imports
+still require recording disabled. The
 [data-management design](../design/design-data-management.md) owns field rules,
 limits and import/restore procedures.
 

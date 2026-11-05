@@ -41,6 +41,18 @@ def page(movie=None):
 
 
 class ParsersTest(unittest.TestCase):
+    def test_science_fiction_genres_are_normalized_for_both_providers(self):
+        genres = [{"name": "Sci-Fi"}, {"name": "Science Fiction"}]
+        tmdb_data = tmdb.parse(
+            {"id": 42, "title": TITLE, "release_date": "2025-01-01", "genres": genres},
+            42,
+            TITLE,
+            YEAR,
+        )
+        store_data = store.parse(page({**MOVIE, "genres": genres}), PATH, TITLE, YEAR)
+        self.assertEqual(tmdb_data["genres"], ["Science Fiction"])
+        self.assertEqual(store_data["genres"], ["Science Fiction"])
+
     def test_tmdb_cast_uses_billing_order_and_limits_untrusted_fields(self):
         data = tmdb.parse(
             {
@@ -79,6 +91,40 @@ class ParsersTest(unittest.TestCase):
         self.assertNotIn("alert", json.dumps(data))
         self.assertEqual(data["studios"], ["Fictional Studio"])
         self.assertEqual(data["distributor"], "Example Distributor")
+
+    def test_store_retail_uses_unambiguous_base_price_only(self):
+        price = {
+            "currency_code": "USD",
+            "dollars": 19,
+            "cents": 99,
+            "is_negative": False,
+        }
+        package = {
+            "est_base_price": price,
+            "price": {**price, "dollars": 9},
+            "rental_price": {**price, "dollars": 5},
+        }
+        parsed = store.parse(
+            page({**MOVIE, "packages": [package, {"est_base_price": None}]}),
+            PATH,
+            TITLE,
+            YEAR,
+        )
+        self.assertEqual(parsed["retail_price"], "$19.99")
+        self.assertIsNone(
+            store.retail_price(
+                {"packages": [package, {"est_base_price": {**price, "dollars": 24}}]}
+            )
+        )
+        for bad in (
+            {**price, "is_negative": True},
+            {**price, "cents": 100},
+            {**price, "currency_code": "???"},
+            {**price, "dollars": True},
+        ):
+            self.assertIsNone(
+                store.retail_price({"packages": [{"est_base_price": bad}]})
+            )
 
     def test_fixed_store_routes_and_identity_refuse_unsafe_or_ambiguous_input(self):
         for path in (

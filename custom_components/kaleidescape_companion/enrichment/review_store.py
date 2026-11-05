@@ -9,6 +9,7 @@ from ..core.database_mutations import replay
 from ..core.models import JournalError, identifier, invalid
 from ..core.security import private_directory
 from ..library.browse import library_versions
+from ..library.purchases import fill_retail_price, history_for, summary
 from ..library.store import changed, image_type, save_images
 from .matching import (
     bindings,
@@ -39,6 +40,11 @@ def signature(rows):
                         "enrichment",
                         "artwork_key",
                         "sort_title",
+                        "purchased_on",
+                        "purchase_price",
+                        "retail_price",
+                        "purchase_history",
+                        "purchase_information_unavailable",
                     )
                 ]
                 for row in rows
@@ -65,7 +71,16 @@ def members(db, source, title):
         raise JournalError(
             "metadata_limit", "Title reviews support up to 100 versions per movie"
         )
-    return rows
+    result = []
+    for row in rows:
+        item = dict(row)
+        invoices = history_for(db, item["id"])
+        item["purchase_history"] = json.dumps(invoices)
+        if invoices:
+            item.update(summary(invoices))
+            item["purchased_on"] = item["purchased_on"] or invoices[0]["purchased_on"]
+        result.append(item)
+    return result
 
 
 def target(db, source, title):
@@ -432,6 +447,8 @@ def action(db, source, actor, request, data, ready):
     result = {"title_id": title, "updated_count": len(rows), "checked_at": now}
     with db:
         ready()
+        if kind == "download" and data["provider"] == "kaleidescape":
+            fill_retail_price(db, title, data["metadata"].get("retail_price"))
         for row in rows:
             value = json.loads(row["enrichment"])
             if kind == "checked":

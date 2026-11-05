@@ -85,11 +85,21 @@ it("organizes settings by scope, preserves drafts across tabs and saves personal
     "Personal",
     "Kaleidescape",
     "Scrapers",
+    "About",
   ]);
   const panel = (id: string) =>
     root().querySelector<HTMLElement>(`#settings-${id}`)!;
   expect(panel("home-assistant").hidden).toBe(false);
   expect(panel("companion").hidden).toBe(true);
+  button("About").click();
+  await flush();
+  expect(panel("about").hidden).toBe(false);
+  expect(panel("about").textContent).toContain("pykaleidescape version");
+  expect(panel("about").textContent).toContain("1.1.6");
+  expect(panel("about").textContent).toContain("Release notes");
+  expect(panel("ecosystem").textContent).not.toContain(
+    "pykaleidescape version",
+  );
   button("Companion").click();
   await flush();
   input("minimum_runtime_minutes", "25");
@@ -168,7 +178,6 @@ it("keeps library sync opt-in and saves library controls through the native opti
   enabled.dispatchEvent(new Event("change", { bubbles: true }));
   await flush();
   input("library_host", "");
-  input("library_interval_hours", "12");
   input("custom_collection", "Demo extras");
   button("Add hidden name").click();
   await flush();
@@ -191,7 +200,6 @@ it("keeps library sync opt-in and saves library controls through the native opti
   ).toMatchObject({
     library_enabled: true,
     library_host: "",
-    library_interval_hours: 12,
     library_sync_collections: true,
     library_sync_details: true,
     library_sync_artwork: true,

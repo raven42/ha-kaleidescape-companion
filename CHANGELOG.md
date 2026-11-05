@@ -1,5 +1,45 @@
 # Changelog
 
+## Unreleased — Database purchase reconciliation
+
+- Move existing invoice histories into a purchase table and save unmatched email
+  purchases until they can be linked to scanned Library entries.
+- Review saved purchases without uploading a trace or stopping playback
+  tracking.
+- Update the purchase receipt blueprint to version 3 for the new workflow.
+
+## Unreleased — Purchase review and format badges
+
+- Allow purchase-only reconciliation while playback tracking is enabled, with
+  server-side checks that reject other import data.
+- Order ratings from general audiences upward and distinguish SDR, HDR10, Dolby
+  Vision, and Dolby Atmos badges.
+
+## Unreleased — Library filters and blueprint versions
+
+- Show installed and bundled blueprint versions in About and guard panel
+  elements against duplicate registration.
+- Normalize Science Fiction genres, order ratings by age, and show individual
+  viewing-format badges.
+- Remove actor and director lookup from the filter dialog and add a
+  purchase-reconciliation shortcut for saved trace records.
+
+## Unreleased — Purchase receipt review
+
+- Import unambiguous purchases from a receipt while returning only unmatched or
+  conflicting records for review.
+- Update the purchase receipt blueprint to version 2 with import and review
+  counts.
+
+## Unreleased — Automation blueprints and About
+
+- Install missing blueprints automatically and report their status in Settings.
+- Warn about known outdated versions and notify users after explicit updates.
+- Add blueprint version numbers and an About tab with versions and release
+  notes.
+- Provide opt-in automation blueprints for library, metadata, calendar and
+  purchase receipts.
+
 ## Unreleased — Basic and Advanced view
 
 - Replace the Library-only system-button option with a main-tab Basic/Advanced

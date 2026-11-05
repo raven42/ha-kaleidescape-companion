@@ -1,0 +1,32 @@
+blueprint:
+  name: Kaleidescape Companion - Schedule calendar full sync
+  description: >-
+    Run guarded Full Sync on a dedicated calendar. Full Sync and its dedicated
+    calendar acknowledgement must first be enabled in Companion settings.
+    Unmatched events can be deleted after repeated scans and a grace period.
+  domain: automation
+  input:
+    sync_button:
+      name: Calendar full sync button
+      selector:
+        entity:
+          filter:
+            - domain: button
+              integration: kaleidescape_companion
+    time:
+      name: Local time
+      default: "03:00:00"
+      selector:
+        time:
+triggers:
+  - trigger: time
+    at: !input time
+actions:
+  - action: button.press
+    target:
+      entity_id: !input sync_button
+  - delay: "00:11:00"
+  - action: button.press
+    target:
+      entity_id: !input sync_button
+mode: single

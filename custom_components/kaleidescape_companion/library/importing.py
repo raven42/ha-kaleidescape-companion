@@ -25,13 +25,17 @@ TITLE_COLUMNS = {
     "order_id",
     "href",
     "purchase_match_pending",
+    "purchase_information_unavailable",
 }
 
 
 def purchase_date(value):
     if not isinstance(value, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
         raise invalid("Expected a purchase date")
-    parsed = date.fromisoformat(value)
+    try:
+        parsed = date.fromisoformat(value)
+    except ValueError as error:
+        raise invalid("Expected a valid purchase date") from error
     if not date(1990, 1, 1) <= parsed <= datetime.now(UTC).date():
         raise invalid("Purchase date is outside the supported range")
     return parsed.isoformat()
@@ -73,7 +77,7 @@ def title_record(row, now, decode):
         else:
             data[key] = text(value, 10000 if key == "synopsis" else 500, empty=True)
     purchased = row.get("purchased_on")
-    return {
+    result = {
         "id": expected,
         "source_id": source,
         "source_handle": handle,
@@ -87,11 +91,30 @@ def title_record(row, now, decode):
         "last_seen": timestamp(row.get("last_seen", now)),
         "purchased_on": purchase_date(purchased) if purchased is not None else None,
     }
+    # Manual prices and public retail prices can precede an invoice.
+    if not (
+        decode(row.get("purchase_history", "[]"))
+        if isinstance(row.get("purchase_history", "[]"), str)
+        else row.get("purchase_history", [])
+    ):
+        from .purchases import price
+
+        for key in ("purchase_price", "retail_price"):
+            if row.get(key) is not None:
+                result[key] = price(row[key])
+    unavailable = row.get("purchase_information_unavailable")
+    if unavailable is not None:
+        if type(unavailable) not in (bool, int) or unavailable not in (0, 1):
+            raise invalid("Invalid purchase information availability")
+        result["purchase_information_unavailable"] = int(unavailable)
+    return result
 
 
 def portable_titles(db):
     """Export no origin, fetch URL, cache key/path, receipt, or device state."""
-    columns = ",".join(sorted(TITLE_COLUMNS))
+    from .purchases import history_for, summary
+
+    columns = ",".join(sorted(TITLE_COLUMNS - {"purchase_history"}))
     for row in db.execute(f"SELECT {columns} FROM library ORDER BY id"):
         record = dict(row)
         record["data"] = {
@@ -99,5 +122,7 @@ def portable_titles(db):
             for key, value in json.loads(record["data"]).items()
             if key in PUBLIC_FIELDS
         }
-        record["purchase_history"] = json.loads(record["purchase_history"])
+        record["purchase_history"] = history_for(db, record["id"])
+        if record["purchase_history"]:
+            record.update(summary(record["purchase_history"]))
         yield record

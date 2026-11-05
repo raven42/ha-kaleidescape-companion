@@ -25,8 +25,12 @@ VIEWING_MERGE_FIELDS = (
 )
 
 
-def review(db, payload, import_format, actor):
+def review(db, payload, import_format, actor, *, purchase_only=False):
     bundle = parse_bundle(payload, import_format)
+    if purchase_only and (
+        bundle["viewings"] or bundle["library"] or not bundle["purchases"]
+    ):
+        raise invalid("Purchase reconciliation accepts only purchase records")
     revision = db.execute("SELECT revision FROM schema_metadata").fetchone()[0]
     sources = {row[0] for row in db.execute("SELECT id FROM library_sources")}
     rows, operations, purchase_matches = [], {}, {}
@@ -37,7 +41,19 @@ def review(db, payload, import_format, actor):
             db,
             deadline,
             preferred_ids=(
-                link["owner"] for link in purchase_index.values() if not link["pending"]
+                {
+                    link["owner"]
+                    for link in purchase_index.values()
+                    if not link["pending"]
+                }
+                | {
+                    row[0]
+                    for row in db.execute(
+                        "SELECT id FROM library WHERE NOT EXISTS "
+                        "(SELECT 1 FROM purchase_records WHERE library_id=library.id) "
+                        "AND (purchase_price IS NOT NULL OR retail_price IS NOT NULL)"
+                    )
+                }
             ),
         )
         if bundle["purchases"]
@@ -52,6 +68,26 @@ def review(db, payload, import_format, actor):
                 old = purchase_index.get(record["id"])
                 target, detail = purchases.propose_link(db, record, old, matcher)
                 row, operation = purchase_proposal(key, record, old, target, detail)
+                if (old is None or old["pending"]) and target:
+                    existing = db.execute(
+                        "SELECT purchase_price,retail_price,EXISTS "
+                        "(SELECT 1 FROM purchase_records "
+                        "WHERE library_id=library.id) has_purchases "
+                        "FROM library WHERE id=?",
+                        (target,),
+                    ).fetchone()
+                    if existing and not existing["has_purchases"]:
+                        for field in ("purchase_price", "retail_price"):
+                            if (
+                                existing[field] is not None
+                                and record[field] is not None
+                                and existing[field] != record[field]
+                            ):
+                                row["conflicts"].append(field)
+                                row["changes"].pop(field, None)
+                        if row["conflicts"]:
+                            row["action"] = "skip"
+                            operation = None
                 rows.append(row)
                 if operation:
                     operations[key] = operation
@@ -109,13 +145,41 @@ def review(db, payload, import_format, actor):
                     **record["data"],
                     "purchased_on": record["purchased_on"],
                     "sort_title": record["sort_title"],
+                    **{
+                        key: record[key]
+                        for key in (
+                            "purchase_price",
+                            "retail_price",
+                            "purchase_information_unavailable",
+                        )
+                        if key in record
+                    },
                 }.items():
                     previous = (
                         old[field]
-                        if field in {"purchased_on", "sort_title"}
+                        if field
+                        in {
+                            "purchased_on",
+                            "sort_title",
+                            "purchase_price",
+                            "retail_price",
+                            "purchase_information_unavailable",
+                        }
                         else old_data.get(field)
                     )
-                    if previous in EMPTY and value not in EMPTY:
+                    if field == "purchased_on" and previous is None:
+                        previous = db.execute(
+                            "SELECT min(purchased_on) FROM purchase_records "
+                            "WHERE library_id=?",
+                            (record["id"],),
+                        ).fetchone()[0]
+                    if (
+                        field == "purchase_information_unavailable"
+                        and previous == 0
+                        and value == 1
+                    ):
+                        changes[field] = {"before": previous, "after": value}
+                    elif previous in EMPTY and value not in EMPTY:
                         changes[field] = {"before": previous, "after": value}
                     elif (
                         value not in EMPTY
@@ -187,6 +251,7 @@ def review(db, payload, import_format, actor):
         "public": public,
         "operations": operations,
         "purchase_matches": purchase_matches,
+        "purchase_only": purchase_only,
         "actor": actor,
         "expires": time.monotonic() + REVIEW_SECONDS,
     }
@@ -194,6 +259,8 @@ def review(db, payload, import_format, actor):
 
 def purchase_proposal(key, record, old, target, detail):
     changes, conflicts, action = purchases.proposal(record, old, target)
+    if target is None and old:
+        _, conflicts, _ = purchases.proposal(record, old, "pending")
     row = {
         "key": key,
         "table": "library",
@@ -258,7 +325,8 @@ def search_matches(db, plan, plan_id, revision, key, query, actor):
     db.set_progress_handler(lambda: int(time.monotonic() > deadline), 1000)
     try:
         rows = db.execute(
-            "SELECT coalesce(min(CASE WHEN purchase_history!='[]' THEN id END),"
+            "SELECT coalesce(min(CASE WHEN EXISTS (SELECT 1 FROM purchase_records "
+            "WHERE library_id=library.id) THEN id END),"
             "min(id)) id,min(title) title,min(json_extract(data,'$.year')) year,"
             "max(json_extract(data,'$.directors')) directors,count(*) version_count,"
             "source_id FROM library WHERE available=1 AND purchase_match_pending=0 "
@@ -311,6 +379,26 @@ def match_purchase(db, plan, plan_id, revision, key, title_id, actor):
             f"{target['year'] or 'year unknown'}"
         )
     row, operation = purchase_proposal(key, record, old, title_id, detail)
+    if title_id is not None and (old is None or old["pending"]):
+        existing = db.execute(
+            "SELECT purchase_price,retail_price,EXISTS "
+            "(SELECT 1 FROM purchase_records "
+            "WHERE library_id=library.id) has_purchases "
+            "FROM library WHERE id=?",
+            (title_id,),
+        ).fetchone()
+        if existing and not existing["has_purchases"]:
+            for field in ("purchase_price", "retail_price"):
+                if (
+                    existing[field] is not None
+                    and record[field] is not None
+                    and existing[field] != record[field]
+                ):
+                    row["conflicts"].append(field)
+                    row["changes"].pop(field, None)
+            if row["conflicts"]:
+                operation = None
+                row["action"] = "skip"
     row["can_match"] = True
     rows = [row if item["key"] == key else item for item in plan["public"]["rows"]]
     rows.sort(key=lambda item: not item["needs_match"])
@@ -337,10 +425,10 @@ def match_purchase(db, plan, plan_id, revision, key, title_id, actor):
     } | {"row": row}
 
 
-def apply(db, plan, request_id, plan_id, revision, selected, actor):
+def apply(db, plan, request_id, plan_id, revision, selected, actor, pending_records=()):
     if (
         not isinstance(selected, list)
-        or not 1 <= len(selected) <= 10000
+        or not (1 <= len(selected) <= 10000 or (not selected and pending_records))
         or any(not isinstance(key, str) or len(key) > 100 for key in selected)
         or len(set(selected)) != len(selected)
     ):
@@ -374,11 +462,20 @@ def apply(db, plan, request_id, plan_id, revision, selected, actor):
     ):
         raise invalid("Selection does not match this review")
     now = datetime.now(UTC).isoformat()
-    imported = updated = 0
+    imported = updated = pending_count = 0
     sources = set()
     with db:
         if db.execute("SELECT revision FROM schema_metadata").fetchone()[0] != revision:
             raise JournalError("conflict", "Database changed; review the file again")
+        for record in pending_records:
+            cursor = db.execute(
+                "INSERT OR IGNORE INTO purchase_records "
+                "(id,title,purchased_on,purchase_price,retail_price,order_id,href,"
+                "imported_at,library_id,issue) "
+                "VALUES (?,?,?,?,?,?,?,?,NULL,'unmatched')",
+                (record["id"], *(record[key] for key in purchases.INVOICE_FIELDS), now),
+            )
+            pending_count += cursor.rowcount
         for key in selected:
             operation = plan["operations"][key]
             table, record = operation["table"], operation["record"]
@@ -421,7 +518,8 @@ def apply(db, plan, request_id, plan_id, revision, selected, actor):
                 updated += 1
             else:
                 old = db.execute(
-                    "SELECT data,purchased_on,purchase_imported_at,sort_title "
+                    "SELECT data,purchased_on,purchase_imported_at,sort_title,"
+                    "retail_price "
                     "FROM library WHERE id=?",
                     (record["id"],),
                 ).fetchone()
@@ -430,9 +528,28 @@ def apply(db, plan, request_id, plan_id, revision, selected, actor):
                     {
                         k: v
                         for k, v in patch.items()
-                        if k not in {"purchased_on", "sort_title"}
+                        if k
+                        not in {
+                            "purchased_on",
+                            "sort_title",
+                            "purchase_price",
+                            "retail_price",
+                            "purchase_information_unavailable",
+                        }
                     }
                 )
+                if "retail_price" in patch:
+                    purchases.fill_retail_price(db, record["id"], patch["retail_price"])
+                if "purchase_price" in patch:
+                    purchases.fill_missing_price(
+                        db, record["id"], "purchase_price", patch["purchase_price"]
+                    )
+                if "purchase_information_unavailable" in patch:
+                    db.execute(
+                        "UPDATE library SET purchase_information_unavailable=1 "
+                        "WHERE id=?",
+                        (record["id"],),
+                    )
                 db.execute(
                     "UPDATE library SET data=?,purchased_on=?,sort_title=?,"
                     "purchase_imported_at=? "
@@ -460,6 +577,8 @@ def apply(db, plan, request_id, plan_id, revision, selected, actor):
             "skipped_count": skipped,
             "revision": revision + 1,
         }
+        if pending_records:
+            result["pending_count"] = pending_count
         db.execute(
             "INSERT INTO requests VALUES (?,?,?)",
             (request_id, fingerprint, json.dumps(result)),

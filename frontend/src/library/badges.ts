@@ -51,6 +51,16 @@ export function highestVideoFormat(row: VideoMetadata) {
     .map((key) => badges.find((badge) => badge.key === key))
     .find(Boolean);
 }
+const dolbySymbol = svg`<svg class="dolby-symbol" viewBox="0 0 24 16" aria-hidden="true" focusable="false">
+  <path fill="currentColor" d="M1 1h3.1c4.1 0 7 2.9 7 7s-2.9 7-7 7H1V1Zm22 0h-3.1c-4.1 0-7 2.9-7 7s2.9 7 7 7H23V1Z" />
+</svg>`;
+const hdrSymbol = svg`<svg class="hdr-symbol" viewBox="0 0 27 16" aria-hidden="true" focusable="false">
+  <path fill="#e94637" d="M1 4 7 3v10l-6-1z" />
+  <path fill="#f28c28" d="M6 3 12 2v12l-6-1z" />
+  <path fill="#edc13b" d="M11 2 17 1v14l-6-1z" />
+  <path fill="#72ad69" d="M16 1 22 0v16l-6-1z" />
+  <path fill="#298a98" d="M21 1 26 0v16l-5-1z" />
+</svg>`;
 export function renderFormatBadges(
   row: VideoMetadata,
   cover = false,
@@ -62,7 +72,11 @@ export function renderFormatBadges(
     const content =
       badge.key === "cinematic"
         ? html`<b>4K</b><span class="cinematic-label">Cinematic</span>`
-        : badge.label;
+        : badge.key === "vision" || badge.key === "atmos"
+          ? html`${dolbySymbol}<span>${badge.label}</span>`
+          : badge.key === "hdr10"
+            ? html`${hdrSymbol}<b>HDR10</b>`
+            : badge.label;
     return select
       ? html`<button
           type="button"

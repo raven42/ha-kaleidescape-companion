@@ -10,8 +10,9 @@ working without them.
 The pure Store and TMDB provider clients remain in Companion's `scrapers/`
 package. Public Store metadata pages, anonymous search and cover routes are
 scraped only here; pyk is limited to local devices. Scheduling, authorization,
-review and persistence also remain Companion responsibilities. The patched-pyk
-PoC does not change these provider interfaces.
+review and persistence also remain Companion responsibilities; HA automations
+own optional recurring schedules. The patched-pyk PoC does not change these
+provider interfaces.
 
 ## Setup and operation
 
@@ -22,10 +23,19 @@ PoC does not change these provider interfaces.
 2. Set the shared request rate, **0.1–10 requests/second**, default **2**. Save
    settings. Providers share one limiter; store robots directives can reduce the
    rate further. There is no automatic retry after HTTP errors or rate limiting.
-3. A successful device catalog scan starts enrichment for uncached or week-old
-   metadata. **Refresh metadata** in Settings requests a fresh pass with saved
-   configuration. **Check metadata status** shows progress, updates, skipped
-   matches and an owned error code. Repeated clicks coalesce into one pass.
+3. **Refresh metadata** in Settings or the HA button requests a fresh pass.
+   Library scans do not start metadata refreshes. **Check metadata status**
+   shows progress, updates, skipped matches and an owned error code. Repeated
+   button clicks coalesce into one pass.
+4. To schedule refreshes, install the optional metadata blueprint under
+   **Settings → Home Assistant → Optional automations**, then create an HA
+   automation and choose its time, select the scrapers (`kaleidescape`, `tmdb`,
+   or none for all enabled providers), and whether to refresh only missing
+   metadata or expected artwork. Full refresh requests all selected enabled
+   providers. Per-movie disabled sources and artwork expectations remain
+   respected. The `kaleidescape_companion.refresh_metadata` action also accepts
+   these options directly. A selected refresh fails busy rather than silently
+   discarding its options when another pass is active.
 
 Automatic store enrichment initially needs an existing Library purchase `href`;
 it never invents store slugs. TMDB initially needs the Library title and a known
@@ -73,11 +83,11 @@ across different projections.
 **Kaleidescape library cover** means the original edition-specific image cached
 from the player; store search thumbnails do not replace it. **TMDB** covers use
 a separate cached `w500` poster. To populate them, enable TMDB and Sync artwork,
-select TMDB for Cover artwork, save, then choose **Refresh metadata**. Normal
-seven-day provider caching still applies. Original covers are retained so the
-choice can be reversed. Landscapes currently come from TMDB and use `w780`.
-Selecting Original library data for landscapes also skips new background
-landscape downloads.
+select TMDB for Cover artwork, save, then choose **Refresh metadata**. A
+scheduled missing-only pass also checks expected missing artwork. Original
+covers are retained so the choice can be reversed. Landscapes currently come
+from TMDB and use `w780`. Selecting Original library data for landscapes also
+skips new background landscape downloads.
 
 ## Review a single title
 

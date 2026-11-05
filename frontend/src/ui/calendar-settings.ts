@@ -44,22 +44,14 @@ export function fullSyncSettings(
                   .value=${String(draft.calendar_full_sync_months ?? 3)}
                   @input=${(event: Event) => change({ calendar_full_sync_months: Number((event.target as HTMLInputElement).value) })}
               /></label>
-              <label
-                >Daily sweep · HA local time<input
-                  name="calendar_full_sync_time"
-                  type="time"
-                  required
-                  .value=${String(draft.calendar_full_sync_time ?? "03:00")}
-                  @input=${(event: Event) => change({ calendar_full_sync_time: (event.target as HTMLInputElement).value })}
-              /></label>
             </div>
             <p class="muted">
-              Saved Journal edits are checked about every 10 seconds. The daily
-              sweep finds external calendar changes. Unmatched events require
-              repeated successful scans and at least 10 minutes of grace before
-              deletion. Older and future events are left outside this window;
-              recurring events are skipped. Providers without event editing
-              receive a verified replacement before the old event is removed.
+              Run Full Sync using its button or install the optional calendar
+              automation below. Unmatched events require repeated successful
+              scans and at least 10 minutes of grace before deletion. Older and
+              future events are left outside this window; recurring events are
+              skipped. Providers without event editing receive a verified
+              replacement before the old event is removed.
             </p>
           `
         : nothing
