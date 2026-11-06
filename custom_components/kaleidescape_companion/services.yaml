@@ -31,7 +31,9 @@ refresh_metadata:
               value: tmdb
     only_missing:
       name: Only missing metadata
-      description: Skip scrapers that already have data for a movie.
+      description: >-
+        Skip scrapers that already have data unless configured artwork is
+        missing. In action YAML, missing_only is also accepted as an alias.
       default: false
       selector:
         boolean:

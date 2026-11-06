@@ -19,6 +19,20 @@ CALENDAR_SERVICE = "calendar_full_sync"
 _LOGGER = logging.getLogger(__name__)
 
 
+def _metadata_options(values):
+    """Accept both spellings without silently choosing conflicting options."""
+    if (
+        "only_missing" in values
+        and "missing_only" in values
+        and values["only_missing"] != values["missing_only"]
+    ):
+        raise vol.Invalid("only_missing and missing_only must agree")
+    return {
+        "providers": values["providers"],
+        "only_missing": values.get("only_missing", values.get("missing_only", False)),
+    }
+
+
 def _receipt_log_payload(payload):
     """Keep diagnostic logs bounded even for rejected, untrusted action input."""
     try:
@@ -199,13 +213,17 @@ def async_register_services(hass: HomeAssistant) -> None:
         DOMAIN,
         METADATA_SERVICE,
         refresh_metadata,
-        schema=vol.Schema(
-            {
-                vol.Optional("providers", default=[]): vol.All(
-                    [vol.In(PROVIDERS)], vol.Length(max=len(PROVIDERS))
-                ),
-                vol.Optional("only_missing", default=False): bool,
-            }
+        schema=vol.All(
+            vol.Schema(
+                {
+                    vol.Optional("providers", default=[]): vol.All(
+                        [vol.In(PROVIDERS)], vol.Length(max=len(PROVIDERS))
+                    ),
+                    vol.Optional("only_missing"): bool,
+                    vol.Optional("missing_only"): bool,
+                }
+            ),
+            _metadata_options,
         ),
     )
     hass.services.async_register(

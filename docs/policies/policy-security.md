@@ -181,7 +181,11 @@ The device's plain TCP interface supplies no Companion authentication or TLS. HA
 access controls do not prevent another LAN host from reaching it. Public
 metadata providers can observe the queried movie and outbound host address; they
 do not receive journal history or private invoice data. Scraping private
-accounts is outside scope.
+accounts is outside scope. Automatic Store lookup may use the same fixed,
+bounded public search routes as manual review when a usable movie link is
+missing. Only one exact title/year match is eligible for automatic caching;
+ambiguous or truncated results require review. The automatic search scope does
+not enable Store image previews or other review-only routes.
 
 An administrator's per-title Refresh searches the chosen public provider even
 when a match is cached. Unique or explicitly selected results are downloaded
@@ -192,7 +196,8 @@ directly. Field-source choices and image resets remain administrator-only,
 snapshot-checked Library writes. Provider match links use validated HTTPS movie
 routes and open without a referrer; arbitrary URLs from scraped metadata are not
 rendered. When artwork sync is enabled, a metadata pass may request TMDB's fixed
-movie image-list route and one validated backdrop to fill an empty selection.
+movie image-list route and validated artwork to fill an empty selection,
+including an automatic cover fallback when no selected cover exists.
 
 ## External mutations and recovery
 

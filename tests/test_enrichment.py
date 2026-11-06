@@ -1,5 +1,6 @@
 """Fictional provider enrichment: storage, permissions, credentials and HTTPS gates."""
 
+import asyncio
 import hashlib
 import json
 import unittest
@@ -19,6 +20,7 @@ from custom_components.kaleidescape_companion.library.store import title_id
 from custom_components.kaleidescape_companion.scrapers import (
     ProviderError,
 )
+from custom_components.kaleidescape_companion.scrapers.providers import store_search
 
 ORIGIN = "http://fictional.local"
 IMAGE = b"\xff\xd8\xfffictional-backdrop"
@@ -403,6 +405,12 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
         context.__aexit__ = AsyncMock(return_value=False)
         self.assertEqual(await sync._get(url, {}), IMAGE)
         poster = url.replace("w780", "w500")
+        self.assertEqual(await sync._get(poster, {}), IMAGE)
+        sync.entry.data["metadata_source_artwork"] = "kaleidescape"
+        sync.config["metadata_source_artwork"] = "kaleidescape"
+        self.assertEqual(await sync._get(poster, {}), IMAGE)
+        sync.entry.data["metadata_source_artwork"] = "original"
+        sync.config["metadata_source_artwork"] = "original"
         with self.assertRaisesRegex(ProviderError, "destination"):
             await sync._get(poster, {})
         sync.entry.data["metadata_source_artwork"] = "tmdb"
@@ -474,6 +482,224 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
         ):
             await sync._run(True, ("tmdb",), False)
         self.assertEqual(sync.providers.metadata.await_args.args[0], "tmdb")
+
+    async def test_missing_store_searches_numeric_links_and_missing_links(self):
+        await self.seed()
+        candidate = {
+            **self.data,
+            "provider": "kaleidescape",
+            "url": "https://www.kaleidescape.com/movie-store/movie/fictional-film-2025",
+        }
+        for href in (
+            None,
+            "https://www.kaleidescape.com/movie-store/movie/details/123",
+        ):
+            with self.subTest(href=href):
+                sync = self.sync(metadata_store_enabled=True)
+                row = {
+                    "id": "fictional-id",
+                    "source_group": "movie",
+                    "title": "Fictional Film",
+                    "year": 2025,
+                    "href": href,
+                    "enrichment": {},
+                    "cached_providers": ["tmdb"],
+                }
+                sync.repository = SimpleNamespace(
+                    async_enrichment=AsyncMock(side_effect=[[row], None, None])
+                )
+
+                async def search(provider, query, year):
+                    self.assertTrue(sync.store_search_network)
+                    self.assertFalse(sync.review_network)
+                    self.assertEqual(
+                        (provider, query, year),
+                        ("kaleidescape", "Fictional Film", 2025),
+                    )
+                    return [candidate]
+
+                sync.providers.search = AsyncMock(side_effect=search)
+                with patch(
+                    "custom_components.kaleidescape_companion.enrichment.sync.async_create_clientsession",
+                    return_value=SimpleNamespace(detach=Mock()),
+                ):
+                    await sync._run(True, ("kaleidescape",), True)
+                sync.providers.search.assert_awaited_once()
+                self.assertFalse(sync.store_search_network)
+                self.assertEqual(sync.updated, 1)
+                save = next(
+                    call
+                    for call in sync.repository.async_enrichment.await_args_list
+                    if call.args[0] == "save"
+                )
+                self.assertEqual(save.args[3], "kaleidescape")
+                self.assertEqual(save.args[4]["provider_id"], "42")
+
+    async def test_store_search_refuses_ambiguous_mismatched_and_truncated_results(
+        self,
+    ):
+        await self.seed()
+        exact = {**self.data, "provider": "kaleidescape"}
+        row = {
+            "id": "fictional-id",
+            "source_group": "movie",
+            "title": "Fictional Film",
+            "year": 2025,
+            "href": None,
+            "enrichment": {},
+        }
+        cases = (
+            ([exact, {**exact, "provider_id": "43"}], "store_ambiguous"),
+            ([{**exact, "year": 2024}], "store_not_found"),
+            (store_search.SearchResults([exact], truncated=True), "store_ambiguous"),
+            ([{**exact, "provider_id": ""}], "provider_identity_mismatch"),
+            ([exact], "invalid_store_link"),
+        )
+        for results, reason in cases:
+            with self.subTest(reason=reason):
+                sync = self.sync(metadata_store_enabled=True)
+                sync.repository = SimpleNamespace(
+                    async_enrichment=AsyncMock(side_effect=[[row], None, None])
+                )
+                sync.providers.search = AsyncMock(return_value=results)
+                with (
+                    patch(
+                        "custom_components.kaleidescape_companion.enrichment.sync.async_create_clientsession",
+                        return_value=SimpleNamespace(detach=Mock()),
+                    ),
+                    self.assertLogs(
+                        "custom_components.kaleidescape_companion.enrichment.sync",
+                        level="INFO",
+                    ) as logs,
+                ):
+                    await sync._run(True, ("kaleidescape",), True)
+                self.assertEqual(sync.updated, 0)
+                self.assertEqual(sync.skipped, 1)
+                self.assertTrue(
+                    any(f"kaleidescape:{reason}" in line for line in logs.output)
+                )
+                self.assertFalse(any("Fictional Film" in line for line in logs.output))
+                operations = [
+                    call.args[0]
+                    for call in sync.repository.async_enrichment.await_args_list
+                ]
+                self.assertIn("conflict", operations)
+                self.assertNotIn("save", operations)
+                self.assertFalse(sync.store_search_network)
+
+    async def test_store_search_saves_missing_provider_data_for_library_groups(self):
+        await self.seed()
+        await self.repo.async_metadata_sources({"metadata_store_enabled": True})
+        before = await self.repo.async_library_summary(self.source)
+        self.assertEqual(before["missing_metadata"], 2)
+        sync = self.sync(
+            library_host=ORIGIN,
+            metadata_store_enabled=True,
+            metadata_tmdb_enabled=False,
+        )
+
+        async def search(provider, title, year):
+            return [
+                {
+                    **self.data,
+                    "provider": provider,
+                    "provider_id": str(year),
+                    "title": title,
+                    "year": year,
+                    "url": f"https://www.kaleidescape.com/movie-store/movie/fictional-film-{year}",
+                }
+            ]
+
+        sync.providers.search = AsyncMock(side_effect=search)
+        with patch(
+            "custom_components.kaleidescape_companion.enrichment.sync.async_create_clientsession",
+            return_value=SimpleNamespace(detach=Mock()),
+        ):
+            await sync._run(True, ("kaleidescape",), True)
+        self.assertIsNone(sync.error)
+        self.assertEqual(sync.updated, 2)
+        self.assertEqual(
+            (await self.repo.async_library_summary(self.source))["missing_metadata"], 0
+        )
+        rows = await self.repo.async_enrichment("candidates", self.source)
+        self.assertTrue(all("kaleidescape" in row["cached_providers"] for row in rows))
+        self.assertTrue(
+            all(
+                row["matches"]["kaleidescape"]["provider_id"] == str(row["year"])
+                for row in rows
+            )
+        )
+
+    async def test_store_search_cancellation_restores_its_network_scope(self):
+        sync = self.sync(metadata_store_enabled=True)
+        sync.providers.search = AsyncMock(side_effect=asyncio.CancelledError)
+        with self.assertRaises(asyncio.CancelledError):
+            await sync.search_store({"title": "Fictional Film", "year": 2025})
+        self.assertFalse(sync.store_search_network)
+        self.assertFalse(sync.review_network)
+
+    async def test_discovered_store_identity_is_checked_before_it_is_saved(self):
+        await self.seed()
+        metadata = {
+            **self.data,
+            "provider": "kaleidescape",
+            "url": "https://www.kaleidescape.com/movie-store/movie/fictional-film-2025",
+            "matched_reference": None,
+            "discovered_reference": {
+                "provider_id": "different",
+                "title": "Fictional Film",
+                "year": 2025,
+                "url": "https://www.kaleidescape.com/movie-store/movie/fictional-film-2025",
+            },
+        }
+        with self.assertRaises(JournalError) as error:
+            await self.repo.async_enrichment(
+                "save", self.source, self.id, "kaleidescape", metadata
+            )
+        self.assertEqual(error.exception.code, "refresh_required")
+        rows = await self.repo.async_enrichment("candidates", self.source)
+        self.assertTrue(
+            all("kaleidescape" not in row["cached_providers"] for row in rows)
+        )
+
+    async def test_missing_auto_poster_is_fetched_when_metadata_is_cached(self):
+        await self.seed()
+        row = {
+            "id": "fictional-id",
+            "source_group": "movie",
+            "title": "Fictional Film",
+            "year": 2025,
+            "href": None,
+            "enrichment": {},
+            "cached_providers": ["tmdb"],
+            "backdrop_selected": True,
+            "poster_selected": False,
+        }
+        for preference in ("auto", "kaleidescape", "tmdb", "original"):
+            with self.subTest(preference=preference):
+                sync = self.sync(
+                    library_sync_artwork=True, metadata_source_artwork=preference
+                )
+                sync.repository = SimpleNamespace(
+                    async_enrichment=AsyncMock(side_effect=[[row], None, None, None])
+                )
+                sync.providers.metadata = AsyncMock(return_value=self.data)
+                sync.providers.poster = AsyncMock(return_value=IMAGE)
+                with patch(
+                    "custom_components.kaleidescape_companion.enrichment.sync.async_create_clientsession",
+                    return_value=SimpleNamespace(detach=Mock()),
+                ):
+                    await sync._run(True, ("tmdb",), True)
+                expected = int(preference != "original")
+                self.assertEqual(sync.providers.metadata.await_count, expected)
+                self.assertEqual(sync.providers.poster.await_count, expected)
+                self.assertEqual(
+                    sum(
+                        call.args[0] == "poster"
+                        for call in sync.repository.async_enrichment.await_args_list
+                    ),
+                    expected,
+                )
 
     async def test_missing_backdrop_refreshes_even_with_cached_metadata(self):
         await self.seed()

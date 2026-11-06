@@ -5,6 +5,7 @@ import ipaddress
 import logging
 import re
 import socket
+from collections import Counter
 from datetime import UTC, datetime, timedelta
 from urllib.parse import urlsplit
 from uuid import uuid4
@@ -22,9 +23,12 @@ from ..core.security import is_active_admin
 from ..library.config import origin
 from ..library.store import image_type, source_id
 from ..scrapers import MovieQuery, ProviderError, Providers
+from ..scrapers.models import same_movie
+from ..scrapers.providers.store import movie_path
 from .config import DEFAULTS
 from .destinations import store_image, store_request
 from .matching import REASONS
+from .matching import reference as provider_reference
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -50,6 +54,7 @@ class MetadataSync:
         self.current_title = None
         self.reviews = None
         self.review_network = False
+        self.store_search_network = False
         self.providers = Providers(
             self._get,
             requests_per_second=self.config["metadata_requests_per_second"],
@@ -162,7 +167,9 @@ class MetadataSync:
         if parsed.hostname == "www.kaleidescape.com":
             if not self.config["metadata_store_enabled"]:
                 raise ProviderError("provider_disabled")
-            if not store_request(parsed, headers, self.review_network):
+            if not store_request(
+                parsed, headers, self.review_network or self.store_search_network
+            ):
                 raise ProviderError("provider_destination")
         elif store_cover:
             if not (
@@ -190,7 +197,7 @@ class MetadataSync:
                     and not parsed.path.startswith("/t/p/w780/")
                     and not (
                         parsed.path.startswith("/t/p/w500/")
-                        and self.config.get("metadata_source_artwork") == "tmdb"
+                        and self.config.get("metadata_source_artwork") != "original"
                     )
                 )
             ):
@@ -297,12 +304,52 @@ class MetadataSync:
             if error.code != "refresh_required":
                 raise
 
+    async def search_store(self, row):
+        """Resolve only one exact title/year from the public Store search."""
+        self.store_search_network = True
+        try:
+            candidates = await self.providers.search(
+                "kaleidescape", row["title"][:200], row["year"]
+            )
+        finally:
+            self.store_search_network = False
+        matches = same_movie(row["title"], row["year"], candidates)
+        if getattr(candidates, "truncated", False) or len(matches) != 1:
+            if getattr(candidates, "truncated", False):
+                raise ProviderError("store_ambiguous")
+            raise ProviderError("store_ambiguous" if matches else "store_not_found")
+        match = matches[0]
+        if (
+            match.get("provider") != "kaleidescape"
+            or not isinstance(match.get("provider_id"), str)
+            or not match["provider_id"]
+        ):
+            raise ProviderError("provider_identity_mismatch")
+        try:
+            movie_path(match.get("url"))
+        except ValueError as error:
+            raise ProviderError("invalid_store_link") from error
+        return match
+
     async def _run(self, force, providers=None, only_missing=False):
         operation_id = uuid4().hex[:16]
         _LOGGER.info("Metadata refresh started (operation_id=%s)", operation_id)
+        _LOGGER.info(
+            "Metadata refresh options: only_missing=%s, selected=%s, store_enabled=%s, "
+            "tmdb_enabled=%s, tmdb_credential_configured=%s, artwork_sync=%s "
+            "(operation_id=%s)",
+            only_missing,
+            list(providers) if providers else "all enabled",
+            self.config["metadata_store_enabled"],
+            self.config["metadata_tmdb_enabled"],
+            bool(self.config["metadata_tmdb_credential"]),
+            bool(self.config.get("library_sync_artwork")),
+            operation_id,
+        )
         self.error = None
         self.providers.refresh_adapters()
         self.processed = self.updated = self.skipped = 0
+        skipped_reasons = Counter()
         failure, cancelled = None, False
         try:
             self.session = self.create_session()
@@ -320,6 +367,7 @@ class MetadataSync:
                             continue
                         if provider in row.get("unavailable", []):
                             self.skipped += 1
+                            skipped_reasons[f"{provider}:disabled_for_movie"] += 1
                             continue
                         missing_artwork = (
                             provider == "tmdb"
@@ -334,7 +382,8 @@ class MetadataSync:
                                     and not row.get("backdrop_removed")
                                 )
                                 or (
-                                    self.config.get("metadata_source_artwork") == "tmdb"
+                                    self.config.get("metadata_source_artwork")
+                                    != "original"
                                     and "poster"
                                     not in row.get("unavailable_artwork", [])
                                     and not row.get("poster_selected")
@@ -347,6 +396,7 @@ class MetadataSync:
                             and not missing_artwork
                         ):
                             self.skipped += 1
+                            skipped_reasons[f"{provider}:already_cached"] += 1
                             continue
                         reference = row.get("matches", {}).get(provider)
                         if (
@@ -354,19 +404,19 @@ class MetadataSync:
                             and not self.config["metadata_tmdb_credential"]
                         ):
                             self.skipped += 1
+                            skipped_reasons["tmdb:missing_credential"] += 1
                             continue
                         if not reference and (
                             type(row["year"]) is not int
-                            or (provider == "kaleidescape" and not row["href"])
+                            or not 1800 <= row["year"] <= 2200
                         ):
                             await self.mark_conflict(
                                 row,
                                 provider,
-                                "missing_year"
-                                if type(row["year"]) is not int
-                                else "invalid_store_link",
+                                "missing_year",
                             )
                             self.skipped += 1
+                            skipped_reasons[f"{provider}:missing_year"] += 1
                             continue
                         previous = row["enrichment"].get(provider, {}).get("fetched_at")
                         if previous and not force:
@@ -374,24 +424,42 @@ class MetadataSync:
                                 if datetime.fromisoformat(previous) > datetime.now(
                                     UTC
                                 ) - timedelta(days=7):
+                                    self.skipped += 1
+                                    skipped_reasons[f"{provider}:recently_fetched"] += 1
                                     continue
                             except ValueError, TypeError:
                                 pass
                         try:
-                            result = (
-                                await self.providers.resolve(provider, reference)
-                                if reference
-                                else await self.providers.metadata(
+                            discovered = False
+                            if reference:
+                                result = await self.providers.resolve(
+                                    provider, reference
+                                )
+                            elif provider == "kaleidescape":
+                                try:
+                                    movie_path(row["href"])
+                                except ProviderError, ValueError:
+                                    result = await self.search_store(row)
+                                    discovered = True
+                                else:
+                                    result = await self.providers.metadata(
+                                        provider,
+                                        MovieQuery(
+                                            row["title"], row["year"], row["href"]
+                                        ),
+                                    )
+                            else:
+                                result = await self.providers.metadata(
                                     provider,
                                     MovieQuery(
                                         row["title"], row["year"], row["href"] or ""
                                     ),
                                 )
-                            )
                         except ProviderError as error:
                             if str(error) in REASONS:
                                 await self.mark_conflict(row, provider, str(error))
                                 self.skipped += 1
+                                skipped_reasons[f"{provider}:{error}"] += 1
                                 continue
                             raise
                         self._ready()
@@ -400,6 +468,11 @@ class MetadataSync:
                             "matched_title": row["title"],
                             "matched_group": row["source_group"],
                             "matched_reference": reference,
+                            **(
+                                {"discovered_reference": provider_reference(result)}
+                                if discovered
+                                else {}
+                            ),
                         }
                         try:
                             await self.repository.async_enrichment(
@@ -415,6 +488,7 @@ class MetadataSync:
                             # An administrator may restore source-only metadata
                             # while a response is in flight. Do not restore it again.
                             self.skipped += 1
+                            skipped_reasons[f"{provider}:changed_during_refresh"] += 1
                             continue
                         if (
                             provider == "tmdb"
@@ -444,12 +518,23 @@ class MetadataSync:
                                     if error.code != "refresh_required":
                                         raise
                                     self.skipped += 1
+                                    skipped_reasons[
+                                        f"{provider}:changed_during_refresh"
+                                    ] += 1
                                     continue
                         if (
                             provider == "tmdb"
                             and self.config.get("library_sync_artwork")
-                            and self.config.get("metadata_source_artwork") == "tmdb"
+                            and self.config.get("metadata_source_artwork") != "original"
                             and "poster" not in row.get("unavailable_artwork", [])
+                            and (
+                                not row.get("poster_selected")
+                                or (
+                                    not only_missing
+                                    and self.config.get("metadata_source_artwork")
+                                    == "tmdb"
+                                )
+                            )
                         ):
                             poster = await self.providers.poster(provider, result)
                             self._ready()
@@ -469,6 +554,9 @@ class MetadataSync:
                                     if error.code != "refresh_required":
                                         raise
                                     self.skipped += 1
+                                    skipped_reasons[
+                                        f"{provider}:changed_during_refresh"
+                                    ] += 1
                                     continue
                         self.updated += 1
                     self.processed += 1
@@ -530,10 +618,11 @@ class MetadataSync:
                     self._reported_failure = None
                     _LOGGER.info(
                         "Metadata refresh completed: %s records processed, %s updates, "
-                        "%s skipped (operation_id=%s)",
+                        "%s provider attempts skipped; reasons=%s (operation_id=%s)",
                         self.processed,
                         self.updated,
                         self.skipped,
+                        dict(sorted(skipped_reasons.items())),
                         operation_id,
                     )
             self.actor = None

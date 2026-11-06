@@ -62,6 +62,18 @@ class ScraperNetworkTest(unittest.IsolatedAsyncioTestCase):
         context = sync.session.get.return_value
         context.__aenter__ = AsyncMock(return_value=response)
         context.__aexit__ = AsyncMock(return_value=False)
+        sync.review_network = False
+        sync.store_search_network = True
+        self.assertEqual(await sync._get(html, {}), body)
+        response.content_type = "application/json"
+        self.assertEqual(await sync._get(api, headers), body)
+        with self.assertRaises(ProviderError):
+            await sync._get(cover, {})
+        with self.assertRaises(ProviderError):
+            await sync._get(api, {**headers, "Authorization": "fictional"})
+        sync.store_search_network = False
+        sync.review_network = True
+        response.content_type = "text/html"
         self.assertEqual(await sync._get(html, {}), body)
         response.content_type = "application/json"
         self.assertEqual(await sync._get(api, headers), body)

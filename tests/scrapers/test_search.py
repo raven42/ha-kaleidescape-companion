@@ -125,6 +125,41 @@ class ProviderSearchTest(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(ProviderError, "artwork_unavailable"):
             await client.image("kaleidescape", {"kind": "poster", "path": cover})
 
+    async def test_store_search_reports_truncation_before_filtering_by_year(self):
+        packages = [
+            {"movie_edition_uri_name": f"fictional-{number}", "is_television": False}
+            for number in range(8)
+        ]
+
+        async def fetch(url, _headers):
+            if url.endswith("/robots.txt"):
+                return b"User-agent: *\n"
+            if "/rest/packages/search?" in url:
+                return json.dumps(
+                    {"groups": [{"algorithm_id": 7, "packages": packages}]}
+                ).encode()
+            if "/movie-store/search?" in url:
+                return b'<body data-store_version="2026.10-123">'
+            slug = url.rsplit("/", 1)[1]
+            number = int(slug.rsplit("-", 1)[1])
+            movie = {
+                **MOVIE,
+                "uri_name": slug,
+                "release_year": YEAR if number == 0 else YEAR + 1,
+            }
+            data = {
+                f"/movie-store/rest/movie/edition/{slug}": "123",
+                "/movie-store/rest/movie/edition/id/123": movie,
+            }
+            return (
+                "<script>window.preloadedAjaxData = " + json.dumps(data) + ";</script>"
+            ).encode()
+
+        client = Providers(fetch, requests_per_second=10)
+        results = await client.search("kaleidescape", TITLE, YEAR)
+        self.assertEqual(len(results), 1)
+        self.assertTrue(results.truncated)
+
     async def test_search_inputs_and_untrusted_cover_routes_are_bounded(self):
         fetch = AsyncMock(return_value=b"{}")
         client = Providers(fetch, requests_per_second=10)

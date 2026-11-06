@@ -34,19 +34,26 @@ provider interfaces.
    metadata or expected artwork. Full refresh requests all selected enabled
    providers. Per-movie disabled sources and artwork expectations remain
    respected. The `kaleidescape_companion.refresh_metadata` action also accepts
-   these options directly. A selected refresh fails busy rather than silently
-   discarding its options when another pass is active.
+   these options directly. Its missing-only option is `only_missing`; action
+   YAML also accepts `missing_only` as an alias, and conflicting values are
+   rejected. A selected refresh fails busy rather than silently discarding its
+   options when another pass is active.
 
-Automatic store enrichment initially needs an existing Library purchase `href`;
-it never invents store slugs. TMDB initially needs the Library title and a known
-release year. An administrator-approved match can supply the provider identity
-instead, including for a movie without a store link or scanned year. Matching is
+Automatic store enrichment uses a valid public Store movie link when available.
+When the link is absent or is a numeric receipt-details link, it searches the
+public Store by title and year. It saves only a single exact normalized-title
+and year match; ambiguous or truncated results require manual review. It never
+invents Store slugs. TMDB initially needs the Library title and a known release
+year. An administrator-approved match can supply the provider identity instead,
+including for a movie without a store link or scanned year. Matching is
 conservative: unresolved ambiguous or mismatched movies are skipped and marked
 for review. Skipped totals are provider attempts, so one movie can contribute
 twice. A pass stops after one hour; successfully cached results remain
 available. It supports up to 10,000 scanned versions and processes one movie
-group at a time. Unknown years and missing credentials/links are skipped without
-requesting a movie.
+group at a time. Unknown years and missing TMDB credentials are skipped without
+requesting a movie. The completion log breaks skipped attempts down by provider
+and reason. Artwork flagged by the Library filter may remain missing when
+artwork sync, a suitable provider, or the selected source is unavailable.
 
 These are internet lookups: the provider can see the request, movie identity and
 the HA host's network address. No watch history, notes, invoices, prices or

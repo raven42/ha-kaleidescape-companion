@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, Mock, patch
 from zoneinfo import ZoneInfo
 
 import test_backend as backend
+import voluptuous as vol
 from homeassistant import loader
 from homeassistant.components.automation.config import (
     AUTOMATION_BLUEPRINT_SCHEMA,
@@ -632,6 +633,14 @@ class MetadataActionTest(unittest.IsolatedAsyncioTestCase):
         )
         handler, schema = registration.args[2], registration.kwargs["schema"]
         data = schema({"providers": ["tmdb"], "only_missing": True})
+        self.assertEqual(schema({"missing_only": True})["only_missing"], True)
+        self.assertEqual(schema({})["only_missing"], False)
+        self.assertEqual(
+            schema({"only_missing": True, "missing_only": True})["only_missing"],
+            True,
+        )
+        with self.assertRaises(vol.Invalid):
+            schema({"only_missing": False, "missing_only": True})
         sync = SimpleNamespace(request_sync=Mock())
         runtime = SimpleNamespace(enrichment=sync)
         with patch(
@@ -649,7 +658,5 @@ class MetadataActionTest(unittest.IsolatedAsyncioTestCase):
             )
             with self.assertRaises(HomeAssistantError):
                 await handler(call)
-        import voluptuous as vol
-
         with self.assertRaises(vol.Invalid):
             schema({"providers": ["other"]})

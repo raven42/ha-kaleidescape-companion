@@ -10,6 +10,14 @@ from ..models import ProviderError, label
 HOST = "https://www.kaleidescape.com"
 
 
+class SearchResults(list):
+    """Keep the bounded-search limit visible to automatic matching."""
+
+    def __init__(self, values, *, truncated):
+        super().__init__(values)
+        self.truncated = truncated
+
+
 def cover_url(value):
     if not isinstance(value, str) or len(value) > 300:
         return None
@@ -94,7 +102,8 @@ async def search(provider, query, year):
     await provider.permitted(route)
     body = await provider.transport.get(HOST + route, headers)
     results = []
-    for candidate in await asyncio.to_thread(packages, body):
+    candidates = await asyncio.to_thread(packages, body)
+    for candidate in candidates:
         path = candidate["href"]
         await provider.permitted(path)
         page = await provider.transport.get(HOST + path)
@@ -111,4 +120,4 @@ async def search(provider, query, year):
             parse, text, path, movie["title"], movie["release_year"]
         )
         results.append({**metadata, "poster_url": candidate["poster_url"]})
-    return results
+    return SearchResults(results, truncated=len(candidates) >= 8)

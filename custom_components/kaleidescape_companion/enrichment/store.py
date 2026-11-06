@@ -271,6 +271,14 @@ def save(db, source, title_id, provider, metadata):
             and reference(metadata) != metadata["matched_reference"]
         )
         or (
+            metadata.get("discovered_reference") is not None
+            and (
+                provider != "kaleidescape"
+                or metadata.get("matched_reference") is not None
+                or reference(metadata) != metadata["discovered_reference"]
+            )
+        )
+        or (
             metadata.get("matched_reference") is None
             and json.loads(row["data"]).get("year") not in (None, metadata.get("year"))
         )
@@ -285,10 +293,10 @@ def save(db, source, title_id, provider, metadata):
             (source, row["source_group"]),
         ).fetchall():
             value = json.loads(member["enrichment"])
-            if metadata.get("matched_reference"):
-                value.setdefault("matches", {})[provider] = metadata[
-                    "matched_reference"
-                ]
+            if selected := metadata.get("matched_reference") or metadata.get(
+                "discovered_reference"
+            ):
+                value.setdefault("matches", {})[provider] = selected
             value.setdefault("conflicts", {}).pop(provider, None)
             previous = value.get(provider, {})
             value[provider] = json.loads(encoded)
