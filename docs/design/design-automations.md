@@ -23,7 +23,7 @@ history of the operator's edits.
 
 | Blueprint                    | Bundled version | Inputs and behavior                                                                          |
 | ---------------------------- | --------------- | -------------------------------------------------------------------------------------------- |
-| `purchase_email_parser.yaml` | 6               | Selected IMAP entry and optional sender filter; validates and imports receipt events         |
+| `purchase_email_parser.yaml` | 8               | Selected IMAP entry and optional sender filter; validates and imports receipt events         |
 | `library_schedule.yaml`      | 1               | Daily local time, default 03:00; requests Library sync                                       |
 | `metadata_schedule.yaml`     | 1               | Daily local time, default 04:00; selected enabled providers and Only missing, default true   |
 | `calendar_schedule.yaml`     | 1               | Daily local time, default 03:00; requests Full Sync, waits 11 minutes, requests another pass |
@@ -91,9 +91,9 @@ a subject containing “Kaleidescape Store Receipt”. The optional sender subst
 filter is a routing filter, not sender authentication. `imap.fetch` retrieves
 the complete message; the event's text preview may be truncated.
 
-Blueprint version 7 passes the fetched message text and the available HTML part
-to the Python importer. It attempts both representations, extracts bounded item
-evidence and imports independently valid items. Incomplete values and
+Blueprint version 8 passes the fetched HTML part to the Python importer. It
+extracts bounded item evidence and imports independently valid items. Missing or
+unusable HTML produces a notification and no import. Incomplete values and
 subtotal/total discrepancies are returned as review issues rather than rejecting
 the entire receipt. A missing date remains unknown; forwarded messages do not
 use the forward date as the purchase date. Parsing does not authenticate the
@@ -110,14 +110,14 @@ The importer reads movie and set rows from the decoded HTML tables, including
 forwarded HTML and included movies in set rows. A crossed-out price is the
 retail price and an unmarked price is the purchase price. A missing retail price
 stays empty and is reported when selected; multiple unmarked prices are reported
-as ambiguous. If HTML is unavailable or incomplete, the importer uses
-identifiable text rows as a fallback and flags text-only items. For a single
-price in plain text, it records the purchase price only when that amount
-reconciles exactly with the subtotal and all other known item prices.
+as ambiguous. Item extraction uses HTML only, so an incomplete HTML part may
+omit items that appear only in the text part; review the original receipt when
+completeness is uncertain. Parsing stops when HTML structural budgets are
+exceeded.
 
-The automation attempts `imap.fetch_part` whenever HA lists an HTML part. If
-that fetch fails, it still passes the text to the importer and reports the
-missing HTML. HA's IMAP actions and automation traces may contain the full
+The automation attempts `imap.fetch_part` whenever HA lists an HTML part. If the
+part is missing or the fetch fails, it notifies the user that the receipt could
+not be imported. HA's IMAP actions and automation traces may contain the full
 email.
 
 Store numeric IDs and local Library content handles are different identities.

@@ -1,6 +1,6 @@
 # Kaleidescape Companion comprehensive engineering audit
 
-Procedure updated 2026-11-04. Audit the current repository as a Home Assistant
+Procedure updated 2026-11-06. Audit the current repository as a Home Assistant
 **custom integration running inside HA Core**, not a separately isolated add-on.
 Assess architecture, functionality, security, privacy, reliability,
 supportability, performance, maintainability, tests and documentation. Preserve
@@ -28,9 +28,9 @@ contracts must be reassessed rather than carried forward as requirements.
 3. Read-only analysis, isolated fictional probes and normal checks are
    authorized by an audit request. Do not deploy, restart HA, control devices,
    scrape live providers or inspect household databases, credentials, email
-   attachments or ignored `.ha-dev/` state during routine auditing. Use adjacent
-   patched pyk source read-only. Follow AGENTS.md; do not automate a real
-   browser.
+   attachments or ignored `.ha-dev/` state during routine auditing. Treat
+   external API and dependency logging behavior as outside the audit scope.
+   Follow AGENTS.md; do not automate a real browser.
 4. Change audit reports and explicitly requested documentation only. Do not
    change application behavior, migrations, dependencies or existing tests.
    Temporary fictional probes may live in a temporary directory or sanitized
@@ -40,8 +40,11 @@ contracts must be reassessed rather than carried forward as requirements.
    Offline fixtures do not establish live HA, browser, device, provider or
    backup/restore acceptance.
 6. Findings name the trigger, consequence, location, evidence, severity,
-   confidence and validation status. Reproduce where feasible; label inference
-   and uncertainty. For dependencies distinguish presence from reachability.
+   confidence and validation status. Examine each issue and propose a specific
+   fix, alternatives or an explicit reason no code change is appropriate, plus
+   acceptance checks; do not implement the fix during the audit. Reproduce where
+   feasible; label inference and uncertainty. For dependencies distinguish
+   presence from reachability.
 7. Finish with prioritized fixes and acceptance checks. An audit request does
    not authorize subsequent product refactoring. Existing explicit user
    authorization for implementation still governs that work; do not invent an
@@ -71,11 +74,11 @@ partial shutdown, backup pause/resume and cancellation. Verify work drains and
 remaining cleanup proceeds after errors.
 
 Preserve HA's built-in `kaleidescape` and pyk's public `Device` workflow. The
-manifest pin remains 1.1.6 for the HA 2026.10.4 development baseline while this
-PoC needs the adjacent patched package/HA overlay. Assess that release
-dependency honestly. Public Store scraping belongs in Companion, not pyk. Check
-for private built-in runtime access, global logger/connector changes and unsafe
-replay of uncertain device/collection writes.
+manifest pins pyk 1.2.0 for the HA 2026.11.0 development baseline; the PoC uses
+a namespaced bundle. Assess that release dependency honestly. Public Store
+scraping belongs in Companion, not pyk. Check for private built-in runtime
+access, global logger/connector changes and unsafe replay of uncertain
+device/collection writes.
 
 Trace end-to-end: observation/session recovery, manual viewings, Library
 catalog/details/collections/artwork, control discovery/preflight, launch/remote
@@ -96,10 +99,10 @@ Explicitly review these recent contracts as part of the wider audit:
   title/year/edition ambiguity and collection matching. Numeric Store IDs are
   not local handles. Evaluate replay identity when date/title/link evidence
   changes.
-- Receipt blueprint v6: quoted forwards, original versus local fallback dates,
-  linkless prices, optional HTML, cover/title repetition versus actual duplicate
-  items, size limits and reconciled totals. Distinguish invalid parsing from
-  unmatched records and saved partial results. Use fictional receipt formats.
+- Receipt blueprint v8: quoted forwards, original versus local fallback dates,
+  required HTML, cover/title repetition versus actual duplicate items, size
+  limits and reconciled totals. Distinguish invalid parsing from unmatched
+  records and saved partial results. Use fictional receipt formats.
 - Blueprints: missing-only installation, semantic fingerprints, revision-bound
   updates, modified files, installed versus bundled versions, YAML histories,
   About/history UI, uncertain reload/write reporting and guarded custom-element
@@ -143,8 +146,9 @@ The current [logging contract](../docs/design/design-logging.md) is native HA
 module logging, HA handlers/levels, a small `safe_exception` helper and bounded
 diagnostics. There is **no custom log database, HMAC identifier scheme or
 log-values opt-in mode**. Do not restore removed designs to satisfy old reports.
-DEBUG never permits household data, URLs, frames, credentials, invoices or raw
-exception text/chains.
+For Companion-owned code, DEBUG never permits household data, URLs, frames,
+credentials, invoices or raw exception text/chains. Do not report logging
+concerns originating in external APIs or dependencies, including bundled code.
 
 For each subsystem map decision/outcome, conflict, retry, recovery, cancellation
 and cleanup evidence. Can a maintainer identify stage, bounded cause,
@@ -162,7 +166,7 @@ fictional scale probes.
 
 ### 5. Tests, tooling and documentation
 
-Run `bash dev/dev.sh check` with the prepared patched pyk checkout. It covers
+Run `bash dev/dev.sh check` with the packaged pyk bundle. It covers
 provider/integration tests, structure/doc links, Python lint/format, shell
 syntax, Markdown, frontend lint/format/security/component tests, types and
 build. Some tests require loopback sockets; if the sandbox denies them, use the
@@ -177,7 +181,7 @@ packages during the audit.
 Inspect assertions/fault paths rather than just test counts. Assess resource
 warnings, lifecycle cleanup and unexpected frontend console output. Record
 missing hardware/browser/HA transport/restore acceptance. Verify CLI, VS Code
-tasks, packaging and docs agree, including PYTHONPATH/pyk overlay. Audit
+tasks, packaging and docs agree, including bundled pyk provenance. Audit
 maintained Markdown for stale schema, permissions, version, UI, logging and
 release claims. Keep historical evidence clearly dated rather than rewriting its
 old results.

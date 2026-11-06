@@ -32,18 +32,15 @@ Recent Library/UI work includes canonical Science Fiction genres, individual
 resolution/dynamic-range/audio badges, general-audience-first rating filters,
 known-rating exclusion from Unrated, cached covers in reconciliation, calendar
 search/view restoration, Today navigation and the Watch Soon corner badge.
-Receipt blueprint v6 handles repeated cover/title links after v4 added quoted
-forwards and v5 added linkless original receipts with optional HTML ID recovery.
+Receipt blueprint v8 requires the HTML part and reports when it cannot be
+imported; v7 moved receipt extraction into Python.
 
 ## Next delivery gates
 
-The [2026-11-04 independent audit](../../audit/2026-11-04/AUDIT_FINDINGS.md)
-adds confirmed correctness, lifecycle and privacy fixes to the delivery work.
-Use its [prioritized plan](../../audit/2026-11-04/REFACTORING_PLAN.md) for
-evidence and acceptance checks, including purchase identity/import/query
-behavior and reproducible developer/CI entry points. Documentation of a
-limitation is not its resolution. The upstream and qualification gates below
-remain in force.
+The [2026-11-06 independent audit](../../audit/2026-11-06/AUDIT_FINDINGS.md)
+records offline findings and release qualification gaps. Historical reports
+capture the audited baseline rather than subsequent changes. The upstream and
+qualification gates below remain in force.
 
 1. Review and upstream the local pyk patches while preserving its existing
    `Device` workflow. Verify the released package with HA's built-in integration
