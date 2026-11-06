@@ -25,33 +25,9 @@ from .purchase_email import (
 from .purchases import price_cents
 from .receipt_html import parse_rows
 
-_PRICE = re.compile(r"(?<![\w.+-])[$£€]\s*[\d,]+\.\d{2}(?!\d)")
-_PRICE_TOKEN = re.compile(r"(?<![\w.])[-+]?[$£€]\s*[\d,]+(?:\.\d+)?")
-_LINK = re.compile(
-    r"<?(?:https?://[^\s<>]+)?/movie-store/(?:movie|set)/[^\s<>]+>?", re.I
-)
-_SECTION = re.compile(
-    r"(?i)\b(?:item|items|movie|title|product)\b"
-    r"(?:\s+(?:quality|format|qty|quantity|description|unit|item)){0,4}\s+price\b"
-)
 _TOTAL = re.compile(
     r"(?im)^\s*(subtotal|tax(?:es)?|total)\s*:?\s*([$£€][\d,]+\.\d{2})\b"
 )
-
-
-def _store_path(value):
-    try:
-        url = urlsplit(value.strip("<>"))
-        if url.scheme == "https" and url.netloc in {
-            "store.kaleidescape.com",
-            "www.kaleidescape.com",
-        }:
-            return url.path
-        if not url.scheme and not url.netloc and value.startswith(("/", "</")):
-            return url.path
-    except ValueError:
-        pass
-    return None
 
 
 class _HTMLText(HTMLParser):
