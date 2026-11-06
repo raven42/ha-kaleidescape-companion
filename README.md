@@ -46,7 +46,7 @@ imports. HA calendar publishing and dedicated-calendar Full Sync are optional.
 
 Receipt imports retain purchases in their own table, including purchases that
 arrive before a Library scan. Administrators reconcile saved unmatched purchases
-against Library entries without a JSON file or pausing recording. Schema 25
+against Library entries without a JSON file or pausing recording. Schema 26
 moves existing invoice histories into that table rather than keeping duplicate
 copies.
 
@@ -68,9 +68,9 @@ Install the complete built `custom_components/kaleidescape_companion/` directory
 under the target HA configuration, restart HA and add **Kaleidescape Companion**
 through **Settings → Devices & services**. Production includes compiled frontend
 assets and needs neither Node nor Vite. The released HA-pinned pyk dependency
-lacks this PoC's new interfaces; HA OS testing requires the patched package
-overlay described in the deployment guide. That guide also covers packaging,
-optional SSH deployment, configuration checks and rollback limits.
+lacks this PoC's new interfaces. A way to load the patched source in HA OS
+2026.11 has not yet been verified; see the deployment guide for the current
+limitation, packaging, optional SSH deployment, and configuration checks.
 
 Development requires Python 3.14.2+ with SQLite 3.35+, Node.js 22.13+ (22.x) or
 24+, and npm. HA 2026.11.0 with pyk 1.2.0 is the current development baseline,

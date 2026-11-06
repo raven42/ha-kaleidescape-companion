@@ -95,7 +95,10 @@ def review(db, payload, import_format, actor, *, purchase_only=False):
                         same_title = (
                             prior["title"].casefold() == record["title"].casefold()
                         )
-                        same_date = prior["purchased_on"] == record["purchased_on"]
+                        same_date = bool(
+                            record["purchased_on"]
+                            and prior["purchased_on"] == record["purchased_on"]
+                        )
                         same_order = bool(
                             record["order_id"]
                             and prior["order_id"] == record["order_id"]
@@ -331,7 +334,7 @@ def purchase_proposal(key, record, old, target, detail):
         "key": key,
         "table": "library",
         "title": record["title"],
-        "detail": f"{record['purchased_on']} · {detail}",
+        "detail": f"{record['purchased_on'] or 'Date not imported'} · {detail}",
         "action": action,
         "changes": changes,
         "conflicts": conflicts,

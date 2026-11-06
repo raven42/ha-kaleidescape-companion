@@ -63,20 +63,24 @@ permissions accordingly.
 The `import_purchase_email` action accepts private purchase data from HA
 automations with no user context or active administrators. It validates and
 bounds the input, saves unmatched purchases with no Library link, and applies
-unambiguous, nonconflicting matches in one transaction. Existing populated
-values are not overwritten; conflicts are returned for review. Possible receipt
-duplicates are held without being saved for administrator review; the heuristic
-is not proof of identity and does not repair existing duplicates. Unique
-proposed matches are applied without human review and are not proof of identity.
-An administrator can reconcile saved unmatched purchases while recording remains
-active; choices are actor- and revision-bound and require an available scanned
-Library entry. Match results include only cached artwork keys; cover images use
-the existing authenticated Library artwork endpoint. HA automation traces and
-action responses may contain private invoice data and need appropriate access
-controls. Public store refresh may fill a missing retail price, but never a
-purchase price. The missing purchase information sensor exposes its count and
-bounded movie names to HA entity readers. Its Library filter and purchase
-editing are limited to administrators.
+unambiguous, nonconflicting matches in one transaction. The receipt automation
+fetches the complete text and available HTML part for backend parsing. Its
+administrator-selected fields control what is stored; title and Store link are
+always extracted. An empty field selection is rejected. A missing unselected or
+unavailable purchase date remains null rather than being invented. Existing
+populated values are not overwritten; conflicts are returned for review.
+Possible receipt duplicates are held without being saved for administrator
+review; the heuristic is not proof of identity and does not repair existing
+duplicates. Unique proposed matches are applied without human review and are not
+proof of identity. An administrator can reconcile saved unmatched purchases
+while recording remains active; choices are actor- and revision-bound and
+require an available scanned Library entry. Match results include only cached
+artwork keys; cover images use the existing authenticated Library artwork
+endpoint. HA automation traces and action responses may contain private invoice
+data and need appropriate access controls. Public store refresh may fill a
+missing retail price, but never a purchase price. The missing purchase
+information sensor exposes its count and bounded movie names to HA entity
+readers. Its Library filter and purchase editing are limited to administrators.
 
 When HA automations are available, Companion installs missing packaged
 blueprints through HA's blueprint manager. It does not create or enable an
@@ -92,20 +96,19 @@ automation calls without a user context or active administrators; the calendar
 action uses the same dedicated calendar and reconciliation checks as its button.
 The purchase-email blueprint filters a selected IMAP entry and can filter sender
 text, which does not authenticate the sender. Receipt values and action
-responses can appear in HA automation traces; the blueprint does not write them
-to the system log or notifications. The receipt parser strips email quote
-markers and, for a forward without an explicit purchase date, requires a date
-adjacent to a Kaleidescape Store sender header instead of using the forward
+responses can appear in HA automation traces. The receipt parser strips email
+quote markers and, for a forward without an explicit purchase date, requires a
+date adjacent to a Kaleidescape Store sender header instead of using the forward
 date. That header is not authentication; forwarded receipts without a usable
-original date are rejected. For linkless plain-text receipts the blueprint may
-fetch the HTML part of the same IMAP message. Import uses bounded decoding and
-only associates a uniquely titled movie link on the fixed Store host; missing or
-ambiguous links remain unset. The fetched part can appear in HA traces and is
-not logged by Companion. The metadata refresh action accepts known provider
-names and only contacts enabled providers. Calendar Full Sync remains restricted
-to an explicitly acknowledged dedicated calendar, with its existing snapshot,
-grace and uncertainty checks. Its optional automation requests the second check;
-no in-process schedule performs it.
+original date are saved with an unknown date and reported for review. The
+blueprint fetches the HTML part of the same IMAP message when available. Import
+uses bounded decoding and only associates uniquely titled movie links on the
+fixed Store host; missing or ambiguous links remain unset. Receipt content may
+appear in HA logs under the diagnostic exception below. The metadata refresh
+action accepts known provider names and only contacts enabled providers.
+Calendar Full Sync remains restricted to an explicitly acknowledged dedicated
+calendar, with its existing snapshot, grace and uncertainty checks. Its optional
+automation requests the second check; no in-process schedule performs it.
 
 ## Storage, imports and rendering
 
@@ -209,7 +212,13 @@ agreement; Companion does not impose its household policy on all pyk callers.
 [Logging and diagnostics](../design/design-logging.md) is the authoritative
 logging mechanism and privacy policy. Use native module loggers and safe
 exception summaries at owned boundaries. Setup and backup hooks suppress raw
-exception chains in framework-facing errors after attempting cleanup. No raw
+exception chains in framework-facing errors after attempting cleanup. Receipt
+import is an explicit temporary diagnostic exception: failed or incomplete
+imports log the bounded full receipt, extracted results and reasons at warning;
+successful imports log them at debug. Unexpected failures also include their
+tracebacks. These logs can contain titles, prices, order IDs, addresses, local
+paths and other email contents. Protect HA log access and remove this exception
+once diagnostics are no longer needed. Outside receipt import, no raw
 credentials, household content, protocol frames or request bodies belong in
 Companion logs at any severity. Its diagnostic projection is bounded operational
 metadata, not a database export. This policy does not guarantee that unrelated

@@ -9,7 +9,7 @@ from uuid import uuid4
 
 from ..security import private_file
 
-SCHEMA_VERSION = 25
+SCHEMA_VERSION = 26
 _LOGGER = logging.getLogger(__name__)
 
 MIGRATIONS = {
@@ -390,6 +390,23 @@ MIGRATIONS[25] = (
         imported_at TEXT NOT NULL, library_id TEXT REFERENCES library(id)
             ON DELETE SET NULL, issue TEXT
     )""",
+    "CREATE INDEX purchase_records_library "
+    "ON purchase_records(library_id,purchased_on,id)",
+    "CREATE INDEX purchase_records_unmatched "
+    "ON purchase_records(purchased_on,id) WHERE library_id IS NULL",
+)
+
+
+MIGRATIONS[26] = (
+    """CREATE TABLE purchase_records_new (
+        id TEXT PRIMARY KEY, title TEXT NOT NULL, purchased_on TEXT,
+        purchase_price TEXT, retail_price TEXT, order_id TEXT, href TEXT,
+        imported_at TEXT NOT NULL, library_id TEXT REFERENCES library(id)
+            ON DELETE SET NULL, issue TEXT
+    )""",
+    "INSERT INTO purchase_records_new SELECT * FROM purchase_records",
+    "DROP TABLE purchase_records",
+    "ALTER TABLE purchase_records_new RENAME TO purchase_records",
     "CREATE INDEX purchase_records_library "
     "ON purchase_records(library_id,purchased_on,id)",
     "CREATE INDEX purchase_records_unmatched "

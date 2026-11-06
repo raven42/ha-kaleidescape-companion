@@ -1778,7 +1778,7 @@ export class KaleidescapeLibrary extends LitElement {
                                   <summary>
                                     Purchase history · Administrator
                                   </summary>
-                                  ${row.purchase_history.map((purchase) => html`<p>${this.date(purchase.purchased_on)} · ${purchase.title}<br />Paid: ${purchase.purchase_price ?? "Unknown"} · Retail: ${purchase.retail_price ?? "Unknown"}<br />Order: ${purchase.order_id ?? "Unknown"}${purchase.href ? html`<br />Store reference: ${purchase.href}` : nothing}</p>`)}
+                                  ${row.purchase_history.map((purchase) => html`<p>${purchase.purchased_on ? this.date(purchase.purchased_on) : "Date not imported"} · ${purchase.title}<br />Paid: ${purchase.purchase_price ?? "Unknown"} · Retail: ${purchase.retail_price ?? "Unknown"}<br />Order: ${purchase.order_id ?? "Unknown"}${purchase.href ? html`<br />Store reference: ${purchase.href}` : nothing}</p>`)}
                                 </details>`
                               : nothing
                           }

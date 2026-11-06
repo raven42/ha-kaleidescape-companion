@@ -108,7 +108,8 @@ overwrite an unexpected component target. Complete HA onboarding, add
 observation. A manual journal alone needs no player connection.
 
 The local HA launcher uses the same verified source overlay as the tests. It
-does not install or update the separate HA OS overlay.
+does not install the patched source in HA OS. No HA OS 2026.11 deployment method
+for the patched source has yet been verified.
 
 The HA panel uses the signed-in session. Standalone Vite uses a memory-only
 token from the development HA instance and a restricted local proxy; no wildcard

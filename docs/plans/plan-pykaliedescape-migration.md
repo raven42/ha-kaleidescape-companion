@@ -43,11 +43,11 @@ provider. No Store hooks should be added to pyk for this migration.
   remain in Companion and are included in the runtime package.
 - The manifest pins `pykaleidescape==1.2.0` to match HA 2026.11.0. That released
   package does **not** contain the capabilities used by this PoC. Tests load the
-  adjacent patched pyk checkout. HA OS testing requires the operator to install
-  the reviewed patched `kaleidescape` package overlay into
-  `/config/deps/lib/python3.14/site-packages` before restarting HA. A normal HA
-  dependency install alone will not supply this code. Do not treat the overlay
-  as an upstream release or a reproducible production dependency.
+  adjacent patched pyk checkout. A verified way to load that patched source in
+  HA OS 2026.11 is still needed: HA no longer adds `/config/deps` to its import
+  path. A normal HA dependency install alone will not supply the patched code.
+  Do not treat the development checkout as an upstream release or a reproducible
+  production dependency.
 
 HA OS discovery and status logs exposed a patched-pyk identity-read bug: the
 protocol discovery list uses 12-digit serials, while `GET_DEVICE_INFO` returns
@@ -56,8 +56,8 @@ the same serial zero-padded to 16 digits. The new
 identity, with an offline emulator regression test. The final
 `08a-cmp-dev-version` branch labels the complete development build
 `1.2.0.dev1+cmp` in both Python package metadata and pyk's runtime version. HA
-OS validation still requires a fresh overlay from that final branch and a
-restart. The existing overlay is not updated by changing this source checkout.
+OS validation still requires a verified deployment method for that final branch
+and a restart. Changing this source checkout does not update HA OS.
 
 ## Compatibility and upstream path
 

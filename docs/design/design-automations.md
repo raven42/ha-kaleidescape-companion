@@ -91,29 +91,25 @@ a subject containing “Kaleidescape Store Receipt”. The optional sender subst
 filter is a routing filter, not sender authentication. `imap.fetch` retrieves
 the complete message; the event's text preview may be truncated.
 
-The parser removes forwarding quote markers and reads the item section and
-totals. For a forwarded message without an explicit order/purchase date, it
-requires a usable original date immediately following a Store sender header. It
-does not substitute the date the message was forwarded. For an original message,
-fallback to the fetched timestamp uses HA's local calendar date. Forward headers
-are parsing evidence, not proof of authenticity.
+Blueprint version 7 passes the fetched message text and the available HTML part
+to the Python importer. It attempts both representations, extracts bounded item
+evidence and imports independently valid items. Incomplete values and
+subtotal/total discrepancies are returned as review issues rather than rejecting
+the entire receipt. A missing date remains unknown; forwarded messages do not
+use the forward date as the purchase date. Parsing does not authenticate the
+sender or guarantee a match to the correct Library edition.
 
-Linked movie rows preserve their Store paths and numeric movie IDs in those
-paths. Collection rows retain their included movie references. Version 6 treats
-repeated cover and title links for the same pending unpriced movie as one item,
-while retaining rejection of separate duplicate movie items. Complete linkless
-plain-text retail/paid-price rows are also supported; incomplete or ambiguous
-plain-text structures fail validation. The blueprint requires usable titles,
-dates and prices, matching item/subtotal sums and matching subtotal-plus-tax
-totals before calling import.
+The blueprint offers `transaction-id`, `purchase-price`, `retail-price` and
+`purchase-date`; at least one must be selected. Title and a Store link are
+always extracted when available. Unselected fields are not stored. Missing
+selected fields and unidentified items are reported for review. With fewer
+identity fields, distinct purchases can be harder to distinguish; check
+duplicates before accepting a separate purchase.
 
-If a valid receipt has movies without links and HA lists a `text/html` part, the
-blueprint calls `imap.fetch_part` for that part of the same entry/message. This
-explicitly obtains HTML; it does not change HA's default plain-text selection.
-The backend bounds and decodes that part, and accepts only uniquely titled
-numeric movie-detail links from the fixed Store host or equivalent relative
-paths. Missing or ambiguous links stay unset. Fetch failure stops that run;
-inspect its trace before retrying.
+The automation attempts `imap.fetch_part` whenever HA lists an HTML part. If
+that fetch fails, it still passes the text to the importer and reports the
+missing HTML. HA's IMAP actions and automation traces may contain the full
+email.
 
 Store numeric IDs and local Library content handles are different identities.
 Preserving a Store ID improves retained evidence but does not, by itself, make
@@ -147,10 +143,10 @@ editing limits are in [data management](design-data-management.md).
    update under **Home Assistant → Optional automations**. A new Companion build
    alone does not update an installed older blueprint.
 2. Inspect the failed automation trace. Failure before the import action means
-   no purchase import was attempted by that run. Check date extraction, item
-   count, subtotal reconciliation, `receipt_valid`, and any HTML fetch error.
-   Failure after import needs inspection of the response and saved records; do
-   not assume a later notification failure rolled back purchases.
+   no purchase import was attempted by that run. Check the IMAP fetch and field
+   selection, then review the action response and receipt diagnostics. Failure
+   after import needs inspection of the response and saved records; do not
+   assume a later notification failure rolled back purchases.
 3. If the response needs review, inspect its bounded reasons and the saved
    purchases. Unlinked purchases can be reconciled after Library sync. A
    conflicting value needs deliberate review, not blind replacement.
@@ -168,6 +164,7 @@ universal deduplication across arbitrary rewrites of an email.
 
 HA automation traces can contain the full private email, HTML part and invoice
 response. Share only necessary redacted reason values and parsing results.
-Companion logs and notifications omit invoice contents. Source tests use
-fictional receipts, never copied household traces; see the
-[security policy](../policies/policy-security.md).
+Receipt import warnings currently include the full bounded email, parsed results
+and issue details; successful receipt input is logged at debug. Protect HA logs
+accordingly. Source tests use fictional receipts, never copied household traces;
+see the [security policy](../policies/policy-security.md).

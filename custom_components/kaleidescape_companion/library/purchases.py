@@ -46,10 +46,10 @@ def missing_information(db, source):
             "purchase_records WHERE library_id=library.id)) IS NOT NULL)=0 "
             "OR max(coalesce(purchase_price,(SELECT purchase_price FROM "
             "purchase_records WHERE library_id=library.id "
-            "ORDER BY purchased_on,id LIMIT 1)) IS NOT NULL)=0 "
+            "ORDER BY purchased_on IS NULL,purchased_on,id LIMIT 1)) IS NOT NULL)=0 "
             "OR max(coalesce(retail_price,(SELECT retail_price FROM "
             "purchase_records WHERE library_id=library.id "
-            "ORDER BY purchased_on,id LIMIT 1)) IS NOT NULL)=0)",
+            "ORDER BY purchased_on IS NULL,purchased_on,id LIMIT 1)) IS NOT NULL)=0)",
             (source,),
         )
     }
@@ -192,7 +192,9 @@ def purchase_record(row):
         raise invalid("Expected a purchase record")
     record = {
         "title": text(row.get("title"), 500),
-        "purchased_on": purchase_date(row.get("purchased_on")),
+        "purchased_on": purchase_date(row["purchased_on"])
+        if row.get("purchased_on") is not None
+        else None,
         "purchase_price": price(row.get("purchase_price")),
         "retail_price": price(row.get("retail_price")),
         "order_id": None if row.get("order_id") is None else text(row["order_id"], 256),
@@ -244,7 +246,14 @@ def history(value):
         records.append(stored)
     if len(json.dumps(records, ensure_ascii=True).encode()) > 2 * 1024 * 1024:
         raise invalid("Purchase history exceeds 2 MiB for this Library entry")
-    return sorted(records, key=lambda row: (row["purchased_on"], row["id"]))
+    return sorted(
+        records,
+        key=lambda row: (
+            row["purchased_on"] is None,
+            row["purchased_on"] or "",
+            row["id"],
+        ),
+    )
 
 
 def embedded_history(row, decode):
@@ -288,7 +297,7 @@ def history_for(db, title_id):
         {key: row[key] for key in ("id", *INVOICE_FIELDS, "imported_at")}
         for row in db.execute(
             "SELECT * FROM purchase_records WHERE library_id=? "
-            "ORDER BY purchased_on,id",
+            "ORDER BY purchased_on IS NULL,purchased_on,id",
             (title_id,),
         )
     ]
@@ -400,7 +409,7 @@ def fill_missing_price(db, title_id, field, value):
     invoice = db.execute(
         "SELECT id,purchase_price,retail_price FROM purchase_records "
         "WHERE library_id=? "
-        "ORDER BY purchased_on,id LIMIT 1",
+        "ORDER BY purchased_on IS NULL,purchased_on,id LIMIT 1",
         (title_id,),
     ).fetchone()
     if invoice:

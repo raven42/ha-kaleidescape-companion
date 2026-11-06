@@ -563,7 +563,7 @@ class PurchaseImportTest(unittest.IsolatedAsyncioTestCase):
         self.repository = JournalRepository(self.path)
         self.addAsyncCleanup(self.repository.async_close)
         await self.repository.async_open()
-        self.assertEqual((await self.repository.async_info())["schema_version"], 25)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 26)
         invoices = await self.invoices()
         self.assertEqual(len(invoices), 1)
         ledger = (await self.repository.async_inspect("purchase_records"))["items"]

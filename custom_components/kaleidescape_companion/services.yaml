@@ -1,10 +1,13 @@
 import_purchase_email:
   name: Import purchase email
-  description: Import a parsed Kaleidescape purchase email into the library.
+  description: Import a fetched or parsed Kaleidescape receipt into the library.
   fields:
     invoice:
       name: Purchase email
-      description: Parsed email object or JSON string containing the purchases array.
+      description: >-
+        Fetched email content and selected fields, or a parsed email object or
+        JSON string containing the purchases array. Receipt diagnostics can
+        include the message contents in Home Assistant logs.
       required: true
       selector:
         object:

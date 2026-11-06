@@ -165,7 +165,7 @@ def candidates(db, source):
         """SELECT id,source_group,title,json_extract(data,'$.year') year,
             coalesce(href,(SELECT p.href FROM purchase_records p
                 WHERE p.library_id=library.id AND p.href IS NOT NULL
-                ORDER BY p.purchased_on,p.id LIMIT 1)) href,
+                ORDER BY p.purchased_on IS NULL,p.purchased_on,p.id LIMIT 1)) href,
             json_extract(enrichment,'$.kaleidescape.fetched_at') store_fetched,
             json_extract(enrichment,'$.tmdb.fetched_at') tmdb_fetched,
             json_extract(enrichment,'$.reviewed.backdrop_removed') backdrop_removed,

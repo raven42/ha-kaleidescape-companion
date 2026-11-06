@@ -80,7 +80,7 @@ def inspect_database(
         # The visible summary comes from the earliest linked invoice, even when
         # that invoice's field is NULL. Keep predicates and ordering in sync.
         invoice = "FROM purchase_records p WHERE p.library_id=library.id"
-        first = " ORDER BY p.purchased_on,p.id LIMIT 1)"
+        first = " ORDER BY p.purchased_on IS NULL,p.purchased_on,p.id LIMIT 1)"
         for name in ("purchase_price", "retail_price", "order_id", "href"):
             fields[name]["expression"] = (
                 f"(CASE WHEN EXISTS (SELECT 1 {invoice}) "

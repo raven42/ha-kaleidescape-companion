@@ -7776,7 +7776,7 @@ const J = [
                                   <summary>
                                     Purchase history · Administrator
                                   </summary>
-                                  ${t.purchase_history.map((h) => a`<p>${this.date(h.purchased_on)} · ${h.title}<br />Paid: ${h.purchase_price ?? "Unknown"} · Retail: ${h.retail_price ?? "Unknown"}<br />Order: ${h.order_id ?? "Unknown"}${h.href ? a`<br />Store reference: ${h.href}` : l}</p>`)}
+                                  ${t.purchase_history.map((h) => a`<p>${h.purchased_on ? this.date(h.purchased_on) : "Date not imported"} · ${h.title}<br />Paid: ${h.purchase_price ?? "Unknown"} · Retail: ${h.retail_price ?? "Unknown"}<br />Order: ${h.order_id ?? "Unknown"}${h.href ? a`<br />Store reference: ${h.href}` : l}</p>`)}
                                 </details>` : l}
                         </details>
                       </div>

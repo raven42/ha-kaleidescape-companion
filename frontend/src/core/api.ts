@@ -294,7 +294,7 @@ export interface UISettings {
 export interface LibraryPurchase {
   id: string;
   title: string;
-  purchased_on: string;
+  purchased_on: string | null;
   purchase_price: string | null;
   retail_price: string | null;
   order_id: string | null;

@@ -283,33 +283,36 @@ saved purchase HTML.
 
 The [automation design](design-automations.md) owns blueprint installation,
 updates, receipt parsing and operator retry steps. The bundled purchase-receipt
-blueprint is version **6**. To set up the optional IMAP automation, open
+blueprint is version **7**. To set up the optional IMAP automation, open
 **Companion Settings → Home Assistant → Optional automations**, choose
 **Purchase receipt email**, then open **Home Assistant Blueprints**, select the
 installed blueprint, choose an IMAP integration, and save an automation. The
 optional sender text filter helps narrow matching mail; it does not authenticate
-the sender. An invalid receipt or an unresolved import produces a generic
-notification. Open **Database → Reconcile purchases** to link saved purchases to
-scanned Library entries. The parser expects a text receipt with an
-`Item Quality Price` section and reconciled dollar amounts; other layouts must
-be reviewed or adapted. The IMAP integration must be configured separately.
-Missing blueprints are installed at startup when HA automations are available;
-no automation is enabled for you. Each blueprint description has a version
-number. Settings shows whether each file is current, outdated, modified, missing
-or unavailable. Known outdated versions produce a startup warning and a
-persistent HA notification. Review and explicitly update existing files in
-Settings; HA reloads automations that use them and sends an update notification.
-Customized files are never replaced automatically. The Settings About tab
-compares installed and bundled blueprint versions and offers a version history
-for each bundled blueprint. Each history is maintained in the YAML comments
-between the version-history markers; it describes the bundled file, which may
-differ from a locally modified blueprint.
+the sender. Select one or more of transaction ID, purchase price, retail price
+and purchase date; title and Store link are always extracted. No selection is an
+error. The Python parser attempts both text and HTML, imports independently
+usable entries and reports missing fields or discrepancies. Open **Database →
+Reconcile purchases** to link saved purchases to scanned Library entries. The
+current parser recognizes item/price sections; unfamiliar layouts may require
+further review. The IMAP integration must be configured separately. Missing
+blueprints are installed at startup when HA automations are available; no
+automation is enabled for you. Each blueprint description has a version number.
+Settings shows whether each file is current, outdated, modified, missing or
+unavailable. Known outdated versions produce a startup warning and a persistent
+HA notification. Review and explicitly update existing files in Settings; HA
+reloads automations that use them and sends an update notification. Customized
+files are never replaced automatically. The Settings About tab compares
+installed and bundled blueprint versions and offers a version history for each
+bundled blueprint. Each history is maintained in the YAML comments between the
+version-history markers; it describes the bundled file, which may differ from a
+locally modified blueprint.
 
 For forwarded receipts, quote markers are removed before parsing. An explicit
 purchase date is preferred; otherwise, the parser requires the original
 Kaleidescape Store sender header immediately followed by its Date header. It
-does not use the forward's date as the purchase date. If the original date is
-missing or uses an unsupported layout, the receipt is rejected for review.
+does not use the forward's date as the purchase date. If a selected original
+date is missing or unsupported, the purchase is saved with an unknown date and
+the issue is reported.
 
 The `kaleidescape_companion.import_purchase_email` action accepts the parsed
 email object, or its JSON string, in `invoice`. Configure the integration and
@@ -481,9 +484,10 @@ fetched. JSON and SQLite exports are private administrator downloads.
 
 ### Formats, limits and APIs
 
-SQLite merge reads schema-25 purchase records from the separate ledger. Manual
-or public prices on a Library version remain title fields and do not create an
-invoice. Older exports with embedded or flat purchase fields remain supported.
+SQLite merge reads schema-25-and-later purchase records from the separate
+ledger. Manual or public prices on a Library version remain title fields and do
+not create an invoice. Older exports with embedded or flat purchase fields
+remain supported.
 
 Limits are 32 MiB per file, 10,000 combined viewing/title/purchase records, an 8
 MiB review response, and a 30-second upload/validation/review budget. Oversized
@@ -498,15 +502,15 @@ operational recent-batch markers are never merged from exports. SQLite snapshots
 still contain these private rows; see
 [UI preference storage](design-user-interface.md#personal-and-shared-preferences).
 Every viewing needs `id`, `title`, and an ISO `started_at` with timezone. Titles
-need exact ID/source/handle/group/title keys. Purchase records need title/date;
-optional prices must be nonnegative currency strings with two decimal places,
-and order IDs/links are bounded validated text. Each embedded import history
-supports up to 1000 invoices and 2 MiB. Scan the source before importing
-purchase history; new metadata rows imported in the same review do not qualify
-as scanned targets. SQLite imports read only known columns from regular
-allowlisted tables in a defensive, query-only in-memory connection; SQL text,
-views, virtual tables, functions and attachments are rejected. No source schema
-or code is installed.
+need exact ID/source/handle/group/title keys. Purchase records need a title; the
+purchase date may be unknown; optional prices must be nonnegative currency
+strings with two decimal places, and order IDs/links are bounded validated text.
+Each embedded import history supports up to 1000 invoices and 2 MiB. Scan the
+source before importing purchase history; new metadata rows imported in the same
+review do not qualify as scanned targets. SQLite imports read only known columns
+from regular allowlisted tables in a defensive, query-only in-memory connection;
+SQL text, views, virtual tables, functions and attachments are rejected. No
+source schema or code is installed.
 
 Upload the raw file to the scoped, authenticated preview route:
 

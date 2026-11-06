@@ -79,12 +79,24 @@ locations. Use placeholders for values and lazy logger arguments. Aggregate
 counts can still describe household activity; diagnostic downloads remain
 private.
 
-Do not log titles, notes, searches, calendar text, collections, content handles,
-player names/serials, addresses/hostnames, source URLs, database paths, account
+Except for the temporary receipt-import diagnostic described below, do not log
+titles, notes, searches, calendar text, collections, content handles, player
+names/serials, addresses/hostnames, source URLs, database paths, account
 identifiers, credentials, tokens, cookies, authorization headers, invoice data,
 raw SQL/rows, request/response bodies, HTML, images or wire frames. DEBUG is not
-an exception to this policy. Truncation and hashing are not substitutes for
-omitting household identifiers. Do not fetch data simply to enrich a message.
+an exception to this policy outside the receipt diagnostic. Truncation and
+hashing are not substitutes for omitting household identifiers. Do not fetch
+data simply to enrich a message.
+
+Receipt import currently logs the bounded full action input, outcome and item
+reasons at warning when review is needed or an import is rejected; successful
+results are available at debug. Unexpected receipt-import failures also log
+their exception traceback and the input. This explicitly requested temporary
+diagnostic can include raw email text, HTML, titles, prices, order numbers,
+addresses, local paths and other private content. HA logs and automation traces
+therefore need the same access and retention controls as the original email.
+Oversized or unserializable inputs are not reproduced in full. Remove this
+exception when the parser has been qualified against real receipts.
 
 Raw exception messages and traceback chains can contain any of those values. Use
 `safe_exception(error)` at owned exception boundaries, including cleanup,

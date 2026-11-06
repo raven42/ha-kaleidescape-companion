@@ -23,7 +23,7 @@ from ..library.summary import library_summary
 from ..playback.history import history_summary
 from ..playback.recording import save_session
 from . import import_merge, journal_store, preferences
-from .importing import MAX_IMPORT_BYTES
+from .importing import MAX_IMPORT_BYTES, decode_json
 from .maintenance import inspect_database, purge_database
 from .migrations import SCHEMA_VERSION, UnsupportedSchemaError, migrate
 from .models import (
@@ -831,24 +831,53 @@ class JournalRepository:
                 self._import_task = None
                 self._import_active = False
 
-    async def async_purchase_email(self, payload, *, actor_id=None, allow_partial=True):
+    async def async_purchase_email(
+        self, payload, *, actor_id=None, allow_partial=True, timezone="UTC"
+    ):
         """Import an automation email using the same serialized import boundary."""
         async with self.async_import_slot():
             task = self._import_task = asyncio.create_task(
                 self._call(
-                    self._purchase_email, payload, self._actor(actor_id), allow_partial
+                    self._purchase_email,
+                    payload,
+                    self._actor(actor_id),
+                    allow_partial,
+                    timezone,
                 )
             )
             return await async_wait(task)
 
-    def _purchase_email(self, payload, actor, allow_partial):
+    def _purchase_email(self, payload, actor, allow_partial, timezone):
         from uuid import uuid4
 
         from ..library.purchase_email import normalize
 
         if self._paused:
             raise JournalError("backup_in_progress", "Journal writes paused for backup")
-        records = normalize(payload)
+        if isinstance(payload, str):
+            if len(payload.encode("utf-8")) > 4 * 1024 * 1024:
+                raise invalid("Purchase email exceeds the size limit")
+            try:
+                payload = decode_json(payload)
+            except (ValueError, TypeError, RecursionError) as error:
+                raise invalid("Expected a valid purchase email JSON object") from error
+        raw_receipt = isinstance(payload, dict) and "email" in payload
+        if raw_receipt:
+            from ..library.receipt_parser import parse_receipt
+
+            records, parse_issues = parse_receipt(payload, timezone)
+        else:
+            records, parse_issues = normalize(payload), []
+        if not records:
+            return {
+                "status": "needs_review",
+                "imported_count": 0,
+                "updated_count": 0,
+                "unchanged_count": 0,
+                "issues": parse_issues,
+                "review_records": [],
+                "extracted_records": [],
+            }
         db = self._db()
         plan = import_merge.review(
             db, json.dumps(records).encode(), "json", actor, purchase_only=True
@@ -900,13 +929,15 @@ class JournalRepository:
                 )
             finally:
                 db.execute(f"PRAGMA max_page_count={previous}")
-        if problems:
+        if problems or parse_issues:
             problem_keys = {row["key"] for row in problems}
             return {
                 "status": "needs_review",
                 **result,
                 "unchanged_count": unchanged_count,
-                "issues": [
+                **({"extracted_records": records} if raw_receipt else {}),
+                "issues": parse_issues
+                + [
                     {
                         "title": row["title"],
                         "reason": "possible_duplicate"
@@ -931,6 +962,7 @@ class JournalRepository:
             "status": "imported" if selected else "unchanged",
             **result,
             "unchanged_count": unchanged_count,
+            **({"extracted_records": records} if raw_receipt else {}),
         }
 
     async def async_import_preview(
@@ -968,7 +1000,7 @@ class JournalRepository:
             dict(row)
             for row in db.execute(
                 "SELECT * FROM purchase_records WHERE library_id IS NULL "
-                "ORDER BY purchased_on,id LIMIT 10001"
+                "ORDER BY purchased_on IS NULL,purchased_on,id LIMIT 10001"
             )
         ]
         if len(rows) > 10000:
@@ -1605,7 +1637,7 @@ class JournalRepository:
                     first = True
                     for row in db.execute(
                         "SELECT * FROM purchase_records WHERE library_id IS NULL "
-                        "ORDER BY purchased_on,id"
+                        "ORDER BY purchased_on IS NULL,purchased_on,id"
                     ):
                         if first:
                             output.write(', "library_purchases": [')

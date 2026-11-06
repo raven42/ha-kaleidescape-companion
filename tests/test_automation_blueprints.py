@@ -25,6 +25,10 @@ from custom_components.kaleidescape_companion.library.purchase_email import norm
 from custom_components.kaleidescape_companion.services import async_register_services
 from custom_components.kaleidescape_companion.ui.automation_templates import TEMPLATES
 
+LEGACY_RECEIPT = (
+    Path(__file__).parent / "fixtures/blueprints/purchase_email_parser_v6.yaml"
+)
+
 TEMPLATE_DIR = (
     Path(__file__).resolve().parents[1]
     / "custom_components/kaleidescape_companion/templates"
@@ -81,7 +85,7 @@ class BlueprintTest(unittest.IsolatedAsyncioTestCase):
         self.addAsyncCleanup(self.hass.async_stop, force=True)
 
     async def render(self, body, subject="Kaleidescape Store Receipt", date=None):
-        doc = load_yaml(str(TEMPLATE_DIR / TEMPLATES["purchase_email"]))
+        doc = load_yaml(str(LEGACY_RECEIPT))
         values = {
             "email": {"text": body, "date": date},
             "trigger": SimpleNamespace(
@@ -169,14 +173,16 @@ class BlueprintTest(unittest.IsolatedAsyncioTestCase):
             ),
             1999,
         )
-        doc = load_yaml(str(TEMPLATE_DIR / TEMPLATES["purchase_email"]))
+        doc = load_yaml(str(LEGACY_RECEIPT))
         sequence = doc["actions"][-1]["choose"][0]["sequence"]
         self.assertEqual(
             sequence[1]["action"], "kaleidescape_companion.import_purchase_email"
         )
         self.assertNotIn("system_log.write", str(doc))
 
-    async def test_receipt_script_fetches_and_calls_the_real_import_action(self):
+    async def test_receipt_script_fetches_html_and_passes_selected_fields_to_action(
+        self,
+    ):
         loader.async_setup(self.hass)
         await trigger.async_setup(self.hass)
         await condition.async_setup(self.hass)
@@ -189,7 +195,10 @@ class BlueprintTest(unittest.IsolatedAsyncioTestCase):
             {
                 "use_blueprint": {
                     "path": "receipt.yaml",
-                    "input": {"imap_entry": "fictional-imap"},
+                    "input": {
+                        "imap_entry": "fictional-imap",
+                        "import_fields": ["purchase-price"],
+                    },
                 }
             },
         )
@@ -199,15 +208,11 @@ class BlueprintTest(unittest.IsolatedAsyncioTestCase):
                 self.hass, "test", inputs.async_substitute()
             )
 
-        current_body = [BODY]
-        parts = [{}]
-
         async def fetch(call):
-            self.assertEqual(call.data["entry"], "fictional-imap")
             return {
-                "text": current_body[0],
+                "text": UNLINKED_BODY,
                 "date": "2026-10-13T12:30:00+00:00",
-                "parts": parts[0],
+                "parts": {"1": {"content_type": "text/html"}},
             }
 
         async def fetch_part(call):
@@ -215,10 +220,7 @@ class BlueprintTest(unittest.IsolatedAsyncioTestCase):
             return {
                 "content_type": "text/html",
                 "content_transfer_encoding": "quoted-printable",
-                "part_data": (
-                    '<a href=3D"https://store.kaleidescape.com/movie-store/'
-                    'movie/details/123">The Fictional Voyage</a>'
-                ),
+                "part_data": "<p>Fictional HTML</p>",
             }
 
         notifications = []
@@ -235,7 +237,14 @@ class BlueprintTest(unittest.IsolatedAsyncioTestCase):
         )
         async_register_services(self.hass)
         repo = SimpleNamespace(
-            async_purchase_email=AsyncMock(return_value={"status": "imported"})
+            async_purchase_email=AsyncMock(
+                return_value={
+                    "status": "needs_review",
+                    "imported_count": 2,
+                    "pending_count": 1,
+                    "issues": [{"title": "Private title", "reason": "unmatched"}],
+                }
+            )
         )
         runtime = SimpleNamespace(repository=repo)
         script = Script(self.hass, validated["actions"], "receipt-test", "automation")
@@ -246,48 +255,145 @@ class BlueprintTest(unittest.IsolatedAsyncioTestCase):
                 "subject": "Kaleidescape Store Receipt",
             }
         )
-        with patch(
-            "custom_components.kaleidescape_companion.services.loaded_runtimes",
-            return_value=[("entry", runtime)],
+        with (
+            patch(
+                "custom_components.kaleidescape_companion.services.loaded_runtimes",
+                return_value=[("entry", runtime)],
+            ),
+            patch("custom_components.kaleidescape_companion.services._LOGGER.warning"),
         ):
             await script.async_run(
-                {"trigger": SimpleNamespace(event=event)}, context=Context()
+                {
+                    "trigger": SimpleNamespace(event=event),
+                    "import_fields": ["purchase-price"],
+                },
+                context=Context(),
             )
-            payload = repo.async_purchase_email.await_args.args[0]
-            self.assertEqual(len(normalize(payload)), 3)
-            repo.async_purchase_email.return_value = {
-                "status": "needs_review",
-                "imported_count": 2,
-                "updated_count": 0,
-                "unchanged_count": 0,
-                "issues": [{"title": "Private title", "reason": "unmatched"}],
-                "review_records": [],
+        payload = repo.async_purchase_email.await_args.args[0]
+        self.assertEqual(payload["email"]["text"], UNLINKED_BODY)
+        self.assertEqual(payload["selected_fields"], ["purchase-price"])
+        self.assertEqual(payload["html_part"]["part_data"], "<p>Fictional HTML</p>")
+        self.assertIn("1 saved without a Library match", notifications[0]["message"])
+
+    async def test_receipt_blueprint_imports_text_when_html_fetch_fails(self):
+        from custom_components.kaleidescape_companion.core.repository import (
+            JournalRepository,
+        )
+
+        loader.async_setup(self.hass)
+        await trigger.async_setup(self.hass)
+        await condition.async_setup(self.hass)
+        blueprint = Blueprint(
+            load_yaml(str(TEMPLATE_DIR / TEMPLATES["purchase_email"])),
+            expected_domain="automation",
+            schema=AUTOMATION_BLUEPRINT_SCHEMA,
+        )
+        inputs = BlueprintInputs(
+            blueprint,
+            {
+                "use_blueprint": {
+                    "path": "receipt.yaml",
+                    "input": {"imap_entry": "fictional-imap"},
+                }
+            },
+        )
+        inputs.validate()
+        with patch("homeassistant.loader._LOGGER.warning"):
+            validated = await async_validate_config_item(
+                self.hass, "test", inputs.async_substitute()
+            )
+
+        async def fetch(call):
+            return {
+                "text": UNLINKED_BODY,
+                "date": "2026-10-13T12:30:00+00:00",
+                "parts": {"1": {"content_type": "text/html"}},
             }
+
+        async def fail_part(call):
+            raise HomeAssistantError("fictional fetch failure")
+
+        self.hass.services.async_register(
+            "imap", "fetch", fetch, supports_response=SupportsResponse.ONLY
+        )
+        self.hass.services.async_register(
+            "imap", "fetch_part", fail_part, supports_response=SupportsResponse.ONLY
+        )
+        self.hass.services.async_register(
+            "persistent_notification", "create", lambda call: None
+        )
+        async_register_services(self.hass)
+        repo = JournalRepository(Path(self.directory.name) / "journal.sqlite3")
+        await repo.async_open()
+        self.addAsyncCleanup(repo.async_close)
+        script = Script(self.hass, validated["actions"], "receipt-test", "automation")
+        event = SimpleNamespace(
+            data={
+                "entry_id": "fictional-imap",
+                "uid": "123",
+                "subject": "Kaleidescape Store Receipt",
+            }
+        )
+        fields = ["transaction-id", "purchase-price", "retail-price", "purchase-date"]
+        with (
+            patch(
+                "custom_components.kaleidescape_companion.services.loaded_runtimes",
+                return_value=[("entry", SimpleNamespace(repository=repo))],
+            ),
+            patch(
+                "custom_components.kaleidescape_companion.services._LOGGER.warning"
+            ) as warning,
+            patch.object(Script, "_log"),
+        ):
             await script.async_run(
-                {"trigger": SimpleNamespace(event=event)}, context=Context()
+                {"trigger": SimpleNamespace(event=event), "import_fields": fields},
+                context=Context(),
             )
-            self.assertIn("2 purchases imported", notifications[0]["message"])
-            self.assertIn("1 need review", notifications[0]["message"])
-            self.assertNotIn("Private title", notifications[0]["message"])
-            current_body[0] = UNLINKED_BODY
-            parts[0] = {"1": {"content_type": "text/html"}}
+        rows = (await repo.async_inspect("purchase_records"))["items"]
+        self.assertEqual(len(rows), 3)
+        self.assertTrue(
+            any("html_part_unavailable" in str(call) for call in warning.call_args_list)
+        )
+
+    async def test_receipt_blueprint_rejects_empty_field_selection(self):
+        loader.async_setup(self.hass)
+        await trigger.async_setup(self.hass)
+        await condition.async_setup(self.hass)
+        blueprint = Blueprint(
+            load_yaml(str(TEMPLATE_DIR / TEMPLATES["purchase_email"])),
+            expected_domain="automation",
+            schema=AUTOMATION_BLUEPRINT_SCHEMA,
+        )
+        inputs = BlueprintInputs(
+            blueprint,
+            {
+                "use_blueprint": {
+                    "path": "receipt.yaml",
+                    "input": {"imap_entry": "fictional-imap", "import_fields": []},
+                }
+            },
+        )
+        inputs.validate()
+        with patch("homeassistant.loader._LOGGER.warning"):
+            validated = await async_validate_config_item(
+                self.hass, "test", inputs.async_substitute()
+            )
+        script = Script(self.hass, validated["actions"], "receipt-test", "automation")
+        with patch.object(Script, "_log") as script_log:
             await script.async_run(
-                {"trigger": SimpleNamespace(event=event)}, context=Context()
+                {
+                    "trigger": SimpleNamespace(event=SimpleNamespace(data={})),
+                    "import_fields": [],
+                },
+                context=Context(),
             )
-            payload = repo.async_purchase_email.await_args.args[0]
-            result = normalize(payload)
-            self.assertEqual(
-                next(row for row in result if row["title"] == "The Fictional Voyage")[
-                    "href"
-                ],
-                "/movie-store/movie/details/123",
-            )
-            current_body[0] = BODY.replace("Total $20.99", "Total $21.00")
-            await script.async_run(
-                {"trigger": SimpleNamespace(event=event)}, context=Context()
-            )
-        self.assertEqual(repo.async_purchase_email.await_count, 3)
-        self.assertEqual(len(notifications), 3)
+        self.assertTrue(
+            any(
+                "Select at least one receipt field" in str(call)
+                for call in script_log.call_args_list
+            ),
+            script_log.call_args_list,
+        )
 
     async def test_incomplete_duplicate_or_one_cent_disagreement_is_rejected(self):
         for body in (

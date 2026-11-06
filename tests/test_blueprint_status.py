@@ -41,7 +41,7 @@ class BlueprintStatusTest(unittest.IsolatedAsyncioTestCase):
     async def test_fingerprints_match_packaged_and_previous_versions(self):
         for kind in templates.TEMPLATES:
             content = templates.read_template(kind)["yaml"]
-            version = 6 if kind == "purchase_email" else 1
+            version = 7 if kind == "purchase_email" else 1
             self.assertIn(f"Blueprint version: {version}.", content)
             self.assertIn("# Version history:\n", content)
             self.assertIn(f"# v{version}: ", content)
@@ -75,6 +75,12 @@ class BlueprintStatusTest(unittest.IsolatedAsyncioTestCase):
             templates.KNOWN_OLDER["purchase_email"],
         )
 
+        previous_receipts = (FIXTURES / "purchase_email_parser_v6.yaml").read_text()
+        self.assertIn(
+            templates.fingerprint(previous_receipts),
+            templates.KNOWN_OLDER["purchase_email"],
+        )
+
     async def test_install_missing_preserves_existing_and_warns_outdated(self):
         old = self.old("library_schedule")
         modified = templates.read_template("metadata_schedule")["yaml"].replace(
@@ -97,8 +103,8 @@ class BlueprintStatusTest(unittest.IsolatedAsyncioTestCase):
             ],
         )
         state = await templates.async_status(self.hass, notify=False)
-        self.assertEqual(state["purchase_email"]["installed_version"], 6)
-        self.assertEqual(state["purchase_email"]["latest_version"], 6)
+        self.assertEqual(state["purchase_email"]["installed_version"], 7)
+        self.assertEqual(state["purchase_email"]["latest_version"], 7)
         self.assertIsNone(state["library_schedule"]["installed_version"])
         self.assertEqual(state["library_schedule"]["latest_version"], 1)
         self.assertEqual(

@@ -13,6 +13,24 @@ from .purchases import money, price_cents, purchase_record
 
 MAX_BYTES = 1024 * 1024
 MAX_MOVIES = 1000
+SELECTABLE_FIELDS = frozenset(
+    {"transaction-id", "purchase-price", "retail-price", "purchase-date"}
+)
+
+
+def selected_fields(payload):
+    """Validate the optional field selection for both raw and parsed receipts."""
+    value = payload.get("selected_fields", sorted(SELECTABLE_FIELDS))
+    if (
+        not isinstance(value, list)
+        or not value
+        or any(
+            not isinstance(item, str) or item not in SELECTABLE_FIELDS for item in value
+        )
+        or len(set(value)) != len(value)
+    ):
+        raise invalid("Select at least one valid receipt field")
+    return set(value)
 
 
 def _title_key(value):
@@ -115,6 +133,7 @@ def normalize(payload):
         raise invalid("Expected a valid purchase email JSON object") from error
     if not isinstance(payload, dict) or payload.get("source") != "kaleidescape":
         raise invalid("Expected a Kaleidescape purchase email")
+    selected = selected_fields(payload)
     if payload.get("prices_reconciled", True) is not True:
         raise invalid("Purchase email prices are not reconciled")
     items = payload.get("purchases")
@@ -125,11 +144,25 @@ def normalize(payload):
     for item in items:
         if not isinstance(item, dict):
             raise invalid("Expected a purchase record")
-        date = item.get("purchased_on", payload.get("purchased_on"))
-        order = item.get("order_id", payload.get("order_id"))
+        date = (
+            item.get("purchased_on", payload.get("purchased_on"))
+            if "purchase-date" in selected
+            else None
+        )
+        order = (
+            item.get("order_id", payload.get("order_id"))
+            if "transaction-id" in selected
+            else None
+        )
         if (
-            payload.get("purchased_on") is not None and date != payload["purchased_on"]
-        ) or (payload.get("order_id") is not None and order != payload["order_id"]):
+            "purchase-date" in selected
+            and payload.get("purchased_on") is not None
+            and date != payload["purchased_on"]
+        ) or (
+            "transaction-id" in selected
+            and payload.get("order_id") is not None
+            and order != payload["order_id"]
+        ):
             raise invalid("Purchase date or order differs from its email")
         members = item.get("included_titles")
         if members is None:
@@ -164,8 +197,14 @@ def normalize(payload):
             for member in members
         ]
         validated.sort(key=lambda row: row["id"])
-        paid = _shares(item.get("purchase_price"), len(validated))
-        retail = _shares(item.get("retail_price"), len(validated))
+        paid = _shares(
+            item.get("purchase_price") if "purchase-price" in selected else None,
+            len(validated),
+        )
+        retail = _shares(
+            item.get("retail_price") if "retail-price" in selected else None,
+            len(validated),
+        )
         for index, record in enumerate(validated):
             if record["id"] in seen:
                 raise invalid("Duplicate purchase identity in email")

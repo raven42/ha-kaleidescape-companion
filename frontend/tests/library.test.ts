@@ -924,7 +924,7 @@ it("shows private purchase history only in administrator title details", async (
     {
       id: "p".repeat(64),
       title: "<script>Private purchase</script>",
-      purchased_on: "2020-01-02",
+      purchased_on: null,
       purchase_price: "$12.99",
       retail_price: "$24.99",
       order_id: "FICTIONAL-ORDER",
@@ -935,6 +935,7 @@ it("shows private purchase history only in administrator title details", async (
   await flush();
   expect(text()).toContain("Purchase history · Administrator");
   expect(text()).toContain("FICTIONAL-ORDER");
+  expect(text()).toContain("Date not imported");
   expect(root().querySelector("script")).toBeNull();
   element.scope = {
     ...info,

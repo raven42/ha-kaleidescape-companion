@@ -11,24 +11,20 @@ runtime requirement. See the [security policy](../policies/policy-security.md).
 The current manifest targets HA 2026.11.0 and pins `pykaleidescape==1.2.0` to
 match its built-in integration. Do not deploy this manifest to an older HA
 release with a conflicting pyk pin. The released pyk package lacks the new
-`Device` and `LocalLibrary` interfaces used by this **temporary PoC**. Before
-loading this Companion code into HA OS, the operator must install the reviewed
-patched pyk `kaleidescape` package into the HA Core
-`/config/deps/lib/python3.14/site-packages` override and restart Core. The
-existing package metadata can remain 1.2.0 for this controlled test; that does
-not make the patched code a released 1.2.0 distribution. Confirm the active Core
-Python version/path on the target, and inspect any existing override before
-replacing it. Reverting the PoC also requires removing/restoring that override
-and restarting Core. This overlay affects HA's built-in Kaleidescape integration
-too, so validate both integrations together. See the
+`Device` and `LocalLibrary` interfaces used by this **temporary PoC**. A
+verified deployment method for the patched pyk source on HA OS 2026.11 is still
+needed. The previously documented `/config/deps` overlay does not work: HA
+2026.11 removed that directory from its dependency import path. A normal
+dependency installation supplies the released package, not the patched source.
+Do not deploy this PoC to HA OS until a replacement method is verified. See the
 [migration plan](../plans/plan-pykaliedescape-migration.md). Controls remain
 disabled until configured. This guide's component upload does not install pyk.
 
 The current patched source branch is `08a-cmp-dev-version`. Its runtime and
 wheel metadata both report `1.2.0.dev1+cmp`, so the version shown in Companion
-Settings can distinguish this development build from the earlier overlay. HA's
-shared requirement remains pinned to 1.2.0; copying the reviewed package code
-into the existing override does not change that manifest requirement.
+Settings can distinguish this development build from the released package. HA's
+shared requirement remains pinned to 1.2.0; the development wheel itself does
+not satisfy that exact requirement.
 
 ## Configure the target
 

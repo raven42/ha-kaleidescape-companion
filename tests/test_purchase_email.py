@@ -499,6 +499,32 @@ class EmailTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(totals["purchase_count"], 1)
         self.assertEqual(totals["currencies"][0]["library_cost"], "$9.99")
 
+    async def test_raw_email_import_stores_only_selected_fields_and_round_trips(self):
+        from test_receipt_parser import envelope
+
+        from custom_components.kaleidescape_companion.core.importing import parse_bundle
+
+        result = await self.repository.async_purchase_email(
+            envelope(fields=["purchase-price"])
+        )
+        self.assertEqual(result["pending_count"], 2)
+        rows = (await self.repository.async_inspect("purchase_records"))["items"]
+        self.assertEqual(len(rows), 2)
+        self.assertTrue(all(row["purchased_on"] is None for row in rows))
+        self.assertTrue(all(row["order_id"] is None for row in rows))
+        self.assertTrue(all(row["retail_price"] is None for row in rows))
+        self.assertEqual({row["purchase_price"] for row in rows}, {"$9.99", "$4.99"})
+        self.assertTrue(all(row["href"] for row in rows))
+        for kind in ("json", "sqlite"):
+            async with self.repository.async_export_snapshot(kind) as path:
+                parsed = parse_bundle(path.read_bytes(), kind)
+            self.assertEqual(len(parsed["purchases"]), 2)
+            self.assertTrue(
+                all(row["purchased_on"] is None for row in parsed["purchases"])
+            )
+        with self.assert_error("invalid_request"):
+            await self.repository.async_purchase_email(envelope(fields=[]))
+
     async def test_invalid_or_unreconciled_rejected_without_write(self):
         await self.seed_library()
         for email in (
@@ -514,6 +540,13 @@ class EmailTest(unittest.IsolatedAsyncioTestCase):
 
 
 class ServiceTest(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        patcher = patch(
+            "custom_components.kaleidescape_companion.services._LOGGER.warning"
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     async def test_action_permissions_and_review_response(self):
         hass = SimpleNamespace(
             services=SimpleNamespace(async_register=Mock()),
@@ -611,3 +644,171 @@ class ServiceTest(unittest.IsolatedAsyncioTestCase):
                 self.assertIn("may have been saved", str(caught.exception))
                 self.assertNotIn("private", str(caught.exception))
                 repo.async_purchase_email.assert_awaited_once()
+
+
+class ReceiptLoggingTest(unittest.IsolatedAsyncioTestCase):
+    async def test_action_logs_full_receipt_and_specific_reasons(self):
+        import tempfile
+        from pathlib import Path
+
+        from test_receipt_parser import envelope
+
+        from custom_components.kaleidescape_companion.core.repository import (
+            JournalRepository,
+        )
+
+        with tempfile.TemporaryDirectory() as directory:
+            repo = JournalRepository(Path(directory) / "journal.sqlite3")
+            await repo.async_open()
+            self.addAsyncCleanup(repo.async_close)
+            hass = SimpleNamespace(
+                services=SimpleNamespace(async_register=Mock()),
+                auth=SimpleNamespace(async_get_user=AsyncMock()),
+                config=SimpleNamespace(time_zone="UTC"),
+            )
+            async_register_services(hass)
+            handler = hass.services.async_register.call_args.args[2]
+            raw = envelope(
+                text=(
+                    "Order ID PRIVATE-ORDER\nItem Quality Price\n"
+                    "Fictional title $19.99\nSubtotal $19.99"
+                ),
+                html_part={
+                    "content_type": "text/html",
+                    "content_transfer_encoding": "base64",
+                    "part_data": "PGI+ZmljdGlvbmFsIGh0bWw8L2I+",
+                },
+            )
+            call = ServiceCall(
+                hass,
+                "kaleidescape_companion",
+                "import_purchase_email",
+                {"invoice": raw},
+                return_response=True,
+            )
+            runtime = SimpleNamespace(repository=repo)
+            with (
+                patch(
+                    "custom_components.kaleidescape_companion.services.loaded_runtimes",
+                    return_value=[("entry", runtime)],
+                ),
+                self.assertLogs(
+                    "custom_components.kaleidescape_companion.services", level="WARNING"
+                ) as logs,
+            ):
+                result = await handler(call)
+            self.assertEqual(result["status"], "needs_review")
+            self.assertTrue(
+                any(
+                    issue.get("reason") == "purchase_price_missing"
+                    for issue in result["issues"]
+                )
+            )
+            output = "\n".join(logs.output)
+            self.assertIn("Fictional title", output)
+            self.assertIn("PRIVATE-ORDER", output)
+            self.assertIn("purchase_price_missing", output)
+            self.assertIn("$19.99", output)
+            self.assertIn("fictional html", output)
+            self.assertEqual(result["pending_count"], 1)
+            self.assertEqual(result["extracted_records"][0]["title"], "Fictional title")
+
+    async def test_html_only_action_saves_selected_fields_with_titles_and_links(self):
+        import tempfile
+        from pathlib import Path
+
+        from test_receipt_parser import HTML, envelope
+
+        from custom_components.kaleidescape_companion.core.repository import (
+            JournalRepository,
+        )
+
+        with tempfile.TemporaryDirectory() as directory:
+            repo = JournalRepository(Path(directory) / "journal.sqlite3")
+            await repo.async_open()
+            self.addAsyncCleanup(repo.async_close)
+            hass = SimpleNamespace(
+                services=SimpleNamespace(async_register=Mock()),
+                auth=SimpleNamespace(async_get_user=AsyncMock()),
+            )
+            async_register_services(hass)
+            handler = hass.services.async_register.call_args.args[2]
+            part = {
+                "content_type": "text/html",
+                "content_transfer_encoding": "base64",
+                "part_data": base64.b64encode(HTML.encode()).decode(),
+            }
+            payload = envelope(text="", fields=["transaction-id"], html_part=part)
+            call = ServiceCall(
+                hass,
+                "kaleidescape_companion",
+                "import_purchase_email",
+                {"invoice": payload},
+                return_response=True,
+            )
+            with (
+                patch(
+                    "custom_components.kaleidescape_companion.services.loaded_runtimes",
+                    return_value=[("entry", SimpleNamespace(repository=repo))],
+                ),
+                self.assertLogs(
+                    "custom_components.kaleidescape_companion.services", level="WARNING"
+                ),
+            ):
+                result = await handler(call)
+            self.assertEqual(result["pending_count"], 2)
+            records = (await repo.async_inspect("purchase_records"))["items"]
+            self.assertEqual(
+                {row["title"] for row in records}, {"Fictional Voyage", "Second Film"}
+            )
+            self.assertTrue(
+                all(row["href"] and row["order_id"] == "ORDER-123" for row in records)
+            )
+            self.assertTrue(
+                all(
+                    row["purchased_on"] is None
+                    and row["purchase_price"] is None
+                    and row["retail_price"] is None
+                    for row in records
+                )
+            )
+
+    async def test_empty_selection_is_rejected_by_the_action(self):
+        import tempfile
+        from pathlib import Path
+
+        from test_receipt_parser import envelope
+
+        from custom_components.kaleidescape_companion.core.repository import (
+            JournalRepository,
+        )
+
+        with tempfile.TemporaryDirectory() as directory:
+            repo = JournalRepository(Path(directory) / "journal.sqlite3")
+            await repo.async_open()
+            self.addAsyncCleanup(repo.async_close)
+            hass = SimpleNamespace(
+                services=SimpleNamespace(async_register=Mock()),
+                auth=SimpleNamespace(async_get_user=AsyncMock()),
+            )
+            async_register_services(hass)
+            handler = hass.services.async_register.call_args.args[2]
+            call = ServiceCall(
+                hass,
+                "kaleidescape_companion",
+                "import_purchase_email",
+                {"invoice": envelope(fields=[])},
+                return_response=True,
+            )
+            with (
+                patch(
+                    "custom_components.kaleidescape_companion.services.loaded_runtimes",
+                    return_value=[("entry", SimpleNamespace(repository=repo))],
+                ),
+                self.assertLogs(
+                    "custom_components.kaleidescape_companion.services", level="WARNING"
+                ),
+            ):
+                with self.assertRaisesRegex(HomeAssistantError, "Select at least one"):
+                    await handler(call)
+            self.assertEqual((await repo.async_inspect("purchase_records"))["total"], 0)
