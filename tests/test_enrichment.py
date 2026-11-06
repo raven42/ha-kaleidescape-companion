@@ -551,7 +551,10 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
         cases = (
             ([exact, {**exact, "provider_id": "43"}], "store_ambiguous"),
             ([{**exact, "year": 2024}], "store_not_found"),
-            (store_search.SearchResults([exact], truncated=True), "store_ambiguous"),
+            (
+                store_search.SearchResults([exact], truncated=True),
+                "store_search_truncated",
+            ),
             ([{**exact, "provider_id": ""}], "provider_identity_mismatch"),
             ([exact], "invalid_store_link"),
         )
@@ -592,6 +595,15 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
         await self.repo.async_metadata_sources({"metadata_store_enabled": True})
         before = await self.repo.async_library_summary(self.source)
         self.assertEqual(before["missing_metadata"], 2)
+        for row in await self.repo.async_enrichment("candidates", self.source):
+            await self.repo.async_enrichment(
+                "conflict",
+                self.source,
+                row["id"],
+                "kaleidescape",
+                "store_ambiguous",
+                row,
+            )
         sync = self.sync(
             library_host=ORIGIN,
             metadata_store_enabled=True,
@@ -599,16 +611,19 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
         )
 
         async def search(provider, title, year):
-            return [
-                {
-                    **self.data,
-                    "provider": provider,
-                    "provider_id": str(year),
-                    "title": title,
-                    "year": year,
-                    "url": f"https://www.kaleidescape.com/movie-store/movie/fictional-film-{year}",
-                }
-            ]
+            return store_search.SearchResults(
+                [
+                    {
+                        **self.data,
+                        "provider": provider,
+                        "provider_id": str(year),
+                        "title": title,
+                        "year": year,
+                        "url": f"https://www.kaleidescape.com/movie-store/movie/fictional-film-{year}",
+                    }
+                ],
+                truncated=False,
+            )
 
         sync.providers.search = AsyncMock(side_effect=search)
         with patch(
@@ -620,6 +635,9 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(sync.updated, 2)
         self.assertEqual(
             (await self.repo.async_library_summary(self.source))["missing_metadata"], 0
+        )
+        self.assertEqual(
+            (await self.repo.async_library_summary(self.source))["scraper_conflicts"], 0
         )
         rows = await self.repo.async_enrichment("candidates", self.source)
         self.assertTrue(all("kaleidescape" in row["cached_providers"] for row in rows))

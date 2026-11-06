@@ -28,12 +28,13 @@ async def search(manager, actor, title, provider, query, year=None):
         rows = await client.providers.search(
             provider, phrase(query) if quoted(query) else query, year
         )
-    if len(json.dumps(rows).encode()) > 512 * 1024 or len(rows) > 8:
+    if len(json.dumps(rows).encode()) > 512 * 1024 or len(rows) > 15:
         raise JournalError(
             "metadata_limit", "Search results are too large; refine the title"
         )
     if quoted(query):
         rows = [row for row in rows if matches(row.get("title"), query)]
+    rows = rows[:8]
     candidates = {f"match-{index}": row for index, row in enumerate(rows)}
     artwork = bool(manager.parent.config.get("library_sync_artwork"))
     images = {}

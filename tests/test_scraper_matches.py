@@ -129,6 +129,11 @@ class ScraperMatchingTest(unittest.IsolatedAsyncioTestCase):
         self,
     ):
         choices = await self.prepare_matches()
+        self.search.return_value = [
+            {**self.first, "provider_id": str(index)} for index in range(15)
+        ]
+        bounded = await self.manager.search(self.admin, self.id, "tmdb", "Fictional")
+        self.assertEqual(len(bounded["candidates"]), 8)
         self.search.return_value = []
         empty = await self.manager.search(
             self.admin, self.id, "tmdb", "Different title"

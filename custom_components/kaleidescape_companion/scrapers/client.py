@@ -68,7 +68,7 @@ class Providers:
     async def search(
         self, provider: str, query: str, year: int | None = None
     ) -> list[Metadata]:
-        """Return up to eight detailed candidates for explicit application selection."""
+        """Return bounded detailed candidates; the Store may return up to 15."""
         adapter = self.adapters.get(provider)
         if adapter is None:
             raise ProviderError("unknown_provider")

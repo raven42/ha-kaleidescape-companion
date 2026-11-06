@@ -43,17 +43,20 @@ Automatic store enrichment uses a valid public Store movie link when available.
 When the link is absent or is a numeric receipt-details link, it searches the
 public Store by title and year. It saves only a single exact normalized-title
 and year match; ambiguous or truncated results require manual review. It never
-invents Store slugs. TMDB initially needs the Library title and a known release
-year. An administrator-approved match can supply the provider identity instead,
-including for a movie without a store link or scanned year. Matching is
-conservative: unresolved ambiguous or mismatched movies are skipped and marked
-for review. Skipped totals are provider attempts, so one movie can contribute
-twice. A pass stops after one hour; successfully cached results remain
-available. It supports up to 10,000 scanned versions and processes one movie
-group at a time. Unknown years and missing TMDB credentials are skipped without
-requesting a movie. The completion log breaks skipped attempts down by provider
-and reason. Artwork flagged by the Library filter may remain missing when
-artwork sync, a suitable provider, or the selected source is unavailable.
+invents Store slugs. A full 15-result Store page remains potentially truncated,
+even when later filtering leaves one candidate. The completion log distinguishes
+a truncated Store search from multiple exact matches. TMDB initially needs the
+Library title and a known release year. An administrator-approved match can
+supply the provider identity instead, including for a movie without a store link
+or scanned year. Matching is conservative: unresolved ambiguous or mismatched
+movies are skipped and marked for review. Skipped totals are provider attempts,
+so one movie can contribute twice. A pass stops after one hour; successfully
+cached results remain available. It supports up to 10,000 scanned versions and
+processes one movie group at a time. Unknown years and missing TMDB credentials
+are skipped without requesting a movie. The completion log breaks skipped
+attempts down by provider and reason. Artwork flagged by the Library filter may
+remain missing when artwork sync, a suitable provider, or the selected source is
+unavailable.
 
 These are internet lookups: the provider can see the request, movie identity and
 the HA host's network address. No watch history, notes, invoices, prices or
@@ -410,11 +413,11 @@ Results contain bounded credits, provider reference and source-specific scores;
 TMDB audience votes are not Rotten Tomatoes percentages.
 
 `Providers.search(provider, query, year=None)` is a separate, explicit manual
-workflow. It accepts 1–200 characters and returns up to eight detailed movie
-records from the first search page, with available cast/directors/genres and
-validated poster references. It never chooses a match or modifies a caller's
-library. Offer title/year, a short cast list, genres and optional cover
-previews, then persist the approved reference after review.
+workflow. It accepts 1–200 characters and returns up to fifteen Store or eight
+TMDB detailed movie records from the first search page, with available
+cast/directors/genres and validated poster references. It never chooses a match
+or modifies a caller's library. Offer title/year, a short cast list, genres and
+optional cover previews, then persist the approved reference after review.
 `resolve(provider, reference)` revisits its fixed TMDB movie ID or store edition
 URL without searching titles; the adapter still validates provider identity.
 Reference changes and caller snapshot/retry protection belong to the
@@ -426,7 +429,7 @@ bounded public application version, then calls the anonymous
 `/movie-store/rest/packages/search` route with the two public
 `X-Kaleidescape-Application-{Id,Version}` headers. It fixes country US and
 display limit 15, honors the store's robots policy, and projects only
-matching-movie groups. It follows at most eight validated movie routes to
+matching-movie groups. It follows at most fifteen validated movie routes to
 retrieve credits and genres; related-person groups, prices, accounts and
 ownership are ignored. Missing/unfamiliar version/response shapes fail closed.
 Country-specific catalogs are not currently configurable.
@@ -441,7 +444,7 @@ preview API. Callers must opt into images, enforce public DNS/TLS/body/redirect
 controls on these additional routes, and serve previews through their
 authenticated interface rather than expose arbitrary URLs. All requests share
 the limiter and carry no account cookies or image credentials. Refining the
-query replaces pagination beyond the first eight candidates; low configured
+query replaces pagination beyond the first fifteen candidates; low configured
 rates can require a longer application timeout.
 
 ### Research and limitations

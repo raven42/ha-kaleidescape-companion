@@ -316,7 +316,7 @@ class MetadataSync:
         matches = same_movie(row["title"], row["year"], candidates)
         if getattr(candidates, "truncated", False) or len(matches) != 1:
             if getattr(candidates, "truncated", False):
-                raise ProviderError("store_ambiguous")
+                raise ProviderError("store_search_truncated")
             raise ProviderError("store_ambiguous" if matches else "store_not_found")
         match = matches[0]
         if (

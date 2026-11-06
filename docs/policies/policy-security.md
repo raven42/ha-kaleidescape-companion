@@ -190,7 +190,9 @@ accounts is outside scope. Automatic Store lookup may use the same fixed,
 bounded public search routes as manual review when a usable movie link is
 missing. Only one exact title/year match is eligible for automatic caching;
 ambiguous or truncated results require review. The automatic search scope does
-not enable Store image previews or other review-only routes.
+not enable Store image previews or other review-only routes. Store search reads
+at most fifteen validated movie pages per query; administrator review presents
+at most eight candidates and does not automatically select one.
 
 An administrator's per-title Refresh searches the chosen public provider even
 when a match is cached. Unique or explicitly selected results are downloaded

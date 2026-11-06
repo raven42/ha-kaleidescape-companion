@@ -128,7 +128,7 @@ class ProviderSearchTest(unittest.IsolatedAsyncioTestCase):
     async def test_store_search_reports_truncation_before_filtering_by_year(self):
         packages = [
             {"movie_edition_uri_name": f"fictional-{number}", "is_television": False}
-            for number in range(8)
+            for number in range(15)
         ]
 
         async def fetch(url, _headers):
@@ -157,6 +157,63 @@ class ProviderSearchTest(unittest.IsolatedAsyncioTestCase):
 
         client = Providers(fetch, requests_per_second=10)
         results = await client.search("kaleidescape", TITLE, YEAR)
+        self.assertEqual(len(results), 1)
+        self.assertTrue(results.truncated)
+
+    async def test_complete_store_search_with_eight_or_more_candidates_is_usable(self):
+        for count in (8, 14):
+            packages = [
+                {
+                    "movie_edition_uri_name": f"fictional-{number}",
+                    "is_television": False,
+                }
+                for number in range(count)
+            ]
+            calls = []
+
+            async def fetch(url, _headers):
+                calls.append(url)
+                if url.endswith("/robots.txt"):
+                    return b"User-agent: *\n"
+                if "/rest/packages/search?" in url:
+                    return json.dumps(
+                        {"groups": [{"algorithm_id": 7, "packages": packages}]}
+                    ).encode()
+                if "/movie-store/search?" in url:
+                    return b'<body data-store_version="2026.10-123">'
+                slug = url.rsplit("/", 1)[1]
+                number = int(slug.rsplit("-", 1)[1])
+                movie = {
+                    **MOVIE,
+                    "uri_name": slug,
+                    "release_year": YEAR if number == 0 else YEAR + 1,
+                }
+                data = {
+                    f"/movie-store/rest/movie/edition/{slug}": "123",
+                    "/movie-store/rest/movie/edition/id/123": movie,
+                }
+                return (
+                    "<script>window.preloadedAjaxData = "
+                    + json.dumps(data)
+                    + ";</script>"
+                ).encode()
+
+            with self.subTest(count=count):
+                client = Providers(fetch, requests_per_second=10)
+                results = await client.search("kaleidescape", TITLE, YEAR)
+                self.assertEqual(len(results), 1)
+                self.assertFalse(results.truncated)
+                self.assertEqual(
+                    len([url for url in calls if "/movie-store/movie/" in url]), count
+                )
+
+    def test_full_store_page_is_truncated_even_after_duplicate_filtering(self):
+        package = {"movie_edition_uri_name": "fictional-film", "is_television": False}
+        results = packages(
+            json.dumps(
+                {"groups": [{"algorithm_id": 7, "packages": [package] * 15}]}
+            ).encode()
+        )
         self.assertEqual(len(results), 1)
         self.assertTrue(results.truncated)
 

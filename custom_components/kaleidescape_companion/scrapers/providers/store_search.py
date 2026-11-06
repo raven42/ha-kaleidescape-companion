@@ -8,6 +8,7 @@ from urllib.parse import urlencode, urlsplit
 from ..models import ProviderError, label
 
 HOST = "https://www.kaleidescape.com"
+DISPLAY_LIMIT = 15
 
 
 class SearchResults(list):
@@ -49,11 +50,17 @@ def packages(body):
     if not isinstance(data, dict) or not isinstance(data.get("groups"), list):
         raise ProviderError("store_format_changed")
     result, seen = [], set()
+    truncated = len(data["groups"]) > 30
+    raw_count = 0
     for group in data["groups"][:30]:
         if not isinstance(group, dict) or group.get("algorithm_id") != 7:
             continue
         if not isinstance(group.get("packages"), list):
             raise ProviderError("store_format_changed")
+        # A full server page may have more results even when duplicates or TV
+        # items are removed locally. Do not infer uniqueness from that page.
+        raw_count += len(group["packages"])
+        truncated |= raw_count >= DISPLAY_LIMIT
         for item in group["packages"][:30]:
             if not isinstance(item, dict) or item.get("is_television") is not False:
                 continue
@@ -67,6 +74,9 @@ def packages(body):
                 continue
             seen.add(slug)
             images = item.get("image_uris")
+            if len(result) == DISPLAY_LIMIT:
+                truncated = True
+                continue
             result.append(
                 {
                     "href": "/movie-store/movie/" + slug,
@@ -75,9 +85,7 @@ def packages(body):
                     else None,
                 }
             )
-            if len(result) == 8:
-                return result
-    return result
+    return SearchResults(result, truncated=truncated)
 
 
 async def search(provider, query, year):
@@ -97,7 +105,7 @@ async def search(provider, query, year):
         "X-Kaleidescape-Application-Version": version[1].decode("ascii"),
     }
     route = "/movie-store/rest/packages/search?" + urlencode(
-        {"text": query, "country_code": "US", "display_limit": 15}
+        {"text": query, "country_code": "US", "display_limit": DISPLAY_LIMIT}
     )
     await provider.permitted(route)
     body = await provider.transport.get(HOST + route, headers)
@@ -120,4 +128,4 @@ async def search(provider, query, year):
             parse, text, path, movie["title"], movie["release_year"]
         )
         results.append({**metadata, "poster_url": candidate["poster_url"]})
-    return SearchResults(results, truncated=len(candidates) >= 8)
+    return SearchResults(results, truncated=candidates.truncated)

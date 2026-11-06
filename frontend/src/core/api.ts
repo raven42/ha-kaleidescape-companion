@@ -787,6 +787,8 @@ export function errorMessage(error: unknown): string {
     tmdb_not_found: "TMDB did not find a matching title and release year.",
     tmdb_ambiguous:
       "TMDB returned more than one matching movie. No data was imported.",
+    store_search_truncated:
+      "The Kaleidescape Store returned too many results to verify a unique match. Refine the search and choose a match for review.",
   };
   return (
     messages[errorCode(error)] ??

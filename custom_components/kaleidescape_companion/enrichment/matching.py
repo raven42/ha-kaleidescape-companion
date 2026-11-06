@@ -13,6 +13,7 @@ REASONS = {
     "tmdb_ambiguous",
     "store_not_found",
     "store_ambiguous",
+    "store_search_truncated",
     "provider_identity_mismatch",
     "invalid_store_link",
     "missing_year",
