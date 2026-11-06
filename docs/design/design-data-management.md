@@ -408,8 +408,9 @@ invoice remain on the Library entry until an invoice is linked.
 To repair an existing invoice, open **Database → Purchases**, select the
 invoice, and choose **Repair purchase**. Correct receipt fields or choose an
 available Library entry (or unlink it), or choose **Void purchase**. Review the
-exact before/after records, Library associations and recalculated source totals,
-then confirm. Changes use the selected row token, dataset revision,
+field-by-field before/after records, Library associations and recalculated
+source totals in the repair dialog, then confirm. Invalid fields show an
+explanation before review. Changes use the selected row token, dataset revision,
 administrator and a durable request ID. An identity collision is rejected.
 Previous identities remain replay barriers, and similar enriched replays are
 held for review.

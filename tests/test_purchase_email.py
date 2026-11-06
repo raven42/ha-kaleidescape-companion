@@ -40,6 +40,32 @@ class EmailTest(unittest.IsolatedAsyncioTestCase):
     seed_library = importing.ImportStorageTest.seed_library
     assert_error = importing.ImportStorageTest.assert_error
 
+    async def test_replaying_partial_receipt_fills_purchase_price_without_duplicate(
+        self,
+    ):
+        from test_receipt_parser import SINGLE_PRICE_TEXT, envelope
+
+        target = await self.seed_library()
+        title = library.ROWS[0]["title"]
+        body = SINGLE_PRICE_TEXT.replace("Fictional Voyage", title)
+        partial = envelope(body.replace("Subtotal $18.00", "Subtotal $17.00"))
+        await self.repository.async_purchase_email(partial)
+        original = (await self.repository.async_inspect("purchase_records"))["items"]
+        self.assertEqual(len(original), 1)
+        self.assertIsNone(original[0]["purchase_price"])
+        self.assertEqual(original[0]["library_id"], target)
+
+        result = await self.repository.async_purchase_email(envelope(body))
+        rows = (await self.repository.async_inspect("purchase_records"))["items"]
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["id"], original[0]["id"])
+        self.assertEqual(rows[0]["library_id"], target)
+        self.assertEqual(rows[0]["purchase_price"], "$18.00")
+        self.assertIsNone(rows[0]["retail_price"])
+        self.assertIn(
+            {"title": title, "reason": "retail_price_missing"}, result["issues"]
+        )
+
     async def test_html_links_are_used_only_for_unique_exact_store_titles(self):
         document = """
           <a href="https://store.kaleidescape.com/movie-store/movie/details/123"><img></a>
@@ -702,14 +728,14 @@ class ReceiptLoggingTest(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(result["status"], "needs_review")
             self.assertTrue(
                 any(
-                    issue.get("reason") == "purchase_price_missing"
+                    issue.get("reason") == "retail_price_missing"
                     for issue in result["issues"]
                 )
             )
             output = "\n".join(logs.output)
             self.assertIn("Fictional title", output)
             self.assertIn("PRIVATE-ORDER", output)
-            self.assertIn("purchase_price_missing", output)
+            self.assertIn("retail_price_missing", output)
             self.assertIn("$19.99", output)
             self.assertIn("fictional html", output)
             self.assertEqual(result["pending_count"], 1)

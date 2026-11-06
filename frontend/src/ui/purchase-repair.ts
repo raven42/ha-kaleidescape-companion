@@ -9,6 +9,7 @@ import type {
   PurchaseRepairReview,
 } from "../core/api";
 import { styles } from "./styles";
+import { closeButton, dismissBackdrop } from "./dialog";
 
 const FIELDS = [
   ["title", "Receipt title"],
@@ -18,6 +19,60 @@ const FIELDS = [
   ["order_id", "Transaction ID"],
   ["href", "Store link"],
 ] as const;
+
+function flatten(value: unknown, prefix = ""): Record<string, unknown> {
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).flatMap(([key, child]) =>
+        Object.entries(flatten(child, prefix ? `${prefix}.${key}` : key)),
+      ),
+    );
+  }
+  return prefix ? { [prefix]: value } : {};
+}
+
+function displayValue(value: unknown): string {
+  if (value === undefined) return "—";
+  if (value === null) return "null";
+  return typeof value === "string" ? value : JSON.stringify(value);
+}
+
+function comparison(title: string, before: unknown, after: unknown) {
+  const left = flatten(before);
+  const right = flatten(after);
+  const keys = [...new Set([...Object.keys(left), ...Object.keys(right)])];
+  return html`<h4>${title}</h4>
+    <div class="diff" role="table" aria-label=${title}>
+      <div class="diff-row" role="row">
+        <strong role="columnheader">Field</strong>
+        <strong role="columnheader">Before</strong>
+        <strong role="columnheader">After</strong>
+      </div>
+      ${
+        keys.length
+          ? keys.map((key) => {
+              const changed =
+                JSON.stringify(left[key]) !== JSON.stringify(right[key]);
+              const label = FIELDS.find(([field]) => field === key)?.[1] ?? key;
+              return html`<div
+                class=${changed ? "diff-row changed" : "diff-row"}
+                role="row"
+              >
+                <span role="rowheader"
+                  >${label}${changed ? " (changed)" : ""}</span
+                >
+                <span class="before" role="cell"
+                  >${displayValue(left[key])}</span
+                >
+                <span class="after" role="cell"
+                  >${displayValue(right[key])}</span
+                >
+              </div>`;
+            })
+          : html`<p>No values to compare.</p>`
+      }
+    </div>`;
+}
 
 export class KaleidescapePurchaseRepair extends LitElement {
   static properties = {
@@ -32,20 +87,40 @@ export class KaleidescapePurchaseRepair extends LitElement {
     css`
       :host {
         display: block;
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        padding: 1rem;
-        margin-block: 1rem;
+      }
+      dialog {
+        width: min(1000px, calc(100% - 24px));
       }
       .fields {
         display: grid;
         gap: 0.7rem;
       }
-      pre {
-        max-height: 18rem;
-        overflow: auto;
-        white-space: pre-wrap;
+      .diff {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+      }
+      .diff-row {
+        display: grid;
+        grid-template-columns: minmax(9rem, 1fr) minmax(13rem, 2fr) minmax(
+            13rem,
+            2fr
+          );
+        min-width: 35rem;
+      }
+      .diff-row > * {
+        padding: 0.5rem;
+        border-bottom: 1px solid var(--line);
         overflow-wrap: anywhere;
+        white-space: pre-wrap;
+      }
+      .diff-row.changed .before {
+        background: rgba(190, 45, 45, 0.2);
+        border-left: 3px solid #c64141;
+      }
+      .diff-row.changed .after {
+        background: rgba(36, 145, 76, 0.2);
+        border-left: 3px solid #319653;
       }
       .search-results {
         max-height: 16rem;
@@ -69,6 +144,7 @@ export class KaleidescapePurchaseRepair extends LitElement {
   private confirmed = false;
   private busy = false;
   private error = "";
+  private fieldErrors: Record<string, string> = {};
   private generation = 0;
 
   connectedCallback() {
@@ -79,6 +155,9 @@ export class KaleidescapePurchaseRepair extends LitElement {
     this.owner =
       typeof this.row.library_id === "string" ? this.row.library_id : null;
     this.ownerLabel = this.owner ? "Current Library entry" : "Unlinked";
+  }
+  protected firstUpdated() {
+    this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.showModal();
   }
   disconnectedCallback() {
     this.generation++;
@@ -91,7 +170,8 @@ export class KaleidescapePurchaseRepair extends LitElement {
       window.confirm("Discard this purchase repair review?")
     );
   }
-  private close() {
+  private close(event?: Event) {
+    event?.preventDefault();
     if (!this.confirmNavigation()) return;
     this.dispatchEvent(
       new CustomEvent("repair-cancel", { bubbles: true, composed: true }),
@@ -150,8 +230,80 @@ export class KaleidescapePurchaseRepair extends LitElement {
       changes.library_id = this.owner;
     return changes;
   }
+  private validate(): boolean {
+    const errors: Record<string, string> = {};
+    const title = this.draft.title ?? "";
+    if (!title.trim()) errors.title = "Enter a receipt title.";
+    else if ([...title].length > 500)
+      errors.title = "The receipt title must be at most 500 characters.";
+    const date = this.draft.purchased_on ?? "";
+    const dateInput = this.renderRoot.querySelector<HTMLInputElement>(
+      '[name="purchased_on"]',
+    );
+    if (
+      dateInput?.validity.badInput ||
+      (date &&
+        (date < "1990-01-01" || date > new Date().toISOString().slice(0, 10)))
+    )
+      errors.purchased_on =
+        "Enter a valid date between January 1, 1990 and today (UTC).";
+    for (const field of ["purchase_price", "retail_price"]) {
+      const value = this.draft[field] ?? "";
+      if (
+        value &&
+        (value.length > 64 ||
+          !/^[^\d\s.,+-]{1,8}\s*(?:[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+)\.[0-9]{2}$/u.test(
+            value,
+          ))
+      )
+        errors[field] =
+          "Enter a nonnegative price with a currency symbol and two decimal places, such as $19.99.";
+    }
+    const order = this.draft.order_id ?? "";
+    if (order && (!order.trim() || [...order].length > 256))
+      errors.order_id =
+        "Enter a transaction ID of up to 256 characters, or leave it empty.";
+    const href = this.draft.href ?? "";
+    if (href) {
+      let valid =
+        href.startsWith("/movie-store/") || href.startsWith("movie-store/");
+      try {
+        const url = new URL(href);
+        valid =
+          ["http:", "https:"].includes(url.protocol) &&
+          !!url.hostname &&
+          !url.username &&
+          !url.password;
+      } catch {
+        /* A Store-relative path is also accepted. */
+      }
+      if (
+        !valid ||
+        [...href].length > 2048 ||
+        [...href].some((char) => char.charCodeAt(0) < 32)
+      )
+        errors.href =
+          "Enter an HTTP(S) link without credentials or a /movie-store/ path, or leave it empty.";
+    }
+    this.fieldErrors = errors;
+    if (Object.keys(errors).length) {
+      this.error =
+        "Correct the highlighted fields before reviewing the change.";
+      return false;
+    }
+    if (!Object.keys(this.changes()).length) {
+      this.error =
+        "Change a purchase field or its Library association before reviewing.";
+      return false;
+    }
+    return true;
+  }
   private async preview() {
     if (!this.client || !this.scope || this.busy) return;
+    if (!this.reverse && this.action === "correct" && !this.validate()) {
+      this.requestUpdate();
+      return;
+    }
     const generation = ++this.generation;
     this.busy = true;
     this.notifyBusy();
@@ -224,158 +376,183 @@ export class KaleidescapePurchaseRepair extends LitElement {
   }
   protected render() {
     return html`
-      <h3>${this.reverse ? "Reverse purchase repair" : "Repair purchase"}</h3>
-      <p>
-        Review the invoice, its Library association and totals before applying a
-        change. Similar purchases may be legitimate separate transactions.
-      </p>
-      ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
-      ${
-        !this.review
-          ? html`
-              ${
-                !this.reverse
-                  ? html`
-                      <label
-                        >Action<select
-                          .value=${this.action}
-                          ?disabled=${this.busy}
-                          @change=${(event: Event) => {
-                            this.action = (event.target as HTMLSelectElement)
-                              .value as "correct" | "void";
-                            this.requestUpdate();
-                          }}
+      <dialog
+        @click=${dismissBackdrop}
+        @cancel=${this.close}
+        aria-labelledby="repair-heading"
+      >
+        <div class="card-head">
+          <h2 id="repair-heading">
+            ${this.reverse ? "Reverse purchase repair" : "Repair purchase"}
+          </h2>
+          ${closeButton((event) => this.close(event), this.busy || !!this.pending)}
+        </div>
+        <p>
+          Review the invoice, its Library association and totals before applying
+          a change. Similar purchases may be legitimate separate transactions.
+        </p>
+        ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
+        ${
+          !this.review
+            ? html`
+                ${
+                  !this.reverse
+                    ? html`
+                        <label
+                          >Action<select
+                            .value=${this.action}
+                            ?disabled=${this.busy}
+                            @change=${(event: Event) => {
+                              this.action = (event.target as HTMLSelectElement)
+                                .value as "correct" | "void";
+                              this.requestUpdate();
+                            }}
+                          >
+                            <option value="correct">Correct purchase</option>
+                            <option value="void">Void purchase</option>
+                          </select></label
                         >
-                          <option value="correct">Correct purchase</option>
-                          <option value="void">Void purchase</option>
-                        </select></label
-                      >
-                      ${
-                        this.action === "correct"
-                          ? html`
-                              <div class="fields">
-                                ${FIELDS.map(
-                                  ([key, label]) => html`
-                                    <label
-                                      >${label}<input
-                                        name=${key}
-                                        type=${key === "purchased_on" ? "date" : "text"}
-                                        .value=${this.draft[key] ?? ""}
-                                        ?disabled=${this.busy}
-                                        @input=${(event: Event) => {
-                                          this.draft[key] = (
-                                            event.target as HTMLInputElement
-                                          ).value;
-                                        }}
-                                    /></label>
-                                  `,
-                                )}
-                              </div>
-                              <p>Library association: ${this.ownerLabel}</p>
-                              <label
-                                >Find a Library movie<input
-                                  type="search"
-                                  .value=${this.query}
+                        ${
+                          this.action === "correct"
+                            ? html`
+                                <div class="fields">
+                                  ${FIELDS.map(
+                                    ([key, label]) => html`
+                                      <label
+                                        >${label}<input
+                                          name=${key}
+                                          type=${key === "purchased_on" ? "date" : "text"}
+                                          .value=${this.draft[key] ?? ""}
+                                          aria-invalid=${this.fieldErrors[key] ? "true" : "false"}
+                                          aria-describedby=${this.fieldErrors[key] ? `error-${key}` : nothing}
+                                          ?disabled=${this.busy}
+                                          @input=${(event: Event) => {
+                                            this.draft[key] = (
+                                              event.target as HTMLInputElement
+                                            ).value;
+                                            if (this.fieldErrors[key]) {
+                                              delete this.fieldErrors[key];
+                                              this.requestUpdate();
+                                            }
+                                          }}
+                                        />${this.fieldErrors[key] ? html`<span class="error" id=${`error-${key}`}>${this.fieldErrors[key]}</span>` : nothing}</label
+                                      >
+                                    `,
+                                  )}
+                                </div>
+                                <p>Library association: ${this.ownerLabel}</p>
+                                <label
+                                  >Find a Library movie<input
+                                    type="search"
+                                    .value=${this.query}
+                                    ?disabled=${this.busy}
+                                    @input=${(event: Event) => {
+                                      this.query = (
+                                        event.target as HTMLInputElement
+                                      ).value;
+                                    }}
+                                /></label>
+                                <button
+                                  type="button"
                                   ?disabled=${this.busy}
-                                  @input=${(event: Event) => {
-                                    this.query = (
-                                      event.target as HTMLInputElement
-                                    ).value;
+                                  @click=${this.search}
+                                >
+                                  Search Library
+                                </button>
+                                <button
+                                  type="button"
+                                  ?disabled=${this.busy}
+                                  @click=${() => {
+                                    this.owner = null;
+                                    this.ownerLabel = "Unlinked";
+                                    this.requestUpdate();
                                   }}
-                              /></label>
-                              <button
-                                type="button"
-                                ?disabled=${this.busy}
-                                @click=${this.search}
-                              >
-                                Search Library
-                              </button>
-                              <button
-                                type="button"
-                                ?disabled=${this.busy}
-                                @click=${() => {
-                                  this.owner = null;
-                                  this.ownerLabel = "Unlinked";
-                                  this.requestUpdate();
-                                }}
-                              >
-                                Unlink purchase
-                              </button>
-                              <div class="search-results">
-                                ${this.results.map(
-                                  (item) => html`
-                                    <button
-                                      type="button"
-                                      ?disabled=${this.busy}
-                                      @click=${() => {
-                                        this.owner = item.id;
-                                        this.ownerLabel = item.title;
-                                        this.results = [];
-                                        this.requestUpdate();
-                                      }}
-                                    >
-                                      ${item.title} ${item.year ?? ""}
-                                    </button>
-                                  `,
-                                )}
-                              </div>
-                            `
-                          : html`<p class="warning">
-                              Voiding removes this invoice from active totals
-                              and prevents its identity from being imported
-                              again.
-                            </p>`
-                      }
-                    `
-                  : nothing
-              }
-              <div class="actions">
-                <button ?disabled=${this.busy} @click=${this.close}>
-                  Cancel</button
-                ><button ?disabled=${this.busy} @click=${this.preview}>
-                  Review change
-                </button>
-              </div>
-            `
-          : html`
-              <h4>Current purchase and Library association</h4>
-              <pre>
-${JSON.stringify({ purchase: this.review.before, library: this.review.before_library }, null, 2)}</pre>
-              <h4>After this change</h4>
-              <pre>
-${JSON.stringify({ purchase: this.review.after, library: this.review.after_library }, null, 2)}</pre>
-              <h4>Library totals before and after</h4>
-              <pre>${JSON.stringify(this.review.totals_change, null, 2)}</pre>
-              <label
-                ><input
-                  type="checkbox"
-                  .checked=${this.confirmed}
-                  ?disabled=${this.busy || !!this.pending}
-                  @change=${(event: Event) => {
-                    this.confirmed = (event.target as HTMLInputElement).checked;
-                    this.requestUpdate();
-                  }}
-                />I reviewed this change and its totals.</label
-              >
-              <div class="actions">
-                <button
-                  ?disabled=${this.busy || !!this.pending}
-                  @click=${() => {
-                    this.review = undefined;
-                    this.requestUpdate();
-                  }}
+                                >
+                                  Unlink purchase
+                                </button>
+                                <div class="search-results">
+                                  ${this.results.map(
+                                    (item) => html`
+                                      <button
+                                        type="button"
+                                        ?disabled=${this.busy}
+                                        @click=${() => {
+                                          this.owner = item.id;
+                                          this.ownerLabel = item.title;
+                                          this.results = [];
+                                          this.requestUpdate();
+                                        }}
+                                      >
+                                        ${item.title} ${item.year ?? ""}
+                                      </button>
+                                    `,
+                                  )}
+                                </div>
+                              `
+                            : html`<p class="warning">
+                                Voiding removes this invoice from active totals
+                                and prevents its identity from being imported
+                                again.
+                              </p>`
+                        }
+                      `
+                    : nothing
+                }
+                <div class="actions">
+                  <button ?disabled=${this.busy} @click=${this.close}>
+                    Cancel</button
+                  ><button ?disabled=${this.busy} @click=${this.preview}>
+                    Review change
+                  </button>
+                </div>
+              `
+            : html`
+                ${comparison("Purchase", this.review.before, this.review.after)}
+                ${comparison("Library association", this.review.before_library, this.review.after_library)}
+                ${comparison(
+                  "Library totals",
+                  this.review.totals_change.map((entry) => ({
+                    source_id: entry.source_id,
+                    totals: entry.before,
+                  })),
+                  this.review.totals_change.map((entry) => ({
+                    source_id: entry.source_id,
+                    totals: entry.after,
+                  })),
+                )}
+                <label class="check"
+                  ><input
+                    type="checkbox"
+                    .checked=${this.confirmed}
+                    ?disabled=${this.busy || !!this.pending}
+                    @change=${(event: Event) => {
+                      this.confirmed = (
+                        event.target as HTMLInputElement
+                      ).checked;
+                      this.requestUpdate();
+                    }}
+                  />I reviewed this change and its totals.</label
                 >
-                  Back
-                </button>
-                <button
-                  ?disabled=${this.busy || !this.confirmed}
-                  @click=${this.apply}
-                >
-                  ${this.pending ? "Retry change" : "Apply reviewed change"}
-                </button>
-              </div>
-            `
-      }
+                <div class="actions">
+                  <button
+                    ?disabled=${this.busy || !!this.pending}
+                    @click=${() => {
+                      this.review = undefined;
+                      this.requestUpdate();
+                    }}
+                  >
+                    Back
+                  </button>
+                  <button
+                    ?disabled=${this.busy || !this.confirmed}
+                    @click=${this.apply}
+                  >
+                    ${this.pending ? "Retry change" : "Apply reviewed change"}
+                  </button>
+                </div>
+              `
+        }
+      </dialog>
     `;
   }
 }

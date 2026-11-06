@@ -107,7 +107,10 @@ original date are saved with an unknown date and reported for review. The
 blueprint fetches the HTML part of the same IMAP message when available. Import
 uses bounded decoding and only associates uniquely titled movie links on the
 fixed Store host; missing or ambiguous links remain unset. Receipt content may
-appear in HA logs under the diagnostic exception below. The metadata refresh
+appear in HA logs under the diagnostic exception below. A single displayed item
+price is recorded as the purchase price only when it reconciles exactly with the
+receipt subtotal and all other item purchase prices; it does not establish a
+retail price. Unreconciled prices remain unset for review. The metadata refresh
 action accepts known provider names and only contacts enabled providers.
 Calendar Full Sync remains restricted to an explicitly acknowledged dedicated
 calendar, with its existing snapshot, grace and uncertainty checks. Its optional

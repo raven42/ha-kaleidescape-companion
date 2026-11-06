@@ -288,7 +288,7 @@ def _parse_items(body):
                     prices[-1],
                 )
             elif prices:
-                issues.append({"title": title, "reason": "ambiguous_price"})
+                current["_ambiguous_prices"] = prices
             if current.pop("_included"):
                 if bundle is not None:
                     bundle["included_titles"].append(
@@ -392,6 +392,29 @@ def _parse_items(body):
             totals[key.lower()] = price_cents(value)
         except JournalError:
             issues.append({"reason": "invalid_total"})
+    # A single displayed price is not inherently a purchase or retail price.
+    # It is a purchase price when it exactly accounts for the remaining item
+    # subtotal after every other item's known purchase price is deducted.
+    ambiguous = [item for item in items if item.get("_ambiguous_prices")]
+    if len(ambiguous) == 1 and len(ambiguous[0]["_ambiguous_prices"]) == 1:
+        subtotal = totals.get("subtotal")
+        candidate = price_cents(ambiguous[0]["_ambiguous_prices"][0])
+        others = [
+            price_cents(item.get("purchase_price"))
+            for item in items
+            if item is not ambiguous[0]
+        ]
+        if (
+            subtotal
+            and candidate[0] == subtotal[0]
+            and all(value is not None and value[0] == subtotal[0] for value in others)
+            and candidate[1] + sum(value[1] for value in others) == subtotal[1]
+        ):
+            ambiguous[0]["purchase_price"] = ambiguous[0]["_ambiguous_prices"][0]
+            ambiguous[0].pop("_ambiguous_prices")
+    for item in items:
+        if item.pop("_ambiguous_prices", None):
+            issues.append({"title": item["title"], "reason": "ambiguous_price"})
     return items, issues, totals
 
 

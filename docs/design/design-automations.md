@@ -106,6 +106,12 @@ selected fields and unidentified items are reported for review. With fewer
 identity fields, distinct purchases can be harder to distinguish; check
 duplicates before accepting a separate purchase.
 
+When a receipt shows only one price for an item, the importer records it as the
+purchase price if it exactly reconciles with the subtotal and all other known
+item prices. An unlisted retail price stays empty and is reported when selected.
+If the subtotal does not establish the price, the item is saved with the price
+missing and flagged for review.
+
 The automation attempts `imap.fetch_part` whenever HA lists an HTML part. If
 that fetch fails, it still passes the text to the importer and reports the
 missing HTML. HA's IMAP actions and automation traces may contain the full

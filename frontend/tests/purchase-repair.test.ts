@@ -48,7 +48,10 @@ beforeEach(async () => {
   document.body.append(element);
   await flush();
 });
-afterEach(() => element.remove());
+afterEach(() => {
+  element.remove();
+  vi.unstubAllGlobals();
+});
 
 it("previews corrections and retries uncertain writes with the same request", async () => {
   const preview = vi
@@ -76,12 +79,19 @@ it("previews corrections and retries uncertain writes with the same request", as
     element.token,
     { purchase_price: "$8.99" },
   ]);
-  expect(text()).toContain("Library totals before and after");
+  expect(root().querySelector<HTMLDialogElement>("dialog")!.open).toBe(true);
+  const purchase = root().querySelector('[aria-label="Purchase"]')!;
+  const changed = purchase.querySelector(".diff-row.changed")!;
+  expect(changed.textContent).toContain("Purchase price (changed)");
+  expect(changed.querySelector(".before")?.textContent).toContain("$12.99");
+  expect(changed.querySelector(".after")?.textContent).toContain("$8.99");
+  expect(text()).toContain("Library totals");
   expect(text()).toContain("$8.99");
   expect(root().querySelector("img[src=x]")).toBeNull();
   const check = root().querySelector<HTMLInputElement>(
     'input[type="checkbox"]',
   )!;
+  expect(check.closest("label")?.classList.contains("check")).toBe(true);
   check.click();
   await flush();
   button("Apply reviewed change").click();
@@ -94,6 +104,60 @@ it("previews corrections and retries uncertain writes with the same request", as
   expect(apply.mock.calls[0][0]).toEqual(apply.mock.calls[1][0]);
   expect(done).toHaveBeenCalledOnce();
   expect(busy.mock.calls.at(-1)?.[0].detail).toBe(false);
+});
+
+it("explains invalid fields and blocks preview until they are corrected", async () => {
+  const preview = vi
+    .spyOn(element.client!, "previewPurchaseRepair")
+    .mockResolvedValue(review);
+  const set = (name: string, value: string) => {
+    const field = root().querySelector<HTMLInputElement>(`[name="${name}"]`)!;
+    field.value = value;
+    field.dispatchEvent(new Event("input"));
+  };
+  set("title", " ");
+  set("purchase_price", "12.9");
+  set("retail_price", "-$24.99");
+  set("href", "javascript:alert(1)");
+  button("Review change").click();
+  await flush();
+  expect(preview).not.toHaveBeenCalled();
+  for (const name of ["title", "purchase_price", "retail_price", "href"]) {
+    const field = root().querySelector<HTMLInputElement>(`[name="${name}"]`)!;
+    expect(field.getAttribute("aria-invalid")).toBe("true");
+    expect(
+      root().querySelector(`#${field.getAttribute("aria-describedby")}`)
+        ?.textContent,
+    ).toBeTruthy();
+  }
+  expect(text()).toContain("currency symbol and two decimal places");
+  expect(text()).toContain("HTTP(S) link");
+  set("title", row.title);
+  set("purchase_price", "$8.99");
+  set("retail_price", row.retail_price);
+  set("href", "");
+  button("Review change").click();
+  await flush();
+  expect(preview).toHaveBeenCalledOnce();
+});
+
+it("guards closing the modal with unsaved changes", async () => {
+  const field = root().querySelector<HTMLInputElement>('[name="title"]')!;
+  field.value = "Changed title";
+  field.dispatchEvent(new Event("input"));
+  const confirm = vi.fn(() => false);
+  vi.stubGlobal("confirm", confirm);
+  const cancel = vi.fn();
+  element.addEventListener("repair-cancel", cancel);
+  root()
+    .querySelector("dialog")!
+    .dispatchEvent(new Event("cancel", { cancelable: true }));
+  expect(confirm).toHaveBeenCalledOnce();
+  expect(cancel).not.toHaveBeenCalled();
+  expect(root().querySelector<HTMLDialogElement>("dialog")!.open).toBe(true);
+  confirm.mockReturnValue(true);
+  root().querySelector<HTMLButtonElement>(".dialog-close")!.click();
+  expect(cancel).toHaveBeenCalledOnce();
 });
 
 it("requires review before voiding and supports restoring a recorded repair", async () => {

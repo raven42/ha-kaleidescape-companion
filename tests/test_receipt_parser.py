@@ -1,6 +1,7 @@
 """Fictional IMAP messages exercise the Python receipt extraction boundary."""
 
 import base64
+import quopri
 import unittest
 from itertools import combinations
 
@@ -34,6 +35,26 @@ HTML = (
     "<td>4K</td><td>$14.99 $4.99</td></tr>"
     "<tr><td>Subtotal $14.98</td></tr></table></body></html>"
 )
+SINGLE_PRICE_TEXT = """Order ID ORDER-456
+Order Date: October 13, 2026
+Item Quality Price
+[image: Cover]
+Fictional Voyage <https://store.kaleidescape.com/movie-store/movie/details/123>
+[image: HD]
+$18.00
+Subtotal $18.00
+Taxes $1.50
+Total $19.50
+"""
+SINGLE_PRICE_HTML = """<html><body><div>Order ID ORDER-456</div>
+<div>Order Date: October 13, 2026</div><table><tr><td><table>
+<thead><tr><th>Item</th><th>Quality</th><th></th><th>Price</th></tr></thead>
+<tbody><tr><td><a href="https://store.kaleidescape.com/movie-store/movie/details/123">
+Fictional Voyage</a></td><td><img alt="HD"></td>
+<td style="text-decoration: line-through"></td><td>$18.00</td></tr>
+<tr><td>Subtotal</td><td>$18.00</td></tr>
+<tr><td>Taxes</td><td>$1.50</td></tr><tr><td>Total</td><td>$19.50</td></tr>
+</tbody></table></td></tr></table></body></html>"""
 
 
 def envelope(text=TEXT, fields=None, **kwargs):
@@ -50,6 +71,68 @@ def envelope(text=TEXT, fields=None, **kwargs):
 
 
 class ReceiptParserTest(unittest.TestCase):
+    def test_single_item_price_is_confirmed_by_subtotal_for_text_and_html(self):
+        part = {
+            "content_type": "text/html",
+            "content_transfer_encoding": "quoted-printable",
+            "part_data": quopri.encodestring(SINGLE_PRICE_HTML.encode()).decode(),
+        }
+        for text, html in (
+            (SINGLE_PRICE_TEXT, None),
+            ("", part),
+            (SINGLE_PRICE_TEXT, part),
+        ):
+            with self.subTest(text=bool(text), html=bool(html)):
+                records, issues = parse_receipt(envelope(text=text, html_part=html))
+                self.assertEqual(len(records), 1)
+                self.assertEqual(records[0]["purchase_price"], "$18.00")
+                self.assertIsNone(records[0]["retail_price"])
+                self.assertEqual(
+                    issues,
+                    [{"title": "Fictional Voyage", "reason": "retail_price_missing"}],
+                )
+
+    def test_subtotal_confirms_only_one_unknown_price(self):
+        body = TEXT.replace("$14.99 $4.99", "$4.99")
+        records, issues = parse_receipt(envelope(text=body))
+        self.assertEqual([row["purchase_price"] for row in records], ["$9.99", "$4.99"])
+        self.assertIsNone(records[1]["retail_price"])
+        self.assertEqual(
+            issues, [{"title": "Second Film", "reason": "retail_price_missing"}]
+        )
+
+    def test_inferred_price_obeys_field_selection(self):
+        records, issues = parse_receipt(
+            envelope(SINGLE_PRICE_TEXT, fields=["purchase-price"])
+        )
+        self.assertEqual(records[0]["purchase_price"], "$18.00")
+        self.assertIsNone(records[0]["retail_price"])
+        self.assertFalse(
+            any(issue["reason"].endswith("price_missing") for issue in issues)
+        )
+        records, issues = parse_receipt(
+            envelope(SINGLE_PRICE_TEXT, fields=["retail-price"])
+        )
+        self.assertIsNone(records[0]["purchase_price"])
+        self.assertIsNone(records[0]["retail_price"])
+        self.assertIn(
+            {"title": "Fictional Voyage", "reason": "retail_price_missing"}, issues
+        )
+
+    def test_single_price_without_conclusive_subtotal_remains_ambiguous(self):
+        for body in (
+            SINGLE_PRICE_TEXT.replace("Subtotal $18.00\n", ""),
+            SINGLE_PRICE_TEXT.replace("Subtotal $18.00", "Subtotal $17.00"),
+            SINGLE_PRICE_TEXT.replace("Subtotal $18.00", "Subtotal £18.00"),
+            TEXT.replace("$19.99 $9.99", "$9.99").replace("$14.99 $4.99", "$4.99"),
+        ):
+            with self.subTest(body=body):
+                records, issues = parse_receipt(envelope(text=body))
+                self.assertTrue(all(row["purchase_price"] is None for row in records))
+                self.assertTrue(
+                    any(issue["reason"] == "ambiguous_price" for issue in issues)
+                )
+
     def test_every_nonempty_selection_saves_only_requested_fields(self):
         options = sorted(SELECTABLE_FIELDS)
         for count in range(1, len(options) + 1):
