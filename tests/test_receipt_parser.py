@@ -84,6 +84,11 @@ MIXED_PRICE_HTML = """<html><body><div>Order ID ORDER-789</div>
 
 
 def envelope(text=TEXT, fields=None, **kwargs):
+    if "html_part" not in kwargs:
+        if text == TEXT:
+            kwargs["html_part"] = {"content_type": "text/html", "part_data": HTML}
+        elif "<table" in text.lower():
+            kwargs["html_part"] = {"content_type": "text/html", "part_data": text}
     return {
         "source": "kaleidescape",
         "email": {
@@ -97,6 +102,25 @@ def envelope(text=TEXT, fields=None, **kwargs):
 
 
 class ReceiptParserTest(unittest.TestCase):
+    def test_html_is_required_and_text_is_never_imported(self):
+        records, issues = parse_receipt(envelope(TEXT, html_part=None))
+        self.assertEqual(records, [])
+        self.assertEqual(issues, [{"reason": "html_part_unavailable"}])
+        records, issues = parse_receipt(
+            envelope(
+                TEXT,
+                html_part={
+                    "content_type": "text/html",
+                    "part_data": "<p>not a receipt</p>",
+                },
+            )
+        )
+        self.assertEqual(records, [])
+        self.assertEqual(issues, [{"reason": "html_items_unavailable"}])
+
+
+
+
     def test_html_rows_identify_struck_retail_and_paid_price_independent_of_order(self):
         html = """<html><body><div>Order ID ORDER-321</div>
         <div>Order Date: October 13, 2026</div>
@@ -218,26 +242,6 @@ Fictional Three $9.00
             {"ambiguous_price", "purchase_price_missing", "retail_price_missing"},
         )
 
-    def test_partial_html_retains_text_only_rows_with_review_reason(self):
-        html = """<html><body><div>Order ID ORDER-1</div>
-        <table><tr><th>Item</th><th>Price</th></tr>
-        <tr><td><a href="/movie-store/movie/details/101">Fictional One</a></td>
-        <td><s>$20.00</s></td><td>$7.00</td></tr></table></body></html>"""
-        text = """Order ID ORDER-1
-Item Quality Price
-Fictional One $7.00 $20.00
-Fictional Two <https://store.kaleidescape.com/movie-store/movie/details/102>
-$25.00 $8.00
-"""
-        records, issues = parse_receipt(
-            envelope(text, html_part={"content_type": "text/html", "part_data": html})
-        )
-        self.assertEqual(
-            [row["title"] for row in records], ["Fictional One", "Fictional Two"]
-        )
-        self.assertEqual([row["purchase_price"] for row in records], ["$7.00", "$8.00"])
-        self.assertIn({"title": "Fictional Two", "reason": "text_only_item"}, issues)
-
     def test_html_bundle_rows_are_allocated_to_included_movies(self):
         html = """<html><body><div>Order ID ORDER-1</div>
         <table><tr><th>Item</th><th>Price</th></tr>
@@ -290,29 +294,6 @@ $25.00 $8.00
         )
         self.assertEqual({row["purchase_price"] for row in records}, {"$5.00"})
         self.assertEqual(issues, [])
-
-    def test_partial_html_bundle_recovers_missing_member_from_text(self):
-        html = """<html><body><div>Order ID ORDER-1</div>
-        <table><tr><th>Item</th><th>Price</th></tr>
-        <tr><td><a href="/movie-store/set/fictional-set">Fictional Set</a></td>
-        <td><s>$20.00</s></td><td>$10.00</td></tr>
-        <tr><td><a href="/movie-store/movie/details/101">First Film</a></td>
-        <td>Included</td></tr></table></body></html>"""
-        text = """Order ID ORDER-1
-Item Quality Price
-Fictional Set <https://www.kaleidescape.com/movie-store/set/fictional-set> $20.00 $10.00
-First Film <https://store.kaleidescape.com/movie-store/movie/details/101> Included
-Second Film <https://store.kaleidescape.com/movie-store/movie/details/102> Included
-Subtotal $10.00
-"""
-        records, issues = parse_receipt(
-            envelope(text, html_part={"content_type": "text/html", "part_data": html})
-        )
-        self.assertEqual(
-            {row["title"] for row in records}, {"First Film", "Second Film"}
-        )
-        self.assertEqual({row["purchase_price"] for row in records}, {"$5.00"})
-        self.assertEqual(issues, [{"title": "Second Film", "reason": "text_only_item"}])
 
     def test_forwarded_html_table_uses_original_receipt_date(self):
         html = """<html><body><blockquote>
@@ -373,7 +354,6 @@ Subtotal $10.00
             "part_data": quopri.encodestring(SINGLE_PRICE_HTML.encode()).decode(),
         }
         for text, html in (
-            (SINGLE_PRICE_TEXT, None),
             ("", part),
             (SINGLE_PRICE_TEXT, part),
         ):
@@ -385,47 +365,6 @@ Subtotal $10.00
                 self.assertEqual(
                     issues,
                     [{"title": "Fictional Voyage", "reason": "retail_price_missing"}],
-                )
-
-    def test_subtotal_confirms_only_one_unknown_price(self):
-        body = TEXT.replace("$14.99 $4.99", "$4.99")
-        records, issues = parse_receipt(envelope(text=body))
-        self.assertEqual([row["purchase_price"] for row in records], ["$9.99", "$4.99"])
-        self.assertIsNone(records[1]["retail_price"])
-        self.assertEqual(
-            issues, [{"title": "Second Film", "reason": "retail_price_missing"}]
-        )
-
-    def test_inferred_price_obeys_field_selection(self):
-        records, issues = parse_receipt(
-            envelope(SINGLE_PRICE_TEXT, fields=["purchase-price"])
-        )
-        self.assertEqual(records[0]["purchase_price"], "$18.00")
-        self.assertIsNone(records[0]["retail_price"])
-        self.assertFalse(
-            any(issue["reason"].endswith("price_missing") for issue in issues)
-        )
-        records, issues = parse_receipt(
-            envelope(SINGLE_PRICE_TEXT, fields=["retail-price"])
-        )
-        self.assertIsNone(records[0]["purchase_price"])
-        self.assertIsNone(records[0]["retail_price"])
-        self.assertIn(
-            {"title": "Fictional Voyage", "reason": "retail_price_missing"}, issues
-        )
-
-    def test_single_price_without_conclusive_subtotal_remains_ambiguous(self):
-        for body in (
-            SINGLE_PRICE_TEXT.replace("Subtotal $18.00\n", ""),
-            SINGLE_PRICE_TEXT.replace("Subtotal $18.00", "Subtotal $17.00"),
-            SINGLE_PRICE_TEXT.replace("Subtotal $18.00", "Subtotal £18.00"),
-            TEXT.replace("$19.99 $9.99", "$9.99").replace("$14.99 $4.99", "$4.99"),
-        ):
-            with self.subTest(body=body):
-                records, issues = parse_receipt(envelope(text=body))
-                self.assertTrue(all(row["purchase_price"] is None for row in records))
-                self.assertTrue(
-                    any(issue["reason"] == "ambiguous_price" for issue in issues)
                 )
 
     def test_every_nonempty_selection_saves_only_requested_fields(self):
@@ -514,26 +453,6 @@ Subtotal $10.00
         self.assertEqual(records[0]["purchase_price"], "$9.99")
         self.assertEqual(issues, [])
 
-    def test_missing_heading_uses_store_links_with_review_warning(self):
-        body = TEXT.replace("Item Quality Price\n", "")
-        records, issues = parse_receipt(envelope(body))
-        self.assertEqual(
-            [row["title"] for row in records], ["Fictional Voyage", "Second Film"]
-        )
-        self.assertIn({"reason": "item_section_missing"}, issues)
-
-    def test_currency_and_untrusted_links(self):
-        body = TEXT.replace("$", "£").replace(
-            "https://store.kaleidescape.com/movie-store/movie/details/123",
-            "https://attacker.invalid/movie-store/movie/details/123",
-        )
-        records, issues = parse_receipt(envelope(body))
-        self.assertEqual(records[0]["purchase_price"], "£9.99")
-        self.assertIsNone(records[0]["href"])
-        self.assertIn(
-            {"title": "Fictional Voyage", "reason": "store_link_missing"}, issues
-        )
-
     def test_hidden_html_content_does_not_change_visible_prices(self):
         html = HTML.replace(
             "<s>$19.99</s> $9.99",
@@ -544,112 +463,14 @@ Subtotal $10.00
         self.assertEqual(records[0]["retail_price"], "$19.99")
         self.assertFalse(issues)
 
-    def test_relative_store_link_and_title_words_are_preserved(self):
-        body = TEXT.replace("Fictional Voyage", "HD Fictional Voyage").replace(
-            "https://store.kaleidescape.com/movie-store/movie/details/123",
-            "/movie-store/movie/details/123",
-        )
-        records, _ = parse_receipt(envelope(text=body))
-        self.assertEqual(records[0]["title"], "HD Fictional Voyage")
-        self.assertEqual(records[0]["href"], "/movie-store/movie/details/123")
-
-    def test_partial_rows_and_total_discrepancies_do_not_discard_other_items(self):
-        body = TEXT.replace("$14.99 $4.99", "$14.99").replace(
-            "Total $15.98", "Total $16.98"
-        )
-        records, issues = parse_receipt(envelope(text=body))
-        self.assertEqual(len(records), 2)
-        self.assertEqual(records[0]["purchase_price"], "$9.99")
-        self.assertIsNone(records[1]["purchase_price"])
-        self.assertIn(
-            {"title": "Second Film", "reason": "purchase_price_missing"}, issues
-        )
-        self.assertIn({"reason": "total_mismatch"}, issues)
-
-    def test_malformed_total_does_not_discard_valid_items(self):
-        body = TEXT.replace("Subtotal $14.98", "Subtotal $1,2.98")
-        records, issues = parse_receipt(envelope(body))
-        self.assertEqual(len(records), 2)
-        self.assertIn({"reason": "invalid_total"}, issues)
-
-    def test_invalid_or_ambiguous_prices_are_not_invented(self):
-        for prices in ("$19.99 -$9.99", "$19.99 $1,2.99", "$19.99 $9.99 $4.99"):
-            with self.subTest(prices=prices):
-                body = TEXT.replace("$19.99 $9.99", prices)
-                records, issues = parse_receipt(envelope(text=body))
-                first = next(
-                    row for row in records if row["title"] == "Fictional Voyage"
-                )
-                self.assertIsNone(first["purchase_price"])
-                self.assertIsNone(first["retail_price"])
-                self.assertTrue(
-                    any(
-                        issue["reason"] in {"invalid_price", "ambiguous_price"}
-                        for issue in issues
-                    )
-                )
-                self.assertEqual(records[1]["purchase_price"], "$4.99")
-
-    def test_forwarded_quote_uses_original_date_and_repeated_title_links(self):
-        receipt = """From: Kaleidescape Movie Store <store@kaleidescape.com>
-Date: Tue, Oct 13, 2026 at 9:01 AM
-Item Quality Price
-[image: Cover]
-<https://store.kaleidescape.com/movie-store/movie/details/123> The Fictional
-Voyage Beyond
-<https://store.kaleidescape.com/movie-store/movie/details/123> [image: HD] $19.99 $9.99
-[image: Cover]
-<https://store.kaleidescape.com/movie-store/movie/details/456> Another Film
-<https://store.kaleidescape.com/movie-store/movie/details/456> [image: 4K] $14.99 $4.99
-Subtotal $14.98
-Taxes $1.00
-Total $15.98"""
-        body = "\n".join("> > " + line for line in receipt.splitlines())
-        data = envelope(text=body)
-        data["email"]["subject"] = "Fwd: Kaleidescape Store Receipt"
-        records, issues = parse_receipt(data)
-        self.assertEqual(
-            [row["title"] for row in records],
-            ["The Fictional Voyage Beyond", "Another Film"],
-        )
-        self.assertTrue(all(row["purchased_on"] == "2026-10-13" for row in records))
-        self.assertEqual([row["purchase_price"] for row in records], ["$9.99", "$4.99"])
-        self.assertEqual(issues, [{"reason": "order_id_missing"}])
-
-    def test_html_recovers_unique_links_for_plain_text_items(self):
-        from test_automation_blueprints import UNLINKED_BODY
-
-        html = (
-            '<a href="https://store.kaleidescape.com/movie-store/movie/details/123">'
-            "The Fictional Voyage</a>"
-        )
-        part = {"content_type": "text/html", "part_data": html}
-        records, issues = parse_receipt(envelope(text=UNLINKED_BODY, html_part=part))
-        self.assertEqual(len(records), 3)
-        self.assertEqual(records[0]["href"], "/movie-store/movie/details/123")
-        self.assertEqual(
-            sum(issue["reason"] == "store_link_missing" for issue in issues), 2
-        )
-
-    def test_forward_date_is_not_mistaken_for_purchase_date(self):
-        body = TEXT.replace("Order Date: October 13, 2026\n", "")
-        payload = envelope(body)
-        payload["email"]["subject"] = "Fwd: Kaleidescape Store Receipt"
-        records, issues = parse_receipt(payload)
-        self.assertEqual(len(records), 2)
-        self.assertTrue(all(row["purchased_on"] is None for row in records))
-        self.assertIn({"reason": "purchase_date_missing"}, issues)
-
     def test_html_failure_and_no_items_are_actionable(self):
         records, issues = parse_receipt(
             envelope("unsupported message", html_expected=True)
         )
         self.assertEqual(records, [])
         self.assertIn({"reason": "html_part_unavailable"}, issues)
-        self.assertIn({"reason": "no_items_found"}, issues)
         records, issues = parse_receipt(envelope("", html_expected=True))
         self.assertEqual(records, [])
-        self.assertIn({"reason": "email_body_missing"}, issues)
         self.assertIn({"reason": "html_part_unavailable"}, issues)
 
 

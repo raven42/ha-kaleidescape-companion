@@ -38,6 +38,7 @@ LABELS = {
 KNOWN_OLDER = {
     "purchase_email": frozenset(
         {
+            "87fdfb8b207b6871dc3dddba8286af3d4b7c403942b13b5464fd8bf49d5c9979",
             "925bc82fe753e27278c10cd7ec6ba26d5d7e8a38d276717c0ee40e4b5b5bc037",
             "b2f6345aea2b34759dfe4407ae4a00ef6e7ec521139426be21acae84cecff96a",
             "1334182ffcd69152fea57679a9a110d685fbeeaeccab0094e8a8c242409a8304",
@@ -69,7 +70,7 @@ KNOWN_OLDER = {
 # These fingerprints also make future template changes visible to tests.
 CURRENT = {
     "purchase_email": (
-        "87fdfb8b207b6871dc3dddba8286af3d4b7c403942b13b5464fd8bf49d5c9979"
+        "95c87fe455c812fb0fa439cae5e1aa7d98a11343086aac4b1b059016b7b94707"
     ),
     "library_schedule": (
         "46dc751ba272241dcc67768b0fe4ba8ed994088696339e0d27ab5f203e91a43b"
@@ -83,7 +84,7 @@ CURRENT = {
 }
 MAX_TEMPLATE_BYTES = 128 * 1024
 NOTICE_ID = "kaleidescape_companion_blueprints_outdated"
-LATEST_VERSION = {kind: 7 if kind == "purchase_email" else 1 for kind in TEMPLATES}
+LATEST_VERSION = {kind: 8 if kind == "purchase_email" else 1 for kind in TEMPLATES}
 
 
 def read_template(kind):

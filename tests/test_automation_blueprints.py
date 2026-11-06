@@ -276,7 +276,7 @@ class BlueprintTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(payload["html_part"]["part_data"], "<p>Fictional HTML</p>")
         self.assertIn("1 saved without a Library match", notifications[0]["message"])
 
-    async def test_receipt_blueprint_imports_text_when_html_fetch_fails(self):
+    async def test_receipt_blueprint_notifies_when_html_fetch_fails(self):
         from custom_components.kaleidescape_companion.core.repository import (
             JournalRepository,
         )
@@ -320,8 +320,11 @@ class BlueprintTest(unittest.IsolatedAsyncioTestCase):
         self.hass.services.async_register(
             "imap", "fetch_part", fail_part, supports_response=SupportsResponse.ONLY
         )
+        notifications = []
         self.hass.services.async_register(
-            "persistent_notification", "create", lambda call: None
+            "persistent_notification",
+            "create",
+            lambda call: notifications.append(call.data),
         )
         async_register_services(self.hass)
         repo = JournalRepository(Path(self.directory.name) / "journal.sqlite3")
@@ -351,7 +354,11 @@ class BlueprintTest(unittest.IsolatedAsyncioTestCase):
                 context=Context(),
             )
         rows = (await repo.async_inspect("purchase_records"))["items"]
-        self.assertEqual(len(rows), 3)
+        self.assertEqual(len(rows), 0)
+        self.assertIn("receipt could not be imported", notifications[0]["message"])
+        self.assertIn(
+            "HTML part could not be found or fetched", notifications[0]["message"]
+        )
         self.assertTrue(
             any("html_part_unavailable" in str(call) for call in warning.call_args_list)
         )

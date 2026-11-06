@@ -40,6 +40,7 @@ class EmailTest(unittest.IsolatedAsyncioTestCase):
     seed_library = importing.ImportStorageTest.seed_library
     assert_error = importing.ImportStorageTest.assert_error
 
+
     async def test_mixed_receipt_saves_both_items_and_reports_only_missing_retail(self):
         from test_receipt_parser import MIXED_PRICE_HTML, MIXED_PRICE_TEXT, envelope
 
@@ -71,12 +72,12 @@ class EmailTest(unittest.IsolatedAsyncioTestCase):
     async def test_replaying_partial_receipt_fills_purchase_price_without_duplicate(
         self,
     ):
-        from test_receipt_parser import SINGLE_PRICE_TEXT, envelope
+        from test_receipt_parser import SINGLE_PRICE_HTML, envelope
 
         target = await self.seed_library()
         title = library.ROWS[0]["title"]
-        body = SINGLE_PRICE_TEXT.replace("Fictional Voyage", title)
-        partial = envelope(body.replace("Subtotal $18.00", "Subtotal $17.00"))
+        body = SINGLE_PRICE_HTML.replace("Fictional Voyage", title)
+        partial = envelope(body.replace("<td>$18.00</td></tr>", "<td></td></tr>", 1))
         await self.repository.async_purchase_email(partial)
         original = (await self.repository.async_inspect("purchase_records"))["items"]
         self.assertEqual(len(original), 1)
@@ -732,7 +733,11 @@ class ReceiptLoggingTest(unittest.IsolatedAsyncioTestCase):
                 html_part={
                     "content_type": "text/html",
                     "content_transfer_encoding": "base64",
-                    "part_data": "PGI+ZmljdGlvbmFsIGh0bWw8L2I+",
+                    "part_data": base64.b64encode(
+                        b"<div>Order ID PRIVATE-ORDER</div><table><tr><td>"
+                        b'<a href="/movie-store/movie/details/1">Fictional title</a>'
+                        b"</td><td>$19.99</td></tr></table><!-- fictional html -->"
+                    ).decode(),
                 },
             )
             call = ServiceCall(

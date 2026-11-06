@@ -1,4 +1,5 @@
 # Version history:
+# v8: Require receipt HTML and report when it cannot be imported.
 # v7: Parse fetched receipts in Python with selectable imported fields and diagnostics.
 # v6: Recognize repeated cover and title links in forwarded receipts.
 # v5: Parse linkless receipts, recover HTML links, and localize email dates.
@@ -12,7 +13,7 @@ blueprint:
   description: >-
     Fetch purchase receipts from a selected IMAP integration and import the
     chosen fields. Title and Store link are always imported when available.
-    Receipt details are logged for troubleshooting. Blueprint version: 7.
+    Receipt details are logged for troubleshooting. Blueprint version: 8.
   domain: automation
   input:
     imap_entry:
@@ -97,7 +98,7 @@ actions:
           'subject': email.get('subject') or trigger.event.data.get('subject', '')
         }, 'selected_fields': import_fields,
         'html_part': html_part | default({}, true),
-        'html_expected': html_key is not none} }}
+        'html_expected': true} }}
     response_variable: purchase_import
   - if: "{{ purchase_import.status == 'needs_review' }}"
     then:
@@ -105,6 +106,11 @@ actions:
         data:
           title: Kaleidescape purchase needs review
           message: >-
+            {% if purchase_import.issues | selectattr('reason', 'eq', 'html_part_unavailable') | list | count %}
+            The receipt could not be imported because its HTML part could not be found or fetched.
+            {% elif purchase_import.issues | selectattr('reason', 'eq', 'html_items_unavailable') | list | count %}
+            The receipt could not be imported because its HTML could not be parsed safely.
+            {% else %}
             {{ purchase_import.imported_count | default(0) }} purchases imported,
             {{ purchase_import.updated_count | default(0) }} updated, and
             {{ purchase_import.unchanged_count | default(0) }} unchanged, and
@@ -112,5 +118,6 @@ actions:
             Library match. {{ purchase_import.issues | count }} issues need review. Check the
             Home Assistant logs and automation trace for receipt details, then
             review saved purchases in Companion's Database.
+            {% endif %}
 mode: queued
 max: 10

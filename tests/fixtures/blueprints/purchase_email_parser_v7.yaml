@@ -1,0 +1,116 @@
+# Version history:
+# v7: Parse fetched receipts in Python with selectable imported fields and diagnostics.
+# v6: Recognize repeated cover and title links in forwarded receipts.
+# v5: Parse linkless receipts, recover HTML links, and localize email dates.
+# v4: Parse quoted forwards and use the original receipt date.
+# v3: Store unmatched purchases for database reconciliation.
+# v2: Import matched purchases while returning unresolved records for review.
+# v1: Introduce validated purchase receipt parsing and import.
+# End version history
+blueprint:
+  name: Kaleidescape Companion - Import purchase receipts
+  description: >-
+    Fetch purchase receipts from a selected IMAP integration and import the
+    chosen fields. Title and Store link are always imported when available.
+    Receipt details are logged for troubleshooting. Blueprint version: 7.
+  domain: automation
+  input:
+    imap_entry:
+      name: IMAP account
+      description: Select the IMAP integration that receives purchase receipts.
+      selector:
+        config_entry:
+          integration: imap
+    sender_filter:
+      name: Sender contains (optional)
+      description: Filter the IMAP sender address; this does not authenticate the sender.
+      default: ""
+      selector:
+        text:
+    import_fields:
+      name: Receipt fields to import
+      description: Select at least one field. Title and Store link are always imported.
+      default:
+        - transaction-id
+        - purchase-price
+        - retail-price
+        - purchase-date
+      selector:
+        select:
+          multiple: true
+          options:
+            - transaction-id
+            - purchase-price
+            - retail-price
+            - purchase-date
+variables:
+  sender_filter: !input sender_filter
+  import_fields: !input import_fields
+triggers:
+  - trigger: event
+    event_type: imap_content
+    event_data:
+      entry_id: !input imap_entry
+conditions:
+  - condition: template
+    value_template: |-
+      {{ 'kaleidescape store receipt' in
+         (trigger.event.data.get('subject') | default('', true) | string | lower)
+         and (not sender_filter or
+           (sender_filter | lower) in
+           (trigger.event.data.get('sender') | default('', true) | string | lower)) }}
+actions:
+  - if: "{{ import_fields | count == 0 }}"
+    then:
+      - stop: Select at least one receipt field to import.
+        error: true
+  - action: imap.fetch
+    data:
+      entry: '{{ trigger.event.data[''entry_id''] }}'
+      uid: '{{ trigger.event.data[''uid''] }}'
+    response_variable: email
+  - variables:
+      html_key: |-
+        {% set ns = namespace(value=none) %}
+        {% for key, part in email.get('parts', {}).items() %}
+          {% if ns.value is none and part.get('content_type', '') | lower == 'text/html' %}
+            {% set ns.value = key %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.value }}
+      html_part: "{{ {} }}"
+  - if: "{{ html_key is not none }}"
+    then:
+      - action: imap.fetch_part
+        continue_on_error: true
+        data:
+          entry: '{{ trigger.event.data[''entry_id''] }}'
+          uid: '{{ trigger.event.data[''uid''] }}'
+          part: "{{ html_key }}"
+        response_variable: html_part
+  - action: kaleidescape_companion.import_purchase_email
+    data:
+      invoice: >-
+        {{ {'source': 'kaleidescape', 'email': {
+          'text': email.get('text', ''),
+          'date': email.get('date'),
+          'subject': email.get('subject') or trigger.event.data.get('subject', '')
+        }, 'selected_fields': import_fields,
+        'html_part': html_part | default({}, true),
+        'html_expected': html_key is not none} }}
+    response_variable: purchase_import
+  - if: "{{ purchase_import.status == 'needs_review' }}"
+    then:
+      - action: persistent_notification.create
+        data:
+          title: Kaleidescape purchase needs review
+          message: >-
+            {{ purchase_import.imported_count | default(0) }} purchases imported,
+            {{ purchase_import.updated_count | default(0) }} updated, and
+            {{ purchase_import.unchanged_count | default(0) }} unchanged, and
+            {{ purchase_import.pending_count | default(0) }} saved without a
+            Library match. {{ purchase_import.issues | count }} issues need review. Check the
+            Home Assistant logs and automation trace for receipt details, then
+            review saved purchases in Companion's Database.
+mode: queued
+max: 10

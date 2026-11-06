@@ -1,4 +1,4 @@
-"""Extract bounded purchase evidence from fetched receipt text and HTML."""
+"""Extract bounded purchase evidence from fetched receipt HTML."""
 
 import base64
 import binascii
@@ -238,185 +238,14 @@ def _clean(body):
     return re.sub(r"(?is)\[image:[^\]]*\]", " ", body)
 
 
-def _parse_items(body):
-    match = _SECTION.search(body)
-    issues = []
-    if match:
-        section = body[match.end() :]
-    else:
-        lines = body.splitlines()
-        indexes = [
-            index
-            for index, line in enumerate(lines)
-            if any(_store_path(url) for url in _LINK.findall(line))
-        ]
-        if not indexes:
-            return [], [{"reason": "item_section_missing"}], {}
-        start, end = indexes[0], indexes[-1] + 1
-        if start and not lines[start].split("<", 1)[0].strip():
-            previous = lines[start - 1].strip()
-            if previous and not re.match(
-                r"(?i)^(?:order|date|from|subject|subtotal|total)\b", previous
-            ):
-                start -= 1
-        while end < len(lines) and end < indexes[-1] + 5:
-            following = lines[end].strip()
-            if following and not (
-                _PRICE_TOKEN.search(following)
-                or re.fullmatch(r"(?i)(?:quality|4k|hd|uhd|sd|included)", following)
-            ):
-                break
-            end += 1
-        section = "\n".join(lines[start:end])
-        issues.append({"reason": "item_section_missing"})
-    stop = re.search(r"(?im)^\s*subtotal\b", section)
-    if stop:
-        section = section[: stop.start()]
-    items, current, bundle = [], None, None
-
-    def finish():
-        nonlocal current
-        if current is None:
-            return
-        title = " ".join(current.pop("_title")).strip()
-        prices = current.pop("_prices")
-        current.pop("_price_seen")
-        if title:
-            current["title"] = title
-            if len(prices) == 2:
-                current["retail_price"], current["purchase_price"] = (
-                    prices[0],
-                    prices[-1],
-                )
-            elif prices:
-                current["_ambiguous_prices"] = prices
-            if current.pop("_included"):
-                if bundle is not None:
-                    bundle["included_titles"].append(
-                        {"title": title, "href": current.get("href")}
-                    )
-                else:
-                    issues.append(
-                        {"title": title, "reason": "collection_not_identified"}
-                    )
-            else:
-                items.append(current)
-        else:
-            issues.append({"reason": "title_missing"})
-        current = None
-
-    for raw in section.splitlines():
-        line = " ".join(raw.split())
-        if not line:
-            continue
-        if line == "@cover@":
-            finish()
-            bundle = None
-            continue
-        urls = _LINK.findall(line)
-        tokens = _PRICE_TOKEN.findall(line)
-        invalid_price = False
-        for value in tokens:
-            try:
-                if _PRICE.fullmatch(value) is None:
-                    invalid_price = True
-                else:
-                    price_cents(value.replace(" ", ""))
-            except JournalError:
-                invalid_price = True
-        values = (
-            []
-            if invalid_price
-            else [
-                value.replace(" ", "").replace(",", "")
-                for value in _PRICE.findall(line)
-            ]
-        )
-        included = bool(re.search(r"\bincluded\b", line, re.I))
-        paths = [path for url in urls if (path := _store_path(url))]
-        is_set = any(path.lower().startswith("/movie-store/set/") for path in paths)
-        clean = _LINK.sub(" ", line)
-        clean = _PRICE_TOKEN.sub(" ", clean)
-        clean = re.sub(r"(?i)\s*\bincluded\s*$", " ", clean)
-        clean = re.sub(r"(?i)(?:^|\s+)(?:quality|4k|hd|uhd|sd)\s*$", " ", clean)
-        clean = " ".join(clean.strip(" <>-–|:").split())
-        if not clean and not tokens and not urls and not included:
-            continue
-        href = next(
-            (path for path in paths if path.lower().startswith("/movie-store/movie/")),
-            None,
-        )
-        if is_set:
-            finish()
-            bundle = {
-                "_title": [clean] if clean else [],
-                "_prices": values,
-                "_included": False,
-                "_price_seen": bool(tokens),
-                "included_titles": [],
-            }
-            current = bundle
-            continue
-        # A new title begins after a priced row, or an included collection row.
-        if (
-            current
-            and clean
-            and (current["_price_seen"] or (bundle is not None and current is bundle))
-        ):
-            finish()
-        if current is None:
-            current = {
-                "_title": [],
-                "_prices": [],
-                "_price_seen": False,
-                "_included": included,
-                "href": href,
-            }
-        if clean:
-            if not current["_title"] or clean != current["_title"][-1]:
-                current["_title"].append(clean)
-        if href:
-            current["href"] = href
-        current["_prices"].extend(values)
-        current["_price_seen"] |= bool(tokens)
-        current["_included"] |= included
-        if invalid_price:
-            issues.append(
-                {"title": " ".join(current["_title"]), "reason": "invalid_price"}
-            )
-        if included and current is not bundle:
-            finish()
-    finish()
-    totals = {}
+def _totals(body):
+    totals, issues = {}, []
     for key, value in _TOTAL.findall(body):
         try:
             totals[key.lower()] = price_cents(value)
         except JournalError:
             issues.append({"reason": "invalid_total"})
-    # A single displayed price is not inherently a purchase or retail price.
-    # It is a purchase price when it exactly accounts for the remaining item
-    # subtotal after every other item's known purchase price is deducted.
-    ambiguous = [item for item in items if item.get("_ambiguous_prices")]
-    if len(ambiguous) == 1 and len(ambiguous[0]["_ambiguous_prices"]) == 1:
-        subtotal = totals.get("subtotal")
-        candidate = price_cents(ambiguous[0]["_ambiguous_prices"][0])
-        others = [
-            price_cents(item.get("purchase_price"))
-            for item in items
-            if item is not ambiguous[0]
-        ]
-        if (
-            subtotal
-            and candidate[0] == subtotal[0]
-            and all(value is not None and value[0] == subtotal[0] for value in others)
-            and candidate[1] + sum(value[1] for value in others) == subtotal[1]
-        ):
-            ambiguous[0]["purchase_price"] = ambiguous[0]["_ambiguous_prices"][0]
-            ambiguous[0].pop("_ambiguous_prices")
-    for item in items:
-        if item.pop("_ambiguous_prices", None):
-            issues.append({"title": item["title"], "reason": "ambiguous_price"})
-    return items, issues, totals
+    return totals, issues
 
 
 def parse_receipt(payload, timezone="UTC"):
@@ -442,104 +271,26 @@ def parse_receipt(payload, timezone="UTC"):
     except UnicodeError as error:
         raise invalid("Purchase email text must contain valid Unicode") from error
     html = _html_part(payload.get("html_part"))
-    html_issue = payload.get("html_expected") is True and html is None
-    versions = []
-    for content in (text, html):
-        if not content:
-            continue
-        rows = None
-        if re.search(r"(?i)<(?:html|body|table|tr|div)\b", content):
-            rows = parse_rows(content)
-            content = _render_html(content)
-        body = _clean(content)
-        items, issues, totals = _parse_items(body)
-        if rows is not None:
-            items, issues = rows
-        versions.append((items, issues, totals, body, rows is not None))
-    if not versions:
-        issues = [{"reason": "email_body_missing"}]
-        if html_issue:
-            issues.append({"reason": "html_part_unavailable"})
-        return [], issues
-    items, issues, totals, body, structured = max(
-        versions,
-        key=lambda result: (
-            result[4],
-            len(result[0]),
-            sum(bool(i.get("purchase_price")) for i in result[0]),
-        ),
-    )
-    if structured:
-        # Keep identifiable text-only rows when a partially structured HTML
-        # part lacks them, but flag their less certain price/link evidence.
-        known = {
-            _title_key(movie.get("title", ""))
-            for item in items
-            for movie in item.get("included_titles", [item])
-            if movie.get("title")
-        }
-        for fallback_items, _, _, _, fallback_structured in versions:
-            if fallback_structured:
-                continue
-            for item in fallback_items:
-                if "included_titles" in item:
-                    bundles = [
-                        candidate
-                        for candidate in items
-                        if "included_titles" in candidate
-                        and _title_key(candidate.get("title", ""))
-                        == _title_key(item.get("title", ""))
-                    ]
-                    if len(bundles) == 1:
-                        for member in item["included_titles"]:
-                            key = _title_key(member.get("title", ""))
-                            if not key or key in known:
-                                continue
-                            bundles[0]["included_titles"].append(member)
-                            known.add(key)
-                            issues.append(
-                                {"title": member["title"], "reason": "text_only_item"}
-                            )
-                        continue
-                titles = [
-                    movie.get("title", "")
-                    for movie in item.get("included_titles", [item])
-                ]
-                keys = {_title_key(title) for title in titles if title}
-                if not keys or keys & known:
-                    continue
-                items.append(item)
-                known.update(keys)
-                issues.append(
-                    {"title": item.get("title", ""), "reason": "text_only_item"}
-                )
-    if html_issue:
-        issues.append({"reason": "html_part_unavailable"})
+    if not html:
+        return [], [{"reason": "html_part_unavailable"}]
+    rows = parse_rows(html)
+    if rows is None:
+        return [], [{"reason": "html_items_unavailable"}]
+    items, issues = rows
+    body = _clean(_render_html(html))
+    totals, total_issues = _totals(body)
+    issues.extend(total_issues)
     if not items:
         issues.append({"reason": "no_items_found"})
     date = None
     if "purchase-date" in selected:
-        for candidate in [
-            body,
-            *(version[3] for version in versions if version[3] != body),
-        ]:
-            date = _receipt_date(candidate, subject, None, timezone)
-            if date:
-                break
-        if not date:
-            date = _receipt_date(body, subject, email.get("date"), timezone)
+        date = _receipt_date(body, subject, email.get("date"), timezone)
     order = None
     if "transaction-id" in selected:
-        for candidate in [
+        order = re.search(
+            r"(?i)\b(?:order|transaction)\s*(?:id|number|#)\s*:?\s*([A-Za-z0-9_-]{1,256})",
             body,
-            *(version[3] for version in versions if version[3] != body),
-        ]:
-            order = re.search(
-                r"(?i)\b(?:order|transaction)\s*(?:id|number|#)\s*:?\s*([A-Za-z0-9_-]{1,256})",
-                candidate,
-            )
-            if order:
-                break
+        )
     order_id = order.group(1) if order else None
     if "purchase-date" in selected and not date:
         issues.append({"reason": "purchase_date_missing"})
