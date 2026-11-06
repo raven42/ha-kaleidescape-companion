@@ -726,21 +726,26 @@ check. Removal will need its own verified contract and security review.
 
 ## Badge meanings
 
-| Badge                    | Criterion and cover placement                                                                            |
-| ------------------------ | -------------------------------------------------------------------------------------------------------- |
-| Watched · green check    | Source Played status, unless Paused takes priority; top-left triangle                                    |
-| In progress · amber ring | Source Paused status; top-left triangle, with no invented completion percentage                          |
-| Watch Soon · blue clock  | An available version belongs to WatchSoon; top-left triangle when neither In progress nor Watched        |
-| New · blue label         | Retained `recently_added` sensor batch membership, unless a higher-priority flag applies; top-left label |
-| Favorite · gold star     | An available version belongs to Favorites; independent top-right bookmark                                |
+| Badge                       | Criterion and cover placement                                                                     |
+| --------------------------- | ------------------------------------------------------------------------------------------------- |
+| Watched · green check       | Source Played status, unless Paused takes priority; top-left triangle                             |
+| In progress · amber ring    | Source Paused status; top-left triangle, with no invented completion percentage                   |
+| Watch Soon · blue clock     | An available version belongs to WatchSoon; top-left triangle when neither In progress nor Watched |
+| Recently Added · blue label | Retained `recently_added` sensor batch membership or a recent linked purchase; top-left label     |
+| Favorite · gold star        | An available version belongs to Favorites; independent top-right bookmark                         |
 
-Watched, In progress, Watch Soon and New are mutually exclusive. Progress or
-completion takes precedence, followed by Watch Soon and then New. A higher
-priority badge suppresses New even while the movie remains in the sensor batch;
-the sensor batch itself is unchanged. These use cached source statuses and
-refresh with collection sync, rather than adding playback polling or treating
-journal facts as device collection membership. Favorite can accompany any of the
-statuses.
+Watched, In progress and Watch Soon are mutually exclusive. Progress or
+completion takes precedence, followed by Watch Soon. Recently Added and Favorite
+can accompany these statuses. The Recently Added badge is independent of the
+Kaleidescape **New** collection: it includes the retained addition batch and any
+purchase linked to the same source-defined movie group within the configured
+purchase window. Administrators set this window in **Settings → Ecosystem →
+Library sync**, in whole weeks from 0 to 520; it defaults to 2 and 0 disables
+the purchase-date portion. The boundary date is included, future dates are not,
+and dates use Home Assistant's local calendar day. The recently added sensor
+batch itself is unchanged. These use cached source statuses and refresh with
+collection sync, rather than adding playback polling or treating journal facts
+as device collection membership.
 
 Text collection/status badges use compact outlined gradient pills: All in slate,
 New in blue, Unwatched in gold, Watched in green, Favorites in purple and In

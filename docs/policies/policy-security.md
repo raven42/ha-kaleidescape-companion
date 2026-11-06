@@ -52,6 +52,8 @@ Playing also respects source entity read permission. Administrators and HA
 backups can access the full stored dataset; tombstones are not secure erasure.
 The Watch Soon indicator, like Favorite, exposes source collection membership
 for available movie groups even when that collection name is hidden from lists.
+The Recently Added badge also reveals whether a movie has a linked purchase
+within the administrator-configured window; all Library readers see the badge.
 
 Companion's HA configuration switches and sync buttons can be operated by users
 and automations allowed to control those entities by Home Assistant. They

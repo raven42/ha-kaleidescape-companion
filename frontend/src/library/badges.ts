@@ -15,11 +15,12 @@ export function statusBadges(row: LibrarySummary) {
         ? { key: "watched", label: "Watched", symbol: "✓" }
         : watchSoon
           ? { key: "watch-soon", label: "Watch Soon", symbol: "" }
-          : row.is_recently_added
-            ? { key: "recent", label: "Recently added", symbol: "NEW" }
-            : undefined;
+          : undefined;
   return [
     ...(status ? [status] : []),
+    ...(row.is_recently_added
+      ? [{ key: "recent", label: "Recently Added", symbol: "Recently Added" }]
+      : []),
     ...(row.is_favorite
       ? [{ key: "favorite", label: "Favorite", symbol: "★" }]
       : []),
@@ -110,12 +111,13 @@ export function renderStatusBadges(
   flags = false,
   exclude: readonly string[] = [],
 ) {
-  return statusBadges(row)
+  const badges = statusBadges(row);
+  return badges
     .filter((badge) => !exclude.includes(badge.key))
     .map(
       (badge) =>
         html`<span
-          class=${flags ? `cover-flag flag-${badge.key}` : `status-badge collection-badge collection-${collectionKind(badge.label)}`}
+          class=${flags ? `cover-flag flag-${badge.key}${badge.key === "recent" && badges.length > 1 ? " flag-offset" : ""}` : `status-badge collection-badge collection-${collectionKind(badge.label)}`}
           title=${badge.label}
           aria-label=${badge.label}
           role="img"

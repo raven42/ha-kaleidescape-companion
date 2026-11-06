@@ -4610,10 +4610,15 @@ const bi = Fi(class extends Vi {
     top: 8px;
     left: 8px;
     border-radius: 5px;
-    padding: 4px 9px;
-    font-size: 12px;
+    max-width: calc(100% - 16px);
+    padding: 4px 5px;
+    font-size: 9px;
+    line-height: 1.1;
     font-weight: 800;
     box-shadow: 0 1px 4px #0006;
+  }
+  .cover-flag.flag-recent.flag-offset {
+    top: 50px;
   }
   .cover-flag.flag-favorite {
     left: auto;
@@ -6175,9 +6180,10 @@ class M {
 function Bs(n) {
   const e = n.is_watch_soon ?? n.collections.some(
     (i) => i.toLowerCase().replace(/[\s_-]+/g, "") === "watchsoon"
-  ), t = n.watched_status === "in_progress" ? { key: "progress", label: "In progress", symbol: "◔" } : n.watched_status === "watched" ? { key: "watched", label: "Watched", symbol: "✓" } : e ? { key: "watch-soon", label: "Watch Soon", symbol: "" } : n.is_recently_added ? { key: "recent", label: "Recently added", symbol: "NEW" } : void 0;
+  ), t = n.watched_status === "in_progress" ? { key: "progress", label: "In progress", symbol: "◔" } : n.watched_status === "watched" ? { key: "watched", label: "Watched", symbol: "✓" } : e ? { key: "watch-soon", label: "Watch Soon", symbol: "" } : void 0;
   return [
     ...t ? [t] : [],
+    ...n.is_recently_added ? [{ key: "recent", label: "Recently Added", symbol: "Recently Added" }] : [],
     ...n.is_favorite ? [{ key: "favorite", label: "Favorite", symbol: "★" }] : []
   ];
 }
@@ -6225,13 +6231,14 @@ function O(n, e = !1, t, i = !1) {
   });
 }
 function tt(n, e = !1, t = []) {
-  return Bs(n).filter((i) => !t.includes(i.key)).map(
-    (i) => a`<span
-          class=${e ? `cover-flag flag-${i.key}` : `status-badge collection-badge collection-${Ge(i.label)}`}
-          title=${i.label}
-          aria-label=${i.label}
+  const i = Bs(n);
+  return i.filter((s) => !t.includes(s.key)).map(
+    (s) => a`<span
+          class=${e ? `cover-flag flag-${s.key}${s.key === "recent" && i.length > 1 ? " flag-offset" : ""}` : `status-badge collection-badge collection-${Ge(s.label)}`}
+          title=${s.label}
+          aria-label=${s.label}
           role="img"
-          >${e ? a`<span class="badge-symbol" aria-hidden="true">${i.key === "watch-soon" ? Os : i.symbol}</span>` : a`${Zt(i.label)}<span>${i.label}</span>`}</span
+          >${e ? a`<span class="badge-symbol" aria-hidden="true">${s.key === "watch-soon" ? Os : s.symbol}</span>` : a`${Zt(s.label)}<span>${s.label}</span>`}</span
         >`
   );
 }
@@ -12137,6 +12144,13 @@ const nt = [
     ""
   ],
   [
+    "library_recent_purchase_weeks",
+    "Recently Added purchase window · weeks (0 disables)",
+    "number",
+    "0",
+    "520"
+  ],
+  [
     "library_artwork_cache_mb",
     "Artwork cache limit · MiB",
     "number",
@@ -12175,7 +12189,7 @@ const nt = [
   invalid_metadata_options: "Use a valid provider credential and a request rate from 0.1 to 10 per second.",
   invalid_control_options: "Use a private LAN control hostname/IP and a valid player serial number.",
   invalid_library_host: "Enter a hostname or private LAN HTTP(S) origin without a path, credentials, or query.",
-  invalid_library_options: "Choose an artwork cache limit of 32–4096 MiB."
+  invalid_library_options: "Choose a purchase window of 0–520 weeks and an artwork cache limit of 32–4096 MiB."
 }, Oe = class Oe extends x {
   constructor() {
     super(), this.tab = "home-assistant", this.personalReady = !1, this.personalError = "", this.generation = 0, this.draft = {}, this.initial = {}, this.collectionChoices = [], this.hiddenCollections = [], this.sharedReady = !1, this.sharedError = "", this.customCollection = "", this.loading = !1, this.saving = !1, this.uncertain = !1, this.dashboardBusy = !1, this.error = "", this.bound = "", ue(this, () => this.loading || this.saving || this.uncertain || this.personalPreferences?.unsettled ? !1 : (this.personalPreferences?.dispose(), this.personalPreferences = void 0, this.personalReady = !1, this.tab === "personal" && this.selectTab("personal"), !0));

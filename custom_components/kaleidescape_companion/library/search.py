@@ -7,7 +7,6 @@ from ..core.search import matches, normalized, quoted, score
 from .browse import (
     FAVORITE_SQL,
     PURCHASE_SQL,
-    RECENT_SQL,
     STATUS_SQL,
     WATCH_SOON_SQL,
     bounded_page,
@@ -15,10 +14,11 @@ from .browse import (
     hidden_names,
     memberships_for,
     public_title,
+    recent_sql,
 )
 
 
-def search(db, source, query, excluded, fuzzy=True):
+def search(db, source, query, excluded, fuzzy=True, weeks=2, today=None):
     if not isinstance(query, str) or len(query) > 100 or "\x00" in query:
         raise invalid("Title search is limited to 100 characters")
     if type(fuzzy) is not bool:
@@ -58,7 +58,7 @@ def search(db, source, query, excluded, fuzzy=True):
         row = db.execute(
             f"SELECT t.*,({STATUS_SQL}) watched_status,({FAVORITE_SQL}) "
             f"is_favorite,({WATCH_SOON_SQL}) is_watch_soon,"
-            f"({RECENT_SQL}) is_recently_added,"
+            f"({recent_sql(weeks, today)}) is_recently_added,"
             f"{PURCHASE_SQL} effective_purchased_on FROM library t "
             f"JOIN library_sources s ON s.id=t.source_id WHERE t.id=? AND "
             f"t.source_id=?",

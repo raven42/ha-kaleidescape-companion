@@ -178,6 +178,12 @@ it("keeps library sync opt-in and saves library controls through the native opti
   enabled.dispatchEvent(new Event("change", { bubbles: true }));
   await flush();
   input("library_host", "");
+  expect(
+    root().querySelector<HTMLInputElement>(
+      '[name="library_recent_purchase_weeks"]',
+    )!.value,
+  ).toBe("2");
+  input("library_recent_purchase_weeks", "4");
   input("custom_collection", "Demo extras");
   button("Add hidden name").click();
   await flush();
@@ -204,6 +210,7 @@ it("keeps library sync opt-in and saves library controls through the native opti
     library_sync_details: true,
     library_sync_artwork: true,
     library_artwork_cache_mb: 512,
+    library_recent_purchase_weeks: 4,
   });
 });
 it("cancels without saving and returns server validation errors on the settings page", async () => {

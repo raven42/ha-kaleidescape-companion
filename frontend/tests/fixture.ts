@@ -183,6 +183,7 @@ export class FixtureTransport implements Transport {
     library_host: "",
     default_landing_page: "journal",
     library_interval_hours: 6,
+    library_recent_purchase_weeks: 2,
     library_sync_collections: true,
     library_allow_collection_add: false,
     library_sync_details: true,

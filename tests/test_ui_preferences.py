@@ -19,6 +19,118 @@ class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = library.LibraryStorageTest.asyncSetUp
     assert_error = library.LibraryStorageTest.assert_error
 
+    async def test_recent_purchase_badges_use_all_linked_versions_and_dates(self):
+        remake = {
+            **library.ROWS[0],
+            "source_handle": "remake",
+            "source_group": "remake",
+            "year": 1990,
+        }
+        await self.repository.async_library_catalog(
+            library.ORIGIN, [*library.ROWS, remake], {"New": ["fixture-b"]}
+        )
+
+        def add_purchases():
+            db = self.repository._db()
+            with db:
+                db.execute(
+                    "UPDATE library SET purchased_on=? "
+                    "WHERE source_id=? AND source_handle=?",
+                    ("2026-01-01", library.SOURCE, "fixture-a"),
+                )
+                db.execute(
+                    "UPDATE library SET purchased_on=? "
+                    "WHERE source_id=? AND source_handle=?",
+                    ("2026-10-22", library.SOURCE, "fixture-b"),
+                )
+                for number, handle, purchased in (
+                    (1, "fixture-a", "2026-01-01"),
+                    (2, "fixture-a2", "2026-10-25"),
+                    (3, "fixture-b", "2026-01-01"),
+                    (4, "remake", "2026-11-06"),
+                    (5, None, "2026-11-05"),
+                ):
+                    db.execute(
+                        "INSERT INTO purchase_records "
+                        "(id,title,purchased_on,order_id,imported_at,library_id) "
+                        "VALUES (?,?,?,?,?,?)",
+                        (
+                            str(number) * 64,
+                            "Fictional receipt",
+                            purchased,
+                            f"ORDER-{number}",
+                            "2026-11-05T12:00:00+00:00",
+                            library.title_id(library.SOURCE, handle)
+                            if handle
+                            else None,
+                        ),
+                    )
+
+        await self.repository._call(add_purchases)
+        today = "2026-11-05"
+        grouped = await self.repository.async_library_list(
+            library.SOURCE, {"grouped": True}, "", 2, today
+        )
+        by_year = {row["year"]: row for row in grouped["items"]}
+        self.assertTrue(by_year[2025]["is_recently_added"])
+        self.assertTrue(by_year[2024]["is_recently_added"])
+        self.assertFalse(by_year[1990]["is_recently_added"])
+        self.assertIn("New", by_year[2024]["collections"])
+        self.assertIn("New", grouped["facets"]["collections"])
+        self.assertNotIn("2026-10-25", json.dumps(by_year[2025]))
+
+        versions = await self.repository.async_library_versions(
+            library.SOURCE,
+            library.title_id(library.SOURCE, "fixture-a"),
+            0,
+            None,
+            "",
+            2,
+            today,
+        )
+        self.assertTrue(all(row["is_recently_added"] for row in versions["items"]))
+        search = await self.repository.async_library_search(
+            library.SOURCE, "Europa", "", True, 2, today
+        )
+        self.assertTrue(any(row["is_recently_added"] for row in search["items"]))
+        one_week = await self.repository.async_library_list(
+            library.SOURCE, {"grouped": True}, "", 1, today
+        )
+        self.assertFalse(
+            next(row for row in one_week["items"] if row["year"] == 2024)[
+                "is_recently_added"
+            ]
+        )
+        disabled = await self.repository.async_library_list(
+            library.SOURCE, {"grouped": True}, "", 0, today
+        )
+        self.assertFalse(any(row["is_recently_added"] for row in disabled["items"]))
+        tomorrow = await self.repository.async_library_list(
+            library.SOURCE, {"grouped": True}, "", 2, "2026-11-06"
+        )
+        self.assertTrue(
+            next(row for row in tomorrow["items"] if row["year"] == 1990)[
+                "is_recently_added"
+            ]
+        )
+        added = {
+            **library.ROWS[0],
+            "source_handle": "new-scan",
+            "source_group": "new-scan",
+            "year": 2018,
+        }
+        await self.repository.async_library_catalog(
+            library.ORIGIN, [*library.ROWS, remake, added], {}
+        )
+        disabled = await self.repository.async_library_list(
+            library.SOURCE, {"grouped": True}, "", 0, today
+        )
+        self.assertTrue(
+            next(row for row in disabled["items"] if row["year"] == 2018)[
+                "is_recently_added"
+            ]
+        )
+
     async def test_interface_mode_validation_and_retired_library_switch(
         self,
     ):

@@ -9,6 +9,7 @@ DEFAULTS = {
     "library_enabled": False,
     "library_host": "",
     "library_interval_hours": 6,
+    "library_recent_purchase_weeks": 2,
     "library_sync_collections": True,
     "library_allow_collection_add": False,
     "library_sync_details": True,
@@ -111,6 +112,7 @@ def validate(values: dict, previous: dict) -> dict:
             raise ValueError("invalid_library_options")
     for key, minimum, maximum in (
         ("library_interval_hours", 1, 168),
+        ("library_recent_purchase_weeks", 0, 520),
         ("library_artwork_cache_mb", 32, 4096),
     ):
         value = config[key]

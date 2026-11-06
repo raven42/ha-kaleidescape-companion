@@ -59,6 +59,13 @@ const libraryFields = [
     "",
   ],
   [
+    "library_recent_purchase_weeks",
+    "Recently Added purchase window · weeks (0 disables)",
+    "number",
+    "0",
+    "520",
+  ],
+  [
     "library_artwork_cache_mb",
     "Artwork cache limit · MiB",
     "number",
@@ -108,7 +115,8 @@ const validation: Record<string, string> = {
     "Use a private LAN control hostname/IP and a valid player serial number.",
   invalid_library_host:
     "Enter a hostname or private LAN HTTP(S) origin without a path, credentials, or query.",
-  invalid_library_options: "Choose an artwork cache limit of 32–4096 MiB.",
+  invalid_library_options:
+    "Choose a purchase window of 0–520 weeks and an artwork cache limit of 32–4096 MiB.",
 };
 
 export class KaleidescapeSettings extends LitElement {

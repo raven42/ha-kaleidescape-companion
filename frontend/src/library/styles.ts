@@ -182,10 +182,15 @@ export const libraryStyles = css`
     top: 8px;
     left: 8px;
     border-radius: 5px;
-    padding: 4px 9px;
-    font-size: 12px;
+    max-width: calc(100% - 16px);
+    padding: 4px 5px;
+    font-size: 9px;
+    line-height: 1.1;
     font-weight: 800;
     box-shadow: 0 1px 4px #0006;
+  }
+  .cover-flag.flag-recent.flag-offset {
+    top: 50px;
   }
   .cover-flag.flag-favorite {
     left: auto;

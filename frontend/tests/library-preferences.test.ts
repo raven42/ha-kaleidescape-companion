@@ -6,6 +6,8 @@ import { ApiError } from "../src/core/api";
 import type { LibraryPage } from "../src/core/api";
 import { PreferenceStore } from "../src/ui/preference-store";
 import {
+  collectionKind,
+  collectionLabel,
   formatBadges,
   highestVideoFormat,
   statusBadges,
@@ -448,10 +450,16 @@ it("renders known format badges and named status flags in both views", async () 
       is_favorite: true,
       is_recently_added: true,
       watched_status: "watched",
+      collections: ["New"],
       formats: ["4K Cinematic SDR HDR10 Dolby Vision Dolby Atmos", "HD"],
     }),
   ];
   const root = await mount(transport);
+  expect(collectionLabel("New")).toBe("New");
+  expect(collectionKind("New")).toBe("new");
+  expect(
+    root.querySelector(".library-table .collection-cell")?.textContent,
+  ).toContain("New");
   expect(
     root.querySelector('.library-summary-line [aria-label="Favorite"]'),
   ).toBeTruthy();
@@ -491,10 +499,12 @@ it("renders known format badges and named status flags in both views", async () 
     )!
     .click();
   await flush();
-  expect(root.querySelectorAll(".cover-flags .cover-flag")).toHaveLength(2);
+  expect(root.querySelectorAll(".cover-flags .cover-flag")).toHaveLength(3);
   expect(
-    root.querySelector('.cover-flags [aria-label="Recently added"]'),
-  ).toBeNull();
+    root.querySelector('.cover-flags [aria-label="Recently Added"]')
+      ?.textContent,
+  ).toContain("Recently Added");
+  expect(root.querySelector(".flag-recent.flag-offset")).toBeTruthy();
   expect(
     root.querySelector('.cover-flags [aria-label="Watched"]'),
   ).toBeTruthy();
@@ -542,12 +552,12 @@ it("does not revive stale failed writes, and offers latest-value retries", async
   expect(store.values).toEqual({});
 });
 
-it("keeps Favorite independent and replaces New with source progress or completion", () => {
+it("keeps Recently Added and Favorite independent of source progress", () => {
   for (const [status, expected] of [
-    ["unwatched", "recent"],
+    ["unwatched", null],
     ["in_progress", "progress"],
     ["watched", "watched"],
-    ["unknown", "recent"],
+    ["unknown", null],
   ] as const) {
     const title = libraryTitle({
       watched_status: status,
@@ -555,7 +565,8 @@ it("keeps Favorite independent and replaces New with source progress or completi
       is_favorite: true,
     });
     expect(statusBadges(title).map((badge) => badge.key)).toEqual([
-      expected,
+      ...(expected ? [expected] : []),
+      "recent",
       "favorite",
     ]);
     expect(title.is_recently_added).toBe(true);
@@ -587,6 +598,7 @@ it("shows a Watch Soon clock in the status corner for the WatchSoon collection",
     });
     expect(statusBadges(item).map((badge) => badge.key)).toEqual([
       "watch-soon",
+      "recent",
       "favorite",
     ]);
   }

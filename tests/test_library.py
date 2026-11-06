@@ -6,6 +6,7 @@ import socket
 import sqlite3
 import unittest
 from contextlib import closing
+from datetime import datetime
 from html import escape
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
@@ -175,6 +176,19 @@ class LibraryParserTest(unittest.TestCase):
 
     def test_host_validation_and_disabled_defaults(self):
         self.assertFalse(validate({}, {})["library_enabled"])
+        self.assertEqual(validate({}, {})["library_recent_purchase_weeks"], 2)
+        self.assertEqual(
+            validate({"library_recent_purchase_weeks": 0}, {})[
+                "library_recent_purchase_weeks"
+            ],
+            0,
+        )
+        self.assertEqual(
+            validate({}, {"library_recent_purchase_weeks": 4})[
+                "library_recent_purchase_weeks"
+            ],
+            4,
+        )
         self.assertEqual(origin(""), "http://my-kaleidescape.local")
         self.assertEqual(origin("fictional-cinema.local"), ORIGIN)
         for value in (
@@ -194,6 +208,10 @@ class LibraryParserTest(unittest.TestCase):
             ("library_interval_hours", 0),
             ("library_interval_hours", float("nan")),
             ("library_artwork_cache_mb", 9000),
+            ("library_recent_purchase_weeks", -1),
+            ("library_recent_purchase_weeks", 521),
+            ("library_recent_purchase_weeks", 2.5),
+            ("library_recent_purchase_weeks", True),
         ):
             with self.assertRaises(ValueError):
                 validate({key: value}, {})
@@ -789,6 +807,54 @@ class LibrarySyncTest(unittest.IsolatedAsyncioTestCase):
 class LibraryApiTest(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = backend_tests.BackendTest.asyncSetUp
     call = backend_tests.BackendTest.call
+
+    async def test_badge_uses_administrator_window_and_local_calendar_date(self):
+        object.__setattr__(
+            self.entry,
+            "data",
+            {"library_enabled": True, "library_recent_purchase_weeks": 2},
+        )
+        runtime = self.entry.runtime_data
+        runtime.library = SimpleNamespace(source=SOURCE, async_stop=AsyncMock())
+        await runtime.repository.async_library_catalog(
+            ORIGIN, ROWS, {"New": ["fixture-a"]}
+        )
+
+        def purchase_date():
+            db = runtime.repository._db()
+            with db:
+                db.execute(
+                    "UPDATE library SET purchased_on=? WHERE id=?",
+                    ("2026-10-22", title_id(SOURCE, "fixture-a")),
+                )
+
+        await runtime.repository._call(purchase_date)
+        reader = SimpleNamespace(id="reader", is_active=True, is_admin=False)
+        with patch(
+            "custom_components.kaleidescape_companion.ui.websocket.dt_util.now",
+            return_value=datetime.fromisoformat("2026-11-05T23:30:00-06:00"),
+        ):
+            result = await self.call("library/list", user=reader, **self.scope)
+            self.assertTrue(result["success"])
+            row = next(
+                item
+                for item in result["result"]["items"]
+                if item["id"] == title_id(SOURCE, "fixture-a")
+            )
+            self.assertTrue(row["is_recently_added"])
+            self.assertIn("New", row["collections"])
+            object.__setattr__(
+                self.entry,
+                "data",
+                {"library_enabled": True, "library_recent_purchase_weeks": 1},
+            )
+            result = await self.call("library/list", user=reader, **self.scope)
+            row = next(
+                item
+                for item in result["result"]["items"]
+                if item["id"] == title_id(SOURCE, "fixture-a")
+            )
+            self.assertFalse(row["is_recently_added"])
 
     async def test_disabled_is_inert_and_readers_cannot_request_sync(self):
         self.assertIsNone(self.entry.runtime_data.library)

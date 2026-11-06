@@ -96,6 +96,12 @@ def form(hass: HomeAssistant, config: dict) -> p.Schema:
             properties[marker] = selector.BooleanSelector()
         elif key == "library_host":
             properties[marker] = selector.TextSelector()
+        elif key == "library_recent_purchase_weeks":
+            properties[marker] = selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=0, max=520, step=1, mode=selector.NumberSelectorMode.BOX
+                )
+            )
         else:
             properties[marker] = selector.NumberSelector(
                 selector.NumberSelectorConfig(

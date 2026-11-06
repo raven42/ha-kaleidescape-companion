@@ -3,6 +3,7 @@
 import hashlib
 import json
 import re
+from datetime import UTC, date, datetime, timedelta
 
 from ..core.models import JournalError, invalid
 from .config import excluded_collections
@@ -27,6 +28,22 @@ WATCH_SOON_SQL = """EXISTS (SELECT 1 FROM library wt JOIN library_memberships wm
 RECENT_SQL = """s.recently_added_batch IS NOT NULL AND EXISTS
     (SELECT 1 FROM library rt WHERE rt.source_id=t.source_id
     AND rt.source_group=t.source_group AND rt.addition_batch=s.recently_added_batch)"""
+
+
+def recent_sql(weeks=2, today=None):
+    """Build a fixed date expression from validated settings, never client SQL."""
+    if type(weeks) is not int or not 0 <= weeks <= 520:
+        raise invalid("Invalid recent purchase window")
+    if weeks == 0:
+        return RECENT_SQL
+    today = date.fromisoformat(today) if today else datetime.now(UTC).date()
+    start = (today - timedelta(weeks=weeks)).isoformat()
+    end = today.isoformat()
+    return f"""({RECENT_SQL}) OR EXISTS (
+        SELECT 1 FROM library rp LEFT JOIN purchase_records pr ON pr.library_id=rp.id
+        WHERE rp.source_id=t.source_id AND rp.source_group=t.source_group
+        AND (rp.purchased_on BETWEEN '{start}' AND '{end}'
+             OR pr.purchased_on BETWEEN '{start}' AND '{end}'))"""
 
 
 def bounded_page(page):
@@ -318,7 +335,7 @@ def matching_people(db, source, query, fuzzy):
     )
 
 
-def library_list(db, source, filters, excluded="", cache=None):
+def library_list(db, source, filters, excluded="", cache=None, weeks=2, today=None):
     """Query local SQLite with parameters and fixed sort expressions."""
     allowed = {
         "query",
@@ -539,6 +556,8 @@ def library_list(db, source, filters, excluded="", cache=None):
             limit,
             seed,
             cache,
+            weeks,
+            today,
         )
     total = db.execute(f"SELECT count(*) FROM {join} WHERE {where}", values).fetchone()[
         0
@@ -551,7 +570,7 @@ def library_list(db, source, filters, excluded="", cache=None):
         f"""SELECT t.*,({STATUS_SQL}) watched_status,
             {PURCHASE_SQL} effective_purchased_on,
             ({FAVORITE_SQL}) is_favorite,({WATCH_SOON_SQL}) is_watch_soon,
-            ({RECENT_SQL}) is_recently_added
+            ({recent_sql(weeks, today)}) is_recently_added
         FROM {join} WHERE {where}
         ORDER BY {order},t.id LIMIT ? OFFSET ?""",
         (*values, *sort_values, limit + 1, offset),
@@ -674,6 +693,8 @@ def grouped_page(
     limit,
     seed="",
     cache=None,
+    weeks=2,
+    today=None,
 ):
     """Filter per version, group before pagination, and summarize all versions."""
     join = "library t JOIN library_sources s ON s.id=t.source_id"
@@ -696,7 +717,7 @@ def grouped_page(
     ), versions AS (
         SELECT t.*,({STATUS_SQL}) watched_status,{collection_sql} collection_sort,
         ({FAVORITE_SQL}) is_favorite,({WATCH_SOON_SQL}) is_watch_soon,
-        ({RECENT_SQL}) is_recently_added,
+        ({recent_sql(weeks, today)}) is_recently_added,
         {PURCHASE_SQL} effective_purchased_on
         FROM {join} WHERE t.source_id=? AND t.available=1
     ) SELECT source_group,min(title_search) title_search,min(id) id,
@@ -867,7 +888,15 @@ def grouped_page(
 
 
 def library_versions(
-    db, source, title, offset=0, revision=None, excluded="", admin=False
+    db,
+    source,
+    title,
+    offset=0,
+    revision=None,
+    excluded="",
+    admin=False,
+    weeks=2,
+    today=None,
 ):
     """An opaque version key selects its source-defined group in this source only."""
     from .purchases import history_for
@@ -900,7 +929,7 @@ def library_versions(
         f"""SELECT t.*,({STATUS_SQL}) watched_status,
             {PURCHASE_SQL} effective_purchased_on,
             ({FAVORITE_SQL}) is_favorite,({WATCH_SOON_SQL}) is_watch_soon,
-            ({RECENT_SQL}) is_recently_added
+            ({recent_sql(weeks, today)}) is_recently_added
         FROM library t
         JOIN library_sources s ON s.id=t.source_id WHERE t.source_id=?
         AND t.available=1 AND t.source_group=? ORDER BY

@@ -9,6 +9,7 @@ from homeassistant.components.websocket_api.connection import REDACT_KEYS
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError, Unauthorized
 from homeassistant.helpers.redact import async_redact_data
+from homeassistant.util import dt as dt_util
 from probatio.humanize import humanize_error
 
 from ..const import DOMAIN, VERSION
@@ -788,7 +789,14 @@ async def async_handle(
                             ]
                     elif operation == "library/search":
                         result = await repository.async_library_search(
-                            library.source, msg["query"], excluded, msg["fuzzy"]
+                            library.source,
+                            msg["query"],
+                            excluded,
+                            msg["fuzzy"],
+                            (entry.options or entry.data).get(
+                                "library_recent_purchase_weeks", 2
+                            ),
+                            dt_util.now().date().isoformat(),
                         )
                     elif operation == "library/suggest":
                         result = await repository.async_library_suggest(
@@ -801,6 +809,10 @@ async def async_handle(
                             msg["offset"],
                             msg.get("revision"),
                             excluded,
+                            (entry.options or entry.data).get(
+                                "library_recent_purchase_weeks", 2
+                            ),
+                            dt_util.now().date().isoformat(),
                             admin=admin,
                         )
                     else:
@@ -825,7 +837,13 @@ async def async_handle(
                                 )
                             filters["random_seed"] = seed
                         result = await repository.async_library_list(
-                            library.source, filters, excluded
+                            library.source,
+                            filters,
+                            excluded,
+                            (entry.options or entry.data).get(
+                                "library_recent_purchase_weeks", 2
+                            ),
+                            dt_util.now().date().isoformat(),
                         )
                         if filters.get("sort") == "random":
                             result["random_seed"] = seed

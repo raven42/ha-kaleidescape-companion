@@ -266,7 +266,7 @@ class JournalRepository:
         return await self._call(self._search_read, totals, source)
 
     async def async_library_list(
-        self, source: str, filters: dict, excluded: str = ""
+        self, source: str, filters: dict, excluded: str = "", weeks=2, today=None
     ) -> dict:
         return await self._call(
             self._search_read,
@@ -275,6 +275,8 @@ class JournalRepository:
             filters,
             excluded,
             self._read_cache,
+            weeks,
+            today,
         )
 
     async def async_library_versions(
@@ -284,6 +286,8 @@ class JournalRepository:
         offset: int = 0,
         revision: int | None = None,
         excluded: str = "",
+        weeks=2,
+        today=None,
         *,
         admin: bool = False,
     ) -> dict:
@@ -296,6 +300,8 @@ class JournalRepository:
             revision,
             excluded,
             admin,
+            weeks,
+            today,
         )
 
     async def async_library_edit(
@@ -711,10 +717,14 @@ class JournalRepository:
         finally:
             db.set_progress_handler(None, 0)
 
-    async def async_library_search(self, source, query, excluded, fuzzy=True):
+    async def async_library_search(
+        self, source, query, excluded, fuzzy=True, weeks=2, today=None
+    ):
         from ..library.search import search
 
-        return await self._call(search, self._db(), source, query, excluded, fuzzy)
+        return await self._call(
+            search, self._db(), source, query, excluded, fuzzy, weeks, today
+        )
 
     def _inspect(self, table, offset, revision, limit, query, sort, descending) -> dict:
         return self._search_read(
