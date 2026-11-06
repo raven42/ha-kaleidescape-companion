@@ -48,7 +48,11 @@ contracts must be reassessed rather than carried forward as requirements.
 7. Finish with prioritized fixes and acceptance checks. An audit request does
    not authorize subsequent product refactoring. Existing explicit user
    authorization for implementation still governs that work; do not invent an
-   additional approval requirement.
+   additional approval requirement. For authorized follow-up work, commit each
+   fix separately with its relevant tests and documentation. Prefix each audit
+   and follow-up commit with a basic task type consistent with repository
+   history, such as `audit:`, `bugfix:`, `doc:`, `ui:`, `test:`, `vendor:` or
+   `refactor:`.
 
 ## Baseline and evidence
 
@@ -207,6 +211,11 @@ repeating findings:
    distinguish confirmed defects, release/validation gaps and recommendations.
    Reassess historical F01–F12 individually as resolved, still applicable,
    superseded or unverified with reasons. Give new findings run-specific IDs.
+   Include a prominent instruction to anyone fixing findings to read this audit
+   procedure (link it as `../AUDIT_PROCEDURE.md` from the dated report), read
+   `AGENTS.md` and follow the repository's standard practices. State that
+   authorized fixes belong in separate commits with task-type prefixes; the
+   report itself does not authorize implementation.
 8. **REFACTORING_PLAN.md**: priority/dependencies, affected files, acceptance
    and regression checks, migration/rollback risks; distinguish code fixes from
    external validation tasks.
