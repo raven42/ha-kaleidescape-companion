@@ -242,7 +242,9 @@ def _totals(body):
     totals, issues = {}, []
     for key, value in _TOTAL.findall(body):
         try:
-            totals[key.lower()] = price_cents(value)
+            totals["taxes" if key.lower() == "tax" else key.lower()] = price_cents(
+                value
+            )
         except JournalError:
             issues.append({"reason": "invalid_total"})
     return totals, issues

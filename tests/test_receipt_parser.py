@@ -132,6 +132,25 @@ class ReceiptParserTest(unittest.TestCase):
         )
         self.assertEqual(issues, [])
 
+    def test_tax_and_taxes_both_reconcile_and_check_currency(self):
+        for label in ("Tax", "Taxes"):
+            for tax, total, reason in (
+                ("$1.00", "$15.98", None),
+                ("$1.00", "$99.99", "total_mismatch"),
+                ("£1.00", "$15.98", "currency_mismatch"),
+            ):
+                with self.subTest(label=label, tax=tax, total=total):
+                    html = HTML.replace(
+                        "</table>",
+                        f"<tr><td>{label}</td><td>{tax}</td></tr>"
+                        f"<tr><td>Total</td><td>{total}</td></tr></table>",
+                    )
+                    records, issues = parse_receipt(envelope(html))
+                    self.assertEqual(len(records), 2)
+                    if reason:
+                        self.assertIn({"reason": reason}, issues)
+                    else:
+                        self.assertEqual(issues, [])
 
 
     def test_html_rows_identify_struck_retail_and_paid_price_independent_of_order(self):
