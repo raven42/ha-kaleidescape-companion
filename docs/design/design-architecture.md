@@ -109,8 +109,8 @@ fetch interface independent of HA.
 
 ## Dependency and release contract
 
-The current manifest pins `pykaleidescape==1.1.6`, matching development HA
-2026.10.4. Required HA dependencies are `frontend`, `http`, and `websocket_api`;
+The current manifest pins `pykaleidescape==1.2.0`, matching development HA
+2026.11.0. Required HA dependencies are `frontend`, `http`, and `websocket_api`;
 `kaleidescape`, `calendar`, and `automation` are optional ordering dependencies
 via `after_dependencies`. A manual journal does not require a configured player
 or calendar. Automatic recording needs selected existing HA entities.
@@ -118,7 +118,7 @@ or calendar. Automatic recording needs selected existing HA entities.
 The PoC owns lazy, persistent pyk `Device` objects and uses public methods and
 requests while preserving application preflight and durable outcomes. Pyk's
 `LocalLibrary` parses local browser pages through Companion's HA HTTP transport.
-Public Store scraping belongs entirely to Companion. The installed 1.1.6 package
+Public Store scraping belongs entirely to Companion. The installed 1.2.0 package
 lacks these new interfaces, so this PoC requires the patched overlay described
 in the [deployment guide](../guides/guide-deployment.md). The
 [migration plan](../plans/plan-pykaliedescape-migration.md) owns release gates.

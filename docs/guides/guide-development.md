@@ -11,9 +11,9 @@ delivered/remaining product work; the
 
 Requires Python 3.14.2+ with SQLite 3.35+, Node.js 22.13+ (22.x) or 24+, and
 npm. Python dependencies are declared in `pyproject.toml`; frontend tooling uses
-`frontend/package-lock.json`. The current development baseline is HA 2026.10.4
-with pyk 1.1.6 in HA's manifest. This PoC tests against the adjacent patched pyk
-checkout, whose new interfaces are not present in the released 1.1.6 package.
+`frontend/package-lock.json`. The current development baseline is HA 2026.11.0
+with pyk 1.2.0 in HA's manifest. This PoC tests against the adjacent patched pyk
+checkout, whose new interfaces are not present in the released 1.2.0 package.
 This is not yet a supported minimum HA version.
 
 ```sh
@@ -39,6 +39,9 @@ MIT license is included beside it. `setup` installs HA's released pinned
 dependency separately. The source overlay is for this PoC and is not a supported
 release or a replacement for compatibility testing with the built-in
 integration.
+
+Set `COMPANION_VENV` to an absolute virtual-environment path to run setup or
+checks in an isolated environment; it defaults to `.venv` in this checkout.
 
 The complete check validates workspace/runtime consistency, standalone provider
 contracts, Python integration tests, project structure and documentation links,

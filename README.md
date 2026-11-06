@@ -73,7 +73,7 @@ overlay described in the deployment guide. That guide also covers packaging,
 optional SSH deployment, configuration checks and rollback limits.
 
 Development requires Python 3.14.2+ with SQLite 3.35+, Node.js 22.13+ (22.x) or
-24+, and npm. HA 2026.10.4 with pyk 1.1.6 is the current development baseline,
+24+, and npm. HA 2026.11.0 with pyk 1.2.0 is the current development baseline,
 not a promised supported minimum. Offline tests load the adjacent patched pyk
 checkout. In the prepared developer workspace:
 

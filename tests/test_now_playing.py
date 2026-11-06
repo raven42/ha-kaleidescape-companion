@@ -100,6 +100,7 @@ class NowPlayingAPITest(unittest.IsolatedAsyncioTestCase):
         from homeassistant.helpers import entity_registry as er
 
         self.hass.config_entries.async_initialize = AsyncMock()
+        self.hass.config_entries.async_wait_initialized = AsyncMock()
         loader.async_setup(self.hass)
         await bootstrap.async_load_base_functionality(self.hass)
         from test_controls import CONFIG, SERIAL

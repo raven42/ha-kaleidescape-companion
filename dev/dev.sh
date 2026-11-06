@@ -5,27 +5,28 @@ umask 077
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 PYK_SOURCE="${COMPANION_PYK_PATH:-$ROOT/../pykaleidescape}"
+VENV_PATH="${COMPANION_VENV:-$ROOT/.venv}"
 
 use_pyk() {
-  .venv/bin/python dev/check_pyk.py "$PYK_SOURCE"
+  "$VENV_PATH"/bin/python dev/check_pyk.py "$PYK_SOURCE"
   export PYTHONPATH="$PYK_SOURCE${PYTHONPATH:+:$PYTHONPATH}"
 }
 
 case "${1:-help}" in
   setup)
-    if [[ ! -x .venv/bin/python ]]; then
-      python3 -m venv .venv
+    if [[ ! -x "$VENV_PATH"/bin/python ]]; then
+      python3 -m venv "$VENV_PATH"
     fi
-    .venv/bin/python -m pip install -e '.[dev]'
+    "$VENV_PATH"/bin/python -m pip install -e '.[dev]'
     (cd frontend && npm ci)
     ;;
   check)
     use_pyk
-    PYTHONPATH="$ROOT/custom_components/kaleidescape_companion:$PYTHONPATH" .venv/bin/python -m unittest discover -s tests/scrapers
-    .venv/bin/python -m unittest discover -s tests
-    .venv/bin/python dev/check_project.py
-    .venv/bin/ruff check .
-    .venv/bin/ruff format --check .
+    PYTHONPATH="$ROOT/custom_components/kaleidescape_companion:$PYTHONPATH" "$VENV_PATH"/bin/python -m unittest discover -s tests/scrapers
+    "$VENV_PATH"/bin/python -m unittest discover -s tests
+    "$VENV_PATH"/bin/python dev/check_project.py
+    "$VENV_PATH"/bin/ruff check .
+    "$VENV_PATH"/bin/ruff format --check .
     bash -n dev/dev.sh
     (
       cd frontend
@@ -39,7 +40,7 @@ case "${1:-help}" in
     ;;
   python-test)
     use_pyk
-    exec .venv/bin/python -m unittest discover -s tests -v
+    exec "$VENV_PATH"/bin/python -m unittest discover -s tests -v
     ;;
   preview)
     cd frontend
@@ -48,7 +49,7 @@ case "${1:-help}" in
   audit)
     # Network advisory scans are separate from the reproducible local checks.
     audit_status=0
-    .venv/bin/python -m pip_audit --skip-editable || audit_status=1
+    "$VENV_PATH"/bin/python -m pip_audit --skip-editable || audit_status=1
     npm --prefix frontend audit || audit_status=1
     exit "$audit_status"
     ;;
@@ -73,7 +74,7 @@ case "${1:-help}" in
     if [[ ! -e .ha-dev/configuration.yaml ]]; then
       cp dev/ha-development.yaml .ha-dev/configuration.yaml
     fi
-    exec .venv/bin/hass --config "$ROOT/.ha-dev" --debug
+    exec "$VENV_PATH"/bin/hass --config "$ROOT/.ha-dev" --debug
     ;;
   *)
     echo "Usage: bash dev/dev.sh {setup|check|python-test|audit|preview|ha}"

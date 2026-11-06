@@ -68,7 +68,7 @@ precise functional requirements, optional owner decisions and exit evidence.
 ## Release readiness
 
 - Declare and test supported HA releases; complete manifest repository URLs,
-  code ownership, versioning, license and distribution metadata. HA 2026.10.4 is
+  code ownership, versioning, license and distribution metadata. HA 2026.11.0 is
   the development baseline, not a promised minimum version.
 - Make a clean checkout/build/install reproducible with the accepted released
   pyk dependency; verify setup, options reload, unload, restart and upgrade.

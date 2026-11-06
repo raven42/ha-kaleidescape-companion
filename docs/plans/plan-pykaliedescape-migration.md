@@ -33,19 +33,18 @@ provider. No Store hooks should be added to pyk for this migration.
   verified private IPs and uses public `Device` methods and Request classes.
   Companion still validates seed/player identity and requires fresh state before
   sending a user command. Pause/unload closes owned clients, but the
-  [2026-11-04 audit](../../audit/2026-11-04/AUDIT_FINDINGS.md#a26-12--control-discovery-can-create-a-connection-after-stop)
-  found an in-flight discovery path that can create a client after stop; closing
-  that ownership gap remains necessary.
+  [2026-11-05 follow-up](../../audit/2026-11-05/FOLLOW_UP.md) records the
+  offline fix for in-flight reads; hardware qualification remains necessary.
 - `library/sync.py` uses pyk `LocalLibrary` for catalog, collections, details,
   artwork, and add-only form handling. Companion retains its bounded HA HTTP
   session and SQLite reconciliation. Collection additions keep durable receipts
   and an explicit readback; an uncertain outcome is never automatically resent.
 - The old bundled device API and its vendor/build tools are gone. Store scrapers
   remain in Companion and are included in the runtime package.
-- The manifest still pins `pykaleidescape==1.1.6` to match HA 2026.10.4. That
-  released package does **not** contain the capabilities used by this PoC. Tests
-  load the adjacent patched pyk checkout. HA OS testing requires the operator to
-  install the reviewed patched `kaleidescape` package overlay into
+- The manifest pins `pykaleidescape==1.2.0` to match HA 2026.11.0. That released
+  package does **not** contain the capabilities used by this PoC. Tests load the
+  adjacent patched pyk checkout. HA OS testing requires the operator to install
+  the reviewed patched `kaleidescape` package overlay into
   `/config/deps/lib/python3.14/site-packages` before restarting HA. A normal HA
   dependency install alone will not supply this code. Do not treat the overlay
   as an upstream release or a reproducible production dependency.
@@ -68,8 +67,8 @@ examples. Pyk's existing `Device` constructor, async methods, dispatcher, state
 objects, reconnect behavior, Request subclass extension points, and ordinary
 return values remain the hard compatibility contract. New public interfaces are
 additive. The patched checkout reports version `1.2.0.dev1+cmp`, but the HA
-shared dependency pin is 1.1.6; replacing metadata or changing the manifest
-before an accepted compatible release would risk the built-in HA integration.
+shared dependency pin is 1.2.0. Replacing the overlay with a released package
+requires upstream acceptance and verification with the built-in HA integration.
 
 Before release: obtain upstream review and merge/release the needed patches;
 verify built-in HA `kaleidescape` against that exact release; update the
