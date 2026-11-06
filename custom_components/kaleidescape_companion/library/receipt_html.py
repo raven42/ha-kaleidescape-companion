@@ -263,7 +263,26 @@ def _item(row):
         return None, [{"reason": "ambiguous_item_row"}], None
     title = max(names, key=len)
     regular, struck, issues = [], [], []
-    for cell in row["cells"]:
+    # Price-only nested rows belong to this item only when no nested purchase
+    # or total is present in the same nested table.
+    price_cells = list(row["cells"])
+    for table in row["nested"]:
+        children = table["rows"]
+        if any(_anchors(child) or _nested_anchors(child) for child in children):
+            continue
+        if any(
+            re.search(
+                r"(?i)\b(?:subtotal|tax(?:es)?|total)\b",
+                " ".join(
+                    "".join(piece for piece, _ in cell["pieces"])
+                    for cell in child["cells"]
+                ),
+            )
+            for child in children
+        ):
+            continue
+        price_cells.extend(cell for child in children for cell in child["cells"])
+    for cell in price_cells:
         text = "".join(piece for piece, _ in cell["pieces"])
         flags = [flag for piece, flag in cell["pieces"] for _ in piece]
         for match in _TOKEN.finditer(text):

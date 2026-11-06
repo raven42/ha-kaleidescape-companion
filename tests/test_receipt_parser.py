@@ -118,6 +118,19 @@ class ReceiptParserTest(unittest.TestCase):
         self.assertEqual(records, [])
         self.assertEqual(issues, [{"reason": "html_items_unavailable"}])
 
+    def test_nested_price_rows_are_associated_with_the_owning_movie(self):
+        html = """<div>Order ID ORDER-1</div><table>
+        <tr><th>Item</th><th>Price</th></tr>
+        <tr><td><a href="/movie-store/movie/details/101">First</a></td><td>
+        <table><tr><td><s>$20.00</s></td><td>$7.00</td></tr></table></td></tr>
+        <tr><td><a href="/movie-store/movie/details/102">Second</a></td>
+        <td><s>$15.00</s> $5.00</td></tr></table>"""
+        records, issues = parse_receipt(envelope(html))
+        self.assertEqual(
+            [(r["title"], r["purchase_price"], r["retail_price"]) for r in records],
+            [("First", "$7.00", "$20.00"), ("Second", "$5.00", "$15.00")],
+        )
+        self.assertEqual(issues, [])
 
 
 
