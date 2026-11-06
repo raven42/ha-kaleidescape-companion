@@ -567,6 +567,21 @@ export interface ImportReviewRow {
   needs_match?: boolean;
   can_match?: boolean;
   possible_duplicate?: boolean;
+  repair_barrier?: boolean;
+  duplicate_candidates?: {
+    id: string;
+    title: string;
+    purchased_on: string | null;
+    purchase_price: string | null;
+    retail_price: string | null;
+    order_id: string | null;
+    href: string | null;
+    imported_at: string;
+    library_id: string | null;
+    library_title: string | null;
+    reserved_by_repair?: boolean;
+  }[];
+  duplicate_candidates_more?: boolean;
   detail?: string;
   key: string;
   table: "viewings" | "library";
@@ -576,6 +591,17 @@ export interface ImportReviewRow {
   changes: Record<string, { before: unknown; after: unknown }>;
   conflicts: string[];
   reason: string;
+}
+export interface PurchaseRepairReview {
+  plan_id: string;
+  revision: number;
+  action: "correct" | "void" | "reverse";
+  before: Record<string, unknown> | null;
+  after: Record<string, unknown> | null;
+  before_library: Record<string, unknown> | null;
+  after_library: Record<string, unknown> | null;
+  totals_change: { source_id: string; before: unknown; after: unknown }[];
+  expires_in: number;
 }
 export interface ImportReview {
   plan_id: string;
@@ -1585,6 +1611,36 @@ export class JournalClient {
       type: `${DOMAIN}/purchases/reconcile`,
       ...scopeFields(scope),
     });
+  }
+  previewPurchaseRepair(
+    scope: Scope,
+    action: PurchaseRepairReview["action"],
+    key: string,
+    token: string,
+    changes: Record<string, unknown>,
+  ): Promise<PurchaseRepairReview> {
+    return this.call({
+      ...scopeFields(scope),
+      type: `${DOMAIN}/purchases/repair/preview`,
+      action,
+      key,
+      token,
+      changes,
+    });
+  }
+  preparePurchaseRepair(
+    scope: Scope,
+    review: PurchaseRepairReview,
+  ): PreparedMutation {
+    return this.prepareCommand(scope, "purchases/repair/apply", {
+      plan_id: review.plan_id,
+      revision: review.revision,
+    });
+  }
+  applyPurchaseRepair(
+    pending: PreparedMutation,
+  ): Promise<{ revision: number; event_id: string }> {
+    return this.call({ ...pending.message });
   }
   purge(pending: PreparedMutation): Promise<PurgeResult> {
     return this.call({ ...pending.message });

@@ -172,6 +172,8 @@ class EmailTest(unittest.IsolatedAsyncioTestCase):
                     target,
                 ),
             )
+            db.execute("DROP TABLE purchase_identity_barriers")
+            db.execute("DROP TABLE purchase_repair_events")
             db.execute("PRAGMA user_version=24")
         self.repository = JournalRepository(self.path)
         self.addAsyncCleanup(self.repository.async_close)

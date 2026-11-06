@@ -22,6 +22,7 @@ EXAMPLE_CONFIG = ROOT / ".vscode" / "ha-deploy.example.json"
 MAX_PACKAGE_BYTES = 32 * 1024 * 1024
 REQUIRED = {
     "core/settings_transfer.py",
+    "core/purchase_repair.py",
     "core/sync_actions.py",
     "ui/settings_transfer.py",
     "__init__.py",

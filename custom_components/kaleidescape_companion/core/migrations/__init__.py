@@ -9,7 +9,7 @@ from uuid import uuid4
 
 from ..security import private_file
 
-SCHEMA_VERSION = 26
+SCHEMA_VERSION = 27
 _LOGGER = logging.getLogger(__name__)
 
 MIGRATIONS = {
@@ -411,6 +411,34 @@ MIGRATIONS[26] = (
     "ON purchase_records(library_id,purchased_on,id)",
     "CREATE INDEX purchase_records_unmatched "
     "ON purchase_records(purchased_on,id) WHERE library_id IS NULL",
+)
+
+
+MIGRATIONS[27] = (
+    """CREATE TABLE purchase_repair_events (
+        request_id TEXT PRIMARY KEY REFERENCES requests(request_id),
+        actor_id TEXT NOT NULL,
+        operation TEXT NOT NULL CHECK (operation IN ('correct','void','reverse')),
+        before_record TEXT, after_record TEXT,
+        before_library TEXT, after_library TEXT,
+        reverses TEXT REFERENCES purchase_repair_events(request_id),
+        occurred_at TEXT NOT NULL,
+        CHECK (before_record IS NOT NULL OR after_record IS NOT NULL)
+    )""",
+    "CREATE UNIQUE INDEX purchase_repair_reverse_once "
+    "ON purchase_repair_events(reverses) WHERE reverses IS NOT NULL",
+    """CREATE TABLE purchase_identity_barriers (
+        purchase_id TEXT PRIMARY KEY,
+        event_id TEXT NOT NULL REFERENCES purchase_repair_events(request_id)
+    )""",
+    """CREATE TRIGGER purchase_repair_events_no_update BEFORE UPDATE
+       ON purchase_repair_events BEGIN
+         SELECT RAISE(ABORT, 'purchase repair evidence is append-only');
+       END""",
+    """CREATE TRIGGER purchase_repair_events_no_delete BEFORE DELETE
+       ON purchase_repair_events BEGIN
+         SELECT RAISE(ABORT, 'purchase repair evidence is append-only');
+       END""",
 )
 
 

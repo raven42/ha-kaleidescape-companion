@@ -332,7 +332,7 @@ class ReceiptMigrationTest(unittest.IsolatedAsyncioTestCase):
             upgraded = JournalRepository(path)
             await upgraded.async_open()
             try:
-                self.assertEqual((await upgraded.async_info())["schema_version"], 26)
+                self.assertEqual((await upgraded.async_info())["schema_version"], 27)
                 rows = (await upgraded.async_inspect("purchase_records"))["items"]
                 self.assertEqual(len(rows), 1)
                 self.assertEqual(rows[0]["id"], record["id"])

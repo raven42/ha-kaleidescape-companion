@@ -229,6 +229,96 @@ it("leaves purchase records unchecked until their suggested links are approved",
   ]);
 });
 
+it("shows possible existing invoices and requires selecting a separate purchase", async () => {
+  const value = review(1);
+  value.rows[0] = {
+    ...value.rows[0],
+    key: "purchases:possible",
+    needs_match: true,
+    can_match: true,
+    possible_duplicate: true,
+    action: "skip",
+    duplicate_candidates: [
+      {
+        id: "a".repeat(64),
+        title: "<img src=x> Fictional",
+        purchased_on: "2020-01-02",
+        purchase_price: "$12.99",
+        retail_price: "$24.99",
+        order_id: "ORDER-1",
+        href: null,
+        imported_at: "2026-11-05T00:00:00+00:00",
+        library_id: "b".repeat(64),
+        library_title: "Fictional Library movie",
+      },
+    ],
+    duplicate_candidates_more: true,
+  };
+  value.counts = { new: 0, merge: 0, unchanged: 0, skip: 1 };
+  vi.spyOn(element.client!, "searchImportMatches").mockResolvedValue({
+    items: [
+      {
+        id: "b".repeat(64),
+        title: "Fictional Library movie",
+        year: 2020,
+        directors: [],
+        version_count: 1,
+        source_hint: "fictional",
+      },
+    ],
+    has_more: false,
+  });
+  const matched = {
+    ...value.rows[0],
+    needs_match: false,
+    selected_by_default: false,
+    action: "new" as const,
+  };
+  vi.spyOn(element.client!, "matchImportPurchase").mockResolvedValue({
+    plan_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    revision: 5,
+    expires_in: 600,
+    counts: { new: 1, merge: 0, unchanged: 0, skip: 0 },
+    row: matched,
+  });
+  const apply = vi.spyOn(element.client!, "applyImport").mockResolvedValue({
+    imported_count: 1,
+    updated_count: 0,
+    skipped_count: 0,
+    revision: 6,
+  });
+  await preview(value);
+  expect(text()).toContain("Possible existing purchases (1+)");
+  expect(text()).toContain("$12.99");
+  expect(text()).toContain("More possible matches exist");
+  expect(root().querySelector("img[src=x]")).toBeNull();
+  button("Match title…").click();
+  await flush();
+  const matcher = root().querySelector<KaleidescapeImportMatcher>(
+    "kaleidescape-import-matcher",
+  )!;
+  await matcher.updateComplete;
+  matcher
+    .shadowRoot!.querySelector<HTMLButtonElement>('[role="option"]')!
+    .click();
+  await flush();
+  const check = root().querySelector<HTMLInputElement>(
+    'tbody input[type="checkbox"]',
+  )!;
+  expect(check.checked).toBe(false);
+  button("Select all changes").click();
+  await flush();
+  expect(check.checked).toBe(false);
+  expect(apply).not.toHaveBeenCalled();
+  check.click();
+  await flush();
+  button("Apply 1 selected change").click();
+  await flush();
+  expect(apply.mock.calls[0][0].message.selected).toEqual([
+    "purchases:possible",
+  ]);
+});
+
 it("distinguishes incoming purchase records from existing Library entries", async () => {
   const value = review();
   value.rows[0] = {

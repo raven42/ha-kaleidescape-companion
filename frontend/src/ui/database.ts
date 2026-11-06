@@ -20,6 +20,8 @@ import { closeButton, dismissBackdrop } from "./dialog";
 import { manualDraft, manualData } from "./manual-viewing";
 import "./database-query";
 import "./transfers";
+import "./purchase-repair";
+import type { KaleidescapePurchaseRepair } from "./purchase-repair";
 import "../library/cover";
 import { CoverQueue } from "../library/cover";
 
@@ -32,6 +34,8 @@ const LABELS: Record<string, string> = {
   library_artwork: "Library artwork",
   settings: "UI settings",
   purchase_records: "Purchases",
+  purchase_repair_events: "Purchase repair history",
+  purchase_identity_barriers: "Purchase replay barriers",
   library_memberships: "Library memberships",
   requests: "Write requests",
   schema_metadata: "Metadata",
@@ -110,6 +114,8 @@ export class KaleidescapeDatabase extends LitElement {
   private loading = false;
   private saving = false;
   private transferBusy = false;
+  private repairing = false;
+  private repairPending = false;
   private error = "";
   private notice = "";
   private search = "";
@@ -176,7 +182,12 @@ export class KaleidescapeDatabase extends LitElement {
     this.search = "";
     this.confirmed = false;
     this.deleteWord = "";
-    this.loading = this.saving = this.transferBusy = false;
+    this.loading =
+      this.saving =
+      this.transferBusy =
+      this.repairing =
+      this.repairPending =
+        false;
     this.error = this.notice = this.preferenceError = "";
     for (const dialog of this.renderRoot.querySelectorAll("dialog"))
       dialog.close();
@@ -289,12 +300,22 @@ export class KaleidescapeDatabase extends LitElement {
     );
   }
   private get blocked() {
-    return this.loading || this.saving || !!this.pending || this.transferBusy;
+    return (
+      this.loading ||
+      this.saving ||
+      !!this.pending ||
+      this.transferBusy ||
+      this.repairing
+    );
   }
   private busy() {
     this.dispatchEvent(
       new CustomEvent("maintenance-busy", {
-        detail: this.saving || !!this.pending || this.transferBusy,
+        detail:
+          this.saving ||
+          !!this.pending ||
+          this.transferBusy ||
+          this.repairPending,
         bubbles: true,
         composed: true,
       }),
@@ -504,7 +525,16 @@ export class KaleidescapeDatabase extends LitElement {
   }
   confirmNavigation() {
     return (
-      !this.transferBusy && !this.saving && !this.pending && this.discard()
+      !this.transferBusy &&
+      !this.saving &&
+      !this.pending &&
+      this.discard() &&
+      (this.renderRoot
+        .querySelector<KaleidescapePurchaseRepair>(
+          "kaleidescape-purchase-repair",
+        )
+        ?.confirmNavigation() ??
+        true)
     );
   }
   private close(event?: Event) {
@@ -911,6 +941,22 @@ export class KaleidescapeDatabase extends LitElement {
           <div class="card-head">
             <h2>Entry details</h2>
             ${this.detail ? html`<button ?disabled=${this.blocked || !editable} @click=${this.edit}>Edit entry</button>` : nothing}
+            ${
+              this.detail &&
+              ["purchase_records", "purchase_repair_events"].includes(
+                this.table,
+              )
+                ? html`<button
+                    ?disabled=${this.blocked}
+                    @click=${() => {
+                      this.repairing = true;
+                      this.requestUpdate();
+                    }}
+                  >
+                    ${this.table === "purchase_records" ? "Repair purchase" : "Review reversal"}
+                  </button>`
+                : nothing
+            }
           </div>
           ${
             this.detail
@@ -934,6 +980,43 @@ export class KaleidescapeDatabase extends LitElement {
                     ${(this.page?.references ?? []).filter((ref) => Object.values(ref.key).every((key) => this.detail?.[key] != null)).map((ref) => html`<button class="link" ?disabled=${this.blocked} @click=${() => this.follow(ref)}>Open ${LABELS[ref.table] ?? ref.table} · ${Object.values(ref.key).join(", ")}</button>`)}
                   </div>
                   <pre>${JSON.stringify(this.detail, null, 2)}</pre>
+                  ${
+                    this.repairing &&
+                    ["purchase_records", "purchase_repair_events"].includes(
+                      this.table,
+                    )
+                      ? html`<kaleidescape-purchase-repair
+                          .client=${this.client}
+                          .scope=${this.scope}
+                          .row=${this.detail}
+                          .token=${this.rowSelection(this.detail).token}
+                          .reverse=${this.table === "purchase_repair_events"}
+                          @repair-cancel=${() => {
+                            this.repairing = false;
+                            this.requestUpdate();
+                          }}
+                          @repair-busy=${(event: CustomEvent<boolean>) => {
+                            this.repairPending = event.detail;
+                            this.busy();
+                          }}
+                          @repair-complete=${() => {
+                            this.repairing = false;
+                            this.repairPending = false;
+                            this.busy();
+                            this.detail = undefined;
+                            this.notice = "Purchase repair applied.";
+                            this.dispatchEvent(
+                              new CustomEvent("database-changed", {
+                                bubbles: true,
+                                composed: true,
+                              }),
+                            );
+                            void this.load();
+                          }}
+                          @access-denied=${() => this.fail({ code: "unauthorized" })}
+                        ></kaleidescape-purchase-repair>`
+                      : nothing
+                  }
                   ${!editable ? html`<p class="muted">This table protects system integrity; stored values are read-only.</p>` : nothing}`
               : html`<p class="empty">
                   Select an entry to inspect raw values.

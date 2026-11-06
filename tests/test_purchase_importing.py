@@ -330,10 +330,22 @@ class PurchaseImportTest(unittest.IsolatedAsyncioTestCase):
         row = next(row for row in plan["rows"] if row["key"].startswith("purchases:"))
         self.assertTrue(row["possible_duplicate"])
         self.assertTrue(row["needs_match"])
+        existing = (await self.invoices())[0][1]
+        self.assertEqual(len(row["duplicate_candidates"]), 1)
+        candidate = row["duplicate_candidates"][0]
+        self.assertEqual(candidate["id"], existing["id"])
+        self.assertEqual(candidate["href"], None)
+        self.assertEqual(candidate["purchase_price"], "$12.99")
+        self.assertEqual(candidate["library_id"], target)
+        self.assertEqual(candidate["library_title"], library.ROWS[0]["title"])
+        self.assertFalse(row["duplicate_candidates_more"])
         with self.assert_error("invalid_request"):
             await self.apply(plan, [row["key"]])
         reviewed = await self.match_review(plan, row["key"], target)
         self.assertFalse(reviewed["rows"][0]["needs_match"])
+        self.assertTrue(reviewed["rows"][0]["possible_duplicate"])
+        self.assertEqual(reviewed["rows"][0]["duplicate_candidates"], [candidate])
+        self.assertFalse(reviewed["rows"][0]["selected_by_default"])
         await self.apply(reviewed, [row["key"]])
         self.assertEqual(len(await self.invoices()), 2)
 
@@ -558,12 +570,14 @@ class PurchaseImportTest(unittest.IsolatedAsyncioTestCase):
                 "ALTER TABLE library_titles DROP COLUMN "
                 "purchase_information_unavailable"
             )
+            db.execute("DROP TABLE purchase_identity_barriers")
+            db.execute("DROP TABLE purchase_repair_events")
             db.execute("PRAGMA user_version=15")
             db.commit()
         self.repository = JournalRepository(self.path)
         self.addAsyncCleanup(self.repository.async_close)
         await self.repository.async_open()
-        self.assertEqual((await self.repository.async_info())["schema_version"], 26)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 27)
         invoices = await self.invoices()
         self.assertEqual(len(invoices), 1)
         ledger = (await self.repository.async_inspect("purchase_records"))["items"]

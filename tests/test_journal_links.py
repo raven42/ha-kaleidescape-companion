@@ -97,6 +97,8 @@ class JournalLinksTest(unittest.IsolatedAsyncioTestCase):
                     "ALTER TABLE library ADD COLUMN purchase_history "
                     "TEXT NOT NULL DEFAULT '[]'"
                 )
+                db.execute("DROP TABLE purchase_identity_barriers")
+                db.execute("DROP TABLE purchase_repair_events")
                 db.execute("PRAGMA user_version=16")
 
         await self.repository._call(old_schema)

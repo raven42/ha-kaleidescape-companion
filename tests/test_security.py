@@ -218,6 +218,8 @@ class RepositorySecurityTest(unittest.IsolatedAsyncioTestCase):
             db.execute("DROP TABLE calendar_reconcile_candidates")
             db.execute("DROP TABLE calendar_reconcile_intents")
             db.execute("DROP TABLE IF EXISTS purchase_records")
+            db.execute("DROP TABLE purchase_identity_barriers")
+            db.execute("DROP TABLE purchase_repair_events")
             db.execute("PRAGMA user_version=2")
             db.commit()
         reopened = JournalRepository(self.path)

@@ -254,6 +254,8 @@ export class FixtureTransport implements Transport {
     sorts: {},
   };
   databaseResults = new Map<string, unknown>();
+  purchaseRecords: Record<string, unknown>[] = [];
+  purchaseRepairEvents: Record<string, unknown>[] = [];
   viewingLinks = new Map<string, string>();
   private uiRevision = 0;
   async callWS<T>(message: ApiMessage): Promise<T> {
@@ -796,6 +798,9 @@ export class FixtureTransport implements Transport {
         schema_metadata: [{ revision: this.revision }],
         library_sources: [],
         library: [],
+        purchase_records: this.purchaseRecords,
+        purchase_repair_events: this.purchaseRepairEvents,
+        purchase_identity_barriers: [],
         library_collections: [],
         library_memberships: [],
         library_artwork: [],
@@ -836,7 +841,7 @@ export class FixtureTransport implements Transport {
             : [];
       result = {
         dataset_revision: this.revision,
-        main_tables: ["viewings", "sessions", "library"],
+        main_tables: ["viewings", "sessions", "library", "purchase_records"],
         schema: columns.map((name) => ({
           name,
           type: ["duration_seconds", "watched_seconds", "revision"].includes(

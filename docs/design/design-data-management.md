@@ -49,7 +49,7 @@ silently selecting a different row.
 | `viewings`                                                                     | Correct title/times/runtime/watched time/status/notes; permanently delete closed entries and their session references                                                                           |
 | `sessions`                                                                     | Correct title/runtime/watched time or delete closed sessions; viewing summaries are not automatically recalculated                                                                              |
 | `library`                                                                      | Correct title, known descriptive metadata JSON, purchase/detection dates, paid/retail summary prices and availability; delete versions and local memberships; retained invoices become unlinked |
-| `purchase_records`                                                             | Inspect/search/sort only; invoice identity and Library links are protected; edit linked invoice prices through the Library entry                                                                |
+| `purchase_records`                                                             | Inspect/search/sort; use the reviewed purchase repair workflow to correct, reassign or void an invoice                                                                                          |
 | `library_collections`                                                          | Correct detection dates/availability; delete a local collection and its memberships                                                                                                             |
 | `library_sources`                                                              | Correct the source detection date while keeping sync state protected; delete a source and its local versions/collections/memberships when receipts permit                                       |
 | `library_artwork`                                                              | Delete a managed cache entry, clear all title references, then unlink its private managed file; byte size/type/hash are protected                                                               |
@@ -398,9 +398,28 @@ from Library, drops its old `purchase_history` column and retains an upgrade
 backup. Matching invoice identities are retained once; conflicting duplicates or
 multiple Library owners abort the migration. Safe unlinked legacy placeholder
 Library rows are removed when no membership, viewing or collection intent still
-references them. Library summaries and purchase history views are derived from
-these records. Manually entered prices without an invoice remain on the Library
-entry until an invoice is linked.
+references them. Possible duplicate reviews show up to five similar invoices and
+their Library associations; similarity is a hint, not proof. Choosing a Library
+match does not select a possible duplicate for import: the administrator must
+explicitly select it as a separate purchase. Library summaries and purchase
+history views are derived from these records. Manually entered prices without an
+invoice remain on the Library entry until an invoice is linked.
+
+To repair an existing invoice, open **Database → Purchases**, select the
+invoice, and choose **Repair purchase**. Correct receipt fields or choose an
+available Library entry (or unlink it), or choose **Void purchase**. Review the
+exact before/after records, Library associations and recalculated source totals,
+then confirm. Changes use the selected row token, dataset revision,
+administrator and a durable request ID. An identity collision is rejected.
+Previous identities remain replay barriers, and similar enriched replays are
+held for review.
+
+**Options → Show system tables → Purchase repair history** displays append-only
+private evidence. Select an event and choose **Review reversal** to preview and
+explicitly reverse it. A reversal is rejected if the record or reserved identity
+changed, the destination is no longer available, or that event was already
+reversed. New repairs also have reversible evidence. Neither similarity nor
+choosing a match proves two invoices are duplicates.
 
 Open **Database → Reconcile purchases** to review unlinked database records and
 choose a scanned Library entry. No receipt JSON is required, and automatic
@@ -408,9 +427,13 @@ tracking may remain on. Match choices and selected entries show a cached Library
 cover when available, using the authenticated artwork endpoint. A new Library
 scan makes entries available for manual matching. JSON exports contain linked
 invoices in the compatible Library export and unlinked purchases separately;
-SQLite backups retain the purchase table. Manual import/reconciliation still
-requires a Library match for every selected purchase. The automation can save
-unmatched purchases without one.
+SQLite backups retain the purchase table, repair evidence and replay barriers.
+JSON exports and SQLite merge imports do not transfer repair evidence or replay
+barriers; they are not full restores. Use an offline SQLite backup restore to
+preserve those protections, and do not treat a JSON merge as a recovery of
+repair history. Manual import/reconciliation still requires a Library match for
+every selected purchase. The automation can save unmatched purchases without
+one.
 
 The optional offline helper's `purchases.json` can also be reviewed using
 **Database → Merge Import**.

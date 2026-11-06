@@ -14,6 +14,7 @@ from .models import JournalError, invalid, text, validate_times
 
 REVIEW_SECONDS = 600
 MAX_REVIEW_BYTES = 8 * 1024 * 1024
+MAX_DUPLICATE_CANDIDATES = 5
 EMPTY = (None, "", [])
 VIEWING_MERGE_FIELDS = (
     "ended_at",
@@ -36,9 +37,22 @@ def review(db, payload, import_format, actor, *, purchase_only=False):
     rows, operations, purchase_matches = [], {}, {}
     artwork_cache = {}
     purchase_index = purchases.index(db)
+    # Superseded and voided identities still participate in similarity review.
+    # Otherwise an enriched replay could bypass an exact-identity barrier.
+    candidate_index = dict(purchase_index)
+    for reserved in db.execute(
+        "SELECT b.purchase_id,e.before_record FROM purchase_identity_barriers b "
+        "JOIN purchase_repair_events e ON e.request_id=b.event_id"
+    ):
+        prior = json.loads(reserved["before_record"])
+        candidate_index[reserved["purchase_id"]] = {
+            "record": prior,
+            "owner": prior["library_id"],
+            "reserved": True,
+        }
     # Candidate lookup is bounded by the import limit and never changes records.
     by_order, by_link, by_title_date = {}, {}, {}
-    for existing_id, item in purchase_index.items():
+    for existing_id, item in candidate_index.items():
         prior = item["record"]
         if prior.get("order_id"):
             by_order.setdefault(prior["order_id"], []).append(existing_id)
@@ -76,10 +90,32 @@ def review(db, payload, import_format, actor, *, purchase_only=False):
                 raise invalid("Import review exceeded its time budget")
             key = f"{table}:{record['id']}"
             if table == "purchases":
+                if db.execute(
+                    "SELECT 1 FROM purchase_identity_barriers WHERE purchase_id=?",
+                    (record["id"],),
+                ).fetchone():
+                    rows.append(
+                        {
+                            "key": key,
+                            "table": "library",
+                            "title": record["title"],
+                            "detail": record["purchased_on"] or "Date not imported",
+                            "action": "skip",
+                            "changes": {},
+                            "conflicts": [],
+                            "reason": "A prior purchase repair reserved this identity",
+                            "selected_by_default": False,
+                            "needs_match": True,
+                            "can_match": False,
+                            "repair_barrier": True,
+                        }
+                    )
+                    continue
                 old = purchase_index.get(record["id"])
                 target, detail = purchases.propose_link(db, record, old, matcher)
                 row, operation = purchase_proposal(key, record, old, target, detail)
-                possible = False
+                candidates_to_review = []
+                more_candidates = False
                 if old is None:
                     candidates = set(by_order.get(record["order_id"], ()))
                     candidates.update(by_link.get(record["href"], ()))
@@ -88,10 +124,10 @@ def review(db, payload, import_format, actor, *, purchase_only=False):
                             (record["title"].casefold(), record["purchased_on"]), ()
                         )
                     )
-                    for existing_id in candidates:
+                    for existing_id in sorted(candidates):
                         if time.monotonic() > deadline:
                             raise invalid("Import review exceeded its time budget")
-                        prior = purchase_index[existing_id]["record"]
+                        prior = candidate_index[existing_id]["record"]
                         same_title = (
                             prior["title"].casefold() == record["title"].casefold()
                         )
@@ -119,14 +155,36 @@ def review(db, payload, import_format, actor, *, purchase_only=False):
                                 )
                             )
                         ):
-                            possible = True
-                            break
+                            if len(candidates_to_review) == MAX_DUPLICATE_CANDIDATES:
+                                more_candidates = True
+                                break
+                            owner = candidate_index[existing_id]["owner"]
+                            library = (
+                                db.execute(
+                                    "SELECT title FROM library WHERE id=?", (owner,)
+                                ).fetchone()
+                                if owner
+                                else None
+                            )
+                            candidates_to_review.append(
+                                {
+                                    **prior,
+                                    "library_id": owner,
+                                    "library_title": library[0] if library else None,
+                                    "reserved_by_repair": bool(
+                                        candidate_index[existing_id].get("reserved")
+                                    ),
+                                }
+                            )
+                possible = bool(candidates_to_review)
                 if possible:
                     row.update(
                         action="skip",
                         needs_match=True,
                         can_match=True,
                         possible_duplicate=True,
+                        duplicate_candidates=candidates_to_review,
+                        duplicate_candidates_more=more_candidates,
                         reason=(
                             "Possible duplicate receipt; review before adding "
                             "a separate purchase"
@@ -162,7 +220,12 @@ def review(db, payload, import_format, actor, *, purchase_only=False):
                     operations[key] = operation
                 if possible or target is None or (old and old["pending"]):
                     row["can_match"] = True
-                    purchase_matches[key] = {"record": dict(record), "old": old}
+                    purchase_matches[key] = {
+                        "record": dict(record),
+                        "old": old,
+                        "duplicate_candidates": candidates_to_review,
+                        "duplicate_candidates_more": more_candidates,
+                    }
                 continue
             old = db.execute(
                 f"SELECT * FROM {table} WHERE id=?", (record["id"],)
@@ -463,6 +526,17 @@ def match_purchase(db, plan, plan_id, revision, key, title_id, actor):
             f"{target['year'] or 'year unknown'}"
         )
     row, operation = purchase_proposal(key, record, old, title_id, detail)
+    if context["duplicate_candidates"]:
+        row.update(
+            possible_duplicate=True,
+            duplicate_candidates=context["duplicate_candidates"],
+            duplicate_candidates_more=context["duplicate_candidates_more"],
+            selected_by_default=False,
+            reason=(
+                "Selecting this row adds a separate purchase; "
+                "existing records remain unchanged"
+            ),
+        )
     row["artwork_key"] = purchase_artwork(db, title_id) if title_id else None
     if title_id is not None and (old is None or old["pending"]):
         existing = db.execute(
@@ -553,6 +627,13 @@ def apply(db, plan, request_id, plan_id, revision, selected, actor, pending_reco
         if db.execute("SELECT revision FROM schema_metadata").fetchone()[0] != revision:
             raise JournalError("conflict", "Database changed; review the file again")
         for record in pending_records:
+            if db.execute(
+                "SELECT 1 FROM purchase_identity_barriers WHERE purchase_id=?",
+                (record["id"],),
+            ).fetchone():
+                raise JournalError(
+                    "conflict", "A purchase identity is reserved by a repair"
+                )
             cursor = db.execute(
                 "INSERT OR IGNORE INTO purchase_records "
                 "(id,title,purchased_on,purchase_price,retail_price,order_id,href,"
@@ -566,6 +647,13 @@ def apply(db, plan, request_id, plan_id, revision, selected, actor, pending_reco
             table, record = operation["table"], operation["record"]
             patch = {k: v["after"] for k, v in operation["changes"].items()}
             if table == "purchases":
+                if db.execute(
+                    "SELECT 1 FROM purchase_identity_barriers WHERE purchase_id=?",
+                    (record["id"],),
+                ).fetchone():
+                    raise JournalError(
+                        "conflict", "A purchase identity is reserved by a repair"
+                    )
                 sources.add(
                     purchases.merge_into(
                         db, record, operation["target"], now, operation["old_owner"]

@@ -66,6 +66,7 @@ class JournalRepository:
         self._import_active = False
         self._import_task: asyncio.Task | None = None
         self._import_plan: dict | None = None
+        self._purchase_repair_plan: dict | None = None
         self._export_directory = path.with_name(f".{path.name}.exports")
         self._artwork_directory = path.parent / "artwork"
         self._calendar: dict | None = None
@@ -892,7 +893,9 @@ class JournalRepository:
             and row["action"] in {"new", "merge"}
         ]
         unmatched_keys = {
-            row["key"] for row in problems if not row.get("possible_duplicate")
+            row["key"]
+            for row in problems
+            if not row.get("possible_duplicate") and not row.get("repair_barrier")
         }
         from ..library.purchases import index as purchase_index
 
@@ -940,7 +943,9 @@ class JournalRepository:
                 + [
                     {
                         "title": row["title"],
-                        "reason": "possible_duplicate"
+                        "reason": "purchase_identity_reserved"
+                        if row.get("repair_barrier")
+                        else "possible_duplicate"
                         if row.get("possible_duplicate")
                         else "conflict"
                         if row["conflicts"]
@@ -993,6 +998,48 @@ class JournalRepository:
     async def async_purchase_reconciliation(self, actor_id):
         """Create an administrator review of durable unmatched purchases."""
         return await self._call(self._purchase_reconciliation, self._actor(actor_id))
+
+    async def async_purchase_repair_preview(
+        self, action, key, token, changes, actor_id
+    ):
+        """Preview a private receipt repair on the repository worker."""
+        actor = self._actor(actor_id)
+        if actor is None:
+            raise invalid("Purchase repairs require an administrator")
+        return await self._call(
+            self._purchase_repair_preview, action, key, token, changes, actor
+        )
+
+    def _purchase_repair_preview(self, action, key, token, changes, actor):
+        from .purchase_repair import preview
+
+        self._purchase_repair_plan = preview(
+            self._db(), action, key, token, changes, actor
+        )
+        return self._purchase_repair_plan["public"]
+
+    async def async_purchase_repair_apply(
+        self, request_id, plan_id, revision, actor_id
+    ):
+        """Apply one explicit, actor-bound and idempotent reviewed repair."""
+        actor = self._actor(actor_id)
+        if actor is None:
+            raise invalid("Purchase repairs require an administrator")
+        return await self._call(
+            self._library_write,
+            self._apply_purchase_repair,
+            identifier(request_id),
+            identifier(plan_id),
+            revision,
+            actor,
+        )
+
+    def _apply_purchase_repair(self, db, request_id, plan_id, revision, actor):
+        from .purchase_repair import apply
+
+        return apply(
+            db, self._purchase_repair_plan, request_id, plan_id, revision, actor
+        )
 
     def _purchase_reconciliation(self, actor):
         db = self._db()

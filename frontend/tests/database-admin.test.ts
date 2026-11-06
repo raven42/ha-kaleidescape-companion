@@ -77,6 +77,36 @@ it("keeps the database pager outside the list and provides separate keyboard scr
   );
 });
 
+it("opens the selected purchase in the reviewed repair panel", async () => {
+  transport.purchaseRecords = [
+    {
+      id: "a".repeat(64),
+      title: "Fictional purchase",
+      purchase_price: "$12.99",
+      purchased_on: "2020-01-02",
+      library_id: null,
+    },
+  ];
+  await mount();
+  root().querySelector<HTMLButtonElement>("#table-purchase_records")!.click();
+  await vi.waitFor(() =>
+    expect(root().textContent).toContain("Fictional purchase"),
+  );
+  root().querySelector<HTMLButtonElement>(".entry-name")!.click();
+  await flush();
+  button("Repair purchase").click();
+  await flush();
+  const repair = root().querySelector("kaleidescape-purchase-repair")!;
+  await (repair as HTMLElement & { updateComplete: Promise<unknown> })
+    .updateComplete;
+  expect(
+    repair.shadowRoot!.querySelector<HTMLInputElement>('[name="title"]')!.value,
+  ).toBe("Fictional purchase");
+  expect(
+    root().querySelector<HTMLButtonElement>("#table-viewings")!.disabled,
+  ).toBe(true);
+});
+
 it("shows raw details first and edits only supported fields after explicit confirmation", async () => {
   await mount();
   await choose();
@@ -178,7 +208,7 @@ it("retains an edited draft on conflicts and blocks implicit dirty-modal dismiss
 });
 it("stores database row counts, per-table sorts and system visibility separately from Library preferences", async () => {
   await mount();
-  expect(root().querySelectorAll('[role="tab"]')).toHaveLength(3);
+  expect(root().querySelectorAll('[role="tab"]')).toHaveLength(4);
   button("Options").click();
   await flush();
   const limit = root().querySelector<HTMLSelectElement>(

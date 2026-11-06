@@ -5,6 +5,8 @@ TABLE_KEYS = {
     "sessions": "id",
     "library": "id",
     "purchase_records": "id",
+    "purchase_repair_events": "request_id",
+    "purchase_identity_barriers": "purchase_id",
     "library_collections": "source_id,name",
     "library_sources": "id",
     "library_artwork": "cache_key",

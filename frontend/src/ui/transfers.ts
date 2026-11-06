@@ -454,7 +454,11 @@ export class KaleidescapeTransfers extends LitElement {
         ),
       };
       this.matching = undefined;
-      if (["new", "merge"].includes(result.row.action)) this.selected.add(key);
+      if (
+        ["new", "merge"].includes(result.row.action) &&
+        !result.row.possible_duplicate
+      )
+        this.selected.add(key);
       else this.selected.delete(key);
       this.page = 0;
     } catch (error) {
@@ -519,7 +523,7 @@ export class KaleidescapeTransfers extends LitElement {
         ${review.counts.new} new · ${review.counts.merge} mergeable ·
         ${review.counts.unchanged} unchanged · ${review.counts.skip} skipped.
         ${this.selected.size} selected.
-        ${review.rows.some((row) => row.needs_match) ? html`${counted(review.rows.filter((row) => row.needs_match).length, "purchase requiring a match")} shown first.` : nothing}
+        ${review.rows.some((row) => row.needs_match) ? html`${counted(review.rows.filter((row) => row.needs_match).length, "purchase requiring review")} shown first.` : nothing}
       </p>
       ${
         review.rows.some((row) => row.key.startsWith("purchases:"))
@@ -562,7 +566,9 @@ export class KaleidescapeTransfers extends LitElement {
               review.rows
                 .filter(
                   (row) =>
-                    !row.needs_match && ["new", "merge"].includes(row.action),
+                    !row.needs_match &&
+                    !row.possible_duplicate &&
+                    ["new", "merge"].includes(row.action),
                 )
                 .map((row) => row.key),
             );
@@ -596,16 +602,18 @@ export class KaleidescapeTransfers extends LitElement {
               const purchase = row.key.startsWith("purchases:");
               const action = !purchase
                 ? row.action
-                : row.possible_duplicate
-                  ? "Review possible duplicate"
-                  : row.needs_match
-                    ? "Choose Library match"
-                    : {
-                        new: "Add purchase to Library entry",
-                        merge: "Update purchase record",
-                        unchanged: "Purchase already imported",
-                        skip: "Skip purchase",
-                      }[row.action];
+                : row.repair_barrier
+                  ? "Blocked by prior repair"
+                  : row.possible_duplicate && row.needs_match
+                    ? "Review possible duplicate"
+                    : row.needs_match
+                      ? "Choose Library match"
+                      : {
+                          new: "Add purchase to Library entry",
+                          merge: "Update purchase record",
+                          unchanged: "Purchase already imported",
+                          skip: "Skip purchase",
+                        }[row.action];
               return html`<tr>
                 <td>
                   <input
@@ -649,7 +657,23 @@ export class KaleidescapeTransfers extends LitElement {
                 <td>${action}</td>
                 <td>
                   ${row.reason || Object.keys(row.changes).join(", ") || "No missing data"}
-                  ${row.possible_duplicate ? html`<small class="warning">Check the existing purchase first. Choosing a match allows this to be imported as a separate purchase.</small>` : row.needs_match ? html`<small class="warning">No Library match selected</small>` : nothing}
+                  ${row.possible_duplicate ? html`<small class="warning">Compare the existing purchases before selecting this as a separate purchase.</small>` : row.needs_match && !row.repair_barrier ? html`<small class="warning">No Library match selected</small>` : nothing}
+                  ${
+                    row.duplicate_candidates?.length
+                      ? html`<details>
+                          <summary>
+                            Possible existing purchases
+                            (${row.duplicate_candidates.length}${row.duplicate_candidates_more ? "+" : ""})
+                          </summary>
+                          <p>
+                            Similar details are review hints, not proof of a
+                            duplicate.
+                          </p>
+                          ${row.duplicate_candidates.map((candidate) => html`<pre>${JSON.stringify(candidate, null, 2)}</pre>`)}
+                          ${row.duplicate_candidates_more ? html`<p>More possible matches exist. Inspect Purchases for the full list.</p>` : nothing}
+                        </details>`
+                      : nothing
+                  }
                   ${
                     row.can_match
                       ? html`<button
@@ -730,12 +754,12 @@ export class KaleidescapeTransfers extends LitElement {
         versions. Populated values, manual corrections and deletion status are
         kept. Only known Library sources match. Newly imported versions stay
         inactive until a server sync verifies them. Session evidence, collection
-        membership, artwork files, audit and retry state are not restored.
-        Maximum 32 MiB / 10,000 records. Review expires after 10 minutes or any
-        database change. Purchase JSON keeps separate orders and proposes
-        exact-name Library group links for review. Ambiguous names stay
-        unlinked. Purchase rows start unchecked; select the purchases and links
-        you approve.
+        membership, artwork files, audit, retry state, purchase repair history
+        and replay barriers are not restored. Maximum 32 MiB / 10,000 records.
+        Review expires after 10 minutes or any database change. Purchase JSON
+        keeps separate orders and proposes exact-name Library group links for
+        review. Ambiguous names stay unlinked. Purchase rows start unchecked;
+        select the purchases and links you approve.
       </p>
       ${this.scope?.tracking_enabled && !this.purchaseReview ? html`<p class="warning">Disable automatic tracking in Settings before importing.</p>` : nothing}
       <label
@@ -845,7 +869,10 @@ export class KaleidescapeTransfers extends LitElement {
           this.dialog === "export"
             ? html`<p>
                 Exports include private history and deleted records. SQLite also
-                includes catalog and source metadata. Store downloads securely.
+                includes catalog, source metadata, purchase repair history and
+                replay barriers. JSON does not preserve repair history or replay
+                barriers. Use a SQLite backup for a full restore. Store
+                downloads securely.
               </p> `
             : this.dialog === "import"
               ? this.renderImport(blocked)

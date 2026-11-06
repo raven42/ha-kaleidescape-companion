@@ -215,6 +215,34 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
                 )
                 self.assertEqual(result["code"], "unauthorized")
 
+    async def test_purchase_repair_requires_and_rechecks_admin(self):
+        user = SimpleNamespace(id="viewer", is_active=True, is_admin=False)
+        arguments = {
+            **self.scope,
+            "action": "void",
+            "key": "a" * 64,
+            "token": "b" * 64,
+            "changes": {},
+        }
+        repository = self.entry.runtime_data.repository
+        with patch.object(
+            repository, "async_purchase_repair_preview", new_callable=AsyncMock
+        ) as preview:
+            result = await self.call("purchases/repair/preview", user=user, **arguments)
+            self.assertEqual(result["code"], "unauthorized")
+            preview.assert_not_awaited()
+
+        async def revoked(*_args):
+            self.admin.is_admin = False
+            return {"before": {"title": "private fictional invoice"}}
+
+        with patch.object(
+            repository, "async_purchase_repair_preview", side_effect=revoked
+        ):
+            result = await self.call("purchases/repair/preview", **arguments)
+        self.assertEqual(result["code"], "unauthorized")
+        self.assertNotIn("private fictional invoice", str(result))
+
     async def test_invalid_scope_and_payload(self):
         result = await self.call(
             "journal/list", **{**self.scope, "entry_id": "missing-entry"}

@@ -280,6 +280,18 @@ def async_register_commands(hass: HomeAssistant) -> None:
             p.Required("selected"): [str],
         },
         "database/mutate": {**mutations, p.Required("data"): dict},
+        "purchases/repair/preview": {
+            **scoped,
+            p.Required("action"): p.In(["correct", "void", "reverse"]),
+            p.Required("key"): str,
+            p.Required("token"): str,
+            p.Required("changes"): dict,
+        },
+        "purchases/repair/apply": {
+            **mutations,
+            p.Required("plan_id"): str,
+            p.Required("revision"): int,
+        },
         "database/import/search": {
             **scoped,
             p.Required("plan_id"): str,
@@ -981,6 +993,14 @@ async def async_handle(
                     )
                 case "purchases/reconcile":
                     result = await repository.async_purchase_reconciliation(user.id)
+                case "purchases/repair/preview":
+                    result = await repository.async_purchase_repair_preview(
+                        msg["action"], msg["key"], msg["token"], msg["changes"], user.id
+                    )
+                case "purchases/repair/apply":
+                    result = await repository.async_purchase_repair_apply(
+                        msg["request_id"], msg["plan_id"], msg["revision"], user.id
+                    )
                 case (
                     "database/import"
                     | "database/import/search"

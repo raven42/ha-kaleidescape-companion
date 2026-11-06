@@ -1,6 +1,6 @@
 # Journal storage and playback recording
 
-Status: implemented. API version is `1`; SQLite schema is `26` and JSON export
+Status: implemented. API version is `1`; SQLite schema is `27` and JSON export
 format is `5`. This document owns persistent journal behavior and observation.
 [Data management](design-data-management.md) owns administrative
 editing/imports; [calendar](design-calendar.md) owns event delivery;

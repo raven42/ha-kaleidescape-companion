@@ -71,16 +71,19 @@ unavailable purchase date remains null rather than being invented. Existing
 populated values are not overwritten; conflicts are returned for review.
 Possible receipt duplicates are held without being saved for administrator
 review; the heuristic is not proof of identity and does not repair existing
-duplicates. Unique proposed matches are applied without human review and are not
-proof of identity. An administrator can reconcile saved unmatched purchases
-while recording remains active; choices are actor- and revision-bound and
-require an available scanned Library entry. Match results include only cached
-artwork keys; cover images use the existing authenticated Library artwork
-endpoint. HA automation traces and action responses may contain private invoice
-data and need appropriate access controls. Public store refresh may fill a
-missing retail price, but never a purchase price. The missing purchase
-information sensor exposes its count and bounded movie names to HA entity
-readers. Its Library filter and purchase editing are limited to administrators.
+duplicates. The administrator-only import review shows up to five possible
+existing invoices and their Library associations; it does not select a possible
+duplicate for import automatically, even after a Library match is chosen. Unique
+proposed matches are applied without human review and are not proof of identity.
+An administrator can reconcile saved unmatched purchases while recording remains
+active; choices are actor- and revision-bound and require an available scanned
+Library entry. Match results include only cached artwork keys; cover images use
+the existing authenticated Library artwork endpoint. HA automation traces and
+action responses may contain private invoice data and need appropriate access
+controls. Public store refresh may fill a missing retail price, but never a
+purchase price. The missing purchase information sensor exposes its count and
+bounded movie names to HA entity readers. Its Library filter and purchase
+editing are limited to administrators.
 
 When HA automations are available, Companion installs missing packaged
 blueprints through HA's blueprint manager. It does not create or enable an
@@ -128,6 +131,12 @@ before applying, and cannot introduce network configuration or executable data.
 Raw database files are opened defensively; application writes never execute SQL
 from an import. A SQLite snapshot with the current purchase ledger takes invoice
 records from that ledger rather than inferring them from flat Library prices.
+Purchase correction, void and reversal require an administrator-bound review,
+row token, dataset revision and durable request ID. Full before/after invoice
+and association evidence is private and append-only; prior identities are
+reserved against silent replay. Similarity hints do not prove identity. Full
+SQLite backups retain this evidence and the barriers; JSON exports and SQLite
+merge imports do not transfer them, so they are not a full restore.
 Purchase-only reconciliation can run while recording is active: the server
 validates that the uploaded bundle contains only purchases and binds subsequent
 review and apply operations to that validated plan. General imports still
