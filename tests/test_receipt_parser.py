@@ -152,6 +152,14 @@ class ReceiptParserTest(unittest.TestCase):
                     else:
                         self.assertEqual(issues, [])
 
+    def test_html_complexity_is_rejected_and_next_receipt_still_parses(self):
+        html = "<table><tr><td>" + "<span>" * 5000 + "x" * 100 + "</span>" * 5000
+        records, issues = parse_receipt(envelope(html))
+        self.assertEqual(records, [])
+        self.assertEqual(issues, [{"reason": "html_items_unavailable"}])
+        records, issues = parse_receipt(envelope())
+        self.assertEqual(len(records), 2)
+        self.assertEqual(issues, [])
 
     def test_html_rows_identify_struck_retail_and_paid_price_independent_of_order(self):
         html = """<html><body><div>Order ID ORDER-321</div>

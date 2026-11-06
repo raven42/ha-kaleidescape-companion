@@ -40,6 +40,21 @@ class EmailTest(unittest.IsolatedAsyncioTestCase):
     seed_library = importing.ImportStorageTest.seed_library
     assert_error = importing.ImportStorageTest.assert_error
 
+    async def test_overcomplex_html_releases_repository_worker(self):
+        import asyncio
+
+        from test_receipt_parser import envelope
+
+        html = "<table><tr><td>" + "<span>" * 5000 + "x" * 100 + "</span>" * 5000
+        result = await asyncio.wait_for(
+            self.repository.async_purchase_email(envelope(html)), timeout=3
+        )
+        self.assertEqual(result["status"], "needs_review")
+        self.assertEqual(result["issues"], [{"reason": "html_items_unavailable"}])
+        await asyncio.wait_for(self.repository.async_info(), timeout=3)
+        self.assertEqual(
+            (await self.repository.async_inspect("purchase_records"))["items"], []
+        )
 
     async def test_mixed_receipt_saves_both_items_and_reports_only_missing_retail(self):
         from test_receipt_parser import MIXED_PRICE_HTML, MIXED_PRICE_TEXT, envelope

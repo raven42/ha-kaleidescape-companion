@@ -66,26 +66,26 @@ The `import_purchase_email` action accepts private purchase data from HA
 automations with no user context or active administrators. It validates and
 bounds the input, saves unmatched purchases with no Library link, and applies
 unambiguous, nonconflicting matches in one transaction. The receipt automation
-fetches the complete text and available HTML part for backend parsing. Its
-administrator-selected fields control what is stored; title and Store link are
-always extracted. An empty field selection is rejected. A missing unselected or
-unavailable purchase date remains null rather than being invented. Existing
-populated values are not overwritten; conflicts are returned for review.
-Possible receipt duplicates are held without being saved for administrator
-review; the heuristic is not proof of identity and does not repair existing
-duplicates. The administrator-only import review shows up to five possible
-existing invoices and their Library associations; it does not select a possible
-duplicate for import automatically, even after a Library match is chosen. Unique
-proposed matches are applied without human review and are not proof of identity.
-An administrator can reconcile saved unmatched purchases while recording remains
-active; choices are actor- and revision-bound and require an available scanned
-Library entry. Match results include only cached artwork keys; cover images use
-the existing authenticated Library artwork endpoint. HA automation traces and
-action responses may contain private invoice data and need appropriate access
-controls. Public store refresh may fill a missing retail price, but never a
-purchase price. The missing purchase information sensor exposes its count and
-bounded movie names to HA entity readers. Its Library filter and purchase
-editing are limited to administrators.
+fetches the HTML part for backend parsing; missing or unusable HTML is not
+imported and is reported for review. Its administrator-selected fields control
+what is stored; title and Store link are always extracted. An empty field
+selection is rejected. A missing unselected or unavailable purchase date remains
+null rather than being invented. Existing populated values are not overwritten;
+conflicts are returned for review. Possible receipt duplicates are held without
+being saved for administrator review; the heuristic is not proof of identity and
+does not repair existing duplicates. The administrator-only import review shows
+up to five possible existing invoices and their Library associations; it does
+not select a possible duplicate for import automatically, even after a Library
+match is chosen. Unique proposed matches are applied without human review and
+are not proof of identity. An administrator can reconcile saved unmatched
+purchases while recording remains active; choices are actor- and revision-bound
+and require an available scanned Library entry. Match results include only
+cached artwork keys; cover images use the existing authenticated Library artwork
+endpoint. HA automation traces and action responses may contain private invoice
+data and need appropriate access controls. Public store refresh may fill a
+missing retail price, but never a purchase price. The missing purchase
+information sensor exposes its count and bounded movie names to HA entity
+readers. Its Library filter and purchase editing are limited to administrators.
 
 When HA automations are available, Companion installs missing packaged
 blueprints through HA's blueprint manager. It does not create or enable an
@@ -114,15 +114,13 @@ purchase price; multiple unmarked prices remain ambiguous. Set rows can include
 movie rows sequentially or nested inside the set row. When item and subtotal
 markers exist, rows outside that region are excluded. Unmarked, headerless
 layouts can still contain unrelated movie links, so they require careful review.
-Text-only rows retained alongside structured HTML are flagged. In plain text, a
-single price is treated as the purchase price only when it reconciles with the
-subtotal and other known item prices. A missing retail price is never invented.
-Receipt content may appear in HA logs under the diagnostic exception below. The
-metadata refresh action accepts known provider names and only contacts enabled
-providers. Calendar Full Sync remains restricted to an explicitly acknowledged
-dedicated calendar, with its existing snapshot, grace and uncertainty checks.
-Its optional automation requests the second check; no in-process schedule
-performs it.
+Plain-text item parsing is not used. HTML structural complexity is bounded
+before receipt extraction. A missing retail price is never invented. Receipt
+content may appear in HA logs under the diagnostic exception below. The metadata
+refresh action accepts known provider names and only contacts enabled providers.
+Calendar Full Sync remains restricted to an explicitly acknowledged dedicated
+calendar, with its existing snapshot, grace and uncertainty checks. Its optional
+automation requests the second check; no in-process schedule performs it.
 
 ## Storage, imports and rendering
 

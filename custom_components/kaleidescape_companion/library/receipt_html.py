@@ -67,6 +67,10 @@ def _struck(tag, attrs):
     )
 
 
+class _ComplexityLimit(Exception):
+    """Stop parsing immediately when structural budgets are exceeded."""
+
+
 class _Rows(HTMLParser):
     """Collect independent rows from nested tables, ignoring hidden content."""
 
@@ -77,6 +81,8 @@ class _Rows(HTMLParser):
         self.hidden = []
         self.too_complex = False
         self.position = 0
+        self.depth = 0
+        self.data_nodes = 0
 
     def _row(self):
         return self.tables[-1]["row"] if self.tables else None
@@ -98,10 +104,16 @@ class _Rows(HTMLParser):
         self.tables[-1]["rows"].append(row)
         self.tables[-1]["row"] = None
         if len(self.tables[-1]["rows"]) > MAX_MOVIES + 100:
-            self.too_complex = True
+            raise _ComplexityLimit
 
     def handle_starttag(self, tag, attrs):
         self.position += 1
+        if self.position > 20000:
+            raise _ComplexityLimit
+        if tag not in _VOID:
+            self.depth += 1
+            if self.depth > 128:
+                raise _ComplexityLimit
         attrs = dict(attrs)
         void = tag in _VOID
         style = str(attrs.get("style") or "").lower()
@@ -114,10 +126,12 @@ class _Rows(HTMLParser):
         if self.hidden or hidden:
             if not void:
                 self.hidden.append(tag)
+                if len(self.hidden) > 128:
+                    raise _ComplexityLimit
             return
         if tag == "table":
             if len(self.tables) >= 64:
-                self.too_complex = True
+                raise _ComplexityLimit
             parent = self._row()
             table = {"row": None, "rows": [], "parent": parent}
             if parent:
@@ -144,6 +158,7 @@ class _Rows(HTMLParser):
                 "anchor": None,
                 "strike": _struck(tag, attrs),
                 "inline_tags": [],
+                "strike_depth": 0,
             }
             row["cells"].append(cell)
             row["cell"] = cell
@@ -157,9 +172,14 @@ class _Rows(HTMLParser):
             if href:
                 cell["anchor"] = {"href": href, "text": []}
         if not void:
-            cell["inline_tags"].append((tag, _struck(tag, attrs)))
+            struck = _struck(tag, attrs)
+            cell["inline_tags"].append((tag, struck))
+            if len(cell["inline_tags"]) > 128:
+                raise _ComplexityLimit
+            cell["strike_depth"] += struck
 
     def handle_endtag(self, tag):
+        self.depth = max(0, self.depth - 1)
         if self.hidden:
             if tag in self.hidden:
                 while self.hidden:
@@ -180,21 +200,24 @@ class _Rows(HTMLParser):
             self._close_anchor(cell)
         if any(name == tag for name, _ in cell["inline_tags"]):
             while cell["inline_tags"]:
-                if cell["inline_tags"].pop()[0] == tag:
+                name, struck = cell["inline_tags"].pop()
+                cell["strike_depth"] -= struck
+                if name == tag:
                     break
         if tag in {"td", "th"}:
             self._close_anchor(cell)
             self._row()["cell"] = None
 
     def handle_data(self, data):
+        self.data_nodes += 1
+        if self.data_nodes > 20000:
+            raise _ComplexityLimit
         if self.hidden:
             return
         cell = self._cell()
         if cell is None:
             return
-        cell["pieces"].append(
-            (data, cell["strike"] or any(struck for _, struck in cell["inline_tags"]))
-        )
+        cell["pieces"].append((data, cell["strike"] or cell["strike_depth"] > 0))
         if cell["anchor"]:
             cell["anchor"]["text"].append(data)
 
@@ -330,8 +353,11 @@ def _item(row):
 def parse_rows(html):
     """Return structured movie rows, or None when the layout needs text fallback."""
     parser = _Rows()
-    parser.feed(html)
-    parser.close()
+    try:
+        parser.feed(html)
+        parser.close()
+    except _ComplexityLimit:
+        return None
     while parser.tables:
         parser._close_row()
         parser.finished.append(parser.tables.pop())
