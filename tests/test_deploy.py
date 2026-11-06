@@ -1,5 +1,6 @@
 """Exercise deployment boundaries using fictional files and a local shell, never SSH."""
 
+import hashlib
 import io
 import json
 import os
@@ -12,8 +13,6 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
-
-import kaleidescape
 
 from dev import deploy
 
@@ -90,6 +89,13 @@ class DeployTest(unittest.TestCase):
             self.assertTrue(
                 all(member.isfile() and member.mode == 0o644 for member in archive)
             )
+            self.assertIn(
+                f"{deploy.DOMAIN}/vendor/kaleidescape/library_parser.py",
+                archive.getnames(),
+            )
+            self.assertIn(
+                f"{deploy.DOMAIN}/vendor/kaleidescape/LICENSE", archive.getnames()
+            )
 
     def test_only_the_integration_brand_icons_enter_the_runtime_archive(self):
         for name in (
@@ -132,6 +138,19 @@ class DeployTest(unittest.TestCase):
                     for member in archive
                 )
             )
+            root = Path(__file__).resolve().parents[1]
+            hashes = json.loads((root / "dev/pyk-overlay/hashes.json").read_text())
+            for name, digest in hashes.items():
+                member = archive.extractfile(f"{deploy.DOMAIN}/vendor/{name}")
+                self.assertIsNotNone(member)
+                self.assertEqual(hashlib.sha256(member.read()).hexdigest(), digest)
+            license_file = archive.extractfile(
+                f"{deploy.DOMAIN}/vendor/kaleidescape/LICENSE"
+            )
+            self.assertIsNotNone(license_file)
+            self.assertEqual(
+                license_file.read(), (root / "dev/pyk-overlay/LICENSE").read_bytes()
+            )
             archive.extractall(components, filter="data")
             for member in archive:
                 if member.name.endswith(".py"):
@@ -140,34 +159,49 @@ class DeployTest(unittest.TestCase):
                         parts.pop()
                     modules.append("custom_components." + ".".join(parts))
         script = """
-import importlib, json, pathlib, sys
+import importlib, importlib.util, json, pathlib, sys
+if sys.argv[3] == 'builtin-first':
+    import kaleidescape as builtin_pyk
 root = pathlib.Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(root))
-sys.path.insert(0, sys.argv[3])
 for name in json.loads(sys.argv[2]):
     module = importlib.import_module(name)
     assert pathlib.Path(module.__file__).resolve().is_relative_to(root), name
+if sys.argv[3] == 'companion-first':
+    import kaleidescape as builtin_pyk
 import custom_components.kaleidescape_companion.scrapers as scrapers
 assert pathlib.Path(scrapers.__file__).resolve().is_relative_to(root)
 assert scrapers.Providers is not None
+from custom_components.kaleidescape_companion.vendor import (
+    kaleidescape as companion_pyk,
+)
+assert sys.modules['kaleidescape'] is builtin_pyk
+assert builtin_pyk is not companion_pyk
+assert builtin_pyk.__version__ == '1.2.0'
+assert importlib.util.find_spec('kaleidescape.library_parser') is None
+assert companion_pyk.__version__ == '1.2.0.dev1+cmp'
+assert callable(companion_pyk.Device.prepare_movie_launch)
+assert pathlib.Path(companion_pyk.__file__).resolve().is_relative_to(root)
 assert 'kaleidescape_api' not in sys.modules
 assert not any(name == 'dev' or name.startswith('dev.') for name in sys.modules)
 """
-        result = subprocess.run(
-            [
-                sys.executable,
-                "-I",
-                "-c",
-                script,
-                str(destination),
-                json.dumps(modules),
-                str(Path(kaleidescape.__file__).resolve().parent.parent),
-            ],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        self.assertEqual(result.returncode, 0, result.stderr)
+        for order in ("builtin-first", "companion-first"):
+            with self.subTest(order=order):
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        "-I",
+                        "-c",
+                        script,
+                        str(destination),
+                        json.dumps(modules),
+                        order,
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_package_rejects_links_missing_bundle_wrong_domain_and_size_overflow(self):
         source = self.source / "const.py"

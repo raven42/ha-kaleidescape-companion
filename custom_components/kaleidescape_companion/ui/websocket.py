@@ -3,7 +3,6 @@
 import logging
 from typing import Any
 
-import kaleidescape
 import probatio as p
 from homeassistant.components import websocket_api
 from homeassistant.components.websocket_api.connection import REDACT_KEYS
@@ -20,6 +19,7 @@ from ..core.runtime import get_library, get_runtime, loaded_runtimes
 from ..core.security import is_active_admin, is_active_user
 from ..library.config import origin
 from ..playback.now_playing import snapshot as now_playing_snapshot
+from ..vendor import kaleidescape
 from .controls import control_request
 from .preferences import public_defaults
 from .settings import fingerprint, options_request

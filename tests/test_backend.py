@@ -9,7 +9,6 @@ from types import MappingProxyType, SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
-import kaleidescape
 import probatio
 from aiohttp import web
 from aiohttp.test_utils import make_mocked_request
@@ -39,6 +38,7 @@ from custom_components.kaleidescape_companion.diagnostics import (
     async_get_config_entry_diagnostics,
 )
 from custom_components.kaleidescape_companion.ui.http import JournalExportView
+from custom_components.kaleidescape_companion.vendor import kaleidescape
 
 
 def entry():

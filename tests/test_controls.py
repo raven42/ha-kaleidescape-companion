@@ -8,13 +8,6 @@ from uuid import uuid4
 
 import test_backend as backend
 from _expected_logs import expected_log
-from kaleidescape import const as pyk_const
-from kaleidescape import message as pyk
-from kaleidescape.error import (
-    MessageError,
-    RequestNotSentError,
-    RequestOutcomeUnknownError,
-)
 
 from custom_components.kaleidescape_companion.backup import (
     async_post_backup,
@@ -25,7 +18,15 @@ from custom_components.kaleidescape_companion.core.repository import JournalRepo
 from custom_components.kaleidescape_companion.library.store import source_id, title_id
 from custom_components.kaleidescape_companion.playback import controls as module
 from custom_components.kaleidescape_companion.playback.control_config import validate
+from custom_components.kaleidescape_companion.vendor.kaleidescape import const
+from custom_components.kaleidescape_companion.vendor.kaleidescape import message as pyk
+from custom_components.kaleidescape_companion.vendor.kaleidescape.error import (
+    MessageError,
+    RequestNotSentError,
+    RequestOutcomeUnknownError,
+)
 
+pyk_const = const
 SERIAL = "1A2B"
 SEED = "10.0.0.10"
 PLAYER = "10.0.0.25"

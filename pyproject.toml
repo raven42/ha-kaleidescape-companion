@@ -27,10 +27,12 @@ include = ["custom_components", "custom_components.kaleidescape_companion*"]
     "templates/purchase_email_parser.yaml", "templates/library_schedule.yaml",
     "templates/metadata_schedule.yaml", "templates/calendar_schedule.yaml",
 ]
+"custom_components.kaleidescape_companion.vendor.kaleidescape" = ["LICENSE", "py.typed"]
 
 [tool.ruff]
 target-version = "py314"
 line-length = 88
+extend-exclude = ["custom_components/kaleidescape_companion/vendor/kaleidescape"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]

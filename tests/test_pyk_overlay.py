@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class PykOverlayTest(unittest.TestCase):
     def test_gate_accepts_reviewed_files_and_rejects_mutations(self):
-        source = Path(__import__("kaleidescape").__file__).resolve().parent.parent
+        source = ROOT / "custom_components/kaleidescape_companion/vendor"
         expected = json.loads((ROOT / "dev/pyk-overlay/hashes.json").read_text())
         with tempfile.TemporaryDirectory() as directory:
             dest = Path(directory)

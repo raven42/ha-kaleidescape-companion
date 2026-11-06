@@ -11,19 +11,19 @@ from homeassistant.helpers.aiohttp_client import (
     DATA_RESOLVER,
     async_create_clientsession,
 )
-from kaleidescape.error import KaleidescapeError
-from kaleidescape.library_parser import LibraryFormatError, artwork_path
-from kaleidescape.local_browser import (
-    BrowserResponse,
-    BrowserResponseError,
-    LocalLibrary,
-)
 from yarl import URL
 
 from ..core.logging import safe_exception
 from ..core.models import JournalError
 from ..core.security import async_finish_cleanup
 from ..core.tasks import async_wait
+from ..vendor.kaleidescape.error import KaleidescapeError
+from ..vendor.kaleidescape.library_parser import LibraryFormatError, artwork_path
+from ..vendor.kaleidescape.local_browser import (
+    BrowserResponse,
+    BrowserResponseError,
+    LocalLibrary,
+)
 from .collections import member_hash, parameters
 from .config import DEFAULTS, lan_address, origin
 from .store import MAX_ARTWORK_BYTES, image_type, source_id

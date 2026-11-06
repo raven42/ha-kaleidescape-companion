@@ -57,6 +57,19 @@ REQUIRED = {
     "calendar/entity.py",
     "calendar/maintenance.py",
     "calendar/maintenance_store.py",
+    "vendor/__init__.py",
+    "vendor/kaleidescape/__init__.py",
+    "vendor/kaleidescape/_version.py",
+    "vendor/kaleidescape/connection.py",
+    "vendor/kaleidescape/const.py",
+    "vendor/kaleidescape/device.py",
+    "vendor/kaleidescape/dispatcher.py",
+    "vendor/kaleidescape/error.py",
+    "vendor/kaleidescape/library_parser.py",
+    "vendor/kaleidescape/local_browser.py",
+    "vendor/kaleidescape/message.py",
+    "vendor/kaleidescape/py.typed",
+    "vendor/kaleidescape/LICENSE",
 }
 
 # Only a locally constructed runtime archive is ever sent to this script.

@@ -14,14 +14,6 @@ from dataclasses import asdict, dataclass
 
 from homeassistant.helpers.aiohttp_client import DATA_RESOLVER
 from homeassistant.helpers.storage import Store
-from kaleidescape import Device
-from kaleidescape import const as pyk_const
-from kaleidescape import message as pyk
-from kaleidescape.error import (
-    KaleidescapeError,
-    MessageError,
-    RequestNotSentError,
-)
 
 from ..const import DOMAIN
 from ..core.logging import safe_exception
@@ -30,6 +22,14 @@ from ..core.security import async_finish_cleanup
 from ..core.tasks import async_wait
 from ..library.config import lan_address, origin
 from ..library.store import source_id
+from ..vendor.kaleidescape import Device
+from ..vendor.kaleidescape import const as pyk_const
+from ..vendor.kaleidescape import message as pyk
+from ..vendor.kaleidescape.error import (
+    KaleidescapeError,
+    MessageError,
+    RequestNotSentError,
+)
 from .control_config import COMMANDS, fingerprint, host
 from .identity import normalize_serial
 

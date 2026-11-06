@@ -47,7 +47,7 @@ remain in force.
 
 1. Review and upstream the local pyk patches while preserving its existing
    `Device` workflow. Verify the released package with HA's built-in integration
-   before changing the shared dependency pin or removing the PoC overlay.
+   before changing the shared dependency pin or removing the bundled PoC copy.
 2. Qualify the migrated controls and local Library browser on the owned Strato
    K, Terra Server Compact 30 TB and Terra Server Prime 120 TB. Record firmware
    and topology. Test reads before selected player writes, then recovery and
@@ -55,7 +55,7 @@ remain in force.
 3. Validate Companion's public Store scraper independently for anonymous search,
    metadata, covers, robots and request limits. Keep all public Store work out
    of pyk.
-4. Replace the temporary patched overlay with a reproducible released pyk
+4. Replace the temporary bundled copy with a reproducible released pyk
    dependency and complete clean HA install/reload/restart validation.
 5. Extend modern, hardware-testable video/capability features in small
    increments. Premiere music, vault/disc-specific workflows and alternative

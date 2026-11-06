@@ -16,8 +16,8 @@ household devices or external metadata providers.
 ## Focused checks
 
 ```sh
-PYTHONPATH=../pykaleidescape:custom_components/kaleidescape_companion .venv/bin/python -m unittest discover -s tests/scrapers
-PYTHONPATH=../pykaleidescape .venv/bin/python -m unittest discover -s tests
+PYTHONPATH=custom_components/kaleidescape_companion .venv/bin/python -m unittest discover -s tests/scrapers
+.venv/bin/python -m unittest discover -s tests
 npm --prefix frontend test
 npm --prefix frontend run build
 ```

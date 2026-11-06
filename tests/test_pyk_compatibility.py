@@ -6,9 +6,6 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import homeassistant
-from kaleidescape import Device
-from kaleidescape import message as pyk
-from kaleidescape.local_browser import LocalLibrary
 
 from custom_components.kaleidescape_companion.playback.control_config import COMMANDS
 from custom_components.kaleidescape_companion.playback.controls import (
@@ -16,6 +13,11 @@ from custom_components.kaleidescape_companion.playback.controls import (
     PlaybackState,
 )
 from custom_components.kaleidescape_companion.playback.identity import normalize_serial
+from custom_components.kaleidescape_companion.vendor.kaleidescape import Device
+from custom_components.kaleidescape_companion.vendor.kaleidescape import message as pyk
+from custom_components.kaleidescape_companion.vendor.kaleidescape.local_browser import (
+    LocalLibrary,
+)
 
 
 class PykCompatibilityTest(unittest.TestCase):

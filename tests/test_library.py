@@ -15,13 +15,6 @@ import test_repository as repository_tests
 from aiohttp import TCPConnector, web
 from aiohttp.test_utils import make_mocked_request
 from homeassistant.components.http import KEY_HASS
-from kaleidescape.library_parser import (
-    LibraryFormatError,
-    artwork_path,
-    catalog,
-    details,
-)
-from kaleidescape.local_browser import BrowserResponse, LocalLibrary
 
 from custom_components.kaleidescape_companion import (
     async_setup_entry,
@@ -41,7 +34,16 @@ from custom_components.kaleidescape_companion.library.config import (
 from custom_components.kaleidescape_companion.library.store import source_id, title_id
 from custom_components.kaleidescape_companion.library.sync import LibrarySync
 from custom_components.kaleidescape_companion.ui.http import LibraryArtworkView
+from custom_components.kaleidescape_companion.vendor.kaleidescape import library_parser
+from custom_components.kaleidescape_companion.vendor.kaleidescape.local_browser import (
+    BrowserResponse,
+    LocalLibrary,
+)
 
+LibraryFormatError = library_parser.LibraryFormatError
+artwork_path = library_parser.artwork_path
+catalog = library_parser.catalog
+details = library_parser.details
 ORIGIN = "http://fictional-cinema.local"
 SOURCE = source_id(ORIGIN)
 ROWS = [

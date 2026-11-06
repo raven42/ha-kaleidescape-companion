@@ -67,15 +67,15 @@ migration plan preserves pyk's workflow and tracks upstream release work.
 Install the complete built `custom_components/kaleidescape_companion/` directory
 under the target HA configuration, restart HA and add **Kaleidescape Companion**
 through **Settings → Devices & services**. Production includes compiled frontend
-assets and needs neither Node nor Vite. The released HA-pinned pyk dependency
-lacks this PoC's new interfaces. A way to load the patched source in HA OS
-2026.11 has not yet been verified; see the deployment guide for the current
-limitation, packaging, optional SSH deployment, and configuration checks.
+assets and needs neither Node nor Vite. Companion bundles the reviewed patched
+pyk source under a private namespace; HA's built-in integration continues to use
+the released dependency. See the deployment guide for packaging, optional SSH
+deployment and configuration checks. HA OS hardware validation is pending.
 
 Development requires Python 3.14.2+ with SQLite 3.35+, Node.js 22.13+ (22.x) or
 24+, and npm. HA 2026.11.0 with pyk 1.2.0 is the current development baseline,
-not a promised supported minimum. Offline tests load the adjacent patched pyk
-checkout. In the prepared developer workspace:
+not a promised supported minimum. Offline tests load the bundled patched pyk
+source. In the prepared developer workspace:
 
 ```sh
 bash dev/dev.sh setup

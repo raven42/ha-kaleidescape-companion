@@ -4,12 +4,10 @@ set -euo pipefail
 umask 077
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
-PYK_SOURCE="${COMPANION_PYK_PATH:-$ROOT/../pykaleidescape}"
 VENV_PATH="${COMPANION_VENV:-$ROOT/.venv}"
 
 use_pyk() {
-  "$VENV_PATH"/bin/python dev/check_pyk.py "$PYK_SOURCE"
-  export PYTHONPATH="$PYK_SOURCE${PYTHONPATH:+:$PYTHONPATH}"
+  "$VENV_PATH"/bin/python dev/check_pyk.py "$ROOT/custom_components/kaleidescape_companion/vendor"
 }
 
 case "${1:-help}" in
@@ -22,7 +20,7 @@ case "${1:-help}" in
     ;;
   check)
     use_pyk
-    PYTHONPATH="$ROOT/custom_components/kaleidescape_companion:$PYTHONPATH" "$VENV_PATH"/bin/python -m unittest discover -s tests/scrapers
+    PYTHONPATH="$ROOT/custom_components/kaleidescape_companion${PYTHONPATH:+:$PYTHONPATH}" "$VENV_PATH"/bin/python -m unittest discover -s tests/scrapers
     "$VENV_PATH"/bin/python -m unittest discover -s tests
     "$VENV_PATH"/bin/python dev/check_project.py
     "$VENV_PATH"/bin/ruff check .

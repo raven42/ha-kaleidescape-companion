@@ -1,12 +1,12 @@
 # Migration to pykaleidescape
 
-Status: **temporary proof of concept**, 2026-11-03. Companion now uses the
-patched pykaleidescape checkout for device discovery, playback controls, title
-launch, and local server browser reads/writes. Its bundled device API has been
-removed. This has offline test coverage, but no hardware or HA OS validation in
-the original migration. Subsequent HA OS logs exposed an identity-read bug now
-included in phase 03a; a successful hardware retest is pending. This is not a
-supported release migration.
+Status: **temporary proof of concept**, 2026-11-03. Companion uses a privately
+namespaced copy of patched pykaleidescape for device discovery, playback
+controls, title launch, and local server browser reads/writes. This has offline
+test coverage, but no hardware or HA OS validation of the bundled source.
+Earlier HA OS logs exposed an identity-read bug now included in phase 03a; a
+successful hardware retest is pending. This is not a supported release
+migration.
 
 ## Scope and ownership
 
@@ -39,15 +39,13 @@ provider. No Store hooks should be added to pyk for this migration.
   artwork, and add-only form handling. Companion retains its bounded HA HTTP
   session and SQLite reconciliation. Collection additions keep durable receipts
   and an explicit readback; an uncertain outcome is never automatically resent.
-- The old bundled device API and its vendor/build tools are gone. Store scrapers
-  remain in Companion and are included in the runtime package.
+- Companion bundles the reviewed patched pyk source under its own namespace.
+  Store scrapers remain in Companion and are included in the runtime package.
 - The manifest pins `pykaleidescape==1.2.0` to match HA 2026.11.0. That released
   package does **not** contain the capabilities used by this PoC. Tests load the
-  adjacent patched pyk checkout. A verified way to load that patched source in
-  HA OS 2026.11 is still needed: HA no longer adds `/config/deps` to its import
-  path. A normal HA dependency install alone will not supply the patched code.
-  Do not treat the development checkout as an upstream release or a reproducible
-  production dependency.
+  bundled patched pyk source. HA no longer adds `/config/deps` to its import
+  path, so the former overlay cannot provide that code. The bundled package is
+  not an upstream release; HA OS validation remains pending.
 
 HA OS discovery and status logs exposed a patched-pyk identity-read bug: the
 protocol discovery list uses 12-digit serials, while `GET_DEVICE_INFO` returns
@@ -56,8 +54,8 @@ the same serial zero-padded to 16 digits. The new
 identity, with an offline emulator regression test. The final
 `08a-cmp-dev-version` branch labels the complete development build
 `1.2.0.dev1+cmp` in both Python package metadata and pyk's runtime version. HA
-OS validation still requires a verified deployment method for that final branch
-and a restart. Changing this source checkout does not update HA OS.
+OS validation still requires deployment of the updated Companion package and a
+restart. Changing this source checkout does not update HA OS.
 
 ## Compatibility and upstream path
 
@@ -67,15 +65,16 @@ examples. Pyk's existing `Device` constructor, async methods, dispatcher, state
 objects, reconnect behavior, Request subclass extension points, and ordinary
 return values remain the hard compatibility contract. New public interfaces are
 additive. The patched checkout reports version `1.2.0.dev1+cmp`, but the HA
-shared dependency pin is 1.2.0. Replacing the overlay with a released package
-requires upstream acceptance and verification with the built-in HA integration.
+shared dependency pin is 1.2.0. Replacing the bundled copy with a released
+package requires upstream acceptance and verification with the built-in HA
+integration.
 
 Before release: obtain upstream review and merge/release the needed patches;
 verify built-in HA `kaleidescape` against that exact release; update the
-Companion/HA dependency strategy together; remove the manual overlay; then
-retest a clean install, reload, restart, backup and rollback. Upstream logging
-privacy enhancements remain optional and require the pyk owner's approval.
-Preserve Companion's native HA logging safeguards regardless.
+Companion/HA dependency strategy together; remove the bundled copy; then retest
+a clean install, reload, restart, backup and rollback. Upstream logging privacy
+enhancements remain optional and require the pyk owner's approval. Preserve
+Companion's native HA logging safeguards regardless.
 
 The
 [historical 206-request inventory](../../audit/2026-11-03/PYK_COMMAND_INVENTORY_2026-11-03.md)
@@ -87,16 +86,16 @@ future possibilities, with no current hardware qualification path.
 ## Test strategy and concrete hardware runs
 
 Normal checks use fictional fixtures and do not contact devices or the public
-Store. Run `bash dev/dev.sh check` with the patched pyk checkout alongside this
-repository. The optional tests in pyk's `tests/hardware_tests/` can be run by an
-operator at the relevant patch phase with a player **or** a server; neither is
-required for default CI. Record model/firmware, topology, patch commit, and
-sanitized results. Start with read-only discovery/library queries, then selected
-player controls and launch. Stop on identity or capability mismatch. Test
-reconnect, interrupted replies, outcome uncertainty, and coexistence with HA's
-built-in integration before claiming hardware support. Available owner hardware:
-Strato K, Terra Compact 30 TB, and Terra Prime 120 TB; firmware is unrecorded.
-No successful hardware run is claimed here.
+Store. Run `bash dev/dev.sh check` with the bundled pyk source. The optional
+tests in pyk's `tests/hardware_tests/` can be run by an operator at the relevant
+patch phase with a player **or** a server; neither is required for default CI.
+Record model/firmware, topology, patch commit, and sanitized results. Start with
+read-only discovery/library queries, then selected player controls and launch.
+Stop on identity or capability mismatch. Test reconnect, interrupted replies,
+outcome uncertainty, and coexistence with HA's built-in integration before
+claiming hardware support. Available owner hardware: Strato K, Terra Compact 30
+TB, and Terra Prime 120 TB; firmware is unrecorded. No successful hardware run
+is claimed here.
 
 For the Companion PoC, verify on an explicitly selected HA instance: setup,
 Library catalog/details/artwork/collections, public Store metadata/search and

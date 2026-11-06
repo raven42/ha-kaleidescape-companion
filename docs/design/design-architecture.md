@@ -119,8 +119,9 @@ The PoC owns lazy, persistent pyk `Device` objects and uses public methods and
 requests while preserving application preflight and durable outcomes. Pyk's
 `LocalLibrary` parses local browser pages through Companion's HA HTTP transport.
 Public Store scraping belongs entirely to Companion. The installed 1.2.0 package
-lacks these new interfaces, so this PoC requires the patched overlay described
-in the [deployment guide](../guides/guide-deployment.md). The
+lacks these new interfaces, so this PoC bundles the reviewed patched source in
+Companion's private namespace as described in the
+[deployment guide](../guides/guide-deployment.md). The
 [migration plan](../plans/plan-pykaliedescape-migration.md) owns release gates.
 
 Before release, establish supported HA versions, upstream pyk compatibility,

@@ -12,33 +12,24 @@ delivered/remaining product work; the
 Requires Python 3.14.2+ with SQLite 3.35+, Node.js 22.13+ (22.x) or 24+, and
 npm. Python dependencies are declared in `pyproject.toml`; frontend tooling uses
 `frontend/package-lock.json`. The current development baseline is HA 2026.11.0
-with pyk 1.2.0 in HA's manifest. This PoC tests against the adjacent patched pyk
-checkout, whose new interfaces are not present in the released 1.2.0 package.
-This is not yet a supported minimum HA version.
+with pyk 1.2.0 in HA's manifest. This PoC tests its bundled patched pyk source,
+whose new interfaces are not present in the released 1.2.0 package. This is not
+yet a supported minimum HA version.
 
 ```sh
 bash dev/dev.sh setup
 bash dev/dev.sh check
 ```
 
-The Python tests and local HA launcher require the reviewed pyk source. By
-default they use `../pykaleidescape`; set `COMPANION_PYK_PATH` to choose another
-checkout. They verify its package files against the recorded hashes before use.
-To prepare the source in a clean checkout, run:
-
-```sh
-git clone https://github.com/SteveEasley/pykaleidescape.git .pyk-source
-git -C .pyk-source checkout --detach 50df2869349667d1e68d429b9b619e32ede9879b
-git -C .pyk-source apply ../dev/pyk-overlay/companion.patch
-export COMPANION_PYK_PATH="$PWD/.pyk-source"
-```
-
-The patch is the runtime portion of reviewed local commit
+The Python tests and local HA launcher use the reviewed source at
+`custom_components/kaleidescape_companion/vendor/kaleidescape`. They verify its
+package files against `dev/pyk-overlay/hashes.json` before use. The bundled
+patch records the runtime portion of reviewed local commit
 `bfbe789ffaf297f4aad7d1ac64328796456b4ed2` against the stated upstream base; its
-MIT license is included beside it. `setup` installs HA's released pinned
-dependency separately. The source overlay is for this PoC and is not a supported
-release or a replacement for compatibility testing with the built-in
-integration.
+base is `50df2869349667d1e68d429b9b619e32ede9879b`, and its MIT license ships
+with the private package. `setup` installs HA's released pinned dependency
+separately. The bundled source is for this PoC and is not a replacement for
+compatibility testing with the built-in integration.
 
 Set `COMPANION_VENV` to an absolute virtual-environment path to run setup or
 checks in an isolated environment; it defaults to `.venv` in this checkout.
@@ -54,7 +45,7 @@ Focused checks, using the prepared virtual environment:
 
 ```sh
 bash dev/dev.sh python-test
-PYTHONPATH=../pykaleidescape:custom_components/kaleidescape_companion .venv/bin/python -m unittest discover -s tests/scrapers
+PYTHONPATH=custom_components/kaleidescape_companion .venv/bin/python -m unittest discover -s tests/scrapers
 .venv/bin/python dev/check_project.py
 .venv/bin/ruff check .
 .venv/bin/ruff format --check .
@@ -67,11 +58,11 @@ npm --prefix frontend run format:docs:check
 Use `npm --prefix frontend run format:docs` to format Markdown. The source of
 truth for task composition is `dev/dev.sh` and `.vscode/tasks.json`; focused
 checks do not replace a required full check for an implementation change. The VS
-Code **Test Python** task uses the same checked source, and CI reconstructs it
-from the pinned base and bundled patch. Expected warnings from failure-injection
-cases do not mean compilation failed; inspect the process exit and test summary.
-Unexpected frontend console output is tested separately. Logging behavior is
-specified in [logging and diagnostics](../design/design-logging.md).
+Code **Test Python** task and CI verify the bundled source. Expected warnings
+from failure-injection cases do not mean compilation failed; inspect the process
+exit and test summary. Unexpected frontend console output is tested separately.
+Logging behavior is specified in
+[logging and diagnostics](../design/design-logging.md).
 
 The frontend lockfile temporarily overrides transitive minimatch 10 with 11.0.4
 for the glob amplification advisory. ESLint and TypeScript tooling still declare
@@ -107,9 +98,8 @@ overwrite an unexpected component target. Complete HA onboarding, add
 `/kaleidescape-companion`. Keep the built-in Kaleidescape integration for actual
 observation. A manual journal alone needs no player connection.
 
-The local HA launcher uses the same verified source overlay as the tests. It
-does not install the patched source in HA OS. No HA OS 2026.11 deployment method
-for the patched source has yet been verified.
+The local HA launcher uses the same verified bundled source as the tests. HA OS
+deployment and hardware validation of the bundled package remain pending.
 
 The HA panel uses the signed-in session. Standalone Vite uses a memory-only
 token from the development HA instance and a restricted local proxy; no wildcard

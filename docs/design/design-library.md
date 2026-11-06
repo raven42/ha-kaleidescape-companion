@@ -9,7 +9,7 @@ cached library and artwork. Settings and **Sync now** remain administrator-only.
 The temporary PoC uses pyk's `LocalLibrary` to parse local browser pages and the
 add-only form. Companion supplies its guarded HA HTTP transport and retains
 caching, scheduling, identity, authorization and durable collection outcomes.
-This requires the patched pyk overlay described in the
+This requires the privately bundled patched pyk source described in the
 [migration plan](../plans/plan-pykaliedescape-migration.md).
 
 ## Connection and sync settings

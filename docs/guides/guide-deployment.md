@@ -11,20 +11,20 @@ runtime requirement. See the [security policy](../policies/policy-security.md).
 The current manifest targets HA 2026.11.0 and pins `pykaleidescape==1.2.0` to
 match its built-in integration. Do not deploy this manifest to an older HA
 release with a conflicting pyk pin. The released pyk package lacks the new
-`Device` and `LocalLibrary` interfaces used by this **temporary PoC**. A
-verified deployment method for the patched pyk source on HA OS 2026.11 is still
-needed. The previously documented `/config/deps` overlay does not work: HA
-2026.11 removed that directory from its dependency import path. A normal
-dependency installation supplies the released package, not the patched source.
-Do not deploy this PoC to HA OS until a replacement method is verified. See the
-[migration plan](../plans/plan-pykaliedescape-migration.md). Controls remain
-disabled until configured. This guide's component upload does not install pyk.
+`Device` and `LocalLibrary` interfaces used by this **temporary PoC**. Companion
+includes the reviewed patched source in its own private namespace; the built-in
+integration continues to use the HA-installed package. The runtime archive
+includes that source and its MIT license. The previously documented
+`/config/deps` overlay does not work on HA 2026.11, which removed that directory
+from its dependency import path. No global pyk overlay or `PYTHONPATH` change is
+required. HA OS and hardware validation of this packaging change remain pending.
+See the [migration plan](../plans/plan-pykaliedescape-migration.md). Controls
+remain disabled until configured.
 
 The current patched source branch is `08a-cmp-dev-version`. Its runtime and
-wheel metadata both report `1.2.0.dev1+cmp`, so the version shown in Companion
-Settings can distinguish this development build from the released package. HA's
-shared requirement remains pinned to 1.2.0; the development wheel itself does
-not satisfy that exact requirement.
+wheel metadata both report `1.2.0.dev1+cmp`, which is the bundled version shown
+in Companion Settings. HA's shared requirement remains pinned to 1.2.0; the
+development wheel itself does not satisfy that exact requirement.
 
 ## Configure the target
 
