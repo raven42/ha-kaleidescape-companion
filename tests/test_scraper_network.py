@@ -63,6 +63,10 @@ class ScraperNetworkTest(unittest.IsolatedAsyncioTestCase):
         context.__aenter__ = AsyncMock(return_value=response)
         context.__aexit__ = AsyncMock(return_value=False)
         sync.review_network = False
+        numeric = "https://www.kaleidescape.com/movie-store/movie/details/12345678"
+        self.assertEqual(await sync._get(numeric, {}), body)
+        with self.assertRaises(ProviderError):
+            await sync._get(numeric + "?token=private", {})
         sync.store_search_network = True
         self.assertEqual(await sync._get(html, {}), body)
         response.content_type = "application/json"

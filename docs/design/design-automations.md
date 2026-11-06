@@ -106,11 +106,14 @@ selected fields and unidentified items are reported for review. With fewer
 identity fields, distinct purchases can be harder to distinguish; check
 duplicates before accepting a separate purchase.
 
-When a receipt shows only one price for an item, the importer records it as the
-purchase price if it exactly reconciles with the subtotal and all other known
-item prices. An unlisted retail price stays empty and is reported when selected.
-If the subtotal does not establish the price, the item is saved with the price
-missing and flagged for review.
+The importer reads movie and set rows from the decoded HTML tables, including
+forwarded HTML and included movies in set rows. A crossed-out price is the
+retail price and an unmarked price is the purchase price. A missing retail price
+stays empty and is reported when selected; multiple unmarked prices are reported
+as ambiguous. If HTML is unavailable or incomplete, the importer uses
+identifiable text rows as a fallback and flags text-only items. For a single
+price in plain text, it records the purchase price only when that amount
+reconciles exactly with the subtotal and all other known item prices.
 
 The automation attempts `imap.fetch_part` whenever HA lists an HTML part. If
 that fetch fails, it still passes the text to the importer and reports the
@@ -170,7 +173,8 @@ universal deduplication across arbitrary rewrites of an email.
 
 HA automation traces can contain the full private email, HTML part and invoice
 response. Share only necessary redacted reason values and parsing results.
-Receipt import warnings currently include the full bounded email, parsed results
-and issue details; successful receipt input is logged at debug. Protect HA logs
-accordingly. Source tests use fictional receipts, never copied household traces;
-see the [security policy](../policies/policy-security.md).
+Receipt import warnings start with saved, updated, unchanged and pending counts,
+followed by issue details, the full bounded email and parsed results; successful
+receipt input is logged at debug. Protect HA logs accordingly. Source tests use
+fictional receipts, never copied household traces; see the
+[security policy](../policies/policy-security.md).

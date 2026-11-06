@@ -40,7 +40,64 @@ def page(movie=None):
     )
 
 
+def numeric_page(movie=None, edition="123", package="12345678"):
+    data = {
+        "/movie-store/rest/movie/edition/package/" + package: edition,
+        "/movie-store/rest/movie/edition/id/" + str(edition): movie or MOVIE,
+        "/movie-store/rest/session": {"private": "must never be copied"},
+        "/movie-store/rest/ownership/packages/est": {"private": True},
+    }
+    return "<script>window.preloadedAjaxData=" + json.dumps(data) + ";</script>"
+
+
 class ParsersTest(unittest.TestCase):
+    def test_numeric_receipt_page_resolves_package_to_edition_without_private_data(
+        self,
+    ):
+        path = "/movie-store/movie/details/12345678"
+        for href in (
+            path,
+            "https://www.kaleidescape.com" + path,
+            "https://store.kaleidescape.com" + path,
+        ):
+            with self.subTest(href=href):
+                result = store.parse(numeric_page(), href, TITLE, YEAR)
+                self.assertEqual(result["provider_id"], "123")
+                self.assertEqual(result["url"], "https://www.kaleidescape.com" + path)
+                self.assertEqual(result["actors"], ["Avery Example"])
+                self.assertNotIn("private", json.dumps(result))
+        self.assertEqual(
+            store.parse(numeric_page(), path, TITLE + " (Director’s Cut)", YEAR)[
+                "title"
+            ],
+            TITLE,
+        )
+
+    def test_numeric_receipt_page_rejects_wrong_package_or_edition(self):
+        path = "/movie-store/movie/details/12345678"
+        for bad in (
+            numeric_page(package="87654321"),
+            numeric_page(movie={**MOVIE, "movie_edition_id": "456"}),
+            numeric_page(edition="../../invalid"),
+        ):
+            with (
+                self.subTest(page=bad),
+                self.assertRaisesRegex(ProviderError, "store_format_changed"),
+            ):
+                store.parse(bad, path, TITLE, YEAR)
+        for title, year in (("Different Film", YEAR), (TITLE, YEAR - 1)):
+            with self.assertRaisesRegex(ProviderError, "provider_identity_mismatch"):
+                store.parse(numeric_page(), path, title, year)
+        for bad in (
+            "/movie-store/movie/details/not-a-number",
+            "/movie-store/movie/details/123456789012345678901",
+            path + "?token=secret",
+            "https://evil.invalid" + path,
+            "https://user@store.kaleidescape.com" + path,
+        ):
+            with self.subTest(href=bad), self.assertRaises(ProviderError):
+                store.movie_path(bad)
+
     def test_science_fiction_genres_are_normalized_for_both_providers(self):
         genres = [{"name": "Sci-Fi"}, {"name": "Science Fiction"}]
         tmdb_data = tmdb.parse(
@@ -197,6 +254,32 @@ class ParsersTest(unittest.TestCase):
 
 
 class ProviderClientTest(unittest.IsolatedAsyncioTestCase):
+    async def test_numeric_receipt_link_fetches_directly_without_search(self):
+        path = "/movie-store/movie/details/12345678"
+        calls = []
+
+        async def fetch(url, _headers):
+            calls.append(url)
+            if url.endswith("/robots.txt"):
+                return b"User-agent: *\n"
+            if url == "https://www.kaleidescape.com" + path:
+                return numeric_page().encode()
+            raise AssertionError("Unexpected route")
+
+        client = Providers(fetch, requests_per_second=10)
+        result = await client.metadata(
+            "kaleidescape",
+            MovieQuery(TITLE, YEAR, "https://store.kaleidescape.com" + path),
+        )
+        self.assertEqual(result["provider_id"], "123")
+        self.assertEqual(
+            calls,
+            [
+                "https://www.kaleidescape.com/robots.txt",
+                "https://www.kaleidescape.com" + path,
+            ],
+        )
+
     async def test_gallery_keeps_fixed_paths_and_distinguishes_image_sizes(self):
         async def fetch(url, headers):
             if "/images?" in url:

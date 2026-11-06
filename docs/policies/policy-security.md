@@ -107,16 +107,22 @@ date adjacent to a Kaleidescape Store sender header instead of using the forward
 date. That header is not authentication; forwarded receipts without a usable
 original date are saved with an unknown date and reported for review. The
 blueprint fetches the HTML part of the same IMAP message when available. Import
-uses bounded decoding and only associates uniquely titled movie links on the
-fixed Store host; missing or ambiguous links remain unset. Receipt content may
-appear in HA logs under the diagnostic exception below. A single displayed item
-price is recorded as the purchase price only when it reconciles exactly with the
-receipt subtotal and all other item purchase prices; it does not establish a
-retail price. Unreconciled prices remain unset for review. The metadata refresh
-action accepts known provider names and only contacts enabled providers.
-Calendar Full Sync remains restricted to an explicitly acknowledged dedicated
-calendar, with its existing snapshot, grace and uncertainty checks. Its optional
-automation requests the second check; no in-process schedule performs it.
+uses bounded decoding, reads visible table rows without loading external assets,
+and associates movie links only with their own row and approved Store hosts.
+Crossed-out prices are treated as retail and a single unmarked row price as the
+purchase price; multiple unmarked prices remain ambiguous. Set rows can include
+movie rows sequentially or nested inside the set row. When item and subtotal
+markers exist, rows outside that region are excluded. Unmarked, headerless
+layouts can still contain unrelated movie links, so they require careful review.
+Text-only rows retained alongside structured HTML are flagged. In plain text, a
+single price is treated as the purchase price only when it reconciles with the
+subtotal and other known item prices. A missing retail price is never invented.
+Receipt content may appear in HA logs under the diagnostic exception below. The
+metadata refresh action accepts known provider names and only contacts enabled
+providers. Calendar Full Sync remains restricted to an explicitly acknowledged
+dedicated calendar, with its existing snapshot, grace and uncertainty checks.
+Its optional automation requests the second check; no in-process schedule
+performs it.
 
 ## Storage, imports and rendering
 
@@ -186,13 +192,18 @@ The device's plain TCP interface supplies no Companion authentication or TLS. HA
 access controls do not prevent another LAN host from reaching it. Public
 metadata providers can observe the queried movie and outbound host address; they
 do not receive journal history or private invoice data. Scraping private
-accounts is outside scope. Automatic Store lookup may use the same fixed,
-bounded public search routes as manual review when a usable movie link is
-missing. Only one exact title/year match is eligible for automatic caching;
-ambiguous or truncated results require review. The automatic search scope does
-not enable Store image previews or other review-only routes. Store search reads
-at most fifteen validated movie pages per query; administrator review presents
-at most eight candidates and does not automatically select one.
+accounts is outside scope. Automatic Store lookup accepts fixed public movie
+slug and numeric receipt-detail routes. Numeric pages must map the requested
+package ID to the returned edition and match the scanned title and year. When a
+usable link is missing, automatic lookup may use the same fixed, bounded public
+search routes as manual review. It accepts exactly one result with matching
+cleaned title, year, scanned directors and four scanned actors, even on a full
+search page. Additional results beyond that page may contain another match.
+Missing credits, no match or multiple matches require review; the original
+scanned credit evidence is rechecked before saving. The automatic search scope
+does not enable Store image previews or other review-only routes. Store search
+reads at most fifteen validated movie pages per query; administrator review
+presents at most eight candidates and does not automatically select one.
 
 An administrator's per-title Refresh searches the chosen public provider even
 when a match is cached. Unique or explicitly selected results are downloaded

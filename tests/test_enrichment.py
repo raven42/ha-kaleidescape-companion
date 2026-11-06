@@ -24,6 +24,7 @@ from custom_components.kaleidescape_companion.scrapers.providers import store_se
 
 ORIGIN = "http://fictional.local"
 IMAGE = b"\xff\xd8\xfffictional-backdrop"
+SCAN_ACTORS = ["Original Actor", "Second Actor", "Third Actor", "Fourth Actor"]
 
 
 class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
@@ -483,11 +484,15 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
             await sync._run(True, ("tmdb",), False)
         self.assertEqual(sync.providers.metadata.await_args.args[0], "tmdb")
 
-    async def test_missing_store_searches_numeric_links_and_missing_links(self):
+    async def test_numeric_links_are_loaded_directly_and_missing_links_are_searched(
+        self,
+    ):
         await self.seed()
         candidate = {
             **self.data,
             "provider": "kaleidescape",
+            "actors": [*SCAN_ACTORS, "Other Actor"],
+            "directors": ["Original Director"],
             "url": "https://www.kaleidescape.com/movie-store/movie/fictional-film-2025",
         }
         for href in (
@@ -504,6 +509,11 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
                     "href": href,
                     "enrichment": {},
                     "cached_providers": ["tmdb"],
+                    "credit_evidence": {
+                        "id": "fictional-id",
+                        "actors": SCAN_ACTORS,
+                        "directors": ["Original Director"],
+                    },
                 }
                 sync.repository = SimpleNamespace(
                     async_enrichment=AsyncMock(side_effect=[[row], None, None])
@@ -519,12 +529,20 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
                     return [candidate]
 
                 sync.providers.search = AsyncMock(side_effect=search)
+                sync.providers.metadata = AsyncMock(return_value=candidate)
                 with patch(
                     "custom_components.kaleidescape_companion.enrichment.sync.async_create_clientsession",
                     return_value=SimpleNamespace(detach=Mock()),
                 ):
                     await sync._run(True, ("kaleidescape",), True)
-                sync.providers.search.assert_awaited_once()
+                if href is None:
+                    sync.providers.search.assert_awaited_once()
+                    sync.providers.metadata.assert_not_awaited()
+                else:
+                    sync.providers.search.assert_not_awaited()
+                    self.assertEqual(
+                        sync.providers.metadata.await_args.args[1].href, href
+                    )
                 self.assertFalse(sync.store_search_network)
                 self.assertEqual(sync.updated, 1)
                 save = next(
@@ -535,11 +553,84 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(save.args[3], "kaleidescape")
                 self.assertEqual(save.args[4]["provider_id"], "42")
 
+    async def test_linked_receipt_numeric_id_refreshes_group_without_search(self):
+        await self.seed()
+        await self.repo.async_metadata_sources({"metadata_store_enabled": True})
+        path = "/movie-store/movie/details/12345678"
+
+        def add_linked_receipt():
+            db = self.repo._db()
+            with db:
+                db.execute(
+                    "INSERT INTO purchase_records "
+                    "(id,title,purchased_on,order_id,href,imported_at,library_id) "
+                    "VALUES (?,?,?,?,?,?,?)",
+                    (
+                        "a" * 64,
+                        "Fictional Film",
+                        "2025-01-01",
+                        "FICTIONAL-ORDER",
+                        path,
+                        "2025-01-01T12:00:00+00:00",
+                        self.id,
+                    ),
+                )
+
+        await self.repo._call(add_linked_receipt)
+        rows = await self.repo.async_enrichment("candidates", self.source)
+        movie = next(row for row in rows if row["source_group"] == "movie")
+        self.assertEqual(movie["href"], path)
+        await self.repo.async_enrichment(
+            "conflict",
+            self.source,
+            movie["id"],
+            "kaleidescape",
+            "store_search_truncated",
+            movie,
+        )
+        sync = self.sync(
+            library_host=ORIGIN,
+            metadata_store_enabled=True,
+            metadata_tmdb_enabled=False,
+        )
+        sync.providers.metadata = AsyncMock(
+            return_value={
+                **self.data,
+                "provider": "kaleidescape",
+                "url": "https://www.kaleidescape.com" + path,
+            }
+        )
+        sync.providers.search = AsyncMock(return_value=[])
+        with patch(
+            "custom_components.kaleidescape_companion.enrichment.sync.async_create_clientsession",
+            return_value=SimpleNamespace(detach=Mock()),
+        ):
+            await sync._run(True, ("kaleidescape",), True)
+        self.assertEqual(sync.updated, 1)
+        self.assertEqual(sync.providers.metadata.await_count, 1)
+        self.assertEqual(sync.providers.metadata.await_args.args[1].href, path)
+        self.assertFalse(
+            any(call.args[2] == 2025 for call in sync.providers.search.await_args_list)
+        )
+        rows = await self.repo.async_enrichment("candidates", self.source)
+        movie = next(row for row in rows if row["source_group"] == "movie")
+        self.assertIn("kaleidescape", movie["cached_providers"])
+        raw = (await self.repo.async_inspect("library"))["items"]
+        member = next(row for row in raw if row["id"] == self.id)
+        self.assertNotIn(
+            "kaleidescape", json.loads(member["enrichment"]).get("conflicts", {})
+        )
+
     async def test_store_search_refuses_ambiguous_mismatched_and_truncated_results(
         self,
     ):
         await self.seed()
-        exact = {**self.data, "provider": "kaleidescape"}
+        exact = {
+            **self.data,
+            "provider": "kaleidescape",
+            "actors": SCAN_ACTORS,
+            "directors": ["Original Director"],
+        }
         row = {
             "id": "fictional-id",
             "source_group": "movie",
@@ -547,12 +638,18 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
             "year": 2025,
             "href": None,
             "enrichment": {},
+            "credit_evidence": {
+                "id": "fictional-id",
+                "actors": SCAN_ACTORS,
+                "directors": ["Original Director"],
+            },
         }
         cases = (
             ([exact, {**exact, "provider_id": "43"}], "store_ambiguous"),
             ([{**exact, "year": 2024}], "store_not_found"),
+            ([{**exact, "actors": ["Different Actor"]}], "store_credit_mismatch"),
             (
-                store_search.SearchResults([exact], truncated=True),
+                store_search.SearchResults([], truncated=True),
                 "store_search_truncated",
             ),
             ([{**exact, "provider_id": ""}], "provider_identity_mismatch"),
@@ -590,8 +687,134 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
                 self.assertNotIn("save", operations)
                 self.assertFalse(sync.store_search_network)
 
+    async def test_fallback_search_matches_sanitized_title_and_all_scanned_credits(
+        self,
+    ):
+        sync = self.sync(metadata_store_enabled=True)
+        row = {
+            "title": "Fictional Film (Director’s Cut)",
+            "year": 2025,
+            "credit_evidence": {
+                "id": "fictional-id",
+                "actors": ["Alex Example", "Renée Actor", "C. Player", "Fourth Person"],
+                "directors": ["Example Director"],
+            },
+        }
+        exact = {
+            "provider": "kaleidescape",
+            "provider_id": "42",
+            "url": "https://www.kaleidescape.com/movie-store/movie/fictional-film-2025",
+            "title": "Fictional Film",
+            "year": 2025,
+            "actors": [
+                "Fourth Person",
+                "Renee Actor",
+                "C Player",
+                "Alex Example",
+                "Extra Actor",
+            ],
+            "directors": ["Example Director"],
+        }
+        wrong_cast = {**exact, "provider_id": "43", "actors": exact["actors"][:-2]}
+        wrong_director = {**exact, "provider_id": "44", "directors": ["Other Director"]}
+        sync.providers.search = AsyncMock(
+            return_value=store_search.SearchResults(
+                [wrong_cast, exact, wrong_director, {**exact, "year": 2024}],
+                truncated=True,
+            )
+        )
+        self.assertEqual(await sync.search_store(row), exact)
+        sync.providers.search.assert_awaited_once_with(
+            "kaleidescape", "Fictional Film", 2025
+        )
+        for candidates, expected in (
+            ([wrong_cast], "store_credit_mismatch"),
+            ([wrong_director], "store_credit_mismatch"),
+            ([{**exact, "actors": []}], "store_credit_mismatch"),
+            ([{**exact, "directors": []}], "store_credit_mismatch"),
+            ([exact, {**exact, "provider_id": "45"}], "store_ambiguous"),
+            ([], "store_not_found"),
+            (store_search.SearchResults([], truncated=True), "store_search_truncated"),
+        ):
+            with self.subTest(reason=expected):
+                sync.providers.search = AsyncMock(return_value=candidates)
+                with self.assertRaisesRegex(ProviderError, expected):
+                    await sync.search_store(row)
+        for evidence in (
+            {"actors": [], "directors": ["Example Director"]},
+            {"actors": SCAN_ACTORS[:3], "directors": ["Example Director"]},
+            {"actors": SCAN_ACTORS, "directors": []},
+        ):
+            with self.subTest(evidence=evidence):
+                sync.providers.search = AsyncMock()
+                with self.assertRaisesRegex(
+                    ProviderError, "store_missing_library_credits"
+                ):
+                    await sync.search_store({**row, "credit_evidence": evidence})
+                sync.providers.search.assert_not_awaited()
+
+    async def test_fallback_uses_complete_credits_from_another_scanned_version(self):
+        await self.seed()
+        await self.repo.async_library_details(
+            self.source,
+            self.id,
+            {
+                "actors": SCAN_ACTORS[:2],
+                "directors": ["Original Director"],
+                "synopsis": "Fictional description " * 100,
+            },
+        )
+        second = title_id(self.source, "other")
+        await self.repo.async_library_details(
+            self.source,
+            second,
+            {"actors": SCAN_ACTORS, "directors": ["Original Director"]},
+        )
+        rows = await self.repo.async_enrichment("candidates", self.source)
+        movie = next(row for row in rows if row["source_group"] == "movie")
+        self.assertEqual(movie["id"], self.id)
+        self.assertEqual(movie["credit_evidence"]["id"], second)
+        self.assertEqual(movie["credit_evidence"]["actors"], SCAN_ACTORS)
+
+    async def test_fallback_match_is_not_saved_when_scanned_credits_change(self):
+        await self.seed()
+        await self.repo.async_library_details(
+            self.source,
+            self.id,
+            {"actors": SCAN_ACTORS, "directors": ["Original Director"]},
+        )
+        rows = await self.repo.async_enrichment("candidates", self.source)
+        row = next(item for item in rows if item["source_group"] == "movie")
+        evidence = row["credit_evidence"]
+        self.assertEqual(evidence["id"], self.id)
+        result = {
+            **self.data,
+            "provider": "kaleidescape",
+            "url": "https://www.kaleidescape.com/movie-store/movie/fictional-film-2025",
+            "matched_title": row["title"],
+            "matched_group": row["source_group"],
+            "matched_reference": None,
+            "matched_credits": evidence,
+        }
+        await self.repo.async_library_details(
+            self.source,
+            self.id,
+            {"actors": ["Different Actor"], "directors": ["Original Director"]},
+        )
+        with self.assertRaises(JournalError) as error:
+            await self.repo.async_enrichment(
+                "save", self.source, row["id"], "kaleidescape", result
+            )
+        self.assertEqual(error.exception.code, "refresh_required")
+
     async def test_store_search_saves_missing_provider_data_for_library_groups(self):
         await self.seed()
+        for handle in ("fictional", "remake"):
+            await self.repo.async_library_details(
+                self.source,
+                title_id(self.source, handle),
+                {"actors": SCAN_ACTORS, "directors": ["Original Director"]},
+            )
         await self.repo.async_metadata_sources({"metadata_store_enabled": True})
         before = await self.repo.async_library_summary(self.source)
         self.assertEqual(before["missing_metadata"], 2)
@@ -620,9 +843,11 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
                         "title": title,
                         "year": year,
                         "url": f"https://www.kaleidescape.com/movie-store/movie/fictional-film-{year}",
+                        "actors": [*SCAN_ACTORS, "Additional Actor"],
+                        "directors": ["Original Director"],
                     }
                 ],
-                truncated=False,
+                truncated=True,
             )
 
         sync.providers.search = AsyncMock(side_effect=search)
@@ -652,7 +877,16 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
         sync = self.sync(metadata_store_enabled=True)
         sync.providers.search = AsyncMock(side_effect=asyncio.CancelledError)
         with self.assertRaises(asyncio.CancelledError):
-            await sync.search_store({"title": "Fictional Film", "year": 2025})
+            await sync.search_store(
+                {
+                    "title": "Fictional Film",
+                    "year": 2025,
+                    "credit_evidence": {
+                        "actors": SCAN_ACTORS,
+                        "directors": ["Original Director"],
+                    },
+                }
+            )
         self.assertFalse(sync.store_search_network)
         self.assertFalse(sync.review_network)
 

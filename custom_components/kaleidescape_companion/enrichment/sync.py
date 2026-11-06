@@ -23,7 +23,7 @@ from ..core.security import is_active_admin
 from ..library.config import origin
 from ..library.store import image_type, source_id
 from ..scrapers import MovieQuery, ProviderError, Providers
-from ..scrapers.models import same_movie
+from ..scrapers.models import normalized, same_movie, search_title
 from ..scrapers.providers.store import movie_path
 from .config import DEFAULTS
 from .destinations import store_image, store_request
@@ -305,19 +305,53 @@ class MetadataSync:
                 raise
 
     async def search_store(self, row):
-        """Resolve only one exact title/year from the public Store search."""
+        """Match scanned title, year, directors and cast against Store results."""
+        evidence = row.get("credit_evidence") or {}
+
+        def people(values):
+            if not isinstance(values, list):
+                return set()
+            return {name for value in values if (name := normalized(value))}
+
+        actors = people(evidence.get("actors"))
+        directors = people(evidence.get("directors"))
+        if len(actors) < 4 or not directors:
+            raise ProviderError("store_missing_library_credits")
+        title = search_title(row["title"])
         self.store_search_network = True
         try:
-            candidates = await self.providers.search(
-                "kaleidescape", row["title"][:200], row["year"]
-            )
+            candidates = await self.providers.search("kaleidescape", title, row["year"])
         finally:
             self.store_search_network = False
-        matches = same_movie(row["title"], row["year"], candidates)
-        if getattr(candidates, "truncated", False) or len(matches) != 1:
+        titles = [
+            candidate
+            for candidate in candidates
+            if same_movie(
+                title,
+                row["year"],
+                [
+                    {
+                        "title": search_title(candidate.get("title")),
+                        "original_title": search_title(candidate.get("original_title")),
+                        "year": candidate.get("year"),
+                    }
+                ],
+            )
+        ]
+        matches = [
+            candidate
+            for candidate in titles
+            if actors <= people(candidate.get("actors"))
+            and directors <= people(candidate.get("directors"))
+        ]
+        if len(matches) != 1:
+            if matches:
+                raise ProviderError("store_ambiguous")
+            if titles:
+                raise ProviderError("store_credit_mismatch")
             if getattr(candidates, "truncated", False):
                 raise ProviderError("store_search_truncated")
-            raise ProviderError("store_ambiguous" if matches else "store_not_found")
+            raise ProviderError("store_not_found")
         match = matches[0]
         if (
             match.get("provider") != "kaleidescape"
@@ -469,7 +503,10 @@ class MetadataSync:
                             "matched_group": row["source_group"],
                             "matched_reference": reference,
                             **(
-                                {"discovered_reference": provider_reference(result)}
+                                {
+                                    "discovered_reference": provider_reference(result),
+                                    "matched_credits": row["credit_evidence"],
+                                }
                                 if discovered
                                 else {}
                             ),

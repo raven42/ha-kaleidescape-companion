@@ -118,8 +118,13 @@ def async_register_services(hass: HomeAssistant) -> None:
             )
         if result["status"] == "needs_review":
             _LOGGER.warning(
-                "Purchase receipt needs review: issues=%s; receipt=%s; "
+                "Purchase receipt needs review: imported=%s, updated=%s, "
+                "unchanged=%s, pending=%s; issues=%s; receipt=%s; "
                 "result=%s; decoded_html=%s",
+                result.get("imported_count", 0),
+                result.get("updated_count", 0),
+                result.get("unchanged_count", 0),
+                result.get("pending_count", 0),
                 json.dumps(result.get("issues", []), ensure_ascii=True),
                 _receipt_log_payload(call.data["invoice"]),
                 _receipt_log_payload(result),

@@ -30,9 +30,9 @@ HTML = (
     "<div>Order Date: October 13, 2026</div>"
     "<table><tr><th>Item</th><th>Quality</th><th>Price</th></tr>"
     '<tr><td><a href="https://store.kaleidescape.com/movie-store/movie/details/123">'
-    "Fictional Voyage</a></td><td>HD</td><td>$19.99 $9.99</td></tr>"
+    "Fictional Voyage</a></td><td>HD</td><td><s>$19.99</s> $9.99</td></tr>"
     '<tr><td><a href="/movie-store/movie/details/456">Second Film</a></td>'
-    "<td>4K</td><td>$14.99 $4.99</td></tr>"
+    "<td>4K</td><td><s>$14.99</s> $4.99</td></tr>"
     "<tr><td>Subtotal $14.98</td></tr></table></body></html>"
 )
 SINGLE_PRICE_TEXT = """Order ID ORDER-456
@@ -55,6 +55,32 @@ Fictional Voyage</a></td><td><img alt="HD"></td>
 <tr><td>Subtotal</td><td>$18.00</td></tr>
 <tr><td>Taxes</td><td>$1.50</td></tr><tr><td>Total</td><td>$19.50</td></tr>
 </tbody></table></td></tr></table></body></html>"""
+MIXED_PRICE_TEXT = """Order ID ORDER-789
+Order Date: October 13, 2026
+Item Quality Price
+Fictional Voyage
+$24.00
+$18.00
+Second Film
+$18.00
+Subtotal $36.00
+Taxes $3.00
+Total $39.00
+"""
+MIXED_PRICE_HTML = """<html><body><div>Order ID ORDER-789</div>
+<div>Order Date: October 13, 2026</div><table><tr><td><table>
+<thead><tr><th>Item</th><th></th><th>Quality</th><th></th><th>Price</th></tr></thead>
+<tbody><tr><td><a href="/movie-store/movie/details/123"><img alt="Cover"></a></td>
+<td><a href="/movie-store/movie/details/123">Fictional Voyage</a></td>
+<td><img alt="HD"></td><td style="text-decoration: line-through">$24.00</td>
+<td>$18.00</td></tr>
+<tr><td><a href="/movie-store/movie/details/456"><img alt="Cover"></a></td>
+<td><a href="/movie-store/movie/details/456">Second Film</a></td>
+<td><img alt="HD"></td><td style="text-decoration: line-through"></td>
+<td>$18.00</td></tr>
+<tr><td>Subtotal</td><td>$36.00</td></tr>
+<tr><td>Taxes</td><td>$3.00</td></tr><tr><td>Total</td><td>$39.00</td></tr>
+</tbody></table></td></tr></table></body></html>"""
 
 
 def envelope(text=TEXT, fields=None, **kwargs):
@@ -71,6 +97,275 @@ def envelope(text=TEXT, fields=None, **kwargs):
 
 
 class ReceiptParserTest(unittest.TestCase):
+    def test_html_rows_identify_struck_retail_and_paid_price_independent_of_order(self):
+        html = """<html><body><div>Order ID ORDER-321</div>
+        <div>Order Date: October 13, 2026</div>
+        <table><tr><th>Item</th><th>Price</th></tr>
+          <tr><td><a href="/movie-store/movie/details/101">Fictional One</a></td>
+              <td>$7.00</td><td><span class="line-through">$20.00</span></td></tr>
+          <tr><td><a href="/movie-store/movie/details/102">Fictional Two</a></td>
+              <td><s>$25.00</s></td><td>$8.00</td></tr>
+          <tr><td><a href="/movie-store/movie/details/103">Fictional Three</a></td>
+              <td>$9.00</td><td style="text-decoration: line-through"></td></tr>
+        </table></body></html>"""
+        # Deliberately conflicting text has the same item count; HTML is authoritative.
+        text = """Order ID ORDER-321
+Order Date: October 13, 2026
+Item Quality Price
+Fictional One $7.00 $20.00
+Fictional Two $25.00 $8.00
+Fictional Three $9.00
+"""
+        part = {"content_type": "text/html", "part_data": html}
+        for body in (text, ""):
+            with self.subTest(text_present=bool(body)):
+                records, issues = parse_receipt(envelope(body, html_part=part))
+                self.assertEqual(
+                    [record["title"] for record in records],
+                    ["Fictional One", "Fictional Two", "Fictional Three"],
+                )
+                self.assertEqual(
+                    [record["purchase_price"] for record in records],
+                    ["$7.00", "$8.00", "$9.00"],
+                )
+                self.assertEqual(
+                    [record["retail_price"] for record in records],
+                    ["$20.00", "$25.00", None],
+                )
+                self.assertEqual(
+                    issues,
+                    [{"title": "Fictional Three", "reason": "retail_price_missing"}],
+                )
+
+    def test_html_table_uses_purchase_rows_not_unrelated_movie_recommendations(self):
+        html = """<html><body><div>Order ID ORDER-1</div>
+        <table><tr><td><a href="/movie-store/movie/details/999">Suggested Film</a></td>
+        <td>$9.00</td></tr></table>
+        <table><tr><th>Item</th><th>Price</th></tr>
+        <tr><td><a href="/movie-store/movie/details/101">Purchased Film</a></td>
+        <td><span style="display:none">$999.00</span>$7.00</td></tr></table>
+        </body></html>"""
+        records, issues = parse_receipt(envelope(html))
+        self.assertEqual([row["title"] for row in records], ["Purchased Film"])
+        self.assertEqual(records[0]["purchase_price"], "$7.00")
+        self.assertEqual(
+            issues, [{"title": "Purchased Film", "reason": "retail_price_missing"}]
+        )
+
+    def test_html_finds_movie_rows_across_multiple_tables_before_subtotal(self):
+        html = """<html><body><div>Order ID ORDER-1</div>
+        <table><tr><td><a href="/movie-store/movie/details/999">Suggested</a></td>
+        <td>$9.00</td></tr></table>
+        <table><tr><th>Item</th><th>Price</th></tr>
+        <tr><td><a href="/movie-store/movie/details/101">First Film</a></td>
+        <td>$7.00</td></tr></table>
+        <table><tr><td><a href="/movie-store/movie/details/102">Second Film</a></td>
+        <td>$8.00</td></tr></table>
+        <table><tr><td>Subtotal</td><td>$15.00</td></tr></table>
+        <table><tr><td><a href="/movie-store/movie/details/998">Also Suggested</a></td>
+        <td>$8.00</td></tr></table></body></html>"""
+        for header in ("th", "td"):
+            with self.subTest(header=header):
+                body = html.replace("<th>", f"<{header}>").replace(
+                    "</th>", f"</{header}>"
+                )
+                records, issues = parse_receipt(envelope(body))
+                self.assertEqual(
+                    [row["title"] for row in records], ["First Film", "Second Film"]
+                )
+                self.assertEqual(
+                    [row["purchase_price"] for row in records], ["$7.00", "$8.00"]
+                )
+                self.assertEqual(
+                    [item["reason"] for item in issues], ["retail_price_missing"] * 2
+                )
+
+    def test_html_cover_link_and_unlinked_title_are_combined_within_row(self):
+        html = """<html><body><div>Order ID ORDER-1</div>
+        <table><tr><th>Item</th><th>Price</th></tr>
+        <tr><td><a href="/movie-store/movie/details/101"><img alt="Cover"></a></td>
+        <td>Fictional Film</td><td>$7.00</td></tr></table></body></html>"""
+        records, issues = parse_receipt(envelope(html))
+        self.assertEqual(records[0]["title"], "Fictional Film")
+        self.assertEqual(records[0]["href"], "/movie-store/movie/details/101")
+        self.assertEqual(records[0]["purchase_price"], "$7.00")
+        self.assertEqual(
+            issues, [{"title": "Fictional Film", "reason": "retail_price_missing"}]
+        )
+
+    def test_nested_inline_markup_preserves_strikethrough_for_the_whole_price(self):
+        html = """<html><body><div>Order ID ORDER-1</div>
+        <table><tr><th>Item</th><th>Price</th></tr>
+        <tr><td><a href="/movie-store/movie/details/101">Fictional Film</a></td>
+        <td><span style="text-decoration: line-through"><span>$20</span>.00</span></td>
+        <td><span>$</span><span>7.00</span></td></tr></table></body></html>"""
+        records, issues = parse_receipt(envelope(html))
+        self.assertEqual(records[0]["retail_price"], "$20.00")
+        self.assertEqual(records[0]["purchase_price"], "$7.00")
+        self.assertEqual(issues, [])
+
+    def test_html_row_with_multiple_unmarked_prices_remains_ambiguous(self):
+        html = """<html><body><div>Order ID ORDER-1</div>
+        <table><tr><th>Item</th><th>Price</th></tr>
+        <tr><td><a href="/movie-store/movie/details/101">Fictional Film</a></td>
+        <td>$20.00 $7.00</td></tr></table></body></html>"""
+        records, issues = parse_receipt(envelope(html))
+        self.assertEqual(len(records), 1)
+        self.assertIsNone(records[0]["purchase_price"])
+        self.assertIsNone(records[0]["retail_price"])
+        self.assertEqual(
+            {issue["reason"] for issue in issues},
+            {"ambiguous_price", "purchase_price_missing", "retail_price_missing"},
+        )
+
+    def test_partial_html_retains_text_only_rows_with_review_reason(self):
+        html = """<html><body><div>Order ID ORDER-1</div>
+        <table><tr><th>Item</th><th>Price</th></tr>
+        <tr><td><a href="/movie-store/movie/details/101">Fictional One</a></td>
+        <td><s>$20.00</s></td><td>$7.00</td></tr></table></body></html>"""
+        text = """Order ID ORDER-1
+Item Quality Price
+Fictional One $7.00 $20.00
+Fictional Two <https://store.kaleidescape.com/movie-store/movie/details/102>
+$25.00 $8.00
+"""
+        records, issues = parse_receipt(
+            envelope(text, html_part={"content_type": "text/html", "part_data": html})
+        )
+        self.assertEqual(
+            [row["title"] for row in records], ["Fictional One", "Fictional Two"]
+        )
+        self.assertEqual([row["purchase_price"] for row in records], ["$7.00", "$8.00"])
+        self.assertIn({"title": "Fictional Two", "reason": "text_only_item"}, issues)
+
+    def test_html_bundle_rows_are_allocated_to_included_movies(self):
+        html = """<html><body><div>Order ID ORDER-1</div>
+        <table><tr><th>Item</th><th>Price</th></tr>
+        <tr><td><a href="/movie-store/set/fictional-set">Fictional Set</a></td>
+            <td><s>$20.00</s></td><td>$10.00</td></tr>
+        <tr><td><a href="/movie-store/movie/details/101">First Film</a></td>
+            <td>Included</td></tr>
+        <tr><td><a href="/movie-store/movie/details/102">Second Film</a></td>
+            <td>Included</td></tr>
+        </table></body></html>"""
+        records, issues = parse_receipt(envelope(html))
+        self.assertEqual(
+            {row["title"] for row in records}, {"First Film", "Second Film"}
+        )
+        self.assertEqual({row["purchase_price"] for row in records}, {"$5.00"})
+        self.assertEqual({row["retail_price"] for row in records}, {"$10.00"})
+        self.assertEqual(issues, [])
+
+    def test_html_bundle_with_nested_movie_rows_is_not_double_imported(self):
+        html = """<html><body><div>Order ID ORDER-1</div>
+        <table><tr><th>Item</th><th>Price</th></tr>
+        <tr><td><a href="/movie-store/set/fictional-set">Fictional Set</a>
+          <table><tr><td><a href="/movie-store/movie/details/101">First Film</a></td>
+          </tr><tr><td><a href="/movie-store/movie/details/102">Second Film</a></td>
+          </tr></table>
+        </td><td><del>$20.00</del></td><td>$10.00</td></tr>
+        </table></body></html>"""
+        records, issues = parse_receipt(envelope(html))
+        self.assertEqual(
+            {row["title"] for row in records}, {"First Film", "Second Film"}
+        )
+        self.assertEqual(len(records), 2)
+        self.assertEqual({row["purchase_price"] for row in records}, {"$5.00"})
+        self.assertEqual(issues, [])
+
+    def test_html_bundle_members_in_following_table_remain_in_the_set(self):
+        html = """<html><body><div>Order ID ORDER-1</div>
+        <table><tr><th>Item</th><th>Price</th></tr>
+        <tr><td><a href="/movie-store/set/fictional-set">Fictional Set</a></td>
+        <td><s>$20.00</s></td><td>$10.00</td></tr></table>
+        <table><tr><td><a href="/movie-store/movie/details/101">First Film</a></td>
+        <td>Included</td></tr>
+        <tr><td><a href="/movie-store/movie/details/102">Second Film</a></td>
+        <td>Included</td></tr></table>
+        <table><tr><td>Subtotal</td><td>$10.00</td></tr></table>
+        </body></html>"""
+        records, issues = parse_receipt(envelope(html))
+        self.assertEqual(
+            {row["title"] for row in records}, {"First Film", "Second Film"}
+        )
+        self.assertEqual({row["purchase_price"] for row in records}, {"$5.00"})
+        self.assertEqual(issues, [])
+
+    def test_partial_html_bundle_recovers_missing_member_from_text(self):
+        html = """<html><body><div>Order ID ORDER-1</div>
+        <table><tr><th>Item</th><th>Price</th></tr>
+        <tr><td><a href="/movie-store/set/fictional-set">Fictional Set</a></td>
+        <td><s>$20.00</s></td><td>$10.00</td></tr>
+        <tr><td><a href="/movie-store/movie/details/101">First Film</a></td>
+        <td>Included</td></tr></table></body></html>"""
+        text = """Order ID ORDER-1
+Item Quality Price
+Fictional Set <https://www.kaleidescape.com/movie-store/set/fictional-set> $20.00 $10.00
+First Film <https://store.kaleidescape.com/movie-store/movie/details/101> Included
+Second Film <https://store.kaleidescape.com/movie-store/movie/details/102> Included
+Subtotal $10.00
+"""
+        records, issues = parse_receipt(
+            envelope(text, html_part={"content_type": "text/html", "part_data": html})
+        )
+        self.assertEqual(
+            {row["title"] for row in records}, {"First Film", "Second Film"}
+        )
+        self.assertEqual({row["purchase_price"] for row in records}, {"$5.00"})
+        self.assertEqual(issues, [{"title": "Second Film", "reason": "text_only_item"}])
+
+    def test_forwarded_html_table_uses_original_receipt_date(self):
+        html = """<html><body><blockquote>
+        <div>From: Kaleidescape Movie Store &lt;store@kaleidescape.com&gt;</div>
+        <div>Date: Tue, Oct 13, 2026 at 9:01 AM</div>
+        <div>Order ID ORDER-1</div><table><tr><th>Item</th><th>Price</th></tr>
+        <tr><td><a href="/movie-store/movie/details/101">Fictional Film</a></td>
+        <td>$7.00</td></tr></table></blockquote></body></html>"""
+        payload = envelope(
+            "", html_part={"content_type": "text/html", "part_data": html}
+        )
+        payload["email"]["subject"] = "Fwd: Kaleidescape Store Receipt"
+        payload["email"]["date"] = "2026-10-20T12:00:00+00:00"
+        records, issues = parse_receipt(payload)
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0]["purchased_on"], "2026-10-13")
+        self.assertEqual(records[0]["purchase_price"], "$7.00")
+        self.assertEqual(
+            issues, [{"title": "Fictional Film", "reason": "retail_price_missing"}]
+        )
+
+    def test_mixed_discounted_and_single_price_items_import_without_inventing_retail(
+        self,
+    ):
+        part = {
+            "content_type": "text/html",
+            "content_transfer_encoding": "quoted-printable",
+            "part_data": quopri.encodestring(MIXED_PRICE_HTML.encode()).decode(),
+        }
+        for text in (MIXED_PRICE_TEXT, ""):
+            with self.subTest(text_present=bool(text)):
+                records, issues = parse_receipt(envelope(text=text, html_part=part))
+                self.assertEqual(
+                    [item["title"] for item in records],
+                    ["Fictional Voyage", "Second Film"],
+                )
+                self.assertEqual(
+                    [item["purchase_price"] for item in records], ["$18.00", "$18.00"]
+                )
+                self.assertEqual(
+                    [item["retail_price"] for item in records], ["$24.00", None]
+                )
+                self.assertEqual(
+                    [item["href"] for item in records],
+                    [
+                        "/movie-store/movie/details/123",
+                        "/movie-store/movie/details/456",
+                    ],
+                )
+                self.assertEqual(
+                    issues, [{"title": "Second Film", "reason": "retail_price_missing"}]
+                )
+
     def test_single_item_price_is_confirmed_by_subtotal_for_text_and_html(self):
         part = {
             "content_type": "text/html",
@@ -209,7 +504,7 @@ class ReceiptParserTest(unittest.TestCase):
             '<tr><td><a href="/movie-store/movie/details/123">'
             '<img alt="Cover"></a></td>'
             '<td><a href="/movie-store/movie/details/123">Fictional Voyage</a></td>'
-            "<td>HD</td><td>$19.99 $9.99</td></tr>"
+            "<td>HD</td><td><s>$19.99</s> $9.99</td></tr>"
             "<tr><td>Subtotal $9.99</td></tr></table>"
         )
         records, issues = parse_receipt(envelope(text=html))
@@ -241,7 +536,8 @@ class ReceiptParserTest(unittest.TestCase):
 
     def test_hidden_html_content_does_not_change_visible_prices(self):
         html = HTML.replace(
-            "$19.99 $9.99", '<span style="display:none">$999.99</span>$19.99 $9.99'
+            "<s>$19.99</s> $9.99",
+            '<span style="display:none">$999.99</span><s>$19.99</s> $9.99',
         )
         records, issues = parse_receipt(envelope(text=html))
         self.assertEqual(records[0]["purchase_price"], "$9.99")

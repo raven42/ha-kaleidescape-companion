@@ -23,6 +23,7 @@ from .purchase_email import (
     selected_fields,
 )
 from .purchases import price_cents
+from .receipt_html import parse_rows
 
 _PRICE = re.compile(r"(?<![\w.+-])[$£€]\s*[\d,]+\.\d{2}(?!\d)")
 _PRICE_TOKEN = re.compile(r"(?<![\w.])[-+]?[$£€]\s*[\d,]+(?:\.\d+)?")
@@ -446,23 +447,72 @@ def parse_receipt(payload, timezone="UTC"):
     for content in (text, html):
         if not content:
             continue
+        rows = None
         if re.search(r"(?i)<(?:html|body|table|tr|div)\b", content):
+            rows = parse_rows(content)
             content = _render_html(content)
         body = _clean(content)
         items, issues, totals = _parse_items(body)
-        versions.append((items, issues, totals, body))
+        if rows is not None:
+            items, issues = rows
+        versions.append((items, issues, totals, body, rows is not None))
     if not versions:
         issues = [{"reason": "email_body_missing"}]
         if html_issue:
             issues.append({"reason": "html_part_unavailable"})
         return [], issues
-    items, issues, totals, body = max(
+    items, issues, totals, body, structured = max(
         versions,
         key=lambda result: (
+            result[4],
             len(result[0]),
             sum(bool(i.get("purchase_price")) for i in result[0]),
         ),
     )
+    if structured:
+        # Keep identifiable text-only rows when a partially structured HTML
+        # part lacks them, but flag their less certain price/link evidence.
+        known = {
+            _title_key(movie.get("title", ""))
+            for item in items
+            for movie in item.get("included_titles", [item])
+            if movie.get("title")
+        }
+        for fallback_items, _, _, _, fallback_structured in versions:
+            if fallback_structured:
+                continue
+            for item in fallback_items:
+                if "included_titles" in item:
+                    bundles = [
+                        candidate
+                        for candidate in items
+                        if "included_titles" in candidate
+                        and _title_key(candidate.get("title", ""))
+                        == _title_key(item.get("title", ""))
+                    ]
+                    if len(bundles) == 1:
+                        for member in item["included_titles"]:
+                            key = _title_key(member.get("title", ""))
+                            if not key or key in known:
+                                continue
+                            bundles[0]["included_titles"].append(member)
+                            known.add(key)
+                            issues.append(
+                                {"title": member["title"], "reason": "text_only_item"}
+                            )
+                        continue
+                titles = [
+                    movie.get("title", "")
+                    for movie in item.get("included_titles", [item])
+                ]
+                keys = {_title_key(title) for title in titles if title}
+                if not keys or keys & known:
+                    continue
+                items.append(item)
+                known.update(keys)
+                issues.append(
+                    {"title": item.get("title", ""), "reason": "text_only_item"}
+                )
     if html_issue:
         issues.append({"reason": "html_part_unavailable"})
     if not items:

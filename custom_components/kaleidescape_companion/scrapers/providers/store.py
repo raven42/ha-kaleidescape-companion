@@ -16,6 +16,7 @@ from ..models import (
     names,
     same_movie,
     score,
+    search_title,
 )
 from ..transport import Transport
 
@@ -27,14 +28,20 @@ def movie_path(href):
     """Accept only a fixed public movie route without credentials or query."""
     if not isinstance(href, str) or len(href) > 1024:
         raise ProviderError("invalid_store_link")
-    parsed = urlsplit(href)
+    try:
+        parsed = urlsplit(href)
+    except ValueError as error:
+        raise ProviderError("invalid_store_link") from error
     if (
         (parsed.netloc and not parsed.scheme)
         or parsed.scheme not in ("", "https")
-        or parsed.netloc not in ("", "www.kaleidescape.com")
+        or parsed.netloc not in ("", "www.kaleidescape.com", "store.kaleidescape.com")
         or parsed.query
         or parsed.fragment
-        or not re.fullmatch(r"/movie-store/movie/[a-z0-9]+(?:-[a-z0-9]+)*", parsed.path)
+        or not (
+            re.fullmatch(r"/movie-store/movie/[a-z0-9]+(?:-[a-z0-9]+)*", parsed.path)
+            or re.fullmatch(r"/movie-store/movie/details/[0-9]{1,20}", parsed.path)
+        )
     ):
         raise ProviderError("invalid_store_link")
     return parsed.path
@@ -75,10 +82,25 @@ def movie_data(page, href):
             raise ProviderError("store_format_changed") from error
         if not isinstance(data, dict):
             continue
+        numeric = re.fullmatch(r"/movie-store/movie/details/([0-9]{1,20})", path)
         slug = path.rsplit("/", 1)[1]
-        edition = data.get("/movie-store/rest/movie/edition/" + slug)
+        key = "/movie-store/rest/movie/edition/" + (
+            "package/" + numeric[1] if numeric else slug
+        )
+        edition = data.get(key)
+        if not isinstance(edition, (str, int)) or isinstance(edition, bool):
+            continue
+        if not re.fullmatch(r"[a-z0-9]{1,100}", str(edition)):
+            continue
         movie = data.get("/movie-store/rest/movie/edition/id/" + str(edition))
-        if isinstance(movie, dict) and movie.get("uri_name") == slug:
+        if isinstance(movie, dict) and (
+            (
+                numeric
+                and edition is not None
+                and str(movie.get("movie_edition_id")) == str(edition)
+            )
+            or (not numeric and movie.get("uri_name") == slug)
+        ):
             found.append(movie)
     if len(found) != 1:
         raise ProviderError("store_format_changed")
@@ -117,7 +139,14 @@ def parse(page, href, title, year):
     path = movie_path(href)
     movie = movie_data(page, href)
     if not same_movie(
-        title, year, [{"title": movie.get("title"), "year": movie.get("release_year")}]
+        search_title(title),
+        year,
+        [
+            {
+                "title": search_title(movie.get("title")),
+                "year": movie.get("release_year"),
+            }
+        ],
     ):
         raise ProviderError("provider_identity_mismatch")
     people = movie.get("persons", [])

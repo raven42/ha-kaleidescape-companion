@@ -789,6 +789,10 @@ export function errorMessage(error: unknown): string {
       "TMDB returned more than one matching movie. No data was imported.",
     store_search_truncated:
       "The Kaleidescape Store returned too many results to verify a unique match. Refine the search and choose a match for review.",
+    store_missing_library_credits:
+      "The Library needs four scanned actors and a director before this Store match can be verified.",
+    store_credit_mismatch:
+      "The Store results did not match the scanned cast and director. Choose a match for review.",
   };
   return (
     messages[errorCode(error)] ??

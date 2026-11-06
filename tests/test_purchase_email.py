@@ -40,6 +40,34 @@ class EmailTest(unittest.IsolatedAsyncioTestCase):
     seed_library = importing.ImportStorageTest.seed_library
     assert_error = importing.ImportStorageTest.assert_error
 
+    async def test_mixed_receipt_saves_both_items_and_reports_only_missing_retail(self):
+        from test_receipt_parser import MIXED_PRICE_HTML, MIXED_PRICE_TEXT, envelope
+
+        await self.seed_library()
+        first, second = library.ROWS[0]["title"], library.ROWS[1]["title"]
+        body = MIXED_PRICE_TEXT.replace("Fictional Voyage", first).replace(
+            "Second Film", second
+        )
+        html = MIXED_PRICE_HTML.replace("Fictional Voyage", first).replace(
+            "Second Film", second
+        )
+        result = await self.repository.async_purchase_email(
+            envelope(body, html_part={"content_type": "text/html", "part_data": html})
+        )
+        self.assertEqual(result["status"], "needs_review")
+        self.assertEqual(result["imported_count"], 2)
+        self.assertEqual(
+            result["issues"], [{"title": second, "reason": "retail_price_missing"}]
+        )
+        records = (await self.repository.async_inspect("purchase_records"))["items"]
+        self.assertEqual(len(records), 2)
+        records_by_title = {row["title"]: row for row in records}
+        self.assertEqual(records_by_title[first]["purchase_price"], "$18.00")
+        self.assertEqual(records_by_title[first]["retail_price"], "$24.00")
+        self.assertEqual(records_by_title[second]["purchase_price"], "$18.00")
+        self.assertIsNone(records_by_title[second]["retail_price"])
+        self.assertTrue(all(row["library_id"] for row in records))
+
     async def test_replaying_partial_receipt_fills_purchase_price_without_duplicate(
         self,
     ):
@@ -733,6 +761,9 @@ class ReceiptLoggingTest(unittest.IsolatedAsyncioTestCase):
                 )
             )
             output = "\n".join(logs.output)
+            self.assertIn(f"imported={result['imported_count']}", output)
+            self.assertIn(f"pending={result['pending_count']}", output)
+            self.assertLess(output.index("imported="), output.index("receipt="))
             self.assertIn("Fictional title", output)
             self.assertIn("PRIVATE-ORDER", output)
             self.assertIn("retail_price_missing", output)

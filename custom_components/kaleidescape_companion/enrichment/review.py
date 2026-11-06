@@ -2,7 +2,6 @@
 
 import asyncio
 import json
-import re
 import time
 from contextlib import asynccontextmanager
 from uuid import uuid4
@@ -13,17 +12,11 @@ from ..core.models import JournalError, identifier, invalid
 from ..core.security import is_active_admin
 from ..library.store import image_type
 from ..scrapers import MovieQuery, ProviderError, Providers
+from ..scrapers.models import search_title
 from .matching import REASONS, reference
 from .review_store import REVIEW_FIELDS, selection
 
 REVIEW_SECONDS = 20 * 60
-
-
-def search_title(title):
-    """Remove only a trailing edition suffix; leave the Library identity intact."""
-    return re.sub(
-        r"\s*\(director['’]s cut\)\s*$", "", title, flags=re.IGNORECASE
-    ).strip()[:200]
 
 
 class TitleReviews:

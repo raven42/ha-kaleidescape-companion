@@ -1641,7 +1641,9 @@ function v(n) {
     provider_identity_mismatch: "The provider could not verify this movie's title and release year.",
     tmdb_not_found: "TMDB did not find a matching title and release year.",
     tmdb_ambiguous: "TMDB returned more than one matching movie. No data was imported.",
-    store_search_truncated: "The Kaleidescape Store returned too many results to verify a unique match. Refine the search and choose a match for review."
+    store_search_truncated: "The Kaleidescape Store returned too many results to verify a unique match. Refine the search and choose a match for review.",
+    store_missing_library_credits: "The Library needs four scanned actors and a director before this Store match can be verified.",
+    store_credit_mismatch: "The Store results did not match the scanned cast and director. Choose a match for review."
   }[u(n)] ?? "The connection was interrupted. The result could not be confirmed.";
 }
 async function D(n, e = vs) {

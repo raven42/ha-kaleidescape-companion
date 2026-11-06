@@ -1,5 +1,6 @@
 """Small, bounded provider projections; no account, ownership or payment data."""
 
+import re
 import unicodedata
 from dataclasses import dataclass
 from typing import TypedDict
@@ -79,6 +80,15 @@ def genre_name(value):
 
 def genre_names(values):
     return list(dict.fromkeys(genre_name(value) for value in names(values)))
+
+
+def search_title(title):
+    """Remove only a trailing director's-cut suffix for Store lookup."""
+    if not isinstance(title, str):
+        return ""
+    return re.sub(
+        r"\s*\(director['’]s cut\)\s*$", "", title, flags=re.IGNORECASE
+    ).strip()[:200]
 
 
 def normalized(value):

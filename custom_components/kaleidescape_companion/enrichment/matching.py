@@ -14,6 +14,8 @@ REASONS = {
     "store_not_found",
     "store_ambiguous",
     "store_search_truncated",
+    "store_missing_library_credits",
+    "store_credit_mismatch",
     "provider_identity_mismatch",
     "invalid_store_link",
     "missing_year",

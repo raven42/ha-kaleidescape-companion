@@ -39,24 +39,27 @@ provider interfaces.
    rejected. A selected refresh fails busy rather than silently discarding its
    options when another pass is active.
 
-Automatic store enrichment uses a valid public Store movie link when available.
-When the link is absent or is a numeric receipt-details link, it searches the
-public Store by title and year. It saves only a single exact normalized-title
-and year match; ambiguous or truncated results require manual review. It never
-invents Store slugs. A full 15-result Store page remains potentially truncated,
-even when later filtering leaves one candidate. The completion log distinguishes
-a truncated Store search from multiple exact matches. TMDB initially needs the
-Library title and a known release year. An administrator-approved match can
-supply the provider identity instead, including for a movie without a store link
-or scanned year. Matching is conservative: unresolved ambiguous or mismatched
-movies are skipped and marked for review. Skipped totals are provider attempts,
-so one movie can contribute twice. A pass stops after one hour; successfully
-cached results remain available. It supports up to 10,000 scanned versions and
-processes one movie group at a time. Unknown years and missing TMDB credentials
-are skipped without requesting a movie. The completion log breaks skipped
-attempts down by provider and reason. Artwork flagged by the Library filter may
-remain missing when artwork sync, a suitable provider, or the selected source is
-unavailable.
+Automatic store enrichment uses a valid public Store movie link when available,
+including a numeric receipt-details link. The numeric page maps the package ID
+to an edition; the parser checks that mapping and validates title and year. It
+does not invent Store slugs. When no usable link exists, it searches using the
+same cleaned title as the manual dialog and the scanned year. A returned match
+must have the same normalized title and year, every scanned director, and the
+four scanned actors. Exactly one such result is selected, even when the Store
+returns a full page. Other matching results may exist beyond the bounded page,
+so this is strong evidence, not proof of uniqueness. Missing credits, no match
+or multiple matching results are reported for review; the completion log
+distinguishes these outcomes. TMDB initially needs the Library title and a known
+release year. An administrator-approved match can supply the provider identity
+instead, including for a movie without a store link or scanned year. Matching is
+conservative: unresolved ambiguous or mismatched movies are skipped and marked
+for review. Skipped totals are provider attempts, so one movie can contribute
+twice. A pass stops after one hour; successfully cached results remain
+available. It supports up to 10,000 scanned versions and processes one movie
+group at a time. Unknown years and missing TMDB credentials are skipped without
+requesting a movie. The completion log breaks skipped attempts down by provider
+and reason. Artwork flagged by the Library filter may remain missing when
+artwork sync, a suitable provider, or the selected source is unavailable.
 
 These are internet lookups: the provider can see the request, movie identity and
 the HA host's network address. No watch history, notes, invoices, prices or
@@ -450,16 +453,17 @@ rates can require a longer application timeout.
 ### Research and limitations
 
 The public Kaleidescape store currently embeds movie JSON in an inline
-`window.preloadedAjaxData` assignment. The parser decodes that JSON without
-executing scripts and selects only the requested edition. Account/session,
-ownership, orders, sale/rental prices and recommendations are ignored. The
-parser accepts one unambiguous public `est_base_price` across supported purchase
-packages (USD, GBP, EUR or CAD); differing prices/currencies or malformed
-amounts leave retail price unknown. Credit role IDs were checked against the
-public store application's role map. Production companies and the
-licensor/distributor stay separate. This interface is undocumented and may
-change; unfamiliar markup stops the pass. No login, private store API, trailer
-fetch or account scraping is supported.
+`window.preloadedAjaxData` assignment. For a numeric receipt path it reads the
+package-to-edition mapping and verifies the returned edition ID. The parser
+decodes that JSON without executing scripts and selects only the requested
+edition. Account/session, ownership, orders, sale/rental prices and
+recommendations are ignored. The parser accepts one unambiguous public
+`est_base_price` across supported purchase packages (USD, GBP, EUR or CAD);
+differing prices/currencies or malformed amounts leave retail price unknown.
+Credit role IDs were checked against the public store application's role map.
+Production companies and the licensor/distributor stay separate. This interface
+is undocumented and may change; unfamiliar markup stops the pass. No login,
+private store API, trailer fetch or account scraping is supported.
 
 TMDB uses its
 [official API](https://developer.themoviedb.org/reference/intro/getting-started):

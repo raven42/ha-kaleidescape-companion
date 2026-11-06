@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from ..core.models import JournalError
 from ..library.purchases import fill_retail_price
 from ..library.store import changed
-from ..scrapers.models import genre_name
+from ..scrapers.models import genre_name, normalized
 from .availability import artwork_for_group, for_group
 from .matching import bindings, has_provider_data, reference
 
@@ -163,6 +163,10 @@ def candidates(db, source):
     """Choose scanned movie groups, excluding purchase-only placeholders."""
     rows = db.execute(
         """SELECT id,source_group,title,json_extract(data,'$.year') year,
+            CASE WHEN json_type(data,'$.actors')='array'
+                THEN json_extract(data,'$.actors') ELSE '[]' END original_actors,
+            CASE WHEN json_type(data,'$.directors')='array'
+                THEN json_extract(data,'$.directors') ELSE '[]' END original_directors,
             coalesce(href,(SELECT p.href FROM purchase_records p
                 WHERE p.library_id=library.id AND p.href IS NOT NULL
                 ORDER BY p.purchased_on IS NULL,p.purchased_on,p.id LIMIT 1)) href,
@@ -207,6 +211,7 @@ def candidates(db, source):
                 "href": None,
                 "enrichment": {},
                 "matches": {},
+                "credit_evidence": None,
                 "cached_providers": set(),
                 "backdrop_selected": False,
                 "poster_selected": False,
@@ -215,6 +220,25 @@ def candidates(db, source):
         )
         if not entry["year"]:
             entry["year"] = row["year"]
+        actors = json.loads(row["original_actors"] or "null")
+        directors = json.loads(row["original_directors"] or "null")
+        actor_keys = (
+            {normalized(value) for value in actors[:4]}
+            if isinstance(actors, list)
+            else set()
+        )
+        if (
+            entry["credit_evidence"] is None
+            and isinstance(actors, list)
+            and len(actor_keys - {""}) == 4
+            and isinstance(directors, list)
+            and any(normalized(value) for value in directors)
+        ):
+            entry["credit_evidence"] = {
+                "id": row["id"],
+                "actors": actors[:4],
+                "directors": directors,
+            }
         entry["matches"].update(json.loads(row["matched_refs"] or "{}"))
         cache = {
             "matches": json.loads(row["matched_refs"] or "{}"),
@@ -245,7 +269,16 @@ def save(db, source, title_id, provider, metadata):
     if provider not in PROVIDERS:
         raise JournalError("invalid_request", "Unknown metadata provider")
     fetched_at = datetime.now(UTC).isoformat()
-    encoded = json.dumps({**metadata, "fetched_at": fetched_at})
+    encoded = json.dumps(
+        {
+            **{
+                key: value
+                for key, value in metadata.items()
+                if key != "matched_credits"
+            },
+            "fetched_at": fetched_at,
+        }
+    )
     if len(encoded.encode()) > 128 * 1024:
         raise JournalError("metadata_limit", "Provider metadata is too large")
     row = db.execute(
@@ -253,8 +286,32 @@ def save(db, source, title_id, provider, metadata):
         "WHERE source_id=? AND id=? AND available=1",
         (source, title_id),
     ).fetchone()
+    credits = metadata.get("matched_credits")
+    credits_changed = False
+    if credits is not None:
+        evidence = (
+            db.execute(
+                "SELECT source_group,data FROM library WHERE source_id=? AND id=? "
+                "AND available=1 AND purchase_match_pending=0",
+                (source, credits.get("id")),
+            ).fetchone()
+            if isinstance(credits, dict)
+            else None
+        )
+        data = json.loads(evidence["data"]) if evidence else {}
+        actors, directors = data.get("actors"), data.get("directors")
+        credits_changed = (
+            not evidence
+            or row is None
+            or evidence["source_group"] != row["source_group"]
+            or not isinstance(actors, list)
+            or not isinstance(directors, list)
+            or actors[:4] != credits.get("actors")
+            or directors != credits.get("directors")
+        )
     if (
         row is None
+        or credits_changed
         or provider in for_group(db, source, row["source_group"])
         or db.execute(
             "SELECT 1 FROM library WHERE source_id=? AND source_group=? "
