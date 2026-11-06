@@ -664,3 +664,20 @@ it.each(["kaleidescape-panel", "kaleidescape-reader"])(
     );
   },
 );
+
+it("marks an open completed viewing at its completion date", async () => {
+  const { calendarDays } = await import("../src/ui/journal-calendar");
+  const start = new Date(2026, 9, 31, 23, 59).toISOString();
+  const completion = new Date(2026, 10, 1, 0, 1).toISOString();
+  expect(
+    calendarDays({
+      started_at: start,
+      ended_at: null,
+      completed_at: completion,
+      status: "completed",
+    }),
+  ).toEqual([
+    { day: "2026-10-31", phase: "start" },
+    { day: "2026-11-01", phase: "completion" },
+  ]);
+});

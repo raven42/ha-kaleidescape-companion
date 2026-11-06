@@ -40,6 +40,52 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
     async def month(self, **values):
         return await self.repository.async_calendar_month(START, END, **values)
 
+    async def test_open_completed_tracker_session_appears_in_completion_month(self):
+        from datetime import UTC, datetime, timedelta
+
+        from custom_components.kaleidescape_companion.playback.tracker import (
+            Observation,
+            PlaybackTracker,
+        )
+
+        base = datetime(2026, 10, 31, 23, 59, 30, tzinfo=UTC)
+        tracker = PlaybackTracker("fictional-player")
+        for seconds, location in (
+            (0, "content"),
+            (0.5, "content"),
+            (20, "content"),
+            (40, "credits"),
+        ):
+            point = Observation(
+                at=(base + timedelta(seconds=seconds)).isoformat(
+                    timespec="microseconds"
+                ),
+                monotonic=seconds,
+                content_id="fictional-film",
+                title="Fictional Film",
+                duration=7200,
+                available=True,
+                play_status="playing",
+                location=location,
+            )
+            for snapshot in tracker.apply(point):
+                await self.repository.async_save_session(snapshot, 30, 24)
+        row = (await self.repository.async_inspect("viewings"))["items"][0]
+        self.assertIsNone(row["ended_at"])
+        self.assertIsNotNone(row["completed_at"])
+        october = await self.repository.async_calendar_month(
+            "2026-10-01T00:00:00Z", "2026-11-01T00:00:00Z"
+        )
+        november = await self.repository.async_calendar_month(
+            "2026-11-01T00:00:00Z", "2026-12-01T00:00:00Z"
+        )
+        self.assertEqual(len(october["items"]), 1)
+        self.assertEqual(october["summary"]["viewing_count"], 0)
+        self.assertEqual(len(november["items"]), 1)
+        self.assertEqual(november["items"][0]["completed_at"], row["completed_at"])
+        self.assertEqual(november["summary"]["viewing_count"], 1)
+        self.assertEqual(november["summary"]["watched_seconds"], row["watched_seconds"])
+
     async def test_half_open_local_range_handles_midnight_precision_and_deleted_rows(
         self,
     ):
@@ -68,7 +114,8 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
             [row["id"] for row in result["items"]], [first["id"], second["id"]]
         )
         self.assertEqual(
-            set(result["items"][0]), PUBLIC_FIELDS | {"library_title_id", "artwork_key"}
+            set(result["items"][0]),
+            PUBLIC_FIELDS | {"library_title_id", "artwork_key", "completed_at"},
         )
         self.assertEqual(
             result["revision"], (await self.repository.async_info())["revision"]
@@ -118,7 +165,7 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
         detail = await self.repository.async_calendar_details(
             viewing["id"], library.SOURCE
         )
-        self.assertEqual(set(detail["viewing"]), PUBLIC_FIELDS)
+        self.assertEqual(set(detail["viewing"]), PUBLIC_FIELDS | {"completed_at"})
         self.assertEqual(set(detail["movie"]), set(MOVIE_FIELDS))
         self.assertEqual(detail["movie"]["year"], 2025)
         self.assertEqual(detail["movie"]["edition"], "HD")
@@ -317,7 +364,7 @@ class JournalCalendarApiTest(unittest.IsolatedAsyncioTestCase):
             )
             self.assertEqual(
                 set(result["result"]["items"][0]),
-                PUBLIC_FIELDS | {"library_title_id", "artwork_key"},
+                PUBLIC_FIELDS | {"library_title_id", "artwork_key", "completed_at"},
             )
             result = await self.call(
                 "journal/calendar/get",
@@ -325,7 +372,9 @@ class JournalCalendarApiTest(unittest.IsolatedAsyncioTestCase):
                 **self.scope,
                 viewing_id=viewing["id"],
             )
-            self.assertEqual(set(result["result"]["viewing"]), PUBLIC_FIELDS)
+            self.assertEqual(
+                set(result["result"]["viewing"]), PUBLIC_FIELDS | {"completed_at"}
+            )
             self.assertEqual(set(result["result"]["movie"]), set(MOVIE_FIELDS))
         object.__setattr__(
             self.entry, "data", {**self.entry.data, "library_enabled": False}

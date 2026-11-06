@@ -28,7 +28,7 @@ def month_totals(db, start, end):
     Callers validate/construct the bounded interval before entering this worker.
     """
     date = (
-        "CASE WHEN status='completed' THEN coalesce(ended_at,started_at) "
+        "CASE WHEN status='completed' THEN coalesce(ended_at,completed_at,started_at) "
         "ELSE started_at END"
     )
     row = db.execute(
@@ -65,7 +65,11 @@ def month(
     predicates = [
         "v.deleted_at IS NULL",
         "((v.started_at>=? AND v.started_at<?) OR (v.status='completed' "
-        "AND v.ended_at>v.started_at AND v.ended_at>=? AND v.ended_at<?))",
+        "AND julianday(coalesce(v.ended_at,v.completed_at,v.started_at))>"
+        "julianday(v.started_at) "
+        "AND julianday(coalesce(v.ended_at,v.completed_at,v.started_at))>=julianday(?) "
+        "AND julianday(coalesce(v.ended_at,v.completed_at,v.started_at))"
+        "<julianday(?)))",
     ]
     values = [source, start, end, start, end]
     if query:
@@ -85,7 +89,7 @@ def month(
         values.extend((source, group))
     columns = ",".join(f"v.{key}" for key in sorted(PUBLIC_FIELDS))
     rows = db.execute(
-        f"SELECT {columns},t.id library_title_id,"
+        f"SELECT {columns},v.completed_at,t.id library_title_id,"
         "companion_artwork(t.artwork_key,t.enrichment,'artwork') artwork_key "
         "FROM viewings v "
         "LEFT JOIN library t ON t.id=v.library_title_id AND t.source_id=? "
@@ -104,6 +108,7 @@ def month(
         "items": [
             {
                 **public_viewing(row),
+                "completed_at": row["completed_at"],
                 "library_title_id": row["library_title_id"],
                 "artwork_key": row["artwork_key"],
             }
@@ -129,4 +134,7 @@ def details(db, viewing_id, source=None):
     if row is not None:
         metadata = snapshot(db, row)
         movie = {key: metadata.get(key) for key in MOVIE_FIELDS}
-    return {"viewing": public_viewing(viewing), "movie": movie}
+    return {
+        "viewing": {**public_viewing(viewing), "completed_at": viewing["completed_at"]},
+        "movie": movie,
+    }

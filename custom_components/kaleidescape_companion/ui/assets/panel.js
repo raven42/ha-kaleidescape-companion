@@ -8740,10 +8740,10 @@ function Ws(n) {
   ];
 }
 function Ys(n) {
-  const e = Y(new Date(n.started_at)), t = n.ended_at ? Y(new Date(n.ended_at)) : e;
-  return n.status === "completed" && t !== e && n.ended_at && new Date(n.ended_at) > new Date(n.started_at) ? [
+  const e = Y(new Date(n.started_at)), t = n.ended_at ?? n.completed_at, i = t ? Y(new Date(t)) : e;
+  return n.status === "completed" && i !== e && t && new Date(t) > new Date(n.started_at) ? [
     { day: e, phase: "start" },
-    { day: t, phase: "completion" }
+    { day: i, phase: "completion" }
   ] : [{ day: e, phase: "single" }];
 }
 const Pe = class Pe extends x {
@@ -8917,13 +8917,13 @@ const Pe = class Pe extends x {
     </button>`;
   }
   renderDetails() {
-    const e = this.selected, t = this.movie, i = e ? new Date(e.started_at) : null, s = e?.ended_at ? new Date(e.ended_at) : null, r = i && s && Y(i) !== Y(s), o = t?.duration_seconds ?? e?.duration_seconds;
+    const e = this.selected, t = this.movie, i = e ? new Date(e.started_at) : null, s = e?.ended_at ?? e?.completed_at, r = s ? new Date(s) : null, o = i && r && Y(i) !== Y(r), h = t?.duration_seconds ?? e?.duration_seconds;
     return a`<dialog
       class="database-dialog calendar-dialog"
       aria-labelledby="calendar-movie-title"
       @click=${q}
-      @close=${(h) => {
-      h.target.open || (this.closeDetails(), this.requestUpdate());
+      @close=${(d) => {
+      d.target.open || (this.closeDetails(), this.requestUpdate());
     }}
     >
       <div class="card-head">
@@ -8947,7 +8947,7 @@ const Pe = class Pe extends x {
                 ${this.detailLoading ? a`<p role="status">Loading movie details…</p>` : l}
                 ${this.detailError ? a`<p class="error" role="alert">${this.detailError} <button @click=${() => this.select(e, this.selectedArtwork)}>Retry details</button></p>` : l}
                 ${t ? a`<div class="detail-badges">
-                          ${O(t, !1, (h) => this.browse("format", h))}${oe(t.rating ?? "", (h) => this.browse("rating", h))}
+                          ${O(t, !1, (d) => this.browse("format", d))}${oe(t.rating ?? "", (d) => this.browse("rating", d))}
                         </div>
                         ${t.year ? a`<p><strong>Year:</strong> ${this.detailLink("year", String(t.year))}</p>` : l}
                         ${[
@@ -8955,19 +8955,19 @@ const Pe = class Pe extends x {
       ["Directors", t.directors],
       ["Genres", t.genres]
     ].map(
-      ([h, d]) => d?.length ? a`<p>
-                                <strong>${h}:</strong>
-                                ${d.map((c, m) => a`${m ? ", " : ""}${this.detailLink(h === "Genres" ? "genre" : "query", c)}`)}
+      ([d, c]) => c?.length ? a`<p>
+                                <strong>${d}:</strong>
+                                ${c.map((m, p) => a`${p ? ", " : ""}${this.detailLink(d === "Genres" ? "genre" : "query", m)}`)}
                               </p>` : l
     )}` : !this.detailLoading && !this.detailError ? a`<p class="muted">
                           No linked Library metadata is available.
                         </p>` : l}
-                ${o != null ? a`<p><strong>Runtime:</strong> ${(o / 60).toFixed(2)} min</p>` : l}
+                ${h != null ? a`<p><strong>Runtime:</strong> ${(h / 60).toFixed(2)} min</p>` : l}
                 <p>
                   <strong
-                    >${r ? "Viewing dates" : "Viewing date"}:</strong
+                    >${o ? "Viewing dates" : "Viewing date"}:</strong
                   >
-                  ${i?.toLocaleDateString()}${r ? ` – ${s.toLocaleDateString()}` : ""}
+                  ${i?.toLocaleDateString()}${o ? ` – ${r.toLocaleDateString()}` : ""}
                 </p>
                 <p>
                   <strong>Watched:</strong>

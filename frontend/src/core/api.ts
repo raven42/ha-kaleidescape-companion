@@ -139,6 +139,7 @@ export interface JournalPage {
 export interface CalendarViewing extends ViewingSummary {
   library_title_id: string | null;
   artwork_key: string | null;
+  completed_at?: string | null;
 }
 export interface CalendarMovie {
   title: string;
@@ -1315,7 +1316,10 @@ export class JournalClient {
   calendarDetails(
     scope: Scope,
     viewing_id: string,
-  ): Promise<{ viewing: ViewingSummary; movie: CalendarMovie | null }> {
+  ): Promise<{
+    viewing: ViewingSummary & { completed_at?: string | null };
+    movie: CalendarMovie | null;
+  }> {
     return this.call({
       type: `${DOMAIN}/journal/calendar/get`,
       ...scopeFields(scope),

@@ -43,14 +43,18 @@ export function monthBounds(month: Date) {
 
 /** Endpoint markers use local dates, including viewings crossing month boundaries. */
 export function calendarDays(
-  row: Pick<CalendarViewing, "started_at" | "ended_at" | "status">,
+  row: Pick<
+    CalendarViewing,
+    "started_at" | "ended_at" | "completed_at" | "status"
+  >,
 ) {
   const start = dayKey(new Date(row.started_at));
-  const end = row.ended_at ? dayKey(new Date(row.ended_at)) : start;
+  const endpoint = row.ended_at ?? row.completed_at;
+  const end = endpoint ? dayKey(new Date(endpoint)) : start;
   return row.status === "completed" &&
     end !== start &&
-    row.ended_at &&
-    new Date(row.ended_at) > new Date(row.started_at)
+    endpoint &&
+    new Date(endpoint) > new Date(row.started_at)
     ? [
         { day: start, phase: "start" },
         { day: end, phase: "completion" },
@@ -98,7 +102,7 @@ export class JournalCalendar extends LitElement {
   private privacy = "";
   private boundClient?: JournalClient;
   private queue = new CoverQueue();
-  private selected?: ViewingSummary;
+  private selected?: ViewingSummary & { completed_at?: string | null };
   private selectedArtwork: string | null = null;
   private movie: CalendarMovie | null = null;
   private detailRequest = 0;
@@ -393,7 +397,8 @@ export class JournalCalendar extends LitElement {
     const viewing = this.selected,
       movie = this.movie;
     const start = viewing ? new Date(viewing.started_at) : null;
-    const end = viewing?.ended_at ? new Date(viewing.ended_at) : null;
+    const endpoint = viewing?.ended_at ?? viewing?.completed_at;
+    const end = endpoint ? new Date(endpoint) : null;
     const different = start && end && dayKey(start) !== dayKey(end);
     const runtime = movie?.duration_seconds ?? viewing?.duration_seconds;
     return html`<dialog
