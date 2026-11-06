@@ -184,3 +184,91 @@ it("discards history responses after administrator access changes", async () => 
   expect(element.shadowRoot!.textContent).not.toContain("Late history");
   expect(element.shadowRoot!.querySelector("dialog")).toBeNull();
 });
+
+it.each(["disconnect", "replace client", "revoke permission"])(
+  "does not save a retrieved template after %s",
+  async (change) => {
+    const client = new FixtureTransport().client();
+    const replacement = new FixtureTransport().client();
+    vi.spyOn(client, "automationStatuses").mockResolvedValue({
+      library_schedule: { status: "missing", label: "Library", revision: null },
+    });
+    let release!: (value: { path: string; yaml: string }) => void;
+    vi.spyOn(client, "automationTemplate").mockReturnValue(
+      new Promise((resolve) => (release = resolve)),
+    );
+    const save = vi.spyOn(client, "installAutomationBlueprint");
+    const otherSave = vi.spyOn(replacement, "installAutomationBlueprint");
+    element = document.createElement(
+      "kaleidescape-automation-blueprints",
+    ) as AutomationBlueprints;
+    element.client = client;
+    element.scope = { ...info, permissions: { ...info.permissions } };
+    document.body.append(element);
+    await vi.waitFor(() =>
+      expect(
+        element.shadowRoot!.querySelector(
+          '[data-blueprint="library_schedule"] button',
+        ),
+      ).not.toBeNull(),
+    );
+    element
+      .shadowRoot!.querySelector<HTMLButtonElement>(
+        '[data-blueprint="library_schedule"] button',
+      )!
+      .click();
+    await vi.waitFor(() => expect(release).toBeDefined());
+    if (change === "disconnect") element.remove();
+    if (change === "replace client") element.client = replacement;
+    if (change === "revoke permission")
+      element.scope = {
+        ...element.scope!,
+        permissions: { ...info.permissions, edit: false },
+      };
+    release({ path: "fictional.yaml", yaml: "fictional" });
+    await element.updateComplete;
+    await Promise.resolve();
+    expect(save).not.toHaveBeenCalled();
+    expect(otherSave).not.toHaveBeenCalled();
+  },
+);
+
+it("does not show a stale result after a blueprint save was transmitted", async () => {
+  const client = new FixtureTransport().client();
+  vi.spyOn(client, "automationStatuses").mockResolvedValue({
+    library_schedule: { status: "missing", label: "Library", revision: null },
+  });
+  vi.spyOn(client, "automationTemplate").mockResolvedValue({
+    path: "fictional.yaml",
+    yaml: "fictional",
+  });
+  let finish!: (value: { overrides_existing: boolean }) => void;
+  const save = vi
+    .spyOn(client, "installAutomationBlueprint")
+    .mockReturnValue(new Promise((resolve) => (finish = resolve)));
+  element = document.createElement(
+    "kaleidescape-automation-blueprints",
+  ) as AutomationBlueprints;
+  element.client = client;
+  element.scope = info;
+  document.body.append(element);
+  await vi.waitFor(() =>
+    expect(
+      element.shadowRoot!.querySelector(
+        '[data-blueprint="library_schedule"] button',
+      ),
+    ).not.toBeNull(),
+  );
+  element
+    .shadowRoot!.querySelector<HTMLButtonElement>(
+      '[data-blueprint="library_schedule"] button',
+    )!
+    .click();
+  await vi.waitFor(() => expect(save).toHaveBeenCalledOnce());
+  element.scope = { ...info, entry_id: "new-scope" };
+  finish({ overrides_existing: false });
+  await element.updateComplete;
+  await Promise.resolve();
+  expect(save).toHaveBeenCalledOnce();
+  expect(element.shadowRoot!.textContent).not.toContain("blueprint installed");
+});

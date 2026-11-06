@@ -75,6 +75,8 @@ export class AutomationBlueprints extends LitElement {
   protected willUpdate(changed: PropertyValues) {
     if (changed.has("client") || changed.has("scope")) {
       this.generation++;
+      this.busy = this.message = this.error = "";
+      this.checking = false;
       this.closeHistory();
       this.statuses = undefined;
       this.pendingUpdate = undefined;
@@ -83,6 +85,8 @@ export class AutomationBlueprints extends LitElement {
   }
   disconnectedCallback() {
     this.generation++;
+    this.busy = this.message = this.error = "";
+    this.checking = false;
     this.closeHistory();
     super.disconnectedCallback();
   }
@@ -142,6 +146,15 @@ export class AutomationBlueprints extends LitElement {
   }
   private async install(kind: string, label: string, update: boolean) {
     if (!this.client || !this.scope?.permissions.edit || this.busy) return;
+    const client = this.client,
+      scope = this.scope,
+      generation = this.generation;
+    const current = () =>
+      this.isConnected &&
+      this.generation === generation &&
+      this.client === client &&
+      this.scope === scope &&
+      !!this.scope?.permissions.edit;
     this.busy = kind;
     this.message = this.error = "";
     this.pendingUpdate = undefined;
@@ -154,22 +167,24 @@ export class AutomationBlueprints extends LitElement {
         this.pendingUpdate = { kind, label, revision };
         this.message = `${label}: replacing this blueprint reloads its automations and may discard local edits.`;
       } else {
-        const template = await this.client.automationTemplate(this.scope, kind);
-        await this.client.installAutomationBlueprint(
-          template.path,
-          template.yaml,
-        );
+        const template = await client.automationTemplate(scope, kind);
+        if (!current()) return;
+        await client.installAutomationBlueprint(template.path, template.yaml);
+        if (!current()) return;
         this.message = `${label} blueprint installed. Create an automation in Home Assistant Blueprints.`;
         await this.refresh();
       }
     } catch (error) {
+      if (!current()) return;
       if (errorCode(error) === "already_exists") {
         this.message = `${label} was installed while checking. Its status has been refreshed.`;
         await this.refresh();
       } else this.error = errorMessage(error);
     } finally {
-      this.busy = "";
-      this.requestUpdate();
+      if (current()) {
+        this.busy = "";
+        this.requestUpdate();
+      }
     }
   }
 
@@ -182,25 +197,38 @@ export class AutomationBlueprints extends LitElement {
     )
       return;
     const pending = this.pendingUpdate;
+    const client = this.client,
+      scope = this.scope,
+      generation = this.generation;
+    const current = () =>
+      this.isConnected &&
+      this.generation === generation &&
+      this.client === client &&
+      this.scope === scope &&
+      !!this.scope?.permissions.edit;
     this.busy = pending.kind;
     this.message = this.error = "";
     this.requestUpdate();
     try {
-      await this.client.updateAutomationBlueprint(
-        this.scope,
+      await client.updateAutomationBlueprint(
+        scope,
         pending.kind,
         pending.revision,
       );
+      if (!current()) return;
       this.message = `${pending.label} blueprint updated. Review its automations in Home Assistant.`;
       this.pendingUpdate = undefined;
       await this.refresh();
     } catch (error) {
+      if (!current()) return;
       this.error = errorMessage(error);
       this.pendingUpdate = undefined;
       await this.refresh();
     } finally {
-      this.busy = "";
-      this.requestUpdate();
+      if (current()) {
+        this.busy = "";
+        this.requestUpdate();
+      }
     }
   }
   protected render() {

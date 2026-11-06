@@ -11141,10 +11141,10 @@ const je = class je extends x {
     super(...arguments), this.versionsOnly = !1, this.busy = "", this.message = "", this.error = "", this.checking = !1, this.generation = 0, this.historyRequest = 0;
   }
   willUpdate(e) {
-    (e.has("client") || e.has("scope")) && (this.generation++, this.closeHistory(), this.statuses = void 0, this.pendingUpdate = void 0, this.client && this.scope?.permissions.edit && this.refresh());
+    (e.has("client") || e.has("scope")) && (this.generation++, this.busy = this.message = this.error = "", this.checking = !1, this.closeHistory(), this.statuses = void 0, this.pendingUpdate = void 0, this.client && this.scope?.permissions.edit && this.refresh());
   }
   disconnectedCallback() {
-    this.generation++, this.closeHistory(), super.disconnectedCallback();
+    this.generation++, this.busy = this.message = this.error = "", this.checking = !1, this.closeHistory(), super.disconnectedCallback();
   }
   closeHistory() {
     this.historyRequest++, this.history = void 0, this.renderRoot.querySelector("dialog")?.close(), this.requestUpdate();
@@ -11190,43 +11190,44 @@ const je = class je extends x {
     }
   }
   async install(e, t, i) {
-    if (!(!this.client || !this.scope?.permissions.edit || this.busy)) {
-      this.busy = e, this.message = this.error = "", this.pendingUpdate = void 0, this.requestUpdate();
-      try {
-        if (i) {
-          const s = this.statuses?.[e]?.revision;
-          if (!s)
-            throw new Error("Blueprint status changed; check again.");
-          this.pendingUpdate = { kind: e, label: t, revision: s }, this.message = `${t}: replacing this blueprint reloads its automations and may discard local edits.`;
-        } else {
-          const s = await this.client.automationTemplate(this.scope, e);
-          await this.client.installAutomationBlueprint(
-            s.path,
-            s.yaml
-          ), this.message = `${t} blueprint installed. Create an automation in Home Assistant Blueprints.`, await this.refresh();
-        }
-      } catch (s) {
-        u(s) === "already_exists" ? (this.message = `${t} was installed while checking. Its status has been refreshed.`, await this.refresh()) : this.error = v(s);
-      } finally {
-        this.busy = "", this.requestUpdate();
+    if (!this.client || !this.scope?.permissions.edit || this.busy) return;
+    const s = this.client, r = this.scope, o = this.generation, h = () => this.isConnected && this.generation === o && this.client === s && this.scope === r && !!this.scope?.permissions.edit;
+    this.busy = e, this.message = this.error = "", this.pendingUpdate = void 0, this.requestUpdate();
+    try {
+      if (i) {
+        const d = this.statuses?.[e]?.revision;
+        if (!d)
+          throw new Error("Blueprint status changed; check again.");
+        this.pendingUpdate = { kind: e, label: t, revision: d }, this.message = `${t}: replacing this blueprint reloads its automations and may discard local edits.`;
+      } else {
+        const d = await s.automationTemplate(r, e);
+        if (!h() || (await s.installAutomationBlueprint(d.path, d.yaml), !h())) return;
+        this.message = `${t} blueprint installed. Create an automation in Home Assistant Blueprints.`, await this.refresh();
       }
+    } catch (d) {
+      if (!h()) return;
+      u(d) === "already_exists" ? (this.message = `${t} was installed while checking. Its status has been refreshed.`, await this.refresh()) : this.error = v(d);
+    } finally {
+      h() && (this.busy = "", this.requestUpdate());
     }
   }
   async updateInstalled() {
     if (!this.client || !this.scope?.permissions.edit || this.busy || !this.pendingUpdate)
       return;
-    const e = this.pendingUpdate;
+    const e = this.pendingUpdate, t = this.client, i = this.scope, s = this.generation, r = () => this.isConnected && this.generation === s && this.client === t && this.scope === i && !!this.scope?.permissions.edit;
     this.busy = e.kind, this.message = this.error = "", this.requestUpdate();
     try {
-      await this.client.updateAutomationBlueprint(
-        this.scope,
+      if (await t.updateAutomationBlueprint(
+        i,
         e.kind,
         e.revision
-      ), this.message = `${e.label} blueprint updated. Review its automations in Home Assistant.`, this.pendingUpdate = void 0, await this.refresh();
-    } catch (t) {
-      this.error = v(t), this.pendingUpdate = void 0, await this.refresh();
+      ), !r()) return;
+      this.message = `${e.label} blueprint updated. Review its automations in Home Assistant.`, this.pendingUpdate = void 0, await this.refresh();
+    } catch (o) {
+      if (!r()) return;
+      this.error = v(o), this.pendingUpdate = void 0, await this.refresh();
     } finally {
-      this.busy = "", this.requestUpdate();
+      r() && (this.busy = "", this.requestUpdate());
     }
   }
   render() {
