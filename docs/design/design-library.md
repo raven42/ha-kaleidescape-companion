@@ -726,13 +726,13 @@ check. Removal will need its own verified contract and security review.
 
 ## Badge meanings
 
-| Badge                       | Criterion and cover placement                                                                     |
-| --------------------------- | ------------------------------------------------------------------------------------------------- |
-| Watched · green check       | Source Played status, unless Paused takes priority; top-left triangle                             |
-| In progress · amber ring    | Source Paused status; top-left triangle, with no invented completion percentage                   |
-| Watch Soon · blue clock     | An available version belongs to WatchSoon; top-left triangle when neither In progress nor Watched |
-| Recently Added · blue label | Retained `recently_added` sensor batch membership or a recent linked purchase; top-left label     |
-| Favorite · gold star        | An available version belongs to Favorites; independent top-right bookmark                         |
+| Badge                         | Criterion and cover placement                                                                     |
+| ----------------------------- | ------------------------------------------------------------------------------------------------- |
+| Watched · green check         | Source Played status, unless Paused takes priority; top-left triangle                             |
+| In progress · amber ring      | Source Paused status; top-left triangle, with no invented completion percentage                   |
+| Watch Soon · blue clock       | An available version belongs to WatchSoon; top-left triangle when neither In progress nor Watched |
+| Recently Added · purple label | Retained `recently_added` sensor batch membership or a recent linked purchase; top-left label     |
+| Favorite · gold star          | An available version belongs to Favorites; independent top-right bookmark                         |
 
 Watched, In progress and Watch Soon are mutually exclusive. Progress or
 completion takes precedence, followed by Watch Soon. Recently Added and Favorite

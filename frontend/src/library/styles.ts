@@ -217,7 +217,7 @@ export const libraryStyles = css`
     color: #fff;
   }
   .flag-recent {
-    background: #1369ac;
+    background: #7238a5;
     color: #fff;
   }
   .flag-favorite {
@@ -559,6 +559,10 @@ export const libraryStyles = css`
   .collection-new {
     --badge-color: #27c4f2;
     --badge-tint: #086f95;
+  }
+  .status-recent {
+    --badge-color: #d8acfa;
+    --badge-tint: #6b318f;
   }
   .collection-unwatched {
     --badge-color: #ffc107;

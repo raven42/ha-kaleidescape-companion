@@ -117,7 +117,7 @@ export function renderStatusBadges(
     .map(
       (badge) =>
         html`<span
-          class=${flags ? `cover-flag flag-${badge.key}${badge.key === "recent" && badges.length > 1 ? " flag-offset" : ""}` : `status-badge collection-badge collection-${collectionKind(badge.label)}`}
+          class=${flags ? `cover-flag flag-${badge.key}${badge.key === "recent" && badges.length > 1 ? " flag-offset" : ""}` : `status-badge collection-badge collection-${collectionKind(badge.label)}${badge.key === "recent" ? " status-recent" : ""}`}
           title=${badge.label}
           aria-label=${badge.label}
           role="img"

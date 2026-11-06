@@ -4646,7 +4646,7 @@ const bi = Fi(class extends Vi {
     color: #fff;
   }
   .flag-recent {
-    background: #1369ac;
+    background: #7238a5;
     color: #fff;
   }
   .flag-favorite {
@@ -4988,6 +4988,10 @@ const bi = Fi(class extends Vi {
   .collection-new {
     --badge-color: #27c4f2;
     --badge-tint: #086f95;
+  }
+  .status-recent {
+    --badge-color: #d8acfa;
+    --badge-tint: #6b318f;
   }
   .collection-unwatched {
     --badge-color: #ffc107;
@@ -6235,7 +6239,7 @@ function tt(n, e = !1, t = []) {
   const i = Bs(n);
   return i.filter((s) => !t.includes(s.key)).map(
     (s) => a`<span
-          class=${e ? `cover-flag flag-${s.key}${s.key === "recent" && i.length > 1 ? " flag-offset" : ""}` : `status-badge collection-badge collection-${Ge(s.label)}`}
+          class=${e ? `cover-flag flag-${s.key}${s.key === "recent" && i.length > 1 ? " flag-offset" : ""}` : `status-badge collection-badge collection-${Ge(s.label)}${s.key === "recent" ? " status-recent" : ""}`}
           title=${s.label}
           aria-label=${s.label}
           role="img"
