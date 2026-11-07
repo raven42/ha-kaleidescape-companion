@@ -56,9 +56,12 @@ Movie status also exposes membership in New, Played or Paused even when those
 collection names are hidden; the personal label preference changes only naming.
 The Recently Added badge also reveals whether a movie has a linked purchase
 within the administrator-configured window; all Library readers see the badge.
-Movie purchase history and Journal editing controls are shown only to
-administrators in Advanced mode, including in dialogs opened from Journal.
-Backend authorization remains the enforcement boundary.
+Library list and version responses include a per-movie missing-metadata/artwork
+flag, which exposes the same classification already available through the
+reader-accessible filter. The corresponding warning overlay remains
+administrator-only. Movie purchase history and Journal editing controls are
+shown only to administrators in Advanced mode, including in dialogs opened from
+Journal. Backend authorization remains the enforcement boundary.
 
 Companion's HA configuration switches and sync buttons can be operated by users
 and automations allowed to control those entities by Home Assistant. They

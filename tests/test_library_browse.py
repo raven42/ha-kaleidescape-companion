@@ -790,6 +790,16 @@ class GroupedLibraryApiTest(unittest.IsolatedAsyncioTestCase):
         result = await self.call("library/versions", user=reader, **message)
         self.assertEqual(result["result"]["total"], 2)
         self.assertNotIn("group_purchase_details", result["result"])
+        reader_list = await self.call(
+            "library/list", user=reader, **self.scope, filters={"grouped": True}
+        )
+        self.assertTrue(reader_list["result"]["items"])
+        self.assertTrue(
+            all(
+                isinstance(row["missing_metadata_artwork"], bool)
+                for row in reader_list["result"]["items"]
+            )
+        )
         admin_result = await self.call("library/versions", user=self.admin, **message)
         self.assertIn("group_purchase_details", admin_result["result"])
         denied = await self.call(

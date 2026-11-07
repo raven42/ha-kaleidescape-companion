@@ -453,6 +453,7 @@ export interface LibraryEdit {
 }
 export interface LibraryTitle {
   scraper_conflict?: boolean;
+  missing_metadata_artwork?: boolean;
   ratings?: Pick<
     ProviderMetadata,
     "critic_score" | "audience_score" | "audience_rating" | "audience_votes"
@@ -499,6 +500,7 @@ export type LibrarySummary = Pick<
   | "is_watch_soon"
   | "is_recently_added"
   | "scraper_conflict"
+  | "missing_metadata_artwork"
   | "rating"
   | "purchased_on"
   | "title"

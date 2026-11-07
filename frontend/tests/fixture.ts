@@ -402,7 +402,12 @@ export class FixtureTransport implements Transport {
       const offset = Number(message.offset ?? 0);
       result = {
         preferences_key: this.preferencesKey,
-        items: rows.slice(offset, offset + 50),
+        items: rows.slice(offset, offset + 50).map((row) => ({
+          ...row,
+          missing_metadata_artwork: rows.some((item) =>
+            this.missingMetadataArtwork.has(item.id),
+          ),
+        })),
         total: rows.length,
         offset,
         has_more: rows.length > offset + 50,
@@ -585,7 +590,11 @@ export class FixtureTransport implements Transport {
           (!filters.scraper_conflict || !!row.scraper_conflict) &&
           (!filters.recently_added || row.is_recently_added) &&
           (!filters.missing_metadata_artwork ||
-            this.missingMetadataArtwork.has(row.id)) &&
+            this.libraryTitles.some(
+              (candidate) =>
+                this.groupKey(candidate) === this.groupKey(row) &&
+                this.missingMetadataArtwork.has(candidate.id),
+            )) &&
           (!filters.missing_purchase_information ||
             this.missingPurchaseInformation.has(row.id)) &&
           (!filters.query ||
@@ -658,6 +667,9 @@ export class FixtureTransport implements Transport {
                 ),
             ),
             is_recently_added: versions.some((row) => row.is_recently_added),
+            missing_metadata_artwork: versions.some((row) =>
+              this.missingMetadataArtwork.has(row.id),
+            ),
             formats: [
               ...new Set(
                 versions.flatMap(
@@ -723,7 +735,16 @@ export class FixtureTransport implements Transport {
       result = {
         preferences_key: this.preferencesKey,
         limit,
-        items: rows.slice(offset, offset + limit),
+        items: rows.slice(offset, offset + limit).map((row) => ({
+          ...row,
+          missing_metadata_artwork:
+            row.missing_metadata_artwork ??
+            this.libraryTitles.some(
+              (candidate) =>
+                this.groupKey(candidate) === this.groupKey(row) &&
+                this.missingMetadataArtwork.has(candidate.id),
+            ),
+        })),
         total: rows.length,
         offset,
         has_more: rows.length > offset + limit,

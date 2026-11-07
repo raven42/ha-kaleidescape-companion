@@ -8419,12 +8419,19 @@ const Y = [
     const t = Math.round(e / 60), i = Math.floor(t / 60);
     return i ? `${i}h ${t % 60}m` : `${t}m`;
   }
+  warningMessage(e) {
+    return this.scope?.permissions.edit ? [
+      ...e.missing_metadata_artwork ? ["Missing metadata or artwork"] : [],
+      ...e.scraper_conflict ? ["Scraper conflict: review a provider match"] : []
+    ].join("; ") : "";
+  }
   conflictIcon(e) {
-    return this.scope?.permissions.edit && e.scraper_conflict ? a`<span
+    const t = this.warningMessage(e);
+    return t ? a`<span
           class="scraper-conflict-icon"
           role="img"
-          aria-label="Scraper conflict"
-          title="Scraper conflict: review a provider match"
+          aria-label=${t}
+          title=${t}
           >⚠</span
         >` : l;
   }
@@ -8960,8 +8967,8 @@ const Y = [
                 ${s.map(
       (h) => a`<button
                       class=${`cover-tile${this.display.show_titles ? " has-title" : ""}${this.display.show_rating && h.rating ? " has-rating" : ""}`}
-                      title=${`${h.title}${h.year ? ` (${h.year})` : ""}`}
-                      aria-label=${`Details for ${h.title}${h.year ? ` (${h.year})` : ""}`}
+                      title=${`${h.title}${h.year ? ` (${h.year})` : ""}${this.warningMessage(h) ? `; ${this.warningMessage(h)}` : ""}`}
+                      aria-label=${`Details for ${h.title}${h.year ? ` (${h.year})` : ""}${this.warningMessage(h) ? `; ${this.warningMessage(h)}` : ""}`}
                       @click=${() => this.select(h)}
                     >
                       <div class="cover-image">${this.cover(h)}</div>

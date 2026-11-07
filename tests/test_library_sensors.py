@@ -260,6 +260,25 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
         summary = await self.summary()
         self.assertEqual(summary["missing_metadata"], 1)
         self.assertEqual(summary["missing_artwork"], 1)
+        all_movies = await self.repository.async_library_list(
+            library.SOURCE, {"grouped": True}
+        )
+        flags = {
+            item["title"]: item["missing_metadata_artwork"]
+            for item in all_movies["items"]
+        }
+        self.assertEqual(
+            flags,
+            {
+                library.ROWS[0]["title"]: True,
+                library.ROWS[1]["title"]: True,
+                "Complete Film": False,
+            },
+        )
+        conflict = next(
+            item for item in all_movies["items"] if item["title"] == "Complete Film"
+        )
+        self.assertTrue(conflict["scraper_conflict"])
         page = await self.repository.async_library_list(
             library.SOURCE, {"grouped": True, "missing_metadata_artwork": True}
         )
@@ -267,10 +286,14 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
             {item["title"] for item in page["items"]},
             {library.ROWS[0]["title"], library.ROWS[1]["title"]},
         )
+        self.assertTrue(all(item["missing_metadata_artwork"] for item in page["items"]))
         versions = await self.repository.async_library_list(
             library.SOURCE, {"missing_metadata_artwork": True}
         )
         self.assertEqual(versions["total"], 3)
+        self.assertTrue(
+            all(item["missing_metadata_artwork"] for item in versions["items"])
+        )
         with closing(sqlite3.connect(self.path)) as db, db:
             db.execute(
                 "UPDATE library SET enrichment=json_set(enrichment,"
@@ -281,6 +304,65 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(
             [item["title"] for item in page["items"]], [library.ROWS[1]["title"]]
+        )
+        all_movies = await self.repository.async_library_list(
+            library.SOURCE, {"grouped": True}
+        )
+        self.assertFalse(
+            next(
+                item
+                for item in all_movies["items"]
+                if item["title"] == library.ROWS[0]["title"]
+            )["missing_metadata_artwork"]
+        )
+
+    async def test_missing_warning_uses_data_across_all_available_versions(self):
+        await self.repository.async_metadata_sources({"metadata_tmdb_enabled": True})
+        await self.scan(collections={})
+        with closing(sqlite3.connect(self.path)) as db, db:
+            for handle, enrichment in (
+                ("fixture-a", {"tmdb": {"fetched_at": "2026-01-01T00:00:00+00:00"}}),
+                (
+                    "fixture-a2",
+                    {"unavailable_artwork": {"poster": True, "backdrop": True}},
+                ),
+            ):
+                db.execute(
+                    "UPDATE library SET enrichment=? "
+                    "WHERE source_id=? AND source_handle=?",
+                    (json.dumps(enrichment), library.SOURCE, handle),
+                )
+        for grouped in (True, False):
+            page = await self.repository.async_library_list(
+                library.SOURCE, {"grouped": grouped}
+            )
+            complete = [
+                item
+                for item in page["items"]
+                if item["title"] == library.ROWS[0]["title"]
+            ]
+            self.assertEqual(len(complete), 1 if grouped else 2)
+            self.assertTrue(
+                all(not item["missing_metadata_artwork"] for item in complete)
+            )
+            filtered = await self.repository.async_library_list(
+                library.SOURCE, {"grouped": grouped, "missing_metadata_artwork": True}
+            )
+            self.assertTrue(filtered["items"])
+            self.assertTrue(
+                all(item["missing_metadata_artwork"] for item in filtered["items"])
+            )
+            self.assertTrue(
+                all(
+                    item["title"] != library.ROWS[0]["title"]
+                    for item in filtered["items"]
+                )
+            )
+        versions = await self.repository.async_library_versions(
+            library.SOURCE, title_id(library.SOURCE, "fixture-a")
+        )
+        self.assertTrue(
+            all(not item["missing_metadata_artwork"] for item in versions["items"])
         )
 
     async def test_baseline_unique_groups_and_empty_catalog_are_not_initial_additions(

@@ -68,8 +68,8 @@ def record_additions(db, source, rows, seen):
     return batch, set(added)
 
 
-def completeness(db, source):
-    """Compute group-level missing data and conflict state for Library views."""
+def completeness(db, source, selected_groups=None):
+    """Compute missing data and conflicts for all or selected source groups."""
     sources = source_preferences(db)
     cached_images = {
         row[0] for row in db.execute("SELECT cache_key FROM library_artwork")
@@ -101,12 +101,20 @@ def completeness(db, source):
             for provider in ("tmdb", "kaleidescape", "reviewed")
         ),
     ]
+    group_clause = (
+        " AND source_group IN (SELECT value FROM json_each(?))"
+        if selected_groups is not None
+        else ""
+    )
+    arguments = (
+        (source,) if selected_groups is None else (source, json.dumps(selected_groups))
+    )
     for row in db.execute(
         "SELECT source_group,title,artwork_key,json_object("
         + ",".join(projected)
         + ") enrichment FROM library "
-        "WHERE source_id=? AND available=1 AND purchase_match_pending=0",
-        (source,),
+        "WHERE source_id=? AND available=1 AND purchase_match_pending=0" + group_clause,
+        arguments,
     ):
         enrichment = json.loads(row["enrichment"])
         titles[row["source_group"]] = min(

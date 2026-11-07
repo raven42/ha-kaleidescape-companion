@@ -458,13 +458,16 @@ operators and single-quoted values.
 
 **Missing metadata/artwork** selects movies missing an expected provider's
 metadata or an expected cover or backdrop. It uses the same grouped availability
-rules as the missing-metadata and missing-artwork sensors. The filter saves with
-other personal browsing preferences. Administrators also have **Missing purchase
+rules as the missing-metadata and missing-artwork sensors. List rows and cover
+tiles show the warning icon to administrators for those same movies, even when
+there is no scraper match conflict. A conflict also shows the warning; its
+accessible label identifies both causes when they occur together. The warning is
+independent of the optional status/format badges. The filter saves with other
+personal browsing preferences. Administrators also have **Missing purchase
 information**, using the same group-level date/paid/retail completeness rules as
 its sensor. It adds no warning badge and omits movies explicitly marked
 **Purchase information unavailable**. A role change clears this private filter
-from reader requests. Covers and List view separately indicate unresolved
-scraper match conflicts. See
+from reader requests. See
 [manual resolution](design-metadata.md#review-a-single-title).
 
 The filter panes use consistent inner heading padding, and their sticky action

@@ -586,12 +586,14 @@ def library_list(db, source, filters, excluded="", cache=None, weeks=2, today=No
             )
         values.append(json.dumps(selected))
     # Validate all facets before doing full-catalog completeness or people work.
+    missing_groups = None
     if missing:
         from .summary import completeness
 
         metadata_groups, artwork_groups, _, _, _ = completeness(db, source)
+        missing_groups = metadata_groups | artwork_groups
         clauses.append("t.source_group IN (SELECT value FROM json_each(?))")
-        values.append(json.dumps(sorted(metadata_groups | artwork_groups)))
+        values.append(json.dumps(sorted(missing_groups)))
     if missing_purchases:
         from .purchases import missing_information
 
@@ -618,6 +620,7 @@ def library_list(db, source, filters, excluded="", cache=None, weeks=2, today=No
             cache,
             weeks,
             today,
+            missing_groups,
         )
     total = db.execute(f"SELECT count(*) FROM {join} WHERE {where}", values).fetchone()[
         0
@@ -642,6 +645,14 @@ def library_list(db, source, filters, excluded="", cache=None, weeks=2, today=No
         db, source, [row["id"] for row in rows[:limit]], (), by_id=True
     )
     shared = group_metadata(db, source, [row["source_group"] for row in rows[:limit]])
+    if rows and missing_groups is None:
+        from .summary import completeness
+
+        metadata_groups, artwork_groups, _, _, _ = completeness(
+            db, source, list({row["source_group"] for row in rows[:limit]})
+        )
+        missing_groups = metadata_groups | artwork_groups
+    missing_groups = missing_groups or set()
     items = []
     byte_size = 0
     for row in rows[:limit]:
@@ -649,6 +660,7 @@ def library_list(db, source, filters, excluded="", cache=None, weeks=2, today=No
             row, memberships.get(row["id"], []), shared.get(row["source_group"])
         )
         item["movie_statuses"] = movie_statuses(all_statuses.get(row["id"], []))
+        item["missing_metadata_artwork"] = row["source_group"] in missing_groups
         byte_size += len(json.dumps(item, ensure_ascii=True).encode())
         if byte_size > MAX_PAGE_BYTES:
             raise JournalError(
@@ -759,6 +771,7 @@ def grouped_page(
     cache=None,
     weeks=2,
     today=None,
+    missing_groups=None,
 ):
     """Filter per version, group before pagination, and summarize all versions."""
     join = "library t JOIN library_sources s ON s.id=t.source_id"
@@ -819,6 +832,13 @@ def grouped_page(
         items = []
     else:
         groups_on_page = [row["source_group"] for row in page]
+        if missing_groups is None:
+            from .summary import completeness
+
+            metadata_groups, artwork_groups, _, _, _ = completeness(
+                db, source, groups_on_page
+            )
+            missing_groups = metadata_groups | artwork_groups
         memberships = memberships_for(db, source, groups_on_page, hidden)
         all_statuses = memberships_for(db, source, groups_on_page, ())
         representatives = {}
@@ -891,6 +911,7 @@ def grouped_page(
                     "is_watch_soon": bool(group["is_watch_soon"]),
                     "is_recently_added": bool(group["is_recently_added"]),
                     "scraper_conflict": bool(group["scraper_conflict"]),
+                    "missing_metadata_artwork": group["source_group"] in missing_groups,
                     "year": group["year"],
                     "edition": representative["edition"],
                     "rating": representative["rating"]
@@ -973,6 +994,7 @@ def library_versions(
 ):
     """An opaque version key selects its source-defined group in this source only."""
     from .purchases import group_details, history_for
+    from .summary import completeness
 
     if (
         not isinstance(title, str)
@@ -1018,6 +1040,8 @@ def library_versions(
         by_id=True,
     )
     shared = group_metadata(db, source, [group]).get(group)
+    metadata_groups, artwork_groups, _, _, _ = completeness(db, source, [group])
+    missing_metadata_artwork = group in metadata_groups or group in artwork_groups
     status_memberships = memberships_for(db, source, [group], ())
     group_statuses = movie_statuses(
         [name for names in status_memberships.values() for name in names]
@@ -1033,6 +1057,7 @@ def library_versions(
                 {
                     **public_title(row, memberships.get(row["id"], []), shared),
                     "movie_statuses": group_statuses,
+                    "missing_metadata_artwork": missing_metadata_artwork,
                     **(
                         {"purchase_history": history_for(db, row["id"])}
                         if admin

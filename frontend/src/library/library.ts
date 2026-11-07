@@ -1726,13 +1726,23 @@ export class KaleidescapeLibrary extends LitElement {
     const hours = Math.floor(minutes / 60);
     return hours ? `${hours}h ${minutes % 60}m` : `${minutes}m`;
   }
+  private warningMessage(item: LibrarySummary) {
+    if (!this.scope?.permissions.edit) return "";
+    return [
+      ...(item.missing_metadata_artwork ? ["Missing metadata or artwork"] : []),
+      ...(item.scraper_conflict
+        ? ["Scraper conflict: review a provider match"]
+        : []),
+    ].join("; ");
+  }
   private conflictIcon(item: LibrarySummary) {
-    return this.scope?.permissions.edit && item.scraper_conflict
+    const issues = this.warningMessage(item);
+    return issues
       ? html`<span
           class="scraper-conflict-icon"
           role="img"
-          aria-label="Scraper conflict"
-          title="Scraper conflict: review a provider match"
+          aria-label=${issues}
+          title=${issues}
           >⚠</span
         >`
       : nothing;
@@ -2419,8 +2429,8 @@ export class KaleidescapeLibrary extends LitElement {
                   (item) =>
                     html`<button
                       class=${`cover-tile${this.display.show_titles ? " has-title" : ""}${this.display.show_rating && item.rating ? " has-rating" : ""}`}
-                      title=${`${item.title}${item.year ? ` (${item.year})` : ""}`}
-                      aria-label=${`Details for ${item.title}${item.year ? ` (${item.year})` : ""}`}
+                      title=${`${item.title}${item.year ? ` (${item.year})` : ""}${this.warningMessage(item) ? `; ${this.warningMessage(item)}` : ""}`}
+                      aria-label=${`Details for ${item.title}${item.year ? ` (${item.year})` : ""}${this.warningMessage(item) ? `; ${this.warningMessage(item)}` : ""}`}
                       @click=${() => this.select(item)}
                     >
                       <div class="cover-image">${this.cover(item)}</div>

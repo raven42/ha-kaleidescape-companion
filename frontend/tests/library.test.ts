@@ -1063,6 +1063,16 @@ it("overlays scraper conflicts independently of badges and persists the missing-
   button("Refresh cached data").click();
   await flush();
   expect(root().querySelector("tbody .scraper-conflict-icon")).toBeTruthy();
+  expect(
+    root()
+      .querySelector("tbody .scraper-conflict-icon")!
+      .getAttribute("aria-label"),
+  ).toContain("Missing metadata or artwork");
+  expect(
+    root()
+      .querySelector("tbody .scraper-conflict-icon")!
+      .getAttribute("aria-label"),
+  ).toContain("Scraper conflict");
   button("Options").click();
   await flush();
   root()
@@ -1093,6 +1103,61 @@ it("overlays scraper conflicts independently of badges and persists the missing-
   expect(transport.uiPreferences.missing_metadata_artwork).toBe(false);
 });
 
+it("shows a missing-data warning without a scraper conflict across grouped versions", async () => {
+  transport.libraryTitles.push(
+    libraryTitle({ id: "d".repeat(64), edition: "HD" }),
+  );
+  transport.libraryGroups.set("a".repeat(64), "fictional-work");
+  transport.libraryGroups.set("d".repeat(64), "fictional-work");
+  transport.missingMetadataArtwork.add("d".repeat(64));
+  button("Refresh cached data").click();
+  await flush();
+  const warning = title("Voyage to Europa")
+    .closest("tr")!
+    .querySelector(".scraper-conflict-icon")!;
+  expect(warning.getAttribute("aria-label")).toBe(
+    "Missing metadata or artwork",
+  );
+  button("Options").click();
+  await flush();
+  root()
+    .querySelector<HTMLInputElement>(
+      'input[name="library_view"][value="covers"]',
+    )!
+    .click();
+  await flush();
+  root().querySelector<HTMLInputElement>('[name="show_badges"]')!.click();
+  await flush();
+  expect(
+    root().querySelector(
+      '.cover-tile > .scraper-conflict-icon[aria-label="Missing metadata or artwork"]',
+    ),
+  ).toBeTruthy();
+  const cover = root().querySelector<HTMLButtonElement>(
+    '.cover-tile[aria-label*="Voyage to Europa"]',
+  )!;
+  expect(cover.getAttribute("aria-label")).toContain(
+    "Missing metadata or artwork",
+  );
+  expect(cover.title).toContain("Missing metadata or artwork");
+  modalClose(root()).click();
+  button("Filters").click();
+  await flush();
+  root()
+    .querySelector<HTMLInputElement>('[name="missing_metadata_artwork"]')!
+    .click();
+  button("Apply filters").click();
+  await flush();
+  expect(root().querySelectorAll(".cover-tile")).toHaveLength(1);
+  expect(
+    root().querySelector(".cover-tile .scraper-conflict-icon"),
+  ).toBeTruthy();
+  transport.missingMetadataArtwork.clear();
+  button("Clear Filter").click();
+  await flush();
+  expect(root().querySelector(".scraper-conflict-icon")).toBeNull();
+});
+
 it("filters missing purchase information without adding a warning", async () => {
   transport.missingPurchaseInformation.add(transport.libraryTitles[0].id);
   button("Filters").click();
@@ -1112,6 +1177,7 @@ it("filters missing purchase information without adding a warning", async () => 
 
 it("hides conflict overlays and system-button options from standard users", async () => {
   transport.libraryTitles[0].scraper_conflict = true;
+  transport.missingMetadataArtwork.add(transport.libraryTitles[0].id);
   element.scope = {
     ...info,
     library_enabled: true,
@@ -1121,6 +1187,20 @@ it("hides conflict overlays and system-button options from standard users", asyn
   expect(root().querySelector(".scraper-conflict-icon")).toBeNull();
   button("Options").click();
   await flush();
+  root()
+    .querySelector<HTMLInputElement>(
+      'input[name="library_view"][value="covers"]',
+    )!
+    .click();
+  await flush();
+  expect(root().querySelector(".scraper-conflict-icon")).toBeNull();
+  expect(
+    root()
+      .querySelector<HTMLButtonElement>(
+        '.cover-tile[aria-label*="Voyage to Europa"]',
+      )!
+      .getAttribute("aria-label"),
+  ).not.toContain("Missing metadata");
   expect(root().querySelector('[name="show_system_buttons"]')).toBeNull();
 });
 
