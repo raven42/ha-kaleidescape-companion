@@ -488,6 +488,11 @@ export const libraryStyles = css`
   .has-backdrop .movie-heading {
     color: var(--primary-text-color);
   }
+  .has-backdrop .movie-intro .detail-link {
+    text-shadow:
+      0 1px 3px #000c,
+      0 0 6px #0009;
+  }
   @media (max-width: 600px) {
     .movie-dialog {
       width: calc(100% - 16px);
@@ -662,12 +667,16 @@ export const libraryStyles = css`
   }
   .movie-purchases {
     margin-top: 12px;
-    font-size: 11px;
+    font-size: 10.5px;
     overflow-wrap: anywhere;
   }
   .movie-record-details {
     margin-top: 12px;
-    font-size: 11px;
+    font-size: 10.5px;
+  }
+  .movie-record-details > summary,
+  .movie-purchases > summary {
+    font-size: 12px;
   }
   .movie-purchases .purchase-edit-link {
     font-size: inherit;
@@ -685,6 +694,19 @@ export const libraryStyles = css`
   }
   .version-format-badges {
     margin-top: 10px;
+  }
+  .detail-badges.version-format-badges .format-badge {
+    min-height: 22px;
+    font-size: 10px;
+    padding: 1px 4px;
+  }
+  .version-format-badges .dolby-symbol {
+    width: 14px;
+    height: 10px;
+  }
+  .version-format-badges .hdr-symbol {
+    width: 16px;
+    height: 10px;
   }
   @container movie-modal (max-width: 600px) {
     .movie-ratings {
@@ -798,9 +820,6 @@ export const libraryStyles = css`
     .movie-summary,
     .movie-description {
       font-size: 13px;
-    }
-    .movie-record-details {
-      font-size: 12px;
     }
     .movie-credits dd {
       line-height: 1.5;

@@ -23,7 +23,7 @@ export class LibraryJournal extends LitElement {
     css`
       :host {
         display: flow-root;
-        font-size: 11px;
+        font-size: 10.5px;
       }
       :host([hidden]) {
         display: none;
@@ -37,6 +37,7 @@ export class LibraryJournal extends LitElement {
       summary {
         cursor: pointer;
         font-weight: 600;
+        font-size: 12px;
       }
       .summary-edit {
         display: none;
@@ -52,6 +53,9 @@ export class LibraryJournal extends LitElement {
       ul {
         padding: 0;
         list-style: none;
+      }
+      details ul {
+        font-size: inherit;
       }
       li {
         padding: 0.5rem 0;
