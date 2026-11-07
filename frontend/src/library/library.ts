@@ -17,6 +17,7 @@ import type {
   LibraryTitle,
   LibrarySummary,
   LibraryVersionPage,
+  GroupPurchaseRecord,
 } from "../core/api";
 import { styles } from "../ui/styles";
 import { libraryStyles } from "./styles";
@@ -35,9 +36,15 @@ import {
   collectionKind,
   collectionSymbol,
   renderCollectionBadge,
+  movieStatusLabel,
+  movieStatuses,
 } from "./badges";
+import type { MovieStatusLabels } from "./badges";
 import "./collections";
+import "./library-journal";
 import "./title-edit";
+import "../ui/purchase-repair";
+import type { KaleidescapePurchaseRepair } from "../ui/purchase-repair";
 import type { TitleEdit } from "./title-edit";
 import type { LibraryCriterion } from "./criteria";
 
@@ -72,7 +79,10 @@ const STATUS: Record<string, string> = {
   unwatched: "Unwatched",
   in_progress: "In progress",
   unknown: "Unknown",
+  none: "No status",
 };
+const statusCollection = (value: string) =>
+  ["new", "played", "paused"].includes(value.trim().toLowerCase());
 
 /** Dashboard layout is local to the card, never written to user preferences. */
 export interface DashboardLibrary {
@@ -115,6 +125,8 @@ export class KaleidescapeLibrary extends LitElement {
     openTitleId: { attribute: false },
     openCriterion: { attribute: false },
     dashboard: { attribute: false },
+    dialogOnly: { type: Boolean },
+    advanced: { type: Boolean },
   };
   static styles = [styles, libraryStyles];
   client?: JournalClient;
@@ -122,6 +134,8 @@ export class KaleidescapeLibrary extends LitElement {
   openTitleId?: string;
   openCriterion?: LibraryCriterion;
   dashboard?: DashboardLibrary;
+  dialogOnly = false;
+  advanced = false;
   private boundClient?: JournalClient;
   private bound = "";
   private generation = 0;
@@ -147,6 +161,10 @@ export class KaleidescapeLibrary extends LitElement {
   private scrapeLocked = false;
   private artworkLocked = false;
   private editLocked = false;
+  private activePurchaseEditor?: EventTarget;
+  private purchaseRepair?: GroupPurchaseRecord;
+  private purchaseRepairBusy = false;
+  private purchaseManagerOpen = false;
   private castLimit = 8;
   private get detailsLocked() {
     return (
@@ -154,7 +172,8 @@ export class KaleidescapeLibrary extends LitElement {
       this.controlLocked ||
       this.scrapeLocked ||
       this.artworkLocked ||
-      this.editLocked
+      this.editLocked ||
+      !!this.purchaseRepair
     );
   }
   private checkingCollection = false;
@@ -164,13 +183,22 @@ export class KaleidescapeLibrary extends LitElement {
       this.collectionLocked ||
       this.scrapeLocked ||
       this.artworkLocked ||
-      this.checkingCollection
+      this.checkingCollection ||
+      this.purchaseRepairBusy
     )
       return false;
     return (
-      this.renderRoot
-        .querySelector<TitleEdit>("kaleidescape-title-edit")
-        ?.confirmNavigation() ?? true
+      [
+        ...this.renderRoot.querySelectorAll<TitleEdit>(
+          "kaleidescape-title-edit",
+        ),
+      ].every((editor) => editor.confirmNavigation()) &&
+      (this.renderRoot
+        .querySelector<KaleidescapePurchaseRepair>(
+          "kaleidescape-purchase-repair",
+        )
+        ?.confirmNavigation() ??
+        true)
     );
   }
 
@@ -189,6 +217,7 @@ export class KaleidescapeLibrary extends LitElement {
   private fuzzySearch = true;
   private mode: "list" | "covers" = "list";
   private coverSize = 150;
+  private movieStatusLabels: MovieStatusLabels = "modern";
   private display = {
     show_titles: true,
     show_format: true,
@@ -244,8 +273,44 @@ export class KaleidescapeLibrary extends LitElement {
       this.boundClient = this.client;
       this.bound = key;
       if (this.client && this.scope?.library_enabled) {
-        void this.initializePreferences();
-        void this.refreshStatus();
+        if (this.dialogOnly) {
+          this.preferencesReady = true;
+          const generation = this.generation;
+          this.preferences = new PreferenceStore(
+            this.client,
+            this.scope,
+            false,
+            (error) => {
+              if (
+                generation === this.generation &&
+                error &&
+                errorCode(error) === "unauthorized"
+              )
+                this.fail(error);
+            },
+          );
+          void this.preferences
+            .load()
+            .then((saved) => {
+              if (generation !== this.generation) return;
+              this.movieStatusLabels =
+                saved.movie_status_labels === "kaleidescape"
+                  ? "kaleidescape"
+                  : "modern";
+              this.requestUpdate();
+            })
+            .catch((error) => {
+              if (
+                generation === this.generation &&
+                errorCode(error) === "unauthorized"
+              )
+                this.fail(error);
+            });
+          if (this.openTitleId) void this.openLinkedTitle(this.openTitleId);
+        } else {
+          void this.initializePreferences();
+          void this.refreshStatus();
+        }
       }
       return;
     }
@@ -312,6 +377,7 @@ export class KaleidescapeLibrary extends LitElement {
             ),
             missing_metadata_artwork: false,
             missing_purchase_information: false,
+            recently_added: false,
           }
         : saved;
       if (this.dashboard) {
@@ -325,6 +391,10 @@ export class KaleidescapeLibrary extends LitElement {
       this.mode = values.view as "list" | "covers";
       this.entriesPerPage = values.page_size as number | "all";
       this.coverSize = values.cover_size as number;
+      this.movieStatusLabels =
+        values.movie_status_labels === "kaleidescape"
+          ? "kaleidescape"
+          : "modern";
       this.castLimit = Number.isInteger(values.cast_limit)
         ? (values.cast_limit as number)
         : 8;
@@ -344,8 +414,39 @@ export class KaleidescapeLibrary extends LitElement {
           "status",
           "missing_metadata_artwork",
           "missing_purchase_information",
+          "recently_added",
         ].map((key) => [key, values[key]]),
       ) as Filters;
+      const savedCollections = Array.isArray(this.applied.collection)
+        ? this.applied.collection
+        : [];
+      const migratedStatuses = savedCollections
+        .map(
+          (name) =>
+            (
+              ({
+                new: "unwatched",
+                played: "watched",
+                paused: "in_progress",
+              }) as Record<string, string>
+            )[name.toLowerCase()],
+        )
+        .filter((value): value is string => !!value);
+      if (migratedStatuses.length) {
+        this.applied.collection = savedCollections.filter(
+          (name) => !statusCollection(name),
+        );
+        this.applied.status = [
+          ...new Set([
+            ...(Array.isArray(this.applied.status) ? this.applied.status : []),
+            ...migratedStatuses,
+          ]),
+        ];
+        this.preferences?.set({
+          collection: this.applied.collection,
+          status: this.applied.status,
+        });
+      }
       if (Array.isArray(this.applied.genre))
         this.applied.genre = [
           ...new Set(
@@ -380,13 +481,15 @@ export class KaleidescapeLibrary extends LitElement {
           "status",
           "missing_metadata_artwork",
           "missing_purchase_information",
+          "recently_added",
         ].map((key) => [
           key,
           this.applied[key] ??
             (key === "query"
               ? ""
               : key === "missing_metadata_artwork" ||
-                  key === "missing_purchase_information"
+                  key === "missing_purchase_information" ||
+                  key === "recently_added"
                 ? false
                 : []),
         ]),
@@ -405,6 +508,16 @@ export class KaleidescapeLibrary extends LitElement {
     this.purchaseReload = false;
     this.purchaseError = "";
     this.purchaseDetailsOpen = false;
+    if (
+      this.purchaseRepair ||
+      this.activePurchaseEditor ||
+      this.purchaseManagerOpen
+    )
+      this.repairLock(false);
+    this.purchaseManagerOpen = false;
+    this.activePurchaseEditor = undefined;
+    this.purchaseRepair = undefined;
+    this.purchaseRepairBusy = false;
     const details =
       this.renderRoot.querySelector<HTMLDetailsElement>(".purchase-details");
     if (details) details.open = false;
@@ -433,6 +546,7 @@ export class KaleidescapeLibrary extends LitElement {
     this.covers.cache.dispose();
     this.covers = new CoverQueue();
     this.fuzzySearch = true;
+    this.movieStatusLabels = "modern";
     this.castLimit = 8;
     this.display = {
       show_titles: true,
@@ -572,6 +686,14 @@ export class KaleidescapeLibrary extends LitElement {
       );
     }
     this.error = errorMessage(error);
+    if (this.dialogOnly && !this.selected)
+      this.dispatchEvent(
+        new CustomEvent("title-dialog-error", {
+          detail: this.error,
+          bubbles: true,
+          composed: true,
+        }),
+      );
     this.requestUpdate();
   }
   private async load(offset = 0, preserveSelection = false) {
@@ -769,13 +891,15 @@ export class KaleidescapeLibrary extends LitElement {
       const result = await this.client.libraryVersions(this.scope, id);
       if (generation !== this.generation || request !== this.versionRequest)
         return;
-      const row = result.items[0];
-      if (!row) return;
+      const row =
+        result.items.find((item) => item.id === id) ?? result.items[0];
+      if (!row) throw new Error("Library title is unavailable.");
       this.selected = row;
       this.versions = result;
       this.activeVersion = row;
       this.requestUpdate();
       await this.openDialog("title-dialog");
+      if (this.dialogOnly) void this.refreshStatus();
     } catch (error) {
       if (generation === this.generation && request === this.versionRequest)
         this.fail(error);
@@ -957,6 +1081,17 @@ export class KaleidescapeLibrary extends LitElement {
   }
   private fromDetails(key: string, value: string) {
     if (this.detailsLocked || this.checkingCollection) return;
+    if (this.dialogOnly) {
+      this.dispatchEvent(
+        new CustomEvent("browse-library", {
+          detail: { key, value },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      this.closeDialog("title-dialog");
+      return;
+    }
     clearTimeout(this.searchTimer);
     this.filters = {
       query: key === "query" ? value : "",
@@ -1065,12 +1200,18 @@ export class KaleidescapeLibrary extends LitElement {
           a.localeCompare(b),
       );
     }
-    return choices.filter((value) =>
-      matches(
-        key === "collection" ? collectionLabel(value) : value,
-        this.facetSearch,
-        this.fuzzySearch,
-      ),
+    return choices.filter(
+      (value) =>
+        (key !== "collection" || !statusCollection(value)) &&
+        matches(
+          key === "collection"
+            ? collectionLabel(value)
+            : key === "status"
+              ? movieStatusLabel(value, this.movieStatusLabels)
+              : value,
+          this.facetSearch,
+          this.fuzzySearch,
+        ),
     );
   }
 
@@ -1270,6 +1411,25 @@ export class KaleidescapeLibrary extends LitElement {
           ${(["list", "covers"] as const).map((mode) => html`<label class="check"><input type="radio" name="library_view" value=${mode} .checked=${this.mode === mode} @change=${() => this.setMode(mode)} />${mode === "list" ? "List" : "Cover"}</label>`)}
         </fieldset>
         <label
+          >Movie status labels<select
+            name="movie_status_labels"
+            .value=${this.movieStatusLabels}
+            @change=${(event: Event) => {
+              this.movieStatusLabels =
+                (event.target as HTMLSelectElement).value === "kaleidescape"
+                  ? "kaleidescape"
+                  : "modern";
+              this.preferences?.set({
+                movie_status_labels: this.movieStatusLabels,
+              });
+              this.requestUpdate();
+            }}
+          >
+            <option value="modern">Modern format</option>
+            <option value="kaleidescape">Kaleidescape format</option>
+          </select></label
+        >
+        <label
           >Visible cast members<input
             type="number"
             name="cast_limit"
@@ -1355,7 +1515,8 @@ export class KaleidescapeLibrary extends LitElement {
                 synced: ${this.date(this.info.collections_synced_at)}
               </p>
               <p>
-                Source “Played” maps to Watched; “Paused” maps to In progress.
+                Source “New”, “Played” and “Paused” map to Unwatched, Watched
+                and In progress.
               </p>
             </details>`
           : nothing
@@ -1400,6 +1561,19 @@ export class KaleidescapeLibrary extends LitElement {
       ${this.page?.truncated_facets.length ? html`<p class="muted">Each category shows up to 500 known names.</p>` : nothing}
       <label class="check"
         ><input
+          name="recently_added"
+          type="checkbox"
+          .checked=${!!this.draft.recently_added}
+          @change=${(event: Event) => {
+            this.draft.recently_added = (
+              event.target as HTMLInputElement
+            ).checked;
+            this.requestUpdate();
+          }}
+        />Recently added</label
+      >
+      <label class="check"
+        ><input
           name="missing_metadata_artwork"
           type="checkbox"
           .checked=${!!this.draft.missing_metadata_artwork}
@@ -1430,7 +1604,7 @@ export class KaleidescapeLibrary extends LitElement {
       }
       <div class="facet-groups">
         ${[
-          ["status", "Watched status", "status"],
+          ["status", "Movie status", "status"],
           ...FILTERS.filter(([key]) => key !== "actor" && key !== "director"),
         ].map(([key, label, facet]) => {
           const selected = (this.draft[key] ?? []) as string[];
@@ -1459,7 +1633,7 @@ export class KaleidescapeLibrary extends LitElement {
                               };
                               this.requestUpdate();
                             }}
-                          />${key === "status" ? renderCollectionBadge(STATUS[value]) : key === "rating" ? renderRatingBadge(value) : key === "collection" ? renderCollectionBadge(value) : key === "format" && formatBadges({ formats: [value] }).length === 1 ? renderFormatBadges({ formats: [value] }) : value}</label
+                          />${key === "status" ? renderCollectionBadge(movieStatusLabel(value, this.movieStatusLabels)) : key === "rating" ? renderRatingBadge(value) : key === "collection" ? renderCollectionBadge(value) : key === "format" && formatBadges({ formats: [value] }).length === 1 ? renderFormatBadges({ formats: [value] }) : value}</label
                         >`,
                     )
                   : html`<p class="muted">No matching options</p>`
@@ -1507,6 +1681,7 @@ export class KaleidescapeLibrary extends LitElement {
               !!this.draft.missing_metadata_artwork;
             next.missing_purchase_information =
               !!this.draft.missing_purchase_information;
+            next.recently_added = !!this.draft.recently_added;
             this.applied = next;
             this.saveFilters();
             this.closeDialog("filter-dialog");
@@ -1585,11 +1760,172 @@ export class KaleidescapeLibrary extends LitElement {
       }}
     ></kaleidescape-title-scrape>`;
   }
+  private renderMovieJournal(row: LibraryTitle) {
+    return html`<kaleidescape-library-journal
+      class="movie-journal"
+      .client=${this.client}
+      .scope=${this.scope}
+      .titleId=${row.id}
+      .editable=${this.advanced && !!this.scope?.permissions.edit}
+      .unified=${true}
+    ></kaleidescape-library-journal>`;
+  }
+  private repairLock(locked: boolean) {
+    this.dispatchEvent(
+      new CustomEvent("control-lock", {
+        detail: locked,
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+  private async refreshPurchaseDetails() {
+    const offset = this.versions?.offset ?? 0;
+    this.purchaseRepair = undefined;
+    this.purchaseRepairBusy = false;
+    this.repairLock(this.purchaseManagerOpen);
+    this.versions = undefined;
+    this.requestUpdate();
+    await this.load(this.page?.offset ?? 0, true);
+    await this.loadVersions(offset);
+    void this.refreshStatus();
+  }
+  private renderManualPurchaseEditor(
+    titleId: string,
+    dateOnly = false,
+    optionsOnly = false,
+  ) {
+    return html`<kaleidescape-title-edit
+      .client=${this.client}
+      .scope=${this.scope}
+      .versionId=${titleId}
+      .purchaseOnly=${true}
+      .dateOnly=${dateOnly}
+      .optionsOnly=${optionsOnly}
+      .blocked=${this.controlLocked || this.collectionLocked || this.scrapeLocked || this.artworkLocked || !!this.purchaseRepair}
+      @edit-lock=${(event: CustomEvent<boolean>) => {
+        if (event.detail) {
+          this.activePurchaseEditor = event.currentTarget ?? undefined;
+          this.editLocked = true;
+          this.repairLock(true);
+          this.requestUpdate();
+        } else if (this.activePurchaseEditor === event.currentTarget) {
+          this.activePurchaseEditor = undefined;
+          this.editLocked = false;
+          this.repairLock(!!this.purchaseRepair || this.purchaseManagerOpen);
+          this.requestUpdate();
+        }
+      }}
+      @metadata-changed=${() => void this.refreshPurchaseDetails()}
+    ></kaleidescape-title-edit>`;
+  }
+  private renderMoviePurchases() {
+    if (!this.advanced || !this.scope?.permissions.edit) return nothing;
+    const details = this.versions?.group_purchase_details;
+    if (!details) return nothing;
+    return html`<details class="movie-purchases">
+      <summary>
+        Purchase details
+        <button
+          type="button"
+          class="link summary-edit"
+          @click=${async (event: Event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            this.purchaseManagerOpen = true;
+            this.repairLock(true);
+            this.requestUpdate();
+            await this.updateComplete;
+            this.renderRoot
+              .querySelector<HTMLDialogElement>("#purchase-manager")
+              ?.showModal();
+          }}
+        >
+          edit
+        </button>
+      </summary>
+      ${details.records.map(
+        (purchase) =>
+          html`<p>
+            ${purchase.purchased_on ? this.date(purchase.purchased_on) : "Date not imported"}
+            · ${purchase.title}<br />
+            Paid: ${purchase.purchase_price ?? "Unknown"} · Retail:
+            ${purchase.retail_price ?? "Unknown"}<br />
+            Order:
+            ${purchase.order_id ?? "Unknown"}${purchase.href ? html`<br />Store reference: ${purchase.href}` : nothing}
+          </p>`,
+      )}
+      ${details.manual.map(
+        (item) =>
+          html`<p>
+            ${item.purchased_on ? html`Purchased ${this.date(item.purchased_on)}<br />` : nothing}
+            ${!item.date_only ? html`Paid: ${item.purchase_price ?? "Unknown"} · Retail: ${item.retail_price ?? "Unknown"}<br />` : nothing}
+            ${!item.editable ? html`<small>This saved entry is unavailable for editing.</small>` : nothing}
+          </p>`,
+      )}
+      ${!details.records.length && !details.manual.length ? html`<p>No purchase details saved.</p>` : nothing}
+      ${details.truncated ? html`<p class="warning">Additional purchase details are available in Database.</p>` : nothing}
+    </details>`;
+  }
+  private renderPurchaseManager(row: LibraryTitle) {
+    const details = this.versions?.group_purchase_details;
+    if (
+      !this.purchaseManagerOpen ||
+      !this.scope?.permissions.edit ||
+      !this.advanced
+    )
+      return nothing;
+    const close = (event?: Event) => {
+      event?.preventDefault();
+      if (!this.confirmNavigation()) return;
+      this.purchaseManagerOpen = false;
+      this.repairLock(false);
+      this.requestUpdate();
+    };
+    return html`<dialog
+      id="purchase-manager"
+      class="database-dialog"
+      aria-label="Edit purchase details"
+      @cancel=${close}
+    >
+      <div class="card-head">
+        <h2>Edit purchase details</h2>
+        ${closeButton(close)}
+      </div>
+      ${details?.records.map(
+        (purchase) =>
+          html`<p>
+            ${purchase.purchased_on ? this.date(purchase.purchased_on) : "Date not imported"}
+            · ${purchase.title} · ${purchase.order_id ?? "No order ID"}
+            <button
+              type="button"
+              class="link"
+              aria-label=${`Edit purchase ${purchase.title}${purchase.purchased_on ? `, ${purchase.purchased_on}` : ""}`}
+              ?disabled=${!!this.purchaseRepair || this.editLocked}
+              @click=${() => {
+                this.purchaseRepair = purchase;
+                this.repairLock(true);
+                this.requestUpdate();
+              }}
+            >
+              edit
+            </button>
+          </p>`,
+      )}
+      ${details?.manual.map((item) => html`<p>Saved purchase details ${item.purchased_on ? this.date(item.purchased_on) : ""}: ${item.editable ? this.renderManualPurchaseEditor(item.library_id, item.date_only) : "Unavailable for editing"}</p>`)}
+      ${details && !details.records.length && !details.manual.length ? html`<p>Manual purchase details: ${this.renderManualPurchaseEditor(row.id)}</p>` : nothing}
+      ${details && (details.records.length || details.manual.length) && !details.manual.some((item) => item.editable) ? html`<p>Purchase information status: ${this.renderManualPurchaseEditor(row.id, false, true)}</p>` : nothing}
+      <div class="dialog-footer">
+        <button type="button" @click=${close}>Done</button>
+      </div>
+    </dialog>`;
+  }
   private renderTitleDialog() {
     const group = this.selected;
     const row = this.activeVersion;
     const multiple = (this.versions?.total ?? group?.version_count ?? 1) > 1;
     const admin = this.scope?.permissions.edit;
+    const unified = true;
     const locked = this.detailsLocked || this.checkingCollection;
     const ratings = group?.content_ratings ?? [
       ...new Set(
@@ -1604,233 +1940,272 @@ export class KaleidescapeLibrary extends LitElement {
         ? row.backdrop_key
         : row?.enrichment?.tmdb?.backdrop_key;
     return html`<dialog
-      id="title-dialog"
-      @cancel=${(event: Event) => {
-        event.preventDefault();
-        this.closeDialog("title-dialog");
-      }}
-      @click=${dismissBackdrop}
-      class=${`database-dialog library-dialog movie-dialog inset-dialog${backdrop ? " has-backdrop" : ""}`}
-      aria-labelledby="library-title"
-      @close=${() => {
-        this.selected = undefined;
-        this.clearVersions();
-        this.controlLocked = false;
-        this.requestUpdate();
-      }}
-    >
-      ${
-        group
-          ? html`
-              <div class="movie-close">
-                ${closeButton(() => this.closeDialog("title-dialog"))}
-              </div>
-              <div class="movie-intro">
-                ${backdrop && row ? html`<div class="movie-hero" aria-hidden="true">${this.cover(row, backdrop)}</div>` : nothing}
-                <div class="movie-heading">
-                  <h2 id="library-title">
-                    ${this.detailLink("query", group.title)}
-                  </h2>
+        id="title-dialog"
+        @cancel=${(event: Event) => {
+          event.preventDefault();
+          this.closeDialog("title-dialog");
+        }}
+        @click=${dismissBackdrop}
+        class=${`database-dialog library-dialog movie-dialog inset-dialog${backdrop ? " has-backdrop" : ""}`}
+        aria-labelledby="library-title"
+        @close=${() => {
+          this.selected = undefined;
+          this.clearVersions();
+          this.controlLocked = false;
+          if (this.dialogOnly)
+            this.dispatchEvent(
+              new CustomEvent("title-dialog-closed", {
+                bubbles: true,
+                composed: true,
+              }),
+            );
+          this.requestUpdate();
+        }}
+      >
+        ${
+          group
+            ? html`
+                <div class="movie-close">
+                  ${closeButton(() => this.closeDialog("title-dialog"))}
                 </div>
-                <p class="movie-summary">
-                  ${(row?.year ?? group.year) ? this.detailLink("year", String(row?.year ?? group.year)) : "Year unknown"}
-                  ·
-                  ${this.compactRuntime(row?.duration_seconds ?? group.duration_seconds)}
-                  ${row?.genres.length ? html` · ${row.genres.map((genre, index) => html`${index ? ", " : ""}${this.detailLink("genre", genre)}`)}` : nothing}
-                </p>
-                <div class="detail-badges movie-heading-badges">
-                  ${renderFormatBadges(multiple ? group : (row ?? group), false, (value) => this.fromDetails("format", value), locked)}
-                  ${ratings.map((rating) => renderRatingBadge(rating, (value) => this.fromDetails("rating", value), locked))}
-                  <button
-                    class=${`movie-status collection-badge collection-${collectionKind(STATUS[row?.watched_status ?? group.watched_status])}`}
-                    ?disabled=${locked}
-                    @click=${() => this.fromDetails("status", row?.watched_status ?? group.watched_status)}
-                  >
-                    ${collectionSymbol(STATUS[row?.watched_status ?? group.watched_status])}
-                    <span
-                      >${STATUS[row?.watched_status ?? group.watched_status]}</span
-                    >
-                  </button>
-                  ${renderStatusBadges(group, false, ["watched", "progress", "watch-soon"])}
-                  ${group.collections.map((collection) =>
-                    renderCollectionBadge(
-                      collection,
-                      () => this.fromDetails("collection", collection),
-                      locked,
-                    ),
-                  )}
+                <div class="movie-intro">
+                  ${backdrop && row ? html`<div class="movie-hero" aria-hidden="true">${this.cover(row, backdrop)}</div>` : nothing}
+                  <div class="movie-heading">
+                    <h2 id="library-title">
+                      ${this.detailLink("query", group.title)}
+                    </h2>
+                  </div>
+                  <p class="movie-summary">
+                    ${(row?.year ?? group.year) ? this.detailLink("year", String(row?.year ?? group.year)) : "Year unknown"}
+                    ·
+                    ${this.compactRuntime(row?.duration_seconds ?? group.duration_seconds)}
+                    ${row?.genres.length ? html` · ${row.genres.map((genre, index) => html`${index ? ", " : ""}${this.detailLink("genre", genre)}`)}` : nothing}
+                  </p>
+                  <div class="detail-badges movie-heading-badges">
+                    ${renderFormatBadges(multiple ? group : (row ?? group), false, (value) => this.fromDetails("format", value), locked)}
+                    ${ratings.map((rating) => renderRatingBadge(rating, (value) => this.fromDetails("rating", value), locked))}
+                    ${(movieStatuses(group).length
+                      ? movieStatuses(group)
+                      : [
+                          group.watched_status === "unknown"
+                            ? "unknown"
+                            : "none",
+                        ]
+                    ).map(
+                      (status) =>
+                        html`<button
+                          class=${`movie-status collection-badge collection-${collectionKind(movieStatusLabel(status, this.movieStatusLabels))}`}
+                          ?disabled=${locked}
+                          @click=${() => this.fromDetails("status", status)}
+                        >
+                          ${collectionSymbol(movieStatusLabel(status, this.movieStatusLabels))}
+                          <span
+                            >${movieStatusLabel(status, this.movieStatusLabels)}</span
+                          >
+                        </button>`,
+                    )}
+                    ${renderStatusBadges(group, false, ["watched", "progress", "watch-soon", "unwatched"], this.movieStatusLabels)}
+                    ${group.collections
+                      .filter((collection) => !statusCollection(collection))
+                      .map((collection) =>
+                        renderCollectionBadge(
+                          collection,
+                          () => this.fromDetails("collection", collection),
+                          locked,
+                        ),
+                      )}
+                  </div>
+                  ${
+                    row
+                      ? html`<kaleidescape-device-controls
+                          .client=${this.client}
+                          .scope=${this.scope}
+                          .versionId=${row.id}
+                          mode="movie"
+                          @control-lock=${(event: CustomEvent<boolean>) => {
+                            if (event.detail !== this.controlLocked) {
+                              this.controlLocked = event.detail;
+                              this.requestUpdate();
+                            }
+                          }}
+                          >${this.renderCollectionAction(row)}${
+                            admin
+                              ? html`<kaleidescape-title-edit
+                                    slot="collection"
+                                    .client=${this.client}
+                                    .scope=${this.scope}
+                                    .versionId=${row.id}
+                                    .blocked=${this.controlLocked || this.collectionLocked || this.scrapeLocked || this.artworkLocked}
+                                    @edit-lock=${(
+                                      event: CustomEvent<boolean>,
+                                    ) => {
+                                      if (event.detail !== this.editLocked) {
+                                        this.editLocked = event.detail;
+                                        this.requestUpdate();
+                                      }
+                                    }}
+                                    @metadata-changed=${async () => {
+                                      this.editLocked = false;
+                                      this.versions = undefined;
+                                      await this.load(
+                                        this.page?.offset ?? 0,
+                                        true,
+                                      );
+                                      await this.loadVersions();
+                                      void this.refreshStatus();
+                                    }}
+                                  ></kaleidescape-title-edit>
+                                  ${this.renderScrapeAction(row)}`
+                              : nothing
+                          }${renderRatings(row)}</kaleidescape-device-controls
+                        >`
+                      : nothing
+                  }
+                  ${this.versionsLoading ? html`<p role="status">Loading individual versions…</p>` : nothing}
+                  ${
+                    this.versionsError
+                      ? html`<p class="error" role="alert">
+                            ${this.versionsError}
+                          </p>
+                          <button
+                            @click=${async () => {
+                              await this.load(this.page?.offset ?? 0, true);
+                              void this.loadVersions();
+                            }}
+                          >
+                            Refresh title details
+                          </button>`
+                      : nothing
+                  }
+                  ${
+                    this.versions && this.versions.total > 1
+                      ? html`
+                          <div
+                            class="page-tabs version-tabs"
+                            role="tablist"
+                            aria-label="Title versions"
+                            @keydown=${this.versionKey}
+                          >
+                            ${this.versions.items.map(
+                              (item, index) =>
+                                html`<button
+                                  ?disabled=${this.detailsLocked}
+                                  role="tab"
+                                  id=${`version-${index}`}
+                                  aria-controls="version-details"
+                                  tabindex=${item.id === row?.id ? 0 : -1}
+                                  aria-selected=${item.id === row?.id}
+                                  @click=${() => {
+                                    this.activeVersion = item;
+                                    this.requestUpdate();
+                                  }}
+                                >
+                                  Version ${this.versions!.offset + index + 1}
+                                </button>`,
+                            )}
+                          </div>
+                          ${this.versions.total > 50 ? html`<div class="actions"><button ?disabled=${!this.versions.offset || this.versionsLoading || this.detailsLocked} @click=${() => this.loadVersions(Math.max(0, this.versions!.offset - 50))}>Previous versions</button><button ?disabled=${!this.versions.has_more || this.versionsLoading || this.detailsLocked} @click=${() => this.loadVersions(this.versions!.offset + 50)}>Next versions</button></div>` : nothing}
+                        `
+                      : nothing
+                  }
                 </div>
                 ${
                   row
-                    ? html`<kaleidescape-device-controls
-                        .client=${this.client}
-                        .scope=${this.scope}
-                        .versionId=${row.id}
-                        mode="movie"
-                        @control-lock=${(event: CustomEvent<boolean>) => {
-                          if (event.detail !== this.controlLocked) {
-                            this.controlLocked = event.detail;
-                            this.requestUpdate();
-                          }
-                        }}
-                        >${this.renderCollectionAction(row)}${
-                          admin
-                            ? html`<kaleidescape-title-edit
-                                  slot="collection"
-                                  .client=${this.client}
-                                  .scope=${this.scope}
-                                  .versionId=${row.id}
-                                  .blocked=${this.controlLocked || this.collectionLocked || this.scrapeLocked || this.artworkLocked}
-                                  @edit-lock=${(
-                                    event: CustomEvent<boolean>,
-                                  ) => {
-                                    if (event.detail !== this.editLocked) {
-                                      this.editLocked = event.detail;
-                                      this.requestUpdate();
-                                    }
-                                  }}
-                                  @metadata-changed=${async () => {
-                                    this.editLocked = false;
-                                    this.versions = undefined;
-                                    await this.load(
-                                      this.page?.offset ?? 0,
-                                      true,
-                                    );
-                                    await this.loadVersions();
-                                    void this.refreshStatus();
-                                  }}
-                                ></kaleidescape-title-edit>
-                                ${this.renderScrapeAction(row)}`
-                            : nothing
-                        }${renderRatings(row)}</kaleidescape-device-controls
-                      >`
-                    : nothing
-                }
-                ${this.versionsLoading ? html`<p role="status">Loading individual versions…</p>` : nothing}
-                ${
-                  this.versionsError
-                    ? html`<p class="error" role="alert">
-                          ${this.versionsError}
-                        </p>
-                        <button
-                          @click=${async () => {
-                            await this.load(this.page?.offset ?? 0, true);
-                            void this.loadVersions();
-                          }}
-                        >
-                          Refresh title details
-                        </button>`
-                    : nothing
-                }
-                ${
-                  this.versions && this.versions.total > 1
-                    ? html`
-                        <div
-                          class="page-tabs version-tabs"
-                          role="tablist"
-                          aria-label="Title versions"
-                          @keydown=${this.versionKey}
-                        >
-                          ${this.versions.items.map(
-                            (item, index) =>
-                              html`<button
-                                ?disabled=${this.detailsLocked}
-                                role="tab"
-                                id=${`version-${index}`}
-                                aria-controls="version-details"
-                                tabindex=${item.id === row?.id ? 0 : -1}
-                                aria-selected=${item.id === row?.id}
-                                @click=${() => {
-                                  this.activeVersion = item;
-                                  this.requestUpdate();
-                                }}
-                              >
-                                Version ${this.versions!.offset + index + 1}
-                              </button>`,
-                          )}
+                    ? html`<div
+                        class="playback-layout movie-body"
+                        id="version-details"
+                        role=${(this.versions?.total ?? 1) > 1 ? "tabpanel" : "region"}
+                        aria-label=${(this.versions?.total ?? 1) === 1 ? "Version details" : nothing}
+                        aria-labelledby=${(this.versions?.total ?? 1) > 1 ? `version-${this.versions?.items.findIndex((item) => item.id === row.id) ?? 0}` : nothing}
+                      >
+                        <div class="movie-aside">
+                          <div class="cover movie-poster">
+                            ${this.cover(row)}
+                          </div>
+                          ${multiple ? html`<div class="detail-badges version-format-badges">${renderFormatBadges(row, false, (value) => this.fromDetails("format", value), locked)}</div>` : nothing}
+                          <details class="movie-record-details">
+                            <summary>Library details</summary>
+                            <p class="muted">
+                              ${!unified && this.advanced && admin && row.purchased_on ? html`Purchased ${this.date(row.purchased_on)}<br />` : nothing}First
+                              detected ${this.date(row.first_seen)}.
+                            </p>
+                            ${!unified ? this.renderMoviePurchases() : nothing}
+                          </details>
+                          ${unified ? this.renderMovieJournal(row) : nothing}
+                          ${unified ? this.renderMoviePurchases() : nothing}
                         </div>
-                        ${this.versions.total > 50 ? html`<div class="actions"><button ?disabled=${!this.versions.offset || this.versionsLoading || this.detailsLocked} @click=${() => this.loadVersions(Math.max(0, this.versions!.offset - 50))}>Previous versions</button><button ?disabled=${!this.versions.has_more || this.versionsLoading || this.detailsLocked} @click=${() => this.loadVersions(this.versions!.offset + 50)}>Next versions</button></div>` : nothing}
-                      `
-                    : nothing
-                }
-              </div>
-              ${
-                row
-                  ? html`<div
-                      class="playback-layout movie-body"
-                      id="version-details"
-                      role=${(this.versions?.total ?? 1) > 1 ? "tabpanel" : "region"}
-                      aria-label=${(this.versions?.total ?? 1) === 1 ? "Version details" : nothing}
-                      aria-labelledby=${(this.versions?.total ?? 1) > 1 ? `version-${this.versions?.items.findIndex((item) => item.id === row.id) ?? 0}` : nothing}
-                    >
-                      <div class="movie-aside">
-                        <div class="cover movie-poster">${this.cover(row)}</div>
-                        ${multiple ? html`<div class="detail-badges version-format-badges">${renderFormatBadges(row, false, (value) => this.fromDetails("format", value), locked)}</div>` : nothing}
-                        <details class="movie-record-details">
-                          <summary>Library details</summary>
-                          <p class="muted">
-                            ${row.purchased_on ? html`Purchased ${this.date(row.purchased_on)}<br />` : nothing}First
-                            detected ${this.date(row.first_seen)}.
+                        <div class="movie-description">
+                          <h3>Synopsis</h3>
+                          <p class="movie-synopsis">
+                            ${row.synopsis || "No synopsis available."}
                           </p>
+                          <hr />
+                          <dl class="movie-credits">
+                            ${[
+                              ["Directors", row.directors, "query"],
+                              [
+                                "Cast",
+                                row.actors.slice(0, this.castLimit),
+                                "query",
+                              ],
+                              ["Genres", row.genres, "genre"],
+                              [
+                                "Collections",
+                                row.collections.filter(
+                                  (name) => !statusCollection(name),
+                                ),
+                                "collection",
+                              ],
+                            ].map(([label, values, key]) =>
+                              (values as string[]).length
+                                ? html`<div>
+                                    <dt>${label}</dt>
+                                    <dd>
+                                      ${(values as string[]).map((value, index, all) => html`<span class="credit-name">${this.detailLink(key as string, value, (label === "Collections" ? collectionLabel(value) : value) + (index < all.length - 1 ? "," : ""))}</span>${index < all.length - 1 ? " " : ""}`)}
+                                    </dd>
+                                  </div>`
+                                : nothing,
+                            )}
+                          </dl>
+                          ${metadataDetails(row, (name, label) => this.detailLink("query", name, label), this.castLimit)}
                           ${
-                            admin && row.purchase_history?.length
-                              ? html`<details>
-                                  <summary>
-                                    Purchase history · Administrator
-                                  </summary>
-                                  ${row.purchase_history.map((purchase) => html`<p>${purchase.purchased_on ? this.date(purchase.purchased_on) : "Date not imported"} · ${purchase.title}<br />Paid: ${purchase.purchase_price ?? "Unknown"} · Retail: ${purchase.retail_price ?? "Unknown"}<br />Order: ${purchase.order_id ?? "Unknown"}${purchase.href ? html`<br />Store reference: ${purchase.href}` : nothing}</p>`)}
-                                </details>`
+                            !unified && !this.dialogOnly
+                              ? this.renderMovieJournal(row)
                               : nothing
                           }
-                        </details>
-                      </div>
-                      <div class="movie-description">
-                        <h3>Synopsis</h3>
-                        <p class="movie-synopsis">
-                          ${row.synopsis || "No synopsis available."}
-                        </p>
-                        <hr />
-                        <dl class="movie-credits">
-                          ${[
-                            ["Directors", row.directors, "query"],
-                            [
-                              "Cast",
-                              row.actors.slice(0, this.castLimit),
-                              "query",
-                            ],
-                            ["Genres", row.genres, "genre"],
-                            ["Collections", row.collections, "collection"],
-                          ].map(([label, values, key]) =>
-                            (values as string[]).length
-                              ? html`<div>
-                                  <dt>${label}</dt>
-                                  <dd>
-                                    ${(values as string[]).map((value, index, all) => html`<span class="credit-name">${this.detailLink(key as string, value, (label === "Collections" ? collectionLabel(value) : value) + (index < all.length - 1 ? "," : ""))}</span>${index < all.length - 1 ? " " : ""}`)}
-                                  </dd>
-                                </div>`
-                              : nothing,
-                          )}
-                        </dl>
-                        ${metadataDetails(row, (name, label) => this.detailLink("query", name, label), this.castLimit)}
-                        <p>
-                          <button
-                            class="link"
-                            ?disabled=${this.detailsLocked}
-                            @click=${() => this.dispatchEvent(new CustomEvent("open-title-journal", { detail: { id: row.id, title: row.title }, bubbles: true, composed: true }))}
-                          >
-                            View journal entries for this movie
-                          </button>
-                        </p>
-                      </div>
-                    </div>`
-                  : nothing
-              }
-            `
+                        </div>
+                      </div>`
+                    : nothing
+                }
+              `
+            : nothing
+        }
+      </dialog>
+      ${row ? this.renderPurchaseManager(row) : nothing}
+      ${
+        this.purchaseRepair && this.advanced && this.scope?.permissions.edit
+          ? html`<kaleidescape-purchase-repair
+              .client=${this.client}
+              .scope=${this.scope}
+              .row=${this.purchaseRepair}
+              .token=${this.purchaseRepair.token}
+              @repair-cancel=${() => {
+                this.purchaseRepair = undefined;
+                this.repairLock(this.purchaseManagerOpen);
+                this.requestUpdate();
+              }}
+              @repair-busy=${(event: CustomEvent<boolean>) => {
+                this.purchaseRepairBusy = event.detail;
+              }}
+              @repair-complete=${() => void this.refreshPurchaseDetails()}
+              @access-denied=${() => this.fail(new ApiError("unauthorized"))}
+            ></kaleidescape-purchase-repair>`
           : nothing
-      }
-    </dialog>`;
+      }`;
   }
   protected render() {
+    if (this.dialogOnly)
+      return html`${this.error ? html`<p role="alert" class="error">${this.error}</p>` : nothing}${this.renderTitleDialog()}`;
     if (!this.preferencesReady)
       return html`<p role="status">
           ${this.error || "Loading Library preferences…"}
@@ -1854,7 +2229,8 @@ export class KaleidescapeLibrary extends LitElement {
       (count, key) =>
         count + ((this.applied[key] as string[] | undefined)?.length ?? 0),
       Number(!!this.applied.missing_metadata_artwork) +
-        Number(!!this.applied.missing_purchase_information),
+        Number(!!this.applied.missing_purchase_information) +
+        Number(!!this.applied.recently_added),
     );
     return html`<section
       class="library-page"
@@ -2048,7 +2424,7 @@ export class KaleidescapeLibrary extends LitElement {
                       @click=${() => this.select(item)}
                     >
                       <div class="cover-image">${this.cover(item)}</div>
-                      ${this.display.show_badges ? html`<div class="cover-flags">${renderStatusBadges(item, true)}</div>` : nothing}
+                      ${this.display.show_badges ? html`<div class="cover-flags">${renderStatusBadges(item, true, [], this.movieStatusLabels)}</div>` : nothing}
                       ${this.display.show_format ? html`<div class="cover-formats">${renderFormatBadges(item, true)}</div>` : nothing}
                       ${this.display.show_rating ? html`<div class="cover-rating">${renderRatingBadge(item.rating)}</div>` : nothing}
                       ${this.conflictIcon(item)}
@@ -2139,7 +2515,7 @@ export class KaleidescapeLibrary extends LitElement {
                               class="library-summary-line"
                               title=${this.format(item)}
                             >
-                              ${this.display.show_badges ? renderStatusBadges(item) : nothing}
+                              ${this.display.show_badges ? renderStatusBadges(item, false, [], this.movieStatusLabels) : nothing}
                               ${this.display.show_format ? renderFormatBadges(item) : nothing}
                               ${this.display.show_format && !formatBadges(item).length ? html`<small>${this.format(item)}</small>` : nothing}
                               ${(item.version_count ?? 1) > 1 ? html`<small>${counted(item.version_count!, "version")}</small>` : nothing}
@@ -2149,12 +2525,22 @@ export class KaleidescapeLibrary extends LitElement {
                           <td>
                             <span
                               class="collection-cell"
-                              title=${item.collections.map(collectionLabel).join(", ")}
-                              >${item.collections.map(collectionLabel).join(", ") || "—"}</span
+                              title=${item.collections
+                                .filter((name) => !statusCollection(name))
+                                .map(collectionLabel)
+                                .join(", ")}
+                              >${
+                                item.collections
+                                  .filter((name) => !statusCollection(name))
+                                  .map(collectionLabel)
+                                  .join(", ") || "—"
+                              }</span
                             >
                           </td>
                           <td>${this.runtime(item)}</td>
-                          <td>${STATUS[item.watched_status]}</td>
+                          <td>
+                            ${(movieStatuses(item).length ? movieStatuses(item) : [item.watched_status === "unknown" ? "unknown" : "none"]).map((status) => movieStatusLabel(status, this.movieStatusLabels)).join(", ")}
+                          </td>
                           <td
                             title=${item.purchased_on ? "Imported purchase date" : "First detected by Companion"}
                           >
@@ -2180,9 +2566,12 @@ export class KaleidescapeLibrary extends LitElement {
         >
           <span>
             ${String(this.applied.query ?? "").trim() || activeFilters ? html`<strong class="match-count">Matches ${this.page?.total ?? 0}</strong> · ` : nothing}
-            Total ${this.info?.group_count ?? 0} · Unwatched
-            ${this.info?.status_counts?.unwatched ?? 0} · Watched
-            ${this.info?.status_counts?.watched ?? 0} · Paused
+            Total ${this.info?.group_count ?? 0} ·
+            ${movieStatusLabel("unwatched", this.movieStatusLabels)}
+            ${this.info?.status_counts?.unwatched ?? 0} ·
+            ${movieStatusLabel("watched", this.movieStatusLabels)}
+            ${this.info?.status_counts?.watched ?? 0} ·
+            ${movieStatusLabel("in_progress", this.movieStatusLabels)}
             ${this.info?.status_counts?.in_progress ?? 0}
           </span>
           ${admin && this.info ? html`<span class="footer-admin">${counted(this.info.collection_count, "collection")}${this.info.artwork_enabled ? ` · Artwork ${((this.info.artwork_bytes ?? 0) / 1048576).toFixed(1)} MiB` : ""}${this.display.show_library_cost ? ` · Library cost ${this.purchaseAmount("library_cost")}` : ""} · Synced ${this.date(this.info.last_synced_at)}</span>` : nothing}

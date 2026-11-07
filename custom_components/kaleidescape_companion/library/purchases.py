@@ -303,6 +303,47 @@ def history_for(db, title_id):
     ]
 
 
+def group_details(db, source, group):
+    """Project group-owned purchase evidence without inferring an edition."""
+    from ..core.maintenance import row_token
+
+    invoices = db.execute(
+        "SELECT p.* FROM library t JOIN purchase_records p ON p.library_id=t.id "
+        "WHERE t.source_id=? AND t.source_group=? AND t.purchase_match_pending=0 "
+        "ORDER BY p.purchased_on IS NULL,p.purchased_on,p.id LIMIT ?",
+        (source, group, MAX_HISTORY + 1),
+    ).fetchall()
+    manual = db.execute(
+        "SELECT t.id,t.purchased_on,t.purchase_price,t.retail_price,t.available,"
+        "EXISTS(SELECT 1 FROM purchase_records p WHERE p.library_id=t.id) has_invoices "
+        "FROM library t WHERE t.source_id=? AND t.source_group=? "
+        "AND t.purchase_match_pending=0 AND (t.purchased_on IS NOT NULL OR "
+        "t.purchase_price IS NOT NULL OR t.retail_price IS NOT NULL) "
+        "ORDER BY t.purchased_on IS NULL,t.purchased_on,t.id LIMIT ?",
+        (source, group, MAX_HISTORY + 1),
+    ).fetchall()
+    return {
+        "records": [
+            {**dict(row), "token": row_token(row)} for row in invoices[:MAX_HISTORY]
+        ],
+        "manual": [
+            {
+                "library_id": row["id"],
+                "purchased_on": row["purchased_on"],
+                "purchase_price": None
+                if row["has_invoices"]
+                else row["purchase_price"],
+                "retail_price": None if row["has_invoices"] else row["retail_price"],
+                "editable": bool(row["available"]),
+                "date_only": bool(row["has_invoices"]),
+            }
+            for row in manual[:MAX_HISTORY]
+            if row["purchased_on"] or not row["has_invoices"]
+        ],
+        "truncated": len(invoices) > MAX_HISTORY or len(manual) > MAX_HISTORY,
+    }
+
+
 def index(db):
     if not db.execute(
         "SELECT 1 FROM sqlite_master WHERE type='table' AND name='purchase_records'"

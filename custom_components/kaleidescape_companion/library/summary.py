@@ -203,12 +203,22 @@ def library_summary(db, source):
             coalesce(sum(status_rank=2),0),coalesce(sum(status_rank=1),0) FROM (
             SELECT t.source_group,min(CASE ({STATUS_SQL})
                 WHEN 'in_progress' THEN 0 WHEN 'watched' THEN 1
-                WHEN 'unknown' THEN 2 ELSE 3 END) status_rank
+                WHEN 'unknown' THEN 2 WHEN 'unwatched' THEN 3 ELSE 4 END) status_rank
             FROM library t JOIN library_sources s ON s.id=t.source_id
             WHERE t.source_id=? AND t.available=1 GROUP BY t.source_group)""",
         (source,),
     ).fetchone()
     status_known = info["collections_synced_at"] is not None and not counts[2]
+    membership_counts = dict(
+        db.execute(
+            "SELECT lower(m.collection),count(DISTINCT t.source_group) "
+            "FROM library t JOIN library_memberships m ON m.title_id=t.id "
+            "WHERE t.source_id=? AND t.available=1 "
+            "AND lower(m.collection) IN ('new','played') "
+            "GROUP BY lower(m.collection)",
+            (source,),
+        )
+    )
     movies = json.loads(info["recently_added_movies"])
     missing_metadata, missing, conflicts, stamps, titles = completeness(db, source)
     missing_purchases = missing_information(db, source)
@@ -248,8 +258,8 @@ def library_summary(db, source):
         "scraper_conflicts_movies": conflict_names,
         "scraper_conflicts_truncated": len(conflict_names) < len(conflicts),
         "total_movies": counts[0],
-        "unwatched_movies": counts[1] if status_known else None,
-        "watched_movies": counts[3] if status_known else None,
+        "unwatched_movies": membership_counts.get("new", 0) if status_known else None,
+        "watched_movies": membership_counts.get("played", 0) if status_known else None,
         "unknown_movies": counts[2],
         "collections_synced_at": info["collections_synced_at"],
         "last_library_sync": info["last_synced_at"],

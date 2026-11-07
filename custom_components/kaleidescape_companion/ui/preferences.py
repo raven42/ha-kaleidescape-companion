@@ -23,6 +23,7 @@ LIBRARY_DEFAULTS = {
     "show_titles": True,
     "show_format": True,
     "show_badges": True,
+    "movie_status_labels": "modern",
     "show_rating": False,
     "show_library_cost": False,
     "cast_limit": 8,
@@ -41,6 +42,7 @@ LIBRARY_DEFAULTS = {
     "status": [],
     "missing_metadata_artwork": False,
     "missing_purchase_information": False,
+    "recently_added": False,
 }
 SORTS = {"name", "year", "collection", "length", "watched", "added", "random"}
 
@@ -81,6 +83,8 @@ def validate_library(patch, previous=None):
     values.pop("show_system_buttons", None)
     if values["view"] not in ("list", "covers") or values["sort"] not in tuple(SORTS):
         raise invalid("Invalid Library view/sort")
+    if values["movie_status_labels"] not in ("modern", "kaleidescape"):
+        raise invalid("Choose Kaleidescape or Modern movie status labels")
     seed = values["random_seed"]
     if not isinstance(seed, str) or (seed and not re.fullmatch(r"[a-f0-9]{32}", seed)):
         raise invalid("Invalid Library shuffle seed")
@@ -99,6 +103,7 @@ def validate_library(patch, previous=None):
             "show_library_cost",
             "missing_metadata_artwork",
             "missing_purchase_information",
+            "recently_added",
         )
     ):
         raise invalid("Invalid display toggle")
@@ -137,7 +142,13 @@ def validate_library(patch, previous=None):
         for value in values["year"]
     ):
         raise invalid("Invalid year filter")
-    if set(values["status"]) - {"watched", "unwatched", "in_progress", "unknown"}:
+    if set(values["status"]) - {
+        "watched",
+        "unwatched",
+        "in_progress",
+        "unknown",
+        "none",
+    }:
         raise invalid("Invalid watched filter")
     if len(json.dumps(values).encode()) > 16384:
         raise invalid("UI settings exceed 16 KiB")
@@ -212,7 +223,12 @@ def validate_interface(patch, previous=None):
     return values
 
 
-JOURNAL_DEFAULTS = {"view": "list", "calendar_size": 180, "calendar_fit": False}
+JOURNAL_DEFAULTS = {
+    "view": "list",
+    "calendar_size": 180,
+    "calendar_fit": False,
+    "movie_details": "full",
+}
 
 
 def validate_journal(patch, previous=None):
@@ -221,6 +237,8 @@ def validate_journal(patch, previous=None):
     values = {**JOURNAL_DEFAULTS, **(previous or {}), **patch}
     if values["view"] not in ("list", "calendar"):
         raise invalid("Choose List or Calendar")
+    if values["movie_details"] not in ("full", "compact"):
+        raise invalid("Choose Full or Compact movie details")
     size = values["calendar_size"]
     if type(size) is not int or not 60 <= size <= 320:
         raise invalid("Choose a calendar size between 60 and 320 pixels")

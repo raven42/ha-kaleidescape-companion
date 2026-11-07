@@ -10,6 +10,7 @@ import {
   collectionLabel,
   formatBadges,
   highestVideoFormat,
+  movieStatusLabel,
   statusBadges,
 } from "../src/library/badges";
 import { FixtureTransport, info, libraryTitle } from "./fixture";
@@ -459,7 +460,7 @@ it("renders known format badges and named status flags in both views", async () 
   expect(collectionKind("New")).toBe("new");
   expect(
     root.querySelector(".library-table .collection-cell")?.textContent,
-  ).toContain("New");
+  ).not.toContain("New");
   expect(
     root.querySelector('.library-summary-line [aria-label="Favorite"]'),
   ).toBeTruthy();
@@ -554,7 +555,7 @@ it("does not revive stale failed writes, and offers latest-value retries", async
 
 it("keeps Recently Added and Favorite independent of source progress", () => {
   for (const [status, expected] of [
-    ["unwatched", null],
+    ["unwatched", "unwatched"],
     ["in_progress", "progress"],
     ["watched", "watched"],
     ["unknown", null],
@@ -571,9 +572,9 @@ it("keeps Recently Added and Favorite independent of source progress", () => {
     ]);
     expect(title.is_recently_added).toBe(true);
   }
-  expect(statusBadges(libraryTitle({ watched_status: "unwatched" }))).toEqual(
-    [],
-  );
+  expect(
+    statusBadges(libraryTitle({ watched_status: "unwatched" }))[0].key,
+  ).toBe("unwatched");
   for (const [formats, expected] of [
     [["SD"], "SD"],
     [["SD", "HD"], "HD"],
@@ -588,6 +589,34 @@ it("keeps Recently Added and Favorite independent of source progress", () => {
   ).toBeUndefined();
 });
 
+it("only changes the names of collection-derived movie statuses", () => {
+  for (const [status, modern, kaleidescape] of [
+    ["unwatched", "Unwatched", "New"],
+    ["watched", "Watched", "Played"],
+    ["in_progress", "In progress", "Paused"],
+  ] as const) {
+    const row = libraryTitle({ watched_status: status });
+    expect(movieStatusLabel(status, "modern")).toBe(modern);
+    expect(movieStatusLabel(status, "kaleidescape")).toBe(kaleidescape);
+    expect(statusBadges(row, "modern")[0].label).toBe(modern);
+    expect(statusBadges(row, "kaleidescape")[0].label).toBe(kaleidescape);
+  }
+  expect(
+    statusBadges(libraryTitle({ watched_status: "none", collections: [] })),
+  ).toEqual([]);
+  const multiple = libraryTitle({
+    movie_statuses: ["unwatched", "watched", "in_progress"],
+  });
+  expect(statusBadges(multiple, "modern").map((badge) => badge.label)).toEqual([
+    "In progress",
+    "Watched",
+    "Unwatched",
+  ]);
+  expect(
+    statusBadges(multiple, "kaleidescape").map((badge) => badge.label),
+  ).toEqual(["Paused", "Played", "New"]);
+});
+
 it("shows a Watch Soon clock in the status corner for the WatchSoon collection", () => {
   for (const collection of ["WatchSoon", "Watch Soon", "watch-soon"]) {
     const item = libraryTitle({
@@ -598,6 +627,7 @@ it("shows a Watch Soon clock in the status corner for the WatchSoon collection",
     });
     expect(statusBadges(item).map((badge) => badge.key)).toEqual([
       "watch-soon",
+      "unwatched",
       "recent",
       "favorite",
     ]);
@@ -618,7 +648,7 @@ it("shows a Watch Soon clock in the status corner for the WatchSoon collection",
         watched_status: "unwatched",
       }),
     ),
-  ).toEqual([]);
+  ).toMatchObject([{ key: "unwatched" }]);
 });
 it("saves Options toggles immediately and restores them after remount", async () => {
   const transport = new FixtureTransport();
@@ -725,7 +755,7 @@ it("shows primary filters without actor or director lookup", async () => {
     (node) => node.textContent?.trim(),
   );
   expect(legends).toEqual([
-    "Watched status",
+    "Movie status",
     "Collection",
     "Rating",
     "Genre",

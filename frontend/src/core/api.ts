@@ -301,6 +301,25 @@ export interface LibraryPurchase {
   order_id: string | null;
   href: string | null;
 }
+export interface GroupPurchaseRecord extends LibraryPurchase {
+  imported_at: string;
+  library_id: string | null;
+  issue: string | null;
+  token: string;
+}
+export interface GroupManualPurchase {
+  library_id: string;
+  purchased_on: string | null;
+  purchase_price: string | null;
+  retail_price: string | null;
+  editable: boolean;
+  date_only: boolean;
+}
+export interface GroupPurchaseDetails {
+  records: GroupPurchaseRecord[];
+  manual: GroupManualPurchase[];
+  truncated: boolean;
+}
 export interface ProviderMetadata {
   provider: string;
   provider_id: string;
@@ -430,6 +449,7 @@ export interface LibraryEdit {
   snapshot: string;
   values: Record<string, string | string[] | number | boolean | null>;
   version_count: number;
+  has_invoices: boolean;
 }
 export interface LibraryTitle {
   scraper_conflict?: boolean;
@@ -458,7 +478,8 @@ export interface LibraryTitle {
   last_seen: string;
   metadata_synced_at: string | null;
   artwork_key: string | null;
-  watched_status: "watched" | "unwatched" | "in_progress" | "unknown";
+  watched_status: "watched" | "unwatched" | "in_progress" | "unknown" | "none";
+  movie_statuses?: ("watched" | "unwatched" | "in_progress")[];
   collections: string[];
   actors: string[];
   directors: string[];
@@ -492,6 +513,7 @@ export type LibrarySummary = Pick<
   | "metadata_synced_at"
   | "artwork_key"
   | "watched_status"
+  | "movie_statuses"
   | "collections"
   | "year"
   | "edition"
@@ -510,6 +532,7 @@ export interface LibraryPage {
   truncated_facets: string[];
 }
 export interface LibraryVersionPage {
+  group_purchase_details?: GroupPurchaseDetails;
   preferences_key?: string;
   items: LibraryTitle[];
   total: number;

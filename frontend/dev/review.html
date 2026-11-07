@@ -80,6 +80,26 @@
         }),
       );
     }
+    // Give the movie-dialog comparison two linked fictional viewings and a
+    // purchase, including one viewing linked to another version in the group.
+    if (transport.libraryTitles.some((title) => title.id === "a".repeat(64))) {
+      transport.records[0].title = "Voyage to Europa";
+      transport.records[1].title = "Voyage to Europa";
+      transport.viewingLinks.set(transport.records[0].id, "a".repeat(64));
+      transport.viewingLinks.set(transport.records[1].id, "d".repeat(64));
+      transport.libraryTitles[0].purchased_on = "2026-10-12";
+      transport.libraryTitles[0].purchase_history = [
+        {
+          id: "f".repeat(64),
+          title: "Voyage to Europa",
+          purchased_on: "2026-10-12",
+          purchase_price: "$9.99",
+          retail_price: "$19.99",
+          order_id: "FICTIONAL-ORDER",
+          href: null,
+        },
+      ];
+    }
     // Full-precision source data should display rounded without rewriting untouched fields.
     transport.records[0].started_at = "2026-10-24T19:15:00.123456Z";
     transport.records[0].ended_at = "2026-10-24T21:05:00.654321Z";

@@ -1,4 +1,5 @@
 import { modalClose } from "./dialog-helpers";
+import { setUnifiedMovieDialog } from "../src/ui/movie-dialog-mode";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import "../src/ui/panel";
 import type { KaleidescapePanel } from "../src/ui/panel";
@@ -40,8 +41,9 @@ async function selectViewing(title = "The Lantern Voyage", editing = true) {
   button(title).click();
   await vi.waitFor(() =>
     expect(
-      panel.shadowRoot!.querySelector(".entries-detail .journal-title")
-        ?.textContent,
+      panel
+        .shadowRoot!.querySelector(".entries-detail .journal-title")
+        ?.textContent?.trim(),
     ).toBe(title),
   );
   if (editing) {
@@ -61,6 +63,7 @@ async function save() {
   await settle();
 }
 beforeEach(async () => {
+  setUnifiedMovieDialog(true);
   // happy-dom uses exact floating-point modulo for number steps (110 % .01),
   // unlike browser constraint validation. Native widget validation is operator QA.
   vi.spyOn(HTMLFormElement.prototype, "reportValidity").mockReturnValue(true);
@@ -654,7 +657,7 @@ it("requires confirmation to abandon an uncertain retry and inspect existing rec
   expect(button("＋ Add viewing").disabled).toBe(false);
 });
 
-it("navigates between Journal artwork and exact grouped Library viewing history", async () => {
+it("opens the exact Library details over the selected Journal entry", async () => {
   transport.options.library_enabled = true;
   const title = transport.libraryTitles[0];
   transport.viewingLinks.set(transport.records[0].id, title.id);
@@ -663,39 +666,17 @@ it("navigates between Journal artwork and exact grouped Library viewing history"
   await selectViewing("The Lantern Voyage", false);
   const link = panel.shadowRoot!.querySelector("kaleidescape-viewing-library")!;
   await vi.waitFor(() =>
-    expect(link.shadowRoot!.querySelector("button")).not.toBeNull(),
-  );
-  link.shadowRoot!.querySelector<HTMLButtonElement>("button")!.click();
-  await settle();
-  const library = panel.shadowRoot!.querySelector("kaleidescape-library")!;
-  await vi.waitFor(() =>
     expect(
-      library.shadowRoot!.querySelector<HTMLDialogElement>("#title-dialog")
-        ?.open,
+      link
+        .shadowRoot!.querySelector("kaleidescape-library")
+        ?.shadowRoot?.querySelector<HTMLDialogElement>("#title-dialog")?.open,
     ).toBe(true),
   );
-  const history = [...library.shadowRoot!.querySelectorAll("button")].find(
-    (button) =>
-      button.textContent?.trim() === "View journal entries for this movie",
-  )!;
-  history.click();
-  await settle();
-  await vi.waitFor(() =>
-    expect(
-      transport.calls.some(
-        (call) =>
-          call.type.endsWith("library/viewings") && call.title_id === title.id,
-      ),
-    ).toBe(true),
-  );
-  expect(panel.shadowRoot!.textContent).toContain(
-    `Viewings for ${title.title}`,
-  );
-  button("Show all viewings").click();
-  await settle();
-  expect(panel.shadowRoot!.textContent).not.toContain(
-    `Viewings for ${title.title}`,
-  );
+  const library = link.shadowRoot!.querySelector("kaleidescape-library")!;
+  expect(
+    library.shadowRoot!.querySelector("kaleidescape-library-journal"),
+  ).not.toBeNull();
+  expect(panel.shadowRoot!.querySelector(".entries-detail")).not.toBeNull();
 });
 
 it("enables the Library tab after opting in and clears its content on navigation", async () => {
@@ -787,4 +768,67 @@ it("shifts the journal editor end when start changes and saves both atomically",
     started_at: new Date("2026-10-12T19:00:00").toISOString(),
     ended_at: new Date("2026-10-12T21:00:00").toISOString(),
   });
+});
+
+it("edits a Journal entry over Library without switching pages", async () => {
+  transport.options.library_enabled = true;
+  transport.viewingLinks.set(
+    transport.records[0].id,
+    transport.libraryTitles[0].id,
+  );
+  button("Refresh").click();
+  await vi.waitFor(() =>
+    expect(
+      panel.shadowRoot!.querySelector<HTMLButtonElement>("#page-library")!
+        .disabled,
+    ).toBe(false),
+  );
+  page("library");
+  await vi.waitFor(() =>
+    expect(
+      panel.shadowRoot!.querySelector("kaleidescape-library")?.shadowRoot
+        ?.textContent,
+    ).toContain("Voyage to Europa"),
+  );
+  const library = panel.shadowRoot!.querySelector("kaleidescape-library")!;
+  [...library.shadowRoot!.querySelectorAll<HTMLButtonElement>("tbody button")]
+    .find((node) => node.textContent?.trim() === "Voyage to Europa")!
+    .click();
+  await vi.waitFor(() =>
+    expect(
+      library.shadowRoot!.querySelector("kaleidescape-library-journal")
+        ?.shadowRoot?.textContent,
+    ).toContain("edit"),
+  );
+  const journal = library.shadowRoot!.querySelector(
+    "kaleidescape-library-journal",
+  )!;
+  journal.shadowRoot!.querySelector<HTMLDetailsElement>("details")!.open = true;
+  [...journal.shadowRoot!.querySelectorAll<HTMLButtonElement>("button")]
+    .find((node) => node.textContent?.trim() === "edit")!
+    .click();
+  await vi.waitFor(() =>
+    expect(
+      panel.shadowRoot!.querySelector<HTMLDialogElement>("#journal-editor")
+        ?.open,
+    ).toBe(true),
+  );
+  expect(
+    library.shadowRoot!.querySelector<HTMLDialogElement>("#title-dialog")!.open,
+  ).toBe(true);
+  expect(
+    panel
+      .shadowRoot!.querySelector("#page-library")!
+      .getAttribute("aria-selected"),
+  ).toBe("true");
+  input("notes", "Edited from Library");
+  await save();
+  await vi.waitFor(() =>
+    expect(transport.records[0].notes).toBe("Edited from Library"),
+  );
+  expect(
+    panel
+      .shadowRoot!.querySelector("#page-library")!
+      .getAttribute("aria-selected"),
+  ).toBe("true");
 });

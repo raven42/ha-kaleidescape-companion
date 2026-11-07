@@ -25,6 +25,8 @@ const FIELDS = [
   ["producers", "Producers"],
   ["studios", "Studios"],
   ["genres", "Genres"],
+];
+const PURCHASE_FIELDS = [
   ["purchased_on", "Purchase date"],
   ["purchase_price", "Purchase price"],
   ["retail_price", "Retail price"],
@@ -44,6 +46,9 @@ export class TitleEdit extends LitElement {
     scope: { attribute: false },
     versionId: {},
     blocked: { type: Boolean },
+    purchaseOnly: { type: Boolean },
+    dateOnly: { type: Boolean },
+    optionsOnly: { type: Boolean },
   };
   static styles = [
     styles,
@@ -54,6 +59,9 @@ export class TitleEdit extends LitElement {
       }
       dialog {
         width: min(640px, calc(100% - 24px));
+      }
+      .purchase-edit-link {
+        font-size: inherit;
       }
       .edit-fields {
         display: grid;
@@ -69,6 +77,9 @@ export class TitleEdit extends LitElement {
   scope?: JournalInfo;
   versionId = "";
   blocked = false;
+  purchaseOnly = false;
+  dateOnly = false;
+  optionsOnly = false;
   private review?: LibraryEdit;
   private draft: Record<string, string> = {};
   private pending?: PreparedMutation;
@@ -110,6 +121,7 @@ export class TitleEdit extends LitElement {
     this.lock();
   }
   private close() {
+    if (!this.confirmNavigation()) return;
     this.reset();
     this.requestUpdate();
   }
@@ -144,6 +156,16 @@ export class TitleEdit extends LitElement {
     try {
       const review = await this.client.libraryEdit(this.scope, this.versionId);
       if (generation !== this.generation) return;
+      if (
+        this.purchaseOnly &&
+        !this.dateOnly &&
+        !this.optionsOnly &&
+        review.has_invoices !== false
+      ) {
+        this.error =
+          "Purchase records changed. Close and reopen the movie details to edit the receipt.";
+        return;
+      }
       this.review = review;
       this.draft = Object.fromEntries(
         Object.entries(review.values).map(([key, value]) => [
@@ -161,9 +183,16 @@ export class TitleEdit extends LitElement {
       }
     }
   }
+  private fields() {
+    if (!this.purchaseOnly) return FIELDS;
+    if (this.optionsOnly) return [];
+    return this.dateOnly
+      ? PURCHASE_FIELDS.filter(([key]) => key === "purchased_on")
+      : PURCHASE_FIELDS;
+  }
   private patch() {
     const patch: Record<string, unknown> = {};
-    for (const [key] of FIELDS) {
+    for (const [key] of this.fields()) {
       const current = this.draft[key] ?? "";
       const value = LISTS.has(key)
         ? current
@@ -202,7 +231,10 @@ export class TitleEdit extends LitElement {
         patch[key] = value;
     }
     const unavailable = this.draft.purchase_information_unavailable === "true";
-    if (unavailable !== !!this.review!.values.purchase_information_unavailable)
+    if (
+      this.purchaseOnly &&
+      unavailable !== !!this.review!.values.purchase_information_unavailable
+    )
       patch.purchase_information_unavailable = unavailable;
     return patch;
   }
@@ -236,7 +268,8 @@ export class TitleEdit extends LitElement {
       if (generation !== this.generation) return;
       this.pending = undefined;
       this.busy = false;
-      this.close();
+      this.reset();
+      this.requestUpdate();
       this.dispatchEvent(
         new CustomEvent("metadata-changed", { bubbles: true, composed: true }),
       );
@@ -264,7 +297,7 @@ export class TitleEdit extends LitElement {
   }
   protected render() {
     if (!this.scope?.permissions.edit) return nothing;
-    return html`${iconAction("Edit details", "edit", this.blocked || this.busy || !!this.pending, () => this.open())}
+    return html`${this.purchaseOnly ? html`<button type="button" class="link purchase-edit-link" ?disabled=${this.blocked || this.busy || !!this.pending} @click=${this.open}>edit</button>` : iconAction("Edit details", "edit", this.blocked || this.busy || !!this.pending, () => this.open())}
       <dialog
         data-admin-dialog
         class="inset-dialog"
@@ -276,7 +309,9 @@ export class TitleEdit extends LitElement {
         }}
       >
         <div class="card-head">
-          <h2 id="library-edit-title">Edit Library details</h2>
+          <h2 id="library-edit-title">
+            ${this.purchaseOnly ? "Edit purchase details" : "Edit Library details"}
+          </h2>
           ${closeButton(() => this.close())}
         </div>
         ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
@@ -292,13 +327,10 @@ export class TitleEdit extends LitElement {
               </p>`
             : this.review
               ? html`<p class="muted">
-                    Applies to ${counted(this.review.version_count, "version")}.
-                    Changes survive scans. Source IDs, runtime, formats,
-                    purchases and viewing records are protected. Enter one name
-                    per line for credits and genres.
+                    ${this.purchaseOnly ? "Saved purchase details appear for the whole movie group." : html`Applies to ${counted(this.review.version_count, "version")}. Changes survive scans. Source IDs, runtime, formats, purchases and viewing records are protected. Enter one name per line for credits and genres.`}
                   </p>
                   <div class="edit-fields">
-                    ${FIELDS.map(
+                    ${this.fields().map(
                       ([key, label]) =>
                         html`<label
                           >${label}${
@@ -329,24 +361,31 @@ export class TitleEdit extends LitElement {
                           }</label
                         >`,
                     )}
-                    <label class="check"
-                      ><input
-                        name="purchase_information_unavailable"
-                        type="checkbox"
-                        .checked=${this.draft.purchase_information_unavailable === "true"}
-                        ?disabled=${!!this.pending || this.busy}
-                        @change=${(e: Event) => {
-                          this.draft.purchase_information_unavailable = String(
-                            (e.target as HTMLInputElement).checked,
-                          );
-                          this.requestUpdate();
-                        }}
-                      />Purchase information unavailable</label
-                    >
-                    <p class="muted">
-                      Purchase date and prices apply to this version. The
-                      unavailable option applies to the whole movie.
-                    </p>
+                    ${
+                      this.purchaseOnly
+                        ? html`
+                            <label class="check"
+                              ><input
+                                name="purchase_information_unavailable"
+                                type="checkbox"
+                                .checked=${this.draft.purchase_information_unavailable === "true"}
+                                ?disabled=${!!this.pending || this.busy}
+                                @change=${(e: Event) => {
+                                  this.draft.purchase_information_unavailable =
+                                    String(
+                                      (e.target as HTMLInputElement).checked,
+                                    );
+                                  this.requestUpdate();
+                                }}
+                              />Purchase information unavailable</label
+                            >
+                            <p class="muted">
+                              These details appear for the movie group. The
+                              unavailable option applies to the whole movie.
+                            </p>
+                          `
+                        : nothing
+                    }
                   </div>`
               : nothing
         }
@@ -355,7 +394,10 @@ export class TitleEdit extends LitElement {
             Cancel
           </button>
           ${
-            this.review && !this.restoring && !this.pending
+            this.review &&
+            !this.purchaseOnly &&
+            !this.restoring &&
+            !this.pending
               ? html`<button
                   class="danger"
                   ?disabled=${this.busy}

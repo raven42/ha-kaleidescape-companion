@@ -2,6 +2,8 @@ import "./journal-shortcuts";
 import "./journal-calendar";
 import { responsiveViewport } from "./viewport";
 import "./viewing-library";
+import type { ViewingLibrary } from "./viewing-library";
+import { unifiedMovieDialog, watchMovieDialogMode } from "./movie-dialog-mode";
 import type { JournalCalendar } from "./journal-calendar";
 import type { CalendarStatus } from "./journal-view";
 import { calendarNotice, journalTotals } from "./journal-view";
@@ -44,6 +46,9 @@ export class KaleidescapeReader extends LitElement {
   private scope: JournalInfo | null = null;
   private rows: ViewingSummary[] = [];
   private selected: ViewingSummary | null = null;
+  private linkedViewingId?: string;
+  private movieSelectionId?: string;
+  private unwatchMovieDialog?: () => void;
   private detailLoading = false;
   private detailRequest = 0;
   private loading = false;
@@ -113,11 +118,18 @@ export class KaleidescapeReader extends LitElement {
   }
   connectedCallback() {
     super.connectedCallback();
+    this.unwatchMovieDialog = watchMovieDialogMode(() => {
+      if (unifiedMovieDialog() && this.selected)
+        this.movieSelectionId = this.selected.id;
+      this.requestUpdate();
+    });
     this.requestUpdate("hass");
     this.requestUpdate("client");
   }
   disconnectedCallback() {
     super.disconnectedCallback();
+    this.unwatchMovieDialog?.();
+    this.unwatchMovieDialog = undefined;
     this.bind(null);
   }
   private clear() {
@@ -245,8 +257,12 @@ export class KaleidescapeReader extends LitElement {
       }
     }
   }
-  private async selectRecord(id: string) {
+  private selectJournalEntry(id: string) {
+    return this.selectRecord(id, true);
+  }
+  private async selectRecord(id: string, openMovie = false) {
     if (!this.api || !this.scope) return;
+    this.movieSelectionId = openMovie ? id : undefined;
     const generation = this.generation,
       request = ++this.detailRequest;
     this.selected = null;
@@ -392,7 +408,6 @@ export class KaleidescapeReader extends LitElement {
                   .scope=${this.scope}
                   .openTitleId=${this.libraryTitleId}
                   .openCriterion=${this.libraryCriterion}
-                  @open-title-journal=${(event: CustomEvent<{ id: string; title: string }>) => this.selectPage("journal", { movie: event.detail })}
                   @access-denied=${() => this.fail(new ApiError("unauthorized"))}
                   @library-disabled=${() => {
                     this.activePage = "journal";
@@ -587,7 +602,7 @@ export class KaleidescapeReader extends LitElement {
                                           tabindex="0"
                                           aria-label="Viewings"
                                         >
-                                          ${this.rows.map((row) => viewingListRow(row, this.selected?.id, (id) => void this.selectRecord(id)))}
+                                          ${this.rows.map((row) => viewingListRow(row, this.selected?.id, (id) => void this.selectJournalEntry(id)))}
                                         </ul>`
                                       : html`<div class="empty">
                                           No viewings to display.
@@ -608,14 +623,46 @@ export class KaleidescapeReader extends LitElement {
                                       Loading entry…
                                     </div>`
                                   : this.selected
-                                    ? html`${viewingDetails(this.selected, (value) => this.date(value))}
+                                    ? html`${viewingDetails(
+                                          this.selected,
+                                          (value) => this.date(value),
+                                          this.linkedViewingId ===
+                                            this.selected.id
+                                            ? () =>
+                                                this.renderRoot
+                                                  .querySelector<ViewingLibrary>(
+                                                    "kaleidescape-viewing-library",
+                                                  )
+                                                  ?.openLibrary()
+                                            : undefined,
+                                        )}
                                         <kaleidescape-viewing-library
                                           .client=${this.api ?? undefined}
                                           .scope=${this.scope ?? undefined}
                                           .viewingId=${this.selected.id}
+                                          .autoOpen=${unifiedMovieDialog() && this.movieSelectionId === this.selected.id}
+                                          @viewing-library-link=${(
+                                            event: CustomEvent<{
+                                              viewingId: string;
+                                              linked: boolean;
+                                            }>,
+                                          ) => {
+                                            if (
+                                              this.selected?.id !==
+                                              event.detail.viewingId
+                                            )
+                                              return;
+                                            const id = event.detail.linked
+                                              ? event.detail.viewingId
+                                              : undefined;
+                                            if (this.linkedViewingId !== id) {
+                                              this.linkedViewingId = id;
+                                              this.requestUpdate();
+                                            }
+                                          }}
                                           @access-denied=${() => this.fail(new ApiError("unauthorized"))}
-                                          @open-library-title=${(event: CustomEvent<string>) => this.selectPage("library", { libraryTitleId: event.detail })}
-                                        ></kaleidescape-viewing-library>`
+                                          @browse-library=${(event: CustomEvent<LibraryCriterion>) => this.selectPage("library", { libraryCriterion: event.detail })}
+                                        ></kaleidescape-viewing-library> `
                                     : html`<div class="empty">
                                         <strong>Select an entry</strong>
                                         <p>

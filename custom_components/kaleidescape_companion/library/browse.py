@@ -80,7 +80,9 @@ STATUS_SQL = """CASE WHEN s.collections_synced_at IS NULL
         AND lower(m.collection)='paused') THEN 'in_progress'
     WHEN EXISTS (SELECT 1 FROM library_memberships m WHERE m.title_id=t.id
         AND lower(m.collection)='played') THEN 'watched'
-    ELSE 'unwatched' END"""
+    WHEN EXISTS (SELECT 1 FROM library_memberships m WHERE m.title_id=t.id
+        AND lower(m.collection)='new') THEN 'unwatched'
+    ELSE 'none' END"""
 
 
 def scalar_sql(field, prefix=""):
@@ -229,6 +231,30 @@ def memberships_for(db, source, keys, hidden, *, by_id=False):
     return result
 
 
+def movie_statuses(names):
+    """Map source collection memberships to stable, presentation-independent keys."""
+    collections = {name.casefold() for name in names}
+    return [
+        status
+        for collection, status in (
+            ("new", "unwatched"),
+            ("played", "watched"),
+            ("paused", "in_progress"),
+        )
+        if collection in collections
+    ]
+
+
+def status_member(collection, grouped):
+    """A fixed collection name and grouping scope for source-bound filters."""
+    scope = "st.source_group=t.source_group" if grouped else "st.id=t.id"
+    return (
+        "EXISTS (SELECT 1 FROM library st JOIN library_memberships sm "
+        "ON sm.title_id=st.id WHERE st.source_id=t.source_id "
+        f"AND st.available=1 AND {scope} AND lower(sm.collection)='{collection}')"
+    )
+
+
 def library_info(db, source, excluded=""):
     row = db.execute(
         """SELECT last_synced_at,collections_synced_at,revision FROM
@@ -241,19 +267,30 @@ def library_info(db, source, excluded=""):
             f"""SELECT status,count(*) FROM (
             SELECT CASE min(CASE ({STATUS_SQL})
                 WHEN 'in_progress' THEN 0 WHEN 'watched' THEN 1
-                WHEN 'unknown' THEN 2 ELSE 3 END)
+                WHEN 'unknown' THEN 2 WHEN 'unwatched' THEN 3 ELSE 4 END)
                 WHEN 0 THEN 'in_progress' WHEN 1 THEN 'watched'
-                WHEN 2 THEN 'unknown' ELSE 'unwatched' END status
+                WHEN 2 THEN 'unknown' WHEN 3 THEN 'unwatched' ELSE 'none' END status
             FROM library t JOIN library_sources s ON s.id=t.source_id
             WHERE t.source_id=? AND t.available=1 GROUP BY t.source_group)
             GROUP BY status""",
             (source,),
         )
     )
+    for key, collection in (
+        ("unwatched", "new"),
+        ("watched", "played"),
+        ("in_progress", "paused"),
+    ):
+        statuses[key] = db.execute(
+            "SELECT count(DISTINCT t.source_group) FROM library t "
+            "JOIN library_memberships m ON m.title_id=t.id WHERE t.source_id=? "
+            "AND t.available=1 AND lower(m.collection)=?",
+            (source, collection),
+        ).fetchone()[0]
     return {
         "status_counts": {
             key: statuses.get(key, 0)
-            for key in ("unwatched", "watched", "in_progress", "unknown")
+            for key in ("unwatched", "watched", "in_progress", "unknown", "none")
         },
         "preferences_key": hashlib.sha256(
             json.dumps(hidden, ensure_ascii=False).encode()
@@ -342,6 +379,7 @@ def library_list(db, source, filters, excluded="", cache=None, weeks=2, today=No
         "scraper_conflict",
         "missing_metadata_artwork",
         "missing_purchase_information",
+        "recently_added",
         "fuzzy",
         "collection",
         "actor",
@@ -429,6 +467,11 @@ def library_list(db, source, filters, excluded="", cache=None, weeks=2, today=No
     missing_purchases = filters.get("missing_purchase_information", False)
     if type(missing_purchases) is not bool:
         raise invalid("Invalid missing purchase information filter")
+    recently_added = filters.get("recently_added", False)
+    if type(recently_added) is not bool:
+        raise invalid("Invalid recently added filter")
+    if recently_added:
+        clauses.append(f"({recent_sql(weeks, today)})")
     if not isinstance(query, str) or len(query) > 500 or "\x00" in query:
         raise invalid("Invalid library search")
     fuzzy = filters.get("fuzzy", False)
@@ -521,9 +564,26 @@ def library_list(db, source, filters, excluded="", cache=None, weeks=2, today=No
                 f"WHERE value IN ({placeholders}))"
             )
         else:
-            if set(selected) - {"watched", "unwatched", "in_progress", "unknown"}:
+            if set(selected) - {
+                "watched",
+                "unwatched",
+                "in_progress",
+                "unknown",
+                "none",
+            }:
                 raise invalid("Invalid library status")
-            clauses.append(f"({STATUS_SQL}) IN ({placeholders})")
+            new, played, paused = (
+                status_member(name, grouped) for name in ("new", "played", "paused")
+            )
+            clauses.append(
+                "EXISTS (SELECT 1 FROM json_each(?) wanted WHERE "
+                f"(wanted.value='unwatched' AND {new}) OR "
+                f"(wanted.value='watched' AND {played}) OR "
+                f"(wanted.value='in_progress' AND {paused}) OR "
+                f"(wanted.value='none' AND NOT ({new} OR {played} OR {paused}) "
+                f"AND ({STATUS_SQL})!='unknown') OR "
+                f"(wanted.value='unknown' AND ({STATUS_SQL})='unknown'))"
+            )
         values.append(json.dumps(selected))
     # Validate all facets before doing full-catalog completeness or people work.
     if missing:
@@ -578,6 +638,9 @@ def library_list(db, source, filters, excluded="", cache=None, weeks=2, today=No
     memberships = memberships_for(
         db, source, [row["id"] for row in rows[:limit]], hidden, by_id=True
     )
+    all_statuses = memberships_for(
+        db, source, [row["id"] for row in rows[:limit]], (), by_id=True
+    )
     shared = group_metadata(db, source, [row["source_group"] for row in rows[:limit]])
     items = []
     byte_size = 0
@@ -585,6 +648,7 @@ def library_list(db, source, filters, excluded="", cache=None, weeks=2, today=No
         item = public_title(
             row, memberships.get(row["id"], []), shared.get(row["source_group"])
         )
+        item["movie_statuses"] = movie_statuses(all_statuses.get(row["id"], []))
         byte_size += len(json.dumps(item, ensure_ascii=True).encode())
         if byte_size > MAX_PAGE_BYTES:
             raise JournalError(
@@ -736,7 +800,7 @@ def grouped_page(
         min(effective_purchased_on) purchased_on,
         min(collection_sort COLLATE NOCASE) collection_sort,
         min(CASE watched_status WHEN 'in_progress' THEN 0 WHEN 'watched' THEN 1
-            WHEN 'unknown' THEN 2 ELSE 3 END) status_rank
+            WHEN 'unknown' THEN 2 WHEN 'unwatched' THEN 3 ELSE 4 END) status_rank
         FROM versions WHERE source_group IN (SELECT source_group FROM matching)
         GROUP BY source_group
         ORDER BY {sorts[sort]} {direction},title_search,source_group
@@ -756,6 +820,7 @@ def grouped_page(
     else:
         groups_on_page = [row["source_group"] for row in page]
         memberships = memberships_for(db, source, groups_on_page, hidden)
+        all_statuses = memberships_for(db, source, groups_on_page, ())
         representatives = {}
         for batch in batches([row["id"] for row in page]):
             for row in db.execute(
@@ -815,6 +880,13 @@ def grouped_page(
             items.append(
                 {
                     "collections": collections,
+                    "movie_statuses": movie_statuses(
+                        [
+                            name
+                            for row in rows
+                            for name in all_statuses.get(row["id"], [])
+                        ]
+                    ),
                     "is_favorite": bool(group["is_favorite"]),
                     "is_watch_soon": bool(group["is_watch_soon"]),
                     "is_recently_added": bool(group["is_recently_added"]),
@@ -863,6 +935,7 @@ def grouped_page(
                         "watched",
                         "unknown",
                         "unwatched",
+                        "none",
                     )[group["status_rank"]],
                 }
             )
@@ -899,7 +972,7 @@ def library_versions(
     today=None,
 ):
     """An opaque version key selects its source-defined group in this source only."""
-    from .purchases import history_for
+    from .purchases import group_details, history_for
 
     if (
         not isinstance(title, str)
@@ -945,11 +1018,21 @@ def library_versions(
         by_id=True,
     )
     shared = group_metadata(db, source, [group]).get(group)
+    status_memberships = memberships_for(db, source, [group], ())
+    group_statuses = movie_statuses(
+        [name for names in status_memberships.values() for name in names]
+    )
     return bounded_page(
         {
+            **(
+                {"group_purchase_details": group_details(db, source, group)}
+                if admin
+                else {}
+            ),
             "items": [
                 {
                     **public_title(row, memberships.get(row["id"], []), shared),
+                    "movie_statuses": group_statuses,
                     **(
                         {"purchase_history": history_for(db, row["id"])}
                         if admin

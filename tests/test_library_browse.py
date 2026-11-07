@@ -27,6 +27,54 @@ class GroupedLibraryTest(unittest.IsolatedAsyncioTestCase):
     page = library_tests.LibraryStorageTest.page
     assert_error = library_tests.LibraryStorageTest.assert_error
 
+    async def test_statuses_and_group_filters_follow_source_collections(self):
+        rows = [
+            {**ROWS[0], "source_group": group, "source_handle": handle, "title": group}
+            for group, handle in (
+                ("new-only", "new-only"),
+                ("no-status", "no-status"),
+                ("played", "played-new"),
+                ("played", "played-played"),
+                ("paused", "paused-played"),
+                ("paused", "paused-paused"),
+            )
+        ]
+        await self.repository.async_library_catalog(
+            ORIGIN,
+            rows,
+            {
+                "New": ["new-only", "played-new"],
+                "Played": ["played-played", "paused-played"],
+                "Paused": ["paused-paused"],
+            },
+        )
+        all_movies = await self.repository.async_library_list(SOURCE, {"grouped": True})
+        self.assertEqual(
+            {r["title"]: r["watched_status"] for r in all_movies["items"]},
+            {
+                "new-only": "unwatched",
+                "no-status": "none",
+                "played": "watched",
+                "paused": "in_progress",
+            },
+        )
+        self.assertEqual(
+            next(row for row in all_movies["items"] if row["title"] == "played")[
+                "movie_statuses"
+            ],
+            ["unwatched", "watched"],
+        )
+        for status, titles in (
+            ("unwatched", {"new-only", "played"}),
+            ("none", {"no-status"}),
+            ("watched", {"played", "paused"}),
+            ("in_progress", {"paused"}),
+        ):
+            page = await self.repository.async_library_list(
+                SOURCE, {"grouped": True, "status": [status]}
+            )
+            self.assertEqual({row["title"] for row in page["items"]}, titles)
+
     async def test_watch_soon_follows_group_even_when_collection_is_hidden(self):
         await self.repository.async_library_catalog(
             ORIGIN, ROWS, {"WatchSoon": ["fixture-a2"]}
@@ -67,6 +115,69 @@ class GroupedLibraryTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(details["items"]), 50)
         self.assertEqual({row["rating"] for row in details["items"]}, {"PG"})
         self.assertEqual(group["version_count"], 60)
+
+    async def test_group_purchase_details_include_later_versions_and_are_private(self):
+        rows = [{**ROWS[0], "source_handle": f"variant-{index}"} for index in range(61)]
+        rows.append(
+            {**ROWS[1], "source_handle": "other-movie", "source_group": "other"}
+        )
+        await self.repository.async_library_catalog(ORIGIN, rows, {})
+        first_id = title_id(SOURCE, "variant-0")
+        page = await self.repository.async_library_versions(SOURCE, first_id)
+        later = await self.repository.async_library_versions(SOURCE, first_id, 50)
+        late_id = later["items"][0]["id"]
+
+        def add_receipts():
+            db = self.repository._db()
+            with db:
+                for ident, owner, order in (
+                    ("a" * 64, late_id, "LATER-VERSION"),
+                    ("b" * 64, first_id, "FIRST-VERSION"),
+                    ("c" * 64, title_id(SOURCE, "other-movie"), "OTHER-GROUP"),
+                ):
+                    db.execute(
+                        "INSERT INTO purchase_records "
+                        "(id,title,purchased_on,purchase_price,order_id,"
+                        "imported_at,library_id) "
+                        "VALUES (?,?,?,?,?,?,?)",
+                        (
+                            ident,
+                            "Fictional",
+                            "2020-01-02",
+                            "$9.99",
+                            order,
+                            "2020-01-02T00:00:00+00:00",
+                            owner,
+                        ),
+                    )
+
+        await self.repository._call(add_receipts)
+        reader = await self.repository.async_library_versions(SOURCE, first_id)
+        self.assertNotIn("group_purchase_details", reader)
+        self.assertNotIn("LATER-VERSION", str(reader))
+        admin_first = await self.repository.async_library_versions(
+            SOURCE, first_id, admin=True
+        )
+        admin_later = await self.repository.async_library_versions(
+            SOURCE, first_id, 50, admin=True
+        )
+        details = admin_first["group_purchase_details"]
+        self.assertEqual(details, admin_later["group_purchase_details"])
+        self.assertEqual(
+            {r["order_id"] for r in details["records"]},
+            {"LATER-VERSION", "FIRST-VERSION"},
+        )
+        self.assertFalse(details["truncated"])
+        record = next(r for r in details["records"] if r["library_id"] == late_id)
+        plan = await self.repository.async_purchase_repair_preview(
+            "correct",
+            record["id"],
+            record["token"],
+            {"purchase_price": "$8.99"},
+            "admin",
+        )
+        self.assertEqual(plan["before"]["id"], record["id"])
+        self.assertEqual(page["total"], 61)
 
     async def test_versions_sort_quality_then_runtime_with_stable_pagination(self):
         variants = [
@@ -551,10 +662,15 @@ class GroupedLibraryTest(unittest.IsolatedAsyncioTestCase):
         page = await self.repository.async_library_list(
             SOURCE, {"grouped": True, "status": ["watched"]}, excluded
         )
-        self.assertEqual(page["total"], 1)
-        self.assertEqual(page["items"][0]["watched_status"], "watched")
+        self.assertEqual(page["total"], 2)
+        self.assertTrue(
+            all("watched" in row["movie_statuses"] for row in page["items"])
+        )
+        watched = next(
+            row for row in page["items"] if row["watched_status"] == "watched"
+        )
         versions = await self.repository.async_library_versions(
-            SOURCE, page["items"][0]["id"], excluded=excluded
+            SOURCE, watched["id"], excluded=excluded
         )
         self.assertTrue(all(not row["collections"] for row in versions["items"]))
         self.assertEqual(
@@ -673,6 +789,9 @@ class GroupedLibraryApiTest(unittest.IsolatedAsyncioTestCase):
         message = {**self.scope, "title_id": title_id(SOURCE, "fixture-a")}
         result = await self.call("library/versions", user=reader, **message)
         self.assertEqual(result["result"]["total"], 2)
+        self.assertNotIn("group_purchase_details", result["result"])
+        admin_result = await self.call("library/versions", user=self.admin, **message)
+        self.assertIn("group_purchase_details", admin_result["result"])
         denied = await self.call(
             "library/list",
             user=reader,

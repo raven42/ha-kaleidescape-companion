@@ -241,12 +241,13 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
     async def test_filters_status_priority_and_no_title_merging(self):
         await self.seed()
         self.assertEqual((await self.page())["total"], 3)
-        self.assertEqual((await self.page(status="watched"))["total"], 1)
+        self.assertEqual((await self.page(status="watched"))["total"], 2)
         self.assertEqual(
             (await self.page(status="in_progress"))["items"][0]["title"],
             "Midnight 100%_",
         )
-        self.assertEqual((await self.page(status="unwatched"))["total"], 1)
+        self.assertEqual((await self.page(status="unwatched"))["total"], 0)
+        self.assertEqual((await self.page(status="none"))["total"], 1)
         for key, value in (
             ("collection", "Favorites"),
             ("actor", "Zoë Example"),
@@ -368,7 +369,8 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
         added = {**ROWS[0], "source_handle": "new-version", "source_group": "new-group"}
         await self.repository.async_library_catalog(ORIGIN, [*ROWS, added], None)
         self.assertEqual((await self.page(status="unknown"))["total"], 1)
-        self.assertEqual((await self.page(status="unwatched"))["total"], 1)
+        self.assertEqual((await self.page(status="unwatched"))["total"], 0)
+        self.assertEqual((await self.page(status="none"))["total"], 1)
 
     async def test_revision_bounds_invalid_sort_and_backup_barrier(self):
         await self.seed()

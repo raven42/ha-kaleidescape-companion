@@ -1,3 +1,4 @@
+import { setUnifiedMovieDialog } from "../src/ui/movie-dialog-mode";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../src/ui/panel";
 import type { JournalOptions } from "../src/ui/journal-options";
@@ -18,6 +19,7 @@ function button(text: string) {
   )!;
 }
 beforeEach(async () => {
+  setUnifiedMovieDialog(true);
   transport = new FixtureTransport();
   reader = document.createElement("kaleidescape-reader") as KaleidescapeReader;
   reader.client = transport.client();
@@ -110,8 +112,9 @@ it("opens household-safe entry details without exposing administrator fields", a
   button("The Lantern Voyage").click();
   await vi.waitFor(() =>
     expect(
-      reader.shadowRoot!.querySelector(".entries-detail .journal-title")
-        ?.textContent,
+      reader
+        .shadowRoot!.querySelector(".entries-detail .journal-title")
+        ?.textContent?.trim(),
     ).toBe("The Lantern Voyage"),
   );
   expect(content()).toContain("Runtime");
@@ -223,13 +226,13 @@ it("offers enabled Library browsing to readers without sync/settings and unmount
   await waitFor("The Lantern Voyage");
 });
 
-it("follows exact Library links and related viewings for a household reader", async () => {
+it("opens exact Library details in place for a household reader", async () => {
   transport.options.library_enabled = true;
   const title = transport.libraryTitles[0];
   transport.viewingLinks.set(transport.records[0].id, title.id);
   button("Refresh").click();
-  await waitFor("The Lantern Voyage");
   await vi.waitFor(() => expect(button("Library").disabled).toBe(false));
+  await vi.waitFor(() => expect(button("The Lantern Voyage")).toBeDefined());
   button("The Lantern Voyage").click();
   await vi.waitFor(() =>
     expect(
@@ -240,36 +243,26 @@ it("follows exact Library links and related viewings for a household reader", as
     "kaleidescape-viewing-library",
   )!;
   await vi.waitFor(() =>
-    expect(link.shadowRoot!.querySelector("button")).not.toBeNull(),
-  );
-  link.shadowRoot!.querySelector<HTMLButtonElement>("button")!.click();
-  await reader.updateComplete;
-  const library = reader.shadowRoot!.querySelector("kaleidescape-library")!;
-  await vi.waitFor(() =>
     expect(
-      library.shadowRoot!.querySelector<HTMLDialogElement>("#title-dialog")
-        ?.open,
+      link
+        .shadowRoot!.querySelector("kaleidescape-library")
+        ?.shadowRoot?.querySelector<HTMLDialogElement>("#title-dialog")?.open,
     ).toBe(true),
   );
-  [...library.shadowRoot!.querySelectorAll("button")]
-    .find(
-      (button) =>
-        button.textContent?.trim() === "View journal entries for this movie",
-    )!
-    .click();
+  expect(
+    link
+      .shadowRoot!.querySelector("kaleidescape-library")!
+      .shadowRoot!.querySelector("kaleidescape-library-journal"),
+  ).not.toBeNull();
+  const journal = link
+    .shadowRoot!.querySelector("kaleidescape-library")!
+    .shadowRoot!.querySelector("kaleidescape-library-journal")!;
   await vi.waitFor(() =>
-    expect(
-      transport.calls.some(
-        (call) =>
-          call.type.endsWith("library/viewings") && call.title_id === title.id,
-      ),
-    ).toBe(true),
+    expect(journal.shadowRoot!.querySelector("summary")).not.toBeNull(),
   );
-  await waitFor(`Viewings for ${title.title}`);
+  expect(journal.shadowRoot!.textContent).not.toContain("Edit Journal");
+  expect(reader.shadowRoot!.querySelector(".entries-detail")).not.toBeNull();
   expect(button("＋ Add viewing")).toBeUndefined();
-  button("Show all viewings").click();
-  await waitFor("The Lantern Voyage");
-  expect(content()).not.toContain(`Viewings for ${title.title}`);
 });
 
 it("orders reader tabs Now Playing, Library then Journal and follows that order with Home and End", async () => {

@@ -1,5 +1,6 @@
 /** Source-scoped Journal artwork and navigation using the saved exact version link. */
 import { LitElement, css, html, nothing } from "lit";
+import type { PropertyValues } from "lit";
 import type {
   JournalClient,
   JournalInfo,
@@ -8,6 +9,7 @@ import type {
 import { errorCode, errorMessage } from "../core/api";
 import { CoverQueue } from "../library/cover";
 import { styles } from "./styles";
+import "../library/library";
 
 export class ViewingLibrary extends LitElement {
   static properties = {
@@ -15,6 +17,8 @@ export class ViewingLibrary extends LitElement {
     scope: { attribute: false },
     viewingId: { type: String },
     disabled: { type: Boolean },
+    advanced: { type: Boolean },
+    autoOpen: { type: Boolean },
   };
   static styles = [
     styles,
@@ -54,19 +58,32 @@ export class ViewingLibrary extends LitElement {
   client?: JournalClient;
   scope?: JournalInfo;
   viewingId = "";
+  private openTitleId?: string;
   disabled = false;
+  advanced = false;
+  autoOpen = false;
+  private autoOpened = false;
   private queue = new CoverQueue();
   private link?: ViewingLibraryLink | null;
   private error = "";
   private generation = 0;
   private bound = "";
   private boundClient?: JournalClient;
-  protected willUpdate() {
-    const key = `${this.scope?.entry_id}:${this.scope?.dataset_id}:${this.scope?.library_enabled}:${this.viewingId}`;
-    if (key === this.bound && this.client === this.boundClient) return;
+  protected willUpdate(changed: PropertyValues) {
+    const key = `${this.scope?.entry_id}:${this.scope?.dataset_id}:${this.scope?.library_enabled}:${this.scope?.permissions.edit}:${this.viewingId}`;
+    if (key === this.bound && this.client === this.boundClient) {
+      if (changed.has("autoOpen")) {
+        if (!this.autoOpen) {
+          if (this.autoOpened) this.openTitleId = undefined;
+          this.autoOpened = false;
+        } else this.openAutomatically();
+      }
+      return;
+    }
     this.clear();
     this.bound = key;
     this.boundClient = this.client;
+    this.reportLink();
     void this.load();
   }
   disconnectedCallback() {
@@ -79,6 +96,8 @@ export class ViewingLibrary extends LitElement {
     this.generation++;
     this.queue.cache.dispose();
     this.queue = new CoverQueue();
+    this.openTitleId = undefined;
+    this.autoOpened = false;
     this.link = undefined;
     this.error = "";
   }
@@ -90,7 +109,11 @@ export class ViewingLibrary extends LitElement {
         this.scope,
         this.viewingId,
       );
-      if (generation === this.generation) this.link = result.library;
+      if (generation === this.generation) {
+        this.link = result.library;
+        this.reportLink();
+        this.openAutomatically();
+      }
     } catch (error) {
       if (generation !== this.generation) return;
       this.error = errorMessage(error);
@@ -105,42 +128,73 @@ export class ViewingLibrary extends LitElement {
       if (generation === this.generation) this.requestUpdate();
     }
   }
+  private reportLink() {
+    this.dispatchEvent(
+      new CustomEvent("viewing-library-link", {
+        detail: { viewingId: this.viewingId, linked: !!this.link },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+  private openAutomatically() {
+    if (this.autoOpen && !this.autoOpened && this.link && !this.disabled) {
+      this.autoOpened = true;
+      this.openLibrary();
+    }
+  }
+  openLibrary() {
+    if (!this.link || this.disabled) return;
+    this.openTitleId = this.link.title_id;
+    this.requestUpdate();
+  }
   protected render() {
-    if (!this.scope?.library_enabled) return nothing;
-    if (this.error)
-      return html`<p class="error" role="alert">
-        ${this.error} <button @click=${this.load}>Retry Library link</button>
-      </p>`;
-    if (this.link === null)
-      return html`<p class="muted">No linked Library entry is available.</p>`;
-    if (!this.link) return nothing;
-    return html`<div class="linked-movie">
-      <kaleidescape-library-cover
-        .client=${this.client}
-        .scope=${this.scope}
-        .queue=${this.queue}
-        .artworkKey=${this.link.artwork_key}
-        .title=${this.link.title}
-        @access-denied=${() => {
-          this.clear();
-          this.requestUpdate();
-        }}
-      ></kaleidescape-library-cover>
-      <button
-        class="link"
-        ?disabled=${this.disabled}
-        @click=${() =>
-          this.dispatchEvent(
-            new CustomEvent("open-library-title", {
-              detail: this.link!.title_id,
-              bubbles: true,
-              composed: true,
-            }),
-          )}
-      >
-        View in Library: ${this.link.title}
-      </button>
-    </div>`;
+    return html` ${this.error ? html`<p class="error" role="alert">${this.error} <button @click=${this.load}>Retry Library link</button></p>` : nothing}
+    ${this.scope?.library_enabled && this.link === null ? html`<p class="muted">No linked Library entry is available.</p>` : nothing}
+    ${
+      this.link
+        ? html`<div class="linked-movie">
+            <kaleidescape-library-cover
+              .client=${this.client}
+              .scope=${this.scope}
+              .queue=${this.queue}
+              .artworkKey=${this.link.artwork_key}
+              .title=${this.link.title}
+              @access-denied=${() => {
+                this.clear();
+                this.requestUpdate();
+                this.dispatchEvent(
+                  new CustomEvent("access-denied", {
+                    bubbles: true,
+                    composed: true,
+                  }),
+                );
+              }}
+            ></kaleidescape-library-cover>
+          </div>`
+        : nothing
+    }
+    ${
+      this.openTitleId
+        ? html`<kaleidescape-library
+            .client=${this.client}
+            .scope=${this.scope}
+            .dialogOnly=${true}
+            .advanced=${this.advanced}
+            .openTitleId=${this.openTitleId}
+            @title-dialog-closed=${() => {
+              if (this.openTitleId === undefined) return;
+              this.openTitleId = undefined;
+              this.requestUpdate();
+            }}
+            @title-dialog-error=${(event: CustomEvent<string>) => {
+              this.openTitleId = undefined;
+              this.error = event.detail;
+              this.requestUpdate();
+            }}
+          ></kaleidescape-library>`
+        : nothing
+    }`;
   }
 }
 if (!customElements.get("kaleidescape-viewing-library"))

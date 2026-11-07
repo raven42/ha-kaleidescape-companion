@@ -19,6 +19,7 @@ afterEach(() => {
 const review: LibraryEdit = {
   snapshot: "a".repeat(64),
   version_count: 2,
+  has_invoices: false,
   values: {
     title: "Fictional Film",
     sort_title: null,
@@ -37,18 +38,23 @@ const button = (root: ShadowRoot, label: string) =>
   [...root.querySelectorAll<HTMLButtonElement>("button")].find(
     (item) => item.textContent!.trim() === label,
   )!;
-async function editor() {
+async function editor(purchaseOnly = false) {
   const client = new FixtureTransport().client();
   vi.spyOn(client, "libraryEdit").mockResolvedValue(review);
   element = document.createElement("kaleidescape-title-edit") as TitleEdit;
   element.client = client;
   element.scope = { ...info, library_enabled: true };
   element.versionId = "a".repeat(64);
+  element.purchaseOnly = purchaseOnly;
   document.body.append(element);
   await element.updateComplete;
-  button(element.shadowRoot!, "Edit details").click();
+  button(element.shadowRoot!, purchaseOnly ? "edit" : "Edit details").click();
   await vi.waitFor(() =>
-    expect(element.shadowRoot!.querySelector('[name="title"]')).toBeTruthy(),
+    expect(
+      element.shadowRoot!.querySelector(
+        purchaseOnly ? '[name="purchased_on"]' : '[name="title"]',
+      ),
+    ).toBeTruthy(),
   );
   return { client, root: element.shadowRoot! };
 }
@@ -71,6 +77,11 @@ it("allows a mode change from a settled editor while protecting unsaved changes"
 it("restricts editing to display fields, locks drafts, and retries exactly after an uncertain save", async () => {
   const { client, root } = await editor();
   expect(root.querySelector('[name="id"]')).toBeNull();
+  expect(root.querySelector('[name="purchased_on"]')).toBeNull();
+  expect(root.querySelector('[name="purchase_price"]')).toBeNull();
+  expect(
+    root.querySelector('[name="purchase_information_unavailable"]'),
+  ).toBeNull();
   const sort = root.querySelector<HTMLInputElement>('[name="sort_title"]')!;
   sort.value = "Fictional Film, The";
   sort.dispatchEvent(new Event("input", { bubbles: true }));
@@ -95,7 +106,7 @@ it("restricts editing to display fields, locks drafts, and retries exactly after
   );
 });
 it("edits purchase details and the group unavailable option", async () => {
-  const { client, root } = await editor();
+  const { client, root } = await editor(true);
   const save = vi
     .spyOn(client, "saveLibraryEdit")
     .mockResolvedValue({ title_id: "a".repeat(64), updated_count: 2 });
@@ -122,6 +133,29 @@ it("edits purchase details and the group unavailable option", async () => {
     retail_price: "$19.99",
     purchase_information_unavailable: true,
   });
+});
+it("refuses the manual editor if a receipt appeared before it opened", async () => {
+  const client = new FixtureTransport().client();
+  vi.spyOn(client, "libraryEdit").mockResolvedValue({
+    ...review,
+    has_invoices: true,
+  });
+  element = document.createElement("kaleidescape-title-edit") as TitleEdit;
+  element.client = client;
+  element.scope = { ...info, library_enabled: true };
+  element.versionId = "a".repeat(64);
+  element.purchaseOnly = true;
+  document.body.append(element);
+  await element.updateComplete;
+  button(element.shadowRoot!, "edit").click();
+  await vi.waitFor(() =>
+    expect(element.shadowRoot!.textContent).toContain(
+      "Purchase records changed",
+    ),
+  );
+  expect(
+    element.shadowRoot!.querySelector('[name="purchase_price"]'),
+  ).toBeNull();
 });
 it("offers a confirmed source restore and never exposes the editor to readers", async () => {
   const { client, root } = await editor();

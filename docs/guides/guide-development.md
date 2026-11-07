@@ -61,7 +61,11 @@ checks do not replace a required full check for an implementation change. The VS
 Code **Test Python** task and CI verify the bundled source. Expected warnings
 from failure-injection cases do not mean compilation failed; inspect the process
 exit and test summary. Unexpected frontend console output is tested separately.
-Logging behavior is specified in
+The integration-test runner keeps asyncio debug mode enabled but reports slow
+callbacks after 200 ms instead of the default 100 ms, to reduce fixture and CI
+scheduling noise. Direct `python -m unittest` runs use Python's default 100 ms
+threshold. This adjustment does not change Home Assistant or production event
+loops. Logging behavior is specified in
 [logging and diagnostics](../design/design-logging.md).
 
 The frontend lockfile temporarily overrides transitive minimatch 10 with 11.0.4

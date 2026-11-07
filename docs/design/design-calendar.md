@@ -49,20 +49,24 @@ once. Loading, no-matches and error/retry messages also live in that footer; the
 calendar has no separate status labels above or below the grid. On phones, the
 compact footer shows only the selected month's count and watched time.
 
-Click a poster to open compact viewing/movie details: artwork, rating, cast,
-directors, genres, runtime, year, format/version badges, watched minutes and
-status. The viewing date appears once; a start/end date range appears only when
-the local dates differ. Purchase and detection details are omitted. Close,
-Escape or a backdrop click dismisses the popup.
+Click a linked poster to open the same full movie details used by the Library,
+including its expandable Journal history. Journal options can select the compact
+movie details instead. When Library is disabled or the exact link is
+unavailable, the compact viewing details remain available. The compact dialog
+shows artwork, rating, cast, directors, genres, runtime, year, format/version
+badges, watched minutes and status; it omits purchase and detection details.
+Close, Escape or a backdrop click dismisses the popup.
 
-Administrators also have **Edit viewing** in the popup. It loads the current
-Journal record and opens the same editor as the list view for title, start/end,
-runtime, watched minutes, status and notes. Its Movie from Library field uses
-the same autocomplete as Add viewing; changing the title requires selecting an
-exact version, distinguished by year/format. That selection updates the title,
-Library link and metadata together while preserving recorded timing, watched
-minutes and playback identifiers. Existing history can still receive timing or
-note corrections with Library disabled, but changing the movie requires Library
+Administrators in Advanced mode can choose **edit** in the expanded Journal
+heading of the full dialog, then choose an entry if there is more than one, or
+**Edit viewing** in the compact dialog. It loads the current Journal record and
+opens the same editor as the list view for title, start/end, runtime, watched
+minutes, status and notes. Its Movie from Library field uses the same
+autocomplete as Add viewing; changing the title requires selecting an exact
+version, distinguished by year/format. That selection updates the title, Library
+link and metadata together while preserving recorded timing, watched minutes and
+playback identifiers. Existing history can still receive timing or note
+corrections with Library disabled, but changing the movie requires Library
 access. Changing start time shifts end time by the same elapsed interval;
 manually changing end time leaves start time alone. **Delete entry** opens the
 normal confirmation; its X returns to the editor. Confirming sets the viewing's
@@ -72,12 +76,12 @@ record. Saving or deleting refreshes the current month. Household readers retain
 read-only details. Revision checks, unsaved-change guards and explicit retries
 after uncertain writes match the list editor.
 
-Title and person-name links open Library with a fresh search matching titles,
-actors and directors. Year, genre, rating and format links open Library with one
-exact filter instead. Both actions clear the old Library search and facet
-selections, preserve sort/display preferences, reset pagination and save the new
-criteria. Names search across actor/director roles. These controls require
-enabled, linked Library metadata and work for both household roles.
+In the current dialog, the movie title opens its full Library details in place.
+Person-name links open Library with a fresh search matching actors and
+directors; year, genre, rating and format links use one exact filter. These
+search and filter actions clear old Library search and facet selections,
+preserve sort/display preferences, reset pagination and save the new criteria.
+They require enabled, linked Library metadata and work for both household roles.
 
 The exact saved Library version supplies current cached metadata and artwork
 when Library is enabled and that version remains available in the current

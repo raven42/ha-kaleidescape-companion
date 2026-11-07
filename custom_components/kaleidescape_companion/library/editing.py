@@ -86,6 +86,11 @@ def inspect(db, source, title):
             ),
         },
         "version_count": len(rows),
+        "has_invoices": bool(
+            json.loads(
+                next(row for row in rows if row["id"] == title)["purchase_history"]
+            )
+        ),
     }
 
 

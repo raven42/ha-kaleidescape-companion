@@ -52,8 +52,13 @@ Playing also respects source entity read permission. Administrators and HA
 backups can access the full stored dataset; tombstones are not secure erasure.
 The Watch Soon indicator, like Favorite, exposes source collection membership
 for available movie groups even when that collection name is hidden from lists.
+Movie status also exposes membership in New, Played or Paused even when those
+collection names are hidden; the personal label preference changes only naming.
 The Recently Added badge also reveals whether a movie has a linked purchase
 within the administrator-configured window; all Library readers see the badge.
+Movie purchase history and Journal editing controls are shown only to
+administrators in Advanced mode, including in dialogs opened from Journal.
+Backend authorization remains the enforcement boundary.
 
 Companion's HA configuration switches and sync buttons can be operated by users
 and automations allowed to control those entities by Home Assistant. They
@@ -86,6 +91,13 @@ data and need appropriate access controls. Public store refresh may fill a
 missing retail price, but never a purchase price. The missing purchase
 information sensor exposes its count and bounded movie names to HA entity
 readers. Its Library filter and purchase editing are limited to administrators.
+The administrator's Advanced movie details include bounded group-wide purchase
+history and row tokens for reviewed corrections. Reader version responses
+contain neither those records nor their tokens. A purchase linked to one group
+member is not treated as proof of a particular format. Receipt edits use the
+existing actor- and revision-bound repair workflow; manual edits check the group
+snapshot and refuse the manual price editor if a receipt appeared before it
+opened.
 
 When HA automations are available, Companion installs missing packaged
 blueprints through HA's blueprint manager. It does not create or enable an

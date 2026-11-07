@@ -67,8 +67,8 @@ Hidden collection names are matched without case sensitivity (up to 200 names,
 256 characters each). They affect shared Library labels, collection filters,
 counts, and sorting, including individual-version details. They do not hide
 movies, skip network sync, remove cached memberships, or change the device.
-Played/Paused continue to determine status even if their names are hidden. Clear
-the preference to show the names again without resyncing.
+New/Played/Paused continue to determine status even if their names are hidden.
+Clear the preference to show the names again without resyncing.
 
 ## Browsing
 
@@ -168,18 +168,20 @@ preferences; main-tab navigation remains in the URL. See
 
 The summary shows the union of visible collections/formats/content
 ratings/years, minimum–maximum known runtime, earliest detection and known
-purchase date, and a source status priority of In progress, Watched, Unknown,
-then Unwatched. Sorts use the earliest year, minimum known runtime, first
-visible collection name, and purchase date with detection as fallback, as
-applicable. Browsing preferences restore from the database when Library is
-reopened.
+purchase date, and source status memberships. The legacy single status used for
+sorting prioritizes In progress, Watched, Unknown, Unwatched, then no status.
+Sorts use the earliest year, minimum known runtime, first visible collection
+name, and purchase date with detection as fallback, as applicable. Browsing
+preferences restore from the database when Library is reopened.
 
 Statuses reflect source collection membership, independently for exact source
-handles: **Paused → In progress**, otherwise **Played → Watched**, otherwise
-**Unwatched**. Before any complete collection sync, and for versions first
-detected after the retained collection snapshot, status is **Unknown**. These
-are editable source labels, not Companion journal completion, saved position, or
-dated viewing evidence. No viewings are fabricated from Played membership.
+handles: **Paused → In progress**, **Played → Watched**, and **New →
+Unwatched**. A movie may show multiple statuses when the group belongs to
+multiple collections. A title in none of these collections has no status. Before
+any complete collection sync, and for versions first detected after the retained
+collection snapshot, status is **Unknown**. These are editable source labels,
+not Companion journal completion, saved position, or dated viewing evidence. No
+viewings are fabricated from Played membership.
 
 Alternate editions retain exact source handles and source-scoped groups in
 storage. Source-defined display grouping never merges those records or guesses
@@ -198,6 +200,20 @@ known-name checkboxes and custom values in the shared database settings row,
 migrated once from former HA options. Changing the configured origin creates a
 separate source namespace, even if it reaches the same physical system.
 Cross-host identity reconciliation is deferred.
+
+When a movie group has recorded or manual viewings, the consolidated movie
+dialog places an expandable **Journal** section below Library details. It lists
+each viewing's start time, status and watched time; administrators in Advanced
+mode can open the revision-checked editor with **edit** in the expanded heading,
+choosing an entry when there are multiple viewings. Purchase history is a
+separate section below Journal, shown only in Advanced mode to administrators.
+An empty history has no Journal section. The history uses the existing
+source-scoped group and revision-bound pagination, and reports errors rather
+than claiming no viewings.
+
+The full dialog is shared with linked Journal entries, with no navigation
+between Library and Journal pages. Each user can select the full or compact
+viewing dialog in Journal options; Library always uses full movie details.
 
 Sync progress/status refreshes only while the Library page is visible: about
 every five seconds during a scan and 30 seconds when idle. Newly cached metadata
@@ -227,9 +243,8 @@ criteria. Advanced mode adds collection counts, last catalog sync, artwork usage
 and compact scraper progress. It is one shared status/navigation bar;
 First/Previous/Next are omitted when all matching titles fit on one page,
 including All. Options contains detailed freshness timestamps and
-individual-version counts. Source Played is displayed as **Watched** in browsing
-labels; Options explains the mapping while API/device collection names remain
-unchanged.
+individual-version counts. The user's movie-status naming choice controls
+browsing labels while API/device collection names remain unchanged.
 
 The redundant Library heading is omitted. Desktop sort method/direction remain
 directly available in the search toolbar. On phones, the method is in Options
@@ -543,15 +558,22 @@ because metadata can legitimately change active filters and some sort fields.
 
 Administrators can select **Edit details**. It edits display title, sort title,
 year, rating, synopsis, cast, directors, writers, producers, studios and genres
-across the source group's available versions. Credits use one name per line.
-Purchase date, paid price and retail price apply to the selected version. The
-**Purchase information unavailable** checkbox applies across every version of
-the group, including temporarily unavailable versions. It suppresses the
-missing-purchase-information sensor/filter without clearing stored values or
-adding a badge. Prices use a currency prefix and two decimal places; zero is a
-known value. Linked price edits update the earliest invoice in
-`purchase_records`; without an invoice, manual prices remain on Library. A date
-edit is a Library date override and does not rewrite invoice identity.
+across the source group's available versions. Credits use one name per line. The
+administrator's Advanced **Purchase details** section lists saved receipts and
+manual purchase details for the source-defined movie group, regardless of which
+version holds their database link. The link alone does not establish an edition,
+so the same group history appears on each version. The list includes temporarily
+unavailable group members and reports when its bounded result is truncated. The
+expanded section's **edit** link opens purchase editing, where each receipt uses
+the reviewed repair workflow, preserving its identity checks, audit history and
+retry handling. When no receipt exists for a saved manual entry, its editor
+changes the manual date and prices; a separate date override for an entry with a
+receipt can be edited without altering the receipt. Prices use a currency prefix
+and two decimal places; zero is a known value. The purchase editor also offers
+**Purchase information unavailable**, which applies across every version of the
+group and suppresses the missing-information sensor/filter without clearing
+stored values or adding a badge. Purchase fields do not appear in **Edit
+details**.
 
 Source identity, runtime, formats, file/cache paths, memberships, invoice
 identity/order/link, watched state and viewing records cannot be edited here.
@@ -578,14 +600,14 @@ background enrichment.
 
 ## Compact footer
 
-Basic mode shows global movie-group totals: Total, Unwatched, Watched and
-Paused. A bold blue Matches count appears only while search or filters are
-active; global totals remain unchanged. Multiple versions count as one movie and
-follow the same Paused-before-Watched precedence as the Library list. Unknown
-statuses are included in Total. Per-page and covers-per-row labels are omitted.
-Collection, artwork-cache, sync, scraper and enabled purchase-cost details
-remain visible only in Advanced mode on desktop. Navigation stays on the same
-sticky footer; refresh/sync are in Options.
+Basic mode shows global movie-group totals for each status using the selected
+labels. A bold blue Matches count appears only while search or filters are
+active; global totals remain unchanged. Multiple versions count as one movie per
+collection, and a movie can count in multiple statuses. Unknown statuses are
+included in Total. Per-page and covers-per-row labels are omitted. Collection,
+artwork-cache, sync, scraper and enabled purchase-cost details remain visible
+only in Advanced mode on desktop. Navigation stays on the same sticky footer;
+refresh/sync are in Options.
 
 On phones, the footer keeps totals/matches on one compact line, with square
 paging icons only for multipage results. Administrator cache/scraper details
@@ -734,26 +756,34 @@ check. Removal will need its own verified contract and security review.
 | Recently Added · purple label | Retained `recently_added` sensor batch membership or a recent linked purchase; top-left label     |
 | Favorite · gold star          | An available version belongs to Favorites; independent top-right bookmark                         |
 
-Watched, In progress and Watch Soon are mutually exclusive. Progress or
-completion takes precedence, followed by Watch Soon. Recently Added and Favorite
-can accompany these statuses. The Recently Added badge is independent of the
-Kaleidescape **New** collection: it includes the retained addition batch and any
-purchase linked to the same source-defined movie group within the configured
-purchase window. Administrators set this window in **Settings → Ecosystem →
-Library sync**, in whole weeks from 0 to 520; it defaults to 2 and 0 disables
-the purchase-date portion. The boundary date is included, future dates are not,
-and dates use Home Assistant's local calendar day. The recently added sensor
-batch itself is unchanged. These use cached source statuses and refresh with
-collection sync, rather than adding playback polling or treating journal facts
-as device collection membership.
+Library options choose **Modern format** (the default: Unwatched, Watched, In
+progress) or **Kaleidescape format** (New, Played, Paused). The choice only
+renames the same collection-derived statuses. The Movie status filter uses the
+same status and naming choice; those three source collections are not repeated
+in the Collection filter. The separate **Recently added** filter uses the same
+retained batch and purchase window as the Recently Added badge and can be
+combined with other Library filters.
+
+Watched and In progress can both appear if their source memberships overlap.
+Watch Soon is shown in the status corner when neither is present. Recently Added
+and Favorite can accompany these statuses. The Recently Added badge is
+independent of the Kaleidescape **New** collection: it includes the retained
+addition batch and any purchase linked to the same source-defined movie group
+within the configured purchase window. Administrators set this window in
+**Settings → Ecosystem → Library sync**, in whole weeks from 0 to 520; it
+defaults to 2 and 0 disables the purchase-date portion. The boundary date is
+included, future dates are not, and dates use Home Assistant's local calendar
+day. The recently added sensor batch itself is unchanged. These use cached
+source statuses and refresh with collection sync, rather than adding playback
+polling or treating journal facts as device collection membership.
 
 Text collection/status badges use compact outlined gradient pills: All in slate,
 New in blue, Unwatched in gold, Watched in green, Favorites in purple and In
 progress in amber, each with a local line icon. Their compact icons and padding
 match inline format badges; movie-detail badges share the same 28 px minimum
 height as the format and rating buttons. Movie-detail filter links and filter
-checkboxes retain their existing actions. Cover corner flags retain their layout
-and mutually exclusive status behavior.
+checkboxes retain their existing actions. Cover corner flags show overlapping
+status memberships with additional labels.
 
 Hidden collection names affect labels and filters, not status/favorite/Watch
 Soon classification. Recent identity uses the source-scoped group, never title
@@ -768,8 +798,8 @@ Covers show only the highest known video format across the group's versions:
 **4K Cinematic > 4K > HD > SD**. Unknown video quality produces no format badge;
 SDR/HDR10 alone does not imply SD/HD. Lists retain all known video/HDR/audio
 format chips, including SDR, HDR10, Dolby Vision and Dolby Atmos. Resolution
-does not imply HDR or audio capability. Lists also show the mutually exclusive
-status plus independent favorite below the title. Indicators have accessible
+does not imply HDR or audio capability. Lists also show collection-based
+statuses plus independent favorite below the title. Indicators have accessible
 labels and use text/CSS without remote assets or new dependencies.
 
 ## Cover image retention

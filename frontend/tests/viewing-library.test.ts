@@ -26,24 +26,35 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it("uses the linked artwork and emits the exact Library ID without executing titles", async () => {
+it("opens the exact linked Library dialog without executing titles", async () => {
   const transport = new FixtureTransport();
   const movie = transport.libraryTitles[0];
   movie.title = "<img src=x onerror=alert(1)>";
   transport.viewingLinks.set(transport.records[0].id, movie.id);
   mount(transport);
-  const navigate = vi.fn();
-  element.addEventListener("open-library-title", navigate);
   await vi.waitFor(() =>
-    expect(element.shadowRoot!.querySelector("button")).not.toBeNull(),
+    expect(
+      element.shadowRoot!.querySelector("kaleidescape-library-cover"),
+    ).not.toBeNull(),
   );
   const cover = element.shadowRoot!.querySelector(
     "kaleidescape-library-cover",
   ) as LibraryCover;
   expect(cover.artworkKey).toBe(movie.artwork_key);
   expect(element.shadowRoot!.querySelector("img")).toBeNull();
-  element.shadowRoot!.querySelector<HTMLButtonElement>("button")!.click();
-  expect(navigate.mock.calls[0][0].detail).toBe(movie.id);
+  element.openLibrary();
+  await vi.waitFor(() =>
+    expect(
+      element
+        .shadowRoot!.querySelector("kaleidescape-library")
+        ?.shadowRoot?.querySelector<HTMLDialogElement>("#title-dialog")?.open,
+    ).toBe(true),
+  );
+  expect(
+    element
+      .shadowRoot!.querySelector("kaleidescape-library")
+      ?.getAttribute("dialogOnly"),
+  ).toBeNull();
 });
 
 it("does not request Library data when the feature is disabled", async () => {

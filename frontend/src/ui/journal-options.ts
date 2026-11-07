@@ -7,12 +7,14 @@ import { errorCode, errorMessage } from "../core/api";
 import { PreferenceStore } from "./preference-store";
 import { styles } from "./styles";
 import { closeButton, dismissBackdrop } from "./dialog";
+import { setUnifiedMovieDialog } from "./movie-dialog-mode";
 
 export interface JournalOptionsValue {
   fuzzy_search: boolean;
   view: "list" | "calendar";
   calendar_size: number;
   calendar_fit: boolean;
+  movie_details: "full" | "compact";
 }
 
 export class JournalOptions extends LitElement {
@@ -59,6 +61,7 @@ export class JournalOptions extends LitElement {
   private view: "list" | "calendar" = "list";
   private calendarSize = 180;
   private calendarFit = false;
+  private movieDetails: "full" | "compact" = "full";
   private bound = "";
   private boundClient?: JournalClient;
   private generation = 0;
@@ -93,6 +96,7 @@ export class JournalOptions extends LitElement {
     this.view = "list";
     this.calendarSize = 180;
     this.calendarFit = false;
+    this.movieDetails = "full";
     this.ready = false;
     this.fuzzy = true;
     this.error = "";
@@ -106,6 +110,7 @@ export class JournalOptions extends LitElement {
           view: this.view,
           calendar_size: this.calendarSize,
           calendar_fit: this.calendarFit,
+          movie_details: this.movieDetails,
         },
         bubbles: true,
         composed: true,
@@ -165,6 +170,9 @@ export class JournalOptions extends LitElement {
       this.view = journal.view as "list" | "calendar";
       this.calendarSize = journal.calendar_size as number;
       this.calendarFit = journal.calendar_fit as boolean;
+      this.movieDetails =
+        journal.movie_details === "compact" ? "compact" : "full";
+      setUnifiedMovieDialog(this.movieDetails === "full");
       this.ready = true;
       this.error = "";
       this.notify();
@@ -244,6 +252,25 @@ export class JournalOptions extends LitElement {
           case. On also tolerates small spelling mistakes and word order
           differences.
         </p>
+        <label
+          >Movie details<select
+            name="journal_movie_details"
+            .value=${this.movieDetails}
+            @change=${(event: Event) => {
+              this.movieDetails =
+                (event.target as HTMLSelectElement).value === "compact"
+                  ? "compact"
+                  : "full";
+              this.viewStore?.set({ movie_details: this.movieDetails });
+              setUnifiedMovieDialog(this.movieDetails === "full");
+              this.notify();
+              this.requestUpdate();
+            }}
+          >
+            <option value="full">Full movie details</option>
+            <option value="compact">Compact movie details</option>
+          </select></label
+        >
         <label class="check"
           ><input
             name="journal_calendar_view"

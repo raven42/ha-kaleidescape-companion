@@ -78,6 +78,14 @@ class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertIn("New", by_year[2024]["collections"])
         self.assertIn("New", grouped["facets"]["collections"])
         self.assertNotIn("2026-10-25", json.dumps(by_year[2025]))
+        filtered = await self.repository.async_library_list(
+            library.SOURCE, {"grouped": True, "recently_added": True}, "", 2, today
+        )
+        self.assertEqual({row["year"] for row in filtered["items"]}, {2024, 2025})
+        with self.assert_error("invalid_request"):
+            await self.repository.async_library_list(
+                library.SOURCE, {"recently_added": "true"}, "", 2, today
+            )
 
         versions = await self.repository.async_library_versions(
             library.SOURCE,
@@ -130,6 +138,50 @@ class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
                 "is_recently_added"
             ]
         )
+        recent_scan = await self.repository.async_library_list(
+            library.SOURCE, {"grouped": True, "recently_added": True}, "", 0, today
+        )
+        self.assertEqual([row["year"] for row in recent_scan["items"]], [2018])
+
+    async def test_movie_details_and_badge_preferences_are_private_and_validated(self):
+        journal = await self.repository.async_ui_preferences("a", area="journal")
+        self.assertEqual(journal["values"]["movie_details"], "full")
+        await self.repository.async_ui_preferences_update(
+            "a",
+            False,
+            str(uuid4()),
+            journal["revision"],
+            {"movie_details": "compact"},
+            "journal",
+        )
+        self.assertEqual(
+            (await self.repository.async_ui_preferences("a", area="journal"))["values"][
+                "movie_details"
+            ],
+            "compact",
+        )
+        self.assertEqual(
+            (await self.repository.async_ui_preferences("b", area="journal"))["values"][
+                "movie_details"
+            ],
+            "full",
+        )
+        with self.assert_error("invalid_request"):
+            await self.repository.async_ui_preferences_update(
+                "a", False, str(uuid4()), 1, {"movie_details": "other"}, "journal"
+            )
+        defaults = await self.repository.async_ui_preferences("a")
+        self.assertEqual(defaults["values"]["movie_status_labels"], "modern")
+        await self.repository.async_ui_preferences_update(
+            "a",
+            False,
+            str(uuid4()),
+            defaults["revision"],
+            {"movie_status_labels": "kaleidescape", "recently_added": True},
+        )
+        saved = (await self.repository.async_ui_preferences("a"))["values"]
+        self.assertEqual(saved["movie_status_labels"], "kaleidescape")
+        self.assertTrue(saved["recently_added"])
 
     async def test_interface_mode_validation_and_retired_library_switch(
         self,
@@ -418,6 +470,8 @@ class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
             {"show_titles": "false"},
             {"show_format": 1},
             {"show_badges": None},
+            {"movie_status_labels": "other"},
+            {"recently_added": 1},
             {"status": ["invalid"]},
             {"actor": [1]},
             {"actor": ["x" * 500] * 201},

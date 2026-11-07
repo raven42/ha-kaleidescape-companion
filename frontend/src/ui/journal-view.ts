@@ -82,8 +82,14 @@ export function viewingListRow(
 export function viewingDetails(
   row: ViewingSummary,
   date: (value: string | null) => string,
+  openTitle?: () => void,
 ) {
-  return html`<h3 class="journal-title">${row.title}</h3>
+  const title = openTitle
+    ? html`<button type="button" class="link" @click=${openTitle}>
+        ${row.title}
+      </button>`
+    : row.title;
+  return html`<h3 class="journal-title">${title}</h3>
     <dl class="journal-summary">
       <div>
         <dt>Status</dt>

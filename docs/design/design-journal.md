@@ -130,6 +130,11 @@ All operations use HA authentication and scoped entry/dataset identifiers.
 Household views contain safe viewing summaries and totals; notes, raw
 identities, sessions, audits and exports require administrator access. Now
 Playing reads permitted HA entities; recorder internals are administrator-only.
+Linked Journal entries open full movie details in place by default, with an
+expandable Journal history. Journal options let each user choose full movie
+details or the compact viewing dialog. An entry without an available Library
+link keeps its compact viewing details. Administrators in Advanced mode can edit
+an entry from the full dialog without switching pages.
 
 Lists are paginated with bounded results and revision/filter/sort-bound cursors.
 Search supports case-folded literal matching and the saved fuzzy option. Sorts

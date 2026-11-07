@@ -49,7 +49,11 @@ it("renders the Watch Soon flag as an accessible corner clock", () => {
   const host = document.createElement("div");
   render(
     renderStatusBadges(
-      libraryTitle({ collections: ["WatchSoon"], watched_status: "unwatched" }),
+      libraryTitle({
+        collections: ["WatchSoon"],
+        watched_status: "none",
+        movie_statuses: [],
+      }),
       true,
     ),
     host,

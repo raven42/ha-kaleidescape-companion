@@ -306,14 +306,24 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
     ):
         self.assertEqual(
             (await self.repository.async_ui_preferences("a", area="journal"))["values"],
-            {"view": "list", "calendar_size": 180, "calendar_fit": False},
+            {
+                "view": "list",
+                "calendar_size": 180,
+                "calendar_fit": False,
+                "movie_details": "full",
+            },
         )
         await self.repository.async_ui_preferences_update(
             "a",
             False,
             str(uuid4()),
             0,
-            {"view": "calendar", "calendar_size": 90, "calendar_fit": True},
+            {
+                "view": "calendar",
+                "calendar_size": 90,
+                "calendar_fit": True,
+                "movie_details": "compact",
+            },
             "journal",
         )
         await self.repository.async_close()
@@ -323,11 +333,21 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
         await self.repository.async_seed_ui_preferences({})
         self.assertEqual(
             (await self.repository.async_ui_preferences("a", area="journal"))["values"],
-            {"view": "calendar", "calendar_size": 90, "calendar_fit": True},
+            {
+                "view": "calendar",
+                "calendar_size": 90,
+                "calendar_fit": True,
+                "movie_details": "compact",
+            },
         )
         self.assertEqual(
             (await self.repository.async_ui_preferences("b", area="journal"))["values"],
-            {"view": "list", "calendar_size": 180, "calendar_fit": False},
+            {
+                "view": "list",
+                "calendar_size": 180,
+                "calendar_fit": False,
+                "movie_details": "full",
+            },
         )
         self.assertEqual(
             (await self.repository.async_ui_preferences("a", area="search"))["values"],

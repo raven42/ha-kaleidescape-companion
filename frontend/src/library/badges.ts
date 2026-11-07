@@ -2,22 +2,74 @@
 import { html, nothing, svg } from "lit";
 import type { LibrarySummary } from "../core/api";
 type VideoMetadata = { formats?: string[] | null; edition?: string | null };
-export function statusBadges(row: LibrarySummary) {
+export type MovieStatusLabels = "modern" | "kaleidescape";
+export function movieStatuses(row: LibrarySummary): string[] {
+  return (
+    row.movie_statuses ??
+    (["unwatched", "watched", "in_progress"].includes(row.watched_status)
+      ? [row.watched_status]
+      : [])
+  );
+}
+export function movieStatusLabel(
+  status: string,
+  style: MovieStatusLabels = "modern",
+) {
+  return (
+    (
+      {
+        unwatched: style === "modern" ? "Unwatched" : "New",
+        watched: style === "modern" ? "Watched" : "Played",
+        in_progress: style === "modern" ? "In progress" : "Paused",
+        unknown: "Unknown",
+        none: "No status",
+      } as Record<string, string>
+    )[status] ?? "Unknown"
+  );
+}
+export function statusBadges(
+  row: LibrarySummary,
+  style: MovieStatusLabels = "modern",
+) {
   const watchSoon =
     row.is_watch_soon ??
     row.collections.some(
       (name) => name.toLowerCase().replace(/[\s_-]+/g, "") === "watchsoon",
     );
-  const status =
-    row.watched_status === "in_progress"
-      ? { key: "progress", label: "In progress", symbol: "◔" }
-      : row.watched_status === "watched"
-        ? { key: "watched", label: "Watched", symbol: "✓" }
-        : watchSoon
-          ? { key: "watch-soon", label: "Watch Soon", symbol: "" }
-          : undefined;
+  const statuses = movieStatuses(row);
   return [
-    ...(status ? [status] : []),
+    ...(statuses.includes("in_progress")
+      ? [
+          {
+            key: "progress",
+            label: movieStatusLabel("in_progress", style),
+            symbol: "◔",
+          },
+        ]
+      : []),
+    ...(statuses.includes("watched")
+      ? [
+          {
+            key: "watched",
+            label: movieStatusLabel("watched", style),
+            symbol: "✓",
+          },
+        ]
+      : []),
+    ...(!statuses.includes("in_progress") &&
+    !statuses.includes("watched") &&
+    watchSoon
+      ? [{ key: "watch-soon", label: "Watch Soon", symbol: "" }]
+      : []),
+    ...(statuses.includes("unwatched")
+      ? [
+          {
+            key: "unwatched",
+            label: movieStatusLabel("unwatched", style),
+            symbol: movieStatusLabel("unwatched", style),
+          },
+        ]
+      : []),
     ...(row.is_recently_added
       ? [{ key: "recent", label: "Recently Added", symbol: "Recently Added" }]
       : []),
@@ -110,20 +162,36 @@ export function renderStatusBadges(
   row: LibrarySummary,
   flags = false,
   exclude: readonly string[] = [],
+  style: MovieStatusLabels = "modern",
 ) {
-  const badges = statusBadges(row);
+  const badges = statusBadges(row, style);
+  const topStatus = badges.some((badge) =>
+    ["watched", "progress", "watch-soon"].includes(badge.key),
+  );
+  let labelIndex = 0;
+  let triangleCount = 0;
   return badges
     .filter((badge) => !exclude.includes(badge.key))
-    .map(
-      (badge) =>
-        html`<span
-          class=${flags ? `cover-flag flag-${badge.key}${badge.key === "recent" && badges.length > 1 ? " flag-offset" : ""}` : `status-badge collection-badge collection-${collectionKind(badge.label)}${badge.key === "recent" ? " status-recent" : ""}`}
-          title=${badge.label}
-          aria-label=${badge.label}
-          role="img"
-          >${flags ? html`<span class="badge-symbol" aria-hidden="true">${badge.key === "watch-soon" ? watchSoonSymbol : badge.symbol}</span>` : html`${collectionSymbol(badge.label)}<span>${badge.label}</span>`}</span
-        >`,
-    );
+    .map((badge) => {
+      const isTriangle = ["watched", "progress", "watch-soon"].includes(
+        badge.key,
+      );
+      const extra = flags && isTriangle && triangleCount++ > 0;
+      const isLabel =
+        extra || ["recent", "new", "unwatched"].includes(badge.key);
+      const top =
+        flags && isLabel
+          ? 8 + (topStatus ? 42 : 0) + labelIndex++ * 26
+          : undefined;
+      return html`<span
+        class=${flags ? `cover-flag flag-${badge.key === "unwatched" && style === "kaleidescape" ? "new" : badge.key}${extra ? " flag-status-extra" : ""}${badge.key === "recent" && badges.length > 1 ? " flag-offset" : ""}` : `status-badge collection-badge collection-${collectionKind(badge.label)}${badge.key === "recent" ? " status-recent" : ""}`}
+        style=${top === undefined ? nothing : `top:${top}px`}
+        title=${badge.label}
+        aria-label=${badge.label}
+        role="img"
+        >${flags ? html`<span class="badge-symbol" aria-hidden="true">${extra ? badge.label : badge.key === "watch-soon" ? watchSoonSymbol : badge.symbol}</span>` : html`${collectionSymbol(badge.label)}<span>${badge.label}</span>`}</span
+      >`;
+    });
 }
 
 export function renderRatingBadge(

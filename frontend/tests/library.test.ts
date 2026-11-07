@@ -1,4 +1,5 @@
 import { modalClose } from "./dialog-helpers";
+import { setUnifiedMovieDialog } from "../src/ui/movie-dialog-mode";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../src/library/library";
 import type { KaleidescapeLibrary } from "../src/library/library";
@@ -42,6 +43,7 @@ function title(label: string) {
 }
 const covers = () => [...root().querySelectorAll("kaleidescape-library-cover")];
 beforeEach(async () => {
+  setUnifiedMovieDialog(true);
   vi.stubGlobal(
     "IntersectionObserver",
     class {
@@ -60,6 +62,7 @@ beforeEach(async () => {
     "kaleidescape-library",
   ) as KaleidescapeLibrary;
   element.client = transport.client();
+  element.advanced = true;
   element.scope = { ...info, library_enabled: true };
   document.body.append(element);
   await flush();
@@ -617,6 +620,111 @@ it("groups source editions in list and covers, lists formats, and switches versi
   expect(root().querySelectorAll(".cover-tile")).toHaveLength(1);
 });
 
+it("switches movie status names without duplicating collection filters", async () => {
+  transport.libraryTitles[0].collections.push("New");
+  transport.libraryTitles[0].watched_status = "unwatched";
+  button("Refresh cached data").click();
+  await flush();
+  let first = title("Voyage to Europa").closest("tr")!;
+  expect(first.querySelector('[aria-label="Unwatched"]')).toBeTruthy();
+  expect(first.querySelector('[aria-label="New"]')).toBeNull();
+  const select = root().querySelector<HTMLSelectElement>(
+    '[name="movie_status_labels"]',
+  )!;
+  select.value = "kaleidescape";
+  select.dispatchEvent(new Event("change", { bubbles: true }));
+  await flush();
+  first = title("Voyage to Europa").closest("tr")!;
+  expect(first.querySelector('[aria-label="New"]')).toBeTruthy();
+  expect(first.querySelector('[aria-label="Unwatched"]')).toBeNull();
+  await vi.waitFor(() =>
+    expect(transport.uiPreferences.movie_status_labels).toBe("kaleidescape"),
+  );
+  button("Filters").click();
+  await flush();
+  expect(root().querySelector('[name="collection"][value="New"]')).toBeNull();
+  expect(
+    root().querySelector('[name="status"][value="unwatched"]'),
+  ).toBeTruthy();
+});
+
+it("applies and persists the Recently added filter", async () => {
+  transport.libraryTitles[0].is_recently_added = true;
+  button("Filters").click();
+  await flush();
+  root().querySelector<HTMLInputElement>('[name="recently_added"]')!.click();
+  button("Apply filters").click();
+  await flush();
+  expect(
+    transport.calls.filter((call) => call.type.endsWith("library/list")).at(-1)!
+      .filters,
+  ).toMatchObject({ recently_added: true });
+  expect(root().querySelectorAll("tbody tr")).toHaveLength(1);
+  await vi.waitFor(() =>
+    expect(transport.uiPreferences.recently_added).toBe(true),
+  );
+});
+
+it("shows group purchases across version tabs and opens the selected receipt editor", async () => {
+  transport.libraryTitles = [
+    libraryTitle({ edition: "4K" }),
+    libraryTitle({
+      id: "d".repeat(64),
+      edition: "HD",
+      purchase_history: [
+        {
+          id: "f".repeat(64),
+          title: "Fictional purchase",
+          purchased_on: "2020-01-02",
+          purchase_price: "$9.99",
+          retail_price: "$19.99",
+          order_id: "GROUP-ORDER",
+          href: null,
+        },
+      ],
+    }),
+  ];
+  transport.libraryGroups.set("a".repeat(64), "fictional-work");
+  transport.libraryGroups.set("d".repeat(64), "fictional-work");
+  button("Refresh cached data").click();
+  await flush();
+  title("Voyage to Europa").click();
+  await flush();
+  expect(text()).toContain("GROUP-ORDER");
+  root().querySelectorAll<HTMLButtonElement>(".version-tabs button")[1].click();
+  await flush();
+  expect(text()).toContain("GROUP-ORDER");
+  root().querySelector<HTMLDetailsElement>(".movie-purchases")!.open = true;
+  root()
+    .querySelector<HTMLButtonElement>(".movie-purchases .summary-edit")!
+    .click();
+  await flush();
+  expect(
+    root().querySelector<HTMLDialogElement>("#purchase-manager")!.open,
+  ).toBe(true);
+  expect(root().querySelector("#purchase-manager")!.textContent).toContain(
+    "Purchase information status",
+  );
+  expect(
+    root().querySelectorAll(".movie-purchases .summary-edit"),
+  ).toHaveLength(1);
+  root()
+    .querySelector<HTMLButtonElement>(
+      "#purchase-manager button[aria-label^='Edit purchase']",
+    )!
+    .click();
+  await flush();
+  const repair = root().querySelector("kaleidescape-purchase-repair")!;
+  expect(repair).toBeTruthy();
+  expect(
+    repair.shadowRoot!.querySelector<HTMLInputElement>('[name="order_id"]')!
+      .value,
+  ).toBe("GROUP-ORDER");
+  expect(root().querySelector<HTMLDialogElement>("#title-dialog")!.open).toBe(
+    true,
+  );
+});
+
 it("keeps same-name remakes separate in both views and opens only the selected work", async () => {
   transport.libraryTitles = [
     libraryTitle({ year: 1995, directors: ["Original Director"] }),
@@ -933,7 +1041,7 @@ it("shows private purchase history only in administrator title details", async (
   ];
   title("Voyage to Europa").click();
   await flush();
-  expect(text()).toContain("Purchase history · Administrator");
+  expect(text()).toContain("Purchase details");
   expect(text()).toContain("FICTIONAL-ORDER");
   expect(text()).toContain("Date not imported");
   expect(root().querySelector("script")).toBeNull();
@@ -946,7 +1054,7 @@ it("shows private purchase history only in administrator title details", async (
   title("Voyage to Europa").click();
   await flush();
   expect(text()).not.toContain("FICTIONAL-ORDER");
-  expect(text()).not.toContain("Purchase history · Administrator");
+  expect(text()).not.toContain("Purchase details");
 });
 
 it("overlays scraper conflicts independently of badges and persists the missing-data filter", async () => {
@@ -1038,7 +1146,7 @@ it("limits the Basic footer to global counts and shows a highlighted match count
   );
   const footer = () => root().querySelector("footer")!;
   expect(footer().textContent).toMatch(
-    /Unwatched\s+2.*Watched\s+2.*Paused\s+1/s,
+    /Unwatched\s+2.*Watched\s+2.*In progress\s+1/s,
   );
   expect(footer().textContent).not.toMatch(
     /Artwork|Synced|scraped|per page|covers per row/,
@@ -1144,4 +1252,139 @@ it("connects mobile filter and randomize shortcuts and keeps refresh inside Opti
       ...root().querySelectorAll<HTMLButtonElement>("#library-options button"),
     ].some((b) => b.textContent?.trim() === "Refresh cached data"),
   ).toBe(true);
+});
+
+it("shows expandable grouped Journal history inside the Library title dialog", async () => {
+  transport.options.library_enabled = true;
+  transport.viewingLinks.set(
+    transport.records[0].id,
+    transport.libraryTitles[0].id,
+  );
+  title("Voyage to Europa").click();
+  await vi.waitFor(() =>
+    expect(
+      root()
+        .querySelector("kaleidescape-library-journal")
+        ?.shadowRoot?.querySelector("summary")?.textContent,
+    ).toContain("Journal"),
+  );
+  const journal = root().querySelector("kaleidescape-library-journal")!;
+  expect(root().querySelector<HTMLDialogElement>("#title-dialog")!.open).toBe(
+    true,
+  );
+  expect(journal.shadowRoot!.querySelector("details")!.open).toBe(false);
+  journal.shadowRoot!.querySelector<HTMLDetailsElement>("details")!.open = true;
+  expect(journal.shadowRoot!.textContent).toContain("Completed");
+  const edit = vi.fn();
+  journal.addEventListener("edit-journal", edit);
+  const editButton =
+    journal.shadowRoot!.querySelector<HTMLButtonElement>("summary button")!;
+  expect(editButton.textContent?.trim()).toBe("edit");
+  editButton.click();
+  expect(edit.mock.calls[0][0].detail).toBe(transport.records[0].id);
+  expect(root().querySelector<HTMLDialogElement>("#title-dialog")!.open).toBe(
+    true,
+  );
+});
+
+it("lets the Journal heading edit link select among multiple viewings", async () => {
+  transport.viewingLinks.set(
+    transport.records[0].id,
+    transport.libraryTitles[0].id,
+  );
+  transport.viewingLinks.set(
+    transport.records[1].id,
+    transport.libraryTitles[0].id,
+  );
+  title("Voyage to Europa").click();
+  await vi.waitFor(() =>
+    expect(
+      root()
+        .querySelector("kaleidescape-library-journal")
+        ?.shadowRoot?.querySelectorAll("li"),
+    ).toHaveLength(2),
+  );
+  const journal = root().querySelector("kaleidescape-library-journal")!;
+  journal.shadowRoot!.querySelector<HTMLDetailsElement>("details")!.open = true;
+  const edit = vi.fn();
+  journal.addEventListener("edit-journal", edit);
+  journal
+    .shadowRoot!.querySelector<HTMLButtonElement>("summary button")!
+    .click();
+  await vi.waitFor(() =>
+    expect(
+      journal.shadowRoot!.querySelector<HTMLDialogElement>(
+        ".journal-edit-chooser",
+      )?.open,
+    ).toBe(true),
+  );
+  journal
+    .shadowRoot!.querySelectorAll<HTMLButtonElement>(
+      ".journal-edit-chooser li button",
+    )[1]
+    .click();
+  expect(edit).toHaveBeenCalledOnce();
+  expect([transport.records[0].id, transport.records[1].id]).toContain(
+    edit.mock.calls[0][0].detail,
+  );
+});
+
+it("places Journal before purchases without a temporary layout switch", async () => {
+  transport.libraryTitles[0].purchased_on = "2020-05-12";
+  transport.viewingLinks.set(
+    transport.records[0].id,
+    transport.libraryTitles[0].id,
+  );
+  transport.libraryTitles[0].purchase_history = [
+    {
+      id: "p".repeat(64),
+      title: "Example",
+      purchased_on: null,
+      purchase_price: "$4.99",
+      retail_price: null,
+      order_id: "EXAMPLE",
+      href: null,
+    },
+  ];
+  title("Voyage to Europa").click();
+  await vi.waitFor(() =>
+    expect(
+      root().querySelector(".movie-aside .movie-purchases"),
+    ).not.toBeNull(),
+  );
+  const aside = root().querySelector(".movie-aside")!;
+  expect(
+    aside.querySelector(".movie-record-details .movie-purchases"),
+  ).toBeNull();
+  expect(
+    aside
+      .querySelector(".movie-journal")!
+      .compareDocumentPosition(aside.querySelector(".movie-purchases")!) &
+      Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+  expect(text()).not.toContain("Use current movie details");
+  expect(text()).not.toContain("Use consolidated movie details");
+});
+
+it("hides purchase details in Basic mode even for an administrator", async () => {
+  element.advanced = false;
+  transport.libraryTitles[0].purchased_on = "2020-05-12";
+  transport.libraryTitles[0].purchase_history = [
+    {
+      id: "p".repeat(64),
+      title: "Example",
+      purchased_on: null,
+      purchase_price: "$4.99",
+      retail_price: null,
+      order_id: "PRIVATE-ORDER",
+      href: null,
+    },
+  ];
+  title("Voyage to Europa").click();
+  await flush();
+  expect(text()).not.toContain("PRIVATE-ORDER");
+  expect(root().querySelector(".movie-purchases")).toBeNull();
+  expect(
+    root().querySelector(".movie-record-details")!.textContent,
+  ).not.toContain("Purchased");
 });

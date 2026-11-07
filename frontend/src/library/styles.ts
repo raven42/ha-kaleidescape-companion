@@ -178,7 +178,10 @@ export const libraryStyles = css`
     width: 25px;
     height: 25px;
   }
-  .cover-flag.flag-recent {
+  .cover-flag.flag-recent,
+  .cover-flag.flag-new,
+  .cover-flag.flag-unwatched,
+  .cover-flag.flag-status-extra {
     top: 8px;
     left: 8px;
     border-radius: 5px;
@@ -188,6 +191,22 @@ export const libraryStyles = css`
     line-height: 1.1;
     font-weight: 800;
     box-shadow: 0 1px 4px #0006;
+  }
+  .cover-flag.flag-status-extra {
+    width: auto;
+    height: auto;
+    clip-path: none;
+  }
+  .cover-flag.flag-status-extra .badge-symbol {
+    position: static;
+    display: inline;
+    width: auto;
+    height: auto;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    box-shadow: none;
   }
   .cover-flag.flag-recent.flag-offset {
     top: 50px;
@@ -218,6 +237,14 @@ export const libraryStyles = css`
   }
   .flag-recent {
     background: #7238a5;
+    color: #fff;
+  }
+  .flag-new {
+    background: #086f95;
+    color: #fff;
+  }
+  .flag-unwatched {
+    background: #795b00;
     color: #fff;
   }
   .flag-favorite {
@@ -633,9 +660,28 @@ export const libraryStyles = css`
     white-space: nowrap;
     max-width: 100%;
   }
+  .movie-purchases {
+    margin-top: 12px;
+    font-size: 11px;
+    overflow-wrap: anywhere;
+  }
   .movie-record-details {
     margin-top: 12px;
-    font-size: 12px;
+    font-size: 11px;
+  }
+  .movie-purchases .purchase-edit-link {
+    font-size: inherit;
+  }
+  .movie-purchases .summary-edit {
+    display: none;
+    margin-left: 0.5rem;
+    font-size: inherit;
+    min-height: 0;
+    padding: 0;
+    line-height: inherit;
+  }
+  .movie-purchases[open] .summary-edit {
+    display: inline;
   }
   .version-format-badges {
     margin-top: 10px;
@@ -724,6 +770,14 @@ export const libraryStyles = css`
       border-top: 1px solid var(--line);
       padding-top: 8px;
     }
+    .movie-journal {
+      grid-column: 1 / -1;
+      order: 11;
+    }
+    .movie-purchases {
+      grid-column: 1 / -1;
+      order: 12;
+    }
     .version-format-badges {
       grid-column: 1 / -1;
       order: 9;
@@ -742,9 +796,11 @@ export const libraryStyles = css`
       line-height: 1.5;
     }
     .movie-summary,
-    .movie-description,
-    .movie-record-details {
+    .movie-description {
       font-size: 13px;
+    }
+    .movie-record-details {
+      font-size: 12px;
     }
     .movie-credits dd {
       line-height: 1.5;

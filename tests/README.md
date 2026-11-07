@@ -17,7 +17,7 @@ household devices or external metadata providers.
 
 ```sh
 PYTHONPATH=custom_components/kaleidescape_companion .venv/bin/python -m unittest discover -s tests/scrapers
-.venv/bin/python -m unittest discover -s tests
+.venv/bin/python dev/run_python_tests.py
 npm --prefix frontend test
 npm --prefix frontend run build
 ```

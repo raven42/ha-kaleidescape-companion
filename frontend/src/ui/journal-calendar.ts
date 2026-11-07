@@ -17,6 +17,8 @@ import { styles } from "./styles";
 import type { CalendarStatus } from "./journal-view";
 import { calendarStyles } from "./journal-calendar.styles";
 import { closeButton, dismissBackdrop } from "./dialog";
+import "../library/library";
+import { unifiedMovieDialog, watchMovieDialogMode } from "./movie-dialog-mode";
 
 export function dayKey(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -75,6 +77,7 @@ export class JournalCalendar extends LitElement {
     disabled: { type: Boolean },
     editable: { type: Boolean },
     rememberUrl: { type: Boolean },
+    detailsOnly: { type: Boolean },
   };
   static styles = [styles, libraryStyles, calendarStyles];
   client?: JournalClient;
@@ -89,6 +92,11 @@ export class JournalCalendar extends LitElement {
   // Only the administrator host connects the shared Journal editor.
   editable = false;
   rememberUrl = true;
+  detailsOnly = false;
+  private linkedTitleId?: string;
+  private unwatchMovieDialog?: () => void;
+  private preserveDetailOnClose = false;
+  private libraryRequest = 0;
   private fittedSize = 180;
   private resizeObserver?: ResizeObserver;
   private layoutFrame?: number;
@@ -110,13 +118,29 @@ export class JournalCalendar extends LitElement {
   private detailError = "";
   connectedCallback() {
     super.connectedCallback();
+    this.unwatchMovieDialog = watchMovieDialogMode(() => {
+      this.requestUpdate();
+      if (this.detailsOnly || !this.selected) return;
+      if (
+        unifiedMovieDialog() &&
+        this.renderRoot.querySelector<HTMLDialogElement>(".calendar-dialog")
+          ?.open
+      )
+        void this.openLibraryTitle(true);
+      else if (!unifiedMovieDialog() && this.linkedTitleId) {
+        const row = this.selected;
+        this.linkedTitleId = undefined;
+        void this.openViewing(row);
+      }
+    });
+    if (this.detailsOnly) return;
     window.addEventListener("resize", this.scheduleLayout);
     window.visualViewport?.addEventListener("resize", this.scheduleLayout);
     this.rememberMonth();
     this.requestUpdate();
   }
   protected updated() {
-    if (!this.isConnected) return;
+    if (!this.isConnected || this.detailsOnly) return;
     if (!this.resizeObserver) {
       this.resizeObserver = new ResizeObserver(this.scheduleLayout);
       this.resizeObserver.observe(this);
@@ -178,6 +202,7 @@ export class JournalCalendar extends LitElement {
       this.privacy = privacy;
       this.boundClient = this.client;
     }
+    if (this.detailsOnly) return;
     const signature = JSON.stringify([
       privacy,
       this.scope?.revision,
@@ -193,6 +218,8 @@ export class JournalCalendar extends LitElement {
   }
   disconnectedCallback() {
     super.disconnectedCallback();
+    this.unwatchMovieDialog?.();
+    this.unwatchMovieDialog = undefined;
     window.removeEventListener("resize", this.scheduleLayout);
     window.visualViewport?.removeEventListener("resize", this.scheduleLayout);
     this.resizeObserver?.disconnect();
@@ -307,6 +334,8 @@ export class JournalCalendar extends LitElement {
     history.replaceState(history.state, "", url);
   }
   private closeDetails() {
+    this.libraryRequest++;
+    this.linkedTitleId = undefined;
     this.detailRequest++;
     this.selected = undefined;
     this.movie = null;
@@ -315,7 +344,7 @@ export class JournalCalendar extends LitElement {
     this.detailError = "";
     this.renderRoot.querySelector("dialog")?.close();
   }
-  private async select(row: ViewingSummary, artwork: string | null = null) {
+  async openViewing(row: ViewingSummary, artwork: string | null = null) {
     if (!this.client || !this.scope) return;
     const generation = this.generation,
       request = ++this.detailRequest;
@@ -332,6 +361,35 @@ export class JournalCalendar extends LitElement {
       !this.isConnected
     )
       return;
+    if (
+      unifiedMovieDialog() &&
+      !this.detailsOnly &&
+      this.scope.library_enabled
+    ) {
+      try {
+        const result = await this.client.viewingLibrary(this.scope, row.id);
+        if (
+          generation !== this.generation ||
+          request !== this.detailRequest ||
+          !this.isConnected
+        )
+          return;
+        if (result.library && unifiedMovieDialog()) {
+          this.linkedTitleId = result.library.title_id;
+          this.detailLoading = false;
+          this.requestUpdate();
+          return;
+        }
+      } catch (error) {
+        if (generation !== this.generation || request !== this.detailRequest)
+          return;
+        if (errorCode(error) === "unauthorized") {
+          this.fail(error);
+          return;
+        }
+        this.detailError = errorMessage(error);
+      }
+    }
     this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.showModal();
     try {
       const result = await this.client.calendarDetails(this.scope, row.id);
@@ -348,6 +406,55 @@ export class JournalCalendar extends LitElement {
     } finally {
       if (generation === this.generation && request === this.detailRequest) {
         this.detailLoading = false;
+        this.requestUpdate();
+      }
+    }
+  }
+  private async openLibraryTitle(replaceCompact = false) {
+    if (
+      !this.client ||
+      !this.scope?.library_enabled ||
+      !this.selected ||
+      this.detailsOnly
+    )
+      return;
+    const generation = this.generation,
+      request = ++this.libraryRequest;
+    try {
+      const result = await this.client.viewingLibrary(
+        this.scope,
+        this.selected.id,
+      );
+      if (
+        generation !== this.generation ||
+        request !== this.libraryRequest ||
+        !this.isConnected ||
+        (replaceCompact && !unifiedMovieDialog())
+      )
+        return;
+      if (result.library) {
+        if (replaceCompact) {
+          const dialog =
+            this.renderRoot.querySelector<HTMLDialogElement>(
+              ".calendar-dialog",
+            );
+          if (dialog?.open) {
+            this.preserveDetailOnClose = true;
+            dialog.close();
+          }
+        }
+        this.linkedTitleId = result.library.title_id;
+        this.requestUpdate();
+      } else {
+        this.detailError = "No linked Library entry is available.";
+        this.requestUpdate();
+      }
+    } catch (error) {
+      if (generation !== this.generation || request !== this.libraryRequest)
+        return;
+      if (errorCode(error) === "unauthorized") this.fail(error);
+      else {
+        this.detailError = errorMessage(error);
         this.requestUpdate();
       }
     }
@@ -385,6 +492,7 @@ export class JournalCalendar extends LitElement {
     this.requestUpdate();
   }
   private detailLink(key: LibraryCriterion["key"], value: string) {
+    if (this.detailsOnly) return value;
     return html`<button
       type="button"
       class="link detail-link"
@@ -402,95 +510,121 @@ export class JournalCalendar extends LitElement {
     const different = start && end && dayKey(start) !== dayKey(end);
     const runtime = movie?.duration_seconds ?? viewing?.duration_seconds;
     return html`<dialog
-      class="database-dialog calendar-dialog"
-      aria-labelledby="calendar-movie-title"
-      @click=${dismissBackdrop}
-      @close=${(event: Event) => {
-        if (!(event.target as HTMLDialogElement).open) {
-          this.closeDetails();
-          this.requestUpdate();
+        class="database-dialog calendar-dialog"
+        aria-labelledby="calendar-movie-title"
+        @click=${dismissBackdrop}
+        @close=${(event: Event) => {
+          if (!(event.target as HTMLDialogElement).open) {
+            if (this.preserveDetailOnClose) {
+              this.preserveDetailOnClose = false;
+              return;
+            }
+            this.closeDetails();
+            this.requestUpdate();
+          }
+        }}
+      >
+        <div class="card-head">
+          <h2 id="calendar-movie-title">
+            ${viewing && movie && !this.detailsOnly ? html`<button type="button" class="link detail-link" @click=${() => void this.openLibraryTitle()}>${viewing.title}</button>` : (viewing?.title ?? "Viewing details")}
+          </h2>
+          ${closeButton(() => {
+            this.closeDetails();
+            this.requestUpdate();
+          })}
+        </div>
+        ${
+          viewing
+            ? html`<div class="movie-detail">
+                <kaleidescape-library-cover
+                  .client=${this.client}
+                  .scope=${this.scope}
+                  .queue=${this.queue}
+                  .artworkKey=${this.selectedArtwork}
+                  .title=${viewing.title}
+                  @access-denied=${() => this.fail({ code: "unauthorized" })}
+                ></kaleidescape-library-cover>
+                <div>
+                  ${this.detailLoading ? html`<p role="status">Loading movie details…</p>` : nothing}
+                  ${this.detailError ? html`<p class="error" role="alert">${this.detailError} <button @click=${() => this.openViewing(viewing, this.selectedArtwork)}>Retry details</button></p>` : nothing}
+                  ${
+                    movie
+                      ? html`<div class="detail-badges">
+                            ${renderFormatBadges(movie, false, this.detailsOnly ? undefined : (value) => this.browse("format", value))}${renderRatingBadge(movie.rating ?? "", this.detailsOnly ? undefined : (value) => this.browse("rating", value))}
+                          </div>
+                          ${movie.year ? html`<p><strong>Year:</strong> ${this.detailLink("year", String(movie.year))}</p>` : nothing}
+                          ${[
+                            ["Cast", movie.actors],
+                            ["Directors", movie.directors],
+                            ["Genres", movie.genres],
+                          ].map(([label, names]) =>
+                            (names as string[] | null)?.length
+                              ? html`<p>
+                                  <strong>${label}:</strong>
+                                  ${(names as string[]).map((name, index) => html`${index ? ", " : ""}${this.detailLink(label === "Genres" ? "genre" : "query", name)}`)}
+                                </p>`
+                              : nothing,
+                          )}`
+                      : !this.detailLoading && !this.detailError
+                        ? html`<p class="muted">
+                            No linked Library metadata is available.
+                          </p>`
+                        : nothing
+                  }
+                  ${runtime != null ? html`<p><strong>Runtime:</strong> ${(runtime / 60).toFixed(2)} min</p>` : nothing}
+                  <p>
+                    <strong
+                      >${different ? "Viewing dates" : "Viewing date"}:</strong
+                    >
+                    ${start?.toLocaleDateString()}${different ? ` – ${end!.toLocaleDateString()}` : ""}
+                  </p>
+                  <p>
+                    <strong>Watched:</strong>
+                    ${(viewing.watched_seconds / 60).toFixed(2)} min ·
+                    ${viewing.status === "completed" ? "Completed" : "Partial"}
+                  </p>
+                </div>
+              </div>`
+            : nothing
         }
-      }}
-    >
-      <div class="card-head">
-        <h2 id="calendar-movie-title">
-          ${viewing && movie ? this.detailLink("query", viewing.title) : (viewing?.title ?? "Viewing details")}
-        </h2>
-        ${closeButton(() => {
-          this.closeDetails();
-          this.requestUpdate();
-        })}
-      </div>
+        ${
+          viewing && this.editable && this.scope?.permissions.edit
+            ? html`<div class="dialog-footer">
+                <button
+                  class="primary"
+                  ?disabled=${this.disabled || this.detailLoading}
+                  @click=${this.editViewing}
+                >
+                  Edit viewing
+                </button>
+              </div>`
+            : nothing
+        }
+      </dialog>
       ${
-        viewing
-          ? html`<div class="movie-detail">
-              <kaleidescape-library-cover
-                .client=${this.client}
-                .scope=${this.scope}
-                .queue=${this.queue}
-                .artworkKey=${this.selectedArtwork}
-                .title=${viewing.title}
-                @access-denied=${() => this.fail({ code: "unauthorized" })}
-              ></kaleidescape-library-cover>
-              <div>
-                ${this.detailLoading ? html`<p role="status">Loading movie details…</p>` : nothing}
-                ${this.detailError ? html`<p class="error" role="alert">${this.detailError} <button @click=${() => this.select(viewing, this.selectedArtwork)}>Retry details</button></p>` : nothing}
-                ${
-                  movie
-                    ? html`<div class="detail-badges">
-                          ${renderFormatBadges(movie, false, (value) => this.browse("format", value))}${renderRatingBadge(movie.rating ?? "", (value) => this.browse("rating", value))}
-                        </div>
-                        ${movie.year ? html`<p><strong>Year:</strong> ${this.detailLink("year", String(movie.year))}</p>` : nothing}
-                        ${[
-                          ["Cast", movie.actors],
-                          ["Directors", movie.directors],
-                          ["Genres", movie.genres],
-                        ].map(([label, names]) =>
-                          (names as string[] | null)?.length
-                            ? html`<p>
-                                <strong>${label}:</strong>
-                                ${(names as string[]).map((name, index) => html`${index ? ", " : ""}${this.detailLink(label === "Genres" ? "genre" : "query", name)}`)}
-                              </p>`
-                            : nothing,
-                        )}`
-                    : !this.detailLoading && !this.detailError
-                      ? html`<p class="muted">
-                          No linked Library metadata is available.
-                        </p>`
-                      : nothing
-                }
-                ${runtime != null ? html`<p><strong>Runtime:</strong> ${(runtime / 60).toFixed(2)} min</p>` : nothing}
-                <p>
-                  <strong
-                    >${different ? "Viewing dates" : "Viewing date"}:</strong
-                  >
-                  ${start?.toLocaleDateString()}${different ? ` – ${end!.toLocaleDateString()}` : ""}
-                </p>
-                <p>
-                  <strong>Watched:</strong>
-                  ${(viewing.watched_seconds / 60).toFixed(2)} min ·
-                  ${viewing.status === "completed" ? "Completed" : "Partial"}
-                </p>
-              </div>
-            </div>`
+        this.linkedTitleId && !this.detailsOnly
+          ? html`<kaleidescape-library
+              .client=${this.client}
+              .scope=${this.scope}
+              .dialogOnly=${true}
+              .advanced=${this.editable}
+              .openTitleId=${this.linkedTitleId}
+              @title-dialog-closed=${() => {
+                if (this.linkedTitleId === undefined) return;
+                this.linkedTitleId = undefined;
+                this.requestUpdate();
+              }}
+              @title-dialog-error=${(event: CustomEvent<string>) => {
+                this.linkedTitleId = undefined;
+                this.detailError = event.detail;
+                this.requestUpdate();
+              }}
+            ></kaleidescape-library>`
           : nothing
-      }
-      ${
-        viewing && this.editable && this.scope?.permissions.edit
-          ? html`<div class="dialog-footer">
-              <button
-                class="primary"
-                ?disabled=${this.disabled || this.detailLoading}
-                @click=${this.editViewing}
-              >
-                Edit viewing
-              </button>
-            </div>`
-          : nothing
-      }
-    </dialog>`;
+      }`;
   }
   protected render() {
+    if (this.detailsOnly) return this.renderDetails();
     const year = this.month.getFullYear(),
       month = this.month.getMonth();
     const first = new Date(year, month, 1),
@@ -564,7 +698,7 @@ export class JournalCalendar extends LitElement {
                             aria-label=${`${row.title} · ${phase === "start" ? "Started; completed on another day" : phase === "completion" ? "Completed; started on another day" : row.status === "completed" ? "Completed" : "Partial"}`}
                             title=${row.title}
                             ?disabled=${this.disabled}
-                            @click=${() => this.select(row, row.artwork_key)}
+                            @click=${() => this.openViewing(row, row.artwork_key)}
                           >
                             <span class="poster-art"
                               ><kaleidescape-library-cover

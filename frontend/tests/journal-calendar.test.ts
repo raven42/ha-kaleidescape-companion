@@ -1,4 +1,5 @@
 import { modalClose } from "./dialog-helpers";
+import { setUnifiedMovieDialog } from "../src/ui/movie-dialog-mode";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../src/ui/journal-calendar";
 import "../src/ui/panel";
@@ -15,6 +16,7 @@ import { FixtureTransport, info, record } from "./fixture";
 let calendar: JournalCalendar;
 let parent: KaleidescapePanel | KaleidescapeReader | undefined;
 beforeEach(() => {
+  setUnifiedMovieDialog(false);
   history.replaceState(null, "", "/");
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date(2026, 9, 30, 12));
@@ -470,6 +472,37 @@ it("resizes day rows without reloading month data and fits different week counts
   expect(grid.style.getPropertyValue("--calendar-day-size")).toBe("90px");
 });
 
+it("opens the linked full Library detail from the movie title without leaving the calendar", async () => {
+  const transport = new FixtureTransport();
+  transport.viewingLinks.set(
+    transport.records[0].id,
+    transport.libraryTitles[0].id,
+  );
+  await mount(transport);
+  posters()[0].click();
+  await vi.waitFor(() =>
+    expect(root().querySelector("h2 button")?.textContent).toContain(
+      "The Lantern Voyage",
+    ),
+  );
+  root().querySelector<HTMLButtonElement>("h2 button")!.click();
+  await vi.waitFor(() =>
+    expect(
+      root()
+        .querySelector("kaleidescape-library")
+        ?.shadowRoot?.querySelector<HTMLDialogElement>("#title-dialog")?.open,
+    ).toBe(true),
+  );
+  const library = root().querySelector("kaleidescape-library")!;
+  expect(
+    library.shadowRoot!.querySelector("kaleidescape-library-journal"),
+  ).not.toBeNull();
+  expect(root().querySelector(".month-grid")).not.toBeNull();
+  expect(
+    root().querySelector<HTMLDialogElement>(".calendar-dialog")!.open,
+  ).toBe(true);
+});
+
 it.each([
   ["Fictional Actor", "query", "Fictional Actor"],
   ["Fictional Director", "query", "Fictional Director"],
@@ -477,7 +510,6 @@ it.each([
   ["2025", "year", "2025"],
   ["PG", "rating", "PG"],
   ["4K", "format", "4K"],
-  ["The Lantern Voyage", "query", "The Lantern Voyage"],
 ])(
   "routes a compact-detail %s link to fresh Library criteria",
   async (label, key, value) => {
@@ -513,6 +545,7 @@ it.each(["kaleidescape-panel", "kaleidescape-reader"])(
     const transport = new FixtureTransport();
     transport.options.library_enabled = true;
     transport.journalPreferences.view = "calendar";
+    transport.journalPreferences.movie_details = "compact";
     transport.uiPreferences.query = "Old search";
     transport.uiPreferences.genre = ["Old genre"];
     transport.uiPreferences.rating = ["R"];
@@ -680,4 +713,224 @@ it("marks an open completed viewing at its completion date", async () => {
     { day: "2026-10-31", phase: "start" },
     { day: "2026-11-01", phase: "completion" },
   ]);
+});
+
+it("does not open Library after the viewing dialog closes during link lookup", async () => {
+  const transport = new FixtureTransport();
+  transport.viewingLinks.set(
+    transport.records[0].id,
+    transport.libraryTitles[0].id,
+  );
+  await mount(transport);
+  let resolve!: (
+    value: Awaited<
+      ReturnType<NonNullable<typeof calendar.client>["viewingLibrary"]>
+    >,
+  ) => void;
+  vi.spyOn(calendar.client!, "viewingLibrary").mockReturnValue(
+    new Promise((done) => (resolve = done)),
+  );
+  posters()[0].click();
+  await vi.waitFor(() =>
+    expect(root().querySelector("h2 button")).not.toBeNull(),
+  );
+  root().querySelector<HTMLButtonElement>("h2 button")!.click();
+  modalClose(root()).click();
+  resolve({
+    library: {
+      title_id: transport.libraryTitles[0].id,
+      title: "Fictional",
+      artwork_key: null,
+    },
+  });
+  await calendar.updateComplete;
+  await Promise.resolve();
+  expect(root().querySelector("kaleidescape-library")).toBeNull();
+});
+
+it("reports an unavailable Library title in the original viewing dialog", async () => {
+  const transport = new FixtureTransport();
+  transport.viewingLinks.set(
+    transport.records[0].id,
+    transport.libraryTitles[0].id,
+  );
+  await mount(transport);
+  vi.spyOn(calendar.client!, "libraryVersions").mockRejectedValue(
+    new Error("Fictional Library failure"),
+  );
+  posters()[0].click();
+  await vi.waitFor(() =>
+    expect(root().querySelector("h2 button")).not.toBeNull(),
+  );
+  root().querySelector<HTMLButtonElement>("h2 button")!.click();
+  await vi.waitFor(() =>
+    expect(
+      root().querySelector(".calendar-dialog [role=alert]"),
+    ).not.toBeNull(),
+  );
+  expect(
+    root().querySelector<HTMLDialogElement>(".calendar-dialog")!.open,
+  ).toBe(true);
+});
+
+it("opens the consolidated movie dialog directly from a linked calendar entry", async () => {
+  setUnifiedMovieDialog(true);
+  const transport = new FixtureTransport();
+  transport.viewingLinks.set(
+    transport.records[0].id,
+    transport.libraryTitles[0].id,
+  );
+  await mount(transport);
+  posters()[0].click();
+  await vi.waitFor(() =>
+    expect(
+      root()
+        .querySelector("kaleidescape-library")
+        ?.shadowRoot?.querySelector<HTMLDialogElement>("#title-dialog")?.open,
+    ).toBe(true),
+  );
+  expect(
+    root().querySelector<HTMLDialogElement>(".calendar-dialog")!.open,
+  ).toBe(false);
+  const library = root().querySelector("kaleidescape-library")!;
+  await vi.waitFor(() =>
+    expect(
+      library
+        .shadowRoot!.querySelector(".movie-aside .movie-journal")
+        ?.shadowRoot?.querySelector("summary"),
+    ).not.toBeNull(),
+  );
+  expect(library.shadowRoot!.textContent).not.toContain(
+    "Use current movie details",
+  );
+});
+
+it("switches an open current calendar dialog into the consolidated dialog", async () => {
+  const transport = new FixtureTransport();
+  transport.viewingLinks.set(
+    transport.records[0].id,
+    transport.libraryTitles[0].id,
+  );
+  await mount(transport);
+  posters()[0].click();
+  await vi.waitFor(() =>
+    expect(root().querySelector(".calendar-dialog")?.textContent).toContain(
+      "Fictional Actor",
+    ),
+  );
+  setUnifiedMovieDialog(true);
+  await vi.waitFor(() =>
+    expect(
+      root()
+        .querySelector("kaleidescape-library")
+        ?.shadowRoot?.querySelector<HTMLDialogElement>("#title-dialog")?.open,
+    ).toBe(true),
+  );
+  expect(
+    root().querySelector<HTMLDialogElement>(".calendar-dialog")!.open,
+  ).toBe(false);
+});
+
+it("opens the current viewing details when the Library link is unavailable", async () => {
+  setUnifiedMovieDialog(true);
+  await mount();
+  posters()[0].click();
+  await vi.waitFor(() =>
+    expect(
+      root().querySelector<HTMLDialogElement>(".calendar-dialog")?.open,
+    ).toBe(true),
+  );
+  expect(root().querySelector("kaleidescape-library")).toBeNull();
+});
+
+it("opens the Journal editor from the consolidated calendar movie dialog", async () => {
+  setUnifiedMovieDialog(true);
+  const transport = new FixtureTransport();
+  transport.options.library_enabled = true;
+  transport.journalPreferences.view = "calendar";
+  transport.viewingLinks.set(
+    transport.records[0].id,
+    transport.libraryTitles[0].id,
+  );
+  parent = document.createElement("kaleidescape-panel") as KaleidescapePanel;
+  parent.client = transport.client();
+  document.body.append(parent);
+  await vi.waitFor(() =>
+    expect(
+      parent!.shadowRoot!.querySelector("kaleidescape-journal-calendar"),
+    ).not.toBeNull(),
+  );
+  calendar = parent.shadowRoot!.querySelector(
+    "kaleidescape-journal-calendar",
+  ) as JournalCalendar;
+  await vi.waitFor(() => expect(posters()).toHaveLength(3));
+  posters()[0].click();
+  await vi.waitFor(() =>
+    expect(
+      root()
+        .querySelector("kaleidescape-library")
+        ?.shadowRoot?.querySelector<HTMLDialogElement>("#title-dialog")?.open,
+    ).toBe(true),
+  );
+  const library = root().querySelector("kaleidescape-library")!;
+  await vi.waitFor(() =>
+    expect(
+      library.shadowRoot!.querySelector("kaleidescape-library-journal")
+        ?.shadowRoot?.textContent,
+    ).toContain("edit"),
+  );
+  const history = library.shadowRoot!.querySelector(
+    "kaleidescape-library-journal",
+  )!;
+  history.shadowRoot!.querySelector<HTMLDetailsElement>("details")!.open = true;
+  [...history.shadowRoot!.querySelectorAll<HTMLButtonElement>("button")]
+    .find((button) => button.textContent?.trim() === "edit")!
+    .click();
+  await vi.waitFor(() =>
+    expect(
+      parent!.shadowRoot!.querySelector<HTMLDialogElement>("#journal-editor")
+        ?.open,
+    ).toBe(true),
+  );
+  expect(
+    library.shadowRoot!.querySelector<HTMLDialogElement>("#title-dialog")!.open,
+  ).toBe(true);
+});
+
+it("ignores a delayed consolidated-dialog lookup after switching back", async () => {
+  const transport = new FixtureTransport();
+  transport.viewingLinks.set(
+    transport.records[0].id,
+    transport.libraryTitles[0].id,
+  );
+  await mount(transport);
+  posters()[0].click();
+  await vi.waitFor(() =>
+    expect(root().querySelector(".calendar-dialog")?.textContent).toContain(
+      "Fictional Actor",
+    ),
+  );
+  let resolve!: (
+    value: Awaited<
+      ReturnType<NonNullable<typeof calendar.client>["viewingLibrary"]>
+    >,
+  ) => void;
+  vi.spyOn(calendar.client!, "viewingLibrary").mockReturnValue(
+    new Promise((done) => (resolve = done)),
+  );
+  setUnifiedMovieDialog(true);
+  setUnifiedMovieDialog(false);
+  resolve({
+    library: {
+      title_id: transport.libraryTitles[0].id,
+      title: "Fictional",
+      artwork_key: null,
+    },
+  });
+  await Promise.resolve();
+  await calendar.updateComplete;
+  expect(
+    root().querySelector<HTMLDialogElement>(".calendar-dialog")!.open,
+  ).toBe(true);
+  expect(root().querySelector("kaleidescape-library")).toBeNull();
 });

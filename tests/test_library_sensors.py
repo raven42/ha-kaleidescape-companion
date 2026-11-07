@@ -293,7 +293,7 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(empty["artwork_cache_bytes"], 0)
         result = await self.scan(collections={})
         self.assertEqual(result["total_movies"], 2)
-        self.assertEqual(result["unwatched_movies"], 2)
+        self.assertEqual(result["unwatched_movies"], 0)
         self.assertEqual(result["watched_movies"], 0)
         self.assertEqual(result["recently_added"], 0)
         self.assertEqual(result["recently_added_movies"], [])
@@ -354,11 +354,11 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
             )
             self.assertEqual(
                 result["unwatched_movies"],
-                sum(row["watched_status"] == "unwatched" for row in page["items"]),
+                sum("unwatched" in row["movie_statuses"] for row in page["items"]),
             )
             self.assertEqual(
                 result["watched_movies"],
-                sum(row["watched_status"] == "watched" for row in page["items"]),
+                sum("watched" in row["movie_statuses"] for row in page["items"]),
             )
         result = await self.scan([*library.ROWS, movie()])
         self.assertEqual(result["total_movies"], 3)
@@ -366,21 +366,21 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(result["watched_movies"])
         self.assertEqual(result["unknown_movies"], 1)
         result = await self.scan([*library.ROWS, movie()], {})
-        self.assertEqual(result["unwatched_movies"], 3)
+        self.assertEqual(result["unwatched_movies"], 0)
         self.assertEqual(result["watched_movies"], 0)
 
-    async def test_watched_counts_groups_excludes_paused_and_uses_current_source(self):
+    async def test_watched_counts_played_groups_and_uses_current_source(self):
         remake = movie("remake", "remake", title=library.ROWS[0]["title"], year=1990)
         rows = [*library.ROWS, remake]
         played = [row["source_handle"] for row in rows]
         result = await self.scan(rows, {"Played": played})
         self.assertEqual(result["watched_movies"], 3)
         result = await self.scan(rows, {"Played": played, "Paused": ["fixture-a2"]})
-        self.assertEqual(result["watched_movies"], 2)
+        self.assertEqual(result["watched_movies"], 3)
         await self.repository.async_library_catalog(
             "http://other-fictional.local", [movie()], {"Played": ["new-handle"]}
         )
-        self.assertEqual((await self.summary())["watched_movies"], 2)
+        self.assertEqual((await self.summary())["watched_movies"], 3)
         result = await self.scan([remake], {"Played": ["remake"]})
         self.assertEqual(result["watched_movies"], 1)
 

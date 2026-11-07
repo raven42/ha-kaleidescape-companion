@@ -38,6 +38,7 @@ it("saves the global personal search choice and restores it when reopened", asyn
     view: "list",
     calendar_size: 180,
     calendar_fit: false,
+    movie_details: "full",
   });
   element.remove();
   const reopened = await mount(transport);
@@ -96,6 +97,7 @@ it("persists Calendar view independently of the global search preference", async
     view: "calendar",
     calendar_size: 180,
     calendar_fit: false,
+    movie_details: "full",
   });
   expect(transport.searchPreferences).toEqual({ fuzzy_search: true });
   element.remove();
@@ -104,6 +106,26 @@ it("persists Calendar view independently of the global search preference", async
     reopened.querySelector<HTMLInputElement>('[name="journal_calendar_view"]')!
       .checked,
   ).toBe(true);
+});
+
+it("persists the Journal movie detail mode", async () => {
+  const transport = new FixtureTransport();
+  const root = await mount(transport);
+  const select = root.querySelector<HTMLSelectElement>(
+    '[name="journal_movie_details"]',
+  )!;
+  expect(select.value).toBe("full");
+  select.value = "compact";
+  select.dispatchEvent(new Event("change", { bubbles: true }));
+  await vi.waitFor(() =>
+    expect(transport.journalPreferences.movie_details).toBe("compact"),
+  );
+  element.remove();
+  const reopened = await mount(transport);
+  expect(
+    reopened.querySelector<HTMLSelectElement>('[name="journal_movie_details"]')!
+      .value,
+  ).toBe("compact");
 });
 
 it("saves live calendar sizing and fit options independently for the current user", async () => {

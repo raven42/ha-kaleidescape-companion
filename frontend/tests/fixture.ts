@@ -205,6 +205,7 @@ export class FixtureTransport implements Transport {
     show_titles: true,
     show_format: true,
     show_badges: true,
+    movie_status_labels: "modern",
     show_rating: false,
     show_library_cost: false,
     widths: [360, 90, 260, 150, 140, 210],
@@ -222,6 +223,7 @@ export class FixtureTransport implements Transport {
     status: [],
     missing_metadata_artwork: false,
     missing_purchase_information: false,
+    recently_added: false,
   };
   missingMetadataArtwork = new Set<string>();
   missingPurchaseInformation = new Set<string>();
@@ -231,6 +233,7 @@ export class FixtureTransport implements Transport {
   journalPreferences: Record<string, unknown> = {
     view: "list",
     calendar_size: 180,
+    movie_details: "full",
     calendar_fit: false,
   };
   purchaseTotals = {
@@ -404,6 +407,28 @@ export class FixtureTransport implements Transport {
         offset,
         has_more: rows.length > offset + 50,
         revision: this.revision,
+        group_purchase_details: {
+          records: rows.flatMap((row) =>
+            (row.purchase_history ?? []).map((purchase) => ({
+              ...purchase,
+              imported_at: "2026-10-13T00:00:00Z",
+              library_id: row.id,
+              issue: null,
+              token: "a".repeat(64),
+            })),
+          ),
+          manual: rows
+            .filter((row) => row.purchased_on)
+            .map((row) => ({
+              library_id: row.id,
+              purchased_on: row.purchased_on,
+              purchase_price: null,
+              retail_price: null,
+              editable: true,
+              date_only: !!row.purchase_history?.length,
+            })),
+          truncated: false,
+        },
       };
     } else if (operation === "library/collections/targets")
       result = { collections: ["Science Fiction"], revision: this.revision };
@@ -558,6 +583,7 @@ export class FixtureTransport implements Transport {
       let rows = this.libraryTitles.filter(
         (row) =>
           (!filters.scraper_conflict || !!row.scraper_conflict) &&
+          (!filters.recently_added || row.is_recently_added) &&
           (!filters.missing_metadata_artwork ||
             this.missingMetadataArtwork.has(row.id)) &&
           (!filters.missing_purchase_information ||
@@ -1004,7 +1030,19 @@ export class FixtureTransport implements Transport {
             ) &&
             (!message.status || row.status === message.status) &&
             (operation !== "library/viewings" ||
-              this.viewingLinks.get(row.id) === message.title_id),
+              (() => {
+                const linked = this.libraryTitles.find(
+                  (title) => title.id === this.viewingLinks.get(row.id),
+                );
+                const selected = this.libraryTitles.find(
+                  (title) => title.id === message.title_id,
+                );
+                return (
+                  !!linked &&
+                  !!selected &&
+                  this.groupKey(linked) === this.groupKey(selected)
+                );
+              })()),
         ),
         revision: this.revision,
         next_cursor: null,

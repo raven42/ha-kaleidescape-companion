@@ -21,7 +21,7 @@ case "${1:-help}" in
   check)
     use_pyk
     PYTHONPATH="$ROOT/custom_components/kaleidescape_companion${PYTHONPATH:+:$PYTHONPATH}" "$VENV_PATH"/bin/python -m unittest discover -s tests/scrapers
-    "$VENV_PATH"/bin/python -m unittest discover -s tests
+    "$VENV_PATH"/bin/python dev/run_python_tests.py
     "$VENV_PATH"/bin/python dev/check_project.py
     "$VENV_PATH"/bin/ruff check .
     "$VENV_PATH"/bin/ruff format --check .
@@ -38,7 +38,7 @@ case "${1:-help}" in
     ;;
   python-test)
     use_pyk
-    exec "$VENV_PATH"/bin/python -m unittest discover -s tests -v
+    exec "$VENV_PATH"/bin/python dev/run_python_tests.py -v
     ;;
   preview)
     cd frontend
