@@ -203,8 +203,8 @@ Cross-host identity reconciliation is deferred.
 
 When a movie group has recorded or manual viewings, the consolidated movie
 dialog places an expandable **Journal** section below Library details. It lists
-each viewing's start time, status and watched time; administrators in Advanced
-mode can open the revision-checked editor with **edit** in the expanded heading,
+each viewing as its status, date and start time; administrators in Advanced mode
+can open the revision-checked editor with **edit** in the expanded heading,
 choosing an entry when there are multiple viewings. Purchase history is a
 separate section below Journal, shown only in Advanced mode to administrators.
 An empty history has no Journal section. The history uses the existing
@@ -562,27 +562,30 @@ because metadata can legitimately change active filters and some sort fields.
 Administrators can select **Edit details**. It edits display title, sort title,
 year, rating, synopsis, cast, directors, writers, producers, studios and genres
 across the source group's available versions. Credits use one name per line. The
-administrator's Advanced **Purchase details** section lists saved receipts and
-manual purchase details for the source-defined movie group, regardless of which
-version holds their database link. The link alone does not establish an edition,
-so the same group history appears on each version. The list includes temporarily
-unavailable group members and reports when its bounded result is truncated. The
-expanded section's **edit** link opens purchase editing, where each receipt uses
-the reviewed repair workflow, preserving its identity checks, audit history and
-retry handling. When no receipt exists for a saved manual entry, its editor
-changes the manual date and prices; a separate date override for an entry with a
-receipt can be edited without altering the receipt. Prices use a currency prefix
-and two decimal places; zero is a known value. The purchase editor also offers
-**Purchase information unavailable**, which applies across every version of the
-group and suppresses the missing-information sensor/filter without clearing
-stored values or adding a badge. Purchase fields do not appear in **Edit
-details**.
+administrator's Advanced **Purchase details** section shows one combined set of
+purchase values for the source-defined movie group, regardless of which version
+holds them. A version link alone does not establish an edition, so all formats
+share the same summary. Populated receipt fields take precedence, with missing
+values filled from unambiguous receipt or manual group values. The section
+reports truncated results and displays a clickable Store link for recognized
+Kaleidescape Store paths.
 
-Source identity, runtime, formats, file/cache paths, memberships, invoice
-identity/order/link, watched state and viewing records cannot be edited here.
-Raw scan identity remains unchanged; display overrides survive future scans.
-Edits check the movie snapshot and preserve the exact request after an uncertain
-save.
+The expanded section's **edit** link opens one dialog for purchase fields and
+**Purchase information unavailable**. Checking it hides the fields and
+suppresses the missing-information sensor/filter without clearing stored values.
+When multiple receipts exist, select the receipt to edit; a value from another
+receipt is read-only until its receipt is selected. Conflicting saved values are
+flagged for review. Prices use a currency prefix and two decimal places; zero is
+a known value. Purchase fields do not appear in **Edit details**. Receipt edits
+retain identity checks and audit history, and matching manual values and the
+unavailable flag are saved atomically and included in reversible receipt
+corrections. All group edits check the snapshot and preserve exact-request
+retries.
+
+Source identity, runtime, formats, file/cache paths, memberships, watched state
+and viewing records cannot be edited in the movie metadata editor. Raw scan
+identity remains unchanged; display overrides survive future scans. Edits check
+the movie snapshot and preserve the exact request after an uncertain save.
 
 Schema 22 adds nullable `library.sort_title`. Alphabetical sorting uses this
 value, then the display title, then the scanned title. A blank sort title resets
@@ -757,7 +760,7 @@ check. Removal will need its own verified contract and security review.
 | In progress · amber ring      | Source Paused status; top-left triangle, with no invented completion percentage                   |
 | Watch Soon · blue clock       | An available version belongs to WatchSoon; top-left triangle when neither In progress nor Watched |
 | Recently Added · purple label | Retained `recently_added` sensor batch membership or a recent linked purchase; top-left label     |
-| Favorite · gold star          | An available version belongs to Favorites; independent top-right bookmark                         |
+| Favorites · gold star         | An available version belongs to Favorites; independent top-right bookmark                         |
 
 Library options choose **Modern format** (the default: Unwatched, Watched, In
 progress) or **Kaleidescape format** (New, Played, Paused). The choice only
@@ -772,7 +775,7 @@ not shown as a cover badge.
 
 Watched and In progress can both appear if their source memberships overlap.
 Watch Soon is shown in the status corner when neither is present. Recently Added
-and Favorite can accompany these statuses. The Recently Added badge is
+and Favorites can accompany these statuses. The Recently Added badge is
 independent of the Kaleidescape **New** collection: it includes the retained
 addition batch and any purchase linked to the same source-defined movie group
 within the configured purchase window. Administrators set this window in
@@ -782,6 +785,11 @@ included, future dates are not, and dates use Home Assistant's local calendar
 day. The recently added sensor batch itself is unchanged. These use cached
 source statuses and refresh with collection sync, rather than adding playback
 polling or treating journal facts as device collection membership.
+
+The Favorites badge and filter use the same group-wide source collection
+membership. Movie details show it once even when the collection name is also
+included in the movie's listed collections. A membership on any available
+version marks the group as Favorites.
 
 Text collection/status badges use compact outlined gradient pills: All in slate,
 New in blue, Unwatched in gold, Watched in green, Favorites in purple and In

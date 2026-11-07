@@ -335,6 +335,26 @@ class JournalRepository:
             snapshot,
         )
 
+    async def async_group_purchase_edit(
+        self, source, title, actor, request=None, snapshot=None, data=None
+    ):
+        from ..library import group_purchase_edit
+
+        if data is None:
+            return await self._call(
+                self._search_read, group_purchase_edit.inspect, source, title
+            )
+        return await self._call(
+            self._library_write,
+            group_purchase_edit.apply,
+            source,
+            self._actor(actor),
+            identifier(request),
+            title,
+            snapshot,
+            data,
+        )
+
     async def async_library_candidates(self, source: str) -> list[dict]:
         return await self._call(library_store.detail_candidates, self._db(), source)
 

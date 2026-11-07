@@ -14,6 +14,94 @@ from .models import JournalError, invalid
 REVIEW_SECONDS = 600
 RECORD_FIELDS = ("id", *purchases.INVOICE_FIELDS, "imported_at", "library_id", "issue")
 EDIT_FIELDS = frozenset((*purchases.INVOICE_FIELDS, "library_id"))
+GROUP_FIELDS = (
+    "id",
+    "purchased_on",
+    "purchase_price",
+    "retail_price",
+    "order_id",
+    "href",
+    "purchase_information_unavailable",
+)
+
+
+def _check_group(db, state):
+    """Check private group evidence before applying or reversing a correction."""
+    if not isinstance(state, dict) or set(state) != {
+        "source_id",
+        "source_group",
+        "rows",
+    }:
+        raise JournalError("conflict", "Purchase group evidence is invalid")
+    rows = state["rows"]
+    if (
+        not isinstance(state["source_id"], str)
+        or not re.fullmatch(r"[a-f0-9]{64}", state["source_id"])
+        or not isinstance(state["source_group"], str)
+        or not 0 < len(state["source_group"]) <= 256
+        or not isinstance(rows, list)
+        or len(rows) > purchases.MAX_HISTORY
+    ):
+        raise JournalError("conflict", "Purchase group evidence is invalid")
+    current = [
+        dict(row)
+        for row in db.execute(
+            "SELECT id,purchased_on,purchase_price,retail_price,order_id,href,"
+            "purchase_information_unavailable FROM library WHERE source_id=? "
+            "AND source_group=? AND purchase_match_pending=0 ORDER BY id",
+            (state["source_id"], state["source_group"]),
+        )
+    ]
+    if current != rows:
+        raise JournalError("conflict", "Purchase group changed; review it again")
+
+
+def _write_group(db, state):
+    for row in state["rows"]:
+        if not isinstance(row, dict) or set(row) != set(GROUP_FIELDS):
+            raise JournalError("conflict", "Purchase group evidence is invalid")
+        db.execute(
+            "UPDATE library SET purchased_on=?,purchase_price=?,retail_price=?,"
+            "order_id=?,href=?,purchase_information_unavailable=? WHERE id=? "
+            "AND source_id=? AND source_group=? AND purchase_match_pending=0",
+            (
+                *(row[key] for key in GROUP_FIELDS[1:]),
+                row["id"],
+                state["source_id"],
+                state["source_group"],
+            ),
+        )
+
+
+def _check_group_transition(before, after):
+    if not isinstance(after, dict) or set(after) != {
+        "source_id",
+        "source_group",
+        "rows",
+    }:
+        raise JournalError("conflict", "Purchase group evidence is invalid")
+    if (before["source_id"], before["source_group"]) != (
+        after["source_id"],
+        after["source_group"],
+    ):
+        raise JournalError("conflict", "Purchase group evidence is invalid")
+    if not isinstance(after["rows"], list) or len(before["rows"]) != len(after["rows"]):
+        raise JournalError("conflict", "Purchase group evidence is invalid")
+    if any(
+        not isinstance(a, dict)
+        or not isinstance(b, dict)
+        or set(a) != set(GROUP_FIELDS)
+        or set(b) != set(GROUP_FIELDS)
+        or a["id"] != b["id"]
+        or type(b["purchase_information_unavailable"]) is not int
+        or b["purchase_information_unavailable"] not in (0, 1)
+        or any(
+            b[key] is not None and not isinstance(b[key], str)
+            for key in GROUP_FIELDS[1:-1]
+        )
+        for a, b in zip(before["rows"], after["rows"], strict=True)
+    ):
+        raise JournalError("conflict", "Purchase group evidence is invalid")
 
 
 def _record(db, purchase_id):
@@ -44,13 +132,15 @@ def _available_owner(db, record):
     return owner
 
 
-def _effect(db, before, after):
+def _effect(db, before, after, group_after=None):
     """Compute actual totals using the normal projection, then roll back the preview."""
     owners = [_owner(db, record) for record in (before, after)]
     sources = sorted({owner["source_id"] for owner in owners if owner})
     previous = {source: purchases.totals(db, source) for source in sources}
     db.execute("SAVEPOINT purchase_repair_preview")
     try:
+        if group_after is not None:
+            _write_group(db, group_after)
         if before:
             db.execute("DELETE FROM purchase_records WHERE id=?", (before["id"],))
         if after:
@@ -100,6 +190,7 @@ def preview(db, action, key, token, changes, actor):
     if not isinstance(changes, dict) or (action != "correct" and changes):
         raise invalid("Invalid purchase repair changes")
     reverse_id = None
+    before_group = after_group = None
     if action == "reverse":
         event = db.execute(
             "SELECT * FROM purchase_repair_events WHERE request_id=?", (key,)
@@ -114,6 +205,21 @@ def preview(db, action, key, token, changes, actor):
             raise JournalError("conflict", "This purchase repair was already reversed")
         before = json.loads(event["after_record"]) if event["after_record"] else None
         after = json.loads(event["before_record"]) if event["before_record"] else None
+        before_library = (
+            json.loads(event["after_library"]) if event["after_library"] else {}
+        )
+        after_library = (
+            json.loads(event["before_library"]) if event["before_library"] else {}
+        )
+        if not isinstance(before_library, dict) or not isinstance(after_library, dict):
+            raise JournalError("conflict", "Purchase repair evidence is invalid")
+        before_group = before_library.get("group_purchase")
+        after_group = after_library.get("group_purchase")
+        if (before_group is None) != (after_group is None):
+            raise JournalError("conflict", "Purchase group evidence is invalid")
+        if before_group is not None:
+            _check_group(db, before_group)
+            _check_group_transition(before_group, after_group)
         if before and _record(db, before["id"]) != before:
             raise JournalError("conflict", "The repaired purchase has since changed")
         reverse_id = key
@@ -147,15 +253,28 @@ def preview(db, action, key, token, changes, actor):
                 raise invalid("Purchase correction contains no changes")
     _check_destination(db, before, after, reverse_id)
     revision = db.execute("SELECT revision FROM schema_metadata").fetchone()[0]
+    before_library = _owner(db, before)
+    after_library = _owner(db, after)
+    if before_group is not None:
+        if not before_library or not after_library:
+            raise JournalError("conflict", "Purchase group evidence is invalid")
+        if any(
+            (owner["source_id"], owner["source_group"])
+            != (before_group["source_id"], before_group["source_group"])
+            for owner in (before_library, after_library)
+        ):
+            raise JournalError("conflict", "Purchase group evidence is invalid")
+        before_library["group_purchase"] = before_group
+        after_library["group_purchase"] = after_group
     public = {
         "plan_id": str(uuid4()),
         "revision": revision,
         "action": action,
         "before": before,
         "after": after,
-        "before_library": _owner(db, before),
-        "after_library": _owner(db, after),
-        "totals_change": _effect(db, before, after),
+        "before_library": before_library,
+        "after_library": after_library,
+        "totals_change": _effect(db, before, after, after_group),
         "expires_in": REVIEW_SECONDS,
     }
     return {
@@ -166,11 +285,24 @@ def preview(db, action, key, token, changes, actor):
     }
 
 
-def apply(db, plan, request_id, plan_id, revision, actor):
+def apply(
+    db,
+    plan,
+    request_id,
+    plan_id,
+    revision,
+    actor,
+    *,
+    fingerprint_override=None,
+    before_mutation=None,
+):
     """Apply the reviewed transition, its evidence and replay barriers atomically."""
-    fingerprint = hashlib.sha256(
-        json.dumps(["purchase_repair", plan_id, revision, actor]).encode()
-    ).hexdigest()
+    fingerprint = (
+        fingerprint_override
+        or hashlib.sha256(
+            json.dumps(["purchase_repair", plan_id, revision, actor]).encode()
+        ).hexdigest()
+    )
     cached = db.execute(
         "SELECT * FROM requests WHERE request_id=?", (request_id,)
     ).fetchone()
@@ -206,6 +338,24 @@ def apply(db, plan, request_id, plan_id, revision, actor):
         ):
             raise JournalError("conflict", "This purchase repair was already reversed")
         _check_destination(db, before, after, reverse_id)
+        if before_mutation is not None:
+            before_mutation(db)
+        before_group = (public["before_library"] or {}).get("group_purchase")
+        after_group = (public["after_library"] or {}).get("group_purchase")
+        if (before_group is None) != (after_group is None):
+            raise JournalError("conflict", "Purchase group evidence is invalid")
+        if before_group is not None:
+            _check_group(db, before_group)
+            _check_group_transition(before_group, after_group)
+            if not public["before_library"] or not public["after_library"]:
+                raise JournalError("conflict", "Purchase group evidence is invalid")
+            if any(
+                (owner["source_id"], owner["source_group"])
+                != (before_group["source_id"], before_group["source_group"])
+                for owner in (public["before_library"], public["after_library"])
+            ):
+                raise JournalError("conflict", "Purchase group evidence is invalid")
+            _write_group(db, after_group)
         now = datetime.now(UTC).isoformat()
         result = {"revision": revision + 1, "event_id": request_id}
         db.execute(

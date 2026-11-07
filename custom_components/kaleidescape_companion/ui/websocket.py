@@ -156,6 +156,13 @@ def async_register_commands(hass: HomeAssistant) -> None:
             p.Required("confirmation"): str,
         },
         "library/edit/get": {**scoped, p.Required("title_id"): str},
+        "library/purchases/edit/get": {**scoped, p.Required("title_id"): str},
+        "library/purchases/edit/save": {
+            **mutations,
+            p.Required("title_id"): str,
+            p.Required("snapshot"): str,
+            p.Required("data"): dict,
+        },
         "library/edit/save": {
             **mutations,
             p.Required("title_id"): str,
@@ -569,6 +576,18 @@ async def async_handle(
                         is not runtime
                         or get_library(hass, msg["entry_id"], runtime) is not library
                     ):
+                        raise JournalError("not_ready", "Library integration reloaded")
+                case "library/purchases/edit/get" | "library/purchases/edit/save":
+                    library = get_library(hass, msg["entry_id"], runtime)
+                    result = await repository.async_group_purchase_edit(
+                        library.source,
+                        msg["title_id"],
+                        user.id,
+                        msg.get("request_id"),
+                        msg.get("snapshot"),
+                        msg.get("data") if operation.endswith("save") else None,
+                    )
+                    if get_library(hass, msg["entry_id"], runtime) is not library:
                         raise JournalError("not_ready", "Library integration reloaded")
                 case "library/edit/get" | "library/edit/save" | "library/edit/reset":
                     library = get_library(hass, msg["entry_id"], runtime)

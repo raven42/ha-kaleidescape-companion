@@ -74,7 +74,7 @@ export function statusBadges(
       ? [{ key: "recent", label: "Recently Added", symbol: "Recently Added" }]
       : []),
     ...(row.is_favorite
-      ? [{ key: "favorite", label: "Favorite", symbol: "★" }]
+      ? [{ key: "favorite", label: "Favorites", symbol: "★" }]
       : []),
   ];
 }

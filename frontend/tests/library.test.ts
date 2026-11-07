@@ -797,11 +797,21 @@ it("shows group purchases across version tabs and opens the selected receipt edi
   ];
   transport.libraryGroups.set("a".repeat(64), "fictional-work");
   transport.libraryGroups.set("d".repeat(64), "fictional-work");
+  transport.libraryTitles[0].purchased_on = "2020-01-02";
+  transport.libraryTitles[1].purchase_history![0].href =
+    "/movie-store/movie/fictional-film";
   button("Refresh cached data").click();
   await flush();
   title("Voyage to Europa").click();
   await flush();
   expect(text()).toContain("GROUP-ORDER");
+  expect(root().querySelectorAll(".movie-purchases p")).toHaveLength(1);
+  const store = root().querySelector<HTMLAnchorElement>(".movie-purchases a")!;
+  expect(store.textContent?.trim()).toBe("store link");
+  expect(store.href).toBe(
+    "https://www.kaleidescape.com/movie-store/movie/fictional-film",
+  );
+  expect(store.rel).toContain("noreferrer");
   root().querySelectorAll<HTMLButtonElement>(".version-tabs button")[1].click();
   await flush();
   expect(text()).toContain("GROUP-ORDER");
@@ -811,22 +821,22 @@ it("shows group purchases across version tabs and opens the selected receipt edi
     .click();
   await flush();
   expect(
-    root().querySelector<HTMLDialogElement>("#purchase-manager")!.open,
-  ).toBe(true);
-  expect(root().querySelector("#purchase-manager")!.textContent).toContain(
-    "Purchase information status",
-  );
-  expect(
     root().querySelectorAll(".movie-purchases .summary-edit"),
   ).toHaveLength(1);
-  root()
-    .querySelector<HTMLButtonElement>(
-      "#purchase-manager button[aria-label^='Edit purchase']",
-    )!
-    .click();
-  await flush();
-  const repair = root().querySelector("kaleidescape-purchase-repair")!;
-  expect(repair).toBeTruthy();
+  const repair = root().querySelector("kaleidescape-group-purchase-edit")!;
+  await vi.waitFor(() =>
+    expect(
+      repair.shadowRoot!.querySelector<HTMLDialogElement>("dialog")?.open,
+    ).toBe(true),
+  );
+  await vi.waitFor(() =>
+    expect(repair.shadowRoot!.querySelector('[name="order_id"]')).toBeTruthy(),
+  );
+  expect(
+    repair.shadowRoot!.querySelector(
+      '[name="purchase_information_unavailable"]',
+    ),
+  ).toBeTruthy();
   expect(
     repair.shadowRoot!.querySelector<HTMLInputElement>('[name="order_id"]')!
       .value,
@@ -834,6 +844,37 @@ it("shows group purchases across version tabs and opens the selected receipt edi
   expect(root().querySelector<HTMLDialogElement>("#title-dialog")!.open).toBe(
     true,
   );
+});
+
+it("shows one group summary for complementary receipt records", async () => {
+  transport.libraryTitles[0].purchase_history = [
+    {
+      id: "e".repeat(64),
+      title: "Fictional purchase",
+      purchased_on: "2020-01-02",
+      purchase_price: null,
+      retail_price: "$19.99",
+      order_id: null,
+      href: null,
+    },
+    {
+      id: "f".repeat(64),
+      title: "Fictional purchase",
+      purchased_on: "2021-02-03",
+      purchase_price: "$5.99",
+      retail_price: null,
+      order_id: "FICTIONAL-2",
+      href: "/movie-store/movie/fictional",
+    },
+  ];
+  title("Voyage to Europa").click();
+  await flush();
+  const details = root().querySelector(".movie-purchases")!;
+  expect(details.textContent).toContain("$5.99");
+  expect(details.textContent).toContain("$19.99");
+  expect(details.textContent).toContain("Multiple purchase records");
+  expect(details.querySelectorAll("a")).toHaveLength(1);
+  expect(details.querySelectorAll("p")).toHaveLength(2);
 });
 
 it("keeps same-name remakes separate in both views and opens only the selected work", async () => {
@@ -959,6 +1000,47 @@ it("refreshes cached labels when display preferences change without a source rev
     transport.calls.filter((call) => call.type.endsWith("/library/list"))
       .length,
   ).toBe(before + 1);
+});
+
+it("shows one Favorites badge for the group and uses the same Favorites filter", async () => {
+  const first = libraryTitle({ title: "Fictional group", collections: [] });
+  const second = libraryTitle({
+    id: "d".repeat(64),
+    title: "Fictional group",
+    collections: ["Favorites"],
+  });
+  transport.libraryTitles = [
+    first,
+    second,
+    libraryTitle({
+      id: "e".repeat(64),
+      title: "Not a favorite",
+      collections: [],
+    }),
+  ];
+  transport.libraryGroups.set(first.id, "group");
+  transport.libraryGroups.set(second.id, "group");
+  button("Refresh cached data").click();
+  await flush();
+  title("Fictional group").click();
+  await flush();
+  const badges = root().querySelectorAll<HTMLButtonElement>(
+    "#title-dialog .movie-heading-badges .collection-favorite",
+  );
+  expect(badges).toHaveLength(1);
+  expect(badges[0].textContent?.trim()).toBe("Favorites");
+  badges[0].click();
+  await flush();
+  expect(root().querySelectorAll("tbody tr")).toHaveLength(1);
+  expect(title("Fictional group")).toBeTruthy();
+  expect(transport.uiPreferences.status).toEqual(["favorite"]);
+  button("Filters (1)").click();
+  await flush();
+  const selected = root().querySelector<HTMLInputElement>(
+    '[name="status"][value="favorite"]',
+  )!;
+  expect(selected.checked).toBe(true);
+  expect(selected.parentElement?.textContent?.trim()).toBe("Favorites");
 });
 
 it("replaces all criteria when clicking people, years, genres, collections, status, formats or ratings", async () => {

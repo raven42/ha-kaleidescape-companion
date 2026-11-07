@@ -95,6 +95,23 @@ class GroupedLibraryTest(unittest.IsolatedAsyncioTestCase):
         search = await self.repository.async_library_search(SOURCE, "Voyage", "")
         self.assertTrue(all(row["is_watch_soon"] for row in search["items"]))
 
+    async def test_favorites_badge_and_filter_use_available_group_membership(self):
+        await self.repository.async_library_catalog(
+            ORIGIN, ROWS, {"Favorites": ["fixture-a2"]}
+        )
+        grouped = await self.repository.async_library_list(
+            SOURCE, {"grouped": True}, "Favorites"
+        )
+        movie = next(row for row in grouped["items"] if row["version_count"] == 2)
+        self.assertTrue(movie["is_favorite"])
+        self.assertNotIn("Favorites", movie["collections"])
+        filtered = await self.repository.async_library_list(
+            SOURCE, {"grouped": True, "status": ["favorite"]}, "Favorites"
+        )
+        self.assertEqual([row["id"] for row in filtered["items"]], [movie["id"]])
+        versions = await self.repository.async_library_versions(SOURCE, movie["id"])
+        self.assertTrue(all(row["is_favorite"] for row in versions["items"]))
+
     async def test_movie_badge_filters_match_any_and_follow_group_memberships(self):
         names = ("played", "new", "paused", "favorite", "soon", "ordinary")
         rows = [
@@ -831,6 +848,41 @@ class GroupedLibraryTest(unittest.IsolatedAsyncioTestCase):
 class GroupedLibraryApiTest(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = backend_tests.BackendTest.asyncSetUp
     call = backend_tests.BackendTest.call
+
+    async def test_group_purchase_editor_requires_and_rechecks_administrator(self):
+        object.__setattr__(self.entry, "data", {"library_enabled": True})
+        runtime = self.entry.runtime_data
+        runtime.library = SimpleNamespace(source=SOURCE, async_stop=AsyncMock())
+        reader = SimpleNamespace(id="reader", is_active=True, is_admin=False)
+        message = {**self.scope, "title_id": title_id(SOURCE, "fixture-a")}
+        with patch.object(
+            runtime.repository, "async_group_purchase_edit", new_callable=AsyncMock
+        ) as edit:
+            denied = await self.call(
+                "library/purchases/edit/get", user=reader, **message
+            )
+            self.assertEqual(denied["code"], "unauthorized")
+            denied = await self.call(
+                "library/purchases/edit/save",
+                user=reader,
+                **message,
+                request_id=str(uuid4()),
+                snapshot="a" * 64,
+                data={},
+            )
+            self.assertEqual(denied["code"], "unauthorized")
+            edit.assert_not_awaited()
+
+        async def revoked(*_args):
+            self.admin.is_admin = False
+            return {"records": [{"order_id": "PRIVATE-FICTIONAL"}]}
+
+        with patch.object(
+            runtime.repository, "async_group_purchase_edit", side_effect=revoked
+        ):
+            result = await self.call("library/purchases/edit/get", **message)
+        self.assertEqual(result["code"], "unauthorized")
+        self.assertNotIn("PRIVATE-FICTIONAL", str(result))
 
     async def test_version_reads_share_access_and_hide_excluded_names(self):
         object.__setattr__(

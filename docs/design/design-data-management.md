@@ -371,14 +371,15 @@ action; a user context must belong to an active administrator. The payload and
 response include private orders and prices: protect automation traces and any
 saved review records using HA's normal access and retention settings.
 
-In **Library → movie → Edit details**, administrators can edit the purchase
-date, purchase price, and retail price for the selected version. Enter prices
-with a currency symbol and two decimal places, such as `$9.99`. The **Purchase
-information unavailable** checkbox applies to the whole movie and removes it
-from the missing-purchase-information sensor and filter until unchecked. It does
-not change its stored purchase fields or add a warning badge. Manual prices can
-be saved before an invoice is available; when an email later conflicts with
-them, the automation returns the email for review.
+In **Library → movie → Purchase details → edit**, administrators can edit the
+combined purchase information for a movie group. Enter prices with a currency
+symbol and two decimal places, such as `$9.99`. The **Purchase information
+unavailable** checkbox applies to the whole movie and removes it from the
+missing-purchase-information sensor and filter until unchecked. It does not
+change stored purchase fields or add a warning badge. Manual prices can be saved
+before an invoice is available; when an email later conflicts with them, the
+automation returns the email for review. Multiple actual receipts remain
+separate and can be selected in the editor.
 
 When a Kaleidescape store metadata refresh finds the same valid public base
 price across its purchase packages, it fills a missing retail price on the
@@ -503,8 +504,10 @@ reconciliation. Sync preserves purchases and manual purchase fields.
 
 Standard-user APIs omit prices, orders, store links and the complete history;
 only the date is shared. Sensors, viewing snapshots and calendar templates never
-receive those private fields. Store references remain passive text and are never
-fetched. JSON and SQLite exports are private administrator downloads.
+receive those private fields. Recognized official Store paths are rendered as
+HTTPS links in administrator movie details; they are opened only when clicked.
+The application does not automatically fetch those references. JSON and SQLite
+exports are private administrator downloads.
 
 ### Formats, limits and APIs
 

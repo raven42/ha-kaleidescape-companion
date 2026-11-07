@@ -97,12 +97,15 @@ missing retail price, but never a purchase price. The missing purchase
 information sensor exposes its count and bounded movie names to HA entity
 readers. Its Library filter and purchase editing are limited to administrators.
 The administrator's Advanced movie details include bounded group-wide purchase
-history and row tokens for reviewed corrections. Reader version responses
-contain neither those records nor their tokens. A purchase linked to one group
-member is not treated as proof of a particular format. Receipt edits use the
-existing actor- and revision-bound repair workflow; manual edits check the group
-snapshot and refuse the manual price editor if a receipt appeared before it
-opened.
+history and row tokens. Reader version responses contain neither those records
+nor their tokens. A purchase linked to one group member is not proof of a
+particular format. The group editor validates the administrator, group snapshot,
+receipt ownership and actor-bound request ID. Receipt corrections use the
+revision-bound repair workflow and atomically include matching manual group
+values and unavailable flags in reversible evidence. Group-only changes use the
+same snapshot and retry safeguards. Store links accept only recognized official
+Store hosts and paths, use HTTPS and `noopener noreferrer`, and are never
+fetched automatically.
 
 When HA automations are available, Companion installs missing packaged
 blueprints through HA's blueprint manager. It does not create or enable an
@@ -157,10 +160,11 @@ before applying, and cannot introduce network configuration or executable data.
 Raw database files are opened defensively; application writes never execute SQL
 from an import. A SQLite snapshot with the current purchase ledger takes invoice
 records from that ledger rather than inferring them from flat Library prices.
-Purchase correction, void and reversal require an administrator-bound review,
-row token, dataset revision and durable request ID. Full before/after invoice
-and association evidence is private and append-only; prior identities are
-reserved against silent replay. Similarity hints do not prove identity. Full
+Database purchase correction, void and reversal require an administrator-bound
+review, row token, dataset revision and durable request ID. The group purchase
+editor uses the same correction checks when saving its form. Full before/after
+invoice and association evidence is private and append-only; prior identities
+are reserved against silent replay. Similarity hints do not prove identity. Full
 SQLite backups retain this evidence and the barriers; JSON exports and SQLite
 merge imports do not transfer them, so they are not a full restore.
 Purchase-only reconciliation can run while recording is active: the server

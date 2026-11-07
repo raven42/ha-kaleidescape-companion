@@ -314,15 +314,25 @@ def group_details(db, source, group):
         (source, group, MAX_HISTORY + 1),
     ).fetchall()
     manual = db.execute(
-        "SELECT t.id,t.purchased_on,t.purchase_price,t.retail_price,t.available,"
+        "SELECT t.id,t.purchased_on,t.purchase_price,t.retail_price,"
+        "t.order_id,t.href,t.available,"
         "EXISTS(SELECT 1 FROM purchase_records p WHERE p.library_id=t.id) has_invoices "
         "FROM library t WHERE t.source_id=? AND t.source_group=? "
         "AND t.purchase_match_pending=0 AND (t.purchased_on IS NOT NULL OR "
-        "t.purchase_price IS NOT NULL OR t.retail_price IS NOT NULL) "
+        "t.purchase_price IS NOT NULL OR t.retail_price IS NOT NULL OR "
+        "t.order_id IS NOT NULL OR t.href IS NOT NULL) "
         "ORDER BY t.purchased_on IS NULL,t.purchased_on,t.id LIMIT ?",
         (source, group, MAX_HISTORY + 1),
     ).fetchall()
     return {
+        "unavailable": bool(
+            db.execute(
+                "SELECT EXISTS(SELECT 1 FROM library WHERE source_id=? "
+                "AND source_group=? "
+                "AND purchase_match_pending=0 AND purchase_information_unavailable=1)",
+                (source, group),
+            ).fetchone()[0]
+        ),
         "records": [
             {**dict(row), "token": row_token(row)} for row in invoices[:MAX_HISTORY]
         ],
@@ -330,15 +340,14 @@ def group_details(db, source, group):
             {
                 "library_id": row["id"],
                 "purchased_on": row["purchased_on"],
-                "purchase_price": None
-                if row["has_invoices"]
-                else row["purchase_price"],
-                "retail_price": None if row["has_invoices"] else row["retail_price"],
+                "purchase_price": row["purchase_price"],
+                "retail_price": row["retail_price"],
+                "order_id": row["order_id"],
+                "href": row["href"],
                 "editable": bool(row["available"]),
                 "date_only": bool(row["has_invoices"]),
             }
             for row in manual[:MAX_HISTORY]
-            if row["purchased_on"] or not row["has_invoices"]
         ],
         "truncated": len(invoices) > MAX_HISTORY or len(manual) > MAX_HISTORY,
     }

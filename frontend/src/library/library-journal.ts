@@ -5,6 +5,11 @@ import { errorCode, errorMessage } from "../core/api";
 import type { JournalCalendar } from "../ui/journal-calendar";
 import { styles } from "../ui/styles";
 
+function viewingLabel(row: ViewingSummary) {
+  const date = new Date(row.started_at);
+  return `${row.status === "completed" ? "Completed" : "Partial"}: ${date.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" })} ${date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}`;
+}
+
 export class LibraryJournal extends LitElement {
   static properties = {
     client: { attribute: false },
@@ -251,12 +256,7 @@ export class LibraryJournal extends LitElement {
                     html`<li>
                       <div class="viewing">
                         <time datetime=${row.started_at}
-                          >${new Date(row.started_at).toLocaleString()}</time
-                        >
-                        <span
-                          >·
-                          ${row.status === "completed" ? "Completed" : "Partial"}
-                          · ${(row.watched_seconds / 60).toFixed(2)} min</span
+                          >${viewingLabel(row)}</time
                         >
                         ${
                           !this.unified
@@ -291,7 +291,7 @@ export class LibraryJournal extends LitElement {
               <h2>Edit journal entry</h2>
               <p>Choose a viewing to edit.</p>
               <ul>
-                ${this.items.map((row) => html`<li><button type="button" class="link" @click=${() => this.edit(row)}>${new Date(row.started_at).toLocaleString()} · ${row.status === "completed" ? "Completed" : "Partial"}</button></li>`)}
+                ${this.items.map((row) => html`<li><button type="button" class="link" @click=${() => this.edit(row)}>${viewingLabel(row)}</button></li>`)}
               </ul>
               <button
                 type="button"

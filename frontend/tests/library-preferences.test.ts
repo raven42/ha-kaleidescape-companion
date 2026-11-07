@@ -513,7 +513,7 @@ it("renders known format badges and named status flags in both views", async () 
     root.querySelector(".library-table .collection-cell")?.textContent,
   ).not.toContain("New");
   expect(
-    root.querySelector('.library-summary-line [aria-label="Favorite"]'),
+    root.querySelector('.library-summary-line [aria-label="Favorites"]'),
   ).toBeTruthy();
   expect(
     [...root.querySelectorAll(".library-table .format-badge")].map((node) =>

@@ -1,6 +1,7 @@
 /** Fictional in-memory transport for UI tests and the explicit review page only. */
 import { matches } from "../src/core/search";
 import { formatBadges } from "../src/library/badges";
+import { purchaseValues } from "../src/library/purchase-details";
 import { ApiError, JournalClient } from "../src/core/api";
 import type {
   ApiMessage,
@@ -139,6 +140,9 @@ export class FixtureTransport implements Transport {
   ];
   // Fictional source groups stay in the transport, outside public API records.
   libraryGroups = new Map<string, string>();
+  purchaseUnavailable = new Set<string>();
+  manualPurchaseValues = new Map<string, Record<string, string | null>>();
+  private purchaseEditResults = new Map<string, unknown>();
   private groupKey(row: LibraryTitle) {
     return this.libraryGroups.get(row.id) ?? row.id;
   }
@@ -385,6 +389,94 @@ export class FixtureTransport implements Transport {
             }
           : null,
       };
+    } else if (
+      operation === "library/purchases/edit/get" ||
+      operation === "library/purchases/edit/save"
+    ) {
+      const title = this.libraryTitles.find(
+        (row) => row.id === message.title_id,
+      );
+      if (!title) throw new ApiError("not_found");
+      const group = this.groupKey(title);
+      const rows = this.libraryTitles.filter(
+        (row) => this.groupKey(row) === group,
+      );
+      const records = rows.flatMap((row) => row.purchase_history ?? []);
+      const manual = rows
+        .filter(
+          (row) => row.purchased_on || this.manualPurchaseValues.has(row.id),
+        )
+        .map((row) => ({
+          library_id: row.id,
+          purchased_on: row.purchased_on ?? null,
+          purchase_price: null,
+          retail_price: null,
+          order_id: null,
+          href: null,
+          ...this.manualPurchaseValues.get(row.id),
+        }));
+      const snapshot = this.revision.toString(16).padStart(64, "0");
+      if (operation.endsWith("/get"))
+        result = {
+          snapshot,
+          unavailable: this.purchaseUnavailable.has(group),
+          records,
+          manual,
+        };
+      else {
+        const request = String(message.request_id);
+        const previous = this.purchaseEditResults.get(request);
+        if (previous) return previous as T;
+        if (message.snapshot !== snapshot)
+          throw new ApiError("refresh_required");
+        const data = message.data as {
+          receipt_id: string | null;
+          unavailable: boolean;
+          fields: Record<string, string | null>;
+        };
+        const index = records.findIndex(
+          (record) => record.id === data.receipt_id,
+        );
+        const baseline = purchaseValues(records, manual, Math.max(index, 0));
+        if (data.receipt_id && index < 0) throw new ApiError("not_found");
+        if (data.unavailable) this.purchaseUnavailable.add(group);
+        else this.purchaseUnavailable.delete(group);
+        const record = index < 0 ? undefined : records[index];
+        if (record) Object.assign(record, data.fields);
+        if ("purchased_on" in data.fields) {
+          const old = baseline.purchased_on;
+          for (const row of rows)
+            if (
+              (old !== null && row.purchased_on === old) ||
+              (!record && old === null && row.id === title.id)
+            )
+              row.purchased_on = data.fields.purchased_on;
+        }
+        for (const key of [
+          "purchase_price",
+          "retail_price",
+          "order_id",
+          "href",
+        ] as const) {
+          if (!(key in data.fields)) continue;
+          const old = baseline[key];
+          for (const row of rows) {
+            const existing =
+              this.manualPurchaseValues.get(row.id)?.[key] ?? null;
+            if (
+              (old !== null && existing === old) ||
+              (!record && old === null && row.id === title.id)
+            )
+              this.manualPurchaseValues.set(row.id, {
+                ...this.manualPurchaseValues.get(row.id),
+                [key]: data.fields[key],
+              });
+          }
+        }
+        this.revision++;
+        result = { title_id: title.id };
+        this.purchaseEditResults.set(request, result);
+      }
     } else if (operation === "library/versions") {
       if (message.revision !== undefined && message.revision !== this.revision)
         throw new ApiError("refresh_required");
@@ -413,6 +505,7 @@ export class FixtureTransport implements Transport {
         has_more: rows.length > offset + 50,
         revision: this.revision,
         group_purchase_details: {
+          unavailable: this.purchaseUnavailable.has(this.groupKey(title)),
           records: rows.flatMap((row) =>
             (row.purchase_history ?? []).map((purchase) => ({
               ...purchase,
@@ -423,12 +516,18 @@ export class FixtureTransport implements Transport {
             })),
           ),
           manual: rows
-            .filter((row) => row.purchased_on)
+            .filter(
+              (row) =>
+                row.purchased_on || this.manualPurchaseValues.has(row.id),
+            )
             .map((row) => ({
               library_id: row.id,
               purchased_on: row.purchased_on,
               purchase_price: null,
               retail_price: null,
+              order_id: null,
+              href: null,
+              ...this.manualPurchaseValues.get(row.id),
               editable: true,
               date_only: !!row.purchase_history?.length,
             })),

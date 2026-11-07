@@ -17,7 +17,6 @@ import type {
   LibraryTitle,
   LibrarySummary,
   LibraryVersionPage,
-  GroupPurchaseRecord,
 } from "../core/api";
 import { styles } from "../ui/styles";
 import { libraryStyles } from "./styles";
@@ -43,8 +42,9 @@ import type { MovieStatusLabels } from "./badges";
 import "./collections";
 import "./library-journal";
 import "./title-edit";
-import "../ui/purchase-repair";
-import type { KaleidescapePurchaseRepair } from "../ui/purchase-repair";
+import "./purchase-edit";
+import type { GroupPurchaseEditor } from "./purchase-edit";
+import { purchaseValues, storeLink } from "./purchase-details";
 import type { TitleEdit } from "./title-edit";
 import type { LibraryCriterion } from "./criteria";
 
@@ -184,8 +184,6 @@ export class KaleidescapeLibrary extends LitElement {
   private scrapeLocked = false;
   private artworkLocked = false;
   private editLocked = false;
-  private activePurchaseEditor?: EventTarget;
-  private purchaseRepair?: GroupPurchaseRecord;
   private purchaseRepairBusy = false;
   private purchaseManagerOpen = false;
   private castLimit = 8;
@@ -196,7 +194,7 @@ export class KaleidescapeLibrary extends LitElement {
       this.scrapeLocked ||
       this.artworkLocked ||
       this.editLocked ||
-      !!this.purchaseRepair
+      this.purchaseManagerOpen
     );
   }
   private checkingCollection = false;
@@ -217,9 +215,7 @@ export class KaleidescapeLibrary extends LitElement {
         ),
       ].every((editor) => editor.confirmNavigation()) &&
       (this.renderRoot
-        .querySelector<KaleidescapePurchaseRepair>(
-          "kaleidescape-purchase-repair",
-        )
+        .querySelector<GroupPurchaseEditor>("kaleidescape-group-purchase-edit")
         ?.confirmNavigation() ??
         true)
     );
@@ -536,15 +532,8 @@ export class KaleidescapeLibrary extends LitElement {
     this.purchaseReload = false;
     this.purchaseError = "";
     this.purchaseDetailsOpen = false;
-    if (
-      this.purchaseRepair ||
-      this.activePurchaseEditor ||
-      this.purchaseManagerOpen
-    )
-      this.repairLock(false);
+    if (this.purchaseManagerOpen) this.repairLock(false);
     this.purchaseManagerOpen = false;
-    this.activePurchaseEditor = undefined;
-    this.purchaseRepair = undefined;
     this.purchaseRepairBusy = false;
     const details =
       this.renderRoot.querySelector<HTMLDetailsElement>(".purchase-details");
@@ -1833,43 +1822,14 @@ export class KaleidescapeLibrary extends LitElement {
   }
   private async refreshPurchaseDetails() {
     const offset = this.versions?.offset ?? 0;
-    this.purchaseRepair = undefined;
+    this.purchaseManagerOpen = false;
     this.purchaseRepairBusy = false;
-    this.repairLock(this.purchaseManagerOpen);
+    this.repairLock(false);
     this.versions = undefined;
     this.requestUpdate();
     await this.load(this.page?.offset ?? 0, true);
     await this.loadVersions(offset);
     void this.refreshStatus();
-  }
-  private renderManualPurchaseEditor(
-    titleId: string,
-    dateOnly = false,
-    optionsOnly = false,
-  ) {
-    return html`<kaleidescape-title-edit
-      .client=${this.client}
-      .scope=${this.scope}
-      .versionId=${titleId}
-      .purchaseOnly=${true}
-      .dateOnly=${dateOnly}
-      .optionsOnly=${optionsOnly}
-      .blocked=${this.controlLocked || this.collectionLocked || this.scrapeLocked || this.artworkLocked || !!this.purchaseRepair}
-      @edit-lock=${(event: CustomEvent<boolean>) => {
-        if (event.detail) {
-          this.activePurchaseEditor = event.currentTarget ?? undefined;
-          this.editLocked = true;
-          this.repairLock(true);
-          this.requestUpdate();
-        } else if (this.activePurchaseEditor === event.currentTarget) {
-          this.activePurchaseEditor = undefined;
-          this.editLocked = false;
-          this.repairLock(!!this.purchaseRepair || this.purchaseManagerOpen);
-          this.requestUpdate();
-        }
-      }}
-      @metadata-changed=${() => void this.refreshPurchaseDetails()}
-    ></kaleidescape-title-edit>`;
   }
   private renderMoviePurchases() {
     if (!this.advanced || !this.scope?.permissions.edit) return nothing;
@@ -1881,96 +1841,43 @@ export class KaleidescapeLibrary extends LitElement {
         <button
           type="button"
           class="link summary-edit"
-          @click=${async (event: Event) => {
+          @click=${(event: Event) => {
             event.preventDefault();
             event.stopPropagation();
             this.purchaseManagerOpen = true;
             this.repairLock(true);
             this.requestUpdate();
-            await this.updateComplete;
-            this.renderRoot
-              .querySelector<HTMLDialogElement>("#purchase-manager")
-              ?.showModal();
           }}
         >
           edit
         </button>
       </summary>
-      ${details.records.map(
-        (purchase) =>
-          html`<p>
-            ${purchase.purchased_on ? this.date(purchase.purchased_on) : "Date not imported"}
-            · ${purchase.title}<br />
-            Paid: ${purchase.purchase_price ?? "Unknown"} · Retail:
-            ${purchase.retail_price ?? "Unknown"}<br />
-            Order:
-            ${purchase.order_id ?? "Unknown"}${purchase.href ? html`<br />Store reference: ${purchase.href}` : nothing}
-          </p>`,
-      )}
-      ${details.manual.map(
-        (item) =>
-          html`<p>
-            ${item.purchased_on ? html`Purchased ${this.date(item.purchased_on)}<br />` : nothing}
-            ${!item.date_only ? html`Paid: ${item.purchase_price ?? "Unknown"} · Retail: ${item.retail_price ?? "Unknown"}<br />` : nothing}
-            ${!item.editable ? html`<small>This saved entry is unavailable for editing.</small>` : nothing}
-          </p>`,
-      )}
-      ${!details.records.length && !details.manual.length ? html`<p>No purchase details saved.</p>` : nothing}
+      ${
+        details.unavailable
+          ? html`<p>Purchase information unavailable.</p>`
+          : (details.records.length || details.manual.length
+              ? [details.records[0]]
+              : []
+            ).map((purchase, index) => {
+              const values = purchaseValues(
+                details.records,
+                details.manual,
+                index,
+              );
+              const href = storeLink(values.href);
+              return html`<p>
+                ${values.purchased_on ? this.date(values.purchased_on) : "Date not imported"}${purchase ? html` · ${purchase.title}` : nothing}<br />
+                Paid: ${values.purchase_price ?? "Unknown"} · Retail:
+                ${values.retail_price ?? "Unknown"}<br />
+                Order: ${values.order_id ?? "Unknown"}
+                ${href ? html`<br /><a href=${href} target="_blank" rel="noopener noreferrer">store link</a>` : nothing}
+              </p>`;
+            })
+      }
+      ${!details.unavailable && details.records.length > 1 ? html`<p class="muted">Multiple purchase records are saved for this movie.</p>` : nothing}
+      ${!details.unavailable && !details.records.length && !details.manual.length ? html`<p>No purchase details saved.</p>` : nothing}
       ${details.truncated ? html`<p class="warning">Additional purchase details are available in Database.</p>` : nothing}
     </details>`;
-  }
-  private renderPurchaseManager(row: LibraryTitle) {
-    const details = this.versions?.group_purchase_details;
-    if (
-      !this.purchaseManagerOpen ||
-      !this.scope?.permissions.edit ||
-      !this.advanced
-    )
-      return nothing;
-    const close = (event?: Event) => {
-      event?.preventDefault();
-      if (!this.confirmNavigation()) return;
-      this.purchaseManagerOpen = false;
-      this.repairLock(false);
-      this.requestUpdate();
-    };
-    return html`<dialog
-      id="purchase-manager"
-      class="database-dialog"
-      aria-label="Edit purchase details"
-      @cancel=${close}
-    >
-      <div class="card-head">
-        <h2>Edit purchase details</h2>
-        ${closeButton(close)}
-      </div>
-      ${details?.records.map(
-        (purchase) =>
-          html`<p>
-            ${purchase.purchased_on ? this.date(purchase.purchased_on) : "Date not imported"}
-            · ${purchase.title} · ${purchase.order_id ?? "No order ID"}
-            <button
-              type="button"
-              class="link"
-              aria-label=${`Edit purchase ${purchase.title}${purchase.purchased_on ? `, ${purchase.purchased_on}` : ""}`}
-              ?disabled=${!!this.purchaseRepair || this.editLocked}
-              @click=${() => {
-                this.purchaseRepair = purchase;
-                this.repairLock(true);
-                this.requestUpdate();
-              }}
-            >
-              edit
-            </button>
-          </p>`,
-      )}
-      ${details?.manual.map((item) => html`<p>Saved purchase details ${item.purchased_on ? this.date(item.purchased_on) : ""}: ${item.editable ? this.renderManualPurchaseEditor(item.library_id, item.date_only) : "Unavailable for editing"}</p>`)}
-      ${details && !details.records.length && !details.manual.length ? html`<p>Manual purchase details: ${this.renderManualPurchaseEditor(row.id)}</p>` : nothing}
-      ${details && (details.records.length || details.manual.length) && !details.manual.some((item) => item.editable) ? html`<p>Purchase information status: ${this.renderManualPurchaseEditor(row.id, false, true)}</p>` : nothing}
-      <div class="dialog-footer">
-        <button type="button" @click=${close}>Done</button>
-      </div>
-    </dialog>`;
   }
   private renderTitleDialog() {
     const group = this.selected;
@@ -2049,9 +1956,14 @@ export class KaleidescapeLibrary extends LitElement {
                           >
                         </button>`,
                     )}
-                    ${renderStatusBadges(group, false, ["watched", "progress", "watch-soon", "unwatched"], this.movieStatusLabels)}
+                    ${renderStatusBadges(group, false, ["watched", "progress", "watch-soon", "unwatched", "favorite"], this.movieStatusLabels)}
+                    ${group.is_favorite ? renderCollectionBadge("Favorites", () => this.fromDetails("status", "favorite"), locked) : nothing}
                     ${group.collections
-                      .filter((collection) => !statusCollection(collection))
+                      .filter(
+                        (collection) =>
+                          !statusCollection(collection) &&
+                          collectionStatus(collection) !== "favorite",
+                      )
                       .map((collection) =>
                         renderCollectionBadge(
                           collection,
@@ -2228,25 +2140,26 @@ export class KaleidescapeLibrary extends LitElement {
             : nothing
         }
       </dialog>
-      ${row ? this.renderPurchaseManager(row) : nothing}
       ${
-        this.purchaseRepair && this.advanced && this.scope?.permissions.edit
-          ? html`<kaleidescape-purchase-repair
+        this.purchaseManagerOpen &&
+        row &&
+        this.advanced &&
+        this.scope?.permissions.edit
+          ? html`<kaleidescape-group-purchase-edit
               .client=${this.client}
               .scope=${this.scope}
-              .row=${this.purchaseRepair}
-              .token=${this.purchaseRepair.token}
-              @repair-cancel=${() => {
-                this.purchaseRepair = undefined;
-                this.repairLock(this.purchaseManagerOpen);
+              .titleId=${row.id}
+              @purchase-cancel=${() => {
+                this.purchaseManagerOpen = false;
+                this.repairLock(false);
                 this.requestUpdate();
               }}
-              @repair-busy=${(event: CustomEvent<boolean>) => {
+              @purchase-busy=${(event: CustomEvent<boolean>) => {
                 this.purchaseRepairBusy = event.detail;
               }}
-              @repair-complete=${() => void this.refreshPurchaseDetails()}
+              @purchase-complete=${() => void this.refreshPurchaseDetails()}
               @access-denied=${() => this.fail(new ApiError("unauthorized"))}
-            ></kaleidescape-purchase-repair>`
+            ></kaleidescape-group-purchase-edit>`
           : nothing
       }`;
   }

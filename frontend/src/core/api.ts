@@ -312,13 +312,32 @@ export interface GroupManualPurchase {
   purchased_on: string | null;
   purchase_price: string | null;
   retail_price: string | null;
+  order_id?: string | null;
+  href?: string | null;
   editable: boolean;
   date_only: boolean;
+}
+export interface GroupPurchaseEdit {
+  snapshot: string;
+  unavailable: boolean;
+  records: LibraryPurchase[];
+  manual: Array<
+    Pick<
+      GroupManualPurchase,
+      | "library_id"
+      | "purchased_on"
+      | "purchase_price"
+      | "retail_price"
+      | "order_id"
+      | "href"
+    >
+  >;
 }
 export interface GroupPurchaseDetails {
   records: GroupPurchaseRecord[];
   manual: GroupManualPurchase[];
   truncated: boolean;
+  unavailable: boolean;
 }
 export interface ProviderMetadata {
   provider: string;
@@ -1182,6 +1201,28 @@ export class JournalClient {
       ...scopeFields(scope),
       title_id: titleId,
     });
+  }
+  groupPurchaseEdit(scope: Scope, titleId: string): Promise<GroupPurchaseEdit> {
+    return this.call({
+      ...scopeFields(scope),
+      type: `${DOMAIN}/library/purchases/edit/get`,
+      title_id: titleId,
+    });
+  }
+  prepareGroupPurchaseEdit(
+    scope: Scope,
+    titleId: string,
+    snapshot: string,
+    data: Record<string, unknown>,
+  ): PreparedMutation {
+    return this.prepareCommand(scope, "library/purchases/edit/save", {
+      title_id: titleId,
+      snapshot,
+      data,
+    });
+  }
+  saveGroupPurchaseEdit(pending: PreparedMutation): Promise<unknown> {
+    return this.call({ ...pending.message });
   }
   prepareLibraryEdit(
     scope: Scope,

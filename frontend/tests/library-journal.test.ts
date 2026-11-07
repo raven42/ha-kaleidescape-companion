@@ -52,6 +52,9 @@ it("shows each viewing and opens its existing detail popup without Library cross
   );
   const details = element.shadowRoot!.querySelector("details")!;
   expect(element.hasAttribute("hidden")).toBe(false);
+  expect(element.shadowRoot!.querySelector("li time")!.textContent).toMatch(
+    /^(Completed|Partial): \d{2}\/\d{2}\/\d{2} \d/,
+  );
   expect(details.open).toBe(false);
   details.open = true;
   element.shadowRoot!.querySelector<HTMLButtonElement>("li button")!.click();
