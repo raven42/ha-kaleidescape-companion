@@ -551,12 +551,12 @@ it("renders known format badges and named status flags in both views", async () 
     )!
     .click();
   await flush();
-  expect(root.querySelectorAll(".cover-flags .cover-flag")).toHaveLength(3);
+  expect(root.querySelectorAll(".cover-flags .cover-flag")).toHaveLength(2);
   expect(
-    root.querySelector('.cover-flags [aria-label="Recently Added"]')
-      ?.textContent,
-  ).toContain("Recently Added");
-  expect(root.querySelector(".flag-recent.flag-offset")).toBeTruthy();
+    root.querySelector(
+      '.cover-flags .cover-recent-edge[aria-label="Recently Added"]',
+    ),
+  ).toBeTruthy();
   expect(
     root.querySelector('.cover-flags [aria-label="Watched"]'),
   ).toBeTruthy();
@@ -708,6 +708,12 @@ it("saves Options toggles immediately and restores them after remount", async ()
   button(root, "Options").click();
   await flush();
   expect(options.open).toBe(true);
+  for (const label of [
+    "Show format badges",
+    "Show library badges",
+    "Show rating badges",
+  ])
+    expect(options.textContent).toContain(label);
   expect(root.querySelector('[name="cover_size"]')).toBeNull();
   root
     .querySelector<HTMLInputElement>(

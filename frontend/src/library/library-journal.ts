@@ -5,9 +5,37 @@ import { errorCode, errorMessage } from "../core/api";
 import type { JournalCalendar } from "../ui/journal-calendar";
 import { styles } from "../ui/styles";
 
+function formatViewingDate(date: Date) {
+  return `${date.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" })} ${date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+}
+
+function viewingTimes(row: ViewingSummary) {
+  const start = new Date(row.started_at);
+  const endpoint = row.ended_at ?? row.completed_at;
+  const end = endpoint ? new Date(endpoint) : null;
+  const separate =
+    row.status === "completed" &&
+    end !== null &&
+    end > start &&
+    start.toDateString() !== end.toDateString();
+  return separate
+    ? [
+        { label: "Started", date: start, datetime: row.started_at },
+        { label: "Completed", date: end, datetime: endpoint! },
+      ]
+    : [
+        {
+          label: row.status === "completed" ? "Completed" : "Partial",
+          date: start,
+          datetime: row.started_at,
+        },
+      ];
+}
+
 function viewingLabel(row: ViewingSummary) {
-  const date = new Date(row.started_at);
-  return `${row.status === "completed" ? "Completed" : "Partial"}: ${date.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" })} ${date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}`;
+  return viewingTimes(row)
+    .map(({ label, date }) => `${label}: ${formatViewingDate(date)}`)
+    .join(" · ");
 }
 
 export class LibraryJournal extends LitElement {
@@ -59,13 +87,20 @@ export class LibraryJournal extends LitElement {
       }
       li {
         padding: 0.5rem 0;
-        border-bottom: 1px solid var(--line);
+      }
+      .viewing-separator {
+        border: 0;
+        border-top: 1px solid var(--line);
+        margin: 0 0 0.5rem;
       }
       .viewing {
         display: flex;
         align-items: baseline;
         gap: 0.5rem;
         flex-wrap: wrap;
+      }
+      .viewing-dates time {
+        display: block;
       }
     `,
   ];
@@ -256,12 +291,13 @@ export class LibraryJournal extends LitElement {
               </summary>
               <ul>
                 ${this.items.map(
-                  (row) =>
+                  (row, index) =>
                     html`<li>
+                      ${index ? html`<hr class="viewing-separator" />` : nothing}
                       <div class="viewing">
-                        <time datetime=${row.started_at}
-                          >${viewingLabel(row)}</time
-                        >
+                        <div class="viewing-dates">
+                          ${viewingTimes(row).map(({ label, date, datetime }) => html`<time datetime=${datetime}>${label}: ${formatViewingDate(date)}</time>`)}
+                        </div>
                         ${
                           !this.unified
                             ? html`<button

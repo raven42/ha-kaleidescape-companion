@@ -69,9 +69,9 @@ const SORTS = [
 type Filters = Record<string, string | string[] | boolean>;
 const DISPLAY_OPTIONS = [
   ["show_titles", "Show titles on covers"],
-  ["show_format", "Show format"],
+  ["show_format", "Show format badges"],
   ["show_badges", "Show library badges"],
-  ["show_rating", "Show rating on covers"],
+  ["show_rating", "Show rating badges"],
   ["show_library_cost", "Show total library cost in footer"],
 ] as const;
 const MOVIE_FILTERS = [

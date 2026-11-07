@@ -118,6 +118,11 @@ const watchSoonSymbol = svg`<svg viewBox="0 0 24 24" aria-hidden="true" focusabl
   <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" />
   <path d="M12 6v6h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
 </svg>`;
+const recentSymbol = svg`<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+  <path fill="currentColor" d="M13 3c.6 0 1 .4 1.2 1l1.4 5.2a5.8 5.8 0 0 0 4.1 4.1l5.2 1.4c.6.2 1 .6 1 1.2s-.4 1-1 1.2l-5.2 1.4a5.8 5.8 0 0 0-4.1 4.1l-1.4 5.2c-.2.6-.6 1-1.2 1s-1-.4-1.2-1l-1.4-5.2a5.8 5.8 0 0 0-4.1-4.1L1 17.1c-.6-.2-1-.6-1-1.2s.4-1 1-1.2l5.2-1.4a5.8 5.8 0 0 0 4.1-4.1L11.8 4c.2-.6.6-1 1.2-1Z" />
+  <path fill="currentColor" d="M26 1c.5 0 .8.3.9.7l.6 2.1a2.7 2.7 0 0 0 1.9 1.9l2.1.6c.3.1.5.4.5.8s-.2.7-.5.8l-2.1.6a2.7 2.7 0 0 0-1.9 1.9l-.6 2.1c-.1.4-.4.7-.9.7s-.8-.3-.9-.7l-.6-2.1a2.7 2.7 0 0 0-1.9-1.9l-2.1-.6c-.3-.1-.5-.4-.5-.8s.2-.7.5-.8l2.1-.6a2.7 2.7 0 0 0 1.9-1.9l.6-2.1c.1-.4.4-.7.9-.7Z" />
+  <path fill="currentColor" d="M5 23c.5 0 .8.3.9.7l.5 1.7a2.3 2.3 0 0 0 1.6 1.6l1.7.5c.4.1.6.4.6.8s-.2.7-.6.8l-1.7.5a2.3 2.3 0 0 0-1.6 1.6l-.5 1.7c-.1.4-.4.6-.9.6s-.8-.2-.9-.6l-.5-1.7A2.3 2.3 0 0 0 2 29.6l-1.7-.5c-.4-.1-.6-.4-.6-.8s.2-.7.6-.8L2 27a2.3 2.3 0 0 0 1.6-1.6l.5-1.7c.1-.4.4-.7.9-.7Z" />
+</svg>`;
 const hdrSymbol = svg`<svg class="hdr-symbol" viewBox="0 0 27 16" aria-hidden="true" focusable="false">
   <path fill="#e94637" d="M1 4 7 3v10l-6-1z" />
   <path fill="#f28c28" d="M6 3 12 2v12l-6-1z" />
@@ -165,32 +170,31 @@ export function renderStatusBadges(
   style: MovieStatusLabels = "modern",
 ) {
   const badges = statusBadges(row, style);
-  const topStatus = badges.some((badge) =>
-    ["watched", "progress", "watch-soon"].includes(badge.key),
-  );
-  let labelIndex = 0;
-  let triangleCount = 0;
-  return badges
+  const corner = flags
+    ? ["progress", "watched", "watch-soon", "recent"]
+        .map((key) => badges.find((badge) => badge.key === key))
+        .find(Boolean)
+    : undefined;
+  return (
+    flags
+      ? badges.filter((badge) => badge === corner || badge.key === "favorite")
+      : badges
+  )
     .filter((badge) => !exclude.includes(badge.key))
     .map((badge) => {
-      const isTriangle = ["watched", "progress", "watch-soon"].includes(
-        badge.key,
-      );
-      const extra = flags && isTriangle && triangleCount++ > 0;
-      const isLabel =
-        extra || ["recent", "new", "unwatched"].includes(badge.key);
-      const top =
-        flags && isLabel
-          ? 8 + (topStatus ? 42 : 0) + labelIndex++ * 26
-          : undefined;
-      return html`<span
-        class=${flags ? `cover-flag flag-${badge.key === "unwatched" && style === "kaleidescape" ? "new" : badge.key}${extra ? " flag-status-extra" : ""}${badge.key === "recent" && badges.length > 1 ? " flag-offset" : ""}` : `status-badge collection-badge collection-${collectionKind(badge.label)}${badge.key === "recent" ? " status-recent" : ""}`}
-        style=${top === undefined ? nothing : `top:${top}px`}
-        title=${badge.label}
-        aria-label=${badge.label}
-        role="img"
-        >${flags ? html`<span class="badge-symbol" aria-hidden="true">${extra ? badge.label : badge.key === "watch-soon" ? watchSoonSymbol : badge.symbol}</span>` : html`${collectionSymbol(badge.label)}<span>${badge.label}</span>`}</span
-      >`;
+      const recentBehind =
+        flags &&
+        badge === corner &&
+        badge.key !== "recent" &&
+        !exclude.includes("recent") &&
+        badges.some((item) => item.key === "recent");
+      return html`${recentBehind ? html`<span class="cover-recent-edge" role="img" aria-label="Recently Added" title="Recently Added"></span>` : nothing}<span
+          class=${flags ? `cover-flag flag-${badge.key}` : `status-badge collection-badge collection-${collectionKind(badge.label)}${badge.key === "recent" ? " status-recent" : ""}`}
+          title=${badge.label}
+          aria-label=${badge.label}
+          role="img"
+          >${flags ? html`<span class="badge-symbol" aria-hidden="true">${badge.key === "watch-soon" ? watchSoonSymbol : badge.key === "recent" ? recentSymbol : badge.symbol}</span>` : html`${collectionSymbol(badge.label)}<span>${badge.label}</span>`}</span
+        >`;
     });
 }
 

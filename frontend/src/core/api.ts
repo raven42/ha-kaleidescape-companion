@@ -91,7 +91,7 @@ export type ViewingSummary = Pick<
   | "watched_seconds"
   | "status"
   | "origin"
->;
+> & { completed_at?: string | null };
 export interface Session {
   id: string;
   started_at: string;

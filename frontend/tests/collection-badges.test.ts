@@ -63,3 +63,57 @@ it("renders the Watch Soon flag as an accessible corner clock", () => {
   expect(badge.querySelector("svg circle")).not.toBeNull();
   expect(host.querySelectorAll(".cover-flag")).toHaveLength(1);
 });
+
+it("prioritizes cover statuses and shows a recently added edge behind them", () => {
+  const host = document.createElement("div");
+  for (const [statuses, watchSoon, recent, expected] of [
+    [["in_progress", "watched"], true, true, "In progress"],
+    [["watched"], true, true, "Watched"],
+    [["unwatched"], true, true, "Watch Soon"],
+    [["unwatched"], false, true, "Recently Added"],
+    [["watched"], false, false, "Watched"],
+    [[], false, false, null],
+  ] as const) {
+    render(
+      renderStatusBadges(
+        libraryTitle({
+          movie_statuses: [...statuses],
+          is_watch_soon: watchSoon,
+          is_recently_added: recent,
+          is_favorite: true,
+        }),
+        true,
+      ),
+      host,
+    );
+    const corner = [
+      ...host.querySelectorAll(".cover-flag:not(.flag-favorite)"),
+    ];
+    expect(corner.map((badge) => badge.getAttribute("aria-label"))).toEqual(
+      expected ? [expected] : [],
+    );
+    expect(host.querySelectorAll(".flag-favorite")).toHaveLength(1);
+    const edge = host.querySelector<HTMLElement>(".cover-recent-edge");
+    expect(!!edge).toBe(recent && expected !== "Recently Added");
+    if (edge) {
+      expect(edge.getAttribute("aria-label")).toBe("Recently Added");
+      expect(edge.getAttribute("role")).toBe("img");
+      expect(edge.nextElementSibling).toBe(corner[0]);
+    }
+    if (expected === "Recently Added") {
+      expect(
+        corner[0].querySelectorAll('svg[aria-hidden="true"] path'),
+      ).toHaveLength(3);
+      expect(corner[0].getAttribute("title")).toBe("Recently Added");
+    }
+  }
+  render(
+    renderStatusBadges(
+      libraryTitle({ movie_statuses: ["watched"], is_recently_added: true }),
+      true,
+      ["recent"],
+    ),
+    host,
+  );
+  expect(host.querySelector(".cover-recent-edge")).toBeNull();
+});

@@ -804,7 +804,11 @@ async def async_handle(
                         )
                         if not admin:
                             result["items"] = [
-                                public_viewing(row) for row in result["items"]
+                                {
+                                    **public_viewing(row),
+                                    "completed_at": row.get("completed_at"),
+                                }
+                                for row in result["items"]
                             ]
                     elif operation == "library/search":
                         result = await repository.async_library_search(

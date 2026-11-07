@@ -142,9 +142,19 @@ export const libraryStyles = css`
     top: 0;
     left: 0;
   }
+  .cover-recent-edge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 64px;
+    height: 64px;
+    clip-path: polygon(0 0, 100% 0, 0 100%);
+    background: linear-gradient(135deg, #bb4eec, #6b1eb9);
+  }
   .cover-flag.flag-watched,
   .cover-flag.flag-progress,
-  .cover-flag.flag-watch-soon {
+  .cover-flag.flag-watch-soon,
+  .cover-flag.flag-recent {
     width: 52px;
     height: 52px;
     clip-path: polygon(0 0, 100% 0, 0 100%);
@@ -178,38 +188,16 @@ export const libraryStyles = css`
     width: 25px;
     height: 25px;
   }
-  .cover-flag.flag-recent,
-  .cover-flag.flag-new,
-  .cover-flag.flag-unwatched,
-  .cover-flag.flag-status-extra {
-    top: 8px;
-    left: 8px;
-    border-radius: 5px;
-    max-width: calc(100% - 16px);
-    padding: 4px 5px;
-    font-size: 9px;
-    line-height: 1.1;
-    font-weight: 800;
-    box-shadow: 0 1px 4px #0006;
+  .cover-flag.flag-recent .badge-symbol {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 30px;
+    height: 30px;
   }
-  .cover-flag.flag-status-extra {
-    width: auto;
-    height: auto;
-    clip-path: none;
-  }
-  .cover-flag.flag-status-extra .badge-symbol {
-    position: static;
-    display: inline;
-    width: auto;
-    height: auto;
-    border: 0;
-    background: none;
-    color: inherit;
-    font: inherit;
-    box-shadow: none;
-  }
-  .cover-flag.flag-recent.flag-offset {
-    top: 50px;
+  .cover-flag.flag-recent svg {
+    width: 100%;
+    height: 100%;
   }
   .cover-flag.flag-favorite {
     left: auto;
@@ -236,15 +224,7 @@ export const libraryStyles = css`
     color: #fff;
   }
   .flag-recent {
-    background: #7238a5;
-    color: #fff;
-  }
-  .flag-new {
-    background: #086f95;
-    color: #fff;
-  }
-  .flag-unwatched {
-    background: #795b00;
+    background: linear-gradient(135deg, #bb4eec, #6b1eb9);
     color: #fff;
   }
   .flag-favorite {

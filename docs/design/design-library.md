@@ -203,13 +203,14 @@ Cross-host identity reconciliation is deferred.
 
 When a movie group has recorded or manual viewings, the consolidated movie
 dialog places an expandable **Journal** section below Library details. It lists
-each viewing as its status, date and start time; administrators in Advanced mode
-can open the revision-checked editor with **edit** in the expanded heading,
-choosing an entry when there are multiple viewings. Purchase history is a
-separate section below Journal, shown only in Advanced mode to administrators.
-An empty history has no Journal section. The history uses the existing
-source-scoped group and revision-bound pagination, and reports errors rather
-than claiming no viewings.
+each viewing as its status, date and start time. Completed viewings that cross
+local calendar dates show separate start and completion times, and a rule
+separates multiple entries. Administrators in Advanced mode can open the
+revision-checked editor with **edit** in the expanded heading, choosing an entry
+when there are multiple viewings. Purchase history is a separate section below
+Journal, shown only in Advanced mode to administrators. An empty history has no
+Journal section. The history uses the existing source-scoped group and
+revision-bound pagination, and reports errors rather than claiming no viewings.
 
 The full dialog is shared with linked Journal entries, with no navigation
 between Library and Journal pages. Each user can select the full or compact
@@ -756,10 +757,10 @@ check. Removal will need its own verified contract and security review.
 
 | Badge                         | Criterion and cover placement                                                                     |
 | ----------------------------- | ------------------------------------------------------------------------------------------------- |
-| Watched · green check         | Source Played status; top-left triangle or an additional status label                             |
+| Watched · green check         | Source Played status; top-left triangle                                                           |
 | In progress · amber ring      | Source Paused status; top-left triangle, with no invented completion percentage                   |
 | Watch Soon · blue clock       | An available version belongs to WatchSoon; top-left triangle when neither In progress nor Watched |
-| Recently Added · purple label | Retained `recently_added` sensor batch membership or a recent linked purchase; top-left label     |
+| Recently Added · purple stars | Retained `recently_added` sensor batch membership or a recent linked purchase; top-left triangle  |
 | Favorites · gold star         | An available version belongs to Favorites; independent top-right bookmark                         |
 
 Library options choose **Modern format** (the default: Unwatched, Watched, In
@@ -773,9 +774,12 @@ Added choice uses the same retained batch and purchase window as its badge.
 Unwatched/New remains available as a filter and in list and movie details but is
 not shown as a cover badge.
 
-Watched and In progress can both appear if their source memberships overlap.
-Watch Soon is shown in the status corner when neither is present. Recently Added
-and Favorites can accompany these statuses. The Recently Added badge is
+Watched and In progress can both appear in lists and details if their source
+memberships overlap. Covers prioritize the upper-left status as In progress,
+Watched, then Watch Soon. If a movie is also Recently Added, a narrow purple
+edge appears behind that status; otherwise Recently Added uses its own purple
+corner. The Favorites bookmark remains independent in the upper-right corner. A
+suppressed badge does not change its filter membership. Recently Added is
 independent of the Kaleidescape **New** collection: it includes the retained
 addition batch and any purchase linked to the same source-defined movie group
 within the configured purchase window. Administrators set this window in
@@ -796,8 +800,7 @@ New in blue, Unwatched in gold, Watched in green, Favorites in purple and In
 progress in amber, each with a local line icon. Their compact icons and padding
 match inline format badges; movie-detail badges share the same 28 px minimum
 height as the format and rating buttons. Movie-detail filter links and filter
-checkboxes retain their existing actions. Cover corner flags show overlapping
-status memberships with additional labels.
+checkboxes retain their existing actions.
 
 Hidden collection names affect labels and filters, not status/favorite/Watch
 Soon classification. Recent identity uses the source-scoped group, never title

@@ -849,6 +849,38 @@ class GroupedLibraryApiTest(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = backend_tests.BackendTest.asyncSetUp
     call = backend_tests.BackendTest.call
 
+    async def test_reader_viewings_include_completion_time_without_private_fields(self):
+        object.__setattr__(self.entry, "data", {"library_enabled": True})
+        runtime = self.entry.runtime_data
+        runtime.library = SimpleNamespace(source=SOURCE, async_stop=AsyncMock())
+        reader = SimpleNamespace(id="reader", is_active=True, is_admin=False)
+        viewing = {
+            "id": str(uuid4()),
+            "title": "Fictional movie",
+            "started_at": "2026-10-24T23:00:00+00:00",
+            "ended_at": None,
+            "completed_at": "2026-10-25T01:00:00+00:00",
+            "status": "completed",
+            "notes": "private",
+            "source_id": "private-source",
+        }
+        with patch.object(
+            runtime.repository,
+            "async_list",
+            new_callable=AsyncMock,
+            return_value={"items": [viewing], "next_cursor": None, "revision": 1},
+        ):
+            result = await self.call(
+                "library/viewings",
+                user=reader,
+                **self.scope,
+                title_id=title_id(SOURCE, "fixture-a"),
+            )
+        item = result["result"]["items"][0]
+        self.assertEqual(item["completed_at"], viewing["completed_at"])
+        self.assertNotIn("notes", item)
+        self.assertNotIn("source_id", item)
+
     async def test_group_purchase_editor_requires_and_rechecks_administrator(self):
         object.__setattr__(self.entry, "data", {"library_enabled": True})
         runtime = self.entry.runtime_data

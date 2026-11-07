@@ -2,7 +2,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import "../src/library/library-journal";
 import type { LibraryJournal } from "../src/library/library-journal";
 import type { JournalCalendar } from "../src/ui/journal-calendar";
-import { FixtureTransport, info } from "./fixture";
+import { FixtureTransport, info, record } from "./fixture";
 
 let element: LibraryJournal;
 const scope = { ...info, library_enabled: true };
@@ -75,6 +75,51 @@ it("shows each viewing and opens its existing detail popup without Library cross
   expect(
     transport.calls.some((call) => call.type.endsWith("journal/calendar")),
   ).toBe(false);
+});
+
+it("shows separate local start and completion dates and divides multiple viewings", async () => {
+  const transport = new FixtureTransport();
+  const local = (day: number, hour: number) =>
+    new Date(2026, 9, day, hour, 15).toISOString();
+  const viewings = [
+    record({ started_at: local(24, 22), ended_at: local(25, 1) }),
+    {
+      ...record({ started_at: local(26, 23), ended_at: null }),
+      completed_at: local(27, 1),
+    },
+    record({ started_at: local(28, 20), ended_at: local(28, 22) }),
+    record({
+      started_at: local(29, 23),
+      ended_at: local(30, 1),
+      status: "partial",
+    }),
+    record({ started_at: local(30, 23), ended_at: null }),
+  ];
+  mount(transport);
+  vi.spyOn(element.client!, "list").mockResolvedValueOnce({
+    items: viewings,
+    revision: 1,
+    next_cursor: null,
+  });
+  await vi.waitFor(() =>
+    expect(element.shadowRoot!.querySelectorAll("details li")).toHaveLength(5),
+  );
+  const rows = [...element.shadowRoot!.querySelectorAll("details li")];
+  const times = (index: number) =>
+    [...rows[index].querySelectorAll("time")].map((time) => time.textContent);
+  expect(times(0)).toEqual([
+    "Started: 10/24/26 10:15 PM",
+    "Completed: 10/25/26 1:15 AM",
+  ]);
+  expect(times(1)).toEqual([
+    "Started: 10/26/26 11:15 PM",
+    "Completed: 10/27/26 1:15 AM",
+  ]);
+  expect(times(2)).toEqual(["Completed: 10/28/26 8:15 PM"]);
+  expect(times(3)).toEqual(["Partial: 10/29/26 11:15 PM"]);
+  expect(times(4)).toEqual(["Completed: 10/30/26 11:15 PM"]);
+  expect(rows[0].querySelector("hr")).toBeNull();
+  expect(element.shadowRoot!.querySelectorAll("details hr")).toHaveLength(4);
 });
 
 it("loads all cursor pages on expansion", async () => {
