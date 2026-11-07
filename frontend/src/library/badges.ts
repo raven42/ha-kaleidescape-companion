@@ -283,6 +283,7 @@ export function renderCollectionBadge(
   value: string,
   select?: () => void,
   disabled = false,
+  actionLabel?: string,
 ) {
   const content = html`${collectionSymbol(value)}<span
       >${collectionLabel(value)}</span
@@ -292,7 +293,7 @@ export function renderCollectionBadge(
     ? html`<button
         type="button"
         class=${className}
-        aria-label=${`Filter by collection: ${collectionLabel(value)}`}
+        aria-label=${actionLabel ?? `Filter by collection: ${collectionLabel(value)}`}
         ?disabled=${disabled}
         @click=${select}
       >

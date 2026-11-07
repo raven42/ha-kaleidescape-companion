@@ -20,6 +20,12 @@ async function flush() {
   await element?.updateComplete;
 }
 async function mount(transport: FixtureTransport) {
+  if (location.pathname === "/")
+    history.replaceState(
+      null,
+      "",
+      "/kaleidescape-companion?companion_page=library",
+    );
   element = document.createElement(
     "kaleidescape-library",
   ) as KaleidescapeLibrary;
@@ -48,7 +54,7 @@ afterEach(() => {
   element = undefined;
 });
 
-it("restores view, page size, search and sort after navigating away", async () => {
+it("restores view and sort from preferences and search from the URL", async () => {
   const transport = new FixtureTransport();
   let root = await mount(transport);
   root
@@ -69,10 +75,13 @@ it("restores view, page size, search and sort after navigating away", async () =
   expect(transport.uiPreferences).toMatchObject({
     view: "covers",
     page_size: 25,
-    query: "Voyage",
+    query: "",
     sort: "year",
     descending: true,
   });
+  expect(new URL(location.href).searchParams.get("library_query")).toBe(
+    "Voyage",
+  );
   element!.remove();
   root = await mount(transport);
   expect(root.querySelector(".cover-grid")).toBeTruthy();
@@ -359,7 +368,7 @@ it("All loads bounded revision-bound pages and keeps the entire final remainder"
   expect(button(root, "Next")).toBeUndefined();
   expect(transport.uiPreferences.page_size).toBe("all");
 });
-it("persists applied facets across remount, discards drafts, and saves Clear Filter", async () => {
+it("keeps applied facets in the URL across remount and discards drafts", async () => {
   const transport = new FixtureTransport();
   let root = await mount(transport);
   button(root, "Filters").click();
@@ -379,7 +388,10 @@ it("persists applied facets across remount, discards drafts, and saves Clear Fil
   await flush();
   button(root, "Apply filters").click();
   await flush();
-  expect(transport.uiPreferences.status).toEqual(["watched"]);
+  expect(transport.uiPreferences.status).toEqual([]);
+  expect(new URL(location.href).searchParams.getAll("library_status")).toEqual([
+    "watched",
+  ]);
   element!.remove();
   root = await mount(transport);
   const last = transport.calls
@@ -390,7 +402,7 @@ it("persists applied facets across remount, discards drafts, and saves Clear Fil
   await flush();
   expect(transport.uiPreferences.status).toEqual([]);
 });
-it("moves saved collection and recent filters into the consolidated badge group", async () => {
+it("normalizes collection aliases from the URL without saving old filters", async () => {
   const transport = new FixtureTransport();
   transport.libraryTitles[0].collections.push("Fav-orites");
   transport.uiPreferences.collection = [
@@ -402,18 +414,27 @@ it("moves saved collection and recent filters into the consolidated badge group"
   ];
   transport.uiPreferences.status = ["watched", "unknown", "none"];
   transport.uiPreferences.recently_added = true;
+  history.replaceState(
+    null,
+    "",
+    "/kaleidescape-companion?companion_page=library&library_collection=All&library_collection=Favorites&library_collection=Watch+Soon&library_collection=New&library_collection=Fav-orites&library_status=watched&library_status=unknown&library_status=none&library_status=recently_added",
+  );
   const root = await mount(transport);
   await vi.waitFor(() =>
-    expect(transport.uiPreferences.status).toEqual([
+    expect(
+      new URL(location.href).searchParams.getAll("library_status"),
+    ).toEqual([
       "watched",
+      "recently_added",
       "favorite",
       "watch_soon",
       "unwatched",
-      "recently_added",
     ]),
   );
-  expect(transport.uiPreferences.collection).toEqual(["Fav-orites"]);
-  expect(transport.uiPreferences.recently_added).toBe(false);
+  expect(
+    new URL(location.href).searchParams.getAll("library_collection"),
+  ).toEqual(["Fav-orites"]);
+  expect(transport.uiPreferences.recently_added).toBe(true);
   await vi.waitFor(() =>
     expect(root.querySelector(".library-tools button")).toBeTruthy(),
   );
@@ -779,7 +800,10 @@ it("debounces title/actor/director search, reuses detail badges, and saves optio
         .at(-1)?.filters,
     ).toMatchObject({ query: "Fictional Act" }),
   );
-  expect(transport.uiPreferences.query).toBe("Fictional Act");
+  expect(transport.uiPreferences.query).toBe("");
+  expect(new URL(location.href).searchParams.get("library_query")).toBe(
+    "Fictional Act",
+  );
   button(root, "Clear Filter").click();
   await flush();
   root

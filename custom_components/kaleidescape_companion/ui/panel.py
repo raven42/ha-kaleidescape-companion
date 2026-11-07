@@ -7,9 +7,8 @@ from homeassistant.components import frontend, panel_custom
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import HomeAssistant, callback
 
-from ..const import DOMAIN, NAME
+from ..const import DOMAIN, NAME, PANEL_PATH
 
-PANEL_PATH = "kaleidescape-companion"
 ASSET_URL = f"/{DOMAIN}_static/panel.js"
 ASSET = Path(__file__).parent / "assets" / "panel.js"
 

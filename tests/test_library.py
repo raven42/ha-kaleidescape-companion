@@ -556,10 +556,20 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
 
 
 class LibrarySyncTest(unittest.IsolatedAsyncioTestCase):
-    asyncSetUp = LibraryStorageTest.asyncSetUp
     assert_error = LibraryStorageTest.assert_error
     seed = LibraryStorageTest.seed
     page = LibraryStorageTest.page
+
+    async def asyncSetUp(self):
+        await LibraryStorageTest.asyncSetUp(self)
+        from custom_components.kaleidescape_companion.library import sync as sync_module
+
+        self.enterContext(
+            patch.object(sync_module.persistent_notification, "async_create")
+        )
+        self.enterContext(
+            patch.object(sync_module.persistent_notification, "async_dismiss")
+        )
 
     async def connector(self, **config):
         async def executor(function, *args):

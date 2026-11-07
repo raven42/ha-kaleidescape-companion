@@ -5,6 +5,7 @@ import "../src/library/library";
 import type { KaleidescapeLibrary } from "../src/library/library";
 import type { LibraryPage } from "../src/core/api";
 import { FixtureTransport, info, libraryTitle } from "./fixture";
+import { readLibraryFilters } from "../src/library/url-filters";
 
 let element: KaleidescapeLibrary;
 let transport: FixtureTransport;
@@ -43,6 +44,11 @@ function title(label: string) {
 }
 const covers = () => [...root().querySelectorAll("kaleidescape-library-cover")];
 beforeEach(async () => {
+  history.replaceState(
+    null,
+    "",
+    "/kaleidescape-companion?companion_page=library",
+  );
   setUnifiedMovieDialog(true);
   vi.stubGlobal(
     "IntersectionObserver",
@@ -602,6 +608,14 @@ it("groups source editions in list and covers, lists formats, and switches versi
   title("Voyage to Europa").click();
   await flush();
   expect(root().querySelectorAll(".version-tabs button")).toHaveLength(2);
+  expect(
+    root().querySelectorAll(".version-format-badges .format-badge").length,
+  ).toBeGreaterThan(0);
+  expect(
+    [...root().querySelectorAll(".version-format-badges .format-badge")].every(
+      (badge) => badge.tagName === "BUTTON",
+    ),
+  ).toBe(true);
   expect(text()).toContain("First version synopsis");
   const tabs = root().querySelectorAll<HTMLButtonElement>(
     ".version-tabs button",
@@ -684,7 +698,7 @@ it("switches movie status names without duplicating collection filters", async (
   ).toBeTruthy();
 });
 
-it("applies and persists the Recently added filter", async () => {
+it("applies the Recently added filter and puts it in the URL", async () => {
   transport.libraryTitles[0].is_recently_added = true;
   button("Filters").click();
   await flush();
@@ -698,9 +712,10 @@ it("applies and persists the Recently added filter", async () => {
       .filters,
   ).toMatchObject({ status: ["recently_added"] });
   expect(root().querySelectorAll("tbody tr")).toHaveLength(1);
-  await vi.waitFor(() =>
-    expect(transport.uiPreferences.status).toEqual(["recently_added"]),
-  );
+  expect(new URL(location.href).searchParams.getAll("library_status")).toEqual([
+    "recently_added",
+  ]);
+  expect(transport.uiPreferences.status).toEqual([]);
 });
 
 it("groups the six requested badges into one filter with any-match behavior", async () => {
@@ -765,12 +780,10 @@ it("groups the six requested badges into one filter with any-match behavior", as
   button("Apply filters").click();
   await flush();
   expect(root().querySelectorAll("tbody tr")).toHaveLength(2);
-  await vi.waitFor(() =>
-    expect(transport.uiPreferences.status).toEqual([
-      "watched",
-      "recently_added",
-    ]),
-  );
+  expect(new URL(location.href).searchParams.getAll("library_status")).toEqual([
+    "watched",
+    "recently_added",
+  ]);
   expect(
     transport.calls.filter((call) => call.type.endsWith("library/list")).at(-1)!
       .filters,
@@ -1069,7 +1082,9 @@ it("shows one Favorites badge for the group and uses the same Favorites filter",
   await flush();
   expect(root().querySelectorAll("tbody tr")).toHaveLength(1);
   expect(title("Fictional group")).toBeTruthy();
-  expect(transport.uiPreferences.status).toEqual(["favorite"]);
+  expect(new URL(location.href).searchParams.getAll("library_status")).toEqual([
+    "favorite",
+  ]);
   button("Filters (1)").click();
   await flush();
   const selected = root().querySelector<HTMLInputElement>(
@@ -1085,12 +1100,14 @@ it("replaces all criteria when clicking people, years, genres, collections, stat
     actors: ["Fictional Shared Name"],
     directors: ["Fictional Director"],
     genres: ["Adventure"],
-    collections: ["Favorites"],
+    collections: ["All", "Favorites", "WatchSoon", "Family"],
     year: 2025,
     rating: "PG",
     edition: "4K HDR10",
     formats: ["4K HDR10"],
     watched_status: "watched",
+    movie_statuses: ["watched", "unwatched", "in_progress"],
+    is_recently_added: true,
   });
   transport.libraryTitles = [
     movie,
@@ -1111,13 +1128,18 @@ it("replaces all criteria when clicking people, years, genres, collections, stat
     ["Adventure", "genre", ["Adventure"]],
     ["Favorites", "status", ["favorite"]],
     ["Watched", "status", ["watched"]],
+    ["Unwatched", "status", ["unwatched"]],
+    ["In progress", "status", ["in_progress"]],
+    ["Watch Soon", "status", ["watch_soon"]],
+    ["Recently Added", "status", ["recently_added"]],
+    ["Family", "collection", ["Family"]],
+    ["All", "all", []],
     ["4K", "format", ["4K"]],
     ["HDR10", "format", ["HDR10"]],
     ["PG", "rating", ["PG"]],
   ] as const;
   for (const [label, key, value] of cases) {
-    // Remount with unrelated filters that still include this movie; every click
-    // must replace them, persist, reset pagination, and close the detail popup.
+    // Remount with unrelated URL filters; every click replaces them and resets pagination.
     element.remove();
     transport.uiPreferences = {
       ...transport.uiPreferences,
@@ -1131,6 +1153,11 @@ it("replaces all criteria when clicking people, years, genres, collections, stat
       actor: [],
       director: [],
     };
+    history.replaceState(
+      null,
+      "",
+      "/kaleidescape-companion?companion_page=library&library_query=Clickable&library_collection=Favorites&library_genre=Adventure&library_year=2025&library_format=4K&library_rating=PG&library_status=watched",
+    );
     element = document.createElement(
       "kaleidescape-library",
     ) as KaleidescapeLibrary;
@@ -1140,9 +1167,21 @@ it("replaces all criteria when clicking people, years, genres, collections, stat
     await vi.waitFor(() => expect(title("Clickable movie")).toBeTruthy());
     title("Clickable movie").click();
     await flush();
+    expect(
+      [
+        ...root().querySelectorAll(
+          ".movie-heading-badges .format-badge, .movie-heading-badges .rating-badge, .movie-heading-badges .collection-badge",
+        ),
+      ].every((badge) => badge.tagName === "BUTTON"),
+    ).toBe(true);
     const clickable = [
       ...root().querySelectorAll<HTMLButtonElement>("#title-dialog button"),
-    ].find((node) => node.textContent?.trim() === label)!;
+    ].find((node) =>
+      label === "Recently Added"
+        ? node.getAttribute("aria-label") ===
+          "Filter by movie status: Recently Added"
+        : node.textContent?.trim() === label,
+    )!;
     expect(clickable, label).toBeTruthy();
     clickable.click();
     await flush();
@@ -1152,7 +1191,9 @@ it("replaces all criteria when clicking people, years, genres, collections, stat
     expect(filters).toMatchObject({
       query: key === "query" ? JSON.stringify(value) : "",
       offset: 0,
-      [key]: key === "query" ? JSON.stringify(value) : value,
+      ...(key === "all"
+        ? {}
+        : { [key]: key === "query" ? JSON.stringify(value) : value }),
     });
     for (const other of [
       "collection",
@@ -1171,15 +1212,46 @@ it("replaces all criteria when clicking people, years, genres, collections, stat
     expect(
       root().querySelector<HTMLInputElement>('[name="library_query"]')!.value,
     ).toBe(key === "query" ? JSON.stringify(value) : "");
-    expect(transport.uiPreferences[key]).toEqual(
-      key === "query" ? JSON.stringify(value) : value,
-    );
+    if (key !== "all")
+      expect(readLibraryFilters(undefined, true)![key]).toEqual(
+        key === "query" ? JSON.stringify(value) : value,
+      );
     if (label === "Fictional Shared Name")
       expect(root().querySelectorAll("tbody tr")).toHaveLength(2);
   }
 });
 
-it("offers persisted genre/year/format filters and hides the tablist for one version", async () => {
+it.each([
+  [
+    "Filter by movie status: Recently Added",
+    { key: "status", value: "recently_added" },
+  ],
+  ["Show all movies", { key: "collection", value: "All" }],
+] as const)(
+  "opens the correct Library filter from a linked movie dialog: %s",
+  async (label, expected) => {
+    element.remove();
+    transport.libraryTitles[0].is_recently_added = true;
+    transport.libraryTitles[0].collections = ["All"];
+    element = document.createElement(
+      "kaleidescape-library",
+    ) as KaleidescapeLibrary;
+    element.client = transport.client();
+    element.scope = { ...info, library_enabled: true };
+    element.dialogOnly = true;
+    element.openTitleId = transport.libraryTitles[0].id;
+    const browse = vi.fn();
+    element.addEventListener("browse-library", browse);
+    document.body.append(element);
+    await vi.waitFor(() =>
+      expect(root().querySelector(`[aria-label="${label}"]`)).toBeTruthy(),
+    );
+    root().querySelector<HTMLButtonElement>(`[aria-label="${label}"]`)!.click();
+    expect((browse.mock.calls[0][0] as CustomEvent).detail).toEqual(expected);
+  },
+);
+
+it("offers URL-backed genre/year/format filters and hides the tablist for one version", async () => {
   transport.libraryTitles = [
     libraryTitle({
       genres: ["Adventure"],
@@ -1196,7 +1268,7 @@ it("offers persisted genre/year/format filters and hides the tablist for one ver
   check("format", "HDR10");
   button("Apply filters").click();
   await flush();
-  expect(transport.uiPreferences).toMatchObject({
+  expect(readLibraryFilters(undefined, true)).toMatchObject({
     genre: ["Adventure"],
     year: ["2025"],
     format: ["HDR10"],
@@ -1325,11 +1397,15 @@ it("overlays scraper conflicts independently of badges and persists the missing-
     .click();
   button("Apply filters").click();
   await flush();
-  expect(transport.uiPreferences.missing_metadata_artwork).toBe(true);
+  expect(readLibraryFilters(undefined, true)!.missing_metadata_artwork).toBe(
+    true,
+  );
   expect(root().querySelectorAll(".cover-tile")).toHaveLength(1);
   button("Clear Filter").click();
   await flush();
-  expect(transport.uiPreferences.missing_metadata_artwork).toBe(false);
+  expect(readLibraryFilters(undefined, true)!.missing_metadata_artwork).toBe(
+    false,
+  );
 });
 
 it("shows a missing-data warning without a scraper conflict across grouped versions", async () => {
@@ -1396,12 +1472,16 @@ it("filters missing purchase information without adding a warning", async () => 
     .click();
   button("Apply filters").click();
   await flush();
-  expect(transport.uiPreferences.missing_purchase_information).toBe(true);
+  expect(
+    readLibraryFilters(undefined, true)!.missing_purchase_information,
+  ).toBe(true);
   expect(root().querySelectorAll("tbody tr")).toHaveLength(1);
   expect(root().querySelector(".scraper-conflict-icon")).toBeNull();
   button("Clear Filter").click();
   await flush();
-  expect(transport.uiPreferences.missing_purchase_information).toBe(false);
+  expect(
+    readLibraryFilters(undefined, true)!.missing_purchase_information,
+  ).toBe(false);
 });
 
 it("hides conflict overlays and system-button options from standard users", async () => {

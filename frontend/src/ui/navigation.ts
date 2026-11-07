@@ -1,4 +1,4 @@
-/** URL contains an allowlisted tab and calendar month, never records, queries, or credentials. */
+/** URL contains an allowlisted tab, calendar month and Library filter state. */
 export type Page =
   "now-playing" | "journal" | "library" | "database" | "settings";
 const pages: Page[] = [
@@ -33,5 +33,6 @@ export function landingPage(
 export function rememberPage(page: Page) {
   const url = new URL(location.href);
   url.searchParams.set("companion_page", page);
+  if (page !== "journal") url.searchParams.delete("companion_month");
   history.replaceState(history.state, "", url);
 }

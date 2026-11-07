@@ -47,6 +47,12 @@ import type { GroupPurchaseEditor } from "./purchase-edit";
 import { purchaseValues, storeLink } from "./purchase-details";
 import type { TitleEdit } from "./title-edit";
 import type { LibraryCriterion } from "./criteria";
+import {
+  emptyLibraryFilters,
+  isLibraryLocation,
+  readLibraryFilters,
+  writeLibraryFilters,
+} from "./url-filters";
 
 const FILTERS = [
   ["collection", "Collection", "collections"],
@@ -106,6 +112,33 @@ const hiddenFilterCollection = (value: string) =>
   value.toLowerCase().trim() === "all" || !!collectionStatus(value);
 const statusCollection = (value: string) =>
   ["new", "played", "paused"].includes(value.trim().toLowerCase());
+function normalizeUrlFilters(filters: Filters): Filters {
+  const collections = Array.isArray(filters.collection)
+    ? filters.collection
+    : [];
+  const mapped = collections
+    .map(collectionStatus)
+    .filter((value): value is string => !!value);
+  const statuses = Array.isArray(filters.status) ? filters.status : [];
+  return {
+    ...filters,
+    collection: collections.filter((name) => !hiddenFilterCollection(name)),
+    status: [...new Set([...statuses, ...mapped])],
+    genre: Array.isArray(filters.genre)
+      ? [
+          ...new Set(
+            filters.genre.map((value) =>
+              ["sci-fi", "sci fi", "science fiction"].includes(
+                value.trim().toLowerCase(),
+              )
+                ? "Science Fiction"
+                : value,
+            ),
+          ),
+        ]
+      : [],
+  };
+}
 
 /** Dashboard layout is local to the card, never written to user preferences. */
 export interface DashboardLibrary {
@@ -271,15 +304,42 @@ export class KaleidescapeLibrary extends LitElement {
       this.scheduleLayoutPage();
     }
   };
+  private locationChanged = () => {
+    if (
+      this.dashboard ||
+      this.dialogOnly ||
+      !this.preferencesReady ||
+      !isLibraryLocation()
+    )
+      return;
+    const filters = normalizeUrlFilters(
+      readLibraryFilters(undefined, !!this.scope?.permissions.edit) ??
+        emptyLibraryFilters(),
+    );
+    const next = { ...this.applied, ...filters };
+    if (JSON.stringify(next) === JSON.stringify(this.applied)) return;
+    if (!this.confirmNavigation()) return;
+    clearTimeout(this.searchTimer);
+    this.applied = next;
+    this.filters = structuredClone(this.applied);
+    this.draft = {};
+    this.facetSearch = "";
+    if (this.selected) this.closeDialog("title-dialog");
+    void this.load();
+  };
   connectedCallback() {
     super.connectedCallback();
     document.addEventListener("visibilitychange", this.visibility);
+    window.addEventListener("location-changed", this.locationChanged);
+    window.addEventListener("popstate", this.locationChanged);
     this.requestUpdate("client");
     this.requestUpdate("scope");
   }
   disconnectedCallback() {
     super.disconnectedCallback();
     document.removeEventListener("visibilitychange", this.visibility);
+    window.removeEventListener("location-changed", this.locationChanged);
+    window.removeEventListener("popstate", this.locationChanged);
     this.clear();
     this.boundClient = undefined;
     this.bound = "";
@@ -436,53 +496,13 @@ export class KaleidescapeLibrary extends LitElement {
           "recently_added",
         ].map((key) => [key, values[key]]),
       ) as Filters;
-      const savedCollections = Array.isArray(this.applied.collection)
-        ? this.applied.collection
-        : [];
-      const migratedStatuses = savedCollections
-        .map(collectionStatus)
-        .filter((value): value is string => !!value);
-      const priorStatuses = Array.isArray(this.applied.status)
-        ? this.applied.status
-        : [];
-      const retainedStatuses = priorStatuses.filter((value) =>
-        (MOVIE_FILTERS as readonly string[]).includes(value),
-      );
-      if (
-        migratedStatuses.length ||
-        this.applied.recently_added ||
-        retainedStatuses.length !== priorStatuses.length ||
-        savedCollections.some(hiddenFilterCollection)
-      ) {
-        this.applied.collection = savedCollections.filter(
-          (name) => !hiddenFilterCollection(name),
-        );
-        this.applied.status = [
-          ...new Set([
-            ...retainedStatuses,
-            ...migratedStatuses,
-            ...(this.applied.recently_added ? ["recently_added"] : []),
-          ]),
-        ];
-        this.applied.recently_added = false;
-        this.preferences?.set({
-          collection: this.applied.collection,
-          status: this.applied.status,
-          recently_added: false,
-        });
-      }
-      if (Array.isArray(this.applied.genre))
-        this.applied.genre = [
-          ...new Set(
-            this.applied.genre.map((value) =>
-              ["sci-fi", "sci fi", "science fiction"].includes(
-                value.trim().toLowerCase(),
-              )
-                ? "Science Fiction"
-                : value,
-            ),
-          ),
-        ];
+      const urlFilters = this.dashboard
+        ? null
+        : readLibraryFilters(undefined, !!this.scope?.permissions.edit);
+      this.applied = {
+        ...this.applied,
+        ...normalizeUrlFilters(urlFilters ?? emptyLibraryFilters()),
+      };
       if (!this.scope?.permissions.edit)
         this.applied.missing_purchase_information = false;
       this.filters = structuredClone(this.applied);
@@ -497,28 +517,7 @@ export class KaleidescapeLibrary extends LitElement {
     }
   }
   private saveFilters() {
-    this.preferences?.set(
-      Object.fromEntries(
-        [
-          "query",
-          ...FILTERS.map(([key]) => key),
-          "status",
-          "missing_metadata_artwork",
-          "missing_purchase_information",
-          "recently_added",
-        ].map((key) => [
-          key,
-          this.applied[key] ??
-            (key === "query"
-              ? ""
-              : key === "missing_metadata_artwork" ||
-                  key === "missing_purchase_information" ||
-                  key === "recently_added"
-                ? false
-                : []),
-        ]),
-      ),
-    );
+    if (!this.dashboard && !this.dialogOnly) writeLibraryFilters(this.applied);
   }
   private finishColumnResize() {
     if (!this.resize) return;
@@ -716,6 +715,7 @@ export class KaleidescapeLibrary extends LitElement {
   private async load(offset = 0, preserveSelection = false) {
     if (this.detailsLocked) return;
     if (!this.client || !this.scope?.library_enabled) return;
+    this.saveFilters();
     clearTimeout(this.layoutTimer);
     this.layoutTimer = undefined;
     this.pendingLimit = undefined;
@@ -1098,8 +1098,9 @@ export class KaleidescapeLibrary extends LitElement {
   }
   private fromDetails(key: string, value: string) {
     if (this.detailsLocked || this.checkingCollection) return;
+    const allMovies =
+      key === "collection" && value.toLowerCase().trim() === "all";
     if (key === "collection") {
-      if (value.toLowerCase().trim() === "all") return;
       const mapped = collectionStatus(value);
       if (mapped) {
         key = "status";
@@ -1119,6 +1120,11 @@ export class KaleidescapeLibrary extends LitElement {
           composed: true,
         }),
       );
+      this.closeDialog("title-dialog");
+      return;
+    }
+    if (allMovies) {
+      this.clearFilters();
       this.closeDialog("title-dialog");
       return;
     }
@@ -1204,7 +1210,6 @@ export class KaleidescapeLibrary extends LitElement {
   private applySearch() {
     clearTimeout(this.searchTimer);
     this.applied = { ...this.applied, query: this.filters.query };
-    this.preferences?.set({ query: this.applied.query });
     void this.load();
   }
   private choices(key: string, facet: string) {
@@ -1430,7 +1435,6 @@ export class KaleidescapeLibrary extends LitElement {
               clearTimeout(this.searchTimer);
               this.applied = { ...this.applied, query: this.filters.query };
               this.searchPreferences?.set({ fuzzy_search: this.fuzzySearch });
-              this.preferences?.set({ query: this.applied.query });
               void this.load();
             }}
           />Fuzzy search</label
@@ -1956,7 +1960,7 @@ export class KaleidescapeLibrary extends LitElement {
                           >
                         </button>`,
                     )}
-                    ${renderStatusBadges(group, false, ["watched", "progress", "watch-soon", "unwatched", "favorite"], this.movieStatusLabels)}
+                    ${group.is_recently_added ? renderCollectionBadge("Recently Added", () => this.fromDetails("status", "recently_added"), locked, "Filter by movie status: Recently Added") : nothing}
                     ${group.is_favorite ? renderCollectionBadge("Favorites", () => this.fromDetails("status", "favorite"), locked) : nothing}
                     ${group.collections
                       .filter(
@@ -1967,10 +1971,11 @@ export class KaleidescapeLibrary extends LitElement {
                       .map((collection) =>
                         renderCollectionBadge(
                           collection,
-                          collection.toLowerCase().trim() === "all"
-                            ? undefined
-                            : () => this.fromDetails("collection", collection),
+                          () => this.fromDetails("collection", collection),
                           locked,
+                          collection.toLowerCase().trim() === "all"
+                            ? "Show all movies"
+                            : undefined,
                         ),
                       )}
                   </div>

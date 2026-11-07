@@ -169,6 +169,30 @@ def completeness(db, source, selected_groups=None):
     return missing_metadata, missing, conflicts, stamps, titles
 
 
+def missing_for_notification(db, source):
+    """Return all affected groups using the same criteria as the Library filter."""
+    info = db.execute(
+        "SELECT last_synced_at FROM library_sources WHERE id=?", (source,)
+    ).fetchone()
+    if info is None or info["last_synced_at"] is None:
+        return None
+    metadata, artwork, _, _, titles = completeness(db, source)
+    return {
+        "missing_metadata": len(metadata),
+        "missing_artwork": len(artwork),
+        "movies": [
+            {
+                "title": titles[group],
+                "metadata": group in metadata,
+                "artwork": group in artwork,
+            }
+            for group in sorted(
+                metadata | artwork, key=lambda group: (titles[group].casefold(), group)
+            )
+        ],
+    }
+
+
 def library_summary(db, source):
     """Use the same Paused > Played > unknown > unwatched grouping as browsing."""
     result = {

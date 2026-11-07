@@ -1,4 +1,4 @@
-/** Actor-scoped UI setters save immediately; no browsing data goes into URLs. */
+/** Actor-scoped durable UI preferences save immediately. */
 import { displayProfile } from "../core/display-profile";
 import type { JournalClient, Scope } from "../core/api";
 

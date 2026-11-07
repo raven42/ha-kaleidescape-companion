@@ -250,8 +250,9 @@ imports and reconciliation retain the
 
 Displayed genres normalize Sci-Fi and Science Fiction to **Science Fiction** and
 deduplicate that label across scanned, provider and reviewed metadata. Search
-filters accept the legacy spelling, and saved Library genre selections normalize
-on load. The raw source/provider facts are retained; no migration is needed.
+filters accept the legacy spelling, and Library genre selections from URLs
+normalize on load. The raw source/provider facts are retained; no migration is
+needed.
 
 ## Validation and remaining review
 

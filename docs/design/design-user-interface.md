@@ -96,15 +96,15 @@ user and dataset. No request selects another owner. Profiles are desktop (over
 cookie or device fingerprint. Library, Journal, Database, search and interface
 choices have independent profile values.
 
-| Area             | Stored choices                                                                                                                |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `interface`      | Administrator Basic/Advanced presentation                                                                                     |
-| `library`        | List/covers, page size, cover/cast presentation, filters/search, sort/direction, column widths and administrator cost display |
-| `journal`        | List/calendar, day size and fit-to-screen                                                                                     |
-| `database`       | Table, count mode, system-table visibility and per-table sort/order                                                           |
-| `search`         | Fuzzy-search boolean shared across the views in that display profile                                                          |
-| `library_random` | One random seed shared across the user's display profiles                                                                     |
-| Shared UI        | Administrator-maintained hidden collection names and initial inherited defaults                                               |
+| Area             | Stored choices                                                                                                |
+| ---------------- | ------------------------------------------------------------------------------------------------------------- |
+| `interface`      | Administrator Basic/Advanced presentation                                                                     |
+| `library`        | List/covers, page size, cover/cast presentation, sort/direction, column widths and administrator cost display |
+| `journal`        | List/calendar, day size and fit-to-screen                                                                     |
+| `database`       | Table, count mode, system-table visibility and per-table sort/order                                           |
+| `search`         | Fuzzy-search boolean shared across the views in that display profile                                          |
+| `library_random` | One random seed shared across the user's display profiles                                                     |
+| Shared UI        | Administrator-maintained hidden collection names and initial inherited defaults                               |
 
 Updates use entry/dataset scope, a cryptographic request UUID, row revision and
 validated field patch. The worker patches the latest row, preserving unrelated
@@ -112,6 +112,14 @@ fields; the last accepted same-field setter wins. Preference revisions are not
 journal optimistic locks. Exact actor/profile/payload retries return the
 original revision. Receipts contain fingerprints/revisions, not copies of
 searches.
+
+Library search and filters are temporary panel URL parameters rather than user
+preferences. Opening a filter URL replaces the current search and filters; a URL
+without Library filter parameters starts unfiltered. Previously saved Library
+search/filter fields remain readable for compatibility but are not restored by
+the panel. URLs can contain search terms and selected facet names, so copying or
+sharing one also shares those values. View and sort preferences remain personal
+and do not come from the URL.
 
 Settings revisions are separate from content revisions. Raw Database settings
 inspection has a monotonic counter even across row deletion. Personal patches
@@ -144,10 +152,11 @@ cannot authorize a movie launch or silently merge identities.
 Journal Options saves list/calendar, 60–320 pixel day height (default 180) and
 fit-to-screen (default off). Slider release saves the size; fitting temporarily
 uses the available viewport and disabling it restores the saved value. Month
-selection is retained as `companion_month=YYYY-MM` in the panel URL, falling
-back to the current local month; it is not a personal settings field. Dashboard
-month navigation remains local to the card. Search/status state and displayed
-month must not be confused with persisted layout.
+selection is retained as `companion_month=YYYY-MM` in the panel URL while the
+Journal is active, falling back to the current local month; navigating away
+removes it. It is not a personal settings field. Dashboard month navigation
+remains local to the card. Search/status state and displayed month must not be
+confused with persisted layout.
 
 An active Journal search temporarily shows list results without changing the
 saved view. The desktop search field has a clear button; mobile exposes the

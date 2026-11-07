@@ -145,6 +145,10 @@ routine successful syncs remain informational. Repeated automatic failures
 remain bounded. Logs do not identify the affected collection or movie, so they
 cannot establish which source change caused the mismatch.
 
+When a completed Library sync finds missing metadata or artwork, an info-level
+entry records the affected group count and the count for each category. Movie
+titles appear in the Home Assistant notification, not in the log.
+
 Ordinary transport activity must not produce unbounded per-frame logs. Keep
 formatting cheap and avoid synchronous I/O on HA's event loop. Existing bounded
 queues and persisted receipts serve their application purpose, not a second

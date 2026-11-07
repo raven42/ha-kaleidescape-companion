@@ -51,6 +51,21 @@ timestamps. It does not claim that retained metadata is current. **Sync now**
 coalesces with an already running scan. It cannot contact arbitrary
 browser-supplied destinations.
 
+After a Library sync completes, Companion updates a Home Assistant persistent
+notification when any available movie groups have missing metadata or artwork.
+It lists each affected title once, identifies the missing categories, and uses
+the same provider and artwork-expectation rules as the Library's **Missing
+metadata/artwork** filter. Startup, manual, and scheduled syncs use the same
+notification. A later complete sync with no missing data dismisses it. If a sync
+finishes with partial errors, the notification says its list reflects the cached
+Library; an incomplete, failed or cancelled sync does not clear an earlier
+notification. An info-level log records the affected movie and category counts
+without logging movie titles.
+
+The notification and info log include the panel path for opening the Library
+with **Missing metadata/artwork** selected. The notification uses a clickable
+relative link; the log shows the path so it can be opened from the HA origin.
+
 The first detail/artwork pass can take several minutes for a large catalog.
 Requests are sequential; details refresh when basic metadata changes or after
 seven days. Missing covers are retried during subsequent scans. A scan has a
@@ -161,10 +176,21 @@ columns or 98 at seven. Resizing adjusts the nearest page containing the old
 first title after a short debounce. The final catalog remainder stays visible
 even if its row is incomplete. All loads bounded, revision-checked chunks for
 the entire matching catalog (maximum 10,000 groups and 32 MiB aggregate
-metadata). Nothing is duplicated to fill rows. View, count, applied
-search/filters, sort, cover size and widths save as personal database
-preferences; main-tab navigation remains in the URL. See
+metadata). Nothing is duplicated to fill rows. View, count, sort, cover size and
+widths save as personal database preferences. Library search and filters live in
+the panel URL for this view; they are not saved as user preferences. See
 [preference limits and badge criteria](design-user-interface.md#personal-and-shared-preferences).
+
+Shareable panel URLs use `companion_page=library` and `library_query` for
+search. Repeated `library_collection`, `library_actor`, `library_director`,
+`library_rating`, `library_genre`, `library_year`, `library_format` and
+`library_status` parameters select facet values; boolean filters use
+`library_missing_metadata_artwork=1` or
+`library_missing_purchase_information=1`. The purchase filter remains
+administrator-only. The URL contains the selected search and facet values;
+sharing it shares those values too. A `library_filters=1` marker represents an
+explicitly unfiltered view. Parameter values are bounded before use and backend
+authorization and filter validation still apply.
 
 The summary shows the union of visible collections/formats/content
 ratings/years, minimum–maximum known runtime, earliest detection and known
@@ -466,13 +492,12 @@ rules as the missing-metadata and missing-artwork sensors. List rows and cover
 tiles show the warning icon to administrators for those same movies, even when
 there is no scraper match conflict. A conflict also shows the warning; its
 accessible label identifies both causes when they occur together. The warning is
-independent of the optional status/format badges. The filter saves with other
-personal browsing preferences. Administrators also have **Missing purchase
-information**, using the same group-level date/paid/retail completeness rules as
-its sensor. It adds no warning badge and omits movies explicitly marked
-**Purchase information unavailable**. A role change clears this private filter
-from reader requests. See
-[manual resolution](design-metadata.md#review-a-single-title).
+independent of the optional status/format badges. The filter lives in the
+Library URL. Administrators also have **Missing purchase information**, using
+the same group-level date/paid/retail completeness rules as its sensor. It adds
+no warning badge and omits movies explicitly marked **Purchase information
+unavailable**. A role change clears this private filter from reader requests.
+See [manual resolution](design-metadata.md#review-a-single-title).
 
 The filter panes use consistent inner heading padding, and their sticky action
 footer has extra space below the buttons.
@@ -803,7 +828,9 @@ New in blue, Unwatched in gold, Watched in green, Favorites in purple and In
 progress in amber, each with a local line icon. Their compact icons and padding
 match inline format badges; movie-detail badges share the same 28 px minimum
 height as the format and rating buttons. Movie-detail filter links and filter
-checkboxes retain their existing actions.
+checkboxes retain their existing actions. Selecting a movie-detail format,
+content rating, status or collection badge replaces the Library filters with
+that selection, including **Recently Added**; selecting **All** clears them.
 
 Hidden collection names affect labels and filters, not status/favorite/Watch
 Soon classification. Recent identity uses the source-scoped group, never title

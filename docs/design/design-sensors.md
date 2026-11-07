@@ -80,6 +80,10 @@ adds them to the same service device; existing history unique IDs are unchanged.
 | `missing_artwork`              | Missing artwork: integer              | Available scanned movie groups without a selected cached poster or backdrop when that kind's per-movie expectation switch is on; a title missing both counts once; attributes `movies` and `truncated` |
 | `missing_purchase_information` | Missing purchase information: integer | Available movie groups missing purchase date, paid price, or retail price, except groups marked unavailable; attributes `movies` and `truncated`                                                       |
 
+Completed Library syncs also update a persistent notification listing all groups
+with missing metadata or artwork using these same definitions. Unlike sensor
+attributes, that notification is not limited to the first 50 titles.
+
 Sizes use HA's data-size device class, measurement state class and two-decimal
 display precision. Timestamps use the timestamp device class. Sizes, timestamps,
 conflicts, missing metadata, missing artwork and missing purchase information

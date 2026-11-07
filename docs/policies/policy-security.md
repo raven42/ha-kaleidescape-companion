@@ -65,7 +65,15 @@ already available through the reader-accessible filter. The corresponding
 warning overlay remains administrator-only. Movie purchase history and Journal
 editing controls are shown only to administrators in Advanced mode, including in
 dialogs opened from Journal. Backend authorization remains the enforcement
-boundary.
+boundary. After a completed Library sync, the Home Assistant persistent
+notification for missing metadata or artwork exposes affected movie titles and
+their missing categories to users who can read HA notifications. It contains no
+private purchase details, and titles are rendered as text.
+
+Library searches and selected filters are stored in the panel URL, not saved as
+new user preferences. Their text can be exposed through browser history, shared
+links and HTTP access logs. URL parameters are bounded and do not grant access;
+the purchase-information filter remains administrator-only on the backend.
 
 Companion's HA configuration switches and sync buttons can be operated by users
 and automations allowed to control those entities by Home Assistant. They

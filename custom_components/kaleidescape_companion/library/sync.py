@@ -2,17 +2,21 @@
 
 import asyncio
 import logging
+import re
 import socket
 from datetime import UTC, datetime, timedelta
+from html import escape
 from uuid import uuid4
 
 from aiohttp import ClientError, ClientTimeout, DummyCookieJar, FormData
+from homeassistant.components import persistent_notification
 from homeassistant.helpers.aiohttp_client import (
     DATA_RESOLVER,
     async_create_clientsession,
 )
 from yarl import URL
 
+from ..const import PANEL_PATH
 from ..core.logging import safe_exception
 from ..core.models import JournalError
 from ..core.security import async_finish_cleanup
@@ -29,6 +33,16 @@ from .config import DEFAULTS, lan_address, origin
 from .store import MAX_ARTWORK_BYTES, image_type, source_id
 
 _LOGGER = logging.getLogger(__name__)
+MISSING_NOTICE_ID = "kaleidescape_companion_library_missing_data"
+MISSING_LIBRARY_LINK = (
+    f"/{PANEL_PATH}?companion_page=library&library_missing_metadata_artwork=1"
+)
+
+
+def _notification_title(value):
+    """Treat catalog titles as text in Home Assistant's Markdown renderer."""
+    text = escape(" ".join(value.split()), quote=False)
+    return re.sub(r"([\\`*_{}\[\]()#+.!|~>\-])", r"\\\1", text)
 
 
 class LibrarySync:
@@ -471,6 +485,62 @@ class LibrarySync:
             return await self.browser.movies()
         raise ValueError("Use the browser's collection method for named listings")
 
+    async def _notify_missing(self):
+        """Publish the current group-level completeness result after a scan."""
+        try:
+            missing = await self.repository.async_library_missing_for_notification(
+                self.source
+            )
+            if missing is None or self.stopped or self.paused:
+                return
+            movies = missing["movies"]
+            if not movies:
+                if not self.error:
+                    persistent_notification.async_dismiss(self.hass, MISSING_NOTICE_ID)
+                return
+            lines = []
+            for movie in movies:
+                categories = [
+                    label
+                    for key, label in (("metadata", "metadata"), ("artwork", "artwork"))
+                    if movie[key]
+                ]
+                title = _notification_title(movie["title"])
+                lines.append(f"- {title} ({' and '.join(categories)})")
+            message = (
+                f"{len(movies)} {'movie has' if len(movies) == 1 else 'movies have'} "
+                "missing metadata or artwork. "
+                f"Missing metadata: {missing['missing_metadata']}; "
+                f"missing artwork: {missing['missing_artwork']}.\n\n" + "\n".join(lines)
+            )
+            if self.error:
+                message += (
+                    "\n\nThe sync was incomplete; this reflects the cached library."
+                )
+            message += "\n\n[View library with missing metadata filter]" + (
+                f"({MISSING_LIBRARY_LINK})"
+            )
+            _LOGGER.info(
+                "Library sync found %s movies missing metadata or artwork "
+                "(metadata=%s, artwork=%s). "
+                "View library with missing metadata filter: %s",
+                len(movies),
+                missing["missing_metadata"],
+                missing["missing_artwork"],
+                MISSING_LIBRARY_LINK,
+            )
+            persistent_notification.async_create(
+                self.hass,
+                message,
+                "Kaleidescape Companion: missing metadata or artwork",
+                MISSING_NOTICE_ID,
+            )
+        except Exception as error:
+            _LOGGER.warning(
+                "Could not update the Library missing-data notification: %s",
+                safe_exception(error),
+            )
+
     async def _run(self):
         operation_id = uuid4().hex[:16]
         _LOGGER.info("Library synchronization started (operation_id=%s)", operation_id)
@@ -482,6 +552,7 @@ class LibrarySync:
             async with asyncio.timeout(1800):
                 async with self.operation_lock:
                     await self._sync()
+            await self._notify_missing()
         except asyncio.CancelledError:
             _LOGGER.debug(
                 "Library synchronization cancelled (operation_id=%s)", operation_id

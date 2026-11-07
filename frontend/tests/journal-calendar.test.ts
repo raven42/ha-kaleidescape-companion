@@ -540,8 +540,13 @@ it.each([
 );
 
 it.each(["kaleidescape-panel", "kaleidescape-reader"])(
-  "opens Library with replaced and saved criteria in %s",
+  "opens Library with URL-backed criteria in %s",
   async (tag) => {
+    history.replaceState(
+      null,
+      "",
+      "/kaleidescape-companion?companion_page=journal",
+    );
     const transport = new FixtureTransport();
     transport.options.library_enabled = true;
     transport.journalPreferences.view = "calendar";
@@ -584,10 +589,12 @@ it.each(["kaleidescape-panel", "kaleidescape-reader"])(
       "kaleidescape-library",
     ) as KaleidescapeLibrary;
     await vi.waitFor(() =>
-      expect(transport.uiPreferences.genre).toEqual(["Science Fiction"]),
+      expect(
+        new URL(location.href).searchParams.getAll("library_genre"),
+      ).toEqual(["Science Fiction"]),
     );
-    expect(transport.uiPreferences.query).toBe("");
-    expect(transport.uiPreferences.rating).toEqual([]);
+    expect(transport.uiPreferences.query).toBe("Old search");
+    expect(transport.uiPreferences.rating).toEqual(["R"]);
     expect(
       library.shadowRoot!.querySelector<HTMLInputElement>(
         '[name="library_query"]',
@@ -598,7 +605,7 @@ it.each(["kaleidescape-panel", "kaleidescape-reader"])(
         .filter((call) => call.type.endsWith("library/list"))
         .at(-1)!.filters,
     ).toMatchObject({ query: "", genre: ["Science Fiction"], offset: 0 });
-    expect(location.search).not.toContain("Science");
+    expect(location.search).toContain("Science");
     expect(
       transport.calls.some((call) =>
         /library\/sync$|journal\/create$/.test(call.type),

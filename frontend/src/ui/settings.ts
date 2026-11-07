@@ -856,9 +856,9 @@ export class KaleidescapeSettings extends LitElement {
                         </select></label
                       >
                       <p class="muted">
-                        The URL remembers your current tab. Library view, page
-                        size, filters and sort save automatically for your HA
-                        user while browsing.
+                        The URL remembers your current tab and Library search
+                        and filters. Library view, page size and sort save for
+                        your HA user while browsing.
                       </p>
                     </section>
                     <section
@@ -1198,7 +1198,8 @@ export class KaleidescapeSettings extends LitElement {
                   <p>
                     Library, Journal and Database Options save view layouts,
                     page sizes and display choices for your account as you
-                    browse. Library filters and sorting are personal too.
+                    browse. Library sorting is personal; searches and filters
+                    stay in the current URL.
                   </p>
                   <p class="muted">
                     The default landing page under Companion is shared. The URL

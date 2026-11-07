@@ -17,6 +17,7 @@ import { styles } from "./styles";
 import { entryLayoutStyles } from "./entry-layout.styles";
 import { journalStyles, viewingDetails, viewingListRow } from "./journal-view";
 import { landingPage, rememberPage } from "./navigation";
+import { isLibraryLocation, readLibraryFilters } from "../library/url-filters";
 import "../library/library";
 import "../playback/now-playing";
 import "./journal-options";
@@ -75,6 +76,16 @@ export class KaleidescapeReader extends LitElement {
   private activePage: "now-playing" | "journal" | "library" = "journal";
   private navigationReady = false;
   private controlLocked = false;
+  private locationChanged = () => {
+    if (
+      this.navigationReady &&
+      this.scope?.library_enabled &&
+      this.activePage !== "library" &&
+      isLibraryLocation() &&
+      readLibraryFilters()
+    )
+      this.selectPage("library");
+  };
 
   confirmNavigation() {
     return (
@@ -118,6 +129,8 @@ export class KaleidescapeReader extends LitElement {
   }
   connectedCallback() {
     super.connectedCallback();
+    window.addEventListener("location-changed", this.locationChanged);
+    window.addEventListener("popstate", this.locationChanged);
     this.unwatchMovieDialog = watchMovieDialogMode(() => {
       if (unifiedMovieDialog() && this.selected)
         this.movieSelectionId = this.selected.id;
@@ -128,6 +141,8 @@ export class KaleidescapeReader extends LitElement {
   }
   disconnectedCallback() {
     super.disconnectedCallback();
+    window.removeEventListener("location-changed", this.locationChanged);
+    window.removeEventListener("popstate", this.locationChanged);
     this.unwatchMovieDialog?.();
     this.unwatchMovieDialog = undefined;
     this.bind(null);

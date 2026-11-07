@@ -19,7 +19,7 @@ from ..library import browse as library_browse
 from ..library import collections as library_collections
 from ..library import store as library_store
 from ..library.importing import portable_titles
-from ..library.summary import library_summary
+from ..library.summary import library_summary, missing_for_notification
 from ..playback.history import history_summary
 from ..playback.recording import save_session
 from . import import_merge, journal_store, preferences
@@ -703,6 +703,13 @@ class JournalRepository:
             **library_summary(self._db(), source),
             "database_bytes": self.path.stat().st_size,
         }
+
+    async def async_library_missing_for_notification(self, source):
+        """Read all missing groups on the database worker after a catalog sync."""
+        return await self._call(self._library_missing_for_notification, source)
+
+    def _library_missing_for_notification(self, source):
+        return missing_for_notification(self._db(), source)
 
     async def async_inspect(
         self,
