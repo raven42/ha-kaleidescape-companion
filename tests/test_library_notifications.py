@@ -168,7 +168,9 @@ class LibraryNotificationTest(unittest.IsolatedAsyncioTestCase):
                 sync.error = "library_format"
 
             sync._sync = partial
-            await sync._run()
+            with self.assertLogs(sync_module.__name__, level="WARNING") as logs:
+                await sync._run()
+            self.assertIn("Library sync incomplete;", str(logs.output))
             create.assert_not_called()
             dismiss.assert_not_called()
 
@@ -220,7 +222,10 @@ class LibraryNotificationTest(unittest.IsolatedAsyncioTestCase):
             sync._sync = AsyncMock(
                 side_effect=JournalError("library_unreachable", "offline")
             )
-            await sync._run()
+            with self.assertLogs(sync_module.__name__, level="ERROR") as logs:
+                await sync._run()
+            self.assertIn("Library synchronization failed;", str(logs.output))
+            self.assertNotIn("offline", str(logs.output))
             sync._sync = AsyncMock(side_effect=asyncio.CancelledError)
             with self.assertRaises(asyncio.CancelledError):
                 await sync._run()
@@ -247,7 +252,10 @@ class LibraryNotificationTest(unittest.IsolatedAsyncioTestCase):
         with patch.object(
             sync_module.persistent_notification, "async_create"
         ) as create:
-            await sync._run()
+            with self.assertLogs(sync_module.__name__, level="WARNING") as logs:
+                await sync._run()
+        self.assertIn("Library sync incomplete;", str(logs.output))
+        self.assertNotIn("<script>", str(logs.output))
         message = create.call_args.args[1]
         self.assertIn("sync was incomplete", message)
         self.assertNotIn("<script>", message)
