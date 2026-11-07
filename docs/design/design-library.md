@@ -802,6 +802,13 @@ Added choice uses the same retained batch and purchase window as its badge.
 Unwatched/New remains available as a filter and in list and movie details but is
 not shown as a cover badge.
 
+**Library badge style** is a per-user, per-layout choice between **Icons**
+(default) and **Text**. Icons use the existing cover corners and list pills;
+Text uses rectangular labels in covers and lists. In Text mode, a Recently Added
+label appears below the primary status label when both apply, and the Favorites
+label remains independent. The choice does not alter badge data, filters,
+format/content-rating badges or the movie-details dialog.
+
 Watched and In progress can both appear in lists and details if their source
 memberships overlap. Covers prioritize the upper-left status as In progress,
 Watched, then Watch Soon. If a movie is also Recently Added, a narrow purple

@@ -3,6 +3,7 @@ import { html, nothing, svg } from "lit";
 import type { LibrarySummary } from "../core/api";
 type VideoMetadata = { formats?: string[] | null; edition?: string | null };
 export type MovieStatusLabels = "modern" | "kaleidescape";
+export type LibraryBadgeStyle = "icons" | "text";
 export function movieStatuses(row: LibrarySummary): string[] {
   return (
     row.movie_statuses ??
@@ -168,6 +169,7 @@ export function renderStatusBadges(
   flags = false,
   exclude: readonly string[] = [],
   style: MovieStatusLabels = "modern",
+  badgeStyle: LibraryBadgeStyle = "icons",
 ) {
   const badges = statusBadges(row, style);
   const corner = flags
@@ -175,6 +177,33 @@ export function renderStatusBadges(
         .map((key) => badges.find((badge) => badge.key === key))
         .find(Boolean)
     : undefined;
+  if (flags && badgeStyle === "text") {
+    const primary =
+      corner && !exclude.includes(corner.key) ? corner : undefined;
+    const recent = badges.find((badge) => badge.key === "recent");
+    const showRecent =
+      primary &&
+      primary.key !== "recent" &&
+      recent &&
+      !exclude.includes("recent");
+    const favorite = badges.find(
+      (badge) => badge.key === "favorite" && !exclude.includes("favorite"),
+    );
+    const textBadge = (badge: (typeof badges)[number]) =>
+      html`<span
+        class=${`cover-text-flag flag-${badge.key}`}
+        role="img"
+        aria-label=${badge.label}
+        title=${badge.label}
+        >${badge.label}</span
+      >`;
+    return html`<div class="cover-text-badges">
+      <div class="cover-text-stack">
+        ${primary ? textBadge(primary) : nothing}${showRecent ? textBadge(recent) : nothing}
+      </div>
+      ${favorite ? textBadge(favorite) : nothing}
+    </div>`;
+  }
   return (
     flags
       ? badges.filter((badge) => badge === corner || badge.key === "favorite")
@@ -189,11 +218,11 @@ export function renderStatusBadges(
         !exclude.includes("recent") &&
         badges.some((item) => item.key === "recent");
       return html`${recentBehind ? html`<span class="cover-recent-edge" role="img" aria-label="Recently Added" title="Recently Added"></span>` : nothing}<span
-          class=${flags ? `cover-flag flag-${badge.key}` : `status-badge collection-badge collection-${collectionKind(badge.label)}${badge.key === "recent" ? " status-recent" : ""}`}
+          class=${flags ? `cover-flag flag-${badge.key}` : `status-badge collection-badge collection-${collectionKind(badge.label)}${badge.key === "recent" ? " status-recent" : ""}${badgeStyle === "text" ? " status-text" : ""}`}
           title=${badge.label}
           aria-label=${badge.label}
           role="img"
-          >${flags ? html`<span class="badge-symbol" aria-hidden="true">${badge.key === "watch-soon" ? watchSoonSymbol : badge.key === "recent" ? recentSymbol : badge.symbol}</span>` : html`${collectionSymbol(badge.label)}<span>${badge.label}</span>`}</span
+          >${flags ? html`<span class="badge-symbol" aria-hidden="true">${badge.key === "watch-soon" ? watchSoonSymbol : badge.key === "recent" ? recentSymbol : badge.symbol}</span>` : html`${badgeStyle === "icons" ? collectionSymbol(badge.label) : nothing}<span>${badge.label}</span>`}</span
         >`;
     });
 }

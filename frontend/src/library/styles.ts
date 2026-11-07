@@ -137,6 +137,37 @@ export const libraryStyles = css`
     inset: 0;
     pointer-events: none;
   }
+  .cover-text-badges {
+    position: absolute;
+    inset: 6px 6px auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .cover-text-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .cover-text-flag {
+    display: block;
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    padding: 3px 5px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 800;
+    line-height: 1.2;
+    box-shadow: 0 1px 4px #0008;
+  }
   .cover-flag {
     position: absolute;
     top: 0;
@@ -230,6 +261,16 @@ export const libraryStyles = css`
   .flag-favorite {
     background: #ffc329;
     color: #241600;
+  }
+  .cover-text-flag.flag-progress {
+    background: #ffbd4a;
+    color: #241600;
+  }
+  .cover-text-flag.flag-watch-soon {
+    background: #005e9c;
+  }
+  .cover-text-flag.flag-recent {
+    background: #7130a1;
   }
   .cover-formats {
     position: absolute;
@@ -567,6 +608,10 @@ export const libraryStyles = css`
     width: 14px;
     height: 14px;
     flex: none;
+  }
+  .status-badge.status-text {
+    border-radius: 3px;
+    box-shadow: none;
   }
   .collection-new {
     --badge-color: #27c4f2;

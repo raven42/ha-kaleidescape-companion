@@ -625,6 +625,77 @@ it("does not revive stale failed writes, and offers latest-value retries", async
   expect(store.values).toEqual({});
 });
 
+it("switches Library badges between icons and text and restores the choice", async () => {
+  const transport = new FixtureTransport();
+  transport.libraryTitles = [
+    libraryTitle({
+      is_favorite: true,
+      is_recently_added: true,
+      watched_status: "watched",
+    }),
+  ];
+  let root = await mount(transport);
+  expect(
+    root.querySelector(".library-summary-line .status-badge svg"),
+  ).toBeTruthy();
+  button(root, "Options").click();
+  await flush();
+  expect(
+    root.querySelector<HTMLSelectElement>('[name="library_badge_style"]')!
+      .value,
+  ).toBe("icons");
+  change(root, "library_badge_style", "text");
+  await flush();
+  expect(transport.uiPreferences.library_badge_style).toBe("text");
+  expect(
+    root.querySelectorAll(".library-summary-line .status-text"),
+  ).toHaveLength(3);
+  expect(
+    root.querySelector(".library-summary-line .status-badge svg"),
+  ).toBeNull();
+  root
+    .querySelector<HTMLInputElement>(
+      'input[name="library_view"][value="covers"]',
+    )!
+    .click();
+  await flush();
+  expect(
+    [...root.querySelectorAll(".cover-text-flag")].map((badge) =>
+      badge.textContent?.trim(),
+    ),
+  ).toEqual(["Watched", "Recently Added", "Favorites"]);
+  expect(root.querySelector(".cover-flags svg")).toBeNull();
+  root.querySelector<HTMLInputElement>('[name="show_badges"]')!.click();
+  await flush();
+  expect(root.querySelector(".cover-text-badges")).toBeNull();
+  root.querySelector<HTMLInputElement>('[name="show_badges"]')!.click();
+  await flush();
+  change(root, "movie_status_labels", "kaleidescape");
+  await flush();
+  expect(root.querySelector(".cover-text-flag")?.textContent?.trim()).toBe(
+    "Played",
+  );
+  element!.remove();
+  root = await mount(transport);
+  expect(root.querySelector(".cover-text-flag")?.textContent?.trim()).toBe(
+    "Played",
+  );
+  button(root, "Options").click();
+  await flush();
+  expect(
+    root.querySelector<HTMLSelectElement>('[name="library_badge_style"]')!
+      .value,
+  ).toBe("text");
+  change(root, "library_badge_style", "icons");
+  await flush();
+  expect(transport.uiPreferences.library_badge_style).toBe("icons");
+  expect(root.querySelector('.cover-flag[aria-label="Played"]')).toBeTruthy();
+  expect(
+    root.querySelector('.cover-recent-edge[aria-label="Recently Added"]'),
+  ).toBeTruthy();
+  expect(root.querySelector(".cover-text-flag")).toBeNull();
+});
+
 it("keeps Recently Added and Favorite independent of source progress", () => {
   for (const [status, expected] of [
     ["unwatched", "unwatched"],

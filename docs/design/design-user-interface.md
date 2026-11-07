@@ -96,15 +96,15 @@ user and dataset. No request selects another owner. Profiles are desktop (over
 cookie or device fingerprint. Library, Journal, Database, search and interface
 choices have independent profile values.
 
-| Area             | Stored choices                                                                                                |
-| ---------------- | ------------------------------------------------------------------------------------------------------------- |
-| `interface`      | Administrator Basic/Advanced presentation                                                                     |
-| `library`        | List/covers, page size, cover/cast presentation, sort/direction, column widths and administrator cost display |
-| `journal`        | List/calendar, day size and fit-to-screen                                                                     |
-| `database`       | Table, count mode, system-table visibility and per-table sort/order                                           |
-| `search`         | Fuzzy-search boolean shared across the views in that display profile                                          |
-| `library_random` | One random seed shared across the user's display profiles                                                     |
-| Shared UI        | Administrator-maintained hidden collection names and initial inherited defaults                               |
+| Area             | Stored choices                                                                                                             |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `interface`      | Administrator Basic/Advanced presentation                                                                                  |
+| `library`        | List/covers, page size, badge style, cover/cast presentation, sort/direction, column widths and administrator cost display |
+| `journal`        | List/calendar, day size and fit-to-screen                                                                                  |
+| `database`       | Table, count mode, system-table visibility and per-table sort/order                                                        |
+| `search`         | Fuzzy-search boolean shared across the views in that display profile                                                       |
+| `library_random` | One random seed shared across the user's display profiles                                                                  |
+| Shared UI        | Administrator-maintained hidden collection names and initial inherited defaults                                            |
 
 Updates use entry/dataset scope, a cryptographic request UUID, row revision and
 validated field patch. The worker patches the latest row, preserving unrelated

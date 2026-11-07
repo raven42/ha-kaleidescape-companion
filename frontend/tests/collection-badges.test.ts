@@ -117,3 +117,47 @@ it("prioritizes cover statuses and shows a recently added edge behind them", () 
   );
   expect(host.querySelector(".cover-recent-edge")).toBeNull();
 });
+
+it("renders rectangular text labels for cover statuses and preserves all meanings", () => {
+  const host = document.createElement("div");
+  const row = libraryTitle({
+    movie_statuses: ["in_progress", "watched", "unwatched"],
+    is_recently_added: true,
+    is_favorite: true,
+  });
+  render(renderStatusBadges(row, true, ["unwatched"], "modern", "text"), host);
+  expect(
+    [...host.querySelectorAll(".cover-text-flag")].map((badge) =>
+      badge.textContent?.trim(),
+    ),
+  ).toEqual(["In progress", "Recently Added", "Favorites"]);
+  expect(host.querySelector("svg, .cover-flag, .cover-recent-edge")).toBeNull();
+  expect(
+    host.querySelector('[role="img"][aria-label="Recently Added"]'),
+  ).toBeTruthy();
+  render(
+    renderStatusBadges(row, true, ["unwatched"], "kaleidescape", "text"),
+    host,
+  );
+  expect(host.querySelector(".cover-text-flag")?.textContent?.trim()).toBe(
+    "Paused",
+  );
+  render(
+    renderStatusBadges(
+      libraryTitle({ movie_statuses: ["unwatched"], is_recently_added: true }),
+      true,
+      ["unwatched"],
+      "modern",
+      "text",
+    ),
+    host,
+  );
+  expect(
+    [...host.querySelectorAll(".cover-text-flag")].map((badge) =>
+      badge.textContent?.trim(),
+    ),
+  ).toEqual(["Recently Added"]);
+  render(renderStatusBadges(row, false, [], "modern", "text"), host);
+  expect(host.querySelectorAll(".status-text")).toHaveLength(5);
+  expect(host.querySelector("svg")).toBeNull();
+});

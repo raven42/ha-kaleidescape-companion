@@ -17,14 +17,14 @@ let Zi = class {
     return this.cssText;
   }
 };
-const qs = (r) => new Zi(typeof r == "string" ? r : r + "", void 0, ri), E = (r, ...e) => {
+const Ss = (r) => new Zi(typeof r == "string" ? r : r + "", void 0, ri), E = (r, ...e) => {
   const t = r.length === 1 ? r[0] : e.reduce((i, s, n) => i + ((o) => {
     if (o._$cssResult$ === !0) return o.cssText;
     if (typeof o == "number") return o;
     throw Error("Value passed to 'css' function must be a 'css' function result: " + o + ". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.");
   })(s) + r[n + 1], r[0]);
   return new Zi(t, r, ri);
-}, Ss = (r, e) => {
+}, qs = (r, e) => {
   if (ai) r.adoptedStyleSheets = e.map((t) => t instanceof CSSStyleSheet ? t : t.styleSheet);
   else for (const t of e) {
     const i = document.createElement("style"), s = we.litNonce;
@@ -33,7 +33,7 @@ const qs = (r) => new Zi(typeof r == "string" ? r : r + "", void 0, ri), E = (r,
 }, yi = ai ? (r) => r : (r) => r instanceof CSSStyleSheet ? ((e) => {
   let t = "";
   for (const i of e.cssRules) t += i.cssText;
-  return qs(t);
+  return Ss(t);
 })(r) : r;
 const { is: Es, defineProperty: As, getOwnPropertyDescriptor: Ps, getOwnPropertyNames: Ls, getOwnPropertySymbols: Us, getPrototypeOf: Rs } = Object, nt = globalThis, wi = nt.trustedTypes, Ts = wi ? wi.emptyScript : "", Ds = nt.reactiveElementPolyfillSupport, le = (r, e) => r, wt = { toAttribute(r, e) {
   switch (e) {
@@ -85,8 +85,8 @@ let Y = class extends HTMLElement {
       this[t] = o;
     } };
     return { get: s, set(o) {
-      const h = s?.call(this);
-      n?.call(this, o), this.requestUpdate(e, h, i);
+      const d = s?.call(this);
+      n?.call(this, o), this.requestUpdate(e, d, i);
     }, configurable: !0, enumerable: !0 };
   }
   static getPropertyOptions(e) {
@@ -146,7 +146,7 @@ let Y = class extends HTMLElement {
   }
   createRenderRoot() {
     const e = this.shadowRoot ?? this.attachShadow(this.constructor.shadowRootOptions);
-    return Ss(e, this.constructor.elementStyles), e;
+    return qs(e, this.constructor.elementStyles), e;
   }
   connectedCallback() {
     this.renderRoot ??= this.createRenderRoot(), this.enableUpdating(!0), this._$EO?.forEach((e) => e.hostConnected?.());
@@ -171,8 +171,8 @@ let Y = class extends HTMLElement {
     if (s !== void 0 && this._$Em !== s) {
       const n = i.getPropertyOptions(s), o = typeof n.converter == "function" ? { fromAttribute: n.converter } : n.converter?.fromAttribute !== void 0 ? n.converter : wt;
       this._$Em = s;
-      const h = o.fromAttribute(t, n.type);
-      this[s] = h ?? this._$Ej?.get(s) ?? h, this._$Em = null;
+      const d = o.fromAttribute(t, n.type);
+      this[s] = d ?? this._$Ej?.get(s) ?? d, this._$Em = null;
     }
   }
   requestUpdate(e, t, i, s = !1, n) {
@@ -208,8 +208,8 @@ let Y = class extends HTMLElement {
       }
       const i = this.constructor.elementProperties;
       if (i.size > 0) for (const [s, n] of i) {
-        const { wrapped: o } = n, h = this[s];
-        o !== !0 || this._$AL.has(s) || h === void 0 || this.C(s, void 0, n, h);
+        const { wrapped: o } = n, d = this[s];
+        o !== !0 || this._$AL.has(s) || d === void 0 || this.C(s, void 0, n, d);
       }
     }
     let e = !1;
@@ -248,8 +248,8 @@ let Y = class extends HTMLElement {
 };
 Y.elementStyles = [], Y.shadowRootOptions = { mode: "open" }, Y[le("elementProperties")] = /* @__PURE__ */ new Map(), Y[le("finalized")] = /* @__PURE__ */ new Map(), Ds?.({ ReactiveElement: Y }), (nt.reactiveElementVersions ??= []).push("2.1.2");
 const ni = globalThis, ki = (r) => r, $e = ni.trustedTypes, Ci = $e ? $e.createPolicy("lit-html", { createHTML: (r) => r }) : void 0, es = "$lit$", I = `lit$${Math.random().toFixed(9).slice(2)}$`, ts = "?" + I, zs = `<${ts}>`, W = document, ce = () => W.createComment(""), pe = (r) => r === null || typeof r != "object" && typeof r != "function", oi = Array.isArray, js = (r) => oi(r) || typeof r?.[Symbol.iterator] == "function", ht = `[ 	
-\f\r]`, ie = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, $i = /-->/g, qi = />/g, O = RegExp(`>|${ht}(?:([^\\s"'>=/]+)(${ht}*=${ht}*(?:[^ 	
-\f\r"'\`<>=]|("|')|))|$)`, "g"), Si = /'/g, Ei = /"/g, is = /^(?:script|style|textarea|title)$/i, ss = (r) => (e, ...t) => ({ _$litType$: r, strings: e, values: t }), a = ss(1), C = ss(2), T = /* @__PURE__ */ Symbol.for("lit-noChange"), l = /* @__PURE__ */ Symbol.for("lit-nothing"), Ai = /* @__PURE__ */ new WeakMap(), H = W.createTreeWalker(W, 129);
+\f\r]`, ie = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, $i = /-->/g, Si = />/g, O = RegExp(`>|${ht}(?:([^\\s"'>=/]+)(${ht}*=${ht}*(?:[^ 	
+\f\r"'\`<>=]|("|')|))|$)`, "g"), qi = /'/g, Ei = /"/g, is = /^(?:script|style|textarea|title)$/i, ss = (r) => (e, ...t) => ({ _$litType$: r, strings: e, values: t }), a = ss(1), C = ss(2), T = /* @__PURE__ */ Symbol.for("lit-noChange"), l = /* @__PURE__ */ Symbol.for("lit-nothing"), Ai = /* @__PURE__ */ new WeakMap(), H = W.createTreeWalker(W, 129);
 function as(r, e) {
   if (!oi(r) || !r.hasOwnProperty("raw")) throw Error("invalid template strings array");
   return Ci !== void 0 ? Ci.createHTML(e) : e;
@@ -257,12 +257,12 @@ function as(r, e) {
 const Ms = (r, e) => {
   const t = r.length - 1, i = [];
   let s, n = e === 2 ? "<svg>" : e === 3 ? "<math>" : "", o = ie;
-  for (let h = 0; h < t; h++) {
-    const d = r[h];
-    let c, g, p = -1, y = 0;
-    for (; y < d.length && (o.lastIndex = y, g = o.exec(d), g !== null); ) y = o.lastIndex, o === ie ? g[1] === "!--" ? o = $i : g[1] !== void 0 ? o = qi : g[2] !== void 0 ? (is.test(g[2]) && (s = RegExp("</" + g[2], "g")), o = O) : g[3] !== void 0 && (o = O) : o === O ? g[0] === ">" ? (o = s ?? ie, p = -1) : g[1] === void 0 ? p = -2 : (p = o.lastIndex - g[2].length, c = g[1], o = g[3] === void 0 ? O : g[3] === '"' ? Ei : Si) : o === Ei || o === Si ? o = O : o === $i || o === qi ? o = ie : (o = O, s = void 0);
-    const w = o === O && r[h + 1].startsWith("/>") ? " " : "";
-    n += o === ie ? d + zs : p >= 0 ? (i.push(c), d.slice(0, p) + es + d.slice(p) + I + w) : d + I + (p === -2 ? h : w);
+  for (let d = 0; d < t; d++) {
+    const h = r[d];
+    let c, g, p = -1, b = 0;
+    for (; b < h.length && (o.lastIndex = b, g = o.exec(h), g !== null); ) b = o.lastIndex, o === ie ? g[1] === "!--" ? o = $i : g[1] !== void 0 ? o = Si : g[2] !== void 0 ? (is.test(g[2]) && (s = RegExp("</" + g[2], "g")), o = O) : g[3] !== void 0 && (o = O) : o === O ? g[0] === ">" ? (o = s ?? ie, p = -1) : g[1] === void 0 ? p = -2 : (p = o.lastIndex - g[2].length, c = g[1], o = g[3] === void 0 ? O : g[3] === '"' ? Ei : qi) : o === Ei || o === qi ? o = O : o === $i || o === Si ? o = ie : (o = O, s = void 0);
+    const w = o === O && r[d + 1].startsWith("/>") ? " " : "";
+    n += o === ie ? h + zs : p >= 0 ? (i.push(c), h.slice(0, p) + es + h.slice(p) + I + w) : h + I + (p === -2 ? d : w);
   }
   return [as(r, n + (r[t] || "<?>") + (e === 2 ? "</svg>" : e === 3 ? "</math>" : "")), i];
 };
@@ -271,29 +271,29 @@ class ue {
     let s;
     this.parts = [];
     let n = 0, o = 0;
-    const h = e.length - 1, d = this.parts, [c, g] = Ms(e, t);
+    const d = e.length - 1, h = this.parts, [c, g] = Ms(e, t);
     if (this.el = ue.createElement(c, i), H.currentNode = this.el.content, t === 2 || t === 3) {
       const p = this.el.content.firstChild;
       p.replaceWith(...p.childNodes);
     }
-    for (; (s = H.nextNode()) !== null && d.length < h; ) {
+    for (; (s = H.nextNode()) !== null && h.length < d; ) {
       if (s.nodeType === 1) {
         if (s.hasAttributes()) for (const p of s.getAttributeNames()) if (p.endsWith(es)) {
-          const y = g[o++], w = s.getAttribute(p).split(I), A = /([.?@])?(.*)/.exec(y);
-          d.push({ type: 1, index: n, name: A[2], strings: w, ctor: A[1] === "." ? Is : A[1] === "?" ? Os : A[1] === "@" ? Ns : ot }), s.removeAttribute(p);
-        } else p.startsWith(I) && (d.push({ type: 6, index: n }), s.removeAttribute(p));
+          const b = g[o++], w = s.getAttribute(p).split(I), A = /([.?@])?(.*)/.exec(b);
+          h.push({ type: 1, index: n, name: A[2], strings: w, ctor: A[1] === "." ? Is : A[1] === "?" ? Os : A[1] === "@" ? Ns : ot }), s.removeAttribute(p);
+        } else p.startsWith(I) && (h.push({ type: 6, index: n }), s.removeAttribute(p));
         if (is.test(s.tagName)) {
-          const p = s.textContent.split(I), y = p.length - 1;
-          if (y > 0) {
+          const p = s.textContent.split(I), b = p.length - 1;
+          if (b > 0) {
             s.textContent = $e ? $e.emptyScript : "";
-            for (let w = 0; w < y; w++) s.append(p[w], ce()), H.nextNode(), d.push({ type: 2, index: ++n });
-            s.append(p[y], ce());
+            for (let w = 0; w < b; w++) s.append(p[w], ce()), H.nextNode(), h.push({ type: 2, index: ++n });
+            s.append(p[b], ce());
           }
         }
-      } else if (s.nodeType === 8) if (s.data === ts) d.push({ type: 2, index: n });
+      } else if (s.nodeType === 8) if (s.data === ts) h.push({ type: 2, index: n });
       else {
         let p = -1;
-        for (; (p = s.data.indexOf(I, p + 1)) !== -1; ) d.push({ type: 7, index: n }), p += I.length - 1;
+        for (; (p = s.data.indexOf(I, p + 1)) !== -1; ) h.push({ type: 7, index: n }), p += I.length - 1;
       }
       n++;
     }
@@ -322,13 +322,13 @@ class Bs {
   u(e) {
     const { el: { content: t }, parts: i } = this._$AD, s = (e?.creationScope ?? W).importNode(t, !0);
     H.currentNode = s;
-    let n = H.nextNode(), o = 0, h = 0, d = i[0];
-    for (; d !== void 0; ) {
-      if (o === d.index) {
+    let n = H.nextNode(), o = 0, d = 0, h = i[0];
+    for (; h !== void 0; ) {
+      if (o === h.index) {
         let c;
-        d.type === 2 ? c = new ee(n, n.nextSibling, this, e) : d.type === 1 ? c = new d.ctor(n, d.name, d.strings, this, e) : d.type === 6 && (c = new Vs(n, this, e)), this._$AV.push(c), d = i[++h];
+        h.type === 2 ? c = new ee(n, n.nextSibling, this, e) : h.type === 1 ? c = new h.ctor(n, h.name, h.strings, this, e) : h.type === 6 && (c = new Vs(n, this, e)), this._$AV.push(c), h = i[++d];
       }
-      o !== d?.index && (n = H.nextNode(), o++);
+      o !== h?.index && (n = H.nextNode(), o++);
     }
     return H.currentNode = W, s;
   }
@@ -411,9 +411,9 @@ class ot {
     let o = !1;
     if (n === void 0) e = _(this, e, t, 0), o = !pe(e) || e !== this._$AH && e !== T, o && (this._$AH = e);
     else {
-      const h = e;
-      let d, c;
-      for (e = n[0], d = 0; d < n.length - 1; d++) c = _(this, h[i + d], t, d), c === T && (c = this._$AH[d]), o ||= !pe(c) || c !== this._$AH[d], c === l ? e = l : e !== l && (e += (c ?? "") + n[d + 1]), this._$AH[d] = c;
+      const d = e;
+      let h, c;
+      for (e = n[0], h = 0; h < n.length - 1; h++) c = _(this, d[i + h], t, h), c === T && (c = this._$AH[h]), o ||= !pe(c) || c !== this._$AH[h], c === l ? e = l : e !== l && (e += (c ?? "") + n[h + 1]), this._$AH[h] = c;
     }
     o && !s && this.j(e);
   }
@@ -499,7 +499,7 @@ x._$litElement$ = !0, x.finalized = !0, li.litElementHydrateSupport?.({ LitEleme
 const Js = li.litElementPolyfillSupport;
 Js?.({ LitElement: x });
 (li.litElementVersions ??= []).push("4.2.2");
-const S = E`
+const q = E`
   :host {
     display: block;
     min-height: 0;
@@ -1401,7 +1401,7 @@ function $(r, e = !1) {
     </svg>
   </button>`;
 }
-function q(r) {
+function S(r) {
   const e = r.currentTarget;
   if (r.target !== e) return;
   const t = e.getBoundingClientRect();
@@ -1463,7 +1463,7 @@ const Le = class Le extends x {
       </div>
       <dialog
         aria-labelledby="journal-search-title"
-        @click=${q}
+        @click=${S}
         @cancel=${this.close}
       >
         <div class="card-head">
@@ -1504,7 +1504,7 @@ Le.properties = {
   context: { attribute: !1 },
   scopeKey: {}
 }, Le.styles = [
-  S,
+  q,
   E`
       :host {
         display: none;
@@ -1549,7 +1549,7 @@ function G() {
   const r = window.innerWidth;
   return r <= 600 ? "mobile" : r <= 1024 ? "tablet" : "desktop";
 }
-class b extends Error {
+class v extends Error {
   constructor(e) {
     super(e), this.code = e;
   }
@@ -1562,7 +1562,7 @@ function Z() {
   const r = globalThis.crypto;
   if (typeof r?.randomUUID == "function") return r.randomUUID();
   if (typeof r?.getRandomValues != "function")
-    throw new b("request_id_unavailable");
+    throw new v("request_id_unavailable");
   const e = r.getRandomValues(new Uint8Array(16));
   e[6] = e[6] & 15 | 64, e[8] = e[8] & 63 | 128;
   const t = Array.from(
@@ -1573,14 +1573,14 @@ function Z() {
 }
 async function ve(r, e, t) {
   const i = r.body?.getReader();
-  if (!i) throw new b("storage_error");
+  if (!i) throw new v("storage_error");
   const s = [];
   let n = 0;
   try {
     for (; ; ) {
-      const { value: o, done: h } = await i.read();
-      if (h) break;
-      if (n += o.byteLength, n > e) throw new b("export_too_large");
+      const { value: o, done: d } = await i.read();
+      if (d) break;
+      if (n += o.byteLength, n > e) throw new v("export_too_large");
       s.push(new Uint8Array(o));
     }
     return new Blob(s, { type: t });
@@ -1592,7 +1592,7 @@ async function ve(r, e, t) {
 function u(r) {
   return typeof r == "object" && r !== null && "code" in r && typeof r.code == "string" ? r.code : "connection_lost";
 }
-function v(r) {
+function y(r) {
   return {
     unauthorized: "Access to this operation is denied. Your journal has been cleared from this view.",
     not_ready: "The integration is not loaded. Reload the connection after it starts.",
@@ -1653,7 +1653,7 @@ async function B(r, e = Xs) {
       r,
       new Promise((i, s) => {
         t = setTimeout(
-          () => s(new b("connection_lost")),
+          () => s(new v("connection_lost")),
           e
         );
       })
@@ -1851,7 +1851,7 @@ class ci {
   }
   async titleScrapeImage(e, t, i, s) {
     if (!/^[a-f0-9-]{36}$/.test(t) || !/^(poster|backdrop|match)-[0-9]{1,3}$/.test(i))
-      throw new b("invalid_request");
+      throw new v("invalid_request");
     return this.raster(
       `/api/${f}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/metadata/review/${t}/image/${i}`,
       s
@@ -1978,16 +1978,16 @@ class ci {
   info() {
     return this.call({ type: `${f}/info` });
   }
-  list(e, t = "", i = "", s, n = "completed_at", o = !0, h = !1, d) {
+  list(e, t = "", i = "", s, n = "completed_at", o = !0, d = !1, h) {
     return this.call({
-      type: `${f}/${d ? "library/viewings" : "journal/list"}`,
-      ...d ? { title_id: d } : {},
+      type: `${f}/${h ? "library/viewings" : "journal/list"}`,
+      ...h ? { title_id: h } : {},
       ...m(e),
       query: t,
       limit: 25,
       sort: n,
       descending: o,
-      fuzzy: h,
+      fuzzy: d,
       ...i ? { status: i } : {},
       ...s ? { cursor: s } : {}
     });
@@ -1999,7 +1999,7 @@ class ci {
       viewing_id: t
     });
   }
-  calendarMonth(e, t, i, s = "", n = "", o = !1, h) {
+  calendarMonth(e, t, i, s = "", n = "", o = !1, d) {
     return this.call({
       type: `${f}/journal/calendar`,
       ...m(e),
@@ -2008,7 +2008,7 @@ class ci {
       query: s,
       fuzzy: o,
       ...n ? { status: n } : {},
-      ...h ? { title_id: h } : {}
+      ...d ? { title_id: d } : {}
     });
   }
   calendarDetails(e, t) {
@@ -2101,7 +2101,7 @@ class ci {
     });
   }
   async libraryArtwork(e, t, i) {
-    if (!/^[a-f0-9]{64}$/.test(t)) throw new b("invalid_request");
+    if (!/^[a-f0-9]{64}$/.test(t)) throw new v("invalid_request");
     return this.raster(
       `/api/${f}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/library/artwork/${t}`,
       i
@@ -2114,12 +2114,12 @@ class ci {
       redirect: "error"
     });
     if (!i.ok)
-      throw await i.body?.cancel(), new b(
+      throw await i.body?.cancel(), new v(
         [401, 403].includes(i.status) ? "unauthorized" : "not_found"
       );
     const s = i.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase();
     if (!s || !["image/jpeg", "image/png", "image/webp"].includes(s))
-      throw await i.body?.cancel(), new b("invalid_request");
+      throw await i.body?.cancel(), new v("invalid_request");
     return ve(i, Pi, s);
   }
   settingsTransfer(e, t, i, s = {}, n = "") {
@@ -2187,9 +2187,9 @@ class ci {
   }
   async previewImport(e, t, i, s = !1) {
     const n = /\.(sqlite|sqlite3|db)$/i.test(t.name) ? "sqlite" : /\.json$/i.test(t.name) ? "json" : null;
-    if (!n) throw new b("invalid_request");
+    if (!n) throw new v("invalid_request");
     if (!t.size || t.size > Ys)
-      throw new b("import_too_large");
+      throw new v("import_too_large");
     const o = await this.transport.fetchWithAuth(
       `/api/${f}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/import/preview?format=${n}${s ? "&purchase_only=true" : ""}`,
       {
@@ -2202,22 +2202,22 @@ class ci {
       }
     );
     if (!o.ok) {
-      const d = {
+      const h = {
         401: "unauthorized",
         403: "unauthorized",
         413: "import_too_large",
         404: "not_found"
       };
-      if (d[o.status]) throw new b(d[o.status]);
+      if (h[o.status]) throw new v(h[o.status]);
       const c = await o.json().catch(() => null);
-      throw new b(c?.code ?? "connection_lost");
+      throw new v(c?.code ?? "connection_lost");
     }
-    const h = await ve(
+    const d = await ve(
       o,
       8 * 1024 * 1024,
       "application/json"
     );
-    return JSON.parse(await h.text());
+    return JSON.parse(await d.text());
   }
   reconcilePurchases(e) {
     return this.call({
@@ -2249,7 +2249,7 @@ class ci {
   }
   async artwork(e, t) {
     if (!/^media_player\.[a-z0-9_]{1,255}$/.test(e))
-      throw new b("invalid_request");
+      throw new v("invalid_request");
     const i = await this.transport.fetchWithAuth(
       `/api/media_player_proxy/${e}`,
       {
@@ -2260,7 +2260,7 @@ class ci {
     );
     if (!i.ok) {
       if (await i.body?.cancel(), i.status === 404) return null;
-      throw new b(
+      throw new v(
         [401, 403].includes(i.status) ? "unauthorized" : "not_ready"
       );
     }
@@ -2335,7 +2335,7 @@ class ci {
     const n = [];
     let o = 0;
     for (; i(); ) {
-      const h = await this.libraryList(e, {
+      const d = await this.libraryList(e, {
         ...t,
         grouped: !0,
         limit: 1e3,
@@ -2346,22 +2346,22 @@ class ci {
           ...s.random_seed !== void 0 ? { random_seed: s.random_seed } : {}
         } : {}
       });
-      if (!i()) throw new b("not_ready");
-      if (s && (h.revision !== s.revision || h.preferences_key !== s.preferences_key))
-        throw new b("refresh_required");
-      if (o += new TextEncoder().encode(JSON.stringify(h.items)).byteLength, n.length + h.items.length > 1e4 || o > 32 * 1024 * 1024)
-        throw new b("library_page_too_large");
-      if (n.push(...h.items), s = h, !h.has_more)
+      if (!i()) throw new v("not_ready");
+      if (s && (d.revision !== s.revision || d.preferences_key !== s.preferences_key))
+        throw new v("refresh_required");
+      if (o += new TextEncoder().encode(JSON.stringify(d.items)).byteLength, n.length + d.items.length > 1e4 || o > 32 * 1024 * 1024)
+        throw new v("library_page_too_large");
+      if (n.push(...d.items), s = d, !d.has_more)
         return {
-          ...h,
+          ...d,
           items: n,
           offset: 0,
           limit: n.length,
           has_more: !1
         };
-      if (!h.items.length) throw new b("refresh_required");
+      if (!d.items.length) throw new v("refresh_required");
     }
-    throw new b("not_ready");
+    throw new v("not_ready");
   }
   prepare(e, t, i) {
     return this.prepareCommand(e, `journal/${t}`, i);
@@ -2392,7 +2392,7 @@ class ci {
         413: "export_too_large",
         503: "busy"
       };
-      throw new b(o[n.status] ?? "storage_error");
+      throw new v(o[n.status] ?? "storage_error");
     }
     return ve(
       n,
@@ -2765,7 +2765,7 @@ function ta(r) {
     aria-label="Viewer and critic ratings"
   >
     ${e.map(({ kind: t, label: i, value: s, max: n }) => {
-    const o = Math.round(s / n * 100), h = t === "critic" ? o >= 60 ? Ks : Gs : o >= 60 ? Zs : _s;
+    const o = Math.round(s / n * 100), d = t === "critic" ? o >= 60 ? Ks : Gs : o >= 60 ? Zs : _s;
     return a`<span
         class=${`score-chip score-${t}`}
         title=${`${i}: ${o}%`}
@@ -2801,7 +2801,7 @@ function ta(r) {
                   ${o}
                   <tspan font-size="7" dy="-4">%</tspan>
                 </text>
-              </svg>` : a`<img src=${h} alt="" width="30" height="30" /><span
+              </svg>` : a`<img src=${d} alt="" width="30" height="30" /><span
                   >${o}%</span
                 >`}
       </span>`;
@@ -2834,7 +2834,7 @@ function sa(r, e, t = 8) {
     ([s, n]) => n?.length ? a`<div>
                     <dt>${s}</dt>
                     <dd>
-                      ${n.map((o, h) => a`<span class="credit-name">${e(o, o + (h < n.length - 1 ? "," : ""))}</span>${h < n.length - 1 ? " " : ""}`)}
+                      ${n.map((o, d) => a`<span class="credit-name">${e(o, o + (d < n.length - 1 ? "," : ""))}</span>${d < n.length - 1 ? " " : ""}`)}
                     </dd>
                   </div>` : l
   )}
@@ -2860,8 +2860,8 @@ class aa {
     if (i) return i;
     for (; this.bytes + t.size > this.maxBytes || this.entries.size >= this.maxEntries; ) {
       const n = [...this.entries.keys()], o = n.find(
-        (h) => ![...this.readers.get(h) ?? []].some(
-          (d) => d.visible()
+        (d) => ![...this.readers.get(d) ?? []].some(
+          (h) => h.visible()
         )
       ) ?? n[0];
       if (o === void 0) return;
@@ -2964,14 +2964,14 @@ const Ue = class Ue extends x {
         return;
       }
       n = setTimeout(() => i.abort(), 5e3);
-      const h = await this.client.libraryArtwork(
+      const d = await this.client.libraryArtwork(
         this.scope,
         this.artworkKey,
         i.signal
       );
       if (t !== this.generation || i.signal.aborted || !this.isConnected || document.hidden)
         return;
-      this.url = this.queue.cache.put(this.cacheKey, h), this.requestUpdate();
+      this.url = this.queue.cache.put(this.cacheKey, d), this.requestUpdate();
     } catch (o) {
       t === this.generation && u(o) === "unauthorized" && this.dispatchEvent(
         new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
@@ -3189,7 +3189,7 @@ const Te = class Te extends x {
     }
   }
   report(e) {
-    this.error = v(e), u(e) === "unauthorized" && this.dispatchEvent(
+    this.error = y(e), u(e) === "unauthorized" && this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     );
   }
@@ -3245,7 +3245,7 @@ const Te = class Te extends x {
           !0
         );
         if (t !== this.generation) return;
-        if (i.outcome !== "staged") throw new b("refresh_required");
+        if (i.outcome !== "staged") throw new v("refresh_required");
         this.providerDrafts = {
           ...this.providerDrafts,
           [this.matchProvider]: i
@@ -3259,7 +3259,7 @@ const Te = class Te extends x {
           e
         );
         if (t !== this.generation) return;
-        if ("search_id" in i) throw new b("refresh_required");
+        if ("search_id" in i) throw new v("refresh_required");
         this.review = i, this.candidatePage = void 0, this.imageChoice = "", this.requestUpdate();
       }
     } catch (i) {
@@ -3771,7 +3771,7 @@ const Te = class Te extends x {
         data-admin-dialog
         class="inset-dialog"
         aria-labelledby="scrape-title"
-        @click=${q}
+        @click=${S}
         @cancel=${(e) => {
       e.preventDefault(), this.close();
     }}
@@ -3831,7 +3831,7 @@ const Te = class Te extends x {
         data-admin-dialog
         class="choice-dialog"
         aria-labelledby="choice-title"
-        @click=${q}
+        @click=${S}
         @cancel=${(e) => {
       e.preventDefault(), this.busy || this.closeChoice();
     }}
@@ -3846,7 +3846,7 @@ Te.properties = {
   versionId: {},
   blocked: { type: Boolean }
 }, Te.styles = [
-  S,
+  q,
   di,
   E`
       :host {
@@ -4354,13 +4354,13 @@ function ra(r, e) {
   for (let n = 1; n <= r.length; n++) {
     const o = Array(e.length + 1).fill(t + 1);
     o[0] = n;
-    for (let h = Math.max(1, n - t); h <= Math.min(e.length, n + t); h++) {
-      let d = Math.min(
-        i[h] + 1,
-        o[h - 1] + 1,
-        i[h - 1] + +(r[n - 1] !== e[h - 1])
+    for (let d = Math.max(1, n - t); d <= Math.min(e.length, n + t); d++) {
+      let h = Math.min(
+        i[d] + 1,
+        o[d - 1] + 1,
+        i[d - 1] + +(r[n - 1] !== e[d - 1])
       );
-      n > 1 && h > 1 && r[n - 1] === e[h - 2] && r[n - 2] === e[h - 1] && (d = Math.min(d, s[h - 2] + 1)), o[h] = d;
+      n > 1 && d > 1 && r[n - 1] === e[d - 2] && r[n - 2] === e[d - 1] && (h = Math.min(h, s[d - 2] + 1)), o[d] = h;
     }
     if (Math.min(...o) > t) return !1;
     s = i, i = o;
@@ -4370,14 +4370,14 @@ function ra(r, e) {
 function hs(r, e, t = !1) {
   const i = e.trim();
   if (i.length >= 2 && i.startsWith('"') && i.endsWith('"')) {
-    let d;
+    let h;
     try {
-      d = JSON.parse(i).trim();
+      h = JSON.parse(i).trim();
     } catch {
-      d = i.slice(1, -1).trim();
+      h = i.slice(1, -1).trim();
     }
-    if (!d) return !1;
-    const c = d.toLocaleLowerCase().split(/\s+/).map((g) => g.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    if (!h) return !1;
+    const c = h.toLocaleLowerCase().split(/\s+/).map((g) => g.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
     return new RegExp(
       "(?<![\\p{L}\\p{N}_])" + c.join("\\s+") + "(?![\\p{L}\\p{N}_])",
       "u"
@@ -4389,9 +4389,9 @@ function hs(r, e, t = !1) {
   const s = Ui(e), n = Ui(r);
   if (!s) return !1;
   if (n.includes(s)) return !0;
-  const o = s.split(" "), h = n.split(" ");
+  const o = s.split(" "), d = n.split(" ");
   return o.length <= 12 && o.every(
-    (d) => h.some((c) => c.includes(d) || ra(d, c))
+    (h) => d.some((c) => c.includes(h) || ra(h, c))
   );
 }
 const V = { ATTRIBUTE: 1, CHILD: 2, PROPERTY: 3, BOOLEAN_ATTRIBUTE: 4 }, cs = (r) => (...e) => ({ _$litDirective$: r, values: e });
@@ -4417,16 +4417,16 @@ const { I: na } = Qs, Ri = (r) => r, oa = (r) => r.strings === void 0, Ti = () =
     const n = i.insertBefore(Ti(), s), o = i.insertBefore(Ti(), s);
     t = new na(n, o, r, r.options);
   } else {
-    const n = t._$AB.nextSibling, o = t._$AM, h = o !== r;
-    if (h) {
-      let d;
-      t._$AQ?.(r), t._$AM = r, t._$AP !== void 0 && (d = r._$AU) !== o._$AU && t._$AP(d);
+    const n = t._$AB.nextSibling, o = t._$AM, d = o !== r;
+    if (d) {
+      let h;
+      t._$AQ?.(r), t._$AM = r, t._$AP !== void 0 && (h = r._$AU) !== o._$AU && t._$AP(h);
     }
-    if (n !== s || h) {
-      let d = t._$AA;
-      for (; d !== n; ) {
-        const c = Ri(d).nextSibling;
-        Ri(i).insertBefore(d, s), d = c;
+    if (n !== s || d) {
+      let h = t._$AA;
+      for (; h !== n; ) {
+        const c = Ri(h).nextSibling;
+        Ri(i).insertBefore(h, s), h = c;
       }
     }
   }
@@ -4588,6 +4588,37 @@ const Di = cs(class extends ps {
     inset: 0;
     pointer-events: none;
   }
+  .cover-text-badges {
+    position: absolute;
+    inset: 6px 6px auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .cover-text-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .cover-text-flag {
+    display: block;
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    padding: 3px 5px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 800;
+    line-height: 1.2;
+    box-shadow: 0 1px 4px #0008;
+  }
   .cover-flag {
     position: absolute;
     top: 0;
@@ -4681,6 +4712,16 @@ const Di = cs(class extends ps {
   .flag-favorite {
     background: #ffc329;
     color: #241600;
+  }
+  .cover-text-flag.flag-progress {
+    background: #ffbd4a;
+    color: #241600;
+  }
+  .cover-text-flag.flag-watch-soon {
+    background: #005e9c;
+  }
+  .cover-text-flag.flag-recent {
+    background: #7130a1;
   }
   .cover-formats {
     position: absolute;
@@ -5018,6 +5059,10 @@ const Di = cs(class extends ps {
     width: 14px;
     height: 14px;
     flex: none;
+  }
+  .status-badge.status-text {
+    border-radius: 3px;
+    box-shadow: none;
   }
   .collection-new {
     --badge-color: #27c4f2;
@@ -5678,15 +5723,15 @@ const Di = cs(class extends ps {
   }
 `;
 function zi(r, e, t, i) {
-  const s = (n, o, h, d = "") => a` <button
+  const s = (n, o, d, h = "") => a` <button
       type="button"
-      class=${d}
+      class=${h}
       aria-label=${o}
       title=${o}
       ?disabled=${e || !t && !n.startsWith("power_")}
       @click=${() => i(n)}
     >
-      <span aria-hidden="true">${h}</span>
+      <span aria-hidden="true">${d}</span>
     </button>`;
   return a`
     <div class="remote-top">
@@ -5775,7 +5820,7 @@ const ca = {
       control_uncertain: "An administrator must inspect and acknowledge the previous uncertain command.",
       control_limit: "Control receipt storage is full. Administrator maintenance is required."
     };
-    this.error = i[t] ?? v(e), t === "unauthorized" && (this.generation++, this.info = this.pending = this.status = void 0, this.selectedPlayer = "", this.dispatchEvent(
+    this.error = i[t] ?? y(e), t === "unauthorized" && (this.generation++, this.info = this.pending = this.status = void 0, this.selectedPlayer = "", this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     ));
   }
@@ -6013,11 +6058,11 @@ const ca = {
     }) : l}
       ${this.dialog !== "remote" || this.acknowledge ? this.feedback() : l}
       ${s && !(e?.can_manage && this.scope.permissions.edit) ? a`<p class="warning">This player needs administrator review of an uncertain command before more commands can be sent.</p>` : l}
-      ${e?.can_manage && this.scope.permissions.edit ? e.pending.map((o) => a`<p class="warning">Unconfirmed ${o.operation} for ${e.players.find((h) => h.id === o.player_id)?.name || "a previously selected player"}. <button type="button" ?disabled=${this.busy} @click=${() => this.reviewPending(o.request_id)}>I inspected the player…</button></p>`) : l}
+      ${e?.can_manage && this.scope.permissions.edit ? e.pending.map((o) => a`<p class="warning">Unconfirmed ${o.operation} for ${e.players.find((d) => d.id === o.player_id)?.name || "a previously selected player"}. <button type="button" ?disabled=${this.busy} @click=${() => this.reviewPending(o.request_id)}>I inspected the player…</button></p>`) : l}
       <dialog
         ?data-admin-dialog=${!!this.acknowledge}
         class=${this.dialog === "remote" && !this.acknowledge ? "database-dialog remote-dialog" : "database-dialog"}
-        @click=${q}
+        @click=${S}
         @cancel=${this.close}
       >
         <div class="card-head">
@@ -6078,7 +6123,7 @@ De.properties = {
   value: {},
   configured: { type: Boolean }
 }, De.styles = [
-  S,
+  q,
   ha,
   E`
       [hidden] {
@@ -6170,8 +6215,8 @@ De.properties = {
       }
     `
 ];
-let qt = De;
-customElements.get("kaleidescape-device-controls") || customElements.define("kaleidescape-device-controls", qt);
+let St = De;
+customElements.get("kaleidescape-device-controls") || customElements.define("kaleidescape-device-controls", St);
 const ji = [
   "close",
   "cancel",
@@ -6308,7 +6353,7 @@ function ua(r, e = "modern") {
     ...r.is_favorite ? [{ key: "favorite", label: "Favorites", symbol: "★" }] : []
   ];
 }
-function qe(r) {
+function Se(r) {
   const e = (r.formats?.length ? r.formats : [r.edition ?? ""]).map(
     (s) => s.toLowerCase()
   ), t = (s) => e.some((n) => s.test(n)), i = [];
@@ -6317,7 +6362,7 @@ function qe(r) {
   ) && i.push({ key: "four-k", label: "4K" }), e.some((s) => /\b4k\b/.test(s) && /\bcinematic\b/.test(s)) && i.push({ key: "cinematic", label: "4K Cinematic" }), t(/\bhd\b|\b1080p\b/) && i.push({ key: "hd", label: "HD" }), t(/\bsd\b|\b(?:480|576)[pi]\b/) && i.push({ key: "sd", label: "SD" }), t(/\bsdr\b/) && i.push({ key: "sdr", label: "SDR" }), t(/\bhdr10\b/) && i.push({ key: "hdr10", label: "HDR10" }), t(/\bdolby\s*vision\b/) && i.push({ key: "vision", label: "Dolby Vision" }), t(/\bdolby\s*atmos\b/) && i.push({ key: "atmos", label: "Dolby Atmos" }), i;
 }
 function ga(r) {
-  const e = qe(r);
+  const e = Se(r);
   return ["cinematic", "four-k", "hd", "sd"].map((t) => e.find((i) => i.key === t)).find(Boolean);
 }
 const fa = C`<svg class="dolby-symbol" viewBox="0 0 24 16" aria-hidden="true" focusable="false">
@@ -6338,7 +6383,7 @@ const fa = C`<svg class="dolby-symbol" viewBox="0 0 24 16" aria-hidden="true" fo
 </svg>`;
 function Q(r, e = !1, t, i = !1) {
   const s = e ? ga(r) : void 0;
-  return (e ? s ? [s] : [] : qe(r)).map((n) => {
+  return (e ? s ? [s] : [] : Se(r)).map((n) => {
     const o = n.key === "cinematic" ? a`<b>4K</b><span class="cinematic-label">Cinematic</span>` : n.key === "vision" || n.key === "atmos" ? a`${fa}<span>${n.label}</span>` : n.key === "hdr10" ? a`${va}<b>HDR10</b>` : n.label;
     return t ? a`<button
           type="button"
@@ -6355,16 +6400,33 @@ function Q(r, e = !1, t, i = !1) {
         >`;
   });
 }
-function Mi(r, e = !1, t = [], i = "modern") {
-  const s = ua(r, i), n = e ? ["progress", "watched", "watch-soon", "recent"].map((o) => s.find((h) => h.key === o)).find(Boolean) : void 0;
-  return (e ? s.filter((o) => o === n || o.key === "favorite") : s).filter((o) => !t.includes(o.key)).map((o) => {
-    const h = e && o === n && o.key !== "recent" && !t.includes("recent") && s.some((d) => d.key === "recent");
+function Mi(r, e = !1, t = [], i = "modern", s = "icons") {
+  const n = ua(r, i), o = e ? ["progress", "watched", "watch-soon", "recent"].map((d) => n.find((h) => h.key === d)).find(Boolean) : void 0;
+  if (e && s === "text") {
+    const d = o && !t.includes(o.key) ? o : void 0, h = n.find((b) => b.key === "recent"), c = d && d.key !== "recent" && h && !t.includes("recent"), g = n.find(
+      (b) => b.key === "favorite" && !t.includes("favorite")
+    ), p = (b) => a`<span
+        class=${`cover-text-flag flag-${b.key}`}
+        role="img"
+        aria-label=${b.label}
+        title=${b.label}
+        >${b.label}</span
+      >`;
+    return a`<div class="cover-text-badges">
+      <div class="cover-text-stack">
+        ${d ? p(d) : l}${c ? p(h) : l}
+      </div>
+      ${g ? p(g) : l}
+    </div>`;
+  }
+  return (e ? n.filter((d) => d === o || d.key === "favorite") : n).filter((d) => !t.includes(d.key)).map((d) => {
+    const h = e && d === o && d.key !== "recent" && !t.includes("recent") && n.some((c) => c.key === "recent");
     return a`${h ? a`<span class="cover-recent-edge" role="img" aria-label="Recently Added" title="Recently Added"></span>` : l}<span
-          class=${e ? `cover-flag flag-${o.key}` : `status-badge collection-badge collection-${dt(o.label)}${o.key === "recent" ? " status-recent" : ""}`}
-          title=${o.label}
-          aria-label=${o.label}
+          class=${e ? `cover-flag flag-${d.key}` : `status-badge collection-badge collection-${dt(d.label)}${d.key === "recent" ? " status-recent" : ""}${s === "text" ? " status-text" : ""}`}
+          title=${d.label}
+          aria-label=${d.label}
           role="img"
-          >${e ? a`<span class="badge-symbol" aria-hidden="true">${o.key === "watch-soon" ? ma : o.key === "recent" ? ba : o.symbol}</span>` : a`${gi(o.label)}<span>${o.label}</span>`}</span
+          >${e ? a`<span class="badge-symbol" aria-hidden="true">${d.key === "watch-soon" ? ma : d.key === "recent" ? ba : d.symbol}</span>` : a`${s === "icons" ? gi(d.label) : l}<span>${d.label}</span>`}</span
         >`;
   });
 }
@@ -6467,7 +6529,7 @@ const ze = class ze extends x {
     e?.preventDefault(), this.clear(), this.requestUpdate();
   }
   fail(e) {
-    this.error = v(e), ["unauthorized", "library_disabled"].includes(u(e)) && (this.clear(), this.dispatchEvent(
+    this.error = y(e), ["unauthorized", "library_disabled"].includes(u(e)) && (this.clear(), this.dispatchEvent(
       new CustomEvent(
         u(e) === "unauthorized" ? "access-denied" : "library-disabled",
         { bubbles: !0, composed: !0 }
@@ -6553,7 +6615,7 @@ const ze = class ze extends x {
       <dialog
         data-admin-dialog
         class="database-dialog"
-        @click=${q}
+        @click=${S}
         @cancel=${this.close}
         aria-labelledby="collection-add-title"
       >
@@ -6604,7 +6666,7 @@ ze.properties = {
   enabled: { type: Boolean },
   blocked: { type: Boolean }
 }, ze.styles = [
-  S,
+  q,
   di,
   E`
       .collection-button {
@@ -6621,10 +6683,10 @@ ze.properties = {
       }
     `
 ];
-let St = ze;
+let qt = ze;
 customElements.get("kaleidescape-library-collection-add") || customElements.define(
   "kaleidescape-library-collection-add",
-  St
+  qt
 );
 function gs(r) {
   return `${r.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" })} ${r.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
@@ -6685,32 +6747,32 @@ const je = class je extends x {
     const t = this.client, i = this.scope, s = this.titleId, n = this.generation, o = () => this.isConnected && n === this.generation && this.client === t && this.bound === this.scopeKey() && this.titleId === s;
     this.loading = !0, this.error = "", this.requestUpdate();
     try {
-      let h = e ? this.cursor : null;
-      const d = /* @__PURE__ */ new Set();
+      let d = e ? this.cursor : null;
+      const h = /* @__PURE__ */ new Set();
       do {
-        if (h) {
-          if (d.has(h))
+        if (d) {
+          if (h.has(d))
             throw new Error("Unable to continue viewing history.");
-          d.add(h);
+          h.add(d);
         }
         const c = await t.list(
           i,
           "",
           "",
-          h ?? void 0,
+          d ?? void 0,
           "completed_at",
           !0,
           !1,
           s
         );
         if (!o()) return;
-        this.items = h ? [...this.items, ...c.items] : c.items, this.cursor = c.next_cursor, h = this.cursor, this.requestUpdate();
-      } while (h && this.renderRoot.querySelector("details")?.open);
-    } catch (h) {
+        this.items = d ? [...this.items, ...c.items] : c.items, this.cursor = c.next_cursor, d = this.cursor, this.requestUpdate();
+      } while (d && this.renderRoot.querySelector("details")?.open);
+    } catch (d) {
       if (!o()) return;
-      u(h) === "unauthorized" || u(h) === "library_disabled" ? (this.clear(), this.dispatchEvent(
+      u(d) === "unauthorized" || u(d) === "library_disabled" ? (this.clear(), this.dispatchEvent(
         new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
-      )) : u(h) === "refresh_required" ? (this.items = [], this.cursor = null, this.error = "Viewing history changed. Refresh to see the latest entries.") : this.error = v(h);
+      )) : u(d) === "refresh_required" ? (this.items = [], this.cursor = null, this.error = "Viewing history changed. Refresh to see the latest entries.") : this.error = y(d);
     } finally {
       o() && (this.loading = !1, this.requestUpdate());
     }
@@ -6793,7 +6855,7 @@ je.properties = {
   editable: { type: Boolean },
   unified: { type: Boolean }
 }, je.styles = [
-  S,
+  q,
   E`
       :host {
         display: flow-root;
@@ -6904,7 +6966,7 @@ const wa = [
     return this.busy || this.pending ? !1 : !this.opened || !this.review || !this.restoring && !Object.keys(this.patch()).length || window.confirm("Discard your unsaved Library changes?");
   }
   report(e) {
-    this.error = v(e), u(e) === "unauthorized" && (this.reset(), this.dispatchEvent(
+    this.error = y(e), u(e) === "unauthorized" && (this.reset(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     ));
   }
@@ -6996,7 +7058,7 @@ const wa = [
         data-admin-dialog
         class="inset-dialog"
         aria-labelledby="library-edit-title"
-        @click=${q}
+        @click=${S}
         @cancel=${(e) => {
       e.preventDefault(), this.close();
     }}
@@ -7101,7 +7163,7 @@ Me.properties = {
   dateOnly: { type: Boolean },
   optionsOnly: { type: Boolean }
 }, Me.styles = [
-  S,
+  q,
   di,
   E`
       :host {
@@ -7138,23 +7200,23 @@ function ms(r, e, t = 0) {
 function bs(r, e, t = 0) {
   const i = r[t], s = /* @__PURE__ */ new Set(), n = /* @__PURE__ */ new Set();
   return { values: Object.fromEntries(
-    Pt.map((h) => {
-      if (i?.[h] != null) return [h, i[h]];
-      const d = [
+    Pt.map((d) => {
+      if (i?.[d] != null) return [d, i[d]];
+      const h = [
         ...new Set(
-          r.map((g) => g[h]).filter((g) => g != null)
+          r.map((g) => g[d]).filter((g) => g != null)
         )
       ];
-      if (d.length > 1)
-        return n.add(h), [h, null];
-      if (d.length === 1)
-        return s.add(h), [h, d[0]];
+      if (h.length > 1)
+        return n.add(d), [d, null];
+      if (h.length === 1)
+        return s.add(d), [d, h[0]];
       const c = [
         ...new Set(
-          e.map((g) => g[h]).filter((g) => g != null)
+          e.map((g) => g[d]).filter((g) => g != null)
         )
       ];
-      return c.length > 1 && n.add(h), [h, c[0] ?? null];
+      return c.length > 1 && n.add(d), [d, c[0] ?? null];
     })
   ), foreign: s, conflicts: n };
 }
@@ -7226,7 +7288,7 @@ const ka = {
     );
   }
   report(e) {
-    this.error = v(e), u(e) === "unauthorized" && this.dispatchEvent(
+    this.error = y(e), u(e) === "unauthorized" && this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     );
   }
@@ -7302,7 +7364,7 @@ const ka = {
     return a`<dialog
       aria-labelledby="purchase-edit-title"
       @cancel=${this.close}
-      @click=${q}
+      @click=${S}
     >
       <div class="card-head">
         <h2 id="purchase-edit-title">Edit purchase details</h2>
@@ -7381,7 +7443,7 @@ Be.properties = {
   scope: { attribute: !1 },
   titleId: { type: String }
 }, Be.styles = [
-  S,
+  q,
   E`
       dialog {
         width: min(640px, calc(100% - 24px));
@@ -7430,7 +7492,7 @@ function Ii() {
 function be(r = new URL(location.href)) {
   return /^\/kaleidescape-companion\/?$/.test(r.pathname) && r.searchParams.get("companion_page") === "library";
 }
-function Se(r = new URL(location.href), e = !1) {
+function qe(r = new URL(location.href), e = !1) {
   if (!be(r)) return null;
   const t = r.searchParams;
   if (!["filters", "query", ...ge, ...Ut].some((o) => t.has(`library_${o}`))) return null;
@@ -7441,11 +7503,11 @@ function Se(r = new URL(location.href), e = !1) {
     recently_added: !1
   };
   for (const o of ge) {
-    const h = t.getAll(`library_${o}`);
-    n[o] = h.length <= 100 ? [
+    const d = t.getAll(`library_${o}`);
+    n[o] = d.length <= 100 ? [
       ...new Set(
-        h.filter(
-          (d) => d.length > 0 && d.length <= 500 && !d.includes("\0") && (o !== "status" || Ca.has(d))
+        d.filter(
+          (h) => h.length > 0 && h.length <= 500 && !h.includes("\0") && (o !== "status" || Ca.has(h))
         )
       )
     ] : [];
@@ -7533,7 +7595,7 @@ const Ie = class Ie extends x {
       query: "",
       sort: "name",
       descending: !1
-    }, this.applied = { ...this.filters }, this.loading = !1, this.requesting = !1, this.error = "", this.notice = "", this.covers = new R(), this.fuzzySearch = !0, this.mode = "list", this.coverSize = 150, this.movieStatusLabels = "modern", this.display = {
+    }, this.applied = { ...this.filters }, this.loading = !1, this.requesting = !1, this.error = "", this.notice = "", this.covers = new R(), this.fuzzySearch = !0, this.mode = "list", this.coverSize = 150, this.movieStatusLabels = "modern", this.libraryBadgeStyle = "icons", this.display = {
       show_titles: !0,
       show_format: !0,
       show_badges: !0,
@@ -7545,7 +7607,7 @@ const Ie = class Ie extends x {
       if (this.dashboard || this.dialogOnly || !this.preferencesReady || !be())
         return;
       const e = Vi(
-        Se(void 0, !!this.scope?.permissions.edit) ?? Ii()
+        qe(void 0, !!this.scope?.permissions.edit) ?? Ii()
       ), t = { ...this.applied, ...e };
       JSON.stringify(t) !== JSON.stringify(this.applied) && this.confirmNavigation() && (clearTimeout(this.searchTimer), this.applied = t, this.filters = structuredClone(this.applied), this.draft = {}, this.facetSearch = "", this.selected && this.closeDialog("title-dialog"), this.load());
     }, this.mobileQuery = "", me(this, () => !this.preferencesReady || this.preferences?.unsettled || this.searchPreferences?.unsettled || this.loading || this.detailsLocked || this.resize || this.renderRoot.querySelector("dialog[open]") ? !1 : (this.clear(), this.initializePreferences(), this.refreshStatus(), !0));
@@ -7604,14 +7666,14 @@ const Ie = class Ie extends x {
       this.scope,
       !1,
       (t) => {
-        e === this.generation && (t && u(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? v(t) : "", this.requestUpdate()));
+        e === this.generation && (t && u(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? y(t) : "", this.requestUpdate()));
       }
     ), this.searchPreferences = new M(
       this.client,
       this.scope,
       !1,
       (t) => {
-        e === this.generation && (t && u(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? v(t) : "", this.requestUpdate()));
+        e === this.generation && (t && u(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? y(t) : "", this.requestUpdate()));
       },
       "search"
     );
@@ -7639,7 +7701,7 @@ const Ie = class Ie extends x {
         missing_purchase_information: !1,
         recently_added: !1
       } : t;
-      this.dashboard && (this.preferences?.dispose(), this.preferences = void 0, this.searchPreferences?.dispose(), this.searchPreferences = void 0, this.coverColumns = this.dashboard.columns), this.fuzzySearch = i.fuzzy_search, this.mode = s.view, this.entriesPerPage = s.page_size, this.coverSize = s.cover_size, this.movieStatusLabels = s.movie_status_labels === "kaleidescape" ? "kaleidescape" : "modern", this.castLimit = Number.isInteger(s.cast_limit) ? s.cast_limit : 8, this.display = Object.fromEntries(
+      this.dashboard && (this.preferences?.dispose(), this.preferences = void 0, this.searchPreferences?.dispose(), this.searchPreferences = void 0, this.coverColumns = this.dashboard.columns), this.fuzzySearch = i.fuzzy_search, this.mode = s.view, this.entriesPerPage = s.page_size, this.coverSize = s.cover_size, this.movieStatusLabels = s.movie_status_labels === "kaleidescape" ? "kaleidescape" : "modern", this.libraryBadgeStyle = s.library_badge_style === "text" ? "text" : "icons", this.castLimit = Number.isInteger(s.cast_limit) ? s.cast_limit : 8, this.display = Object.fromEntries(
         Oi.map(([o]) => [o, s[o]])
       ), this.scope?.permissions.edit && this.display.show_library_cost && this.loadPurchaseTotals(), this.widths = [...s.widths], this.applied = Object.fromEntries(
         [
@@ -7654,7 +7716,7 @@ const Ie = class Ie extends x {
           "recently_added"
         ].map((o) => [o, s[o]])
       );
-      const n = this.dashboard ? null : Se(void 0, !!this.scope?.permissions.edit);
+      const n = this.dashboard ? null : qe(void 0, !!this.scope?.permissions.edit);
       this.applied = {
         ...this.applied,
         ...Vi(n ?? Ii())
@@ -7675,7 +7737,7 @@ const Ie = class Ie extends x {
     e && (e.open = !1), clearTimeout(this.searchTimer), this.preferences?.dispose(), this.preferences = void 0, this.searchPreferences?.dispose(), this.searchPreferences = void 0, this.preferencesReady = !1, this.preferenceError = "", this.generation++, this.listRequest++, clearTimeout(this.timer), clearTimeout(this.layoutTimer), this.layoutTimer = void 0, this.pendingLimit = void 0, this.gridObserver?.disconnect(), this.gridObserver = void 0, this.grid = void 0, this.gridWidth = 0, this.coverColumns = 1, this.entriesPerPage = this.requestLimit = 100, this.requestedOffset = 0;
     for (const t of this.renderRoot.querySelectorAll("dialog"))
       t.close();
-    this.covers.cache.dispose(), this.covers = new R(), this.fuzzySearch = !0, this.movieStatusLabels = "modern", this.castLimit = 8, this.display = {
+    this.covers.cache.dispose(), this.covers = new R(), this.fuzzySearch = !0, this.movieStatusLabels = "modern", this.libraryBadgeStyle = "icons", this.castLimit = 8, this.display = {
       show_titles: !0,
       show_format: !0,
       show_badges: !0,
@@ -7686,7 +7748,8 @@ const Ie = class Ie extends x {
   updated() {
     for (const [t, i] of [
       ["library_page_size", String(this.entriesPerPage)],
-      ["library_sort", String(this.applied.sort)]
+      ["library_sort", String(this.applied.sort)],
+      ["library_badge_style", this.libraryBadgeStyle]
     ]) {
       const s = this.renderRoot.querySelector(
         `[name="${t}"]`
@@ -7742,7 +7805,7 @@ const Ie = class Ie extends x {
         t === "unauthorized" ? "access-denied" : "library-disabled",
         { bubbles: !0, composed: !0 }
       )
-    )), this.error = v(e), this.dialogOnly && !this.selected && this.dispatchEvent(
+    )), this.error = y(e), this.dialogOnly && !this.selected && this.dispatchEvent(
       new CustomEvent("title-dialog-error", {
         detail: this.error,
         bubbles: !0,
@@ -7777,7 +7840,7 @@ const Ie = class Ie extends x {
         this.load(0, t);
         return;
       }
-      this.page = o, o.random_seed !== void 0 && this.applied.sort === "random" && (this.applied.random_seed = o.random_seed, this.filters.random_seed = o.random_seed), this.selected && (this.selected = o.items.find((h) => h.id === this.selected?.id) ?? (t ? this.selected : void 0), this.selected ? this.versions && (this.versions.revision !== o.revision || this.versions.preferences_key !== o.preferences_key) && this.loadVersions() : this.closeDialog("title-dialog"));
+      this.page = o, o.random_seed !== void 0 && this.applied.sort === "random" && (this.applied.random_seed = o.random_seed, this.filters.random_seed = o.random_seed), this.selected && (this.selected = o.items.find((d) => d.id === this.selected?.id) ?? (t ? this.selected : void 0), this.selected ? this.versions && (this.versions.revision !== o.revision || this.versions.preferences_key !== o.preferences_key) && this.loadVersions() : this.closeDialog("title-dialog"));
     } catch (o) {
       i === this.generation && s === this.listRequest && this.fail(o);
     } finally {
@@ -7873,9 +7936,9 @@ const Ie = class Ie extends x {
       );
       if (t !== this.generation || i !== this.versionRequest || this.selected?.id !== s)
         return;
-      this.versions = o, this.activeVersion = o.items.find((h) => h.id === n) ?? o.items[0], this.activeVersion && (this.selected = { ...this.selected, title: this.activeVersion.title });
+      this.versions = o, this.activeVersion = o.items.find((d) => d.id === n) ?? o.items[0], this.activeVersion && (this.selected = { ...this.selected, title: this.activeVersion.title });
     } catch (o) {
-      t === this.generation && i === this.versionRequest && (["unauthorized", "library_disabled"].includes(u(o)) ? this.fail(o) : u(o) === "refresh_required" && e ? this.loadVersions() : this.versionsError = v(o));
+      t === this.generation && i === this.versionRequest && (["unauthorized", "library_disabled"].includes(u(o)) ? this.fail(o) : u(o) === "refresh_required" && e ? this.loadVersions() : this.versionsError = y(o));
     } finally {
       t === this.generation && i === this.versionRequest && (this.versionsLoading = !1, this.requestUpdate());
     }
@@ -8000,7 +8063,7 @@ const Ie = class Ie extends x {
       id="library-search"
       class="library-options"
       aria-labelledby="library-search-title"
-      @click=${q}
+      @click=${S}
     >
       <div class="card-head">
         <h2 id="library-search-title">Search Library</h2>
@@ -8047,7 +8110,7 @@ const Ie = class Ie extends x {
         G: 1
       };
       s.sort(
-        (o, h) => (n[o.toUpperCase()] ?? 3) - (n[h.toUpperCase()] ?? 3) || o.localeCompare(h)
+        (o, d) => (n[o.toUpperCase()] ?? 3) - (n[d.toUpperCase()] ?? 3) || o.localeCompare(d)
       );
     }
     return s.filter(
@@ -8106,7 +8169,7 @@ const Ie = class Ie extends x {
       t === this.generation && (this.purchaseTotals = i);
     } catch (i) {
       if (t !== this.generation) return;
-      this.purchaseTotals = void 0, this.purchaseError = v(i), ["unauthorized", "library_disabled"].includes(u(i)) && this.fail(i);
+      this.purchaseTotals = void 0, this.purchaseError = y(i), ["unauthorized", "library_disabled"].includes(u(i)) && this.fail(i);
     } finally {
       t === this.generation && (this.purchaseLoading = !1, this.purchaseReload && (this.purchaseReload = !1, this.loadPurchaseTotals(!0)), this.requestUpdate());
     }
@@ -8157,7 +8220,7 @@ const Ie = class Ie extends x {
       id="library-options"
       class="database-dialog library-options"
       aria-labelledby="library-options-title"
-      @click=${q}
+      @click=${S}
     >
       <div class="card-head">
         <h2 id="library-options-title">Library options</h2>
@@ -8196,6 +8259,27 @@ const Ie = class Ie extends x {
           <legend>View type</legend>
           ${["list", "covers"].map((e) => a`<label class="check"><input type="radio" name="library_view" value=${e} .checked=${this.mode === e} @change=${() => this.setMode(e)} />${e === "list" ? "List" : "Cover"}</label>`)}
         </fieldset>
+        <label
+          >Library badge style<select
+            name="library_badge_style"
+            .value=${this.libraryBadgeStyle}
+            @change=${(e) => {
+      this.libraryBadgeStyle = e.target.value === "text" ? "text" : "icons", this.preferences?.set({
+        library_badge_style: this.libraryBadgeStyle
+      }), this.requestUpdate();
+    }}
+          >
+            <option
+              value="icons"
+              ?selected=${this.libraryBadgeStyle === "icons"}
+            >
+              Icons
+            </option>
+            <option value="text" ?selected=${this.libraryBadgeStyle === "text"}>
+              Text
+            </option>
+          </select></label
+        >
         <label
           >Movie status labels<select
             name="movie_status_labels"
@@ -8298,7 +8382,7 @@ const Ie = class Ie extends x {
   renderFilterDialog() {
     return a`<dialog
       id="filter-dialog"
-      @click=${q}
+      @click=${S}
       class="database-dialog library-dialog"
       aria-labelledby="filters-title"
     >
@@ -8358,14 +8442,14 @@ const Ie = class Ie extends x {
                             .value=${o}
                             .checked=${s.includes(o)}
                             ?disabled=${s.length >= 100 && !s.includes(o)}
-                            @change=${(h) => {
-          const d = this.draft[e] ?? [];
+                            @change=${(d) => {
+          const h = this.draft[e] ?? [];
           this.draft = {
             ...this.draft,
-            [e]: h.target.checked ? [...d, o] : d.filter((c) => c !== o)
+            [e]: d.target.checked ? [...h, o] : h.filter((c) => c !== o)
           }, this.requestUpdate();
         }}
-                          />${e === "status" ? ae(Ni(o, this.movieStatusLabels)) : e === "rating" ? de(o) : e === "collection" ? ae(o) : e === "format" && qe({ formats: [o] }).length === 1 ? Q({ formats: [o] }) : o}</label
+                          />${e === "status" ? ae(Ni(o, this.movieStatusLabels)) : e === "rating" ? de(o) : e === "collection" ? ae(o) : e === "format" && Se({ formats: [o] }).length === 1 ? Q({ formats: [o] }) : o}</label
                         >`
       ) : a`<p class="muted">No matching options</p>`}
             </div>
@@ -8531,17 +8615,17 @@ const Ie = class Ie extends x {
       ...new Set(
         [
           e?.rating,
-          ...(this.versions?.items ?? []).map((d) => d.rating)
-        ].filter((d) => !!d?.trim())
+          ...(this.versions?.items ?? []).map((h) => h.rating)
+        ].filter((h) => !!h?.trim())
       )
-    ], h = t && "backdrop_key" in t ? t.backdrop_key : t?.enrichment?.tmdb?.backdrop_key;
+    ], d = t && "backdrop_key" in t ? t.backdrop_key : t?.enrichment?.tmdb?.backdrop_key;
     return a`<dialog
         id="title-dialog"
-        @cancel=${(d) => {
-      d.preventDefault(), this.closeDialog("title-dialog");
+        @cancel=${(h) => {
+      h.preventDefault(), this.closeDialog("title-dialog");
     }}
-        @click=${q}
-        class=${`database-dialog library-dialog movie-dialog inset-dialog${h ? " has-backdrop" : ""}`}
+        @click=${S}
+        class=${`database-dialog library-dialog movie-dialog inset-dialog${d ? " has-backdrop" : ""}`}
         aria-labelledby="library-title"
         @close=${() => {
       this.selected = void 0, this.clearVersions(), this.controlLocked = !1, this.dialogOnly && this.dispatchEvent(
@@ -8557,7 +8641,7 @@ const Ie = class Ie extends x {
                   ${$(() => this.closeDialog("title-dialog"))}
                 </div>
                 <div class="movie-intro">
-                  ${h && t ? a`<div class="movie-hero" aria-hidden="true">${this.cover(t, h)}</div>` : l}
+                  ${d && t ? a`<div class="movie-hero" aria-hidden="true">${this.cover(t, d)}</div>` : l}
                   <div class="movie-heading">
                     <h2 id="library-title">
                       ${this.detailLink("query", e.title)}
@@ -8567,33 +8651,33 @@ const Ie = class Ie extends x {
                     ${t?.year ?? e.year ? this.detailLink("year", String(t?.year ?? e.year)) : "Year unknown"}
                     ·
                     ${this.compactRuntime(t?.duration_seconds ?? e.duration_seconds)}
-                    ${t?.genres.length ? a` · ${t.genres.map((d, c) => a`${c ? ", " : ""}${this.detailLink("genre", d)}`)}` : l}
+                    ${t?.genres.length ? a` · ${t.genres.map((h, c) => a`${c ? ", " : ""}${this.detailLink("genre", h)}`)}` : l}
                   </p>
                   <div class="detail-badges movie-heading-badges">
-                    ${Q(i ? e : t ?? e, !1, (d) => this.fromDetails("format", d), n)}
-                    ${o.map((d) => de(d, (c) => this.fromDetails("rating", c), n))}
+                    ${Q(i ? e : t ?? e, !1, (h) => this.fromDetails("format", h), n)}
+                    ${o.map((h) => de(h, (c) => this.fromDetails("rating", c), n))}
                     ${xe(e).map(
-      (d) => a`<button
-                          class=${`movie-status collection-badge collection-${dt(U(d, this.movieStatusLabels))}`}
+      (h) => a`<button
+                          class=${`movie-status collection-badge collection-${dt(U(h, this.movieStatusLabels))}`}
                           ?disabled=${n}
-                          @click=${() => this.fromDetails("status", d)}
+                          @click=${() => this.fromDetails("status", h)}
                         >
-                          ${gi(U(d, this.movieStatusLabels))}
+                          ${gi(U(h, this.movieStatusLabels))}
                           <span
-                            >${U(d, this.movieStatusLabels)}</span
+                            >${U(h, this.movieStatusLabels)}</span
                           >
                         </button>`
     )}
                     ${e.is_recently_added ? ae("Recently Added", () => this.fromDetails("status", "recently_added"), n, "Filter by movie status: Recently Added") : l}
                     ${e.is_favorite ? ae("Favorites", () => this.fromDetails("status", "favorite"), n) : l}
                     ${e.collections.filter(
-      (d) => !ye(d) && Ee(d) !== "favorite"
+      (h) => !ye(h) && Ee(h) !== "favorite"
     ).map(
-      (d) => ae(
-        d,
-        () => this.fromDetails("collection", d),
+      (h) => ae(
+        h,
+        () => this.fromDetails("collection", h),
         n,
-        d.toLowerCase().trim() === "all" ? "Show all movies" : void 0
+        h.toLowerCase().trim() === "all" ? "Show all movies" : void 0
       )
     )}
                   </div>
@@ -8602,8 +8686,8 @@ const Ie = class Ie extends x {
                           .scope=${this.scope}
                           .versionId=${t.id}
                           mode="movie"
-                          @control-lock=${(d) => {
-      d.detail !== this.controlLocked && (this.controlLocked = d.detail, this.requestUpdate());
+                          @control-lock=${(h) => {
+      h.detail !== this.controlLocked && (this.controlLocked = h.detail, this.requestUpdate());
     }}
                           >${this.renderCollectionAction(t)}${s ? a`<kaleidescape-title-edit
                                     slot="collection"
@@ -8611,8 +8695,8 @@ const Ie = class Ie extends x {
                                     .scope=${this.scope}
                                     .versionId=${t.id}
                                     .blocked=${this.controlLocked || this.collectionLocked || this.scrapeLocked || this.artworkLocked}
-                                    @edit-lock=${(d) => {
-      d.detail !== this.editLocked && (this.editLocked = d.detail, this.requestUpdate());
+                                    @edit-lock=${(h) => {
+      h.detail !== this.editLocked && (this.editLocked = h.detail, this.requestUpdate());
     }}
                                     @metadata-changed=${async () => {
       this.editLocked = !1, this.versions = void 0, await this.load(
@@ -8642,15 +8726,15 @@ const Ie = class Ie extends x {
                             @keydown=${this.versionKey}
                           >
                             ${this.versions.items.map(
-      (d, c) => a`<button
+      (h, c) => a`<button
                                   ?disabled=${this.detailsLocked}
                                   role="tab"
                                   id=${`version-${c}`}
                                   aria-controls="version-details"
-                                  tabindex=${d.id === t?.id ? 0 : -1}
-                                  aria-selected=${d.id === t?.id}
+                                  tabindex=${h.id === t?.id ? 0 : -1}
+                                  aria-selected=${h.id === t?.id}
                                   @click=${() => {
-        this.activeVersion = d, this.requestUpdate();
+        this.activeVersion = h, this.requestUpdate();
       }}
                                 >
                                   Version ${this.versions.offset + c + 1}
@@ -8665,13 +8749,13 @@ const Ie = class Ie extends x {
                         id="version-details"
                         role=${(this.versions?.total ?? 1) > 1 ? "tabpanel" : "region"}
                         aria-label=${(this.versions?.total ?? 1) === 1 ? "Version details" : l}
-                        aria-labelledby=${(this.versions?.total ?? 1) > 1 ? `version-${this.versions?.items.findIndex((d) => d.id === t.id) ?? 0}` : l}
+                        aria-labelledby=${(this.versions?.total ?? 1) > 1 ? `version-${this.versions?.items.findIndex((h) => h.id === t.id) ?? 0}` : l}
                       >
                         <div class="movie-aside">
                           <div class="cover movie-poster">
                             ${this.cover(t)}
                           </div>
-                          ${i ? a`<div class="detail-badges version-format-badges">${Q(t, !1, (d) => this.fromDetails("format", d), n)}</div>` : l}
+                          ${i ? a`<div class="detail-badges version-format-badges">${Q(t, !1, (h) => this.fromDetails("format", h), n)}</div>` : l}
                           <details class="movie-record-details">
                             <summary>Library details</summary>
                             <p class="muted">
@@ -8701,20 +8785,20 @@ const Ie = class Ie extends x {
       [
         "Collections",
         t.collections.filter(
-          (d) => !ye(d)
+          (h) => !ye(h)
         ),
         "collection"
       ]
     ].map(
-      ([d, c, g]) => c.length ? a`<div>
-                                    <dt>${d}</dt>
+      ([h, c, g]) => c.length ? a`<div>
+                                    <dt>${h}</dt>
                                     <dd>
-                                      ${c.map((p, y, w) => a`<span class="credit-name">${this.detailLink(g, p, (d === "Collections" ? J(p) : p) + (y < w.length - 1 ? "," : ""))}</span>${y < w.length - 1 ? " " : ""}`)}
+                                      ${c.map((p, b, w) => a`<span class="credit-name">${this.detailLink(g, p, (h === "Collections" ? J(p) : p) + (b < w.length - 1 ? "," : ""))}</span>${b < w.length - 1 ? " " : ""}`)}
                                     </dd>
                                   </div>` : l
     )}
                           </dl>
-                          ${sa(t, (d, c) => this.detailLink("query", d, c), this.castLimit)}
+                          ${sa(t, (h, c) => this.detailLink("query", h, c), this.castLimit)}
                           ${l}
                         </div>
                       </div>` : l}
@@ -8727,13 +8811,13 @@ const Ie = class Ie extends x {
               @purchase-cancel=${() => {
       this.purchaseManagerOpen = !1, this.repairLock(!1), this.requestUpdate();
     }}
-              @purchase-busy=${(d) => {
-      this.purchaseRepairBusy = d.detail;
+              @purchase-busy=${(h) => {
+      this.purchaseRepairBusy = h.detail;
     }}
               @purchase-complete=${() => {
       this.refreshPurchaseDetails();
     }}
-              @access-denied=${() => this.fail(new b("unauthorized"))}
+              @access-denied=${() => this.fail(new v("unauthorized"))}
             ></kaleidescape-group-purchase-edit>` : l}`;
   }
   render() {
@@ -8747,14 +8831,14 @@ const Ie = class Ie extends x {
     const e = this.page?.limit ?? this.requestLimit, t = this.loading || !!this.layoutTimer, i = this.page?.items ?? [], s = this.mode === "covers" && !this.dashboard && this.page?.has_more && i.length >= this.coverColumns ? i.slice(
       0,
       i.length - i.length % this.coverColumns
-    ) : i, n = this.scope?.permissions.edit, o = [...re.map(([h]) => h), "status"].reduce(
-      (h, d) => h + (this.applied[d]?.length ?? 0),
+    ) : i, n = this.scope?.permissions.edit, o = [...re.map(([d]) => d), "status"].reduce(
+      (d, h) => d + (this.applied[h]?.length ?? 0),
       +!!this.applied.missing_metadata_artwork + +!!this.applied.missing_purchase_information + +!!this.applied.recently_added
     );
     return a`<section
       class="library-page"
-      @access-denied=${(h) => {
-      h.stopPropagation(), this.fail(new b("unauthorized"));
+      @access-denied=${(d) => {
+      d.stopPropagation(), this.fail(new v("unauthorized"));
     }}
     >
       ${this.preferenceError ? a`<p class="warning" role="alert">
@@ -8768,22 +8852,22 @@ const Ie = class Ie extends x {
               </button>
             </p>` : l}
       ${n && this.info?.phase && this.info.phase !== "idle" ? a`<p role="status">Syncing… ${this.info.processed ?? 0}/${this.info.total ?? "?"}</p>` : l}
-      ${n && this.info?.error ? a`<p class="warning" role="status">${v(new b(this.info.error))}</p>` : l}
+      ${n && this.info?.error ? a`<p class="warning" role="status">${y(new v(this.info.error))}</p>` : l}
       ${this.error ? a`<p class="error" role="alert">${this.error}<button @click=${() => this.load()}>Refresh results</button></p>` : l}
       ${this.notice ? a`<p class="notice" role="status">${this.notice}</p>` : l}
       ${n ? (this.info?.pending_adds ?? []).map(
-      (h) => a`<div class="warning" role="status">
-                  Unconfirmed collection add: <strong>${h.title}</strong> →
-                  ${h.collection}. Checking never sends another add.
+      (d) => a`<div class="warning" role="status">
+                  Unconfirmed collection add: <strong>${d.title}</strong> →
+                  ${d.collection}. Checking never sends another add.
                   <div class="actions">
                     <button
                       ?disabled=${this.checkingCollection}
-                      @click=${() => this.checkCollection(h.request_id)}
+                      @click=${() => this.checkCollection(d.request_id)}
                     >
                       Check membership</button
                     ><button
                       ?disabled=${this.checkingCollection}
-                      @click=${() => this.checkCollection(h.request_id, !0)}
+                      @click=${() => this.checkCollection(d.request_id, !0)}
                     >
                       Acknowledge unconfirmed add
                     </button>
@@ -8858,8 +8942,8 @@ const Ie = class Ie extends x {
           <form
             class="desktop-library-search"
             ?hidden=${this.dashboard?.search_position === "off"}
-            @submit=${(h) => {
-      h.preventDefault(), this.applySearch();
+            @submit=${(d) => {
+      d.preventDefault(), this.applySearch();
     }}
           >
             <label
@@ -8868,8 +8952,8 @@ const Ie = class Ie extends x {
                 type="search"
                 maxlength="500"
                 .value=${Di(String(this.filters.query ?? ""))}
-                @input=${(h) => {
-      this.filters.query = h.target.value, clearTimeout(this.searchTimer), this.searchTimer = setTimeout(() => this.applySearch(), 300);
+                @input=${(d) => {
+      this.filters.query = d.target.value, clearTimeout(this.searchTimer), this.searchTimer = setTimeout(() => this.applySearch(), 300);
     }}
             /></label>
             <button type="submit" ?disabled=${this.loading}>Search</button>
@@ -8892,9 +8976,9 @@ const Ie = class Ie extends x {
               >Sort by<select
                 name="library_sort"
                 .value=${String(this.applied.sort)}
-                @change=${(h) => this.sort(h.target.value)}
+                @change=${(d) => this.sort(d.target.value)}
               >
-                ${gt.map(([h, d]) => a`<option value=${h}>${d}</option>`)}
+                ${gt.map(([d, h]) => a`<option value=${d}>${h}</option>`)}
               </select></label
             >
             <button
@@ -8919,47 +9003,47 @@ const Ie = class Ie extends x {
                 style=${`--cover-size: ${this.coverSize}px; --cover-columns: ${this.coverColumns}`}
               >
                 ${s.map(
-      (h) => a`<button
-                      class=${`cover-tile${this.display.show_titles ? " has-title" : ""}${this.display.show_rating && h.rating ? " has-rating" : ""}`}
-                      title=${`${h.title}${h.year ? ` (${h.year})` : ""}${this.warningMessage(h) ? `; ${this.warningMessage(h)}` : ""}`}
-                      aria-label=${`Details for ${h.title}${h.year ? ` (${h.year})` : ""}${this.warningMessage(h) ? `; ${this.warningMessage(h)}` : ""}`}
-                      @click=${() => this.select(h)}
+      (d) => a`<button
+                      class=${`cover-tile${this.display.show_titles ? " has-title" : ""}${this.display.show_rating && d.rating ? " has-rating" : ""}`}
+                      title=${`${d.title}${d.year ? ` (${d.year})` : ""}${this.warningMessage(d) ? `; ${this.warningMessage(d)}` : ""}`}
+                      aria-label=${`Details for ${d.title}${d.year ? ` (${d.year})` : ""}${this.warningMessage(d) ? `; ${this.warningMessage(d)}` : ""}`}
+                      @click=${() => this.select(d)}
                     >
-                      <div class="cover-image">${this.cover(h)}</div>
-                      ${this.display.show_badges ? a`<div class="cover-flags">${Mi(h, !0, ["unwatched"], this.movieStatusLabels)}</div>` : l}
-                      ${this.display.show_format ? a`<div class="cover-formats">${Q(h, !0)}</div>` : l}
-                      ${this.display.show_rating ? a`<div class="cover-rating">${de(h.rating)}</div>` : l}
-                      ${this.conflictIcon(h)}
-                      ${this.display.show_titles ? a`<span class="cover-caption">${h.title}${h.year ? ` (${h.year})` : ""}</span>` : l}
+                      <div class="cover-image">${this.cover(d)}</div>
+                      ${this.display.show_badges ? a`<div class="cover-flags">${Mi(d, !0, ["unwatched"], this.movieStatusLabels, this.libraryBadgeStyle)}</div>` : l}
+                      ${this.display.show_format ? a`<div class="cover-formats">${Q(d, !0)}</div>` : l}
+                      ${this.display.show_rating ? a`<div class="cover-rating">${de(d.rating)}</div>` : l}
+                      ${this.conflictIcon(d)}
+                      ${this.display.show_titles ? a`<span class="cover-caption">${d.title}${d.year ? ` (${d.year})` : ""}</span>` : l}
                     </button>`
     )}
               </div>` : a`<div class="table-wrap">
                 <table
                   class="library-table"
-                  style=${`--library-width: ${this.widths.reduce((h, d) => h + d, 0)}px`}
+                  style=${`--library-width: ${this.widths.reduce((d, h) => d + h, 0)}px`}
                 >
                   <colgroup>
-                    ${this.widths.map((h) => a`<col style=${`width: ${h}px`} />`)}
+                    ${this.widths.map((d) => a`<col style=${`width: ${d}px`} />`)}
                   </colgroup>
                   <thead>
                     <tr>
-                      ${gt.filter(([h]) => h !== "random").map(
-      ([h, d], c) => a`<th
-                            aria-sort=${this.applied.sort === h ? this.applied.descending ? "descending" : "ascending" : "none"}
+                      ${gt.filter(([d]) => d !== "random").map(
+      ([d, h], c) => a`<th
+                            aria-sort=${this.applied.sort === d ? this.applied.descending ? "descending" : "ascending" : "none"}
                           >
                             <button
                               class="sort-heading"
-                              @click=${() => this.sort(h)}
+                              @click=${() => this.sort(d)}
                             >
-                              <span>${d}</span
+                              <span>${h}</span
                               ><span class="sort-icon" aria-hidden="true"
-                                >${this.applied.sort === h ? this.applied.descending ? "↓" : "↑" : "↕"}</span
+                                >${this.applied.sort === d ? this.applied.descending ? "↓" : "↑" : "↕"}</span
                               >
                             </button>
                             <span
                               class="column-resize"
                               role="separator"
-                              aria-label=${`Resize ${d} column`}
+                              aria-label=${`Resize ${h} column`}
                               aria-orientation="vertical"
                               aria-valuemin="80"
                               aria-valuemax="800"
@@ -8993,41 +9077,41 @@ const Ie = class Ie extends x {
                   </thead>
                   <tbody>
                     ${(this.page?.items ?? []).map(
-      (h) => a`<tr>
+      (d) => a`<tr>
                           <td>
                             <button
                               class="link"
-                              @click=${() => this.select(h)}
+                              @click=${() => this.select(d)}
                             >
-                              ${h.title}
+                              ${d.title}
                             </button>
-                            ${this.conflictIcon(h)}
+                            ${this.conflictIcon(d)}
                             <div
                               class="library-summary-line"
-                              title=${this.format(h)}
+                              title=${this.format(d)}
                             >
-                              ${this.display.show_badges ? Mi(h, !1, [], this.movieStatusLabels) : l}
-                              ${this.display.show_format ? Q(h) : l}
-                              ${this.display.show_format && !qe(h).length ? a`<small>${this.format(h)}</small>` : l}
-                              ${(h.version_count ?? 1) > 1 ? a`<small>${k(h.version_count, "version")}</small>` : l}
+                              ${this.display.show_badges ? Mi(d, !1, [], this.movieStatusLabels, this.libraryBadgeStyle) : l}
+                              ${this.display.show_format ? Q(d) : l}
+                              ${this.display.show_format && !Se(d).length ? a`<small>${this.format(d)}</small>` : l}
+                              ${(d.version_count ?? 1) > 1 ? a`<small>${k(d.version_count, "version")}</small>` : l}
                             </div>
                           </td>
-                          <td title=${this.years(h)}>${this.years(h)}</td>
+                          <td title=${this.years(d)}>${this.years(d)}</td>
                           <td>
                             <span
                               class="collection-cell"
-                              title=${h.collections.filter((d) => !ye(d)).map(J).join(", ")}
-                              >${h.collections.filter((d) => !ye(d)).map(J).join(", ") || "—"}</span
+                              title=${d.collections.filter((h) => !ye(h)).map(J).join(", ")}
+                              >${d.collections.filter((h) => !ye(h)).map(J).join(", ") || "—"}</span
                             >
                           </td>
-                          <td>${this.runtime(h)}</td>
+                          <td>${this.runtime(d)}</td>
                           <td>
-                            ${(xe(h).length ? xe(h) : [h.watched_status === "unknown" ? "unknown" : "none"]).map((d) => U(d, this.movieStatusLabels)).join(", ")}
+                            ${(xe(d).length ? xe(d) : [d.watched_status === "unknown" ? "unknown" : "none"]).map((h) => U(h, this.movieStatusLabels)).join(", ")}
                           </td>
                           <td
-                            title=${h.purchased_on ? "Imported purchase date" : "First detected by Companion"}
+                            title=${d.purchased_on ? "Imported purchase date" : "First detected by Companion"}
                           >
-                            ${this.date(h.purchased_on ?? h.first_seen)}
+                            ${this.date(d.purchased_on ?? d.first_seen)}
                           </td>
                         </tr>`
     )}
@@ -9102,17 +9186,17 @@ Ie.properties = {
   dashboard: { attribute: !1 },
   dialogOnly: { type: Boolean },
   advanced: { type: Boolean }
-}, Ie.styles = [S, lt];
+}, Ie.styles = [q, lt];
 let Rt = Ie;
 customElements.get("kaleidescape-library") || customElements.define("kaleidescape-library", Rt);
-const qa = {
+const Sa = {
   playing: "Playing",
   paused: "Paused",
   forward: "Scanning forward",
   reverse: "Scanning backward",
   stopped: "Stopped",
   none: "Stopped"
-}, Sa = {
+}, qa = {
   content: "Main content",
   credits: "Credits",
   intermission: "Intermission",
@@ -9157,17 +9241,17 @@ const qa = {
       this.player = s[0] ?? null;
       const n = this.player, o = n?.available && n.artwork_key && n.entity_id ? `${n.entity_id}:${n.content_key ?? n.raw_content_id ?? ""}:${n.artwork_key}` : "";
       if (o !== this.imageKey && (this.clearImage(), this.imageKey = o, this.requestUpdate(), o)) {
-        const h = this.abort = new AbortController(), d = setTimeout(() => h.abort(), 5e3);
+        const d = this.abort = new AbortController(), h = setTimeout(() => d.abort(), 5e3);
         try {
           const c = await e.artwork(
             n.entity_id,
-            h.signal
+            d.signal
           );
           i === this.generation && c && (this.image = URL.createObjectURL(c));
         } catch (c) {
           if (u(c) === "unauthorized") throw c;
         } finally {
-          clearTimeout(d), this.abort === h && (this.abort = void 0);
+          clearTimeout(h), this.abort === d && (this.abort = void 0);
         }
       }
     } catch (s) {
@@ -9212,7 +9296,7 @@ const qa = {
                     <h3>
                       ${e.available ? t ? e.title ?? "Unknown title" : "No movie playing" : "Player unavailable"}
                     </h3>
-                    ${e.available ? a`<p>${qa[e.play_status] ?? "Unknown playback state"} · ${Sa[e.location] ?? "Unknown location"}</p>` : l}
+                    ${e.available ? a`<p>${Sa[e.play_status] ?? "Unknown playback state"} · ${qa[e.location] ?? "Unknown location"}</p>` : l}
                     ${t && e.duration_seconds != null ? a`<p>Runtime · ${(e.duration_seconds / 60).toFixed(2)} min</p>` : l}
                     ${this.scope?.permissions.edit && t && e.session ? a`<p>
                               This session ·
@@ -9254,7 +9338,7 @@ Oe.properties = {
   compact: { type: Boolean, reflect: !0 },
   showControls: { type: Boolean }
 }, Oe.styles = [
-  S,
+  q,
   E`
       :host([compact]) .now-playing {
         min-height: 0;
@@ -9346,7 +9430,7 @@ const Qi = (r, e, t) => {
     t === void 0 ? t = e : e !== void 0 && (i = e);
     const s = [], n = [];
     let o = 0;
-    for (const h of r) s[o] = i ? i(h, o) : o, n[o] = t(h, o), o++;
+    for (const d of r) s[o] = i ? i(d, o) : o, n[o] = t(d, o), o++;
     return { values: n, keys: s };
   }
   render(r, e, t) {
@@ -9355,32 +9439,32 @@ const Qi = (r, e, t) => {
   update(r, [e, t, i]) {
     const s = da(r), { values: n, keys: o } = this.dt(e, t, i);
     if (!Array.isArray(s)) return this.ut = o, n;
-    const h = this.ut ??= [], d = [];
-    let c, g, p = 0, y = s.length - 1, w = 0, A = n.length - 1;
-    for (; p <= y && w <= A; ) if (s[p] === null) p++;
-    else if (s[y] === null) y--;
-    else if (h[p] === o[w]) d[w] = N(s[p], n[w]), p++, w++;
-    else if (h[y] === o[A]) d[A] = N(s[y], n[A]), y--, A--;
-    else if (h[p] === o[A]) d[A] = N(s[p], n[A]), se(r, d[A + 1], s[p]), p++, A--;
-    else if (h[y] === o[w]) d[w] = N(s[y], n[w]), se(r, s[p], s[y]), y--, w++;
-    else if (c === void 0 && (c = Qi(o, w, A), g = Qi(h, p, y)), c.has(h[p])) if (c.has(h[y])) {
+    const d = this.ut ??= [], h = [];
+    let c, g, p = 0, b = s.length - 1, w = 0, A = n.length - 1;
+    for (; p <= b && w <= A; ) if (s[p] === null) p++;
+    else if (s[b] === null) b--;
+    else if (d[p] === o[w]) h[w] = N(s[p], n[w]), p++, w++;
+    else if (d[b] === o[A]) h[A] = N(s[b], n[A]), b--, A--;
+    else if (d[p] === o[A]) h[A] = N(s[p], n[A]), se(r, h[A + 1], s[p]), p++, A--;
+    else if (d[b] === o[w]) h[w] = N(s[b], n[w]), se(r, s[p], s[b]), b--, w++;
+    else if (c === void 0 && (c = Qi(o, w, A), g = Qi(d, p, b)), c.has(d[p])) if (c.has(d[b])) {
       const P = g.get(o[w]), D = P !== void 0 ? s[P] : null;
       if (D === null) {
         const te = se(r, s[p]);
-        N(te, n[w]), d[w] = te;
-      } else d[w] = N(D, n[w]), se(r, s[p], D), s[P] = null;
+        N(te, n[w]), h[w] = te;
+      } else h[w] = N(D, n[w]), se(r, s[p], D), s[P] = null;
       w++;
-    } else pt(s[y]), y--;
+    } else pt(s[b]), b--;
     else pt(s[p]), p++;
     for (; w <= A; ) {
-      const P = se(r, d[A + 1]);
-      N(P, n[w]), d[w++] = P;
+      const P = se(r, h[A + 1]);
+      N(P, n[w]), h[w++] = P;
     }
-    for (; p <= y; ) {
+    for (; p <= b; ) {
       const P = s[p++];
       P !== null && pt(P);
     }
-    return this.ut = o, us(r, d), T;
+    return this.ut = o, us(r, h), T;
   }
 }), Aa = E`
   :host {
@@ -9672,8 +9756,8 @@ const Ne = class Ne extends x {
           this.month.getFullYear(),
           this.month.getMonth() + 1,
           0
-        ).getDate(), h = Math.ceil((n.getDay() + o) / 7), d = Math.max(48, Math.floor((e - t - s) / h));
-        d !== this.fittedSize && (this.fittedSize = d, this.requestUpdate());
+        ).getDate(), d = Math.ceil((n.getDay() + o) / 7), h = Math.max(48, Math.floor((e - t - s) / d));
+        h !== this.fittedSize && (this.fittedSize = h, this.requestUpdate());
       }));
     };
   }
@@ -9716,7 +9800,7 @@ const Ne = class Ne extends x {
   fail(e) {
     u(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
-    )), this.error = v(e), this.requestUpdate();
+    )), this.error = y(e), this.requestUpdate();
   }
   async load() {
     if (!this.client || !this.scope) return;
@@ -9806,14 +9890,14 @@ const Ne = class Ne extends x {
             this.fail(n);
             return;
           }
-          this.detailError = v(n);
+          this.detailError = y(n);
         }
       this.renderRoot.querySelector("dialog")?.showModal();
       try {
         const n = await this.client.calendarDetails(this.scope, e.id);
         i === this.generation && s === this.detailRequest && (this.selected = n.viewing, this.movie = n.movie, this.selectedArtwork = n.movie?.artwork_key ?? t);
       } catch (n) {
-        i === this.generation && s === this.detailRequest && (u(n) === "unauthorized" ? this.fail(n) : this.detailError = v(n));
+        i === this.generation && s === this.detailRequest && (u(n) === "unauthorized" ? this.fail(n) : this.detailError = y(n));
       } finally {
         i === this.generation && s === this.detailRequest && (this.detailLoading = !1, this.requestUpdate());
       }
@@ -9843,7 +9927,7 @@ const Ne = class Ne extends x {
     } catch (s) {
       if (t !== this.generation || i !== this.libraryRequest)
         return;
-      u(s) === "unauthorized" ? this.fail(s) : (this.detailError = v(s), this.requestUpdate());
+      u(s) === "unauthorized" ? this.fail(s) : (this.detailError = y(s), this.requestUpdate());
     }
   }
   browse(e, t) {
@@ -9877,13 +9961,13 @@ const Ne = class Ne extends x {
     </button>`;
   }
   renderDetails() {
-    const e = this.selected, t = this.movie, i = e ? new Date(e.started_at) : null, s = e?.ended_at ?? e?.completed_at, n = s ? new Date(s) : null, o = i && n && X(i) !== X(n), h = t?.duration_seconds ?? e?.duration_seconds;
+    const e = this.selected, t = this.movie, i = e ? new Date(e.started_at) : null, s = e?.ended_at ?? e?.completed_at, n = s ? new Date(s) : null, o = i && n && X(i) !== X(n), d = t?.duration_seconds ?? e?.duration_seconds;
     return a`<dialog
         class="database-dialog calendar-dialog"
         aria-labelledby="calendar-movie-title"
-        @click=${q}
-        @close=${(d) => {
-      if (!d.target.open) {
+        @click=${S}
+        @close=${(h) => {
+      if (!h.target.open) {
         if (this.preserveDetailOnClose) {
           this.preserveDetailOnClose = !1;
           return;
@@ -9915,7 +9999,7 @@ const Ne = class Ne extends x {
                   ${this.detailLoading ? a`<p role="status">Loading movie details…</p>` : l}
                   ${this.detailError ? a`<p class="error" role="alert">${this.detailError} <button @click=${() => this.openViewing(e, this.selectedArtwork)}>Retry details</button></p>` : l}
                   ${t ? a`<div class="detail-badges">
-                            ${Q(t, !1, this.detailsOnly ? void 0 : (d) => this.browse("format", d))}${de(t.rating ?? "", this.detailsOnly ? void 0 : (d) => this.browse("rating", d))}
+                            ${Q(t, !1, this.detailsOnly ? void 0 : (h) => this.browse("format", h))}${de(t.rating ?? "", this.detailsOnly ? void 0 : (h) => this.browse("rating", h))}
                           </div>
                           ${t.year ? a`<p><strong>Year:</strong> ${this.detailLink("year", String(t.year))}</p>` : l}
                           ${[
@@ -9923,14 +10007,14 @@ const Ne = class Ne extends x {
       ["Directors", t.directors],
       ["Genres", t.genres]
     ].map(
-      ([d, c]) => c?.length ? a`<p>
-                                  <strong>${d}:</strong>
-                                  ${c.map((g, p) => a`${p ? ", " : ""}${this.detailLink(d === "Genres" ? "genre" : "query", g)}`)}
+      ([h, c]) => c?.length ? a`<p>
+                                  <strong>${h}:</strong>
+                                  ${c.map((g, p) => a`${p ? ", " : ""}${this.detailLink(h === "Genres" ? "genre" : "query", g)}`)}
                                 </p>` : l
     )}` : !this.detailLoading && !this.detailError ? a`<p class="muted">
                             No linked Library metadata is available.
                           </p>` : l}
-                  ${h != null ? a`<p><strong>Runtime:</strong> ${(h / 60).toFixed(2)} min</p>` : l}
+                  ${d != null ? a`<p><strong>Runtime:</strong> ${(d / 60).toFixed(2)} min</p>` : l}
                   <p>
                     <strong
                       >${o ? "Viewing dates" : "Viewing date"}:</strong
@@ -9963,8 +10047,8 @@ const Ne = class Ne extends x {
               @title-dialog-closed=${() => {
       this.linkedTitleId !== void 0 && (this.linkedTitleId = void 0, this.requestUpdate());
     }}
-              @title-dialog-error=${(d) => {
-      this.linkedTitleId = void 0, this.detailError = d.detail, this.requestUpdate();
+              @title-dialog-error=${(h) => {
+      this.linkedTitleId = void 0, this.detailError = h.detail, this.requestUpdate();
     }}
             ></kaleidescape-library>` : l}`;
   }
@@ -9972,11 +10056,11 @@ const Ne = class Ne extends x {
     if (this.detailsOnly) return this.renderDetails();
     const e = this.month.getFullYear(), t = this.month.getMonth(), i = new Date(e, t, 1), s = new Date(e, t + 1, 0).getDate(), n = Math.ceil((i.getDay() + s) / 7) * 7, o = Array.from(
       { length: n },
-      (d, c) => new Date(e, t, c - i.getDay() + 1)
-    ), h = /* @__PURE__ */ new Map();
-    for (const d of this.items)
-      for (const { day: c, phase: g } of ws(d))
-        h.set(c, [...h.get(c) ?? [], { row: d, phase: g }]);
+      (h, c) => new Date(e, t, c - i.getDay() + 1)
+    ), d = /* @__PURE__ */ new Map();
+    for (const h of this.items)
+      for (const { day: c, phase: g } of ws(h))
+        d.set(c, [...d.get(c) ?? [], { row: h, phase: g }]);
     return a`<div class="month-bar">
         <button
           aria-label="Previous month"
@@ -10011,14 +10095,14 @@ const Ne = class Ne extends x {
           aria-label="Viewing calendar"
           aria-busy=${this.loading}
         >
-          ${Array.from({ length: 7 }, (d, c) => a`<div class="weekday">${new Date(2023, 0, 1 + c).toLocaleDateString(void 0, { weekday: "short" })}</div>`)}
-          ${o.map((d) => {
-      const c = X(d), g = h.get(c) ?? [];
+          ${Array.from({ length: 7 }, (h, c) => a`<div class="weekday">${new Date(2023, 0, 1 + c).toLocaleDateString(void 0, { weekday: "short" })}</div>`)}
+          ${o.map((h) => {
+      const c = X(h), g = d.get(c) ?? [];
       return a`<section
-              class=${`day${d.getMonth() !== t ? " other-month" : ""}${c === X(/* @__PURE__ */ new Date()) ? " today" : ""}`}
-              aria-label=${d.toLocaleDateString()}
+              class=${`day${h.getMonth() !== t ? " other-month" : ""}${c === X(/* @__PURE__ */ new Date()) ? " today" : ""}`}
+              aria-label=${h.toLocaleDateString()}
             >
-              <time datetime=${c}>${d.getDate()}</time>
+              <time datetime=${c}>${h.getDate()}</time>
               ${g.length ? a`<div
                       class="cover-stack"
                       style=${`--spread:${1 + (g.length - 1) * 0.15}`}
@@ -10026,10 +10110,10 @@ const Ne = class Ne extends x {
                       ${Ea(
         g,
         ({ row: p }) => p.id,
-        ({ row: p, phase: y }, w) => a`<button
-                            class=${`poster poster-${y}`}
+        ({ row: p, phase: b }, w) => a`<button
+                            class=${`poster poster-${b}`}
                             style=${`--index:${w};--layer:${w + 1}`}
-                            aria-label=${`${p.title} · ${y === "start" ? "Started; completed on another day" : y === "completion" ? "Completed; started on another day" : p.status === "completed" ? "Completed" : "Partial"}`}
+                            aria-label=${`${p.title} · ${b === "start" ? "Started; completed on another day" : b === "completion" ? "Completed; started on another day" : p.status === "completed" ? "Completed" : "Partial"}`}
                             title=${p.title}
                             ?disabled=${this.disabled}
                             @click=${() => this.openViewing(p, p.artwork_key)}
@@ -10068,7 +10152,7 @@ Ne.properties = {
   editable: { type: Boolean },
   rememberUrl: { type: Boolean },
   detailsOnly: { type: Boolean }
-}, Ne.styles = [S, lt, Aa];
+}, Ne.styles = [q, lt, Aa];
 let Ae = Ne;
 customElements.get("kaleidescape-journal-calendar") || customElements.define("kaleidescape-journal-calendar", Ae);
 const Pa = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
@@ -10146,9 +10230,9 @@ function xs(r, e) {
   }), t;
 }
 function Ua(r) {
-  const e = (o) => ({ name: o, selector: { text: {} } }), t = (o) => ({ name: o, selector: { boolean: {} } }), i = (o, h, d) => ({
+  const e = (o) => ({ name: o, selector: { text: {} } }), t = (o) => ({ name: o, selector: { boolean: {} } }), i = (o, d, h) => ({
     name: o,
-    selector: { number: { min: h, max: d, step: 1, mode: "box" } }
+    selector: { number: { min: d, max: h, step: 1, mode: "box" } }
   }), s = r === "library" || r === "library-covers", n = xs(
     { type: `custom:kaleidescape-${r}-card` },
     r
@@ -10192,7 +10276,7 @@ function Ua(r) {
       ...o,
       default: n[o.name]
     })),
-    computeLabel: (o) => o.name.replaceAll("_", " ").replace(/^./, (h) => h.toUpperCase()),
+    computeLabel: (o) => o.name.replaceAll("_", " ").replace(/^./, (d) => d.toUpperCase()),
     computeHelper: (o) => o.name === "entry_id" ? "Leave blank for the loaded Companion integration." : o.name === "channel" ? "Search and Library cards with the same channel work together on this dashboard." : void 0
   };
 }
@@ -10262,14 +10346,14 @@ const mt = "kaleidescape-companion-card-search", he = class he extends x {
       if (e !== this.generation) return;
       const i = this.config.entry_id ? t.entries.find((s) => s.entry_id === this.config.entry_id) : t.entries[0];
       if (!i?.permissions.read || i.api_version !== 1)
-        throw new b("not_ready");
+        throw new v("not_ready");
       this.scope = {
         ...i,
         permissions: { read: !0, edit: !1, export: !1 }
       }, this.error = "";
     } catch (t) {
       if (e !== this.generation) return;
-      this.scope = void 0, this.error = v(t);
+      this.scope = void 0, this.error = y(t);
     } finally {
       e === this.generation && (this.requestUpdate(), this.timer = setTimeout(() => {
         this.refresh();
@@ -10382,7 +10466,7 @@ const mt = "kaleidescape-companion-card-search", he = class he extends x {
                         </p>` : a`<p class="message" role="status">
                 ${this.hass?.user ? "Loading Companion…" : "Sign in to Home Assistant to use this card."}
               </p>`}
-      ${this.popupCriterion && this.scope?.library_enabled ? a`<dialog @click=${q} @cancel=${this.closePopup}>
+      ${this.popupCriterion && this.scope?.library_enabled ? a`<dialog @click=${S} @cancel=${this.closePopup}>
               <div class="card-head">
                 <h2>Library</h2>
                 ${$((i) => this.closePopup(i), this.locked)}
@@ -10398,7 +10482,7 @@ const mt = "kaleidescape-companion-card-search", he = class he extends x {
   }
 };
 he.kind = "library", he.properties = { hass: { attribute: !1 } }, he.styles = [
-  S,
+  q,
   os,
   E`
       :host {
@@ -10498,24 +10582,24 @@ class Ra {
         ), s = Math.max(0, this.viewport?.offsetTop ?? 0), n = Math.max(0, window.innerHeight - i - s), o = this.observed.reduce(
           (P, D) => P + D.getBoundingClientRect().height,
           0
-        ), h = parseFloat(
+        ), d = parseFloat(
           getComputedStyle(this.host).getPropertyValue(
             "--companion-sticky-top"
           )
-        ) || 0, d = this.observed.find(
+        ) || 0, h = this.observed.find(
           (P) => P.classList.contains("entries-header")
         ), c = this.observed.find(
           (P) => P.classList.contains("entries-footer")
         ), g = this.host.renderRoot.querySelector(".entries-layout"), p = Math.max(
-          s + h + (d?.getBoundingClientRect().height ?? 0),
+          s + d + (h?.getBoundingClientRect().height ?? 0),
           g?.getBoundingClientRect().top ?? 0
         );
-        let y = s + i;
+        let b = s + i;
         for (const P of this.containers.slice(1)) {
           if (!/(auto|scroll|hidden|clip)/.test(getComputedStyle(P).overflowY))
             continue;
           const D = P.getBoundingClientRect();
-          D.height > 0 && (y = Math.min(y, D.bottom));
+          D.height > 0 && (b = Math.min(b, D.bottom));
         }
         const w = {
           "--companion-viewport-height": i,
@@ -10523,7 +10607,7 @@ class Ra {
           "--companion-viewport-bottom": n,
           "--entries-height": Math.max(
             180,
-            g ? y - p - (c?.getBoundingClientRect().height ?? 0) - 16 : i - o - h - 16
+            g ? b - p - (c?.getBoundingClientRect().height ?? 0) - 16 : i - o - d - 16
           )
         };
         let A = !1;
@@ -10586,7 +10670,7 @@ const Ve = class Ve extends x {
       e === this.generation && (this.link = t.library, this.reportLink(), this.openAutomatically());
     } catch (t) {
       if (e !== this.generation) return;
-      this.error = v(t), u(t) === "unauthorized" && (this.clear(), this.requestUpdate(), this.dispatchEvent(
+      this.error = y(t), u(t) === "unauthorized" && (this.clear(), this.requestUpdate(), this.dispatchEvent(
         new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
       ));
     } finally {
@@ -10651,7 +10735,7 @@ Ve.properties = {
   advanced: { type: Boolean },
   autoOpen: { type: Boolean }
 }, Ve.styles = [
-  S,
+  q,
   E`
       :host {
         display: block;
@@ -10708,9 +10792,9 @@ function Ji(r) {
 function Ta(r, e, t, i = r) {
   const s = { ...r, [e]: t };
   if (e === "started_at") {
-    const n = new Date(t).getTime(), o = new Date(i.started_at).getTime(), h = new Date(i.ended_at).getTime();
-    t && i.ended_at && [n, o, h].every(Number.isFinite) && (s.ended_at = fe(
-      new Date(n + h - o).toISOString()
+    const n = new Date(t).getTime(), o = new Date(i.started_at).getTime(), d = new Date(i.ended_at).getTime();
+    t && i.ended_at && [n, o, d].every(Number.isFinite) && (s.ended_at = fe(
+      new Date(n + d - o).toISOString()
     ));
   }
   return s;
@@ -10722,15 +10806,15 @@ function Da(r, e) {
   return t;
 }
 function za(r, e, t) {
-  function i(s, n, o = "text", h = !1, d) {
+  function i(s, n, o = "text", d = !1, h) {
     return a`<label
       >${n}<input
         id=${s === "title" ? "title" : s}
         name=${s}
         type=${o}
         .value=${r[s]}
-        ?required=${h}
-        maxlength=${d ?? l}
+        ?required=${d}
+        maxlength=${h ?? l}
         min=${o === "number" ? "0" : l}
         max=${o === "number" ? String(1e9 / 60) : l}
         step=${o === "datetime-local" ? "1" : o === "number" ? "0.01" : l}
@@ -10821,7 +10905,7 @@ const Qe = class Qe extends x {
         );
         t === this.request && this.isConnected && (this.items = i.items, this.requestUpdate());
       } catch (i) {
-        t === this.request && (this.error = v(i), this.requestUpdate(), u(i) === "unauthorized" && this.dispatchEvent(
+        t === this.request && (this.error = y(i), this.requestUpdate(), u(i) === "unauthorized" && this.dispatchEvent(
           new CustomEvent("access-denied", {
             bubbles: !0,
             composed: !0
@@ -10874,7 +10958,7 @@ Qe.properties = {
   requireRuntime: { type: Boolean },
   disabled: { type: Boolean },
   fuzzySearch: { attribute: !1 }
-}, Qe.styles = [S, lt];
+}, Qe.styles = [q, lt];
 let It = Qe;
 customElements.get("kaleidescape-library-title-picker") || customElements.define(
   "kaleidescape-library-title-picker",
@@ -10907,15 +10991,15 @@ function ks(r) {
     throw new Error(
       "That local date/time does not exist. Check the date or daylight-saving transition."
     );
-  const h = Number(r.watched_minutes) * 60;
-  if (r.status === "partial" && (!r.watched_minutes.trim() || !Number.isFinite(h) || h <= 0))
+  const d = Number(r.watched_minutes) * 60;
+  if (r.status === "partial" && (!r.watched_minutes.trim() || !Number.isFinite(d) || d <= 0))
     throw new Error("Enter positive watched minutes for a partial viewing.");
   return {
     library_title_id: r.library_title_id,
     started_at: o.toISOString(),
     status: r.status,
     notes: r.notes,
-    ...r.status === "partial" ? { watched_seconds: h } : {}
+    ...r.status === "partial" ? { watched_seconds: d } : {}
   };
 }
 const Fe = class Fe extends x {
@@ -10993,7 +11077,7 @@ Fe.properties = {
   draft: { attribute: !1 },
   disabled: { type: Boolean },
   fuzzySearch: { attribute: !1 }
-}, Fe.styles = [S, lt];
+}, Fe.styles = [q, lt];
 let Ot = Fe;
 customElements.get("kaleidescape-manual-viewing") || customElements.define("kaleidescape-manual-viewing", Ot);
 const bi = E`
@@ -11182,7 +11266,7 @@ const Cs = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAA
     );
   }
   fail(e) {
-    this.error = v(e), u(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
+    this.error = y(e), u(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     )), this.requestUpdate();
   }
@@ -11237,7 +11321,7 @@ const Cs = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAA
       <dialog
         class="database-dialog"
         aria-labelledby="journal-options-title"
-        @click=${q}
+        @click=${S}
       >
         <div class="card-head">
           <h2 id="journal-options-title">Journal options</h2>
@@ -11361,7 +11445,7 @@ He.properties = {
   status: { type: String },
   mobileCompact: { type: Boolean }
 }, He.styles = [
-  S,
+  q,
   E`
       @media (max-width: 700px) {
         .desktop-options {
@@ -11375,7 +11459,7 @@ customElements.get("kaleidescape-journal-options") || customElements.define("kal
 const Je = class Je extends x {
   constructor() {
     super(), this.narrow = !1, this.api = null, this.userKey = "", this.generation = 0, this.scope = null, this.rows = [], this.selected = null, this.detailLoading = !1, this.detailRequest = 0, this.loading = !1, this.error = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.next = null, this.history = [], this.page = 1, this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.controlLocked = !1, this.locationChanged = () => {
-      this.navigationReady && this.scope?.library_enabled && this.activePage !== "library" && be() && Se() && this.selectPage("library");
+      this.navigationReady && this.scope?.library_enabled && this.activePage !== "library" && be() && qe() && this.selectPage("library");
     }, mi(this);
   }
   confirmNavigation() {
@@ -11417,7 +11501,7 @@ const Je = class Je extends x {
     e !== this.api && (this.clear(), this.api = e, this.requestUpdate(), e && this.refresh());
   }
   fail(e) {
-    u(e) === "unauthorized" && this.clear(), this.error = v(e), this.requestUpdate();
+    u(e) === "unauthorized" && this.clear(), this.error = y(e), this.requestUpdate();
   }
   async refresh() {
     if (!this.api) return;
@@ -11427,7 +11511,7 @@ const Je = class Je extends x {
       const { entries: t } = await this.api.info();
       if (e !== this.generation) return;
       if (!t[0]?.permissions.read || t[0].api_version !== 1)
-        throw new b("not_ready");
+        throw new v("not_ready");
       if (this.scope = {
         ...t[0],
         permissions: { read: !0, edit: !1, export: !1 }
@@ -11555,13 +11639,13 @@ const Je = class Je extends x {
                 .playerId=${this.playbackPlayer}
                 .client=${this.api ?? void 0}
                 .scope=${this.scope}
-                @access-denied=${() => this.fail(new b("unauthorized"))}
+                @access-denied=${() => this.fail(new v("unauthorized"))}
               ></kaleidescape-now-playing>` : this.activePage === "library" && this.scope ? a`<kaleidescape-library
                   .client=${this.api ?? void 0}
                   .scope=${this.scope}
                   .openTitleId=${this.libraryTitleId}
                   .openCriterion=${this.libraryCriterion}
-                  @access-denied=${() => this.fail(new b("unauthorized"))}
+                  @access-denied=${() => this.fail(new v("unauthorized"))}
                   @library-disabled=${() => {
       this.activePage = "journal", this.refresh();
     }}
@@ -11661,7 +11745,7 @@ const Je = class Je extends x {
       const i = this.fuzzySearch !== t.detail.fuzzy_search;
       this.fuzzySearch = t.detail.fuzzy_search, i && (this.page = 1, this.history = [], this.load());
     }}
-                          @access-denied=${() => this.fail(new b("unauthorized"))}
+                          @access-denied=${() => this.fail(new v("unauthorized"))}
                         ></kaleidescape-journal-options>
                       </div>
                     </form>
@@ -11679,7 +11763,7 @@ const Je = class Je extends x {
                           .daySize=${this.calendarSize}
                           .fitScreen=${this.calendarFit}
                           @browse-library=${(t) => this.selectPage("library", { libraryCriterion: t.detail })}
-                          @access-denied=${() => this.fail(new b("unauthorized"))}
+                          @access-denied=${() => this.fail(new v("unauthorized"))}
                         ></kaleidescape-journal-calendar>` : a`
                           <div class="entries-layout">
                             <section
@@ -11736,7 +11820,7 @@ const Je = class Je extends x {
       const i = t.detail.linked ? t.detail.viewingId : void 0;
       this.linkedViewingId !== i && (this.linkedViewingId = i, this.requestUpdate());
     }}
-                                          @access-denied=${() => this.fail(new b("unauthorized"))}
+                                          @access-denied=${() => this.fail(new v("unauthorized"))}
                                           @browse-library=${(t) => this.selectPage("library", { libraryCriterion: t.detail })}
                                         ></kaleidescape-viewing-library> ` : a`<div class="empty">
                                         <strong>Select an entry</strong>
@@ -11796,7 +11880,7 @@ Je.properties = {
   hass: { attribute: !1 },
   client: { attribute: !1 },
   narrow: { type: Boolean }
-}, Je.styles = [S, bi, ls];
+}, Je.styles = [q, bi, ls];
 let Qt = Je;
 customElements.get("kaleidescape-reader") || customElements.define("kaleidescape-reader", Qt);
 function Ma(r, e) {
@@ -11876,7 +11960,7 @@ const Xe = class Xe extends x {
   fail(e) {
     u(e) === "unauthorized" ? (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
-    )) : this.error = v(e), this.requestUpdate();
+    )) : this.error = y(e), this.requestUpdate();
   }
   async refresh() {
     if (!this.client || !this.scope) return;
@@ -12007,7 +12091,7 @@ const Xe = class Xe extends x {
       <dialog
         id="maintenance-review"
         class="database-dialog"
-        @click=${q}
+        @click=${S}
         @cancel=${this.close}
         aria-labelledby="maintenance-review-title"
       >
@@ -12048,7 +12132,7 @@ const Xe = class Xe extends x {
       <dialog
         id="maintenance-run"
         class="database-dialog"
-        @click=${q}
+        @click=${S}
         @cancel=${this.close}
         aria-labelledby="maintenance-run-title"
       >
@@ -12111,7 +12195,7 @@ const Xe = class Xe extends x {
         class="database-dialog"
         aria-labelledby="calendar-export-title"
         aria-describedby="calendar-export-summary"
-        @click=${q}
+        @click=${S}
         @cancel=${this.close}
       >
         <div class="card-head">
@@ -12166,7 +12250,7 @@ Xe.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, Xe.styles = S;
+}, Xe.styles = q;
 let Ft = Xe;
 customElements.get("kaleidescape-calendar-export") || customElements.define("kaleidescape-calendar-export", Ft);
 const Xi = [
@@ -12219,7 +12303,7 @@ const We = class We extends x {
           label: t,
           loading: !1,
           entries: [],
-          error: v(n)
+          error: y(n)
         };
       }
       this.requestUpdate();
@@ -12233,31 +12317,31 @@ const We = class We extends x {
       const t = await this.client.automationStatuses(this.scope);
       e === this.generation && (this.statuses = t);
     } catch (t) {
-      e === this.generation && (this.error = v(t));
+      e === this.generation && (this.error = y(t));
     } finally {
       e === this.generation && (this.checking = !1, this.requestUpdate());
     }
   }
   async install(e, t, i) {
     if (!this.client || !this.scope?.permissions.edit || this.busy) return;
-    const s = this.client, n = this.scope, o = this.generation, h = () => this.isConnected && this.generation === o && this.client === s && this.scope === n && !!this.scope?.permissions.edit;
+    const s = this.client, n = this.scope, o = this.generation, d = () => this.isConnected && this.generation === o && this.client === s && this.scope === n && !!this.scope?.permissions.edit;
     this.busy = e, this.message = this.error = "", this.pendingUpdate = void 0, this.requestUpdate();
     try {
       if (i) {
-        const d = this.statuses?.[e]?.revision;
-        if (!d)
+        const h = this.statuses?.[e]?.revision;
+        if (!h)
           throw new Error("Blueprint status changed; check again.");
-        this.pendingUpdate = { kind: e, label: t, revision: d }, this.message = `${t}: replacing this blueprint reloads its automations and may discard local edits.`;
+        this.pendingUpdate = { kind: e, label: t, revision: h }, this.message = `${t}: replacing this blueprint reloads its automations and may discard local edits.`;
       } else {
-        const d = await s.automationTemplate(n, e);
-        if (!h() || (await s.installAutomationBlueprint(d.path, d.yaml), !h())) return;
+        const h = await s.automationTemplate(n, e);
+        if (!d() || (await s.installAutomationBlueprint(h.path, h.yaml), !d())) return;
         this.message = `${t} blueprint installed. Create an automation in Home Assistant Blueprints.`, await this.refresh();
       }
-    } catch (d) {
-      if (!h()) return;
-      u(d) === "already_exists" ? (this.message = `${t} was installed while checking. Its status has been refreshed.`, await this.refresh()) : this.error = v(d);
+    } catch (h) {
+      if (!d()) return;
+      u(h) === "already_exists" ? (this.message = `${t} was installed while checking. Its status has been refreshed.`, await this.refresh()) : this.error = y(h);
     } finally {
-      h() && (this.busy = "", this.requestUpdate());
+      d() && (this.busy = "", this.requestUpdate());
     }
   }
   async updateInstalled() {
@@ -12274,7 +12358,7 @@ const We = class We extends x {
       this.message = `${e.label} blueprint updated. Review its automations in Home Assistant.`, this.pendingUpdate = void 0, await this.refresh();
     } catch (o) {
       if (!n()) return;
-      this.error = v(o), this.pendingUpdate = void 0, await this.refresh();
+      this.error = y(o), this.pendingUpdate = void 0, await this.refresh();
     } finally {
       n() && (this.busy = "", this.requestUpdate());
     }
@@ -12327,7 +12411,7 @@ const We = class We extends x {
         <dialog
           class="database-dialog"
           aria-labelledby="blueprint-history-title"
-          @click=${q}
+          @click=${S}
           @close=${this.closeHistory}
         >
           <div class="card-head">
@@ -12400,7 +12484,7 @@ We.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   versionsOnly: { type: Boolean }
-}, We.styles = [S];
+}, We.styles = [q];
 let Ht = We;
 customElements.get("kaleidescape-automation-blueprints") || customElements.define(
   "kaleidescape-automation-blueprints",
@@ -12429,7 +12513,7 @@ const Ia = [
     e?.preventDefault(), this.reset(), this.requestUpdate();
   }
   fail(e) {
-    this.error = v(e), u(e) === "unauthorized" && (this.reset(), this.dispatchEvent(
+    this.error = y(e), u(e) === "unauthorized" && (this.reset(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     ));
   }
@@ -12495,7 +12579,7 @@ const Ia = [
       ${this.notice ? a`<p class="notice" role="status">${this.notice}</p>` : l}
       <dialog
         class="database-dialog"
-        @click=${q}
+        @click=${S}
         @cancel=${(t) => this.close(t)}
       >
         <div class="card-head">
@@ -12581,7 +12665,7 @@ Ye.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, Ye.styles = S;
+}, Ye.styles = q;
 let Jt = Ye;
 customElements.get("kaleidescape-settings-transfer") || customElements.define(
   "kaleidescape-settings-transfer",
@@ -12608,7 +12692,7 @@ class Oa {
     }, i = await this.client.haDashboards();
     t();
     const s = i.find(
-      (h) => h.url_path === this.plan.url_path
+      (d) => d.url_path === this.plan.url_path
     );
     if (s && (!this.attempted || s.title !== this.plan.title || s.mode !== "storage" || s.icon !== "mdi:test-tube" || s.require_admin !== !1 || s.show_in_sidebar !== !0))
       throw new z(
@@ -12628,8 +12712,8 @@ class Oa {
     let n;
     try {
       n = await this.client.haTestDashboardConfig(this.plan.url_path), t();
-    } catch (h) {
-      if (t(), u(h) !== "config_not_found") throw h;
+    } catch (d) {
+      if (t(), u(d) !== "config_not_found") throw d;
     }
     if (n) {
       if (K(n) === K(this.plan.config)) return;
@@ -12701,7 +12785,7 @@ const Ke = class Ke extends x {
     } catch (s) {
       if (!i()) return;
       const n = u(s), o = s?.message;
-      this.error = typeof o == "string" && (n.startsWith("dashboard_") || s instanceof z) ? o : v(s), n === "unauthorized" && (this.reset(), this.dispatchEvent(
+      this.error = typeof o == "string" && (n.startsWith("dashboard_") || s instanceof z) ? o : y(s), n === "unauthorized" && (this.reset(), this.dispatchEvent(
         new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
       ));
     } finally {
@@ -12735,7 +12819,7 @@ const Ke = class Ke extends x {
       <dialog
         data-admin-dialog
         class="database-dialog"
-        @click=${q}
+        @click=${S}
         @cancel=${this.close}
       >
         <div class="card-head">
@@ -12799,7 +12883,7 @@ Ke.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, Ke.styles = S;
+}, Ke.styles = q;
 let Xt = Ke;
 customElements.get("kaleidescape-test-dashboard") || customElements.define("kaleidescape-test-dashboard", Xt);
 const Ge = class Ge extends x {
@@ -12826,7 +12910,7 @@ const Ge = class Ge extends x {
   fail(e) {
     u(e) === "unauthorized" ? (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
-    )) : this.error = v(e), this.requestUpdate();
+    )) : this.error = y(e), this.requestUpdate();
   }
   async open() {
     if (!this.client || !this.scope || this.disabled || this.working) return;
@@ -12895,7 +12979,7 @@ const Ge = class Ge extends x {
       <dialog
         class="database-dialog"
         aria-labelledby="metadata-repair-title"
-        @click=${q}
+        @click=${S}
         @cancel=${this.close}
       >
         <div class="card-head">
@@ -12946,7 +13030,7 @@ Ge.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, Ge.styles = S;
+}, Ge.styles = q;
 let Wt = Ge;
 customElements.get("kaleidescape-metadata-repair") || customElements.define("kaleidescape-metadata-repair", Wt);
 const Yi = [
@@ -13003,7 +13087,7 @@ const Yi = [
         this.refresh();
       }, 2e3));
     } catch (i) {
-      t === this.generation && (this.error = v(i));
+      t === this.generation && (this.error = y(i));
     } finally {
       t === this.generation && (this.loading = !1, this.requestUpdate());
     }
@@ -13164,7 +13248,7 @@ Ze.properties = {
   scope: { attribute: !1 },
   draft: { attribute: !1 },
   disabled: { type: Boolean }
-}, Ze.styles = S;
+}, Ze.styles = q;
 let Yt = Ze;
 customElements.get("kaleidescape-enrichment-settings") || customElements.define("kaleidescape-enrichment-settings", Yt);
 const bt = [
@@ -13273,7 +13357,7 @@ const bt = [
     });
   }
   fail(e) {
-    this.error = v(e), u(e) === "unauthorized" && (this.personalPreferences?.dispose(), this.personalPreferences = void 0, this.personalReady = !1, this.sharedPreferences?.dispose(), this.sharedPreferences = void 0, this.sharedReady = !1, this.hiddenCollections = [], this.flow = void 0, this.draft = {}, this.initial = {}, this.dispatchEvent(
+    this.error = y(e), u(e) === "unauthorized" && (this.personalPreferences?.dispose(), this.personalPreferences = void 0, this.personalReady = !1, this.sharedPreferences?.dispose(), this.sharedPreferences = void 0, this.sharedReady = !1, this.hiddenCollections = [], this.flow = void 0, this.draft = {}, this.initial = {}, this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     )), this.requestUpdate();
   }
@@ -13297,7 +13381,7 @@ const bt = [
         t,
         !0,
         (o) => {
-          i === this.generation && (o && u(o) === "unauthorized" ? this.fail(o) : (this.sharedError = o ? v(o) : "", this.requestUpdate()));
+          i === this.generation && (o && u(o) === "unauthorized" ? this.fail(o) : (this.sharedError = o ? y(o) : "", this.requestUpdate()));
         }
       );
       const n = await this.sharedPreferences.load();
@@ -13376,7 +13460,7 @@ const bt = [
       this.scope,
       !1,
       (i) => {
-        t === this.generation && (i && u(i) === "unauthorized" ? this.fail(i) : (this.personalError = i ? v(i) : "", this.requestUpdate()));
+        t === this.generation && (i && u(i) === "unauthorized" ? this.fail(i) : (this.personalError = i ? y(i) : "", this.requestUpdate()));
       },
       "search"
     );
@@ -13385,7 +13469,7 @@ const bt = [
       this.personalReady = !0;
     } catch (i) {
       if (t !== this.generation) return;
-      this.personalError = v(i), this.personalPreferences?.dispose(), this.personalPreferences = void 0, u(i) === "unauthorized" && this.fail(i);
+      this.personalError = y(i), this.personalPreferences?.dispose(), this.personalPreferences = void 0, u(i) === "unauthorized" && this.fail(i);
     }
     this.requestUpdate();
   }
@@ -13521,7 +13605,7 @@ const bt = [
                         @dashboard-busy=${(e) => {
       this.dashboardBusy !== e.detail && (this.dashboardBusy = e.detail, this.busy(), this.requestUpdate());
     }}
-                        @access-denied=${() => this.fail(new b("unauthorized"))}
+                        @access-denied=${() => this.fail(new v("unauthorized"))}
                       ></kaleidescape-test-dashboard>
                       <h3>Playback source entities</h3>
                       <p class="muted">
@@ -14075,7 +14159,7 @@ _e.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 }
 }, _e.styles = [
-  S,
+  q,
   E`
       [hidden] {
         display: none !important;
@@ -14280,7 +14364,7 @@ const Fa = E`
       const o = s[2].replace(/\s+/g, " ").toLowerCase();
       return {
         start: this.cursor - s[2].length,
-        options: this.operators.filter((h) => h.toLowerCase().startsWith(o)).slice(0, 12)
+        options: this.operators.filter((d) => d.toLowerCase().startsWith(o)).slice(0, 12)
       };
     }
     let n;
@@ -14309,7 +14393,7 @@ const Fa = E`
         ), e === this.generation && (this.message = "", this.invalid = !1);
       } catch (t) {
         if (e !== this.generation) return;
-        this.invalid = !0, this.message = u(t) === "query_syntax" && typeof t.message == "string" ? t.message : v(t), u(t) === "unauthorized" && this.dispatchEvent(
+        this.invalid = !0, this.message = u(t) === "query_syntax" && typeof t.message == "string" ? t.message : y(t), u(t) === "unauthorized" && this.dispatchEvent(
           new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
         );
       } finally {
@@ -14520,7 +14604,7 @@ const tt = class tt extends x {
       this.items = t.items, this.more = t.has_more;
     } catch (t) {
       if (e !== this.request || !this.isConnected) return;
-      this.error = v(t), u(t) === "unauthorized" && this.dispatchEvent(
+      this.error = y(t), u(t) === "unauthorized" && this.dispatchEvent(
         new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
       );
     } finally {
@@ -14624,7 +14708,7 @@ tt.properties = {
   queue: { attribute: !1 },
   disabled: { type: Boolean }
 }, tt.styles = [
-  S,
+  q,
   E`
       :host {
         display: block;
@@ -14750,7 +14834,7 @@ const it = class it extends x {
   fail(e) {
     u(e) === "unauthorized" && (this.clear(), this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
-    )), this.error = v(e), this.requestUpdate();
+    )), this.error = y(e), this.requestUpdate();
   }
   async exportData(e) {
     if (!this.client || !this.scope || this.working || this.pending || this.disabled)
@@ -14764,9 +14848,9 @@ const it = class it extends x {
         i.signal
       );
       if (t !== this.generation) return;
-      const o = URL.createObjectURL(n), h = document.createElement("a");
+      const o = URL.createObjectURL(n), d = document.createElement("a");
       try {
-        h.href = o, h.download = `kaleidescape-journal.${e}`, h.click();
+        d.href = o, d.download = `kaleidescape-journal.${e}`, d.click();
       } finally {
         setTimeout(() => URL.revokeObjectURL(o), 1e3);
       }
@@ -14849,7 +14933,7 @@ const it = class it extends x {
         ...this.review,
         ...o,
         rows: this.review.rows.map(
-          (h) => h.key === i ? n : h
+          (d) => d.key === i ? n : d
         )
       }, this.matching = void 0, ["new", "merge"].includes(s.row.action) && !s.row.possible_duplicate ? this.selected.add(i) : this.selected.delete(i), this.page = 0;
     } catch (s) {
@@ -14862,13 +14946,13 @@ const it = class it extends x {
   renderReview(e) {
     if (!this.review) return l;
     const t = this.review, i = this.query.trim().toLocaleLowerCase(), s = t.rows.filter(
-      (d) => (!this.changesOnly || d.needs_match || !d.needs_match && ["new", "merge"].includes(d.action)) && hs(
-        `${d.title} ${d.detail ?? ""} ${d.table} ${Object.keys(d.changes).join(" ")}`,
+      (h) => (!this.changesOnly || h.needs_match || !h.needs_match && ["new", "merge"].includes(h.action)) && hs(
+        `${h.title} ${h.detail ?? ""} ${h.table} ${Object.keys(h.changes).join(" ")}`,
         i
       )
     ).sort(
-      (d, c) => +!!c.needs_match - +!!d.needs_match
-    ), n = Math.max(0, Math.ceil(s.length / this.pageSize) - 1), o = Math.min(this.page, n), h = s.slice(
+      (h, c) => +!!c.needs_match - +!!h.needs_match
+    ), n = Math.max(0, Math.ceil(s.length / this.pageSize) - 1), o = Math.min(this.page, n), d = s.slice(
       o * this.pageSize,
       (o + 1) * this.pageSize
     );
@@ -14879,7 +14963,7 @@ const it = class it extends x {
               .row=${this.matching}
               .queue=${this.covers}
               .disabled=${e}
-              @match-choice=${(d) => this.chooseMatch(d.detail)}
+              @match-choice=${(h) => this.chooseMatch(h.detail)}
               @match-cancel=${() => {
       this.matching = void 0, this.requestUpdate();
     }}
@@ -14889,9 +14973,9 @@ const it = class it extends x {
         ${t.counts.new} new · ${t.counts.merge} mergeable ·
         ${t.counts.unchanged} unchanged · ${t.counts.skip} skipped.
         ${this.selected.size} selected.
-        ${t.rows.some((d) => d.needs_match) ? a`${k(t.rows.filter((d) => d.needs_match).length, "purchase requiring review")} shown first.` : l}
+        ${t.rows.some((h) => h.needs_match) ? a`${k(t.rows.filter((h) => h.needs_match).length, "purchase requiring review")} shown first.` : l}
       </p>
-      ${t.rows.some((d) => d.key.startsWith("purchases:")) ? a`<p class="muted">
+      ${t.rows.some((h) => h.key.startsWith("purchases:")) ? a`<p class="muted">
               Purchase records can be saved without a Library match and linked
               later. New means a new purchase record, not a new movie. Purchase
               titles preserve the store's wording; Library titles are kept
@@ -14903,8 +14987,8 @@ const it = class it extends x {
             type="search"
             .value=${this.query}
             ?disabled=${e}
-            @input=${(d) => {
-      this.query = d.target.value, this.page = 0, this.requestUpdate();
+            @input=${(h) => {
+      this.query = h.target.value, this.page = 0, this.requestUpdate();
     }}
         /></label>
         <label class="check"
@@ -14912,8 +14996,8 @@ const it = class it extends x {
             type="checkbox"
             .checked=${this.changesOnly}
             ?disabled=${e}
-            @change=${(d) => {
-      this.changesOnly = d.target.checked, this.page = 0, this.requestUpdate();
+            @change=${(h) => {
+      this.changesOnly = h.target.checked, this.page = 0, this.requestUpdate();
     }}
           />Changes only</label
         >
@@ -14922,8 +15006,8 @@ const it = class it extends x {
           @click=${() => {
       this.selected = new Set(
         t.rows.filter(
-          (d) => !d.needs_match && !d.possible_duplicate && ["new", "merge"].includes(d.action)
-        ).map((d) => d.key)
+          (h) => !h.needs_match && !h.possible_duplicate && ["new", "merge"].includes(h.action)
+        ).map((h) => h.key)
       ), this.requestUpdate();
     }}
         >
@@ -14949,74 +15033,74 @@ const it = class it extends x {
             </tr>
           </thead>
           <tbody>
-            ${h.map((d) => {
-      const c = d.key.startsWith("purchases:"), g = c ? d.repair_barrier ? "Blocked by prior repair" : d.possible_duplicate && d.needs_match ? "Review possible duplicate" : d.needs_match ? "Choose Library match" : {
+            ${d.map((h) => {
+      const c = h.key.startsWith("purchases:"), g = c ? h.repair_barrier ? "Blocked by prior repair" : h.possible_duplicate && h.needs_match ? "Review possible duplicate" : h.needs_match ? "Choose Library match" : {
         new: "Add purchase to Library entry",
         merge: "Update purchase record",
         unchanged: "Purchase already imported",
         skip: "Skip purchase"
-      }[d.action] : d.action;
+      }[h.action] : h.action;
       return a`<tr>
                 <td>
                   <input
                     type="checkbox"
-                    aria-label=${`Import ${d.title}`}
-                    .checked=${this.selected.has(d.key)}
-                    ?disabled=${e || !!d.needs_match || !["new", "merge"].includes(d.action)}
+                    aria-label=${`Import ${h.title}`}
+                    .checked=${this.selected.has(h.key)}
+                    ?disabled=${e || !!h.needs_match || !["new", "merge"].includes(h.action)}
                     @change=${(p) => {
-        p.target.checked ? this.selected.add(d.key) : this.selected.delete(d.key), this.requestUpdate();
+        p.target.checked ? this.selected.add(h.key) : this.selected.delete(h.key), this.requestUpdate();
       }}
                   />
                 </td>
                 <td>
                   <div class="review-entry">
-                    ${d.artwork_key ? a`<kaleidescape-library-cover
+                    ${h.artwork_key ? a`<kaleidescape-library-cover
                             .client=${this.client}
                             .scope=${this.scope}
                             .queue=${this.covers}
-                            .artworkKey=${d.artwork_key}
-                            .title=${d.title}
+                            .artworkKey=${h.artwork_key}
+                            .title=${h.title}
                             aria-hidden="true"
                             @access-denied=${() => this.fail({ code: "unauthorized" })}
                           ></kaleidescape-library-cover>` : l}
                     <div>
-                      ${d.title}<small class="muted" title=${d.key}
-                        >${d.detail}</small
+                      ${h.title}<small class="muted" title=${h.key}
+                        >${h.detail}</small
                       >
                       <small class="muted"
-                        >${c ? "Purchase history on Library entry" : d.table}</small
+                        >${c ? "Purchase history on Library entry" : h.table}</small
                       >
                     </div>
                   </div>
                 </td>
                 <td>${g}</td>
                 <td>
-                  ${d.reason || Object.keys(d.changes).join(", ") || "No missing data"}
-                  ${d.possible_duplicate ? a`<small class="warning">Compare the existing purchases before selecting this as a separate purchase.</small>` : d.needs_match && !d.repair_barrier ? a`<small class="warning">No Library match selected</small>` : l}
-                  ${d.duplicate_candidates?.length ? a`<details>
+                  ${h.reason || Object.keys(h.changes).join(", ") || "No missing data"}
+                  ${h.possible_duplicate ? a`<small class="warning">Compare the existing purchases before selecting this as a separate purchase.</small>` : h.needs_match && !h.repair_barrier ? a`<small class="warning">No Library match selected</small>` : l}
+                  ${h.duplicate_candidates?.length ? a`<details>
                           <summary>
                             Possible existing purchases
-                            (${d.duplicate_candidates.length}${d.duplicate_candidates_more ? "+" : ""})
+                            (${h.duplicate_candidates.length}${h.duplicate_candidates_more ? "+" : ""})
                           </summary>
                           <p>
                             Similar details are review hints, not proof of a
                             duplicate.
                           </p>
-                          ${d.duplicate_candidates.map((p) => a`<pre>${JSON.stringify(p, null, 2)}</pre>`)}
-                          ${d.duplicate_candidates_more ? a`<p>More possible matches exist. Inspect Purchases for the full list.</p>` : l}
+                          ${h.duplicate_candidates.map((p) => a`<pre>${JSON.stringify(p, null, 2)}</pre>`)}
+                          ${h.duplicate_candidates_more ? a`<p>More possible matches exist. Inspect Purchases for the full list.</p>` : l}
                         </details>` : l}
-                  ${d.can_match ? a`<button
+                  ${h.can_match ? a`<button
                           ?disabled=${e || !!this.matching || !!this.scope?.tracking_enabled && !this.purchaseReview}
-                          @click=${() => this.openMatch(d)}
+                          @click=${() => this.openMatch(h)}
                         >
                           Match title…
                         </button>` : l}
-                  ${d.conflicts.length ? a`<small class="muted">Existing ${c ? "purchase " : ""}values kept: ${d.conflicts.join(", ")}</small>` : l}
-                  ${Object.keys(d.changes).length ? a`<details>
+                  ${h.conflicts.length ? a`<small class="muted">Existing ${c ? "purchase " : ""}values kept: ${h.conflicts.join(", ")}</small>` : l}
+                  ${Object.keys(h.changes).length ? a`<details>
                           <summary>
-                            ${c ? d.action === "new" ? "Purchase record to add" : "Purchase record changes" : "Changes"}
+                            ${c ? h.action === "new" ? "Purchase record to add" : "Purchase record changes" : "Changes"}
                           </summary>
-                          <pre>${JSON.stringify(d.changes, null, 2)}</pre>
+                          <pre>${JSON.stringify(h.changes, null, 2)}</pre>
                         </details>` : l}
                 </td>
               </tr>`;
@@ -15025,7 +15109,7 @@ const it = class it extends x {
         </table>
       </div>
       <p class="muted">
-        ${h.length === 1 ? "Row" : "Rows"}
+        ${d.length === 1 ? "Row" : "Rows"}
         ${s.length ? o * this.pageSize + 1 : 0}–${Math.min((o + 1) * this.pageSize, s.length)}
         of ${s.length}. Selection covers all review pages.
       </p>
@@ -15049,11 +15133,11 @@ const it = class it extends x {
           >Rows per page<select
             ?disabled=${e}
             .value=${String(this.pageSize)}
-            @change=${(d) => {
-      this.pageSize = Number(d.target.value), this.page = 0, this.requestUpdate();
+            @change=${(h) => {
+      this.pageSize = Number(h.target.value), this.page = 0, this.requestUpdate();
     }}
           >
-            ${[25, 100, 500].map((d) => a`<option value=${d}>${d}</option>`)}
+            ${[25, 100, 500].map((h) => a`<option value=${h}>${h}</option>`)}
           </select></label
         >
       </div>`;
@@ -15150,7 +15234,7 @@ const it = class it extends x {
       ${!this.dialog && this.notice ? a`<p class="notice" role="status">${this.notice}</p>` : l}
       <dialog
         class="database-dialog"
-        @click=${q}
+        @click=${S}
         aria-labelledby="transfer-title"
         @cancel=${this.closeDialog}
       >
@@ -15179,7 +15263,7 @@ it.properties = {
   scope: { attribute: !1 },
   disabled: { type: Boolean }
 }, it.styles = [
-  S,
+  q,
   E`
       .database-dialog {
         width: min(1100px, calc(100% - 32px));
@@ -15291,13 +15375,13 @@ function vt(r, e, t) {
         <strong role="columnheader">After</strong>
       </div>
       ${n.length ? n.map((o) => {
-    const h = JSON.stringify(i[o]) !== JSON.stringify(s[o]), d = Ce.find(([c]) => c === o)?.[1] ?? o;
+    const d = JSON.stringify(i[o]) !== JSON.stringify(s[o]), h = Ce.find(([c]) => c === o)?.[1] ?? o;
     return a`<div
-                class=${h ? "diff-row changed" : "diff-row"}
+                class=${d ? "diff-row changed" : "diff-row"}
                 role="row"
               >
                 <span role="rowheader"
-                  >${d}${h ? " (changed)" : ""}</span
+                  >${h}${d ? " (changed)" : ""}</span
                 >
                 <span class="before" role="cell"
                   >${Gi(i[o])}</span
@@ -15342,7 +15426,7 @@ const st = class st extends x {
     );
   }
   report(e) {
-    this.error = v(e), u(e) === "unauthorized" && (this.pending = void 0, this.review = void 0, this.dispatchEvent(
+    this.error = y(e), u(e) === "unauthorized" && (this.pending = void 0, this.review = void 0, this.dispatchEvent(
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     ));
   }
@@ -15378,23 +15462,23 @@ const st = class st extends x {
     (this.renderRoot.querySelector(
       '[name="purchased_on"]'
     )?.validity.badInput || i && (i < "1990-01-01" || i > (/* @__PURE__ */ new Date()).toISOString().slice(0, 10))) && (e.purchased_on = "Enter a valid date between January 1, 1990 and today (UTC).");
-    for (const h of ["purchase_price", "retail_price"]) {
-      const d = this.draft[h] ?? "";
-      d && (d.length > 64 || !/^[^\d\s.,+-]{1,8}\s*(?:[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+)\.[0-9]{2}$/u.test(
-        d
-      )) && (e[h] = "Enter a nonnegative price with a currency symbol and two decimal places, such as $19.99.");
+    for (const d of ["purchase_price", "retail_price"]) {
+      const h = this.draft[d] ?? "";
+      h && (h.length > 64 || !/^[^\d\s.,+-]{1,8}\s*(?:[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+)\.[0-9]{2}$/u.test(
+        h
+      )) && (e[d] = "Enter a nonnegative price with a currency symbol and two decimal places, such as $19.99.");
     }
     const n = this.draft.order_id ?? "";
     n && (!n.trim() || [...n].length > 256) && (e.order_id = "Enter a transaction ID of up to 256 characters, or leave it empty.");
     const o = this.draft.href ?? "";
     if (o) {
-      let h = o.startsWith("/movie-store/") || o.startsWith("movie-store/");
+      let d = o.startsWith("/movie-store/") || o.startsWith("movie-store/");
       try {
-        const d = new URL(o);
-        h = ["http:", "https:"].includes(d.protocol) && !!d.hostname && !d.username && !d.password;
+        const h = new URL(o);
+        d = ["http:", "https:"].includes(h.protocol) && !!h.hostname && !h.username && !h.password;
       } catch {
       }
-      (!h || [...o].length > 2048 || [...o].some((d) => d.charCodeAt(0) < 32)) && (e.href = "Enter an HTTP(S) link without credentials or a /movie-store/ path, or leave it empty.");
+      (!d || [...o].length > 2048 || [...o].some((h) => h.charCodeAt(0) < 32)) && (e.href = "Enter an HTTP(S) link without credentials or a /movie-store/ path, or leave it empty.");
     }
     return this.fieldErrors = e, Object.keys(e).length ? (this.error = "Correct the highlighted fields before reviewing the change.", !1) : Object.keys(this.changes()).length ? !0 : (this.error = "Change a purchase field or its Library association before reviewing.", !1);
   }
@@ -15444,7 +15528,7 @@ const st = class st extends x {
   render() {
     return a`
       <dialog
-        @click=${q}
+        @click=${S}
         @cancel=${this.close}
         aria-labelledby="repair-heading"
       >
@@ -15599,7 +15683,7 @@ st.properties = {
   token: { type: String },
   reverse: { type: Boolean }
 }, st.styles = [
-  S,
+  q,
   E`
       :host {
         display: block;
@@ -15712,7 +15796,7 @@ const ne = {
       this.scope,
       !1,
       (i) => {
-        t === this.generation && (i && u(i) === "unauthorized" ? this.fail(i) : (this.preferenceError = i ? v(i) : "", this.requestUpdate()));
+        t === this.generation && (i && u(i) === "unauthorized" ? this.fail(i) : (this.preferenceError = i ? y(i) : "", this.requestUpdate()));
       },
       "database"
     );
@@ -15748,7 +15832,7 @@ const ne = {
     if (!this.fitPage || this.blocked || this.operation || !this.page) return;
     const e = this.renderRoot.querySelector(".entry-list");
     if (!e || e.clientHeight <= 0) return;
-    const t = [...e.querySelectorAll("li")].map((h) => h.getBoundingClientRect().height).filter((h) => h > 0);
+    const t = [...e.querySelectorAll("li")].map((d) => d.getBoundingClientRect().height).filter((d) => d > 0);
     if (!t.length) return;
     const i = Math.max(
       1,
@@ -15779,7 +15863,7 @@ const ne = {
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     ));
     const t = u(e), i = e?.message;
-    this.error = ["query_syntax", "conflict", "invalid_request", "busy"].includes(t) && typeof i == "string" && i !== t ? i : v(e), this.requestUpdate();
+    this.error = ["query_syntax", "conflict", "invalid_request", "busy"].includes(t) && typeof i == "string" && i !== t ? i : y(e), this.requestUpdate();
   }
   async load(e = 0, t, i) {
     if (!this.client || !this.scope || !this.ready || this.pending) return;
@@ -15795,9 +15879,9 @@ const ne = {
       );
       if (s !== this.generation || n !== this.request) return;
       if (this.page = o, i) {
-        const h = o.schema?.filter((d) => d.primary).map((d) => d.name) ?? [];
+        const d = o.schema?.filter((h) => h.primary).map((h) => h.name) ?? [];
         this.detail = o.items.find(
-          (d) => h.length ? h.every((c) => d[c] === i[c]) : JSON.stringify(d) === JSON.stringify(i)
+          (h) => d.length ? d.every((c) => h[c] === i[c]) : JSON.stringify(h) === JSON.stringify(i)
         );
       }
       this.filters.sort = o.sort;
@@ -15807,10 +15891,10 @@ const ne = {
       if (s === this.generation && n === this.request && (this.loading = !1, this.requestUpdate(), await this.updateComplete, s === this.generation && n === this.request)) {
         const o = this.renderRoot.querySelector(".entry-list");
         o && (o.scrollTop = 0);
-        const h = this.renderRoot.querySelector("li.selected");
-        i && h && o && (o.scrollTop = Math.max(
+        const d = this.renderRoot.querySelector("li.selected");
+        i && d && o && (o.scrollTop = Math.max(
           0,
-          h.offsetTop - o.offsetTop + h.offsetHeight - o.clientHeight
+          d.offsetTop - o.offsetTop + d.offsetHeight - o.clientHeight
         ));
       }
     }
@@ -15820,11 +15904,11 @@ const ne = {
       return;
     const t = [];
     for (const [n, o] of Object.entries(e.key)) {
-      const h = this.detail[o];
-      if (h == null || !/^[a-z_]+$/.test(n) || !["string", "number"].includes(typeof h))
+      const d = this.detail[o];
+      if (d == null || !/^[a-z_]+$/.test(n) || !["string", "number"].includes(typeof d))
         return;
       t.push(
-        `${n} = ${typeof h == "number" ? h : `'${String(h).replaceAll("'", "''")}'`}`
+        `${n} = ${typeof d == "number" ? d : `'${String(d).replaceAll("'", "''")}'`}`
       );
     }
     oe.includes(e.table) || (this.showSystem = !0, this.preferences?.set({ show_system: !0 })), this.table = e.table, this.search = `WHERE ${t.join(" AND ")}`, this.filters = {
@@ -16009,7 +16093,7 @@ const ne = {
     return a`<dialog
       id="database-options"
       class="database-dialog"
-      @click=${q}
+      @click=${S}
     >
       <div class="card-head">
         <h2>Database options</h2>
@@ -16280,7 +16364,7 @@ const ne = {
       <dialog
         id="database-edit"
         class="database-dialog"
-        @click=${q}
+        @click=${S}
         @cancel=${this.close}
       >
         <div class="card-head">
@@ -16307,7 +16391,7 @@ const ne = {
                     @draft-change=${(i) => {
       this.createDraft = i.detail, this.requestUpdate();
     }}
-                    @access-denied=${() => this.fail(new b("unauthorized"))}
+                    @access-denied=${() => this.fail(new v("unauthorized"))}
                   ></kaleidescape-manual-viewing>` : (this.page?.schema ?? []).filter((i) => i.editable).map(
       (i) => a`<div class="database-edit-field">
                           <label
@@ -16370,7 +16454,7 @@ const ne = {
       <dialog
         id="database-delete"
         class="database-dialog"
-        @click=${q}
+        @click=${S}
         @cancel=${this.close}
       >
         <div class="card-head">
@@ -16411,7 +16495,7 @@ const ne = {
 at.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 }
-}, at.styles = [S, bi, Fa];
+}, at.styles = [q, bi, Fa];
 let ii = at;
 customElements.get("kaleidescape-database") || customElements.define("kaleidescape-database", ii);
 function Ha(r, e, t) {
@@ -16459,7 +16543,7 @@ const yt = [
 ], rt = class rt extends x {
   constructor() {
     super(), this.narrow = !1, this.api = null, this.generation = 0, this.mutationEpoch = 0, this.listRequest = 0, this.detailRequest = 0, this.info = null, this.rows = [], this.selected = null, this.editMovieId = null, this.editTitleTouched = !1, this.draft = null, this.initial = null, this.manual = null, this.manualInitial = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.journalReady = !1, this.sessions = null, this.sessionError = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.nextCursor = null, this.history = [], this.page = 1, this.loading = !1, this.detailLoading = !1, this.saving = !1, this.pending = null, this.confirmDelete = !1, this.error = "", this.lastError = "", this.notice = "", this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.settingsBusy = !1, this.maintenanceBusy = !1, this.advancedView = !0, this.modeReady = !1, this.modeScope = "", this.modeError = "", this.controlLocked = !1, this.locationChanged = () => {
-      this.navigationReady && this.advancedView && this.info?.permissions.edit && this.info.library_enabled && this.activePage !== "library" && be() && Se(void 0, !0) && this.switchPage("library");
+      this.navigationReady && this.advancedView && this.info?.permissions.edit && this.info.library_enabled && this.activePage !== "library" && be() && qe(void 0, !0) && this.switchPage("library");
     }, mi(this), me(this, () => {
       const e = this.renderRoot.querySelector(
         "kaleidescape-reader"
@@ -16522,7 +16606,7 @@ const yt = [
     this.api !== e && (this.clearPrivate(), this.api = e, this.error = "", this.requestUpdate(), e && this.refresh());
   }
   fail(e) {
-    u(e) === "unauthorized" && this.clearPrivate(), this.lastError = u(e), this.error = v(e), this.requestUpdate();
+    u(e) === "unauthorized" && this.clearPrivate(), this.lastError = u(e), this.error = y(e), this.requestUpdate();
   }
   dirty() {
     return this.manual ? JSON.stringify(this.manual) !== this.manualInitial : this.draft && (this.editTitleTouched || JSON.stringify(this.draft) !== JSON.stringify(this.initial));
@@ -16549,12 +16633,12 @@ const yt = [
     try {
       let { entries: s } = await t.info();
       for (let o = 0; e && !s.length && o < 20; o++) {
-        if (await new Promise((h) => setTimeout(h, 500)), i !== this.generation) return;
+        if (await new Promise((d) => setTimeout(d, 500)), i !== this.generation) return;
         ({ entries: s } = await t.info());
       }
       if (i !== this.generation) return;
-      if (!s.length) throw new b("not_ready");
-      if (s[0].api_version !== 1) throw new b("not_ready");
+      if (!s.length) throw new v("not_ready");
+      if (s[0].api_version !== 1) throw new v("not_ready");
       if (this.info = s[0], !this.info.permissions.edit) return;
       const n = `${this.info.entry_id}:${this.info.dataset_id}`;
       if (!this.modePreferences || !this.modeReady || this.modeScope !== n) {
@@ -16563,15 +16647,15 @@ const yt = [
           t,
           this.info,
           !1,
-          (d) => {
-            this.modePreferences === o && (this.modeError = d ? v(d) : "", this.requestUpdate());
+          (h) => {
+            this.modePreferences === o && (this.modeError = h ? y(h) : "", this.requestUpdate());
           },
           "interface"
         );
         this.modePreferences = o, this.modeScope = n;
-        const h = await o.load();
+        const d = await o.load();
         if (i !== this.generation) return;
-        this.advancedView = h.advanced_view === !0, this.modeReady = !0;
+        this.advancedView = d.advanced_view === !0, this.modeReady = !0;
       }
       this.navigationReady || (this.activePage = Nt(
         this.info.ui_defaults?.default_landing_page,
@@ -16617,18 +16701,18 @@ const yt = [
     const i = this.api, s = this.info, n = this.generation, o = ++this.detailRequest;
     this.detailLoading = !0, this.error = "", this.notice = "", this.requestUpdate();
     try {
-      const h = await i.get(s, e);
+      const d = await i.get(s, e);
       if (n !== this.generation || o !== this.detailRequest)
         return;
-      this.selected = h, this.draft = this.initial = null, this.timingAnchor = void 0, this.detailLoading = !1, this.requestUpdate();
+      this.selected = d, this.draft = this.initial = null, this.timingAnchor = void 0, this.detailLoading = !1, this.requestUpdate();
       try {
-        const d = await i.sessions(s, e);
-        n === this.generation && o === this.detailRequest && (this.sessions = d);
-      } catch (d) {
-        n === this.generation && o === this.detailRequest && (u(d) === "unauthorized" ? this.fail(d) : this.sessionError = "Session details could not be loaded.");
+        const h = await i.sessions(s, e);
+        n === this.generation && o === this.detailRequest && (this.sessions = h);
+      } catch (h) {
+        n === this.generation && o === this.detailRequest && (u(h) === "unauthorized" ? this.fail(h) : this.sessionError = "Session details could not be loaded.");
       }
-    } catch (h) {
-      n === this.generation && o === this.detailRequest && this.fail(h);
+    } catch (d) {
+      n === this.generation && o === this.detailRequest && this.fail(d);
     } finally {
       n === this.generation && o === this.detailRequest && (this.detailLoading = !1, this.requestUpdate());
     }
@@ -16768,7 +16852,7 @@ const yt = [
                 @draft-change=${(e) => {
       this.manual = e.detail, this.requestUpdate();
     }}
-                @access-denied=${() => this.fail(new b("unauthorized"))}
+                @access-denied=${() => this.fail(new v("unauthorized"))}
               ></kaleidescape-manual-viewing>` : za(
       this.draft,
       (e, t) => this.input(e, t),
@@ -16783,7 +16867,7 @@ const yt = [
                     @title-selection=${(e) => {
         this.draft && (this.editTitleTouched = !0, this.editMovieId = e.detail.movie?.id ?? null, this.draft = { ...this.draft, title: e.detail.query }, this.requestUpdate());
       }}
-                    @access-denied=${() => this.fail(new b("unauthorized"))}
+                    @access-denied=${() => this.fail(new v("unauthorized"))}
                   ></kaleidescape-library-title-picker>
                   <small
                     >Selecting a different movie keeps the recorded times and
@@ -16964,7 +17048,7 @@ const yt = [
               .client=${this.api}
               .scope=${this.info}
               .disabled=${t}
-              @access-denied=${() => this.fail(new b("unauthorized"))}
+              @access-denied=${() => this.fail(new v("unauthorized"))}
               @journal-options=${(i) => {
       this.journalReady = !0, this.journalView = i.detail.view, this.calendarSize = i.detail.calendar_size, this.calendarFit = i.detail.calendar_fit;
       const s = this.fuzzySearch !== i.detail.fuzzy_search;
@@ -16990,7 +17074,7 @@ const yt = [
               .editable=${!0}
               @edit-viewing=${(i) => this.editCalendarViewing(i.detail)}
               @browse-library=${(i) => this.switchPage("library", { libraryCriterion: i.detail })}
-              @access-denied=${() => this.fail(new b("unauthorized"))}
+              @access-denied=${() => this.fail(new v("unauthorized"))}
             ></kaleidescape-journal-calendar>` : a`
               <div class="entries-layout">
                 <section class="entries-list" aria-label="Journal entries">
@@ -17047,7 +17131,7 @@ const yt = [
     }}
                               .disabled=${t}
                               .advanced=${!0}
-                              @access-denied=${() => this.fail(new b("unauthorized"))}
+                              @access-denied=${() => this.fail(new v("unauthorized"))}
                               @browse-library=${(i) => this.switchPage("library", { libraryCriterion: i.detail })}
                             ></kaleidescape-viewing-library>
                             ${this.selected.notes ? a`<h3>Notes</h3>
@@ -17127,7 +17211,7 @@ const yt = [
         data-admin-dialog
         class="database-dialog journal-dialog"
         aria-labelledby="journal-editor-title"
-        @click=${q}
+        @click=${S}
         @cancel=${this.cancelEdit}
       >
         <div class="card-head">
@@ -17146,7 +17230,7 @@ const yt = [
         data-admin-dialog
         class="database-dialog"
         aria-labelledby="journal-delete-title"
-        @click=${q}
+        @click=${S}
         @cancel=${this.cancelDelete}
       >
         <div class="card-head">
@@ -17247,14 +17331,14 @@ const yt = [
                         .advanced=${!0}
                         .openTitleId=${this.libraryTitleId}
                         .openCriterion=${this.libraryCriterion}
-                        @access-denied=${() => this.fail(new b("unauthorized"))}
+                        @access-denied=${() => this.fail(new v("unauthorized"))}
                         @library-disabled=${() => {
       this.activePage = "journal", this.refresh();
     }}
                       ></kaleidescape-library>` : this.activePage === "database" ? a`<kaleidescape-database
                           .client=${this.api}
                           .scope=${this.info}
-                          @access-denied=${() => this.fail(new b("unauthorized"))}
+                          @access-denied=${() => this.fail(new v("unauthorized"))}
                           @maintenance-busy=${(t) => {
       this.maintenanceBusy !== t.detail && (this.maintenanceBusy = t.detail, this.requestUpdate());
     }}
@@ -17262,7 +17346,7 @@ const yt = [
                         ></kaleidescape-database>` : this.activePage === "settings" ? a`<kaleidescape-settings
                             .client=${this.api}
                             .scope=${this.info}
-                            @access-denied=${() => this.fail(new b("unauthorized"))}
+                            @access-denied=${() => this.fail(new v("unauthorized"))}
                             @settings-busy=${(t) => {
       this.settingsBusy !== t.detail && (this.settingsBusy = t.detail, this.requestUpdate());
     }}
@@ -17297,7 +17381,7 @@ rt.properties = {
   hass: { attribute: !1 },
   client: { attribute: !1 },
   narrow: { type: Boolean }
-}, rt.styles = [S, bi, ls];
+}, rt.styles = [q, bi, ls];
 let si = rt;
 customElements.get("kaleidescape-panel") || customElements.define("kaleidescape-panel", si);
 export {

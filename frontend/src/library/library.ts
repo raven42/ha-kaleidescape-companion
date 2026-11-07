@@ -38,7 +38,7 @@ import {
   movieStatusLabel,
   movieStatuses,
 } from "./badges";
-import type { MovieStatusLabels } from "./badges";
+import type { LibraryBadgeStyle, MovieStatusLabels } from "./badges";
 import "./collections";
 import "./library-journal";
 import "./title-edit";
@@ -270,6 +270,7 @@ export class KaleidescapeLibrary extends LitElement {
   private mode: "list" | "covers" = "list";
   private coverSize = 150;
   private movieStatusLabels: MovieStatusLabels = "modern";
+  private libraryBadgeStyle: LibraryBadgeStyle = "icons";
   private display = {
     show_titles: true,
     show_format: true,
@@ -474,6 +475,8 @@ export class KaleidescapeLibrary extends LitElement {
         values.movie_status_labels === "kaleidescape"
           ? "kaleidescape"
           : "modern";
+      this.libraryBadgeStyle =
+        values.library_badge_style === "text" ? "text" : "icons";
       this.castLimit = Number.isInteger(values.cast_limit)
         ? (values.cast_limit as number)
         : 8;
@@ -563,6 +566,7 @@ export class KaleidescapeLibrary extends LitElement {
     this.covers = new CoverQueue();
     this.fuzzySearch = true;
     this.movieStatusLabels = "modern";
+    this.libraryBadgeStyle = "icons";
     this.castLimit = 8;
     this.display = {
       show_titles: true,
@@ -589,6 +593,7 @@ export class KaleidescapeLibrary extends LitElement {
     for (const [name, value] of [
       ["library_page_size", String(this.entriesPerPage)],
       ["library_sort", String(this.applied.sort)],
+      ["library_badge_style", this.libraryBadgeStyle],
     ]) {
       const select = this.renderRoot.querySelector<HTMLSelectElement>(
         `[name="${name}"]`,
@@ -1448,6 +1453,32 @@ export class KaleidescapeLibrary extends LitElement {
           <legend>View type</legend>
           ${(["list", "covers"] as const).map((mode) => html`<label class="check"><input type="radio" name="library_view" value=${mode} .checked=${this.mode === mode} @change=${() => this.setMode(mode)} />${mode === "list" ? "List" : "Cover"}</label>`)}
         </fieldset>
+        <label
+          >Library badge style<select
+            name="library_badge_style"
+            .value=${this.libraryBadgeStyle}
+            @change=${(event: Event) => {
+              this.libraryBadgeStyle =
+                (event.target as HTMLSelectElement).value === "text"
+                  ? "text"
+                  : "icons";
+              this.preferences?.set({
+                library_badge_style: this.libraryBadgeStyle,
+              });
+              this.requestUpdate();
+            }}
+          >
+            <option
+              value="icons"
+              ?selected=${this.libraryBadgeStyle === "icons"}
+            >
+              Icons
+            </option>
+            <option value="text" ?selected=${this.libraryBadgeStyle === "text"}>
+              Text
+            </option>
+          </select></label
+        >
         <label
           >Movie status labels<select
             name="movie_status_labels"
@@ -2389,7 +2420,7 @@ export class KaleidescapeLibrary extends LitElement {
                       @click=${() => this.select(item)}
                     >
                       <div class="cover-image">${this.cover(item)}</div>
-                      ${this.display.show_badges ? html`<div class="cover-flags">${renderStatusBadges(item, true, ["unwatched"], this.movieStatusLabels)}</div>` : nothing}
+                      ${this.display.show_badges ? html`<div class="cover-flags">${renderStatusBadges(item, true, ["unwatched"], this.movieStatusLabels, this.libraryBadgeStyle)}</div>` : nothing}
                       ${this.display.show_format ? html`<div class="cover-formats">${renderFormatBadges(item, true)}</div>` : nothing}
                       ${this.display.show_rating ? html`<div class="cover-rating">${renderRatingBadge(item.rating)}</div>` : nothing}
                       ${this.conflictIcon(item)}
@@ -2480,7 +2511,7 @@ export class KaleidescapeLibrary extends LitElement {
                               class="library-summary-line"
                               title=${this.format(item)}
                             >
-                              ${this.display.show_badges ? renderStatusBadges(item, false, [], this.movieStatusLabels) : nothing}
+                              ${this.display.show_badges ? renderStatusBadges(item, false, [], this.movieStatusLabels, this.libraryBadgeStyle) : nothing}
                               ${this.display.show_format ? renderFormatBadges(item) : nothing}
                               ${this.display.show_format && !formatBadges(item).length ? html`<small>${this.format(item)}</small>` : nothing}
                               ${(item.version_count ?? 1) > 1 ? html`<small>${counted(item.version_count!, "version")}</small>` : nothing}

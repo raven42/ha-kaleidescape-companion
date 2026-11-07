@@ -172,6 +172,7 @@ class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
             )
         defaults = await self.repository.async_ui_preferences("a")
         self.assertEqual(defaults["values"]["movie_status_labels"], "modern")
+        self.assertEqual(defaults["values"]["library_badge_style"], "icons")
         await self.repository.async_ui_preferences_update(
             "a",
             False,
@@ -179,16 +180,24 @@ class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
             defaults["revision"],
             {
                 "movie_status_labels": "kaleidescape",
+                "library_badge_style": "text",
                 "recently_added": True,
                 "status": ["favorite", "watch_soon", "recently_added"],
             },
         )
         saved = (await self.repository.async_ui_preferences("a"))["values"]
         self.assertEqual(saved["movie_status_labels"], "kaleidescape")
+        self.assertEqual(saved["library_badge_style"], "text")
         self.assertTrue(saved["recently_added"])
         self.assertEqual(saved["status"], ["favorite", "watch_soon", "recently_added"])
         self.assertEqual(
             (await self.repository.async_ui_preferences("b"))["values"]["status"], []
+        )
+        self.assertEqual(
+            (await self.repository.async_ui_preferences("b"))["values"][
+                "library_badge_style"
+            ],
+            "icons",
         )
 
     async def test_interface_mode_validation_and_retired_library_switch(
@@ -479,6 +488,8 @@ class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
             {"show_format": 1},
             {"show_badges": None},
             {"movie_status_labels": "other"},
+            {"library_badge_style": "other"},
+            {"library_badge_style": None},
             {"recently_added": 1},
             {"status": ["invalid"]},
             {"actor": [1]},
@@ -522,13 +533,15 @@ class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
         with closing(sqlite3.connect(self.path)) as db:
             db.execute(
                 "UPDATE settings SET value=json_remove(value, '$.show_titles', "
-                "'$.show_format', '$.show_badges') WHERE owner='user:a'"
+                "'$.show_format', '$.show_badges', '$.library_badge_style') "
+                "WHERE owner='user:a'"
             )
             db.commit()
         old = await self.repository.async_ui_preferences("a")
         self.assertTrue(old["values"]["show_titles"])
         self.assertTrue(old["values"]["show_format"])
         self.assertTrue(old["values"]["show_badges"])
+        self.assertEqual(old["values"]["library_badge_style"], "icons")
         self.assertEqual(old["values"]["view"], "covers")
         await self.repository.async_ui_preferences_update(
             "a",

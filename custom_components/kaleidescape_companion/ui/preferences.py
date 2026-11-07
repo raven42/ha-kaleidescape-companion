@@ -23,6 +23,7 @@ LIBRARY_DEFAULTS = {
     "show_titles": True,
     "show_format": True,
     "show_badges": True,
+    "library_badge_style": "icons",
     "movie_status_labels": "modern",
     "show_rating": False,
     "show_library_cost": False,
@@ -85,6 +86,8 @@ def validate_library(patch, previous=None):
         raise invalid("Invalid Library view/sort")
     if values["movie_status_labels"] not in ("modern", "kaleidescape"):
         raise invalid("Choose Kaleidescape or Modern movie status labels")
+    if values["library_badge_style"] not in ("icons", "text"):
+        raise invalid("Choose Icons or Text library badges")
     seed = values["random_seed"]
     if not isinstance(seed, str) or (seed and not re.fullmatch(r"[a-f0-9]{32}", seed)):
         raise invalid("Invalid Library shuffle seed")
