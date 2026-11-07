@@ -30,6 +30,7 @@ it("hides Journal when a movie has no viewing entries", async () => {
   );
   await element.updateComplete;
   expect(element.shadowRoot!.querySelector("details")).toBeNull();
+  expect(element.hasAttribute("hidden")).toBe(true);
 });
 
 it("shows each viewing and opens its existing detail popup without Library crosslinks", async () => {
@@ -50,6 +51,7 @@ it("shows each viewing and opens its existing detail popup without Library cross
     expect(element.shadowRoot!.querySelectorAll("li")).toHaveLength(2),
   );
   const details = element.shadowRoot!.querySelector("details")!;
+  expect(element.hasAttribute("hidden")).toBe(false);
   expect(details.open).toBe(false);
   details.open = true;
   element.shadowRoot!.querySelector<HTMLButtonElement>("li button")!.click();

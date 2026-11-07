@@ -585,6 +585,39 @@ export class FixtureTransport implements Transport {
           ]),
         ),
       ];
+      const matchesStatus = (row: LibraryTitle, selected: string[]) => {
+        const group = filters.grouped
+          ? this.libraryTitles.filter(
+              (candidate) => this.groupKey(candidate) === this.groupKey(row),
+            )
+          : [row];
+        return selected.some((status) =>
+          group.some((candidate) => {
+            if (status === "favorite")
+              return (
+                !!candidate.is_favorite ||
+                candidate.collections.some(
+                  (name) => name.toLowerCase() === "favorites",
+                )
+              );
+            if (status === "watch_soon")
+              return (
+                !!candidate.is_watch_soon ||
+                candidate.collections.some(
+                  (name) =>
+                    name.toLowerCase().replace(/[\s_-]+/g, "") === "watchsoon",
+                )
+              );
+            if (status === "recently_added")
+              return !!candidate.is_recently_added;
+            return (
+              candidate.movie_statuses?.includes(
+                status as "watched" | "unwatched" | "in_progress",
+              ) ?? candidate.watched_status === status
+            );
+          }),
+        );
+      };
       let rows = this.libraryTitles.filter(
         (row) =>
           (!filters.scraper_conflict || !!row.scraper_conflict) &&
@@ -603,7 +636,7 @@ export class FixtureTransport implements Transport {
             )) &&
           (!filters.status ||
             !(filters.status as string[]).length ||
-            (filters.status as string[]).includes(row.watched_status)),
+            matchesStatus(row, filters.status as string[])),
       );
       for (const [filter, key] of [
         ["actor", "actors"],

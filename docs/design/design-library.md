@@ -753,7 +753,7 @@ check. Removal will need its own verified contract and security review.
 
 | Badge                         | Criterion and cover placement                                                                     |
 | ----------------------------- | ------------------------------------------------------------------------------------------------- |
-| Watched · green check         | Source Played status, unless Paused takes priority; top-left triangle                             |
+| Watched · green check         | Source Played status; top-left triangle or an additional status label                             |
 | In progress · amber ring      | Source Paused status; top-left triangle, with no invented completion percentage                   |
 | Watch Soon · blue clock       | An available version belongs to WatchSoon; top-left triangle when neither In progress nor Watched |
 | Recently Added · purple label | Retained `recently_added` sensor batch membership or a recent linked purchase; top-left label     |
@@ -761,11 +761,14 @@ check. Removal will need its own verified contract and security review.
 
 Library options choose **Modern format** (the default: Unwatched, Watched, In
 progress) or **Kaleidescape format** (New, Played, Paused). The choice only
-renames the same collection-derived statuses. The Movie status filter uses the
-same status and naming choice; those three source collections are not repeated
-in the Collection filter. The separate **Recently added** filter uses the same
-retained batch and purchase window as the Recently Added badge and can be
-combined with other Library filters.
+renames the same collection-derived statuses. One Movie status filter groups
+Watched, Unwatched, In progress, Favorites, Watch Soon and Recently Added; any
+selected badge can match. Other filter categories still combine with that group.
+All, Unknown and No status are omitted, and the source collections represented
+by the status badges are not repeated in the Collection filter. The Recently
+Added choice uses the same retained batch and purchase window as its badge.
+Unwatched/New remains available as a filter and in list and movie details but is
+not shown as a cover badge.
 
 Watched and In progress can both appear if their source memberships overlap.
 Watch Soon is shown in the status corner when neither is present. Recently Added

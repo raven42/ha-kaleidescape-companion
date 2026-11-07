@@ -652,17 +652,128 @@ it("applies and persists the Recently added filter", async () => {
   transport.libraryTitles[0].is_recently_added = true;
   button("Filters").click();
   await flush();
-  root().querySelector<HTMLInputElement>('[name="recently_added"]')!.click();
+  root()
+    .querySelector<HTMLInputElement>('[name="status"][value="recently_added"]')!
+    .click();
   button("Apply filters").click();
   await flush();
   expect(
     transport.calls.filter((call) => call.type.endsWith("library/list")).at(-1)!
       .filters,
-  ).toMatchObject({ recently_added: true });
+  ).toMatchObject({ status: ["recently_added"] });
   expect(root().querySelectorAll("tbody tr")).toHaveLength(1);
   await vi.waitFor(() =>
-    expect(transport.uiPreferences.recently_added).toBe(true),
+    expect(transport.uiPreferences.status).toEqual(["recently_added"]),
   );
+});
+
+it("groups the six requested badges into one filter with any-match behavior", async () => {
+  transport.libraryTitles[0].collections = [
+    "All",
+    "Played",
+    "New",
+    "Paused",
+    "Favorites",
+    "WatchSoon",
+  ];
+  transport.libraryTitles[0].watched_status = "watched";
+  transport.libraryTitles[1].watched_status = "none";
+  transport.libraryTitles[1].collections = [];
+  transport.libraryTitles[2].watched_status = "none";
+  transport.libraryTitles[2].collections = [];
+  transport.libraryTitles[2].is_recently_added = true;
+  button("Refresh cached data").click();
+  await flush();
+  button("Filters").click();
+  await flush();
+  const rootDialog = root().querySelector<HTMLDialogElement>("#filter-dialog")!;
+  const filters = [
+    ...rootDialog.querySelectorAll<HTMLInputElement>('input[name="status"]'),
+  ];
+  expect(filters.map((input) => input.value)).toEqual([
+    "watched",
+    "unwatched",
+    "in_progress",
+    "favorite",
+    "watch_soon",
+    "recently_added",
+  ]);
+  expect(
+    filters.map((input) =>
+      input
+        .parentElement!.querySelector(".collection-badge > span")!
+        .textContent!.trim(),
+    ),
+  ).toEqual([
+    "Watched",
+    "Unwatched",
+    "In progress",
+    "Favorites",
+    "Watch Soon",
+    "Recently Added",
+  ]);
+  expect(
+    rootDialog.querySelector('[name="collection"][value="All"]'),
+  ).toBeNull();
+  expect(
+    rootDialog.querySelector('[name="status"][value="unknown"]'),
+  ).toBeNull();
+  expect(rootDialog.querySelector('[name="status"][value="none"]')).toBeNull();
+  expect(
+    [...rootDialog.querySelectorAll("legend")].some(
+      (node) => node.textContent?.trim() === "Collection",
+    ),
+  ).toBe(false);
+  filters.find((input) => input.value === "watched")!.click();
+  filters.find((input) => input.value === "recently_added")!.click();
+  button("Apply filters").click();
+  await flush();
+  expect(root().querySelectorAll("tbody tr")).toHaveLength(2);
+  await vi.waitFor(() =>
+    expect(transport.uiPreferences.status).toEqual([
+      "watched",
+      "recently_added",
+    ]),
+  );
+  expect(
+    transport.calls.filter((call) => call.type.endsWith("library/list")).at(-1)!
+      .filters,
+  ).toMatchObject({ status: ["watched", "recently_added"] });
+});
+
+it("omits the Unwatched or New badge from covers while retaining Recently Added", async () => {
+  transport.libraryTitles[0].watched_status = "unwatched";
+  transport.libraryTitles[0].collections = ["New"];
+  transport.libraryTitles[0].is_recently_added = true;
+  button("Refresh cached data").click();
+  await flush();
+  expect(
+    title("Voyage to Europa")
+      .closest("tr")!
+      .querySelector('[aria-label="Unwatched"]'),
+  ).toBeTruthy();
+  button("Options").click();
+  await flush();
+  root()
+    .querySelector<HTMLInputElement>(
+      'input[name="library_view"][value="covers"]',
+    )!
+    .click();
+  await flush();
+  const cover = () =>
+    root().querySelector<HTMLButtonElement>(
+      '.cover-tile[aria-label*="Voyage to Europa"]',
+    )!;
+  expect(cover().querySelector('[aria-label="Unwatched"]')).toBeNull();
+  expect(cover().querySelector('[aria-label="Recently Added"]')).toBeTruthy();
+  const labels = root().querySelector<HTMLSelectElement>(
+    '[name="movie_status_labels"]',
+  )!;
+  labels.value = "kaleidescape";
+  labels.dispatchEvent(new Event("change", { bubbles: true }));
+  await flush();
+  expect(cover().querySelector('[aria-label="New"]')).toBeNull();
+  expect(cover().querySelector('[aria-label="Recently Added"]')).toBeTruthy();
 });
 
 it("shows group purchases across version tabs and opens the selected receipt editor", async () => {
@@ -880,7 +991,7 @@ it("replaces all criteria when clicking people, years, genres, collections, stat
     ["Fictional Director", "query", "Fictional Director"],
     ["2025", "year", ["2025"]],
     ["Adventure", "genre", ["Adventure"]],
-    ["Favorites", "collection", ["Favorites"]],
+    ["Favorites", "status", ["favorite"]],
     ["Watched", "status", ["watched"]],
     ["4K", "format", ["4K"]],
     ["HDR10", "format", ["HDR10"]],

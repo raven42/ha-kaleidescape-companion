@@ -283,7 +283,7 @@ export function renderCollectionBadge(
   const content = html`${collectionSymbol(value)}<span
       >${collectionLabel(value)}</span
     >`;
-  const className = `collection-badge collection-${collectionKind(value)}`;
+  const className = `collection-badge collection-${collectionKind(value)}${value.toLowerCase() === "recently added" ? " status-recent" : ""}`;
   return select
     ? html`<button
         type="button"

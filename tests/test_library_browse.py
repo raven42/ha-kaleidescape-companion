@@ -95,6 +95,69 @@ class GroupedLibraryTest(unittest.IsolatedAsyncioTestCase):
         search = await self.repository.async_library_search(SOURCE, "Voyage", "")
         self.assertTrue(all(row["is_watch_soon"] for row in search["items"]))
 
+    async def test_movie_badge_filters_match_any_and_follow_group_memberships(self):
+        names = ("played", "new", "paused", "favorite", "soon", "ordinary")
+        rows = [
+            {
+                **ROWS[0],
+                "source_group": name,
+                "source_handle": name,
+                "title": name,
+                "genres": ["Drama" if name in ("played", "recent") else "Adventure"],
+            }
+            for name in names
+        ]
+        collections = {
+            "Played": ["played"],
+            "New": ["new"],
+            "Paused": ["paused"],
+            "Favorites": ["favorite"],
+            "WatchSoon": ["soon"],
+        }
+        await self.repository.async_library_catalog(ORIGIN, rows, collections)
+        recent = {
+            **ROWS[0],
+            "source_group": "recent",
+            "source_handle": "recent",
+            "title": "recent",
+            "genres": ["Drama"],
+        }
+        await self.repository.async_library_catalog(
+            ORIGIN, [*rows, recent], collections
+        )
+        for status, expected in (
+            ("watched", "played"),
+            ("unwatched", "new"),
+            ("in_progress", "paused"),
+            ("favorite", "favorite"),
+            ("watch_soon", "soon"),
+            ("recently_added", "recent"),
+        ):
+            page = await self.repository.async_library_list(
+                SOURCE, {"grouped": True, "status": [status]}, "Favorites\nWatchSoon", 0
+            )
+            self.assertEqual([row["title"] for row in page["items"]], [expected])
+        page = await self.repository.async_library_list(
+            SOURCE,
+            {"grouped": True, "status": ["watched", "favorite", "recently_added"]},
+            "",
+            0,
+        )
+        self.assertEqual(
+            {row["title"] for row in page["items"]}, {"played", "favorite", "recent"}
+        )
+        page = await self.repository.async_library_list(
+            SOURCE,
+            {
+                "grouped": True,
+                "status": ["watched", "favorite", "recently_added"],
+                "genre": ["Drama"],
+            },
+            "",
+            0,
+        )
+        self.assertEqual({row["title"] for row in page["items"]}, {"played", "recent"})
+
     async def test_group_ratings_include_versions_beyond_the_current_detail_page(self):
         await self.repository.async_library_catalog(
             ORIGIN,

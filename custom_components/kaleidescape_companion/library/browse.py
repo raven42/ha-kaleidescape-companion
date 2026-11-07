@@ -568,6 +568,9 @@ def library_list(db, source, filters, excluded="", cache=None, weeks=2, today=No
                 "watched",
                 "unwatched",
                 "in_progress",
+                "favorite",
+                "watch_soon",
+                "recently_added",
                 "unknown",
                 "none",
             }:
@@ -580,6 +583,9 @@ def library_list(db, source, filters, excluded="", cache=None, weeks=2, today=No
                 f"(wanted.value='unwatched' AND {new}) OR "
                 f"(wanted.value='watched' AND {played}) OR "
                 f"(wanted.value='in_progress' AND {paused}) OR "
+                f"(wanted.value='favorite' AND ({FAVORITE_SQL})) OR "
+                f"(wanted.value='watch_soon' AND ({WATCH_SOON_SQL})) OR "
+                f"(wanted.value='recently_added' AND ({recent_sql(weeks, today)})) OR "
                 f"(wanted.value='none' AND NOT ({new} OR {played} OR {paused}) "
                 f"AND ({STATUS_SQL})!='unknown') OR "
                 f"(wanted.value='unknown' AND ({STATUS_SQL})='unknown'))"

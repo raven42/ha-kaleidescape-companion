@@ -17,9 +17,14 @@ export class LibraryJournal extends LitElement {
     styles,
     css`
       :host {
-        display: block;
-        margin-top: 12px;
+        display: flow-root;
         font-size: 11px;
+      }
+      :host([hidden]) {
+        display: none;
+      }
+      details {
+        margin-top: 12px;
       }
       .viewing button {
         font-size: inherit;
@@ -70,6 +75,10 @@ export class LibraryJournal extends LitElement {
   private dialogReady = false;
   private detailRequest = 0;
   private editChooser = false;
+
+  protected updated() {
+    this.toggleAttribute("hidden", !this.items.length && !this.error);
+  }
 
   private edit(row: ViewingSummary) {
     this.editChooser = false;

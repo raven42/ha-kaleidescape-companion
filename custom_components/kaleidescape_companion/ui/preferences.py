@@ -146,6 +146,9 @@ def validate_library(patch, previous=None):
         "watched",
         "unwatched",
         "in_progress",
+        "favorite",
+        "watch_soon",
+        "recently_added",
         "unknown",
         "none",
     }:

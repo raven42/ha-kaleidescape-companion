@@ -390,6 +390,57 @@ it("persists applied facets across remount, discards drafts, and saves Clear Fil
   await flush();
   expect(transport.uiPreferences.status).toEqual([]);
 });
+it("moves saved collection and recent filters into the consolidated badge group", async () => {
+  const transport = new FixtureTransport();
+  transport.libraryTitles[0].collections.push("Fav-orites");
+  transport.uiPreferences.collection = [
+    "All",
+    "Favorites",
+    "Watch Soon",
+    "New",
+    "Fav-orites",
+  ];
+  transport.uiPreferences.status = ["watched", "unknown", "none"];
+  transport.uiPreferences.recently_added = true;
+  const root = await mount(transport);
+  await vi.waitFor(() =>
+    expect(transport.uiPreferences.status).toEqual([
+      "watched",
+      "favorite",
+      "watch_soon",
+      "unwatched",
+      "recently_added",
+    ]),
+  );
+  expect(transport.uiPreferences.collection).toEqual(["Fav-orites"]);
+  expect(transport.uiPreferences.recently_added).toBe(false);
+  await vi.waitFor(() =>
+    expect(root.querySelector(".library-tools button")).toBeTruthy(),
+  );
+  root.querySelector<HTMLButtonElement>(".library-tools button")!.click();
+  await flush();
+  for (const value of [
+    "watched",
+    "favorite",
+    "watch_soon",
+    "unwatched",
+    "recently_added",
+  ])
+    expect(
+      root.querySelector<HTMLInputElement>(`[name="status"][value="${value}"]`)!
+        .checked,
+    ).toBe(true);
+  expect(
+    root.querySelector(
+      '[name="status"][value="unknown"], [name="status"][value="none"]',
+    ),
+  ).toBeNull();
+  expect(
+    root.querySelector<HTMLInputElement>(
+      '[name="collection"][value="Fav-orites"]',
+    )!.checked,
+  ).toBe(true);
+});
 it("bounds All aggregation and stops after navigation invalidates the request", async () => {
   const client = new FixtureTransport().client();
   const page: LibraryPage = {

@@ -74,13 +74,36 @@ const DISPLAY_OPTIONS = [
   ["show_rating", "Show rating on covers"],
   ["show_library_cost", "Show total library cost in footer"],
 ] as const;
-const STATUS: Record<string, string> = {
-  watched: "Watched",
-  unwatched: "Unwatched",
-  in_progress: "In progress",
-  unknown: "Unknown",
-  none: "No status",
+const MOVIE_FILTERS = [
+  "watched",
+  "unwatched",
+  "in_progress",
+  "favorite",
+  "watch_soon",
+  "recently_added",
+] as const;
+const statusFilterLabel = (value: string, style: MovieStatusLabels) =>
+  (
+    ({
+      favorite: "Favorites",
+      watch_soon: "Watch Soon",
+      recently_added: "Recently Added",
+    }) as Record<string, string>
+  )[value] ?? movieStatusLabel(value, style);
+const collectionStatus = (value: string) => {
+  const name = value.toLowerCase().trim();
+  if (name.replace(/[\s_-]+/g, "") === "watchsoon") return "watch_soon";
+  return (
+    {
+      new: "unwatched",
+      played: "watched",
+      paused: "in_progress",
+      favorites: "favorite",
+    } as Record<string, string>
+  )[name];
 };
+const hiddenFilterCollection = (value: string) =>
+  value.toLowerCase().trim() === "all" || !!collectionStatus(value);
 const statusCollection = (value: string) =>
   ["new", "played", "paused"].includes(value.trim().toLowerCase());
 
@@ -421,30 +444,35 @@ export class KaleidescapeLibrary extends LitElement {
         ? this.applied.collection
         : [];
       const migratedStatuses = savedCollections
-        .map(
-          (name) =>
-            (
-              ({
-                new: "unwatched",
-                played: "watched",
-                paused: "in_progress",
-              }) as Record<string, string>
-            )[name.toLowerCase()],
-        )
+        .map(collectionStatus)
         .filter((value): value is string => !!value);
-      if (migratedStatuses.length) {
+      const priorStatuses = Array.isArray(this.applied.status)
+        ? this.applied.status
+        : [];
+      const retainedStatuses = priorStatuses.filter((value) =>
+        (MOVIE_FILTERS as readonly string[]).includes(value),
+      );
+      if (
+        migratedStatuses.length ||
+        this.applied.recently_added ||
+        retainedStatuses.length !== priorStatuses.length ||
+        savedCollections.some(hiddenFilterCollection)
+      ) {
         this.applied.collection = savedCollections.filter(
-          (name) => !statusCollection(name),
+          (name) => !hiddenFilterCollection(name),
         );
         this.applied.status = [
           ...new Set([
-            ...(Array.isArray(this.applied.status) ? this.applied.status : []),
+            ...retainedStatuses,
             ...migratedStatuses,
+            ...(this.applied.recently_added ? ["recently_added"] : []),
           ]),
         ];
+        this.applied.recently_added = false;
         this.preferences?.set({
           collection: this.applied.collection,
           status: this.applied.status,
+          recently_added: false,
         });
       }
       if (Array.isArray(this.applied.genre))
@@ -1081,6 +1109,19 @@ export class KaleidescapeLibrary extends LitElement {
   }
   private fromDetails(key: string, value: string) {
     if (this.detailsLocked || this.checkingCollection) return;
+    if (key === "collection") {
+      if (value.toLowerCase().trim() === "all") return;
+      const mapped = collectionStatus(value);
+      if (mapped) {
+        key = "status";
+        value = mapped;
+      }
+    }
+    if (
+      key === "status" &&
+      !(MOVIE_FILTERS as readonly string[]).includes(value)
+    )
+      return;
     if (this.dialogOnly) {
       this.dispatchEvent(
         new CustomEvent("browse-library", {
@@ -1113,6 +1154,8 @@ export class KaleidescapeLibrary extends LitElement {
     );
   }
   private detailLink(key: string, value: string, label = value) {
+    if (key === "collection" && value.toLowerCase().trim() === "all")
+      return html`${label}`;
     return html`<button
       type="button"
       class="link detail-link"
@@ -1177,7 +1220,7 @@ export class KaleidescapeLibrary extends LitElement {
   }
   private choices(key: string, facet: string) {
     const values =
-      key === "status" ? Object.keys(STATUS) : (this.page?.facets[facet] ?? []);
+      key === "status" ? [...MOVIE_FILTERS] : (this.page?.facets[facet] ?? []);
     // Retain selected names even if a subsequent sync removes their suggestion.
     const choices = [
       ...new Set([...values, ...((this.draft[key] ?? []) as string[])]),
@@ -1202,12 +1245,14 @@ export class KaleidescapeLibrary extends LitElement {
     }
     return choices.filter(
       (value) =>
-        (key !== "collection" || !statusCollection(value)) &&
+        (key !== "collection" || !hiddenFilterCollection(value)) &&
+        (key !== "status" ||
+          (MOVIE_FILTERS as readonly string[]).includes(value)) &&
         matches(
           key === "collection"
             ? collectionLabel(value)
             : key === "status"
-              ? movieStatusLabel(value, this.movieStatusLabels)
+              ? statusFilterLabel(value, this.movieStatusLabels)
               : value,
           this.facetSearch,
           this.fuzzySearch,
@@ -1561,19 +1606,6 @@ export class KaleidescapeLibrary extends LitElement {
       ${this.page?.truncated_facets.length ? html`<p class="muted">Each category shows up to 500 known names.</p>` : nothing}
       <label class="check"
         ><input
-          name="recently_added"
-          type="checkbox"
-          .checked=${!!this.draft.recently_added}
-          @change=${(event: Event) => {
-            this.draft.recently_added = (
-              event.target as HTMLInputElement
-            ).checked;
-            this.requestUpdate();
-          }}
-        />Recently added</label
-      >
-      <label class="check"
-        ><input
           name="missing_metadata_artwork"
           type="checkbox"
           .checked=${!!this.draft.missing_metadata_artwork}
@@ -1609,6 +1641,14 @@ export class KaleidescapeLibrary extends LitElement {
         ].map(([key, label, facet]) => {
           const selected = (this.draft[key] ?? []) as string[];
           const choices = this.choices(key, facet);
+          if (
+            key === "collection" &&
+            !(this.page?.facets[facet] ?? []).some(
+              (value) => !hiddenFilterCollection(value),
+            ) &&
+            !selected.some((value) => !hiddenFilterCollection(value))
+          )
+            return nothing;
           return html`<fieldset>
             <legend>${label}</legend>
             <div class="facet-options">
@@ -1624,16 +1664,18 @@ export class KaleidescapeLibrary extends LitElement {
                             .checked=${selected.includes(value)}
                             ?disabled=${selected.length >= 100 && !selected.includes(value)}
                             @change=${(event: Event) => {
+                              const current = (this.draft[key] ??
+                                []) as string[];
                               this.draft = {
                                 ...this.draft,
                                 [key]: (event.target as HTMLInputElement)
                                   .checked
-                                  ? [...selected, value]
-                                  : selected.filter((item) => item !== value),
+                                  ? [...current, value]
+                                  : current.filter((item) => item !== value),
                               };
                               this.requestUpdate();
                             }}
-                          />${key === "status" ? renderCollectionBadge(movieStatusLabel(value, this.movieStatusLabels)) : key === "rating" ? renderRatingBadge(value) : key === "collection" ? renderCollectionBadge(value) : key === "format" && formatBadges({ formats: [value] }).length === 1 ? renderFormatBadges({ formats: [value] }) : value}</label
+                          />${key === "status" ? renderCollectionBadge(statusFilterLabel(value, this.movieStatusLabels)) : key === "rating" ? renderRatingBadge(value) : key === "collection" ? renderCollectionBadge(value) : key === "format" && formatBadges({ formats: [value] }).length === 1 ? renderFormatBadges({ formats: [value] }) : value}</label
                         >`,
                     )
                   : html`<p class="muted">No matching options</p>`
@@ -1681,7 +1723,7 @@ export class KaleidescapeLibrary extends LitElement {
               !!this.draft.missing_metadata_artwork;
             next.missing_purchase_information =
               !!this.draft.missing_purchase_information;
-            next.recently_added = !!this.draft.recently_added;
+            next.recently_added = false;
             this.applied = next;
             this.saveFilters();
             this.closeDialog("filter-dialog");
@@ -1994,14 +2036,7 @@ export class KaleidescapeLibrary extends LitElement {
                   <div class="detail-badges movie-heading-badges">
                     ${renderFormatBadges(multiple ? group : (row ?? group), false, (value) => this.fromDetails("format", value), locked)}
                     ${ratings.map((rating) => renderRatingBadge(rating, (value) => this.fromDetails("rating", value), locked))}
-                    ${(movieStatuses(group).length
-                      ? movieStatuses(group)
-                      : [
-                          group.watched_status === "unknown"
-                            ? "unknown"
-                            : "none",
-                        ]
-                    ).map(
+                    ${movieStatuses(group).map(
                       (status) =>
                         html`<button
                           class=${`movie-status collection-badge collection-${collectionKind(movieStatusLabel(status, this.movieStatusLabels))}`}
@@ -2020,7 +2055,9 @@ export class KaleidescapeLibrary extends LitElement {
                       .map((collection) =>
                         renderCollectionBadge(
                           collection,
-                          () => this.fromDetails("collection", collection),
+                          collection.toLowerCase().trim() === "all"
+                            ? undefined
+                            : () => this.fromDetails("collection", collection),
                           locked,
                         ),
                       )}
@@ -2434,7 +2471,7 @@ export class KaleidescapeLibrary extends LitElement {
                       @click=${() => this.select(item)}
                     >
                       <div class="cover-image">${this.cover(item)}</div>
-                      ${this.display.show_badges ? html`<div class="cover-flags">${renderStatusBadges(item, true, [], this.movieStatusLabels)}</div>` : nothing}
+                      ${this.display.show_badges ? html`<div class="cover-flags">${renderStatusBadges(item, true, ["unwatched"], this.movieStatusLabels)}</div>` : nothing}
                       ${this.display.show_format ? html`<div class="cover-formats">${renderFormatBadges(item, true)}</div>` : nothing}
                       ${this.display.show_rating ? html`<div class="cover-rating">${renderRatingBadge(item.rating)}</div>` : nothing}
                       ${this.conflictIcon(item)}

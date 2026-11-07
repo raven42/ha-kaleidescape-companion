@@ -177,11 +177,19 @@ class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
             False,
             str(uuid4()),
             defaults["revision"],
-            {"movie_status_labels": "kaleidescape", "recently_added": True},
+            {
+                "movie_status_labels": "kaleidescape",
+                "recently_added": True,
+                "status": ["favorite", "watch_soon", "recently_added"],
+            },
         )
         saved = (await self.repository.async_ui_preferences("a"))["values"]
         self.assertEqual(saved["movie_status_labels"], "kaleidescape")
         self.assertTrue(saved["recently_added"])
+        self.assertEqual(saved["status"], ["favorite", "watch_soon", "recently_added"])
+        self.assertEqual(
+            (await self.repository.async_ui_preferences("b"))["values"]["status"], []
+        )
 
     async def test_interface_mode_validation_and_retired_library_switch(
         self,
