@@ -211,6 +211,9 @@ when there are multiple viewings. Purchase history is a separate section below
 Journal, shown only in Advanced mode to administrators. An empty history has no
 Journal section. The history uses the existing source-scoped group and
 revision-bound pagination, and reports errors rather than claiming no viewings.
+Switching versions keeps the group Journal and its expanded state; playback
+controls retain their layout while their state is revalidated and cannot send a
+command until that check completes.
 
 The full dialog is shared with linked Journal entries, with no navigation
 between Library and Journal pages. Each user can select the full or compact

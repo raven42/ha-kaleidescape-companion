@@ -155,6 +155,94 @@ it("starts the selected Library movie with automatic preflight and no confirmati
     calls.find((call) => call.type.endsWith("/control/execute")),
   ).not.toHaveProperty("confirmation");
 });
+it("keeps the movie action row stable and blocks playback while a new version is checked", async () => {
+  element.mode = "movie";
+  element.versionId = "a".repeat(64);
+  await mount("Play");
+  const row = element.shadowRoot!.querySelector(".movie-actions");
+  const slot = row!.querySelector("slot");
+  const original = handler;
+  let resolve!: (value: ControlInfo) => void;
+  handler = (message) =>
+    message.type.endsWith("/control/info")
+      ? new Promise<ControlInfo>((done) => {
+          resolve = done;
+        })
+      : original(message);
+  element.versionId = "b".repeat(64);
+  await flush();
+  expect(element.shadowRoot!.querySelector(".movie-actions")).toBe(row);
+  expect(row!.querySelector("slot")).toBe(slot);
+  expect(button("Play").disabled).toBe(true);
+  button("Play").click();
+  expect(calls.some((call) => call.type.endsWith("/control/prepare"))).toBe(
+    false,
+  );
+  resolve(data);
+  await vi.waitFor(() => expect(button("Play")?.disabled).toBe(false));
+  button("Play").click();
+  await vi.waitFor(() =>
+    expect(
+      calls.find((call) => call.type.endsWith("/control/prepare"))?.title_id,
+    ).toBe("b".repeat(64)),
+  );
+});
+
+it("keeps the movie slot in its action row when playback is disabled", async () => {
+  element.mode = "movie";
+  data.enabled = false;
+  document.body.append(element);
+  await vi.waitFor(() =>
+    expect(
+      element.shadowRoot!.querySelector(
+        ".movie-actions > slot[name=collection]",
+      ),
+    ).toBeTruthy(),
+  );
+  expect(button("Play")).toBeUndefined();
+});
+it("clears retained controls if version revalidation fails or access is revoked", async () => {
+  element.mode = "movie";
+  element.versionId = "a".repeat(64);
+  await mount("Play");
+  let reject!: (error: unknown) => void;
+  const original = handler;
+  handler = (message) =>
+    message.type.endsWith("/control/info")
+      ? new Promise<ControlInfo>((_, fail) => {
+          reject = fail;
+        })
+      : original(message);
+  element.versionId = "b".repeat(64);
+  await flush();
+  expect(button("Play").disabled).toBe(true);
+  reject(new ApiError("connection_lost"));
+  await vi.waitFor(() => expect(button("Play")).toBeUndefined());
+
+  handler = original;
+  element.versionId = "c".repeat(64);
+  await vi.waitFor(() => expect(button("Play")?.disabled).toBe(false));
+  let resolve!: (value: ControlInfo) => void;
+  handler = (message) =>
+    message.type.endsWith("/control/info")
+      ? new Promise<ControlInfo>((done) => {
+          resolve = done;
+        })
+      : original(message);
+  element.versionId = "d".repeat(64);
+  await flush();
+  element.scope = {
+    ...info,
+    permissions: { read: false, edit: false, export: false },
+  };
+  await flush();
+  resolve(data);
+  await flush();
+  expect(element.shadowRoot!.querySelector(".movie-actions")).toBeNull();
+  expect(calls.some((call) => call.type.endsWith("/control/execute"))).toBe(
+    false,
+  );
+});
 it("chooses a player for this launch without changing household settings", async () => {
   element.mode = "movie";
   element.versionId = "b".repeat(64);

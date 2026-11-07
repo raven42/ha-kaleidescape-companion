@@ -153,6 +153,7 @@ export class DeviceControls extends LitElement {
   private dialog = "players";
   private acknowledge = "";
   private busy = false;
+  private revalidatingVersion = false;
   private error = "";
   private notice = "";
   private locked = false;
@@ -168,6 +169,13 @@ export class DeviceControls extends LitElement {
       ? `${this.scope.entry_id}:${this.scope.dataset_id}:${!!this.scope.permissions.edit}:${this.versionId}:${this.playerId}`
       : "";
     if (key !== this.key || this.client !== this.boundClient) {
+      const versionOnly =
+        changed.has("versionId") &&
+        !changed.has("scope") &&
+        !changed.has("client") &&
+        !changed.has("playerId") &&
+        !!this.key &&
+        !!key;
       // Changing the version invalidates its preflight, but retains the chosen player.
       if (
         this.client !== this.boundClient ||
@@ -180,7 +188,9 @@ export class DeviceControls extends LitElement {
       this.generation++;
       this.key = key;
       this.boundClient = this.client;
-      this.info = this.status = this.pending = undefined;
+      this.revalidatingVersion = versionOnly && !!this.info;
+      if (!versionOnly) this.info = this.status = undefined;
+      this.pending = undefined;
       this.stopWaking();
       this.busy = false;
       this.acknowledge =
@@ -190,7 +200,7 @@ export class DeviceControls extends LitElement {
         this.lastOperation =
           "";
       if (this.playerId) this.selectedPlayer = this.playerId;
-      if (key && this.client) void this.load(true);
+      if (key && this.client) void this.load(true, this.revalidatingVersion);
     }
   }
   protected updated() {
@@ -209,6 +219,7 @@ export class DeviceControls extends LitElement {
     super.disconnectedCallback();
     this.generation++;
     this.stopWaking();
+    this.revalidatingVersion = false;
     this.pending = this.info = undefined;
   }
   private fail(error: unknown) {
@@ -245,7 +256,7 @@ export class DeviceControls extends LitElement {
       );
     }
   }
-  private async load(readState = false) {
+  private async load(readState = false, versionRefresh = false) {
     const generation = this.generation;
     try {
       const info = await this.client!.controlInfo(this.scope!);
@@ -261,12 +272,24 @@ export class DeviceControls extends LitElement {
       )
         await this.readStatus();
     } catch (error) {
-      if (generation === this.generation) this.fail(error);
+      if (generation === this.generation) {
+        if (versionRefresh) this.info = this.status = undefined;
+        this.fail(error);
+      }
     }
-    if (generation === this.generation) this.requestUpdate();
+    if (generation === this.generation) {
+      if (versionRefresh) this.revalidatingVersion = false;
+      this.requestUpdate();
+    }
   }
   private async action(work: () => Promise<void>) {
-    if (this.busy || !this.client || !this.scope?.permissions.read) return;
+    if (
+      this.busy ||
+      this.revalidatingVersion ||
+      !this.client ||
+      !this.scope?.permissions.read
+    )
+      return;
     const generation = this.generation;
     this.busy = true;
     this.error = "";
@@ -476,7 +499,9 @@ export class DeviceControls extends LitElement {
       return nothing;
     const info = this.info;
     if (this.mode === "movie" && (!info?.enabled || !info.allow_launch))
-      return html`<slot name="collection"></slot>`;
+      return html`<div class="movie-actions">
+        <slot name="collection"></slot>
+      </div>`;
     const devices = info?.devices?.filter((device) => device.is_player) ?? [];
     const player = info?.players.find(
       (item) => item.id === this.selectedPlayer,
@@ -484,6 +509,7 @@ export class DeviceControls extends LitElement {
     const blocked = info?.blocked_players.includes(this.selectedPlayer);
     const disabled =
       this.busy ||
+      this.revalidatingVersion ||
       this.waking ||
       !info?.enabled ||
       !this.selectedPlayer ||
@@ -574,7 +600,7 @@ export class DeviceControls extends LitElement {
                     ${this.waking ? html`<span class="spinner" aria-hidden="true">◌</span> Starting player…` : !this.status || this.status.readiness === "starting" ? "Check player" : this.status.ready ? "Play" : "Power On"}</button
                   ><button
                     type="button"
-                    ?disabled=${this.busy || this.waking || !!this.pending}
+                    ?disabled=${this.busy || this.revalidatingVersion || this.waking || !!this.pending}
                     ?hidden=${(info?.players.length ?? 0) < 2}
                     @click=${this.choosePlayer}
                   >

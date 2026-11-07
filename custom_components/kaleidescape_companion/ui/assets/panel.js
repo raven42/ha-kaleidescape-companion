@@ -5736,7 +5736,7 @@ const ra = {
   not_sent: "Settings or access changed before sending. The command was not sent."
 }, Re = class Re extends x {
   constructor() {
-    super(...arguments), this.mode = "remote", this.versionId = "", this.playerId = "", this.inlineRemote = !1, this.value = "", this.configured = !0, this.generation = 0, this.key = "", this.waking = !1, this.wakeDeadline = 0, this.started = "", this.lastOperation = "", this.selectedPlayer = "", this.dialog = "players", this.acknowledge = "", this.busy = !1, this.error = "", this.notice = "", this.locked = !1;
+    super(...arguments), this.mode = "remote", this.versionId = "", this.playerId = "", this.inlineRemote = !1, this.value = "", this.configured = !0, this.generation = 0, this.key = "", this.waking = !1, this.wakeDeadline = 0, this.started = "", this.lastOperation = "", this.selectedPlayer = "", this.dialog = "players", this.acknowledge = "", this.busy = !1, this.revalidatingVersion = !1, this.error = "", this.notice = "", this.locked = !1;
   }
   willUpdate(e) {
     if (!["scope", "client", "versionId", "playerId"].some(
@@ -5744,7 +5744,10 @@ const ra = {
     ))
       return;
     const t = this.scope?.permissions.read ? `${this.scope.entry_id}:${this.scope.dataset_id}:${!!this.scope.permissions.edit}:${this.versionId}:${this.playerId}` : "";
-    (t !== this.key || this.client !== this.boundClient) && ((this.client !== this.boundClient || !this.key || !t || this.key.split(":").slice(0, 3).join(":") !== t.split(":").slice(0, 3).join(":")) && (this.selectedPlayer = ""), this.generation++, this.key = t, this.boundClient = this.client, this.info = this.status = this.pending = void 0, this.stopWaking(), this.busy = !1, this.acknowledge = this.error = this.notice = this.started = this.lastOperation = "", this.playerId && (this.selectedPlayer = this.playerId), t && this.client && this.load(!0));
+    if (t !== this.key || this.client !== this.boundClient) {
+      const i = e.has("versionId") && !e.has("scope") && !e.has("client") && !e.has("playerId") && !!this.key && !!t;
+      (this.client !== this.boundClient || !this.key || !t || this.key.split(":").slice(0, 3).join(":") !== t.split(":").slice(0, 3).join(":")) && (this.selectedPlayer = ""), this.generation++, this.key = t, this.boundClient = this.client, this.revalidatingVersion = i && !!this.info, i || (this.info = this.status = void 0), this.pending = void 0, this.stopWaking(), this.busy = !1, this.acknowledge = this.error = this.notice = this.started = this.lastOperation = "", this.playerId && (this.selectedPlayer = this.playerId), t && this.client && this.load(!0, this.revalidatingVersion);
+    }
   }
   updated() {
     const e = this.busy || !!this.pending;
@@ -5757,7 +5760,7 @@ const ra = {
     ));
   }
   disconnectedCallback() {
-    super.disconnectedCallback(), this.generation++, this.stopWaking(), this.pending = this.info = void 0;
+    super.disconnectedCallback(), this.generation++, this.stopWaking(), this.revalidatingVersion = !1, this.pending = this.info = void 0;
   }
   fail(e) {
     const t = u(e), i = {
@@ -5776,19 +5779,20 @@ const ra = {
       new CustomEvent("access-denied", { bubbles: !0, composed: !0 })
     ));
   }
-  async load(e = !1) {
-    const t = this.generation;
+  async load(e = !1, t = !1) {
+    const i = this.generation;
     try {
-      const i = await this.client.controlInfo(this.scope);
-      if (t !== this.generation) return;
-      this.info = i, i.players.some((s) => s.id === this.selectedPlayer) || (this.selectedPlayer = i.default_player || i.players[0]?.id || ""), e && i.enabled && this.selectedPlayer && this.mode !== "settings" && await this.readStatus();
-    } catch (i) {
-      t === this.generation && this.fail(i);
+      const s = await this.client.controlInfo(this.scope);
+      if (i !== this.generation) return;
+      this.info = s, s.players.some((n) => n.id === this.selectedPlayer) || (this.selectedPlayer = s.default_player || s.players[0]?.id || ""), e && s.enabled && this.selectedPlayer && this.mode !== "settings" && await this.readStatus();
+    } catch (s) {
+      i === this.generation && (t && (this.info = this.status = void 0), this.fail(s));
     }
-    t === this.generation && this.requestUpdate();
+    i === this.generation && (t && (this.revalidatingVersion = !1), this.requestUpdate());
   }
   async action(e) {
-    if (this.busy || !this.client || !this.scope?.permissions.read) return;
+    if (this.busy || this.revalidatingVersion || !this.client || !this.scope?.permissions.read)
+      return;
     const t = this.generation;
     this.busy = !0, this.error = "", this.requestUpdate();
     try {
@@ -5914,10 +5918,12 @@ const ra = {
       return l;
     const e = this.info;
     if (this.mode === "movie" && (!e?.enabled || !e.allow_launch))
-      return a`<slot name="collection"></slot>`;
+      return a`<div class="movie-actions">
+        <slot name="collection"></slot>
+      </div>`;
     const t = e?.devices?.filter((o) => o.is_player) ?? [], i = e?.players.find(
       (o) => o.id === this.selectedPlayer
-    ), s = e?.blocked_players.includes(this.selectedPlayer), n = this.busy || this.waking || !e?.enabled || !this.selectedPlayer || !!this.pending || s;
+    ), s = e?.blocked_players.includes(this.selectedPlayer), n = this.busy || this.revalidatingVersion || this.waking || !e?.enabled || !this.selectedPlayer || !!this.pending || s;
     return a`<section
       class=${this.mode === "remote" ? "card control-card" : "device-controls"}
     >
@@ -5991,7 +5997,7 @@ const ra = {
                     ${this.waking ? a`<span class="spinner" aria-hidden="true">◌</span> Starting player…` : !this.status || this.status.readiness === "starting" ? "Check player" : this.status.ready ? "Play" : "Power On"}</button
                   ><button
                     type="button"
-                    ?disabled=${this.busy || this.waking || !!this.pending}
+                    ?disabled=${this.busy || this.revalidatingVersion || this.waking || !!this.pending}
                     ?hidden=${(e?.players.length ?? 0) < 2}
                     @click=${this.choosePlayer}
                   >
@@ -8402,7 +8408,7 @@ const Y = [
       class="movie-journal"
       .client=${this.client}
       .scope=${this.scope}
-      .titleId=${e.id}
+      .titleId=${e}
       .editable=${this.advanced && !!this.scope?.permissions.edit}
       .unified=${!0}
     ></kaleidescape-library-journal>`;
@@ -8608,7 +8614,7 @@ const Y = [
                             </p>
                             ${l}
                           </details>
-                          ${this.renderMovieJournal(t)}
+                          ${this.renderMovieJournal(e.id)}
                           ${this.renderMoviePurchases()}
                         </div>
                         <div class="movie-description">

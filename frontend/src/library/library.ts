@@ -1801,12 +1801,12 @@ export class KaleidescapeLibrary extends LitElement {
       }}
     ></kaleidescape-title-scrape>`;
   }
-  private renderMovieJournal(row: LibraryTitle) {
+  private renderMovieJournal(titleId: string) {
     return html`<kaleidescape-library-journal
       class="movie-journal"
       .client=${this.client}
       .scope=${this.scope}
-      .titleId=${row.id}
+      .titleId=${titleId}
       .editable=${this.advanced && !!this.scope?.permissions.edit}
       .unified=${true}
     ></kaleidescape-library-journal>`;
@@ -2090,7 +2090,7 @@ export class KaleidescapeLibrary extends LitElement {
                             </p>
                             ${!unified ? this.renderMoviePurchases() : nothing}
                           </details>
-                          ${unified ? this.renderMovieJournal(row) : nothing}
+                          ${unified ? this.renderMovieJournal(group.id) : nothing}
                           ${unified ? this.renderMoviePurchases() : nothing}
                         </div>
                         <div class="movie-description">
@@ -2129,7 +2129,7 @@ export class KaleidescapeLibrary extends LitElement {
                           ${metadataDetails(row, (name, label) => this.detailLink("query", name, label), this.castLimit)}
                           ${
                             !unified && !this.dialogOnly
-                              ? this.renderMovieJournal(row)
+                              ? this.renderMovieJournal(group.id)
                               : nothing
                           }
                         </div>

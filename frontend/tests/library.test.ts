@@ -620,6 +620,42 @@ it("groups source editions in list and covers, lists formats, and switches versi
   expect(root().querySelectorAll(".cover-tile")).toHaveLength(1);
 });
 
+it("keeps the group Journal open without reloading when switching versions", async () => {
+  const first = libraryTitle({ synopsis: "First version" });
+  const second = libraryTitle({
+    id: "d".repeat(64),
+    synopsis: "Second version",
+  });
+  transport.libraryTitles = [first, second];
+  transport.libraryGroups.set(first.id, "fictional-work");
+  transport.libraryGroups.set(second.id, "fictional-work");
+  transport.viewingLinks.set(transport.records[0].id, first.id);
+  button("Refresh cached data").click();
+  await flush();
+  title("Voyage to Europa").click();
+  await vi.waitFor(() =>
+    expect(root().querySelectorAll(".version-tabs button")).toHaveLength(2),
+  );
+  const journal = root().querySelector("kaleidescape-library-journal")!;
+  await vi.waitFor(() =>
+    expect(journal.shadowRoot!.querySelector("details")).toBeTruthy(),
+  );
+  const details =
+    journal.shadowRoot!.querySelector<HTMLDetailsElement>("details")!;
+  details.open = true;
+  const callsBefore = transport.calls.filter((call) =>
+    call.type.endsWith("/library/viewings"),
+  ).length;
+  root().querySelectorAll<HTMLButtonElement>(".version-tabs button")[1].click();
+  await flush();
+  expect(root().querySelector("kaleidescape-library-journal")).toBe(journal);
+  expect(journal.shadowRoot!.querySelector("details")).toBe(details);
+  expect(details.open).toBe(true);
+  expect(
+    transport.calls.filter((call) => call.type.endsWith("/library/viewings")),
+  ).toHaveLength(callsBefore);
+});
+
 it("switches movie status names without duplicating collection filters", async () => {
   transport.libraryTitles[0].collections.push("New");
   transport.libraryTitles[0].watched_status = "unwatched";
