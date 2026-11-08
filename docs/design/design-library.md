@@ -599,6 +599,14 @@ values filled from unambiguous receipt or manual group values. The section
 reports truncated results and displays a clickable Store link for recognized
 Kaleidescape Store paths.
 
+The missing-purchase-information sensor and filter consider groups with at least
+one available scanned edition. Their date, price and unavailable-flag evidence
+includes retained editions in that same source/group, even when the
+invoice-owning edition disappears from a later scan. The invoice stays with its
+original edition; no format is inferred or link reassigned. A fully absent group
+is excluded from completeness counts, and unlinked invoices do not supply
+evidence to their former group.
+
 The expanded section's **edit** link opens one dialog for purchase fields and
 **Purchase information unavailable**. Checking it hides the fields and
 suppresses the missing-information sensor/filter without clearing stored values.

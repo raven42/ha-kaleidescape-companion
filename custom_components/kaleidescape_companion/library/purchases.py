@@ -35,13 +35,13 @@ MAX_HISTORY = 1000
 
 
 def missing_information(db, source):
-    """Find movie groups missing a date or price, unless marked unavailable."""
+    """Assess retained purchase evidence for groups with an available edition."""
     return {
         row[0]
         for row in db.execute(
-            "SELECT source_group FROM library WHERE source_id=? AND available=1 "
+            "SELECT source_group FROM library WHERE source_id=? "
             "AND purchase_match_pending=0 GROUP BY source_group "
-            "HAVING max(purchase_information_unavailable)=0 AND "
+            "HAVING max(available)=1 AND max(purchase_information_unavailable)=0 AND "
             "(max(coalesce(purchased_on,(SELECT min(purchased_on) FROM "
             "purchase_records WHERE library_id=library.id)) IS NOT NULL)=0 "
             "OR max(coalesce(purchase_price,(SELECT purchase_price FROM "
