@@ -99,6 +99,13 @@ the entire receipt. A missing date remains unknown; forwarded messages do not
 use the forward date as the purchase date. Parsing does not authenticate the
 sender or guarantee a match to the correct Library edition.
 
+When purchase prices are selected, any known item currency differing from the
+subtotal is a `currency_mismatch` review issue, even if another item has no
+price. Amounts are summed only when every item has a price in the subtotal's
+currency. Set charges are checked before allocation to their included movies;
+zero is a known price. Valid partial invoices retain their original currencies
+without conversion, including when tax is absent.
+
 The blueprint offers `transaction-id`, `purchase-price`, `retail-price` and
 `purchase-date`; at least one must be selected. Title and a Store link are
 always extracted when available. Unselected fields are not stored. Missing

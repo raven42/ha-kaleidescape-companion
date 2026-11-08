@@ -323,16 +323,17 @@ def parse_receipt(payload, timezone="UTC"):
     if len(items) > MAX_MOVIES:
         issues.append({"reason": "item_limit_exceeded"})
     paid = [price_cents(item.get("purchase_price")) for item in items]
-    if (
-        "purchase-price" in selected
-        and totals.get("subtotal")
-        and all(value and value[0] == totals["subtotal"][0] for value in paid)
-        and sum(value[1] for value in paid) != totals["subtotal"][1]
-    ):
-        issues.append({"reason": "subtotal_mismatch"})
+    if "purchase-price" in selected and totals.get("subtotal"):
+        if any(value and value[0] != totals["subtotal"][0] for value in paid):
+            issues.append({"reason": "currency_mismatch"})
+        elif all(value is not None for value in paid) and (
+            sum(value[1] for value in paid) != totals["subtotal"][1]
+        ):
+            issues.append({"reason": "subtotal_mismatch"})
     if totals.get("subtotal") and totals.get("taxes") and totals.get("total"):
         if len({totals[key][0] for key in ("subtotal", "taxes", "total")}) != 1:
-            issues.append({"reason": "currency_mismatch"})
+            if {"reason": "currency_mismatch"} not in issues:
+                issues.append({"reason": "currency_mismatch"})
         elif sum(totals[key][1] for key in ("subtotal", "taxes")) != totals["total"][1]:
             issues.append({"reason": "total_mismatch"})
     if not ({"purchase-price", "retail-price"} & selected):
