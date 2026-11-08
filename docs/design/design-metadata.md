@@ -1,11 +1,10 @@
 # External metadata and provider clients
 
 External metadata is separate from the local device scan. Administrators can
-enable **Kaleidescape public store (experimental)** and/or **TMDB** in
-**Settings → External movie metadata** or the integration's native Configure
-flow. Both are disabled by default and require Library sync. Disabled providers
-make no external requests; the ordinary Library, controls and recording keep
-working without them.
+enable **Kaleidescape Store** and/or **TMDB** in **Settings → Metadata** or the
+integration's native Configure flow. Both are disabled by default and require
+Library sync. Disabled providers make no external requests; the ordinary
+Library, controls and recording keep working without them.
 
 The pure Store and TMDB provider clients remain in Companion's `scrapers/`
 package. Public Store metadata pages, anonymous search and cover routes are
@@ -17,9 +16,9 @@ provider interfaces.
 ## Setup and operation
 
 1. Enable the desired provider. For TMDB, enter your own API key or API Read
-   Access Token. A blank credential keeps the saved secret; **Remove saved TMDB
-   credential** explicitly clears it. Existing secrets are never prefilled into
-   settings responses.
+   Access Token. A blank credential keeps the saved secret; **Remove** stages
+   its removal, **Undo** cancels that change, and **Save settings** applies it.
+   Existing secrets are never prefilled into settings responses.
 2. Set the shared request rate, **0.1–10 requests/second**, default **2**. Save
    settings. Providers share one limiter; store robots directives can reduce the
    rate further. There is no automatic retry after HTTP errors or rate limiting.
@@ -39,7 +38,7 @@ provider interfaces.
    refresh fails busy rather than silently discarding its options when another
    pass is active.
 
-Automatic store enrichment uses a valid public Store movie link when available,
+A Store enrichment pass uses a valid public Store movie link when available,
 including a numeric receipt-details link. The numeric page maps the package ID
 to an edition; the parser checks that mapping and validates title and year. It
 does not invent Store slugs. When no usable link exists, it searches using the

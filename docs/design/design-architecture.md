@@ -18,7 +18,7 @@ Companion does not replace it or access its private runtime objects.
 | `core/`                       | One SQLite worker, migrations, requests, settings, permissions and safe logging helpers                       | [Journal](design-journal.md), [data management](design-data-management.md), [logging](design-logging.md) |
 | `playback/`                   | HA observation, recording, selected-player discovery/control and durable command outcomes                     | [Journal](design-journal.md#automatic-tracking), [controls](design-playback-controls.md)                 |
 | `library/`                    | Local browser transport/sync, catalog identity, artwork, collections and matching                             | [Library](design-library.md), [matching](design-title-matching.md)                                       |
-| `enrichment/` and `scrapers/` | HA scheduling/authorization/storage and standalone metadata provider clients respectively                     | [Metadata](design-metadata.md)                                                                           |
+| `enrichment/` and `scrapers/` | HA task orchestration/authorization/storage and standalone metadata provider clients respectively             | [Metadata](design-metadata.md)                                                                           |
 | `calendar/`                   | Publishing, reconciliation and dedicated-calendar Full Sync through HA                                        | [Calendar](design-calendar.md)                                                                           |
 | `ui/` and `frontend/src/`     | Authenticated HTTP/WebSocket interfaces, panel/cards and typed frontend                                       | [UI](design-user-interface.md), [cards](design-dashboard-cards.md)                                       |
 
@@ -119,9 +119,9 @@ Companion's private namespace as described in the
 [deployment guide](../guides/guide-deployment.md). The
 [migration plan](../plans/plan-pykaliedescape-migration.md) owns release gates.
 
-Before release, establish supported HA versions, upstream pyk compatibility,
-repository metadata, license and installation validation. Match dependency pins
-and metadata to HA's
+Before release, establish supported HA versions, upstream pyk compatibility, the
+project license and installation validation, and verify final release metadata.
+Match dependency pins and metadata to HA's
 [manifest contract](https://contributors.home-assistant.io/core/integrations/manifest/).
 The current custom integration has not claimed HA core quality-scale
 certification.

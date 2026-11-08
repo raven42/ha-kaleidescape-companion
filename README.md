@@ -46,15 +46,16 @@ imports. HA calendar publishing and dedicated-calendar Full Sync are optional.
 
 Receipt imports retain purchases in their own table, including purchases that
 arrive before a Library scan. Administrators reconcile saved unmatched purchases
-against Library entries without a JSON file or pausing recording. Schema 26
-moves existing invoice histories into that table rather than keeping duplicate
-copies.
+against Library entries without a JSON file or pausing recording. Schema 25
+moved existing invoice histories into that table rather than keeping duplicate
+copies; the current schema is 27, including purchase-repair evidence.
 
 Three HA buttons, three configuration switches and four optional automation
 blueprints expose synchronization, recording/calendar settings and receipt
-imports. Settings → About compares installed blueprints with the versions
-bundled with Companion and shows each blueprint's history. Existing blueprints
-are updated explicitly under Settings → Home Assistant → Optional automations.
+imports. **Settings → Automations** compares installed blueprints with the
+versions bundled with Companion and provides their change logs. Installation and
+updates are reviewed and explicitly confirmed there; creating or enabling an
+automation remains a separate Home Assistant step.
 
 Controls include discovery, remote/power actions, explicit pause/resume and
 experimental selected-title launch with durable uncertainty recovery. This

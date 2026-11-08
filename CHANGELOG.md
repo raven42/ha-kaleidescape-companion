@@ -3,6 +3,13 @@
 Entries record development history. Later entries can supersede earlier
 behavior; the [documentation index](docs/README.md) owns current contracts.
 
+## Unreleased — Documentation consistency
+
+- Align settings navigation, credential removal, blueprint review and preview
+  instructions with the reorganized workspace.
+- Correct purchase-schema and Library sensor descriptions, and clarify that
+  external metadata refreshes are requested independently of Library scans.
+
 ## Unreleased — Settings workspace
 
 - Organize every active setting into nine feature categories, with search,

@@ -15,9 +15,10 @@ registers no replacement media player and never forwards arbitrary HA services.
 Controls are disabled by default. Administrators configure them in Companion's
 **Settings → Playback**:
 
-1. Enable playback controls and choose a trusted system seed hostname/private
-   LAN address. Blank uses the Library host or `my-kaleidescape.local`. The
-   control connection uses fixed TCP port 10000.
+1. Enable playback controls and enter a trusted system seed hostname/private LAN
+   address under **Kaleidescape Player Address**. Blank uses the **Kaleidescape
+   Server Address** or `my-kaleidescape.local`. The control connection uses
+   fixed TCP port 10000.
 2. Save, then choose **Discover devices**. This read-only query is bounded to 64
    components/65 seconds and never scans the subnet or wakes a player.
 3. Select a movie-capable default player and save again. Discovery choices are

@@ -135,10 +135,11 @@ older entries whose snapshots are missing or incomplete.
 ## Repair existing Journal metadata
 
 After updating Companion, sync the Library's title details, save any Settings
-changes, then use **Settings → Journal Library metadata → Repair Journal Library
-metadata**. Review the counts and choose **Repair missing metadata**. This
-updates the live Journal through its worker; replacing or importing the database
-is unnecessary. Take a normal HA backup first if you want a restore point.
+changes, then use **Settings → Maintenance → Metadata repair → Repair Journal
+Library metadata**. Review the counts and choose **Repair missing metadata**.
+This updates the live Journal through its worker; replacing or importing the
+database is unnecessary. Take a normal HA backup first if you want a restore
+point.
 
 The repair fills missing snapshot values and version references without
 overwriting existing values, viewing/session times, completion state or notes.
@@ -253,7 +254,7 @@ publishing on a restored copy.
 ## Export existing Journal viewings
 
 With Full Sync disabled, save the calendar settings first, then use **Settings →
-Export Journal to calendar → Sync all watched movies to calendar**. The
+Calendar → Existing viewing history → Sync all watched movies to calendar**. The
 confirmation displays the count and warns that changing the title format can
 produce duplicate events. Only completed, nondeleted Journal viewings are
 included; Library's Watched collection is not a substitute for session history.
@@ -300,12 +301,12 @@ produce duplicates; this is not cross-provider exactly-once delivery.
 
 ## Full Sync for a dedicated calendar
 
-Enable **Settings → Watched movies calendar → Full Sync** and acknowledge the
-dedicated-calendar warning, then save. Full Sync is disabled by default.
-**Assign its own separate calendar. Within the age window, events that do not
-match a completed, nondeleted database Journal entry will be permanently
-deleted.** Partial viewings are not calendar events. No live provider writes
-occur during development checks.
+Enable **Settings → Calendar → Dedicated calendar maintenance → Enable Full
+Sync** and acknowledge the dedicated-calendar warning, then save. Full Sync is
+disabled by default. **Assign its own separate calendar. Within the age window,
+events that do not match a completed, nondeleted database Journal entry will be
+permanently deleted.** Partial viewings are not calendar events. No live
+provider writes occur during development checks.
 
 Configure **Full Sync age window** to 1–12 whole months (default **3**). The
 rolling window uses calendar months, ending at the current instant. Older and

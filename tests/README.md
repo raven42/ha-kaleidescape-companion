@@ -27,12 +27,12 @@ npm --prefix frontend run build
   roles.
 - Library, purchases, matching and preferences suites cover exact identities,
   cache preservation, browsing, financial field privacy and sticky UI settings.
-- Purchase tests cover schema-25 movement of embedded invoice history, retained
-  unmatched records, later correlation, replay/conflict handling and
-  purchase-only reconciliation during recording. Blueprint tests exercise quoted
-  forwards, original receipt dates, optional HTML identity recovery, cover/title
-  duplicate links, version fingerprints and comment histories with fictional
-  inputs.
+- Purchase tests cover schema-25 movement of embedded invoice history, nullable
+  dates, schema-27 repair evidence, retained unmatched records, later
+  correlation, replay/conflict handling and purchase-only reconciliation during
+  recording. Receipt and blueprint tests exercise quoted forwards, original
+  receipt dates, required HTML item extraction, cover/title duplicate links,
+  version fingerprints and comment histories with fictional inputs.
 - `test_read_cache` checks distinct-credit work, household/admin search parity,
   cache bounds/invalidation and cleanup after interrupted queries. The offline
   [enriched Library benchmark](../docs/guides/guide-development.md#library-performance)

@@ -14277,10 +14277,10 @@ const st = class st extends x {
         <details class="setting-help">
           <summary>When is metadata refreshed?</summary>
           <p>
-            Successful Library scans enrich new or week-old metadata. Ambiguous
-            matches are skipped. A manual refresh forces a pass using saved
-            settings; provider errors stop the pass without automatic HTTP
-            retries. Recurring schedules are managed under Automations.
+            Library scans do not start external metadata refreshes. Request a
+            refresh here, use the Home Assistant button, or configure a
+            recurring schedule under Automations. Ambiguous matches are skipped;
+            provider errors stop the pass without automatic HTTP retries.
           </p>
         </details>
         <details class="setting-help">

@@ -119,10 +119,10 @@ image references, not a filesystem rescan; per-kind no-artwork declarations
 remove that expectation. Normal cache recovery handles missing files. No
 provider IDs, failure messages or image keys are added as sensor attributes.
 
-The watched count describes the cached Library Played collection, independently
-of completed journal viewings and rewatches. Paused takes priority even when
-another format of the same movie belongs to Played. It refreshes with the
-existing Library coordinator; this sensor needs no database migration.
+The watched count describes membership in the cached Library Played collection,
+independently of completed journal viewings and rewatches. A group in Played is
+counted even if another version is in Paused; display badges may prioritize
+Paused separately. Counts refresh with the existing Library coordinator.
 
 ### Recently added batches
 

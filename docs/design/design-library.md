@@ -2,9 +2,10 @@
 
 Library sync is **disabled by default** and independent from playback recording.
 The Library tab is visible but disabled until an administrator saves **Settings
-→ Enable library sync**. The same options are available under the integration's
-**Configure** action. Once enabled, all active HA users can browse the shared
-cached library and artwork. Settings and **Sync now** remain administrator-only.
+→ Library → Enable Library sync**. The same options are available under the
+integration's **Configure** action. Once enabled, all active HA users can browse
+the shared cached library and artwork. Settings and **Sync now** remain
+administrator-only.
 
 The temporary PoC uses pyk's `LocalLibrary` to parse local browser pages and the
 add-only form. Companion supplies its guarded HA HTTP transport and retains
@@ -14,7 +15,7 @@ This requires the privately bundled patched pyk source described in the
 
 ## Connection and sync settings
 
-Leave **Library hostname** blank to attempt discovery by resolving
+Leave **Kaleidescape Server Address** blank to attempt discovery by resolving
 `my-kaleidescape.local` and validating its read-only Movies page. This uses HA's
 shared DNS/mDNS resolver (host resolution as a fallback), not a subnet scan. If
 local name resolution is unavailable from HA, enter a hostname, private LAN IP,
@@ -27,16 +28,16 @@ The vendor describes this local browser interface in
 [Accessing the Browser Interface](https://www.kaleidescape.com/support/article/Accessing-the-Browser-Interface).
 It is a firmware-dependent HTML interface, not a promised public JSON API.
 
-| Setting                 | Default | Behavior                                                                                                           |
-| ----------------------- | ------- | ------------------------------------------------------------------------------------------------------------------ |
-| Enable library sync     | Off     | Starts a read-only sync after setup; recurring sync requires an HA automation                                      |
-| Library hostname        | Blank   | Attempts `http://my-kaleidescape.local`; an explicit value overrides discovery                                     |
-| Allow Add to Collection | Off     | Administrators may explicitly add one selected version to an existing offered target; requires collection sync     |
-| Sync collections        | On      | Cache available collections and exact title memberships                                                            |
-| Sync title details      | On      | Fetch available cast/director/writer/studio, genres, synopsis, and runtime                                         |
-| Sync artwork            | Off     | Fetch validated covers into the private cache; can require detail-page requests even with detail metadata disabled |
-| Default landing page    | Journal | Used without an allowed URL tab; reader/disabled pages fall back                                                   |
-| Artwork cache limit     | 512 MiB | 32–4096 MiB, separate from the database; older covers are evicted when full                                        |
+| Setting                        | Default | Behavior                                                                                                           |
+| ------------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------ |
+| Enable Library sync            | Off     | Starts a read-only sync after setup; recurring sync requires an HA automation                                      |
+| Kaleidescape Server Address    | Blank   | Attempts `http://my-kaleidescape.local`; an explicit value overrides discovery                                     |
+| Allow Add to Collection        | Off     | Administrators may explicitly add one selected version to an existing offered target; requires collection sync     |
+| Collections and watched status | On      | Cache available collections and exact title memberships                                                            |
+| Movie details and credits      | On      | Fetch available cast/director/writer/studio, genres, synopsis, and runtime                                         |
+| Cover artwork                  | Off     | Fetch validated covers into the private cache; can require detail-page requests even with detail metadata disabled |
+| Default landing page (General) | Journal | Used without an allowed URL tab; reader/disabled pages fall back                                                   |
+| Artwork storage limit          | 512 MiB | 32–4096 MiB, separate from the database; older covers are evicted when full                                        |
 
 Library view/count, sort, cover size and column widths are
 [personal database preferences](design-user-interface.md#personal-and-shared-preferences),
@@ -660,13 +661,13 @@ reuse the same search, filter, sort and preference behavior as desktop controls.
 
 ## Add to Collection
 
-Administrators can enable **Settings → Allow Add to Collection on the device**.
-It is off by default and also requires enabled Library and collection sync. Open
-a Library title, select its individual version tab, and choose **Collection**.
-The dialog reads the server's offered targets. Choose one existing collection
-and **Add selected version**. Viewing history and purchase dates are not
-changed. Removal, collection creation/renaming/deletion, and bulk/group edits
-remain outside this implementation.
+Administrators can enable **Settings → Library → Allow Add to Collection**. It
+is off by default and also requires enabled Library and collection sync. Open a
+Library title, select its individual version tab, and choose **Collection**. The
+dialog reads the server's offered targets. Choose one existing collection and
+**Add selected version**. Viewing history and purchase dates are not changed.
+Removal, collection creation/renaming/deletion, and bulk/group edits remain
+outside this implementation.
 
 ### Protocol capability
 
@@ -827,12 +828,12 @@ suppressed badge does not change its filter membership. Recently Added is
 independent of the Kaleidescape **New** collection: it includes the retained
 addition batch and any purchase linked to the same source-defined movie group
 within the configured purchase window. Administrators set this window in
-**Settings → Ecosystem → Library sync**, in whole weeks from 0 to 520; it
-defaults to 2 and 0 disables the purchase-date portion. The boundary date is
-included, future dates are not, and dates use Home Assistant's local calendar
-day. The recently added sensor batch itself is unchanged. These use cached
-source statuses and refresh with collection sync, rather than adding playback
-polling or treating journal facts as device collection membership.
+**Settings → Library → Recently Added purchase window**, in whole weeks from 0
+to 520; it defaults to 2 and 0 disables the purchase-date portion. The boundary
+date is included, future dates are not, and dates use Home Assistant's local
+calendar day. The recently added sensor batch itself is unchanged. These use
+cached source statuses and refresh with collection sync, rather than adding
+playback polling or treating journal facts as device collection membership.
 
 The Favorites badge and filter use the same group-wide source collection
 membership. Movie details show it once even when the collection name is also

@@ -394,17 +394,19 @@ of the historical price at purchase.
 Receipt imports store each invoice once in the private `purchase_records` table,
 with a nullable Library link. Schema **24** added the per-movie purchase
 information-unavailable flag; schema **25** creates the purchase table and moves
-embedded invoice histories into it. The migration clears derived invoice fields
-from Library, drops its old `purchase_history` column and retains an upgrade
-backup. Matching invoice identities are retained once; conflicting duplicates or
-multiple Library owners abort the migration. Safe unlinked legacy placeholder
-Library rows are removed when no membership, viewing or collection intent still
-references them. Possible duplicate reviews show up to five similar invoices and
-their Library associations; similarity is a hint, not proof. Choosing a Library
-match does not select a possible duplicate for import: the administrator must
-explicitly select it as a separate purchase. Library summaries and purchase
-history views are derived from these records. Manually entered prices without an
-invoice remain on the Library entry until an invoice is linked.
+embedded invoice histories into it. Schema **26** permits unknown purchase
+dates; schema **27** adds append-only repair evidence and identity barriers. The
+schema-25 migration clears derived invoice fields from Library, drops its old
+`purchase_history` column and retains an upgrade backup. Matching invoice
+identities are retained once; conflicting duplicates or multiple Library owners
+abort the migration. Safe unlinked legacy placeholder Library rows are removed
+when no membership, viewing or collection intent still references them. Possible
+duplicate reviews show up to five similar invoices and their Library
+associations; similarity is a hint, not proof. Choosing a Library match does not
+select a possible duplicate for import: the administrator must explicitly select
+it as a separate purchase. Library summaries and purchase history views are
+derived from these records. Manually entered prices without an invoice remain on
+the Library entry until an invoice is linked.
 
 To repair an existing invoice, open **Database → Purchases**, select the
 invoice, and choose **Repair purchase**. Correct receipt fields or choose an

@@ -1,9 +1,9 @@
 # Companion delivery roadmap
 
-Reviewed against the implementation on 2026-11-04. This is the single product
-status and remaining-work list. Feature designs describe implemented behavior;
-the [pyk migration plan](plan-pykaliedescape-migration.md) owns the current PoC,
-upstream compatibility and hardware qualification.
+Status reconciled with the implementation on 2026-11-07. This is the single
+product status and remaining-work list. Feature designs describe implemented
+behavior; the [pyk migration plan](plan-pykaliedescape-migration.md) owns the
+current PoC, upstream compatibility and hardware qualification.
 
 Priorities are **functionality, privacy, usability, scalability, flexibility**.
 Preserve the built-in HA integration, household data and pyk's established
@@ -23,7 +23,7 @@ owner's approval, not a condition that overrides functional migration.
 | HA surfaces     | 17 sensors, six dashboard cards and an explicit test-dashboard generator                                                               | [Sensors](../design/design-sensors.md), [cards](../design/design-dashboard-cards.md)                                               |
 | Calendar        | Local Journal month view, optional publishing/history export and dedicated-calendar Full Sync                                          | [Calendar](../design/design-calendar.md)                                                                                           |
 | Operations      | Native module logging, bounded diagnostics, backup coordination, local checks, runtime packaging and explicit SSH deployment           | [Logging](../design/design-logging.md), [development](../guides/guide-development.md), [deployment](../guides/guide-deployment.md) |
-| Automations     | Three HA buttons/switches each, four versioned blueprints, About/history, explicit updates, receipt parsing and scheduled jobs         | [Automations](../design/design-automations.md)                                                                                     |
+| Automations     | Three HA buttons/switches each, four versioned blueprints, change-log review, explicit updates, receipt parsing and scheduled jobs     | [Automations](../design/design-automations.md)                                                                                     |
 
 Implemented means present in code with offline tests; it does not mean every
 model, firmware, browser size or HA release is qualified. The dashboard calendar
@@ -33,7 +33,9 @@ resolution/dynamic-range/audio badges, general-audience-first rating filters,
 known-rating exclusion from Unrated, cached covers in reconciliation, calendar
 search/view restoration, Today navigation and the Watch Soon corner badge.
 Receipt blueprint v8 requires the HTML part and reports when it cannot be
-imported; v7 moved receipt extraction into Python.
+imported; v7 moved receipt extraction into Python. The settings workspace groups
+configuration by feature, with searchable hints, staged changes, and a single
+blueprint inventory and review workflow.
 
 ## Next delivery gates
 
@@ -44,8 +46,8 @@ below remain in force.
 
 The [authorized follow-up](../../audit/2026-11-07/FOLLOW_UP.md) records the
 receipt currency, retained purchase evidence and notification fixes, corrected
-documentation, development metadata and passing offline checks. External
-acceptance below remains unperformed.
+documentation, development metadata and passing offline checks. The hardware,
+provider, installation and restore acceptance below remains unperformed.
 
 1. Review and upstream the local pyk patches while preserving its existing
    `Device` workflow. Verify the released package with HA's built-in integration
@@ -81,9 +83,11 @@ precise functional requirements, optional owner decisions and exit evidence.
 - Run current dependency audits against the release candidate and assess actual
   exposure. Keep findings with versions and dispositions; a dated audit count is
   neither a permanent blocker nor proof that dependencies are safe today.
-- Complete operator browser review for both roles and desktop/tablet/mobile;
-  validate private exports, real-source parsing, backup/restore and calendar
-  provider behavior. Offline fixtures do not substitute for these checks.
+- The owner reviewed the fictional administrator Settings preview and confirmed
+  the requested refinements on 2026-11-07. Complete broader operator browser
+  review for both roles and desktop/tablet/mobile; validate private exports,
+  real-source parsing, backup/restore and calendar provider behavior. A
+  fictional preview does not establish live HA behavior.
 - Measure startup, reconnect, catalog size, memory and request latency on the
   supported environment before promising larger deployments.
 

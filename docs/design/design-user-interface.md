@@ -221,8 +221,11 @@ or provider response is executable in the panel.
 ## Validation
 
 Automated component/proxy tests use fictional transport and a simulated DOM;
-production bundles exclude preview fixtures and development proxy code. Operator
-browser review still covers desktop/tablet/mobile, both roles, focus/keyboard,
-responsive profiles, dirty/pending dialogs, empty/loading/error states and
-reload persistence. Use the concrete preview URLs in the development guide;
-automated checks do not launch a real browser or send real player commands.
+production bundles exclude preview fixtures and development proxy code. On
+2026-11-07 the owner reviewed the fictional administrator Settings preview and
+confirmed the requested names, hints and credential-removal refinements. Broader
+operator browser review still covers desktop/tablet/mobile, both roles,
+focus/keyboard, responsive profiles, dirty/pending dialogs, empty/loading/error
+states and reload persistence. Use the concrete preview URLs in the development
+guide; automated checks do not launch a real browser or send real player
+commands.

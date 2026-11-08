@@ -22,10 +22,11 @@ disconnects. Shutdown closes the connection on its owning worker.
 Content changes commit rows, dataset revision and retry result together.
 Actor/request/payload-bound UUID retries return the original result without
 reapplying a mutation. Expected revisions reject stale edits. UI settings have
-separate revisions and do not invalidate journal/catalog pages. Protected audit
-records contain operation/actor/revision metadata rather than duplicate movie
-content. Raw source identities are retained exactly; titles do not establish
-identity.
+separate revisions and do not invalidate journal/catalog pages. General activity
+audit records contain operation/actor/revision metadata rather than duplicate
+movie content. Purchase repair evidence separately retains private before/after
+invoice records and Library associations for reviewed reversals. Raw source
+identities are retained exactly; titles do not establish identity.
 
 Private storage uses `0700` directories and `0600` files with owned-path checks.
 Schema migration creates a private pre-migration backup and applies supported
@@ -44,6 +45,7 @@ there is no automatic history purge or filesystem-wide quota.
 | `manual_audit`, `maintenance_audit`, `import_audit`, `database_audit`                    | Attribution and operation/count/field metadata with distinct retention rules                                            |
 | `library`, `library_sources`                                                             | Source/version metadata, catalog generation and freshness                                                               |
 | `purchase_records`                                                                       | Separate purchase history, including unmatched receipts and validated Library links                                     |
+| `purchase_repair_events`, `purchase_identity_barriers`                                   | Append-only private repair evidence and reserved purchase identities                                                    |
 | `library_collections`, `library_memberships`, `library_artwork`                          | Membership relations and file-cache index; image bytes are outside SQLite                                               |
 | `settings`                                                                               | Personal/display-profile preferences and shared UI defaults                                                             |
 | `library_collection_intents`, `playback_controls`                                        | Durable external command outcomes and uncertainty barriers                                                              |

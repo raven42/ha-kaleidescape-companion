@@ -122,12 +122,16 @@ For disconnected fictional review, open:
 
 - `http://127.0.0.1:5173/review.html`
 - `http://127.0.0.1:5173/review.html?library=1&companion_page=library`
+- `http://127.0.0.1:5173/review.html?settings=1&companion_page=settings`
 
-Fixtures live only in page memory and reset on reload. They do not prove durable
-HA behavior. Operator browser review should cover both roles, layout widths,
-keyboard/focus, retries/drafts, settings persistence and feature-specific
-recovery. Automated component tests run independently; do not automate a real
-browser for UI review under this project's workflow.
+The Settings fixture includes fictional outdated, modified and missing
+blueprints and a saved-credential indicator for reviewing the update and removal
+workflows. Fixtures live only in page memory and reset on reload; no actual
+credential is present. They do not prove durable HA behavior. Operator browser
+review should cover both roles, layout widths, keyboard/focus, retries/drafts,
+settings persistence and feature-specific recovery. Automated component tests
+run independently; do not automate a real browser for UI review under this
+project's workflow.
 
 ## Implementation conventions
 
