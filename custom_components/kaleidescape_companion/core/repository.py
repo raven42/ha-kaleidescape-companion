@@ -790,6 +790,13 @@ class JournalRepository:
             inspect_database, table, offset, revision, limit, query, sort, descending
         )
 
+    async def async_database_referenced_by(self, table, key, token, revision):
+        from .maintenance import referencing_rows
+
+        return await self._call(
+            self._search_read, referencing_rows, table, key, token, revision
+        )
+
     async def async_database_cleanup_preview(self, policies):
         return await self._call(self._database_cleanup_preview, policies)
 

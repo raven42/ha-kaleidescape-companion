@@ -8,6 +8,7 @@ import type { PropertyValues } from "lit";
 import { ApiError, errorCode, errorMessage } from "../core/api";
 import type {
   DatabasePage,
+  DatabaseReferenceGroup,
   DatabaseQuery,
   JournalClient,
   JournalInfo,
@@ -140,6 +141,10 @@ export class KaleidescapeDatabase extends LitElement {
   private moreError = "";
   private detailLoading = false;
   private detailRequest = 0;
+  private referenceRequest = 0;
+  private referenceLoading = false;
+  private referenceError = "";
+  private referencedBy: DatabaseReferenceGroup[] = [];
   private rowScrollTop = 0;
   private listHeight = 440;
   private fitObserver?: ResizeObserver;
@@ -221,6 +226,10 @@ export class KaleidescapeDatabase extends LitElement {
     this.allBatchSize = ALL_BATCH;
     this.moreError = "";
     this.detailRequest++;
+    this.referenceRequest++;
+    this.referenceLoading = false;
+    this.referenceError = "";
+    this.referencedBy = [];
     this.rowScrollTop = 0;
     this.filters = { limit: 25, query: "", descending: false };
     this.showSystem = false;
@@ -435,6 +444,10 @@ export class KaleidescapeDatabase extends LitElement {
     this.moreError = "";
     this.allBatchSize = ALL_BATCH;
     this.detailRequest++;
+    this.referenceRequest++;
+    this.referenceLoading = false;
+    this.referenceError = "";
+    this.referencedBy = [];
     this.rowScrollTop = 0;
     if (this.page?.table !== this.table) this.page = undefined;
     this.error = "";
@@ -473,6 +486,7 @@ export class KaleidescapeDatabase extends LitElement {
         );
       }
       this.filters.sort = page.sort;
+      if (this.detail) void this.loadReferencedBy(this.detail);
     } catch (error) {
       if (generation === this.generation && request === this.request)
         this.fail(error);
@@ -498,22 +512,24 @@ export class KaleidescapeDatabase extends LitElement {
       }
     }
   }
-  private async follow(
-    reference: NonNullable<DatabasePage["references"]>[number],
-  ) {
-    if (
-      this.blocked ||
-      !this.detail ||
-      !this.page?.tables ||
-      !(reference.table in this.page.tables)
-    )
+  private follow(reference: NonNullable<DatabasePage["references"]>[number]) {
+    if (!this.detail) return;
+    const values = Object.fromEntries(
+      Object.entries(reference.key).map(([field, local]) => [
+        field,
+        this.detail![local],
+      ]),
+    );
+    void this.followValues(reference.table, values);
+  }
+  private async followValues(target: string, values: Record<string, unknown>) {
+    if (this.blocked || !this.page?.tables || !(target in this.page.tables))
       return;
     const clauses = [];
-    for (const [field, local] of Object.entries(reference.key)) {
-      const value = this.detail[local];
+    for (const [field, value] of Object.entries(values)) {
       if (
         value == null ||
-        !/^[a-z_]+$/.test(field) ||
+        !/^[a-z_][a-z_0-9]*$/.test(field) ||
         !["string", "number"].includes(typeof value)
       )
         return;
@@ -521,11 +537,12 @@ export class KaleidescapeDatabase extends LitElement {
         `${field} = ${typeof value === "number" ? value : `'${String(value).replaceAll("'", "''")}'`}`,
       );
     }
-    if (!MAIN.includes(reference.table)) {
+    if (!clauses.length) return;
+    if (!MAIN.includes(target)) {
       this.showSystem = true;
       this.preferences?.set({ show_system: true });
     }
-    this.table = reference.table;
+    this.table = target;
     this.search = `WHERE ${clauses.join(" AND ")}`;
     this.filters = {
       limit: this.filters.limit,
@@ -533,13 +550,66 @@ export class KaleidescapeDatabase extends LitElement {
       ...this.sorts[this.table],
     };
     this.preferences?.set({ table: this.table });
-    const generation = this.generation;
-    const table = this.table;
+    const generation = this.generation,
+      table = this.table;
     await this.load();
     if (generation !== this.generation || table !== this.table) return;
-    if (this.page?.items[0]) this.showDetail(this.page.items[0]);
+    if (this.page?.items[0]) void this.showDetail(this.page.items[0]);
     else this.notice = "The referenced entry no longer exists.";
     this.requestUpdate();
+  }
+  private referenceText(table: string, values: unknown[]) {
+    return `${LABELS[table] ?? table} - ${values.map((value) => String(value)).join(", ")}`;
+  }
+  private async loadReferencedBy(row: Row) {
+    if (!this.client || !this.scope || !this.page) return;
+    const page = this.page,
+      index = page.items.indexOf(row),
+      token = page.row_tokens?.[index];
+    const request = ++this.referenceRequest,
+      generation = this.generation;
+    this.referencedBy = [];
+    this.referenceError = "";
+    if (index < 0 || !token) {
+      this.referenceLoading = false;
+      this.requestUpdate();
+      return;
+    }
+    this.referenceLoading = true;
+    this.requestUpdate();
+    try {
+      const result = await this.client.referencedBy(
+        this.scope,
+        page.table,
+        this.rowKey(row),
+        token,
+        page.revision,
+      );
+      if (
+        request === this.referenceRequest &&
+        generation === this.generation &&
+        this.detail === row
+      )
+        this.referencedBy = result.groups;
+    } catch (error) {
+      if (
+        request !== this.referenceRequest ||
+        generation !== this.generation ||
+        this.detail !== row
+      )
+        return;
+      if (errorCode(error) === "unauthorized") this.fail(error);
+      else this.referenceError = errorMessage(error);
+    } finally {
+      if (
+        request === this.referenceRequest &&
+        generation === this.generation &&
+        this.detail === row
+      ) {
+        this.referenceLoading = false;
+        this.requestUpdate();
+      }
+    }
   }
   private rowKey(row: Row) {
     return Object.fromEntries(
@@ -765,6 +835,7 @@ export class KaleidescapeDatabase extends LitElement {
       }
     }
     this.detail = row;
+    void this.loadReferencedBy(row);
     this.requestUpdate();
     void this.updateComplete.then(() => {
       if (this.detail !== row) return;
@@ -1377,8 +1448,82 @@ export class KaleidescapeDatabase extends LitElement {
                           ${!this.scope?.library_enabled ? html`<small>Enable Library to preview cached artwork.</small>` : nothing}`
                       : nothing
                   }
-                  <div class="database-references">
-                    ${(this.page?.references ?? []).filter((ref) => Object.values(ref.key).every((key) => this.detail?.[key] != null)).map((ref) => html`<button class="link" ?disabled=${this.blocked} @click=${() => this.follow(ref)}>Open ${LABELS[ref.table] ?? ref.table} · ${Object.values(ref.key).join(", ")}</button>`)}
+                  <div class="database-relationships">
+                    <section
+                      class="database-references"
+                      aria-label="References"
+                    >
+                      <h3>References</h3>
+                      ${(() => {
+                        const refs = (this.page?.references ?? []).filter(
+                          (ref) =>
+                            Object.values(ref.key).every(
+                              (key) => this.detail?.[key] != null,
+                            ),
+                        );
+                        return refs.length
+                          ? html`<ul>
+                              ${refs.map(
+                                (ref) =>
+                                  html`<li>
+                                    <button
+                                      class="link"
+                                      ?disabled=${this.blocked}
+                                      @click=${() => this.follow(ref)}
+                                    >
+                                      ${this.referenceText(
+                                        ref.table,
+                                        Object.values(ref.key).map(
+                                          (key) => this.detail![key],
+                                        ),
+                                      )}
+                                    </button>
+                                  </li>`,
+                              )}
+                            </ul>`
+                          : html`<small>None</small>`;
+                      })()}
+                    </section>
+                    <section
+                      class="database-references"
+                      aria-label="Referenced by"
+                    >
+                      <h3>Referenced by</h3>
+                      ${
+                        this.referenceLoading
+                          ? html`<small role="status">Loading…</small>`
+                          : this.referenceError
+                            ? html`<small class="error" role="alert"
+                                  >${this.referenceError}</small
+                                ><button
+                                  class="link"
+                                  @click=${() => this.detail && this.loadReferencedBy(this.detail)}
+                                >
+                                  Retry
+                                </button>`
+                            : this.referencedBy.length
+                              ? html`<ul>
+                                  ${this.referencedBy.map(
+                                    (group) =>
+                                      html`${group.items.map((key) => html`<li><button class="link" ?disabled=${this.blocked} @click=${() => this.followValues(group.table, key)}>${this.referenceText(group.table, Object.values(key))}</button></li>`)}${
+                                        group.more
+                                          ? html`<li>
+                                              <button
+                                                class="link"
+                                                ?disabled=${this.blocked}
+                                                @click=${() => this.follow(group)}
+                                              >
+                                                View all
+                                                ${LABELS[group.table] ?? group.table}
+                                              </button>
+                                            </li>`
+                                          : nothing
+                                      }`,
+                                  )}
+                                </ul>`
+                              : html`<small>None</small>`
+                      }
+                    </section>
                   </div>
                   <pre>${JSON.stringify(this.detail, null, 2)}</pre>
                   ${

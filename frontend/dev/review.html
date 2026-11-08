@@ -48,6 +48,30 @@
           available: true,
         },
       ];
+      transport.databaseFixtureTables.library_sources = [
+        { id: "fictional-source", name: "Fictional server" },
+      ];
+      transport.databaseReferences.library = [
+        { table: "library_sources", key: { id: "source_id" } },
+      ];
+      transport.databaseIncoming.library = [
+        {
+          table: "purchase_records",
+          key: { library_id: "id" },
+          items: [{ id: "a".repeat(64) }],
+          more: false,
+        },
+        {
+          table: "viewings",
+          key: { library_title_id: "id" },
+          items: [{ id: transport.records[0].id }],
+          more: false,
+        },
+      ];
+      transport.records[0] = {
+        ...transport.records[0],
+        library_title_id: "fictional-library-1",
+      };
       transport.purchaseRecords = [
         {
           id: "a".repeat(64),
@@ -57,7 +81,7 @@
           retail_price: "$24.99",
           order_id: "FICTIONAL-1",
           href: null,
-          library_id: null,
+          library_id: "fictional-library-1",
         },
       ];
     }

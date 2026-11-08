@@ -172,6 +172,88 @@ def inspect_database(
     return page
 
 
+MAX_REFERENCING_ROWS = 10
+
+
+def referencing_rows(db, table, key, token, revision):
+    """Find bounded incoming links for one revision-checked administrator row."""
+    if not isinstance(table, str) or table not in TABLE_KEYS:
+        raise invalid("Invalid database table")
+    keys = TABLE_KEYS[table].split(",")
+    if (
+        not isinstance(key, dict)
+        or set(key) != set(keys)
+        or not isinstance(token, str)
+        or not isinstance(revision, int)
+        or isinstance(revision, bool)
+    ):
+        raise invalid("Invalid database row identity")
+    values = tuple(key[name] for name in keys)
+    if any(
+        not isinstance(value, (str, int))
+        or isinstance(value, bool)
+        or len(str(value)) > 512
+        for value in values
+    ):
+        raise invalid("Invalid database row key")
+    meta = db.execute(
+        "SELECT revision,settings_revision FROM schema_metadata"
+    ).fetchone()
+    current = (
+        meta["settings_revision"]
+        if table == "settings"
+        else meta["revision"] + meta["settings_revision"]
+        if table in {"requests", "schema_metadata"}
+        else meta["revision"]
+    )
+    if current != revision:
+        raise JournalError(
+            "refresh_required", "Database changed; refresh the selected entry"
+        )
+    where = " AND ".join(f'"{name}"=?' for name in keys)
+    selected = db.execute(f'SELECT * FROM "{table}" WHERE {where}', values).fetchone()
+    if selected is None:
+        raise JournalError("not_found", "Selected entry no longer exists")
+    selected = dict(selected)
+    if row_token(selected) != token:
+        raise JournalError(
+            "refresh_required", "Selected entry changed; refresh the database"
+        )
+    groups = []
+    seen = set()
+    for child in TABLE_KEYS:
+        for reference in references(db, child):
+            if reference["table"] != table:
+                continue
+            mapping = reference["key"]
+            signature = (child, tuple(sorted(mapping.items())))
+            if signature in seen or any(
+                name not in selected or selected[name] is None for name in mapping
+            ):
+                continue
+            seen.add(signature)
+            child_keys = TABLE_KEYS[child].split(",")
+            child_where = " AND ".join(f'"{local}"=?' for local in mapping.values())
+            columns = ",".join(f'"{name}"' for name in child_keys)
+            matches = db.execute(
+                f'SELECT {columns} FROM "{child}" WHERE {child_where} LIMIT ?',
+                (*[selected[name] for name in mapping], MAX_REFERENCING_ROWS + 1),
+            ).fetchall()
+            if matches:
+                groups.append(
+                    {
+                        "table": child,
+                        "key": {local: parent for parent, local in mapping.items()},
+                        "items": [
+                            {name: row[name] for name in child_keys}
+                            for row in matches[:MAX_REFERENCING_ROWS]
+                        ],
+                        "more": len(matches) > MAX_REFERENCING_ROWS,
+                    }
+                )
+    return {"groups": groups}
+
+
 def row_token(row):
     return hashlib.sha256(
         json.dumps(dict(row), sort_keys=True, allow_nan=False).encode()

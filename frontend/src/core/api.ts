@@ -247,6 +247,12 @@ export interface CalendarStatus {
     counts: Record<string, number>;
   };
 }
+export interface DatabaseReferenceGroup {
+  table: string;
+  key: Record<string, string>;
+  items: Record<string, string | number>[];
+  more: boolean;
+}
 export interface DatabasePage {
   references?: { table: string; key: Record<string, string> }[];
   dataset_revision?: number;
@@ -1656,6 +1662,22 @@ export class JournalClient {
       offset,
       ...(revision == null ? {} : { revision }),
       ...filters,
+    });
+  }
+  referencedBy(
+    scope: Scope,
+    table: string,
+    key: Record<string, unknown>,
+    token: string,
+    revision: number,
+  ): Promise<{ groups: DatabaseReferenceGroup[] }> {
+    return this.call({
+      type: `${DOMAIN}/database/referenced_by`,
+      ...scopeFields(scope),
+      table,
+      key,
+      token,
+      revision,
     });
   }
   cleanupPreview(

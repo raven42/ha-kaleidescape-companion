@@ -299,6 +299,15 @@ export class FixtureTransport implements Transport {
   purchaseRecords: Record<string, unknown>[] = [];
   cleanupCount = 3;
   databaseLibraryRows: Record<string, unknown>[] = [];
+  databaseFixtureTables: Record<string, Record<string, unknown>[]> = {};
+  databaseReferences: Record<
+    string,
+    { table: string; key: Record<string, string> }[]
+  > = {};
+  databaseIncoming: Record<
+    string,
+    import("../src/core/api").DatabaseReferenceGroup[]
+  > = {};
   purchaseRepairEvents: Record<string, unknown>[] = [];
   viewingLinks = new Map<string, string>();
   private uiRevision = 0;
@@ -1176,6 +1185,8 @@ export class FixtureTransport implements Transport {
       };
       this.cleanupCount = 0;
       this.revision++;
+    } else if (operation === "database/referenced_by") {
+      result = { groups: this.databaseIncoming[String(message.table)] ?? [] };
     } else if (operation === "database/inspect") {
       const tables: Record<string, Record<string, unknown>[]> = {
         settings: [
@@ -1212,6 +1223,7 @@ export class FixtureTransport implements Transport {
         library_collections: [],
         library_memberships: [],
         library_artwork: [],
+        ...this.databaseFixtureTables,
       };
       let rows = tables[String(message.table)];
       if (!rows) throw new ApiError("invalid_request");
@@ -1224,7 +1236,22 @@ export class FixtureTransport implements Transport {
       const query = String(message.query ?? "");
       const columns = Object.keys(rows[0] ?? { id: "" });
       const sort = String(message.sort ?? columns[0]);
-      if (query)
+      if (query.toUpperCase().startsWith("WHERE ")) {
+        const clauses = [
+          ...query.matchAll(
+            /([a-z_][a-z_0-9]*)\s*=\s*(?:'((?:[^']|'')*)'|(-?\d+(?:\.\d+)?))/gi,
+          ),
+        ];
+        rows = rows.filter((row) =>
+          clauses.every(
+            ([, field, textValue, numberValue]) =>
+              String(row[field]) ===
+              (textValue === undefined
+                ? numberValue
+                : textValue.replaceAll("''", "'")),
+          ),
+        );
+      } else if (query)
         rows = rows.filter((row) =>
           Object.values(row).some((value) => matches(String(value), query)),
         );
@@ -1249,6 +1276,7 @@ export class FixtureTransport implements Transport {
             : [];
       result = {
         dataset_revision: this.revision,
+        references: this.databaseReferences[String(message.table)] ?? [],
         main_tables: ["viewings", "sessions", "library", "purchase_records"],
         schema: columns.map((name) => ({
           name,

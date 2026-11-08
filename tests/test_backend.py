@@ -440,6 +440,19 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
                 await request
         self.assertFalse(paths[0].exists())
 
+    async def test_incoming_database_references_require_administrator(self):
+        viewer = SimpleNamespace(id="viewer", is_active=True, is_admin=False)
+        result = await self.call(
+            "database/referenced_by",
+            user=viewer,
+            **self.scope,
+            table="viewings",
+            key={"id": "fictional"},
+            token="x",
+            revision=1,
+        )
+        self.assertEqual(result["code"], "unauthorized")
+
     async def test_cleanup_requires_admin_and_service_preserves_selected_policy(self):
         viewer = SimpleNamespace(id="viewer", is_active=True, is_admin=False)
         result = await self.call(

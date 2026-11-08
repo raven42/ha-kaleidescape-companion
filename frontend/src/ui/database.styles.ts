@@ -74,12 +74,37 @@ export const databaseStyles = css`
     align-items: center;
     gap: 6px;
   }
-  .database-references {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    margin: 16px 0;
+  .database-relationships {
+    display: grid;
+    gap: 12px;
+    margin: 14px 0;
+  }
+  .database-references h3 {
+    font-size: 13px;
+    margin: 0 0 4px;
+  }
+  .database-references ul {
+    display: grid;
+    gap: 0;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .database-references li {
+    min-width: 0;
+    line-height: 1.3;
+  }
+  .database-references button.link {
+    font-size: 12px;
+    display: inline;
+    text-align: left;
+    overflow-wrap: anywhere;
+    padding: 0;
+    min-height: 0;
+    line-height: 1.3;
+  }
+  .database-references small {
+    color: var(--muted);
   }
   .database-options-button {
     margin-left: 0;

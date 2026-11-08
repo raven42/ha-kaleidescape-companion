@@ -1,5 +1,5 @@
-const Pe = globalThis, xi = Pe.ShadowRoot && (Pe.ShadyCSS === void 0 || Pe.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, ki = /* @__PURE__ */ Symbol(), Mi = /* @__PURE__ */ new WeakMap();
-let ms = class {
+const Pe = globalThis, xi = Pe.ShadowRoot && (Pe.ShadyCSS === void 0 || Pe.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, ki = /* @__PURE__ */ Symbol(), ji = /* @__PURE__ */ new WeakMap();
+let fs = class {
   constructor(e, t, i) {
     if (this._$cssResult$ = !0, i !== ki) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
     this.cssText = e, this.t = t;
@@ -9,7 +9,7 @@ let ms = class {
     const t = this.t;
     if (xi && e === void 0) {
       const i = t !== void 0 && t.length === 1;
-      i && (e = Mi.get(t)), e === void 0 && ((this.o = e = new CSSStyleSheet()).replaceSync(this.cssText), i && Mi.set(t, e));
+      i && (e = ji.get(t)), e === void 0 && ((this.o = e = new CSSStyleSheet()).replaceSync(this.cssText), i && ji.set(t, e));
     }
     return e;
   }
@@ -17,20 +17,20 @@ let ms = class {
     return this.cssText;
   }
 };
-const Vs = (n) => new ms(typeof n == "string" ? n : n + "", void 0, ki), $ = (n, ...e) => {
+const Vs = (n) => new fs(typeof n == "string" ? n : n + "", void 0, ki), $ = (n, ...e) => {
   const t = n.length === 1 ? n[0] : e.reduce((i, s, r) => i + ((o) => {
     if (o._$cssResult$ === !0) return o.cssText;
     if (typeof o == "number") return o;
     throw Error("Value passed to 'css' function must be a 'css' function result: " + o + ". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.");
   })(s) + n[r + 1], n[0]);
-  return new ms(t, n, ki);
+  return new fs(t, n, ki);
 }, Qs = (n, e) => {
   if (xi) n.adoptedStyleSheets = e.map((t) => t instanceof CSSStyleSheet ? t : t.styleSheet);
   else for (const t of e) {
     const i = document.createElement("style"), s = Pe.litNonce;
     s !== void 0 && i.setAttribute("nonce", s), i.textContent = t.cssText, n.appendChild(i);
   }
-}, ji = xi ? (n) => n : (n) => n instanceof CSSStyleSheet ? ((e) => {
+}, Mi = xi ? (n) => n : (n) => n instanceof CSSStyleSheet ? ((e) => {
   let t = "";
   for (const i of e.cssRules) t += i.cssText;
   return Vs(t);
@@ -63,7 +63,7 @@ const { is: Hs, defineProperty: Js, getOwnPropertyDescriptor: Xs, getOwnProperty
       }
   }
   return t;
-} }, fs = (n, e) => !Hs(n, e), Ii = { attribute: !0, type: String, converter: Dt, reflect: !1, useDefault: !1, hasChanged: fs };
+} }, ms = (n, e) => !Hs(n, e), Ii = { attribute: !0, type: String, converter: Dt, reflect: !1, useDefault: !1, hasChanged: ms };
 Symbol.metadata ??= /* @__PURE__ */ Symbol("metadata"), wt.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
 let ie = class extends HTMLElement {
   static addInitializer(e) {
@@ -119,8 +119,8 @@ let ie = class extends HTMLElement {
     const t = [];
     if (Array.isArray(e)) {
       const i = new Set(e.flat(1 / 0).reverse());
-      for (const s of i) t.unshift(ji(s));
-    } else e !== void 0 && t.push(ji(e));
+      for (const s of i) t.unshift(Mi(s));
+    } else e !== void 0 && t.push(Mi(e));
     return t;
   }
   static _$Eu(e, t) {
@@ -178,7 +178,7 @@ let ie = class extends HTMLElement {
   requestUpdate(e, t, i, s = !1, r) {
     if (e !== void 0) {
       const o = this.constructor;
-      if (s === !1 && (r = this[e]), i ??= o.getPropertyOptions(e), !((i.hasChanged ?? fs)(r, t) || i.useDefault && i.reflect && r === this._$Ej?.get(e) && !this.hasAttribute(o._$Eu(e, i)))) return;
+      if (s === !1 && (r = this[e]), i ??= o.getPropertyOptions(e), !((i.hasChanged ?? ms)(r, t) || i.useDefault && i.reflect && r === this._$Ej?.get(e) && !this.hasAttribute(o._$Eu(e, i)))) return;
       this.C(e, t, i);
     }
     this.isUpdatePending === !1 && (this._$ES = this._$EP());
@@ -247,8 +247,8 @@ let ie = class extends HTMLElement {
   }
 };
 ie.elementStyles = [], ie.shadowRootOptions = { mode: "open" }, ie[be("elementProperties")] = /* @__PURE__ */ new Map(), ie[be("finalized")] = /* @__PURE__ */ new Map(), Zs?.({ ReactiveElement: ie }), (wt.reactiveElementVersions ??= []).push("2.1.2");
-const $i = globalThis, Oi = (n) => n, je = $i.trustedTypes, Ni = je ? je.createPolicy("lit-html", { createHTML: (n) => n }) : void 0, bs = "$lit$", N = `lit$${Math.random().toFixed(9).slice(2)}$`, vs = "?" + N, ea = `<${vs}>`, Y = document, xe = () => Y.createComment(""), ke = (n) => n === null || typeof n != "object" && typeof n != "function", Ci = Array.isArray, ta = (n) => Ci(n) || typeof n?.[Symbol.iterator] == "function", St = `[ 	
-\f\r]`, pe = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, _i = /-->/g, Fi = />/g, F = RegExp(`>|${St}(?:([^\\s"'>=/]+)(${St}*=${St}*(?:[^ 	
+const $i = globalThis, Oi = (n) => n, Me = $i.trustedTypes, Ni = Me ? Me.createPolicy("lit-html", { createHTML: (n) => n }) : void 0, bs = "$lit$", _ = `lit$${Math.random().toFixed(9).slice(2)}$`, vs = "?" + _, ea = `<${vs}>`, Y = document, xe = () => Y.createComment(""), ke = (n) => n === null || typeof n != "object" && typeof n != "function", Ci = Array.isArray, ta = (n) => Ci(n) || typeof n?.[Symbol.iterator] == "function", St = `[ 	
+\f\r]`, pe = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, _i = /-->/g, Fi = />/g, V = RegExp(`>|${St}(?:([^\\s"'>=/]+)(${St}*=${St}*(?:[^ 	
 \f\r"'\`<>=]|("|')|))|$)`, "g"), Vi = /'/g, Qi = /"/g, ys = /^(?:script|style|textarea|title)$/i, ws = (n) => (e, ...t) => ({ _$litType$: n, strings: e, values: t }), a = ws(1), C = ws(2), z = /* @__PURE__ */ Symbol.for("lit-noChange"), d = /* @__PURE__ */ Symbol.for("lit-nothing"), Hi = /* @__PURE__ */ new WeakMap(), W = Y.createTreeWalker(Y, 129);
 function xs(n, e) {
   if (!Ci(n) || !n.hasOwnProperty("raw")) throw Error("invalid template strings array");
@@ -259,10 +259,10 @@ const ia = (n, e) => {
   let s, r = e === 2 ? "<svg>" : e === 3 ? "<math>" : "", o = pe;
   for (let c = 0; c < t; c++) {
     const l = n[c];
-    let h, p, u = -1, f = 0;
-    for (; f < l.length && (o.lastIndex = f, p = o.exec(l), p !== null); ) f = o.lastIndex, o === pe ? p[1] === "!--" ? o = _i : p[1] !== void 0 ? o = Fi : p[2] !== void 0 ? (ys.test(p[2]) && (s = RegExp("</" + p[2], "g")), o = F) : p[3] !== void 0 && (o = F) : o === F ? p[0] === ">" ? (o = s ?? pe, u = -1) : p[1] === void 0 ? u = -2 : (u = o.lastIndex - p[2].length, h = p[1], o = p[3] === void 0 ? F : p[3] === '"' ? Qi : Vi) : o === Qi || o === Vi ? o = F : o === _i || o === Fi ? o = pe : (o = F, s = void 0);
-    const w = o === F && n[c + 1].startsWith("/>") ? " " : "";
-    r += o === pe ? l + ea : u >= 0 ? (i.push(h), l.slice(0, u) + bs + l.slice(u) + N + w) : l + N + (u === -2 ? c : w);
+    let h, p, u = -1, b = 0;
+    for (; b < l.length && (o.lastIndex = b, p = o.exec(l), p !== null); ) b = o.lastIndex, o === pe ? p[1] === "!--" ? o = _i : p[1] !== void 0 ? o = Fi : p[2] !== void 0 ? (ys.test(p[2]) && (s = RegExp("</" + p[2], "g")), o = V) : p[3] !== void 0 && (o = V) : o === V ? p[0] === ">" ? (o = s ?? pe, u = -1) : p[1] === void 0 ? u = -2 : (u = o.lastIndex - p[2].length, h = p[1], o = p[3] === void 0 ? V : p[3] === '"' ? Qi : Vi) : o === Qi || o === Vi ? o = V : o === _i || o === Fi ? o = pe : (o = V, s = void 0);
+    const w = o === V && n[c + 1].startsWith("/>") ? " " : "";
+    r += o === pe ? l + ea : u >= 0 ? (i.push(h), l.slice(0, u) + bs + l.slice(u) + _ + w) : l + _ + (u === -2 ? c : w);
   }
   return [xs(n, r + (n[t] || "<?>") + (e === 2 ? "</svg>" : e === 3 ? "</math>" : "")), i];
 };
@@ -279,21 +279,21 @@ class $e {
     for (; (s = W.nextNode()) !== null && l.length < c; ) {
       if (s.nodeType === 1) {
         if (s.hasAttributes()) for (const u of s.getAttributeNames()) if (u.endsWith(bs)) {
-          const f = p[o++], w = s.getAttribute(u).split(N), A = /([.?@])?(.*)/.exec(f);
+          const b = p[o++], w = s.getAttribute(u).split(_), A = /([.?@])?(.*)/.exec(b);
           l.push({ type: 1, index: r, name: A[2], strings: w, ctor: A[1] === "." ? aa : A[1] === "?" ? ra : A[1] === "@" ? na : xt }), s.removeAttribute(u);
-        } else u.startsWith(N) && (l.push({ type: 6, index: r }), s.removeAttribute(u));
+        } else u.startsWith(_) && (l.push({ type: 6, index: r }), s.removeAttribute(u));
         if (ys.test(s.tagName)) {
-          const u = s.textContent.split(N), f = u.length - 1;
-          if (f > 0) {
-            s.textContent = je ? je.emptyScript : "";
-            for (let w = 0; w < f; w++) s.append(u[w], xe()), W.nextNode(), l.push({ type: 2, index: ++r });
-            s.append(u[f], xe());
+          const u = s.textContent.split(_), b = u.length - 1;
+          if (b > 0) {
+            s.textContent = Me ? Me.emptyScript : "";
+            for (let w = 0; w < b; w++) s.append(u[w], xe()), W.nextNode(), l.push({ type: 2, index: ++r });
+            s.append(u[b], xe());
           }
         }
       } else if (s.nodeType === 8) if (s.data === vs) l.push({ type: 2, index: r });
       else {
         let u = -1;
-        for (; (u = s.data.indexOf(N, u + 1)) !== -1; ) l.push({ type: 7, index: r }), u += N.length - 1;
+        for (; (u = s.data.indexOf(_, u + 1)) !== -1; ) l.push({ type: 7, index: r }), u += _.length - 1;
       }
       r++;
     }
@@ -1584,7 +1584,7 @@ class v extends Error {
     super(e), this.code = e;
   }
 }
-const m = "kaleidescape_companion", pa = 15e3, b = ({ entry_id: n, dataset_id: e }) => ({
+const f = "kaleidescape_companion", pa = 15e3, m = ({ entry_id: n, dataset_id: e }) => ({
   entry_id: n,
   dataset_id: e
 }), ua = 256 * 1024 * 1024, Ji = 5 * 1024 * 1024, ga = 32 * 1024 * 1024;
@@ -1679,7 +1679,7 @@ function y(n) {
     store_credit_mismatch: "The Store results did not match the scanned cast and director. Choose a match for review."
   }[g(n)] ?? "The connection was interrupted. The result could not be confirmed.";
 }
-async function j(n, e = pa) {
+async function M(n, e = pa) {
   let t;
   try {
     return await Promise.race([
@@ -1700,26 +1700,26 @@ class Ei {
     this.transport = e;
   }
   call(e) {
-    return j(this.transport.callWS(e));
+    return M(this.transport.callWS(e));
   }
   automationStatuses(e) {
     return this.call({
-      type: `${m}/automations/status`,
-      ...b(e)
+      type: `${f}/automations/status`,
+      ...m(e)
     });
   }
   updateAutomationBlueprint(e, t, i) {
     return this.call({
-      type: `${m}/automations/update`,
-      ...b(e),
+      type: `${f}/automations/update`,
+      ...m(e),
       template: t,
       revision: i
     });
   }
   automationTemplate(e, t) {
     return this.call({
-      type: `${m}/automations/template`,
-      ...b(e),
+      type: `${f}/automations/template`,
+      ...m(e),
       template: t
     });
   }
@@ -1733,28 +1733,28 @@ class Ei {
     });
   }
   controlInfo(e) {
-    return this.call({ type: `${m}/control/info`, ...b(e) });
+    return this.call({ type: `${f}/control/info`, ...m(e) });
   }
   controlDiscover(e) {
-    return j(
+    return M(
       this.transport.callWS({
-        type: `${m}/control/discover`,
-        ...b(e)
+        type: `${f}/control/discover`,
+        ...m(e)
       }),
       7e4
     );
   }
   controlStatus(e, t) {
     return this.call({
-      type: `${m}/control/status`,
-      ...b(e),
+      type: `${f}/control/status`,
+      ...m(e),
       ...t ? { player_id: t } : {}
     });
   }
   controlPrepare(e, t, i, s) {
     return this.call({
-      type: `${m}/control/prepare`,
-      ...b(e),
+      type: `${f}/control/prepare`,
+      ...m(e),
       operation: t,
       ...i ? { title_id: i } : {},
       ...s ? { player_id: s } : {}
@@ -1770,30 +1770,30 @@ class Ei {
   }
   controlAcknowledge(e, t) {
     return this.call({
-      type: `${m}/control/acknowledge`,
-      ...b(e),
+      type: `${f}/control/acknowledge`,
+      ...m(e),
       request_id: t,
       confirmation: "REVIEWED"
     });
   }
   metadataStatus(e, t = !1) {
     return this.call({
-      type: `${m}/metadata/${t ? "sync" : "status"}`,
-      ...b(e)
+      type: `${f}/metadata/${t ? "sync" : "status"}`,
+      ...m(e)
     });
   }
   titleScrapeOptions(e, t) {
     return this.call({
-      type: `${m}/metadata/title/options`,
-      ...b(e),
+      type: `${f}/metadata/title/options`,
+      ...m(e),
       title_id: t
     });
   }
   titleScrapePreview(e, t, i, s = "", r = "") {
-    return j(
+    return M(
       this.transport.callWS({
-        type: `${m}/metadata/title/preview`,
-        ...b(e),
+        type: `${f}/metadata/title/preview`,
+        ...m(e),
         title_id: t,
         provider: i,
         search_id: s,
@@ -1803,10 +1803,10 @@ class Ei {
     );
   }
   titleScrapeSearch(e, t, i, s, r) {
-    return j(
+    return M(
       this.transport.callWS({
-        type: `${m}/metadata/title/search`,
-        ...b(e),
+        type: `${f}/metadata/title/search`,
+        ...m(e),
         title_id: t,
         provider: i,
         query: s,
@@ -1816,10 +1816,10 @@ class Ei {
     );
   }
   titleScrapeRefresh(e, t, i, s, r, o = !1) {
-    return j(
+    return M(
       this.transport.callWS({
-        type: `${m}/metadata/title/refresh`,
-        ...b(e),
+        type: `${f}/metadata/title/refresh`,
+        ...m(e),
         request_id: re(),
         title_id: t,
         provider: i,
@@ -1831,10 +1831,10 @@ class Ei {
     );
   }
   titleScrapeRefreshChoice(e, t, i, s, r, o = !1) {
-    return j(
+    return M(
       this.transport.callWS({
-        type: `${m}/metadata/title/refresh_choice`,
-        ...b(e),
+        type: `${f}/metadata/title/refresh_choice`,
+        ...m(e),
         request_id: re(),
         title_id: t,
         provider: i,
@@ -1852,7 +1852,7 @@ class Ei {
     return this.prepareCommand(e, "metadata/title/draft", { data: t });
   }
   applyMetadataDraft(e) {
-    return j(
+    return M(
       this.transport.callWS({ ...e.message }),
       185e3
     );
@@ -1871,13 +1871,13 @@ class Ei {
   }
   cancelTitleScrape(e, t) {
     return this.call({
-      type: `${m}/metadata/title/cancel`,
-      ...b(e),
+      type: `${f}/metadata/title/cancel`,
+      ...m(e),
       plan_id: t
     });
   }
   applyTitleScrape(e) {
-    return j(
+    return M(
       this.transport.callWS({ ...e.message }),
       8e4
     );
@@ -1886,14 +1886,14 @@ class Ei {
     if (!/^[a-f0-9-]{36}$/.test(t) || !/^(poster|backdrop|match)-[0-9]{1,3}$/.test(i))
       throw new v("invalid_request");
     return this.raster(
-      `/api/${m}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/metadata/review/${t}/image/${i}`,
+      `/api/${f}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/metadata/review/${t}/image/${i}`,
       s
     );
   }
   metadataPreview(e) {
     return this.call({
-      type: `${m}/journal/metadata/preview`,
-      ...b(e)
+      type: `${f}/journal/metadata/preview`,
+      ...m(e)
     });
   }
   prepareMetadataRepair(e, t) {
@@ -1914,15 +1914,15 @@ class Ei {
   }
   libraryEdit(e, t) {
     return this.call({
-      type: `${m}/library/edit/get`,
-      ...b(e),
+      type: `${f}/library/edit/get`,
+      ...m(e),
       title_id: t
     });
   }
   groupPurchaseEdit(e, t) {
     return this.call({
-      ...b(e),
-      type: `${m}/library/purchases/edit/get`,
+      ...m(e),
+      type: `${f}/library/purchases/edit/get`,
       title_id: t
     });
   }
@@ -1948,10 +1948,10 @@ class Ei {
   }
   uiPreferences(e, t = !1, i = "library", s = ae()) {
     return this.call({
-      type: `${m}/ui/${t ? "shared" : "preferences"}/get`,
+      type: `${f}/ui/${t ? "shared" : "preferences"}/get`,
       ...i !== "library" ? { area: i } : {},
       ...t ? {} : { profile: s },
-      ...b(e)
+      ...m(e)
     });
   }
   prepareUIPreferences(e, t, i, s, r = "library", o = ae()) {
@@ -1971,16 +1971,16 @@ class Ei {
   }
   testDashboard(e, t, i) {
     return this.call({
-      type: `${m}/dashboard/preview`,
-      ...b(e),
+      type: `${f}/dashboard/preview`,
+      ...m(e),
       request_id: t,
       name: i
     });
   }
   verifyTestDashboard(e, t) {
     return this.call({
-      type: `${m}/dashboard/verify`,
-      ...b(e),
+      type: `${f}/dashboard/verify`,
+      ...m(e),
       request_id: t
     });
   }
@@ -2009,13 +2009,13 @@ class Ei {
     });
   }
   info() {
-    return this.call({ type: `${m}/info` });
+    return this.call({ type: `${f}/info` });
   }
   list(e, t = "", i = "", s, r = "completed_at", o = !0, c = !1, l) {
     return this.call({
-      type: `${m}/${l ? "library/viewings" : "journal/list"}`,
+      type: `${f}/${l ? "library/viewings" : "journal/list"}`,
       ...l ? { title_id: l } : {},
-      ...b(e),
+      ...m(e),
       query: t,
       limit: 25,
       sort: r,
@@ -2027,15 +2027,15 @@ class Ei {
   }
   get(e, t) {
     return this.call({
-      type: `${m}/journal/get`,
-      ...b(e),
+      type: `${f}/journal/get`,
+      ...m(e),
       viewing_id: t
     });
   }
   calendarMonth(e, t, i, s = "", r = "", o = !1, c) {
     return this.call({
-      type: `${m}/journal/calendar`,
-      ...b(e),
+      type: `${f}/journal/calendar`,
+      ...m(e),
       start: t,
       end: i,
       query: s,
@@ -2046,73 +2046,73 @@ class Ei {
   }
   calendarDetails(e, t) {
     return this.call({
-      type: `${m}/journal/calendar/get`,
-      ...b(e),
+      type: `${f}/journal/calendar/get`,
+      ...m(e),
       viewing_id: t
     });
   }
   viewingLibrary(e, t) {
     return this.call({
-      type: `${m}/library/viewing`,
-      ...b(e),
+      type: `${f}/library/viewing`,
+      ...m(e),
       viewing_id: t
     });
   }
   sessions(e, t) {
     return this.call({
-      type: `${m}/journal/sessions`,
-      ...b(e),
+      type: `${f}/journal/sessions`,
+      ...m(e),
       viewing_id: t
     });
   }
   nowPlaying(e, t) {
     return this.call({
-      type: `${m}/now_playing`,
-      ...b(e),
+      type: `${f}/now_playing`,
+      ...m(e),
       ...t ? { player_id: t } : {}
     });
   }
   libraryInfo(e) {
-    return this.call({ type: `${m}/library/info`, ...b(e) });
+    return this.call({ type: `${f}/library/info`, ...m(e) });
   }
   libraryPurchaseTotals(e) {
     return this.call({
-      type: `${m}/library/purchases/summary`,
-      ...b(e)
+      type: `${f}/library/purchases/summary`,
+      ...m(e)
     });
   }
   libraryList(e, t = {}) {
     return this.call({
-      type: `${m}/library/list`,
-      ...b(e),
+      type: `${f}/library/list`,
+      ...m(e),
       filters: t
     });
   }
   libraryVersions(e, t, i = 0, s) {
     return this.call({
-      type: `${m}/library/versions`,
-      ...b(e),
+      type: `${f}/library/versions`,
+      ...m(e),
       title_id: t,
       offset: i,
       ...s === void 0 ? {} : { revision: s }
     });
   }
   librarySync(e) {
-    return this.call({ type: `${m}/library/sync`, ...b(e) });
+    return this.call({ type: `${f}/library/sync`, ...m(e) });
   }
   collectionTargets(e, t, i) {
     return this.call({
-      type: `${m}/library/collections/targets`,
-      ...b(e),
+      type: `${f}/library/collections/targets`,
+      ...m(e),
       title_id: t,
       revision: i
     });
   }
   refreshTitleCollections(e, t, i) {
-    return j(
+    return M(
       this.transport.callWS({
-        type: `${m}/library/collections/refresh`,
-        ...b(e),
+        type: `${f}/library/collections/refresh`,
+        ...m(e),
         title_id: t,
         revision: i
       }),
@@ -2121,8 +2121,8 @@ class Ei {
   }
   dismissCollectionJob(e, t) {
     return this.call({
-      type: `${m}/library/collections/dismiss`,
-      ...b(e),
+      type: `${f}/library/collections/dismiss`,
+      ...m(e),
       request_id: t
     });
   }
@@ -2149,15 +2149,15 @@ class Ei {
   }
   collectionCheck(e, t) {
     return this.call({
-      type: `${m}/library/collections/check`,
-      ...b(e),
+      type: `${f}/library/collections/check`,
+      ...m(e),
       request_id: t
     });
   }
   collectionAcknowledge(e, t) {
     return this.call({
-      type: `${m}/library/collections/acknowledge`,
-      ...b(e),
+      type: `${f}/library/collections/acknowledge`,
+      ...m(e),
       request_id: t,
       confirmation: "ACKNOWLEDGE"
     });
@@ -2165,7 +2165,7 @@ class Ei {
   async libraryArtwork(e, t, i) {
     if (!/^[a-f0-9]{64}$/.test(t)) throw new v("invalid_request");
     return this.raster(
-      `/api/${m}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/library/artwork/${t}`,
+      `/api/${f}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/library/artwork/${t}`,
       i
     );
   }
@@ -2186,8 +2186,8 @@ class Ei {
   }
   settingsTransfer(e, t, i, s = {}, r = "") {
     return this.call({
-      ...b(e),
-      type: `${m}/settings/transfer`,
+      ...m(e),
+      type: `${f}/settings/transfer`,
       operation: t,
       categories: i,
       data: s,
@@ -2197,31 +2197,41 @@ class Ei {
   settings(e, t, i = {}) {
     return this.call({
       ...i,
-      ...b(e),
-      type: `${m}/settings/${t}`
+      ...m(e),
+      type: `${f}/settings/${t}`
     });
   }
   inspect(e, t, i = 0, s, r) {
     return this.call({
-      type: `${m}/database/inspect`,
-      ...b(e),
+      type: `${f}/database/inspect`,
+      ...m(e),
       table: t,
       offset: i,
       ...s == null ? {} : { revision: s },
       ...r
     });
   }
+  referencedBy(e, t, i, s, r) {
+    return this.call({
+      type: `${f}/database/referenced_by`,
+      ...m(e),
+      table: t,
+      key: i,
+      token: s,
+      revision: r
+    });
+  }
   cleanupPreview(e, t) {
     return this.call({
-      type: `${m}/database/cleanup/preview`,
-      ...b(e),
+      type: `${f}/database/cleanup/preview`,
+      ...m(e),
       policies: t
     });
   }
   cleanupDatabase(e, t) {
     return this.call({
-      type: `${m}/database/cleanup/apply`,
-      ...b(e),
+      type: `${f}/database/cleanup/apply`,
+      ...m(e),
       as_of: t.as_of,
       policies: t.policies,
       revision: t.revision
@@ -2235,8 +2245,8 @@ class Ei {
   }
   searchImportMatches(e, t, i, s) {
     return this.call({
-      type: `${m}/database/import/search`,
-      ...b(e),
+      type: `${f}/database/import/search`,
+      ...m(e),
       plan_id: t.plan_id,
       revision: t.revision,
       purchase_key: i,
@@ -2245,8 +2255,8 @@ class Ei {
   }
   matchImportPurchase(e, t, i, s) {
     return this.call({
-      type: `${m}/database/import/match`,
-      ...b(e),
+      type: `${f}/database/import/match`,
+      ...m(e),
       plan_id: t.plan_id,
       revision: t.revision,
       purchase_key: i,
@@ -2269,7 +2279,7 @@ class Ei {
     if (!t.size || t.size > ga)
       throw new v("import_too_large");
     const o = await this.transport.fetchWithAuth(
-      `/api/${m}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/import/preview?format=${r}${s ? "&purchase_only=true" : ""}`,
+      `/api/${f}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/import/preview?format=${r}${s ? "&purchase_only=true" : ""}`,
       {
         method: "POST",
         body: t,
@@ -2299,14 +2309,14 @@ class Ei {
   }
   reconcilePurchases(e) {
     return this.call({
-      type: `${m}/purchases/reconcile`,
-      ...b(e)
+      type: `${f}/purchases/reconcile`,
+      ...m(e)
     });
   }
   previewPurchaseRepair(e, t, i, s, r) {
     return this.call({
-      ...b(e),
-      type: `${m}/purchases/repair/preview`,
+      ...m(e),
+      type: `${f}/purchases/repair/preview`,
       action: t,
       key: i,
       token: s,
@@ -2347,8 +2357,8 @@ class Ei {
   }
   librarySuggestions(e, t, i, s = !1) {
     return this.call({
-      type: `${m}/library/suggest`,
-      ...b(e),
+      type: `${f}/library/suggest`,
+      ...m(e),
       field: t,
       query: i,
       fuzzy: s
@@ -2356,16 +2366,16 @@ class Ei {
   }
   librarySearch(e, t, i = !0) {
     return this.call({
-      type: `${m}/library/search`,
-      ...b(e),
+      type: `${f}/library/search`,
+      ...m(e),
       query: t,
       fuzzy: i
     });
   }
   calendarStatus(e) {
     return this.call({
-      type: `${m}/calendar/status`,
-      ...b(e)
+      type: `${f}/calendar/status`,
+      ...m(e)
     });
   }
   prepareCalendarSync(e, t) {
@@ -2379,8 +2389,8 @@ class Ei {
   }
   calendarMaintain(e, t, i, s = "") {
     return this.call({
-      type: `${m}/calendar/maintain`,
-      ...b(e),
+      type: `${f}/calendar/maintain`,
+      ...m(e),
       action: t,
       fingerprint: i,
       review_token: s,
@@ -2389,15 +2399,15 @@ class Ei {
   }
   calendarCancel(e, t) {
     return this.call({
-      type: `${m}/calendar/cancel`,
-      ...b(e),
+      type: `${f}/calendar/cancel`,
+      ...m(e),
       job_id: t
     });
   }
   validateDatabaseQuery(e, t, i) {
     return this.call({
-      type: `${m}/database/validate_query`,
-      ...b(e),
+      type: `${f}/database/validate_query`,
+      ...m(e),
       table: t,
       query: i
     });
@@ -2447,17 +2457,17 @@ class Ei {
   prepareCommand(e, t, i) {
     const s = structuredClone({
       ...i,
-      ...b(e),
-      type: `${m}/${t}`,
+      ...m(e),
+      type: `${f}/${t}`,
       request_id: re()
     });
-    return { scope: b(e), message: Object.freeze(s) };
+    return { scope: m(e), message: Object.freeze(s) };
   }
   mutate(e) {
     return this.call({ ...e.message });
   }
   async download(e, t, i) {
-    const s = `/api/${m}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/export?format=${t}`, r = await this.transport.fetchWithAuth(s, {
+    const s = `/api/${f}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/export?format=${t}`, r = await this.transport.fetchWithAuth(s, {
       signal: i,
       cache: "no-store",
       redirect: "error"
@@ -2809,7 +2819,7 @@ const Cs = $`
       font-size: 18px;
     }
   }
-`, ma = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20type='positive'%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(1.33,%200)'%3e%3cg%20transform='translate(0,%2016.27)'%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0.000109100102%200.246970954%2077.0827837%200.246970954%2077.0827837%2063.7145228%200.000109100102%2063.7145228'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M77.0137759,27.0426556%20C76.2423237,14.6741909%2069.9521992,5.42041494%2060.4876349,0.246970954%20C60.5414108,0.548381743%2060.273195,0.925145228%2059.9678008,0.791701245%20C53.7772614,-1.91634855%2043.2753527,6.84780083%2035.9365975,2.25825726%20C35.9917012,3.90539419%2035.6700415,11.940249%2024.3515353,12.4063071%20C24.0843154,12.4172614%2023.9372614,12.1443983%2024.1062241,11.9512033%20C25.619917,10.2247303%2027.1482158,5.85360996%2024.9507054,3.5233195%20C20.2446473,7.74041494%2017.5117012,9.32746888%208.48829876,7.23319502%20C2.71103734,13.2740249%20-0.562655602,21.5419087%200.08,31.8413278%20C1.39120332,52.86639%2021.0848133,64.8846473%2040.9165145,63.6471369%20C60.746888,62.4106224%2078.3253112,48.0677178%2077.0137759,27.0426556'%20fill='%23FA320A'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M40.8717012,11.4648963%20C44.946722,10.49361%2056.6678838,11.3702905%2060.4232365,16.3518672%20C60.6486307,16.6506224%2060.3312863,17.2159336%2059.9678008,17.0572614%20C53.7772614,14.3492116%2043.2753527,23.113361%2035.9365975,18.5238174%20C35.9917012,20.1709544%2035.6700415,28.2058091%2024.3515353,28.6718672%20C24.0843154,28.6828216%2023.9372614,28.4099585%2024.1062241,28.2167635%20C25.619917,26.4902905%2027.1478838,22.1191701%2024.9507054,19.7888797%20C19.8243983,24.3827386%2017.0453112,25.8589212%205.91900415,22.8514523%20C5.55485477,22.753195%205.67900415,22.1679668%206.06639004,22.020249%20C8.16929461,21.2165975%2012.933444,17.6965975%2017.4406639,16.1450622%20C18.2987552,15.8499585%2019.1541909,15.6209129%2019.9890456,15.4878008%20C15.02639,15.0443154%2012.7893776,14.3541909%209.63286307,14.8302075%20C9.28697095,14.8823237%209.05195021,14.479668%209.26639004,14.2034855%20C13.5193361,8.7253112%2021.3540249,7.07087137%2026.1878838,9.98107884%20C23.2082988,6.28912863%2020.8743568,3.34473029%2020.8743568,3.34473029%20L26.4046473,0.203485477%20C26.4046473,0.203485477%2028.6894606,5.30821577%2030.3518672,9.02340249%20C34.4657261,2.94506224%2042.119834,2.38406639%2045.3536929,6.69676349%20C45.5455602,6.95302905%2045.3450622,7.31751037%2045.0247303,7.30987552%20C42.3926971,7.24580913%2040.9434025,9.63983402%2040.833527,11.4605809%20L40.8717012,11.4648963'%20fill='%2300912D'%3e%3c/path%3e%3c/g%3e%3c/svg%3e", fa = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20type='negative'%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(0,%201.23)'%3e%3cg%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0%200.161950465%2079.7417075%200.161950465%2079.7417075%2077.522807%200%2077.522807'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M71.4638596,70.225614%20C56.3459649,71.0192982%2053.2568421,53.7203509%2047.325614,53.8435088%20C44.7982456,53.8964912%2042.8063158,56.5389474%2043.6810526,59.6185965%20C44.1621053,61.3115789%2045.4964912,63.794386%2046.337193,65.3350877%20C49.302807,70.7719298%2044.9185965,76.9245614%2039.7880702,77.4449123%20C31.2621053,78.3098246%2027.705614,73.3638596%2027.925614,68.3007018%20C28.1729825,62.6168421%2032.9922807,56.8091228%2028.0494737,54.3378947%20C22.8694737,51.7480702%2018.6585965,61.8754386%2013.7017544,64.1357895%20C9.2154386,66.1817544%202.9877193,64.5954386%200.773684211,59.6136842%20C-0.781403509,56.1129825%20-0.498596491,49.3722807%206.42526316,46.8003509%20C10.7501754,45.1940351%2020.3880702,48.9010526%2020.8824561,44.205614%20C21.4522807,38.7929825%2010.7575439,38.3364912%207.53754386,37.0385965%20C1.84,34.7424561%20-1.52280702,29.8291228%201.11192982,24.5582456%20C3.08877193,20.6045614%208.90526316,18.9957895%2013.3449123,20.7277193%20C18.6635088,22.8024561%2019.517193,28.3189474%2022.2421053,30.6129825%20C24.5894737,32.5901754%2027.8021053,32.8375439%2029.9031579,31.4782456%20C31.4526316,30.4754386%2031.9684211,28.2729825%2031.3838596,26.2610526%20C30.6084211,23.5901754%2028.5505263,21.9235088%2026.542807,20.2905263%20C22.9698246,17.3859649%2017.925614,14.8884211%2020.9768421,6.96035088%20C23.4778947,0.463157895%2030.8133333,0.229122807%2030.8133333,0.229122807%20C33.7277193,-0.0985964912%2036.3375439,0.781403509%2038.4642105,2.68140351%20C41.3073684,5.22140351%2041.8610526,8.61649123%2041.3852632,12.2385965%20C40.9505263,15.5449123%2039.7803509,18.4407018%2039.1701754,21.7164912%20C38.4621053,25.5196491%2040.4947368,29.3519298%2044.3603509,29.5010526%20C49.4449123,29.6975439%2050.9694737,25.7894737%2051.5915789,23.3122807%20C52.5024561,19.6877193%2053.6978947,16.322807%2057.0617544,14.2035088%20C61.8894737,11.1617544%2068.5954386,11.8284211%2071.7066667,17.674386%20C74.1677193,22.3%2073.3775439,28.6677193%2069.6024561,32.1449123%20C67.9087719,33.7045614%2065.8722807,34.254386%2063.6694737,34.2698246%20C60.5105263,34.2922807%2057.3529825,34.2147368%2054.4207018,35.6929825%20C52.4245614,36.6989474%2051.5547368,38.3382456%2051.5550877,40.5354386%20C51.5550877,42.6768421%2052.6698246,44.0754386%2054.4761404,44.985614%20C57.8782456,46.7003509%2061.6336842,47.0508772%2065.3087719,47.694386%20C70.6382456,48.6277193%2075.3242105,50.5049123%2078.3326316,55.4505263%20C78.3596491,55.4940351%2078.3859649,55.5378947%2078.4115789,55.5821053%20C81.8666667,61.4375439%2078.2533333,69.8687719%2071.4638596,70.225614'%20fill='%230AC855'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3c/g%3e%3c/svg%3e", ba = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(10.1,%200)'%3e%3cg%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0.0178438662%200.124907063%2059.6019307%200.124907063%2059.6019307%2079.9821561%200.0178438662%2079.9821561'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M2.53115242,19.0988848%20C2.76163569,23.9952416%2014.8892193,27.8762825%2029.8007435,27.7912268%20C42.8237918,27.7168773%2053.6874349,24.6411896%2056.3485502,20.6004461%20C55.7421561,19.9265428%2054.904684,19.4643866%2053.9613383,19.3391822%20C53.9714498,19.220223%2053.9779926,19.1003717%2053.9773978,18.9787361%20C53.9663941,17.0423792%2052.5460223,15.4477323%2050.695316,15.1503346%20C50.7440892,14.8999257%2050.7696654,14.6408922%2050.7681784,14.3759108%20C50.7559851,12.2194796%2048.9977695,10.481487%2046.8413383,10.4936803%20C46.7925651,10.4939777%2046.7449814,10.4999257%2046.6965056,10.5020074%20C46.8344981,10.0987361%2046.9118216,9.66780669%2046.9094424,9.21784387%20C46.8969517,7.06141264%2045.1390335,5.32342007%2042.9826022,5.33561338%20C42.4877323,5.33858736%2042.0169517,5.43702602%2041.5821561,5.60743494%20C40.9653532,4.44639405%2039.7811152,3.63717472%2038.4002974,3.54379182%20C38.1597026,1.60743494%2036.5055762,0.113605948%2034.506171,0.124843367%20C33.247881,0.13204461%2032.1350186,0.736356877%2031.4263197,1.66453532%20C30.7075093,0.882379182%2029.6773234,0.391672862%2028.5314498,0.398215613%20C26.3750186,0.410408922%2024.637026,2.16862454%2024.6492193,4.32475836%20C24.6515985,4.73665428%2024.718513,5.13249071%2024.8386617,5.50453532%20C23.9586617,5.66780669%2023.1848327,6.12520446%2022.6191822,6.77144981%20C22.1701115,5.09888476%2020.642974,3.86973978%2018.8297398,3.8798513%20C17.1357621,3.88966543%2015.7040892,4.97873606%2015.172342,6.48981413%20C13.7332342,7.07182156%2012.7202974,8.48356877%2012.7298141,10.1302602%20C12.7318959,10.4960595%2012.7878067,10.8481784%2012.8838662,11.1836431%20C12.398513,10.9713011%2011.8634944,10.852342%2011.2996283,10.8556134%20C9.5994052,10.8654275%208.16327138,11.9622305%207.63598513,13.4822305%20C7.13040892,13.2472862%206.56832714,13.1137546%205.973829,13.1173234%20C3.81739777,13.1295167%202.07910781,14.8874349%202.09153162,17.0438662%20C2.09546468,17.7549442%202.29263941,18.4187361%202.62810409,18.9909294%20C2.59390335,19.0254275%202.56386617,19.063197%202.53115242,19.0988848'%20fill='%23F9D320'%20mask='url(%23mask-2)'%3e%3c/path%3e%3cpath%20d='M50.9736803,68.1576208%20C49.8275093,69.89829%2047.6002974,71.7008178%2045.2692937,72.9026022%20L49.2541264,32.4853532%20C51.7894424,31.6707807%2054.2634944,30.5915242%2056.085948,29.0438662%20L50.9736803,68.1576208%20Z%20M41.3037918,74.5885502%20C37.4450558,75.8655762%2035.201487,76.2614126%2031.9895911,76.5766543%20L32.4901115,35.0432714%20C36.0383643,34.9415613%2040.6301859,34.4606691%2044.5427509,33.6255762%20L41.3037918,74.5885502%20Z%20M18.29829,74.5885502%20L15.0596283,33.6255762%20C18.9718959,34.4606691%2023.5637175,34.9415613%2027.1119703,35.0432714%20L27.6124907,76.5766543%20C24.4005948,76.2614126%2022.1573234,75.8655762%2018.29829,74.5885502%20Z%20M8.62869888,68.1576208%20L3.51613383,29.0438662%20C5.33858736,30.5915242%207.81263941,31.6707807%2010.3479554,32.4853532%20L14.3327881,72.9026022%20C12.0017844,71.7008178%209.77457249,69.89829%208.62869888,68.1576208%20Z%20M50.687881,13.6110037%20C50.7384387,13.8578439%2050.7666914,14.1130112%2050.7681784,14.3750186%20C50.7696654,14.64%2050.7440892,14.8990335%2050.6950186,15.1494424%20C52.5460223,15.4465428%2053.9663941,17.0411896%2053.9773978,18.9778439%20C53.9779926,19.0991822%2053.9714498,19.2193309%2053.9613383,19.3379926%20C54.904684,19.463197%2055.7421561,19.9253532%2056.3485502,20.5992565%20C53.6877323,24.6402974%2042.8237918,27.7159851%2029.8010409,27.790632%20C14.8895167,27.8759851%202.76193309,23.9952416%202.53115242,19.0985874%20C2.56386617,19.063197%202.59390335,19.0251301%202.62810409,18.9909294%20C2.39791822,18.5983643%202.23910781,18.1608922%202.15702602,17.6966543%20C0.729219331,19.0518959%20-0.13472119,20.1445353%200.0172490706,21.7356134%20C0.0318215613,21.9482528%206.3339777,67.0709294%206.3339777,67.0709294%20C7.06111524,74.2173978%2017.4388104,79.9292193%2029.8010409,80%20C42.1632714,79.9292193%2052.5412639,74.2173978%2053.2681041,67.0709294%20C53.2681041,67.0709294%2059.5702602,21.9482528%2059.5848327,21.7356134%20C59.8866914,18.5531599%2056.162974,15.6642379%2050.687881,13.6110037%20L50.687881,13.6110037%20Z'%20fill='%23DB382A'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M15.0596283,33.6255762%20L18.29829,74.5885502%20C22.1573234,75.8655762%2024.4005948,76.2614126%2027.6124907,76.5766543%20L27.1119703,35.0432714%20C23.5637175,34.9415613%2018.9718959,34.4606691%2015.0596283,33.6255762'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M31.9895911,76.5766543%20C35.201487,76.2614126%2037.4447584,75.8655762%2041.3037918,74.5885502%20L44.5424535,33.6255762%20C40.6301859,34.4606691%2036.0383643,34.9415613%2032.4901115,35.0432714%20L31.9895911,76.5766543'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M45.2692937,72.9026022%20C47.6002974,71.7008178%2049.8275093,69.89829%2050.9733829,68.1576208%20L56.085948,29.0438662%20C54.2634944,30.5915242%2051.7894424,31.6707807%2049.2541264,32.4853532%20L45.2692937,72.9026022'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M3.51613383,29.0438662%20L8.62840149,68.1576208%20C9.77457249,69.89829%2012.0017844,71.7008178%2014.3327881,72.9026022%20L10.3479554,32.4853532%20C7.81263941,31.6707807%205.33858736,30.5915242%203.51613383,29.0438662'%20fill='%23FFFFFE'%3e%3c/path%3e%3c/g%3e%3c/svg%3e", va = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(0,%2012.46)'%3e%3cg%3e%3cpath%20d='M45.4780328,39.6152131%20C45.9506885,38.4445902%2047.6259672,37.7314098%2048.8288525,37.8148197%20C50.114623,37.904%2051.4803934,39.2556066%2051.719082,40.584918%20C51.7634098,40.5366557%2051.8098361,40.4910164%2051.8570492,40.4461639%20C52.2699016,40.0516721%2052.7871475,39.7899016%2053.3531803,39.7177705%20C53.266623,39.3342951%2053.2459016,38.9238033%2053.3051803,38.5025574%20C53.5142295,37.0205902%2054.7034754,35.9092459%2056.0650492,35.9202623%20C56.9437377,35.9273443%2057.714623,36.376918%2058.216918,37.067541%20C58.2617705,37.0114098%2058.3113443,36.96%2058.3596066,36.907541%20C58.9340328,33.9152787%2059.2980984,30.5345574%2059.3809836,26.9468852%20C59.6655738,14.6103607%2056.5356066,4.53193443%2052.3902951,4.43645902%20C48.2447213,4.34072131%2044.653377,14.2638689%2044.3687869,26.6003934%20C44.3687869,26.6003934%2044.1492459,31.1000656%2045.4780328,39.6152131'%20id='Fill-1'%20fill='%23185A30'%3e%3c/path%3e%3cpath%20d='M73.5446557,53.1058361%20C73.7896393,52.696918%2073.9265574,52.2066885%2073.9171148,51.6857705%20C73.9965902,50.002623%2072.8411803,48.4768525%2071.2335738,48.6457705%20C71.28,48.4532459%2071.3104262,48.2531148%2071.3222295,48.0466885%20C71.4184918,46.3606557%2070.2557377,44.907541%2068.7249836,44.8013115%20C68.6914098,44.7992131%2068.6583607,44.7981639%2068.6250492,44.7971148%20C68.7842623,44.3787541%2068.8632131,43.9116066%2068.8351475,43.4166557%20C68.7559344,42.0139016%2067.7885902,40.832%2066.5300984,40.5993443%20C66.075541,40.5154098%2065.634623,40.5571148%2065.2309508,40.696918%20C64.8495738,39.757377%2064.0487869,39.060459%2063.074623,38.9133115%20C62.9975082,37.3878033%2061.8956066,36.1321967%2060.4768525,36.0338361%20C59.5847869,35.9719344%2058.7651148,36.3816393%2058.216918,37.067541%20C57.714623,36.376918%2056.9437377,35.9276066%2056.0650492,35.9204395%20C54.7034754,35.9092459%2053.5142295,37.0205902%2053.3051803,38.5028197%20C53.2459016,38.9238033%2053.266623,39.3342951%2053.3531803,39.7180328%20C52.7871475,39.7899016%2052.2699016,40.0519344%2051.8570492,40.4461639%20C51.8098361,40.4910164%2051.7634098,40.5366557%2051.719082,40.584918%20C51.4803934,39.2556066%2050.114623,37.9042623%2048.8288525,37.8148197%20C47.6259672,37.7314098%2045.928918,38.4621639%2045.4780328,39.6152131%20C45.6758033,41.6259672%2046.9327213,47.1071475%2051.4788197,52.0241311%20L51.5192131,52.0270164%20C51.9575082,52.4236066%2052.5298361,52.6420984%2053.1399344,52.5878033%20C53.5181639,52.5539672%2053.8664918,52.418623%2054.1665574,52.2098361%20L54.2397377,52.2148197%20C54.6397377,52.4925902%2055.1205246,52.6379016%2055.6285902,52.5927869%20C55.8226885,52.5754754%2056.0078689,52.5287869%2056.1838689,52.4621639%20C56.6192787,53.3623607%2057.5902951,53.9441311%2058.6740984,53.8486557%20C59.5134426,53.7746885%2060.2268852,53.3104262%2060.6462951,52.6570492%20L60.7821639,52.6664918%20C61.2010492,53.0817049%2061.7579016,53.323541%2062.3585574,53.3054426%20C62.855082,54.0566557%2063.767082,54.5188197%2064.7735082,54.4304262%20C65.1525246,54.3971148%2065.5063607,54.2874754%2065.8219016,54.1214426%20C66.3483279,54.7690492%2067.2123279,55.1540984%2068.1602623,55.0706885%20C69.0974426,54.9885902%2069.8890492,54.4689836%2070.3197377,53.7505574%20C70.7428197,54.0902295%2071.272918,54.2725246%2071.8358033,54.2224262%20C72.3819016,54.1736393%2072.8671475,53.9158033%2073.2317377,53.5257705%20L73.2925902,53.5299672%20C73.3754754,53.4098361%2073.4462951,53.2868197%2073.5121311,53.1627541%20C73.5137049,53.1603934%2073.5150164,53.1577705%2073.5163279,53.1554098%20C73.5252459,53.1388852%2073.5362623,53.122623%2073.5446557,53.1058361'%20fill='%23F9D320'%3e%3c/path%3e%3cpath%20d='M42.2090492,9.21232787%20L6.56209836,12.7268197%20C7.62203279,10.6709508%209.21206557,8.70662295%2010.7472787,7.6957377%20L45.2440656,3.18662295%20C43.8793443,4.79422951%2042.9272131,6.9762623%2042.2090492,9.21232787%20Z%20M45.2440656,49.5517377%20L10.7472787,45.042623%20C9.21206557,44.032%207.62203279,42.0674098%206.56209836,40.0118033%20L42.2090492,43.5262951%20C42.9272131,45.7620984%2043.8793443,47.9443934%2045.2440656,49.5517377%20Z%20M5.07514754,36.5143607%20C3.94885246,33.1108197%203.6,31.1323279%203.32170492,28.2992787%20L39.9527869,28.7409836%20C40.0427541,31.8701639%2040.4668852,35.9202623%2041.2031475,39.3707541%20L5.07514754,36.5143607%20Z%20M5.07514754,16.224%20L41.2031475,13.3676066%20C40.4668852,16.8180984%2040.0427541,20.8681967%2039.9527869,23.9976393%20L3.32170492,24.439082%20C3.6,21.6062951%203.94885246,19.627541%205.07514754,16.224%20Z%20M56.7186885,3.84865574%20C54.4333115,1.18767213%2052.7926557,-0.0616393443%2051.3872787,0.100721311%20C51.1252459,0.134032787%2011.4032787,5.67213115%2011.4032787,5.67213115%20C5.10006557,6.31318033%200.0624262295,15.4659672%200,26.3693115%20C0.0624262295,37.2723934%205.10006557,46.4251803%2011.4032787,47.0664918%20C11.4032787,47.0664918%2051.1997377,52.6247869%2051.3872787,52.6376393%20C51.7196066,52.635541%2052.0477377,52.5909508%2052.3711475,52.5080656%20C52.0563934,52.4144262%2051.7660328,52.2504918%2051.5192131,52.0270164%20L51.4788197,52.0241311%20C46.9327213,47.1074098%2045.6758033,41.6259672%2045.4780328,39.6152131%20C45.4785574,39.6136393%2045.4796066,39.6123279%2045.4801311,39.6107541%20C45.4796066,39.6123279%2045.4785574,39.6136393%2045.4780328,39.6152131%20C44.1492459,31.1000656%2044.3687869,26.6003934%2044.3687869,26.6003934%20C44.653377,14.2638689%2048.2447213,4.34072131%2052.3902951,4.43619672%20C56.5356066,4.53193443%2059.6655738,14.6103607%2059.3809836,26.9468852%20C59.2980984,30.5345574%2058.9340328,33.9152787%2058.3596066,36.907541%20C58.9497705,36.2562623%2059.741377,35.9819016%2060.4768525,36.0338361%20C60.6121967,36.043541%2060.7438689,36.0663607%2060.872918,36.096%20C63.3904262,22.3210492%2060.7512131,8.87029508%2056.7186885,3.84865574%20L56.7186885,3.84865574%20Z'%20fill='%23129B47'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M41.2031475,13.3676066%20L5.07514754,16.224%20C3.94885246,19.627541%203.6,21.6062951%203.32170492,24.439082%20L39.9527869,23.997377%20C40.0427541,20.8681967%2040.4668852,16.8180984%2041.2031475,13.3676066'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M45.2440656,3.18662295%20L10.7472787,7.6957377%20C9.21206557,8.70662295%207.62203279,10.6709508%206.56209836,12.7268197%20L42.2090492,9.21232787%20C42.9272131,6.9762623%2043.8793443,4.79422951%2045.2440656,3.18662295'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M6.56209836,40.011541%20C7.62203279,42.0674098%209.21206557,44.032%2010.7472787,45.042623%20L45.2440656,49.5517377%20C43.8793443,47.9443934%2042.9272131,45.7620984%2042.2090492,43.5262951%20L6.56209836,40.011541'%20fill='%23FFFFFE'%3e%3c/path%3e%3cg%20transform='translate(3.15,%2028)'%3e%3cpath%20d='M36.8052459,0.675409836%20L0.174163934,0.233704918%20C0.452459016,3.0664918%200.801311475,5.0452459%201.92760656,8.44878689%20L38.0556066,11.3051803%20C37.3193443,7.85468852%2036.8952131,3.80459016%2036.8052459,0.675409836'%20fill='%23FFFFFE'%3e%3c/path%3e%3c/g%3e%3c/g%3e%3c/svg%3e";
+`, fa = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20type='positive'%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(1.33,%200)'%3e%3cg%20transform='translate(0,%2016.27)'%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0.000109100102%200.246970954%2077.0827837%200.246970954%2077.0827837%2063.7145228%200.000109100102%2063.7145228'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M77.0137759,27.0426556%20C76.2423237,14.6741909%2069.9521992,5.42041494%2060.4876349,0.246970954%20C60.5414108,0.548381743%2060.273195,0.925145228%2059.9678008,0.791701245%20C53.7772614,-1.91634855%2043.2753527,6.84780083%2035.9365975,2.25825726%20C35.9917012,3.90539419%2035.6700415,11.940249%2024.3515353,12.4063071%20C24.0843154,12.4172614%2023.9372614,12.1443983%2024.1062241,11.9512033%20C25.619917,10.2247303%2027.1482158,5.85360996%2024.9507054,3.5233195%20C20.2446473,7.74041494%2017.5117012,9.32746888%208.48829876,7.23319502%20C2.71103734,13.2740249%20-0.562655602,21.5419087%200.08,31.8413278%20C1.39120332,52.86639%2021.0848133,64.8846473%2040.9165145,63.6471369%20C60.746888,62.4106224%2078.3253112,48.0677178%2077.0137759,27.0426556'%20fill='%23FA320A'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M40.8717012,11.4648963%20C44.946722,10.49361%2056.6678838,11.3702905%2060.4232365,16.3518672%20C60.6486307,16.6506224%2060.3312863,17.2159336%2059.9678008,17.0572614%20C53.7772614,14.3492116%2043.2753527,23.113361%2035.9365975,18.5238174%20C35.9917012,20.1709544%2035.6700415,28.2058091%2024.3515353,28.6718672%20C24.0843154,28.6828216%2023.9372614,28.4099585%2024.1062241,28.2167635%20C25.619917,26.4902905%2027.1478838,22.1191701%2024.9507054,19.7888797%20C19.8243983,24.3827386%2017.0453112,25.8589212%205.91900415,22.8514523%20C5.55485477,22.753195%205.67900415,22.1679668%206.06639004,22.020249%20C8.16929461,21.2165975%2012.933444,17.6965975%2017.4406639,16.1450622%20C18.2987552,15.8499585%2019.1541909,15.6209129%2019.9890456,15.4878008%20C15.02639,15.0443154%2012.7893776,14.3541909%209.63286307,14.8302075%20C9.28697095,14.8823237%209.05195021,14.479668%209.26639004,14.2034855%20C13.5193361,8.7253112%2021.3540249,7.07087137%2026.1878838,9.98107884%20C23.2082988,6.28912863%2020.8743568,3.34473029%2020.8743568,3.34473029%20L26.4046473,0.203485477%20C26.4046473,0.203485477%2028.6894606,5.30821577%2030.3518672,9.02340249%20C34.4657261,2.94506224%2042.119834,2.38406639%2045.3536929,6.69676349%20C45.5455602,6.95302905%2045.3450622,7.31751037%2045.0247303,7.30987552%20C42.3926971,7.24580913%2040.9434025,9.63983402%2040.833527,11.4605809%20L40.8717012,11.4648963'%20fill='%2300912D'%3e%3c/path%3e%3c/g%3e%3c/svg%3e", ma = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20type='negative'%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(0,%201.23)'%3e%3cg%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0%200.161950465%2079.7417075%200.161950465%2079.7417075%2077.522807%200%2077.522807'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M71.4638596,70.225614%20C56.3459649,71.0192982%2053.2568421,53.7203509%2047.325614,53.8435088%20C44.7982456,53.8964912%2042.8063158,56.5389474%2043.6810526,59.6185965%20C44.1621053,61.3115789%2045.4964912,63.794386%2046.337193,65.3350877%20C49.302807,70.7719298%2044.9185965,76.9245614%2039.7880702,77.4449123%20C31.2621053,78.3098246%2027.705614,73.3638596%2027.925614,68.3007018%20C28.1729825,62.6168421%2032.9922807,56.8091228%2028.0494737,54.3378947%20C22.8694737,51.7480702%2018.6585965,61.8754386%2013.7017544,64.1357895%20C9.2154386,66.1817544%202.9877193,64.5954386%200.773684211,59.6136842%20C-0.781403509,56.1129825%20-0.498596491,49.3722807%206.42526316,46.8003509%20C10.7501754,45.1940351%2020.3880702,48.9010526%2020.8824561,44.205614%20C21.4522807,38.7929825%2010.7575439,38.3364912%207.53754386,37.0385965%20C1.84,34.7424561%20-1.52280702,29.8291228%201.11192982,24.5582456%20C3.08877193,20.6045614%208.90526316,18.9957895%2013.3449123,20.7277193%20C18.6635088,22.8024561%2019.517193,28.3189474%2022.2421053,30.6129825%20C24.5894737,32.5901754%2027.8021053,32.8375439%2029.9031579,31.4782456%20C31.4526316,30.4754386%2031.9684211,28.2729825%2031.3838596,26.2610526%20C30.6084211,23.5901754%2028.5505263,21.9235088%2026.542807,20.2905263%20C22.9698246,17.3859649%2017.925614,14.8884211%2020.9768421,6.96035088%20C23.4778947,0.463157895%2030.8133333,0.229122807%2030.8133333,0.229122807%20C33.7277193,-0.0985964912%2036.3375439,0.781403509%2038.4642105,2.68140351%20C41.3073684,5.22140351%2041.8610526,8.61649123%2041.3852632,12.2385965%20C40.9505263,15.5449123%2039.7803509,18.4407018%2039.1701754,21.7164912%20C38.4621053,25.5196491%2040.4947368,29.3519298%2044.3603509,29.5010526%20C49.4449123,29.6975439%2050.9694737,25.7894737%2051.5915789,23.3122807%20C52.5024561,19.6877193%2053.6978947,16.322807%2057.0617544,14.2035088%20C61.8894737,11.1617544%2068.5954386,11.8284211%2071.7066667,17.674386%20C74.1677193,22.3%2073.3775439,28.6677193%2069.6024561,32.1449123%20C67.9087719,33.7045614%2065.8722807,34.254386%2063.6694737,34.2698246%20C60.5105263,34.2922807%2057.3529825,34.2147368%2054.4207018,35.6929825%20C52.4245614,36.6989474%2051.5547368,38.3382456%2051.5550877,40.5354386%20C51.5550877,42.6768421%2052.6698246,44.0754386%2054.4761404,44.985614%20C57.8782456,46.7003509%2061.6336842,47.0508772%2065.3087719,47.694386%20C70.6382456,48.6277193%2075.3242105,50.5049123%2078.3326316,55.4505263%20C78.3596491,55.4940351%2078.3859649,55.5378947%2078.4115789,55.5821053%20C81.8666667,61.4375439%2078.2533333,69.8687719%2071.4638596,70.225614'%20fill='%230AC855'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3c/g%3e%3c/svg%3e", ba = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(10.1,%200)'%3e%3cg%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0.0178438662%200.124907063%2059.6019307%200.124907063%2059.6019307%2079.9821561%200.0178438662%2079.9821561'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M2.53115242,19.0988848%20C2.76163569,23.9952416%2014.8892193,27.8762825%2029.8007435,27.7912268%20C42.8237918,27.7168773%2053.6874349,24.6411896%2056.3485502,20.6004461%20C55.7421561,19.9265428%2054.904684,19.4643866%2053.9613383,19.3391822%20C53.9714498,19.220223%2053.9779926,19.1003717%2053.9773978,18.9787361%20C53.9663941,17.0423792%2052.5460223,15.4477323%2050.695316,15.1503346%20C50.7440892,14.8999257%2050.7696654,14.6408922%2050.7681784,14.3759108%20C50.7559851,12.2194796%2048.9977695,10.481487%2046.8413383,10.4936803%20C46.7925651,10.4939777%2046.7449814,10.4999257%2046.6965056,10.5020074%20C46.8344981,10.0987361%2046.9118216,9.66780669%2046.9094424,9.21784387%20C46.8969517,7.06141264%2045.1390335,5.32342007%2042.9826022,5.33561338%20C42.4877323,5.33858736%2042.0169517,5.43702602%2041.5821561,5.60743494%20C40.9653532,4.44639405%2039.7811152,3.63717472%2038.4002974,3.54379182%20C38.1597026,1.60743494%2036.5055762,0.113605948%2034.506171,0.124843367%20C33.247881,0.13204461%2032.1350186,0.736356877%2031.4263197,1.66453532%20C30.7075093,0.882379182%2029.6773234,0.391672862%2028.5314498,0.398215613%20C26.3750186,0.410408922%2024.637026,2.16862454%2024.6492193,4.32475836%20C24.6515985,4.73665428%2024.718513,5.13249071%2024.8386617,5.50453532%20C23.9586617,5.66780669%2023.1848327,6.12520446%2022.6191822,6.77144981%20C22.1701115,5.09888476%2020.642974,3.86973978%2018.8297398,3.8798513%20C17.1357621,3.88966543%2015.7040892,4.97873606%2015.172342,6.48981413%20C13.7332342,7.07182156%2012.7202974,8.48356877%2012.7298141,10.1302602%20C12.7318959,10.4960595%2012.7878067,10.8481784%2012.8838662,11.1836431%20C12.398513,10.9713011%2011.8634944,10.852342%2011.2996283,10.8556134%20C9.5994052,10.8654275%208.16327138,11.9622305%207.63598513,13.4822305%20C7.13040892,13.2472862%206.56832714,13.1137546%205.973829,13.1173234%20C3.81739777,13.1295167%202.07910781,14.8874349%202.09153162,17.0438662%20C2.09546468,17.7549442%202.29263941,18.4187361%202.62810409,18.9909294%20C2.59390335,19.0254275%202.56386617,19.063197%202.53115242,19.0988848'%20fill='%23F9D320'%20mask='url(%23mask-2)'%3e%3c/path%3e%3cpath%20d='M50.9736803,68.1576208%20C49.8275093,69.89829%2047.6002974,71.7008178%2045.2692937,72.9026022%20L49.2541264,32.4853532%20C51.7894424,31.6707807%2054.2634944,30.5915242%2056.085948,29.0438662%20L50.9736803,68.1576208%20Z%20M41.3037918,74.5885502%20C37.4450558,75.8655762%2035.201487,76.2614126%2031.9895911,76.5766543%20L32.4901115,35.0432714%20C36.0383643,34.9415613%2040.6301859,34.4606691%2044.5427509,33.6255762%20L41.3037918,74.5885502%20Z%20M18.29829,74.5885502%20L15.0596283,33.6255762%20C18.9718959,34.4606691%2023.5637175,34.9415613%2027.1119703,35.0432714%20L27.6124907,76.5766543%20C24.4005948,76.2614126%2022.1573234,75.8655762%2018.29829,74.5885502%20Z%20M8.62869888,68.1576208%20L3.51613383,29.0438662%20C5.33858736,30.5915242%207.81263941,31.6707807%2010.3479554,32.4853532%20L14.3327881,72.9026022%20C12.0017844,71.7008178%209.77457249,69.89829%208.62869888,68.1576208%20Z%20M50.687881,13.6110037%20C50.7384387,13.8578439%2050.7666914,14.1130112%2050.7681784,14.3750186%20C50.7696654,14.64%2050.7440892,14.8990335%2050.6950186,15.1494424%20C52.5460223,15.4465428%2053.9663941,17.0411896%2053.9773978,18.9778439%20C53.9779926,19.0991822%2053.9714498,19.2193309%2053.9613383,19.3379926%20C54.904684,19.463197%2055.7421561,19.9253532%2056.3485502,20.5992565%20C53.6877323,24.6402974%2042.8237918,27.7159851%2029.8010409,27.790632%20C14.8895167,27.8759851%202.76193309,23.9952416%202.53115242,19.0985874%20C2.56386617,19.063197%202.59390335,19.0251301%202.62810409,18.9909294%20C2.39791822,18.5983643%202.23910781,18.1608922%202.15702602,17.6966543%20C0.729219331,19.0518959%20-0.13472119,20.1445353%200.0172490706,21.7356134%20C0.0318215613,21.9482528%206.3339777,67.0709294%206.3339777,67.0709294%20C7.06111524,74.2173978%2017.4388104,79.9292193%2029.8010409,80%20C42.1632714,79.9292193%2052.5412639,74.2173978%2053.2681041,67.0709294%20C53.2681041,67.0709294%2059.5702602,21.9482528%2059.5848327,21.7356134%20C59.8866914,18.5531599%2056.162974,15.6642379%2050.687881,13.6110037%20L50.687881,13.6110037%20Z'%20fill='%23DB382A'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M15.0596283,33.6255762%20L18.29829,74.5885502%20C22.1573234,75.8655762%2024.4005948,76.2614126%2027.6124907,76.5766543%20L27.1119703,35.0432714%20C23.5637175,34.9415613%2018.9718959,34.4606691%2015.0596283,33.6255762'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M31.9895911,76.5766543%20C35.201487,76.2614126%2037.4447584,75.8655762%2041.3037918,74.5885502%20L44.5424535,33.6255762%20C40.6301859,34.4606691%2036.0383643,34.9415613%2032.4901115,35.0432714%20L31.9895911,76.5766543'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M45.2692937,72.9026022%20C47.6002974,71.7008178%2049.8275093,69.89829%2050.9733829,68.1576208%20L56.085948,29.0438662%20C54.2634944,30.5915242%2051.7894424,31.6707807%2049.2541264,32.4853532%20L45.2692937,72.9026022'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M3.51613383,29.0438662%20L8.62840149,68.1576208%20C9.77457249,69.89829%2012.0017844,71.7008178%2014.3327881,72.9026022%20L10.3479554,32.4853532%20C7.81263941,31.6707807%205.33858736,30.5915242%203.51613383,29.0438662'%20fill='%23FFFFFE'%3e%3c/path%3e%3c/g%3e%3c/svg%3e", va = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(0,%2012.46)'%3e%3cg%3e%3cpath%20d='M45.4780328,39.6152131%20C45.9506885,38.4445902%2047.6259672,37.7314098%2048.8288525,37.8148197%20C50.114623,37.904%2051.4803934,39.2556066%2051.719082,40.584918%20C51.7634098,40.5366557%2051.8098361,40.4910164%2051.8570492,40.4461639%20C52.2699016,40.0516721%2052.7871475,39.7899016%2053.3531803,39.7177705%20C53.266623,39.3342951%2053.2459016,38.9238033%2053.3051803,38.5025574%20C53.5142295,37.0205902%2054.7034754,35.9092459%2056.0650492,35.9202623%20C56.9437377,35.9273443%2057.714623,36.376918%2058.216918,37.067541%20C58.2617705,37.0114098%2058.3113443,36.96%2058.3596066,36.907541%20C58.9340328,33.9152787%2059.2980984,30.5345574%2059.3809836,26.9468852%20C59.6655738,14.6103607%2056.5356066,4.53193443%2052.3902951,4.43645902%20C48.2447213,4.34072131%2044.653377,14.2638689%2044.3687869,26.6003934%20C44.3687869,26.6003934%2044.1492459,31.1000656%2045.4780328,39.6152131'%20id='Fill-1'%20fill='%23185A30'%3e%3c/path%3e%3cpath%20d='M73.5446557,53.1058361%20C73.7896393,52.696918%2073.9265574,52.2066885%2073.9171148,51.6857705%20C73.9965902,50.002623%2072.8411803,48.4768525%2071.2335738,48.6457705%20C71.28,48.4532459%2071.3104262,48.2531148%2071.3222295,48.0466885%20C71.4184918,46.3606557%2070.2557377,44.907541%2068.7249836,44.8013115%20C68.6914098,44.7992131%2068.6583607,44.7981639%2068.6250492,44.7971148%20C68.7842623,44.3787541%2068.8632131,43.9116066%2068.8351475,43.4166557%20C68.7559344,42.0139016%2067.7885902,40.832%2066.5300984,40.5993443%20C66.075541,40.5154098%2065.634623,40.5571148%2065.2309508,40.696918%20C64.8495738,39.757377%2064.0487869,39.060459%2063.074623,38.9133115%20C62.9975082,37.3878033%2061.8956066,36.1321967%2060.4768525,36.0338361%20C59.5847869,35.9719344%2058.7651148,36.3816393%2058.216918,37.067541%20C57.714623,36.376918%2056.9437377,35.9276066%2056.0650492,35.9204395%20C54.7034754,35.9092459%2053.5142295,37.0205902%2053.3051803,38.5028197%20C53.2459016,38.9238033%2053.266623,39.3342951%2053.3531803,39.7180328%20C52.7871475,39.7899016%2052.2699016,40.0519344%2051.8570492,40.4461639%20C51.8098361,40.4910164%2051.7634098,40.5366557%2051.719082,40.584918%20C51.4803934,39.2556066%2050.114623,37.9042623%2048.8288525,37.8148197%20C47.6259672,37.7314098%2045.928918,38.4621639%2045.4780328,39.6152131%20C45.6758033,41.6259672%2046.9327213,47.1071475%2051.4788197,52.0241311%20L51.5192131,52.0270164%20C51.9575082,52.4236066%2052.5298361,52.6420984%2053.1399344,52.5878033%20C53.5181639,52.5539672%2053.8664918,52.418623%2054.1665574,52.2098361%20L54.2397377,52.2148197%20C54.6397377,52.4925902%2055.1205246,52.6379016%2055.6285902,52.5927869%20C55.8226885,52.5754754%2056.0078689,52.5287869%2056.1838689,52.4621639%20C56.6192787,53.3623607%2057.5902951,53.9441311%2058.6740984,53.8486557%20C59.5134426,53.7746885%2060.2268852,53.3104262%2060.6462951,52.6570492%20L60.7821639,52.6664918%20C61.2010492,53.0817049%2061.7579016,53.323541%2062.3585574,53.3054426%20C62.855082,54.0566557%2063.767082,54.5188197%2064.7735082,54.4304262%20C65.1525246,54.3971148%2065.5063607,54.2874754%2065.8219016,54.1214426%20C66.3483279,54.7690492%2067.2123279,55.1540984%2068.1602623,55.0706885%20C69.0974426,54.9885902%2069.8890492,54.4689836%2070.3197377,53.7505574%20C70.7428197,54.0902295%2071.272918,54.2725246%2071.8358033,54.2224262%20C72.3819016,54.1736393%2072.8671475,53.9158033%2073.2317377,53.5257705%20L73.2925902,53.5299672%20C73.3754754,53.4098361%2073.4462951,53.2868197%2073.5121311,53.1627541%20C73.5137049,53.1603934%2073.5150164,53.1577705%2073.5163279,53.1554098%20C73.5252459,53.1388852%2073.5362623,53.122623%2073.5446557,53.1058361'%20fill='%23F9D320'%3e%3c/path%3e%3cpath%20d='M42.2090492,9.21232787%20L6.56209836,12.7268197%20C7.62203279,10.6709508%209.21206557,8.70662295%2010.7472787,7.6957377%20L45.2440656,3.18662295%20C43.8793443,4.79422951%2042.9272131,6.9762623%2042.2090492,9.21232787%20Z%20M45.2440656,49.5517377%20L10.7472787,45.042623%20C9.21206557,44.032%207.62203279,42.0674098%206.56209836,40.0118033%20L42.2090492,43.5262951%20C42.9272131,45.7620984%2043.8793443,47.9443934%2045.2440656,49.5517377%20Z%20M5.07514754,36.5143607%20C3.94885246,33.1108197%203.6,31.1323279%203.32170492,28.2992787%20L39.9527869,28.7409836%20C40.0427541,31.8701639%2040.4668852,35.9202623%2041.2031475,39.3707541%20L5.07514754,36.5143607%20Z%20M5.07514754,16.224%20L41.2031475,13.3676066%20C40.4668852,16.8180984%2040.0427541,20.8681967%2039.9527869,23.9976393%20L3.32170492,24.439082%20C3.6,21.6062951%203.94885246,19.627541%205.07514754,16.224%20Z%20M56.7186885,3.84865574%20C54.4333115,1.18767213%2052.7926557,-0.0616393443%2051.3872787,0.100721311%20C51.1252459,0.134032787%2011.4032787,5.67213115%2011.4032787,5.67213115%20C5.10006557,6.31318033%200.0624262295,15.4659672%200,26.3693115%20C0.0624262295,37.2723934%205.10006557,46.4251803%2011.4032787,47.0664918%20C11.4032787,47.0664918%2051.1997377,52.6247869%2051.3872787,52.6376393%20C51.7196066,52.635541%2052.0477377,52.5909508%2052.3711475,52.5080656%20C52.0563934,52.4144262%2051.7660328,52.2504918%2051.5192131,52.0270164%20L51.4788197,52.0241311%20C46.9327213,47.1074098%2045.6758033,41.6259672%2045.4780328,39.6152131%20C45.4785574,39.6136393%2045.4796066,39.6123279%2045.4801311,39.6107541%20C45.4796066,39.6123279%2045.4785574,39.6136393%2045.4780328,39.6152131%20C44.1492459,31.1000656%2044.3687869,26.6003934%2044.3687869,26.6003934%20C44.653377,14.2638689%2048.2447213,4.34072131%2052.3902951,4.43619672%20C56.5356066,4.53193443%2059.6655738,14.6103607%2059.3809836,26.9468852%20C59.2980984,30.5345574%2058.9340328,33.9152787%2058.3596066,36.907541%20C58.9497705,36.2562623%2059.741377,35.9819016%2060.4768525,36.0338361%20C60.6121967,36.043541%2060.7438689,36.0663607%2060.872918,36.096%20C63.3904262,22.3210492%2060.7512131,8.87029508%2056.7186885,3.84865574%20L56.7186885,3.84865574%20Z'%20fill='%23129B47'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M41.2031475,13.3676066%20L5.07514754,16.224%20C3.94885246,19.627541%203.6,21.6062951%203.32170492,24.439082%20L39.9527869,23.997377%20C40.0427541,20.8681967%2040.4668852,16.8180984%2041.2031475,13.3676066'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M45.2440656,3.18662295%20L10.7472787,7.6957377%20C9.21206557,8.70662295%207.62203279,10.6709508%206.56209836,12.7268197%20L42.2090492,9.21232787%20C42.9272131,6.9762623%2043.8793443,4.79422951%2045.2440656,3.18662295'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M6.56209836,40.011541%20C7.62203279,42.0674098%209.21206557,44.032%2010.7472787,45.042623%20L45.2440656,49.5517377%20C43.8793443,47.9443934%2042.9272131,45.7620984%2042.2090492,43.5262951%20L6.56209836,40.011541'%20fill='%23FFFFFE'%3e%3c/path%3e%3cg%20transform='translate(3.15,%2028)'%3e%3cpath%20d='M36.8052459,0.675409836%20L0.174163934,0.233704918%20C0.452459016,3.0664918%200.801311475,5.0452459%201.92760656,8.44878689%20L38.0556066,11.3051803%20C37.3193443,7.85468852%2036.8952131,3.80459016%2036.8052459,0.675409836'%20fill='%23FFFFFE'%3e%3c/path%3e%3c/g%3e%3c/g%3e%3c/svg%3e";
 function ya(n) {
   const e = n.enrichment ?? {}, t = e.reviewed;
   return [
@@ -2843,7 +2853,7 @@ function wa(n) {
     aria-label="Viewer and critic ratings"
   >
     ${e.map(({ kind: t, label: i, value: s, max: r }) => {
-    const o = Math.round(s / r * 100), c = t === "critic" ? o >= 60 ? ma : fa : o >= 60 ? ba : va;
+    const o = Math.round(s / r * 100), c = t === "critic" ? o >= 60 ? fa : ma : o >= 60 ? ba : va;
     return a`<span
         class=${`score-chip score-${t}`}
         title=${`${i}: ${o}%`}
@@ -3094,8 +3104,8 @@ Fe.properties = {
       font: inherit;
     }
   `;
-let Mt = Fe;
-customElements.get("kaleidescape-library-cover") || customElements.define("kaleidescape-library-cover", Mt);
+let jt = Fe;
+customElements.get("kaleidescape-library-cover") || customElements.define("kaleidescape-library-cover", jt);
 const Ve = class Ve extends x {
   constructor() {
     super(...arguments), this.plan = "", this.choice = "", this.visible = !1, this.url = "", this.failed = !1;
@@ -3170,8 +3180,8 @@ Ve.properties = {
       padding: 8px;
     }
   `;
-let jt = Ve;
-customElements.get("kaleidescape-scrape-image") || customElements.define("kaleidescape-scrape-image", jt);
+let Mt = Ve;
+customElements.get("kaleidescape-scrape-image") || customElements.define("kaleidescape-scrape-image", Mt);
 function Xi(n) {
   if (n)
     try {
@@ -4458,7 +4468,7 @@ const { I: Ca } = la, Wi = (n) => n, Sa = (n) => n.strings === void 0, Ki = () =
     }
   }
   return t;
-}, V = (n, e, t = n) => (n._$AI(e, t), n), qa = {}, Ls = (n, e = qa) => n._$AH = e, Ea = (n) => n._$AH, Et = (n) => {
+}, Q = (n, e, t = n) => (n._$AI(e, t), n), qa = {}, Ls = (n, e = qa) => n._$AH = e, Ea = (n) => n._$AH, Et = (n) => {
   n._$AR(), n._$AA.remove();
 };
 const Yi = Es(class extends As {
@@ -5808,11 +5818,11 @@ const Yi = Es(class extends As {
       const p = t.getBoundingClientRect(), u = Math.max(
         o + 12,
         Math.min(l.left - 8, o + s - h - 12)
-      ), f = l.bottom + 10 + p.height > c + r - 12, w = f ? Math.max(c + 12, l.top - p.height - 10) : l.bottom + 10;
+      ), b = l.bottom + 10 + p.height > c + r - 12, w = b ? Math.max(c + 12, l.top - p.height - 10) : l.bottom + 10;
       t.style.left = `${u}px`, t.style.top = `${w}px`, t.style.setProperty(
         "--arrow-left",
         `${Math.max(12, Math.min(h - 20, l.left + l.width / 2 - u - 4))}px`
-      ), t.toggleAttribute("data-above", f);
+      ), t.toggleAttribute("data-above", b);
     };
   }
   disconnectedCallback() {
@@ -7009,14 +7019,14 @@ const Ta = C`<svg class="dolby-symbol" viewBox="0 0 24 16" aria-hidden="true" fo
   <path fill="currentColor" d="M13 3c.6 0 1 .4 1.2 1l1.4 5.2a5.8 5.8 0 0 0 4.1 4.1l5.2 1.4c.6.2 1 .6 1 1.2s-.4 1-1 1.2l-5.2 1.4a5.8 5.8 0 0 0-4.1 4.1l-1.4 5.2c-.2.6-.6 1-1.2 1s-1-.4-1.2-1l-1.4-5.2a5.8 5.8 0 0 0-4.1-4.1L1 17.1c-.6-.2-1-.6-1-1.2s.4-1 1-1.2l5.2-1.4a5.8 5.8 0 0 0 4.1-4.1L11.8 4c.2-.6.6-1 1.2-1Z" />
   <path fill="currentColor" d="M26 1c.5 0 .8.3.9.7l.6 2.1a2.7 2.7 0 0 0 1.9 1.9l2.1.6c.3.1.5.4.5.8s-.2.7-.5.8l-2.1.6a2.7 2.7 0 0 0-1.9 1.9l-.6 2.1c-.1.4-.4.7-.9.7s-.8-.3-.9-.7l-.6-2.1a2.7 2.7 0 0 0-1.9-1.9l-2.1-.6c-.3-.1-.5-.4-.5-.8s.2-.7.5-.8l2.1-.6a2.7 2.7 0 0 0 1.9-1.9l.6-2.1c.1-.4.4-.7.9-.7Z" />
   <path fill="currentColor" d="M5 23c.5 0 .8.3.9.7l.5 1.7a2.3 2.3 0 0 0 1.6 1.6l1.7.5c.4.1.6.4.6.8s-.2.7-.6.8l-1.7.5a2.3 2.3 0 0 0-1.6 1.6l-.5 1.7c-.1.4-.4.6-.9.6s-.8-.2-.9-.6l-.5-1.7A2.3 2.3 0 0 0 2 29.6l-1.7-.5c-.4-.1-.6-.4-.6-.8s.2-.7.6-.8L2 27a2.3 2.3 0 0 0 1.6-1.6l.5-1.7c.1-.4.4-.7.9-.7Z" />
-</svg>`, Ma = C`<svg class="hdr-symbol" viewBox="0 0 27 16" aria-hidden="true" focusable="false">
+</svg>`, ja = C`<svg class="hdr-symbol" viewBox="0 0 27 16" aria-hidden="true" focusable="false">
   <path fill="#e94637" d="M1 4 7 3v10l-6-1z" />
   <path fill="#f28c28" d="M6 3 12 2v12l-6-1z" />
   <path fill="#edc13b" d="M11 2 17 1v14l-6-1z" />
   <path fill="#72ad69" d="M16 1 22 0v16l-6-1z" />
   <path fill="#298a98" d="M21 1 26 0v16l-5-1z" />
 </svg>`;
-function _(n, e = !1, t, i = !1, s = { video: !0, audio: !0 }) {
+function F(n, e = !1, t, i = !1, s = { video: !0, audio: !0 }) {
   const r = e ? Ua(n) : void 0;
   return (e ? [
     ...r ? [r] : [],
@@ -7025,7 +7035,7 @@ function _(n, e = !1, t, i = !1, s = { video: !0, audio: !0 }) {
     (o) => es(o.key) ? s.audio : s.video
   ).map((o) => {
     const c = o.key === "cinematic" || o.key === "hd-cinematic" ? a`<b>${o.key === "cinematic" ? "4K" : "HD"}</b
-              ><span class="cinematic-label">Cinematic</span>` : o.key === "vision" || o.key === "atmos" ? a`${Ta}<span>${o.label}</span>` : o.key === "hdr10" ? a`${Ma}<b>HDR10</b>` : o.label;
+              ><span class="cinematic-label">Cinematic</span>` : o.key === "vision" || o.key === "atmos" ? a`${Ta}<span>${o.label}</span>` : o.key === "hdr10" ? a`${ja}<b>HDR10</b>` : o.label;
     return t ? a`<button
             type="button"
             class=${`format-badge format-${o.key}`}
@@ -7044,14 +7054,14 @@ function _(n, e = !1, t, i = !1, s = { video: !0, audio: !0 }) {
 function ts(n, e = !1, t = [], i = "modern", s = "icons") {
   const r = Pa(n, i), o = e ? ["progress", "watched", "watch-soon", "recent"].map((c) => r.find((l) => l.key === c)).find(Boolean) : void 0;
   if (e && s === "text") {
-    const c = o && !t.includes(o.key) ? o : void 0, l = r.find((f) => f.key === "recent"), h = c && c.key !== "recent" && l && !t.includes("recent"), p = r.find(
-      (f) => f.key === "favorite" && !t.includes("favorite")
-    ), u = (f) => a`<span
-        class=${`cover-text-flag flag-${f.key}`}
+    const c = o && !t.includes(o.key) ? o : void 0, l = r.find((b) => b.key === "recent"), h = c && c.key !== "recent" && l && !t.includes("recent"), p = r.find(
+      (b) => b.key === "favorite" && !t.includes("favorite")
+    ), u = (b) => a`<span
+        class=${`cover-text-flag flag-${b.key}`}
         role="img"
-        aria-label=${f.label}
-        title=${f.label}
-        >${f.label}</span
+        aria-label=${b.label}
+        title=${b.label}
+        >${b.label}</span
       >`;
     return a`<div class="cover-text-badges">
       <div class="cover-text-stack">
@@ -7141,12 +7151,12 @@ function ge(n, e, t = !1, i) {
         ${s}
       </button>` : a`<span class=${r}>${s}</span>`;
 }
-const D = (n) => n.toLowerCase().replace(/[\s_-]+/g, ""), me = (n) => ({
+const D = (n) => n.toLowerCase().replace(/[\s_-]+/g, ""), fe = (n) => ({
   new: "Unwatched",
   played: "Watched",
   paused: "In Progress",
   watchsoon: "Watch Soon"
-})[D(n)] ?? n, fe = (n) => ["queued", "working", "syncing"].includes(n.status), Xe = class Xe extends x {
+})[D(n)] ?? n, me = (n) => ["queued", "working", "syncing"].includes(n.status), Xe = class Xe extends x {
   constructor() {
     super(...arguments), this.revision = 0, this.enabled = !1, this.blocked = !1, this.choices = [], this.jobs = [], this.generation = 0, this.selected = "", this.busy = !1, this.refreshing = !1, this.refreshNotice = "", this.error = "";
   }
@@ -7215,7 +7225,7 @@ const D = (n) => n.toLowerCase().replace(/[\s_-]+/g, ""), me = (n) => ({
   isQueued(e) {
     const t = D(e);
     return this.jobs.some(
-      (i) => fe(i) && i.title_id === this.version?.id && (D(i.collection) === t || ["new", "played"].includes(D(i.collection)) && ["new", "played"].includes(t))
+      (i) => me(i) && i.title_id === this.version?.id && (D(i.collection) === t || ["new", "played"].includes(D(i.collection)) && ["new", "played"].includes(t))
     );
   }
   get actionLabel() {
@@ -7223,11 +7233,11 @@ const D = (n) => n.toLowerCase().replace(/[\s_-]+/g, ""), me = (n) => ({
   }
   actionFor(e) {
     const t = D(e), i = this.isMember(e);
-    return t === "new" ? i ? "Move to Watched" : "Move to Unwatched" : t === "played" ? i ? "Move to Unwatched" : "Move to Watched" : `${i ? "Remove from" : "Add to"} ${me(e)}`;
+    return t === "new" ? i ? "Move to Watched" : "Move to Unwatched" : t === "played" ? i ? "Move to Unwatched" : "Move to Watched" : `${i ? "Remove from" : "Add to"} ${fe(e)}`;
   }
   rowDisabled(e) {
     const t = D(e), i = this.isMember(e);
-    return this.busy || this.refreshing || !!this.pending || this.isQueued(e) || this.jobs.filter(fe).length >= 10 || t === "paused" && !i || i && !["favorites", "watchsoon", "new", "played", "paused"].includes(
+    return this.busy || this.refreshing || !!this.pending || this.isQueued(e) || this.jobs.filter(me).length >= 10 || t === "paused" && !i || i && !["favorites", "watchsoon", "new", "played", "paused"].includes(
       t
     );
   }
@@ -7236,7 +7246,7 @@ const D = (n) => n.toLowerCase().replace(/[\s_-]+/g, ""), me = (n) => ({
     return this.isQueued(e) ? "Change queued or being verified" : t === "paused" ? i ? "Can be removed; playback adds it again" : "Start playback to add In Progress" : ["new", "played"].includes(t) ? i ? "Currently in this status · moving changes both" : "Watched and Unwatched cannot overlap" : i && !["favorites", "watchsoon"].includes(t) ? "Custom collection removal is not yet supported" : i ? "Currently in this collection" : "Not in this collection";
   }
   get disabled() {
-    return !this.selected || this.busy || this.refreshing || this.queued || this.jobs.filter(fe).length >= 10 || this.selectedKey === "paused" && !this.member || this.member && !["favorites", "watchsoon", "new", "played", "paused"].includes(
+    return !this.selected || this.busy || this.refreshing || this.queued || this.jobs.filter(me).length >= 10 || this.selectedKey === "paused" && !this.member || this.member && !["favorites", "watchsoon", "new", "played", "paused"].includes(
       this.selectedKey
     );
   }
@@ -7316,7 +7326,7 @@ const D = (n) => n.toLowerCase().replace(/[\s_-]+/g, ""), me = (n) => ({
         <div class="card-head">
           <h2 id="collection-add-title">Manage collections</h2>
           <div class="actions">
-            ${Be("Refresh collections", "refresh", this.busy || this.refreshing || !!this.pending || this.jobs.some(fe), () => this.refresh(), "refresh-collections")}
+            ${Be("Refresh collections", "refresh", this.busy || this.refreshing || !!this.pending || this.jobs.some(me), () => this.refresh(), "refresh-collections")}
             ${S((e) => this.close(e), this.busy)}
           </div>
         </div>
@@ -7345,16 +7355,16 @@ const D = (n) => n.toLowerCase().replace(/[\s_-]+/g, ""), me = (n) => ({
         const o = i.indexOf(D(r));
         return o < 0 ? i.length : o;
       };
-      return s(e) - s(t) || me(e).localeCompare(me(t));
+      return s(e) - s(t) || fe(e).localeCompare(fe(t));
     }).map(
       (e) => a`<div
                   class=${`collection-row${this.isMember(e) ? " member" : ""}${this.isQueued(e) ? " pending" : ""}`}
                 >
                   <span class="collection-icon" aria-hidden="true"
-                    >${Se(me(e))}</span
+                    >${Se(fe(e))}</span
                   >
                   <span class="collection-copy"
-                    ><strong>${me(e)}</strong
+                    ><strong>${fe(e)}</strong
                     ><small>${this.rowHint(e)}</small></span
                   >
                   <button
@@ -7369,7 +7379,7 @@ const D = (n) => n.toLowerCase().replace(/[\s_-]+/g, ""), me = (n) => ({
                 </div>`
     )}
         </div>
-        ${this.jobs.filter(fe).length >= 10 ? a`<p class="warning">The queue holds up to 10 changes. Wait for an item to finish.</p>` : d}
+        ${this.jobs.filter(me).length >= 10 ? a`<p class="warning">The queue holds up to 10 changes. Wait for an item to finish.</p>` : d}
         ${this.choices.length ? d : a`<p>No cached collection names are available. Run a Library sync first.</p>`}
         ${this.pending ? a`<div class="dialog-footer">
                 <button
@@ -7504,7 +7514,7 @@ function Us(n) {
     }
   ];
 }
-function ja(n) {
+function Ma(n) {
   return Us(n).map(({ label: e, date: t }) => `${e}: ${Ps(t)}`).join(" · ");
 }
 const We = class We extends x {
@@ -7633,7 +7643,7 @@ const We = class We extends x {
               <h2>Edit journal entry</h2>
               <p>Choose a viewing to edit.</p>
               <ul>
-                ${this.items.map((e) => a`<li><button type="button" class="link" @click=${() => this.edit(e)}>${ja(e)}</button></li>`)}
+                ${this.items.map((e) => a`<li><button type="button" class="link" @click=${() => this.edit(e)}>${Ma(e)}</button></li>`)}
               </ul>
               <button
                 type="button"
@@ -7935,7 +7945,7 @@ const Ba = [
         ), this.formatMode = "custom", this.requestUpdate();
       }}
                                     />
-                                    ${_({ formats: [e] })}
+                                    ${F({ formats: [e] })}
                                   </label>`
     )}
                             </div>
@@ -9301,7 +9311,7 @@ const Ge = class Ge extends x {
             [t]: l.target.checked ? [...h, c] : h.filter((p) => p !== c)
           }, this.requestUpdate();
         }}
-                          />${t === "status" ? ge(_a(c, this.movieStatusLabels)) : t === "rating" ? ve(c) : t === "collection" ? ge(c) : t === "format" && Ce({ formats: [c] }).length === 1 ? _({ formats: [c] }) : c}</label
+                          />${t === "status" ? ge(_a(c, this.movieStatusLabels)) : t === "rating" ? ve(c) : t === "collection" ? ge(c) : t === "format" && Ce({ formats: [c] }).length === 1 ? F({ formats: [c] }) : c}</label
                         >`
       ) : a`<p class="muted">No matching options</p>`}
             </div>
@@ -9578,7 +9588,7 @@ const Ge = class Ge extends x {
                     ${t?.genres.length ? a` · ${t.genres.map((l, h) => a`${h ? ", " : ""}${this.detailLink("genre", l)}`)}` : d}
                   </p>
                   <div class="detail-badges movie-heading-badges">
-                    ${_(i ? e : t ?? e, !1, (l) => this.fromDetails("format", l), r)}
+                    ${F(i ? e : t ?? e, !1, (l) => this.fromDetails("format", l), r)}
                     ${o.map((l) => ve(l, (h) => this.fromDetails("rating", h), r))}
                     ${Ue(e).map(
       (l) => a`<button
@@ -9679,7 +9689,7 @@ const Ge = class Ge extends x {
                           <div class="cover movie-poster">
                             ${this.cover(t)}
                           </div>
-                          ${i ? a`<div class="detail-badges version-format-badges">${_(t, !1, (l) => this.fromDetails("format", l), r)}</div>` : d}
+                          ${i ? a`<div class="detail-badges version-format-badges">${F(t, !1, (l) => this.fromDetails("format", l), r)}</div>` : d}
                           <details class="movie-record-details">
                             <summary>Library details</summary>
                             <p class="muted">
@@ -9717,7 +9727,7 @@ const Ge = class Ge extends x {
       ([l, h, p]) => h.length ? a`<div>
                                     <dt>${l}</dt>
                                     <dd>
-                                      ${h.map((u, f, w) => a`<span class="credit-name">${this.detailLink(p, u, (l === "Collections" ? ne(u) : u) + (f < w.length - 1 ? "," : ""))}</span>${f < w.length - 1 ? " " : ""}`)}
+                                      ${h.map((u, b, w) => a`<span class="credit-name">${this.detailLink(p, u, (l === "Collections" ? ne(u) : u) + (b < w.length - 1 ? "," : ""))}</span>${b < w.length - 1 ? " " : ""}`)}
                                     </dd>
                                   </div>` : d
     )}
@@ -10026,7 +10036,7 @@ const Ge = class Ge extends x {
                     >
                       <div class="cover-image">${this.cover(c)}</div>
                       ${this.display.show_badges || this.pendingCollection(c) ? a`<div class=${`cover-flags${this.pendingCollection(c) ? " collection-pending" : ""}`}>${this.display.show_badges ? ts(c, !0, ["unwatched"], this.movieStatusLabels, this.libraryBadgeStyle) : d}${this.pendingCollectionBadge(c)}</div>` : d}
-                      ${this.display.show_format || this.display.show_audio_format ? a`<div class="cover-formats">${_(c, !0, void 0, !1, { video: this.display.show_format, audio: this.display.show_audio_format })}</div>` : d}
+                      ${this.display.show_format || this.display.show_audio_format ? a`<div class="cover-formats">${F(c, !0, void 0, !1, { video: this.display.show_format, audio: this.display.show_audio_format })}</div>` : d}
                       ${this.display.show_rating ? a`<div class="cover-rating">${ve(c.rating)}</div>` : d}
                       ${this.conflictIcon(c)}
                       ${this.display.show_titles ? a`<span class="cover-caption">${c.title}${c.year ? ` (${c.year})` : ""}</span>` : d}
@@ -10107,7 +10117,7 @@ const Ge = class Ge extends x {
                             >
                               ${this.display.show_badges ? ts(c, !1, [], this.movieStatusLabels, this.libraryBadgeStyle) : d}
                               ${this.pendingCollectionBadge(c)}
-                              ${this.display.show_format || this.display.show_audio_format ? _(c, !1, void 0, !1, { video: this.display.show_format, audio: this.display.show_audio_format }) : d}
+                              ${this.display.show_format || this.display.show_audio_format ? F(c, !1, void 0, !1, { video: this.display.show_format, audio: this.display.show_audio_format }) : d}
                               ${this.display.show_format && !Ce(c).length ? a`<small>${this.format(c)}</small>` : d}
                               ${(c.version_count ?? 1) > 1 ? a`<small>${k(c.version_count, "version")}</small>` : d}
                             </div>
@@ -10468,27 +10478,27 @@ const os = (n, e, t) => {
     const s = Ea(n), { values: r, keys: o } = this.dt(e, t, i);
     if (!Array.isArray(s)) return this.ut = o, r;
     const c = this.ut ??= [], l = [];
-    let h, p, u = 0, f = s.length - 1, w = 0, A = r.length - 1;
-    for (; u <= f && w <= A; ) if (s[u] === null) u++;
-    else if (s[f] === null) f--;
-    else if (c[u] === o[w]) l[w] = V(s[u], r[w]), u++, w++;
-    else if (c[f] === o[A]) l[A] = V(s[f], r[A]), f--, A--;
-    else if (c[u] === o[A]) l[A] = V(s[u], r[A]), ue(n, l[A + 1], s[u]), u++, A--;
-    else if (c[f] === o[w]) l[w] = V(s[f], r[w]), ue(n, s[u], s[f]), f--, w++;
-    else if (h === void 0 && (h = os(o, w, A), p = os(c, u, f)), h.has(c[u])) if (h.has(c[f])) {
-      const L = p.get(o[w]), M = L !== void 0 ? s[L] : null;
-      if (M === null) {
+    let h, p, u = 0, b = s.length - 1, w = 0, A = r.length - 1;
+    for (; u <= b && w <= A; ) if (s[u] === null) u++;
+    else if (s[b] === null) b--;
+    else if (c[u] === o[w]) l[w] = Q(s[u], r[w]), u++, w++;
+    else if (c[b] === o[A]) l[A] = Q(s[b], r[A]), b--, A--;
+    else if (c[u] === o[A]) l[A] = Q(s[u], r[A]), ue(n, l[A + 1], s[u]), u++, A--;
+    else if (c[b] === o[w]) l[w] = Q(s[b], r[w]), ue(n, s[u], s[b]), b--, w++;
+    else if (h === void 0 && (h = os(o, w, A), p = os(c, u, b)), h.has(c[u])) if (h.has(c[b])) {
+      const L = p.get(o[w]), j = L !== void 0 ? s[L] : null;
+      if (j === null) {
         const he = ue(n, s[u]);
-        V(he, r[w]), l[w] = he;
-      } else l[w] = V(M, r[w]), ue(n, s[u], M), s[L] = null;
+        Q(he, r[w]), l[w] = he;
+      } else l[w] = Q(j, r[w]), ue(n, s[u], j), s[L] = null;
       w++;
-    } else Et(s[f]), f--;
+    } else Et(s[b]), b--;
     else Et(s[u]), u++;
     for (; w <= A; ) {
       const L = ue(n, l[A + 1]);
-      V(L, r[w]), l[w++] = L;
+      Q(L, r[w]), l[w++] = L;
     }
-    for (; u <= f; ) {
+    for (; u <= b; ) {
       const L = s[u++];
       L !== null && Et(L);
     }
@@ -10743,7 +10753,7 @@ function Ui(n) {
 function K(n) {
   return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
 }
-function Ms(n = location.search, e = /* @__PURE__ */ new Date()) {
+function js(n = location.search, e = /* @__PURE__ */ new Date()) {
   const t = new URLSearchParams(n).get("companion_month") ?? "";
   if (/^\d{4}-(0[1-9]|1[0-2])$/.test(t)) {
     const [i, s] = t.split("-").map(Number);
@@ -10751,7 +10761,7 @@ function Ms(n = location.search, e = /* @__PURE__ */ new Date()) {
   }
   return new Date(e.getFullYear(), e.getMonth(), 1);
 }
-function js(n) {
+function Ms(n) {
   return [
     new Date(n.getFullYear(), n.getMonth(), 1).toISOString(),
     new Date(n.getFullYear(), n.getMonth() + 1, 1).toISOString()
@@ -10766,7 +10776,7 @@ function Bs(n) {
 }
 const et = class et extends x {
   constructor() {
-    super(...arguments), this.query = "", this.status = "", this.fuzzy = !0, this.daySize = 180, this.fitScreen = !1, this.disabled = !1, this.editable = !1, this.rememberUrl = !0, this.detailsOnly = !1, this.preserveDetailOnClose = !1, this.libraryRequest = 0, this.fittedSize = 180, this.month = Ms(), this.items = [], this.loading = !1, this.error = "", this.generation = 0, this.signature = "", this.privacy = "", this.queue = new T(), this.selectedArtwork = null, this.movie = null, this.detailRequest = 0, this.detailLoading = !1, this.detailError = "", this.scheduleLayout = () => {
+    super(...arguments), this.query = "", this.status = "", this.fuzzy = !0, this.daySize = 180, this.fitScreen = !1, this.disabled = !1, this.editable = !1, this.rememberUrl = !0, this.detailsOnly = !1, this.preserveDetailOnClose = !1, this.libraryRequest = 0, this.fittedSize = 180, this.month = js(), this.items = [], this.loading = !1, this.error = "", this.generation = 0, this.signature = "", this.privacy = "", this.queue = new T(), this.selectedArtwork = null, this.movie = null, this.detailRequest = 0, this.detailLoading = !1, this.detailError = "", this.scheduleLayout = () => {
       !this.fitScreen || !this.isConnected || this.layoutFrame !== void 0 || (this.layoutFrame = requestAnimationFrame(() => {
         if (this.layoutFrame = void 0, !this.fitScreen || !this.isConnected) return;
         const e = window.visualViewport?.height ?? window.innerHeight, t = Math.max(
@@ -10835,7 +10845,7 @@ const et = class et extends x {
     const e = ++this.generation;
     this.closeDetails(), this.items = [], this.totals = void 0, this.loading = !0, this.error = "", this.notifyStatus(), this.requestUpdate();
     try {
-      const [t, i] = js(this.month), s = await this.client.calendarMonth(
+      const [t, i] = Ms(this.month), s = await this.client.calendarMonth(
         this.scope,
         t,
         i,
@@ -11027,7 +11037,7 @@ const et = class et extends x {
                   ${this.detailLoading ? a`<p role="status">Loading movie details…</p>` : d}
                   ${this.detailError ? a`<p class="error" role="alert">${this.detailError} <button @click=${() => this.openViewing(e, this.selectedArtwork)}>Retry details</button></p>` : d}
                   ${t ? a`<div class="detail-badges">
-                            ${_(t, !1, this.detailsOnly ? void 0 : (l) => this.browse("format", l))}${ve(t.rating ?? "", this.detailsOnly ? void 0 : (l) => this.browse("rating", l))}
+                            ${F(t, !1, this.detailsOnly ? void 0 : (l) => this.browse("format", l))}${ve(t.rating ?? "", this.detailsOnly ? void 0 : (l) => this.browse("rating", l))}
                           </div>
                           ${t.year ? a`<p><strong>Year:</strong> ${this.detailLink("year", String(t.year))}</p>` : d}
                           ${[
@@ -11138,10 +11148,10 @@ const et = class et extends x {
                       ${zs(
         p,
         ({ row: u }) => u.id,
-        ({ row: u, phase: f }, w) => a`<button
-                            class=${`poster poster-${f}`}
+        ({ row: u, phase: b }, w) => a`<button
+                            class=${`poster poster-${b}`}
                             style=${`--index:${w};--layer:${w + 1}`}
-                            aria-label=${`${u.title} · ${f === "start" ? "Started; completed on another day" : f === "completion" ? "Completed; started on another day" : u.status === "completed" ? "Completed" : "Partial"}`}
+                            aria-label=${`${u.title} · ${b === "start" ? "Started; completed on another day" : b === "completion" ? "Completed; started on another day" : u.status === "completed" ? "Completed" : "Partial"}`}
                             title=${u.title}
                             ?disabled=${this.disabled}
                             @click=${() => this.openViewing(u, u.artwork_key)}
@@ -11187,9 +11197,9 @@ const Ha = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   JournalCalendar: Oe,
   calendarDays: Bs,
-  calendarMonth: Ms,
+  calendarMonth: js,
   dayKey: K,
-  monthBounds: js
+  monthBounds: Ms
 }, Symbol.toStringTag, { value: "Module" })), Ja = [
   "remote",
   "now-playing",
@@ -11611,7 +11621,7 @@ class Wa {
           this.viewport?.height ?? window.innerHeight,
           document.documentElement.clientHeight || window.innerHeight
         ), s = Math.max(0, this.viewport?.offsetTop ?? 0), r = Math.max(0, window.innerHeight - i - s), o = this.observed.reduce(
-          (L, M) => L + M.getBoundingClientRect().height,
+          (L, j) => L + j.getBoundingClientRect().height,
           0
         ), c = parseFloat(
           getComputedStyle(this.host).getPropertyValue(
@@ -11625,12 +11635,12 @@ class Wa {
           s + c + (l?.getBoundingClientRect().height ?? 0),
           p?.getBoundingClientRect().top ?? 0
         );
-        let f = s + i;
+        let b = s + i;
         for (const L of this.containers.slice(1)) {
           if (!/(auto|scroll|hidden|clip)/.test(getComputedStyle(L).overflowY))
             continue;
-          const M = L.getBoundingClientRect();
-          M.height > 0 && (f = Math.min(f, M.bottom));
+          const j = L.getBoundingClientRect();
+          j.height > 0 && (b = Math.min(b, j.bottom));
         }
         const w = {
           "--companion-viewport-height": i,
@@ -11638,12 +11648,12 @@ class Wa {
           "--companion-viewport-bottom": r,
           "--entries-height": Math.max(
             180,
-            p ? f - u - (h?.getBoundingClientRect().height ?? 0) - 16 : i - o - c - 16
+            p ? b - u - (h?.getBoundingClientRect().height ?? 0) - 16 : i - o - c - 16
           )
         };
         let A = !1;
-        for (const [L, M] of Object.entries(w)) {
-          const he = `${Math.round(M)}px`;
+        for (const [L, j] of Object.entries(w)) {
+          const he = `${Math.round(j)}px`;
           this.host.style.getPropertyValue(L) !== he && (this.host.style.setProperty(L, he), A = !0);
         }
         A && this.resized?.();
@@ -11977,7 +11987,7 @@ const it = class it extends x {
         ${this.open ? a`<div class="movie-suggestions" id="movie-suggestions" role="listbox">${this.items.map((e, t) => a`<button type="button" role="option" id=${`movie-option-${t}`} aria-selected=${this.active === t} ?disabled=${this.requireRuntime && !e.duration_seconds} @pointerdown=${(i) => i.preventDefault()} @click=${() => this.choose(e)}><strong>${e.title}</strong> · ${e.year ?? "Year unknown"} · ${(e.formats?.length ? e.formats : [e.edition]).filter(Boolean).join(", ")} · ${e.duration_seconds ? `${(e.duration_seconds / 60).toFixed(2)} min` : "Runtime unknown"}</button>`)}${this.items.length ? d : a`<small>Type a title; only cached Library movies can be selected.</small>`}</div>` : d}
       </div>
       ${this.error ? a`<p class="error" role="alert">${this.error}</p>` : d}
-      ${this.selected ? a`<p class="manual-metadata">${this.selected.year ?? ""} ${_(this.selected)} ${ve(this.selected.rating)} · ${((this.selected.duration_seconds ?? 0) / 60).toFixed(2)} min</p>` : d}
+      ${this.selected ? a`<p class="manual-metadata">${this.selected.year ?? ""} ${F(this.selected)} ${ve(this.selected.rating)} · ${((this.selected.duration_seconds ?? 0) / 60).toFixed(2)} min</p>` : d}
     </fieldset>`;
   }
 };
@@ -13748,20 +13758,20 @@ const ot = class ot extends x {
     const u = this.renderRoot.querySelector("dialog");
     u && !u.open && u.showModal();
     try {
-      const f = await r.automationTemplate(o, e);
+      const b = await r.automationTemplate(o, e);
       if (!p()) return;
       this.review = {
         ...this.review,
         loading: !1,
-        entries: rr(f.yaml),
-        template: f
+        entries: rr(b.yaml),
+        template: b
       };
-    } catch (f) {
+    } catch (b) {
       if (!p()) return;
-      g(f) === "unauthorized" ? this.fail(f) : this.review = {
+      g(b) === "unauthorized" ? this.fail(b) : this.review = {
         ...this.review,
         loading: !1,
-        error: y(f)
+        error: y(b)
       };
     }
     this.requestUpdate();
@@ -16440,12 +16450,37 @@ const dr = $`
     align-items: center;
     gap: 6px;
   }
-  .database-references {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    margin: 16px 0;
+  .database-relationships {
+    display: grid;
+    gap: 12px;
+    margin: 14px 0;
+  }
+  .database-references h3 {
+    font-size: 13px;
+    margin: 0 0 4px;
+  }
+  .database-references ul {
+    display: grid;
+    gap: 0;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .database-references li {
+    min-width: 0;
+    line-height: 1.3;
+  }
+  .database-references button.link {
+    font-size: 12px;
+    display: inline;
+    text-align: left;
+    overflow-wrap: anywhere;
+    padding: 0;
+    min-height: 0;
+    line-height: 1.3;
+  }
+  .database-references small {
+    color: var(--muted);
   }
   .database-options-button {
     margin-left: 0;
@@ -16548,14 +16583,14 @@ const dr = $`
       box-shadow: -8px 0 8px var(--surface);
     }
   }
-`, cr = "Journal viewing records, including watched time, status, and notes.", hr = "Individual playback sessions linked to Journal viewings, used to track pauses and resumes.", pr = "Cached movie versions and metadata synchronized from the Kaleidescape server.", ur = "Imported purchase receipts, prices, and their links to Library movies.", gr = "Scanned Kaleidescape servers and their Library synchronization state.", mr = "Names and synchronization state of collections read from each server.", fr = "Links between movie versions and their source collections.", br = "Index of locally cached artwork files and their metadata.", vr = "Personal display preferences and shared Library display settings.", yr = "Request fingerprints and results used to prevent duplicate changes on retry.", wr = "Database identity and revision counters used to keep changes consistent.", xr = "Audit records for manual Journal changes.", kr = "Audit records for maintenance and purge operations.", $r = "Audit records for supported data imports.", Cr = "Audit records for direct Database edits and deletions.", Sr = "Receipts and recovery state for requested collection changes on the server.", qr = "Publication state for completed viewings sent to a calendar.", Er = "Calendar export jobs and their progress.", Ar = "Per-viewing progress and outcomes within calendar export jobs.", Lr = "Calendar events tracked by Companion for reconciliation.", Rr = "Events being checked for calendar reconciliation and review.", Pr = "Calendar reconciliation requests and recovery state.", Ur = "Playback control requests and their delivery and recovery state.", Tr = "Before-and-after evidence for reviewed purchase corrections and reversals.", Dr = "Reserved purchase identities that guard against replay and duplicate imports.", zr = {
+`, cr = "Journal viewing records, including watched time, status, and notes.", hr = "Individual playback sessions linked to Journal viewings, used to track pauses and resumes.", pr = "Cached movie versions and metadata synchronized from the Kaleidescape server.", ur = "Imported purchase receipts, prices, and their links to Library movies.", gr = "Scanned Kaleidescape servers and their Library synchronization state.", fr = "Names and synchronization state of collections read from each server.", mr = "Links between movie versions and their source collections.", br = "Index of locally cached artwork files and their metadata.", vr = "Personal display preferences and shared Library display settings.", yr = "Request fingerprints and results used to prevent duplicate changes on retry.", wr = "Database identity and revision counters used to keep changes consistent.", xr = "Audit records for manual Journal changes.", kr = "Audit records for maintenance and purge operations.", $r = "Audit records for supported data imports.", Cr = "Audit records for direct Database edits and deletions.", Sr = "Receipts and recovery state for requested collection changes on the server.", qr = "Publication state for completed viewings sent to a calendar.", Er = "Calendar export jobs and their progress.", Ar = "Per-viewing progress and outcomes within calendar export jobs.", Lr = "Calendar events tracked by Companion for reconciliation.", Rr = "Events being checked for calendar reconciliation and review.", Pr = "Calendar reconciliation requests and recovery state.", Ur = "Playback control requests and their delivery and recovery state.", Tr = "Before-and-after evidence for reviewed purchase corrections and reversals.", Dr = "Reserved purchase identities that guard against replay and duplicate imports.", zr = {
   viewings: cr,
   sessions: hr,
   library: pr,
   purchase_records: ur,
   library_sources: gr,
-  library_collections: mr,
-  library_memberships: fr,
+  library_collections: fr,
+  library_memberships: mr,
   library_artwork: br,
   settings: vr,
   requests: yr,
@@ -16841,7 +16876,7 @@ customElements.get("kaleidescape-database-search") || customElements.define("kal
 function us(n) {
   return n.toLocaleLowerCase().normalize("NFKD").replace(new RegExp("\\p{M}", "gu"), "").match(/[\p{L}\p{N}_]+/gu)?.join(" ") ?? "";
 }
-function Mr(n, e) {
+function jr(n, e) {
   const t = Math.min(2, Math.max(1, Math.ceil(n.length / 4)));
   if (n.length < 3 || Math.max(n.length, e.length) > 100 || Math.abs(n.length - e.length) > t)
     return !1;
@@ -16862,7 +16897,7 @@ function Mr(n, e) {
   }
   return i[e.length] <= t;
 }
-function jr(n, e, t = !1) {
+function Mr(n, e, t = !1) {
   const i = e.trim();
   if (i.length >= 2 && i.startsWith('"') && i.endsWith('"')) {
     let l;
@@ -16886,10 +16921,10 @@ function jr(n, e, t = !1) {
   if (r.includes(s)) return !0;
   const o = s.split(" "), c = r.split(" ");
   return o.length <= 12 && o.every(
-    (l) => c.some((h) => h.includes(l) || Mr(l, h))
+    (l) => c.some((h) => h.includes(l) || jr(l, h))
   );
 }
-const mt = class mt extends x {
+const ft = class ft extends x {
   constructor() {
     super(...arguments), this.disabled = !1, this.bound = "", this.request = 0, this.query = "", this.items = [], this.active = -1, this.loading = !1, this.more = !1, this.error = "";
   }
@@ -17018,14 +17053,14 @@ const mt = class mt extends x {
       </div>`;
   }
 };
-mt.properties = {
+ft.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   review: { attribute: !1 },
   row: { attribute: !1 },
   queue: { attribute: !1 },
   disabled: { type: Boolean }
-}, mt.styles = [
+}, ft.styles = [
   q,
   $`
       :host {
@@ -17084,12 +17119,12 @@ mt.properties = {
       }
     `
 ];
-let mi = mt;
+let fi = ft;
 customElements.get("kaleidescape-import-matcher") || customElements.define(
   "kaleidescape-import-matcher",
-  mi
+  fi
 );
-const ft = class ft extends x {
+const mt = class mt extends x {
   constructor() {
     super(...arguments), this.disabled = !1, this.bound = "", this.generation = 0, this.selected = /* @__PURE__ */ new Set(), this.query = "", this.changesOnly = !1, this.page = 0, this.pageSize = 100, this.working = !1, this.error = "", this.notice = "", this.dialog = null, this.purchaseReview = !1, this.covers = new T();
   }
@@ -17264,7 +17299,7 @@ const ft = class ft extends x {
   renderReview(e) {
     if (!this.review) return d;
     const t = this.review, i = this.query.trim().toLocaleLowerCase(), s = t.rows.filter(
-      (l) => (!this.changesOnly || l.needs_match || !l.needs_match && ["new", "merge"].includes(l.action)) && jr(
+      (l) => (!this.changesOnly || l.needs_match || !l.needs_match && ["new", "merge"].includes(l.action)) && Mr(
         `${l.title} ${l.detail ?? ""} ${l.table} ${Object.keys(l.changes).join(" ")}`,
         i
       )
@@ -17576,11 +17611,11 @@ const ft = class ft extends x {
       </dialog>`;
   }
 };
-ft.properties = {
+mt.properties = {
   client: { attribute: !1 },
   scope: { attribute: !1 },
   disabled: { type: Boolean }
-}, ft.styles = [
+}, mt.styles = [
   q,
   $`
       .database-dialog {
@@ -17663,9 +17698,9 @@ ft.properties = {
       }
     `
 ];
-let fi = ft;
-customElements.get("kaleidescape-transfers") || customElements.define("kaleidescape-transfers", fi);
-const Me = [
+let mi = mt;
+customElements.get("kaleidescape-transfers") || customElements.define("kaleidescape-transfers", mi);
+const je = [
   ["title", "Receipt title"],
   ["purchased_on", "Purchase date"],
   ["purchase_price", "Purchase price"],
@@ -17693,7 +17728,7 @@ function Tt(n, e, t) {
         <strong role="columnheader">After</strong>
       </div>
       ${r.length ? r.map((o) => {
-    const c = JSON.stringify(i[o]) !== JSON.stringify(s[o]), l = Me.find(([h]) => h === o)?.[1] ?? o;
+    const c = JSON.stringify(i[o]) !== JSON.stringify(s[o]), l = je.find(([h]) => h === o)?.[1] ?? o;
     return a`<div
                 class=${c ? "diff-row changed" : "diff-row"}
                 role="row"
@@ -17717,7 +17752,7 @@ const bt = class bt extends x {
   }
   connectedCallback() {
     super.connectedCallback(), this.draft = Object.fromEntries(
-      Me.map(([e]) => [e, String(this.row[e] ?? "")])
+      je.map(([e]) => [e, String(this.row[e] ?? "")])
     ), this.owner = typeof this.row.library_id == "string" ? this.row.library_id : null, this.ownerLabel = this.owner ? "Current Library entry" : "Unlinked";
   }
   firstUpdated() {
@@ -17767,7 +17802,7 @@ const bt = class bt extends x {
   }
   changes() {
     const e = {};
-    for (const [t] of Me) {
+    for (const [t] of je) {
       const i = this.draft[t] || null;
       i !== (this.row[t] ?? null) && (e[t] = i);
     }
@@ -17919,7 +17954,7 @@ const bt = class bt extends x {
                               >`}
                         ${this.action === "correct" ? a`
                                 <div class="fields">
-                                  ${Me.map(
+                                  ${je.map(
       ([e, t]) => a`
                                       <label
                                         >${t}<input
@@ -18054,7 +18089,7 @@ customElements.get("kaleidescape-purchase-repair") || customElements.define(
   "kaleidescape-purchase-repair",
   vi
 );
-const Q = {
+const N = {
   viewings: "Viewings",
   sessions: "Sessions",
   library: "Library",
@@ -18095,7 +18130,7 @@ function Br(n) {
 }
 const vt = class vt extends x {
   constructor() {
-    super(), this.bound = "", this.generation = 0, this.mutationEpoch = 0, this.request = 0, this.table = "viewings", this.filters = { limit: 25, query: "", descending: !1 }, this.fitPage = !0, this.allMode = !1, this.allBatchSize = te, this.moreLoading = !1, this.moreError = "", this.detailLoading = !1, this.detailRequest = 0, this.rowScrollTop = 0, this.listHeight = 440, this.showSystem = !1, this.sorts = {}, this.fuzzySearch = !0, this.ready = !1, this.preferenceError = "", this.loading = !1, this.saving = !1, this.transferBusy = !1, this.repairing = !1, this.repairPending = !1, this.error = "", this.notice = "", this.search = "", this.selected = /* @__PURE__ */ new Set(), this.operation = null, this.draft = {}, this.nulls = /* @__PURE__ */ new Set(), this.original = "", this.createDraft = Ne(), this.confirmed = !1, this.deleteWord = "", this.covers = new T(), this.scheduleFit = () => {
+    super(), this.bound = "", this.generation = 0, this.mutationEpoch = 0, this.request = 0, this.table = "viewings", this.filters = { limit: 25, query: "", descending: !1 }, this.fitPage = !0, this.allMode = !1, this.allBatchSize = te, this.moreLoading = !1, this.moreError = "", this.detailLoading = !1, this.detailRequest = 0, this.referenceRequest = 0, this.referenceLoading = !1, this.referenceError = "", this.referencedBy = [], this.rowScrollTop = 0, this.listHeight = 440, this.showSystem = !1, this.sorts = {}, this.fuzzySearch = !0, this.ready = !1, this.preferenceError = "", this.loading = !1, this.saving = !1, this.transferBusy = !1, this.repairing = !1, this.repairPending = !1, this.error = "", this.notice = "", this.search = "", this.selected = /* @__PURE__ */ new Set(), this.operation = null, this.draft = {}, this.nulls = /* @__PURE__ */ new Set(), this.original = "", this.createDraft = Ne(), this.confirmed = !1, this.deleteWord = "", this.covers = new T(), this.scheduleFit = () => {
       clearTimeout(this.fitTimer), !(!this.fitPage || !this.ready || !this.page || this.blocked || this.operation) && (this.fitTimer = setTimeout(() => this.resizePage(), 120));
     }, Ti(this, () => this.scheduleFit()), $t(this, () => {
       if (!this.ready || this.preferences?.unsettled || this.moreLoading || this.detailLoading || this.allMode && (this.detail || this.selected.size > 0 || (this.page?.items.length ?? 0) > te) || this.blocked || this.operation || this.renderRoot.querySelector("dialog[open]"))
@@ -18127,7 +18162,7 @@ const vt = class vt extends x {
     super.disconnectedCallback(), window.removeEventListener("resize", this.scheduleFit), window.visualViewport?.removeEventListener("resize", this.scheduleFit), this.fitObserver?.disconnect(), this.fitObserver = void 0, this.fitList = void 0, clearTimeout(this.fitTimer), this.clear(), this.boundClient = void 0, this.bound = "";
   }
   clear() {
-    this.covers.cache.dispose(), this.covers = new T(), this.generation++, this.request++, this.preferences?.dispose(), this.preferences = void 0, this.fuzzySearch = !0, this.ready = !1, this.page = void 0, this.table = "viewings", this.fitPage = !0, this.allMode = this.moreLoading = this.detailLoading = !1, this.allBatchSize = te, this.moreError = "", this.detailRequest++, this.rowScrollTop = 0, this.filters = { limit: 25, query: "", descending: !1 }, this.showSystem = !1, this.sorts = {}, this.detail = void 0, this.selected.clear(), this.pending = void 0, this.operation = null, this.draft = {}, this.original = "", this.search = "", this.confirmed = !1, this.deleteWord = "", this.loading = this.saving = this.transferBusy = this.repairing = this.repairPending = !1, this.error = this.notice = this.preferenceError = "";
+    this.covers.cache.dispose(), this.covers = new T(), this.generation++, this.request++, this.preferences?.dispose(), this.preferences = void 0, this.fuzzySearch = !0, this.ready = !1, this.page = void 0, this.table = "viewings", this.fitPage = !0, this.allMode = this.moreLoading = this.detailLoading = !1, this.allBatchSize = te, this.moreError = "", this.detailRequest++, this.referenceRequest++, this.referenceLoading = !1, this.referenceError = "", this.referencedBy = [], this.rowScrollTop = 0, this.filters = { limit: 25, query: "", descending: !1 }, this.showSystem = !1, this.sorts = {}, this.detail = void 0, this.selected.clear(), this.pending = void 0, this.operation = null, this.draft = {}, this.original = "", this.search = "", this.confirmed = !1, this.deleteWord = "", this.loading = this.saving = this.transferBusy = this.repairing = this.repairPending = !1, this.error = this.notice = this.preferenceError = "";
     for (const e of this.renderRoot.querySelectorAll("dialog"))
       e.close();
     this.busy(), this.requestUpdate();
@@ -18223,7 +18258,7 @@ const vt = class vt extends x {
   async load(e = 0, t, i) {
     if (!this.client || !this.scope || !this.ready || this.pending) return;
     const s = this.generation, r = ++this.request;
-    this.loading = !0, this.moreLoading = this.detailLoading = !1, this.moreError = "", this.allBatchSize = te, this.detailRequest++, this.rowScrollTop = 0, this.page?.table !== this.table && (this.page = void 0), this.error = "", i || (this.detail = void 0), this.selected.clear(), this.requestUpdate();
+    this.loading = !0, this.moreLoading = this.detailLoading = !1, this.moreError = "", this.allBatchSize = te, this.detailRequest++, this.referenceRequest++, this.referenceLoading = !1, this.referenceError = "", this.referencedBy = [], this.rowScrollTop = 0, this.page?.table !== this.table && (this.page = void 0), this.error = "", i || (this.detail = void 0), this.selected.clear(), this.requestUpdate();
     try {
       const o = this.allMode ? await this.inspectAllChunk(e, t, s, r) : await this.client.inspect(
         this.scope,
@@ -18244,7 +18279,7 @@ const vt = class vt extends x {
           (l) => c.length ? c.every((h) => l[h] === i[h]) : JSON.stringify(l) === JSON.stringify(i)
         );
       }
-      this.filters.sort = o.sort;
+      this.filters.sort = o.sort, this.detail && this.loadReferencedBy(this.detail);
     } catch (o) {
       s === this.generation && r === this.request && this.fail(o);
     } finally {
@@ -18259,25 +18294,63 @@ const vt = class vt extends x {
       }
     }
   }
-  async follow(e) {
-    if (this.blocked || !this.detail || !this.page?.tables || !(e.table in this.page.tables))
+  follow(e) {
+    if (!this.detail) return;
+    const t = Object.fromEntries(
+      Object.entries(e.key).map(([i, s]) => [
+        i,
+        this.detail[s]
+      ])
+    );
+    this.followValues(e.table, t);
+  }
+  async followValues(e, t) {
+    if (this.blocked || !this.page?.tables || !(e in this.page.tables))
       return;
-    const t = [];
-    for (const [r, o] of Object.entries(e.key)) {
-      const c = this.detail[o];
-      if (c == null || !/^[a-z_]+$/.test(r) || !["string", "number"].includes(typeof c))
+    const i = [];
+    for (const [o, c] of Object.entries(t)) {
+      if (c == null || !/^[a-z_][a-z_0-9]*$/.test(o) || !["string", "number"].includes(typeof c))
         return;
-      t.push(
-        `${r} = ${typeof c == "number" ? c : `'${String(c).replaceAll("'", "''")}'`}`
+      i.push(
+        `${o} = ${typeof c == "number" ? c : `'${String(c).replaceAll("'", "''")}'`}`
       );
     }
-    B.includes(e.table) || (this.showSystem = !0, this.preferences?.set({ show_system: !0 })), this.table = e.table, this.search = `WHERE ${t.join(" AND ")}`, this.filters = {
+    if (!i.length) return;
+    B.includes(e) || (this.showSystem = !0, this.preferences?.set({ show_system: !0 })), this.table = e, this.search = `WHERE ${i.join(" AND ")}`, this.filters = {
       limit: this.filters.limit,
       query: this.search,
       ...this.sorts[this.table]
     }, this.preferences?.set({ table: this.table });
-    const i = this.generation, s = this.table;
-    await this.load(), !(i !== this.generation || s !== this.table) && (this.page?.items[0] ? this.showDetail(this.page.items[0]) : this.notice = "The referenced entry no longer exists.", this.requestUpdate());
+    const s = this.generation, r = this.table;
+    await this.load(), !(s !== this.generation || r !== this.table) && (this.page?.items[0] ? this.showDetail(this.page.items[0]) : this.notice = "The referenced entry no longer exists.", this.requestUpdate());
+  }
+  referenceText(e, t) {
+    return `${N[e] ?? e} - ${t.map((i) => String(i)).join(", ")}`;
+  }
+  async loadReferencedBy(e) {
+    if (!this.client || !this.scope || !this.page) return;
+    const t = this.page, i = t.items.indexOf(e), s = t.row_tokens?.[i], r = ++this.referenceRequest, o = this.generation;
+    if (this.referencedBy = [], this.referenceError = "", i < 0 || !s) {
+      this.referenceLoading = !1, this.requestUpdate();
+      return;
+    }
+    this.referenceLoading = !0, this.requestUpdate();
+    try {
+      const c = await this.client.referencedBy(
+        this.scope,
+        t.table,
+        this.rowKey(e),
+        s,
+        t.revision
+      );
+      r === this.referenceRequest && o === this.generation && this.detail === e && (this.referencedBy = c.groups);
+    } catch (c) {
+      if (r !== this.referenceRequest || o !== this.generation || this.detail !== e)
+        return;
+      g(c) === "unauthorized" ? this.fail(c) : this.referenceError = y(c);
+    } finally {
+      r === this.referenceRequest && o === this.generation && this.detail === e && (this.referenceLoading = !1, this.requestUpdate());
+    }
   }
   rowKey(e) {
     return Object.fromEntries(
@@ -18400,7 +18473,7 @@ const vt = class vt extends x {
           r === this.generation && o === this.request && c === this.detailRequest && (this.detailLoading = !1, this.requestUpdate());
         }
       }
-      this.detail = e, this.requestUpdate(), this.updateComplete.then(() => {
+      this.detail = e, this.loadReferencedBy(e), this.requestUpdate(), this.updateComplete.then(() => {
         if (this.detail !== e) return;
         const t = this.renderRoot.querySelector(".entries-detail");
         t && (t.scrollTop = 0);
@@ -18608,7 +18681,7 @@ const vt = class vt extends x {
     if (!this.ready)
       return a`<p>${this.error || "Loading database preferences…"}</p>
         ${this.error ? a`<button @click=${() => this.initialize()}>Retry loading database</button>` : d}`;
-    const e = Object.keys(this.page?.tables ?? Q), t = B.filter((l) => e.includes(l)), i = e.filter((l) => !B.includes(l)), s = (this.page?.schema ?? []).some((l) => l.editable), r = this.page?.items ?? [], o = this.allMode ? Math.max(0, Math.floor(this.rowScrollTop / H) - 8) : 0, c = this.allMode ? Math.min(
+    const e = Object.keys(this.page?.tables ?? N), t = B.filter((l) => e.includes(l)), i = e.filter((l) => !B.includes(l)), s = (this.page?.schema ?? []).some((l) => l.editable), r = this.page?.items ?? [], o = this.allMode ? Math.max(0, Math.floor(this.rowScrollTop / H) - 8) : 0, c = this.allMode ? Math.min(
       r.length,
       o + Math.ceil(this.listHeight / H) + 16
     ) : r.length;
@@ -18674,7 +18747,7 @@ const vt = class vt extends x {
       ));
     }}
           >
-            ${t.map((l) => a`<button role="tab" id=${`table-${l}`} aria-selected=${this.table === l} tabindex=${this.table === l || !B.includes(this.table) && l === t[0] ? 0 : -1} ?disabled=${this.blocked} @click=${() => this.changeTable(l)}>${Q[l] ?? l}${this.page ? ` (${this.page.tables[l]})` : ""}</button>`)}
+            ${t.map((l) => a`<button role="tab" id=${`table-${l}`} aria-selected=${this.table === l} tabindex=${this.table === l || !B.includes(this.table) && l === t[0] ? 0 : -1} ?disabled=${this.blocked} @click=${() => this.changeTable(l)}>${N[l] ?? l}${this.page ? ` (${this.page.tables[l]})` : ""}</button>`)}
           </div>
           ${this.showSystem ? a`<label class="system-table-picker"
                   >System tables<select
@@ -18692,7 +18765,7 @@ const vt = class vt extends x {
         (p) => Br(p) === l
       );
       return h.length ? a`<optgroup label=${l}>
-                            ${h.map((p) => a`<option value=${p}>${Q[p] ?? p.replaceAll("_", " ")}${this.page ? ` (${this.page.tables[p]})` : ""}</option>`)}
+                            ${h.map((p) => a`<option value=${p}>${N[p] ?? p.replaceAll("_", " ")}${this.page ? ` (${this.page.tables[p]})` : ""}</option>`)}
                           </optgroup>` : d;
     })}
                   </select></label
@@ -18745,8 +18818,8 @@ const vt = class vt extends x {
         >
           <div class="card-head">
             <span class="database-table-heading"
-              ><h2>${Q[this.table] ?? this.table}</h2>
-              ${le(Q[this.table] ?? this.table, zr[this.table] ?? "Database table records.")}</span
+              ><h2>${N[this.table] ?? this.table}</h2>
+              ${le(N[this.table] ?? this.table, zr[this.table] ?? "Database table records.")}</span
             >
           </div>
           ${this.loading ? a`<p role="status">Loading database…</p>` : d}
@@ -18828,8 +18901,65 @@ const vt = class vt extends x {
                             ></kaleidescape-library-cover>
                           </div>
                           ${this.scope?.library_enabled ? d : a`<small>Enable Library to preview cached artwork.</small>`}` : d}
-                  <div class="database-references">
-                    ${(this.page?.references ?? []).filter((l) => Object.values(l.key).every((h) => this.detail?.[h] != null)).map((l) => a`<button class="link" ?disabled=${this.blocked} @click=${() => this.follow(l)}>Open ${Q[l.table] ?? l.table} · ${Object.values(l.key).join(", ")}</button>`)}
+                  <div class="database-relationships">
+                    <section
+                      class="database-references"
+                      aria-label="References"
+                    >
+                      <h3>References</h3>
+                      ${(() => {
+      const l = (this.page?.references ?? []).filter(
+        (h) => Object.values(h.key).every(
+          (p) => this.detail?.[p] != null
+        )
+      );
+      return l.length ? a`<ul>
+                              ${l.map(
+        (h) => a`<li>
+                                    <button
+                                      class="link"
+                                      ?disabled=${this.blocked}
+                                      @click=${() => this.follow(h)}
+                                    >
+                                      ${this.referenceText(
+          h.table,
+          Object.values(h.key).map(
+            (p) => this.detail[p]
+          )
+        )}
+                                    </button>
+                                  </li>`
+      )}
+                            </ul>` : a`<small>None</small>`;
+    })()}
+                    </section>
+                    <section
+                      class="database-references"
+                      aria-label="Referenced by"
+                    >
+                      <h3>Referenced by</h3>
+                      ${this.referenceLoading ? a`<small role="status">Loading…</small>` : this.referenceError ? a`<small class="error" role="alert"
+                                  >${this.referenceError}</small
+                                ><button
+                                  class="link"
+                                  @click=${() => this.detail && this.loadReferencedBy(this.detail)}
+                                >
+                                  Retry
+                                </button>` : this.referencedBy.length ? a`<ul>
+                                  ${this.referencedBy.map(
+      (l) => a`${l.items.map((h) => a`<li><button class="link" ?disabled=${this.blocked} @click=${() => this.followValues(l.table, h)}>${this.referenceText(l.table, Object.values(h))}</button></li>`)}${l.more ? a`<li>
+                                              <button
+                                                class="link"
+                                                ?disabled=${this.blocked}
+                                                @click=${() => this.follow(l)}
+                                              >
+                                                View all
+                                                ${N[l.table] ?? l.table}
+                                              </button>
+                                            </li>` : d}`
+    )}
+                                </ul>` : a`<small>None</small>`}
+                    </section>
                   </div>
                   <pre>${JSON.stringify(this.detail, null, 2)}</pre>
                   ${this.repairing && ["purchase_records", "purchase_repair_events"].includes(
@@ -18864,7 +18994,7 @@ const vt = class vt extends x {
       </div>
       <footer class="entries-footer">
         <span
-          >${Q[this.table] ?? this.table} · ${this.page?.total ?? 0} total
+          >${N[this.table] ?? this.table} · ${this.page?.total ?? 0} total
           · Revision ${this.page?.dataset_revision ?? 0}</span
         >
         ${this.page ? a`<div class="pagination database-pagination">

@@ -326,6 +326,13 @@ def async_register_commands(hass: HomeAssistant) -> None:
             p.Required("policies"): dict,
             p.Required("revision"): int,
         },
+        "database/referenced_by": {
+            **scoped,
+            p.Required("table"): str,
+            p.Required("key"): dict,
+            p.Required("token"): str,
+            p.Required("revision"): int,
+        },
         "database/inspect": {
             **scoped,
             p.Required("table"): str,
@@ -1084,6 +1091,10 @@ async def async_handle(
                 case "database/cleanup/apply":
                     result = await repository.async_database_cleanup(
                         msg["policies"], msg["as_of"], msg["revision"]
+                    )
+                case "database/referenced_by":
+                    result = await repository.async_database_referenced_by(
+                        msg["table"], msg["key"], msg["token"], msg["revision"]
                     )
                 case "database/inspect":
                     result = await repository.async_inspect(

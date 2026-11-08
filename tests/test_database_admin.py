@@ -13,7 +13,10 @@ import test_backend as backend
 import test_library as library
 from test_repository import viewing
 
-from custom_components.kaleidescape_companion.core.database_schema import TABLE_KEYS
+from custom_components.kaleidescape_companion.core.database_schema import (
+    TABLE_KEYS,
+    references,
+)
 
 
 class TableDescriptionsTest(unittest.TestCase):
@@ -292,6 +295,102 @@ class DatabaseStorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.page("library_memberships"))["total"], 0)
         deleted = await self.mutate(await self.page("library_collections"), "delete")
         self.assertEqual(deleted["deleted_count"], 1)
+
+    async def test_outgoing_reference_keys_match_target_primary_keys(self):
+        def check():
+            db = self.repository._db()
+            for table in TABLE_KEYS:
+                for reference in references(db, table):
+                    self.assertEqual(
+                        list(reference["key"]),
+                        TABLE_KEYS[reference["table"]].split(","),
+                        f"{table} references {reference['table']} "
+                        "through a non-primary key",
+                    )
+
+        await self.repository._call(check)
+
+    async def test_incoming_references_cover_individual_rows_composites_and_limits(
+        self,
+    ):
+        handles = [library.ROWS[0]["source_handle"], library.ROWS[1]["source_handle"]]
+        await self.repository.async_library_catalog(
+            library.ORIGIN, library.ROWS, {"Favorites": handles}
+        )
+        title = library.title_id(library.SOURCE, handles[0])
+        await self.repository.async_library_details(
+            library.SOURCE, title, library.details(library.DETAIL)
+        )
+        for _ in range(11):
+            await self.repository.async_create_from_library(
+                str(uuid4()),
+                library.SOURCE,
+                {"library_title_id": title, "started_at": "2025-01-02T12:00:00Z"},
+                actor_id="admin",
+            )
+        page = await self.page("library", query=f"id = '{title}'")
+        result = await self.repository.async_database_referenced_by(
+            "library", {"id": title}, page["row_tokens"][0], page["revision"]
+        )
+        groups = {group["table"]: group for group in result["groups"]}
+        self.assertEqual(groups["viewings"]["key"], {"library_title_id": "id"})
+        self.assertEqual(len(groups["viewings"]["items"]), 10)
+        self.assertTrue(groups["viewings"]["more"])
+        self.assertEqual(
+            groups["library_memberships"]["items"],
+            [{"title_id": title, "collection": "Favorites"}],
+        )
+        collections = await self.page("library_collections")
+        row = collections["items"][0]
+        result = await self.repository.async_database_referenced_by(
+            "library_collections",
+            {"source_id": row["source_id"], "name": row["name"]},
+            collections["row_tokens"][0],
+            collections["revision"],
+        )
+        membership = next(
+            group
+            for group in result["groups"]
+            if group["table"] == "library_memberships"
+        )
+        self.assertEqual(
+            membership["key"], {"source_id": "source_id", "collection": "name"}
+        )
+        self.assertEqual(len(membership["items"]), 2)
+        self.assertFalse(membership["more"])
+
+    async def test_incoming_references_reject_invalid_or_stale_selection(self):
+        await self.seed()
+        page = await self.page("library")
+        key = {"id": page["items"][0]["id"]}
+        for table, candidate, token, revision, code in (
+            ("library", key, "bad", page["revision"], "refresh_required"),
+            (
+                "library",
+                key,
+                page["row_tokens"][0],
+                page["revision"] + 1,
+                "refresh_required",
+            ),
+            (
+                "library; DROP TABLE library",
+                key,
+                page["row_tokens"][0],
+                page["revision"],
+                "invalid_request",
+            ),
+            (
+                "library",
+                {"id": ["bad"]},
+                page["row_tokens"][0],
+                page["revision"],
+                "invalid_request",
+            ),
+        ):
+            with self.subTest(table=table, key=candidate), self.assert_error(code):
+                await self.repository.async_database_referenced_by(
+                    table, candidate, token, revision
+                )
 
     async def test_library_entries_cannot_be_deleted_directly_or_through_source(self):
         await self.seed()

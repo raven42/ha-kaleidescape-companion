@@ -55,6 +55,15 @@ change of table clears the selection. When a detail or selection is active, or
 more than one batch has loaded, switching display profiles waits until refresh
 or another action clears that browsing state.
 
+Entry details show outgoing references and entries that reference the selected
+row. Entry links show the table and the referenced row's primary-key values,
+including each component of a composite key. They open the corresponding
+filtered table; individual incoming links select that exact row. Incoming links
+include declared foreign keys and Companion's explicit logical relationships.
+For each incoming relationship, up to ten matching rows are shown, with a link
+to view all matches when more exist. A revision- and row-token-checked read
+prevents links from being generated for a stale selection.
+
 | Table                                                                          | Supported editing/deletion                                                                                                                   |
 | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `viewings`                                                                     | Correct title/times/runtime/watched time/status/notes; permanently delete closed entries and their session references                        |

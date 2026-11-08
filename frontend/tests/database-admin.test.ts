@@ -423,6 +423,100 @@ it("lets typing replace NULL values with a footer save and header close", async 
   expect(transport.records[0].duration_seconds).toBe(7200);
 });
 
+it("shows compact outgoing and incoming entry links and follows the chosen referencing row", async () => {
+  transport.records[0] = {
+    ...transport.records[0],
+    library_title_id: "fictional-title",
+  } as (typeof transport.records)[0];
+  transport.databaseReferences.viewings = [
+    { table: "library", key: { id: "library_title_id" } },
+  ];
+  transport.purchaseRecords = [
+    { id: "purchase-a", title: "Fictional purchase A" },
+    { id: "purchase'b", title: "Fictional purchase B" },
+  ];
+  transport.databaseIncoming.viewings = [
+    {
+      table: "purchase_records",
+      key: { library_id: "id" },
+      items: [{ id: "purchase-a" }, { id: "purchase'b" }],
+      more: true,
+    },
+  ];
+  await mount();
+  await choose();
+  await vi.waitFor(() =>
+    expect(
+      root().querySelector('[aria-label="Referenced by"]')?.textContent,
+    ).toContain("purchase'b"),
+  );
+  const outgoing = root().querySelector('[aria-label="References"]')!;
+  expect(outgoing.querySelector("h3")?.textContent).toBe("References");
+  expect(outgoing.querySelector("button")?.textContent?.trim()).toBe(
+    "Library - fictional-title",
+  );
+  const incoming = root().querySelector('[aria-label="Referenced by"]')!;
+  const links = [...incoming.querySelectorAll<HTMLButtonElement>("button")];
+  expect(
+    links.map((item) => item.textContent?.replace(/\s+/g, " ").trim()),
+  ).toEqual([
+    "Purchases - purchase-a",
+    "Purchases - purchase'b",
+    "View all Purchases",
+  ]);
+  links[1].click();
+  await vi.waitFor(() =>
+    expect(root().querySelector(".database-detail pre")?.textContent).toContain(
+      "Fictional purchase B",
+    ),
+  );
+  expect(
+    transport.calls
+      .filter((call) => call.type.endsWith("/database/inspect"))
+      .at(-1),
+  ).toMatchObject({
+    table: "purchase_records",
+    query: "WHERE id = 'purchase''b'",
+  });
+});
+
+it("ignores incoming reference results for a previously selected entry", async () => {
+  const client = transport.client();
+  const resolvers: ((value: {
+    groups: import("../src/core/api").DatabaseReferenceGroup[];
+  }) => void)[] = [];
+  vi.spyOn(client, "referencedBy").mockImplementation(
+    () => new Promise((resolve) => resolvers.push(resolve)),
+  );
+  element = document.createElement(
+    "kaleidescape-database",
+  ) as KaleidescapeDatabase;
+  element.client = client;
+  element.scope = info;
+  document.body.append(element);
+  await vi.waitFor(() =>
+    expect(root().querySelectorAll(".entry-name").length).toBeGreaterThan(1),
+  );
+  const buttons = root().querySelectorAll<HTMLButtonElement>(".entry-name");
+  buttons[0].click();
+  await flush();
+  buttons[1].click();
+  await flush();
+  resolvers[1]({ groups: [] });
+  resolvers[0]({
+    groups: [
+      {
+        table: "viewings",
+        key: { id: "id" },
+        items: [{ id: "stale-private-value" }],
+        more: false,
+      },
+    ],
+  });
+  await flush();
+  expect(root().textContent).not.toContain("stale-private-value");
+});
+
 it("follows composite references and selects the referenced row without accepting executable SQL", async () => {
   const original = transport.client();
   const target = { source_id: "fictional-source", name: "Director's picks" };
@@ -469,6 +563,12 @@ it("follows composite references and selects the referenced row without acceptin
   );
   root().querySelector<HTMLButtonElement>(".entry-name")!.click();
   await flush();
+  expect(
+    root()
+      .querySelector<HTMLButtonElement>(".database-references button")!
+      .textContent?.replace(/\s+/g, " ")
+      .trim(),
+  ).toBe("Library collections - fictional-source, Director's picks");
   root()
     .querySelector<HTMLButtonElement>(".database-references button")!
     .click();

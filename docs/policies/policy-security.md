@@ -189,28 +189,30 @@ Database All mode fetches bounded, revision-checked inspection batches, reduces
 batch size for oversized responses, and renders a window of compact row
 summaries. Loaded identities/tokens occupy browser memory until refresh or
 navigation, while selection and mutation limits remain enforced. Detail reads
-are revision- and token-checked before editing. Database mutations cannot delete
-Library membership rows or delete a collection that still has memberships; the
-separate collection workflow and source synchronization manage those rows.
-Database condition search compiles a restricted grammar with bound parameters;
-it does not accept arbitrary SQL. Imports are size/time/row bounded, reviewed
-before applying, and cannot introduce network configuration or executable data.
-Raw database files are opened defensively; application writes never execute SQL
-from an import. A SQLite snapshot with the current purchase ledger takes invoice
-records from that ledger rather than inferring them from flat Library prices.
-Database purchase correction, void and reversal require an administrator-bound
-review, row token, dataset revision and durable request ID. The group purchase
-editor uses the same correction checks when saving its form. Full before/after
-invoice and association evidence is private and append-only; prior identities
-are reserved against silent replay. Similarity hints do not prove identity. Full
-SQLite backups retain this evidence and the barriers; JSON exports and SQLite
-merge imports do not transfer them, so they are not a full restore.
-Purchase-only reconciliation can run while recording is active: the server
-validates that the uploaded bundle contains only purchases and binds subsequent
-review and apply operations to that validated plan. General imports still
-require recording disabled. The
-[data-management design](../design/design-data-management.md) owns field rules,
-limits and import/restore procedures.
+are revision- and token-checked before editing. Incoming-reference inspection is
+administrator-only, limited to allowlisted local relationships and ten row
+identities per relationship, revision- and token-checked, and subject to the
+existing query time budget. Database mutations cannot delete Library membership
+rows or delete a collection that still has memberships; the separate collection
+workflow and source synchronization manage those rows. Database condition search
+compiles a restricted grammar with bound parameters; it does not accept
+arbitrary SQL. Imports are size/time/row bounded, reviewed before applying, and
+cannot introduce network configuration or executable data. Raw database files
+are opened defensively; application writes never execute SQL from an import. A
+SQLite snapshot with the current purchase ledger takes invoice records from that
+ledger rather than inferring them from flat Library prices. Database purchase
+correction, void and reversal require an administrator-bound review, row token,
+dataset revision and durable request ID. The group purchase editor uses the same
+correction checks when saving its form. Full before/after invoice and
+association evidence is private and append-only; prior identities are reserved
+against silent replay. Similarity hints do not prove identity. Full SQLite
+backups retain this evidence and the barriers; JSON exports and SQLite merge
+imports do not transfer them, so they are not a full restore. Purchase-only
+reconciliation can run while recording is active: the server validates that the
+uploaded bundle contains only purchases and binds subsequent review and apply
+operations to that validated plan. General imports still require recording
+disabled. The [data-management design](../design/design-data-management.md) owns
+field rules, limits and import/restore procedures.
 
 Downloads are authenticated, bounded and marked private/no-store; private
 exports include data omitted from normal household views. Full database restore
