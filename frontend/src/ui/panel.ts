@@ -1088,6 +1088,14 @@ export class KaleidescapePanel extends LitElement {
                 .context=${this.api}
                 .scopeKey=${`${this.info?.entry_id}:${this.info?.dataset_id}`}
                 .value=${this.searchText}
+                .status=${this.status}
+                @journal-refresh=${() => this.refresh()}
+                @journal-status=${(event: CustomEvent<string>) => {
+                  this.status = this.filterStatus = event.detail;
+                  this.page = 1;
+                  this.history = [];
+                  void this.loadList();
+                }}
                 .disabled=${blocked}
                 .allowAdd=${true}
                 .filtered=${!!this.status || !!this.journalMovie}
@@ -1133,6 +1141,25 @@ export class KaleidescapePanel extends LitElement {
             ></label
           >
           <div class="journal-filter-tools">
+            <label
+              >Status<select
+                name="filter_status"
+                .value=${this.status}
+                ?disabled=${blocked}
+                @change=${(event: Event) => {
+                  this.status = this.filterStatus = (
+                    event.target as HTMLSelectElement
+                  ).value;
+                  this.page = 1;
+                  this.history = [];
+                  void this.loadList();
+                }}
+              >
+                <option value="">All</option>
+                <option value="partial">Partial</option>
+                <option value="completed">Completed</option>
+              </select></label
+            >
             <label ?hidden=${calendarView}
               >Sort by<select
                 name="journal_sort"
@@ -1186,15 +1213,6 @@ export class KaleidescapePanel extends LitElement {
             </button>
             <kaleidescape-journal-options
               .mobileCompact=${calendarView}
-              @journal-refresh=${() => this.refresh()}
-              .status=${this.status}
-              @journal-status=${(event: CustomEvent<string>) => {
-                this.status = this.filterStatus = event.detail;
-                this.page = 1;
-                this.history = [];
-                void this.loadList();
-                this.requestUpdate();
-              }}
               .client=${this.api}
               .scope=${this.info}
               .disabled=${blocked}

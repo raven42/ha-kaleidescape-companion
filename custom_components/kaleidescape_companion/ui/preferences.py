@@ -6,7 +6,7 @@ import re
 from ..core.models import invalid, text
 from ..library.config import collection_names
 
-DEFAULTS = {"default_landing_page": "journal"}
+DEFAULTS = {"default_landing_page": "library", "fuzzy_search": True}
 CHOICES = {
     "default_landing_page": [
         "now-playing",
@@ -17,7 +17,7 @@ CHOICES = {
     ]
 }
 LIBRARY_DEFAULTS = {
-    "view": "list",
+    "view": "covers",
     "page_size": 100,
     "cover_size": 150,
     "show_titles": True,
@@ -52,9 +52,15 @@ SORTS = {"name", "year", "collection", "length", "watched", "added", "random"}
 def validate(values, previous):
     config = {
         "default_landing_page": values.get(
-            "default_landing_page", previous.get("default_landing_page", "journal")
-        )
+            "default_landing_page",
+            previous.get("default_landing_page", DEFAULTS["default_landing_page"]),
+        ),
+        "fuzzy_search": values.get(
+            "fuzzy_search", previous.get("fuzzy_search", DEFAULTS["fuzzy_search"])
+        ),
     }
+    if type(config["fuzzy_search"]) is not bool:
+        raise ValueError("invalid_display_options")
     if config["default_landing_page"] not in CHOICES["default_landing_page"]:
         raise ValueError("invalid_display_options")
     return config
@@ -234,7 +240,7 @@ def validate_interface(patch, previous=None):
 
 
 JOURNAL_DEFAULTS = {
-    "view": "list",
+    "view": "calendar",
     "calendar_size": 180,
     "calendar_fit": False,
     "movie_details": "full",

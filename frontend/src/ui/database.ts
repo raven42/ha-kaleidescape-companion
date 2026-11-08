@@ -133,7 +133,14 @@ export class KaleidescapeDatabase extends LitElement {
   protected willUpdate(changed: PropertyValues) {
     if (!changed.has("client") && !changed.has("scope")) return;
     const key = `${this.scope?.entry_id}:${this.scope?.dataset_id}:${this.scope?.permissions.edit}`;
-    if (key === this.bound && this.client === this.boundClient) return;
+    if (key === this.bound && this.client === this.boundClient) {
+      const fuzzy = this.scope?.ui_defaults?.fuzzy_search !== false;
+      if (this.ready && this.fuzzySearch !== fuzzy) {
+        this.fuzzySearch = fuzzy;
+        void this.load();
+      }
+      return;
+    }
     this.clear();
     this.bound = key;
     this.boundClient = this.client;
@@ -212,12 +219,9 @@ export class KaleidescapeDatabase extends LitElement {
       "database",
     );
     try {
-      const [values, search] = await Promise.all([
-        this.preferences.load(),
-        this.client!.uiPreferences(this.scope!, false, "search"),
-      ]);
+      const values = await this.preferences.load();
       if (generation !== this.generation) return;
-      this.fuzzySearch = search.values.fuzzy_search as boolean;
+      this.fuzzySearch = this.scope?.ui_defaults?.fuzzy_search !== false;
       this.fitPage = values.limit === "fit" || values.limit === undefined;
       this.filters.limit = this.fitPage ? 25 : (values.limit as number);
       this.showSystem = values.show_system as boolean;

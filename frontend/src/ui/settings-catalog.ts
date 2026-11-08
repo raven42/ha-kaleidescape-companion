@@ -6,7 +6,7 @@ export const SETTINGS_SECTIONS = [
     "general",
     "General",
     "Make Companion feel at home",
-    "Landing page, personal search and display preferences.",
+    "Landing page, shared search and display preferences.",
   ],
   [
     "journal",
@@ -216,6 +216,7 @@ export const TOGGLES = [
   ],
 ] as const;
 export const BOOLEAN_FIELDS = new Set([
+  "fuzzy_search",
   ...TOGGLES.map(([key]) => key),
   "calendar_full_sync",
   "calendar_full_sync_dedicated",
@@ -242,10 +243,10 @@ export const SETTINGS_INDEX: SettingField[] = [
         "Shared starting page",
       ],
       [
-        "personal_fuzzy_search",
+        "fuzzy_search",
         "Fuzzy search",
         "general",
-        "Personal spelling and partial matches",
+        "Shared spelling and partial matches",
       ],
       [
         "hidden_collections",

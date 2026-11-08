@@ -35,7 +35,7 @@ export class PreferenceStore {
     return this.values;
   }
   set(patch: Record<string, unknown>) {
-    if (!this.active) return;
+    if (!this.active) return Promise.resolve(false);
     Object.assign(this.values, structuredClone(patch));
     const sequence = ++this.sequence;
     for (const key of Object.keys(patch)) {
@@ -58,17 +58,19 @@ export class PreferenceStore {
       operation = Promise.reject(error);
     }
     this.inflight++;
-    void operation
+    return operation
       .then((result) => {
-        if (!this.active) return;
+        if (!this.active) return false;
         this.revision = Math.max(this.revision, result.revision);
         if (!Object.keys(this.failed).length) this.error(null);
+        return true;
       })
       .catch((error) => {
-        if (!this.active) return;
+        if (!this.active) return false;
         for (const [key, value] of Object.entries(patch))
           if (this.versions.get(key) === sequence) this.failed[key] = value;
         if (Object.keys(this.failed).length) this.error(error);
+        return false;
       })
       .finally(() => {
         this.inflight--;

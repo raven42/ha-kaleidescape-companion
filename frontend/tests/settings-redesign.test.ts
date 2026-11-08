@@ -33,8 +33,7 @@ async function mount(
   );
   await vi.waitFor(() =>
     expect(
-      root().querySelector<HTMLInputElement>('[name="personal_fuzzy_search"]')
-        ?.disabled,
+      root().querySelector<HTMLInputElement>('[name="fuzzy_search"]')?.disabled,
     ).toBe(false),
   );
   return transport;
@@ -174,35 +173,38 @@ it("searches settings and focuses the corresponding provider field without submi
   expect(save().disabled).toBe(true);
 });
 
-it("keeps personal preferences immediate while configuration changes stay staged", async () => {
+it("stages the shared search setting until Save settings", async () => {
   const transport = await mount();
-  root()
-    .querySelector<HTMLInputElement>('[name="personal_fuzzy_search"]')!
-    .click();
+  root().querySelector<HTMLInputElement>('[name="fuzzy_search"]')!.click();
   await flush();
-  expect(save().disabled).toBe(true);
+  expect(save().disabled).toBe(false);
   expect(
     transport.calls.some((call) =>
       call.type.endsWith("/ui/preferences/update"),
     ),
-  ).toBe(true);
-  const field = root().querySelector<HTMLInputElement>(
-    '[name="minimum_runtime_minutes"]',
-  )!;
-  field.value = "42";
-  field.dispatchEvent(new Event("input", { bubbles: true }));
-  await flush();
-  expect(save().disabled).toBe(false);
+  ).toBe(false);
   expect(root().querySelector(".save-status")!.textContent).toContain(
     "1 unsaved setting",
   );
-  const tab = root().querySelector<HTMLButtonElement>("#settings-tab-general")!;
-  tab.dispatchEvent(
-    new KeyboardEvent("keydown", { key: "End", bubbles: true }),
-  );
+  save().click();
+  await vi.waitFor(() => expect(transport.options.fuzzy_search).toBe(false));
+});
+
+it("updates the landing page on input before change and saves the selected value", async () => {
+  const transport = await mount();
+  const select = root().querySelector<HTMLSelectElement>(
+    '[name="default_landing_page"]',
+  )!;
+  select.value = "library";
+  select.dispatchEvent(new Event("input", { bubbles: true }));
   await flush();
-  expect(root().activeElement?.id).toBe("settings-tab-about");
-  expect(field.value).toBe("42");
+  select.dispatchEvent(new Event("change", { bubbles: true }));
+  await flush();
+  expect(select.value).toBe("library");
+  save().click();
+  await vi.waitFor(() =>
+    expect(transport.options.default_landing_page).toBe("library"),
+  );
 });
 
 it("reveals invalid metadata fields on submit, including an implicit form submit", async () => {
@@ -274,4 +276,41 @@ it("clears drafts and provider credentials when administrator access is revoked"
   expect(root().querySelector("form")).toBeNull();
   expect(root().textContent).not.toContain("PRIVATE-UNSAVED");
   expect(save().disabled).toBe(true);
+});
+
+it("shows library and purchase summaries in About and loads totals on demand", async () => {
+  const transport = await mount({ library_enabled: true });
+  transport.purchaseTotals = {
+    ...transport.purchaseTotals,
+    purchase_count: 1,
+    currencies: [
+      {
+        currency: "$",
+        library_cost: "$12.34",
+        retail_price: "$20.00",
+        savings: "$7.66",
+      },
+    ],
+  };
+  await select("about");
+  expect(root().querySelector("#settings-about")!.textContent).toContain(
+    "Library details",
+  );
+  expect(
+    transport.calls.some((call) =>
+      call.type.endsWith("library/purchases/summary"),
+    ),
+  ).toBe(false);
+  const details = root().querySelector<HTMLDetailsElement>(
+    "#settings-about .purchase-details",
+  )!;
+  details.open = true;
+  details.dispatchEvent(new Event("toggle"));
+  await vi.waitFor(() => expect(details.textContent).toContain("$12.34"));
+  details.open = false;
+  details.dispatchEvent(new Event("toggle"));
+  transport.purchaseTotals.currencies[0].library_cost = "$19.00";
+  details.open = true;
+  details.dispatchEvent(new Event("toggle"));
+  await vi.waitFor(() => expect(details.textContent).toContain("$19.00"));
 });

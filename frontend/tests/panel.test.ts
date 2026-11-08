@@ -698,7 +698,7 @@ it("enables the Library tab after opting in and clears its content on navigation
   expect(panel.shadowRoot!.querySelector("kaleidescape-library")).toBeNull();
 });
 
-it("applies the Journal fuzzy toggle to search and an already-open New entry picker", async () => {
+it("applies shared search changes to an already-open New entry picker", async () => {
   const options = panel.shadowRoot!.querySelector(
     "kaleidescape-journal-options",
   )!;
@@ -722,7 +722,15 @@ it("applies the Journal fuzzy toggle to search and an already-open New entry pic
       titlePicker(manual.shadowRoot!).querySelector('[role="option"]'),
     ).toBeTruthy(),
   );
-  options.shadowRoot!.querySelector<HTMLInputElement>("input")!.click();
+  const host = panel as unknown as {
+    info: typeof info;
+    requestUpdate: () => void;
+  };
+  host.info = {
+    ...host.info,
+    ui_defaults: { default_landing_page: "journal", fuzzy_search: false },
+  };
+  host.requestUpdate();
   await settle();
   await vi.waitFor(() =>
     expect(
@@ -743,7 +751,7 @@ it("applies the Journal fuzzy toggle to search and an already-open New entry pic
       titlePicker(manual.shadowRoot!).querySelector('[role="option"]'),
     ).toBeTruthy(),
   );
-  expect(transport.searchPreferences.fuzzy_search).toBe(false);
+  expect(transport.searchPreferences.fuzzy_search).toBe(true);
   expect(
     transport.calls.filter((call) => call.type.endsWith("journal/list")).at(-1)
       ?.fuzzy,

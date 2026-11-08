@@ -88,7 +88,7 @@ it("renders a settings page and saves the native integration options flow", asyn
   expect(saved).toHaveBeenCalledOnce();
 });
 
-it("organizes settings by scope, preserves drafts across tabs and saves personal search immediately", async () => {
+it("organizes settings by scope, preserves drafts across tabs and stages shared search", async () => {
   await mount("kaleidescape-settings");
   const labels = [...root().querySelectorAll('[role="tab"]')].map((tab) =>
     tab.textContent?.trim(),
@@ -130,20 +130,17 @@ it("organizes settings by scope, preserves drafts across tabs and saves personal
   button("General").click();
   await vi.waitFor(() =>
     expect(
-      root().querySelector<HTMLInputElement>('[name="personal_fuzzy_search"]')!
-        .disabled,
+      root().querySelector<HTMLInputElement>('[name="fuzzy_search"]')!.disabled,
     ).toBe(false),
   );
-  root()
-    .querySelector<HTMLInputElement>('[name="personal_fuzzy_search"]')!
-    .click();
+  root().querySelector<HTMLInputElement>('[name="fuzzy_search"]')!.click();
   await flush();
   expect(
     transport.calls.some(
       (call) =>
         call.type.endsWith("/ui/preferences/update") && call.area === "search",
     ),
-  ).toBe(true);
+  ).toBe(false);
   expect(
     transport.calls.some((call) => call.type.endsWith("/settings/submit")),
   ).toBe(false);
@@ -158,7 +155,7 @@ it("organizes settings by scope, preserves drafts across tabs and saves personal
   expect(
     transport.calls.find((call) => call.type.endsWith("/settings/submit"))!
       .data,
-  ).toMatchObject({ minimum_runtime_minutes: 25 });
+  ).toMatchObject({ minimum_runtime_minutes: 25, fuzzy_search: false });
 });
 
 it("reveals an invalid field's settings tab before native form validation", async () => {
@@ -213,6 +210,9 @@ it("keeps library sync opt-in and saves library controls through the native opti
   await flush();
   expect(text()).toContain("additional disk space");
   expect(text()).toContain("256 MiB limit");
+  expect(button("Save settings").disabled).toBe(true);
+  button("Save visibility").click();
+  await flush();
   button("Save settings").click();
   await flush();
   expect(

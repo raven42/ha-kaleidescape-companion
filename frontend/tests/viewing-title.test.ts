@@ -20,7 +20,7 @@ it.each(["list", "calendar"])(
     const transport = new FixtureTransport();
     transport.options.library_enabled = true;
     transport.journalPreferences.view = view;
-    transport.searchPreferences.fuzzy_search = false;
+    transport.options.fuzzy_search = false;
     transport.libraryTitles[1].year = 2026;
     transport.libraryTitles.push(
       libraryTitle({

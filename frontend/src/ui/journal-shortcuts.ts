@@ -12,6 +12,7 @@ export class JournalShortcuts extends LitElement {
     allowAdd: { type: Boolean },
     filtered: { type: Boolean },
     filterLabel: {},
+    status: {},
     context: { attribute: false },
     scopeKey: {},
   };
@@ -60,6 +61,7 @@ export class JournalShortcuts extends LitElement {
   allowAdd = false;
   filtered = false;
   filterLabel = "";
+  status = "";
   context?: object;
   scopeKey = "";
   private draft = "";
@@ -114,6 +116,15 @@ export class JournalShortcuts extends LitElement {
         ${this.filterLabel ? html`<button type="button" aria-label="Show all viewings" title="Show all viewings" ?disabled=${this.disabled} @click=${() => this.signal("journal-clear-movie")}>All</button>` : ""}
         <button
           type="button"
+          aria-label="Refresh Journal"
+          title="Refresh Journal"
+          ?disabled=${this.disabled}
+          @click=${() => this.signal("journal-refresh")}
+        >
+          ${actionIcon("refresh")}
+        </button>
+        <button
+          type="button"
           aria-label="Journal options"
           title="Options"
           aria-haspopup="dialog"
@@ -152,6 +163,17 @@ export class JournalShortcuts extends LitElement {
                 this.draft = (event.target as HTMLInputElement).value;
               }}
           /></label>
+          <label
+            >Status<select
+              name="filter_status"
+              .value=${this.status}
+              @change=${(event: Event) => this.signal("journal-status", (event.target as HTMLSelectElement).value)}
+            >
+              <option value="">All</option>
+              <option value="partial">Partial</option>
+              <option value="completed">Completed</option>
+            </select></label
+          >
           <div class="dialog-footer">
             <button class="primary" type="submit" ?disabled=${this.disabled}>
               Search

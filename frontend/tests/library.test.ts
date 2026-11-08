@@ -947,7 +947,9 @@ it("keeps same-name remakes separate in both views and opens only the selected w
   await flush();
   expect(root().querySelectorAll("tbody tr")).toHaveLength(2);
   expect(text()).toContain("Total 2");
-  expect(text()).toContain("3 individual versions");
+  expect(root().querySelector("#library-options")!.textContent).not.toContain(
+    "individual versions",
+  );
   const titles = root().querySelectorAll<HTMLButtonElement>("tbody .link");
   titles[0].click();
   await flush();
@@ -1604,7 +1606,7 @@ it("opens a mobile search popup, discards cancelled input, and applies through t
   ).toMatchObject({ query: "" });
 });
 
-it("connects mobile filter and randomize shortcuts and keeps refresh inside Options", async () => {
+it("connects mobile filter and randomize shortcuts and keeps refresh outside Options", async () => {
   root()
     .querySelector<HTMLButtonElement>('[aria-label="Library filters"]')!
     .click();
@@ -1640,7 +1642,7 @@ it("connects mobile filter and randomize shortcuts and keeps refresh inside Opti
     [
       ...root().querySelectorAll<HTMLButtonElement>("#library-options button"),
     ].some((b) => b.textContent?.trim() === "Refresh cached data"),
-  ).toBe(true);
+  ).toBe(false);
 });
 
 it("shows expandable grouped Journal history inside the Library title dialog", async () => {

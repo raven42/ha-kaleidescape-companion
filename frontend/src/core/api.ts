@@ -57,6 +57,7 @@ export interface JournalInfo extends Scope {
   library_enabled?: boolean;
   ui_defaults?: {
     default_landing_page: string;
+    fuzzy_search?: boolean;
   };
   permissions: { read: boolean; edit: boolean; export: boolean };
 }

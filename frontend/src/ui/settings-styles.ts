@@ -124,6 +124,8 @@ export const settingsStyles = css`
   }
   .field-input input {
     min-width: 0;
+  }
+  .field-input:has(.unit) input {
     padding-inline-end: 80px;
   }
   .field-input .unit {

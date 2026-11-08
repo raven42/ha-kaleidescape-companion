@@ -113,7 +113,9 @@ def form(hass: HomeAssistant, config: dict) -> p.Schema:
             )
     for key, default in UI_DEFAULTS.items():
         marker = p.Required(key, default=config.get(key, default))
-        if key in CHOICES:
+        if type(default) is bool:
+            properties[marker] = selector.BooleanSelector()
+        elif key in CHOICES:
             properties[marker] = selector.SelectSelector(
                 selector.SelectSelectorConfig(options=CHOICES[key])
             )

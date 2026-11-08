@@ -141,7 +141,7 @@ it("reshuffles Random sorting, preserves its seed through filtering and reload, 
   expect(button(root, "Ascending ↑")).toBeTruthy();
 });
 
-it("shows admin purchase details and persists the optional footer cost", async () => {
+it("keeps purchase totals out of options and persists the optional footer cost", async () => {
   const transport = new FixtureTransport();
   transport.purchaseTotals = {
     ...transport.purchaseTotals,
@@ -165,14 +165,7 @@ it("shows admin purchase details and persists the optional footer cost", async (
     ),
   ).toBe(false);
   button(root, "Options").click();
-  const details = root.querySelector<HTMLDetailsElement>(".purchase-details")!;
-  expect(details).not.toBeNull();
-  details.open = true;
-  details.dispatchEvent(new Event("toggle"));
-  await vi.waitFor(() => expect(details.textContent).toContain("$12.34"));
-  expect(details.textContent).toContain("$20.00");
-  expect(details.textContent).toContain("$7.66");
-  expect([...details.querySelectorAll("dd")].at(-1)?.textContent).toBe("2");
+  expect(root.querySelector(".purchase-details")).toBeNull();
   expect(root.querySelector(".library-footer")!.textContent).not.toContain(
     "Library cost",
   );
@@ -192,39 +185,6 @@ it("shows admin purchase details and persists the optional footer cost", async (
   expect(
     root.querySelector<HTMLInputElement>('[name="show_library_cost"]')!.checked,
   ).toBe(true);
-});
-
-it("refreshes purchase totals when reopening details even if the revision is unchanged", async () => {
-  const transport = new FixtureTransport();
-  transport.purchaseTotals = {
-    ...transport.purchaseTotals,
-    purchase_count: 2,
-    missing_purchase_prices: 2,
-  };
-  const root = await mount(transport);
-  button(root, "Options").click();
-  const details = root.querySelector<HTMLDetailsElement>(".purchase-details")!;
-  details.open = true;
-  details.dispatchEvent(new Event("toggle"));
-  await vi.waitFor(() =>
-    expect(details.textContent).toContain("2 missing paid prices"),
-  );
-  details.open = false;
-  details.dispatchEvent(new Event("toggle"));
-  transport.purchaseTotals = {
-    ...transport.purchaseTotals,
-    missing_purchase_prices: 0,
-  };
-  details.open = true;
-  details.dispatchEvent(new Event("toggle"));
-  await vi.waitFor(() =>
-    expect(details.textContent).not.toContain("2 missing paid prices"),
-  );
-  expect(
-    transport.calls.filter((call) =>
-      call.type.endsWith("library/purchases/summary"),
-    ).length,
-  ).toBeGreaterThanOrEqual(2);
 });
 
 it("never exposes or requests financial totals for readers, even with a saved footer flag", async () => {
@@ -1023,7 +983,7 @@ it("orders ratings by age with general audiences at the top", async () => {
   expect(values).toEqual(["G", "NR-G", "PG", "PG-13", "NR-R", "R", "NC-17"]);
 });
 
-it("applies the Library fuzzy toggle to main search and local facet search", async () => {
+it("applies shared fuzzy search to main search and local facet search", async () => {
   const transport = new FixtureTransport();
   const root = await mount(transport);
   const field = root.querySelector<HTMLInputElement>('[name="library_query"]')!;
@@ -1036,12 +996,15 @@ it("applies the Library fuzzy toggle to main search and local facet search", asy
         .at(-1)?.filters,
     ).toMatchObject({ query: "Vyoage", fuzzy: true }),
   );
-  root
-    .querySelector<HTMLInputElement>('[name="library_fuzzy_search"]')!
-    .click();
+  expect(root.querySelector('[name="library_fuzzy_search"]')).toBeNull();
+  element!.scope = {
+    ...info,
+    library_enabled: true,
+    ui_defaults: { default_landing_page: "journal", fuzzy_search: false },
+  };
   await flush();
   await vi.waitFor(() =>
-    expect(transport.searchPreferences.fuzzy_search).toBe(false),
+    expect(root.querySelectorAll("tbody tr")).toHaveLength(0),
   );
   expect(root.querySelectorAll("tbody tr")).toHaveLength(0);
   expect(
@@ -1054,9 +1017,11 @@ it("applies the Library fuzzy toggle to main search and local facet search", asy
   await flush();
   modalClose(root).click();
   await flush();
-  root
-    .querySelector<HTMLInputElement>('[name="library_fuzzy_search"]')!
-    .click();
+  element!.scope = {
+    ...info,
+    library_enabled: true,
+    ui_defaults: { default_landing_page: "journal", fuzzy_search: true },
+  };
   await flush();
   button(root, "Filters").click();
   await flush();

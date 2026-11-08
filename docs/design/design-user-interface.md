@@ -37,7 +37,7 @@ keys and hints, then opens the category and focuses the matching control.
 
 | Category    | Scope                                                                                                                                                           |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| General     | Shared landing page, personal fuzzy search and guidance to per-view Options                                                                                     |
+| General     | Shared landing page, shared fuzzy search and guidance to per-view Options                                                                                       |
 | Journal     | Media player, play-status and media-location entities; tracking, minimum runtime, minimum watch time and resume window                                          |
 | Library     | Local address, scanning, collection/detail/artwork options, collection-change permission, artwork storage, recent-purchase window and shared hidden collections |
 | Playback    | Control opt-in, address, player discovery/default and experimental Library title launch                                                                         |
@@ -45,7 +45,7 @@ keys and hints, then opens the category and focuses the matching control.
 | Calendar    | Publishing opt-in, destination, title/description templates, dedicated-calendar Full Sync acknowledgement/window and export                                     |
 | Automations | One installed/bundled blueprint inventory, installation, update review, change logs and HA setup guidance                                                       |
 | Maintenance | Configuration transfer, metadata repair, test-dashboard generation and reload                                                                                   |
-| About       | Companion/pyk/API/schema versions, documentation, release notes and support links                                                                               |
+| About       | Companion/pyk/API/schema versions, Library and purchase summaries, documentation, release notes and support links                                               |
 
 Switching categories preserves drafts. A sticky save bar shows the number of
 changed native settings, with markers beside affected categories. Save is
@@ -56,9 +56,10 @@ button beside their labels: hover, keyboard focus or tap opens a text balloon.
 Escape or an outside interaction dismisses it, and balloons stay within the
 viewport. Inputs retain accessible labels and descriptions. Destructive-action
 warnings remain visible. Native integration settings require **Save settings**.
-Personal and shared SQLite UI preferences save immediately without reloading HA,
-and their cards identify that scope. Settings is administrator-only; household
-users retain Options for their own views.
+Personal SQLite view preferences save immediately without reloading HA. Hidden
+collection changes require **Save visibility**; save or discard them before
+saving native configuration. Settings is administrator-only; household users
+retain Options for their own views.
 
 Journal source inputs suggest existing HA entity IDs and friendly names, with
 bounded lists of media players and sensors. The TMDB card reports whether a
@@ -123,8 +124,10 @@ browser-supplied provider data.
 Preferences live in SQLite's `settings` table, scoped to the authenticated HA
 user and dataset. No request selects another owner. Profiles are desktop (over
 1024 CSS pixels), tablet (601–1024), and mobile (600 or less); width uses no
-cookie or device fingerprint. Library, Journal, Database, search and interface
-choices have independent profile values.
+cookie or device fingerprint. Library, Journal, Database and interface view
+choices have independent profile values. Shared fuzzy search is a native
+household setting; legacy personal search values are retained for compatibility
+but no longer determine behavior.
 
 | Area             | Stored choices                                                                                                             |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------- |
@@ -132,7 +135,7 @@ choices have independent profile values.
 | `library`        | List/covers, page size, badge style, cover/cast presentation, sort/direction, column widths and administrator cost display |
 | `journal`        | List/calendar, day size and fit-to-screen                                                                                  |
 | `database`       | Table, count mode, system-table visibility and per-table sort/order                                                        |
-| `search`         | Fuzzy-search boolean shared across the views in that display profile                                                       |
+| `search`         | Legacy personal fuzzy-search values retained for compatibility; no longer used by the views                                |
 | `library_random` | One random seed shared across the user's display profiles                                                                  |
 | Shared UI        | Administrator-maintained hidden collection names and initial inherited defaults                                            |
 
@@ -179,14 +182,15 @@ condition language stay exact. Matching for imports/provider identity has its
 own [title-matching contract](design-title-matching.md); fuzzy display search
 cannot authorize a movie launch or silently merge identities.
 
-Journal Options saves list/calendar, 60–320 pixel day height (default 180) and
-fit-to-screen (default off). Slider release saves the size; fitting temporarily
-uses the available viewport and disabling it restores the saved value. Month
-selection is retained as `companion_month=YYYY-MM` in the panel URL while the
-Journal is active, falling back to the current local month; navigating away
-removes it. It is not a personal settings field. Dashboard month navigation
-remains local to the card. Search/status state and displayed month must not be
-confused with persisted layout.
+Journal Options saves list/calendar (Calendar for new profiles), 60–320 pixel
+day height (default 180) and fit-to-screen (default off). Slider release saves
+the size; fitting temporarily uses the available viewport and disabling it
+restores the saved value. Month selection is retained as
+`companion_month=YYYY-MM` in the panel URL while the Journal is active, falling
+back to the current local month; navigating away removes it. It is not a
+personal settings field. Dashboard month navigation remains local to the card.
+Search/status state and displayed month must not be confused with persisted
+layout.
 
 An active Journal search temporarily shows list results without changing the
 saved view. The desktop search field has a clear button; mobile exposes the

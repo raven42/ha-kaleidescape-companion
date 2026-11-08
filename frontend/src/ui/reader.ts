@@ -440,6 +440,14 @@ export class KaleidescapeReader extends LitElement {
                             .context=${this.api}
                             .scopeKey=${`${this.scope?.entry_id}:${this.scope?.dataset_id}`}
                             .value=${this.searchText}
+                            .status=${this.status}
+                            @journal-refresh=${() => this.refresh()}
+                            @journal-status=${(event: CustomEvent<string>) => {
+                              this.status = this.filterStatus = event.detail;
+                              this.page = 1;
+                              this.history = [];
+                              void this.load();
+                            }}
                             .disabled=${this.loading || !this.scope}
                             .allowAdd=${false}
                             .filtered=${!!this.status || !!this.journalMovie}
@@ -488,6 +496,25 @@ export class KaleidescapeReader extends LitElement {
                         ></label
                       >
                       <div class="journal-filter-tools">
+                        <label
+                          >Status<select
+                            name="filter_status"
+                            .value=${this.status}
+                            ?disabled=${this.loading || !this.scope}
+                            @change=${(event: Event) => {
+                              this.status = this.filterStatus = (
+                                event.target as HTMLSelectElement
+                              ).value;
+                              this.page = 1;
+                              this.history = [];
+                              void this.load();
+                            }}
+                          >
+                            <option value="">All</option>
+                            <option value="partial">Partial</option>
+                            <option value="completed">Completed</option>
+                          </select></label
+                        >
                         <label ?hidden=${calendarView}
                           >Sort by<select
                             name="journal_sort"
@@ -537,15 +564,6 @@ export class KaleidescapeReader extends LitElement {
                           Refresh</button
                         ><kaleidescape-journal-options
                           .mobileCompact=${calendarView}
-                          @journal-refresh=${() => this.refresh()}
-                          .status=${this.status}
-                          @journal-status=${(event: CustomEvent<string>) => {
-                            this.status = this.filterStatus = event.detail;
-                            this.page = 1;
-                            this.history = [];
-                            void this.load();
-                            this.requestUpdate();
-                          }}
                           .client=${this.api}
                           .scope=${this.scope}
                           .disabled=${this.loading}

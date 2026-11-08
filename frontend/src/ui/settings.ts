@@ -5,11 +5,12 @@ import { ApiError, errorCode, errorMessage } from "../core/api";
 import type {
   JournalClient,
   JournalInfo,
+  LibraryInfo,
+  LibraryPurchaseTotals,
   OptionsForm,
   Scope,
 } from "../core/api";
 import { styles } from "./styles";
-import { responsivePreferences } from "./profile-controller";
 import { settingsStyles } from "./settings-styles";
 import { settingLabel, settingHint } from "./settings-hint";
 import {
@@ -28,6 +29,7 @@ import type {
   SettingField,
 } from "./settings-catalog";
 import { collectionLabel } from "../library/badges";
+import { counted } from "../core/text";
 import { fullSyncSettings } from "./calendar-settings";
 import "./calendar-export";
 import "./automation-blueprints";
@@ -68,23 +70,6 @@ const validation: Record<string, string> = {
 };
 
 export class KaleidescapeSettings extends LitElement {
-  constructor() {
-    super();
-    responsivePreferences(this, () => {
-      if (
-        this.loading ||
-        this.saving ||
-        this.uncertain ||
-        this.personalPreferences?.unsettled
-      )
-        return false;
-      this.personalPreferences?.dispose();
-      this.personalPreferences = undefined;
-      this.personalReady = false;
-      if (this.tab === "general") void this.selectTab("general");
-      return true;
-    });
-  }
   static properties = {
     client: { attribute: false },
     scope: { attribute: false },
@@ -229,6 +214,15 @@ export class KaleidescapeSettings extends LitElement {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 20px;
       }
+      .purchase-summary {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px 16px;
+      }
+      .purchase-summary dd {
+        margin: 0;
+        text-align: end;
+      }
       .version-grid dt {
         color: var(--muted);
         font-size: 12px;
@@ -321,15 +315,18 @@ export class KaleidescapeSettings extends LitElement {
   private tab: SettingsSection = "general";
   private search = "";
   private automationBusy = false;
-  private personalPreferences?: PreferenceStore;
-  private personalReady = false;
-  private personalError = "";
   private generation = 0;
   private flow?: OptionsForm;
   private draft: Record<string, string | number | boolean | string[]> = {};
   private initial: Record<string, string | number | boolean | string[]> = {};
   private collectionChoices: string[] = [];
   private hiddenCollections: string[] = [];
+  private savedHiddenCollections: string[] = [];
+  private savingCollections = false;
+  private libraryInfo?: LibraryInfo;
+  private purchaseTotals?: LibraryPurchaseTotals;
+  private purchaseLoading = false;
+  private purchaseError = "";
   private sharedPreferences?: PreferenceStore;
   private sharedReady = false;
   private sharedError = "";
@@ -384,13 +381,15 @@ export class KaleidescapeSettings extends LitElement {
   }
   private cancelFlow() {
     this.search = "";
-    this.personalPreferences?.dispose();
-    this.personalPreferences = undefined;
-    this.personalReady = false;
-    this.personalError = "";
     this.sharedPreferences?.dispose();
     this.sharedPreferences = undefined;
     this.hiddenCollections = [];
+    this.savedHiddenCollections = [];
+    this.savingCollections = false;
+    this.libraryInfo = undefined;
+    this.purchaseTotals = undefined;
+    this.purchaseLoading = false;
+    this.purchaseError = "";
     this.sharedReady = false;
     this.sharedError = "";
     this.generation++;
@@ -402,13 +401,13 @@ export class KaleidescapeSettings extends LitElement {
   private fail(error: unknown) {
     this.error = errorMessage(error);
     if (errorCode(error) === "unauthorized") {
-      this.personalPreferences?.dispose();
-      this.personalPreferences = undefined;
-      this.personalReady = false;
       this.sharedPreferences?.dispose();
       this.sharedPreferences = undefined;
       this.sharedReady = false;
       this.hiddenCollections = [];
+      this.savedHiddenCollections = [];
+      this.libraryInfo = undefined;
+      this.purchaseTotals = undefined;
       this.flow = undefined;
       this.draft = {};
       this.initial = {};
@@ -460,11 +459,14 @@ export class KaleidescapeSettings extends LitElement {
       const shared = await this.sharedPreferences.load();
       if (generation !== this.generation) return;
       this.hiddenCollections = [...(shared.hidden_collections as string[])];
+      this.savedHiddenCollections = [...this.hiddenCollections];
       this.sharedReady = true;
       if (scope.library_enabled) {
         const library = await client.libraryInfo(scope);
-        if (generation === this.generation)
+        if (generation === this.generation) {
+          this.libraryInfo = library;
           this.collectionChoices = library.collection_names ?? [];
+        }
       }
     } catch (error) {
       if (generation === this.generation) this.fail(error);
@@ -488,6 +490,7 @@ export class KaleidescapeSettings extends LitElement {
     );
     if (
       this.saving ||
+      this.savingCollections ||
       this.automationBusy ||
       (dashboard && !dashboard.confirmNavigation()) ||
       (exporting && !exporting.confirmNavigation()) ||
@@ -499,14 +502,19 @@ export class KaleidescapeSettings extends LitElement {
         "The settings save may already have committed. Leave this view and inspect saved values before making another change?",
       );
     return (
-      !changedSettings(this.draft, this.initial).length ||
+      (!changedSettings(this.draft, this.initial).length &&
+        !this.collectionsDirty) ||
       window.confirm("Discard your unsaved settings changes?")
     );
   }
   private busy() {
     this.dispatchEvent(
       new CustomEvent("settings-busy", {
-        detail: this.saving || this.dashboardBusy || this.automationBusy,
+        detail:
+          this.saving ||
+          this.savingCollections ||
+          this.dashboardBusy ||
+          this.automationBusy,
         bubbles: true,
         composed: true,
       }),
@@ -527,6 +535,8 @@ export class KaleidescapeSettings extends LitElement {
       !this.scope ||
       !this.flow?.flow_id ||
       this.saving ||
+      this.savingCollections ||
+      this.collectionsDirty ||
       this.uncertain ||
       this.dashboardBusy ||
       this.automationBusy ||
@@ -620,43 +630,9 @@ export class KaleidescapeSettings extends LitElement {
       }
     }
   }
-  private async selectTab(tab: string) {
+  private selectTab(tab: string) {
     if (!SETTINGS_SECTIONS.some(([key]) => key === tab)) return;
     this.tab = tab as SettingsSection;
-    this.requestUpdate();
-    if (
-      tab !== "general" ||
-      this.personalPreferences ||
-      !this.client ||
-      !this.scope
-    )
-      return;
-    const generation = this.generation;
-    this.personalPreferences = new PreferenceStore(
-      this.client,
-      this.scope,
-      false,
-      (error) => {
-        if (generation !== this.generation) return;
-        if (error && errorCode(error) === "unauthorized") this.fail(error);
-        else {
-          this.personalError = error ? errorMessage(error) : "";
-          this.requestUpdate();
-        }
-      },
-      "search",
-    );
-    try {
-      await this.personalPreferences.load();
-      if (generation !== this.generation) return;
-      this.personalReady = true;
-    } catch (error) {
-      if (generation !== this.generation) return;
-      this.personalError = errorMessage(error);
-      this.personalPreferences?.dispose();
-      this.personalPreferences = undefined;
-      if (errorCode(error) === "unauthorized") this.fail(error);
-    }
     this.requestUpdate();
   }
   private tabKey(event: KeyboardEvent, current: string) {
@@ -835,6 +811,7 @@ export class KaleidescapeSettings extends LitElement {
             id="default_landing_page"
             aria-describedby="default_landing_page-hint"
             .value=${String(this.draft.default_landing_page ?? "journal")}
+            @input=${(event: Event) => this.change("default_landing_page", (event.target as HTMLSelectElement).value)}
             @change=${(event: Event) => this.change("default_landing_page", (event.target as HTMLSelectElement).value)}
           >
             ${[
@@ -856,25 +833,18 @@ export class KaleidescapeSettings extends LitElement {
         </div>
       </div>
       <div class="settings-card">
-        ${this.heading("Search & display", "Your preferences are separate from the household configuration.", "Your account · saves immediately")}
+        ${this.heading("Search & display", "Choose how searches work for everyone.")}
         <div class="switch-row">
-          ${settingLabel("personal_fuzzy_search", "Fuzzy search across all views", "Allow close spelling matches when searching. Turn off for case-insensitive partial matching. This preference saves immediately for your account and current screen-size profile.")}<input
+          ${settingLabel("fuzzy_search", "Fuzzy search across all views", "Allow close spelling matches when searching. Turn off for case-insensitive partial matching. This setting applies to everyone and is saved with the other shared settings.")}<input
             type="checkbox"
             role="switch"
-            name="personal_fuzzy_search"
-            id="personal_fuzzy_search"
-            aria-describedby="personal_fuzzy_search-hint"
-            .checked=${this.personalPreferences?.values.fuzzy_search !== false}
-            ?disabled=${!this.personalReady || this.blocked}
-            @change=${(event: Event) => {
-              this.personalPreferences?.set({
-                fuzzy_search: (event.target as HTMLInputElement).checked,
-              });
-              this.requestUpdate();
-            }}
+            name="fuzzy_search"
+            id="fuzzy_search"
+            aria-describedby="fuzzy_search-hint"
+            .checked=${this.draft.fuzzy_search !== false}
+            @change=${(event: Event) => this.change("fuzzy_search", (event.target as HTMLInputElement).checked)}
           />
         </div>
-        ${this.personalError ? html`<p class="error" role="alert">${this.personalError}<button type="button" @click=${() => this.personalPreferences?.retry()}>Retry personal settings</button></p>` : nothing}
         <details class="setting-help">
           <summary>Where do I change layouts and badges?</summary>
           <p>
@@ -976,7 +946,7 @@ export class KaleidescapeSettings extends LitElement {
           : nothing
       }
       <div class="settings-card">
-        ${this.heading("Collection visibility", "Hide collection names in shared Library labels and filters. Movies and status remain visible.", "Shared · saves immediately")}${this.renderCollections()}
+        ${this.heading("Collection visibility", "Hide collection names in shared Library labels and filters. Movies and status remain visible.", "Shared · save visibility")}${this.renderCollections()}
       </div>`;
   }
   private renderPlayback() {
@@ -1022,7 +992,7 @@ export class KaleidescapeSettings extends LitElement {
       .scope=${this.scope}
       .draft=${this.draft}
       .disabled=${this.blocked}
-      .actionsDisabled=${this.blocked || this.dirtyKeys.length > 0}
+      .actionsDisabled=${this.blocked || this.collectionsDirty || this.dirtyKeys.length > 0}
       .credentialConfigured=${!!this.flow?.credential_configured}
       @metadata-settings=${(event: CustomEvent<SettingsDraft>) => {
         this.draft = { ...this.draft, ...event.detail };
@@ -1138,7 +1108,7 @@ export class KaleidescapeSettings extends LitElement {
         ${this.heading("Existing viewing history", "Export previous completions or inspect calendar jobs using saved settings.", "Runs when requested")}<kaleidescape-calendar-export
           .client=${this.client}
           .scope=${this.scope}
-          .disabled=${this.blocked || this.dirtyKeys.length > 0}
+          .disabled=${this.blocked || this.collectionsDirty || this.dirtyKeys.length > 0}
         ></kaleidescape-calendar-export>
       </div>`;
   }
@@ -1153,7 +1123,7 @@ export class KaleidescapeSettings extends LitElement {
         <kaleidescape-settings-transfer
           .client=${this.client}
           .scope=${this.scope}
-          .disabled=${this.blocked || this.loading}
+          .disabled=${this.blocked || this.loading || this.collectionsDirty || this.savingCollections}
           @settings-imported=${(event: CustomEvent<SettingsDraft>) => {
             this.draft = { ...this.draft, ...event.detail };
             this.requestUpdate();
@@ -1167,7 +1137,7 @@ export class KaleidescapeSettings extends LitElement {
             ? html`<kaleidescape-metadata-repair
                 .client=${this.client}
                 .scope=${this.scope}
-                .disabled=${this.blocked || this.dirtyKeys.length > 0}
+                .disabled=${this.blocked || this.collectionsDirty || this.dirtyKeys.length > 0}
               ></kaleidescape-metadata-repair>`
             : html`<p>Enable and save Library sync to use metadata repair.</p>
                 ${this.shortcut("library", "Open Library settings")}`
@@ -1178,7 +1148,7 @@ export class KaleidescapeSettings extends LitElement {
         <kaleidescape-test-dashboard
           .client=${this.client}
           .scope=${this.scope}
-          .disabled=${this.blocked || this.dirtyKeys.length > 0}
+          .disabled=${this.blocked || this.collectionsDirty || this.dirtyKeys.length > 0}
           @dashboard-busy=${(event: CustomEvent<boolean>) => {
             if (this.dashboardBusy !== event.detail) {
               this.dashboardBusy = event.detail;
@@ -1199,6 +1169,94 @@ export class KaleidescapeSettings extends LitElement {
         </button>
       </div>`;
   }
+  private async loadPurchaseTotals() {
+    if (
+      !this.client ||
+      !this.scope?.library_enabled ||
+      !this.scope.permissions.edit ||
+      this.purchaseLoading
+    )
+      return;
+    const generation = this.generation;
+    this.purchaseLoading = true;
+    this.purchaseError = "";
+    this.requestUpdate();
+    try {
+      const result = await this.client.libraryPurchaseTotals(this.scope);
+      if (generation === this.generation) this.purchaseTotals = result;
+    } catch (error) {
+      if (generation === this.generation) {
+        this.purchaseError = errorMessage(error);
+        if (errorCode(error) === "unauthorized") this.fail(error);
+      }
+    } finally {
+      if (generation === this.generation) {
+        this.purchaseLoading = false;
+        this.requestUpdate();
+      }
+    }
+  }
+  private purchaseAmount(field: "library_cost" | "retail_price" | "savings") {
+    if (!this.purchaseTotals)
+      return this.purchaseError ? "Unavailable" : "Loading…";
+    if (!this.purchaseTotals.purchase_count) return "No recorded purchases";
+    return (
+      this.purchaseTotals.currencies
+        .map((row) => row[field])
+        .filter((value) => value !== null)
+        .join(" · ") || "Not available"
+    );
+  }
+  private date(value: string | null | undefined) {
+    return value
+      ? new Date(value).toLocaleString(undefined, {
+          dateStyle: "medium",
+          timeStyle: "short",
+        })
+      : "Not yet synced";
+  }
+  private renderPurchaseDetails() {
+    const totals = this.purchaseTotals;
+    return html`<details
+      class="purchase-details"
+      @toggle=${(event: Event) => {
+        if ((event.target as HTMLDetailsElement).open)
+          void this.loadPurchaseTotals();
+      }}
+    >
+      <summary>Purchase details</summary>
+      <p class="muted">
+        Recorded purchases for this Library source include older orders and
+        unavailable titles. Unlinked purchases are excluded until matched.
+        Filters do not change these totals. Currencies are kept separate.
+      </p>
+      ${this.purchaseLoading ? html`<p role="status">Loading purchase totals…</p>` : nothing}
+      ${this.purchaseError ? html`<p class="error" role="alert">${this.purchaseError} <button @click=${() => this.loadPurchaseTotals()}>Retry purchase totals</button></p>` : nothing}
+      ${
+        totals
+          ? html`<dl class="purchase-summary">
+                <dt>Total library cost</dt>
+                <dd>${this.purchaseAmount("library_cost")}</dd>
+                <dt>Total retail price</dt>
+                <dd>${this.purchaseAmount("retail_price")}</dd>
+                <dt>Savings</dt>
+                <dd>${this.purchaseAmount("savings")}</dd>
+                <dt>Unique transactions</dt>
+                <dd>${totals.unique_transactions}</dd>
+              </dl>
+              <p class="muted">
+                ${counted(totals.purchase_count, "purchase record")}. Missing
+                prices are excluded. Savings use records with both prices in the
+                same currency.
+              </p>
+              ${totals.missing_purchase_prices || totals.missing_retail_prices ? html`<p class="muted">${counted(totals.missing_purchase_prices, "missing paid price")} · ${counted(totals.missing_retail_prices, "missing retail price")}.</p>` : nothing}
+              ${totals.unpaired_prices ? html`<p class="muted">${counted(totals.unpaired_prices, "purchase record")} excluded from savings because prices are missing or use different currencies.</p>` : nothing}
+              ${totals.missing_order_ids ? html`<p class="muted">${counted(totals.missing_order_ids, "purchase record")} without an order ID; not included in the transaction count.</p>` : nothing}
+              ${totals.duplicate_purchases ? html`<p class="muted">${counted(totals.duplicate_purchases, "duplicate purchase record")} counted only once.</p>` : nothing}`
+          : nothing
+      }
+    </details>`;
+  }
   private renderAbout() {
     return html`<div class="settings-card">
         ${this.heading("Installed versions", "Version information for troubleshooting this installation.", "Read only")}
@@ -1217,6 +1275,37 @@ export class KaleidescapeSettings extends LitElement {
           )}
         </dl>
       </div>
+      ${
+        this.scope?.library_enabled
+          ? html`<div class="settings-card">
+                ${this.heading("Library details", "Information from the last Library scan.", "Read only")}
+                ${
+                  this.libraryInfo
+                    ? html`<p>
+                          ${counted(this.libraryInfo.group_count, "movie")} ·
+                          ${counted(this.libraryInfo.title_count, "individual version")}
+                          ·
+                          ${counted(this.libraryInfo.collection_count, "collection")}.
+                        </p>
+                        <p>
+                          Catalog synced:
+                          ${this.date(this.libraryInfo.last_synced_at)}<br />Collections
+                          synced:
+                          ${this.date(this.libraryInfo.collections_synced_at)}
+                        </p>
+                        <p>
+                          Source “New”, “Played” and “Paused” map to Unwatched,
+                          Watched and In progress.
+                        </p>`
+                    : html`<p>Library details are unavailable.</p>`
+                }
+              </div>
+              <div class="settings-card">
+                ${this.heading("Purchase details", "Recorded purchases for this Library source.", "Read only")}
+                ${this.renderPurchaseDetails()}
+              </div>`
+          : nothing
+      }
       <div class="settings-card">
         ${this.heading("Documentation & updates", "Find current guidance and the history of changes.", "Reference")}
         <div class="reference-links">
@@ -1292,7 +1381,7 @@ export class KaleidescapeSettings extends LitElement {
         <div class="actions">
           <button
             type="button"
-            ?disabled=${this.saving || this.loading || this.automationBusy || this.dashboardBusy || (!dirty.length && !this.uncertain)}
+            ?disabled=${this.saving || this.savingCollections || this.loading || this.automationBusy || this.dashboardBusy || (!dirty.length && !this.collectionsDirty && !this.uncertain)}
             @click=${this.reload}
           >
             Cancel changes</button
@@ -1300,13 +1389,14 @@ export class KaleidescapeSettings extends LitElement {
             type="button"
             class="primary"
             @click=${this.submitForm}
-            ?disabled=${!ready || this.blocked || this.loading || this.dashboardBusy || this.automationBusy || !dirty.length}
+            ?disabled=${!ready || this.blocked || this.loading || this.dashboardBusy || this.automationBusy || this.savingCollections || this.collectionsDirty || !dirty.length}
           >
             ${this.saving ? "Saving…" : "Save settings"}
           </button>
         </div>
       </div>
       ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
+      ${this.collectionsDirty ? html`<p class="settings-note" role="status">Save or discard Collection visibility changes before saving other settings.</p>` : nothing}
       ${this.uncertain ? html`<p class="warning">The save result is unconfirmed. Reload settings to inspect the saved values before making another change.</p>` : nothing}
       ${
         ready
@@ -1468,12 +1558,12 @@ export class KaleidescapeSettings extends LitElement {
     const choices = [...new Set([...this.collectionChoices, ...selected])].sort(
       (a, b) => a.localeCompare(b),
     );
-    return html`<fieldset class="full">
+    return html`<fieldset class="full" ?disabled=${this.savingCollections}>
       <legend>
         Hidden collection names
-        ${settingHint("Hidden collection names", "Selected names are hidden from shared Library labels and filters. Movies remain visible and source collections still determine status. Changes save immediately and do not modify device collections.")}
+        ${settingHint("Hidden collection names", "Selected names are hidden from Library labels, filters, and collection management. Movies remain visible and source collections still determine status. Save visibility to apply changes; this does not modify device collections.")}
       </legend>
-      ${this.sharedError ? html`<p class="error" role="alert">${this.sharedError}<button type="button" @click=${() => this.sharedPreferences?.retry()}>Retry UI settings</button></p>` : nothing}
+      ${this.sharedError ? html`<p class="error" role="alert">${this.sharedError} Save could not be confirmed. Retry Save visibility or reload settings to inspect the saved values.</p>` : nothing}
       <div class="facet-options">
         ${choices.map(
           (name) =>
@@ -1489,9 +1579,6 @@ export class KaleidescapeSettings extends LitElement {
                     .checked
                     ? [...selected, name]
                     : selected.filter((value) => value !== name);
-                  this.sharedPreferences?.set({
-                    hidden_collections: this.hiddenCollections,
-                  });
                   this.requestUpdate();
                 }}
               />${collectionLabel(name)}</label
@@ -1523,9 +1610,6 @@ export class KaleidescapeSettings extends LitElement {
               )
             ) {
               this.hiddenCollections = [...selected, name];
-              this.sharedPreferences?.set({
-                hidden_collections: this.hiddenCollections,
-              });
             }
             this.customCollection = "";
             this.requestUpdate();
@@ -1534,7 +1618,54 @@ export class KaleidescapeSettings extends LitElement {
           Add hidden name
         </button>
       </div>
+      <div class="actions field-actions">
+        <button
+          type="button"
+          ?disabled=${!this.collectionsDirty || this.savingCollections}
+          @click=${this.saveCollections}
+        >
+          ${this.savingCollections ? "Saving…" : "Save visibility"}
+        </button>
+        <button
+          type="button"
+          ?disabled=${!this.collectionsDirty || this.savingCollections}
+          @click=${() => {
+            this.hiddenCollections = [...this.savedHiddenCollections];
+            this.sharedError = "";
+            this.requestUpdate();
+          }}
+        >
+          Discard changes
+        </button>
+      </div>
     </fieldset>`;
+  }
+  private get collectionsDirty() {
+    return (
+      JSON.stringify([...this.hiddenCollections].sort()) !==
+      JSON.stringify([...this.savedHiddenCollections].sort())
+    );
+  }
+  private async saveCollections() {
+    if (
+      !this.sharedPreferences ||
+      !this.collectionsDirty ||
+      this.savingCollections
+    )
+      return;
+    const generation = this.generation;
+    const values = [...this.hiddenCollections];
+    this.savingCollections = true;
+    this.busy();
+    this.requestUpdate();
+    const saved = await this.sharedPreferences.set({
+      hidden_collections: values,
+    });
+    if (generation !== this.generation) return;
+    if (saved) this.savedHiddenCollections = values;
+    this.savingCollections = false;
+    this.busy();
+    this.requestUpdate();
   }
 }
 if (!customElements.get("kaleidescape-settings"))

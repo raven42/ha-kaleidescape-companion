@@ -298,10 +298,11 @@ it.each(["kaleidescape-panel", "kaleidescape-reader"])(
     await vi.waitFor(() =>
       expect(month.shadowRoot!.textContent).toContain("November 2026"),
     );
-    const options = root.querySelector("kaleidescape-journal-options")!;
-    options.dispatchEvent(
-      new CustomEvent("journal-status", { detail: "partial" }),
-    );
+    const status = root.querySelector<HTMLSelectElement>(
+      "[name=filter_status]",
+    )!;
+    status.value = "partial";
+    status.dispatchEvent(new Event("change"));
     await vi.waitFor(() =>
       expect(
         root.querySelector<HTMLInputElement>('input[name="search"]')!.disabled,

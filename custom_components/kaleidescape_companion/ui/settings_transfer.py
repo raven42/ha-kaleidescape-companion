@@ -31,6 +31,7 @@ CATEGORIES = {
         "metadata_requests_per_second",
         *SOURCE_DEFAULTS,
         "default_landing_page",
+        "fuzzy_search",
         "calendar_enabled",
         "calendar_full_sync",
         "calendar_full_sync_months",

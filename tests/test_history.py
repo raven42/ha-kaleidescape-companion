@@ -52,6 +52,18 @@ class HouseholdReadTest(unittest.IsolatedAsyncioTestCase):
             (await self.call("journal/list", user=user, **scope))["code"], "not_found"
         )
 
+    async def test_shared_search_is_readable_but_only_admin_can_configure_it(self):
+        reader = SimpleNamespace(id="reader", is_active=True, is_admin=False)
+        object.__setattr__(
+            self.entry, "data", {**self.entry.data, "fuzzy_search": False}
+        )
+        info = (await self.call("info", user=reader))["result"]["entries"][0]
+        self.assertIs(info["ui_defaults"]["fuzzy_search"], False)
+        self.assertEqual(
+            (await self.call("settings/start", user=reader, **self.scope))["code"],
+            "unauthorized",
+        )
+
     async def test_regular_user_reads_safe_records_but_cannot_manage(self):
         record = (await self.create())["result"]["viewing"]
         user = SimpleNamespace(id="reader", is_active=True, is_admin=False)

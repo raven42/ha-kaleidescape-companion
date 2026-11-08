@@ -1,7 +1,6 @@
 import { setUnifiedMovieDialog } from "../src/ui/movie-dialog-mode";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../src/ui/panel";
-import type { JournalOptions } from "../src/ui/journal-options";
 import type { KaleidescapeReader } from "../src/ui/reader";
 import type { KaleidescapePanel } from "../src/ui/panel";
 import type { ApiMessage, Hass } from "../src/core/api";
@@ -84,10 +83,7 @@ it("filters titles and status and sends bounded page requests", async () => {
   )!;
   input.value = "Quiet";
   input.dispatchEvent(new Event("input"));
-  const options = reader.shadowRoot!.querySelector<JournalOptions>(
-    "kaleidescape-journal-options",
-  )!;
-  const select = options.shadowRoot!.querySelector<HTMLSelectElement>(
+  const select = reader.shadowRoot!.querySelector<HTMLSelectElement>(
     "[name=filter_status]",
   )!;
   select.value = "partial";
@@ -358,5 +354,5 @@ it("shows one compact basic footer without database health information", async (
   expect(
     root.querySelector(".journal-filters kaleidescape-journal-options"),
   ).not.toBeNull();
-  expect(root.querySelector("[name=filter_status]")).toBeNull();
+  expect(root.querySelector("[name=filter_status]")).not.toBeNull();
 });

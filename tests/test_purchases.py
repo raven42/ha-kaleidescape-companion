@@ -304,7 +304,12 @@ class PurchaseParserTest(unittest.TestCase):
             validate_library,
         )
 
-        self.assertEqual(validate({}, {}), {"default_landing_page": "journal"})
+        self.assertEqual(
+            validate({}, {}), {"default_landing_page": "library", "fuzzy_search": True}
+        )
+        self.assertFalse(validate({"fuzzy_search": False}, {})["fuzzy_search"])
+        with self.assertRaises(ValueError):
+            validate({"fuzzy_search": "false"}, {})
         self.assertEqual(validate_library({})["page_size"], 100)
         for value in (0, 50, 1001, True, "100", 1.5, None):
             with self.assertRaises(JournalError):

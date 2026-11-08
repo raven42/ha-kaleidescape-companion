@@ -287,7 +287,7 @@ it("routes compact calendar Options and Add viewing to the shared dialogs", asyn
     "kaleidescape-journal-options",
   )!.shadowRoot!;
   expect(options.querySelector("dialog")!.open).toBe(true);
-  expect(options.textContent).toContain("Refresh Journal");
+  expect(options.textContent).not.toContain("Refresh Journal");
   modalClose(options).click();
   shortcuts
     .querySelector<HTMLButtonElement>('[aria-label="Add viewing"]')!

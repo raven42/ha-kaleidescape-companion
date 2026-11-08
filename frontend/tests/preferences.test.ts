@@ -145,6 +145,10 @@ it("saves display defaults and hidden known/custom collections as a value list",
   custom.dispatchEvent(new Event("input"));
   button(root, "Add hidden name").click();
   await flush();
+  expect(
+    transport.calls.some((call) => call.type.endsWith("/ui/shared/update")),
+  ).toBe(false);
+  button(root, "Save visibility").click();
   await flush();
   expect(
     transport.calls
@@ -156,6 +160,54 @@ it("saves display defaults and hidden known/custom collections as a value list",
   expect(
     transport.calls.some((call) => call.type.endsWith("/settings/submit")),
   ).toBe(false);
+});
+
+it("retains a failed collection-visibility draft for explicit retry or discard", async () => {
+  transport.options.library_enabled = true;
+  const settings = document.createElement(
+    "kaleidescape-settings",
+  ) as KaleidescapeSettings;
+  const client = transport.client();
+  const save = client.saveUIPreferences.bind(client);
+  vi.spyOn(client, "saveUIPreferences")
+    .mockRejectedValueOnce(new Error("Test save failed"))
+    .mockImplementation(save);
+  settings.client = client;
+  settings.scope = { ...info, library_enabled: true };
+  element = settings;
+  document.body.append(settings);
+  await vi.waitFor(() =>
+    expect(settings.shadowRoot!.textContent).toContain("Science Fiction"),
+  );
+  const root = settings.shadowRoot!;
+  const known = [
+    ...root.querySelectorAll<HTMLInputElement>(
+      '[name="library_excluded_collections"]',
+    ),
+  ].find((input) => input.value === "Science Fiction")!;
+  known.click();
+  await flush();
+  expect(transport.sharedPreferences.hidden_collections).toEqual([]);
+  button(root, "Save visibility").click();
+  await vi.waitFor(() =>
+    expect(root.textContent).toContain("Save could not be confirmed"),
+  );
+  expect(known.checked).toBe(true);
+  expect(transport.sharedPreferences.hidden_collections).toEqual([]);
+  button(root, "Save visibility").click();
+  await vi.waitFor(() =>
+    expect(transport.sharedPreferences.hidden_collections).toEqual([
+      "Science Fiction",
+    ]),
+  );
+  known.click();
+  await flush();
+  button(root, "Discard changes").click();
+  await flush();
+  expect(known.checked).toBe(true);
+  expect(transport.sharedPreferences.hidden_collections).toEqual([
+    "Science Fiction",
+  ]);
 });
 
 it("keeps shared preference controls unavailable until their saved values load", async () => {

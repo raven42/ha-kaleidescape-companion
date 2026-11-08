@@ -307,7 +307,7 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             (await self.repository.async_ui_preferences("a", area="journal"))["values"],
             {
-                "view": "list",
+                "view": "calendar",
                 "calendar_size": 180,
                 "calendar_fit": False,
                 "movie_details": "full",
@@ -343,7 +343,7 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             (await self.repository.async_ui_preferences("b", area="journal"))["values"],
             {
-                "view": "list",
+                "view": "calendar",
                 "calendar_size": 180,
                 "calendar_fit": False,
                 "movie_details": "full",

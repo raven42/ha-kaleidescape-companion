@@ -1,8 +1,8 @@
 import { responsivePreferences } from "./profile-controller";
-/** Personal Journal layout and global search options for both household roles. */
+/** Personal Journal layout options for both household roles. */
 import { LitElement, css, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
-import type { JournalClient, Scope } from "../core/api";
+import type { JournalClient, JournalInfo } from "../core/api";
 import { errorCode, errorMessage } from "../core/api";
 import { PreferenceStore } from "./preference-store";
 import { styles } from "./styles";
@@ -23,7 +23,6 @@ export class JournalOptions extends LitElement {
     responsivePreferences(this, () => {
       if (
         !this.ready ||
-        this.store?.unsettled ||
         this.viewStore?.unsettled ||
         this.disabled ||
         this.renderRoot.querySelector("dialog[open]")
@@ -38,7 +37,6 @@ export class JournalOptions extends LitElement {
     client: { attribute: false },
     scope: { attribute: false },
     disabled: { type: Boolean },
-    status: { type: String },
     mobileCompact: { type: Boolean },
   };
   static styles = [
@@ -52,11 +50,9 @@ export class JournalOptions extends LitElement {
     `,
   ];
   client?: JournalClient;
-  scope?: Scope;
+  scope?: JournalInfo;
   disabled = false;
-  status = "";
   mobileCompact = false;
-  private store?: PreferenceStore;
   private viewStore?: PreferenceStore;
   private view: "list" | "calendar" = "list";
   private calendarSize = 180;
@@ -81,7 +77,14 @@ export class JournalOptions extends LitElement {
   protected willUpdate(changed: PropertyValues) {
     if (!changed.has("client") && !changed.has("scope")) return;
     const key = `${this.scope?.entry_id}:${this.scope?.dataset_id}`;
-    if (key === this.bound && this.client === this.boundClient) return;
+    if (key === this.bound && this.client === this.boundClient) {
+      const fuzzy = this.scope?.ui_defaults?.fuzzy_search !== false;
+      if (this.ready && this.fuzzy !== fuzzy) {
+        this.fuzzy = fuzzy;
+        this.notify();
+      }
+      return;
+    }
     this.clear();
     this.bound = key;
     this.boundClient = this.client;
@@ -89,8 +92,6 @@ export class JournalOptions extends LitElement {
   }
   private clear() {
     this.generation++;
-    this.store?.dispose();
-    this.store = undefined;
     this.viewStore?.dispose();
     this.viewStore = undefined;
     this.view = "list";
@@ -130,21 +131,6 @@ export class JournalOptions extends LitElement {
   private async load() {
     if (!this.client || !this.scope) return;
     const generation = ++this.generation;
-    this.store?.dispose();
-    this.store = new PreferenceStore(
-      this.client,
-      this.scope,
-      false,
-      (error) => {
-        if (generation !== this.generation) return;
-        if (error) this.fail(error);
-        else {
-          this.error = "";
-          this.requestUpdate();
-        }
-      },
-      "search",
-    );
     this.viewStore?.dispose();
     this.viewStore = new PreferenceStore(
       this.client,
@@ -161,12 +147,9 @@ export class JournalOptions extends LitElement {
       "journal",
     );
     try {
-      const [values, journal] = await Promise.all([
-        this.store.load(),
-        this.viewStore.load(),
-      ]);
+      const journal = await this.viewStore.load();
       if (generation !== this.generation) return;
-      this.fuzzy = values.fuzzy_search as boolean;
+      this.fuzzy = this.scope.ui_defaults?.fuzzy_search !== false;
       this.view = journal.view as "list" | "calendar";
       this.calendarSize = journal.calendar_size as number;
       this.calendarFit = journal.calendar_fit as boolean;
@@ -183,7 +166,6 @@ export class JournalOptions extends LitElement {
   }
   private retry() {
     if (!this.ready) return this.load();
-    this.store?.retry();
     this.viewStore?.retry();
   }
   open() {
@@ -212,45 +194,6 @@ export class JournalOptions extends LitElement {
         <p>
           Changes save automatically for your HA user’s
           ${this.viewStore?.profile} layout.
-        </p>
-        <label
-          >Status<select
-            name="filter_status"
-            .value=${this.status}
-            @change=${(event: Event) => {
-              this.status = (event.target as HTMLSelectElement).value;
-              this.dispatchEvent(
-                new CustomEvent("journal-status", {
-                  detail: this.status,
-                  bubbles: true,
-                  composed: true,
-                }),
-              );
-            }}
-          >
-            <option value="">All</option>
-            <option value="partial">Partial</option>
-            <option value="completed">Completed</option>
-          </select></label
-        >
-        <label class="check"
-          ><input
-            name="journal_fuzzy_search"
-            type="checkbox"
-            .checked=${this.fuzzy}
-            @change=${(event: Event) => {
-              this.fuzzy = (event.target as HTMLInputElement).checked;
-              this.store?.set({ fuzzy_search: this.fuzzy });
-              this.notify();
-              this.requestUpdate();
-            }}
-          />Fuzzy search</label
-        >
-        <p class="muted">
-          Applies across all views for your HA user, including Library search
-          and Movie from Library completion. Off matches literal text, ignoring
-          case. On also tolerates small spelling mistakes and word order
-          differences.
         </p>
         <label
           >Movie details<select
@@ -335,15 +278,6 @@ export class JournalOptions extends LitElement {
               `
             : nothing
         }
-        <div class="dialog-footer">
-          <button
-            type="button"
-            ?disabled=${this.disabled}
-            @click=${() => this.dispatchEvent(new CustomEvent("journal-refresh", { bubbles: true, composed: true }))}
-          >
-            Refresh Journal
-          </button>
-        </div>
       </dialog>`;
   }
 }

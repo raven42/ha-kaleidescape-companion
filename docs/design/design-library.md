@@ -36,15 +36,16 @@ It is a firmware-dependent HTML interface, not a promised public JSON API.
 | Collections and watched status | On      | Cache available collections and exact title memberships                                                            |
 | Movie details and credits      | On      | Fetch available cast/director/writer/studio, genres, synopsis, and runtime                                         |
 | Cover artwork                  | Off     | Fetch validated covers into the private cache; can require detail-page requests even with detail metadata disabled |
-| Default landing page (General) | Journal | Used without an allowed URL tab; reader/disabled pages fall back                                                   |
+| Default landing page (General) | Library | Used without an allowed URL tab; reader/disabled pages fall back                                                   |
 | Artwork storage limit          | 512 MiB | 32–4096 MiB, separate from the database; older covers are evicted when full                                        |
 
-Library view/count, sort, cover size and column widths are
+Library defaults to Covers for new profiles. View/count, sort, cover size and
+column widths are
 [personal database preferences](design-user-interface.md#personal-and-shared-preferences),
 saved when changed. Search and applied filters are temporary panel URL state;
 old saved filters are not restored. Hidden collection names are shared database
-preferences in Settings, also saved immediately without reloading HA. The
-default landing page remains native.
+preferences in Settings, applied with **Save visibility** without reloading HA.
+The default landing page and fuzzy search are native shared settings.
 
 Basic titles, ratings, directors, genres, years, and edition labels always sync.
 Other fields depend on the source; missing writers/studios remain unavailable.
@@ -125,7 +126,7 @@ merges works.
 
 Search titles, cast, directors, writers, producers or studios using partial
 text. Input debounces for 300 ms; Search/Enter applies immediately. Literal mode
-uses Unicode case folding; the global personal fuzzy-search option additionally
+uses Unicode case folding; the shared fuzzy-search setting additionally
 tolerates bounded word/typo differences, including credits from another
 available version in the same exact source group. Open **Filters** to select
 collection, rating, genre, year, viewing-format and watched-status checkboxes.
@@ -159,8 +160,7 @@ projections. Cached values are private memory only and are discarded on unload;
 edits/imports use their new input values immediately. The two-second search
 budget, source scoping and public-field allowlists still apply. There is no
 additional persistent actor table or search-data migration. Fuzzy search can
-take more work than literal/quoted search, and different users may have
-different saved fuzzy-search choices.
+take more work than literal/quoted search; the setting is shared across users.
 
 List columns are title/formats, year(s), collection, length, watched status, and
 Added on. Fixed-layout columns keep their widths when sorting or filtering. Drag
@@ -466,18 +466,18 @@ reload.
 
 ## Fuzzy search option
 
-**Library → Options → Fuzzy search** saves immediately to the signed-in user's
-global search preferences. The same option appears in Journal Options. It starts
-enabled in the UI and applies to the main title/cast/director search, the
-filter-values search and compatible actor/director suggestion API calls. Turning
-it off requires the entered text to occur continuously, ignoring case; literal
-partial matches still work, and punctuation/wildcard characters remain ordinary
-text. Turning it on also tolerates small word misspellings/transpositions,
-word-order differences and diacritics. Selected facet values remain exact in
-either mode. Mode changes invalidate pending suggestions and refresh results
-from page one, including All/Covers views. Other users are unaffected; Journal
-and manual-viewing pickers use the same saved mode. Direct list/suggestion API
-calls retain a literal default when `fuzzy` is omitted.
+**Settings → General → Fuzzy search** is saved with the shared integration
+configuration and applies to all users and display profiles. It starts enabled
+and applies to the main title/cast/director search, the filter-values search and
+compatible actor/director suggestion API calls. Turning it off requires the
+entered text to occur continuously, ignoring case; literal partial matches still
+work, and punctuation/wildcard characters remain ordinary text. Turning it on
+also tolerates small word misspellings/transpositions, word-order differences
+and diacritics. Selected facet values remain exact in either mode. Mode changes
+invalidate pending suggestions and refresh results from page one, including
+All/Covers views. Journal and manual-viewing pickers use the same shared mode.
+Previously saved personal choices are not applied to the shared setting. Direct
+list/suggestion API calls retain a literal default when `fuzzy` is omitted.
 
 Enclosing the entire search in double quotes requires a case-insensitive,
 whole-word phrase, regardless of the fuzzy toggle. `"Tom Holland"` matches that
@@ -535,12 +535,12 @@ browsing preference, not a credential.
 
 Library Options includes **Show total library cost in footer**, off by default
 and saved immediately in personal Library preferences. Administrators also have
-an expandable **Purchase details** section showing total library cost, total
-retail price, savings and unique transactions. Totals load only when that
-section opens or the footer option is enabled, then refresh with source revision
-changes. Reopening the section refreshes the totals even when a revision has not
-yet changed. Household readers have neither the purchase-display toggle nor
-purchase totals.
+an expandable **Settings → About → Purchase details** section showing total
+library cost, total retail price, savings and unique transactions. Totals load
+only when that section opens or the footer option is enabled, then refresh with
+source revision changes. Reopening the section refreshes the totals even when a
+revision has not yet changed. Household readers have neither the
+purchase-display toggle nor purchase totals.
 
 These are totals of linked purchase records for the configured Library source,
 including invoices linked to unavailable versions. They also include a Library

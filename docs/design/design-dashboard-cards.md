@@ -120,7 +120,7 @@ values match. Separate channels support independent Library groups. Scope is
 also restricted to the same loaded integration entry and dataset. Search does
 not navigate away from the dashboard or change personal Library preferences.
 Unquoted text supports partial names; double quotes use exact word matching.
-Fuzzy-search behavior follows the user's shared search preference.
+Fuzzy-search behavior follows the household's shared search setting.
 
 ```yaml
 type: vertical-stack

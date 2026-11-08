@@ -1,7 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
 import "../src/ui/journal-options";
-import "../src/library/library";
-import type { KaleidescapeLibrary } from "../src/library/library";
 import type { JournalOptions } from "../src/ui/journal-options";
 import { FixtureTransport, info } from "./fixture";
 let element: JournalOptions;
@@ -20,37 +18,19 @@ async function mount(transport: FixtureTransport) {
   );
   return element.shadowRoot!;
 }
-it("saves the global personal search choice and restores it when reopened", async () => {
+it("uses shared search configuration without offering a personal toggle", async () => {
   const transport = new FixtureTransport();
   const root = await mount(transport);
   const changed = vi.fn();
   element.addEventListener("journal-options", changed);
-  root.querySelector<HTMLButtonElement>("button")!.click();
-  expect(root.querySelector("dialog")!.open).toBe(true);
-  root.querySelector<HTMLInputElement>("input")!.click();
+  element.scope = {
+    ...info,
+    ui_defaults: { default_landing_page: "journal", fuzzy_search: false },
+  };
   await element.updateComplete;
-  await vi.waitFor(() =>
-    expect(transport.searchPreferences.fuzzy_search).toBe(false),
-  );
-  expect(transport.uiPreferences).not.toHaveProperty("fuzzy_search");
-  expect(changed.mock.calls[0][0].detail).toEqual({
-    fuzzy_search: false,
-    view: "list",
-    calendar_size: 180,
-    calendar_fit: false,
-    movie_details: "full",
-  });
-  element.remove();
-  const reopened = await mount(transport);
-  expect(reopened.querySelector<HTMLInputElement>("input")!.checked).toBe(
-    false,
-  );
-  expect(
-    transport.calls.some(
-      (call) =>
-        call.type.endsWith("ui/preferences/update") && call.area === "search",
-    ),
-  ).toBe(true);
+  expect(changed.mock.calls.at(-1)?.[0].detail.fuzzy_search).toBe(false);
+  expect(root.querySelector('[name="journal_fuzzy_search"]')).toBeNull();
+  expect(transport.calls.some((call) => call.area === "search")).toBe(false);
 });
 it("ignores late preference reads after unmount", async () => {
   const transport = new FixtureTransport();
@@ -166,57 +146,8 @@ it("saves live calendar sizing and fit options independently for the current use
   expect(transport.searchPreferences).toEqual({ fuzzy_search: true });
 });
 
-it("shares the saved mode in both directions when moving between views", async () => {
-  const transport = new FixtureTransport();
-  const journal = await mount(transport);
-  journal.querySelector<HTMLInputElement>("input")!.click();
-  await vi.waitFor(() =>
-    expect(transport.searchPreferences.fuzzy_search).toBe(false),
-  );
-  element.remove();
-  const library = document.createElement(
-    "kaleidescape-library",
-  ) as KaleidescapeLibrary;
-  library.client = transport.client();
-  library.scope = { ...info, library_enabled: true };
-  document.body.append(library);
-  try {
-    await vi.waitFor(() =>
-      expect(
-        library.shadowRoot!.querySelector<HTMLInputElement>(
-          '[name="library_fuzzy_search"]',
-        )?.checked,
-      ).toBe(false),
-    );
-    library
-      .shadowRoot!.querySelector<HTMLInputElement>(
-        '[name="library_fuzzy_search"]',
-      )!
-      .click();
-    await vi.waitFor(() =>
-      expect(transport.searchPreferences.fuzzy_search).toBe(true),
-    );
-  } finally {
-    library.remove();
-  }
-  const restored = await mount(transport);
-  expect(restored.querySelector<HTMLInputElement>("input")!.checked).toBe(true);
-  const updates = transport.calls.filter(
-    (call) =>
-      call.type.endsWith("ui/preferences/update") &&
-      "fuzzy_search" in (call.patch as Record<string, unknown>),
-  );
-  expect(updates).toHaveLength(2);
-  expect(updates.every((call) => call.area === "search")).toBe(true);
-});
-
-it("offers the status filter inside Options and notifies its host immediately", async () => {
+it("keeps filtering and refresh actions out of view options", async () => {
   const root = await mount(new FixtureTransport());
-  const change = vi.fn();
-  element.addEventListener("journal-status", change);
-  const field = root.querySelector<HTMLSelectElement>("[name=filter_status]")!;
-  expect(field.closest("dialog")).not.toBeNull();
-  field.value = "partial";
-  field.dispatchEvent(new Event("change"));
-  expect(change.mock.calls[0][0].detail).toBe("partial");
+  expect(root.querySelector("[name=filter_status]")).toBeNull();
+  expect(root.textContent).not.toContain("Refresh Journal");
 });

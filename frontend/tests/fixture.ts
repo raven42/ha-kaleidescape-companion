@@ -208,6 +208,7 @@ export class FixtureTransport implements Transport {
     library_enabled: false,
     library_host: "",
     default_landing_page: "journal",
+    fuzzy_search: true,
     library_recent_purchase_weeks: 2,
     library_sync_collections: true,
     library_allow_collection_add: false,
@@ -366,6 +367,7 @@ export class FixtureTransport implements Transport {
             library_enabled: !!this.options.library_enabled,
             ui_defaults: {
               default_landing_page: String(this.options.default_landing_page),
+              fuzzy_search: this.options.fuzzy_search !== false,
             },
           },
         ],

@@ -45,6 +45,12 @@ cannot select another user's preference owner or receipt. Accepted external
 actions cannot be recalled by closing a dialog or revoking access after
 transmission.
 
+The shared fuzzy-search setting is readable by all active household readers in
+the public UI defaults; only administrators can change it through the validated
+native options flow. Previous per-user search preferences remain isolated and
+are ignored by the UI. Library and purchase summaries in Settings remain
+administrator-only, and purchase totals retain their backend authorization.
+
 The administrator settings form returns bounded entity suggestions (at most 500
 media players and 500 sensors, with friendly names capped at 255 characters) and
 a boolean indicating a stored TMDB credential. Suggestions contain entity IDs

@@ -165,7 +165,6 @@ export class KaleidescapeLibrary extends LitElement {
       if (
         !this.preferencesReady ||
         this.preferences?.unsettled ||
-        this.searchPreferences?.unsettled ||
         this.loading ||
         this.detailsLocked ||
         this.resize ||
@@ -206,7 +205,6 @@ export class KaleidescapeLibrary extends LitElement {
   private purchaseLoading = false;
   private purchaseReload = false;
   private purchaseError = "";
-  private purchaseDetailsOpen = false;
   private selected?: LibrarySummary;
   private versions?: LibraryVersionPage;
   private activeVersion?: LibraryTitle;
@@ -294,7 +292,6 @@ export class KaleidescapeLibrary extends LitElement {
   };
   private entriesPerPage: number | "all" = 100;
   private preferences?: PreferenceStore;
-  private searchPreferences?: PreferenceStore;
   private preferencesReady = false;
   private preferenceError = "";
   private searchTimer?: ReturnType<typeof setTimeout>;
@@ -366,6 +363,7 @@ export class KaleidescapeLibrary extends LitElement {
       this.clear();
       this.boundClient = this.client;
       this.bound = key;
+      this.fuzzySearch = this.scope?.ui_defaults?.fuzzy_search !== false;
       if (this.client && this.scope?.library_enabled) {
         if (this.dialogOnly) {
           this.preferencesReady = true;
@@ -413,6 +411,13 @@ export class KaleidescapeLibrary extends LitElement {
       return;
     }
     if (!this.preferencesReady) return;
+    if (changed.has("scope")) {
+      const fuzzy = this.scope?.ui_defaults?.fuzzy_search !== false;
+      if (this.fuzzySearch !== fuzzy) {
+        this.fuzzySearch = fuzzy;
+        void this.load();
+      }
+    }
     if (changed.has("openCriterion") && this.openCriterion)
       this.fromDetails(this.openCriterion.key, this.openCriterion.value);
     if (changed.has("openTitleId") && this.openTitleId)
@@ -434,25 +439,8 @@ export class KaleidescapeLibrary extends LitElement {
         }
       },
     );
-    this.searchPreferences = new PreferenceStore(
-      this.client,
-      this.scope,
-      false,
-      (error) => {
-        if (generation !== this.generation) return;
-        if (error && errorCode(error) === "unauthorized") this.fail(error);
-        else {
-          this.preferenceError = error ? errorMessage(error) : "";
-          this.requestUpdate();
-        }
-      },
-      "search",
-    );
     try {
-      const [saved, search] = await Promise.all([
-        this.preferences.load(),
-        this.searchPreferences.load(),
-      ]);
+      const saved = await this.preferences.load();
       if (generation !== this.generation) return;
       const values = this.dashboard
         ? {
@@ -477,11 +465,9 @@ export class KaleidescapeLibrary extends LitElement {
       if (this.dashboard) {
         this.preferences?.dispose();
         this.preferences = undefined;
-        this.searchPreferences?.dispose();
-        this.searchPreferences = undefined;
         this.coverColumns = this.dashboard.columns;
       }
-      this.fuzzySearch = search.fuzzy_search as boolean;
+      this.fuzzySearch = this.scope.ui_defaults?.fuzzy_search !== false;
       this.mode = values.view as "list" | "covers";
       this.entriesPerPage = values.page_size as number | "all";
       this.coverSize = values.cover_size as number;
@@ -556,7 +542,6 @@ export class KaleidescapeLibrary extends LitElement {
     this.purchaseLoading = false;
     this.purchaseReload = false;
     this.purchaseError = "";
-    this.purchaseDetailsOpen = false;
     if (this.purchaseManagerOpen) this.repairLock(false);
     this.purchaseManagerOpen = false;
     this.purchaseRepairBusy = false;
@@ -566,8 +551,6 @@ export class KaleidescapeLibrary extends LitElement {
     clearTimeout(this.searchTimer);
     this.preferences?.dispose();
     this.preferences = undefined;
-    this.searchPreferences?.dispose();
-    this.searchPreferences = undefined;
     this.preferencesReady = false;
     this.preferenceError = "";
     this.generation++;
@@ -876,8 +859,7 @@ export class KaleidescapeLibrary extends LitElement {
             last_synced_at: info.last_synced_at,
             collections_synced_at: info.collections_synced_at,
           };
-      if (this.display.show_library_cost || this.purchaseDetailsOpen)
-        void this.loadPurchaseTotals();
+      if (this.display.show_library_cost) void this.loadPurchaseTotals();
       if (
         this.page &&
         (this.page.revision !== info.revision ||
@@ -1442,49 +1424,6 @@ export class KaleidescapeLibrary extends LitElement {
         .join(" · ") || "Not available"
     );
   }
-  private renderPurchaseDetails() {
-    if (!this.scope?.permissions.edit) return nothing;
-    const totals = this.purchaseTotals;
-    return html`<details
-      class="purchase-details"
-      @toggle=${(event: Event) => {
-        this.purchaseDetailsOpen = (event.target as HTMLDetailsElement).open;
-        if (this.purchaseDetailsOpen) void this.loadPurchaseTotals(true);
-      }}
-    >
-      <summary>Purchase details</summary>
-      <p class="muted">
-        Recorded purchases for this Library source include older orders and
-        unavailable titles. Unlinked purchases are excluded until matched.
-        Filters do not change these totals. Currencies are kept separate.
-      </p>
-      ${this.purchaseLoading ? html`<p role="status">Loading purchase totals…</p>` : nothing}
-      ${this.purchaseError ? html`<p class="error" role="alert">${this.purchaseError} <button @click=${() => this.loadPurchaseTotals(true)}>Retry purchase totals</button></p>` : nothing}
-      ${
-        totals
-          ? html`<dl class="purchase-summary">
-                <dt>Total library cost</dt>
-                <dd>${this.purchaseAmount("library_cost")}</dd>
-                <dt>Total retail price</dt>
-                <dd>${this.purchaseAmount("retail_price")}</dd>
-                <dt>Savings</dt>
-                <dd>${this.purchaseAmount("savings")}</dd>
-                <dt>Unique transactions</dt>
-                <dd>${totals.unique_transactions}</dd>
-              </dl>
-              <p class="muted">
-                ${counted(totals.purchase_count, "purchase record")}. Missing
-                prices are excluded. Savings use records with both prices in the
-                same currency.
-              </p>
-              ${totals.missing_purchase_prices || totals.missing_retail_prices ? html`<p class="muted">${counted(totals.missing_purchase_prices, "missing paid price")} · ${counted(totals.missing_retail_prices, "missing retail price")}.</p>` : nothing}
-              ${totals.unpaired_prices ? html`<p class="muted">${counted(totals.unpaired_prices, "purchase record")} excluded from savings because prices are missing or use different currencies.</p>` : nothing}
-              ${totals.missing_order_ids ? html`<p class="muted">${counted(totals.missing_order_ids, "purchase record")} without an order ID; not included in the transaction count.</p>` : nothing}
-              ${totals.duplicate_purchases ? html`<p class="muted">${counted(totals.duplicate_purchases, "duplicate purchase record")} counted only once.</p>` : nothing}`
-          : nothing
-      }
-    </details>`;
-  }
   private renderOptionsDialog() {
     return html`<dialog
       id="library-options"
@@ -1509,25 +1448,6 @@ export class KaleidescapeLibrary extends LitElement {
           >
             ${SORTS.map(([key, label]) => html`<option value=${key} ?selected=${key === this.applied.sort}>${label}</option>`)}
           </select></label
-        >
-        <label class="check"
-          ><input
-            type="checkbox"
-            name="library_fuzzy_search"
-            .checked=${this.fuzzySearch}
-            @change=${(event: Event) => {
-              this.fuzzySearch = (event.target as HTMLInputElement).checked;
-              clearTimeout(this.searchTimer);
-              this.applied = { ...this.applied, query: this.filters.query };
-              this.searchPreferences?.set({ fuzzy_search: this.fuzzySearch });
-              void this.load();
-            }}
-          />Fuzzy search</label
-        ><small
-          >Applies across all views for your HA user. Off matches literal text,
-          ignoring case. On also tolerates small spelling mistakes and word
-          order differences. Double quotes require an exact whole-word
-          phrase.</small
         >
         <fieldset class="view-options">
           <legend>View type</legend>
@@ -1649,37 +1569,6 @@ export class KaleidescapeLibrary extends LitElement {
               />${label}</label
             >`,
         )}
-      </div>
-      ${
-        this.info
-          ? html`<details>
-              <summary>Library details</summary>
-              <p>
-                ${counted(this.info.group_count, "movie")} ·
-                ${counted(this.info.title_count, "individual version")} ·
-                ${counted(this.info.collection_count, "collection")}.
-              </p>
-              <p>
-                Catalog synced: ${this.date(this.info.last_synced_at)}<br />Collections
-                synced: ${this.date(this.info.collections_synced_at)}
-              </p>
-              <p>
-                Source “New”, “Played” and “Paused” map to Unwatched, Watched
-                and In progress.
-              </p>
-            </details>`
-          : nothing
-      }
-      ${this.renderPurchaseDetails()}
-      <div class="dialog-footer">
-        <button
-          type="button"
-          ?disabled=${this.loading}
-          @click=${this.refreshCached}
-        >
-          Refresh cached data
-        </button>
-        ${this.scope?.permissions.edit ? html`<button type="button" ?disabled=${this.requesting || (!!this.info?.phase && this.info.phase !== "idle")} @click=${this.sync}>Sync now</button>` : nothing}
       </div>
     </dialog>`;
   }
@@ -2406,7 +2295,6 @@ export class KaleidescapeLibrary extends LitElement {
                 <button
                   @click=${() => {
                     this.preferences?.retry();
-                    this.searchPreferences?.retry();
                   }}
                 >
                   Retry saving preferences
@@ -2564,6 +2452,16 @@ export class KaleidescapeLibrary extends LitElement {
         }
       </div>
       ${admin && this.info?.phase && this.info.phase !== "idle" ? html`<p role="status">Syncing… ${this.info.processed ?? 0}/${this.info.total ?? "?"}</p>` : nothing}
+      <div class="actions" ?hidden=${!!this.dashboard}>
+        <button
+          type="button"
+          ?disabled=${this.loading}
+          @click=${this.refreshCached}
+        >
+          Refresh cached data
+        </button>
+        ${admin ? html`<button type="button" ?disabled=${this.requesting || (!!this.info?.phase && this.info.phase !== "idle")} @click=${this.sync}>Sync now</button>` : nothing}
+      </div>
       <section class="card library-results">
         <div
           class=${`library-toolbar${this.dashboard?.search_position === "bottom" ? " toolbar-bottom" : ""}`}
