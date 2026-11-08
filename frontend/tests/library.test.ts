@@ -1777,3 +1777,169 @@ it("hides purchase details in Basic mode even for an administrator", async () =>
     root().querySelector(".movie-record-details")!.textContent,
   ).not.toContain("Purchased");
 });
+
+it("shows queued collection progress, completion and clears private status on role change", async () => {
+  const movie = transport.libraryTitles[0];
+  const job = {
+    request_id: "fictional-queue-request",
+    title_id: movie.id,
+    group_id: movie.id,
+    title: movie.title,
+    collection: "Favorites",
+    operation: "add" as const,
+    status: "queued" as const,
+    error: null,
+  };
+  transport.collectionJobs = [job];
+  const refresh = () =>
+    (element as unknown as { refreshStatus(): Promise<void> }).refreshStatus();
+  await refresh();
+  await flush();
+  expect(root().querySelector(".collection-pending")).not.toBeNull();
+  expect(
+    root()
+      .querySelector(".pending-collection-badge")
+      ?.getAttribute("aria-label"),
+  ).toBe("Collection change in progress: Favorites");
+  expect(root().querySelector(".library-footer")?.textContent).toContain(
+    "1 queued",
+  );
+  transport.collectionJobs = [{ ...job, status: "confirmed" }];
+  await refresh();
+  await flush();
+  expect(root().querySelector(".collection-pending")).toBeNull();
+  expect(root().querySelector(".collection-toast")?.textContent).toContain(
+    "verified and Library refreshed",
+  );
+  expect(root().querySelector(".collection-toast")?.classList).toContain(
+    "notification-success",
+  );
+  element.scope = {
+    ...info,
+    library_enabled: true,
+    permissions: { read: true, edit: false, export: false },
+  };
+  await flush();
+  expect(root().querySelector(".collection-toast")).toBeNull();
+});
+
+it("explains and resolves an unconfirmed change inside movie details", async () => {
+  const movie = transport.libraryTitles[0];
+  transport.options.library_allow_collection_add = true;
+  transport.pendingAdds = [
+    {
+      request_id: "fictional-unconfirmed",
+      title_id: movie.id,
+      title: movie.title,
+      collection: "WatchSoon",
+    },
+  ];
+  await (
+    element as unknown as { refreshStatus(): Promise<void> }
+  ).refreshStatus();
+  await flush();
+  expect(
+    root().querySelector(".library-notifications .notification-warning")
+      ?.textContent,
+  ).toContain("Unconfirmed collection change");
+  title(movie.title).click();
+  await flush();
+  const detail = root().querySelector("#title-dialog")!;
+  expect(detail.textContent).toContain("Collection changes are paused");
+  const collection = detail.querySelector(
+    "kaleidescape-library-collection-add",
+  )!;
+  await (collection as unknown as { updateComplete: Promise<void> })
+    .updateComplete;
+  expect(
+    collection.shadowRoot!.querySelector<HTMLButtonElement>(
+      ".collection-button",
+    )!.disabled,
+  ).toBe(true);
+  const recovery = [...detail.querySelectorAll("button")].find(
+    (item) => item.textContent?.trim() === "Check membership",
+  )!;
+  recovery.click();
+  await flush();
+  expect(detail.textContent).toContain(
+    "The requested membership is not confirmed",
+  );
+  vi.stubGlobal(
+    "confirm",
+    vi.fn(() => true),
+  );
+  [...detail.querySelectorAll("button")]
+    .find(
+      (item) => item.textContent?.trim() === "Acknowledge unconfirmed change",
+    )!
+    .click();
+  await flush();
+  await flush();
+  expect(
+    root().querySelector(".library-notifications .notification-info")
+      ?.textContent,
+  ).toContain("Request acknowledged");
+  expect(detail.textContent).not.toContain("Collection changes are paused");
+  expect(
+    collection.shadowRoot!.querySelector<HTMLButtonElement>(
+      ".collection-button",
+    )!.disabled,
+  ).toBe(false);
+});
+
+it("shows dismissible collection notifications over the Library without reviving acknowledged jobs", async () => {
+  const movie = transport.libraryTitles[0];
+  const job = {
+    request_id: "failed-request",
+    title_id: movie.id,
+    group_id: movie.id,
+    title: movie.title,
+    collection: "WatchSoon",
+    operation: "add" as const,
+    status: "failed" as const,
+    error: "library_timeout",
+  };
+  transport.collectionJobs = [
+    job,
+    {
+      ...job,
+      request_id: "acknowledged-request",
+      status: "interrupted",
+      error: "acknowledged",
+    },
+  ];
+  await (
+    element as unknown as { refreshStatus(): Promise<void> }
+  ).refreshStatus();
+  await flush();
+  const overlay = root().querySelector(".library-notifications")!;
+  expect(overlay.textContent).toContain("server took too long");
+  expect(overlay.querySelector(".notification-error")).not.toBeNull();
+  expect(overlay.textContent).not.toContain("acknowledged");
+  expect(root().querySelector(".library-results")!.contains(overlay)).toBe(
+    false,
+  );
+  overlay
+    .querySelector<HTMLButtonElement>(
+      '[aria-label="Dismiss collection failure"]',
+    )!
+    .click();
+  await flush();
+  await flush();
+  expect(transport.collectionJobs).toHaveLength(1);
+  expect(overlay.textContent).not.toContain("server took too long");
+  expect(
+    transport.calls.some((call) =>
+      call.type.endsWith("/library/collections/dismiss"),
+    ),
+  ).toBe(true);
+});
+
+it("marks a requested Library sync as in progress", async () => {
+  await (element as unknown as { sync(): Promise<void> }).sync();
+  await flush();
+  expect(
+    root().querySelector(".library-notifications .notification-progress")
+      ?.textContent,
+  ).toContain("Library sync requested");
+});

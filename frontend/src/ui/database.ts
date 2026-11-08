@@ -43,7 +43,7 @@ const LABELS: Record<string, string> = {
   maintenance_audit: "Maintenance audit",
   import_audit: "Import audit",
   database_audit: "Database audit",
-  library_collection_intents: "Collection add receipts",
+  library_collection_intents: "Collection change receipts",
   calendar_publications: "Calendar publications",
   calendar_sync_jobs: "Calendar exports",
   calendar_sync_items: "Calendar export items",

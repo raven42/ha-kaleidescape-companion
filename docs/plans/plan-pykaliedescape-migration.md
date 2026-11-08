@@ -36,9 +36,10 @@ provider. No Store hooks should be added to pyk for this migration.
   [2026-11-05 follow-up](../../audit/2026-11-05/FOLLOW_UP.md) records the
   offline fix for in-flight reads; hardware qualification remains necessary.
 - `library/sync.py` uses pyk `LocalLibrary` for catalog, collections, details,
-  artwork, and add-only form handling. Companion retains its bounded HA HTTP
-  session and SQLite reconciliation. Collection additions keep durable receipts
-  and an explicit readback; an uncertain outcome is never automatically resent.
+  artwork, add forms and validated built-in removal/status-move forms. Companion
+  retains its bounded HA HTTP session and SQLite reconciliation. Collection
+  changes keep durable receipts and an explicit readback; an uncertain outcome
+  is never automatically resent.
 - Companion bundles the reviewed patched pyk source under its own namespace.
   Store scrapers remain in Companion and are included in the runtime package.
 - The manifest pins `pykaleidescape==1.2.0` to match HA 2026.11.0. That released

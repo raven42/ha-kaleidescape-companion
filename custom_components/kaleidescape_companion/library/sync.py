@@ -1,4 +1,4 @@
-"""Opt-in bounded catalog reads and separately enabled collection additions."""
+"""Opt-in bounded catalog reads and separately enabled collection changes."""
 
 import asyncio
 import logging
@@ -8,7 +8,7 @@ from datetime import UTC, datetime, timedelta
 from html import escape
 from uuid import uuid4
 
-from aiohttp import ClientError, ClientTimeout, DummyCookieJar, FormData
+from aiohttp import ClientError, ClientTimeout, DummyCookieJar, MultipartWriter
 from homeassistant.components import persistent_notification
 from homeassistant.helpers.aiohttp_client import (
     DATA_RESOLVER,
@@ -24,15 +24,22 @@ from ..core.tasks import async_wait
 from ..vendor.kaleidescape.error import KaleidescapeError
 from ..vendor.kaleidescape.library_parser import LibraryFormatError, artwork_path
 from ..vendor.kaleidescape.local_browser import (
+    BrowserOutcomeUnknownError,
     BrowserResponse,
     BrowserResponseError,
     LocalLibrary,
+    _removal_path,
 )
+from .collection_queue import fingerprint as queue_fingerprint
+from .collection_queue import normalized
 from .collections import member_hash, parameters
 from .config import DEFAULTS, lan_address, origin
 from .store import MAX_ARTWORK_BYTES, image_type, source_id
 
 _LOGGER = logging.getLogger(__name__)
+COLLECTION_PAGE_TIMEOUT = 300
+COLLECTION_OPERATION_TIMEOUT = 1800
+LIBRARY_SYNC_TIMEOUT = 3600
 MISSING_NOTICE_ID = "kaleidescape_companion_library_missing_data"
 MISSING_LIBRARY_LINK = (
     f"/{PANEL_PATH}?companion_page=library&library_missing_metadata_artwork=1"
@@ -65,6 +72,13 @@ class LibrarySync:
         self.address = None
         self.operation_lock = asyncio.Lock()
         self.collection_task = None
+        self.collection_queue_task = None
+        self.collection_queue = []
+        self.collection_scheduled = set()
+        self.collection_accepts = set()
+        self.collection_queue_lock = asyncio.Lock()
+        self.collection_stage = "idle"
+        self.collection_failure = None
         self._reported_error = None
         self._manual_sync = False
         self.browser = LocalLibrary(self)
@@ -78,6 +92,7 @@ class LibrarySync:
             auto_cleanup=False,
             headers={"Accept-Encoding": "identity"},
         )
+        await self.repository.async_collection_queue("recover", self.source)
         self.request_sync(manual=False)
 
     def request_sync(self, *, manual=True):
@@ -115,6 +130,16 @@ class LibrarySync:
         await self._drain_collection()
 
     async def _drain_collection(self):
+        async def wait_for(task):
+            try:
+                await async_wait(task, report_abandoned=False)
+            except JournalError, KaleidescapeError, ClientError, OSError, TimeoutError:
+                pass
+
+        for task in tuple(self.collection_accepts):
+            await async_finish_cleanup(wait_for(task))
+        if self.collection_queue_task and not self.collection_queue_task.done():
+            await async_finish_cleanup(wait_for(self.collection_queue_task))
         if self.collection_task and not self.collection_task.done():
 
             async def finish():
@@ -144,7 +169,7 @@ class LibrarySync:
 
         async def run():
             try:
-                async with asyncio.timeout(90):
+                async with asyncio.timeout(COLLECTION_OPERATION_TIMEOUT):
                     if self.operation_lock.locked():
                         raise JournalError(
                             "busy", "Wait for the active Library operation"
@@ -159,7 +184,15 @@ class LibrarySync:
                 return JournalError(
                     "library_format", "The local library page was not recognized"
                 )
-            except ClientError, KaleidescapeError, OSError, TimeoutError, UnicodeError:
+            except TimeoutError as error:
+                if not self.collection_failure or self.collection_failure.startswith(
+                    "CancelledError"
+                ):
+                    self.collection_failure = safe_exception(error)
+                return JournalError(
+                    "library_timeout", "Collection operation exceeded its time limit"
+                )
+            except ClientError, KaleidescapeError, OSError, UnicodeError:
                 return JournalError(
                     "library_unreachable", "Collection operation could not be confirmed"
                 )
@@ -196,27 +229,538 @@ class LibrarySync:
 
         return await self.async_collection_operation(targets, authorize)
 
+    async def async_refresh_title_collections(
+        self, title, revision, excluded, authorize
+    ):
+        """Refresh only one version from its explicit device details field."""
+        if type(revision) is not int or revision < 0:
+            raise JournalError("invalid_request", "Invalid source revision")
+        if self.collection_queue_task and not self.collection_queue_task.done():
+            raise JournalError("busy", "Wait for collection changes to finish")
+        if self.task and not self.task.done():
+            raise JournalError("busy", "Wait for the Library scan to finish")
+
+        async def refresh():
+            state = await self.repository.async_collection_snapshot(
+                self.source, title, excluded
+            )
+            if state["revision"] != revision:
+                raise JournalError("refresh_required", "Library changed; reopen title")
+            if state["pending"]:
+                raise JournalError(
+                    "collection_uncertain", "Resolve the unconfirmed change"
+                )
+            self.address = await self._resolve()
+            found_title, memberships = await self.browser.version_collections(
+                state["version"]["source_handle"]
+            )
+            if found_title != state["version"]["title"]:
+                raise JournalError(
+                    "library_changed", "The server title identity changed"
+                )
+            authorize()
+            self._collection_ready()
+            return await self.repository.async_collection_refresh_version(
+                self.source, title, revision, memberships, excluded
+            )
+
+        return await self.async_collection_operation(refresh, authorize)
+
     async def _collection_members(self, collection):
         return await self.browser.collection(collection)
+
+    async def _collection_step(self, stage, operation):
+        """Record bounded, privacy-preserving timing and failure context."""
+        self.collection_stage = stage
+        self.collection_failure = None
+        started = asyncio.get_running_loop().time()
+        _LOGGER.debug("Collection change stage started: stage=%s", stage)
+        try:
+            return await operation
+        except BaseException as error:
+            self.collection_failure = safe_exception(error)
+            raise
+        finally:
+            _LOGGER.debug(
+                "Collection change stage finished: stage=%s elapsed_seconds=%.1f",
+                stage,
+                asyncio.get_running_loop().time() - started,
+            )
+
+    async def _collection_transport(self, kind, operation):
+        """Log only fixed request categories, timings, sizes and status codes."""
+        started = asyncio.get_running_loop().time()
+        _LOGGER.debug("Collection server request started: kind=%s", kind)
+        try:
+            response = await operation
+        except BaseException as error:
+            _LOGGER.debug(
+                "Collection server request failed: kind=%s "
+                "elapsed_seconds=%.1f reason=%s",
+                kind,
+                asyncio.get_running_loop().time() - started,
+                safe_exception(error),
+            )
+            raise
+        _LOGGER.debug(
+            "Collection server request finished: kind=%s status=%d bytes=%d "
+            "elapsed_seconds=%.1f",
+            kind,
+            response.status,
+            len(response.body),
+            asyncio.get_running_loop().time() - started,
+        )
+        return response
 
     async def _post_collection_add(self, handle, collection):
         """Use pyk's add-only form with no automatic retry."""
         await self.browser.add_to_collection(handle, collection)
 
+    async def async_enqueue_collection(
+        self,
+        request,
+        title,
+        collection,
+        operation,
+        revision,
+        actor,
+        excluded,
+        authorize,
+    ):
+        """Accept up to ten actions without waiting for a slow server."""
+        task = self.hass.async_create_background_task(
+            self._accept_collection(
+                request,
+                title,
+                collection,
+                operation,
+                revision,
+                actor,
+                excluded,
+                authorize,
+            ),
+            "Kaleidescape collection request",
+        )
+        self.collection_accepts.add(task)
+        task.add_done_callback(self.collection_accepts.discard)
+        return await async_wait(task)
+
+    async def _accept_collection(
+        self,
+        request,
+        title,
+        collection,
+        operation,
+        revision,
+        actor,
+        excluded,
+        authorize,
+    ):
+        async with self.collection_queue_lock:
+            self._collection_ready()
+            authorize()
+            result = await self.repository.async_collection_queue(
+                "enqueue",
+                self.source,
+                request,
+                title,
+                collection,
+                operation,
+                revision,
+                actor,
+                excluded,
+            )
+            if result["status"] == "queued" and (self.paused or self.stopped):
+                await self.repository.async_collection_queue(
+                    "update", self.source, request, "interrupted", "not_sent"
+                )
+                return {"request_id": request, "status": "interrupted"}
+            if (
+                result["status"] == "queued"
+                and request not in self.collection_scheduled
+            ):
+                self.collection_scheduled.add(request)
+                self.collection_queue.append(
+                    {
+                        "request": request,
+                        "title": title,
+                        "collection": collection,
+                        "operation": operation,
+                        "revision": revision,
+                        "actor": actor,
+                        "excluded": excluded,
+                        "authorize": authorize,
+                    }
+                )
+                if not self.collection_queue_task or self.collection_queue_task.done():
+                    self.collection_queue_task = self.hass.async_create_background_task(
+                        self._run_collection_queue(), "Kaleidescape collection queue"
+                    )
+            return result
+
+    async def _queued_collection_change(self, job):
+        """Preflight exact identities and reserve a durable one-shot device write."""
+        authorize = job["authorize"]
+        state = await self.repository.async_collection_snapshot(
+            self.source, job["title"], job["excluded"]
+        )
+        if state["pending"]:
+            raise JournalError(
+                "collection_uncertain",
+                "Resolve the unconfirmed collection change first",
+            )
+        self.address = await self._collection_step("resolve", self._resolve())
+        rows, _ = await self._collection_step("catalog", self.browser.movies())
+        version = state["version"]
+        if not any(
+            all(
+                row[key] == version[key]
+                for key in ("source_handle", "source_group", "title")
+            )
+            for row in rows
+        ):
+            raise JournalError(
+                "refresh_required", "Source identity changed; sync the Library"
+            )
+        handle = version["source_handle"]
+        key = normalized(job["collection"])
+        operation = job["operation"]
+        collection = job["collection"]
+        other = None
+        if key in {"new", "played"}:
+            destination = "New" if key == "new" else "Played"
+            source = "Played" if key == "new" else "New"
+            if operation == "remove":
+                source, destination = destination, source
+            collection, other, operation = source, destination, "remove"
+        elif key == "watchsoon":
+            collection = "WatchSoon"
+        before_rows = await self._collection_step(
+            "read_before", self._collection_members(collection)
+        )
+        before = {row["source_handle"] for row in before_rows}
+        other_rows = (
+            await self._collection_step(
+                "read_other_before", self._collection_members(other)
+            )
+            if other
+            else None
+        )
+        other_before = (
+            {row["source_handle"] for row in other_rows}
+            if other_rows is not None
+            else None
+        )
+        if (
+            other
+            and job["operation"] == "add"
+            and handle in before
+            and handle in other_before
+        ):
+            raise JournalError(
+                "invalid_request",
+                "This title is both Watched and Unwatched; remove one status first",
+            )
+        if other and handle not in before and handle not in other_before:
+            raise JournalError(
+                "invalid_request",
+                "The server can move this title only from its current "
+                "Watched or Unwatched collection",
+            )
+        expected = before | {handle} if operation == "add" else before - {handle}
+        expected_other = other_before | {handle} if other_before is not None else None
+        if operation == "add" and handle not in before:
+            targets = await self._collection_step(
+                "add_targets", self.browser.add_targets(handle)
+            )
+            offered = "Watch Soon" if key == "watchsoon" else collection
+            if offered not in targets:
+                raise JournalError(
+                    "collection_form", "Collection is not an available add target"
+                )
+        authorize()
+        self._collection_ready()
+        token = queue_fingerprint(
+            self.source,
+            job["request"],
+            job["title"],
+            job["collection"],
+            job["operation"],
+            job["revision"],
+            job["actor"],
+        )
+        await self.repository.async_collection_begin_change(
+            self.source,
+            job["request"],
+            token,
+            job["title"],
+            collection,
+            state["revision"],
+            member_hash(expected),
+            job["actor"],
+            operation,
+            other,
+            member_hash(expected_other) if expected_other is not None else None,
+        )
+        sent = False
+        try:
+            authorize()
+            self._collection_ready()
+            if (handle in before) != (operation == "add"):
+                try:
+                    if operation == "add":
+                        await self._collection_step(
+                            "submit",
+                            self.browser.add_to_collection(
+                                handle,
+                                "Watch Soon" if key == "watchsoon" else collection,
+                            ),
+                        )
+                    else:
+                        await self._collection_step(
+                            "submit",
+                            self.browser.remove_from_collection(handle, collection),
+                        )
+                    sent = True
+                except BrowserOutcomeUnknownError as error:
+                    sent = True
+                    if asyncio.current_task().cancelling():
+                        raise asyncio.CancelledError from error
+                    _LOGGER.warning(
+                        "Collection submission response was unconfirmed; "
+                        "checking membership: %s",
+                        safe_exception(error),
+                    )
+                before_rows = await self._collection_step(
+                    "read_after", self._collection_members(collection)
+                )
+                other_rows = (
+                    await self._collection_step(
+                        "read_other_after", self._collection_members(other)
+                    )
+                    if other
+                    else None
+                )
+            result = await self._collection_step(
+                "store_result",
+                self.repository.async_collection_finish(
+                    self.source, job["request"], before_rows, other_members=other_rows
+                ),
+            )
+            if result["status"] == "uncertain":
+                observed = {row["source_handle"] for row in before_rows}
+                observed_other = (
+                    {row["source_handle"] for row in other_rows}
+                    if other_rows is not None
+                    else None
+                )
+                _LOGGER.warning(
+                    "Collection readback did not match: selected_matches=%s "
+                    "primary_matches=%s other_matches=%s "
+                    "expected_count=%d observed_count=%d",
+                    (handle in observed) == (operation == "add"),
+                    observed == expected,
+                    observed_other == expected_other,
+                    len(expected),
+                    len(observed),
+                )
+            return result
+        except BaseException:
+            if not sent:
+                await async_finish_cleanup(
+                    self.repository.async_collection_finish(
+                        self.source, job["request"], acknowledge=job["actor"]
+                    )
+                )
+            raise
+
+    async def _run_collection_queue(self):
+        try:
+            await self._process_collection_queue()
+        except Exception as error:
+            _LOGGER.error(
+                "Collection queue stopped unexpectedly: %s", safe_exception(error)
+            )
+            try:
+                jobs = await self.repository.async_collection_queue(
+                    "status", self.source
+                )
+                for job in jobs:
+                    if job["status"] not in {"queued", "working", "syncing"}:
+                        continue
+                    try:
+                        intent = await self.repository.async_collection_intent(
+                            self.source, job["request_id"]
+                        )
+                    except JournalError:
+                        intent = None
+                    uncertain = bool(intent and intent["status"] == "uncertain")
+                    await self.repository.async_collection_queue(
+                        "update",
+                        self.source,
+                        job["request_id"],
+                        "uncertain" if uncertain else "interrupted",
+                        "queue_stopped",
+                    )
+            finally:
+                self.collection_queue.clear()
+                self.collection_scheduled.clear()
+
+    async def _process_collection_queue(self):
+        waiting_scan = []
+        blocked = False
+        while self.collection_queue:
+            job = self.collection_queue.pop(0)
+            request = job["request"]
+            self.collection_stage = "waiting_for_library"
+            self.collection_failure = None
+            started = asyncio.get_running_loop().time()
+            _LOGGER.debug(
+                "Collection change started: queued_remaining=%d",
+                len(self.collection_queue),
+            )
+            if self.paused or self.stopped or blocked:
+                await self.repository.async_collection_queue(
+                    "update", self.source, request, "interrupted", "not_sent"
+                )
+                self.collection_scheduled.discard(request)
+                continue
+            try:
+                if self.task and not self.task.done():
+                    try:
+                        await asyncio.shield(self.task)
+                    except asyncio.CancelledError:
+                        if not (self.paused or self.stopped):
+                            raise
+                self._collection_ready()
+                while self.operation_lock.locked():
+                    await asyncio.sleep(0.2)
+                    self._collection_ready()
+                await self.repository.async_collection_queue(
+                    "update", self.source, request, "working"
+                )
+                result = await self.async_collection_operation(
+                    lambda: self._queued_collection_change(job), job["authorize"]
+                )
+                if result["status"] == "confirmed":
+                    await self.repository.async_collection_queue(
+                        "update", self.source, request, "syncing"
+                    )
+                    waiting_scan.append(request)
+                    _LOGGER.debug(
+                        "Collection readback verified; waiting for Library scan"
+                    )
+                else:
+                    blocked = True
+                    await self.repository.async_collection_queue(
+                        "update",
+                        self.source,
+                        request,
+                        "uncertain",
+                        "collection_uncertain",
+                    )
+            except Exception as error:
+                try:
+                    intent = await self.repository.async_collection_intent(
+                        self.source, request
+                    )
+                except JournalError:
+                    intent = None
+                uncertain = bool(intent and intent["status"] == "uncertain")
+                blocked = blocked or uncertain
+                code = (
+                    error.code
+                    if isinstance(error, JournalError)
+                    else "library_unreachable"
+                )
+                _LOGGER.warning(
+                    "Collection change could not complete: stage=%s outcome=%s code=%s "
+                    "elapsed_seconds=%.1f reason=%s",
+                    self.collection_stage,
+                    "unconfirmed"
+                    if uncertain
+                    else "device_verified"
+                    if intent and intent["status"] == "confirmed"
+                    else "not_sent",
+                    code,
+                    asyncio.get_running_loop().time() - started,
+                    self.collection_failure or safe_exception(error),
+                )
+                await self.repository.async_collection_queue(
+                    "update",
+                    self.source,
+                    request,
+                    "uncertain"
+                    if uncertain
+                    else "interrupted"
+                    if self.paused or self.stopped
+                    else "failed",
+                    code,
+                )
+            finally:
+                self.collection_scheduled.discard(request)
+        if waiting_scan:
+            if not self.paused and not self.stopped:
+                self.request_sync()
+                try:
+                    await asyncio.shield(self.task)
+                except asyncio.CancelledError:
+                    if not self.task.cancelled():
+                        raise
+            for request in waiting_scan:
+                verified = (
+                    not self.paused
+                    and not self.stopped
+                    and not self.error
+                    and await self.repository.async_collection_queue(
+                        "verified", self.source, request
+                    )
+                )
+                await self.repository.async_collection_queue(
+                    "update",
+                    self.source,
+                    request,
+                    "confirmed" if verified else "interrupted",
+                    None if verified else "scan_unconfirmed",
+                )
+                if verified:
+                    _LOGGER.debug("Collection change verified by Library scan")
+                else:
+                    _LOGGER.warning(
+                        "Collection change was read back but the Library scan did not "
+                        "confirm it: scan_failed=%s scan_interrupted=%s",
+                        bool(self.error),
+                        self.paused or self.stopped,
+                    )
+        if self.collection_queue:
+            self.collection_queue_task = self.hass.async_create_background_task(
+                self._run_collection_queue(), "Kaleidescape collection queue"
+            )
+
     async def post(self, path: str, fields: dict[str, str]) -> BrowserResponse:
         """Companion-owned, pinned multipart transport for pyk's local browser."""
-        if path != "/movies":
+        operation = self._post_response(path, fields)
+        if asyncio.current_task() is self.collection_task:
+            return await self._collection_transport("post", operation)
+        return await operation
+
+    async def _post_response(
+        self, path: str, fields: dict[str, str]
+    ) -> BrowserResponse:
+        if path != "/movies" and not _removal_path(path):
             raise JournalError("library_destination", "Library route was rejected")
-        form = FormData(default_to_multipart=True)
+        form = MultipartWriter("form-data")
         for name, value in fields.items():
-            form.add_field(name, value)
+            part = form.append(value)
+            del part.headers["Content-Type"]
+            part.set_content_disposition("form-data", name=name)
         base = URL(self.origin)
         url = URL(self.origin + path).with_host(self.address)
         async with self.session.post(
             url,
             data=form,
             allow_redirects=False,
-            timeout=ClientTimeout(total=15, connect=5),
+            timeout=ClientTimeout(total=COLLECTION_PAGE_TIMEOUT, connect=15),
             headers={"Host": base.authority},
             server_hostname=base.host if base.scheme == "https" else None,
         ) as response:
@@ -351,8 +895,13 @@ class LibrarySync:
             return {"status": row["status"], "request_id": request}
         self.address = await self._resolve()
         members = await self._collection_members(row["collection"])
+        other = (
+            await self._collection_members(row["other_collection"])
+            if row["other_collection"]
+            else None
+        )
         return await self.repository.async_collection_finish(
-            self.source, request, members
+            self.source, request, members, other_members=other
         )
 
     async def async_collection_check(self, request, authorize, acknowledge=None):
@@ -363,7 +912,44 @@ class LibrarySync:
                 )
             return await self._check_collection(request)
 
-        return await self.async_collection_operation(check, authorize)
+        result = await self.async_collection_operation(check, authorize)
+        jobs = await self.repository.async_collection_queue("status", self.source)
+        if any(job["request_id"] == request for job in jobs):
+            if result["status"] == "confirmed":
+                await self.repository.async_collection_queue(
+                    "update", self.source, request, "syncing"
+                )
+                task = self.hass.async_create_background_task(
+                    self._rescan_checked_collection(request),
+                    "Kaleidescape verified collection rescan",
+                )
+                self.collection_queue_task = task
+            elif result["status"] == "abandoned":
+                await self.repository.async_collection_queue(
+                    "update", self.source, request, "interrupted", "acknowledged"
+                )
+        return result
+
+    async def _rescan_checked_collection(self, request):
+        verified = False
+        try:
+            self.request_sync()
+            await asyncio.shield(self.task)
+            verified = not self.error and await self.repository.async_collection_queue(
+                "verified", self.source, request
+            )
+        finally:
+            await self.repository.async_collection_queue(
+                "update",
+                self.source,
+                request,
+                "confirmed" if verified else "interrupted",
+                None if verified else "scan_unconfirmed",
+            )
+            if self.collection_queue:
+                self.collection_queue_task = self.hass.async_create_background_task(
+                    self._run_collection_queue(), "Kaleidescape collection queue"
+                )
 
     async def async_resume(self):
         self.paused = False
@@ -415,6 +1001,19 @@ class LibrarySync:
 
     async def get(self, path: str) -> BrowserResponse:
         """Pin validated DNS results and return bounded bytes to pyk."""
+        operation = self._get_response(path)
+        if asyncio.current_task() is self.collection_task:
+            kind = (
+                "catalog"
+                if path == "/movies"
+                else "details"
+                if path.startswith("/details?")
+                else "collection"
+            )
+            return await self._collection_transport(kind, operation)
+        return await operation
+
+    async def _get_response(self, path: str) -> BrowserResponse:
         base = URL(self.origin)
         if not (
             path == "/movies"
@@ -429,7 +1028,16 @@ class LibrarySync:
         async with self.session.get(
             url,
             allow_redirects=False,
-            timeout=ClientTimeout(total=15, connect=5),
+            timeout=ClientTimeout(
+                total=COLLECTION_PAGE_TIMEOUT
+                if path.startswith("/movies")
+                or asyncio.current_task() is self.collection_task
+                else 15,
+                connect=15
+                if path.startswith("/movies")
+                or asyncio.current_task() is self.collection_task
+                else 5,
+            ),
             headers={"Host": base.authority},
             server_hostname=base.host if base.scheme == "https" else None,
         ) as response:
@@ -549,7 +1157,7 @@ class LibrarySync:
         self.processed = self.total = 0
         failed = False
         try:
-            async with asyncio.timeout(1800):
+            async with asyncio.timeout(LIBRARY_SYNC_TIMEOUT):
                 async with self.operation_lock:
                     await self._sync()
             await self._notify_missing()

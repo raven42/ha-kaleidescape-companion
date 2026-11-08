@@ -17,6 +17,7 @@ import probatio
 import test_backend as backend_tests
 import test_repository as repository_tests
 from _expected_logs import expected_log
+from _schema_fixtures import remove_collection_queue_schema
 from aiohttp import web
 
 from custom_components.kaleidescape_companion.core.models import JournalError
@@ -220,6 +221,7 @@ class RepositorySecurityTest(unittest.IsolatedAsyncioTestCase):
             db.execute("DROP TABLE IF EXISTS purchase_records")
             db.execute("DROP TABLE purchase_identity_barriers")
             db.execute("DROP TABLE purchase_repair_events")
+            remove_collection_queue_schema(db)
             db.execute("PRAGMA user_version=2")
             db.commit()
         reopened = JournalRepository(self.path)

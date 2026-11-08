@@ -17,6 +17,7 @@ import type {
   LibraryTitle,
   LibrarySummary,
   LibraryVersionPage,
+  CollectionJob,
 } from "../core/api";
 import { styles } from "../ui/styles";
 import { libraryStyles } from "./styles";
@@ -231,6 +232,7 @@ export class KaleidescapeLibrary extends LitElement {
     );
   }
   private checkingCollection = false;
+  private collectionRecoveryNotice = "";
   confirmNavigation() {
     if (
       this.controlLocked ||
@@ -264,6 +266,15 @@ export class KaleidescapeLibrary extends LitElement {
   private requesting = false;
   private error = "";
   private notice = "";
+  private noticeSeverity: "success" | "warning" | "progress" | "info" = "info";
+  private dismissedPending = new Set<string>();
+  private dismissedLibraryErrors = new Set<string>();
+  private collectionToast = "";
+  private collectionToastSeverity:
+    "success" | "warning" | "progress" | "error" = "progress";
+  private collectionToastTimer?: ReturnType<typeof setTimeout>;
+  private observedCollectionJobs = new Set<string>();
+  private notifiedCollectionJobs = new Set<string>();
   private timer?: ReturnType<typeof setTimeout>;
   private covers = new CoverQueue();
   private fuzzySearch = true;
@@ -528,6 +539,10 @@ export class KaleidescapeLibrary extends LitElement {
     this.preferences?.set({ widths: [...this.widths] });
   }
   private clear() {
+    clearTimeout(this.collectionToastTimer);
+    this.collectionToast = "";
+    this.observedCollectionJobs.clear();
+    this.notifiedCollectionJobs.clear();
     this.mobileQuery = "";
     this.purchaseTotals = undefined;
     this.purchaseLoading = false;
@@ -579,6 +594,7 @@ export class KaleidescapeLibrary extends LitElement {
     this.facetSearch = "";
     this.page = this.info = this.selected = undefined;
     this.collectionLocked = this.checkingCollection = false;
+    this.collectionRecoveryNotice = "";
     this.clearVersions();
     this.widths = [360, 90, 260, 150, 140, 210];
     this.resize = undefined;
@@ -586,6 +602,8 @@ export class KaleidescapeLibrary extends LitElement {
     this.applied = { ...this.filters };
     this.loading = this.requesting = false;
     this.error = this.notice = "";
+    this.dismissedPending.clear();
+    this.dismissedLibraryErrors.clear();
     this.requestUpdate();
   }
   protected updated() {
@@ -809,6 +827,33 @@ export class KaleidescapeLibrary extends LitElement {
       const info = await this.client.libraryInfo(this.scope);
       if (generation !== this.generation || request !== this.statusRequest)
         return;
+      if (this.scope.permissions.edit) {
+        for (const job of info.collection_jobs ?? []) {
+          if (["queued", "working", "syncing"].includes(job.status))
+            this.observedCollectionJobs.add(job.request_id);
+          else if (
+            this.observedCollectionJobs.has(job.request_id) &&
+            !this.notifiedCollectionJobs.has(job.request_id)
+          ) {
+            this.notifiedCollectionJobs.add(job.request_id);
+            this.collectionToastSeverity =
+              job.status === "confirmed"
+                ? "success"
+                : job.status === "uncertain" || job.status === "interrupted"
+                  ? "warning"
+                  : "error";
+            this.collectionToast =
+              job.status === "confirmed"
+                ? `${job.title}: collection change verified and Library refreshed.`
+                : `${job.title}: ${job.status === "uncertain" ? "collection result is unconfirmed; review it below." : job.error === "scan_unconfirmed" ? "device change was verified, but Library sync needs review." : "collection change did not complete; review the status below."}`;
+            clearTimeout(this.collectionToastTimer);
+            this.collectionToastTimer = setTimeout(() => {
+              this.collectionToast = "";
+              this.requestUpdate();
+            }, 10000);
+          }
+        }
+      }
       this.info = this.scope.permissions.edit
         ? info
         : {
@@ -852,11 +897,15 @@ export class KaleidescapeLibrary extends LitElement {
       ) {
         this.timer = setTimeout(
           () => void this.refreshStatus(),
-          this.info?.metadata?.running ||
-            this.info?.metadata?.active ||
-            (this.info?.phase && this.info.phase !== "idle")
-            ? 5000
-            : 30000,
+          (this.info?.collection_jobs ?? []).some((job) =>
+            ["queued", "working", "syncing"].includes(job.status),
+          )
+            ? 2000
+            : this.info?.metadata?.running ||
+                this.info?.metadata?.active ||
+                (this.info?.phase && this.info.phase !== "idle")
+              ? 5000
+              : 30000,
         );
         this.requestUpdate();
       }
@@ -879,6 +928,7 @@ export class KaleidescapeLibrary extends LitElement {
       if (generation !== this.generation) return;
       this.notice =
         "Library sync requested. Cached titles remain available while it runs.";
+      this.noticeSeverity = "progress";
       void this.refreshStatus();
     } catch (error) {
       if (generation === this.generation) this.fail(error);
@@ -1283,12 +1333,13 @@ export class KaleidescapeLibrary extends LitElement {
     if (
       acknowledge &&
       !window.confirm(
-        "Inspect the collection on the device first. Acknowledging does not undo an add or send another one; it allows a new request even if this add already applied. Continue?",
+        "Inspect the collection on the device first. Acknowledging does not undo a change or send another one; it allows a new request even if the previous change already applied. Continue?",
       )
     )
       return;
     const generation = this.generation;
     this.checkingCollection = true;
+    this.collectionRecoveryNotice = "";
     this.error = "";
     this.requestUpdate();
     try {
@@ -1300,17 +1351,37 @@ export class KaleidescapeLibrary extends LitElement {
         result.status === "confirmed"
           ? "Collection membership confirmed on the device."
           : result.status === "abandoned"
-            ? "Request acknowledged. No device edit was sent."
+            ? "Request acknowledged. Acknowledging did not send a device change."
             : "The requested membership is not confirmed. Inspect the device before acknowledging this request.";
+      this.noticeSeverity =
+        result.status === "confirmed"
+          ? "success"
+          : result.status === "abandoned"
+            ? "info"
+            : "warning";
+      this.collectionRecoveryNotice = this.notice;
       void this.load();
       void this.refreshStatus();
     } catch (error) {
-      if (generation === this.generation) this.fail(error);
+      if (generation === this.generation) {
+        this.collectionRecoveryNotice = errorMessage(error);
+        this.fail(error);
+      }
     } finally {
       if (generation === this.generation) {
         this.checkingCollection = false;
         this.requestUpdate();
       }
+    }
+  }
+  private async dismissCollectionJob(request: string) {
+    if (!this.client || !this.scope) return;
+    const generation = this.generation;
+    try {
+      await this.client.dismissCollectionJob(this.scope, request);
+      if (generation === this.generation) void this.refreshStatus();
+    } catch (error) {
+      if (generation === this.generation) this.fail(error);
     }
   }
   private async loadPurchaseTotals(force = false) {
@@ -1762,29 +1833,87 @@ export class KaleidescapeLibrary extends LitElement {
   private renderCollectionAction(row: LibraryTitle) {
     if (!this.scope?.permissions.edit) return nothing;
     return html`<kaleidescape-library-collection-add
-      slot="collection"
-      .client=${this.client}
-      .scope=${this.scope}
-      .version=${row}
-      .revision=${this.versions?.revision ?? 0}
-      .enabled=${!!this.info?.collection_add_enabled}
-      .blocked=${this.controlLocked || this.scrapeLocked || this.artworkLocked || !!this.info?.pending_adds?.length}
-      @collection-lock=${(event: CustomEvent<boolean>) => {
-        if (event.detail !== this.collectionLocked) {
-          this.collectionLocked = event.detail;
-          this.requestUpdate();
-        }
-      }}
-      @collection-changed=${(event: CustomEvent<{ status: string }>) => {
-        this.collectionLocked = false;
-        this.notice =
-          event.detail.status === "confirmed"
-            ? "Collection membership confirmed on the device."
-            : "Check the pending collection add before making another change.";
-        void this.load();
-        void this.refreshStatus();
-      }}
-    ></kaleidescape-library-collection-add>`;
+        slot="collection"
+        .client=${this.client}
+        .scope=${this.scope}
+        .version=${row}
+        .revision=${this.versions?.revision ?? 0}
+        .enabled=${!!this.info?.collection_add_enabled}
+        .choices=${this.info?.collection_choices ?? []}
+        .jobs=${this.info?.collection_jobs ?? []}
+        .blocked=${this.controlLocked || this.scrapeLocked || this.artworkLocked || !!this.info?.pending_adds?.length}
+        @collection-lock=${(event: CustomEvent<boolean>) => {
+          if (event.detail !== this.collectionLocked) {
+            this.collectionLocked = event.detail;
+            this.requestUpdate();
+          }
+        }}
+        @collection-changed=${(
+          event: CustomEvent<{ status: string; request_id: string }>,
+        ) => {
+          this.collectionLocked = false;
+          this.observedCollectionJobs.add(event.detail.request_id);
+          this.collectionToast = "Collection change queued.";
+          this.collectionToastSeverity = "progress";
+          clearTimeout(this.collectionToastTimer);
+          this.collectionToastTimer = setTimeout(() => {
+            this.collectionToast = "";
+            this.requestUpdate();
+          }, 5000);
+          void this.refreshStatus();
+        }}
+      ></kaleidescape-library-collection-add>
+      ${(this.info?.pending_adds ?? []).map(
+        (item) =>
+          html`<div slot="collection" class="warning" role="status">
+            Collection changes are paused while an earlier change for
+            <strong>${item.title}</strong> is unconfirmed. Check membership
+            without sending another change, or inspect the server and
+            acknowledge it.
+            ${this.collectionRecoveryNotice ? html`<p>${this.collectionRecoveryNotice}</p>` : nothing}
+            <div class="actions">
+              <button
+                ?disabled=${this.checkingCollection}
+                @click=${() => this.checkCollection(item.request_id)}
+              >
+                Check membership
+              </button>
+              <button
+                ?disabled=${this.checkingCollection}
+                @click=${() => this.checkCollection(item.request_id, true)}
+              >
+                Acknowledge unconfirmed change
+              </button>
+            </div>
+          </div>`,
+      )}`;
+  }
+  private pendingCollection(item: LibrarySummary): CollectionJob | undefined {
+    return this.info?.collection_jobs?.find(
+      (job) =>
+        job.group_id === item.id &&
+        ["queued", "working", "syncing"].includes(job.status),
+    );
+  }
+  private pendingCollectionBadge(item: LibrarySummary) {
+    const job = this.pendingCollection(item);
+    if (!job) return nothing;
+    const name =
+      (
+        {
+          new: "Unwatched",
+          played: "Watched",
+          paused: "In Progress",
+          watchsoon: "Watch Soon",
+        } as Record<string, string>
+      )[job.collection.toLowerCase().replace(/[\s_-]+/g, "")] ?? job.collection;
+    return html`<span
+      class="pending-collection-badge"
+      role="status"
+      aria-label=${`Collection change in progress: ${name}`}
+      >${collectionSymbol(name)}<span>${name}</span
+      ><span class="collection-spinner" aria-hidden="true"></span
+    ></span>`;
   }
   private compactRuntime(seconds: number | null | undefined) {
     if (seconds == null) return "Runtime unknown";
@@ -1832,6 +1961,28 @@ export class KaleidescapeLibrary extends LitElement {
         this.versions = undefined;
         await this.load(this.page?.offset ?? 0, true);
         await this.loadVersions();
+        void this.refreshStatus();
+      }}
+      @collection-refreshed=${(
+        event: CustomEvent<{
+          title_id: string;
+          collections: string[];
+          revision: number;
+        }>,
+      ) => {
+        const { title_id, collections, revision } = event.detail;
+        if (this.versions) {
+          this.versions = {
+            ...this.versions,
+            revision,
+            items: this.versions.items.map((item) =>
+              item.id === title_id ? { ...item, collections } : item,
+            ),
+          };
+          if (this.activeVersion?.id === title_id)
+            this.activeVersion = { ...this.activeVersion, collections };
+        }
+        void this.load(this.page?.offset ?? 0, true);
         void this.refreshStatus();
       }}
     ></kaleidescape-title-scrape>`;
@@ -2235,49 +2386,175 @@ export class KaleidescapeLibrary extends LitElement {
         this.fail(new ApiError("unauthorized"));
       }}
     >
-      ${
-        this.preferenceError
-          ? html`<p class="warning" role="alert">
-              Library preferences could not be saved: ${this.preferenceError}
-              <button
-                @click=${() => {
-                  this.preferences?.retry();
-                  this.searchPreferences?.retry();
-                }}
+      <div class="library-notifications" aria-label="Library notifications">
+        ${
+          this.preferenceError
+            ? html`<div
+                class="warning library-notification notification-error"
+                role="alert"
               >
-                Retry saving preferences
-              </button>
-            </p>`
-          : nothing
-      }
+                Library preferences could not be saved: ${this.preferenceError}
+                <button
+                  @click=${() => {
+                    this.preferences?.retry();
+                    this.searchPreferences?.retry();
+                  }}
+                >
+                  Retry saving preferences
+                </button>
+              </div>`
+            : nothing
+        }
+        ${
+          admin &&
+          this.info?.error &&
+          !this.dismissedLibraryErrors.has(this.info.error)
+            ? html`<div
+                class="warning library-notification notification-error"
+                role="status"
+              >
+                ${errorMessage(new ApiError(this.info.error))}<button
+                  class="notification-close"
+                  aria-label="Dismiss Library warning"
+                  @click=${() => {
+                    this.dismissedLibraryErrors.add(this.info!.error!);
+                    this.requestUpdate();
+                  }}
+                >
+                  ${actionIcon("clear")}
+                </button>
+              </div>`
+            : nothing
+        }
+        ${
+          this.error
+            ? html`<div
+                class="error library-notification notification-error"
+                role="alert"
+              >
+                ${this.error}<button @click=${() => this.load()}>
+                  Refresh results</button
+                ><button
+                  class="notification-close"
+                  aria-label="Dismiss error"
+                  @click=${() => {
+                    this.error = "";
+                    this.requestUpdate();
+                  }}
+                >
+                  ${actionIcon("clear")}
+                </button>
+              </div>`
+            : nothing
+        }
+        ${
+          this.notice
+            ? html`<div
+                class=${`notice library-notification notification-${this.noticeSeverity}`}
+                role="status"
+              >
+                ${this.notice}<button
+                  class="notification-close"
+                  aria-label="Dismiss notice"
+                  @click=${() => {
+                    this.notice = "";
+                    this.requestUpdate();
+                  }}
+                >
+                  ${actionIcon("clear")}
+                </button>
+              </div>`
+            : nothing
+        }
+        ${
+          this.collectionToast
+            ? html`<div
+                class=${`collection-toast library-notification notification-${this.collectionToastSeverity}`}
+                role="status"
+              >
+                ${this.collectionToast}<button
+                  class="notification-close"
+                  aria-label="Dismiss collection notification"
+                  @click=${() => {
+                    this.collectionToast = "";
+                    this.requestUpdate();
+                  }}
+                >
+                  ${actionIcon("clear")}
+                </button>
+              </div>`
+            : nothing
+        }
+        ${
+          admin
+            ? (this.info?.collection_jobs ?? [])
+                .filter(
+                  (job) =>
+                    ["failed", "interrupted"].includes(job.status) &&
+                    job.error !== "acknowledged",
+                )
+                .slice(0, 3)
+                .map(
+                  (job) =>
+                    html`<div
+                      class=${`warning library-notification notification-${job.status === "failed" ? "error" : "warning"}`}
+                      role="status"
+                    >
+                      ${job.title}:
+                      ${job.error === "scan_unconfirmed" ? "The device change was verified, but the Library scan did not confirm it. Inspect the device and run Sync now." : job.error === "library_timeout" ? "The server took too long to respond. Check the Home Assistant logs and inspect the server before trying again." : `The collection change did not complete (${job.error ?? job.status}). Refresh and inspect before trying again.`}
+                      <button
+                        class="notification-close"
+                        aria-label="Dismiss collection failure"
+                        @click=${() => this.dismissCollectionJob(job.request_id)}
+                      >
+                        ${actionIcon("clear")}
+                      </button>
+                    </div>`,
+                )
+            : nothing
+        }
+        ${
+          admin
+            ? (this.info?.pending_adds ?? [])
+                .filter((item) => !this.dismissedPending.has(item.request_id))
+                .map(
+                  (item) =>
+                    html`<div
+                      class="warning library-notification notification-warning"
+                      role="status"
+                    >
+                      Unconfirmed collection change:
+                      <strong>${item.title}</strong> → ${item.collection}.
+                      Checking never sends another change.
+                      <button
+                        class="notification-close"
+                        aria-label="Dismiss unconfirmed change notice"
+                        @click=${() => {
+                          this.dismissedPending.add(item.request_id);
+                          this.requestUpdate();
+                        }}
+                      >
+                        ${actionIcon("clear")}
+                      </button>
+                      <div class="actions">
+                        <button
+                          ?disabled=${this.checkingCollection}
+                          @click=${() => this.checkCollection(item.request_id)}
+                        >
+                          Check membership</button
+                        ><button
+                          ?disabled=${this.checkingCollection}
+                          @click=${() => this.checkCollection(item.request_id, true)}
+                        >
+                          Acknowledge unconfirmed change
+                        </button>
+                      </div>
+                    </div>`,
+                )
+            : nothing
+        }
+      </div>
       ${admin && this.info?.phase && this.info.phase !== "idle" ? html`<p role="status">Syncing… ${this.info.processed ?? 0}/${this.info.total ?? "?"}</p>` : nothing}
-      ${admin && this.info?.error ? html`<p class="warning" role="status">${errorMessage(new ApiError(this.info.error))}</p>` : nothing}
-      ${this.error ? html`<p class="error" role="alert">${this.error}<button @click=${() => this.load()}>Refresh results</button></p>` : nothing}
-      ${this.notice ? html`<p class="notice" role="status">${this.notice}</p>` : nothing}
-      ${
-        admin
-          ? (this.info?.pending_adds ?? []).map(
-              (item) =>
-                html`<div class="warning" role="status">
-                  Unconfirmed collection add: <strong>${item.title}</strong> →
-                  ${item.collection}. Checking never sends another add.
-                  <div class="actions">
-                    <button
-                      ?disabled=${this.checkingCollection}
-                      @click=${() => this.checkCollection(item.request_id)}
-                    >
-                      Check membership</button
-                    ><button
-                      ?disabled=${this.checkingCollection}
-                      @click=${() => this.checkCollection(item.request_id, true)}
-                    >
-                      Acknowledge unconfirmed add
-                    </button>
-                  </div>
-                </div>`,
-            )
-          : nothing
-      }
       <section class="card library-results">
         <div
           class=${`library-toolbar${this.dashboard?.search_position === "bottom" ? " toolbar-bottom" : ""}`}
@@ -2420,7 +2697,7 @@ export class KaleidescapeLibrary extends LitElement {
                       @click=${() => this.select(item)}
                     >
                       <div class="cover-image">${this.cover(item)}</div>
-                      ${this.display.show_badges ? html`<div class="cover-flags">${renderStatusBadges(item, true, ["unwatched"], this.movieStatusLabels, this.libraryBadgeStyle)}</div>` : nothing}
+                      ${this.display.show_badges || this.pendingCollection(item) ? html`<div class=${`cover-flags${this.pendingCollection(item) ? " collection-pending" : ""}`}>${this.display.show_badges ? renderStatusBadges(item, true, ["unwatched"], this.movieStatusLabels, this.libraryBadgeStyle) : nothing}${this.pendingCollectionBadge(item)}</div>` : nothing}
                       ${this.display.show_format ? html`<div class="cover-formats">${renderFormatBadges(item, true)}</div>` : nothing}
                       ${this.display.show_rating ? html`<div class="cover-rating">${renderRatingBadge(item.rating)}</div>` : nothing}
                       ${this.conflictIcon(item)}
@@ -2508,10 +2785,11 @@ export class KaleidescapeLibrary extends LitElement {
                             </button>
                             ${this.conflictIcon(item)}
                             <div
-                              class="library-summary-line"
+                              class=${`library-summary-line${this.pendingCollection(item) ? " collection-pending" : ""}`}
                               title=${this.format(item)}
                             >
                               ${this.display.show_badges ? renderStatusBadges(item, false, [], this.movieStatusLabels, this.libraryBadgeStyle) : nothing}
+                              ${this.pendingCollectionBadge(item)}
                               ${this.display.show_format ? renderFormatBadges(item) : nothing}
                               ${this.display.show_format && !formatBadges(item).length ? html`<small>${this.format(item)}</small>` : nothing}
                               ${(item.version_count ?? 1) > 1 ? html`<small>${counted(item.version_count!, "version")}</small>` : nothing}
@@ -2572,6 +2850,7 @@ export class KaleidescapeLibrary extends LitElement {
           </span>
           ${admin && this.info ? html`<span class="footer-admin">${counted(this.info.collection_count, "collection")}${this.info.artwork_enabled ? ` · Artwork ${((this.info.artwork_bytes ?? 0) / 1048576).toFixed(1)} MiB` : ""}${this.display.show_library_cost ? ` · Library cost ${this.purchaseAmount("library_cost")}` : ""} · Synced ${this.date(this.info.last_synced_at)}</span>` : nothing}
           ${admin && this.info?.metadata ? html`<span class="scraper-status footer-admin">${this.scraperSummary()}</span>` : nothing}
+          ${admin && (this.info?.collection_jobs ?? []).some((job) => ["queued", "working", "syncing"].includes(job.status)) ? html`<span class="collection-queue-status">Collection changes: ${this.info?.collection_jobs?.filter((job) => job.status === "queued").length ?? 0} queued · ${this.info?.collection_jobs?.filter((job) => ["working", "syncing"].includes(job.status)).length ?? 0} in progress</span>` : nothing}
         </div>
         <div
           class="footer-actions actions"

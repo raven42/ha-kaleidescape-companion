@@ -971,7 +971,7 @@ export class KaleidescapeSettings extends LitElement {
                 ${this.draft.library_sync_artwork ? html`<p class="settings-note">Artwork uses additional disk space: up to ${String(this.draft.library_artwork_cache_mb)} MiB plus one incoming image (up to 5 MiB). The journal database retains its 256 MiB limit. HA backups can include these cached files.</p>` : nothing}
               </div>
               <div class="settings-card">
-                ${this.heading("Collection actions", "Control whether administrators can make an explicit change on the device.")}${this.toggle("library_allow_collection_add")}
+                ${this.heading("Collection actions", "Control whether administrators can queue explicit changes on the device.")}${this.toggle("library_allow_collection_add")}
               </div>`
           : nothing
       }

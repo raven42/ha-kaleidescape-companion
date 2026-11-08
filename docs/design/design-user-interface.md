@@ -35,17 +35,17 @@ Settings groups configuration by function in a keyboard-accessible desktop
 sidebar and a category selector on narrow screens. Search matches setting names,
 keys and hints, then opens the category and focuses the matching control.
 
-| Category    | Scope                                                                                                                                                         |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| General     | Shared landing page, personal fuzzy search and guidance to per-view Options                                                                                   |
-| Journal     | Media player, play-status and media-location entities; tracking, minimum runtime, minimum watch time and resume window                                        |
-| Library     | Local address, scanning, collection/detail/artwork options, collection-add permission, artwork storage, recent-purchase window and shared hidden collections  |
-| Playback    | Control opt-in, address, player discovery/default and experimental Library title launch                                                                       |
-| Metadata    | Store/TMDB opt-ins, credential replacement/removal, request rate, preferred source for each metadata field, per-title auto-save and enrichment status/actions |
-| Calendar    | Publishing opt-in, destination, title/description templates, dedicated-calendar Full Sync acknowledgement/window and export                                   |
-| Automations | One installed/bundled blueprint inventory, installation, update review, change logs and HA setup guidance                                                     |
-| Maintenance | Configuration transfer, metadata repair, test-dashboard generation and reload                                                                                 |
-| About       | Companion/pyk/API/schema versions, documentation, release notes and support links                                                                             |
+| Category    | Scope                                                                                                                                                           |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| General     | Shared landing page, personal fuzzy search and guidance to per-view Options                                                                                     |
+| Journal     | Media player, play-status and media-location entities; tracking, minimum runtime, minimum watch time and resume window                                          |
+| Library     | Local address, scanning, collection/detail/artwork options, collection-change permission, artwork storage, recent-purchase window and shared hidden collections |
+| Playback    | Control opt-in, address, player discovery/default and experimental Library title launch                                                                         |
+| Metadata    | Store/TMDB opt-ins, credential replacement/removal, request rate, preferred source for each metadata field, per-title auto-save and enrichment status/actions   |
+| Calendar    | Publishing opt-in, destination, title/description templates, dedicated-calendar Full Sync acknowledgement/window and export                                     |
+| Automations | One installed/bundled blueprint inventory, installation, update review, change logs and HA setup guidance                                                       |
+| Maintenance | Configuration transfer, metadata repair, test-dashboard generation and reload                                                                                   |
+| About       | Companion/pyk/API/schema versions, documentation, release notes and support links                                                                               |
 
 Switching categories preserves drafts. A sticky save bar shows the number of
 changed native settings, with markers beside affected categories. Save is
@@ -210,7 +210,7 @@ new intent. An open dialog preserves its exact retry payload/UUID.
 
 Use server-side revisions and owned error codes. A stale edit keeps the draft
 visible and offers reload/review. Do not silently resubmit a mutation under a
-new UUID after a timeout. Controls, collection additions, calendar actions,
+new UUID after a timeout. Controls, collection changes, calendar actions,
 metadata reviews and imports have distinct durable/review-token contracts; link
 their feature designs rather than assuming one generic retry behavior.
 

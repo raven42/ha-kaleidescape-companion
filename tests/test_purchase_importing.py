@@ -11,6 +11,7 @@ from uuid import uuid4
 import test_database_admin as database
 import test_importing as importing
 import test_library as library
+from _schema_fixtures import remove_collection_queue_schema
 
 from custom_components.kaleidescape_companion.core.importing import parse_bundle
 from custom_components.kaleidescape_companion.core.migrations import MIGRATIONS, migrate
@@ -572,12 +573,13 @@ class PurchaseImportTest(unittest.IsolatedAsyncioTestCase):
             )
             db.execute("DROP TABLE purchase_identity_barriers")
             db.execute("DROP TABLE purchase_repair_events")
+            remove_collection_queue_schema(db)
             db.execute("PRAGMA user_version=15")
             db.commit()
         self.repository = JournalRepository(self.path)
         self.addAsyncCleanup(self.repository.async_close)
         await self.repository.async_open()
-        self.assertEqual((await self.repository.async_info())["schema_version"], 27)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 28)
         invoices = await self.invoices()
         self.assertEqual(len(invoices), 1)
         ledger = (await self.repository.async_inspect("purchase_records"))["items"]
@@ -635,6 +637,7 @@ class PurchaseImportTest(unittest.IsolatedAsyncioTestCase):
             db.execute("DROP TABLE IF EXISTS calendar_managed_events")
             db.execute("DROP TABLE IF EXISTS calendar_reconcile_candidates")
             db.execute("DROP TABLE IF EXISTS calendar_reconcile_intents")
+            remove_collection_queue_schema(db)
             db.execute("PRAGMA user_version=15")
             db.commit()
             with patch(

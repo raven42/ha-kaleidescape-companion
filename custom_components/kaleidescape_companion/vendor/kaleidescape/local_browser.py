@@ -17,7 +17,7 @@ import re
 import secrets
 from dataclasses import dataclass
 from typing import Protocol
-from urllib.parse import urlencode
+from urllib.parse import parse_qs, urlencode, urlsplit
 
 from .error import KaleidescapeError
 from .library_parser import (
@@ -26,6 +26,7 @@ from .library_parser import (
     artwork_path,
     catalog,
     clean,
+    detail_collections,
     details,
     identity,
 )
@@ -36,6 +37,13 @@ IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 TEXT_TYPES = {"text/html", "application/xhtml+xml"}
 CHARSETS = {"utf-8", "utf8", "iso-8859-1", "latin-1", "windows-1252"}
 RESERVED_COLLECTIONS = {"all", "new", "played", "paused", "scenes", "trash", "deleted"}
+REMOVAL_ACTIONS = {
+    "favorites": ("Favorites", "remove_from_favorites", "Remove-Often"),
+    "watchsoon": ("WatchSoon", "remove_from_watch_soon", "Remove-Soon"),
+    "new": ("New", "remove_from_new", "Remove-New"),
+    "played": ("Played", "remove_from_played", "Remove-Played"),
+    "paused": ("Paused", "remove_from_paused", "Remove-Paused"),
+}
 
 
 class BrowserResponseError(KaleidescapeError):
@@ -175,8 +183,66 @@ def form_targets(page: str, handle: str) -> dict[str, str]:
     return targets
 
 
+def removal_form(page: str, handle: str, collection: str) -> tuple[str, str]:
+    """Verify the exact built-in collection form and selected checkbox."""
+    identity(handle)
+    if not isinstance(collection, str):
+        raise TypeError("Collection name must be text")
+    key = re.sub(r"[\s_-]+", "", collection.casefold())
+    if key not in REMOVAL_ACTIONS:
+        raise ValueError("Unsupported collection removal")
+    name, button_id, action = REMOVAL_ACTIONS[key]
+    path = "/movies?" + urlencode({"collection": name, "sort": 2})
+    root = Tree(page).root
+    form = root.find(id="main", tag="form")
+    if (
+        form is None
+        or form.attrs.get("method", "").lower() != "post"
+        or form.attrs.get("enctype", "").lower() != "multipart/form-data"
+        or form.attrs.get("action", "") not in {"", path}
+    ):
+        raise LibraryFormatError("Collection removal form was not recognized")
+    button = form.find(id=button_id, tag="button")
+    if (
+        button is None
+        or "disabled" in button.attrs
+        or button.attrs.get("onclick", "").strip()
+        != f"submit_parent_form_once( event, '{action}' );"
+    ):
+        raise LibraryFormatError("Collection removal action was not recognized")
+    controls = [
+        node
+        for node in form.nodes()
+        if node.tag == "input"
+        and node.attrs.get("name") == "check-" + handle
+        and node.attrs.get("type", "").lower() == "checkbox"
+        and "disabled" not in node.attrs
+    ]
+    if len(controls) != 1 or controls[0].attrs.get("value", "on") != "on":
+        raise LibraryFormatError("Selected version cannot be removed")
+    return path, action
+
+
+def _removal_path(path: str) -> bool:
+    """Allow only canonical fixed collection views, with no extra parameters."""
+    parts = urlsplit(path)
+    try:
+        query = parse_qs(parts.query, strict_parsing=True)
+    except ValueError:
+        return False
+    if parts.scheme or parts.netloc or parts.fragment or parts.path != "/movies":
+        return False
+    if set(query) != {"collection", "sort"} or query["sort"] != ["2"]:
+        return False
+    return any(
+        query["collection"] == [name]
+        and path == "/movies?" + urlencode({"collection": name, "sort": 2})
+        for name, _, _ in REMOVAL_ACTIONS.values()
+    )
+
+
 class LocalLibrary:
-    """Read and add to the local movie browser through one injected transport."""
+    """Read and update the local movie browser through one injected transport."""
 
     def __init__(self, transport: BrowserTransport):
         self._transport = transport
@@ -199,6 +265,12 @@ class LocalLibrary:
         identity(handle)
         path = "/details?" + urlencode({"id": handle, "callback": "true"})
         return details(_text(await self._transport.get(path)))
+
+    async def version_collections(self, handle: str) -> tuple[str, list[str]]:
+        """Read explicit collection memberships for one exact version."""
+        identity(handle)
+        path = "/details?" + urlencode({"id": handle, "callback": "true"})
+        return detail_collections(_text(await self._transport.get(path)))
 
     async def artwork(self, path: str) -> tuple[bytes, str]:
         """Return validated image bytes from an allowed local cover route."""
@@ -252,6 +324,45 @@ class LocalLibrary:
             or (
                 response.status != 200
                 and response.location not in {"/movies", "movies"}
+            )
+        ):
+            raise BrowserOutcomeUnknownError("Collection POST outcome is unknown")
+        return CollectionPostResult(response.status, response.location)
+
+    async def remove_from_collection(
+        self, handle: str, collection: str
+    ) -> CollectionPostResult:
+        """Submit one validated built-in removal/move; never retry the POST."""
+        identity(handle)
+        if not isinstance(collection, str):
+            raise TypeError("Collection name must be text")
+        key = re.sub(r"[\s_-]+", "", collection.casefold())
+        if key not in REMOVAL_ACTIONS:
+            raise ValueError("Unsupported collection removal")
+        name = REMOVAL_ACTIONS[key][0]
+        path = "/movies?" + urlencode({"collection": name, "sort": 2})
+        page = _text(await self._transport.get(path))
+        rows, _ = catalog(page)
+        if not any(row["source_handle"] == handle for row in rows):
+            raise LibraryFormatError("Selected version is absent from collection")
+        _, action = removal_form(page, handle, name)
+        try:
+            response = await self._transport.post(
+                path, {"submit_type": action, "check-" + handle: "on"}
+            )
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except BaseException as error:
+            raise BrowserOutcomeUnknownError(
+                "Collection POST outcome is unknown"
+            ) from error
+        if (
+            response.status not in {200, 302, 303}
+            or response.content_encoding.lower() != "identity"
+            or len(response.body) > MAX_PAGE
+            or (
+                response.status != 200
+                and response.location not in {"/movies", "movies", path}
             )
         ):
             raise BrowserOutcomeUnknownError("Collection POST outcome is unknown")
@@ -317,7 +428,7 @@ class _DirectBrowserTransport:
     async def post(self, path: str, fields: dict[str, str]) -> BrowserResponse:
         """Send one bounded multipart request; never retry a POST."""
         self._check_path(path)
-        if path != "/movies":
+        if path != "/movies" and not _removal_path(path):
             raise ValueError("Invalid local browser POST path")
         boundary = secrets.token_hex(16)
         chunks: list[bytes] = []

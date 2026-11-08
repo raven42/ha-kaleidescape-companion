@@ -9,6 +9,7 @@ import test_backend as backend
 import test_library as library
 import test_metadata as metadata
 import test_repository as repository
+from _schema_fixtures import remove_collection_queue_schema
 
 from custom_components.kaleidescape_companion.core.repository import JournalRepository
 
@@ -99,6 +100,7 @@ class JournalLinksTest(unittest.IsolatedAsyncioTestCase):
                 )
                 db.execute("DROP TABLE purchase_identity_barriers")
                 db.execute("DROP TABLE purchase_repair_events")
+                remove_collection_queue_schema(db)
                 db.execute("PRAGMA user_version=16")
 
         await self.repository._call(old_schema)

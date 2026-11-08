@@ -2,6 +2,110 @@
 import { css } from "lit";
 
 export const libraryStyles = css`
+  .library-notifications {
+    position: fixed;
+    z-index: 100;
+    top: max(
+      16px,
+      var(--companion-viewport-top, 0px),
+      env(safe-area-inset-top, 0px)
+    );
+    right: max(16px, env(safe-area-inset-right, 0px));
+    width: min(380px, calc(100vw - 32px));
+    max-height: min(70vh, 600px);
+    overflow-y: auto;
+    display: grid;
+    gap: 8px;
+    pointer-events: none;
+  }
+  .library-notification {
+    position: relative;
+    margin: 0;
+    padding: 12px 48px 12px 14px;
+    border: 1px solid var(--line);
+    border-inline-start: 4px solid var(--library-notification-edge, #8b949e);
+    border-radius: 10px;
+    background: var(--surface);
+    box-shadow: 0 5px 24px #0004;
+    pointer-events: auto;
+  }
+  .library-notification.notification-success {
+    --library-notification-edge: #2e9b57;
+  }
+  .library-notification.notification-warning {
+    --library-notification-edge: #d9a900;
+  }
+  .library-notification.notification-progress {
+    --library-notification-edge: #168bd2;
+  }
+  .library-notification.notification-error {
+    --library-notification-edge: #df4646;
+  }
+  .library-notification.notification-info {
+    --library-notification-edge: #8b949e;
+  }
+  .library-notification .notification-close {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    padding: 7px;
+    min-height: 36px;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    background: transparent;
+  }
+  .notification-close svg {
+    width: 18px;
+    height: 18px;
+  }
+  .collection-pending .collection-badge,
+  .collection-pending .status-badge,
+  .collection-pending .cover-flag {
+    opacity: 0.45;
+  }
+  .collection-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin: 4px;
+    border: 2px solid var(--line);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: collection-spin 0.8s linear infinite;
+  }
+  .pending-collection-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    opacity: 0.65;
+    font-size: 11px;
+  }
+  .pending-collection-badge svg {
+    width: 14px;
+    height: 14px;
+  }
+  .cover-flags .pending-collection-badge {
+    position: absolute;
+    bottom: 6px;
+    left: 6px;
+    max-width: calc(100% - 12px);
+  }
+  @keyframes collection-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .collection-spinner {
+      animation: none;
+      border-color: var(--accent);
+    }
+  }
   .library-toolbar [hidden],
   .library-toolbar[hidden],
   .library-footer [hidden],

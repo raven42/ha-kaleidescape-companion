@@ -461,6 +461,11 @@ class JournalRepository:
             library_collections.snapshot, self._db(), source, title, excluded
         )
 
+    async def async_collection_refresh_version(self, *args):
+        return await self._call(
+            self._library_write, library_collections.refresh_version, *args
+        )
+
     async def async_collection_lookup(self, request, fingerprint):
         return await self._call(
             library_collections.lookup, self._db(), request, fingerprint
@@ -472,8 +477,21 @@ class JournalRepository:
     async def async_collection_begin(self, *args):
         return await self._call(self._library_write, library_collections.begin, *args)
 
+    async def async_collection_begin_change(self, *args):
+        return await self._call(
+            self._library_write, library_collections.begin_change, *args
+        )
+
+    async def async_collection_queue(self, operation, *args):
+        from ..library import collection_queue
+
+        method = getattr(collection_queue, operation)
+        if operation in {"enqueue", "update", "recover", "dismiss"}:
+            return await self._call(self._library_write, method, *args)
+        return await self._call(method, self._db(), *args)
+
     async def async_collection_finish(
-        self, source, request, members=None, acknowledge=None
+        self, source, request, members=None, acknowledge=None, other_members=None
     ):
         return await self._call(
             self._library_write,
@@ -482,6 +500,7 @@ class JournalRepository:
             request,
             members,
             acknowledge,
+            other_members,
         )
 
     def _library_write(self, operation, *args):

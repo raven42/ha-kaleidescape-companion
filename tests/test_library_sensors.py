@@ -11,6 +11,7 @@ from uuid import uuid4
 
 import test_backend as backend
 import test_library as library
+from _schema_fixtures import remove_collection_queue_schema
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import EntityCategory, UnitOfInformation
@@ -541,6 +542,7 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
             db.execute("DROP TABLE calendar_reconcile_intents")
             db.execute("DROP TABLE purchase_identity_barriers")
             db.execute("DROP TABLE purchase_repair_events")
+            remove_collection_queue_schema(db)
             db.execute("PRAGMA user_version=9")
             db.commit()
         self.repository = JournalRepository(self.path)

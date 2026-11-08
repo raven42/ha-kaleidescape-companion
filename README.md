@@ -6,9 +6,9 @@ and an optional local movie Library. It observes playback through HA's built-in
 HA users browse household data and use enabled controls; administrators manage
 configuration, records and discovery.
 
-Recording, Library sync, collection additions, player controls, experimental
-title launch, calendar publishing and external metadata are separately opted in.
-The built-in integration is preserved. Companion's domain is
+Recording, Library sync, collection changes, player controls, experimental title
+launch, calendar publishing and external metadata are separately opted in. The
+built-in integration is preserved. Companion's domain is
 `kaleidescape_companion`.
 
 ## Documentation
@@ -35,7 +35,7 @@ per aspect, organized into designs, plans, guides and policies.
 
 The Journal supports one-player observation, manual viewings, corrections,
 recovery, private exports and a monthly calendar. Library provides cached movie
-browsing, grouped editions, artwork and explicit collection additions. Optional
+browsing, grouped editions, artwork and explicit collection changes. Optional
 public Store/TMDB enrichment supports reviewed metadata and images.
 
 The shared panel includes **Now Playing | Library | Journal | Database |
@@ -48,7 +48,8 @@ Receipt imports retain purchases in their own table, including purchases that
 arrive before a Library scan. Administrators reconcile saved unmatched purchases
 against Library entries without a JSON file or pausing recording. Schema 25
 moved existing invoice histories into that table rather than keeping duplicate
-copies; the current schema is 27, including purchase-repair evidence.
+copies; the current schema is 28, including purchase-repair evidence and
+collection jobs.
 
 Three HA buttons, three configuration switches and four optional automation
 blueprints expose synchronization, recording/calendar settings and receipt

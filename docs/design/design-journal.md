@@ -1,6 +1,6 @@
 # Journal storage and playback recording
 
-Status: implemented. API version is `1`; SQLite schema is `27` and JSON export
+Status: implemented. API version is `1`; SQLite schema is `28` and JSON export
 format is `5`. This document owns persistent journal behavior and observation.
 [Data management](design-data-management.md) owns administrative
 editing/imports; [calendar](design-calendar.md) owns event delivery;
@@ -48,7 +48,7 @@ there is no automatic history purge or filesystem-wide quota.
 | `purchase_repair_events`, `purchase_identity_barriers`                                   | Append-only private repair evidence and reserved purchase identities                                                    |
 | `library_collections`, `library_memberships`, `library_artwork`                          | Membership relations and file-cache index; image bytes are outside SQLite                                               |
 | `settings`                                                                               | Personal/display-profile preferences and shared UI defaults                                                             |
-| `library_collection_intents`, `playback_controls`                                        | Durable external command outcomes and uncertainty barriers                                                              |
+| `collection_jobs`, `library_collection_intents`, `playback_controls`                     | Durable external command outcomes and uncertainty barriers                                                              |
 | `calendar_publications`                                                                  | One-attempt completion publishing state                                                                                 |
 | `calendar_sync_jobs`, `calendar_sync_items`                                              | Explicit historical export progress and receipts                                                                        |
 | `calendar_managed_events`, `calendar_reconcile_candidates`, `calendar_reconcile_intents` | Dedicated-calendar links, delayed cleanup and Full Sync intents                                                         |

@@ -9,6 +9,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import test_importing as importing
 import test_library as library
+from _schema_fixtures import remove_collection_queue_schema
 from homeassistant.core import Context, ServiceCall
 from homeassistant.exceptions import HomeAssistantError
 
@@ -244,6 +245,7 @@ class EmailTest(unittest.IsolatedAsyncioTestCase):
             )
             db.execute("DROP TABLE purchase_identity_barriers")
             db.execute("DROP TABLE purchase_repair_events")
+            remove_collection_queue_schema(db)
             db.execute("PRAGMA user_version=24")
         self.repository = JournalRepository(self.path)
         self.addAsyncCleanup(self.repository.async_close)

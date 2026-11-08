@@ -358,7 +358,7 @@ class PurchaseRepairTest(unittest.IsolatedAsyncioTestCase):
                     backup.execute("PRAGMA user_version").fetchone()[0], 26
                 )
             migrations.migrate(db, path)
-            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 27)
+            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 28)
             self.assertEqual(
                 db.execute("SELECT id FROM purchase_records").fetchone()[0],
                 record["id"],

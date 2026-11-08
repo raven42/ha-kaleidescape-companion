@@ -12,6 +12,7 @@ from uuid import uuid4
 
 import test_backend as backend_tests
 import test_repository as repository_tests
+from _schema_fixtures import remove_collection_queue_schema
 from homeassistant.config_entries import OptionsFlowManager
 from test_tracking import observation
 
@@ -351,6 +352,7 @@ class MaintenanceStorageTest(unittest.IsolatedAsyncioTestCase):
             db.execute("DROP TABLE IF EXISTS purchase_records")
             db.execute("DROP TABLE purchase_identity_barriers")
             db.execute("DROP TABLE purchase_repair_events")
+            remove_collection_queue_schema(db)
             db.execute("PRAGMA user_version=3")
             db.commit()
         self.repository = JournalRepository(self.path)
@@ -359,7 +361,7 @@ class MaintenanceStorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             (await self.repository.async_get(record["id"]))["title"], record["title"]
         )
-        self.assertEqual((await self.repository.async_info())["schema_version"], 27)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 28)
         backup = next(self.path.parent.glob("journal.sqlite3.v3.*.bak"))
         self.assertEqual(backup.stat().st_mode & 0o777, 0o600)
         with closing(sqlite3.connect(backup)) as db:

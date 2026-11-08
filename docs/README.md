@@ -28,7 +28,7 @@ that its implementation or hardware validation has shipped.
 | [Journal](design/design-journal.md)                   | Storage model, observation, recording, manual viewings, recovery and backup/export contract |
 | [Data management](design/design-data-management.md)   | Database administration, reviewed merge imports and offline purchase-history preparation    |
 | [Title matching](design/design-title-matching.md)     | Reusable matching algorithms/interfaces and evaluation tools                                |
-| [Library](design/design-library.md)                   | Local sync, versions, artwork/cache, browsing/badges and collection additions               |
+| [Library](design/design-library.md)                   | Local sync, versions, artwork/cache, browsing/badges and collection management              |
 | [External metadata](design/design-metadata.md)        | Enrichment workflow and standalone provider client/parser interfaces                        |
 | [Player controls](design/design-playback-controls.md) | Discovery, permissions, player/title verification, remote/launch and uncertainty recovery   |
 | [User interface](design/design-user-interface.md)     | Shared UI structure, roles, settings/preferences/profiles and response recovery             |

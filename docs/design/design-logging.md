@@ -45,6 +45,13 @@ Repeated failed polls use debug rather than repeated warnings. Settings → Abou
 shows the version declared by the loaded pyk module; it does not verify whether
 local patches were applied to that version.
 
+Collection changes log failures and unconfirmed readback at warning level,
+including the fixed stage, safe exception category and whether a submission may
+have occurred. Debug logging adds stage and server-request timings, response
+status and byte counts. Readback mismatches report only aggregate counts and
+whether the expected memberships matched. These records omit collection names,
+movie titles, server addresses, request identifiers and response contents.
+
 ## Severity and truthful outcomes
 
 | Level   | Intended use                                                                                                           |

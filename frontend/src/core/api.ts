@@ -567,6 +567,8 @@ export interface LibraryInfo {
   status_counts?: Record<string, number>;
   metadata?: MetadataStatus;
   collection_add_enabled?: boolean;
+  collection_choices?: string[];
+  collection_jobs?: CollectionJob[];
   pending_adds?: {
     request_id: string;
     title_id: string;
@@ -592,6 +594,23 @@ export interface LibraryInfo {
   artwork_enabled?: boolean;
   artwork_bytes?: number;
   artwork_limit_bytes?: number;
+}
+export interface CollectionJob {
+  request_id: string;
+  title_id: string;
+  group_id: string;
+  title: string;
+  collection: string;
+  operation: "add" | "remove";
+  status:
+    | "queued"
+    | "working"
+    | "syncing"
+    | "confirmed"
+    | "failed"
+    | "uncertain"
+    | "interrupted";
+  error: string | null;
 }
 export interface LibraryPurchaseTotals {
   revision: number;
@@ -781,6 +800,8 @@ export function errorMessage(error: unknown): string {
       "Library refresh reached its database storage ceiling. Cached data is retained and journal storage headroom is reserved.",
     library_unreachable:
       "The library host could not be reached. Check the hostname and HA network access. Cached data is retained.",
+    library_timeout:
+      "The library server took too long to respond. Check its status and the Home Assistant logs.",
     library_destination:
       "The library must use a private LAN hostname or address.",
     library_format:
@@ -800,11 +821,11 @@ export function errorMessage(error: unknown): string {
     library_page_too_large:
       "This library page is too large. Reduce entries per page and try again.",
     collection_disabled:
-      "Enable Add to Collection and collection sync in Settings first.",
+      "Enable collection changes and collection sync in Settings first.",
     collection_form:
-      "The server’s collection add form was not recognized. Refresh or sync before starting another add.",
+      "The server’s collection form was not recognized. Refresh or sync before trying again.",
     collection_uncertain:
-      "Check or acknowledge the previous unconfirmed collection add first.",
+      "Check or acknowledge the previous unconfirmed collection change first.",
     collection_limit: "Collection request history reached its storage limit.",
     library_too_large:
       "A library response exceeded its safety limit. Cached data is retained.",
@@ -1469,6 +1490,31 @@ export class JournalClient {
       revision,
     });
   }
+  refreshTitleCollections(
+    scope: Scope,
+    title_id: string,
+    revision: number,
+  ): Promise<{ collections: string[]; revision: number }> {
+    return withRequestDeadline(
+      this.transport.callWS({
+        type: `${DOMAIN}/library/collections/refresh`,
+        ...scopeFields(scope),
+        title_id,
+        revision,
+      }),
+      310000,
+    );
+  }
+  dismissCollectionJob(
+    scope: Scope,
+    request_id: string,
+  ): Promise<{ dismissed: boolean }> {
+    return this.call({
+      type: `${DOMAIN}/library/collections/dismiss`,
+      ...scopeFields(scope),
+      request_id,
+    });
+  }
   prepareCollectionAdd(
     scope: Scope,
     title_id: string,
@@ -1480,6 +1526,25 @@ export class JournalClient {
       collection,
       revision,
     });
+  }
+  prepareCollectionChange(
+    scope: Scope,
+    title_id: string,
+    collection: string,
+    operation: "add" | "remove",
+    revision: number,
+  ) {
+    return this.prepareCommand(scope, "library/collections/queue", {
+      title_id,
+      collection,
+      operation,
+      revision,
+    });
+  }
+  queueCollectionChange(
+    pending: PreparedMutation,
+  ): Promise<{ request_id: string; status: string }> {
+    return this.call({ ...pending.message });
   }
   collectionAdd(pending: PreparedMutation): Promise<CollectionAddResult> {
     return this.call({ ...pending.message });

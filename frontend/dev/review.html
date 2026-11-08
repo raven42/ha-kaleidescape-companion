@@ -24,7 +24,8 @@
     <a href="?library=1">Administrator Library</a> ·
     <a href="?library=1&amp;role=reader">Household reader Library</a> ·
     <a href="?library=1&amp;titles=1200">1,200-title Library</a> ·
-    <a href="?settings=1&amp;companion_page=settings">Settings workspace</a>
+    <a href="?settings=1&amp;companion_page=settings">Settings workspace</a> ·
+    <a href="?collection=1&amp;companion_page=library">Collection changes</a>
   </aside>
   <kaleidescape-panel></kaleidescape-panel>
   <script type="module">
@@ -38,7 +39,39 @@
     const parameters = new URLSearchParams(location.search);
     const transport = new FixtureTransport();
     transport.options.library_enabled =
-      parameters.get("library") === "1" || parameters.get("settings") === "1";
+      parameters.get("library") === "1" ||
+      parameters.get("settings") === "1" ||
+      parameters.get("collection") === "1";
+    if (parameters.get("collection") === "1") {
+      transport.options.library_allow_collection_add = true;
+      transport.options.library_sync_collections = true;
+      transport.libraryTitles[0].collections = ["Played", "Favorites"];
+      transport.libraryTitles[2].collections = ["New"];
+      if (parameters.get("unconfirmed") === "1") {
+        transport.pendingAdds = [
+          {
+            request_id: "fictional-unconfirmed",
+            title_id: transport.libraryTitles[0].id,
+            title: transport.libraryTitles[0].title,
+            collection: "WatchSoon",
+          },
+        ];
+      }
+      if (parameters.get("alerts") === "1") {
+        transport.collectionJobs = [
+          {
+            request_id: "fictional-failed",
+            title_id: transport.libraryTitles[0].id,
+            group_id: transport.libraryTitles[0].id,
+            title: transport.libraryTitles[0].title,
+            collection: "WatchSoon",
+            operation: "add",
+            status: "failed",
+            error: "library_timeout",
+          },
+        ];
+      }
+    }
     if (parameters.get("settings") === "1") {
       transport.credentialConfigured = true;
       transport.options.library_host = "cinema.example.test";

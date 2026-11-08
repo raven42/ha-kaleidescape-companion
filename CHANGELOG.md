@@ -3,6 +3,16 @@
 Entries record development history. Later entries can supersede earlier
 behavior; the [documentation index](docs/README.md) owns current contracts.
 
+## Unreleased — Collection management
+
+- Queue up to ten administrator collection changes, show pending progress and
+  verify the resulting memberships after a Library scan.
+- Support Favorites, Watch Soon and New/Played moves, with Paused removal and
+  one-shot durable uncertainty recovery; use cached names in the dialog.
+- Extend the private pyk patch series with validated built-in removal forms.
+- Correct multipart field headers, add per-version collection refresh, and show
+  dismissible Library notifications without shifting the results.
+
 ## Unreleased — Documentation consistency
 
 - Align settings navigation, credential removal, blueprint review and preview

@@ -63,6 +63,7 @@ class Node:
     tag: str = ""
     attrs: dict[str, str] = field(default_factory=dict)
     children: list = field(default_factory=list)
+    closed: bool = False
 
     def nodes(self):
         for child in self.children:
@@ -112,6 +113,8 @@ class Tree(HTMLParser):
         self.stack[-1].children.append(node)
         if tag not in VOID:
             self.stack.append(node)
+        else:
+            node.closed = True
 
     def handle_startendtag(self, tag, attrs):
         self.handle_starttag(tag, attrs)
@@ -121,6 +124,7 @@ class Tree(HTMLParser):
     def handle_endtag(self, tag):
         for index in range(len(self.stack) - 1, 0, -1):
             if self.stack[index].tag == tag:
+                self.stack[index].closed = True
                 self.stack = self.stack[:index]
                 break
 
@@ -239,6 +243,41 @@ def artwork_path(value: str) -> str | None:
     if any(part in {"", ".", ".."} for part in value.split("/")[1:]):
         return None
     return value
+
+
+def detail_collections(source: str) -> tuple[str, list[str]]:
+    """Read the explicit per-version collection field without executing links."""
+    root = Tree(source).root
+    title = root.find(id="movie_title")
+    if title is None or not clean(title.text()):
+        raise malformed()
+    values = []
+    for row in root.nodes():
+        if row.tag != "tr":
+            continue
+        label, value = row.find(cls="details_name"), row.find(cls="details_value")
+        if (
+            label
+            and value
+            and clean(label.text()).rstrip(":").casefold()
+            == ("in the following collections")
+        ):
+            if not row.closed or not value.closed:
+                raise malformed()
+            values.append(value)
+    if len(values) != 1:
+        raise malformed()
+    links = [node for node in values[0].nodes() if node.tag == "a"]
+    if (
+        not links
+        or len(links) > MAX_COLLECTIONS
+        or not all(link.closed for link in links)
+    ):
+        raise malformed()
+    result = [clean(link.text(), 256) for link in links]
+    if not all(result) or len(set(result)) != len(result):
+        raise malformed()
+    return clean(title.text()), result
 
 
 def details(source: str) -> dict:

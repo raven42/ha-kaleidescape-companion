@@ -8,7 +8,7 @@ the shared cached library and artwork. Settings and **Sync now** remain
 administrator-only.
 
 The temporary PoC uses pyk's `LocalLibrary` to parse local browser pages and the
-add-only form. Companion supplies its guarded HA HTTP transport and retains
+collection forms. Companion supplies its guarded HA HTTP transport and retains
 caching, scheduling, identity, authorization and durable collection outcomes.
 This requires the privately bundled patched pyk source described in the
 [migration plan](../plans/plan-pykaliedescape-migration.md).
@@ -32,7 +32,7 @@ It is a firmware-dependent HTML interface, not a promised public JSON API.
 | ------------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------ |
 | Enable Library sync            | Off     | Starts a read-only sync after setup; recurring sync requires an HA automation                                      |
 | Kaleidescape Server Address    | Blank   | Attempts `http://my-kaleidescape.local`; an explicit value overrides discovery                                     |
-| Allow Add to Collection        | Off     | Administrators may explicitly add one selected version to an existing offered target; requires collection sync     |
+| Allow collection changes       | Off     | Administrators may queue supported changes for an exact version; requires collection sync                          |
 | Collections and watched status | On      | Cache available collections and exact title memberships                                                            |
 | Movie details and credits      | On      | Fetch available cast/director/writer/studio, genres, synopsis, and runtime                                         |
 | Cover artwork                  | Off     | Fetch validated covers into the private cache; can require detail-page requests even with detail metadata disabled |
@@ -263,8 +263,8 @@ administrator sync progress, settings, errors, or storage details. User-created
 HA automations can schedule sync independently. Separately enabled household
 [Library playback](design-playback-controls.md) can launch an exact cached
 version through the protocol extension, with edition limitations. The separately
-opted-in [Add to Collection](design-library.md#add-to-collection) action is the
-only supported vendor edit.
+opted-in [collection management](design-library.md#collection-management) action
+is the only supported vendor edit.
 
 The search toolbar sticks to the top of the scrolling Library. On phones it
 becomes square Search, Filters, Clear, Sort/Randomize and Options shortcuts,
@@ -405,9 +405,9 @@ contacting any device. Canonical work/edition identity and historical artwork
 associations remain follow-ups. Reviewed Library metadata/purchase imports and
 private exports are implemented as described in
 [data management](design-data-management.md). The
-[Add to Collection action](design-library.md#add-to-collection) adds a separate,
-explicit administrator-only POST capability; automatic synchronization remains
-GET-only. Removal remains deferred.
+[collection management action](design-library.md#collection-management) adds a
+separate, explicit administrator-only POST capability; automatic synchronization
+remains GET-only. Removal remains deferred.
 
 ### Performance checks
 
@@ -659,137 +659,100 @@ paging icons only for multipage results. Administrator cache/scraper details
 remain in the desktop footer and detailed dialogs. Mobile shortcut controls
 reuse the same search, filter, sort and preference behavior as desktop controls.
 
-## Add to Collection
+## Collection management
 
-Administrators can enable **Settings → Library → Allow Add to Collection**. It
-is off by default and also requires enabled Library and collection sync. Open a
-Library title, select its individual version tab, and choose **Collection**. The
-dialog reads the server's offered targets. Choose one existing collection and
-**Add selected version**. Viewing history and purchase dates are not changed.
-Removal, collection creation/renaming/deletion, and bulk/group edits remain
-outside this implementation.
+Administrators can enable **Settings → Library → Allow collection changes**; it
+requires Library and collection sync. Open a movie, choose its exact version and
+open **Collection**. Collection names are read from the last successful Library
+sync, so opening the dialog does not contact the server. The action is queued
+and the dialog can close immediately. Up to ten changes can be queued, working
+or waiting for the subsequent scan. Changes run one at a time; a related change
+for the same version must wait until the earlier one finishes. Conflicting
+Watched/Unwatched requests are rejected with guidance.
 
-### Protocol capability
+The refresh icon in **Manage collections** reads the selected version's explicit
+collection field from its details page and updates only that version's cached
+membership. It requires a recognized complete field, matching title and known
+collection names; otherwise it preserves the cache and asks for a Library sync.
+It is unavailable while a scan or collection change is active and does not
+resolve an unconfirmed write. Library notifications appear in a dismissible
+upper-right overlay. Their left edges use green for success, yellow for
+warnings, blue for in-progress work, red for errors and gray for neutral
+information. Dismissing a finished job removes its notification, while an
+unconfirmed change remains recoverable from the movie dialog.
 
-The
-[official control protocol, revision 17](https://www.kaleidescape.com/wp-content/uploads/Kaleidescape-System-Control-Protocol-Reference-Manual.pdf)
-was rechecked on 2026-10-31. `GO_MOVIE_COLLECTION` and `GO_MOVIE_COLLECTIONS`
-select onscreen views; they do not change membership. The command catalog has no
-movie collection membership add/remove command. The temporary patched-pyk
-`LocalLibrary` provides the HTTP add capability used by Companion; an accepted
-upstream release remains part of the migration gate. TCP view commands cannot
-replace the HTTP add path. Removal still needs an observed, verified web request
-contract and its own guarded mutation/recovery path; no guessed command or
-removal request is sent.
+Catalog and collection page requests and collection submissions allow up to five
+minutes each; a collection operation has a 30-minute overall limit and a full
+Library sync has a one-hour limit. A slow server can therefore leave work
+pending for several minutes. Artwork and individual details retain their shorter
+timeouts. Failures before a submission is attempted release the uncertainty
+barrier; a possible submission remains unconfirmed until checked or
+acknowledged. The movie details show recovery controls when an earlier
+unconfirmed change blocks collection actions.
 
-### Observed form and compatibility
+| Kaleidescape collection | Companion label | Supported change                                  |
+| ----------------------- | --------------- | ------------------------------------------------- |
+| Favorites               | Favorites       | Add or remove                                     |
+| WatchSoon               | Watch Soon      | Add or remove                                     |
+| New                     | Unwatched       | Move to/from Played                               |
+| Played                  | Watched         | Move to/from New                                  |
+| Paused                  | In Progress     | Remove only; starting playback creates this state |
 
-Read-only inspection on 2026-10-28 of the `26.1.2-27147` interface found the
-fixed `main` Movies form: POST, multipart/form-data, current `/movies` action.
-The button uses `submit_parent_form_once( event, 'Add-To-Collection' );`.
-Submitted fields are `submit_type=Add-To-Collection`,
-`add_to_collection_select`, and one `check-<source handle>=on`. Dropdown
-JavaScript copies each option's hidden input value into the selector field.
-Labels and wire values can differ; the backend resolves the fresh hidden value
-instead of guessing from the displayed name. No source JavaScript is executed or
-packaged.
+New and Played are mutually exclusive moves, not independent add operations. If
+neither status is present, the server's observed form does not supply a safe
+move; review the device state. Existing non-protected custom collections can
+still receive additions. Their removal remains unavailable because the generic
+form has not been verified. Collection creation, renaming, deletion and bulk
+edits are not supported.
 
-The form is a firmware-dependent interface, not a documented stable API. No real
-POST was sent during implementation. Successful real-device behavior, charset
-handling, and version/group semantics still require operator validation. Normal
-checks use fictional pages, mock transport and isolated databases only.
+The footer reports queued and in-progress changes. A pending badge is faded and
+shows a spinner; a notification reports completion after the Library has been
+rescanned and the selected version's requested membership is confirmed. One scan
+can reconcile a batch. A failed scan does not imply that the device write
+failed: inspect the device and run **Sync now**, rather than blindly repeating
+an action. The selected version is the write target; a grouped badge can also
+reflect other versions in that group.
 
-### Access and request scope
+### Server contract and recovery
 
-The existing authenticated HA WebSocket API exposes administrator-only commands:
+The `26.1.2-27147` local browser uses a multipart `main` form. Companion sends
+browser-style field headers without per-field content types; this device
+silently ignored aiohttp's default multipart field headers despite returning a
+redirect. Its add action uses `Add-To-Collection` and the form's offered opaque
+value. The five observed removal actions are `Remove-Often`, `Remove-Soon`,
+`Remove-New`, `Remove-Played` and `Remove-Paused`. Each requires the checkbox
+for the exact selected version and a fixed collection-view route. The bundled
+pyk patch checks the form, action, route, complete listing and checkbox before
+sending; it never executes page JavaScript or retries a POST. An HTTP response
+is not membership proof.
 
-- `library/collections/targets`: opaque `title_id` and source `revision`;
-  returns offered, cached, visible collection labels after a bounded fresh form
-  read.
-- `library/collections/add`: request UUID, opaque `title_id`, one collection
-  label, and expected source `revision`. Each request selects one exact source
-  handle.
-- `library/collections/check`: request UUID; performs read-only reconciliation.
-- `library/collections/acknowledge`: request UUID and
-  `confirmation=ACKNOWLEDGE`; retires an uncertain request locally without
-  sending any device mutation.
+Before each write, Companion verifies the cached source/version against a fresh
+catalog and reads the full affected collection. Watched/Unwatched moves read
+both New and Played. A durable intent records hashes of the expected complete
+sets before the one-shot POST. Readback must match the expected sets, including
+all other titles, before the device change is confirmed. A lost response is
+resolved by readback when possible; a mismatch or interrupted read remains
+**unconfirmed**. **Check membership** reads again without another POST. An
+administrator may acknowledge an unconfirmed result only after inspecting the
+server. Acknowledgement does not undo or prove the write. Unconfirmed work
+blocks further collection writes.
 
-All use the current entry/dataset scope. The backend resolves raw handles, form
-fields, collection values and fixed routes. Hidden targets and protected labels
-All/New/Played/Paused/Scenes/Trash/Deleted are rejected. Targets must be in both
-the current cached collections and the source's add dropdown. No supplied URL,
-path, method, arbitrary form, SQL, or action is forwarded. The opt-in, current
-administrator, source/runtime identity, settings fingerprint and readiness are
-checked before work and immediately before a possible POST, and access is
-checked again before a result is returned. Checks/acknowledgments remain
-available with collection additions switched off, as long as Library is still
-enabled.
+Queue records are private administrator data in schema 28. Browser disconnects
+do not cancel accepted work; the actor, opt-in, source and permissions are
+rechecked before a send. On integration restart queued/working/syncing items are
+reported as interrupted or unconfirmed, and are not automatically resent. Backup
+and unload stop new work and drain accepted operations. Completed/failed history
+is bounded; uncertain intents remain available for recovery. A source or
+configuration change, inaccessible version, stale review, full queue or
+unrecognized form fails closed.
 
-### Execution and durable outcomes
-
-Scans and explicit collection operations share one source lock. An active scan
-or collection operation returns Busy to new operations. A fresh Movies form must
-still match the cached selected handle/group/title and expose its checkbox. A
-complete target-collection GET establishes the expected membership set. A source
-revision mismatch rejects the operation before POST.
-
-Schema **8** adds private `library_collection_intents` alongside the shared
-`requests` retry receipts. Before POST, a worker transaction records an
-uncertain intent and actor/payload/source-bound UUID fingerprint. There is at
-most one uncertain request per source and at most 10000 retained collection
-receipts in the database. The receipt includes an expected-membership hash,
-without storing a full member list. Confirmed/acknowledged intents clear their
-temporary version, collection and hash fields; attribution, timestamps, outcome
-and the retry barrier remain. UUID reuse with a different actor or payload
-fails. SQLite snapshots and HA backups include these rows; portable JSON
-transfers and journal purge do not remove them. There is no automatic receipt
-pruning or replay.
-
-Only one fixed multipart POST to the pinned configured LAN `/movies` route is
-possible for a newly accepted UUID. Existing membership is a no-op, verified by
-GET. TLS/Host/DNS pinning, disabled cookies/proxy environment use, size/time
-limits and refused redirect following remain. POST responses accept 200 or
-302/303 to exact relative `movies`/`/movies`; no redirect is followed. Responses
-are bounded at 8 MiB. Operations have a 90-second budget, with existing
-five-second DNS/connect and 15-second per-request limits.
-
-After a possible POST, a complete target GET must match the expected set and
-contain the selected handle before success is confirmed. Only that verified
-collection snapshot updates cached memberships and source revision. Other
-collections remain untouched; the global collection-snapshot timestamp is not
-advanced. If the server affects additional versions or memberships, the
-operation stays uncertain. The device and SQLite do not share an atomic
-transaction.
-
-Timeouts, response loss, crashes and cancellation after possible POST retain the
-uncertain receipt. Repeating its UUID or choosing **Check membership** makes
-GETs only and never replays the POST. New additions are blocked until it is
-confirmed or an administrator explicitly acknowledges it after inspecting the
-device. Acknowledgment records the acknowledging actor and permits a new
-request; it neither undoes the earlier add nor proves it failed. Closed/reopened
-pages and integration restarts retain pending requests in the Library warning
-banner.
-
-Accepted operations outlive browser cancellation. Backup/unload stops new work,
-cancels scans and drains accepted collection work before pausing/closing SQLite.
-Private previews/forms clear on role/connection changes and late replies are
-ignored. In-flight or unconfirmed browser requests block implicit dialog
-dismissal until checked; a known uncertain outcome can be closed and reviewed in
-the banner.
-
-### Operator validation
-
-Build/check/package locally without deploying or mutating a device. In the Vite
-fictional fixture, enable Library and the new option, select an individual
-version, review the add dialog and cancellation. The fixture simulates the
-operation. Real browser review remains with the operator.
-
-On an isolated test deployment, first use a disposable existing collection and
-one deliberately selected version. Verify the target, membership before/after,
-unselected versions and unrelated memberships, refreshed UI/cache, and restart
-reconciliation. Do not use Played/Paused or other protected collections for
-tests. Successful form inspection and mocked tests do not replace this firmware
-check. Removal will need its own verified contract and security review.
+The owner explicitly authorized a live test of one title: Favorites and Watch
+Soon add/remove, and Played → New → Played, were read back with the complete
+collections restored to their initial memberships. The Paused removal form was
+observed but no Paused mutation was tested. Broader firmware, custom-collection
+removal, concurrent external writers, large-library performance and live Home
+Assistant integration qualification remain open. Normal automated checks use
+fictional fixtures and never contact the server.
 
 ## Badge meanings
 

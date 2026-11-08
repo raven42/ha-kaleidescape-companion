@@ -6,8 +6,8 @@
   "kaleidescape/device.py": "cc93b51bf239dabdc29adb683c0e2e9891cc0f19eb668ef59c8dad11c30a407c",
   "kaleidescape/dispatcher.py": "0fb33b66cab0ce39cdddeeae264818c1fc78f31100a583a945926ee1c8580dba",
   "kaleidescape/error.py": "69800279a4a5cc4c8d435e202c82c988aebf9895b7bb36fd288c7932a20c1f24",
-  "kaleidescape/library_parser.py": "b4022feab50b418402bb8e70539f1e68fbcdb3ba61af29d4ecf87738f87e04d3",
-  "kaleidescape/local_browser.py": "ebb62ed87907abe0a408b2ce51651e8851c884564bffdb894a5179548d334684",
+  "kaleidescape/library_parser.py": "be3a5d69471dd519d9c6b06db34774f74ffe586d5c551a46fa833cfb5640ba8f",
+  "kaleidescape/local_browser.py": "4c1211862543485ab64d02f32e7c3c779bdb579c2e108d416bdc45c57d1578f3",
   "kaleidescape/message.py": "de1eed81282f5b51236f8688cde7934aff91f56ec40c1064713c45a29dd0a649",
   "kaleidescape/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 }

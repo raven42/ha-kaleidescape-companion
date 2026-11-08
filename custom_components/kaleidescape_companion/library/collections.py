@@ -1,4 +1,4 @@
-"""Bounded add-only form parsing and private durable request receipts."""
+"""Private durable receipts and complete readback for collection changes."""
 
 import hashlib
 import json
@@ -115,6 +115,65 @@ def intent(db, source, request):
     return dict(row)
 
 
+def refresh_version(db, source, title, revision, names, excluded):
+    """Replace only this version's memberships after a verified detail read."""
+    with db:
+        state = snapshot(db, source, title, excluded)
+        if state["revision"] != revision:
+            raise JournalError("refresh_required", "Library changed during refresh")
+        if state["pending"]:
+            raise JournalError("collection_uncertain", "Resolve the unconfirmed change")
+        known = [
+            row[0]
+            for row in db.execute(
+                "SELECT name FROM library_collections "
+                "WHERE source_id=? AND available=1",
+                (source,),
+            )
+        ]
+
+        def key(value):
+            folded = value.casefold()
+            return "watchsoon" if folded in {"watch soon", "watchsoon"} else folded
+
+        mapping = {}
+        for name in known:
+            mapping.setdefault(key(name), []).append(name)
+        resolved = []
+        for name in names:
+            matches = mapping.get(key(name), [])
+            if len(matches) != 1 or matches[0] in resolved:
+                raise JournalError(
+                    "library_changed", "Sync collection names before refresh"
+                )
+            resolved.append(matches[0])
+        before = {
+            row[0]
+            for row in db.execute(
+                "SELECT collection FROM library_memberships "
+                "WHERE source_id=? AND title_id=?",
+                (source, title),
+            )
+        }
+        if before != set(resolved):
+            db.execute(
+                "DELETE FROM library_memberships WHERE source_id=? AND title_id=?",
+                (source, title),
+            )
+            db.executemany(
+                "INSERT INTO library_memberships VALUES (?,?,?)",
+                [(source, title, name) for name in resolved],
+            )
+            changed(db, source)
+        hidden = excluded_collections(excluded)
+        return {
+            "collections": sorted(
+                name for name in resolved if name.casefold() not in hidden
+            ),
+            "revision": revision + int(before != set(resolved)),
+        }
+
+
 def begin(
     db, source, request, fingerprint, title, collection, revision, expected, actor
 ):
@@ -147,6 +206,8 @@ def begin(
         )
         db.execute(
             "INSERT INTO library_collection_intents "
+            "(request_id,source_id,title_id,collection,expected_members_hash,"
+            "status,actor_id,acknowledged_by,created_at,updated_at) "
             "VALUES (?,?,?,?,?,'uncertain',?,NULL,?,?)",
             (request, source, title, collection, expected, actor, stamp, stamp),
         )
@@ -154,7 +215,69 @@ def begin(
     return result
 
 
-def finish(db, source, request, members=None, acknowledge=None):
+def begin_change(
+    db,
+    source,
+    request,
+    fingerprint,
+    title,
+    collection,
+    revision,
+    expected,
+    actor,
+    operation,
+    other_collection=None,
+    expected_other_hash=None,
+):
+    """Reserve a one-shot generalized change before any device write."""
+    with db:
+        if lookup(db, request, fingerprint) is not None:
+            raise JournalError("conflict", "Collection request already exists")
+        state = snapshot(db, source, title)
+        if state["revision"] != revision:
+            raise JournalError("refresh_required", "Library changed during preparation")
+        if state["pending"]:
+            raise JournalError(
+                "collection_uncertain", "Resolve the previous collection request"
+            )
+        if (
+            db.execute("SELECT count(*) FROM library_collection_intents").fetchone()[0]
+            >= MAX_RECEIPTS
+        ):
+            raise JournalError(
+                "collection_limit", "Collection request history reached its limit"
+            )
+        stamp = datetime.now(UTC).isoformat()
+        result = {"status": "uncertain", "request_id": request}
+        db.execute(
+            "INSERT INTO requests VALUES (?,?,?)",
+            (request, fingerprint, json.dumps(result)),
+        )
+        db.execute(
+            "INSERT INTO library_collection_intents "
+            "(request_id,source_id,title_id,collection,expected_members_hash,status,"
+            "actor_id,created_at,updated_at,operation,other_collection,"
+            "expected_other_hash) "
+            "VALUES (?,?,?,?,?,'uncertain',?,?,?,?,?,?)",
+            (
+                request,
+                source,
+                title,
+                collection,
+                expected,
+                actor,
+                stamp,
+                stamp,
+                operation,
+                other_collection,
+                expected_other_hash,
+            ),
+        )
+        db.execute("UPDATE schema_metadata SET revision=revision+1")
+    return result
+
+
+def finish(db, source, request, members=None, acknowledge=None, other_members=None):
     with db:
         row = intent(db, source, request)
         if row["status"] != "uncertain":
@@ -162,39 +285,57 @@ def finish(db, source, request, members=None, acknowledge=None):
         status = "uncertain"
         if members is not None:
             handles = {item["source_handle"] for item in members}
-            if (
-                member_hash(handles) == row["expected_members_hash"]
-                and row["source_handle"] in handles
-            ):
-                # A complete read, including every member, must map to this cache.
-                ids = []
-                for handle in handles:
-                    version = db.execute(
-                        "SELECT id FROM library "
-                        "WHERE source_id=? AND source_handle=? AND available=1",
-                        (source, handle),
-                    ).fetchone()
-                    if version is None:
-                        raise JournalError(
-                            "library_changed",
-                            "Sync the Library before checking this add",
-                        )
-                    ids.append(version[0])
-                db.execute(
-                    "DELETE FROM library_memberships "
-                    "WHERE source_id=? AND collection=?",
-                    (source, row["collection"]),
-                )
-                for title in ids:
-                    db.execute(
-                        "INSERT INTO library_memberships VALUES (?,?,?)",
-                        (source, title, row["collection"]),
+            matches = member_hash(handles) == row["expected_members_hash"] and (
+                (row["source_handle"] in handles) == (row["operation"] == "add")
+            )
+            other_handles = (
+                {item["source_handle"] for item in other_members}
+                if other_members is not None
+                else None
+            )
+            if row["other_collection"]:
+                matches = (
+                    matches
+                    and other_handles is not None
+                    and (
+                        member_hash(other_handles) == row["expected_other_hash"]
+                        and row["source_handle"] in other_handles
                     )
-                db.execute(
-                    "UPDATE library_collections SET last_seen=? "
-                    "WHERE source_id=? AND name=?",
-                    (datetime.now(UTC).isoformat(), source, row["collection"]),
                 )
+            if matches:
+                # A complete read, including every member, must map to this cache.
+                sets = [(row["collection"], handles)]
+                if row["other_collection"]:
+                    sets.append((row["other_collection"], other_handles))
+                for collection, collection_handles in sets:
+                    ids = []
+                    for handle in collection_handles:
+                        version = db.execute(
+                            "SELECT id FROM library "
+                            "WHERE source_id=? AND source_handle=? AND available=1",
+                            (source, handle),
+                        ).fetchone()
+                        if version is None:
+                            raise JournalError(
+                                "library_changed",
+                                "Sync the Library before checking this collection",
+                            )
+                        ids.append(version[0])
+                    db.execute(
+                        "DELETE FROM library_memberships "
+                        "WHERE source_id=? AND collection=?",
+                        (source, collection),
+                    )
+                    for title in ids:
+                        db.execute(
+                            "INSERT INTO library_memberships VALUES (?,?,?)",
+                            (source, title, collection),
+                        )
+                    db.execute(
+                        "UPDATE library_collections SET last_seen=? "
+                        "WHERE source_id=? AND name=?",
+                        (datetime.now(UTC).isoformat(), source, collection),
+                    )
                 changed(db, source)
                 status = "confirmed"
         if acknowledge is not None:
@@ -202,7 +343,8 @@ def finish(db, source, request, members=None, acknowledge=None):
         if status != "uncertain":
             db.execute(
                 "UPDATE library_collection_intents SET status=?,title_id=NULL,"
-                "collection=NULL,expected_members_hash=NULL,acknowledged_by=?,"
+                "collection=NULL,expected_members_hash=NULL,other_collection=NULL,"
+                "expected_other_hash=NULL,acknowledged_by=?,"
                 "updated_at=? WHERE request_id=?",
                 (status, acknowledge, datetime.now(UTC).isoformat(), request),
             )

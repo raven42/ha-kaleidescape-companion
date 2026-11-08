@@ -156,6 +156,7 @@ export class FixtureTransport implements Transport {
     title: string;
     collection: string;
   }[] = [];
+  collectionJobs: import("../src/core/api").CollectionJob[] = [];
   calendarJob: {
     job_id: string;
     total: number;
@@ -392,6 +393,15 @@ export class FixtureTransport implements Transport {
           !!this.options.library_allow_collection_add &&
           !!this.options.library_sync_collections,
         pending_adds: this.pendingAdds,
+        collection_choices: [
+          "Favorites",
+          "WatchSoon",
+          "New",
+          "Played",
+          "Paused",
+          "Science Fiction",
+        ],
+        collection_jobs: this.collectionJobs,
         preferences_key: this.preferencesKey,
         title_count: this.libraryTitles.length,
         name_count: new Set(
@@ -576,9 +586,75 @@ export class FixtureTransport implements Transport {
           truncated: false,
         },
       };
+    } else if (operation === "library/collections/queue") {
+      const request = String(message.request_id);
+      const prior = this.collectionJobs.find(
+        (item) => item.request_id === request,
+      );
+      if (!prior) {
+        const version = this.libraryTitles.find(
+          (item) => item.id === message.title_id,
+        )!;
+        const group = this.groupKey(version);
+        const groupId = this.libraryTitles
+          .filter((item) => this.groupKey(item) === group)
+          .map((item) => item.id)
+          .sort()[0];
+        const job: import("../src/core/api").CollectionJob = {
+          request_id: request,
+          title_id: version.id,
+          group_id: groupId,
+          title: version.title,
+          collection: String(message.collection),
+          operation: message.operation as "add" | "remove",
+          status: "queued",
+          error: null,
+        };
+        this.collectionJobs.unshift(job);
+        setTimeout(() => {
+          job.status = "working";
+          const collection = job.collection;
+          if (["New", "Played"].includes(collection)) {
+            const other = collection === "New" ? "Played" : "New";
+            const desired = job.operation === "add" ? collection : other;
+            version.collections = [
+              ...version.collections.filter(
+                (name) => !["New", "Played"].includes(name),
+              ),
+              desired,
+            ];
+          } else if (job.operation === "add")
+            version.collections = [
+              ...new Set([...version.collections, collection]),
+            ];
+          else
+            version.collections = version.collections.filter(
+              (name) => name !== collection,
+            );
+          job.status = "syncing";
+          setTimeout(() => {
+            job.status = "confirmed";
+            this.revision++;
+          }, 300);
+        }, 250);
+      }
+      result = { status: prior?.status ?? "queued", request_id: request };
     } else if (operation === "library/collections/targets")
       result = { collections: ["Science Fiction"], revision: this.revision };
-    else if (operation === "library/collections/add") {
+    else if (operation === "library/collections/refresh") {
+      const version = this.libraryTitles.find(
+        (item) => item.id === message.title_id,
+      )!;
+      result = {
+        collections: [...version.collections],
+        revision: this.revision,
+      };
+    } else if (operation === "library/collections/dismiss") {
+      this.collectionJobs = this.collectionJobs.filter(
+        (job) => job.request_id !== message.request_id,
+      );
+      result = { dismissed: true };
+    } else if (operation === "library/collections/add") {
       const request = String(message.request_id);
       if (this.collectionResults.has(request))
         return this.collectionResults.get(request) as T;

@@ -13,6 +13,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import test_backend as backend_tests
 import test_repository as repository_tests
+from _schema_fixtures import remove_collection_queue_schema
 from aiohttp import TCPConnector, web
 from aiohttp.test_utils import make_mocked_request
 from homeassistant.components.http import KEY_HASS
@@ -541,12 +542,13 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
             db.execute("DROP TABLE IF EXISTS purchase_records")
             db.execute("DROP TABLE purchase_identity_barriers")
             db.execute("DROP TABLE purchase_repair_events")
+            remove_collection_queue_schema(db)
             db.execute("PRAGMA user_version=5")
             db.commit()
         self.repository = JournalRepository(self.path)
         self.addAsyncCleanup(self.repository.async_close)
         await self.repository.async_open()
-        self.assertEqual((await self.repository.async_info())["schema_version"], 27)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 28)
         self.assertEqual(
             await self.repository.async_get(created["viewing"]["id"]),
             created["viewing"],
@@ -749,6 +751,20 @@ class LibrarySyncTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(call.args[0].host, "192.168.50.10")
         self.assertFalse(call.kwargs["allow_redirects"])
         self.assertEqual(call.kwargs["headers"]["Host"], "fictional-cinema.local:80")
+        self.assertEqual(call.kwargs["timeout"].total, 300)
+        await sync._get("/movies?collection=Favorites&sort=2")
+        self.assertEqual(sync.session.get.call_args.kwargs["timeout"].total, 300)
+        await sync._get("/details?id=fixture-a&callback=true")
+        self.assertEqual(sync.session.get.call_args.kwargs["timeout"].total, 15)
+        sync.collection_task = asyncio.current_task()
+        with self.assertLogs(
+            "custom_components.kaleidescape_companion.library.sync", level="DEBUG"
+        ) as logs:
+            await sync._get("/movies?collection=Private+Collection&sort=2")
+        self.assertIn("kind=collection", "\n".join(logs.output))
+        self.assertNotIn("Private", "\n".join(logs.output))
+        self.assertNotIn("192.168.50.10", "\n".join(logs.output))
+        sync.collection_task = None
         for field, value in (
             ("status", 302),
             ("content_type", "application/javascript"),

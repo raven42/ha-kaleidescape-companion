@@ -9,7 +9,7 @@ from uuid import uuid4
 
 from ..security import private_file
 
-SCHEMA_VERSION = 27
+SCHEMA_VERSION = 28
 _LOGGER = logging.getLogger(__name__)
 
 MIGRATIONS = {
@@ -439,6 +439,24 @@ MIGRATIONS[27] = (
        ON purchase_repair_events BEGIN
          SELECT RAISE(ABORT, 'purchase repair evidence is append-only');
        END""",
+)
+
+MIGRATIONS[28] = (
+    "ALTER TABLE library_collection_intents ADD COLUMN operation TEXT "
+    "NOT NULL DEFAULT 'add'",
+    "ALTER TABLE library_collection_intents ADD COLUMN other_collection TEXT",
+    "ALTER TABLE library_collection_intents ADD COLUMN expected_other_hash TEXT",
+    """CREATE TABLE collection_jobs (
+        request_id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL,
+        source_id TEXT NOT NULL, title_id TEXT NOT NULL, collection TEXT NOT NULL,
+        operation TEXT NOT NULL CHECK(operation IN ('add','remove')),
+        actor_id TEXT NOT NULL, revision INTEGER NOT NULL,
+        status TEXT NOT NULL CHECK(status IN
+            ('queued','working','syncing','confirmed','failed','uncertain','interrupted')),
+        error TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+    )""",
+    "CREATE INDEX collection_jobs_source_status "
+    "ON collection_jobs(source_id,status,created_at)",
 )
 
 

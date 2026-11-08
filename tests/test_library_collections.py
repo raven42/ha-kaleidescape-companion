@@ -351,16 +351,31 @@ class CollectionOperationTest(unittest.IsolatedAsyncioTestCase):
         call = sync.session.post.call_args
         self.assertEqual(str(call.args[0]), "http://192.168.50.10/movies")
         self.assertFalse(call.kwargs["allow_redirects"])
+        self.assertEqual(call.kwargs["timeout"].total, 300)
         self.assertEqual(call.kwargs["headers"]["Host"], "fictional-cinema.local:80")
-        fields = {item[0]["name"]: item[2] for item in call.kwargs["data"]._fields}
-        self.assertEqual(
-            fields,
-            {
-                "submit_type": "Add-To-Collection",
-                "add_to_collection_select": "Zoë & Favorites",
-                "check-fixture-a": "on",
-            },
-        )
+
+        class Writer:
+            def __init__(self):
+                self.parts = []
+
+            async def write(self, part):
+                self.parts.append(part)
+
+        writer = Writer()
+        await call.kwargs["data"].write(writer)
+        payload = b"".join(writer.parts)
+        for name, value in (
+            ("submit_type", "Add-To-Collection"),
+            ("add_to_collection_select", "Zoë & Favorites"),
+            ("check-fixture-a", "on"),
+        ):
+            self.assertIn(
+                (
+                    f'Content-Disposition: form-data; name="{name}"\r\n\r\n{value}\r\n'
+                ).encode(),
+                payload,
+            )
+        self.assertNotIn(b"Content-Type:", payload)
         response.headers["Location"] = "http://evil.invalid/"
         self.assertEqual(
             (await sync.post("/movies", {"submit_type": "Add-To-Collection"})).location,
@@ -430,6 +445,61 @@ class CollectionApiTest(unittest.IsolatedAsyncioTestCase):
                 (await self.call("library/collections/add", **data))["code"],
                 "not_ready",
             )
+
+    async def test_queue_is_administrator_only_and_requires_opt_in(self):
+        data = {
+            **self.scope,
+            "title_id": title_id(library.SOURCE, "fixture-a"),
+            "collection": "Favorites",
+            "operation": "add",
+            "revision": 1,
+            "request_id": str(uuid4()),
+        }
+        reader = SimpleNamespace(is_active=True, is_admin=False)
+        with patch.object(self.sync, "async_enqueue_collection", AsyncMock()) as queue:
+            self.assertEqual(
+                (await self.call("library/collections/queue", user=reader, **data))[
+                    "code"
+                ],
+                "unauthorized",
+            )
+            self.assertEqual(
+                (await self.call("library/collections/queue", **data))["code"],
+                "collection_disabled",
+            )
+            queue.assert_not_awaited()
+
+    async def test_refresh_is_administrator_only_and_requires_opt_in(self):
+        data = {
+            **self.scope,
+            "title_id": title_id(library.SOURCE, "fixture-a"),
+            "revision": 1,
+        }
+        reader = SimpleNamespace(is_active=True, is_admin=False)
+        with patch.object(
+            self.sync, "async_refresh_title_collections", AsyncMock()
+        ) as refresh:
+            self.assertEqual(
+                (await self.call("library/collections/refresh", user=reader, **data))[
+                    "code"
+                ],
+                "unauthorized",
+            )
+            self.assertEqual(
+                (await self.call("library/collections/refresh", **data))["code"],
+                "collection_disabled",
+            )
+            refresh.assert_not_awaited()
+
+    async def test_dismiss_is_administrator_only(self):
+        data = {**self.scope, "request_id": str(uuid4())}
+        reader = SimpleNamespace(is_active=True, is_admin=False)
+        self.assertEqual(
+            (await self.call("library/collections/dismiss", user=reader, **data))[
+                "code"
+            ],
+            "unauthorized",
+        )
 
     async def test_check_and_acknowledge_work_with_add_option_off(self):
         request = str(uuid4())

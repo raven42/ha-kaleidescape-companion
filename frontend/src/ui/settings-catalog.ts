@@ -192,8 +192,8 @@ export const TOGGLES = [
   ],
   [
     "library_allow_collection_add",
-    "Allow Add to Collection",
-    "Let administrators add a selected edition to an existing device collection. Requires collection sync. Removing movies from device collections is not supported.",
+    "Allow collection changes",
+    "Let administrators queue changes for a selected edition on the device. Requires collection sync. Watched and Unwatched are moves; In Progress requires playback to add.",
     "library",
   ],
   [

@@ -32,9 +32,10 @@ The Python tests and local HA launcher use the reviewed source at
 `custom_components/kaleidescape_companion/vendor/kaleidescape`. They verify its
 package files against `dev/pyk-overlay/hashes.json` before use. The bundled
 patch records the runtime portion of reviewed local commit
-`bfbe789ffaf297f4aad7d1ac64328796456b4ed2` against the stated upstream base; its
-base is `50df2869349667d1e68d429b9b619e32ede9879b`, and its MIT license ships
-with the private package. `setup` installs HA's released pinned dependency
+`bfbe789ffaf297f4aad7d1ac64328796456b4ed2` plus the collection-removal and
+per-version collection-read patches against the stated upstream base; its base
+is `50df2869349667d1e68d429b9b619e32ede9879b`, and its MIT license ships with
+the private package. `setup` installs HA's released pinned dependency
 separately. The bundled source is for this PoC and is not a replacement for
 compatibility testing with the built-in integration.
 
@@ -123,6 +124,7 @@ For disconnected fictional review, open:
 - `http://127.0.0.1:5173/review.html`
 - `http://127.0.0.1:5173/review.html?library=1&companion_page=library`
 - `http://127.0.0.1:5173/review.html?settings=1&companion_page=settings`
+- `http://127.0.0.1:5173/review.html?collection=1&companion_page=library`
 
 The Settings fixture includes fictional outdated, modified and missing
 blueprints and a saved-credential indicator for reviewing the update and removal

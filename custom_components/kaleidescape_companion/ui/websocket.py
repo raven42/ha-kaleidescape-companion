@@ -176,13 +176,26 @@ def async_register_commands(hass: HomeAssistant) -> None:
             p.Required("title_id"): str,
             p.Required("revision"): int,
         },
+        "library/collections/refresh": {
+            **scoped,
+            p.Required("title_id"): str,
+            p.Required("revision"): int,
+        },
         "library/collections/add": {
             **mutations,
             p.Required("title_id"): str,
             p.Required("collection"): str,
             p.Required("revision"): int,
         },
+        "library/collections/queue": {
+            **mutations,
+            p.Required("title_id"): str,
+            p.Required("collection"): str,
+            p.Required("operation"): str,
+            p.Required("revision"): int,
+        },
         "library/collections/check": mutations,
+        "library/collections/dismiss": mutations,
         "library/collections/acknowledge": {
             **mutations,
             p.Required("confirmation"): str,
@@ -635,8 +648,11 @@ async def async_handle(
                     | "library/viewings"
                     | "library/purchases/summary"
                     | "library/collections/targets"
+                    | "library/collections/refresh"
                     | "library/collections/add"
+                    | "library/collections/queue"
                     | "library/collections/check"
+                    | "library/collections/dismiss"
                     | "library/collections/acknowledge"
                 ):
                     library = get_library(hass, msg["entry_id"], runtime)
@@ -647,6 +663,8 @@ async def async_handle(
                         adding = operation in {
                             "library/collections/add",
                             "library/collections/targets",
+                            "library/collections/refresh",
+                            "library/collections/queue",
                         }
 
                         def authorize():
@@ -681,7 +699,7 @@ async def async_handle(
                             ):
                                 raise JournalError(
                                     "collection_disabled",
-                                    "Enable collection additions "
+                                    "Enable collection changes "
                                     "and collection sync "
                                     "in Settings",
                                 )
@@ -694,6 +712,10 @@ async def async_handle(
                                 excluded,
                                 authorize,
                             )
+                        elif operation == "library/collections/refresh":
+                            result = await library.async_refresh_title_collections(
+                                msg["title_id"], msg["revision"], excluded, authorize
+                            )
                         elif operation == "library/collections/add":
                             result = await library.async_collection_add(
                                 msg["request_id"],
@@ -703,6 +725,21 @@ async def async_handle(
                                 user.id,
                                 excluded,
                                 authorize,
+                            )
+                        elif operation == "library/collections/queue":
+                            result = await library.async_enqueue_collection(
+                                msg["request_id"],
+                                msg["title_id"],
+                                msg["collection"],
+                                msg["operation"],
+                                msg["revision"],
+                                user.id,
+                                excluded,
+                                authorize,
+                            )
+                        elif operation == "library/collections/dismiss":
+                            result = await repository.async_collection_queue(
+                                "dismiss", library.source, msg["request_id"]
                             )
                         else:
                             acknowledge = None
@@ -723,6 +760,20 @@ async def async_handle(
                     elif operation == "library/info":
                         metadata = await repository.async_library_info(
                             library.source, excluded
+                        )
+                        jobs = (
+                            await repository.async_collection_queue(
+                                "status", library.source
+                            )
+                            if admin
+                            else None
+                        )
+                        choices = (
+                            await repository.async_collection_queue(
+                                "choices", library.source, excluded
+                            )
+                            if admin
+                            else None
                         )
                         result = (
                             {
@@ -763,11 +814,21 @@ async def async_handle(
                                         "library_sync_collections", True
                                     )
                                 ),
-                                "pending_adds": (
-                                    await repository.async_collection_snapshot(
-                                        library.source
+                                "pending_adds": [
+                                    item
+                                    for item in (
+                                        await repository.async_collection_snapshot(
+                                            library.source
+                                        )
+                                    )["pending"]
+                                    if not any(
+                                        job["request_id"] == item["request_id"]
+                                        and job["status"] == "working"
+                                        for job in jobs
                                     )
-                                )["pending"],
+                                ],
+                                "collection_jobs": jobs,
+                                "collection_choices": choices,
                             }
                             if admin
                             else {

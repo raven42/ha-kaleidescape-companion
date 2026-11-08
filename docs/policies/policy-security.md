@@ -30,11 +30,11 @@ permission ceremony is required for ordinary enabled household actions.
 
 ## Access boundaries
 
-| Caller                        | Allowed scope                                                                                                                                                                   |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Anonymous or inactive account | No Companion household data or controls                                                                                                                                         |
-| Active HA user                | Shared journal summary, enabled Library/artwork, own preferences, permitted HA Now Playing state and explicitly enabled player controls                                         |
-| Active HA administrator       | Shared configuration, discovery/default player, journal/database edits and exports/imports, metadata review, collection additions, calendar management and uncertainty recovery |
+| Caller                        | Allowed scope                                                                                                                                                                 |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Anonymous or inactive account | No Companion household data or controls                                                                                                                                       |
+| Active HA user                | Shared journal summary, enabled Library/artwork, own preferences, permitted HA Now Playing state and explicitly enabled player controls                                       |
+| Active HA administrator       | Shared configuration, discovery/default player, journal/database edits and exports/imports, metadata review, collection changes, calendar management and uncertainty recovery |
 
 The Basic/Advanced UI switch changes presentation, not authorization. The
 backend derives actor identity from HA, validates entry/dataset/runtime scope,
@@ -205,6 +205,24 @@ or arbitrary asset URLs. Cached artwork passes format/signature/size validation
 and authenticated serving; browser object URLs are bounded and revoked on scope
 changes. Settings transfer excludes secrets. Development tokens stay in memory
 and never enter bundles or browser persistent storage.
+
+Collection changes remain separately opted in and administrator-only. The queue
+persists actor-bound requests and permits at most ten active items. Accepted
+requests are reauthorized before a single validated POST; complete collection
+readback and a subsequent scan determine completion. New/Played moves validate
+both collections, and Paused may only be removed. A possible send without
+confirmed readback is durable uncertainty, never an automatic retry. Queued work
+interrupted by restart is not replayed. Queue status and title identifiers are
+private administrator data retained in SQLite backups; portable merge imports do
+not execute queued work.
+
+An administrator may explicitly refresh one version's collections using the
+device's bounded details page. The title, source revision, explicit membership
+field and cached collection names are checked before changing that version's
+cache; an incomplete or unrecognized field fails closed. Refresh does not send a
+device write or resolve an uncertain receipt. Administrators may dismiss
+finished queue notices; active or uncertain work and its durable receipts cannot
+be dismissed through that operation.
 
 ## Network boundaries
 
