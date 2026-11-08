@@ -53,6 +53,11 @@ class Metadata(TypedDict, total=False):
     poster_url: str | None
     synopsis: str
     genres: list[str]
+    quality_badges: list[str]
+    quality_editions: list[str]
+    quality_variants: list[dict[str, str | None]]
+    quality_complete: bool
+    quality_has_high: bool
 
 
 def label(value, maximum=1000):

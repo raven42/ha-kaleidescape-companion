@@ -161,12 +161,25 @@ class JournalRepository:
         )
         from ..library.formats import facet_labels, quality
         from ..library.formats import labels as format_labels
+        from ..library.formats import values as format_values
 
         connection.create_function(
             "companion_formats", 1, format_labels, deterministic=True
         )
         connection.create_function(
+            "companion_formats", 2, format_labels, deterministic=True
+        )
+        connection.create_function(
             "companion_format_facets", 1, facet_labels, deterministic=True
+        )
+        connection.create_function(
+            "companion_format_facets", 2, facet_labels, deterministic=True
+        )
+        connection.create_function(
+            "companion_format_values",
+            2,
+            lambda data, enrichment: json.dumps(format_values(data, enrichment)),
+            deterministic=True,
         )
         connection.create_function("companion_quality", 1, quality, deterministic=True)
         from ..enrichment.store import effective

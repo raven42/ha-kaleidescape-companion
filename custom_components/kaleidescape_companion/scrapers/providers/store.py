@@ -22,6 +22,75 @@ from ..transport import Transport
 
 HOST = "https://www.kaleidescape.com"
 ROLES = {"actors": {52}, "directors": {51}, "writers": {53, 54, 75}, "producers": {50}}
+QUALITY_TYPES = {
+    "DVD_QUALITY": ("SD", None),
+    "BLURAY_QUALITY": ("HD", None),
+    "HD_CINEMATIC": ("HD Cinematic", None),
+    "UHD": ("4K", "SDR"),
+    "UHD_HDR": ("4K", "HDR10"),
+    "UHD_DV5": ("4K", "Dolby Vision"),
+    "UHD_CINEMATIC_SDR": ("4K Cinematic", "SDR"),
+    "UHD_CINEMATIC_HDR": ("4K Cinematic", "HDR10"),
+    "UHD_CINEMATIC_DV5": ("4K Cinematic", "Dolby Vision"),
+    "UHD_8K_SDR": ("8K", "SDR"),
+    "UHD_8K_HDR": ("8K", "HDR10"),
+    "UHD_8K_DV5": ("8K", "Dolby Vision"),
+}
+AUDIO_TYPES = {"ATMOS": "Dolby Atmos", "DTS-X": "DTS:X"}
+
+
+def quality_metadata(movie):
+    """Read bounded, explicit package facts behind the Store's quality icons."""
+    packages = movie.get("packages")
+    if not isinstance(packages, list) or len(packages) > 100:
+        return {}
+    variants = []
+    badges = []
+    complete = True
+    has_high_quality = False
+    for package in packages:
+        if not isinstance(package, dict):
+            complete = False
+            continue
+        kind = package.get("media_quality")
+        quality = QUALITY_TYPES.get(kind) if isinstance(kind, str) else None
+        if quality is None:
+            complete = False
+            continue
+        resolution, video = quality
+        has_high_quality |= resolution in {"4K", "4K Cinematic", "8K"}
+        available = package.get("is_available_now")
+        if not isinstance(available, bool):
+            complete = False
+            continue
+        if not available:
+            continue
+        codec = package.get("audio_codec_type")
+        audio = AUDIO_TYPES.get(codec) if isinstance(codec, str) else None
+        variant = {"format": resolution, "video": video, "audio": audio}
+        if variant not in variants:
+            variants.append(variant)
+        for badge in (resolution, video, audio):
+            if badge and badge not in badges:
+                badges.append(badge)
+    return (
+        {
+            "quality_badges": badges,
+            "quality_variants": variants,
+            "quality_editions": [
+                " · ".join(
+                    value
+                    for value in (item["format"], item["video"], item["audio"])
+                    if value
+                )
+                for item in variants
+            ],
+            "quality_complete": complete,
+            "quality_has_high": has_high_quality,
+        }
+        if variants
+        else {}
+    )
 
 
 def movie_path(href):
@@ -185,6 +254,7 @@ def parse(page, href, title, year):
         "url": HOST + path,
         "title": label(movie.get("title")),
         "year": year,
+        **quality_metadata(movie),
         "genres": genre_names(
             [
                 item.get("name") if isinstance(item, dict) else item

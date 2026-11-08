@@ -94,6 +94,12 @@
       title.is_recently_added = index !== 1;
       title.is_favorite = index !== 2;
     });
+    if (parameters.get("formats") === "1") {
+      const title = transport.libraryTitles[0];
+      title.formats = ["4K", "Dolby Atmos"];
+      transport.scannedFormats.set(title.id, ["4K"]);
+      transport.automaticFormats.set(title.id, ["4K", "Dolby Atmos"]);
+    }
     transport.libraryTitles.push(
       libraryTitle({
         id: "d".repeat(64),

@@ -157,6 +157,9 @@ export class FixtureTransport implements Transport {
     collection: string;
   }[] = [];
   collectionJobs: import("../src/core/api").CollectionJob[] = [];
+  scannedFormats = new Map<string, string[]>();
+  automaticFormats = new Map<string, string[]>();
+  formatModes = new Map<string, "auto" | "original" | "custom">();
   calendarJob: {
     job_id: string;
     total: number;
@@ -586,6 +589,60 @@ export class FixtureTransport implements Transport {
           truncated: false,
         },
       };
+    } else if (operation === "library/edit/get") {
+      const version = this.libraryTitles.find(
+        (item) => item.id === message.title_id,
+      )!;
+      const current = formatBadges(version).map((badge) => badge.label);
+      const scanned = this.scannedFormats.get(version.id) ?? current;
+      const automatic = this.automaticFormats.get(version.id) ?? current;
+      result = {
+        snapshot: "a".repeat(64),
+        version_count: 1,
+        has_invoices: false,
+        values: {
+          title: version.title,
+          sort_title: null,
+          year: version.year,
+          rating: version.rating,
+          synopsis: version.synopsis,
+          actors: version.actors,
+          directors: version.directors,
+          writers: version.writers,
+          producers: [],
+          studios: version.studios,
+          genres: version.genres,
+        },
+        format_mode: this.formatModes.get(version.id) ?? "auto",
+        format_badges: current,
+        scanned_format_badges: scanned,
+        automatic_format_badges: automatic,
+      };
+    } else if (operation === "library/edit/save") {
+      const version = this.libraryTitles.find(
+        (item) => item.id === message.title_id,
+      )!;
+      const patch = message.patch as {
+        format_override?: {
+          mode: "auto" | "original" | "custom";
+          badges?: string[];
+        };
+      };
+      if (patch.format_override) {
+        const { mode, badges } = patch.format_override;
+        const current = formatBadges(version).map((badge) => badge.label);
+        if (!this.automaticFormats.has(version.id))
+          this.automaticFormats.set(version.id, current);
+        version.formats =
+          mode === "custom"
+            ? [...(badges ?? [])]
+            : mode === "original"
+              ? [...(this.scannedFormats.get(version.id) ?? current)]
+              : [...(this.automaticFormats.get(version.id) ?? current)];
+        this.formatModes.set(version.id, mode);
+        this.revision++;
+      }
+      result = { title_id: version.id, updated_count: 1 };
     } else if (operation === "library/collections/queue") {
       const request = String(message.request_id);
       const prior = this.collectionJobs.find(

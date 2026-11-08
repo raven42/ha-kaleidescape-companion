@@ -12,6 +12,7 @@ import { styles } from "../ui/styles";
 import { iconAction, iconActionStyles } from "../ui/action-icons";
 import { closeButton, dismissBackdrop } from "../ui/dialog";
 import { counted } from "../core/text";
+import { EDITABLE_FORMATS, renderFormatBadges } from "./badges";
 
 const FIELDS = [
   ["title", "Display title"],
@@ -71,6 +72,31 @@ export class TitleEdit extends LitElement {
       textarea {
         min-height: 90px;
       }
+      .format-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 14px;
+        margin: 10px 0;
+      }
+      .format-options label {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .format-options .format-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 6px;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        font-size: 12px;
+      }
+      .format-options .dolby-symbol,
+      .format-options .hdr-symbol {
+        width: 16px;
+        height: 11px;
+      }
     `,
   ];
   client?: JournalClient;
@@ -86,6 +112,8 @@ export class TitleEdit extends LitElement {
   private busy = false;
   private opened = false;
   private restoring = false;
+  private formatMode: "auto" | "original" | "custom" = "auto";
+  private formatBadges: string[] = [];
   private error = "";
   private generation = 0;
   protected willUpdate(changed: PropertyValues) {
@@ -116,6 +144,8 @@ export class TitleEdit extends LitElement {
     this.pending = undefined;
     this.busy = false;
     this.opened = this.restoring = false;
+    this.formatMode = "auto";
+    this.formatBadges = [];
     this.error = "";
     this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.close();
     this.lock();
@@ -167,6 +197,10 @@ export class TitleEdit extends LitElement {
         return;
       }
       this.review = review;
+      this.formatMode = review.format_mode ?? "auto";
+      this.formatBadges = EDITABLE_FORMATS.filter((name) =>
+        review.format_badges?.includes(name),
+      );
       this.draft = Object.fromEntries(
         Object.entries(review.values).map(([key, value]) => [
           key,
@@ -236,6 +270,20 @@ export class TitleEdit extends LitElement {
       unavailable !== !!this.review!.values.purchase_information_unavailable
     )
       patch.purchase_information_unavailable = unavailable;
+    if (!this.purchaseOnly && this.review) {
+      const initial = EDITABLE_FORMATS.filter((name) =>
+        this.review?.format_badges?.includes(name),
+      );
+      if (
+        this.formatMode !== (this.review.format_mode ?? "auto") ||
+        JSON.stringify(this.formatBadges) !== JSON.stringify(initial)
+      ) {
+        patch.format_override =
+          this.formatMode === "custom"
+            ? { mode: "custom", badges: this.formatBadges }
+            : { mode: this.formatMode };
+      }
+    }
     return patch;
   }
   private async save() {
@@ -327,7 +375,7 @@ export class TitleEdit extends LitElement {
               </p>`
             : this.review
               ? html`<p class="muted">
-                    ${this.purchaseOnly ? "Saved purchase details appear for the whole movie group." : html`Applies to ${counted(this.review.version_count, "version")}. Changes survive scans. Source IDs, runtime, formats, purchases and viewing records are protected. Enter one name per line for credits and genres.`}
+                    ${this.purchaseOnly ? "Saved purchase details appear for the whole movie group." : html`Display details apply to ${counted(this.review.version_count, "version")}; format badges apply only to the selected version. Changes survive scans. Source IDs, runtime, purchases and viewing records are protected. Enter one name per line for credits and genres.`}
                   </p>
                   <div class="edit-fields">
                     ${this.fields().map(
@@ -361,6 +409,91 @@ export class TitleEdit extends LitElement {
                           }</label
                         >`,
                     )}
+                    ${
+                      !this.purchaseOnly
+                        ? html`<fieldset>
+                            <legend>Format badges · selected version</legend>
+                            <p class="muted">
+                              Choose the badges shown for this version.
+                              Automatic Store matches use compatible editions;
+                              HD audio is never inferred from a higher-quality
+                              listing.
+                            </p>
+                            <div class="format-options">
+                              ${EDITABLE_FORMATS.map(
+                                (name) =>
+                                  html`<label>
+                                    <input
+                                      type="checkbox"
+                                      name="format_badge"
+                                      value=${name}
+                                      .checked=${this.formatBadges.includes(name)}
+                                      ?disabled=${!!this.pending || this.busy}
+                                      @change=${(event: Event) => {
+                                        const checked = (
+                                          event.target as HTMLInputElement
+                                        ).checked;
+                                        this.formatBadges =
+                                          EDITABLE_FORMATS.filter((badge) =>
+                                            badge === name
+                                              ? checked
+                                              : this.formatBadges.includes(
+                                                  badge,
+                                                ),
+                                          );
+                                        this.formatMode = "custom";
+                                        this.requestUpdate();
+                                      }}
+                                    />
+                                    ${renderFormatBadges({ formats: [name] })}
+                                  </label>`,
+                              )}
+                            </div>
+                            <p class="muted">
+                              Source:
+                              ${this.formatMode === "original" ? "Server scan only" : this.formatMode === "custom" ? "Manual selection" : "Server scan and compatible Store data"}
+                            </p>
+                            <div class="actions">
+                              <button
+                                type="button"
+                                ?disabled=${!!this.pending || this.busy}
+                                @click=${() => {
+                                  this.formatMode = "original";
+                                  this.formatBadges = EDITABLE_FORMATS.filter(
+                                    (name) =>
+                                      this.review?.scanned_format_badges?.includes(
+                                        name,
+                                      ),
+                                  );
+                                  this.requestUpdate();
+                                }}
+                              >
+                                Restore server formats
+                              </button>
+                              <button
+                                type="button"
+                                ?disabled=${!!this.pending || this.busy}
+                                @click=${() => {
+                                  this.formatMode = "auto";
+                                  this.formatBadges = EDITABLE_FORMATS.filter(
+                                    (name) =>
+                                      this.review?.automatic_format_badges?.includes(
+                                        name,
+                                      ),
+                                  );
+                                  this.requestUpdate();
+                                }}
+                              >
+                                Use automatic matches
+                              </button>
+                            </div>
+                            <p class="muted">
+                              Choose Save changes to apply the selected format
+                              source.
+                            </p>
+                          </fieldset>`
+                        : nothing
+                    }
                     ${
                       this.purchaseOnly
                         ? html`

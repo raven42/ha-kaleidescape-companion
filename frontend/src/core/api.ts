@@ -359,6 +359,7 @@ export interface ProviderMetadata {
   backdrop_key?: string;
   poster_key?: string;
   providers?: string[];
+  quality_badges?: string[];
 }
 export interface ScrapeOptions {
   title?: string;
@@ -471,6 +472,10 @@ export interface LibraryEdit {
   values: Record<string, string | string[] | number | boolean | null>;
   version_count: number;
   has_invoices: boolean;
+  format_mode?: "auto" | "original" | "custom";
+  format_badges?: string[];
+  scanned_format_badges?: string[];
+  automatic_format_badges?: string[];
 }
 export interface LibraryTitle {
   scraper_conflict?: boolean;

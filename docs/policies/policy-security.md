@@ -273,6 +273,14 @@ rendered. When artwork sync is enabled, a metadata pass may request TMDB's fixed
 movie image-list route and validated artwork to fill an empty selection,
 including an automatic cover fallback when no selected cover exists.
 
+Store quality facts are limited to recognized, available package labels from the
+already validated public movie response. Automatic badges require compatible
+local resolution and nonconflicting Store variants; a higher Store edition never
+establishes audio for a locally lower-quality version. Explicit administrator
+badge overrides are allowlisted, snapshot-checked and stored per version without
+rewriting scanned data. Restoring server formats disables Store inference for
+that version until automatic matching is selected again.
+
 ## External mutations and recovery
 
 HA authentication alone cannot make a device or calendar mutation atomic with

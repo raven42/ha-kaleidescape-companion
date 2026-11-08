@@ -173,6 +173,31 @@ Library JSON does not transfer provider caches or artwork files.
 
 ## Stored and displayed data
 
+The Store's quality-list icons are rendered client-side. The scraper reads the
+corresponding available-edition quality and audio fields from the validated
+movie bootstrap data without executing scripts. Its bounded cache records the
+recognized edition variants and quality badges; **Source History** shows the
+badges and per-edition combinations captured by each Store check. Unknown or
+incomplete package formats do not create automatic inferences; unavailable
+editions do not create badges.
+
+Library badges combine the exact version's scanned format with unambiguous
+features shared by matching Store editions. If the Store lists a 4K or 8K
+edition, Store audio is never inferred for a locally HD/SD-only version. A 4K
+Cinematic edition is matched separately from regular 4K; conflicting audio or
+video variants do not establish a feature without a narrower scanned match.
+These are Store-derived inferences, not proof of a downloaded file's soundtrack.
+Full **Refresh metadata** requests a fresh pass for enabled providers, including
+previously cached matches; normal identity, availability and opt-out checks
+still apply. A missing-only pass can skip existing Store records.
+
+**Edit Library details** offers per-version format badges. Manual selection can
+add or remove supported badges without changing scanned data. **Restore server
+formats** selects only the original scan for that version; **Use automatic
+matches** re-enables compatible Store inferences. The chosen source and badge
+changes take effect on Save and survive later scans. Other display edits still
+apply to the movie group.
+
 Schema **19** adds an `enrichment` JSON column to the existing **Library**
 table. It stores provider identity/provenance, fetch time, credits and available
 ratings. Results are linked through the existing source/group identity and

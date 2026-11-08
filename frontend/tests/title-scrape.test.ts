@@ -168,6 +168,29 @@ it("keeps Save at the right and shows per-source download state", async () => {
   expect(root().textContent).toContain("Original Director");
 });
 
+it("shows Store quality badges in source history", async () => {
+  options.history = [
+    {
+      provider: "kaleidescape",
+      checked_at: "2026-11-03T12:00:00+00:00",
+      outcome: "downloaded",
+      values: {
+        quality_badges: ["4K", "Dolby Atmos", "DTS:X"],
+        quality_editions: ["4K · HDR10 · Dolby Atmos"],
+      },
+    },
+  ];
+  await open();
+  button("History").click();
+  await flush();
+  const history = root().querySelector('[aria-label="Source history"]')!;
+  expect(history.textContent).toContain("Quality badges");
+  expect(history.textContent).toContain("Dolby Atmos");
+  expect(history.textContent).toContain("DTS:X");
+  expect(history.textContent).toContain("Quality editions");
+  expect(history.textContent).toContain("4K · HDR10 · Dolby Atmos");
+});
+
 it("links each provider match to its public movie page", async () => {
   options.providers[0].match_url =
     "https://www.kaleidescape.com/movie-store/movie/fictional-voyage";

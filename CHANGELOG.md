@@ -3,6 +3,13 @@
 Entries record development history. Later entries can supersede earlier
 behavior; the [documentation index](docs/README.md) owns current contracts.
 
+## Unreleased — Store quality badges
+
+- Record available Store edition badges in scraper history and match compatible
+  audio/video features to local versions without inferring 4K audio for HD.
+- Add per-version format badge edits, server-format restoration and automatic
+  matching, including Dolby Atmos and DTS:X badges on Library covers.
+
 ## Unreleased — Collection management
 
 - Queue up to ten administrator collection changes, show pending progress and

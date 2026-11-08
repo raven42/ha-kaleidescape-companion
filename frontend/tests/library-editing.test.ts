@@ -20,6 +20,10 @@ const review: LibraryEdit = {
   snapshot: "a".repeat(64),
   version_count: 2,
   has_invoices: false,
+  format_mode: "auto",
+  format_badges: ["4K", "Dolby Atmos"],
+  scanned_format_badges: ["4K"],
+  automatic_format_badges: ["4K", "Dolby Atmos"],
   values: {
     title: "Fictional Film",
     sort_title: null,
@@ -132,6 +136,44 @@ it("edits purchase details and the group unavailable option", async () => {
     purchase_price: "$9.99",
     retail_price: "$19.99",
     purchase_information_unavailable: true,
+  });
+});
+it("edits badges for the selected version and can restore server formats", async () => {
+  const { client, root } = await editor();
+  const save = vi
+    .spyOn(client, "saveLibraryEdit")
+    .mockResolvedValue({ title_id: "a".repeat(64), updated_count: 1 });
+  const atmos = root.querySelector<HTMLInputElement>(
+    '[name="format_badge"][value="Dolby Atmos"]',
+  )!;
+  const dtsx = root.querySelector<HTMLInputElement>(
+    '[name="format_badge"][value="DTS:X"]',
+  )!;
+  expect(atmos.checked).toBe(true);
+  atmos.click();
+  dtsx.click();
+  await element.updateComplete;
+  button(root, "Save changes").click();
+  await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+  expect(save.mock.calls[0][0].message.patch).toEqual({
+    format_override: { mode: "custom", badges: ["4K", "DTS:X"] },
+  });
+
+  element.remove();
+  const second = await editor();
+  const restore = vi
+    .spyOn(second.client, "saveLibraryEdit")
+    .mockResolvedValue({ title_id: "a".repeat(64), updated_count: 1 });
+  button(second.root, "Restore server formats").click();
+  await element.updateComplete;
+  expect(
+    second.root.querySelector<HTMLInputElement>('[value="Dolby Atmos"]')!
+      .checked,
+  ).toBe(false);
+  button(second.root, "Save changes").click();
+  await vi.waitFor(() => expect(restore).toHaveBeenCalledTimes(1));
+  expect(restore.mock.calls[0][0].message.patch).toEqual({
+    format_override: { mode: "original" },
   });
 });
 it("refuses the manual editor if a receipt appeared before it opened", async () => {

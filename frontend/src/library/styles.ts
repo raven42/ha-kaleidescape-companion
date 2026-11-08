@@ -411,7 +411,8 @@ export const libraryStyles = css`
     border: 1px solid #92b4d6;
   }
   .format-four-k,
-  .format-cinematic {
+  .format-cinematic,
+  .format-eight-k {
     background: #ffbd18;
     color: #171400;
     border-color: #ffbd18;
@@ -423,7 +424,8 @@ export const libraryStyles = css`
     margin-left: 3px;
     border-radius: 2px;
   }
-  .format-hd {
+  .format-hd,
+  .format-hd-cinematic {
     background: #236d9e;
     color: #fff;
     border-color: #236d9e;
@@ -437,6 +439,12 @@ export const libraryStyles = css`
   .format-atmos {
     font-weight: 500;
     gap: 3px;
+  }
+  .format-atmos,
+  .format-dtsx {
+    background: #161616;
+    color: #fff;
+    border-color: #aaa;
   }
   .dolby-symbol {
     width: 16px;

@@ -8,12 +8,132 @@ import test_enrichment as enrichment
 
 from custom_components.kaleidescape_companion.core.models import JournalError
 from custom_components.kaleidescape_companion.library.importing import portable_titles
+from custom_components.kaleidescape_companion.library.store import title_id
 
 
 class LibraryEditingTest(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = enrichment.EnrichmentTest.asyncSetUp
     seed = enrichment.EnrichmentTest.seed
     call = enrichment.EnrichmentTest.call
+
+    async def test_store_badges_are_version_safe_filterable_and_manually_restorable(
+        self,
+    ):
+        await self.seed()
+        rows = [
+            {
+                "source_handle": "fictional",
+                "source_group": "movie",
+                "title": "Fictional Film",
+                "year": 2025,
+                "formats": ["4K"],
+            },
+            {
+                "source_handle": "other",
+                "source_group": "movie",
+                "title": "Fictional Film",
+                "year": 2025,
+                "formats": ["HD"],
+            },
+        ]
+        await self.repo.async_library_catalog(enrichment.ORIGIN, rows)
+        store = {
+            "provider": "kaleidescape",
+            "provider_id": "fictional",
+            "title": "Fictional Film",
+            "year": 2025,
+            "matched_title": "Fictional Film",
+            "matched_group": "movie",
+            "quality_badges": ["4K", "HDR10", "Dolby Atmos", "HD"],
+            "quality_editions": ["4K · HDR10 · Dolby Atmos", "HD · Dolby Atmos"],
+            "quality_complete": True,
+            "quality_has_high": True,
+            "quality_variants": [
+                {"format": "4K", "video": "HDR10", "audio": "Dolby Atmos"},
+                {"format": "HD", "video": None, "audio": "Dolby Atmos"},
+            ],
+        }
+        await self.repo.async_enrichment(
+            "save", self.source, self.id, "kaleidescape", store
+        )
+        versions = (await self.repo.async_library_versions(self.source, self.id))[
+            "items"
+        ]
+        four_k = next(item for item in versions if item["id"] == self.id)
+        hd = next(item for item in versions if item["id"] != self.id)
+        self.assertIn("Dolby Atmos", four_k["formats"])
+        self.assertNotIn("Dolby Atmos", hd["formats"])
+        page = await self.repo.async_library_list(
+            self.source, {"format": ["Dolby Atmos"], "grouped": True}
+        )
+        self.assertEqual(page["total"], 1)
+        self.assertIn("Dolby Atmos", page["items"][0]["formats"])
+        target = await self.repo.async_enrichment("review_target", self.source, self.id)
+        self.assertIn("Dolby Atmos", target["history"][0]["values"]["quality_badges"])
+        self.assertIn(
+            "4K · HDR10 · Dolby Atmos",
+            target["history"][0]["values"]["quality_editions"],
+        )
+        review = await self.repo.async_library_edit(self.source, self.id)
+        self.assertIn("Dolby Atmos", review["format_badges"])
+        await self.repo.async_library_edit(
+            self.source,
+            self.id,
+            self.admin.id,
+            str(uuid4()),
+            review["snapshot"],
+            {"format_override": {"mode": "custom", "badges": ["4K", "DTS:X"]}},
+        )
+        review = await self.repo.async_library_edit(self.source, self.id)
+        self.assertEqual(set(review["format_badges"]), {"4K", "DTS:X"})
+        self.assertEqual(
+            (
+                await self.repo.async_library_list(
+                    self.source, {"format": ["Dolby Atmos"]}
+                )
+            )["total"],
+            0,
+        )
+        self.assertEqual(
+            (await self.repo.async_library_list(self.source, {"format": ["DTS:X"]}))[
+                "total"
+            ],
+            1,
+        )
+        await self.repo.async_library_catalog(enrichment.ORIGIN, rows)
+        review = await self.repo.async_library_edit(self.source, self.id)
+        self.assertEqual(review["format_mode"], "custom")
+        await self.repo.async_library_edit(
+            self.source,
+            self.id,
+            self.admin.id,
+            str(uuid4()),
+            review["snapshot"],
+            {"format_override": {"mode": "original"}},
+        )
+        review = await self.repo.async_library_edit(self.source, self.id)
+        self.assertEqual(review["format_badges"], ["4K"])
+        self.assertEqual(review["scanned_format_badges"], ["4K"])
+        await self.repo.async_library_edit(
+            self.source,
+            self.id,
+            self.admin.id,
+            str(uuid4()),
+            review["snapshot"],
+            {"format_override": {"mode": "auto"}},
+        )
+        self.assertIn(
+            "Dolby Atmos",
+            (await self.repo.async_library_edit(self.source, self.id))["format_badges"],
+        )
+        raw = (await self.repo.async_inspect("library"))["items"]
+        self.assertEqual(
+            json.loads(next(row for row in raw if row["id"] == self.id)["data"])[
+                "formats"
+            ],
+            ["4K"],
+        )
+        self.assertEqual(title_id(self.source, "other"), hd["id"])
 
     async def test_group_edits_preserve_identity_survive_scans_and_sort_both_views(
         self,
@@ -134,6 +254,10 @@ class LibraryEditingTest(unittest.IsolatedAsyncioTestCase):
             {"year": True},
             {"title": ""},
             {"actors": "x"},
+            {"format_override": {"mode": []}},
+            {"format_override": {"mode": "auto", "badges": ["4K"]}},
+            {"format_override": {"mode": "custom", "badges": ["Unknown"]}},
+            {"format_override": {"mode": "custom", "badges": ["4K", "4K"]}},
         ):
             with self.assertRaises(JournalError) as error:
                 await self.repo.async_library_edit(

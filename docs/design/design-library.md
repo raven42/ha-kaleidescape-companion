@@ -446,15 +446,16 @@ no separate people lookup controls. Each category matches any selected value,
 with all populated categories required on the same matching version; grouped
 results still show every version of a matching work. Format choices split
 recognized combined source labels into individual positive badge categories: SD,
-HD, 4K, 4K Cinematic, SDR, HDR10, Dolby Vision and Dolby Atmos when present.
-Wholly unknown source labels remain filterable. Existing API/source-label
-filters remain accepted. The 4K category represents non-Cinematic 4K metadata;
-Cinematic has its own category. HDR, Cinematic and audio badges require their
-own positive metadata; resolution alone does not supply them. Unrated selects
-movie groups without a known rating on any available version; a missing rating
-on one version of a rated movie does not make that movie Unrated. Years are
-string values such as `2025` in API filters and preferences. Unknown years are
-not linked or fabricated.
+HD, HD Cinematic, 4K, 4K Cinematic, 8K, SDR, HDR10, Dolby Vision, Dolby Atmos
+and DTS:X when present. Wholly unknown source labels remain filterable. Existing
+API/source-label filters remain accepted. The 4K category represents
+non-Cinematic 4K metadata; Cinematic has its own category. HDR, Cinematic and
+audio badges require their positive scanned, compatible Store or manually
+reviewed data; resolution alone does not supply them. Unrated selects movie
+groups without a known rating on any available version; a missing rating on one
+version of a rated movie does not make that movie Unrated. Years are string
+values such as `2025` in API filters and preferences. Unknown years are not
+linked or fabricated.
 
 All facet selections, including clicked criteria, retain the existing
 100-value/500-character bounds. SQL uses one bound JSON array per selected
@@ -821,13 +822,14 @@ markers. Older title-only sensor snapshots cannot safely identify groups; their
 sensor values remain intact, and recent badges start with the next batch of
 newly discovered groups.
 
-Covers show only the highest known video format across the group's versions:
-**4K Cinematic > 4K > HD > SD**. Unknown video quality produces no format badge;
-SDR/HDR10 alone does not imply SD/HD. Lists retain all known video/HDR/audio
-format chips, including SDR, HDR10, Dolby Vision and Dolby Atmos. Resolution
-does not imply HDR or audio capability. Lists also show collection-based
-statuses plus independent favorite below the title. Indicators have accessible
-labels and use text/CSS without remote assets or new dependencies.
+Covers show the highest known video format across the group's versions: **8K >
+4K Cinematic > 4K > HD Cinematic > HD > SD**, along with known Dolby Atmos or
+DTS:X audio badges. Unknown video quality produces no video badge; SDR/HDR10
+alone does not imply SD/HD. Lists retain all known video/HDR/audio format chips.
+Resolution alone does not imply HDR or audio capability. Lists also show
+collection-based statuses plus independent favorite below the title. Indicators
+have accessible labels and use text/CSS without remote assets or new
+dependencies.
 
 ## Cover image retention
 

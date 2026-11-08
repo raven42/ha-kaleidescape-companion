@@ -484,6 +484,47 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
             await sync._run(True, ("tmdb",), False)
         self.assertEqual(sync.providers.metadata.await_args.args[0], "tmdb")
 
+    async def test_forced_full_store_refresh_revisits_cached_titles_with_quality_data(
+        self,
+    ):
+        await self.seed()
+        sync = self.sync(metadata_store_enabled=True, metadata_tmdb_enabled=False)
+        row = {
+            "id": "fictional-id",
+            "source_group": "movie",
+            "title": "Fictional Film",
+            "year": 2025,
+            "href": "/movie-store/movie/fictional-film-2025",
+            "enrichment": {"kaleidescape": {"fetched_at": "2999-01-01T00:00:00+00:00"}},
+            "cached_providers": ["kaleidescape"],
+        }
+        quality = {
+            **self.data,
+            "provider": "kaleidescape",
+            "quality_badges": ["4K", "Dolby Atmos"],
+            "quality_complete": True,
+            "quality_has_high": True,
+            "quality_variants": [
+                {"format": "4K", "video": "HDR10", "audio": "Dolby Atmos"}
+            ],
+        }
+        sync.repository = SimpleNamespace(
+            async_enrichment=AsyncMock(side_effect=[[row], None, None])
+        )
+        sync.providers.metadata = AsyncMock(return_value=quality)
+        with patch(
+            "custom_components.kaleidescape_companion.enrichment.sync.async_create_clientsession",
+            return_value=SimpleNamespace(detach=Mock()),
+        ):
+            await sync._run(True, ("kaleidescape",), False)
+        sync.providers.metadata.assert_awaited_once()
+        saved = next(
+            call.args
+            for call in sync.repository.async_enrichment.await_args_list
+            if call.args[0] == "save"
+        )
+        self.assertEqual(saved[-1]["quality_badges"], ["4K", "Dolby Atmos"])
+
     async def test_numeric_links_are_loaded_directly_and_missing_links_are_searched(
         self,
     ):

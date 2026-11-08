@@ -581,7 +581,10 @@ it("renders known format badges and named status flags in both views", async () 
   expect(
     root.querySelector('.cover-flags [aria-label="Watched"]'),
   ).toBeTruthy();
-  expect(root.querySelectorAll(".cover-formats .format-badge")).toHaveLength(1);
+  expect(root.querySelectorAll(".cover-formats .format-badge")).toHaveLength(2);
+  expect(
+    root.querySelector('.cover-formats [aria-label="Dolby Atmos"]'),
+  ).toBeTruthy();
   expect(
     root.querySelector('.cover-formats [aria-label="4K Cinematic"]'),
   ).toBeTruthy();

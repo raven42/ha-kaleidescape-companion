@@ -149,6 +149,81 @@ class ParsersTest(unittest.TestCase):
         self.assertEqual(data["studios"], ["Fictional Studio"])
         self.assertEqual(data["distributor"], "Example Distributor")
 
+    def test_store_quality_packages_are_bounded_and_keep_edition_evidence(self):
+        packages = [
+            {
+                "media_quality": "UHD_HDR",
+                "audio_codec_type": "ATMOS",
+                "is_available_now": True,
+            },
+            {
+                "media_quality": "UHD_CINEMATIC_DV5",
+                "audio_codec_type": "DTS-X",
+                "is_available_now": True,
+            },
+            {
+                "media_quality": "BLURAY_QUALITY",
+                "audio_codec_type": "OTHER",
+                "is_available_now": True,
+            },
+            {
+                "media_quality": "UHD_8K_SDR",
+                "audio_codec_type": "ATMOS",
+                "is_available_now": True,
+            },
+            {
+                "media_quality": "DVD_QUALITY",
+                "audio_codec_type": "ATMOS",
+                "is_available_now": False,
+            },
+            {"media_quality": ["invalid"], "is_available_now": True},
+        ]
+        data = store.parse(page({**MOVIE, "packages": packages}), PATH, TITLE, YEAR)
+        self.assertEqual(
+            data["quality_badges"],
+            [
+                "4K",
+                "HDR10",
+                "Dolby Atmos",
+                "4K Cinematic",
+                "Dolby Vision",
+                "DTS:X",
+                "HD",
+                "8K",
+                "SDR",
+            ],
+        )
+        self.assertEqual(
+            data["quality_variants"][0],
+            {"format": "4K", "video": "HDR10", "audio": "Dolby Atmos"},
+        )
+        self.assertNotIn("SD", data["quality_badges"])
+        self.assertFalse(data["quality_complete"])
+        self.assertTrue(data["quality_has_high"])
+        self.assertIn("4K · HDR10 · Dolby Atmos", data["quality_editions"])
+        hd_with_unavailable_4k = store.quality_metadata(
+            {
+                "packages": [
+                    {
+                        "media_quality": "BLURAY_QUALITY",
+                        "audio_codec_type": "ATMOS",
+                        "is_available_now": True,
+                    },
+                    {
+                        "media_quality": "UHD_HDR",
+                        "audio_codec_type": "ATMOS",
+                        "is_available_now": False,
+                    },
+                ]
+            }
+        )
+        self.assertTrue(hd_with_unavailable_4k["quality_complete"])
+        self.assertTrue(hd_with_unavailable_4k["quality_has_high"])
+        self.assertNotIn(
+            "quality_badges",
+            store.parse(page({**MOVIE, "packages": packages * 20}), PATH, TITLE, YEAR),
+        )
+
     def test_store_retail_uses_unambiguous_base_price_only(self):
         price = {
             "currency_code": "USD",

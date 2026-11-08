@@ -1,7 +1,20 @@
-/** Positive metadata-only badges; never infer capabilities from resolution. */
+/** Positive format badges supplied by the server, review, or matched Store data. */
 import { html, nothing, svg } from "lit";
 import type { LibrarySummary } from "../core/api";
 type VideoMetadata = { formats?: string[] | null; edition?: string | null };
+export const EDITABLE_FORMATS = [
+  "8K",
+  "4K Cinematic",
+  "4K",
+  "HD Cinematic",
+  "HD",
+  "SD",
+  "SDR",
+  "HDR10",
+  "Dolby Vision",
+  "Dolby Atmos",
+  "DTS:X",
+] as const;
 export type MovieStatusLabels = "modern" | "kaleidescape";
 export type LibraryBadgeStyle = "icons" | "text";
 export function movieStatuses(row: LibrarySummary): string[] {
@@ -80,11 +93,12 @@ export function statusBadges(
   ];
 }
 export function formatBadges(row: VideoMetadata) {
-  const formats = (row.formats?.length ? row.formats : [row.edition ?? ""]).map(
-    (value) => value.toLowerCase(),
+  const formats = (row.formats ?? [row.edition ?? ""]).map((value) =>
+    value.toLowerCase(),
   );
   const has = (pattern: RegExp) => formats.some((value) => pattern.test(value));
   const badges: { key: string; label: string }[] = [];
+  if (has(/\b8k\b/)) badges.push({ key: "eight-k", label: "8K" });
   if (
     formats.some(
       (value) => /\b4k\b/.test(value) && !/\bcinematic\b/.test(value),
@@ -95,7 +109,16 @@ export function formatBadges(row: VideoMetadata) {
     formats.some((value) => /\b4k\b/.test(value) && /\bcinematic\b/.test(value))
   )
     badges.push({ key: "cinematic", label: "4K Cinematic" });
-  if (has(/\bhd\b|\b1080p\b/)) badges.push({ key: "hd", label: "HD" });
+  if (
+    formats.some((value) => /\bhd\b/.test(value) && /\bcinematic\b/.test(value))
+  )
+    badges.push({ key: "hd-cinematic", label: "HD Cinematic" });
+  if (
+    formats.some(
+      (value) => /\bhd\b|\b1080p\b/.test(value) && !/\bcinematic\b/.test(value),
+    )
+  )
+    badges.push({ key: "hd", label: "HD" });
   if (has(/\bsd\b|\b(?:480|576)[pi]\b/))
     badges.push({ key: "sd", label: "SD" });
   if (has(/\bsdr\b/)) badges.push({ key: "sdr", label: "SDR" });
@@ -104,11 +127,12 @@ export function formatBadges(row: VideoMetadata) {
     badges.push({ key: "vision", label: "Dolby Vision" });
   if (has(/\bdolby\s*atmos\b/))
     badges.push({ key: "atmos", label: "Dolby Atmos" });
+  if (has(/\bdts\s*[:-]\s*x\b/)) badges.push({ key: "dtsx", label: "DTS:X" });
   return badges;
 }
 export function highestVideoFormat(row: VideoMetadata) {
   const badges = formatBadges(row);
-  return ["cinematic", "four-k", "hd", "sd"]
+  return ["eight-k", "cinematic", "four-k", "hd-cinematic", "hd", "sd"]
     .map((key) => badges.find((badge) => badge.key === key))
     .find(Boolean);
 }
@@ -138,10 +162,20 @@ export function renderFormatBadges(
   disabled = false,
 ) {
   const best = cover ? highestVideoFormat(row) : undefined;
-  return (cover ? (best ? [best] : []) : formatBadges(row)).map((badge) => {
+  return (
+    cover
+      ? [
+          ...(best ? [best] : []),
+          ...formatBadges(row).filter((badge) =>
+            ["atmos", "dtsx"].includes(badge.key),
+          ),
+        ]
+      : formatBadges(row)
+  ).map((badge) => {
     const content =
-      badge.key === "cinematic"
-        ? html`<b>4K</b><span class="cinematic-label">Cinematic</span>`
+      badge.key === "cinematic" || badge.key === "hd-cinematic"
+        ? html`<b>${badge.key === "cinematic" ? "4K" : "HD"}</b
+            ><span class="cinematic-label">Cinematic</span>`
         : badge.key === "vision" || badge.key === "atmos"
           ? html`${dolbySymbol}<span>${badge.label}</span>`
           : badge.key === "hdr10"

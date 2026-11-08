@@ -115,7 +115,9 @@ def hidden_names(db, source, excluded):
 
 
 def formats(data):
-    known = data.get("formats") or [data.get("edition", "")]
+    known = data.get("formats")
+    if known is None:
+        known = [data.get("edition", "")]
     return sorted(
         {value for value in known if value and value.casefold() != "multiple"},
         key=str.casefold,
@@ -163,6 +165,7 @@ def public_title(row, memberships, shared=None):
     from ..enrichment.selection import image as selected_image
     from ..enrichment.store import effective
     from ..enrichment.store import public as public_enrichment
+    from .formats import values as format_values
 
     enrichment = {
         **(shared or {}).get("_providers", {}),
@@ -170,6 +173,7 @@ def public_title(row, memberships, shared=None):
     }
     sources = (shared or {}).get("_sources", {})
     data = json.loads(effective(row["data"], enrichment, sources))
+    data["formats"] = format_values(row["data"], row["enrichment"])
     for key, value in (shared or {}).items():
         if data.get(key) in (None, "", []):
             data[key] = value
@@ -560,7 +564,8 @@ def library_list(db, source, filters, excluded="", cache=None, weeks=2, today=No
             )
         elif key == "format":
             clauses.append(
-                "EXISTS (SELECT 1 FROM json_each(companion_formats(t.data)) "
+                "EXISTS (SELECT 1 FROM "
+                "json_each(companion_formats(t.data,t.enrichment)) "
                 f"WHERE value IN ({placeholders}))"
             )
         else:
@@ -739,7 +744,7 @@ def library_facets(db, source, hidden, _revision=None):
         row[0]
         for row in db.execute(
             "SELECT DISTINCT value FROM library t,"
-            "json_each(companion_format_facets(t.data)) "
+            "json_each(companion_format_facets(t.data,t.enrichment)) "
             "WHERE source_id=? AND available=1 ORDER BY value LIMIT 501",
             (source,),
         )
@@ -868,7 +873,7 @@ def grouped_page(
                 "'artwork') "
                 "artwork_key,"
                 "json_extract(enrichment,'$.reviewed.poster_key') reviewed_poster,"
-                "json_extract(data,'$.formats') formats,"
+                "companion_format_values(data,enrichment) formats,"
                 f"({scalar_sql('rating')}) rating,"
                 "json_extract(data,'$.edition') edition,"
                 f"({scalar_sql('year')}) year "

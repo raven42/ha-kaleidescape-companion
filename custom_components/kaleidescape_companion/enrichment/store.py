@@ -23,7 +23,14 @@ REVIEW_FIELDS = (
     "audience_rating",
     "audience_votes",
 )
-HISTORY_FIELDS = ("title", "year", "rating", *REVIEW_FIELDS)
+HISTORY_FIELDS = (
+    "title",
+    "year",
+    "rating",
+    "quality_badges",
+    "quality_editions",
+    *REVIEW_FIELDS,
+)
 FIELDS = (
     "provider",
     "provider_id",
@@ -40,6 +47,7 @@ FIELDS = (
     "synopsis",
     "genres",
     "rating",
+    "quality_badges",
 )
 
 
@@ -55,9 +63,10 @@ def history_values(metadata):
         if isinstance(value, str):
             value = value[:300]
         elif isinstance(value, list):
-            value = [str(item)[:80] for item in value[:8]]
-            if len(metadata[field]) > 8:
-                value.append(f"… and {len(metadata[field]) - 8} more")
+            limit = 32 if field in {"quality_badges", "quality_editions"} else 8
+            value = [str(item)[:80] for item in value[:limit]]
+            if len(metadata[field]) > limit:
+                value.append(f"… and {len(metadata[field]) - limit} more")
         elif not isinstance(value, (int, float)) or isinstance(value, bool):
             continue
         values[field] = value
