@@ -125,12 +125,12 @@ replayed on startup. Locks cover this Companion runtime, not the built-in
 integration, other controllers or another process. External changes between
 verification and sending cannot be eliminated by this protocol.
 
-An open
+Read operations are owned tasks. Pause/stop cancels and drains discovery, status
+and preflight reads, waits for an accepted write, then closes clients. Cleanup
+continues across client failures. Offline lifecycle tests cover the former
 [control-read shutdown race](../../audit/2026-11-04/AUDIT_FINDINGS.md#a26-12--control-discovery-can-create-a-connection-after-stop)
-limits that lifecycle contract: in-flight discovery can create a connection
-after stop returns. The write-task drain does not currently own all read tasks.
-This needs a code fix and regression coverage; returning `not_ready` after the
-read is not proof that its connection was closed.
+and cancellation during cleanup; native HA and hardware qualification remain
+pending under the [migration plan](../plans/plan-pykaliedescape-migration.md).
 
 The plain TCP interface has no integration-level network authentication or
 encryption. Keep it on a trusted LAN; do not expose port 10000 to the Internet.

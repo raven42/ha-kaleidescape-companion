@@ -1,6 +1,6 @@
 # Kaleidescape Companion comprehensive engineering audit
 
-Procedure updated 2026-11-06. Audit the current repository as a Home Assistant
+Procedure updated 2026-11-07. Audit the current repository as a Home Assistant
 **custom integration running inside HA Core**, not a separately isolated add-on.
 Assess architecture, functionality, security, privacy, reliability,
 supportability, performance, maintainability, tests and documentation. Preserve
@@ -150,9 +150,17 @@ The current [logging contract](../docs/design/design-logging.md) is native HA
 module logging, HA handlers/levels, a small `safe_exception` helper and bounded
 diagnostics. There is **no custom log database, HMAC identifier scheme or
 log-values opt-in mode**. Do not restore removed designs to satisfy old reports.
-For Companion-owned code, DEBUG never permits household data, URLs, frames,
-credentials, invoices or raw exception text/chains. Do not report logging
-concerns originating in external APIs or dependencies, including bundled code.
+For Companion-owned code, DEBUG does not generally permit household data, URLs,
+frames, credentials, invoices or raw exception text/chains. The explicit
+temporary receipt-import exception in the logging design and
+[security policy](../docs/policies/policy-security.md#logging-diagnostics-and-dependency-review)
+allows bounded receipt inputs, decoded HTML, results and reasons at warning for
+failed/incomplete imports and at debug for successful ones; unexpected failures
+also include tracebacks. Assess that disclosed behavior against its owning
+contract, protect logs like the original email, and retain its removal gate
+after real-receipt qualification. This is not a general DEBUG exception. Do not
+report logging concerns originating in external APIs or dependencies, including
+bundled code.
 
 For each subsystem map decision/outcome, conflict, retry, recovery, cancellation
 and cleanup evidence. Can a maintainer identify stage, bounded cause,

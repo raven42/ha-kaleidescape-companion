@@ -38,11 +38,12 @@ It is a firmware-dependent HTML interface, not a promised public JSON API.
 | Default landing page    | Journal | Used without an allowed URL tab; reader/disabled pages fall back                                                   |
 | Artwork cache limit     | 512 MiB | 32–4096 MiB, separate from the database; older covers are evicted when full                                        |
 
-Library view/count, applied filters, sort, cover size and column widths are
+Library view/count, sort, cover size and column widths are
 [personal database preferences](design-user-interface.md#personal-and-shared-preferences),
-saved when changed. Hidden collection names are shared database preferences in
-Settings, also saved immediately without reloading HA. The default landing page
-remains native.
+saved when changed. Search and applied filters are temporary panel URL state;
+old saved filters are not restored. Hidden collection names are shared database
+preferences in Settings, also saved immediately without reloading HA. The
+default landing page remains native.
 
 Basic titles, ratings, directors, genres, years, and edition labels always sync.
 Other fields depend on the source; missing writers/studios remain unavailable.
