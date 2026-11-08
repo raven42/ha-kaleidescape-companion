@@ -268,13 +268,13 @@ is the only supported vendor edit.
 
 The search toolbar sticks to the top of the scrolling Library. On phones it
 becomes square Search, Filters, Clear, Sort/Randomize and Options shortcuts,
-with search in a popup and the sort method in Options. Refresh cached data and
-administrator Sync now are also inside Options. A compact sticky footer holds
-global movie/status totals, with a blue match count for active search/filter
-criteria. Advanced mode adds collection counts, last catalog sync, artwork usage
-and compact scraper progress. It is one shared status/navigation bar;
+with search in a popup and the sort method in Options. A compact sticky footer
+holds Refresh cached data and administrator Sync now, along with global
+movie/status totals, with a blue match count for active search/filter criteria.
+Advanced mode adds collection counts, last catalog sync, artwork usage and
+compact scraper progress. It is one shared status/navigation bar;
 First/Previous/Next are omitted when all matching titles fit on one page,
-including All. Options contains detailed freshness timestamps and
+including All. Settings → About contains detailed freshness timestamps and
 individual-version counts. The user's movie-status naming choice controls
 browsing labels while API/device collection names remain unchanged.
 
@@ -652,13 +652,14 @@ active; global totals remain unchanged. Multiple versions count as one movie per
 collection, and a movie can count in multiple statuses. Unknown statuses are
 included in Total. Per-page and covers-per-row labels are omitted. Collection,
 artwork-cache, sync, scraper and enabled purchase-cost details remain visible
-only in Advanced mode on desktop. Navigation stays on the same sticky footer;
-refresh/sync are in Options.
+only in Advanced mode on desktop. Navigation and the refresh/sync actions stay
+on the same sticky footer.
 
-On phones, the footer keeps totals/matches on one compact line, with square
-paging icons only for multipage results. Administrator cache/scraper details
-remain in the desktop footer and detailed dialogs. Mobile shortcut controls
-reuse the same search, filter, sort and preference behavior as desktop controls.
+On phones, the footer keeps totals/matches on one compact line, with short
+refresh/sync buttons and square paging icons only for multipage results.
+Administrator cache/scraper details remain in the desktop footer and detailed
+dialogs. Mobile shortcut controls reuse the same search, filter, sort and
+preference behavior as desktop controls.
 
 ## Collection management
 

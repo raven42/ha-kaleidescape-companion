@@ -29,7 +29,8 @@ import { styles } from "./styles";
 import { entryLayoutStyles } from "./entry-layout.styles";
 import { journalStyles, viewingDetails, viewingListRow } from "./journal-view";
 import { closeButton, dismissBackdrop } from "./dialog";
-import { landingPage, rememberPage } from "./navigation";
+import { landingPage, rememberPage, PAGES } from "./navigation";
+import type { Page } from "./navigation";
 import { isLibraryLocation, readLibraryFilters } from "../library/url-filters";
 import "./reader";
 import "./journal-options";
@@ -48,35 +49,6 @@ import type { KaleidescapeReader } from "./reader";
 import { PreferenceStore } from "./preference-store";
 import { viewModeSwitch } from "./view-mode";
 import { responsivePreferences } from "./profile-controller";
-
-const PAGES = [
-  {
-    id: "now-playing",
-    label: "Now Playing",
-    description: "Live playback and recording context.",
-  },
-  {
-    id: "library",
-    label: "Library",
-    description: "Browse cached titles, collections, and source metadata.",
-  },
-  {
-    id: "journal",
-    label: "Journal",
-    description: "Review recordings and make corrections.",
-  },
-  {
-    id: "database",
-    label: "Database",
-    description: "Inspect entries and manage stored history.",
-  },
-  {
-    id: "settings",
-    label: "Settings",
-    description: "Configure playback recording and journal rules.",
-  },
-] as const;
-type Page = (typeof PAGES)[number]["id"];
 
 export class KaleidescapePanel extends LitElement {
   constructor() {
@@ -261,7 +233,7 @@ export class KaleidescapePanel extends LitElement {
     if (advanced) await this.loadList();
     await this.updateComplete;
     this.renderRoot
-      .querySelector<HTMLButtonElement>(".view-mode-pill")
+      .querySelector<HTMLButtonElement>(".view-mode-switch")
       ?.focus();
   }
 
@@ -1531,12 +1503,12 @@ export class KaleidescapePanel extends LitElement {
           aria-hidden="true"
         />
         <div class="grow">
-          <span class="eyebrow">Kaleidescape Companion · Administrator</span>
           <h1>Kaleidescape Companion</h1>
           <p>
             ${PAGES.find((page) => page.id === this.activePage)!.description}
           </p>
         </div>
+        ${this.info?.permissions.edit ? this.modeControl(blocked) : nothing}
       </header>
       ${
         this.info?.permissions.edit
@@ -1549,7 +1521,6 @@ export class KaleidescapePanel extends LitElement {
               >
                 ${PAGES.map((page) => html`<button id=${`page-${page.id}`} role="tab" aria-selected=${this.activePage === page.id} aria-controls="companion-page" tabindex=${this.activePage === page.id ? "0" : "-1"} ?disabled=${blocked || (page.id === "library" && !this.info?.library_enabled)} title=${page.id === "library" && !this.info?.library_enabled ? "Enable library sync in Settings" : nothing} @click=${() => this.switchPage(page.id)}>${page.label}</button>`)}
               </div>
-              ${this.modeControl(blocked || this.controlLocked)}
             </div>`
           : nothing
       }

@@ -1220,6 +1220,9 @@ export const libraryStyles = css`
     .paging-label {
       display: none;
     }
+    .library-footer .footer-cache-label {
+      display: none;
+    }
     .library-footer .footer-actions {
       flex: none;
       flex-wrap: nowrap;
@@ -1231,6 +1234,15 @@ export const libraryStyles = css`
       min-height: 32px;
       width: 32px;
       padding: 4px;
+    }
+    .library-footer .footer-maintenance {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: auto;
+      padding-inline: 6px;
+      white-space: nowrap;
+      font-size: 10px;
     }
     .paging-icon {
       display: inline-flex;

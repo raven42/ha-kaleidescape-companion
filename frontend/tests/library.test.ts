@@ -554,6 +554,11 @@ it("shares browsing without administrator controls and clears denied or disabled
   };
   await flush();
   expect(button("Sync now")).toBeUndefined();
+  expect(
+    root()
+      .querySelector(".library-footer")!
+      .contains(button("Refresh cached data")),
+  ).toBe(true);
   expect(text()).toContain("Voyage to Europa");
   expect(
     transport.calls.some((call) => call.type.endsWith("/library/sync")),
@@ -1606,7 +1611,20 @@ it("opens a mobile search popup, discards cancelled input, and applies through t
   ).toMatchObject({ query: "" });
 });
 
-it("connects mobile filter and randomize shortcuts and keeps refresh outside Options", async () => {
+it("runs an administrator sync from the Library status bar", async () => {
+  const sync = button("Sync now");
+  expect(root().querySelector(".library-footer")!.contains(sync)).toBe(true);
+  expect(sync.disabled).toBe(false);
+  sync.click();
+  await vi.waitFor(() =>
+    expect(
+      transport.calls.some((call) => call.type.endsWith("/library/sync")),
+    ).toBe(true),
+  );
+  await vi.waitFor(() => expect(text()).toContain("Library sync requested"));
+});
+
+it("connects mobile shortcuts and places refresh and sync in the status bar", async () => {
   root()
     .querySelector<HTMLButtonElement>('[aria-label="Library filters"]')!
     .click();
@@ -1635,9 +1653,9 @@ it("connects mobile filter and randomize shortcuts and keeps refresh outside Opt
     .filter((c) => c.type.endsWith("library/list"))
     .at(-1)?.filters as Record<string, unknown>;
   expect(fresh.random_seed).not.toBe(seed.random_seed);
-  expect(root().querySelector(".library-footer")!.textContent).not.toContain(
-    "Refresh cached data",
-  );
+  const footer = root().querySelector(".library-footer")!;
+  expect(footer.contains(button("Refresh cached data"))).toBe(true);
+  expect(footer.contains(button("Sync now"))).toBe(true);
   expect(
     [
       ...root().querySelectorAll<HTMLButtonElement>("#library-options button"),

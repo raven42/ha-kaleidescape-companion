@@ -1,13 +1,33 @@
 /** URL contains an allowlisted tab, calendar month and Library filter state. */
-export type Page =
-  "now-playing" | "journal" | "library" | "database" | "settings";
-const pages: Page[] = [
-  "now-playing",
-  "library",
-  "journal",
-  "database",
-  "settings",
-];
+export const PAGES = [
+  {
+    id: "now-playing",
+    label: "Now Playing",
+    description: "See what’s playing across your system.",
+  },
+  {
+    id: "library",
+    label: "Library",
+    description: "Browse movies and collections.",
+  },
+  {
+    id: "journal",
+    label: "Journal",
+    description: "Explore your viewing history.",
+  },
+  {
+    id: "database",
+    label: "Database",
+    description: "Inspect and manage stored history.",
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    description: "Configure your Companion experience.",
+  },
+] as const;
+export type Page = (typeof PAGES)[number]["id"];
+const pages: Page[] = PAGES.map((page) => page.id);
 export function landingPage(
   fallback: string | undefined,
   admin: boolean,

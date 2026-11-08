@@ -34,6 +34,9 @@ export const styles = css`
     border-bottom: 1px solid var(--line);
     flex-wrap: wrap;
   }
+  header > .grow {
+    min-width: 0;
+  }
   header .companion-icon {
     width: 60px;
     height: 60px;
@@ -376,46 +379,51 @@ export const styles = css`
   .view-mode-slot,
   .mode-control {
     flex: none;
+    margin-inline-start: auto;
   }
-  .view-mode-pill {
+  .view-mode-switch {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    padding: 6px 9px;
-    gap: 6px;
-    min-height: 34px;
-    background: var(--divider-color, #666);
-    color: var(--primary-text-color);
+    gap: 8px;
+    min-height: 40px;
+    padding: 4px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
     font-size: 12px;
     line-height: 1;
     white-space: nowrap;
   }
+  .view-mode-switch:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
   .mode-track {
     position: relative;
     display: inline-block;
-    width: 30px;
-    height: 16px;
+    width: 34px;
+    height: 20px;
     border-radius: 999px;
-    background: #0003;
+    background: var(--disabled-text-color, #7d8783);
     flex: none;
+    transition: background-color 0.15s;
   }
   .mode-thumb {
     position: absolute;
     inset-block-start: 2px;
     inset-inline-start: 2px;
-    width: 12px;
-    height: 12px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     background: #fff;
     transition: transform 0.15s;
   }
-  .view-mode-pill[aria-checked="true"] {
+  .view-mode-switch[aria-checked="true"] .mode-track {
     background: var(--primary-color, #03a9f4);
-    color: var(--text-primary-color, #fff);
   }
-  .view-mode-pill[aria-checked="true"] .mode-thumb {
+  .view-mode-switch[aria-checked="true"] .mode-thumb {
     transform: translateX(14px);
   }
   .page-tabs button {
@@ -699,12 +707,12 @@ export const styles = css`
     .page-tabs button {
       padding: 8px 10px;
     }
-    .view-mode-pill {
-      min-height: 36px;
+    .view-mode-switch {
+      min-height: 44px;
     }
-    header .eyebrow,
     header p {
-      display: none;
+      font-size: 12px;
+      line-height: 1.3;
     }
     h1 {
       font-size: 21px;

@@ -55,11 +55,18 @@ it("saves Basic mode, hides management views, and restores Advanced mode", async
   const transport = new FixtureTransport();
   await mount(transport);
   expect(root().querySelector("#page-database")).toBeTruthy();
+  expect(toggle().closest("header")).toBeTruthy();
+  expect(toggle().querySelector(".mode-label")?.textContent).toBe("Advanced");
+  expect(toggle().firstElementChild?.className).toBe("mode-label");
   toggle().click();
   await vi.waitFor(() =>
     expect(root().querySelector("kaleidescape-reader")).toBeTruthy(),
   );
   const reader = root().querySelector("kaleidescape-reader")!;
+  expect(
+    reader.shadowRoot!.querySelector('header slot[name="view-mode"]'),
+  ).toBeTruthy();
+  expect(toggle().querySelector(".mode-label")?.textContent).toBe("Basic");
   await vi.waitFor(() =>
     expect(reader.shadowRoot!.textContent).toContain("Viewing details"),
   );
@@ -74,7 +81,46 @@ it("saves Basic mode, hides management views, and restores Advanced mode", async
     expect(root().querySelector("#page-database")).toBeTruthy(),
   );
   expect(transport.interfacePreferences.advanced_view).toBe(true);
+  expect(toggle().querySelector(".mode-label")?.textContent).toBe("Advanced");
 });
+
+it.each([
+  ["now-playing", "See what’s playing across your system."],
+  ["library", "Browse movies and collections."],
+  ["journal", "Explore your viewing history."],
+])(
+  "keeps the %s header consistent in Basic and Advanced modes",
+  async (page, subtitle) => {
+    const transport = new FixtureTransport();
+    transport.options.library_enabled = true;
+    await mount(transport);
+    root().querySelector<HTMLButtonElement>(`#page-${page}`)!.click();
+    await vi.waitFor(() =>
+      expect(root().querySelector("header p")?.textContent?.trim()).toBe(
+        subtitle,
+      ),
+    );
+    expect(root().querySelector("header h1")?.textContent).toBe(
+      "Kaleidescape Companion",
+    );
+    expect(root().querySelector("header .eyebrow")).toBeNull();
+    await vi.waitFor(() => expect(toggle().disabled).toBe(false));
+    toggle().click();
+    await vi.waitFor(() =>
+      expect(root().querySelector("kaleidescape-reader")).toBeTruthy(),
+    );
+    const reader = root().querySelector("kaleidescape-reader")!;
+    await vi.waitFor(() =>
+      expect(
+        reader.shadowRoot!.querySelector("header p")?.textContent?.trim(),
+      ).toBe(subtitle),
+    );
+    expect(reader.shadowRoot!.querySelector("header h1")?.textContent).toBe(
+      "Kaleidescape Companion",
+    );
+    expect(reader.shadowRoot!.querySelector("header .eyebrow")).toBeNull();
+  },
+);
 
 it.each(["database", "settings"])(
   "returns from %s to the configured landing page in Basic mode",

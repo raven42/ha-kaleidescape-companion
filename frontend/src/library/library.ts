@@ -2452,16 +2452,6 @@ export class KaleidescapeLibrary extends LitElement {
         }
       </div>
       ${admin && this.info?.phase && this.info.phase !== "idle" ? html`<p role="status">Syncing… ${this.info.processed ?? 0}/${this.info.total ?? "?"}</p>` : nothing}
-      <div class="actions" ?hidden=${!!this.dashboard}>
-        <button
-          type="button"
-          ?disabled=${this.loading}
-          @click=${this.refreshCached}
-        >
-          Refresh cached data
-        </button>
-        ${admin ? html`<button type="button" ?disabled=${this.requesting || (!!this.info?.phase && this.info.phase !== "idle")} @click=${this.sync}>Sync now</button>` : nothing}
-      </div>
       <section class="card library-results">
         <div
           class=${`library-toolbar${this.dashboard?.search_position === "bottom" ? " toolbar-bottom" : ""}`}
@@ -2761,8 +2751,23 @@ export class KaleidescapeLibrary extends LitElement {
         </div>
         <div
           class="footer-actions actions"
-          ?hidden=${!this.page || (!this.page.offset && !this.page.has_more)}
+          ?hidden=${!!this.dashboard && (!this.page || (!this.page.offset && !this.page.has_more))}
         >
+          ${
+            !this.dashboard
+              ? html`<button
+                    type="button"
+                    class="footer-maintenance"
+                    aria-label="Refresh cached data"
+                    title="Refresh cached data"
+                    ?disabled=${this.loading}
+                    @click=${this.refreshCached}
+                  >
+                    Refresh<span class="footer-cache-label"> cached data</span>
+                  </button>
+                  ${admin ? html`<button type="button" class="footer-maintenance" title="Sync now" ?disabled=${this.requesting || (!!this.info?.phase && this.info.phase !== "idle")} @click=${this.sync}>Sync now</button>` : nothing}`
+              : nothing
+          }
           ${
             this.page && (this.page.offset > 0 || this.page.has_more)
               ? html` <button

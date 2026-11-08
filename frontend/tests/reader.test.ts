@@ -51,7 +51,7 @@ it("keeps rows compact and exposes timing only in the independent detail region"
 });
 
 it("renders titles and timing as text without management controls or private metadata", async () => {
-  expect(content()).toContain("Read-only household journal");
+  expect(content()).toContain("Explore your viewing history.");
   expect(content()).not.toContain("fictional viewing for interface testing");
   expect(content()).not.toContain("fictional-source");
   expect(reader.shadowRoot!.querySelector("textarea")).toBeNull();

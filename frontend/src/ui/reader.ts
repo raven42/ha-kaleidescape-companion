@@ -16,7 +16,7 @@ import companionIcon from "./assets/companion-icon.png?inline";
 import { styles } from "./styles";
 import { entryLayoutStyles } from "./entry-layout.styles";
 import { journalStyles, viewingDetails, viewingListRow } from "./journal-view";
-import { landingPage, rememberPage } from "./navigation";
+import { landingPage, rememberPage, PAGES } from "./navigation";
 import { isLibraryLocation, readLibraryFilters } from "../library/url-filters";
 import "../library/library";
 import "../playback/now-playing";
@@ -375,13 +375,13 @@ export class KaleidescapeReader extends LitElement {
           alt=""
           aria-hidden="true"
         />
-        <div>
-          <span class="eyebrow">Kaleidescape Companion</span>
-          <h1>Viewing history</h1>
+        <div class="grow">
+          <h1>Kaleidescape Companion</h1>
           <p>
-            ${this.activePage === "now-playing" ? "Household playback controls" : "Read-only household journal"}
+            ${PAGES.find((page) => page.id === this.activePage)!.description}
           </p>
         </div>
+        <span class="view-mode-slot"><slot name="view-mode"></slot></span>
       </header>
       ${this.error ? html`<p role="alert" class="error">${this.error}</p>` : nothing}
       <div class="page-navigation">
@@ -393,7 +393,6 @@ export class KaleidescapeReader extends LitElement {
         >
           ${(["now-playing", "library", "journal"] as const).map((page) => html`<button id=${`reader-${page}`} role="tab" aria-controls="reader-content" aria-selected=${this.activePage === page} tabindex=${this.activePage === page ? 0 : -1} ?disabled=${page === "library" && !this.scope?.library_enabled} @click=${() => this.selectPage(page)}>${page === "now-playing" ? "Now Playing" : page === "journal" ? "Journal" : "Library"}</button>`)}
         </nav>
-        <span class="view-mode-slot"><slot name="view-mode"></slot></span>
       </div>
       <section
         id="reader-content"

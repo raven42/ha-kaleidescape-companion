@@ -8,7 +8,7 @@ export function viewModeSwitch(
 ) {
   return html`<button
     type="button"
-    class="view-mode-pill"
+    class="view-mode-switch"
     role="switch"
     aria-label="Advanced view"
     aria-checked=${advanced}
@@ -16,8 +16,9 @@ export function viewModeSwitch(
     ?disabled=${disabled}
     @click=${change}
   >
+    <span class="mode-label">${advanced ? "Advanced" : "Basic"}</span>
     <span class="mode-track" aria-hidden="true"
-      ><span class="mode-thumb"></span></span
-    ><span class="mode-label">Adv</span>
+      ><span class="mode-thumb"></span
+    ></span>
   </button>`;
 }

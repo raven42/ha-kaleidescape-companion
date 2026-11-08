@@ -13,7 +13,10 @@ native default landing-page option is used without an allowed selected tab;
 `companion_page` preserves the tab in the URL. Disabled/inaccessible pages fall
 back to an available household view. Administrator Basic/Advanced is a saved
 presentation preference: Basic uses the household renderer, while Advanced
-exposes management. Backend HA permissions remain authoritative.
+exposes management. The header switch shows the current mode as Basic or
+Advanced. The header uses the same Kaleidescape Companion title and
+page-specific subtitle in both modes. Backend HA permissions remain
+authoritative.
 
 | Surface     | UI responsibility                                                                                               | Feature contract                                                      |
 | ----------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
