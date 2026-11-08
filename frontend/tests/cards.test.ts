@@ -6,7 +6,7 @@ import { CARD_KINDS, cardConfig } from "../src/cards/config";
 import type { Hass } from "../src/core/api";
 import type { KaleidescapeLibrary } from "../src/library/library";
 import type { DeviceControls } from "../src/playback/controls";
-import { FixtureTransport, info } from "./fixture";
+import { FixtureTransport, info, libraryTitle } from "./fixture";
 let transport: FixtureTransport;
 let cards: CompanionCard[];
 function hass(admin = false): Hass {
@@ -213,6 +213,39 @@ it("rejects invalid layout bounds and defers reconfiguration during a player com
   expect(() =>
     card.setConfig({ type: "custom:kaleidescape-remote-card" }),
   ).toThrow("pending player command");
+});
+
+it("keeps legacy dashboard format settings and permits separate audio controls", async () => {
+  const old = cardConfig(
+    { type: "custom:test", show_format: false },
+    "library",
+  );
+  expect(old.show_audio_format).toBe(false);
+  expect(
+    cardConfig(
+      { type: "custom:test", show_format: false, show_audio_format: true },
+      "library",
+    ).show_audio_format,
+  ).toBe(true);
+  expect(() =>
+    cardConfig({ type: "custom:test", show_audio_format: "yes" }, "library"),
+  ).toThrow();
+  transport.libraryTitles = [libraryTitle({ formats: ["4K Dolby Atmos"] })];
+  const card = await mount("library", {
+    show_format: false,
+    show_audio_format: true,
+  });
+  await vi.waitFor(() => {
+    const library = card.shadowRoot!.querySelector<KaleidescapeLibrary>(
+      "kaleidescape-library",
+    );
+    expect(
+      library?.shadowRoot?.querySelector(".cover-formats .format-atmos"),
+    ).toBeTruthy();
+    expect(
+      library?.shadowRoot?.querySelector(".cover-formats .format-four-k"),
+    ).toBeNull();
+  });
 });
 
 it("renders card titles as text and clears the selected month URL behavior in dashboard calendars", async () => {

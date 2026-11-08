@@ -831,6 +831,11 @@ collection-based statuses plus independent favorite below the title. Indicators
 have accessible labels and use text/CSS without remote assets or new
 dependencies.
 
+Library Options independently controls video and audio format badges in cover
+and list views. Existing preferences inherit the old format toggle for both
+settings, then can be changed independently. Movie details and format filters
+remain available regardless of these presentation choices.
+
 ## Cover image retention
 
 Requests still begin only when a cover is visible, with three concurrent

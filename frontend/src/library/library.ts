@@ -76,7 +76,8 @@ const SORTS = [
 type Filters = Record<string, string | string[] | boolean>;
 const DISPLAY_OPTIONS = [
   ["show_titles", "Show titles on covers"],
-  ["show_format", "Show format badges"],
+  ["show_format", "Show video format badges"],
+  ["show_audio_format", "Show audio format badges"],
   ["show_badges", "Show library badges"],
   ["show_rating", "Show rating badges"],
   ["show_library_cost", "Show total library cost in footer"],
@@ -152,6 +153,7 @@ export interface DashboardLibrary {
   show_stats: boolean;
   show_titles: boolean;
   show_format: boolean;
+  show_audio_format: boolean;
   show_badges: boolean;
   show_rating: boolean;
 }
@@ -285,6 +287,7 @@ export class KaleidescapeLibrary extends LitElement {
   private display = {
     show_titles: true,
     show_format: true,
+    show_audio_format: true,
     show_badges: true,
     show_rating: false,
     show_library_cost: false,
@@ -492,7 +495,12 @@ export class KaleidescapeLibrary extends LitElement {
         ? (values.cast_limit as number)
         : 8;
       this.display = Object.fromEntries(
-        DISPLAY_OPTIONS.map(([key]) => [key, values[key]]),
+        DISPLAY_OPTIONS.map(([key]) => [
+          key,
+          key === "show_audio_format" && typeof values[key] !== "boolean"
+            ? values.show_format
+            : values[key],
+        ]),
       ) as typeof this.display;
       if (this.scope?.permissions.edit && this.display.show_library_cost)
         void this.loadPurchaseTotals();
@@ -586,6 +594,7 @@ export class KaleidescapeLibrary extends LitElement {
     this.display = {
       show_titles: true,
       show_format: true,
+      show_audio_format: true,
       show_badges: true,
       show_rating: false,
       show_library_cost: false,
@@ -2698,7 +2707,7 @@ export class KaleidescapeLibrary extends LitElement {
                     >
                       <div class="cover-image">${this.cover(item)}</div>
                       ${this.display.show_badges || this.pendingCollection(item) ? html`<div class=${`cover-flags${this.pendingCollection(item) ? " collection-pending" : ""}`}>${this.display.show_badges ? renderStatusBadges(item, true, ["unwatched"], this.movieStatusLabels, this.libraryBadgeStyle) : nothing}${this.pendingCollectionBadge(item)}</div>` : nothing}
-                      ${this.display.show_format ? html`<div class="cover-formats">${renderFormatBadges(item, true)}</div>` : nothing}
+                      ${this.display.show_format || this.display.show_audio_format ? html`<div class="cover-formats">${renderFormatBadges(item, true, undefined, false, { video: this.display.show_format, audio: this.display.show_audio_format })}</div>` : nothing}
                       ${this.display.show_rating ? html`<div class="cover-rating">${renderRatingBadge(item.rating)}</div>` : nothing}
                       ${this.conflictIcon(item)}
                       ${this.display.show_titles ? html`<span class="cover-caption">${item.title}${item.year ? ` (${item.year})` : ""}</span>` : nothing}
@@ -2790,7 +2799,7 @@ export class KaleidescapeLibrary extends LitElement {
                             >
                               ${this.display.show_badges ? renderStatusBadges(item, false, [], this.movieStatusLabels, this.libraryBadgeStyle) : nothing}
                               ${this.pendingCollectionBadge(item)}
-                              ${this.display.show_format ? renderFormatBadges(item) : nothing}
+                              ${this.display.show_format || this.display.show_audio_format ? renderFormatBadges(item, false, undefined, false, { video: this.display.show_format, audio: this.display.show_audio_format }) : nothing}
                               ${this.display.show_format && !formatBadges(item).length ? html`<small>${this.format(item)}</small>` : nothing}
                               ${(item.version_count ?? 1) > 1 ? html`<small>${counted(item.version_count!, "version")}</small>` : nothing}
                             </div>

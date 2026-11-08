@@ -133,6 +133,7 @@ cards:
     page_size: 20
     show_titles: false
     show_format: true
+    show_audio_format: true
     show_badges: true
     show_rating: false
     show_stats: false
@@ -145,8 +146,10 @@ bounded cache as the panel. Pagination remains available when statistics are
 hidden; opening a cover uses the existing movie detail dialog. Status flags use
 the same priority as the panel: In progress, Watched, Watch Soon, then Recently
 added, with Favorite independent of that choice. Watch Soon uses a clock icon.
-The format overlay shows the highest known video format; it does not infer HDR
-or audio capabilities. The [Library design](design-library.md) owns the complete
+The format overlay shows the highest known video format and any known Atmos or
+DTS:X audio badges. `show_format` controls video and `show_audio_format`
+controls audio. Existing card configurations without `show_audio_format` inherit
+the value of `show_format`. The [Library design](design-library.md) owns the
 badge and metadata display rules.
 
 ## Full Library
@@ -165,6 +168,7 @@ show_filters: true
 show_sort: true
 show_titles: false
 show_format: true
+show_audio_format: true
 show_badges: true
 show_rating: true
 show_stats: true

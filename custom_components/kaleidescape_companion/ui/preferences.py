@@ -22,6 +22,7 @@ LIBRARY_DEFAULTS = {
     "cover_size": 150,
     "show_titles": True,
     "show_format": True,
+    "show_audio_format": True,
     "show_badges": True,
     "library_badge_style": "icons",
     "movie_status_labels": "modern",
@@ -74,6 +75,8 @@ def validate_library(patch, previous=None):
         if "scraper_conflict" in patch:
             patch.setdefault("missing_metadata_artwork", patch.pop("scraper_conflict"))
     previous = dict(previous or {})
+    # The former single toggle controlled both kinds of format badge.
+    previous.setdefault("show_audio_format", previous.get("show_format", True))
     if "scraper_conflict" in previous:
         previous.setdefault(
             "missing_metadata_artwork", previous.pop("scraper_conflict")
@@ -101,6 +104,7 @@ def validate_library(patch, previous=None):
         for key in (
             "show_titles",
             "show_format",
+            "show_audio_format",
             "show_badges",
             "show_rating",
             "show_library_cost",

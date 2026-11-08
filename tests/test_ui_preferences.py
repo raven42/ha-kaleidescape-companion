@@ -486,6 +486,7 @@ class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
             {"cover_size": 9999},
             {"show_titles": "false"},
             {"show_format": 1},
+            {"show_audio_format": 1},
             {"show_badges": None},
             {"movie_status_labels": "other"},
             {"library_badge_style": "other"},
@@ -533,13 +534,15 @@ class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
         with closing(sqlite3.connect(self.path)) as db:
             db.execute(
                 "UPDATE settings SET value=json_remove(value, '$.show_titles', "
-                "'$.show_format', '$.show_badges', '$.library_badge_style') "
+                "'$.show_format', '$.show_audio_format', '$.show_badges', "
+                "'$.library_badge_style') "
                 "WHERE owner='user:a'"
             )
             db.commit()
         old = await self.repository.async_ui_preferences("a")
         self.assertTrue(old["values"]["show_titles"])
         self.assertTrue(old["values"]["show_format"])
+        self.assertTrue(old["values"]["show_audio_format"])
         self.assertTrue(old["values"]["show_badges"])
         self.assertEqual(old["values"]["library_badge_style"], "icons")
         self.assertEqual(old["values"]["view"], "covers")
@@ -560,6 +563,47 @@ class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(
             (await self.repository.async_info())["revision"], before["revision"]
+        )
+
+    async def test_audio_toggle_inherits_legacy_format_setting_then_is_independent(
+        self,
+    ):
+        await self.repository.async_seed_ui_preferences({})
+        for actor, enabled in (("a", False), ("b", True)):
+            await self.repository.async_ui_preferences_update(
+                actor, False, str(uuid4()), 0, {"show_format": enabled}
+            )
+        with closing(sqlite3.connect(self.path)) as db:
+            db.execute(
+                "UPDATE settings SET value=json_remove(value, '$.show_audio_format') "
+                "WHERE owner IN ('user:a', 'user:b') AND key='library'"
+            )
+            db.commit()
+        old = await self.repository.async_ui_preferences("a")
+        self.assertFalse(old["values"]["show_audio_format"])
+        self.assertFalse(
+            (await self.repository.async_ui_preferences("a", profile="mobile"))[
+                "values"
+            ]["show_audio_format"]
+        )
+        self.assertTrue(
+            (await self.repository.async_ui_preferences("b"))["values"][
+                "show_audio_format"
+            ]
+        )
+        await self.repository.async_ui_preferences_update(
+            "a", False, str(uuid4()), old["revision"], {"show_format": True}
+        )
+        updated = await self.repository.async_ui_preferences("a")
+        self.assertTrue(updated["values"]["show_format"])
+        self.assertFalse(updated["values"]["show_audio_format"])
+        await self.repository.async_ui_preferences_update(
+            "a", False, str(uuid4()), updated["revision"], {"show_audio_format": True}
+        )
+        self.assertTrue(
+            (await self.repository.async_ui_preferences("a"))["values"][
+                "show_audio_format"
+            ]
         )
 
     async def test_group_badges_distinguish_remakes_and_replacement_formats(

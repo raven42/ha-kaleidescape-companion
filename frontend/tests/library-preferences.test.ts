@@ -796,6 +796,67 @@ it("shows a Watch Soon clock in the status corner for the WatchSoon collection",
     ),
   ).toMatchObject([{ key: "unwatched" }]);
 });
+it("controls audio and video badges independently in list and cover views", async () => {
+  const transport = new FixtureTransport();
+  transport.libraryTitles = [
+    libraryTitle({ formats: ["4K HDR10 Dolby Atmos DTS:X"] }),
+  ];
+  let root = await mount(transport);
+  button(root, "Options").click();
+  await flush();
+  const toggle = (name: string) =>
+    root.querySelector<HTMLInputElement>(`input[name="${name}"]`)!;
+  expect(root.querySelector(".library-table .format-four-k")).toBeTruthy();
+  expect(root.querySelector(".library-table .format-atmos")).toBeTruthy();
+  toggle("show_format").click();
+  await flush();
+  expect(
+    root.querySelector(
+      ".library-table .format-four-k,.library-table .format-hdr10",
+    ),
+  ).toBeNull();
+  expect(
+    root.querySelector(
+      ".library-table .format-atmos,.library-table .format-dtsx",
+    ),
+  ).toBeTruthy();
+  expect(transport.uiPreferences).toMatchObject({
+    show_format: false,
+    show_audio_format: true,
+  });
+  element!.remove();
+  root = await mount(transport);
+  expect(root.querySelector(".library-table .format-four-k")).toBeNull();
+  expect(root.querySelector(".library-table .format-atmos")).toBeTruthy();
+  button(root, "Options").click();
+  await flush();
+  toggle("show_format").click();
+  toggle("show_audio_format").click();
+  await flush();
+  expect(root.querySelector(".library-table .format-four-k")).toBeTruthy();
+  expect(
+    root.querySelector(
+      ".library-table .format-atmos,.library-table .format-dtsx",
+    ),
+  ).toBeNull();
+  root
+    .querySelector<HTMLInputElement>(
+      'input[name="library_view"][value="covers"]',
+    )!
+    .click();
+  await flush();
+  expect(root.querySelector(".cover-formats .format-four-k")).toBeTruthy();
+  expect(root.querySelector(".cover-formats .format-atmos")).toBeNull();
+  toggle("show_format").click();
+  toggle("show_audio_format").click();
+  await flush();
+  expect(root.querySelector(".cover-formats .format-four-k")).toBeNull();
+  expect(root.querySelector(".cover-formats .format-atmos")).toBeTruthy();
+  toggle("show_audio_format").click();
+  await flush();
+  expect(root.querySelector(".cover-formats")).toBeNull();
+});
+
 it("saves Options toggles immediately and restores them after remount", async () => {
   const transport = new FixtureTransport();
   let root = await mount(transport);
@@ -804,7 +865,8 @@ it("saves Options toggles immediately and restores them after remount", async ()
   await flush();
   expect(options.open).toBe(true);
   for (const label of [
-    "Show format badges",
+    "Show video format badges",
+    "Show audio format badges",
     "Show library badges",
     "Show rating badges",
   ])
@@ -818,13 +880,19 @@ it("saves Options toggles immediately and restores them after remount", async ()
   await flush();
   expect(options.open).toBe(true);
   expect(root.querySelector('[name="cover_size"]')).toBeTruthy();
-  for (const name of ["show_titles", "show_format", "show_badges"])
+  for (const name of [
+    "show_titles",
+    "show_format",
+    "show_audio_format",
+    "show_badges",
+  ])
     root.querySelector<HTMLInputElement>(`input[name="${name}"]`)!.click();
   await flush();
   expect(transport.uiPreferences).toMatchObject({
     view: "covers",
     show_titles: false,
     show_format: false,
+    show_audio_format: false,
     show_badges: false,
   });
   expect(
@@ -841,7 +909,12 @@ it("saves Options toggles immediately and restores them after remount", async ()
   expect(
     root.querySelector(".cover-caption,.cover-formats,.cover-flags"),
   ).toBeNull();
-  for (const name of ["show_titles", "show_format", "show_badges"])
+  for (const name of [
+    "show_titles",
+    "show_format",
+    "show_audio_format",
+    "show_badges",
+  ])
     expect(
       root.querySelector<HTMLInputElement>(`input[name="${name}"]`)!.checked,
     ).toBe(false);

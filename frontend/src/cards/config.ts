@@ -37,6 +37,8 @@ export function cardConfig(
     show_stats: kind !== "library-covers",
     show_titles: true,
     show_format: true,
+    show_audio_format:
+      typeof value.show_format === "boolean" ? value.show_format : true,
     show_badges: true,
     show_rating: false,
     show_controls: true,
@@ -73,6 +75,7 @@ export function cardConfig(
     "show_stats",
     "show_titles",
     "show_format",
+    "show_audio_format",
     "show_badges",
     "show_rating",
     "show_controls",
@@ -121,6 +124,7 @@ export function cardForm(kind: CardKind) {
             ...[
               "show_titles",
               "show_format",
+              "show_audio_format",
               "show_badges",
               "show_rating",
               "show_stats",
@@ -153,9 +157,13 @@ export function cardForm(kind: CardKind) {
       default: defaults[field.name as keyof CardConfig],
     })),
     computeLabel: (field: { name: string }) =>
-      field.name
-        .replaceAll("_", " ")
-        .replace(/^./, (char) => char.toUpperCase()),
+      field.name === "show_format"
+        ? "Show video format badges"
+        : field.name === "show_audio_format"
+          ? "Show audio format badges"
+          : field.name
+              .replaceAll("_", " ")
+              .replace(/^./, (char) => char.toUpperCase()),
     computeHelper: (field: { name: string }) =>
       field.name === "entry_id"
         ? "Leave blank for the loaded Companion integration."

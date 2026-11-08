@@ -238,6 +238,7 @@ export class FixtureTransport implements Transport {
     cast_limit: 8,
     show_titles: true,
     show_format: true,
+    show_audio_format: true,
     show_badges: true,
     library_badge_style: "icons",
     movie_status_labels: "modern",

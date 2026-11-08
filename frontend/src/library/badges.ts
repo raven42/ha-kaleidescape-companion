@@ -136,6 +136,9 @@ export function highestVideoFormat(row: VideoMetadata) {
     .map((key) => badges.find((badge) => badge.key === key))
     .find(Boolean);
 }
+export function isAudioFormatBadge(key: string) {
+  return key === "atmos" || key === "dtsx";
+}
 const dolbySymbol = svg`<svg class="dolby-symbol" viewBox="0 0 24 16" aria-hidden="true" focusable="false">
   <path fill="currentColor" d="M1 1h3.1c4.1 0 7 2.9 7 7s-2.9 7-7 7H1V1Zm22 0h-3.1c-4.1 0-7 2.9-7 7s2.9 7 7 7H23V1Z" />
 </svg>`;
@@ -160,43 +163,46 @@ export function renderFormatBadges(
   cover = false,
   select?: (value: string) => void,
   disabled = false,
+  visibility: { video: boolean; audio: boolean } = { video: true, audio: true },
 ) {
   const best = cover ? highestVideoFormat(row) : undefined;
   return (
     cover
       ? [
           ...(best ? [best] : []),
-          ...formatBadges(row).filter((badge) =>
-            ["atmos", "dtsx"].includes(badge.key),
-          ),
+          ...formatBadges(row).filter((badge) => isAudioFormatBadge(badge.key)),
         ]
       : formatBadges(row)
-  ).map((badge) => {
-    const content =
-      badge.key === "cinematic" || badge.key === "hd-cinematic"
-        ? html`<b>${badge.key === "cinematic" ? "4K" : "HD"}</b
-            ><span class="cinematic-label">Cinematic</span>`
-        : badge.key === "vision" || badge.key === "atmos"
-          ? html`${dolbySymbol}<span>${badge.label}</span>`
-          : badge.key === "hdr10"
-            ? html`${hdrSymbol}<b>HDR10</b>`
-            : badge.label;
-    return select
-      ? html`<button
-          type="button"
-          class=${`format-badge format-${badge.key}`}
-          aria-label=${`Filter by format: ${badge.label}`}
-          ?disabled=${disabled}
-          @click=${() => select(badge.label)}
-        >
-          ${content}
-        </button>`
-      : html`<span
-          class=${`format-badge format-${badge.key}`}
-          aria-label=${badge.label}
-          >${content}</span
-        >`;
-  });
+  )
+    .filter((badge) =>
+      isAudioFormatBadge(badge.key) ? visibility.audio : visibility.video,
+    )
+    .map((badge) => {
+      const content =
+        badge.key === "cinematic" || badge.key === "hd-cinematic"
+          ? html`<b>${badge.key === "cinematic" ? "4K" : "HD"}</b
+              ><span class="cinematic-label">Cinematic</span>`
+          : badge.key === "vision" || badge.key === "atmos"
+            ? html`${dolbySymbol}<span>${badge.label}</span>`
+            : badge.key === "hdr10"
+              ? html`${hdrSymbol}<b>HDR10</b>`
+              : badge.label;
+      return select
+        ? html`<button
+            type="button"
+            class=${`format-badge format-${badge.key}`}
+            aria-label=${`Filter by format: ${badge.label}`}
+            ?disabled=${disabled}
+            @click=${() => select(badge.label)}
+          >
+            ${content}
+          </button>`
+        : html`<span
+            class=${`format-badge format-${badge.key}`}
+            aria-label=${badge.label}
+            >${content}</span
+          >`;
+    });
 }
 export function renderStatusBadges(
   row: LibrarySummary,
