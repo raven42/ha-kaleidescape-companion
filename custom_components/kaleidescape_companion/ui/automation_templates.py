@@ -26,16 +26,21 @@ TEMPLATES = {
     "library_schedule": "library_schedule.yaml",
     "metadata_schedule": "metadata_schedule.yaml",
     "calendar_schedule": "calendar_schedule.yaml",
+    "maintenance_schedule": "maintenance_schedule.yaml",
 }
 LABELS = {
     "purchase_email": "Purchase receipt email",
     "library_schedule": "Schedule library sync",
     "metadata_schedule": "Schedule metadata refresh",
     "calendar_schedule": "Schedule calendar full sync",
+    "maintenance_schedule": "Schedule maintenance",
 }
 # Fingerprints of previously shipped, unmodified blueprints. When changing a
 # packaged blueprint, retain its old current fingerprint here for update checks.
 KNOWN_OLDER = {
+    "maintenance_schedule": frozenset(
+        {"620f280db48f6ef33b4af0e80de9f08c8d5f0ee940268cce56d9770aa650691d"}
+    ),
     "purchase_email": frozenset(
         {
             "87fdfb8b207b6871dc3dddba8286af3d4b7c403942b13b5464fd8bf49d5c9979",
@@ -69,6 +74,9 @@ KNOWN_OLDER = {
 }
 # These fingerprints also make future template changes visible to tests.
 CURRENT = {
+    "maintenance_schedule": (
+        "6e39faf5f5548ef416288471a7bea8be3030a6599b31976a5153ca7c9e486a86"
+    ),
     "purchase_email": (
         "95c87fe455c812fb0fa439cae5e1aa7d98a11343086aac4b1b059016b7b94707"
     ),
@@ -84,13 +92,24 @@ CURRENT = {
 }
 MAX_TEMPLATE_BYTES = 128 * 1024
 NOTICE_ID = "kaleidescape_companion_blueprints_outdated"
-LATEST_VERSION = {kind: 8 if kind == "purchase_email" else 1 for kind in TEMPLATES}
+LATEST_VERSION = {
+    kind: 8 if kind == "purchase_email" else 2 if kind == "maintenance_schedule" else 1
+    for kind in TEMPLATES
+}
 
 
 def read_template(kind):
     """Only read packaged, named templates; callers cannot select a path."""
     path = Path(__file__).resolve().parent.parent / "templates" / TEMPLATES[kind]
-    content = path.read_text(encoding="utf-8")
+    try:
+        content = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as error:
+        _LOGGER.error(
+            "Bundled blueprint %s is unavailable: %s", kind, safe_exception(error)
+        )
+        raise JournalError(
+            "blueprint_unavailable", "Bundled blueprint file is missing or unreadable"
+        ) from None
     if len(content.encode()) > MAX_TEMPLATE_BYTES:
         raise ValueError("Automation template is too large")
     return {"path": f"kaleidescape_companion/{TEMPLATES[kind]}", "yaml": content}

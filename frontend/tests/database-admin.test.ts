@@ -94,7 +94,8 @@ it("opens the selected purchase in the reviewed repair panel", async () => {
   );
   root().querySelector<HTMLButtonElement>(".entry-name")!.click();
   await flush();
-  button("Repair purchase").click();
+  expect(root().textContent).not.toContain("Repair purchase");
+  button("Edit entry").click();
   await flush();
   const repair = root().querySelector("kaleidescape-purchase-repair")!;
   await (repair as HTMLElement & { updateComplete: Promise<unknown> })
@@ -102,9 +103,48 @@ it("opens the selected purchase in the reviewed repair panel", async () => {
   expect(
     repair.shadowRoot!.querySelector<HTMLInputElement>('[name="title"]')!.value,
   ).toBe("Fictional purchase");
+  expect(repair.shadowRoot!.textContent).toContain("Edit purchase");
+  expect(repair.shadowRoot!.textContent).not.toContain("Void purchase");
+  expect(repair.shadowRoot!.textContent).not.toContain("Unlink purchase");
   expect(
     root().querySelector<HTMLButtonElement>("#table-viewings")!.disabled,
   ).toBe(true);
+});
+
+it("clears an applied database search and exposes the selected table hint", async () => {
+  await mount();
+  const hint = root().querySelector<HTMLElement & { hint: string }>(
+    ".database-table-heading kaleidescape-settings-hint",
+  )!;
+  expect(hint.hint).toContain("Journal");
+  const search = root().querySelector(
+    "kaleidescape-database-search",
+  ) as DatabaseSearch;
+  await search.updateComplete;
+  const field = search.shadowRoot!.querySelector<HTMLInputElement>("input")!;
+  field.value = "Voyage";
+  field.dispatchEvent(new Event("input"));
+  field.dispatchEvent(
+    new KeyboardEvent("keydown", {
+      key: "Enter",
+      bubbles: true,
+      cancelable: true,
+    }),
+  );
+  await flush();
+  await search.updateComplete;
+  search
+    .shadowRoot!.querySelector<HTMLButtonElement>(
+      '[aria-label="Clear database search"]',
+    )!
+    .click();
+  await flush();
+  expect(field.value).toBe("");
+  expect(
+    transport.calls
+      .filter((call) => call.type.endsWith("/database/inspect"))
+      .at(-1),
+  ).toMatchObject({ query: "" });
 });
 
 it("shows raw details first and edits only supported fields after explicit confirmation", async () => {

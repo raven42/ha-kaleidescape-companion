@@ -39,6 +39,28 @@
     import { JournalClient } from "../src/core/api.ts";
     const parameters = new URLSearchParams(location.search);
     const transport = new FixtureTransport();
+    if (parameters.get("database") === "1") {
+      transport.databaseLibraryRows = [
+        {
+          id: "fictional-library-1",
+          title: "The Fictional Voyage",
+          source_id: "fictional-source",
+          available: true,
+        },
+      ];
+      transport.purchaseRecords = [
+        {
+          id: "a".repeat(64),
+          title: "The Fictional Voyage",
+          purchased_on: "2020-01-02",
+          purchase_price: "$12.99",
+          retail_price: "$24.99",
+          order_id: "FICTIONAL-1",
+          href: null,
+          library_id: null,
+        },
+      ];
+    }
     transport.options.library_enabled =
       parameters.get("library") === "1" ||
       parameters.get("settings") === "1" ||

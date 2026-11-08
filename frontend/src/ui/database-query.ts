@@ -33,9 +33,27 @@ export class DatabaseSearch extends LitElement {
       gap: 10px;
       align-items: stretch;
     }
-    .control-row input {
+    .query-input {
+      position: relative;
       flex: 1;
       min-width: 0;
+    }
+    .query-input input {
+      padding-right: 44px;
+    }
+    .query-clear {
+      position: absolute;
+      right: 0;
+      top: 0;
+      height: 100%;
+      width: 44px;
+      text-align: center;
+      font-size: 22px;
+      cursor: pointer;
+    }
+    .query-clear:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: -3px;
     }
     input {
       font: inherit;
@@ -234,80 +252,108 @@ export class DatabaseSearch extends LitElement {
       input.setSelectionRange(this.cursor, this.cursor);
     });
   }
+  private clearQuery() {
+    clearTimeout(this.timer);
+    this.generation++;
+    this.value = "";
+    this.cursor = 0;
+    this.message = "";
+    this.invalid = false;
+    this.open = false;
+    this.dispatchEvent(
+      new CustomEvent("query-change", {
+        detail: "",
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    this.dispatchEvent(
+      new CustomEvent("query-submit", { bubbles: true, composed: true }),
+    );
+    this.requestUpdate();
+    void this.updateComplete.then(() => {
+      this.renderRoot.querySelector<HTMLInputElement>("input")?.focus();
+      this.open = false;
+      this.requestUpdate();
+    });
+  }
   protected render() {
     const { options: choices } = this.completion();
     return html`<div class="search">
         <label for="database-query">Search rows / conditions</label>
         <div class="control-row">
-          <input
-            id="database-query"
-            name="database_query"
-            role="combobox"
-            aria-autocomplete="list"
-            aria-expanded=${this.open && !!choices.length}
-            aria-controls="query-suggestions"
-            aria-activedescendant=${this.open && choices.length ? `query-option-${this.active}` : nothing}
-            aria-invalid=${this.invalid}
-            aria-describedby=${this.message ? "query-result query-help" : "query-help"}
-            maxlength="2000"
-            autocomplete="off"
-            .value=${this.value}
-            ?disabled=${this.disabled}
-            @focus=${() => {
-              this.open = true;
-              this.requestUpdate();
-            }}
-            @blur=${() => {
-              this.open = false;
-              this.requestUpdate();
-            }}
-            @click=${(event: Event) => {
-              this.cursor =
-                (event.target as HTMLInputElement).selectionStart ??
-                this.value.length;
-              this.open = true;
-              this.requestUpdate();
-            }}
-            @input=${(event: Event) => {
-              const input = event.target as HTMLInputElement;
-              this.value = input.value;
-              this.cursor = input.selectionStart ?? input.value.length;
-              this.active = 0;
-              this.open = true;
-              this.changed();
-            }}
-            @keydown=${(event: KeyboardEvent) => {
-              if (event.key === "Escape") {
-                this.open = false;
-                this.requestUpdate();
-              } else if (
-                (event.key === "ArrowDown" || event.key === "ArrowUp") &&
-                choices.length
-              ) {
-                event.preventDefault();
+          <div class="query-input">
+            <input
+              id="database-query"
+              name="database_query"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded=${this.open && !!choices.length}
+              aria-controls="query-suggestions"
+              aria-activedescendant=${this.open && choices.length ? `query-option-${this.active}` : nothing}
+              aria-invalid=${this.invalid}
+              aria-describedby=${this.message ? "query-result query-help" : "query-help"}
+              maxlength="2000"
+              autocomplete="off"
+              .value=${this.value}
+              ?disabled=${this.disabled}
+              @focus=${() => {
                 this.open = true;
-                this.active =
-                  (this.active +
-                    (event.key === "ArrowDown" ? 1 : -1) +
-                    choices.length) %
-                  choices.length;
                 this.requestUpdate();
-              } else if (event.key === "Tab" && this.open && choices.length) {
-                event.preventDefault();
-                this.choose(choices[this.active] ?? choices[0]);
-              } else if (event.key === "Enter") {
-                event.preventDefault();
+              }}
+              @blur=${() => {
                 this.open = false;
-                this.dispatchEvent(
-                  new CustomEvent("query-submit", {
-                    bubbles: true,
-                    composed: true,
-                  }),
-                );
                 this.requestUpdate();
-              }
-            }}
-          /><slot name="actions"></slot>
+              }}
+              @click=${(event: Event) => {
+                this.cursor =
+                  (event.target as HTMLInputElement).selectionStart ??
+                  this.value.length;
+                this.open = true;
+                this.requestUpdate();
+              }}
+              @input=${(event: Event) => {
+                const input = event.target as HTMLInputElement;
+                this.value = input.value;
+                this.cursor = input.selectionStart ?? input.value.length;
+                this.active = 0;
+                this.open = true;
+                this.changed();
+              }}
+              @keydown=${(event: KeyboardEvent) => {
+                if (event.key === "Escape") {
+                  this.open = false;
+                  this.requestUpdate();
+                } else if (
+                  (event.key === "ArrowDown" || event.key === "ArrowUp") &&
+                  choices.length
+                ) {
+                  event.preventDefault();
+                  this.open = true;
+                  this.active =
+                    (this.active +
+                      (event.key === "ArrowDown" ? 1 : -1) +
+                      choices.length) %
+                    choices.length;
+                  this.requestUpdate();
+                } else if (event.key === "Tab" && this.open && choices.length) {
+                  event.preventDefault();
+                  this.choose(choices[this.active] ?? choices[0]);
+                } else if (event.key === "Enter") {
+                  event.preventDefault();
+                  this.open = false;
+                  this.dispatchEvent(
+                    new CustomEvent("query-submit", {
+                      bubbles: true,
+                      composed: true,
+                    }),
+                  );
+                  this.requestUpdate();
+                }
+              }}
+            />${this.value ? html`<button class="query-clear" type="button" aria-label="Clear database search" title="Clear search" ?disabled=${this.disabled} @click=${this.clearQuery}>×</button>` : nothing}
+          </div>
+          <slot name="actions"></slot>
         </div>
         ${this.open && choices.length ? html`<div class="suggestions" id="query-suggestions" role="listbox">${choices.map((choice, index) => html`<button type="button" role="option" id=${`query-option-${index}`} aria-selected=${this.active === index} tabindex="-1" @pointerdown=${(event: PointerEvent) => event.preventDefault()} @click=${() => this.choose(choice)}>${choice}</button>`)}</div>` : nothing}
       </div>

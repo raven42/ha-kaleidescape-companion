@@ -81,6 +81,7 @@ export class KaleidescapePurchaseRepair extends LitElement {
     row: { attribute: false },
     token: { type: String },
     reverse: { type: Boolean },
+    editOnly: { type: Boolean },
   };
   static styles = [
     styles,
@@ -133,6 +134,7 @@ export class KaleidescapePurchaseRepair extends LitElement {
   row: Record<string, unknown> = {};
   token = "";
   reverse = false;
+  editOnly = false;
   private action: "correct" | "void" = "correct";
   private draft: Record<string, string> = {};
   private query = "";
@@ -226,7 +228,7 @@ export class KaleidescapePurchaseRepair extends LitElement {
       const value = this.draft[key] || null;
       if (value !== (this.row[key] ?? null)) changes[key] = value;
     }
-    if (this.owner !== (this.row.library_id ?? null))
+    if (!this.editOnly && this.owner !== (this.row.library_id ?? null))
       changes.library_id = this.owner;
     return changes;
   }
@@ -292,8 +294,9 @@ export class KaleidescapePurchaseRepair extends LitElement {
       return false;
     }
     if (!Object.keys(this.changes()).length) {
-      this.error =
-        "Change a purchase field or its Library association before reviewing.";
+      this.error = this.editOnly
+        ? "Change a purchase field before reviewing."
+        : "Change a purchase field or its Library association before reviewing.";
       return false;
     }
     return true;
@@ -383,7 +386,7 @@ export class KaleidescapePurchaseRepair extends LitElement {
       >
         <div class="card-head">
           <h2 id="repair-heading">
-            ${this.reverse ? "Reverse purchase repair" : "Repair purchase"}
+            ${this.reverse ? "Reverse purchase repair" : this.editOnly ? "Edit purchase" : "Repair purchase"}
           </h2>
           ${closeButton((event) => this.close(event), this.busy || !!this.pending)}
         </div>
@@ -398,20 +401,27 @@ export class KaleidescapePurchaseRepair extends LitElement {
                 ${
                   !this.reverse
                     ? html`
-                        <label
-                          >Action<select
-                            .value=${this.action}
-                            ?disabled=${this.busy}
-                            @change=${(event: Event) => {
-                              this.action = (event.target as HTMLSelectElement)
-                                .value as "correct" | "void";
-                              this.requestUpdate();
-                            }}
-                          >
-                            <option value="correct">Correct purchase</option>
-                            <option value="void">Void purchase</option>
-                          </select></label
-                        >
+                        ${
+                          !this.editOnly
+                            ? html`<label
+                                >Action<select
+                                  .value=${this.action}
+                                  ?disabled=${this.busy}
+                                  @change=${(event: Event) => {
+                                    this.action = (
+                                      event.target as HTMLSelectElement
+                                    ).value as "correct" | "void";
+                                    this.requestUpdate();
+                                  }}
+                                >
+                                  <option value="correct">
+                                    Correct purchase
+                                  </option>
+                                  <option value="void">Void purchase</option>
+                                </select></label
+                              >`
+                            : nothing
+                        }
                         ${
                           this.action === "correct"
                             ? html`
@@ -441,53 +451,57 @@ export class KaleidescapePurchaseRepair extends LitElement {
                                   )}
                                 </div>
                                 <p>Library association: ${this.ownerLabel}</p>
-                                <label
-                                  >Find a Library movie<input
-                                    type="search"
-                                    .value=${this.query}
-                                    ?disabled=${this.busy}
-                                    @input=${(event: Event) => {
-                                      this.query = (
-                                        event.target as HTMLInputElement
-                                      ).value;
-                                    }}
-                                /></label>
-                                <button
-                                  type="button"
-                                  ?disabled=${this.busy}
-                                  @click=${this.search}
-                                >
-                                  Search Library
-                                </button>
-                                <button
-                                  type="button"
-                                  ?disabled=${this.busy}
-                                  @click=${() => {
-                                    this.owner = null;
-                                    this.ownerLabel = "Unlinked";
-                                    this.requestUpdate();
-                                  }}
-                                >
-                                  Unlink purchase
-                                </button>
-                                <div class="search-results">
-                                  ${this.results.map(
-                                    (item) => html`
-                                      <button
-                                        type="button"
-                                        ?disabled=${this.busy}
-                                        @click=${() => {
-                                          this.owner = item.id;
-                                          this.ownerLabel = item.title;
-                                          this.results = [];
-                                          this.requestUpdate();
-                                        }}
-                                      >
-                                        ${item.title} ${item.year ?? ""}
-                                      </button>
-                                    `,
-                                  )}
-                                </div>
+                                ${
+                                  !this.editOnly
+                                    ? html`<label
+                                          >Find a Library movie<input
+                                            type="search"
+                                            .value=${this.query}
+                                            ?disabled=${this.busy}
+                                            @input=${(event: Event) => {
+                                              this.query = (
+                                                event.target as HTMLInputElement
+                                              ).value;
+                                            }}
+                                        /></label>
+                                        <button
+                                          type="button"
+                                          ?disabled=${this.busy}
+                                          @click=${this.search}
+                                        >
+                                          Search Library
+                                        </button>
+                                        <button
+                                          type="button"
+                                          ?disabled=${this.busy}
+                                          @click=${() => {
+                                            this.owner = null;
+                                            this.ownerLabel = "Unlinked";
+                                            this.requestUpdate();
+                                          }}
+                                        >
+                                          Unlink purchase
+                                        </button>
+                                        <div class="search-results">
+                                          ${this.results.map(
+                                            (item) => html`
+                                              <button
+                                                type="button"
+                                                ?disabled=${this.busy}
+                                                @click=${() => {
+                                                  this.owner = item.id;
+                                                  this.ownerLabel = item.title;
+                                                  this.results = [];
+                                                  this.requestUpdate();
+                                                }}
+                                              >
+                                                ${item.title} ${item.year ?? ""}
+                                              </button>
+                                            `,
+                                          )}
+                                        </div>`
+                                    : nothing
+                                }
                               `
                             : html`<p class="warning">
                                 Voiding removes this invoice from active totals

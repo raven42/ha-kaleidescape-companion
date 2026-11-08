@@ -99,11 +99,22 @@ class PurchaseCompletenessTest(unittest.IsolatedAsyncioTestCase):
     async def test_deleted_owner_does_not_supply_group_evidence(self):
         await self.seed()
         await self.scan(self.remaining)
-        page = await self.repository.async_inspect("library")
-        index = next(
-            i for i, row in enumerate(page["items"]) if row["id"] == self.owner
-        )
-        await self.mutate(page, "delete", index=index)
+
+        # Simulate an old database with an already removed Library owner.
+        # Current Database management intentionally forbids this deletion.
+        def remove_legacy_owner():
+            db = self.repository._db()
+            with db:
+                db.execute(
+                    "UPDATE purchase_records SET library_id=NULL WHERE library_id=?",
+                    (self.owner,),
+                )
+                db.execute(
+                    "DELETE FROM library_memberships WHERE title_id=?", (self.owner,)
+                )
+                db.execute("DELETE FROM library WHERE id=?", (self.owner,))
+
+        await self.repository._call(remove_legacy_owner)
         await self.assert_missing([library.ROWS[0]["title"], library.ROWS[1]["title"]])
         records = (await self.repository.async_inspect("purchase_records"))["items"]
         self.assertEqual(len(records), 1)

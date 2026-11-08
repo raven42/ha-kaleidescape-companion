@@ -16,6 +16,7 @@ SERVICE = "import_purchase_email"
 METADATA_SERVICE = "refresh_metadata"
 LIBRARY_SERVICE = "library_sync"
 CALENDAR_SERVICE = "calendar_full_sync"
+CLEANUP_SERVICE = "database_cleanup"
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -230,6 +231,41 @@ def async_register_services(hass: HomeAssistant) -> None:
         (CALENDAR_SERVICE, sync_calendar),
     ):
         hass.services.async_register(DOMAIN, name, handler, schema=vol.Schema({}))
+
+    async def database_cleanup(call: ServiceCall):
+        if call.context.user_id:
+            user = await hass.auth.async_get_user(call.context.user_id)
+            if not user or not user.is_active or not user.is_admin:
+                raise HomeAssistantError(
+                    "An administrator is required for database cleanup"
+                )
+        runtimes = loaded_runtimes(hass)
+        if len(runtimes) != 1:
+            raise HomeAssistantError("Kaleidescape Companion is not ready")
+        entry_id, runtime = runtimes[0]
+        entry = hass.config_entries.async_get_entry(entry_id)
+        if entry is None or getattr(entry, "runtime_data", None) is not runtime:
+            raise HomeAssistantError("Kaleidescape Companion is not ready")
+        try:
+            result = await runtime.repository.async_database_cleanup(call.data)
+        except JournalError as error:
+            raise HomeAssistantError(str(error)) from None
+        _LOGGER.info(
+            "Database cleanup removed finalized operation histories: %s",
+            result["removed"],
+        )
+
+    hass.services.async_register(
+        DOMAIN,
+        CLEANUP_SERVICE,
+        database_cleanup,
+        schema=vol.Schema(
+            {
+                vol.Optional(key, default=0): vol.All(int, vol.Range(min=0, max=3650))
+                for key in ("calendar", "collections", "playback")
+            }
+        ),
+    )
 
     async def refresh_metadata(call: ServiceCall):
         actor = None

@@ -787,8 +787,12 @@ export function errorMessage(error: unknown): string {
       "The journal changed. Return to the first page to refresh the results.",
     invalid_request:
       "Some values were rejected. Check the fields and try again.",
+    invalid_format:
+      "Home Assistant rejected the request format. Reload Companion and try again.",
     busy: "The journal is busy. Wait a moment, then retry.",
     backup_in_progress: "A backup is running. Retry after it finishes.",
+    blueprint_unavailable:
+      "The bundled blueprint is missing or unreadable. Reinstall the complete integration and restart Home Assistant.",
     storage_error:
       "The journal could not access storage. Check HA diagnostics and available space.",
     export_too_large: "This export exceeds the download size limit.",
@@ -1652,6 +1656,37 @@ export class JournalClient {
       offset,
       ...(revision == null ? {} : { revision }),
       ...filters,
+    });
+  }
+  cleanupPreview(
+    scope: Scope,
+    policies: Record<string, number>,
+  ): Promise<{
+    as_of: string;
+    counts: Record<string, number>;
+    policies: Record<string, number>;
+    revision: number;
+  }> {
+    return this.call({
+      type: `${DOMAIN}/database/cleanup/preview`,
+      ...scopeFields(scope),
+      policies,
+    });
+  }
+  cleanupDatabase(
+    scope: Scope,
+    review: {
+      as_of: string;
+      policies: Record<string, number>;
+      revision: number;
+    },
+  ): Promise<{ removed: Record<string, number> }> {
+    return this.call({
+      type: `${DOMAIN}/database/cleanup/apply`,
+      ...scopeFields(scope),
+      as_of: review.as_of,
+      policies: review.policies,
+      revision: review.revision,
     });
   }
   preparePurge(

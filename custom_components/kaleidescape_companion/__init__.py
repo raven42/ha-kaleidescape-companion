@@ -26,6 +26,7 @@ from .playback.controls import PlaybackControls
 from .playback.observer import PlaybackObserver
 from .services import (
     CALENDAR_SERVICE,
+    CLEANUP_SERVICE,
     LIBRARY_SERVICE,
     METADATA_SERVICE,
     SERVICE,
@@ -263,6 +264,7 @@ async def async_unload_entry(
     hass.services.async_remove(DOMAIN, METADATA_SERVICE)
     hass.services.async_remove(DOMAIN, LIBRARY_SERVICE)
     hass.services.async_remove(DOMAIN, CALENDAR_SERVICE)
+    hass.services.async_remove(DOMAIN, CLEANUP_SERVICE)
     await _async_close_runtime(runtime, reason)
     if not runtime.preserve_panel_on_reload or entry.disabled_by is not None:
         async_remove_panel(hass)

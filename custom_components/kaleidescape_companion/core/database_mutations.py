@@ -414,25 +414,34 @@ def delete_row(db, table, row):
         )
         db.execute("DELETE FROM manual_audit WHERE viewing_id=?", (row["id"],))
         db.execute("DELETE FROM sessions WHERE viewing_id=?", (row["id"],))
-    elif table == "library":
-        if db.execute(
-            "SELECT 1 FROM library_collection_intents WHERE title_id=?", (row["id"],)
-        ).fetchone():
-            raise JournalError("conflict", "Device-write receipts protect this version")
-        db.execute("DELETE FROM library_memberships WHERE title_id=?", (row["id"],))
     elif table == "library_sources":
+        if db.execute(
+            "SELECT 1 FROM library WHERE source_id=? LIMIT 1", (row["id"],)
+        ).fetchone():
+            raise JournalError(
+                "conflict", "Library entries protect this source from deletion"
+            )
         if db.execute(
             "SELECT 1 FROM library_collection_intents WHERE source_id=?", (row["id"],)
         ).fetchone():
             raise JournalError("conflict", "Device-write receipts protect this source")
-        db.execute("DELETE FROM library_memberships WHERE source_id=?", (row["id"],))
+        if db.execute(
+            "SELECT 1 FROM library_memberships WHERE source_id=? LIMIT 1", (row["id"],)
+        ).fetchone():
+            raise JournalError(
+                "conflict", "Collection memberships protect this source from deletion"
+            )
         db.execute("DELETE FROM library_collections WHERE source_id=?", (row["id"],))
-        db.execute("DELETE FROM library WHERE source_id=?", (row["id"],))
     elif table == "library_collections":
-        db.execute(
-            "DELETE FROM library_memberships WHERE source_id=? AND collection=?",
+        if db.execute(
+            "SELECT 1 FROM library_memberships "
+            "WHERE source_id=? AND collection=? LIMIT 1",
             (row["source_id"], row["name"]),
-        )
+        ).fetchone():
+            raise JournalError(
+                "conflict",
+                "Collection memberships protect this collection from deletion",
+            )
     elif table == "library_artwork":
         from ..library.store import unlink_artwork
 

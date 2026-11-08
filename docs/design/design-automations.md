@@ -1,7 +1,7 @@
 # Home Assistant actions and automations
 
 Reviewed 2026-11-04. Companion exposes HA actions, three configuration switches,
-three buttons and four optional automation blueprints. HA owns automation
+three buttons and five optional automation blueprints. HA owns automation
 execution and traces; Companion owns validation, background jobs and
 persistence. The [data-management design](design-data-management.md) owns
 purchase storage, matching and reconciliation; this document owns the automation
@@ -32,6 +32,7 @@ workflow.
 | `library_schedule.yaml`      | 1               | Daily local time, default 03:00; requests Library sync                                       |
 | `metadata_schedule.yaml`     | 1               | Daily local time, default 04:00; selected enabled providers and Only missing, default true   |
 | `calendar_schedule.yaml`     | 1               | Daily local time, default 03:00; requests Full Sync, waits 11 minutes, requests another pass |
+| `maintenance_schedule.yaml`  | 2               | Daily local time; select database cleanup, Library sync and missing metadata refresh         |
 
 All schedules use HA's local time and single-run mode. The receipt automation
 uses queued mode, at most ten runs. Empty metadata provider selection means all
@@ -201,3 +202,21 @@ followed by issue details, the full bounded email and parsed results; successful
 receipt input is logged at debug. Protect HA logs accordingly. Source tests use
 fictional receipts, never copied household traces; see the
 [security policy](../policies/policy-security.md).
+
+## Database cleanup
+
+Administrators can review **Database cleanup** in Database or Settings →
+Maintenance. Recommended cleanup keeps 180 days of finalized calendar and
+collection change history, and 90 days of finalized playback control history.
+Advanced mode sets each retention period independently or keeps all records of a
+type. Pending and uncertain operations, request replay barriers, purchases,
+Library entries and Journal history are retained. SQLite can reuse freed pages;
+cleanup does not compact the database file. The optional Schedule maintenance
+blueprint runs the same cleanup and can separately request Library sync and
+missing metadata refresh. Its retention inputs are always applied, defaulting to
+180 days for calendar and collection histories and 90 days for playback. After
+updating an existing blueprint, review its saved retention values: values that
+the previous Recommended mode ignored will now be applied. The
+`database_cleanup` action accepts active administrators and HA automations
+without a user context. Scheduled cleanup runs only if an automation is
+explicitly created and enabled.

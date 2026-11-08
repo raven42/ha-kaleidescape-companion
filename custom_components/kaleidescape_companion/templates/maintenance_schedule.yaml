@@ -1,0 +1,91 @@
+# Version history:
+# v2: Use each retention input directly; review previously ignored values.
+# v1: Schedule selectable database cleanup, library sync and metadata refresh tasks.
+# End version history
+blueprint:
+  name: Kaleidescape Companion - Schedule maintenance
+  description: >-
+    Run selected maintenance tasks daily. Choose how many days to retain each
+    finalized operation history; 0 keeps that history indefinitely. Defaults
+    are 180 days for calendar and collection changes and 90 days for playback
+    controls. Pending operations, retry barriers, purchases, Library and Journal
+    records are protected. Blueprint version: 2.
+  domain: automation
+  input:
+    time:
+      name: Local time
+      default: "03:00:00"
+      selector:
+        time:
+    database_cleanup:
+      name: Database cleanup
+      default: true
+      selector:
+        boolean:
+    calendar_days:
+      name: "Calendar reconciliation history retention (days)"
+      description: Finalized receipts only; 0 keeps all history.
+      default: 180
+      selector:
+        number:
+          min: 0
+          max: 3650
+          step: 1
+          mode: box
+    collection_days:
+      name: "Collection change history retention (days)"
+      description: Confirmed or acknowledged receipts only; 0 keeps all history.
+      default: 180
+      selector:
+        number:
+          min: 0
+          max: 3650
+          step: 1
+          mode: box
+    playback_days:
+      name: "Playback control history retention (days)"
+      description: Finished or reviewed commands only; 0 keeps all history.
+      default: 90
+      selector:
+        number:
+          min: 0
+          max: 3650
+          step: 1
+          mode: box
+    library_sync:
+      name: Library sync
+      default: false
+      selector:
+        boolean:
+    metadata_refresh:
+      name: Metadata refresh
+      default: false
+      selector:
+        boolean:
+variables:
+  do_database_cleanup: !input database_cleanup
+  calendar_days: !input calendar_days
+  collection_days: !input collection_days
+  playback_days: !input playback_days
+  do_library_sync: !input library_sync
+  do_metadata_refresh: !input metadata_refresh
+triggers:
+  - trigger: time
+    at: !input time
+actions:
+  - if: "{{ do_database_cleanup }}"
+    then:
+      - action: kaleidescape_companion.database_cleanup
+        data:
+          calendar: "{{ calendar_days | int }}"
+          collections: "{{ collection_days | int }}"
+          playback: "{{ playback_days | int }}"
+  - if: "{{ do_library_sync }}"
+    then:
+      - action: kaleidescape_companion.library_sync
+  - if: "{{ do_metadata_refresh }}"
+    then:
+      - action: kaleidescape_companion.refresh_metadata
+        data:
+          only_missing: true
+mode: single

@@ -30,6 +30,7 @@ include = ["custom_components", "custom_components.kaleidescape_companion*"]
     "*.json", "services.yaml", "translations/*.json", "ui/assets/*.js",
     "templates/purchase_email_parser.yaml", "templates/library_schedule.yaml",
     "templates/metadata_schedule.yaml", "templates/calendar_schedule.yaml",
+    "templates/maintenance_schedule.yaml",
 ]
 "custom_components.kaleidescape_companion.vendor.kaleidescape" = ["LICENSE", "py.typed"]
 

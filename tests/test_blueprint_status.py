@@ -41,7 +41,13 @@ class BlueprintStatusTest(unittest.IsolatedAsyncioTestCase):
     async def test_fingerprints_match_packaged_and_previous_versions(self):
         for kind in templates.TEMPLATES:
             content = templates.read_template(kind)["yaml"]
-            version = 8 if kind == "purchase_email" else 1
+            version = (
+                8
+                if kind == "purchase_email"
+                else 2
+                if kind == "maintenance_schedule"
+                else 1
+            )
             self.assertIn(f"Blueprint version: {version}.", content)
             self.assertIn("# Version history:\n", content)
             self.assertIn(f"# v{version}: ", content)
@@ -51,9 +57,10 @@ class BlueprintStatusTest(unittest.IsolatedAsyncioTestCase):
                 templates.fingerprint(templates.blueprint(content).yaml()),
                 templates.CURRENT[kind],
             )
-            self.assertIn(
-                templates.fingerprint(self.old(kind)), templates.KNOWN_OLDER[kind]
-            )
+            if templates.KNOWN_OLDER[kind]:
+                self.assertIn(
+                    templates.fingerprint(self.old(kind)), templates.KNOWN_OLDER[kind]
+                )
         previous_receipts = (FIXTURES / "purchase_email_parser_v2.yaml").read_text()
         self.assertIn(
             templates.fingerprint(previous_receipts),
@@ -115,7 +122,7 @@ class BlueprintStatusTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(state["library_schedule"]["latest_version"], 1)
         self.assertEqual(
             [state[k]["status"] for k in templates.TEMPLATES],
-            ["current", "outdated", "modified", "outdated"],
+            ["current", "outdated", "modified", "outdated", "current"],
         )
         self.assertEqual(
             (self.root / templates.TEMPLATES["library_schedule"]).read_text(), old

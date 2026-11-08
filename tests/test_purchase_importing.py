@@ -497,8 +497,9 @@ class PurchaseImportTest(unittest.IsolatedAsyncioTestCase):
         )
         page = await self.page()
         page["items"] = [owner]
-        await self.mutate(page, operation="delete")
-        self.assertEqual(await self.invoices(), [])
+        with self.assert_error("invalid_request"):
+            await self.mutate(page, operation="delete")
+        self.assertEqual(len(await self.invoices()), 1)
         with self.assert_error("invalid_request"):
             await self.repository.async_inspect("library_titles")
         with self.assert_error("invalid_request"):

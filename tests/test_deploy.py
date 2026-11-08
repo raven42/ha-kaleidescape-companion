@@ -1,5 +1,6 @@
 """Exercise deployment boundaries using fictional files and a local shell, never SSH."""
 
+import ast
 import hashlib
 import io
 import json
@@ -10,6 +11,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -97,6 +99,35 @@ class DeployTest(unittest.TestCase):
                 f"{deploy.DOMAIN}/vendor/kaleidescape/LICENSE", archive.getnames()
             )
 
+    def test_all_registered_blueprints_are_in_both_package_manifests(self):
+        root = Path(__file__).resolve().parents[1]
+        tree = ast.parse(
+            (
+                root
+                / "custom_components/kaleidescape_companion/ui/automation_templates.py"
+            ).read_text()
+        )
+        definitions = [
+            node.value
+            for node in tree.body
+            if isinstance(node, ast.Assign)
+            and any(
+                isinstance(target, ast.Name) and target.id == "TEMPLATES"
+                for target in node.targets
+            )
+        ]
+        self.assertEqual(len(definitions), 1)
+        expected = {
+            f"templates/{filename}"
+            for filename in ast.literal_eval(definitions[0]).values()
+        }
+        project = tomllib.loads((root / "pyproject.toml").read_text())
+        data = project["tool"]["setuptools"]["package-data"][
+            "custom_components.kaleidescape_companion"
+        ]
+        self.assertTrue(expected <= deploy.REQUIRED, expected - deploy.REQUIRED)
+        self.assertTrue(expected <= set(data), expected - set(data))
+
     def test_only_the_integration_brand_icons_enter_the_runtime_archive(self):
         for name in (
             "brand/icon.png",
@@ -182,6 +213,12 @@ assert importlib.util.find_spec('kaleidescape.library_parser') is None
 assert companion_pyk.__version__ == '1.2.0.dev1+cmp'
 assert callable(companion_pyk.Device.prepare_movie_launch)
 assert pathlib.Path(companion_pyk.__file__).resolve().is_relative_to(root)
+from custom_components.kaleidescape_companion.ui.automation_templates import (
+    TEMPLATES, read_template,
+)
+for kind in TEMPLATES:
+    template = read_template(kind)
+    assert '# Version history:' in template['yaml'], kind
 assert 'kaleidescape_api' not in sys.modules
 assert not any(name == 'dev' or name.startswith('dev.') for name in sys.modules)
 """

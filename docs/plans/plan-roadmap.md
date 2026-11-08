@@ -23,7 +23,7 @@ owner's approval, not a condition that overrides functional migration.
 | HA surfaces     | 17 sensors, six dashboard cards and an explicit test-dashboard generator                                                                        | [Sensors](../design/design-sensors.md), [cards](../design/design-dashboard-cards.md)                                               |
 | Calendar        | Local Journal month view, optional publishing/history export and dedicated-calendar Full Sync                                                   | [Calendar](../design/design-calendar.md)                                                                                           |
 | Operations      | Native module logging, bounded diagnostics, backup coordination, local checks, runtime packaging and explicit SSH deployment                    | [Logging](../design/design-logging.md), [development](../guides/guide-development.md), [deployment](../guides/guide-deployment.md) |
-| Automations     | Three HA buttons/switches each, four versioned blueprints, change-log review, explicit updates, receipt parsing and scheduled jobs              | [Automations](../design/design-automations.md)                                                                                     |
+| Automations     | Three HA buttons/switches each, five versioned blueprints, change-log review, explicit updates, receipt parsing and scheduled jobs              | [Automations](../design/design-automations.md)                                                                                     |
 
 Implemented means present in code with offline tests; it does not mean every
 model, firmware, browser size or HA release is qualified. The dashboard calendar

@@ -27,6 +27,12 @@ const OPTIONS = [
     "Enable and save your providers, then choose the schedule, providers and Only missing option.",
   ],
   [
+    "maintenance_schedule",
+    "Schedule maintenance",
+    "Schedule database cleanup and other routine tasks.",
+    "Choose a daily time and select database cleanup, Library sync, and/or missing metadata refresh.",
+  ],
+  [
     "calendar_schedule",
     "Calendar Full Sync",
     "Maintain a dedicated calendar from completed viewings.",

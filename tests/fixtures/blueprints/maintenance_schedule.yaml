@@ -1,0 +1,103 @@
+# Version history:
+# v1: Schedule selectable database cleanup, library sync and metadata refresh tasks.
+# End version history
+blueprint:
+  name: Kaleidescape Companion - Schedule maintenance
+  description: >-
+    Run selected maintenance tasks daily. Recommended cleanup keeps 180 days
+    of finalized calendar and collection history and 90 days of playback
+    control history. Choose Advanced to use the individual retention inputs;
+    0 keeps that history indefinitely. Pending operations, retry barriers,
+    purchases, Library and Journal records are protected. The advanced inputs
+    are ignored in Recommended mode. Blueprint version: 1.
+  domain: automation
+  input:
+    time:
+      name: Local time
+      default: "03:00:00"
+      selector:
+        time:
+    database_cleanup:
+      name: Database cleanup
+      default: true
+      selector:
+        boolean:
+    cleanup_mode:
+      name: Cleanup settings
+      description: Recommended uses the standard retention periods. Advanced uses the per-type inputs below.
+      default: recommended
+      selector:
+        select:
+          options:
+            - label: Recommended
+              value: recommended
+            - label: Advanced
+              value: advanced
+    calendar_days:
+      name: "Advanced: calendar reconciliation history retention (days)"
+      description: Finalized receipts only; 0 keeps all history.
+      default: 180
+      selector:
+        number:
+          min: 0
+          max: 3650
+          step: 1
+          mode: box
+    collection_days:
+      name: "Advanced: collection change history retention (days)"
+      description: Confirmed or acknowledged receipts only; 0 keeps all history.
+      default: 180
+      selector:
+        number:
+          min: 0
+          max: 3650
+          step: 1
+          mode: box
+    playback_days:
+      name: "Advanced: playback control history retention (days)"
+      description: Finished or reviewed commands only; 0 keeps all history.
+      default: 90
+      selector:
+        number:
+          min: 0
+          max: 3650
+          step: 1
+          mode: box
+    library_sync:
+      name: Library sync
+      default: false
+      selector:
+        boolean:
+    metadata_refresh:
+      name: Metadata refresh
+      default: false
+      selector:
+        boolean:
+variables:
+  do_database_cleanup: !input database_cleanup
+  cleanup_mode: !input cleanup_mode
+  calendar_days: !input calendar_days
+  collection_days: !input collection_days
+  playback_days: !input playback_days
+  do_library_sync: !input library_sync
+  do_metadata_refresh: !input metadata_refresh
+triggers:
+  - trigger: time
+    at: !input time
+actions:
+  - if: "{{ do_database_cleanup }}"
+    then:
+      - action: kaleidescape_companion.database_cleanup
+        data:
+          calendar: "{{ 180 if cleanup_mode == 'recommended' else calendar_days | int }}"
+          collections: "{{ 180 if cleanup_mode == 'recommended' else collection_days | int }}"
+          playback: "{{ 90 if cleanup_mode == 'recommended' else playback_days | int }}"
+  - if: "{{ do_library_sync }}"
+    then:
+      - action: kaleidescape_companion.library_sync
+  - if: "{{ do_metadata_refresh }}"
+    then:
+      - action: kaleidescape_companion.refresh_metadata
+        data:
+          only_missing: true
+mode: single

@@ -7,6 +7,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
 from zoneinfo import ZoneInfo
 
+import probatio
 import test_backend as backend
 import voluptuous as vol
 from homeassistant import loader
@@ -109,6 +110,7 @@ class BlueprintTest(unittest.IsolatedAsyncioTestCase):
             "library_schedule": {},
             "metadata_schedule": {},
             "calendar_schedule": {},
+            "maintenance_schedule": {},
         }
         for kind, filename in TEMPLATES.items():
             with self.subTest(kind=kind):
@@ -161,6 +163,52 @@ class BlueprintTest(unittest.IsolatedAsyncioTestCase):
                     selector = blueprint.inputs["providers"]["selector"]["select"]
                     self.assertTrue(selector["multiple"])
                     self.assertTrue(selector["custom_value"])
+
+    async def test_maintenance_schedule_applies_default_and_selected_retention(self):
+        loader.async_setup(self.hass)
+        await trigger.async_setup(self.hass)
+        await condition.async_setup(self.hass)
+        blueprint = Blueprint(
+            load_yaml(str(TEMPLATE_DIR / TEMPLATES["maintenance_schedule"])),
+            expected_domain="automation",
+            schema=AUTOMATION_BLUEPRINT_SCHEMA,
+        )
+        received = []
+
+        async def capture(call):
+            received.append(dict(call.data))
+
+        self.hass.services.async_register(
+            "kaleidescape_companion", "database_cleanup", capture
+        )
+        self.assertNotIn("cleanup_mode", blueprint.inputs)
+        for selected, expected in (
+            ({}, {"calendar": 180, "collections": 180, "playback": 90}),
+            (
+                {"calendar_days": 0, "collection_days": 30, "playback_days": 365},
+                {"calendar": 0, "collections": 30, "playback": 365},
+            ),
+            # Existing HA automations may retain the removed v1 input. Their
+            # saved per-type values must now be used without invalidating them.
+            (
+                {"cleanup_mode": "recommended", "calendar_days": 30},
+                {"calendar": 30, "collections": 180, "playback": 90},
+            ),
+        ):
+            inputs = BlueprintInputs(
+                blueprint,
+                {"use_blueprint": {"path": "maintenance.yaml", "input": selected}},
+            )
+            inputs.validate()
+            value = inputs.async_substitute()
+            with patch("homeassistant.loader._LOGGER.warning"):
+                validated = await async_validate_config_item(self.hass, "test", value)
+            self.assertEqual(validated.validation_status, "ok")
+            script = Script(
+                self.hass, validated["actions"], "maintenance-test", "automation"
+            )
+            await script.async_run(dict(value["variables"]), context=Context())
+            self.assertEqual(received[-1], expected)
 
     async def test_receipt_parses_set_and_calls_import_with_reconciled_values(self):
         values = await self.render(BODY)
@@ -615,6 +663,59 @@ class BlueprintAccessTest(unittest.IsolatedAsyncioTestCase):
             template="metadata_schedule",
         )
         self.assertEqual(response["code"], "unauthorized")
+
+    async def test_packaged_blueprints_pass_template_and_update_schemas(
+        self,
+    ):
+        # Exercise the registered HA schemas, not only the handler or mocked client.
+        for kind, filename in TEMPLATES.items():
+            with self.subTest(kind=kind):
+                result = await self.call(
+                    "automations/template", **self.scope, template=kind
+                )
+                self.assertTrue(result["success"])
+                self.assertEqual(
+                    result["result"]["path"], f"kaleidescape_companion/{filename}"
+                )
+                self.assertIn("# Version history:", result["result"]["yaml"])
+                with patch(
+                    "custom_components.kaleidescape_companion.ui.automation_templates.async_update",
+                    AsyncMock(return_value={kind: {"status": "current"}}),
+                ) as update:
+                    response = await self.call(
+                        "automations/update",
+                        **self.scope,
+                        template=kind,
+                        revision="reviewed",
+                    )
+                    self.assertTrue(response["success"])
+                    self.assertEqual(update.await_args.args[1:3], (kind, "reviewed"))
+        for operation, extra in (
+            ("automations/template", {}),
+            ("automations/update", {"revision": "reviewed"}),
+        ):
+            with self.subTest(operation=operation), self.assertRaises(probatio.Error):
+                await self.call(
+                    operation, **self.scope, template="../../outside", **extra
+                )
+
+    async def test_missing_packaged_blueprint_reports_actionable_error(self):
+        with (
+            patch(
+                "pathlib.Path.read_text", side_effect=FileNotFoundError("private path")
+            ),
+            self.assertLogs(
+                "custom_components.kaleidescape_companion.ui.automation_templates",
+                level="ERROR",
+            ) as logs,
+        ):
+            response = await self.call(
+                "automations/template", **self.scope, template="maintenance_schedule"
+            )
+        self.assertEqual(response["code"], "blueprint_unavailable")
+        self.assertIn("maintenance_schedule", logs.output[0])
+        self.assertNotIn("private path", logs.output[0])
+        self.assertNotIn("private path", response["message"])
 
     async def test_status_and_updates_require_admin(self):
         reader = SimpleNamespace(id="reader", is_admin=False, is_active=True)

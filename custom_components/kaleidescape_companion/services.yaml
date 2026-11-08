@@ -45,3 +45,35 @@ calendar_full_sync:
   description: >-
     Request one guarded Full Sync pass on the configured dedicated calendar.
     Unmatched events can be deleted after repeated checks and a grace period.
+
+database_cleanup:
+  name: Clean up database
+  description: Remove selected finalized operation histories while preserving unresolved work and retry barriers.
+  fields:
+    calendar:
+      name: Calendar reconciliation retention
+      description: Days to retain finalized receipts; 0 keeps all history.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 3650
+          mode: box
+    collections:
+      name: Collection change retention
+      description: Days to retain finalized receipts; 0 keeps all history.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 3650
+          mode: box
+    playback:
+      name: Playback control retention
+      description: Days to retain finalized receipts; 0 keeps all history.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 3650
+          mode: box

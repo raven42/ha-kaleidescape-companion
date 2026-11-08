@@ -21,6 +21,7 @@ from ..core.security import is_active_admin, is_active_user
 from ..library.config import origin
 from ..playback.now_playing import snapshot as now_playing_snapshot
 from ..vendor import kaleidescape
+from .automation_templates import TEMPLATES
 from .controls import control_request
 from .preferences import public_defaults
 from .settings import fingerprint, options_request
@@ -253,26 +254,12 @@ def async_register_commands(hass: HomeAssistant) -> None:
         "automations/status": scoped,
         "automations/update": {
             **scoped,
-            p.Required("template"): p.In(
-                [
-                    "purchase_email",
-                    "library_schedule",
-                    "metadata_schedule",
-                    "calendar_schedule",
-                ]
-            ),
+            p.Required("template"): p.In(tuple(TEMPLATES)),
             p.Required("revision"): str,
         },
         "automations/template": {
             **scoped,
-            p.Required("template"): p.In(
-                [
-                    "purchase_email",
-                    "library_schedule",
-                    "metadata_schedule",
-                    "calendar_schedule",
-                ]
-            ),
+            p.Required("template"): p.In(tuple(TEMPLATES)),
         },
         "calendar/status": scoped,
         "calendar/sync": {
@@ -331,6 +318,13 @@ def async_register_commands(hass: HomeAssistant) -> None:
             **scoped,
             p.Required("table"): str,
             p.Required("query"): str,
+        },
+        "database/cleanup/preview": {**scoped, p.Required("policies"): dict},
+        "database/cleanup/apply": {
+            **scoped,
+            p.Required("as_of"): str,
+            p.Required("policies"): dict,
+            p.Required("revision"): int,
         },
         "database/inspect": {
             **scoped,
@@ -1082,6 +1076,14 @@ async def async_handle(
                 case "database/validate_query":
                     result = await repository.async_database_validate_query(
                         msg["table"], msg["query"]
+                    )
+                case "database/cleanup/preview":
+                    result = await repository.async_database_cleanup_preview(
+                        msg["policies"]
+                    )
+                case "database/cleanup/apply":
+                    result = await repository.async_database_cleanup(
+                        msg["policies"], msg["as_of"], msg["revision"]
                     )
                 case "database/inspect":
                     result = await repository.async_inspect(

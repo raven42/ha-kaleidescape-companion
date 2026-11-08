@@ -69,9 +69,15 @@ export const databaseStyles = css`
     height: 240px;
     margin: 16px 0;
   }
+  .database-table-heading {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
   .database-references {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: flex-start;
     gap: 8px;
     margin: 16px 0;
   }

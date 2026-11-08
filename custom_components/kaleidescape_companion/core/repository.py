@@ -790,6 +790,24 @@ class JournalRepository:
             inspect_database, table, offset, revision, limit, query, sort, descending
         )
 
+    async def async_database_cleanup_preview(self, policies):
+        return await self._call(self._database_cleanup_preview, policies)
+
+    def _database_cleanup_preview(self, policies):
+        from .database_cleanup import preview
+
+        return preview(self._db(), policies)
+
+    async def async_database_cleanup(self, policies, as_of=None, revision=None):
+        return await self._call(self._database_cleanup, policies, as_of, revision)
+
+    def _database_cleanup(self, policies, as_of, revision):
+        from .database_cleanup import clean
+
+        if self._paused or self._export_active or self._import_active:
+            raise JournalError("busy", "Wait for the active backup or transfer")
+        return clean(self._db(), policies, as_of, revision)
+
     async def async_database_validate_query(self, table, query):
         return await self._call(self._database_validate_query, table, query)
 

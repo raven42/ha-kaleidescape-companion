@@ -4,6 +4,7 @@ import json
 import sqlite3
 import unittest
 from contextlib import closing
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 from uuid import uuid4
@@ -11,6 +12,24 @@ from uuid import uuid4
 import test_backend as backend
 import test_library as library
 from test_repository import viewing
+
+from custom_components.kaleidescape_companion.core.database_schema import TABLE_KEYS
+
+
+class TableDescriptionsTest(unittest.TestCase):
+    def test_all_inspectable_tables_have_a_description(self):
+        path = (
+            Path(__file__).resolve().parents[1]
+            / "frontend/src/ui/database-table-descriptions.json"
+        )
+        descriptions = json.loads(path.read_text())
+        self.assertEqual(set(descriptions), set(TABLE_KEYS))
+        self.assertTrue(
+            all(
+                isinstance(value, str) and value.strip()
+                for value in descriptions.values()
+            )
+        )
 
 
 class DatabaseStorageTest(unittest.IsolatedAsyncioTestCase):
@@ -246,10 +265,55 @@ class DatabaseStorageTest(unittest.IsolatedAsyncioTestCase):
                 await self.page("library"),
                 patch_data={"data": '{"actors": "bad"}'},
             )
-        await self.mutate(await self.page("library_collections"), "delete")
+        memberships = await self.page("library_memberships")
+        self.assertFalse(memberships["deletable"])
+        self.assertEqual(memberships["total"], 1)
+        with self.assert_error("invalid_request"):
+            await self.mutate(memberships, "delete")
+        with self.assert_error("conflict"):
+            await self.mutate(await self.page("library_collections"), "delete")
+        self.assertEqual((await self.page("library_memberships"))["total"], 1)
+        source_page = await self.page("library_sources")
+        with self.assert_error("conflict"):
+            await self.mutate(source_page, "delete")
+        self.assertEqual((await self.page("library"))["total"], len(library.ROWS))
+
+    async def test_collection_sync_can_replace_memberships_and_remove_empty_collection(
+        self,
+    ):
+        await self.repository.async_library_catalog(
+            library.ORIGIN,
+            library.ROWS,
+            {"Favorites": [library.ROWS[0]["source_handle"]]},
+        )
+        await self.repository.async_library_catalog(
+            library.ORIGIN, library.ROWS, {"Favorites": []}
+        )
         self.assertEqual((await self.page("library_memberships"))["total"], 0)
-        await self.mutate(await self.page("library_sources"), "delete")
-        self.assertEqual((await self.page("library"))["total"], 0)
+        deleted = await self.mutate(await self.page("library_collections"), "delete")
+        self.assertEqual(deleted["deleted_count"], 1)
+
+    async def test_library_entries_cannot_be_deleted_directly_or_through_source(self):
+        await self.seed()
+        page = await self.page("library")
+        self.assertFalse(page["deletable"])
+        before = page["total"]
+        with self.assert_error("invalid_request"):
+            await self.mutate(page, "delete")
+        source = await self.page("library_sources")
+        with self.assert_error("conflict"):
+            await self.mutate(source, "delete")
+        self.assertEqual((await self.page("library"))["total"], before)
+        edited = await self.mutate(
+            await self.page("library"), patch_data={"title": "Corrected title"}
+        )
+        self.assertEqual(edited["updated_count"], 1)
+        self.assertTrue(
+            any(
+                row["title"] == "Corrected title"
+                for row in (await self.page("library"))["items"]
+            )
+        )
 
     async def test_protected_system_rows_backup_and_transaction_rollback(self):
         await self.repository.async_create(str(uuid4()), viewing())

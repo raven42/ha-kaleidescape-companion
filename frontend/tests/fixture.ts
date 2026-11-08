@@ -175,6 +175,7 @@ export class FixtureTransport implements Transport {
       ["library_schedule", 1],
       ["metadata_schedule", 1],
       ["calendar_schedule", 1],
+      ["maintenance_schedule", 2],
     ].map(([kind, version]) => [
       String(kind),
       {
@@ -296,6 +297,8 @@ export class FixtureTransport implements Transport {
   };
   databaseResults = new Map<string, unknown>();
   purchaseRecords: Record<string, unknown>[] = [];
+  cleanupCount = 3;
+  databaseLibraryRows: Record<string, unknown>[] = [];
   purchaseRepairEvents: Record<string, unknown>[] = [];
   viewingLinks = new Map<string, string>();
   private uiRevision = 0;
@@ -1147,6 +1150,32 @@ export class FixtureTransport implements Transport {
         revision: ++this.revision,
       };
       this.databaseResults.set(request, result);
+    } else if (operation === "database/cleanup/preview") {
+      const policies = message.policies as Record<string, number>;
+      result = {
+        as_of: "2026-11-08T00:00:00+00:00",
+        counts: Object.fromEntries(
+          Object.entries(policies).map(([key, days]) => [
+            key,
+            days ? this.cleanupCount : 0,
+          ]),
+        ),
+        policies,
+        revision: this.revision,
+      };
+    } else if (operation === "database/cleanup/apply") {
+      if (message.revision !== this.revision) throw new ApiError("conflict");
+      const policies = message.policies as Record<string, number>;
+      result = {
+        removed: Object.fromEntries(
+          Object.entries(policies).map(([key, days]) => [
+            key,
+            days ? this.cleanupCount : 0,
+          ]),
+        ),
+      };
+      this.cleanupCount = 0;
+      this.revision++;
     } else if (operation === "database/inspect") {
       const tables: Record<string, Record<string, unknown>[]> = {
         settings: [
@@ -1176,7 +1205,7 @@ export class FixtureTransport implements Transport {
         database_audit: [],
         schema_metadata: [{ revision: this.revision }],
         library_sources: [],
-        library: [],
+        library: this.databaseLibraryRows,
         purchase_records: this.purchaseRecords,
         purchase_repair_events: this.purchaseRepairEvents,
         purchase_identity_barriers: [],
@@ -1239,12 +1268,10 @@ export class FixtureTransport implements Transport {
         deletable: [
           "viewings",
           "sessions",
-          "library",
           "library_collections",
           "library_sources",
           "library_artwork",
           "settings",
-          "library_memberships",
         ].includes(String(message.table)),
         row_tokens: rows
           .slice(offset, offset + limit)

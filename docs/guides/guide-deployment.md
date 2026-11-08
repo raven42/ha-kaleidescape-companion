@@ -113,7 +113,7 @@ reloading the entry alone does not replace already imported Python code or old
 static-path registrations.
 
 The archive contains the integration's runtime Python, supported JSON files,
-`services.yaml`, four YAML automation blueprints under `templates/`, compiled
+`services.yaml`, five YAML automation blueprints under `templates/`, compiled
 `ui/assets/panel.js` and local PNG branding. It excludes development sources
 outside the integration, environments, caches, databases and repository
 metadata. Symlinked or hard-linked runtime sources are rejected. The printed
@@ -127,7 +127,9 @@ an Internet release check. Choose **Update** for an older file or **Review
 replacement** for a modified file, read the changes and confirm. An accepted
 update replaces that blueprint and reloads its dependent automations; review
 local customizations first. Installing new component files alone does not update
-existing blueprints. See [automations](../design/design-automations.md).
+existing blueprints. If a bundled blueprint cannot be read, install the complete
+integration directory, including its `templates/` directory, and restart HA. See
+[automations](../design/design-automations.md).
 
 Deployment stages files under `<HA config>/.kaleidescape-companion-deploy/`,
 then replaces `<HA config>/custom_components/kaleidescape_companion/`. It

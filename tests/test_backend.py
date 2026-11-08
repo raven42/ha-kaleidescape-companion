@@ -17,8 +17,12 @@ from homeassistant.components import frontend
 from homeassistant.components.http import KEY_HASS
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
-from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
+from homeassistant.core import Context, HomeAssistant
+from homeassistant.exceptions import (
+    ConfigEntryError,
+    ConfigEntryNotReady,
+    HomeAssistantError,
+)
 
 from custom_components.kaleidescape_companion import (
     async_setup_entry,
@@ -436,6 +440,61 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
                 await request
         self.assertFalse(paths[0].exists())
 
+    async def test_cleanup_requires_admin_and_service_preserves_selected_policy(self):
+        viewer = SimpleNamespace(id="viewer", is_active=True, is_admin=False)
+        result = await self.call(
+            "database/cleanup/preview",
+            user=viewer,
+            **self.scope,
+            policies={"calendar": 90},
+        )
+        self.assertEqual(result["code"], "unauthorized")
+        result = await self.call(
+            "database/cleanup/preview", **self.scope, policies={"calendar": 90}
+        )
+        self.assertTrue(result["success"])
+        review = result["result"]
+        applied = await self.call(
+            "database/cleanup/apply",
+            **self.scope,
+            policies=review["policies"],
+            as_of=review["as_of"],
+            revision=review["revision"],
+        )
+        self.assertTrue(applied["success"])
+        with patch.object(
+            self.hass,
+            "auth",
+            SimpleNamespace(async_get_user=AsyncMock(return_value=viewer)),
+            create=True,
+        ):
+            with self.assertRaises(HomeAssistantError):
+                await self.hass.services.async_call(
+                    DOMAIN,
+                    "database_cleanup",
+                    {"calendar": 90},
+                    blocking=True,
+                    context=Context(user_id="viewer"),
+                )
+        with patch.object(
+            self.entry.runtime_data.repository,
+            "async_database_cleanup",
+            AsyncMock(
+                return_value={
+                    "removed": {"calendar": 0, "collections": 0, "playback": 0}
+                }
+            ),
+        ) as cleanup:
+            await self.hass.services.async_call(
+                DOMAIN,
+                "database_cleanup",
+                {"calendar": 30, "playback": 365},
+                blocking=True,
+            )
+            cleanup.assert_awaited_once_with(
+                {"calendar": 30, "collections": 0, "playback": 365}
+            )
+
     async def test_native_sync_actions_use_the_active_entry_and_unload(self):
         from unittest.mock import Mock
 
@@ -458,6 +517,7 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
         await async_unload_entry(self.hass, self.entry)
         self.assertFalse(self.hass.services.has_service(DOMAIN, "library_sync"))
         self.assertFalse(self.hass.services.has_service(DOMAIN, "calendar_full_sync"))
+        self.assertFalse(self.hass.services.has_service(DOMAIN, "database_cleanup"))
 
     async def test_library_buttons_are_available_when_platform_is_forwarded(self):
         from custom_components.kaleidescape_companion.button import (

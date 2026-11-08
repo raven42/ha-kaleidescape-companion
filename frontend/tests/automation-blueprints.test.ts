@@ -162,6 +162,62 @@ it("reviews a missing blueprint before installation and blocks closing while a w
   expect(update).not.toHaveBeenCalled();
 });
 
+it("loads and installs the maintenance blueprint through its review", async () => {
+  const transport = new FixtureTransport();
+  transport.blueprintStatuses.maintenance_schedule = {
+    ...transport.blueprintStatuses.maintenance_schedule,
+    status: "missing",
+    installed_version: null,
+  };
+  element = document.createElement(
+    "kaleidescape-automation-blueprints",
+  ) as AutomationBlueprints;
+  element.client = transport.client();
+  element.scope = info;
+  document.body.append(element);
+  await vi.waitFor(() =>
+    expect(
+      element.shadowRoot!.querySelector(
+        '[data-blueprint="maintenance_schedule"] button',
+      ),
+    ).not.toBeNull(),
+  );
+  element
+    .shadowRoot!.querySelector<HTMLButtonElement>(
+      '[data-blueprint="maintenance_schedule"] button',
+    )!
+    .click();
+  await vi.waitFor(() =>
+    expect(
+      element.shadowRoot!.querySelector<HTMLButtonElement>("dialog .primary")
+        ?.disabled,
+    ).toBe(false),
+  );
+  expect(element.shadowRoot!.querySelector("dialog")!.textContent).toContain(
+    "Initial optional automation",
+  );
+  element
+    .shadowRoot!.querySelector<HTMLButtonElement>("dialog .primary")!
+    .click();
+  await vi.waitFor(() =>
+    expect(transport.blueprintStatuses.maintenance_schedule.status).toBe(
+      "current",
+    ),
+  );
+  expect(transport.calls).toContainEqual(
+    expect.objectContaining({
+      type: "kaleidescape_companion/automations/template",
+      template: "maintenance_schedule",
+    }),
+  );
+  expect(transport.calls).toContainEqual(
+    expect.objectContaining({
+      type: "blueprint/save",
+      path: "kaleidescape_companion/maintenance_schedule.yaml",
+    }),
+  );
+});
+
 it("shows blueprint status and requires confirmation before updating", async () => {
   const client = new FixtureTransport().client();
   const status = vi.spyOn(client, "automationStatuses").mockResolvedValue({
@@ -256,7 +312,10 @@ it("shows installed and current versions in About", async () => {
   expect(rows[0].textContent).toContain("v1");
   expect(rows[0].textContent).toContain("v2");
   expect(rows[2].textContent).toContain("Unversioned");
-  expect(rows[3].textContent).toContain("Not installed");
+  expect(
+    element.shadowRoot!.querySelector('[data-blueprint="calendar_schedule"]')!
+      .textContent,
+  ).toContain("Not installed");
 });
 
 it("does not redefine its custom element when the module is loaded again", async () => {

@@ -59,7 +59,7 @@ EDITABLE = {
     "library_sources": {"first_seen"},
     "settings": {"value"},
 }
-DELETABLE = {*EDITABLE, "library_artwork", "library_memberships"}
+DELETABLE = (set(EDITABLE) - {"library"}) | {"library_artwork"}
 JSON_FIELDS = {
     "library": {
         "actors": "array",

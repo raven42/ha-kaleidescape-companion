@@ -55,28 +55,28 @@ change of table clears the selection. When a detail or selection is active, or
 more than one batch has loaded, switching display profiles waits until refresh
 or another action clears that browsing state.
 
-| Table                                                                          | Supported editing/deletion                                                                                                                                                                      |
-| ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `viewings`                                                                     | Correct title/times/runtime/watched time/status/notes; permanently delete closed entries and their session references                                                                           |
-| `sessions`                                                                     | Correct title/runtime/watched time or delete closed sessions; viewing summaries are not automatically recalculated                                                                              |
-| `library`                                                                      | Correct title, known descriptive metadata JSON, purchase/detection dates, paid/retail summary prices and availability; delete versions and local memberships; retained invoices become unlinked |
-| `purchase_records`                                                             | Inspect/search/sort; use the reviewed purchase repair workflow to correct, reassign or void an invoice                                                                                          |
-| `library_collections`                                                          | Correct detection dates/availability; delete a local collection and its memberships                                                                                                             |
-| `library_sources`                                                              | Correct the source detection date while keeping sync state protected; delete a source and its local versions/collections/memberships when receipts permit                                       |
-| `library_artwork`                                                              | Delete a managed cache entry, clear all title references, then unlink its private managed file; byte size/type/hash are protected                                                               |
-| `library_memberships`                                                          | Delete a local membership; relationship keys cannot be edited                                                                                                                                   |
-| `settings`                                                                     | Validate/edit recognized personal/shared UI preference JSON or delete an allowed row to restore defaults                                                                                        |
-| Audit, request, dataset metadata, calendar and collection-write receipt tables | Inspect/search/sort only; identity, attribution and replay barriers remain protected                                                                                                            |
+| Table                                                                          | Supported editing/deletion                                                                                                                   |
+| ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `viewings`                                                                     | Correct title/times/runtime/watched time/status/notes; permanently delete closed entries and their session references                        |
+| `sessions`                                                                     | Correct title/runtime/watched time or delete closed sessions; viewing summaries are not automatically recalculated                           |
+| `library`                                                                      | Correct title, known descriptive metadata JSON, purchase/detection dates, paid/retail summary prices and availability; deletion is protected |
+| `purchase_records`                                                             | Inspect/search/sort; edit approved receipt fields through the reviewed purchase correction workflow                                          |
+| `library_collections`                                                          | Correct detection dates/availability; delete only an empty local collection                                                                  |
+| `library_sources`                                                              | Correct the source detection date; deletion is blocked while Library versions remain                                                         |
+| `library_artwork`                                                              | Delete a managed cache entry, clear all title references, then unlink its private managed file; byte size/type/hash are protected            |
+| `library_memberships`                                                          | Inspect/search/sort only; memberships are managed through Library collection actions and synchronization                                     |
+| `settings`                                                                     | Validate/edit recognized personal/shared UI preference JSON or delete an allowed row to restore defaults                                     |
+| Audit, request, dataset metadata, calendar and collection-write receipt tables | Inspect/search/sort only; identity, attribution and replay barriers remain protected                                                         |
 
 The private purchase table keeps each invoice once and links it to its Library
 version when matched. Library price and history views are derived from it; price
 edits update the earliest linked invoice. A manually entered price without an
-invoice remains on the Library version. Deleting a Library version or source
-leaves its purchase records unlinked for reconciliation. Purchases cannot be
-edited or deleted directly in Database. Library price edits in Database require
-a linked invoice; use **Library → Edit details** to enter prices before an
-invoice exists. Prices, orders, links and history never enter standard-user
-responses.
+invoice remains on the Library version. Database cannot delete Library versions
+or a source containing versions. Purchases cannot be deleted in Database;
+approved receipt fields use the reviewed correction workflow. Library price
+edits in Database require a linked invoice; use **Library → Edit details** to
+enter prices before an invoice exists. Prices, orders, links and history never
+enter standard-user responses.
 
 The Library inspection response overlays linked purchase history and its
 earliest invoice summary on the Library row, including the invoice date when
@@ -86,18 +86,19 @@ visible values. The `stored_` fields show the underlying Library values, and
 **Purchases** shows the individual stored invoice fields.
 
 Source-owned values may be replaced or recreated by later synchronization.
-Deleting cached collection membership does not remove it on the device.
-Confirmed/pending device-write receipts protect their source/version references;
-resolve uncertain operations before changing related source data. There is no
-arbitrary insert/SQL/DDL tool. New Entry creates a viewing through the existing
-validated journal API.
+Database cannot delete cached collection memberships, directly or by deleting a
+nonempty collection. Use Library collection actions to change the server;
+synchronization can replace cached memberships. Confirmed/pending device-write
+receipts protect their source/version references; resolve uncertain operations
+before changing related source data. There is no arbitrary insert/SQL/DDL tool.
+New Entry creates a viewing through the existing validated journal API.
 
 Select at most 100 rows, choose **Delete entry**, and type **DELETE**. Deletion
-is permanent in the live dataset and may remove dependent session/membership
-references. Existing downloads, migration backups, HA backups and Recorder data
-remain separate. Retry receipts remain content-free barriers; viewing deletion
-redacts cached viewing response content and removes its old manual-audit links,
-with a new database operation audit retaining actor/count/field metadata.
+is permanent in the live dataset and may remove dependent session references.
+Existing downloads, migration backups, HA backups and Recorder data remain
+separate. Retry receipts remain content-free barriers; viewing deletion redacts
+cached viewing response content and removes its old manual-audit links, with a
+new database operation audit retaining actor/count/field metadata.
 
 ## Concurrent recording and sync
 
@@ -419,15 +420,15 @@ it as a separate purchase. Library summaries and purchase history views are
 derived from these records. Manually entered prices without an invoice remain on
 the Library entry until an invoice is linked.
 
-To repair an existing invoice, open **Database → Purchases**, select the
-invoice, and choose **Repair purchase**. Correct receipt fields or choose an
-available Library entry (or unlink it), or choose **Void purchase**. Review the
-field-by-field before/after records, Library associations and recalculated
-source totals in the repair dialog, then confirm. Invalid fields show an
-explanation before review. Changes use the selected row token, dataset revision,
-administrator and a durable request ID. An identity collision is rejected.
-Previous identities remain replay barriers, and similar enriched replays are
-held for review.
+To correct an existing invoice, open **Database → Purchases**, select the
+invoice, and choose **Edit entry**. Correct the receipt title, date, prices,
+transaction ID or Store link. The Library association is read-only in this
+dialog. Review the field-by-field before/after records, Library associations and
+recalculated source totals in the repair dialog, then confirm. Invalid fields
+show an explanation before review. Changes use the selected row token, dataset
+revision, administrator and a durable request ID. An identity collision is
+rejected. Previous identities remain replay barriers, and similar enriched
+replays are held for review.
 
 **Options → Show system tables → Purchase repair history** displays append-only
 private evidence. Select an event and choose **Review reversal** to preview and

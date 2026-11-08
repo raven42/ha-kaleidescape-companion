@@ -37,6 +37,7 @@ REQUIRED = {
     "templates/library_schedule.yaml",
     "templates/metadata_schedule.yaml",
     "templates/calendar_schedule.yaml",
+    "templates/maintenance_schedule.yaml",
     "const.py",
     "manifest.json",
     "strings.json",

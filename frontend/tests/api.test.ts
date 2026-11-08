@@ -8,6 +8,22 @@ import {
 } from "../src/core/api";
 import { FixtureTransport, info } from "./fixture";
 
+it("explains an unavailable packaged blueprint", () => {
+  expect(errorMessage(new ApiError("blueprint_unavailable"))).toContain(
+    "Reinstall the complete integration",
+  );
+  expect(errorMessage(new ApiError("blueprint_unavailable"))).not.toContain(
+    "connection was interrupted",
+  );
+});
+it("reports Home Assistant validation errors without implying a dropped connection", () => {
+  expect(errorMessage(new ApiError("invalid_format"))).toContain(
+    "rejected the request format",
+  );
+  expect(errorMessage(new ApiError("invalid_format"))).not.toContain(
+    "connection was interrupted",
+  );
+});
 it("takes only entry/dataset identifiers from metadata and freezes retry input", async () => {
   const transport = new FixtureTransport(),
     client = transport.client();

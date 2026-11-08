@@ -141,35 +141,37 @@ blueprints through HA's blueprint manager. It does not create or enable an
 automation or automatically replace existing files. A status check compares
 normalized contents with known versions; unrecognized files are treated as
 modified. Known outdated files trigger a startup warning and an HA persistent
-notification. Administrators can explicitly replace a reviewed blueprint; its
-revision and administrator access are checked again before HA writes it and
-reloads dependent automations. HA is notified after an update, including when a
-write may have succeeded but the reload could not be confirmed. Blueprint checks
-do not log file contents. The library and calendar sync actions accept trusted
-automation calls without a user context or active administrators; the calendar
-action uses the same dedicated calendar and reconciliation checks as its button.
-The purchase-email blueprint filters a selected IMAP entry and can filter sender
-text, which does not authenticate the sender. Receipt values and action
-responses can appear in HA automation traces. The receipt parser strips email
-quote markers and, for a forward without an explicit purchase date, requires a
-date adjacent to a Kaleidescape Store sender header instead of using the forward
-date. That header is not authentication; forwarded receipts without a usable
-original date are saved with an unknown date and reported for review. The
-blueprint fetches the HTML part of the same IMAP message when available. Import
-uses bounded decoding, reads visible table rows without loading external assets,
-and associates movie links only with their own row and approved Store hosts.
-Crossed-out prices are treated as retail and a single unmarked row price as the
-purchase price; multiple unmarked prices remain ambiguous. Set rows can include
-movie rows sequentially or nested inside the set row. When item and subtotal
-markers exist, rows outside that region are excluded. Unmarked, headerless
-layouts can still contain unrelated movie links, so they require careful review.
-Plain-text item parsing is not used. HTML structural complexity is bounded
-before receipt extraction. A missing retail price is never invented. Receipt
-content may appear in HA logs under the diagnostic exception below. The metadata
-refresh action accepts known provider names and only contacts enabled providers.
-Calendar Full Sync remains restricted to an explicitly acknowledged dedicated
-calendar, with its existing snapshot, grace and uncertainty checks. Its optional
-automation requests the second check; no in-process schedule performs it.
+notification. Blueprint template and update requests accept only the packaged
+blueprint identifiers. Administrators can explicitly replace a reviewed
+blueprint; its revision and administrator access are checked again before HA
+writes it and reloads dependent automations. HA is notified after an update,
+including when a write may have succeeded but the reload could not be confirmed.
+Blueprint checks do not log file contents. The library and calendar sync actions
+accept trusted automation calls without a user context or active administrators;
+the calendar action uses the same dedicated calendar and reconciliation checks
+as its button. The purchase-email blueprint filters a selected IMAP entry and
+can filter sender text, which does not authenticate the sender. Receipt values
+and action responses can appear in HA automation traces. The receipt parser
+strips email quote markers and, for a forward without an explicit purchase date,
+requires a date adjacent to a Kaleidescape Store sender header instead of using
+the forward date. That header is not authentication; forwarded receipts without
+a usable original date are saved with an unknown date and reported for review.
+The blueprint fetches the HTML part of the same IMAP message when available.
+Import uses bounded decoding, reads visible table rows without loading external
+assets, and associates movie links only with their own row and approved Store
+hosts. Crossed-out prices are treated as retail and a single unmarked row price
+as the purchase price; multiple unmarked prices remain ambiguous. Set rows can
+include movie rows sequentially or nested inside the set row. When item and
+subtotal markers exist, rows outside that region are excluded. Unmarked,
+headerless layouts can still contain unrelated movie links, so they require
+careful review. Plain-text item parsing is not used. HTML structural complexity
+is bounded before receipt extraction. A missing retail price is never invented.
+Receipt content may appear in HA logs under the diagnostic exception below. The
+metadata refresh action accepts known provider names and only contacts enabled
+providers. Calendar Full Sync remains restricted to an explicitly acknowledged
+dedicated calendar, with its existing snapshot, grace and uncertainty checks.
+Its optional automation requests the second check; no in-process schedule
+performs it.
 
 ## Storage, imports and rendering
 
@@ -187,31 +189,39 @@ Database All mode fetches bounded, revision-checked inspection batches, reduces
 batch size for oversized responses, and renders a window of compact row
 summaries. Loaded identities/tokens occupy browser memory until refresh or
 navigation, while selection and mutation limits remain enforced. Detail reads
-are revision- and token-checked before editing. Database condition search
-compiles a restricted grammar with bound parameters; it does not accept
-arbitrary SQL. Imports are size/time/row bounded, reviewed before applying, and
-cannot introduce network configuration or executable data. Raw database files
-are opened defensively; application writes never execute SQL from an import. A
-SQLite snapshot with the current purchase ledger takes invoice records from that
-ledger rather than inferring them from flat Library prices. Database purchase
-correction, void and reversal require an administrator-bound review, row token,
-dataset revision and durable request ID. The group purchase editor uses the same
-correction checks when saving its form. Full before/after invoice and
-association evidence is private and append-only; prior identities are reserved
-against silent replay. Similarity hints do not prove identity. Full SQLite
-backups retain this evidence and the barriers; JSON exports and SQLite merge
-imports do not transfer them, so they are not a full restore. Purchase-only
-reconciliation can run while recording is active: the server validates that the
-uploaded bundle contains only purchases and binds subsequent review and apply
-operations to that validated plan. General imports still require recording
-disabled. The [data-management design](../design/design-data-management.md) owns
-field rules, limits and import/restore procedures.
+are revision- and token-checked before editing. Database mutations cannot delete
+Library membership rows or delete a collection that still has memberships; the
+separate collection workflow and source synchronization manage those rows.
+Database condition search compiles a restricted grammar with bound parameters;
+it does not accept arbitrary SQL. Imports are size/time/row bounded, reviewed
+before applying, and cannot introduce network configuration or executable data.
+Raw database files are opened defensively; application writes never execute SQL
+from an import. A SQLite snapshot with the current purchase ledger takes invoice
+records from that ledger rather than inferring them from flat Library prices.
+Database purchase correction, void and reversal require an administrator-bound
+review, row token, dataset revision and durable request ID. The group purchase
+editor uses the same correction checks when saving its form. Full before/after
+invoice and association evidence is private and append-only; prior identities
+are reserved against silent replay. Similarity hints do not prove identity. Full
+SQLite backups retain this evidence and the barriers; JSON exports and SQLite
+merge imports do not transfer them, so they are not a full restore.
+Purchase-only reconciliation can run while recording is active: the server
+validates that the uploaded bundle contains only purchases and binds subsequent
+review and apply operations to that validated plan. General imports still
+require recording disabled. The
+[data-management design](../design/design-data-management.md) owns field rules,
+limits and import/restore procedures.
 
 Downloads are authenticated, bounded and marked private/no-store; private
 exports include data omitted from normal household views. Full database restore
 requires HA stopped. Backups and exports can consume space outside the database
-cap. There is no automatic history retention, filesystem-wide quota or guarantee
-against host disk exhaustion.
+cap. Administrators can review selective cleanup of finalized calendar,
+collection and playback operation history. The optional scheduled action follows
+the existing HA automation/admin authorization boundary; retention is selected
+per type, and pending or uncertain work and request replay barriers are kept.
+Purchase evidence, Library records and Journal history are not cleaned. SQLite
+reuses freed pages but cleanup does not compact the file. There is no general
+history retention, filesystem-wide quota or guarantee against disk exhaustion.
 
 Frontend rendering treats titles, notes, provider metadata and device responses
 as untrusted text. Do not use dynamic HTML, executable templates, remote scripts

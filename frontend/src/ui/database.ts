@@ -15,11 +15,14 @@ import type {
 } from "../core/api";
 import { styles } from "./styles";
 import { databaseStyles } from "./database.styles";
+import { settingHint } from "./settings-hint";
+import tableDescriptions from "./database-table-descriptions.json";
 import { entryLayoutStyles } from "./entry-layout.styles";
 import { PreferenceStore } from "./preference-store";
 import { closeButton, dismissBackdrop } from "./dialog";
 import { manualDraft, manualData } from "./manual-viewing";
 import "./database-query";
+import "./database-cleanup";
 import "./transfers";
 import "./purchase-repair";
 import type { KaleidescapePurchaseRepair } from "./purchase-repair";
@@ -1130,6 +1133,12 @@ export class KaleidescapeDatabase extends LitElement {
               Refresh database
             </button>
           </div>
+          <kaleidescape-database-cleanup
+            .client=${this.client}
+            .scope=${this.scope}
+            .disabled=${this.blocked || !!this.operation}
+            @cleanup-complete=${() => void this.load()}
+          ></kaleidescape-database-cleanup>
           <kaleidescape-transfers
             .client=${this.client}
             .scope=${this.scope ? { ...this.scope, revision: this.page?.dataset_revision ?? this.scope.revision } : undefined}
@@ -1257,7 +1266,10 @@ export class KaleidescapeDatabase extends LitElement {
           aria-label="Database entries"
         >
           <div class="card-head">
-            <h2>${LABELS[this.table] ?? this.table}</h2>
+            <span class="database-table-heading"
+              ><h2>${LABELS[this.table] ?? this.table}</h2>
+              ${settingHint(LABELS[this.table] ?? this.table, (tableDescriptions as Record<string, string>)[this.table] ?? "Database table records.")}</span
+            >
           </div>
           ${this.loading ? html`<p role="status">Loading database…</p>` : nothing}
           <ul
@@ -1317,12 +1329,23 @@ export class KaleidescapeDatabase extends LitElement {
         >
           <div class="card-head">
             <h2>Entry details</h2>
-            ${this.detail ? html`<button ?disabled=${this.blocked || !editable} @click=${this.edit}>Edit entry</button>` : nothing}
             ${
-              this.detail &&
-              ["purchase_records", "purchase_repair_events"].includes(
-                this.table,
-              )
+              this.detail
+                ? html`<button
+                    ?disabled=${this.blocked || (!editable && this.table !== "purchase_records")}
+                    @click=${() => {
+                      if (this.table === "purchase_records") {
+                        this.repairing = true;
+                        this.requestUpdate();
+                      } else this.edit();
+                    }}
+                  >
+                    Edit entry
+                  </button>`
+                : nothing
+            }
+            ${
+              this.detail && this.table === "purchase_repair_events"
                 ? html`<button
                     ?disabled=${this.blocked}
                     @click=${() => {
@@ -1330,7 +1353,7 @@ export class KaleidescapeDatabase extends LitElement {
                       this.requestUpdate();
                     }}
                   >
-                    ${this.table === "purchase_records" ? "Repair purchase" : "Review reversal"}
+                    Review reversal
                   </button>`
                 : nothing
             }
@@ -1369,6 +1392,7 @@ export class KaleidescapeDatabase extends LitElement {
                           .row=${this.detail}
                           .token=${this.rowSelection(this.detail).token}
                           .reverse=${this.table === "purchase_repair_events"}
+                          .editOnly=${this.table === "purchase_records"}
                           @repair-cancel=${() => {
                             this.repairing = false;
                             this.requestUpdate();
@@ -1395,7 +1419,7 @@ export class KaleidescapeDatabase extends LitElement {
                         ></kaleidescape-purchase-repair>`
                       : nothing
                   }
-                  ${!editable ? html`<p class="muted">This table protects system integrity; stored values are read-only.</p>` : nothing}`
+                  ${!editable && this.table !== "purchase_records" ? html`<p class="muted">This table protects system integrity; stored values are read-only.</p>` : nothing}`
               : html`<p class="empty">
                   Select an entry to inspect raw values.
                 </p>`

@@ -38,6 +38,7 @@ import "./test-dashboard";
 import type { TestDashboard } from "./test-dashboard";
 import { CalendarExport } from "./calendar-export";
 import "./metadata-repair";
+import "./database-cleanup";
 import type { MetadataRepair } from "./metadata-repair";
 import { PreferenceStore } from "./preference-store";
 import "../playback/controls";
@@ -1114,6 +1115,14 @@ export class KaleidescapeSettings extends LitElement {
   }
   private renderMaintenance() {
     return html`<div class="settings-card">
+        ${this.heading("Database cleanup", "Review and remove old, finalized maintenance receipts.")}
+        <kaleidescape-database-cleanup
+          .client=${this.client}
+          .scope=${this.scope}
+          .disabled=${this.blocked || this.collectionsDirty || this.dirtyKeys.length > 0}
+        ></kaleidescape-database-cleanup>
+      </div>
+      <div class="settings-card">
         ${this.heading("Settings transfer", "Export selected categories or review a settings file before importing it.", "Review before applying")}
         <p class="muted">
           Credentials are excluded. Imported integration settings are staged for
