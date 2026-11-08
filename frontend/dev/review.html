@@ -4,7 +4,7 @@
     name="viewport"
     content="width=device-width, initial-scale=1"
   />
-  <title>Fictional journal UI review</title>
+  <title>Companion fictional UI review</title>
   <style>
     body {
       margin: 0;
@@ -15,12 +15,16 @@
       padding: 12px 24px;
       font: 13px system-ui;
     }
+    aside a {
+      color: #c6f2df;
+    }
   </style>
   <aside>
     UI test fixture · Fictional records · Changes stay in this page's memory ·
     <a href="?library=1">Administrator Library</a> ·
     <a href="?library=1&amp;role=reader">Household reader Library</a> ·
-    <a href="?library=1&amp;titles=1200">1,200-title Library</a>
+    <a href="?library=1&amp;titles=1200">1,200-title Library</a> ·
+    <a href="?settings=1&amp;companion_page=settings">Settings workspace</a>
   </aside>
   <kaleidescape-panel></kaleidescape-panel>
   <script type="module">
@@ -33,7 +37,19 @@
     import { JournalClient } from "../src/core/api.ts";
     const parameters = new URLSearchParams(location.search);
     const transport = new FixtureTransport();
-    transport.options.library_enabled = parameters.get("library") === "1";
+    transport.options.library_enabled =
+      parameters.get("library") === "1" || parameters.get("settings") === "1";
+    if (parameters.get("settings") === "1") {
+      transport.credentialConfigured = true;
+      transport.options.library_host = "cinema.example.test";
+      transport.options.calendar_enabled = true;
+      transport.options.calendar_entity = "calendar.movies";
+      transport.blueprintStatuses.purchase_email.status = "outdated";
+      transport.blueprintStatuses.purchase_email.installed_version = 7;
+      transport.blueprintStatuses.metadata_schedule.status = "modified";
+      transport.blueprintStatuses.calendar_schedule.status = "missing";
+      transport.blueprintStatuses.calendar_schedule.installed_version = null;
+    }
     transport.players = [playing()];
     const formats = [
       "4K Cinematic Dolby Vision",

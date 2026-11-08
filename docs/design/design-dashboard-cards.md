@@ -17,7 +17,7 @@ commands when pressed.
 
 ## Generate a test dashboard
 
-In **Companion → Advanced → Settings → Home Assistant**, choose **Generate test
+In **Companion → Advanced → Settings → Maintenance**, choose **Generate test
 dashboard**, enter a name, then **Create test dashboard**. Save any pending
 settings changes first. This creates a separate HA-managed dashboard, visible to
 household users and editable with HA's usual dashboard tools. **Open test

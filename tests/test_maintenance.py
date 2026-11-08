@@ -477,6 +477,48 @@ class MaintenanceApiTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(result["success"])
         return result["result"]
 
+    async def test_settings_choices_are_bounded_and_exclude_secrets(self):
+        object.__setattr__(
+            self.entry,
+            "options",
+            MappingProxyType(
+                {"metadata_tmdb_credential": "PRIVATE-CREDENTIAL-SENTINEL"}
+            ),
+        )
+        self.hass.states.async_set(
+            "media_player.fixture",
+            "PRIVATE-STATE",
+            {"friendly_name": "Fictional player", "access_token": "PRIVATE-ATTRIBUTE"},
+        )
+        self.hass.states.async_set(
+            "switch.hidden", "on", {"friendly_name": "PRIVATE-SWITCH"}
+        )
+        for index in range(502):
+            self.hass.states.async_set(
+                f"sensor.fixture_{index:03}",
+                "PRIVATE-STATE",
+                {"friendly_name": "Fictional " + "x" * 300},
+            )
+        form = await self.prepare_flow()
+        self.assertEqual(set(form["entity_choices"]), {"media_player", "sensor"})
+        self.assertEqual(
+            form["entity_choices"]["media_player"],
+            [{"value": "media_player.fixture", "label": "Fictional player"}],
+        )
+        self.assertEqual(len(form["entity_choices"]["sensor"]), 500)
+        self.assertEqual(len(form["entity_choices"]["sensor"][0]["label"]), 255)
+        self.assertEqual(
+            form["entity_choices"]["sensor"][0]["value"], "sensor.fixture_000"
+        )
+        self.assertTrue(form["credential_configured"])
+        credential = next(
+            field
+            for field in form["fields"]
+            if field["name"] == "metadata_tmdb_credential"
+        )
+        self.assertEqual(credential["default"], "")
+        self.assertNotIn("PRIVATE-", json.dumps(form))
+
     async def test_page_settings_use_real_ha_flow_validation_update_and_reload(self):
         form = await self.prepare_flow()
         defaults = {field["name"]: field.get("default") for field in form["fields"]}

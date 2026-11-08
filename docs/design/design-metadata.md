@@ -28,16 +28,16 @@ provider interfaces.
    shows progress, updates, skipped matches and an owned error code. Repeated
    button clicks coalesce into one pass.
 4. To schedule refreshes, install the optional metadata blueprint under
-   **Settings → Home Assistant → Optional automations**, then create an HA
-   automation and choose its time, select the scrapers (`kaleidescape`, `tmdb`,
-   or none for all enabled providers), and whether to refresh only missing
-   metadata or expected artwork. Full refresh requests all selected enabled
-   providers. Per-movie disabled sources and artwork expectations remain
-   respected. The `kaleidescape_companion.refresh_metadata` action also accepts
-   these options directly. Its missing-only option is `only_missing`; action
-   YAML also accepts `missing_only` as an alias, and conflicting values are
-   rejected. A selected refresh fails busy rather than silently discarding its
-   options when another pass is active.
+   **Settings → Automations**, then create an HA automation and choose its time,
+   select the scrapers (`kaleidescape`, `tmdb`, or none for all enabled
+   providers), and whether to refresh only missing metadata or expected artwork.
+   Full refresh requests all selected enabled providers. Per-movie disabled
+   sources and artwork expectations remain respected. The
+   `kaleidescape_companion.refresh_metadata` action also accepts these options
+   directly. Its missing-only option is `only_missing`; action YAML also accepts
+   `missing_only` as an alias, and conflicting values are rejected. A selected
+   refresh fails busy rather than silently discarding its options when another
+   pass is active.
 
 Automatic store enrichment uses a valid public Store movie link when available,
 including a numeric receipt-details link. The numeric page maps the package ID
@@ -69,9 +69,9 @@ in a full HA backup; secure those backups accordingly.
 
 ## Preferred metadata sources
 
-**Settings → Scrapers → Preferred metadata sources** provides shared defaults
-for cast, directors, writers, producers, studios, synopsis, genres, distributor,
-each supported rating, TMDB audience votes, cover art and landscape images. Save
+**Settings → Metadata → Preferred sources** provides shared defaults for cast,
+directors, writers, producers, studios, synopsis, genres, distributor, each
+supported rating, TMDB audience votes, cover art and landscape images. Save
 settings to apply. The **Prefer TMDB · keep Kaleidescape covers and RT scores**
 preset selects TMDB for descriptive fields and landscapes, retaining the player
 cover and store RT scores. Individual dropdowns can then be adjusted

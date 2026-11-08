@@ -24,10 +24,11 @@ async function flush() {
   await new Promise((resolve) => setTimeout(resolve, 0));
   await element.updateComplete;
 }
-function input(name: string, value: string) {
+async function input(name: string, value: string) {
   const input = root().querySelector<HTMLInputElement>(`[name="${name}"]`)!;
   input.value = value;
   input.dispatchEvent(new Event("input", { bubbles: true }));
+  await flush();
 }
 async function mount(
   tag: "kaleidescape-database" | "kaleidescape-settings",
@@ -59,8 +60,21 @@ it("renders a settings page and saves the native integration options flow", asyn
       .value,
   ).toBe("10");
   const saved = vi.fn();
+  expect(
+    [
+      ...root()
+        .querySelector("kaleidescape-enrichment-settings")!
+        .shadowRoot!.querySelectorAll<HTMLInputElement>("input"),
+    ]
+      .filter((field) => field.willValidate && !field.validity.valid)
+      .map((field) => ({
+        name: field.name,
+        value: field.value,
+        message: field.validationMessage,
+      })),
+  ).toEqual([]);
   element.addEventListener("settings-saved", saved);
-  input("minimum_runtime_minutes", "20");
+  await input("minimum_runtime_minutes", "20");
   button("Save settings").click();
   await flush();
   expect(
@@ -80,39 +94,40 @@ it("organizes settings by scope, preserves drafts across tabs and saves personal
     tab.textContent?.trim(),
   );
   expect(labels).toEqual([
-    "Home Assistant",
-    "Companion",
-    "Personal",
-    "Kaleidescape",
-    "Scrapers",
+    "General",
+    "Journal",
+    "Library",
+    "Playback",
+    "Metadata",
+    "Calendar",
+    "Automations",
+    "Maintenance",
     "About",
   ]);
   const panel = (id: string) =>
     root().querySelector<HTMLElement>(`#settings-${id}`)!;
-  expect(panel("home-assistant").hidden).toBe(false);
-  expect(panel("companion").hidden).toBe(true);
+  expect(panel("general").hidden).toBe(false);
+  expect(panel("journal").hidden).toBe(true);
   button("About").click();
   await flush();
   expect(panel("about").hidden).toBe(false);
   expect(panel("about").textContent).toContain("pykaleidescape version");
   expect(panel("about").textContent).toContain("1.1.6");
   expect(panel("about").textContent).toContain("Release notes");
-  expect(panel("ecosystem").textContent).not.toContain(
-    "pykaleidescape version",
-  );
-  button("Companion").click();
+  expect(panel("library").textContent).not.toContain("pykaleidescape version");
+  button("Journal").click();
   await flush();
-  input("minimum_runtime_minutes", "25");
-  button("Scrapers").click();
+  await input("minimum_runtime_minutes", "25");
+  button("Metadata").click();
   await flush();
-  expect(panel("scrapers").hidden).toBe(false);
+  expect(panel("metadata").hidden).toBe(false);
   expect(
-    panel("ecosystem").querySelector("kaleidescape-enrichment-settings"),
+    panel("library").querySelector("kaleidescape-enrichment-settings"),
   ).toBeNull();
   expect(
-    panel("scrapers").querySelector("kaleidescape-enrichment-settings"),
+    panel("metadata").querySelector("kaleidescape-enrichment-settings"),
   ).not.toBeNull();
-  button("Personal").click();
+  button("General").click();
   await vi.waitFor(() =>
     expect(
       root().querySelector<HTMLInputElement>('[name="personal_fuzzy_search"]')!
@@ -132,7 +147,7 @@ it("organizes settings by scope, preserves drafts across tabs and saves personal
   expect(
     transport.calls.some((call) => call.type.endsWith("/settings/submit")),
   ).toBe(false);
-  button("Companion").click();
+  button("Journal").click();
   await flush();
   expect(
     root().querySelector<HTMLInputElement>('[name="minimum_runtime_minutes"]')!
@@ -154,14 +169,14 @@ it("reveals an invalid field's settings tab before native form validation", asyn
     .querySelector<HTMLInputElement>('[name="calendar_full_sync"]')!
     .click();
   await flush();
-  input("calendar_full_sync_months", "13");
-  button("Kaleidescape").click();
+  await input("calendar_full_sync_months", "13");
+  button("Library").click();
   await flush();
   button("Save settings").click();
   await flush();
   expect(
     root().querySelector('[aria-selected="true"]')?.textContent?.trim(),
-  ).toBe("Home Assistant");
+  ).toBe("Calendar");
   expect(
     transport.calls.some((call) => call.type.endsWith("/settings/submit")),
   ).toBe(false);
@@ -177,17 +192,17 @@ it("keeps library sync opt-in and saves library controls through the native opti
   enabled.checked = true;
   enabled.dispatchEvent(new Event("change", { bubbles: true }));
   await flush();
-  input("library_host", "");
+  await input("library_host", "");
   expect(
     root().querySelector<HTMLInputElement>(
       '[name="library_recent_purchase_weeks"]',
     )!.value,
   ).toBe("2");
-  input("library_recent_purchase_weeks", "4");
-  input("custom_collection", "Demo extras");
+  await input("library_recent_purchase_weeks", "4");
+  await input("custom_collection", "Demo extras");
   button("Add hidden name").click();
   await flush();
-  input("custom_collection", "Archived collection");
+  await input("custom_collection", "Archived collection");
   button("Add hidden name").click();
   await flush();
   const artwork = root().querySelector<HTMLInputElement>(
@@ -227,6 +242,7 @@ it("cancels without saving and returns server validation errors on the settings 
       return original<T>(message);
     },
   );
+  await input("minimum_runtime_minutes", "20");
   button("Save settings").click();
   await waitFor("Select all three source entities");
   element.remove();
@@ -235,6 +251,7 @@ it("cancels without saving and returns server validation errors on the settings 
 });
 it("does not resubmit an unconfirmed options save and clears fields on denial", async () => {
   await mount("kaleidescape-settings");
+  await input("minimum_runtime_minutes", "20");
   transport.failure = "connection_lost";
   button("Save settings").click();
   await waitFor("save result is unconfirmed");
@@ -252,10 +269,10 @@ it("does not resubmit an unconfirmed options save and clears fields on denial", 
 });
 it("cancels inline settings changes through the original HA options flow", async () => {
   await mount("kaleidescape-settings");
-  input("minimum_runtime_minutes", "10");
+  await input("minimum_runtime_minutes", "10");
   expect((element as KaleidescapeSettings).confirmNavigation()).toBe(true);
   expect(window.confirm).not.toHaveBeenCalled();
-  input("minimum_runtime_minutes", "20");
+  await input("minimum_runtime_minutes", "20");
   button("Cancel changes").click();
   await flush();
   expect(
@@ -293,7 +310,7 @@ it("requires a dedicated-calendar acknowledgement for Full Sync and bounds its a
   expect([months.min, months.max, months.value]).toEqual(["1", "12", "3"]);
   acknowledgement.click();
   await flush();
-  input("calendar_entity", "calendar.another");
+  await input("calendar_entity", "calendar.another");
   await flush();
   expect(acknowledgement.checked).toBe(false);
 });

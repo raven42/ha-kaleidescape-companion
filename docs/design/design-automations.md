@@ -14,12 +14,17 @@ files under `blueprints/automation/kaleidescape_companion/`. Setup preserves
 existing files. It does not create or enable an automation. Create an automation
 from the desired blueprint in HA and choose its inputs explicitly.
 
-**Settings → Home Assistant → Optional automations** provides installation,
-status refresh and reviewed updates. **Settings → About → Automation blueprint
-versions** compares the installed version with the version bundled in the loaded
-Companion build. “Latest” means that bundled version; no remote release lookup
-runs. **View history** opens the bundled blueprint's comment history, not a
-history of the operator's edits.
+**Settings → Automations** provides one inventory with installed and bundled
+versions, status, setup requirements and actions. Bundled means the version in
+the loaded Companion build; no remote release lookup runs. **Change log** opens
+the bundled blueprint's comment history, not a history of the operator's edits.
+**Install**, **Update** and **Review replacement** load that history into a
+review before offering confirmation. The review shows installed and bundled
+versions, changes since a known older version and expandable complete history.
+Modified files show the full bundled history and a local-edit replacement
+warning. A failed history request offers Retry and keeps confirmation disabled.
+The page links to HA Blueprints for the separate create/configure/enable
+workflow.
 
 | Blueprint                    | Bundled version | Inputs and behavior                                                                          |
 | ---------------------------- | --------------- | -------------------------------------------------------------------------------------------- |
@@ -47,8 +52,10 @@ Declared version labels alone are not update evidence:
 - **Unavailable**: HA's manager or the bounded file read/parse is unavailable.
 
 Known outdated templates produce a startup warning and HA persistent
-notification. **Review update** warns about replacing local edits and reloading
-dependent automations. Explicit acceptance checks the installed revision and
+notification. **Update** is available for a known older template; **Review
+replacement** is available for a modified or unrecognized template. Both warn
+about reloading dependent automations. The review captures the installed
+revision before loading history. Explicit acceptance checks that revision and
 administrator access again before HA writes. A successful write triggers an
 update notification; an uncertain write/reload tells the operator to inspect the
 installed file and automation state before retrying. Uploading a new integration
@@ -164,9 +171,9 @@ editing limits are in [data management](design-data-management.md).
 
 ## Troubleshooting and retry
 
-1. Check **About** for the installed receipt blueprint version, then review any
-   update under **Home Assistant → Optional automations**. A new Companion build
-   alone does not update an installed older blueprint.
+1. Check **Settings → Automations** for the installed receipt blueprint version,
+   then choose **Update** to review its change log. A new Companion build alone
+   does not update an installed older blueprint.
 2. Inspect the failed automation trace. Failure before the import action means
    no purchase import was attempted by that run. Check the IMAP fetch and field
    selection, then review the action response and receipt diagnostics. Failure

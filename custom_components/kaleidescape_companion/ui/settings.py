@@ -92,6 +92,18 @@ async def options_request(
             "type": "form",
             "flow_id": result["flow_id"],
             "errors": result.get("errors", {}),
+            "credential_configured": bool(
+                (entry.options or entry.data).get("metadata_tmdb_credential")
+            ),
+            "entity_choices": {
+                domain: [
+                    {"value": state.entity_id, "label": state.name[:255]}
+                    for state in sorted(
+                        hass.states.async_all(domain), key=lambda state: state.entity_id
+                    )[:500]
+                ]
+                for domain in ("media_player", "sensor")
+            },
             "calendar_choices": [
                 {"value": state.entity_id, "label": state.name}
                 for state in hass.states.async_all("calendar")

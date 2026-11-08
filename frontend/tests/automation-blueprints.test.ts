@@ -2,9 +2,165 @@ import { afterEach, expect, it, vi } from "vitest";
 import "../src/ui/automation-blueprints";
 import type { AutomationBlueprints } from "../src/ui/automation-blueprints";
 import { FixtureTransport, info } from "./fixture";
+import { ApiError } from "../src/core/api";
 
 let element: AutomationBlueprints;
 afterEach(() => element?.remove());
+
+async function reviewFixture(
+  state: "outdated" | "modified" | "missing" = "outdated",
+) {
+  const client = new FixtureTransport().client();
+  vi.spyOn(client, "automationStatuses").mockResolvedValue({
+    purchase_email: {
+      status: state,
+      label: "Email",
+      revision: state === "missing" ? null : "reviewed-revision",
+      installed_version: state === "missing" ? null : 7,
+      latest_version: 8,
+    },
+  });
+  const template = vi.spyOn(client, "automationTemplate").mockResolvedValue({
+    path: "fictional.yaml",
+    yaml: "# Version history:\n# v8: Require HTML and explain missing items\n# v7: Previous extraction\n# End version history\nblueprint: {}",
+  });
+  const update = vi
+    .spyOn(client, "updateAutomationBlueprint")
+    .mockResolvedValue({});
+  const install = vi
+    .spyOn(client, "installAutomationBlueprint")
+    .mockResolvedValue({ overrides_existing: false });
+  element = document.createElement(
+    "kaleidescape-automation-blueprints",
+  ) as AutomationBlueprints;
+  element.client = client;
+  element.scope = info;
+  document.body.append(element);
+  await vi.waitFor(() =>
+    expect(
+      element.shadowRoot!.querySelector(
+        '[data-blueprint="purchase_email"] button',
+      ),
+    ).not.toBeNull(),
+  );
+  return { client, template, update, install };
+}
+
+it.each(["outdated", "modified"] as const)(
+  "shows versions and a readable change log before accepting an %s blueprint",
+  async (state) => {
+    const { update } = await reviewFixture(state);
+    element
+      .shadowRoot!.querySelector<HTMLButtonElement>(
+        '[data-blueprint="purchase_email"] button',
+      )!
+      .click();
+    await vi.waitFor(() =>
+      expect(
+        element.shadowRoot!.querySelector<HTMLButtonElement>("dialog .primary")
+          ?.disabled,
+      ).toBe(false),
+    );
+    const dialog = element.shadowRoot!.querySelector("dialog")!;
+    expect(dialog.textContent).toContain("v7");
+    expect(dialog.textContent).toContain("v8");
+    expect(dialog.querySelector(".history-list")!.textContent).toContain(
+      "Require HTML",
+    );
+    if (state === "outdated")
+      expect(dialog.querySelector(".history-list")!.textContent).not.toContain(
+        "Previous extraction",
+      );
+    else expect(dialog.textContent).toContain("may discard local edits");
+    expect(update).not.toHaveBeenCalled();
+    dialog.querySelector<HTMLButtonElement>(".primary")!.click();
+    await vi.waitFor(() =>
+      expect(update).toHaveBeenCalledWith(
+        info,
+        "purchase_email",
+        "reviewed-revision",
+      ),
+    );
+  },
+);
+
+it("blocks confirmation when the change log fails and preserves conflict checks after retry", async () => {
+  const { template, update } = await reviewFixture();
+  template.mockRejectedValueOnce(new ApiError("connection_lost"));
+  update.mockRejectedValue(new ApiError("conflict"));
+  element
+    .shadowRoot!.querySelector<HTMLButtonElement>(
+      '[data-blueprint="purchase_email"] button',
+    )!
+    .click();
+  await vi.waitFor(() =>
+    expect(
+      element.shadowRoot!.querySelector("dialog [role=alert]"),
+    ).not.toBeNull(),
+  );
+  expect(
+    element.shadowRoot!.querySelector<HTMLButtonElement>("dialog .primary")!
+      .disabled,
+  ).toBe(true);
+  expect(update).not.toHaveBeenCalled();
+  [...element.shadowRoot!.querySelectorAll<HTMLButtonElement>("dialog button")]
+    .find((button) => button.textContent?.trim() === "Retry change log")!
+    .click();
+  await vi.waitFor(() =>
+    expect(
+      element.shadowRoot!.querySelector<HTMLButtonElement>("dialog .primary")!
+        .disabled,
+    ).toBe(false),
+  );
+  element
+    .shadowRoot!.querySelector<HTMLButtonElement>("dialog .primary")!
+    .click();
+  await vi.waitFor(() =>
+    expect(element.shadowRoot!.querySelector("dialog")!.open).toBe(false),
+  );
+  expect(update).toHaveBeenCalledTimes(1);
+  expect(element.shadowRoot!.querySelector("[role=alert]")).not.toBeNull();
+});
+
+it("reviews a missing blueprint before installation and blocks closing while a write is pending", async () => {
+  const { install, update } = await reviewFixture("missing");
+  let finish!: (value: { overrides_existing: boolean }) => void;
+  install.mockReturnValue(
+    new Promise((resolve) => {
+      finish = resolve;
+    }),
+  );
+  const busy = vi.fn();
+  element.addEventListener("blueprint-busy", busy);
+  element
+    .shadowRoot!.querySelector<HTMLButtonElement>(
+      '[data-blueprint="purchase_email"] button',
+    )!
+    .click();
+  await vi.waitFor(() =>
+    expect(
+      element.shadowRoot!.querySelector<HTMLButtonElement>("dialog .primary")
+        ?.disabled,
+    ).toBe(false),
+  );
+  const dialog = element.shadowRoot!.querySelector("dialog")!;
+  expect(dialog.textContent).toContain(
+    "does not create or enable an automation",
+  );
+  expect(install).not.toHaveBeenCalled();
+  dialog.querySelector<HTMLButtonElement>(".primary")!.click();
+  await vi.waitFor(() => expect(install).toHaveBeenCalledOnce());
+  expect(element.confirmNavigation()).toBe(false);
+  expect(dialog.dispatchEvent(new Event("cancel", { cancelable: true }))).toBe(
+    false,
+  );
+  expect(busy.mock.calls[0][0].detail).toBe(true);
+  finish({ overrides_existing: false });
+  await vi.waitFor(() => expect(dialog.open).toBe(false));
+  expect(element.confirmNavigation()).toBe(true);
+  expect(busy.mock.calls.at(-1)![0].detail).toBe(false);
+  expect(update).not.toHaveBeenCalled();
+});
 
 it("shows blueprint status and requires confirmation before updating", async () => {
   const client = new FixtureTransport().client();
@@ -37,7 +193,12 @@ it("shows blueprint status and requires confirmation before updating", async () 
   row.querySelector("button")!.click();
   await element.updateComplete;
   expect(update).not.toHaveBeenCalled();
-  expect(element.shadowRoot!.textContent).toContain("may discard local edits");
+  await vi.waitFor(() =>
+    expect(element.shadowRoot!.textContent).toContain("v1:"),
+  );
+  expect(element.shadowRoot!.textContent).toContain(
+    "replaces the installed blueprint",
+  );
   [...element.shadowRoot!.querySelectorAll("button")]
     .find(
       (button) => button.textContent!.trim() === "Update installed blueprint",
@@ -263,6 +424,15 @@ it("does not show a stale result after a blueprint save was transmitted", async 
     .shadowRoot!.querySelector<HTMLButtonElement>(
       '[data-blueprint="library_schedule"] button',
     )!
+    .click();
+  await vi.waitFor(() =>
+    expect(
+      element.shadowRoot!.querySelector<HTMLButtonElement>("dialog .primary")
+        ?.disabled,
+    ).toBe(false),
+  );
+  element
+    .shadowRoot!.querySelector<HTMLButtonElement>("dialog .primary")!
     .click();
   await vi.waitFor(() => expect(save).toHaveBeenCalledOnce());
   element.scope = { ...info, entry_id: "new-scope" };

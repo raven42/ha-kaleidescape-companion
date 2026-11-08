@@ -1,17 +1,21 @@
 /** HA calendar settings; destructive maintenance needs a dedicated-calendar opt-in. */
 import { html, nothing } from "lit";
+import { settingLabel } from "./settings-hint";
 export function fullSyncSettings(
   draft: Record<string, string | number | boolean | string[]>,
   change: (patch: Record<string, string | number | boolean | string[]>) => void,
 ) {
-  return html`<label class="check"
-      ><input
+  return html`<div class="switch-row">
+      ${settingLabel("calendar_full_sync", "Enable Full Sync", "Reconcile a dedicated calendar against completed Journal entries. Unmatched events require repeated successful scans and at least 10 minutes of grace before deletion. Schedule runs in Automations or use Run Full Sync now; enabling this does not create a schedule.")}<input
         type="checkbox"
+        role="switch"
         name="calendar_full_sync"
+        id="calendar_full_sync"
+        aria-describedby="calendar_full_sync-hint"
         .checked=${!!draft.calendar_full_sync}
         @change=${(event: Event) => change({ calendar_full_sync: (event.target as HTMLInputElement).checked, calendar_full_sync_dedicated: false })}
-      />Full Sync · maintain the assigned calendar</label
-    >
+      />
+    </div>
     ${
       draft.calendar_full_sync
         ? html`
@@ -22,37 +26,33 @@ export function fullSyncSettings(
                 Journal entry will be permanently deleted.</strong
               >
             </p>
-            <label class="check"
-              ><input
+            <div class="check">
+              <input
                 type="checkbox"
                 name="calendar_full_sync_dedicated"
+                id="calendar_full_sync_dedicated"
+                aria-describedby="calendar_full_sync_dedicated-hint"
                 required
                 .checked=${!!draft.calendar_full_sync_dedicated}
                 @change=${(event: Event) => change({ calendar_full_sync_dedicated: (event.target as HTMLInputElement).checked })}
-              />I assigned a separate dedicated calendar and understand
-              unmatched events will be deleted.</label
-            >
+              />${settingLabel("calendar_full_sync_dedicated", "I assigned a separate dedicated calendar and understand unmatched events will be deleted.", "Use a calendar reserved for Companion. Full Sync may permanently delete unrelated events within its age window; this acknowledgement resets when you change the destination or toggle Full Sync.")}
+            </div>
             <div class="grid settings-grid">
-              <label
-                >Full Sync age window · months<input
+              <div class="setting-field">
+                ${settingLabel("calendar_full_sync_months", "Full Sync age window · months", "Maintain 1–12 whole months of completed viewings. Older and future events remain outside the window, and recurring events are skipped. Increasing the window makes more events eligible for reconciliation and guarded deletion.")}<input
                   name="calendar_full_sync_months"
+                  id="calendar_full_sync_months"
+                  aria-describedby="calendar_full_sync_months-hint"
                   type="number"
                   min="1"
                   max="12"
                   step="1"
                   required
                   .value=${String(draft.calendar_full_sync_months ?? 3)}
-                  @input=${(event: Event) => change({ calendar_full_sync_months: Number((event.target as HTMLInputElement).value) })}
-              /></label>
+                  @input=${(event: Event) => change({ calendar_full_sync_months: (event.target as HTMLInputElement).value })}
+                />
+              </div>
             </div>
-            <p class="muted">
-              Run Full Sync using its button or install the optional calendar
-              automation below. Unmatched events require repeated successful
-              scans and at least 10 minutes of grace before deletion. Older and
-              future events are left outside this window; recurring events are
-              skipped. Providers without event editing receive a verified
-              replacement before the old event is removed.
-            </p>
           `
         : nothing
     }`;

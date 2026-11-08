@@ -3,6 +3,15 @@
 Entries record development history. Later entries can supersede earlier
 behavior; the [documentation index](docs/README.md) owns current contracts.
 
+## Unreleased — Settings workspace
+
+- Organize every active setting into nine feature categories, with search,
+  responsive navigation, consistent cards and visible unsaved-change counts.
+- Guide recording sources, player discovery, provider credentials and calendar
+  templates with contextual hints and clear persistence labels.
+- Consolidate optional automations into one version table and show the bundled
+  change log before explicit installation or update confirmation.
+
 ## Unreleased — Documentation and audit refresh
 
 - Refresh operator and developer docs for durable purchases, receipt blueprint

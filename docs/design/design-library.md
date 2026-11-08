@@ -579,8 +579,8 @@ and score scale. Missing scores are omitted, and Ratings and metadata sources
 remains expandable.
 
 Administrators can set shared, field-by-field provider preferences in **Settings
-→ Scrapers → Preferred metadata sources**. Cached values are projected without
-rewriting raw scan facts; explicit reviewed title edits win. See
+→ Metadata → Preferred sources**. Cached values are projected without rewriting
+raw scan facts; explicit reviewed title edits win. See
 [source selection](design-metadata.md#preferred-metadata-sources).
 
 An open details popup reads fresh versions independently of its Library list's

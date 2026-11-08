@@ -13,7 +13,7 @@ registers no replacement media player and never forwards arbitrary HA services.
 ## Companion setup and use
 
 Controls are disabled by default. Administrators configure them in Companion's
-**Settings → Kaleidescape → Device discovery and controls**:
+**Settings → Playback**:
 
 1. Enable playback controls and choose a trusted system seed hostname/private
    LAN address. Blank uses the Library host or `my-kaleidescape.local`. The

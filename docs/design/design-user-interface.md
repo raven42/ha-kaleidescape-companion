@@ -31,22 +31,47 @@ Advanced mode. The calendar card is implemented, independent of HA publishing.
 
 ## Settings and persistence ownership
 
-Settings has six keyboard-accessible subtabs below sticky Save/Cancel actions:
+Settings groups configuration by function in a keyboard-accessible desktop
+sidebar and a category selector on narrow screens. Search matches setting names,
+keys and hints, then opens the category and focuses the matching control.
 
-| Subtab         | Scope                                                                                                                           |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Home Assistant | Recording source entities, calendar selection/templates/Full Sync, optional automations and test-dashboard generation           |
-| Companion      | Recording rules, landing page, shared hidden collections, settings transfer and reload                                          |
-| Personal       | Fuzzy search and guidance to per-view Options                                                                                   |
-| Kaleidescape   | Local Library/cache, collection-add opt-in, discovery and playback controls                                                     |
-| Scrapers       | Provider opt-ins, credentials, rate limits, preferred sources and enrichment controls                                           |
-| About          | Companion/pyk/API/schema versions, installed/latest blueprint versions, bundled blueprint history and development release notes |
+| Category    | Scope                                                                                                                                                         |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| General     | Shared landing page, personal fuzzy search and guidance to per-view Options                                                                                   |
+| Journal     | Media player, play-status and media-location entities; tracking, minimum runtime, minimum watch time and resume window                                        |
+| Library     | Local address, scanning, collection/detail/artwork options, collection-add permission, artwork storage, recent-purchase window and shared hidden collections  |
+| Playback    | Control opt-in, address, player discovery/default and experimental Library title launch                                                                       |
+| Metadata    | Store/TMDB opt-ins, credential replacement/removal, request rate, preferred source for each metadata field, per-title auto-save and enrichment status/actions |
+| Calendar    | Publishing opt-in, destination, title/description templates, dedicated-calendar Full Sync acknowledgement/window and export                                   |
+| Automations | One installed/bundled blueprint inventory, installation, update review, change logs and HA setup guidance                                                     |
+| Maintenance | Configuration transfer, metadata repair, test-dashboard generation and reload                                                                                 |
+| About       | Companion/pyk/API/schema versions, documentation, release notes and support links                                                                             |
 
-Switching subtabs preserves unsaved configuration. Invalid native form fields
-reveal their subtab before validation. Native integration settings require Save;
-personal and shared SQLite UI preferences save immediately without reloading HA.
-Sections identify that distinction. Settings is administrator-only; household
+Switching categories preserves drafts. A sticky save bar shows the number of
+changed native settings, with markers beside affected categories. Save is
+disabled when nothing has changed. Validation reveals and focuses an invalid
+field even when it is in another category or the nested metadata form. Numeric
+fields show units and bounds. Non-obvious settings have a round question-mark
+button beside their labels: hover, keyboard focus or tap opens a text balloon.
+Escape or an outside interaction dismisses it, and balloons stay within the
+viewport. Inputs retain accessible labels and descriptions. Destructive-action
+warnings remain visible. Native integration settings require **Save settings**.
+Personal and shared SQLite UI preferences save immediately without reloading HA,
+and their cards identify that scope. Settings is administrator-only; household
 users retain Options for their own views.
+
+Journal source inputs suggest existing HA entity IDs and friendly names, with
+bounded lists of media players and sensors. The TMDB card reports whether a
+credential is stored without returning it; an empty replacement retains the
+saved secret. The right-aligned **Remove** button stages removal for **Save
+settings** and becomes **Undo** until then. Library uses **Kaleidescape Server
+Address** and Playback uses **Kaleidescape Player Address** to distinguish their
+connections. Calendar template buttons insert supported placeholders at the text
+selection. Playback guides the administrator through saving the connection,
+discovering players, selecting a default and saving again. Discovery and
+metadata sync require the relevant saved configuration. Legacy in-process
+scheduling fields are not presented as active controls; schedules use optional
+HA automations.
 
 Configuration transfer supports reviewed category selection and excludes
 secrets. It is distinct from journal/Library merge imports, which exclude
@@ -54,11 +79,16 @@ settings and operational receipts. Save settings before discovery-dependent
 dashboard creation; the [card guide](design-dashboard-cards.md) owns its
 prerequisites and lost-response recovery.
 
-**Home Assistant → Optional automations** shows blueprint status and offers
-installation or review of an update. **About → View history** displays the
-selected bundled blueprint's version history; it does not describe local edits.
-The [automation design](design-automations.md) owns installation, version
-checks, updates and the actions behind these optional schedules.
+**Automations** compares installed and bundled versions in one table. **Update**
+or **Review replacement** opens a review with both versions and the bundled
+change log before confirmation. Known older versions show changes since that
+version; modified files also warn that local edits will be replaced. **Install**
+uses the same visible review, and **Change log** is available independently.
+Loading or failed history requests cannot be confirmed. Installing a blueprint
+does not create or enable an automation: the page links to HA Blueprints and
+describes choosing inputs and enabling the desired workflow. The
+[automation design](design-automations.md) owns revision checks and update
+recovery. Bundled history does not describe an operator's local edits.
 
 ## Database and per-title management
 

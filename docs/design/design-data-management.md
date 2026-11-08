@@ -283,27 +283,27 @@ saved purchase HTML.
 
 The [automation design](design-automations.md) owns blueprint installation,
 updates, receipt parsing and operator retry steps. The bundled purchase-receipt
-blueprint is version **7**. To set up the optional IMAP automation, open
-**Companion Settings → Home Assistant → Optional automations**, choose
-**Purchase receipt email**, then open **Home Assistant Blueprints**, select the
-installed blueprint, choose an IMAP integration, and save an automation. The
-optional sender text filter helps narrow matching mail; it does not authenticate
-the sender. Select one or more of transaction ID, purchase price, retail price
-and purchase date; title and Store link are always extracted. No selection is an
-error. The Python parser attempts both text and HTML, imports independently
-usable entries and reports missing fields or discrepancies. Open **Database →
-Reconcile purchases** to link saved purchases to scanned Library entries. The
-current parser recognizes item/price sections; unfamiliar layouts may require
-further review. The IMAP integration must be configured separately. Missing
-blueprints are installed at startup when HA automations are available; no
-automation is enabled for you. Each blueprint description has a version number.
-Settings shows whether each file is current, outdated, modified, missing or
-unavailable. Known outdated versions produce a startup warning and a persistent
-HA notification. Review and explicitly update existing files in Settings; HA
-reloads automations that use them and sends an update notification. Customized
-files are never replaced automatically. The Settings About tab compares
-installed and bundled blueprint versions and offers a version history for each
-bundled blueprint. Each history is maintained in the YAML comments between the
+blueprint is version **8**. To set up the optional IMAP automation, open
+**Companion Settings → Automations**, choose **Purchase receipt email**, then
+open **Home Assistant Blueprints**, select the installed blueprint, choose an
+IMAP integration, and save an automation. The optional sender text filter helps
+narrow matching mail; it does not authenticate the sender. Select one or more of
+transaction ID, purchase price, retail price and purchase date; title and Store
+link are always extracted. No selection is an error. The Python parser reads the
+fetched HTML, imports independently usable entries and reports missing fields or
+discrepancies. Open **Database → Reconcile purchases** to link saved purchases
+to scanned Library entries. The current parser recognizes item/price sections;
+unfamiliar layouts may require further review. The IMAP integration must be
+configured separately. Missing blueprints are installed at startup when HA
+automations are available; no automation is enabled for you. Each blueprint
+description has a version number. Settings shows whether each file is current,
+outdated, modified, missing or unavailable. Known outdated versions produce a
+startup warning and a persistent HA notification. Review and explicitly update
+existing files in Settings; HA reloads automations that use them and sends an
+update notification. Customized files are never replaced automatically. Settings
+→ Automations compares installed and bundled blueprint versions and offers a
+change log for each bundled blueprint, including in the installation and update
+reviews. Each history is maintained in the YAML comments between the
 version-history markers; it describes the bundled file, which may differ from a
 locally modified blueprint.
 

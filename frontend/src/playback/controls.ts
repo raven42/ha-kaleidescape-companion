@@ -11,6 +11,8 @@ import type {
   PreparedMutation,
 } from "../core/api";
 import { styles } from "../ui/styles";
+import { settingLabel } from "../ui/settings-hint";
+import { settingLabelStyles } from "../ui/settings-styles";
 import { actionIcon } from "../ui/action-icons";
 import { remoteControls, remoteStyles } from "./remote";
 import { closeButton, dismissBackdrop } from "../ui/dialog";
@@ -36,9 +38,11 @@ export class DeviceControls extends LitElement {
     inlineRemote: { type: Boolean },
     value: {},
     configured: { type: Boolean },
+    settingsDisabled: { type: Boolean },
   };
   static styles = [
     styles,
+    settingLabelStyles,
     remoteStyles,
     css`
       [hidden] {
@@ -138,6 +142,7 @@ export class DeviceControls extends LitElement {
   inlineRemote = false;
   value = "";
   configured = true;
+  settingsDisabled = false;
   private generation = 0;
   private key = "";
   private boundClient?: JournalClient;
@@ -318,7 +323,11 @@ export class DeviceControls extends LitElement {
     }
   }
   private async discover() {
-    if (!this.scope?.permissions.edit) return;
+    if (
+      !this.scope?.permissions.edit ||
+      (this.mode === "settings" && (this.settingsDisabled || !this.configured))
+    )
+      return;
     await this.action(async () => {
       const generation = this.generation;
       const info = await this.client!.controlDiscover(this.scope!);
@@ -551,18 +560,20 @@ export class DeviceControls extends LitElement {
               <div class="actions">
                 <button
                   type="button"
-                  ?disabled=${this.busy || !info?.enabled || !this.configured}
+                  ?disabled=${this.busy || this.settingsDisabled || !info?.enabled || !this.configured}
                   @click=${this.discover}
                 >
                   ${this.busy ? "Discovering…" : "Discover devices"}
                 </button>
               </div>
               ${!info?.enabled || !this.configured ? html`<p class="muted">Save the enabled control hostname before discovering devices.</p>` : nothing}
-              <label
-                >Default player<select
+              <div>
+                ${settingLabel("control_player", "Default player", "Discover devices using the saved Kaleidescape Player Address, then choose the movie player Companion should use by default. Save this selection to apply it. This does not change the player observed for Journal recording or send a playback command.")}<select
                   name="control_player"
+                  id="control_player"
+                  aria-describedby="control_player-hint"
                   .value=${this.value}
-                  ?disabled=${this.busy}
+                  ?disabled=${this.busy || this.settingsDisabled}
                   @change=${(event: Event) => this.dispatchEvent(new CustomEvent("player-selected", { detail: (event.target as HTMLSelectElement).value, bubbles: true, composed: true }))}
                 >
                   <option value="" ?selected=${!this.value}>
@@ -570,8 +581,8 @@ export class DeviceControls extends LitElement {
                   </option>
                   ${this.value && !devices.some((device) => device.serial === this.value) ? html`<option value=${this.value} selected>Configured player (${this.value})</option>` : nothing}
                   ${devices.map((device) => html`<option value=${device.serial} ?selected=${device.serial === this.value}>${device.name || device.model || "Movie player"} (${device.serial})</option>`)}
-                </select></label
-              >
+                </select>
+              </div>
               ${
                 info?.devices?.length
                   ? html`<details>

@@ -417,9 +417,9 @@ unchanged pass after at least ten minutes can remove the prior event, subject to
 the window, completeness, concurrency and uncertainty safeguards.
 Journal/configuration/event changes restart quarantine.
 
-**Settings → Home Assistant → Full Sync** displays **Pending delete: N**
-alongside unconfirmed writes. A successful pass can still have pending deletes.
-**Run Full Sync now** refreshes status and warns before proceeding when either
-count is nonzero. Continuing rechecks pending work; it does not waive the grace
-period or acknowledge uncertain writes. The status response reports the current
-pending-work counts.
+**Settings → Calendar → Existing viewing history** displays **Pending delete:
+N** alongside unconfirmed writes when Full Sync is enabled. A successful pass
+can still have pending deletes. **Run Full Sync now** refreshes status and warns
+before proceeding when either count is nonzero. Continuing rechecks pending
+work; it does not waive the grace period or acknowledge uncertain writes. The
+status response reports the current pending-work counts.

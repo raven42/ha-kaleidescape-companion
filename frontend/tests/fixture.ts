@@ -1,4 +1,5 @@
 /** Fictional in-memory transport for UI tests and the explicit review page only. */
+import { SOURCE_FIELDS } from "../src/enrichment/sources";
 import { matches } from "../src/core/search";
 import { formatBadges } from "../src/library/badges";
 import { purchaseValues } from "../src/library/purchase-details";
@@ -163,6 +164,24 @@ export class FixtureTransport implements Transport {
   } | null = null;
   collectionResults = new Map<string, { status: string; request_id: string }>();
   trackingEnabled = true;
+  credentialConfigured = false;
+  blueprintStatuses = Object.fromEntries(
+    [
+      ["purchase_email", 8],
+      ["library_schedule", 1],
+      ["metadata_schedule", 1],
+      ["calendar_schedule", 1],
+    ].map(([kind, version]) => [
+      String(kind),
+      {
+        status: "current",
+        label: String(kind),
+        revision: "fixture",
+        installed_version: Number(version) as number | null,
+        latest_version: Number(version),
+      },
+    ]),
+  );
   deletedRecords: Viewing[] = [];
   options: Record<string, string | number | boolean | string[]> = {
     control_enabled: false,
@@ -173,7 +192,6 @@ export class FixtureTransport implements Transport {
     calendar_full_sync: false,
     calendar_full_sync_dedicated: false,
     calendar_full_sync_months: 3,
-    calendar_full_sync_time: "03:00",
     calendar_title: "Watched: {title}",
     calendar_description: "Watched {title} · {watched} minutes",
     tracking_enabled: true,
@@ -186,13 +204,21 @@ export class FixtureTransport implements Transport {
     library_enabled: false,
     library_host: "",
     default_landing_page: "journal",
-    library_interval_hours: 6,
     library_recent_purchase_weeks: 2,
     library_sync_collections: true,
     library_allow_collection_add: false,
     library_sync_details: true,
     library_sync_artwork: false,
     library_artwork_cache_mb: 512,
+    metadata_store_enabled: false,
+    metadata_tmdb_enabled: false,
+    metadata_auto_save: false,
+    metadata_requests_per_second: 2,
+    metadata_tmdb_credential: "",
+    metadata_clear_tmdb_key: false,
+    ...Object.fromEntries(
+      SOURCE_FIELDS.map(([key]) => ["metadata_source_" + key, "auto"]),
+    ),
   };
   purgeResults = new Map<string, { purged_count: number; revision: number }>();
   importResults = new Map<
@@ -275,17 +301,32 @@ export class FixtureTransport implements Transport {
     if (operation === "purchases/reconcile") {
       result = { empty: true };
     } else if (operation === "automations/status") {
-      result = Object.fromEntries(
-        [
-          "purchase_email",
-          "library_schedule",
-          "metadata_schedule",
-          "calendar_schedule",
-        ].map((kind) => [
-          kind,
-          { status: "current", label: kind, revision: "fixture" },
-        ]),
-      );
+      result = this.blueprintStatuses;
+    } else if (operation === "automations/template") {
+      const kind = String(message.template);
+      const version = this.blueprintStatuses[kind]?.latest_version ?? 1;
+      result = {
+        path: `kaleidescape_companion/${kind}.yaml`,
+        yaml: `# Version history:\n# v${version}: ${kind === "purchase_email" ? "Require fetched HTML and explain incomplete receipts" : "Initial optional automation"}\n# End version history\nblueprint: {name: Fictional automation, domain: automation}`,
+      };
+    } else if (
+      operation === "automations/update" ||
+      message.type === "blueprint/save"
+    ) {
+      const kind = message.template
+        ? String(message.template)
+        : Object.keys(this.blueprintStatuses).find(
+            (name) => message.path === `kaleidescape_companion/${name}.yaml`,
+          );
+      if (kind) {
+        const item = this.blueprintStatuses[kind];
+        this.blueprintStatuses[kind] = {
+          ...item,
+          status: "current",
+          installed_version: item.latest_version,
+        };
+      }
+      result = { overrides_existing: false };
     } else if (operation.startsWith("ui/")) {
       const shared = operation.startsWith("ui/shared/");
       const values = shared
@@ -891,15 +932,36 @@ export class FixtureTransport implements Transport {
         type: "form",
         flow_id: "fixture-flow",
         errors: {},
+        entity_choices: {
+          media_player: [
+            { value: "media_player.example", label: "Example movie player" },
+          ],
+          sensor: [
+            { value: "sensor.example_status", label: "Example play status" },
+            {
+              value: "sensor.example_location",
+              label: "Example media location",
+            },
+          ],
+        },
+        calendar_choices: [
+          { value: "calendar.movies", label: "Movie journal" },
+        ],
+        credential_configured: this.credentialConfigured,
         fields: Object.entries({
           ...this.options,
           tracking_enabled: this.trackingEnabled,
+          metadata_tmdb_credential: "",
+          metadata_clear_tmdb_key: false,
         }).map(([name, value]) => ({ name, default: value })),
       };
     else if (operation === "settings/cancel") result = { type: "abort" };
     else if (operation === "settings/submit") {
       this.options = message.data as typeof this.options;
       this.trackingEnabled = !!this.options.tracking_enabled;
+      this.credentialConfigured = this.options.metadata_clear_tmdb_key
+        ? false
+        : !!this.options.metadata_tmdb_credential || this.credentialConfigured;
       result = { type: "create_entry" };
     } else if (operation === "library/suggest") {
       const field = message.field === "actor" ? "actors" : "directors";

@@ -163,6 +163,8 @@ export interface MutationResult {
   revision: number;
 }
 export interface OptionsForm {
+  credential_configured?: boolean;
+  entity_choices?: Record<string, { value: string; label: string }[]>;
   calendar_choices?: { value: string; label: string }[];
   type: "form" | "create_entry" | "abort";
   flow_id?: string;

@@ -45,6 +45,15 @@ cannot select another user's preference owner or receipt. Accepted external
 actions cannot be recalled by closing a dialog or revoking access after
 transmission.
 
+The administrator settings form returns bounded entity suggestions (at most 500
+media players and 500 sensors, with friendly names capped at 255 characters) and
+a boolean indicating a stored TMDB credential. Suggestions contain entity IDs
+and names, never states or attributes; saved credentials are never returned.
+Permission/scope changes clear drafts and suppress late form/history responses.
+Blueprint history is rendered as text from the bounded bundled template. Its
+review does not grant write authority: installation and replacement still use
+administrator checks and the existing revision guard for replacements.
+
 Household summaries exclude private notes, raw source/player identities,
 purchase prices/orders/store references and recorder diagnostics. Purchase dates
 and shared viewing/movie facts are visible where the feature permits them. The
