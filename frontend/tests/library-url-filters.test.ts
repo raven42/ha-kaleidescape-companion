@@ -29,9 +29,10 @@ it("round trips every Library search and filter option without changing other UR
   writeLibraryFilters(filters);
   expect(readLibraryFilters(undefined, true)).toEqual(filters);
   expect(new URL(location.href).searchParams.get("unrelated")).toBe("kept");
-  expect(
-    readLibraryFilters(undefined, false)!.missing_purchase_information,
-  ).toBe(false);
+  expect(readLibraryFilters(undefined, false)).toMatchObject({
+    missing_metadata_artwork: false,
+    missing_purchase_information: false,
+  });
 });
 
 it("rejects unsupported, oversized, malformed and non-panel filter inputs", () => {

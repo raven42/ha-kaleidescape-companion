@@ -244,6 +244,56 @@ it("uses normal-user Library controls in Basic mode", async () => {
   ).toBeNull();
 });
 
+it("removes the maintenance filter when moving to Basic and does not silently restore it", async () => {
+  const transport = new FixtureTransport();
+  transport.options.library_enabled = true;
+  await mount(transport);
+  history.pushState(
+    null,
+    "",
+    "/kaleidescape-companion?companion_page=library&library_missing_metadata_artwork=1",
+  );
+  window.dispatchEvent(new Event("location-changed"));
+  await vi.waitFor(() =>
+    expect(
+      transport.calls
+        .filter((call) => call.type.endsWith("library/list"))
+        .at(-1)?.filters,
+    ).toMatchObject({ missing_metadata_artwork: true }),
+  );
+  await vi.waitFor(() => expect(toggle().disabled).toBe(false));
+  toggle().click();
+  const reader = await basicLibrary();
+  const library = reader.shadowRoot!.querySelector("kaleidescape-library")!;
+  await vi.waitFor(() =>
+    expect(
+      library.shadowRoot!.querySelector('[name="missing_metadata_artwork"]'),
+    ).toBeNull(),
+  );
+  await vi.waitFor(() =>
+    expect(
+      transport.calls
+        .filter((call) => call.type.endsWith("library/list"))
+        .at(-1)?.filters,
+    ).toMatchObject({ missing_metadata_artwork: false }),
+  );
+  expect(
+    new URL(location.href).searchParams.has("library_missing_metadata_artwork"),
+  ).toBe(false);
+  toggle().click();
+  await vi.waitFor(() =>
+    expect(
+      root()
+        .querySelector("kaleidescape-library")
+        ?.shadowRoot?.querySelector('[name="missing_metadata_artwork"]'),
+    ).toBeTruthy(),
+  );
+  expect(
+    transport.calls.filter((call) => call.type.endsWith("library/list")).at(-1)
+      ?.filters,
+  ).toMatchObject({ missing_metadata_artwork: false });
+});
+
 it("keeps a shared view when leaving a non-admin Library dialog", async () => {
   const transport = new FixtureTransport();
   transport.options.library_enabled = true;

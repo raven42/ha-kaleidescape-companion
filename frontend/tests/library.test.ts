@@ -79,6 +79,131 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+it("shows draft counts and clears individual categories without applying until requested", async () => {
+  button("Filters").click();
+  await flush();
+  check("status", "watched");
+  check("genre", "Science Fiction");
+  await flush();
+  const dialog = root().querySelector<HTMLDialogElement>("#filter-dialog")!;
+  expect(
+    dialog.querySelectorAll('.facet-count[aria-label="1 selected"]'),
+  ).toHaveLength(2);
+  expect(
+    dialog.querySelector(".filter-selection-summary")?.textContent,
+  ).toContain("2 selected");
+  dialog
+    .querySelector<HTMLButtonElement>(
+      '[aria-label="Clear Movie status filters"]',
+    )!
+    .click();
+  await flush();
+  expect(
+    dialog.querySelector<HTMLInputElement>('[name="status"][value="watched"]')!
+      .checked,
+  ).toBe(false);
+  expect(
+    dialog.querySelector<HTMLInputElement>(
+      '[name="genre"][value="Science Fiction"]',
+    )!.checked,
+  ).toBe(true);
+  expect(
+    dialog.querySelector(".filter-selection-summary")?.textContent,
+  ).toContain("1 selected");
+  expect(
+    transport.calls.filter((call) => call.type.endsWith("library/list")).at(-1)
+      ?.filters,
+  ).not.toMatchObject({ genre: ["Science Fiction"] });
+  button("Apply filters").click();
+  await vi.waitFor(() =>
+    expect(
+      transport.calls
+        .filter((call) => call.type.endsWith("library/list"))
+        .at(-1)?.filters,
+    ).toMatchObject({ genre: ["Science Fiction"], status: [] }),
+  );
+});
+
+it("keeps every format option available while selecting multiple values", async () => {
+  transport.libraryTitles[0].formats = ["4K", "HDR10", "Dolby Atmos"];
+  button("Refresh cached data").click();
+  await vi.waitFor(() =>
+    expect(
+      transport.calls.filter((call) => call.type.endsWith("library/list"))
+        .length,
+    ).toBeGreaterThan(1),
+  );
+  button("Filters").click();
+  await flush();
+  const field = root()
+    .querySelector<HTMLInputElement>('[name="format"][value="4K"]')!
+    .closest("fieldset")!;
+  const options = () =>
+    [...field.querySelectorAll<HTMLInputElement>('[name="format"]')].map(
+      (item) => item.value,
+    );
+  const clear = field.querySelector<HTMLButtonElement>(".facet-clear")!;
+  const count = field.querySelector<HTMLElement>(".facet-count")!;
+  expect(clear.disabled).toBe(true);
+  expect(count.textContent).toBe("0");
+  expect(field.querySelector(".facet-options")?.nextElementSibling).toBe(clear);
+  const before = options();
+  expect(before).toEqual(
+    expect.arrayContaining(["4K", "HDR10", "Dolby Atmos"]),
+  );
+  field.querySelector<HTMLInputElement>('[name="format"][value="4K"]')!.click();
+  await flush();
+  expect(options()).toEqual(before);
+  expect(field.querySelector(".facet-clear")).toBe(clear);
+  expect(field.querySelector(".facet-count")).toBe(count);
+  expect(clear.disabled).toBe(false);
+  expect(count.textContent).toBe("1");
+  expect(
+    field
+      .querySelector("legend")
+      ?.nextElementSibling?.classList.contains("facet-options"),
+  ).toBe(true);
+  field
+    .querySelector<HTMLInputElement>('[name="format"][value="HDR10"]')!
+    .click();
+  await flush();
+  expect(options()).toEqual(before);
+  expect(
+    [
+      ...field.querySelectorAll<HTMLInputElement>('[name="format"]:checked'),
+    ].map((item) => item.value),
+  ).toEqual(["4K", "HDR10"]);
+  button("Apply filters").click();
+  await vi.waitFor(() =>
+    expect(
+      transport.calls
+        .filter((call) => call.type.endsWith("library/list"))
+        .at(-1)?.filters,
+    ).toMatchObject({ format: ["4K", "HDR10"] }),
+  );
+});
+
+it("omits the facet search and truncation notice even for truncated facets", async () => {
+  const original = transport.client();
+  const libraryList = original.libraryList.bind(original);
+  const list = vi
+    .spyOn(original, "libraryList")
+    .mockImplementation(async (...args) => ({
+      ...(await libraryList(...args)),
+      truncated_facets: ["collections"],
+    }));
+  element.client = original;
+  await vi.waitFor(() => expect(list).toHaveBeenCalled());
+  await vi.waitFor(() => expect(button("Filters")).toBeTruthy());
+  button("Filters").click();
+  await flush();
+  const dialog = root().querySelector("#filter-dialog")!;
+  expect(dialog.querySelector('[name="facet_search"]')).toBeNull();
+  expect(dialog.textContent).not.toContain(
+    "Each category shows up to 500 known names",
+  );
+});
+
 it("uses checkbox filters with multiple values, discards cancelled drafts, and removes writer/studio filters", async () => {
   expect(text()).toContain("Voyage to Europa");
   expect(root().querySelector(".library-footer")!.textContent).not.toContain(

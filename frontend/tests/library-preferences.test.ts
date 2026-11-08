@@ -939,9 +939,11 @@ it("shows primary filters without actor or director lookup", async () => {
   const root = await mount(new FixtureTransport());
   button(root, "Filters").click();
   await flush();
-  const legends = [...root.querySelectorAll("#filter-dialog legend")].map(
-    (node) => node.textContent?.trim(),
-  );
+  const legends = [
+    ...root.querySelectorAll(
+      "#filter-dialog legend .facet-heading > span:first-child",
+    ),
+  ].map((node) => node.textContent?.trim());
   expect(legends).toEqual([
     "Movie status",
     "Collection",
@@ -983,7 +985,7 @@ it("orders ratings by age with general audiences at the top", async () => {
   expect(values).toEqual(["G", "NR-G", "PG", "PG-13", "NR-R", "R", "NC-17"]);
 });
 
-it("applies shared fuzzy search to main search and local facet search", async () => {
+it("applies shared fuzzy search to the main search", async () => {
   const transport = new FixtureTransport();
   const root = await mount(transport);
   const field = root.querySelector<HTMLInputElement>('[name="library_query"]')!;
@@ -1015,20 +1017,7 @@ it("applies shared fuzzy search to main search and local facet search", async ()
   await flush();
   button(root, "Filters").click();
   await flush();
-  modalClose(root).click();
-  await flush();
-  element!.scope = {
-    ...info,
-    library_enabled: true,
-    ui_defaults: { default_landing_page: "journal", fuzzy_search: true },
-  };
-  await flush();
-  button(root, "Filters").click();
-  await flush();
-  const find = root.querySelector<HTMLInputElement>('[name="facet_search"]')!;
-  find.value = "Scince Fiction";
-  find.dispatchEvent(new Event("input"));
-  await flush();
+  expect(root.querySelector('[name="facet_search"]')).toBeNull();
   expect(
     root.querySelector<HTMLInputElement>(
       '[name="collection"][value="Science Fiction"]',

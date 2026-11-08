@@ -52,7 +52,7 @@ export function readLibraryFilters(
   const filters: LibraryUrlFilters = {
     query: query.length <= 500 && !query.includes("\0") ? query : "",
     missing_metadata_artwork:
-      params.get("library_missing_metadata_artwork") === "1",
+      admin && params.get("library_missing_metadata_artwork") === "1",
     missing_purchase_information:
       admin && params.get("library_missing_purchase_information") === "1",
     recently_added: false,

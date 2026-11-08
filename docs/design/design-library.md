@@ -66,8 +66,10 @@ notification. An info-level log records the affected movie and category counts
 without logging movie titles.
 
 The notification and info log include the panel path for opening the Library
-with **Missing metadata/artwork** selected. The notification uses a clickable
-relative link; the log shows the path so it can be opened from the HA origin.
+with **Missing metadata/artwork** selected in Advanced view. Basic view hides
+and clears this maintenance filter; switch to Advanced and reopen the link to
+use it. The notification uses a clickable relative link; the log shows the path
+so it can be opened from the HA origin.
 
 The first detail/artwork pass can take several minutes for a large catalog.
 Requests are sequential; details refresh when basic metadata changes or after
@@ -133,23 +135,24 @@ collection, rating, genre, year, viewing-format and watched-status checkboxes.
 Multiple checked values match **any** value within that category; different
 categories must **all** match on the **same version**. A matching group still
 opens all its versions, including those that did not match. An unchecked
-category is unrestricted. Filter-option search narrows available filter values,
-not the titles. Rating choices put G/NR-G first, then unclassified values
-(including Unrated), then PG, PG-13, R and NC-17, with NR-prefixed equivalents
-beside the corresponding rating and alphabetical ties. They reuse the badges
-from title details. Viewing formats use individual format badges, including
-HDR10 separately from resolution. SD resolution and SDR dynamic range remain
-separate; SDR has a distinct badge. Actor/director filter inputs have been
-removed from the dialog; the main search handles people. Existing saved
-actor/director selections can still be removed using their chips, and the API
-retains those facets for compatible clients. Sci-Fi and Science Fiction share
-the Science Fiction genre label. **Apply filters** applies the draft and returns
-to page one; Closing with X discards it. The toolbar **Clear Filter** clears
-search and all checkbox filters, including unsubmitted search text, and returns
-to page one. It preserves view, sort and page size. Each category offers up to
-500 known names (collections up to 200), with at most 100 selections per
-category. Writers, producers and studios are searchable when available, without
-separate facet controls.
+category is unrestricted. Category headings show the number selected and offer a
+per-category Clear action. The sticky footer shows the draft selection count;
+closing without applying discards changes. Rating choices put G/NR-G first, then
+unclassified values (including Unrated), then PG, PG-13, R and NC-17, with
+NR-prefixed equivalents beside the corresponding rating and alphabetical ties.
+They reuse the badges from title details. Viewing formats use individual format
+badges, including HDR10 separately from resolution. SD resolution and SDR
+dynamic range remain separate; SDR has a distinct badge. Actor/director filter
+inputs have been removed from the dialog; the main search handles people.
+Existing saved actor/director selections can still be removed using their chips,
+and the API retains those facets for compatible clients. Sci-Fi and Science
+Fiction share the Science Fiction genre label. **Apply filters** applies the
+draft and returns to page one; Closing with X discards it. The toolbar **Clear
+Filter** clears search and all checkbox filters, including unsubmitted search
+text, and returns to page one. It preserves view, sort and page size. Each
+category offers up to 500 known names (collections up to 200), with at most 100
+selections per category. Writers, producers and studios are searchable when
+available, without separate facet controls.
 
 Search and display projections run on the same worker for both household roles.
 One search evaluates each distinct credited name once, then resolves matches to
@@ -468,12 +471,12 @@ reload.
 
 **Settings → General → Fuzzy search** is saved with the shared integration
 configuration and applies to all users and display profiles. It starts enabled
-and applies to the main title/cast/director search, the filter-values search and
-compatible actor/director suggestion API calls. Turning it off requires the
-entered text to occur continuously, ignoring case; literal partial matches still
-work, and punctuation/wildcard characters remain ordinary text. Turning it on
-also tolerates small word misspellings/transpositions, word-order differences
-and diacritics. Selected facet values remain exact in either mode. Mode changes
+and applies to the main title/cast/director search and compatible actor/director
+suggestion API calls. Turning it off requires the entered text to occur
+continuously, ignoring case; literal partial matches still work, and
+punctuation/wildcard characters remain ordinary text. Turning it on also
+tolerates small word misspellings/transpositions, word-order differences and
+diacritics. Selected facet values remain exact in either mode. Mode changes
 invalidate pending suggestions and refresh results from page one, including
 All/Covers views. Journal and manual-viewing pickers use the same shared mode.
 Previously saved personal choices are not applied to the shared setting. Direct
@@ -485,22 +488,23 @@ name within cast/director fields but excludes `Tom Hollander`; unquoted text
 retains partial/fuzzy behavior. Punctuation stays literal and whitespace between
 words may vary. People links in movie/calendar details insert double quotes and
 replace existing Library search/filters. The same phrase rule applies to Journal
-search, manual title pickers, filter autocomplete, import review and plain
-Database search. Structured Database predicates keep their documented SQL style
-operators and single-quoted values.
+search, manual title pickers, import review and plain Database search.
+Structured Database predicates keep their documented SQL style operators and
+single-quoted values.
 
-**Missing metadata/artwork** selects movies missing an expected provider's
-metadata or an expected cover or backdrop. It uses the same grouped availability
-rules as the missing-metadata and missing-artwork sensors. List rows and cover
-tiles show the warning icon to administrators for those same movies, even when
-there is no scraper match conflict. A conflict also shows the warning; its
-accessible label identifies both causes when they occur together. The warning is
-independent of the optional status/format badges. The filter lives in the
-Library URL. Administrators also have **Missing purchase information**, using
-the same group-level date/paid/retail completeness rules as its sensor. It adds
-no warning badge and omits movies explicitly marked **Purchase information
-unavailable**. A role change clears this private filter from reader requests.
-See [manual resolution](design-metadata.md#review-a-single-title).
+In Advanced view, **Missing metadata/artwork** selects movies missing an
+expected provider's metadata or an expected cover or backdrop. It uses the same
+grouped availability rules as the missing-metadata and missing-artwork sensors.
+List rows and cover tiles show the warning icon to administrators for those same
+movies, even when there is no scraper match conflict. A conflict also shows the
+warning; its accessible label identifies both causes when they occur together.
+The warning is independent of the optional status/format badges. The filter
+lives in the Library URL. Administrators also have **Missing purchase
+information**, using the same group-level date/paid/retail completeness rules as
+its sensor. It adds no warning badge and omits movies explicitly marked
+**Purchase information unavailable**. A role change clears this private filter
+from reader requests. See
+[manual resolution](design-metadata.md#review-a-single-title).
 
 The filter panes use consistent inner heading padding, and their sticky action
 footer has extra space below the buttons.

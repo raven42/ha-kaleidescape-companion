@@ -46,11 +46,21 @@ it.each([
       expect(lastFilters(transport)).toMatchObject({
         query: "",
         genre: [],
-        missing_metadata_artwork: true,
+        missing_metadata_artwork: advanced,
         offset: 0,
       }),
     );
     expect(library()).toBeTruthy();
+    expect(
+      library()!.shadowRoot!.querySelector(
+        '[name="missing_metadata_artwork"]',
+      ) !== null,
+    ).toBe(advanced);
+    expect(
+      new URL(location.href).searchParams.has(
+        "library_missing_metadata_artwork",
+      ),
+    ).toBe(advanced);
     expect(transport.uiPreferences.query).toBe("Old search");
     expect(transport.uiPreferences.genre).toEqual(["Old genre"]);
     expect(
@@ -84,7 +94,7 @@ it.each(["kaleidescape-panel", "kaleidescape-reader"] as const)(
     window.dispatchEvent(new Event("location-changed"));
     await vi.waitFor(() =>
       expect(lastFilters(transport)).toMatchObject({
-        missing_metadata_artwork: true,
+        missing_metadata_artwork: tag === "kaleidescape-panel",
       }),
     );
     const existing = library();

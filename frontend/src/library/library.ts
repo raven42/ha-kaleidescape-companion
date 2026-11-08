@@ -2,7 +2,6 @@ import { renderRatings } from "../enrichment/ratings";
 import { metadataDetails } from "../enrichment/details";
 import "../enrichment/title-scrape";
 /** Read-only, locally cached library browsing; networking to devices stays in HA. */
-import { matches } from "../core/search";
 import { counted } from "../core/text";
 import { LitElement, html, nothing } from "lit";
 import { live } from "lit/directives/live.js";
@@ -304,7 +303,6 @@ export class KaleidescapeLibrary extends LitElement {
   private requestLimit = 50;
   private requestedOffset = 0;
   private draft: Filters = {};
-  private facetSearch = "";
   private visibility = () => {
     clearTimeout(this.timer);
     if (document.hidden) {
@@ -316,6 +314,21 @@ export class KaleidescapeLibrary extends LitElement {
       this.scheduleLayoutPage();
     }
   };
+  private readViewFilters() {
+    return readLibraryFilters(
+      undefined,
+      this.advanced && !!this.scope?.permissions.edit,
+    );
+  }
+  private clearHiddenMaintenanceFilter(filters: Filters) {
+    if (
+      !(this.advanced && this.scope?.permissions.edit) &&
+      new URL(location.href).searchParams.has(
+        "library_missing_metadata_artwork",
+      )
+    )
+      writeLibraryFilters(filters);
+  }
   private locationChanged = () => {
     if (
       this.dashboard ||
@@ -325,17 +338,19 @@ export class KaleidescapeLibrary extends LitElement {
     )
       return;
     const filters = normalizeUrlFilters(
-      readLibraryFilters(undefined, !!this.scope?.permissions.edit) ??
-        emptyLibraryFilters(),
+      this.readViewFilters() ?? emptyLibraryFilters(),
     );
     const next = { ...this.applied, ...filters };
-    if (JSON.stringify(next) === JSON.stringify(this.applied)) return;
+    if (JSON.stringify(next) === JSON.stringify(this.applied)) {
+      this.clearHiddenMaintenanceFilter(filters);
+      return;
+    }
     if (!this.confirmNavigation()) return;
+    this.clearHiddenMaintenanceFilter(filters);
     clearTimeout(this.searchTimer);
     this.applied = next;
     this.filters = structuredClone(this.applied);
     this.draft = {};
-    this.facetSearch = "";
     if (this.selected) this.closeDialog("title-dialog");
     void this.load();
   };
@@ -411,6 +426,17 @@ export class KaleidescapeLibrary extends LitElement {
       return;
     }
     if (!this.preferencesReady) return;
+    if (
+      changed.has("advanced") &&
+      !this.advanced &&
+      this.applied.missing_metadata_artwork
+    ) {
+      this.applied = { ...this.applied, missing_metadata_artwork: false };
+      this.filters = { ...this.filters, missing_metadata_artwork: false };
+      this.draft = { ...this.draft, missing_metadata_artwork: false };
+      if (!this.dashboard) this.clearHiddenMaintenanceFilter(this.applied);
+      void this.load();
+    }
     if (changed.has("scope")) {
       const fuzzy = this.scope?.ui_defaults?.fuzzy_search !== false;
       if (this.fuzzySearch !== fuzzy) {
@@ -504,15 +530,14 @@ export class KaleidescapeLibrary extends LitElement {
           "recently_added",
         ].map((key) => [key, values[key]]),
       ) as Filters;
-      const urlFilters = this.dashboard
-        ? null
-        : readLibraryFilters(undefined, !!this.scope?.permissions.edit);
+      const urlFilters = this.dashboard ? null : this.readViewFilters();
       this.applied = {
         ...this.applied,
         ...normalizeUrlFilters(urlFilters ?? emptyLibraryFilters()),
       };
       if (!this.scope?.permissions.edit)
         this.applied.missing_purchase_information = false;
+      if (urlFilters) this.clearHiddenMaintenanceFilter(urlFilters);
       this.filters = structuredClone(this.applied);
       this.preferencesReady = true;
       if (this.openCriterion)
@@ -583,7 +608,6 @@ export class KaleidescapeLibrary extends LitElement {
       show_library_cost: false,
     };
     this.draft = {};
-    this.facetSearch = "";
     this.page = this.info = this.selected = undefined;
     this.collectionLocked = this.checkingCollection = false;
     this.collectionRecoveryNotice = "";
@@ -1125,7 +1149,6 @@ export class KaleidescapeLibrary extends LitElement {
   }
   private openFilters() {
     this.draft = structuredClone(this.applied);
-    this.facetSearch = "";
     void this.openDialog("filter-dialog");
   }
   private clearFilters() {
@@ -1138,7 +1161,6 @@ export class KaleidescapeLibrary extends LitElement {
     };
     this.applied = { ...this.filters };
     this.draft = {};
-    this.facetSearch = "";
     this.saveFilters();
     void this.load();
   }
@@ -1184,7 +1206,6 @@ export class KaleidescapeLibrary extends LitElement {
     };
     this.applied = structuredClone(this.filters);
     this.draft = {};
-    this.facetSearch = "";
     this.saveFilters();
     this.closeDialog("title-dialog");
     void this.load();
@@ -1287,16 +1308,7 @@ export class KaleidescapeLibrary extends LitElement {
       (value) =>
         (key !== "collection" || !hiddenFilterCollection(value)) &&
         (key !== "status" ||
-          (MOVIE_FILTERS as readonly string[]).includes(value)) &&
-        matches(
-          key === "collection"
-            ? collectionLabel(value)
-            : key === "status"
-              ? statusFilterLabel(value, this.movieStatusLabels)
-              : value,
-          this.facetSearch,
-          this.fuzzySearch,
-        ),
+          (MOVIE_FILTERS as readonly string[]).includes(value)),
     );
   }
 
@@ -1573,6 +1585,15 @@ export class KaleidescapeLibrary extends LitElement {
     </dialog>`;
   }
   private renderFilterDialog() {
+    const selectedCount = [...FILTERS.map(([key]) => key), "status"].reduce(
+      (total, key) =>
+        total +
+        (Array.isArray(this.draft[key])
+          ? (this.draft[key] as string[]).length
+          : 0),
+      Number(!!this.draft.missing_metadata_artwork) +
+        Number(!!this.draft.missing_purchase_information),
+    );
     return html`<dialog
       id="filter-dialog"
       @click=${dismissBackdrop}
@@ -1583,33 +1604,27 @@ export class KaleidescapeLibrary extends LitElement {
         <h2 id="filters-title">Library filters</h2>
         ${closeButton(() => this.closeDialog("filter-dialog"))}
       </div>
-      <p>
-        Match any checked value within a category and all selected categories.
+      <p class="filter-intro">
+        Select any options within a category. Movies must match every category
+        you choose.
       </p>
-      <label
-        >Find filter values<input
-          name="facet_search"
-          type="search"
-          .value=${this.facetSearch}
-          @input=${(event: Event) => {
-            this.facetSearch = (event.target as HTMLInputElement).value;
-            this.requestUpdate();
-          }}
-      /></label>
-      ${this.page?.truncated_facets.length ? html`<p class="muted">Each category shows up to 500 known names.</p>` : nothing}
-      <label class="check"
-        ><input
-          name="missing_metadata_artwork"
-          type="checkbox"
-          .checked=${!!this.draft.missing_metadata_artwork}
-          @change=${(event: Event) => {
-            this.draft.missing_metadata_artwork = (
-              event.target as HTMLInputElement
-            ).checked;
-            this.requestUpdate();
-          }}
-        />Missing metadata/artwork</label
-      >
+      ${
+        this.advanced && this.scope?.permissions.edit
+          ? html`<label class="check"
+              ><input
+                name="missing_metadata_artwork"
+                type="checkbox"
+                .checked=${!!this.draft.missing_metadata_artwork}
+                @change=${(event: Event) => {
+                  this.draft.missing_metadata_artwork = (
+                    event.target as HTMLInputElement
+                  ).checked;
+                  this.requestUpdate();
+                }}
+              />Missing metadata/artwork</label
+            >`
+          : nothing
+      }
       ${
         this.scope?.permissions.edit
           ? html`<label class="check"
@@ -1643,7 +1658,16 @@ export class KaleidescapeLibrary extends LitElement {
           )
             return nothing;
           return html`<fieldset>
-            <legend>${label}</legend>
+            <legend>
+              <span class="facet-heading">
+                <span>${label}</span>
+                <span
+                  class="facet-count"
+                  aria-label=${`${selected.length} selected`}
+                  >${selected.length}</span
+                >
+              </span>
+            </legend>
             <div class="facet-options">
               ${
                 choices.length
@@ -1674,6 +1698,18 @@ export class KaleidescapeLibrary extends LitElement {
                   : html`<p class="muted">No matching options</p>`
               }
             </div>
+            <button
+              type="button"
+              class="facet-clear"
+              aria-label=${`Clear ${label} filters`}
+              ?disabled=${!selected.length}
+              @click=${() => {
+                this.draft = { ...this.draft, [key]: [] };
+                this.requestUpdate();
+              }}
+            >
+              Clear
+            </button>
           </fieldset>`;
         })}
       </div>
@@ -1705,6 +1741,8 @@ export class KaleidescapeLibrary extends LitElement {
           }}
         >
           Clear filters</button
+        ><span class="filter-selection-summary" role="status"
+          >${selectedCount ? `${selectedCount} selected` : "No filters selected"}</span
         ><span class="grow"></span>
         <button
           class="primary"
@@ -1712,8 +1750,11 @@ export class KaleidescapeLibrary extends LitElement {
             const next = { ...this.applied };
             for (const key of [...FILTERS.map(([key]) => key), "status"])
               next[key] = this.draft[key] ?? [];
-            next.missing_metadata_artwork =
-              !!this.draft.missing_metadata_artwork;
+            next.missing_metadata_artwork = !!(
+              this.advanced &&
+              this.scope?.permissions.edit &&
+              this.draft.missing_metadata_artwork
+            );
             next.missing_purchase_information =
               !!this.draft.missing_purchase_information;
             next.recently_added = false;

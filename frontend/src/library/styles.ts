@@ -977,7 +977,13 @@ export const libraryStyles = css`
     gap: 20px;
     margin-top: 20px;
   }
+  .filter-intro {
+    margin: 12px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
   .facet-groups fieldset {
+    position: relative;
     min-width: 0;
     border: 0;
     padding: 16px;
@@ -996,7 +1002,39 @@ export const libraryStyles = css`
   .people-filters legend + * {
     clear: both;
   }
+  .facet-heading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .facet-count {
+    flex: 0 0 32px;
+    width: 32px;
+    margin-inline-start: auto;
+    text-align: center;
+    border-radius: 999px;
+    padding: 3px 7px;
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .facet-clear {
+    display: block;
+    margin: 8px 0 0 auto;
+    min-height: 30px;
+    padding: 2px 5px;
+    border: 0;
+    background: transparent;
+    color: var(--accent);
+    font-size: 12px;
+  }
+  .filter-selection-summary {
+    color: var(--muted);
+    font-size: 12px;
+  }
   .facet-options {
+    clear: both;
     max-height: 220px;
     overflow: auto;
   }
@@ -1149,6 +1187,11 @@ export const libraryStyles = css`
     padding: 3px 8px;
     min-height: 28px;
     font-size: 12px;
+  }
+  @media (max-width: 480px) {
+    #filter-dialog .facet-groups {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
   @media (max-width: 700px) {
     .library-page {
