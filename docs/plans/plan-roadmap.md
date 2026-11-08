@@ -42,6 +42,11 @@ findings and release qualification gaps. Historical reports capture the audited
 baseline rather than subsequent changes. The upstream and qualification gates
 below remain in force.
 
+The [authorized follow-up](../../audit/2026-11-07/FOLLOW_UP.md) records the
+receipt currency, retained purchase evidence and notification fixes, corrected
+documentation, development metadata and passing offline checks. External
+acceptance below remains unperformed.
+
 1. Review and upstream the local pyk patches while preserving its existing
    `Device` workflow. Verify the released package with HA's built-in integration
    before changing the shared dependency pin or removing the bundled PoC copy.
