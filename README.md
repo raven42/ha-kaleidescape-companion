@@ -90,8 +90,8 @@ privileges; the security policy explains the actual boundaries.
 
 ## Release status
 
-This remains a development integration. Supported HA versions, distribution
-metadata/license, current dependency review and operator/hardware/backup
-validation remain release work tracked in the roadmap. An operator may choose a
-household deployment after reviewing those limits. This documentation does not
-claim hardware qualification or an upstream pyk release.
+This remains a development integration (`0.1.0-dev.0`). Supported HA versions,
+project licensing/distribution, current dependency review and
+operator/hardware/backup validation remain release work tracked in the roadmap.
+An operator may choose a household deployment after reviewing those limits. This
+documentation does not claim hardware qualification or an upstream pyk release.

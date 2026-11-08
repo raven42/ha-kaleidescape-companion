@@ -16,6 +16,13 @@ with pyk 1.2.0 in HA's manifest. This PoC tests its bundled patched pyk source,
 whose new interfaces are not present in the released 1.2.0 package. This is not
 yet a supported minimum HA version.
 
+Both the Python distribution and private frontend package are named
+`kaleidescape-companion`. The HA domain stays `kaleidescape_companion`; the
+external device library remains `pykaleidescape`. Existing development
+environments installed under the old editable name `kaleidescape` should remove
+that distribution before rerunning setup. Do not remove `pykaleidescape` or HA's
+built-in integration when updating the Companion package name.
+
 ```sh
 bash dev/dev.sh setup
 bash dev/dev.sh check

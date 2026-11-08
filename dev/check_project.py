@@ -106,8 +106,28 @@ def validate() -> None:
         or project.get("dependencies", []) != manifest["requirements"]
     ):
         raise ValueError("Runtime dependency must match HA's pykaleidescape pin")
-    if project["name"] != "kaleidescape" or frontend["name"] != "kaleidescape":
-        raise ValueError("Package names must be kaleidescape")
+    if (
+        project["name"] != "kaleidescape-companion"
+        or frontend["name"] != "kaleidescape-companion"
+    ):
+        raise ValueError("Package names must be kaleidescape-companion")
+    if not manifest.get("codeowners") or not all(
+        re.fullmatch(r"@[A-Za-z0-9-]+", owner) for owner in manifest["codeowners"]
+    ):
+        raise ValueError("Manifest must identify GitHub code owners")
+    for field, project_key in (
+        ("documentation", "Homepage"),
+        ("issue_tracker", "Issues"),
+    ):
+        url = manifest.get(field, "")
+        if not url.startswith("https://github.com/") or url != project.get(
+            "urls", {}
+        ).get(project_key):
+            raise ValueError("Manifest and project repository URLs must agree")
+    if manifest["version"] == "0.0.0":
+        raise ValueError(
+            "Replace the scaffold version with a development or release version"
+        )
 
     constants = read_constants(INTEGRATION / "const.py")
     if constants.get("DOMAIN") != DOMAIN or constants.get("NAME") != NAME:
@@ -135,7 +155,12 @@ def validate() -> None:
         raise ValueError("Backend guide must document the current SQLite schema")
 
     lock = read_json(ROOT / "frontend" / "package-lock.json")
-    if lock["name"] != frontend["name"] or lock["version"] != frontend["version"]:
+    if (
+        lock["name"] != frontend["name"]
+        or lock["packages"][""]["name"] != frontend["name"]
+        or lock["version"] != frontend["version"]
+        or lock["packages"][""]["version"] != frontend["version"]
+    ):
         raise ValueError("Frontend lockfile must match package metadata")
     if lock["packages"][""]["dependencies"] != frontend["dependencies"]:
         raise ValueError("Frontend lockfile dependencies are stale")

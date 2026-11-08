@@ -37,10 +37,10 @@ imported; v7 moved receipt extraction into Python.
 
 ## Next delivery gates
 
-The [2026-11-06 independent audit](../../audit/2026-11-06/AUDIT_FINDINGS.md)
-records offline findings and release qualification gaps. Historical reports
-capture the audited baseline rather than subsequent changes. The upstream and
-qualification gates below remain in force.
+The [2026-11-07 audit](../../audit/2026-11-07/AUDIT_FINDINGS.md) records offline
+findings and release qualification gaps. Historical reports capture the audited
+baseline rather than subsequent changes. The upstream and qualification gates
+below remain in force.
 
 1. Review and upstream the local pyk patches while preserving its existing
    `Device` workflow. Verify the released package with HA's built-in integration
@@ -64,9 +64,13 @@ precise functional requirements, optional owner decisions and exit evidence.
 
 ## Release readiness
 
-- Declare and test supported HA releases; complete manifest repository URLs,
-  code ownership, versioning, license and distribution metadata. HA 2026.11.0 is
-  the development baseline, not a promised minimum version.
+- Declare and test supported HA releases. Manifest repository URLs and ownership
+  are populated; `0.1.0-dev.0` identifies an unqualified development build
+  across the integration, project and frontend. Choose the project license
+  (explicitly deferred by the owner) and final release version/distribution
+  policy before publishing. HA 2026.11.0 is the development baseline, not a
+  promised minimum version. The bundled pyk MIT license covers that dependency
+  only.
 - Make a clean checkout/build/install reproducible with the accepted released
   pyk dependency; verify setup, options reload, unload, restart and upgrade.
 - Run current dependency audits against the release candidate and assess actual

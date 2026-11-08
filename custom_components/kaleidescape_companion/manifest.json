@@ -1,7 +1,11 @@
 {
   "domain": "kaleidescape_companion",
   "name": "Kaleidescape Companion",
-  "codeowners": [],
+  "codeowners": [
+    "@raven42"
+  ],
+  "documentation": "https://github.com/raven42/ha-kaleidescape-companion",
+  "issue_tracker": "https://github.com/raven42/ha-kaleidescape-companion/issues",
   "config_flow": true,
   "single_config_entry": true,
   "dependencies": [
@@ -19,5 +23,5 @@
   "requirements": [
     "pykaleidescape==1.2.0"
   ],
-  "version": "0.0.0"
+  "version": "0.1.0-dev.0"
 }
