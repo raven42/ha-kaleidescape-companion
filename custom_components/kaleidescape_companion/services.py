@@ -58,6 +58,49 @@ def _receipt_log_html(payload):
     return _html_part(payload["html_part"])
 
 
+def _purchase_review_message(result):
+    """Choose recovery from bounded outcomes without exposing receipt contents."""
+    reasons = {issue["reason"] for issue in result["issues"]}
+    if result.get("extracted_records") == []:
+        cause = (
+            "The receipt HTML part was unavailable."
+            if "html_part_unavailable" in reasons
+            else "The receipt HTML could not be parsed safely."
+            if "html_items_unavailable" in reasons
+            else "No usable purchase items were found in the receipt HTML."
+        )
+        return (
+            f"Nothing was imported. {cause} Check imap.fetch and imap.fetch_part "
+            "in the automation trace and verify the fetched HTML part."
+        )
+    saved = sum(result.get(key, 0) for key in ("imported_count", "updated_count"))
+    pending = result.get("pending_count", 0)
+    messages = [
+        "Purchases were saved; some need review."
+        if saved + pending
+        else "No new purchases were saved; some need review."
+    ]
+    if pending or "unmatched" in reasons:
+        messages.append(
+            "Open Kaleidescape Companion → Database → Reconcile purchases "
+            "to link saved unmatched purchases."
+        )
+    if reasons - {"unmatched"}:
+        if saved + result.get("unchanged_count", 0):
+            messages.append(
+                "For linked purchases, open Kaleidescape Companion → Library → "
+                "movie details → Purchase details in Advanced mode to inspect "
+                "and repair incomplete or inconsistent fields."
+            )
+        else:
+            messages.append(
+                "Inspect the saved purchase records in Kaleidescape Companion → "
+                "Database and the action result in the automation trace before "
+                "repairing fields or retrying."
+            )
+    return " ".join(messages)
+
+
 def async_register_services(hass: HomeAssistant) -> None:
     """Register Companion actions for the loaded household entry."""
 
@@ -150,8 +193,7 @@ def async_register_services(hass: HomeAssistant) -> None:
 
             persistent_notification.async_create(
                 hass,
-                "Some purchases need review. Open Kaleidescape Companion → "
-                "Database → Reconcile purchases.",
+                _purchase_review_message(result),
                 "Kaleidescape Companion purchases need review",
             )
         return result if call.return_response else None

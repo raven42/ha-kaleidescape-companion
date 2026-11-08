@@ -145,6 +145,15 @@ distinction when customizing notifications. A `needs_review` response does not
 mean nothing was saved. Legacy `allow_partial` does not restore the former
 all-or-nothing matching workflow.
 
+Without a response variable, the action's notification chooses recovery from the
+outcome: no extracted items means nothing was imported and points to HTML
+fetching and trace inspection; saved unmatched rows point to reconciliation;
+linked field issues point to Advanced movie Purchase details for repair. Mixed
+outcomes can include both destinations. Replayed unmatched rows still point to
+reconciliation even when no new row was saved. Notifications contain no receipt
+contents. Conflicts and possible duplicates still require a response variable
+and raise an action error when one was not requested.
+
 Open **Database → Reconcile purchases** to review saved unlinked purchases,
 choose available Library entries (with cached cover art where available), and
 apply selected changes. Playback tracking can remain enabled for purchase-only
