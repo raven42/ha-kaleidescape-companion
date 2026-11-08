@@ -97,11 +97,12 @@ recovery. Bundled history does not describe an operator's local edits.
 ## Database and per-title management
 
 Database shows Viewings, Sessions, Library and Purchases by default. Options
-exposes protected system tables and fixed or viewport-fitted row counts. Its
-entry list and details have separate keyboard-scrollable regions, with a shared
-footer showing row range, total, selection count and First/Previous/Next
-navigation. Library and artwork rows can preview authenticated cached covers;
-relationship links open the referenced row. Protected records remain read-only.
+exposes protected system tables in a grouped picker and fixed, viewport-fitted
+or incrementally loaded All rows. Its entry list and details have separate
+keyboard-scrollable regions, with a shared footer showing row range, total,
+selection count and First/Previous/Next navigation. Library and artwork rows can
+preview authenticated cached covers; relationship links open the referenced row.
+Protected records remain read-only.
 
 **Reconcile purchases** loads unmatched purchases already saved in the database.
 Review starts with no purchases selected; unresolved purchases appear first and

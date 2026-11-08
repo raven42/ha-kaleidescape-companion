@@ -201,7 +201,7 @@ def validate_database(patch, previous=None):
         raise invalid("Unknown Database preferences")
     values = {**DATABASE_DEFAULTS, **(previous or {}), **patch}
     if (
-        values["limit"] != "fit"
+        values["limit"] not in ("fit", "all")
         and (
             type(values["limit"]) is not int
             or values["limit"] not in (10, 25, 100, 500)

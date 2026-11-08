@@ -34,6 +34,7 @@
       FixtureTransport,
       libraryTitle,
       playing,
+      record,
     } from "../tests/fixture.ts";
     import { JournalClient } from "../src/core/api.ts";
     const parameters = new URLSearchParams(location.search);
@@ -120,6 +121,19 @@
           "An independent same-name work, never grouped with the remake.",
       }),
     );
+    const recordCount = Number(parameters.get("records"));
+    if (
+      Number.isInteger(recordCount) &&
+      recordCount > 0 &&
+      recordCount <= 1000
+    ) {
+      transport.records = Array.from({ length: recordCount }, (_, index) =>
+        record({
+          id: `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
+          title: `Fictional viewing ${String(index + 1).padStart(4, "0")}`,
+        }),
+      );
+    }
     const titleCount = Number(parameters.get("titles"));
     if (Number.isInteger(titleCount) && titleCount >= 1 && titleCount <= 2000) {
       transport.libraryTitles = Array.from({ length: titleCount }, (_, index) =>

@@ -3,6 +3,7 @@ import { responsivePreferences } from "./profile-controller";
 import { responsiveViewport } from "./viewport";
 import { counted } from "../core/text";
 import { LitElement, html, nothing } from "lit";
+import { repeat } from "lit/directives/repeat.js";
 import type { PropertyValues } from "lit";
 import { ApiError, errorCode, errorMessage } from "../core/api";
 import type {
@@ -47,8 +48,30 @@ const LABELS: Record<string, string> = {
   calendar_publications: "Calendar publications",
   calendar_sync_jobs: "Calendar exports",
   calendar_sync_items: "Calendar export items",
+  calendar_managed_events: "Calendar managed events",
+  calendar_reconcile_candidates: "Calendar reconciliation candidates",
+  calendar_reconcile_intents: "Calendar reconciliation receipts",
+  playback_controls: "Playback control receipts",
 };
 const MAIN = ["viewings", "sessions", "library", "purchase_records"];
+const ALL_BATCH = 100;
+const ROW_HEIGHT = 44;
+const SYSTEM_GROUPS: [string, (table: string) => boolean][] = [
+  ["Library", (table) => table.startsWith("library_")],
+  ["Purchases", (table) => table.startsWith("purchase_")],
+  ["Calendar", (table) => table.startsWith("calendar_")],
+  [
+    "Activity and audits",
+    (table) =>
+      table.endsWith("_audit") ||
+      table === "requests" ||
+      table === "playback_controls",
+  ],
+  ["System", () => true],
+];
+function systemGroup(table: string) {
+  return SYSTEM_GROUPS.find(([, matches]) => matches(table))![0];
+}
 type Row = Record<string, unknown>;
 interface ResizeAnchor {
   row: Row;
@@ -65,6 +88,12 @@ export class KaleidescapeDatabase extends LitElement {
       if (
         !this.ready ||
         this.preferences?.unsettled ||
+        this.moreLoading ||
+        this.detailLoading ||
+        (this.allMode &&
+          (!!this.detail ||
+            this.selected.size > 0 ||
+            (this.page?.items.length ?? 0) > ALL_BATCH)) ||
         this.blocked ||
         this.operation ||
         this.renderRoot.querySelector("dialog[open]")
@@ -102,6 +131,14 @@ export class KaleidescapeDatabase extends LitElement {
   private table = "viewings";
   private filters: DatabaseQuery = { limit: 25, query: "", descending: false };
   private fitPage = true;
+  private allMode = false;
+  private allBatchSize = ALL_BATCH;
+  private moreLoading = false;
+  private moreError = "";
+  private detailLoading = false;
+  private detailRequest = 0;
+  private rowScrollTop = 0;
+  private listHeight = 440;
   private fitObserver?: ResizeObserver;
   private fitList?: Element;
   private fitTimer?: ReturnType<typeof setTimeout>;
@@ -177,6 +214,11 @@ export class KaleidescapeDatabase extends LitElement {
     this.page = undefined;
     this.table = "viewings";
     this.fitPage = true;
+    this.allMode = this.moreLoading = this.detailLoading = false;
+    this.allBatchSize = ALL_BATCH;
+    this.moreError = "";
+    this.detailRequest++;
+    this.rowScrollTop = 0;
     this.filters = { limit: 25, query: "", descending: false };
     this.showSystem = false;
     this.sorts = {};
@@ -223,7 +265,12 @@ export class KaleidescapeDatabase extends LitElement {
       if (generation !== this.generation) return;
       this.fuzzySearch = this.scope?.ui_defaults?.fuzzy_search !== false;
       this.fitPage = values.limit === "fit" || values.limit === undefined;
-      this.filters.limit = this.fitPage ? 25 : (values.limit as number);
+      this.allMode = values.limit === "all";
+      this.filters.limit = this.allMode
+        ? ALL_BATCH
+        : this.fitPage
+          ? 25
+          : (values.limit as number);
       this.showSystem = values.show_system as boolean;
       this.sorts = (values.sorts ?? {}) as typeof this.sorts;
       this.table = String(values.table ?? "viewings");
@@ -238,12 +285,37 @@ export class KaleidescapeDatabase extends LitElement {
       }
       this.ready = true;
       await this.load(
-        anchor
+        anchor && !this.allMode
           ? Math.floor(anchor.index / this.filters.limit) * this.filters.limit
           : 0,
         anchor?.revision,
-        anchor?.row,
+        this.allMode ? undefined : anchor?.row,
       );
+      if (anchor && this.allMode && generation === this.generation) {
+        while (
+          this.page &&
+          this.page.items.length <= anchor.index &&
+          this.page.has_more &&
+          !this.moreError &&
+          generation === this.generation
+        ) {
+          const loaded = this.page.items.length;
+          await this.loadMore();
+          if (!this.page || this.page.items.length <= loaded) break;
+        }
+        const row = this.page?.items[anchor.index];
+        if (row && generation === this.generation) {
+          await this.showDetail(row);
+          await this.updateComplete;
+          const list =
+            this.renderRoot.querySelector<HTMLElement>(".entry-list");
+          if (list) {
+            list.scrollTop = anchor.index * ROW_HEIGHT;
+            this.rowScrollTop = list.scrollTop;
+            this.requestUpdate();
+          }
+        }
+      }
     } catch (error) {
       if (generation === this.generation) this.fail(error);
     }
@@ -258,8 +330,16 @@ export class KaleidescapeDatabase extends LitElement {
     }
     this.scheduleFit();
     for (const [name, value] of [
-      ["database_limit", this.fitPage ? "fit" : String(this.filters.limit)],
+      [
+        "database_limit",
+        this.allMode
+          ? "all"
+          : this.fitPage
+            ? "fit"
+            : String(this.filters.limit),
+      ],
       ["database_sort", this.filters.sort ?? this.page?.columns[0] ?? ""],
+      ["database_table", MAIN.includes(this.table) ? "" : this.table],
     ]) {
       const input = this.renderRoot.querySelector<HTMLSelectElement>(
         `[name="${name}"]`,
@@ -306,6 +386,7 @@ export class KaleidescapeDatabase extends LitElement {
   private get blocked() {
     return (
       this.loading ||
+      this.detailLoading ||
       this.saving ||
       !!this.pending ||
       this.transferBusy ||
@@ -347,20 +428,35 @@ export class KaleidescapeDatabase extends LitElement {
     const generation = this.generation,
       request = ++this.request;
     this.loading = true;
+    this.moreLoading = this.detailLoading = false;
+    this.moreError = "";
+    this.allBatchSize = ALL_BATCH;
+    this.detailRequest++;
+    this.rowScrollTop = 0;
     if (this.page?.table !== this.table) this.page = undefined;
     this.error = "";
     if (!preserve) this.detail = undefined;
     this.selected.clear();
     this.requestUpdate();
     try {
-      const page = await this.client.inspect(
-        this.scope,
-        this.table,
-        offset,
-        revision,
-        this.filters,
-      );
+      const page = this.allMode
+        ? await this.inspectAllChunk(offset, revision, generation, request)
+        : await this.client.inspect(
+            this.scope,
+            this.table,
+            offset,
+            revision,
+            this.filters,
+          );
       if (generation !== this.generation || request !== this.request) return;
+      if (this.allMode) {
+        if (
+          (page.has_more && !page.items.length) ||
+          page.row_tokens?.length !== page.items.length
+        )
+          throw new ApiError("refresh_required");
+        page.items = page.items.map((row) => this.compactRow(row, page));
+      }
       this.page = page;
       if (preserve) {
         const keys =
@@ -463,7 +559,208 @@ export class KaleidescapeDatabase extends LitElement {
         ? [this.detail]
         : [];
   }
-  private showDetail(row: Row) {
+  private compactRow(row: Row, page: DatabasePage): Row {
+    const keys = new Set([
+      "title",
+      "name",
+      "id",
+      "cache_key",
+      "owner",
+      "request_id",
+      ...(page.schema ?? [])
+        .filter((field) => field.primary)
+        .map((field) => field.name),
+    ]);
+    return Object.fromEntries(
+      [...keys]
+        .filter((key) => key in row)
+        .map((key) => [
+          key,
+          typeof row[key] === "string" &&
+          !(page.schema ?? []).some(
+            (field) => field.primary && field.name === key,
+          )
+            ? (row[key] as string).slice(0, 512)
+            : row[key],
+        ]),
+    );
+  }
+  private async inspectAllChunk(
+    offset: number,
+    revision: number | undefined,
+    generation: number,
+    request: number,
+  ) {
+    while (
+      generation === this.generation &&
+      request === this.request &&
+      this.client &&
+      this.scope
+    ) {
+      try {
+        return await this.client.inspect(
+          this.scope,
+          this.table,
+          offset,
+          revision,
+          { ...this.filters, limit: this.allBatchSize },
+        );
+      } catch (error) {
+        if (generation !== this.generation || request !== this.request)
+          throw error;
+        if (
+          errorCode(error) !== "database_page_too_large" ||
+          this.allBatchSize === 1
+        )
+          throw error;
+        this.allBatchSize = Math.max(1, Math.floor(this.allBatchSize / 2));
+      }
+    }
+    throw new ApiError("not_ready");
+  }
+  private async loadMore() {
+    if (
+      !this.allMode ||
+      !this.client ||
+      !this.scope ||
+      !this.page?.has_more ||
+      this.moreLoading ||
+      this.moreError ||
+      this.blocked ||
+      this.operation
+    )
+      return;
+    const generation = this.generation,
+      request = this.request,
+      page = this.page;
+    this.moreLoading = true;
+    this.requestUpdate();
+    try {
+      const next = await this.inspectAllChunk(
+        page.items.length,
+        page.revision,
+        generation,
+        request,
+      );
+      if (
+        generation !== this.generation ||
+        request !== this.request ||
+        !this.allMode
+      )
+        return;
+      if (
+        next.revision !== page.revision ||
+        next.offset !== page.items.length ||
+        (next.has_more && !next.items.length) ||
+        next.row_tokens?.length !== next.items.length
+      )
+        throw new ApiError("refresh_required");
+      this.page = {
+        ...page,
+        items: [
+          ...page.items,
+          ...next.items.map((row) => this.compactRow(row, next)),
+        ],
+        row_tokens: [...(page.row_tokens ?? []), ...(next.row_tokens ?? [])],
+        has_more: next.has_more,
+        total: next.total,
+      };
+    } catch (error) {
+      if (generation !== this.generation || request !== this.request) return;
+      if (errorCode(error) === "unauthorized") this.fail(error);
+      else
+        this.moreError =
+          errorCode(error) === "refresh_required"
+            ? "The database changed while loading rows."
+            : errorMessage(error);
+    } finally {
+      if (generation === this.generation && request === this.request) {
+        this.moreLoading = false;
+        this.requestUpdate();
+      }
+    }
+  }
+  private scrollRows(event: Event) {
+    const list = event.currentTarget as HTMLElement;
+    this.rowScrollTop = list.scrollTop;
+    this.listHeight = list.clientHeight || 440;
+    if (
+      this.allMode &&
+      list.scrollHeight - list.scrollTop - list.clientHeight < 300
+    )
+      void this.loadMore();
+    if (this.allMode) {
+      const focused = (this.renderRoot as ShadowRoot)
+        .activeElement as HTMLElement | null;
+      const item = focused?.closest<HTMLElement>("li[data-row-index]");
+      const index = item ? Number(item.dataset.rowIndex) : -1;
+      const start = Math.max(0, Math.floor(this.rowScrollTop / ROW_HEIGHT) - 8);
+      const end = start + Math.ceil(this.listHeight / ROW_HEIGHT) + 16;
+      if (index >= 0 && (index < start || index >= end))
+        list.focus({ preventScroll: true });
+      this.requestUpdate();
+    }
+  }
+  private async showDetail(row: Row) {
+    if (this.blocked || !this.page) return;
+    if (this.allMode && this.client && this.scope) {
+      const page = this.page,
+        index = page.items.indexOf(row),
+        token = page.row_tokens?.[index],
+        generation = this.generation,
+        request = this.request,
+        detailRequest = ++this.detailRequest;
+      if (index < 0) return;
+      this.detailLoading = true;
+      this.requestUpdate();
+      try {
+        const result = await this.client.inspect(
+          this.scope,
+          this.table,
+          index,
+          page.revision,
+          { ...this.filters, limit: 1 },
+        );
+        if (
+          generation !== this.generation ||
+          request !== this.request ||
+          detailRequest !== this.detailRequest
+        )
+          return;
+        if (
+          result.revision !== page.revision ||
+          result.offset !== index ||
+          result.table !== page.table ||
+          !result.items[0] ||
+          (token && result.row_tokens?.[0] !== token)
+        )
+          throw new ApiError("refresh_required");
+        if (this.detail) {
+          const old = this.page!.items.indexOf(this.detail);
+          if (old >= 0)
+            this.page!.items[old] = this.compactRow(this.detail, this.page!);
+        }
+        this.page!.items[index] = result.items[0];
+        row = result.items[0];
+      } catch (error) {
+        if (
+          generation === this.generation &&
+          request === this.request &&
+          detailRequest === this.detailRequest
+        )
+          this.fail(error);
+        return;
+      } finally {
+        if (
+          generation === this.generation &&
+          request === this.request &&
+          detailRequest === this.detailRequest
+        ) {
+          this.detailLoading = false;
+          this.requestUpdate();
+        }
+      }
+    }
     this.detail = row;
     this.requestUpdate();
     void this.updateComplete.then(() => {
@@ -740,23 +1037,41 @@ export class KaleidescapeDatabase extends LitElement {
         <label
           >Rows per page<select
             name="database_limit"
-            .value=${this.fitPage ? "fit" : String(this.filters.limit)}
+            .value=${this.allMode ? "all" : this.fitPage ? "fit" : String(this.filters.limit)}
             @change=${(event: Event) => {
               const value = (event.target as HTMLSelectElement).value;
+              const wasAll = this.allMode;
               this.fitPage = value === "fit";
+              this.allMode = value === "all";
               this.preferences?.set({
-                limit: this.fitPage ? "fit" : Number(value),
+                limit: this.fitPage
+                  ? "fit"
+                  : this.allMode
+                    ? "all"
+                    : Number(value),
               });
-              if (this.fitPage) {
+              if (this.fitPage && wasAll) {
+                this.filters.limit = 25;
+                void this.load();
+              } else if (this.fitPage) {
                 this.scheduleFit();
                 this.requestUpdate();
+              } else if (this.allMode) {
+                this.filters.limit = ALL_BATCH;
+                void this.load();
               } else this.browse({ limit: Number(value) });
             }}
           >
             <option value="fit">Fit to screen</option>
+            <option value="all">All · load as you scroll</option>
             ${[10, 25, 100, 500].map((count) => html`<option value=${count}>${count}</option>`)}
           </select></label
-        ><label class="check"
+        >
+        <p class="muted">
+          All loads rows as you scroll. Up to 100 loaded rows can be selected
+          for deletion.
+        </p>
+        <label class="check"
           ><input
             name="show_system"
             type="checkbox"
@@ -781,10 +1096,20 @@ export class KaleidescapeDatabase extends LitElement {
     if (!this.ready)
       return html`<p>${this.error || "Loading database preferences…"}</p>
         ${this.error ? html`<button @click=${() => this.initialize()}>Retry loading database</button>` : nothing}`;
-    const tables = Object.keys(this.page?.tables ?? LABELS).filter(
-      (table) => this.showSystem || MAIN.includes(table),
-    );
+    const available = Object.keys(this.page?.tables ?? LABELS);
+    const tables = MAIN.filter((table) => available.includes(table));
+    const systemTables = available.filter((table) => !MAIN.includes(table));
     const editable = (this.page?.schema ?? []).some((field) => field.editable);
+    const rows = this.page?.items ?? [];
+    const start = this.allMode
+      ? Math.max(0, Math.floor(this.rowScrollTop / ROW_HEIGHT) - 8)
+      : 0;
+    const end = this.allMode
+      ? Math.min(
+          rows.length,
+          start + Math.ceil(this.listHeight / ROW_HEIGHT) + 16,
+        )
+      : rows.length;
     return html`<section class="card database" aria-label="Database management">
       <div class="entries-header">
         <div class="database-toolbar">
@@ -828,34 +1153,63 @@ export class KaleidescapeDatabase extends LitElement {
         <div class="database-messages">
           ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}${this.notice ? html`<p role="status">${this.notice}</p>` : nothing}${this.preferenceError ? html`<p class="warning">${this.preferenceError}<button @click=${() => this.preferences?.retry()}>Retry preferences</button></p>` : nothing}${this.retry()}
         </div>
-        <div
-          class="page-tabs table-tabs"
-          role="tablist"
-          aria-label="Database tables"
-          @keydown=${(event: KeyboardEvent) => {
-            const index = tables.indexOf(this.table);
-            const next =
-              event.key === "ArrowRight"
-                ? (index + 1) % tables.length
-                : event.key === "ArrowLeft"
-                  ? (index + tables.length - 1) % tables.length
-                  : event.key === "Home"
-                    ? 0
-                    : event.key === "End"
-                      ? tables.length - 1
-                      : -1;
-            if (next >= 0 && !this.blocked) {
-              event.preventDefault();
-              this.changeTable(tables[next]);
-              void this.updateComplete.then(() =>
-                this.renderRoot
-                  .querySelector<HTMLButtonElement>(`#table-${this.table}`)
-                  ?.focus(),
-              );
-            }
-          }}
-        >
-          ${tables.map((table) => html`<button role="tab" id=${`table-${table}`} aria-selected=${this.table === table} tabindex=${this.table === table ? 0 : -1} ?disabled=${this.blocked} @click=${() => this.changeTable(table)}>${LABELS[table] ?? table}${this.page ? ` (${this.page.tables[table]})` : ""}</button>`)}
+        <div class="database-table-selector">
+          <div
+            class="page-tabs table-tabs"
+            role="tablist"
+            aria-label="Database tables"
+            @keydown=${(event: KeyboardEvent) => {
+              const index = tables.indexOf(this.table);
+              const next =
+                event.key === "ArrowRight"
+                  ? (index + 1) % tables.length
+                  : event.key === "ArrowLeft"
+                    ? (index + tables.length - 1) % tables.length
+                    : event.key === "Home"
+                      ? 0
+                      : event.key === "End"
+                        ? tables.length - 1
+                        : -1;
+              if (next >= 0 && !this.blocked) {
+                event.preventDefault();
+                this.changeTable(tables[next]);
+                void this.updateComplete.then(() =>
+                  this.renderRoot
+                    .querySelector<HTMLButtonElement>(`#table-${this.table}`)
+                    ?.focus(),
+                );
+              }
+            }}
+          >
+            ${tables.map((table) => html`<button role="tab" id=${`table-${table}`} aria-selected=${this.table === table} tabindex=${this.table === table || (!MAIN.includes(this.table) && table === tables[0]) ? 0 : -1} ?disabled=${this.blocked} @click=${() => this.changeTable(table)}>${LABELS[table] ?? table}${this.page ? ` (${this.page.tables[table]})` : ""}</button>`)}
+          </div>
+          ${
+            this.showSystem
+              ? html`<label class="system-table-picker"
+                  >System tables<select
+                    name="database_table"
+                    .value=${MAIN.includes(this.table) ? "" : this.table}
+                    ?disabled=${this.blocked}
+                    @change=${(event: Event) => {
+                      const table = (event.target as HTMLSelectElement).value;
+                      if (table) this.changeTable(table);
+                    }}
+                  >
+                    <option value="">Choose a table</option>
+                    ${SYSTEM_GROUPS.map(([group]) => {
+                      const choices = systemTables.filter(
+                        (table) => systemGroup(table) === group,
+                      );
+                      return choices.length
+                        ? html`<optgroup label=${group}>
+                            ${choices.map((table) => html`<option value=${table}>${LABELS[table] ?? table.replaceAll("_", " ")}${this.page ? ` (${this.page.tables[table]})` : ""}</option>`)}
+                          </optgroup>`
+                        : nothing;
+                    })}
+                  </select></label
+                >`
+              : nothing
+          }
         </div>
         <div class="database-filters filters">
           <kaleidescape-database-search
@@ -906,10 +1260,24 @@ export class KaleidescapeDatabase extends LitElement {
             <h2>${LABELS[this.table] ?? this.table}</h2>
           </div>
           ${this.loading ? html`<p role="status">Loading database…</p>` : nothing}
-          <ul class="entry-list" tabindex="0" aria-label="Database rows">
-            ${this.page?.items.map(
-              (row, index) =>
-                html`<li class=${this.detail === row ? "selected" : ""}>
+          <ul
+            class="entry-list"
+            tabindex="0"
+            aria-label="Database rows"
+            @scroll=${this.scrollRows}
+          >
+            ${this.allMode && start ? html`<li class="entry-spacer" role="presentation" aria-hidden="true" style=${`height:${start * ROW_HEIGHT}px`}></li>` : nothing}
+            ${repeat(
+              rows.slice(start, end),
+              (_row, localIndex) => `${this.request}:${start + localIndex}`,
+              (row, localIndex) => {
+                const index = start + localIndex;
+                return html`<li
+                  data-row-index=${index}
+                  aria-posinset=${(this.page?.offset ?? 0) + index + 1}
+                  aria-setsize=${this.page?.total ?? rows.length}
+                  class=${this.detail === row ? "selected" : ""}
+                >
                   ${
                     this.page?.deletable
                       ? html`<input
@@ -933,9 +1301,14 @@ export class KaleidescapeDatabase extends LitElement {
                   >
                     ${String(row.title ?? row.name ?? row.id ?? row.cache_key ?? row.owner ?? row.request_id ?? "Dataset metadata")}
                   </button>
-                </li>`,
+                </li>`;
+              },
             )}
+            ${this.allMode && end < rows.length ? html`<li class="entry-spacer" role="presentation" aria-hidden="true" style=${`height:${(rows.length - end) * ROW_HEIGHT}px`}></li>` : nothing}
           </ul>
+          ${this.allMode && this.moreLoading ? html`<p role="status">Loading more rows…</p>` : nothing}
+          ${this.allMode && this.moreError ? html`<p class="error" role="alert">${this.moreError} Refresh database to restart.</p>` : nothing}
+          ${this.allMode && this.page?.has_more && !this.moreError ? html`<button type="button" ?disabled=${this.moreLoading || this.blocked} @click=${this.loadMore}>Load more rows</button>` : nothing}
         </section>
         <section
           class="database-detail entries-detail"
@@ -962,6 +1335,7 @@ export class KaleidescapeDatabase extends LitElement {
                 : nothing
             }
           </div>
+          ${this.detailLoading ? html`<p role="status">Loading entry…</p>` : nothing}
           ${
             this.detail
               ? html`${
@@ -1037,29 +1411,31 @@ export class KaleidescapeDatabase extends LitElement {
           this.page
             ? html`<div class="pagination database-pagination">
                 <small
-                  >${this.page.items.length === 1 ? "Row" : "Rows"}
-                  ${this.page.items.length ? this.page.offset + 1 : 0}–${this.page.offset + this.page.items.length}
-                  of ${this.page.total} · ${this.selected.size} selected
-                  (maximum 100)</small
+                  >${this.allMode ? `${this.page.items.length} of ${this.page.total} rows loaded` : `${this.page.items.length === 1 ? "Row" : "Rows"} ${this.page.items.length ? this.page.offset + 1 : 0}–${this.page.offset + this.page.items.length} of ${this.page.total}`}
+                  · ${this.selected.size} selected (maximum 100)</small
                 >
-                <div class="actions">
-                  <button
-                    ?disabled=${this.blocked || !this.page.offset}
-                    @click=${() => this.load()}
-                  >
-                    First</button
-                  ><button
-                    ?disabled=${this.blocked || !this.page.offset}
-                    @click=${() => this.load(Math.max(0, this.page!.offset - this.page!.limit), this.page!.revision)}
-                  >
-                    Previous</button
-                  ><button
-                    ?disabled=${this.blocked || !this.page.has_more}
-                    @click=${() => this.load(this.page!.offset + this.page!.limit, this.page!.revision)}
-                  >
-                    Next
-                  </button>
-                </div>
+                ${
+                  !this.allMode
+                    ? html`<div class="actions">
+                        <button
+                          ?disabled=${this.blocked || !this.page.offset}
+                          @click=${() => this.load()}
+                        >
+                          First</button
+                        ><button
+                          ?disabled=${this.blocked || !this.page.offset}
+                          @click=${() => this.load(Math.max(0, this.page!.offset - this.page!.limit), this.page!.revision)}
+                        >
+                          Previous</button
+                        ><button
+                          ?disabled=${this.blocked || !this.page.has_more}
+                          @click=${() => this.load(this.page!.offset + this.page!.limit, this.page!.revision)}
+                        >
+                          Next
+                        </button>
+                      </div>`
+                    : nothing
+                }
               </div>`
             : nothing
         }

@@ -23,14 +23,14 @@ and selection counts live in the sticky footer. Narrow screens stack the two
 scroll regions. Changing page resets the list position; selecting another entry
 starts its details at the top.
 
-**Options** saves rows per page (default **Fit to screen**, or 10/25/100/500),
-system-table visibility, the selected table and each table's sort field/order as
-personal database preferences. These use a separate settings row from Library
-preferences and require no HA reload. Initially the four main tables are
-visible: viewings, sessions, Library and Purchases (`purchase_records`).
-Collections, artwork and sources are system tables. **Show system tables**
-exposes the full trusted inspection allowlist; private operational state is
-excluded. It does not remove write protections.
+**Options** saves rows per page (default **Fit to screen**, 10/25/100/500, or
+**All**), system-table visibility, the selected table and each table's sort
+field/order as personal database preferences. These use a separate settings row
+from Library preferences and require no HA reload. Initially the four main
+tables are visible: viewings, sessions, Library and Purchases
+(`purchase_records`). Collections, artwork and sources are system tables. **Show
+system tables** exposes a grouped picker for the trusted inspection allowlist;
+private operational state is excluded. It does not remove write protections.
 
 Fit to screen measures the rendered list area and row height, recalculates on
 viewport/list resize, and requests between 1 and 500 rows. The pane uses its
@@ -43,6 +43,17 @@ the page containing it; ordinary pagination still clears details. Existing fixed
 page-size choices remain unchanged. Resize requests use the current snapshot
 revision, so concurrent database changes can require a refresh instead of
 silently selecting a different row.
+
+**All** loads the next batch as the row list is scrolled, with a manual **Load
+more rows** action as a fallback. Requests retain the inspected revision and
+shrink automatically if a page exceeds its byte limit. A changed database stops
+loading and asks for a refresh. The list renders only nearby compact rows, while
+selected details are fetched separately at the same revision; lightweight row
+identities and tokens remain in memory as more rows are loaded. Selection may
+span loaded batches and remains limited to 100 rows. A refresh, new search or
+change of table clears the selection. When a detail or selection is active, or
+more than one batch has loaded, switching display profiles waits until refresh
+or another action clears that browsing state.
 
 | Table                                                                          | Supported editing/deletion                                                                                                                                                                      |
 | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

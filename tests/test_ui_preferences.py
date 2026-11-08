@@ -19,6 +19,17 @@ class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = library.LibraryStorageTest.asyncSetUp
     assert_error = library.LibraryStorageTest.assert_error
 
+    async def test_database_all_preference_is_validated_and_persisted(self):
+        await self.repository.async_ui_preferences_update(
+            "a", False, str(uuid4()), 0, {"limit": "all"}, "database"
+        )
+        value = await self.repository.async_ui_preferences("a", area="database")
+        self.assertEqual(value["values"]["limit"], "all")
+        with self.assert_error("invalid_request"):
+            await self.repository.async_ui_preferences_update(
+                "a", False, str(uuid4()), 0, {"limit": "everything"}, "database"
+            )
+
     async def test_recent_purchase_badges_use_all_linked_versions_and_dates(self):
         remake = {
             **library.ROWS[0],

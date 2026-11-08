@@ -7,11 +7,19 @@ export const databaseStyles = css`
     margin-top: 24px;
   }
   .database .entry-list li {
-    height: 64px;
+    height: 44px;
     box-sizing: border-box;
-    padding: 8px 12px;
+    padding: 4px 10px;
+    gap: 8px;
+  }
+  .database .entry-list li.entry-spacer {
+    display: block;
+    min-height: 0;
+    padding: 0;
+    border: 0;
   }
   .database .entry-name {
+    flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -83,15 +91,29 @@ export const databaseStyles = css`
     padding-inline: 6px;
     white-space: nowrap;
   }
+  .database-table-selector {
+    display: flex;
+    align-items: end;
+    gap: 12px;
+    padding: 2px 12px 6px;
+  }
   .table-tabs {
+    flex: 1;
+    min-width: 0;
     margin: 0;
-    padding: 2px 12px 0;
+    padding: 0;
+  }
+  .system-table-picker {
+    flex: 0 1 270px;
+    min-width: 150px;
+    font-size: 12px;
+  }
+  .system-table-picker select {
+    min-height: 36px;
+    padding: 5px 8px;
   }
   .database-detail .editor {
     padding: 0;
-  }
-  .database .entry-list li {
-    padding: 6px 10px;
   }
   @media (max-width: 900px) {
     .database-toolbar kaleidescape-transfers {
@@ -131,8 +153,19 @@ export const databaseStyles = css`
     .database-filters select {
       width: 100%;
     }
-    .table-tabs {
+    .database-table-selector {
+      flex-wrap: wrap;
       padding-inline: 8px;
+      gap: 6px;
+    }
+    .table-tabs {
+      flex-basis: 100%;
+    }
+    .system-table-picker {
+      flex: 1 1 100%;
+    }
+    .system-table-picker select {
+      min-height: 44px;
     }
     .database-options-button {
       position: sticky;

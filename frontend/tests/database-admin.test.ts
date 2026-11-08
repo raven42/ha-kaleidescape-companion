@@ -233,7 +233,11 @@ it("stores database row counts, per-table sorts and system visibility separately
     "calendar_reconcile_candidates",
     "calendar_reconcile_intents",
   ])
-    expect(root().getElementById(`table-${table}`)).not.toBeNull();
+    expect(
+      root().querySelector(`[name="database_table"] option[value="${table}"]`),
+    ).not.toBeNull();
+  expect(root().querySelector('optgroup[label="Calendar"]')).toBeTruthy();
+  expect(root().querySelector('optgroup[label="Library"]')).toBeTruthy();
   expect(transport.databasePreferences).toMatchObject({
     limit: 100,
     show_system: true,
@@ -251,8 +255,14 @@ it("stores database row counts, per-table sorts and system visibility separately
     "calendar_reconcile_candidates",
     "calendar_reconcile_intents",
   ])
-    expect(root().getElementById(`table-${table}`)).not.toBeNull();
-  root().querySelector<HTMLButtonElement>("#table-requests")!.click();
+    expect(
+      root().querySelector(`[name="database_table"] option[value="${table}"]`),
+    ).not.toBeNull();
+  const system = root().querySelector<HTMLSelectElement>(
+    '[name="database_table"]',
+  )!;
+  system.value = "requests";
+  system.dispatchEvent(new Event("change"));
   await flush();
   expect(button("New Entry").disabled).toBe(true);
   expect(button("Delete entry").disabled).toBe(true);
@@ -430,6 +440,191 @@ it("follows composite references and selects the referenced row without acceptin
   expect(root().querySelector(".database-detail pre")?.textContent).toContain(
     "Director's picks",
   );
+});
+
+it("loads All in revision-bound batches, virtualizes rows and keeps selections across batches", async () => {
+  transport.databasePreferences.limit = "all";
+  transport.records = Array.from({ length: 225 }, (_, index) =>
+    record({
+      id: String(index).padStart(3, "0"),
+      title:
+        index === 0
+          ? "The Lantern Voyage"
+          : `Viewing ${String(index).padStart(3, "0")}`,
+    }),
+  );
+  await mount();
+  expect(root().textContent).toContain("100 of 225 rows loaded");
+  expect(root().querySelectorAll(".entry-name").length).toBeLessThan(40);
+  expect(root().querySelector(".database-pagination .actions")).toBeNull();
+  const selected = root().querySelector<HTMLInputElement>(
+    '[data-row-index="0"] input',
+  )!;
+  selected.click();
+  selected.focus();
+  const list = root().querySelector<HTMLElement>(".entry-list")!;
+  Object.defineProperty(list, "clientHeight", {
+    configurable: true,
+    value: 440,
+  });
+  Object.defineProperty(list, "scrollHeight", {
+    configurable: true,
+    value: 4400,
+  });
+  list.scrollTop = 4250;
+  list.dispatchEvent(new Event("scroll"));
+  expect(root().activeElement).toBe(list);
+  await vi.waitFor(() =>
+    expect(root().textContent).toContain("200 of 225 rows loaded"),
+  );
+  expect(
+    transport.calls
+      .filter((call) => call.type.endsWith("database/inspect"))
+      .at(-1),
+  ).toMatchObject({ offset: 100, revision: 5, limit: 100 });
+  expect(root().textContent).toContain("1 selected");
+  await vi.waitFor(() =>
+    expect(
+      root().querySelector('[data-row-index="100"] .entry-name'),
+    ).toBeTruthy(),
+  );
+  root()
+    .querySelector<HTMLInputElement>('[data-row-index="100"] input')!
+    .click();
+  root()
+    .querySelector<HTMLButtonElement>('[data-row-index="100"] .entry-name')!
+    .click();
+  await vi.waitFor(() =>
+    expect(root().querySelector(".entries-detail pre")?.textContent).toContain(
+      "Viewing 100",
+    ),
+  );
+  expect(root().textContent).toContain("2 selected");
+  button("Delete entries (2)").click();
+  await flush();
+  input("delete_confirmation", "DELETE");
+  await flush();
+  button("Confirm delete").click();
+  await vi.waitFor(() => expect(transport.records).toHaveLength(223));
+  expect(
+    transport.records.some((row) => row.id === "000" || row.id === "100"),
+  ).toBe(false);
+});
+
+it("stops loading All if the database revision changes and retains the visible selection", async () => {
+  transport.databasePreferences.limit = "all";
+  transport.records = Array.from({ length: 150 }, (_, index) =>
+    record({
+      id: String(index).padStart(3, "0"),
+      title: index ? `Viewing ${index}` : "The Lantern Voyage",
+    }),
+  );
+  await mount();
+  root().querySelector<HTMLInputElement>('[data-row-index="0"] input')!.click();
+  transport.revision++;
+  button("Load more rows").click();
+  await vi.waitFor(() =>
+    expect(root().textContent).toContain("Refresh database to restart"),
+  );
+  expect(root().textContent).toContain("1 selected");
+  expect(root().textContent).toContain("100 of 150 rows loaded");
+  expect(root().querySelectorAll(".entry-name").length).toBeLessThan(40);
+  button("Refresh database").click();
+  await vi.waitFor(() =>
+    expect(root().textContent).not.toContain("Refresh database to restart"),
+  );
+  expect(root().textContent).toContain("0 selected");
+});
+
+it("discards a late All batch after switching tables", async () => {
+  transport.databasePreferences.limit = "all";
+  transport.records = Array.from({ length: 150 }, (_, index) =>
+    record({
+      id: String(index).padStart(3, "0"),
+      title: index ? `Viewing ${index}` : "The Lantern Voyage",
+    }),
+  );
+  const original = transport.callWS.bind(transport);
+  let release!: () => void;
+  vi.spyOn(transport, "callWS").mockImplementation(async (message) => {
+    const result = await original(message);
+    if (
+      message.type.endsWith("database/inspect") &&
+      message.table === "viewings" &&
+      message.offset === 100
+    )
+      await new Promise<void>((resolve) => {
+        release = resolve;
+      });
+    return result;
+  });
+  await mount();
+  button("Load more rows").click();
+  await vi.waitFor(() => expect(release).toBeTypeOf("function"));
+  root().querySelector<HTMLButtonElement>("#table-sessions")!.click();
+  await vi.waitFor(() =>
+    expect(root().querySelector(".entries-list h2")?.textContent).toBe(
+      "Sessions",
+    ),
+  );
+  release();
+  await flush();
+  expect(root().textContent).toContain("0 of 0 rows loaded");
+  expect(root().textContent).not.toContain("Viewing 100");
+});
+
+it("refetches complete rows when switching from All to Fit", async () => {
+  transport.databasePreferences.limit = "all";
+  await mount();
+  button("Options").click();
+  await flush();
+  const limit = root().querySelector<HTMLSelectElement>(
+    '[name="database_limit"]',
+  )!;
+  limit.value = "fit";
+  limit.dispatchEvent(new Event("change"));
+  await vi.waitFor(() =>
+    expect(
+      transport.calls
+        .filter((call) => call.type.endsWith("database/inspect"))
+        .at(-1)?.limit,
+    ).toBe(25),
+  );
+  await vi.waitFor(() =>
+    expect(button("The Lantern Voyage").disabled).toBe(false),
+  );
+  await choose();
+  expect(root().querySelector(".entries-detail pre")?.textContent).toContain(
+    "fictional viewing for interface testing",
+  );
+});
+
+it("reduces All batch size when a response is too large", async () => {
+  transport.databasePreferences.limit = "all";
+  transport.records = Array.from({ length: 150 }, (_, index) =>
+    record({
+      id: String(index).padStart(3, "0"),
+      title: index ? `Viewing ${index}` : "The Lantern Voyage",
+    }),
+  );
+  const original = transport.callWS.bind(transport);
+  const attempted: number[] = [];
+  vi.spyOn(transport, "callWS").mockImplementation(async (message) => {
+    if (message.type.endsWith("database/inspect")) {
+      attempted.push(Number(message.limit));
+      if (Number(message.limit) > 25)
+        throw new ApiError("database_page_too_large");
+    }
+    return original(message);
+  });
+  await mount();
+  expect(attempted.slice(0, 3)).toEqual([100, 50, 25]);
+  expect(root().textContent).toContain("25 of 150 rows loaded");
+  button("Load more rows").click();
+  await vi.waitFor(() =>
+    expect(root().textContent).toContain("50 of 150 rows loaded"),
+  );
+  expect(attempted.at(-1)).toBe(25);
 });
 
 it("fits rows to the list viewport and keeps the selected entry on its new page after resize", async () => {
