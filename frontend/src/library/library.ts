@@ -1453,7 +1453,7 @@ export class KaleidescapeLibrary extends LitElement {
       </p>
       <div class="options-fields">
         <label class="mobile-sort-setting"
-          >Sort by<select
+          >${this.applied.query ? "Sort after search" : "Sort by"}<select
             name="library_mobile_sort"
             .value=${String(this.applied.sort)}
             @change=${(event: Event) => this.sort((event.target as HTMLSelectElement).value)}
@@ -2597,7 +2597,7 @@ export class KaleidescapeLibrary extends LitElement {
               Clear Filter
             </button>
             <label ?hidden=${this.dashboard?.show_sort === false}
-              >Sort by<select
+              >${this.applied.query ? "Sort after search" : "Sort by"}<select
                 name="library_sort"
                 .value=${String(this.applied.sort)}
                 @change=${(event: Event) => this.sort((event.target as HTMLSelectElement).value)}
@@ -2658,7 +2658,7 @@ export class KaleidescapeLibrary extends LitElement {
                       ${SORTS.filter(([key]) => key !== "random").map(
                         ([key, label], index) =>
                           html`<th
-                            aria-sort=${this.applied.sort === key ? (this.applied.descending ? "descending" : "ascending") : "none"}
+                            aria-sort=${!this.applied.query && this.applied.sort === key ? (this.applied.descending ? "descending" : "ascending") : "none"}
                           >
                             <button
                               class="sort-heading"
@@ -2666,7 +2666,7 @@ export class KaleidescapeLibrary extends LitElement {
                             >
                               <span>${label}</span
                               ><span class="sort-icon" aria-hidden="true"
-                                >${this.applied.sort === key ? (this.applied.descending ? "↓" : "↑") : "↕"}</span
+                                >${!this.applied.query && this.applied.sort === key ? (this.applied.descending ? "↓" : "↑") : "↕"}</span
                               >
                             </button>
                             <span
@@ -2780,7 +2780,8 @@ export class KaleidescapeLibrary extends LitElement {
         >
           <span>
             ${String(this.applied.query ?? "").trim() || activeFilters ? html`<strong class="match-count">Matches ${this.page?.total ?? 0}</strong> · ` : nothing}
-            Total ${this.info?.group_count ?? 0} ·
+            ${this.applied.query ? html`Relevance order · ` : nothing}
+            ${`Total ${this.info?.group_count ?? 0}`} ·
             ${movieStatusLabel("unwatched", this.movieStatusLabels)}
             ${this.info?.status_counts?.unwatched ?? 0} ·
             ${movieStatusLabel("watched", this.movieStatusLabels)}

@@ -156,6 +156,7 @@ class JournalRepository:
         connection.create_function(
             "companion_matches", 3, self._read_cache.matches, deterministic=True
         )
+        connection.create_function("companion_relevance", 4, self._read_cache.relevance)
         connection.create_function(
             "companion_shuffle", 2, library_browse.shuffle_key, deterministic=True
         )

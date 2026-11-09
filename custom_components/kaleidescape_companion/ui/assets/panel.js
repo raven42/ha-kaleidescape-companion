@@ -9135,7 +9135,7 @@ const Ge = class Ge extends x {
       </p>
       <div class="options-fields">
         <label class="mobile-sort-setting"
-          >Sort by<select
+          >${this.applied.query ? "Sort after search" : "Sort by"}<select
             name="library_mobile_sort"
             .value=${String(this.applied.sort)}
             @change=${(e) => this.sort(e.target.value)}
@@ -10003,7 +10003,7 @@ const Ge = class Ge extends x {
               Clear Filter
             </button>
             <label ?hidden=${this.dashboard?.show_sort === !1}
-              >Sort by<select
+              >${this.applied.query ? "Sort after search" : "Sort by"}<select
                 name="library_sort"
                 .value=${String(this.applied.sort)}
                 @change=${(c) => this.sort(c.target.value)}
@@ -10059,7 +10059,7 @@ const Ge = class Ge extends x {
                     <tr>
                       ${Lt.filter(([c]) => c !== "random").map(
       ([c, l], h) => a`<th
-                            aria-sort=${this.applied.sort === c ? this.applied.descending ? "descending" : "ascending" : "none"}
+                            aria-sort=${!this.applied.query && this.applied.sort === c ? this.applied.descending ? "descending" : "ascending" : "none"}
                           >
                             <button
                               class="sort-heading"
@@ -10067,7 +10067,7 @@ const Ge = class Ge extends x {
                             >
                               <span>${l}</span
                               ><span class="sort-icon" aria-hidden="true"
-                                >${this.applied.sort === c ? this.applied.descending ? "↓" : "↑" : "↕"}</span
+                                >${!this.applied.query && this.applied.sort === c ? this.applied.descending ? "↓" : "↑" : "↕"}</span
                               >
                             </button>
                             <span
@@ -10163,7 +10163,8 @@ const Ge = class Ge extends x {
         >
           <span>
             ${String(this.applied.query ?? "").trim() || o ? a`<strong class="match-count">Matches ${this.page?.total ?? 0}</strong> · ` : d}
-            Total ${this.info?.group_count ?? 0} ·
+            ${this.applied.query ? a`Relevance order · ` : d}
+            ${`Total ${this.info?.group_count ?? 0}`} ·
             ${U("unwatched", this.movieStatusLabels)}
             ${this.info?.status_counts?.unwatched ?? 0} ·
             ${U("watched", this.movieStatusLabels)}

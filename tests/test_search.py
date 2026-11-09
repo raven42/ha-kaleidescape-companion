@@ -13,6 +13,226 @@ class SearchTest(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = repository.RepositoryTest.asyncSetUp
     assert_error = repository.RepositoryTest.assert_error
 
+    async def test_cast_billing_position_adjusts_relevance_without_filtering(self):
+        actor = "Scarlett Example"
+        extras = [f"Extra Person {index}" for index in range(45)]
+        cases = [
+            ("lead", "lead", "Leading Role", [actor], []),
+            ("support", "support", "Supporting Role", extras[:5] + [actor], []),
+            ("late", "late", "Late Role", extras + [actor], []),
+            ("other-a", "other", "Other Version", extras + [actor], []),
+            ("other-b", "other", "Other Version", [actor], []),
+            ("director", "director", "Director Credit", [], [actor]),
+        ]
+        rows = [
+            {
+                **library.ROWS[0],
+                "source_handle": handle,
+                "source_group": group,
+                "title": title,
+                "actors": actors,
+                "directors": directors,
+                "writers": [],
+                "producers": [],
+                "studios": [],
+            }
+            for handle, group, title, actors, directors in cases
+        ]
+        await self.repository.async_library_catalog(library.ORIGIN, rows, {})
+        for fuzzy, query in ((False, '"Scarlett Example"'), (True, "scarlet")):
+            filters = {"query": query, "fuzzy": fuzzy, "grouped": True}
+            page = await self.repository.async_library_list(library.SOURCE, filters)
+            titles = [item["title"] for item in page["items"]]
+            self.assertEqual(page["total"], 5)
+            self.assertLess(
+                titles.index("Leading Role"), titles.index("Supporting Role")
+            )
+            self.assertLess(titles.index("Supporting Role"), titles.index("Late Role"))
+            self.assertLess(
+                titles.index("Other Version"), titles.index("Supporting Role")
+            )
+            self.assertLess(titles.index("Director Credit"), titles.index("Late Role"))
+            first = await self.repository.async_library_list(
+                library.SOURCE, {**filters, "limit": 2}
+            )
+            second = await self.repository.async_library_list(
+                library.SOURCE, {**filters, "limit": 2, "offset": 2}
+            )
+            self.assertEqual(
+                [item["id"] for item in first["items"] + second["items"]],
+                [item["id"] for item in page["items"][:4]],
+            )
+
+    async def test_library_relevance_preserves_matches_and_ignores_sort(self):
+        cases = [
+            ("exact-title", "Bourne", []),
+            ("title-word", "The Bourne Identity", []),
+            ("fuzzy-title", "The Borne Identity", []),
+            ("credit-word", "Zebra", ["Jason Bourne"]),
+            ("fuzzy-credit", "Alpha", ["Jason Borne"]),
+            ("irrelevant", "Other", []),
+        ]
+        rows = [
+            {
+                **library.ROWS[0],
+                "source_handle": handle,
+                "source_group": handle,
+                "title": title,
+                "actors": actors,
+                "directors": [],
+            }
+            for handle, title, actors in cases
+        ]
+        # A credit on another edition must contribute to the same movie group.
+        rows.append({**rows[3], "source_handle": "credit-second", "actors": []})
+        await self.repository.async_library_catalog(library.ORIGIN, rows, {})
+        expected = [
+            "Bourne",
+            "The Bourne Identity",
+            "Zebra",
+            "The Borne Identity",
+            "Alpha",
+        ]
+        for grouped in (True, False):
+            for sort in ("name", "year", "random"):
+                filters = {
+                    "query": "bourne",
+                    "fuzzy": True,
+                    "grouped": grouped,
+                    "sort": sort,
+                    "descending": True,
+                    "random_seed": "a" * 32,
+                }
+                page = await self.repository.async_library_list(library.SOURCE, filters)
+                titles = [row["title"] for row in page["items"]]
+                self.assertEqual(list(dict.fromkeys(titles)), expected)
+                self.assertEqual(page["total"], 5 if grouped else 6)
+                first = await self.repository.async_library_list(
+                    library.SOURCE, {**filters, "limit": 2}
+                )
+                second = await self.repository.async_library_list(
+                    library.SOURCE,
+                    {**filters, "limit": 2, "offset": 2, "revision": first["revision"]},
+                )
+                self.assertEqual(
+                    [r["id"] for r in first["items"] + second["items"]],
+                    [r["id"] for r in page["items"][:4]],
+                )
+        literal = await self.repository.async_library_list(
+            library.SOURCE, {"query": '"bourne"', "fuzzy": True, "grouped": True}
+        )
+        self.assertEqual([row["title"] for row in literal["items"]], expected[:3])
+        ordinary = await self.repository.async_library_list(
+            library.SOURCE, {"sort": "name", "grouped": True}
+        )
+        self.assertEqual(
+            [row["title"] for row in ordinary["items"]],
+            [
+                "Alpha",
+                "Bourne",
+                "Other",
+                "The Borne Identity",
+                "The Bourne Identity",
+                "Zebra",
+            ],
+        )
+
+    async def test_fuzzy_word_outranks_incidental_substring(self):
+        rows = [
+            {
+                **library.ROWS[0],
+                "source_handle": str(index),
+                "source_group": str(index),
+                "title": title,
+                "actors": actors,
+                "directors": [],
+            }
+            for index, (title, actors) in enumerate(
+                [
+                    ("The Bourne Identity", []),
+                    ("Other Movie", ["Example Osborne"]),
+                    ("Claiborne", []),
+                ]
+            )
+        ]
+        await self.repository.async_library_catalog(library.ORIGIN, rows, {})
+        page = await self.repository.async_library_list(
+            library.SOURCE, {"query": "borne", "fuzzy": True, "grouped": True}
+        )
+        self.assertEqual(
+            [row["title"] for row in page["items"]],
+            ["The Bourne Identity", "Claiborne", "Other Movie"],
+        )
+
+    async def test_leading_prefix_actor_outranks_late_whole_word_actor(self):
+        extras = [f"Fictional Person {index}" for index in range(80)]
+        rows = [
+            {
+                **library.ROWS[0],
+                "source_handle": "late",
+                "source_group": "late",
+                "title": "Late Credit",
+                "actors": extras + ["Scarlet Example"],
+                "directors": [],
+            },
+            {
+                **library.ROWS[0],
+                "source_handle": "lead",
+                "source_group": "lead",
+                "title": "Leading Credit",
+                "actors": ["Scarlett Example"],
+                "directors": [],
+            },
+        ]
+        await self.repository.async_library_catalog(library.ORIGIN, rows, {})
+        page = await self.repository.async_library_list(
+            library.SOURCE, {"query": "scarlet", "fuzzy": True, "grouped": True}
+        )
+        self.assertEqual(
+            [item["title"] for item in page["items"]],
+            ["Leading Credit", "Late Credit"],
+        )
+
+    async def test_weighted_match_quality_field_and_cast_position(self):
+        extras = [f"Person {i}" for i in range(35)]
+        cases = [
+            ("Matt Story", [], [], [], []),
+            ("Early Actor", ["Matt Example"], [], [], []),
+            ("Late Actor", extras + ["Matt Example"], [], [], []),
+            ("Director Movie", [], ["Matt Example"], [], []),
+            ("Writer Movie", [], [], ["Matt Example"], []),
+            ("Producer Movie", [], [], [], ["Matt Example"]),
+            ("Prefix Actor", ["Matthew Example"], [], [], []),
+            ("Fuzzy Title Mat", [], [], [], []),
+        ]
+        rows = [
+            {
+                **library.ROWS[0],
+                "source_handle": str(index),
+                "source_group": str(index),
+                "title": title,
+                "actors": actors,
+                "directors": directors,
+                "writers": writers,
+                "producers": producers,
+                "studios": [],
+            }
+            for index, (title, actors, directors, writers, producers) in enumerate(
+                cases
+            )
+        ]
+        await self.repository.async_library_catalog(library.ORIGIN, rows, {})
+        page = await self.repository.async_library_list(
+            library.SOURCE, {"query": "matt", "fuzzy": True, "grouped": True}
+        )
+        titles = [item["title"] for item in page["items"]]
+        self.assertEqual(len(titles), len(cases))
+        self.assertEqual(titles[0], "Matt Story")
+        self.assertLess(titles.index("Early Actor"), titles.index("Late Actor"))
+        self.assertLess(titles.index("Prefix Actor"), titles.index("Fuzzy Title Mat"))
+        self.assertLess(titles.index("Director Movie"), titles.index("Writer Movie"))
+        self.assertLess(titles.index("Director Movie"), titles.index("Producer Movie"))
+
     async def test_quoted_phrases_across_all_worker_searches(
         self,
     ):

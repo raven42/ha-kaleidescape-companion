@@ -295,6 +295,27 @@ it("clears applied and draft filters without changing sort, view or page size", 
   ).toBe("");
 });
 
+it("explains relevance ordering while retaining the selected sort", async () => {
+  field("library_sort", "year");
+  await flush();
+  field("library_query", "Midnight");
+  button("Search").click();
+  await flush();
+  expect(text()).toContain("Sort after search");
+  expect(root().querySelector(".library-footer")!.textContent).toContain(
+    "Relevance order",
+  );
+  expect(root().querySelector('th[aria-sort="ascending"]')).toBeNull();
+  button("Clear Filter").click();
+  await flush();
+  expect(text()).not.toContain("Sort after search");
+  expect(root().querySelector(".library-footer")!.textContent).not.toContain(
+    "Relevance order",
+  );
+  expect(root().querySelector('th[aria-sort="ascending"]')).not.toBeNull();
+  expect(transport.calls.at(-1)!.filters).toMatchObject({ sort: "year" });
+});
+
 it("adds sortable year/collection headings and opens details only in a popup", async () => {
   expect(root().querySelector("#title-dialog .playback-layout")).toBeNull();
   const year = [

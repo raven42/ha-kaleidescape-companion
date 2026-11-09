@@ -130,29 +130,39 @@ Search titles, cast, directors, writers, producers or studios using partial
 text. Input debounces for 300 ms; Search/Enter applies immediately. Literal mode
 uses Unicode case folding; the shared fuzzy-search setting additionally
 tolerates bounded word/typo differences, including credits from another
-available version in the same exact source group. Open **Filters** to select
-collection, rating, genre, year, viewing-format and watched-status checkboxes.
-Multiple checked values match **any** value within that category; different
-categories must **all** match on the **same version**. A matching group still
-opens all its versions, including those that did not match. An unchecked
-category is unrestricted. Category headings show the number selected and offer a
-per-category Clear action. The sticky footer shows the draft selection count;
-closing without applying discards changes. Rating choices put G/NR-G first, then
-unclassified values (including Unrated), then PG, PG-13, R and NC-17, with
-NR-prefixed equivalents beside the corresponding rating and alphabetical ties.
-They reuse the badges from title details. Viewing formats use individual format
-badges, including HDR10 separately from resolution. SD resolution and SDR
-dynamic range remain separate; SDR has a distinct badge. Actor/director filter
-inputs have been removed from the dialog; the main search handles people.
-Existing saved actor/director selections can still be removed using their chips,
-and the API retains those facets for compatible clients. Sci-Fi and Science
-Fiction share the Science Fiction genre label. **Apply filters** applies the
-draft and returns to page one; Closing with X discards it. The toolbar **Clear
-Filter** clears search and all checkbox filters, including unsubmitted search
-text, and returns to page one. It preserves view, sort and page size. Each
-category offers up to 500 known names (collections up to 200), with at most 100
-selections per category. Writers, producers and studios are searchable when
-available, without separate facet controls.
+available version in the same exact source group. While search text is active,
+results are ordered by relevance instead of the selected sort. A weighted score
+combines match quality (whole phrase, word prefix, substring or typo), the field
+matched, and cast billing order. Titles receive the strongest field boost,
+followed by cast, directors, writers and producers, then studios. A strong typo
+match can outrank an incidental substring, and a leading cast match can outrank
+a lower-billed match. The best title or credit across available versions
+represents the movie, with alphabetical ties. This heuristic does not change
+which records match. All cast members remain searchable, including those beyond
+the profile's visible-cast setting. Clearing the search restores the selected
+sort and existing shuffle. Open **Filters** to select collection, rating, genre,
+year, viewing-format and watched-status checkboxes. Multiple checked values
+match **any** value within that category; different categories must **all**
+match on the **same version**. A matching group still opens all its versions,
+including those that did not match. An unchecked category is unrestricted.
+Category headings show the number selected and offer a per-category Clear
+action. The sticky footer shows the draft selection count; closing without
+applying discards changes. Rating choices put G/NR-G first, then unclassified
+values (including Unrated), then PG, PG-13, R and NC-17, with NR-prefixed
+equivalents beside the corresponding rating and alphabetical ties. They reuse
+the badges from title details. Viewing formats use individual format badges,
+including HDR10 separately from resolution. SD resolution and SDR dynamic range
+remain separate; SDR has a distinct badge. Actor/director filter inputs have
+been removed from the dialog; the main search handles people. Existing saved
+actor/director selections can still be removed using their chips, and the API
+retains those facets for compatible clients. Sci-Fi and Science Fiction share
+the Science Fiction genre label. **Apply filters** applies the draft and returns
+to page one; Closing with X discards it. The toolbar **Clear Filter** clears
+search and all checkbox filters, including unsubmitted search text, and returns
+to page one. It preserves view, sort and page size. Each category offers up to
+500 known names (collections up to 200), with at most 100 selections per
+category. Writers, producers and studios are searchable when available, without
+separate facet controls.
 
 Search and display projections run on the same worker for both household roles.
 One search evaluates each distinct credited name once, then resolves matches to
@@ -516,9 +526,9 @@ uses the API client's existing browser-compatible random ID generator.
 
 Choose **Sort by → Random** to shuffle the movie list and return to the first
 page. The direction button becomes **Randomize**; each click starts a new
-shuffle. Random is available in both List and Cover views, without adding a
-spreadsheet column. Switching to another sort restores the usual direction
-control.
+shuffle. An active search temporarily uses relevance instead of the shuffle.
+Random is available in both List and Cover views, without adding a spreadsheet
+column. Switching to another sort restores the usual direction control.
 
 Library profiles retain their own sort choice and share one shuffle seed per HA
 user. Paging, filtering, switching layouts, cover resizing and reloads preserve

@@ -343,19 +343,23 @@ def shuffle_key(value, seed):
     return hashlib.sha256(f"{seed}:{value}".encode()).digest()
 
 
-def matching_people(db, source, query, fuzzy):
+def matching_people(db, source, query, fuzzy, cache):
     """Search each distinct credit once, then resolve its source-defined groups.
 
     Materialize before matching: otherwise SQLite may push the Python matcher
     into the version/person join, repeating fuzzy comparisons for every edition
     and again for the count and page reads. No title identities are inferred.
     """
-    return json.dumps(
-        [
-            row[0]
-            for row in db.execute(
-                """WITH people AS MATERIALIZED (
-                    SELECT credits.source_group,person.value name
+    from ..core.search import Matcher
+
+    matcher = Matcher(query, fuzzy, cached=True)
+    ranks = {}
+    name_ranks = {}
+    try:
+        for group, name, role, position in db.execute(
+            """WITH people AS MATERIALIZED (
+                    SELECT credits.source_group,person.value name,
+                        roles.key role,person.key position
                     FROM library credits,
                     json_each(companion_metadata(
                         credits.data,credits.enrichment)) roles,
@@ -368,12 +372,21 @@ def matching_people(db, source, query, fuzzy):
                 ), names AS MATERIALIZED (SELECT DISTINCT name FROM people),
                 matches AS MATERIALIZED (
                     SELECT name FROM names WHERE companion_matches(name,?,?)
-                ) SELECT DISTINCT source_group FROM people
+                ) SELECT DISTINCT source_group,name,role,position FROM people
                     WHERE name IN (SELECT name FROM matches)""",
-                (source, query, fuzzy),
-            )
-        ]
-    )
+            (source, query, fuzzy),
+        ):
+            key = (name, role)
+            if key not in name_ranks:
+                name_ranks[key] = matcher.library_relevance(name, role, matched=True)
+            rank = name_ranks[key]
+            if role == "actors":
+                rank = max(1, rank - min(position, 100) * 2)
+            ranks[group] = max(ranks.get(group, 0), rank)
+    finally:
+        matcher.clear()
+    cache.credit_ranks = ranks
+    return json.dumps(list(ranks))
 
 
 def library_list(db, source, filters, excluded="", cache=None, weeks=2, today=None):
@@ -611,7 +624,9 @@ def library_list(db, source, filters, excluded="", cache=None, weeks=2, today=No
         clauses.append("t.source_group IN (SELECT value FROM json_each(?))")
         values.append(json.dumps(sorted(missing_information(db, source))))
     if people_parameter is not None:
-        values[people_parameter] = matching_people(db, source, query.casefold(), fuzzy)
+        values[people_parameter] = matching_people(
+            db, source, query.casefold(), fuzzy, cache
+        )
     where = " AND ".join(clauses)
     join = "library t JOIN library_sources s ON s.id=t.source_id"
     if grouped:
@@ -632,6 +647,8 @@ def library_list(db, source, filters, excluded="", cache=None, weeks=2, today=No
             weeks,
             today,
             missing_groups,
+            query,
+            fuzzy,
         )
     total = db.execute(f"SELECT count(*) FROM {join} WHERE {where}", values).fetchone()[
         0
@@ -640,6 +657,13 @@ def library_list(db, source, filters, excluded="", cache=None, weeks=2, today=No
     sort_values = (
         (seed,) if sort == "random" else hidden if sort == "collection" else ()
     )
+    if query:
+        order = (
+            "companion_relevance(coalesce(json_extract(t.enrichment,"
+            "'$.reviewed.title'),t.title),t.source_group,?,?) DESC,"
+            "t.title_search COLLATE NOCASE ASC"
+        )
+        sort_values = (query.casefold(), fuzzy)
     rows = db.execute(
         f"""SELECT t.*,({STATUS_SQL}) watched_status,
             {PURCHASE_SQL} effective_purchased_on,
@@ -783,6 +807,8 @@ def grouped_page(
     weeks=2,
     today=None,
     missing_groups=None,
+    query="",
+    fuzzy=False,
 ):
     """Filter per version, group before pagination, and summarize all versions."""
     join = "library t JOIN library_sources s ON s.id=t.source_id"
@@ -799,9 +825,24 @@ def grouped_page(
         "random": "companion_shuffle(source_group,?)",
     }
     direction = "DESC" if descending and sort != "random" else "ASC"
+    match_columns = "DISTINCT t.source_group"
+    order = f"{sorts[sort]} {direction}"
+    rank_values = ()
+    if query:
+        match_columns = """t.source_group,max(companion_relevance(coalesce(
+            json_extract(t.enrichment,'$.reviewed.title'),t.title),
+            t.source_group,?,?)) relevance"""
+        order = (
+            "(SELECT relevance FROM matching m "
+            "WHERE m.source_group=versions.source_group) DESC"
+        )
+        rank_values = (query.casefold(), fuzzy)
+    matching_sql = f"SELECT {match_columns} FROM {join} WHERE {where}" + (
+        " GROUP BY t.source_group" if query else ""
+    )
     groups = db.execute(
         f"""WITH matching AS (
-        SELECT DISTINCT t.source_group FROM {join} WHERE {where}
+        {matching_sql}
     ), versions AS (
         SELECT t.*,({STATUS_SQL}) watched_status,{collection_sql} collection_sort,
         ({FAVORITE_SQL}) is_favorite,({WATCH_SOON_SQL}) is_watch_soon,
@@ -827,13 +868,14 @@ def grouped_page(
             WHEN 'unknown' THEN 2 WHEN 'unwatched' THEN 3 ELSE 4 END) status_rank
         FROM versions WHERE source_group IN (SELECT source_group FROM matching)
         GROUP BY source_group
-        ORDER BY {sorts[sort]} {direction},title_search,source_group
+        ORDER BY {order},title_search,source_group
         LIMIT ? OFFSET ?""",
         (
+            *rank_values,
             *values,
             *hidden,
             source,
-            *((seed,) if sort == "random" else ()),
+            *((seed,) if sort == "random" and not query else ()),
             limit + 1,
             offset,
         ),

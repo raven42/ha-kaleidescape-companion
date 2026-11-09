@@ -70,6 +70,7 @@ class ReadCache:
         # than the projection cache cannot evict it and cause another full scan.
         self.facets = Memo(max_bytes=1024 * 1024, max_items=1)
         self.matchers = None
+        self.credit_ranks = {}
 
     def clear(self):
         self.projections.clear()
@@ -84,6 +85,7 @@ class ReadCache:
             for matcher in self.matchers.values():
                 matcher.clear()
             self.matchers = previous
+            self.credit_ranks = {}
 
     def matches(self, value, query, fuzzy):
         if self.matchers is None:
@@ -96,3 +98,14 @@ class ReadCache:
                 return matches(value, query, fuzzy)
             self.matchers[key] = Matcher(query, fuzzy, cached=True)
         return self.matchers[key](value)
+
+    def relevance(self, value, group, query, fuzzy):
+        key = (query, bool(fuzzy))
+        if self.matchers is None:
+            matcher = Matcher(query, fuzzy)
+        else:
+            if key not in self.matchers:
+                self.matchers[key] = Matcher(query, fuzzy, cached=True)
+            matcher = self.matchers[key]
+        title = matcher.library_relevance(value, "title")
+        return max(title, self.credit_ranks.get(group, 0))
