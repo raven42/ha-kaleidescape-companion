@@ -1,4 +1,5 @@
 {
+  "kaleidescape/LICENSE": "21ca61f75c823e717f7b87d0344750f7d56dc4ebbabe393c83777c27f455bdcb",
   "kaleidescape/__init__.py": "77e2a089cd03b2b89d7b21b59b1ff5ae6fcab304a74a4118414d7d951885ba18",
   "kaleidescape/_version.py": "f58dd167be07af5804e42f99200eda352ccf4f462ed971f77c5446e0161e1c2c",
   "kaleidescape/connection.py": "25a7a7bd5e3f28c722f7b68d4faafdf44479e926e2d6a6c1ef486143b9bb4783",

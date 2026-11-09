@@ -40,8 +40,13 @@ provider. No Store hooks should be added to pyk for this migration.
   retains its bounded HA HTTP session and SQLite reconciliation. Collection
   changes keep durable receipts and an explicit readback; an uncertain outcome
   is never automatically resent.
-- Companion bundles the reviewed patched pyk source under its own namespace.
-  Store scrapers remain in Companion and are included in the runtime package.
+- Companion bundles the reviewed patched pyk source under its own namespace. The
+  complete runtime diff reconstructs from a pinned offline upstream fixture,
+  including collection APIs and the pre-submit callback; the normal check
+  verifies all manifested bytes and the MIT license. See the
+  [development guide](../guides/guide-development.md) for independent base
+  checks. Store scrapers remain in Companion and are included in the runtime
+  package.
 - The manifest pins `pykaleidescape==1.2.0` to match HA 2026.11.0. That released
   package does **not** contain the capabilities used by this PoC. Tests load the
   bundled patched pyk source. HA no longer adds `/config/deps` to its import

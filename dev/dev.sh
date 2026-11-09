@@ -20,6 +20,7 @@ case "${1:-help}" in
     ;;
   check)
     use_pyk
+    "$VENV_PATH"/bin/python dev/check_pyk.py --reconstruct
     PYTHONPATH="$ROOT/custom_components/kaleidescape_companion${PYTHONPATH:+:$PYTHONPATH}" "$VENV_PATH"/bin/python -m unittest discover -s tests/scrapers
     "$VENV_PATH"/bin/python dev/run_python_tests.py
     "$VENV_PATH"/bin/python dev/check_project.py

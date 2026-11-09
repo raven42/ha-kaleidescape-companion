@@ -30,14 +30,32 @@ bash dev/dev.sh check
 
 The Python tests and local HA launcher use the reviewed source at
 `custom_components/kaleidescape_companion/vendor/kaleidescape`. They verify its
-package files against `dev/pyk-overlay/hashes.json` before use. The bundled
-patch records the runtime portion of reviewed local commit
-`bfbe789ffaf297f4aad7d1ac64328796456b4ed2` plus the collection-removal and
-per-version collection-read patches against the stated upstream base; its base
-is `50df2869349667d1e68d429b9b619e32ede9879b`, and its MIT license ships with
-the private package. `setup` installs HA's released pinned dependency
-separately. The bundled source is for this PoC and is not a replacement for
-compatibility testing with the built-in integration.
+package files against `dev/pyk-overlay/hashes.json` before use. The complete
+runtime patch in `dev/pyk-overlay/companion.patch` applies to upstream base
+`50df2869349667d1e68d429b9b619e32ede9879b`. It includes the reviewed local
+Device changes, collection removal/per-version reads, and the operation-local
+pre-submit callback. `base.tar.gz` is an offline `git archive` of that commit's
+`kaleidescape` and `LICENSE` paths; `base.json` records its SHA-256 and origin.
+The patch copies the upstream MIT license into the private runtime package.
+Reconstruction must match every entry in `hashes.json`, including that license,
+and may not introduce undocumented Python modules. Only runtime differences are
+included; upstream test configuration is outside this bundle.
+
+The normal `check` reconstructs from the pinned fixture without network access
+or an adjacent checkout. To independently compare the fixture with an upstream
+checkout's tracked commit, run:
+
+```sh
+.venv/bin/python dev/check_pyk.py --reconstruct --base-checkout ../pykaleidescape
+```
+
+Working-tree changes in that checkout are ignored. When updating the bundle,
+regenerate the complete runtime diff against the same recorded base (or
+explicitly review a new base), update the manifest, and run both reconstruction
+and the full check. Missing files and stale/incomplete patches fail
+verification. `setup` installs HA's released pinned dependency separately. This
+bundled source remains a PoC, with built-in Device compatibility and
+upstream-release qualification still required.
 
 Set `COMPANION_VENV` to an absolute virtual-environment path to run setup or
 checks in an isolated environment; it defaults to `.venv` in this checkout.
