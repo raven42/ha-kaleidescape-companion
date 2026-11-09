@@ -58,7 +58,7 @@ protocol discovery list uses 12-digit serials, while `GET_DEVICE_INFO` returns
 the same serial zero-padded to 16 digits. The new
 `phase-03a-fresh-device-reads.patch` normalizes both to the same routed
 identity, with an offline emulator regression test. The final
-`08a-cmp-dev-version` branch labels the complete development build
+`10a-cmp-dev-version` patch-series branch labels the complete development build
 `1.2.0.dev1+cmp` in both Python package metadata and pyk's runtime version. HA
 OS validation still requires deployment of the updated Companion package and a
 restart. Changing this source checkout does not update HA OS.

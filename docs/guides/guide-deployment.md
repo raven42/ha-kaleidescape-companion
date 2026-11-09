@@ -21,10 +21,11 @@ required. HA OS and hardware validation of this packaging change remain pending.
 See the [migration plan](../plans/plan-pykaliedescape-migration.md). Controls
 remain disabled until configured.
 
-The current patched source branch is `08a-cmp-dev-version`. Its runtime and
-wheel metadata both report `1.2.0.dev1+cmp`, which is the bundled version shown
-in Companion Settings. HA's shared requirement remains pinned to 1.2.0; the
-development wheel itself does not satisfy that exact requirement.
+The current pyk working checkout is on `10a-cmp-dev-version`, the final branch
+of the patch series. The development runtime and wheel metadata report
+`1.2.0.dev1+cmp`, which is the bundled version shown in Companion Settings. HA's
+shared requirement remains pinned to 1.2.0; the development wheel itself does
+not satisfy that exact requirement.
 
 ## Configure the target
 
