@@ -134,7 +134,8 @@ class BlueprintStatusTest(unittest.IsolatedAsyncioTestCase):
         self.assertIn(
             "Updates are available for:\n\n"
             "- Schedule library sync\n- Schedule calendar full sync\n\n"
-            "Open Kaleidescape Companion Settings",
+            "Open Kaleidescape Companion Settings → Automations "
+            "to review and update them.",
             notify.call_args.args[1],
         )
         self.assertEqual(

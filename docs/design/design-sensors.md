@@ -194,16 +194,18 @@ and backdrop absence together still count once. Explicit provider no-data
 markers continue to exclude that provider from conflicts. Attributes contain no
 provider IDs, credentials, device identities, invoice data or filesystem paths.
 
-The purchase information check evaluates each available scanned group once. For
-each required field, a value on any available version suffices: an explicit
-Library date or linked invoice date, a manual/earliest-invoice paid price, and a
-manual/earliest-invoice retail price. These fields may come from different
-versions; zero prices are present values. A missing price on a later repeat
-invoice does not make a complete earliest-invoice summary incomplete. Unlinked
-purchase records have no Library group and do not contribute. Marking any
-available version's group as purchase-information-unavailable suppresses the
-check. A public Store refresh can fill retail price only; it cannot supply the
-paid price or historical purchase date.
+The purchase information check evaluates each scanned group with at least one
+available edition once. For each required field, retained evidence on any
+edition of that same source group suffices, including an unavailable edition: an
+explicit Library date or linked invoice date, a manual/earliest-invoice paid
+price, and a manual/earliest-invoice retail price. These fields may come from
+different editions; zero prices are present values. Groups with no available
+editions are excluded. A missing price on a later repeat invoice does not make a
+complete earliest-invoice summary incomplete. Unlinked purchase records have no
+Library group and do not contribute. A purchase-information-unavailable flag on
+any retained edition of the same source group suppresses the check. A public
+Store refresh can fill retail price only; it cannot supply the paid price or
+historical purchase date.
 
 The purchase information sensor does not add a warning badge. HA entity readers
 can see its count and bounded movie-name attributes; the matching Library filter

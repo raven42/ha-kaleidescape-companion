@@ -245,8 +245,7 @@ def _notice(hass, result, *, startup=False):
             hass,
             "Updates are available for:\n\n"
             + "\n".join(f"- {label}" for label in outdated)
-            + "\n\nOpen Kaleidescape Companion Settings → Home Assistant → "
-            "Optional automations "
+            + "\n\nOpen Kaleidescape Companion Settings → Automations "
             "to review and update them.",
             "Kaleidescape Companion blueprints need an update",
             NOTICE_ID,
