@@ -15,6 +15,7 @@ import ipaddress
 import math
 import re
 import secrets
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
 from urllib.parse import parse_qs, urlencode, urlsplit
@@ -292,7 +293,11 @@ class LocalLibrary:
         return form_targets(_text(await self._transport.get("/movies")), handle)
 
     async def add_to_collection(
-        self, handle: str, collection: str
+        self,
+        handle: str,
+        collection: str,
+        *,
+        pre_submit: Callable[[], None] | None = None,
     ) -> CollectionPostResult:
         """Submit one offered add-only form; never retry or infer membership."""
         identity(handle)
@@ -309,6 +314,10 @@ class LocalLibrary:
             "add_to_collection_select": choices[collection],
             "check-" + handle: "on",
         }
+        # A synchronous refusal here proves no POST was attempted. Keep it
+        # outside the possible-send exception boundary and local to this call.
+        if pre_submit is not None:
+            pre_submit()
         try:
             response = await self._transport.post("/movies", fields)
         except (KeyboardInterrupt, SystemExit):
@@ -330,7 +339,11 @@ class LocalLibrary:
         return CollectionPostResult(response.status, response.location)
 
     async def remove_from_collection(
-        self, handle: str, collection: str
+        self,
+        handle: str,
+        collection: str,
+        *,
+        pre_submit: Callable[[], None] | None = None,
     ) -> CollectionPostResult:
         """Submit one validated built-in removal/move; never retry the POST."""
         identity(handle)
@@ -346,6 +359,10 @@ class LocalLibrary:
         if not any(row["source_handle"] == handle for row in rows):
             raise LibraryFormatError("Selected version is absent from collection")
         _, action = removal_form(page, handle, name)
+        # A synchronous refusal here proves no POST was attempted. Keep it
+        # outside the possible-send exception boundary and local to this call.
+        if pre_submit is not None:
+            pre_submit()
         try:
             response = await self._transport.post(
                 path, {"submit_type": action, "check-" + handle: "on"}

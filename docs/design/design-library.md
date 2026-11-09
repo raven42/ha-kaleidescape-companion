@@ -745,12 +745,16 @@ blocks further collection writes.
 
 Queue records are private administrator data in schema 28. Browser disconnects
 do not cancel accepted work; the actor, opt-in, source and permissions are
-rechecked before a send. On integration restart queued/working/syncing items are
-reported as interrupted or unconfirmed, and are not automatically resent. Backup
-and unload stop new work and drain accepted operations. Completed/failed history
-is bounded; uncertain intents remain available for recovery. A source or
-configuration change, inaccessible version, stale review, full queue or
-unrecognized form fails closed.
+rechecked after the final form GET by an operation-local synchronous
+`pre_submit` callback. The owned transport proceeds to the HTTP client without
+an intervening suspension. A callback refusal retires the intent as unsent; only
+a possible POST retains uncertainty. Pausing still permits already accepted
+operations to drain when their authority remains valid. On integration restart
+queued/working/syncing items are reported as interrupted or unconfirmed, and are
+not automatically resent. Backup and unload stop new work and drain accepted
+operations. Completed/failed history is bounded; uncertain intents remain
+available for recovery. A source or configuration change, inaccessible version,
+stale review, full queue or unrecognized form fails closed.
 
 The owner explicitly authorized a live test of one title: Favorites and Watch
 Soon add/remove, and Played → New → Played, were read back with the complete

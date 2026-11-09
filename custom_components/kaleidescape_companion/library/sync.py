@@ -312,9 +312,9 @@ class LibrarySync:
         )
         return response
 
-    async def _post_collection_add(self, handle, collection):
+    async def _post_collection_add(self, handle, collection, authorize):
         """Use pyk's add-only form with no automatic retry."""
-        await self.browser.add_to_collection(handle, collection)
+        await self.browser.add_to_collection(handle, collection, pre_submit=authorize)
 
     async def async_enqueue_collection(
         self,
@@ -514,12 +514,15 @@ class LibrarySync:
                             self.browser.add_to_collection(
                                 handle,
                                 "Watch Soon" if key == "watchsoon" else collection,
+                                pre_submit=authorize,
                             ),
                         )
                     else:
                         await self._collection_step(
                             "submit",
-                            self.browser.remove_from_collection(handle, collection),
+                            self.browser.remove_from_collection(
+                                handle, collection, pre_submit=authorize
+                            ),
                         )
                     sent = True
                 except BrowserOutcomeUnknownError as error:
@@ -849,19 +852,16 @@ class LibrarySync:
                 authorize()
                 self._collection_ready()
                 if version["source_handle"] not in before:
-                    may_have_posted = True
                     try:
                         await self._post_collection_add(
-                            version["source_handle"], collection
+                            version["source_handle"], collection, authorize
                         )
-                    except (
-                        ClientError,
-                        KaleidescapeError,
-                        OSError,
-                        TimeoutError,
-                        JournalError,
-                    ):
-                        pass  # A response failure is not proof the POST failed.
+                        may_have_posted = True
+                    except BrowserOutcomeUnknownError as error:
+                        may_have_posted = True
+                        if asyncio.current_task().cancelling():
+                            raise asyncio.CancelledError from error
+                        # A response failure is not proof the POST failed.
                     members = await self._collection_members(collection)
                 result = await self.repository.async_collection_finish(
                     self.source, request, members

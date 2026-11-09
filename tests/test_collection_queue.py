@@ -5,7 +5,7 @@ import sqlite3
 import unittest
 from contextlib import closing
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
+from unittest.mock import ANY, AsyncMock
 from uuid import uuid4
 
 import test_library as library
@@ -101,7 +101,7 @@ class CollectionQueueTest(unittest.IsolatedAsyncioTestCase):
             side_effect=lambda name: list(self.members[name])
         )
 
-        async def remove(handle, collection):
+        async def remove(handle, collection, *, pre_submit=None):
             found = next(
                 row
                 for row in self.members[collection]
@@ -154,7 +154,7 @@ class CollectionQueueTest(unittest.IsolatedAsyncioTestCase):
         result = await self.sync._queued_collection_change(job)
         self.assertEqual(result["status"], "confirmed")
         self.sync.browser.remove_from_collection.assert_awaited_once_with(
-            "fixture-a", "Played"
+            "fixture-a", "Played", pre_submit=ANY
         )
         self.assertTrue(
             await self.repository.async_collection_queue(
@@ -228,12 +228,12 @@ class CollectionQueueTest(unittest.IsolatedAsyncioTestCase):
         started, release = asyncio.Event(), asyncio.Event()
         original_remove = self.sync.browser.remove_from_collection.side_effect
 
-        async def slow_remove(handle, collection):
+        async def slow_remove(handle, collection, *, pre_submit=None):
             started.set()
             await release.wait()
             await original_remove(handle, collection)
 
-        async def add(handle, collection):
+        async def add(handle, collection, *, pre_submit=None):
             self.members[collection].append(
                 next(row for row in library.ROWS if row["source_handle"] == handle)
             )
@@ -330,7 +330,7 @@ class CollectionQueueTest(unittest.IsolatedAsyncioTestCase):
         await self.enqueue(job)
         original = self.sync.browser.remove_from_collection.side_effect
 
-        async def wider(handle, collection):
+        async def wider(handle, collection, *, pre_submit=None):
             await original(handle, collection)
             self.members["New"].append(library.ROWS[2])
 
@@ -411,7 +411,7 @@ class CollectionQueueTest(unittest.IsolatedAsyncioTestCase):
         await self.enqueue(job)
         started = asyncio.Event()
 
-        async def send(*args):
+        async def send(*args, **kwargs):
             started.set()
             try:
                 await asyncio.Event().wait()

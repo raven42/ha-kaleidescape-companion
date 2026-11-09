@@ -234,7 +234,10 @@ and never enter bundles or browser persistent storage.
 
 Collection changes remain separately opted in and administrator-only. The queue
 persists actor-bound requests and permits at most ten active items. Accepted
-requests are reauthorized before a single validated POST; complete collection
+requests are reauthorized after all awaited form reads, immediately before a
+single validated POST. The synchronous callback belongs to that operation, not
+shared mutable transport state. Refusal before submission retires the intent;
+authority revocation after a possible send cannot undo it. Complete collection
 readback and a subsequent scan determine completion. New/Played moves validate
 both collections, and Paused may only be removed. A possible send without
 confirmed readback is durable uncertainty, never an automatic retry. Queued work

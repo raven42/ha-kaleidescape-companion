@@ -4,7 +4,7 @@ import asyncio
 import unittest
 from html import escape
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import ANY, AsyncMock, Mock, patch
 from uuid import uuid4
 
 import test_backend as backend
@@ -21,6 +21,7 @@ from custom_components.kaleidescape_companion.library.store import title_id
 from custom_components.kaleidescape_companion.library.sync import LibrarySync
 from custom_components.kaleidescape_companion.vendor.kaleidescape import library_parser
 from custom_components.kaleidescape_companion.vendor.kaleidescape.local_browser import (
+    BrowserOutcomeUnknownError,
     form_targets,
 )
 
@@ -103,7 +104,8 @@ class CollectionOperationTest(unittest.IsolatedAsyncioTestCase):
             side_effect=lambda name: list(self.members)
         )
 
-        async def post(handle, collection):
+        async def post(handle, collection, authorize):
+            authorize()
             self.members.append(
                 next(row for row in library.ROWS if row["source_handle"] == handle)
             )
@@ -133,7 +135,7 @@ class CollectionOperationTest(unittest.IsolatedAsyncioTestCase):
         result = await self.add(request)
         self.assertEqual(result["status"], "confirmed")
         self.sync._post_collection_add.assert_awaited_once_with(
-            "fixture-a", "Favorites"
+            "fixture-a", "Favorites", ANY
         )
         rows = (await self.repository.async_library_versions(library.SOURCE, self.id))[
             "items"
@@ -196,7 +198,7 @@ class CollectionOperationTest(unittest.IsolatedAsyncioTestCase):
     )
     async def test_uncertain_add_is_never_replayed_and_survives_connector_restart(self):
         await self.seed()
-        self.sync._post_collection_add.side_effect = TimeoutError
+        self.sync._post_collection_add.side_effect = BrowserOutcomeUnknownError
         request = str(uuid4())
         self.assertEqual((await self.add(request))["status"], "uncertain")
         self.assertEqual((await self.add(request, revision=1))["status"], "uncertain")
@@ -221,7 +223,7 @@ class CollectionOperationTest(unittest.IsolatedAsyncioTestCase):
 
         async def lost(*args):
             self.members.append(library.ROWS[0])
-            raise TimeoutError
+            raise BrowserOutcomeUnknownError("Lost response")
 
         self.sync._post_collection_add.side_effect = lost
         self.assertEqual((await self.add())["status"], "confirmed")
