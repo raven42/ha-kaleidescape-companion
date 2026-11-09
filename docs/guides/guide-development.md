@@ -95,10 +95,23 @@ loops. Logging behavior is specified in
 [logging and diagnostics](../design/design-logging.md).
 
 The frontend lockfile temporarily overrides transitive minimatch 10 with 11.0.4
-for the glob amplification advisory. ESLint and TypeScript tooling still declare
-the 10.x range; the project checks exercise the override, but it is outside
-those packages' declared dependency ranges. Reassess it when those tools adopt a
-fixed version. This affects development tooling, not the production bundle.
+for
+[GHSA-g3hv-75wg-m249](https://github.com/isaacs/minimatch/security/advisories/GHSA-g3hv-75wg-m249).
+This affects development tooling, not the production bundle. The
+[2026-11-08 dependency review](../../audit/2026-11-08/FOLLOW_UP.md#a261108-06--temporary-tooling-override)
+records installed versions, current published parent ranges and fresh scans.
+ESLint, `@eslint/config-array` and `@typescript-eslint/typescript-estree` still
+declare 10.x ranges; the override is a tested compatibility exception.
+
+Remove the override only when all three dependency paths support an unaffected
+minimatch release within their declared ranges. Review the published package
+metadata (not only upstream's unreleased branch), regenerate the lockfile, and
+confirm `npm ls minimatch --all` contains no affected or invalid resolution.
+Then run fresh `bash dev/dev.sh audit` scans and the full
+`bash dev/dev.sh check`, including actual ESLint, Markdown, TypeScript,
+security/component and production build commands. Reassess at each tooling
+upgrade and before release. Do not force npm's downgrade suggestions or remove
+the override solely to simplify the tree.
 
 Network advisory scans are deliberately separate:
 
