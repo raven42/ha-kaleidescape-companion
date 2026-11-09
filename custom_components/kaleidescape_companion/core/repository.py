@@ -820,11 +820,11 @@ class JournalRepository:
 
     def _database_validate_query(self, table, query):
         from .database_query import compile_query
-        from .database_schema import TABLE_KEYS, schema
+        from .database_schema import TABLE_KEYS, inspection_schema
 
         if not isinstance(table, str) or table not in TABLE_KEYS:
             raise invalid("Invalid table")
-        compile_query(query, schema(self._db(), table)[1])
+        compile_query(query, inspection_schema(self._db(), table)[1])
         return {"valid": True}
 
     async def async_database_mutate(self, request, data, actor_id):

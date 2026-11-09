@@ -112,13 +112,59 @@ class DatabaseStorageTest(unittest.IsolatedAsyncioTestCase):
             "title =",
             "actors CONTAINS 4",
             "year > 1e300",
+            "WHERE lower(title) = 'x'",
+            "data.secret IS NULL",
+            "stored_secret IS NULL",
             "(" * 10 + "title = 'x'" + ")" * 10,
         ):
             with self.assert_error("query_syntax"):
                 await self.page("library", query=query)
+            with self.assert_error("query_syntax"):
+                await self.repository.async_database_validate_query("library", query)
         self.assertIn("actors", {field["name"] for field in page["query_fields"]})
         self.assertNotIn("expression", json.dumps(page["query_fields"]))
         self.assertEqual((await self.page("library"))["total"], len(library.ROWS))
+
+    async def test_every_advertised_field_validates_and_stored_aliases_remain_read_only(
+        self,
+    ):
+        await self.seed()
+        for table in TABLE_KEYS:
+            page = await self.page(table)
+            for field in page["query_fields"]:
+                query = f"{field['name']} IS NULL"
+                with self.subTest(table=table, query=query):
+                    self.assertEqual(
+                        await self.repository.async_database_validate_query(
+                            table, query
+                        ),
+                        {"valid": True},
+                    )
+                    await self.page(table, query=query)
+        page = await self.page("library")
+        aliases = {
+            field["name"]
+            for field in page["schema"]
+            if field["name"].startswith("stored_")
+        }
+        self.assertEqual(
+            aliases,
+            {
+                "stored_purchased_on",
+                "stored_purchase_price",
+                "stored_retail_price",
+                "stored_order_id",
+                "stored_href",
+            },
+        )
+        for name in aliases:
+            with self.subTest(alias=name):
+                field = next(field for field in page["schema"] if field["name"] == name)
+                self.assertFalse(field["editable"])
+                ordered = await self.page("library", sort=name)
+                self.assertEqual(ordered["total"], len(library.ROWS))
+                with self.assert_error("invalid_request"):
+                    await self.mutate(page, patch_data={name: None})
 
     async def test_library_queries_and_sorts_match_visible_invoice_projection(self):
         await self.seed()
@@ -128,7 +174,12 @@ class DatabaseStorageTest(unittest.IsolatedAsyncioTestCase):
         def seed_invoices():
             with self.repository._db() as db:
                 db.execute(
-                    "UPDATE library SET purchase_price='$88.88' WHERE id=?", (ids[0],)
+                    "UPDATE library SET purchase_price='$88.88', "
+                    "retail_price='$44.44', "
+                    "order_id='manual-order', "
+                    "href='https://store.kaleidescape.com/movie/1' "
+                    "WHERE id=?",
+                    (ids[0],),
                 )
                 db.executemany(
                     "INSERT INTO purchase_records "
@@ -177,12 +228,24 @@ class DatabaseStorageTest(unittest.IsolatedAsyncioTestCase):
             ("purchase_price = '$9.99'", {ids[0]}),
             ("purchase_price = '$88.88'", set()),
             ("stored_purchase_price = '$88.88'", {ids[0]}),
+            ("stored_purchased_on IS NULL", set(ids)),
+            ("stored_retail_price = '$44.44'", {ids[0]}),
+            ("stored_order_id = 'manual-order'", {ids[0]}),
+            ("order_id = 'manual-order'", set()),
+            ("stored_href IS NOT NULL", {ids[0]}),
+            ("href IS NOT NULL", set()),
             ("purchase_price IS NULL", {ids[1], ids[2]}),
             ("retail_price IS NULL", {ids[0], ids[2]}),
             ("purchased_on = '2020-01-02'", {ids[0]}),
             ("order_id = 'order-a'", {ids[0]}),
         ):
             with self.subTest(query=query):
+                self.assertEqual(
+                    await self.repository.async_database_validate_query(
+                        "library", query
+                    ),
+                    {"valid": True},
+                )
                 result = await self.page("library", query=query)
                 self.assertEqual({row["id"] for row in result["items"]}, expected)
         ordered = await self.page("library", sort="purchase_price", limit=1)

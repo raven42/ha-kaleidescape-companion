@@ -116,6 +116,46 @@ def schema(db, table):
     return columns, fields
 
 
+def inspection_schema(db, table):
+    """One trusted field map for completion, validation, predicates and sorting.
+
+    Display aliases and invoice projections do not grant storage edit permission.
+    Mutations continue to use the underlying schema and EDITABLE allowlist.
+    """
+    descriptions, fields = schema(db, table)
+    if table == "library":
+        # Retain access to stored columns when invoice values override them.
+        for name in (
+            "purchased_on",
+            "purchase_price",
+            "retail_price",
+            "order_id",
+            "href",
+        ):
+            original = fields[name]
+            stored = f"stored_{name}"
+            description = {
+                key: value for key, value in original.items() if key != "expression"
+            }
+            description.update(name=stored, editable=False, primary=False)
+            descriptions.append(description)
+            fields[stored] = {**description, "expression": f'library."{name}"'}
+
+        # The visible summary comes from the earliest linked invoice, even when
+        # that invoice's field is NULL. Keep predicates and ordering in sync.
+        invoice = "FROM purchase_records p WHERE p.library_id=library.id"
+        first = " ORDER BY p.purchased_on IS NULL,p.purchased_on,p.id LIMIT 1)"
+        for name in ("purchase_price", "retail_price", "order_id", "href"):
+            fields[name]["expression"] = (
+                f"(CASE WHEN EXISTS (SELECT 1 {invoice}) "
+                f'THEN (SELECT p.{name} {invoice}{first} ELSE library."{name}" END)'
+            )
+        fields["purchased_on"]["expression"] = (
+            f"COALESCE(library.purchased_on, (SELECT p.purchased_on {invoice}{first})"
+        )
+    return descriptions, fields
+
+
 def references(db, table):
     """Expose only relationships between approved local tables, never HA paths."""
     groups = {}

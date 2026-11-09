@@ -374,6 +374,29 @@ it("uses scoped schema completion, validation feedback and literal/structured se
   await vi.waitFor(() =>
     expect(search.shadowRoot!.textContent).toContain("Expected quoted text"),
   );
+  expect(field.getAttribute("aria-invalid")).toBe("true");
+  const aliases = [
+    "stored_purchased_on",
+    "stored_purchase_price",
+    "stored_retail_price",
+    "stored_order_id",
+    "stored_href",
+  ];
+  search.fields = aliases.map((name) => ({ name, type: "text" }));
+  for (const name of aliases) {
+    field.value = `${name} IS NULL`;
+    field.dispatchEvent(new Event("input"));
+    await vi.waitFor(() =>
+      expect(element.client!.validateDatabaseQuery).toHaveBeenCalledWith(
+        search.scope,
+        search.table,
+        `${name} IS NULL`,
+      ),
+    );
+    await search.updateComplete;
+    expect(field.getAttribute("aria-invalid")).toBe("false");
+    expect(search.shadowRoot!.querySelector("#query-result")).toBeNull();
+  }
 });
 it("clears inspection results after denial and ignores late responses after account changes", async () => {
   await mount();

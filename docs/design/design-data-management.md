@@ -154,7 +154,10 @@ Library metadata aliases include `actors`, `directors`, `writers`, `studios`,
 `genres`, `formats`, `year`, `rating`, `edition`, `synopsis` and
 `duration_seconds`; `data.actors` and similar names also work. All actual
 columns, including immutable IDs, can be queried. Query access does not grant
-edit access.
+edit access. The five `stored_` purchase aliases are read-only inspection fields
+and also support predicates and sorting. Completion, delayed validation,
+filtering and sorting share the same trusted inspection field map; mutation
+permissions continue to use the storage-field allowlist.
 
 The field/operator balloon uses the selected table's returned schema. Type a
 prefix, use arrows and Tab to accept a suggestion, and Enter to search. Pausing

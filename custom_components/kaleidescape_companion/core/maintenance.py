@@ -5,7 +5,13 @@ import json
 from datetime import UTC, datetime
 
 from .database_query import OPERATORS, compile_query
-from .database_schema import DELETABLE, MAIN_TABLES, TABLE_KEYS, references, schema
+from .database_schema import (
+    DELETABLE,
+    MAIN_TABLES,
+    TABLE_KEYS,
+    inspection_schema,
+    references,
+)
 from .models import JournalError, invalid
 
 MAX_PAGE_BYTES = 8 * 1024 * 1024
@@ -52,43 +58,13 @@ def inspect_database(
     # Column identifiers come only from this integration's local migrated schema.
     # Imports never install schemas. Caller-supplied sort strings must match one
     # of these columns exactly before being quoted into the fixed SELECT.
-    descriptions, fields = schema(db, table)
-    if table == "library":
-        # Retain access to stored columns when invoice values override them.
-        for name in (
-            "purchased_on",
-            "purchase_price",
-            "retail_price",
-            "order_id",
-            "href",
-        ):
-            original = fields[name]
-            stored = f"stored_{name}"
-            description = {
-                key: value for key, value in original.items() if key != "expression"
-            }
-            description.update(name=stored, editable=False, primary=False)
-            descriptions.append(description)
-            fields[stored] = {**description, "expression": f'library."{name}"'}
+    descriptions, fields = inspection_schema(db, table)
 
     columns = [item["name"] for item in descriptions]
     sort = TABLE_KEYS[table].split(",")[0] if sort is None else sort
     if not isinstance(sort, str) or sort not in columns:
         raise invalid("Invalid database sort")
 
-    if table == "library":
-        # The visible summary comes from the earliest linked invoice, even when
-        # that invoice's field is NULL. Keep predicates and ordering in sync.
-        invoice = "FROM purchase_records p WHERE p.library_id=library.id"
-        first = " ORDER BY p.purchased_on IS NULL,p.purchased_on,p.id LIMIT 1)"
-        for name in ("purchase_price", "retail_price", "order_id", "href"):
-            fields[name]["expression"] = (
-                f"(CASE WHEN EXISTS (SELECT 1 {invoice}) "
-                f'THEN (SELECT p.{name} {invoice}{first} ELSE library."{name}" END)'
-            )
-        fields["purchased_on"]["expression"] = (
-            f"COALESCE(library.purchased_on, (SELECT p.purchased_on {invoice}{first})"
-        )
     predicate, values = compile_query(query, fields)
     where = " WHERE " + predicate if predicate else ""
     counts = {
