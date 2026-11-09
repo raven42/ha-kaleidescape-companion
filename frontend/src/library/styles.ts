@@ -44,6 +44,9 @@ export const libraryStyles = css`
   .library-notification.notification-info {
     --library-notification-edge: #8b949e;
   }
+  .library-notification .notification-actions {
+    margin-top: 8px;
+  }
   .library-notification .notification-close {
     position: absolute;
     top: 5px;

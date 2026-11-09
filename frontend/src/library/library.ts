@@ -2370,9 +2370,11 @@ export class KaleidescapeLibrary extends LitElement {
                 class="error library-notification notification-error"
                 role="alert"
               >
-                ${this.error}<button @click=${() => this.load()}>
-                  Refresh results</button
-                ><button
+                ${this.error}
+                <div class="actions notification-actions">
+                  <button @click=${() => this.load()}>Refresh results</button>
+                </div>
+                <button
                   class="notification-close"
                   aria-label="Dismiss error"
                   @click=${() => {

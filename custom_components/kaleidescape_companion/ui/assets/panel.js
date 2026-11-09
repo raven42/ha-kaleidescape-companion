@@ -4532,6 +4532,9 @@ const Yi = Es(class extends As {
   .library-notification.notification-info {
     --library-notification-edge: #8b949e;
   }
+  .library-notification .notification-actions {
+    margin-top: 8px;
+  }
   .library-notification .notification-close {
     position: absolute;
     top: 5px;
@@ -9807,9 +9810,11 @@ const Ge = class Ge extends x {
                 class="error library-notification notification-error"
                 role="alert"
               >
-                ${this.error}<button @click=${() => this.load()}>
-                  Refresh results</button
-                ><button
+                ${this.error}
+                <div class="actions notification-actions">
+                  <button @click=${() => this.load()}>Refresh results</button>
+                </div>
+                <button
                   class="notification-close"
                   aria-label="Dismiss error"
                   @click=${() => {
