@@ -106,10 +106,10 @@ def validate() -> None:
     ):
         raise ValueError(f"Display/project names must be {NAME}")
     if (
-        manifest.get("requirements", []) != ["pykaleidescape==1.2.0"]
+        manifest.get("requirements", []) != ["pykaleidescape>=1.2.0"]
         or project.get("dependencies", []) != manifest["requirements"]
     ):
-        raise ValueError("Runtime dependency must match HA's pykaleidescape pin")
+        raise ValueError("Runtime dependency must declare HA's pykaleidescape minimum")
     if (
         project["name"] != "kaleidescape-companion"
         or frontend["name"] != "kaleidescape-companion"

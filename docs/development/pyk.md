@@ -44,8 +44,9 @@ provider. No Store hooks should be added to pyk for this migration.
   verifies all manifested bytes and the MIT license. See the
   [development guide](README.md) for independent base checks. Store scrapers
   remain in Companion and are included in the runtime package.
-- The manifest pins `pykaleidescape==1.2.0` to match HA 2026.11.0. That released
-  package does **not** contain the capabilities used by this PoC. Tests load the
+- The manifest requires `pykaleidescape>=1.2.0` to match the HA 2026.11.0
+  baseline while allowing HA to provide a compatible newer release. The 1.2.0
+  release does **not** contain the capabilities used by this PoC. Tests load the
   bundled patched pyk source. HA no longer adds `/config/deps` to its import
   path, so the former overlay cannot provide that code. The bundled package is
   not an upstream release; HA OS validation remains pending.
