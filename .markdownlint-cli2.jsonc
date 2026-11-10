@@ -15,6 +15,7 @@
     "**/.venv/**",
     "**/.package-test/**",
     ".ha-dev/**",
+    "artifacts/audits/**",
     "**/dist/**",
     "**/build/**",
     "**/*.egg-info/**",

@@ -5,257 +5,61 @@
   },
   "tasks": [
     {
-      "label": "Setup dependencies",
+      "label": "Setup",
       "type": "process",
-      "command": "bash",
-      "args": [
-        "dev/dev.sh",
-        "setup"
-      ],
+      "command": "${workspaceFolder}/scripts/setup",
       "problemMatcher": []
     },
     {
-      "label": "Build frontend",
+      "label": "Build",
       "type": "process",
-      "command": "npm",
-      "args": [
-        "--prefix",
-        "frontend",
-        "run",
-        "build"
-      ],
-      "problemMatcher": [
-        "$tsc"
-      ],
-      "group": "build"
-    },
-    {
-      "label": "Build integration package",
-      "type": "process",
-      "command": "${workspaceFolder}/.venv/bin/python",
-      "args": [
-        "dev/deploy.py",
-        "package"
-      ],
-      "dependsOn": [
-        "Check all"
-      ],
-      "dependsOrder": "sequence",
-      "problemMatcher": [],
+      "command": "${workspaceFolder}/scripts/build",
+      "problemMatcher": ["$tsc"],
       "group": {
         "kind": "build",
         "isDefault": true
       }
     },
     {
-      "label": "Initialize deployment settings",
+      "label": "Lint",
       "type": "process",
-      "command": "${workspaceFolder}/.venv/bin/python",
-      "args": [
-        "dev/deploy.py",
-        "init"
-      ],
+      "command": "${workspaceFolder}/scripts/lint",
       "problemMatcher": []
     },
     {
-      "label": "Preview test HA deployment",
+      "label": "Format",
       "type": "process",
-      "command": "${workspaceFolder}/.venv/bin/python",
-      "args": [
-        "dev/deploy.py",
-        "plan"
-      ],
-      "dependsOn": [
-        "Build integration package"
-      ],
+      "command": "${workspaceFolder}/scripts/format",
       "problemMatcher": []
     },
     {
-      "label": "Deploy to test HA",
+      "label": "Test",
       "type": "process",
-      "command": "${workspaceFolder}/.venv/bin/python",
-      "args": [
-        "dev/deploy.py",
-        "deploy"
-      ],
-      "dependsOn": [
-        "Build integration package"
-      ],
-      "problemMatcher": [],
-      "presentation": {
-        "panel": "dedicated",
-        "reveal": "always"
-      },
-      "runOptions": {
-        "instanceLimit": 1
-      }
-    },
-    {
-      "label": "Check configuration and restart test HA",
-      "type": "process",
-      "command": "${workspaceFolder}/.venv/bin/python",
-      "args": [
-        "dev/deploy.py",
-        "restart"
-      ],
-      "problemMatcher": [],
-      "presentation": {
-        "panel": "dedicated",
-        "reveal": "always"
-      },
-      "runOptions": {
-        "instanceLimit": 1
-      }
-    },
-    {
-      "label": "Build, deploy and restart test HA",
-      "dependsOn": [
-        "Deploy to test HA",
-        "Check configuration and restart test HA"
-      ],
-      "dependsOrder": "sequence",
-      "problemMatcher": [],
-      "runOptions": {
-        "instanceLimit": 1
-      }
-    },
-    {
-      "label": "Test Python",
-      "type": "process",
-      "command": "bash",
-      "args": [
-        "dev/dev.sh",
-        "python-test"
-      ],
+      "command": "${workspaceFolder}/scripts/test",
       "problemMatcher": [],
       "group": "test"
     },
     {
-      "label": "Check project",
+      "label": "Check",
       "type": "process",
-      "command": "${workspaceFolder}/.venv/bin/python",
-      "args": [
-        "dev/check_project.py"
-      ],
-      "problemMatcher": []
-    },
-    {
-      "label": "Lint Python",
-      "type": "process",
-      "command": "${workspaceFolder}/.venv/bin/python",
-      "args": [
-        "-m",
-        "ruff",
-        "check",
-        "."
-      ],
-      "problemMatcher": []
-    },
-    {
-      "label": "Check Python formatting",
-      "type": "process",
-      "command": "${workspaceFolder}/.venv/bin/python",
-      "args": [
-        "-m",
-        "ruff",
-        "format",
-        "--check",
-        "."
-      ],
-      "problemMatcher": []
-    },
-    {
-      "label": "Test frontend",
-      "type": "process",
-      "command": "npm",
-      "args": [
-        "--prefix",
-        "frontend",
-        "test"
-      ],
-      "problemMatcher": [],
-      "group": "test"
-    },
-    {
-      "label": "Audit dependencies (network)",
-      "type": "process",
-      "command": "bash",
-      "args": [
-        "dev/dev.sh",
-        "audit"
-      ],
-      "problemMatcher": []
-    },
-    {
-      "label": "Check frontend formatting",
-      "type": "process",
-      "command": "npm",
-      "args": [
-        "--prefix",
-        "frontend",
-        "run",
-        "format:check"
-      ],
-      "problemMatcher": []
-    },
-    {
-      "label": "Lint frontend",
-      "type": "process",
-      "command": "npm",
-      "args": [
-        "--prefix",
-        "frontend",
-        "run",
-        "lint"
-      ],
-      "problemMatcher": []
-    },
-    {
-      "label": "Lint Markdown",
-      "type": "process",
-      "command": "npm",
-      "args": [
-        "--prefix",
-        "frontend",
-        "run",
-        "lint:markdown"
-      ],
-      "problemMatcher": []
-    },
-    {
-      "label": "Check documentation formatting",
-      "type": "process",
-      "command": "npm",
-      "args": [
-        "--prefix",
-        "frontend",
-        "run",
-        "format:docs:check"
-      ],
-      "problemMatcher": []
-    },
-    {
-      "label": "Check all",
-      "type": "process",
-      "command": "bash",
-      "args": [
-        "dev/dev.sh",
-        "check"
-      ],
+      "command": "${workspaceFolder}/scripts/check",
+      "problemMatcher": ["$tsc"],
       "group": {
         "kind": "test",
         "isDefault": true
-      },
-      "problemMatcher": []
+      }
     },
     {
-      "label": "Run frontend preview",
+      "label": "Package",
       "type": "process",
-      "command": "bash",
-      "args": [
-        "dev/dev.sh",
-        "preview"
-      ],
+      "command": "${workspaceFolder}/scripts/package",
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "Frontend preview",
+      "type": "process",
+      "command": "${workspaceFolder}/scripts/preview",
       "problemMatcher": [],
       "presentation": {
         "panel": "dedicated",
@@ -266,13 +70,9 @@
       }
     },
     {
-      "label": "Run Home Assistant",
+      "label": "Local Home Assistant",
       "type": "process",
-      "command": "bash",
-      "args": [
-        "dev/dev.sh",
-        "ha"
-      ],
+      "command": "${workspaceFolder}/scripts/ha",
       "problemMatcher": [],
       "presentation": {
         "panel": "dedicated",
@@ -283,59 +83,58 @@
       }
     },
     {
-      "label": "Open frontend webview",
+      "label": "Dependency audit (network)",
       "type": "process",
-      "command": "bash",
-      "args": [
-        "-c",
-        ":",
-        "${input:openFrontendWebview}"
-      ],
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "never",
-        "focus": false,
-        "panel": "shared"
-      }
-    },
-    {
-      "label": "Open Home Assistant webview",
-      "type": "process",
-      "command": "bash",
-      "args": [
-        "-c",
-        ":",
-        "${input:openHomeAssistantWebview}"
-      ],
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "never",
-        "focus": false,
-        "panel": "shared"
-      }
-    },
-    {
-      "label": "Open server webviews",
-      "dependsOn": [
-        "Open frontend webview",
-        "Open Home Assistant webview"
-      ],
-      "dependsOrder": "sequence",
+      "command": "${workspaceFolder}/scripts/dependency-audit",
       "problemMatcher": []
-    }
-  ],
-  "inputs": [
-    {
-      "id": "openFrontendWebview",
-      "type": "command",
-      "command": "simpleBrowser.show",
-      "args": "http://127.0.0.1:5173/"
     },
     {
-      "id": "openHomeAssistantWebview",
-      "type": "command",
-      "command": "simpleBrowser.show",
-      "args": "http://127.0.0.1:8123/"
+      "label": "Maintainer: Preview deployment",
+      "type": "process",
+      "command": "${workspaceFolder}/scripts/deploy",
+      "problemMatcher": [],
+      "args": [
+        "plan",
+        "--artifact",
+        "${workspaceFolder}/dist/kaleidescape-companion.tar.gz"
+      ],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "Maintainer: Deploy prepared artifact",
+      "type": "process",
+      "command": "${workspaceFolder}/scripts/deploy",
+      "problemMatcher": [],
+      "args": [
+        "--artifact",
+        "${workspaceFolder}/dist/kaleidescape-companion.tar.gz"
+      ],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "Maintainer: Check configuration and restart",
+      "type": "process",
+      "command": "${workspaceFolder}/scripts/restart",
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      }
     }
   ]
 }

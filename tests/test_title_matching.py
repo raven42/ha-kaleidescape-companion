@@ -20,7 +20,7 @@ from custom_components.kaleidescape_companion.library.title_matching import (
     TitleQuery,
     store_title,
 )
-from dev.benchmark_title_matching import evaluate, main
+from scripts.src.benchmark_title_matching import evaluate, main
 
 SOURCE = "a" * 64
 

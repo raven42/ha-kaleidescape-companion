@@ -1,0 +1,222 @@
+# Home Assistant actions and automations
+
+Reviewed 2026-11-04. Companion exposes HA actions, three configuration switches,
+three buttons and five optional automation blueprints. HA owns automation
+execution and traces; Companion owns validation, background jobs and
+persistence. The [data-management design](data-management.md) owns purchase
+storage, matching and reconciliation; this document owns the automation
+workflow.
+
+## Install, inspect and update blueprints
+
+When HA's automation blueprint manager is available, Companion installs missing
+files under `blueprints/automation/kaleidescape_companion/`. Setup preserves
+existing files. It does not create or enable an automation. Create an automation
+from the desired blueprint in HA and choose its inputs explicitly.
+
+**Settings → Automations** provides one inventory with installed and bundled
+versions, status, setup requirements and actions. Bundled means the version in
+the loaded Companion build; no remote release lookup runs. **Change log** opens
+the bundled blueprint's comment history, not a history of the operator's edits.
+**Install**, **Update** and **Review replacement** load that history into a
+review before offering confirmation. The review shows installed and bundled
+versions, changes since a known older version and expandable complete history.
+Modified files show the full bundled history and a local-edit replacement
+warning. A failed history request offers Retry and keeps confirmation disabled.
+The page links to HA Blueprints for the separate create/configure/enable
+workflow.
+
+| Blueprint                    | Bundled version | Inputs and behavior                                                                          |
+| ---------------------------- | --------------- | -------------------------------------------------------------------------------------------- |
+| `purchase_email_parser.yaml` | 8               | Selected IMAP entry and optional sender filter; validates and imports receipt events         |
+| `library_schedule.yaml`      | 1               | Daily local time, default 03:00; requests Library sync                                       |
+| `metadata_schedule.yaml`     | 1               | Daily local time, default 04:00; selected enabled providers and Only missing, default true   |
+| `calendar_schedule.yaml`     | 1               | Daily local time, default 03:00; requests Full Sync, waits 11 minutes, requests another pass |
+| `maintenance_schedule.yaml`  | 2               | Daily local time; select database cleanup, Library sync and missing metadata refresh         |
+
+All schedules use HA's local time and single-run mode. The receipt automation
+uses queued mode, at most ten runs. Empty metadata provider selection means all
+enabled providers. Scheduling does not enable a disabled feature or bypass its
+prerequisites. Calendar Full Sync still needs the configured dedicated calendar,
+explicit Full Sync enablement, quarantine/reconciliation and deletion guards.
+The delayed second request gives a later pass a chance to recheck pending work;
+it is not a guarantee that an earlier job finished or that deletion will occur.
+
+Status uses a normalized YAML fingerprint, ignoring formatting and comments.
+Declared version labels alone are not update evidence:
+
+- **Current**: fingerprint matches the bundled template.
+- **Outdated**: fingerprint matches a known previously shipped template.
+- **Modified or unrecognized**: valid contents differ from both sets, including
+  an unrecognized newer/local file. The displayed version is self-reported.
+- **Missing**: no installed file.
+- **Unavailable**: HA's manager or the bounded file read/parse is unavailable.
+
+Known outdated templates produce a startup warning and HA persistent
+notification. **Update** is available for a known older template; **Review
+replacement** is available for a modified or unrecognized template. Both warn
+about reloading dependent automations. The review captures the installed
+revision before loading history. Explicit acceptance checks that revision and
+administrator access again before HA writes. A successful write triggers an
+update notification; an uncertain write/reload tells the operator to inspect the
+installed file and automation state before retrying. Uploading a new integration
+package does not replace an existing HA blueprint automatically.
+
+Developers must increment the visible version, add a concise entry between
+`# Version history:` and `# End version history` in the YAML, retain the
+previous fingerprint in `KNOWN_OLDER`, and update `CURRENT` and `LATEST_VERSION`
+in `ui/automation_templates.py`. Keep histories factual and free of household
+data. Fingerprint/history tests detect inconsistent bundled revisions.
+Comment-only changes do not alter the normalized fingerprint.
+
+## Actions and entity controls
+
+Actions use the `kaleidescape_companion` domain:
+
+| Action                  | Data                                                                          | Result                                                                 |
+| ----------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `library_sync`          | None                                                                          | Requests the enabled Library job                                       |
+| `calendar_full_sync`    | None                                                                          | Requests the configured Full Sync job                                  |
+| `refresh_metadata`      | Optional `providers` list and `only_missing` boolean (action default false)   | Requests enrichment for enabled providers; empty list uses all enabled |
+| `import_purchase_email` | `invoice` object or JSON string; optional compatibility field `allow_partial` | Imports validated purchase records; supports an HA response variable   |
+
+Calls with a user context require an active administrator. Trusted HA automation
+calls without a user context are supported. Sync acceptance means the job was
+requested, not that it completed. Review the owning feature's UI status and
+[logs](logging.md) for outcomes.
+
+The buttons **Library sync**, **Refresh metadata**, and **Calendar full sync**
+request the same jobs. The switches **Add watched movies to calendar**,
+**Automatically record playback**, and **Enable library sync** validate and save
+the corresponding options and reload the integration. HA entity-control
+permissions govern these entities. For prerequisites and lifecycle see
+[architecture](architecture.md#home-assistant-controls).
+
+## Receipt parsing and HTML recovery
+
+The receipt blueprint listens for `imap_content` on the selected IMAP entry and
+a subject containing “Kaleidescape Store Receipt”. The optional sender substring
+filter is a routing filter, not sender authentication. `imap.fetch` retrieves
+the complete message; the event's text preview may be truncated.
+
+Blueprint version 8 passes the fetched HTML part to the Python importer. It
+extracts bounded item evidence and imports independently valid items. Missing or
+unusable HTML produces a notification and no import. Incomplete values and
+subtotal/total discrepancies are returned as review issues rather than rejecting
+the entire receipt. A missing date remains unknown; forwarded messages do not
+use the forward date as the purchase date. Parsing does not authenticate the
+sender or guarantee a match to the correct Library edition.
+
+When purchase prices are selected, any known item currency differing from the
+subtotal is a `currency_mismatch` review issue, even if another item has no
+price. Amounts are summed only when every item has a price in the subtotal's
+currency. Set charges are checked before allocation to their included movies;
+zero is a known price. Valid partial invoices retain their original currencies
+without conversion, including when tax is absent.
+
+The blueprint offers `transaction-id`, `purchase-price`, `retail-price` and
+`purchase-date`; at least one must be selected. Title and a Store link are
+always extracted when available. Unselected fields are not stored. Missing
+selected fields and unidentified items are reported for review. With fewer
+identity fields, distinct purchases can be harder to distinguish; check
+duplicates before accepting a separate purchase.
+
+The importer reads movie and set rows from the decoded HTML tables, including
+forwarded HTML and included movies in set rows. A crossed-out price is the
+retail price and an unmarked price is the purchase price. A missing retail price
+stays empty and is reported when selected; multiple unmarked prices are reported
+as ambiguous. Item extraction uses HTML only, so an incomplete HTML part may
+omit items that appear only in the text part; review the original receipt when
+completeness is uncertain. Parsing stops when HTML structural budgets are
+exceeded.
+
+The automation attempts `imap.fetch_part` whenever HA lists an HTML part. If the
+part is missing or the fetch fails, it notifies the user that the receipt could
+not be imported. HA's IMAP actions and automation traces may contain the full
+email.
+
+Store numeric IDs and local Library content handles are different identities.
+Preserving a Store ID improves retained evidence but does not, by itself, make
+it a directly comparable Library key. The current matcher does not directly join
+numeric Store detail IDs to local handles. See
+[title matching](title-matching.md) for actual matching precedence and
+limitations; do not invent a Library ID from an email link.
+
+## Saved purchases and review
+
+Schema 25 moves embedded invoice history into `purchase_records`. Valid
+unmatched purchases are retained with no Library reference, including receipts
+received before a scan. Known nonconflicting matches can be linked in the same
+import. Existing populated invoice values are preserved when a replay conflicts.
+The action response distinguishes saved results from issues; retain that
+distinction when customizing notifications. A `needs_review` response does not
+mean nothing was saved. Legacy `allow_partial` does not restore the former
+all-or-nothing matching workflow.
+
+Without a response variable, the action's notification chooses recovery from the
+outcome: no extracted items means nothing was imported and points to HTML
+fetching and trace inspection; saved unmatched rows point to reconciliation;
+linked field issues point to Advanced movie Purchase details for repair. Mixed
+outcomes can include both destinations. Replayed unmatched rows still point to
+reconciliation even when no new row was saved. Notifications contain no receipt
+contents. Conflicts and possible duplicates still require a response variable
+and raise an action error when one was not requested.
+
+Open **Database → Reconcile purchases** to review saved unlinked purchases,
+choose available Library entries (with cached cover art where available), and
+apply selected changes. Playback tracking can remain enabled for purchase-only
+reconciliation. This workflow reads the database; it does not require JSON from
+the email trace. Linked price conflicts use the Library purchase editor rather
+than the unlinked-purchase picker. Detailed mutation/conflict rules and current
+editing limits are in [data management](data-management.md).
+
+## Troubleshooting and retry
+
+1. Check **Settings → Automations** for the installed receipt blueprint version,
+   then choose **Update** to review its change log. A new Companion build alone
+   does not update an installed older blueprint.
+2. Inspect the failed automation trace. Failure before the import action means
+   no purchase import was attempted by that run. Check the IMAP fetch and field
+   selection, then review the action response and receipt diagnostics. Failure
+   after import needs inspection of the response and saved records; do not
+   assume a later notification failure rolled back purchases.
+3. If the response needs review, inspect its bounded reasons and the saved
+   purchases. Unlinked purchases can be reconciled after Library sync. A
+   conflicting value needs deliberate review, not blind replacement.
+4. To retry the same mailbox message, an administrator can fire `imap_content`
+   in HA Developer Tools → Events with that trace's `entry_id`, `uid`, `subject`
+   and `sender`. The blueprint fetches the body itself. Keep the message in the
+   same configured mailbox so the UID still identifies it. **Run actions** alone
+   lacks the trigger fields this blueprint needs. Toggling read/unread is not a
+   reliable substitute for replaying the event.
+
+Replay identity depends on the normalized receipt fields. Unchanged records are
+deduplicated; editing/forwarding a message can change available dates or links,
+so first inspect saved purchase state when diagnosing a retry. Do not promise
+universal deduplication across arbitrary rewrites of an email.
+
+HA automation traces can contain the full private email, HTML part and invoice
+response. Share only necessary redacted reason values and parsing results.
+Receipt import warnings start with saved, updated, unchanged and pending counts,
+followed by issue details, the full bounded email and parsed results; successful
+receipt input is logged at debug. Protect HA logs accordingly. Source tests use
+fictional receipts, never copied household traces; see the
+[security policy](security.md).
+
+## Database cleanup
+
+Administrators can review **Database cleanup** in Database or Settings →
+Maintenance. Recommended cleanup keeps 180 days of finalized calendar and
+collection change history, and 90 days of finalized playback control history.
+Advanced mode sets each retention period independently or keeps all records of a
+type. Pending and uncertain operations, request replay barriers, purchases,
+Library entries and Journal history are retained. SQLite can reuse freed pages;
+cleanup does not compact the database file. The optional Schedule maintenance
+blueprint runs the same cleanup and can separately request Library sync and
+missing metadata refresh. Its retention inputs are always applied, defaulting to
+180 days for calendar and collection histories and 90 days for playback. After
+updating an existing blueprint, review its saved retention values: values that
+the previous Recommended mode ignored will now be applied. The
+`database_cleanup` action accepts active administrators and HA automations
+without a user context. Scheduled cleanup runs only if an automation is
+explicitly created and enabled.

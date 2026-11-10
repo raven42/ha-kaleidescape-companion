@@ -11,7 +11,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from dev import check_pyk, deploy
+from scripts.src import check_pyk, deploy
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -19,7 +19,9 @@ ROOT = Path(__file__).resolve().parents[1]
 class PykOverlayTest(unittest.TestCase):
     def test_gate_accepts_reviewed_files_and_rejects_mutations(self):
         source = ROOT / "custom_components/kaleidescape_companion/vendor"
-        expected = json.loads((ROOT / "dev/pyk-overlay/hashes.json").read_text())
+        expected = json.loads(
+            (ROOT / "scripts/assets/pyk-overlay/hashes.json").read_text()
+        )
         with tempfile.TemporaryDirectory() as directory:
             dest = Path(directory)
             for name in expected:
@@ -29,7 +31,7 @@ class PykOverlayTest(unittest.TestCase):
 
             def check():
                 return subprocess.run(
-                    [sys.executable, str(ROOT / "dev/check_pyk.py"), str(dest)],
+                    [sys.executable, str(ROOT / "scripts/src/check_pyk.py"), str(dest)],
                     capture_output=True,
                     check=False,
                 ).returncode

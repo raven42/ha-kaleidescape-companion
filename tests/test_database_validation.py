@@ -6,7 +6,7 @@ import unittest
 from contextlib import closing
 from pathlib import Path
 
-from dev.validate_database import validate
+from scripts.src.validate_database import validate
 
 
 class ValidationTest(unittest.TestCase):

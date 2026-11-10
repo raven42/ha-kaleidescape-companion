@@ -7,16 +7,18 @@ import json
 import os
 import shlex
 import shutil
+import signal
 import subprocess
 import sys
 import tarfile
 import tempfile
+import time
 import tomllib
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from dev import deploy
+from scripts.src import deploy, package
 
 
 class DeployTest(unittest.TestCase):
@@ -54,7 +56,7 @@ class DeployTest(unittest.TestCase):
         config = self.load_settings()
         # Inspect the exact SSH command, but execute only its remote shell
         # fragment against this test's temporary configuration directory.
-        with patch.object(deploy.subprocess, "run") as ssh:
+        with patch.object(deploy, "run_ssh") as ssh:
             deploy.deploy(
                 config, data if data is not None else deploy.runtime_package(self.root)
             )
@@ -170,7 +172,9 @@ class DeployTest(unittest.TestCase):
                 )
             )
             root = Path(__file__).resolve().parents[1]
-            hashes = json.loads((root / "dev/pyk-overlay/hashes.json").read_text())
+            hashes = json.loads(
+                (root / "scripts/assets/pyk-overlay/hashes.json").read_text()
+            )
             for name, digest in hashes.items():
                 member = archive.extractfile(f"{deploy.DOMAIN}/vendor/{name}")
                 self.assertIsNotNone(member)
@@ -180,7 +184,8 @@ class DeployTest(unittest.TestCase):
             )
             self.assertIsNotNone(license_file)
             self.assertEqual(
-                license_file.read(), (root / "dev/pyk-overlay/LICENSE").read_bytes()
+                license_file.read(),
+                (root / "scripts/assets/pyk-overlay/LICENSE").read_bytes(),
             )
             archive.extractall(components, filter="data")
             for member in archive:
@@ -220,7 +225,7 @@ for kind in TEMPLATES:
     template = read_template(kind)
     assert '# Version history:' in template['yaml'], kind
 assert 'kaleidescape_api' not in sys.modules
-assert not any(name == 'dev' or name.startswith('dev.') for name in sys.modules)
+assert not any(name == 'scripts' or name.startswith('scripts.') for name in sys.modules)
 """
         for order in ("builtin-first", "companion-first"):
             with self.subTest(order=order):
@@ -252,7 +257,7 @@ assert not any(name == 'dev' or name.startswith('dev.') for name in sys.modules)
         with self.assertRaisesRegex(ValueError, "unlinked"):
             deploy.runtime_package(self.root)
         (self.source / "linked.py").unlink()
-        with patch.object(deploy, "MAX_PACKAGE_BYTES", 1):
+        with patch.object(package, "MAX_PACKAGE_BYTES", 1):
             with self.assertRaisesRegex(ValueError, "32 MiB"):
                 deploy.runtime_package(self.root)
         (self.source / "manifest.json").write_text('{"domain":"kaleidescape"}')
@@ -296,7 +301,7 @@ assert not any(name == 'dev' or name.startswith('dev.') for name in sys.modules)
         self,
     ):
         config = self.load_settings()
-        with patch.object(deploy.subprocess, "run") as run:
+        with patch.object(deploy, "run_ssh") as run:
             deploy.deploy(config, b"fictional archive")
             command = run.call_args.args[0]
             self.assertIn("StrictHostKeyChecking=yes", command)
@@ -332,7 +337,7 @@ assert not any(name == 'dev' or name.startswith('dev.') for name in sys.modules)
             with self.subTest(restart=restart):
                 data["restart"] = restart
                 config = self.load_settings(data)
-                with patch.object(deploy.subprocess, "run") as run:
+                with patch.object(deploy, "run_ssh") as run:
                     deploy.deploy(config, b"fictional archive")
                     deploy.restart(config)
                     for call in run.call_args_list:
@@ -490,14 +495,28 @@ assert not any(name == 'dev' or name.startswith('dev.') for name in sys.modules)
             patch.object(
                 deploy.sys,
                 "argv",
-                ["deploy.py", "plan", "--config", str(self.settings)],
+                [
+                    "deploy.py",
+                    "plan",
+                    "--artifact",
+                    "prepared.tar.gz",
+                    "--config",
+                    str(self.settings),
+                ],
             ),
             patch.object(
                 deploy,
-                "write_package",
-                return_value=(b"archive", "digest", self.root / "package"),
+                "load_artifact",
+                return_value=(
+                    b"archive",
+                    {
+                        "version": "0.1.0-dev.0",
+                        "artifact": {"sha256": "digest"},
+                        "source": {"commit": None, "dirty": True},
+                    },
+                ),
             ),
-            patch.object(deploy.subprocess, "run") as run,
+            patch.object(deploy, "run_ssh") as run,
             patch.object(deploy.sys, "stdout", new_callable=io.StringIO) as output,
         ):
             deploy.main()
@@ -516,14 +535,15 @@ assert not any(name == 'dev' or name.startswith('dev.') for name in sys.modules)
 
         for name in tasks:
             dependencies(name)
-        self.assertIn("Check all", dependencies("Deploy to test HA"))
-        self.assertNotIn("Deploy to test HA", dependencies("Check all"))
-        self.assertNotIn(
-            "Check configuration and restart test HA", dependencies("Deploy to test HA")
-        )
+        for name in ("Setup", "Build", "Lint", "Format", "Test", "Check", "Package"):
+            self.assertFalse(
+                any(item.startswith("Maintainer:") for item in dependencies(name))
+            )
         self.assertEqual(
-            tasks["Build, deploy and restart test HA"]["dependsOrder"], "sequence"
+            dependencies("Maintainer: Deploy prepared artifact"),
+            {"Maintainer: Deploy prepared artifact"},
         )
+        self.assertNotIn("Build, deploy and restart test HA", tasks)
 
     def test_cli_reports_remote_failures_without_dumping_remote_script(self):
         command = ["ssh", "ha-test", deploy.REMOTE_DEPLOY]
@@ -543,3 +563,110 @@ assert not any(name == 'dev' or name.startswith('dev.') for name in sys.modules)
                 self.assertIn(expected, message)
                 self.assertNotIn(deploy.REMOTE_DEPLOY, message)
                 self.assertEqual(len(message.splitlines()), 1)
+
+    def test_restart_wrapper_cancellation_stops_fake_ssh_and_grandchild(self):
+        """Exercise the executable wrapper with a local fake SSH, never a host."""
+        commands = self.root / "fake-ssh-bin"
+        commands.mkdir()
+        ready = self.root / "ssh-ready"
+        child_ready = self.root / "grandchild-ready"
+        stopped = self.root / "ssh-stopped"
+        child_stopped = self.root / "grandchild-stopped"
+        child_code = (
+            "import os, pathlib, signal, sys, time; "
+            f"stopped = pathlib.Path({str(child_stopped)!r}); "
+            "signal.signal(signal.SIGTERM, "
+            "lambda *_: (stopped.write_text('stopped'), sys.exit(0))); "
+            f"pathlib.Path({str(child_ready)!r}).write_text(str(os.getpid())); "
+            "time.sleep(60)"
+        )
+        fake = commands / "ssh"
+        fake.write_text(
+            f"#!{sys.executable}\n"
+            "import os, pathlib, signal, subprocess, sys, time\n"
+            "sys.stdin.buffer.read()\n"
+            f"child = subprocess.Popen([sys.executable, '-c', {child_code!r}])\n"
+            "def stop(*_):\n"
+            "    child.wait(timeout=3)\n"
+            f"    pathlib.Path({str(stopped)!r}).write_text('stopped')\n"
+            "    sys.exit(0)\n"
+            "signal.signal(signal.SIGTERM, stop)\n"
+            f"while not pathlib.Path({str(child_ready)!r}).exists():\n"
+            "    time.sleep(0.01)\n"
+            f"pathlib.Path({str(ready)!r}).write_text(str(os.getpid()))\n"
+            "time.sleep(60)\n"
+        )
+        fake.chmod(0o755)
+        self.load_settings()
+        environment = dict(
+            os.environ,
+            PATH=f"{commands}{os.pathsep}{os.environ['PATH']}",
+            COMPANION_VENV=str(Path(sys.executable).parent.parent),
+        )
+        process = subprocess.Popen(
+            [str(deploy.ROOT / "scripts/restart"), "--config", str(self.settings)],
+            cwd=self.root,
+            env=environment,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        try:
+            deadline = time.monotonic() + 5
+            while not ready.exists() and time.monotonic() < deadline:
+                if process.poll() is not None:
+                    break
+                time.sleep(0.01)
+            self.assertTrue(ready.exists(), "Fake SSH did not become ready")
+            process.send_signal(signal.SIGTERM)
+            stdout, stderr = process.communicate(timeout=5)
+            self.assertEqual(process.returncode, 128 + signal.SIGTERM, stderr)
+            self.assertTrue(stopped.exists())
+            self.assertTrue(child_stopped.exists())
+            for pid in (int(ready.read_text()), int(child_ready.read_text())):
+                with self.assertRaises(ProcessLookupError):
+                    os.kill(pid, 0)
+            self.assertNotIn(deploy.REMOTE_DEPLOY.encode(), stdout + stderr)
+        finally:
+            if ready.exists():
+                try:
+                    os.killpg(int(ready.read_text()), signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+            if process.poll() is None:
+                process.kill()
+            process.communicate(timeout=5)
+
+    def test_ssh_timeout_stops_and_reaps_local_child_and_restores_handlers(self):
+        ready = self.root / "timeout-pid"
+        command = [
+            sys.executable,
+            "-c",
+            "import os, pathlib, sys, time; sys.stdin.buffer.read(); "
+            f"pathlib.Path({str(ready)!r}).write_text(str(os.getpid())); "
+            "time.sleep(60)",
+        ]
+        previous = {
+            signum: signal.getsignal(signum)
+            for signum in (signal.SIGINT, signal.SIGTERM)
+        }
+        with self.assertRaises(subprocess.TimeoutExpired):
+            deploy.run_ssh(command, input=b"fictional input", timeout=1)
+        self.assertTrue(ready.exists())
+        with self.assertRaises(ProcessLookupError):
+            os.kill(int(ready.read_text()), 0)
+        self.assertEqual(
+            previous, {signum: signal.getsignal(signum) for signum in previous}
+        )
+
+    def test_cli_preserves_remote_status_and_cancellation_status(self):
+        for error, expected in (
+            (subprocess.CalledProcessError(7, ["fake-ssh"]), 7),
+            (subprocess.CalledProcessError(-signal.SIGTERM, ["fake-ssh"]), 143),
+            (KeyboardInterrupt(), 130),
+        ):
+            with self.subTest(error=type(error).__name__):
+                with (
+                    patch.object(deploy, "main", side_effect=error),
+                    patch("sys.stderr", new_callable=io.StringIO),
+                ):
+                    self.assertEqual(deploy.cli(), expected)

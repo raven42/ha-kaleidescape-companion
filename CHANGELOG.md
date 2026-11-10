@@ -3,6 +3,19 @@
 Entries record development history. Later entries can supersede earlier
 behavior; the [documentation index](docs/README.md) owns current contracts.
 
+## Unreleased — Alpha preparation tooling and documentation
+
+- Move maintained contributor contracts under `docs/development/`, consolidate
+  security guidance and introduce installation, Journal/Library and recovery
+  guides.
+- Consolidate active work in the roadmap and move reusable audits to an ignored
+  output/private archival workflow while preserving dated evidence.
+- Move development tooling under `scripts/`, share terminal/editor/CI commands,
+  verify generated assets without overwriting them, and separate prepared
+  runtime packaging from optional deployment and restart.
+- Preserve command cancellation through child processes, including optional SSH
+  operations.
+
 ## Unreleased — Store quality badges
 
 - Record available Store edition badges in scraper history and match compatible
@@ -383,8 +396,9 @@ behavior; the [documentation index](docs/README.md) owns current contracts.
 - Rename the engine to `library/title_matching.py` with format-independent
   `TitleQuery`, `TitleMatcher` and `TitleMatch` interfaces. Keep invoice parsing
   and target ownership preferences in the purchase import adapter.
-- Rename the evaluator to `dev/benchmark_title_matching.py`; accept Companion
-  JSON/SQLite exports and bounded title-only JSON manifests through `--input`.
+- Rename the evaluator to `scripts/src/benchmark_title_matching.py`; accept
+  Companion JSON/SQLite exports and bounded title-only JSON manifests through
+  `--input`.
 - Preserve reviewed purchase matching and existing exact-ID live import rules.
 
 ## Unreleased — Purchase title and release-year matching

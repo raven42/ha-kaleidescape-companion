@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+source "$(dirname "$0")/src/bootstrap.sh"
+companion_venv_python
+exec "$COMPANION_INTERPRETER" -m scripts.src.import_purchase_dates "$@"

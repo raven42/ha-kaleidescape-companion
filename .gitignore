@@ -2,6 +2,8 @@ __pycache__/
 *.py[cod]
 .venv/
 .ha-dev/
+.ha-deploy.json
+artifacts/audits/
 .pyk-source/
 *.egg-info/
 build/
@@ -26,4 +28,3 @@ frontend/dist/
 !.vscode/
 .vscode/*
 !.vscode/tasks.json
-!.vscode/ha-deploy.example.json

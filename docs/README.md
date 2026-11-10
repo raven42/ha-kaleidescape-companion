@@ -1,55 +1,60 @@
 # Companion documentation
 
-Start here for the current architecture, implementation status and operator
-workflow. Each high-level aspect has one authoritative document. Links between
-aspects replace parallel specifications and repeated status histories.
+Start with [installation and first use](getting-started.md), then enable only
+the features you need. Companion is preparing for alpha; implementation and
+offline test coverage do not establish a supported HA/hardware release.
 
-- **design/** describes implemented behavior and its contracts.
-- **plans/** describes remaining work, compatibility decisions and exit gates.
-- **guides/** describes development and installation procedures.
-- **policies/** describes cross-cutting trust and security expectations.
+## User guides
 
-Filename prefixes remain useful when a document is viewed outside its directory.
-Feature designs explicitly identify proposed changes; a plan is not evidence
-that its implementation or hardware validation has shipped.
+Each guide explains prerequisites and permissions, a small working example,
+expected results and recovery. Use fictional examples on an isolated instance;
+replace placeholder entity/entry IDs with those selected in your own HA setup.
 
-## Plans
+| Start here                                                     | Covers                                                                                            |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| [Getting started](getting-started.md)                          | Installation, first recording, upgrades and rollback                                              |
+| [Configuration and permissions](guides/configuration.md)       | Feature opt-ins, household/admin roles, Basic/Advanced, profiles and settings transfer            |
+| [Journal and Library](guides/journal-and-library.md)           | Now Playing, recording, manual viewings, first sync, editions and collection recovery             |
+| [Player controls](guides/player-controls.md)                   | Discovery, selected player, remote/power controls, experimental launch and uncertain outcomes     |
+| [Metadata and artwork](guides/metadata.md)                     | Store/TMDB setup, credentials, matches, field/image review and refresh recovery                   |
+| [Purchases and receipts](guides/purchases-and-receipts.md)     | IMAP/HTML blueprint setup, selected fields, unmatched purchases, duplicate review and corrections |
+| [Calendars](guides/calendars.md)                               | Local Journal calendar, publishing, history export, dedicated Full Sync and recovery              |
+| [Dashboard cards](guides/dashboard-cards.md)                   | All six cards, YAML, visual configuration and responsive controls                                 |
+| [Entities and automations](guides/entities-and-automations.md) | Sensors, buttons, switches, actions and all five blueprint workflows                              |
+| [Data management](guides/data-management.md)                   | Inspection/edits, reviewed imports, export versus backup, maintenance and restore                 |
+| [Troubleshooting](guides/troubleshooting.md)                   | Diagnostics, common failures and useful support reports                                           |
 
-| Document                                                           | Owns                                                                                         |
-| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
-| [Delivery roadmap](plans/plan-roadmap.md)                          | Implemented features, remaining product/release work and validation status                   |
-| [Pykaleidescape migration](plans/plan-pykaliedescape-migration.md) | Temporary PoC status, local-device ownership, upstream/release gates and hardware validation |
+The guides describe implemented workflows. They do not claim completed live
+HA/browser/hardware/provider qualification; those gates remain in the roadmap.
+The [security guide](development/security.md) owns trust boundaries, private
+data handling and vulnerability reporting.
 
-## Designs
+## Development
 
-| Document                                              | Owns                                                                                        |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| [Architecture](design/design-architecture.md)         | HA lifecycle/infrastructure, runtime/module ownership and dependencies                      |
-| [Journal](design/design-journal.md)                   | Storage model, observation, recording, manual viewings, recovery and backup/export contract |
-| [Data management](design/design-data-management.md)   | Database administration, reviewed merge imports and offline purchase-history preparation    |
-| [Title matching](design/design-title-matching.md)     | Reusable matching algorithms/interfaces and evaluation tools                                |
-| [Library](design/design-library.md)                   | Local sync, versions, artwork/cache, browsing/badges and collection management              |
-| [External metadata](design/design-metadata.md)        | Enrichment workflow and standalone provider client/parser interfaces                        |
-| [Player controls](design/design-playback-controls.md) | Discovery, permissions, player/title verification, remote/launch and uncertainty recovery   |
-| [User interface](design/design-user-interface.md)     | Shared UI structure, roles, settings/preferences/profiles and response recovery             |
-| [Dashboard cards](design/design-dashboard-cards.md)   | Six HA cards, YAML/visual configuration and test-dashboard generation                       |
-| [Sensors](design/design-sensors.md)                   | 17 HA sensor values, attributes and update semantics                                        |
-| [Calendar](design/design-calendar.md)                 | Local month view, HA publishing, historical export and Full Sync                            |
-| [Logging](design/design-logging.md)                   | Native HA logging, safe exception summaries, severity/privacy and diagnostics               |
-| [Automations](design/design-automations.md)           | HA actions, blueprint installation/versions/history, schedules and receipt troubleshooting  |
+[Code structure](reference/code-structure.md) maps source owners, frontend
+source versus compiled assets, tests and tools.
+[Contributor setup](development/README.md) explains the shared terminal, editor
+and CI commands. Engineering documentation has one owner per contract:
 
-## Guides and policy
+- [Architecture](development/architecture.md),
+  [Journal storage](development/journal.md) and
+  [title matching](development/title-matching.md).
+- [Pyk ownership and compatibility](development/pyk.md),
+  [logging and diagnostics](development/logging.md) and
+  [security](development/security.md).
+- Detailed [Library](development/library.md),
+  [controls](development/playback-controls.md),
+  [metadata](development/metadata.md), [calendar](development/calendar.md),
+  [data management](development/data-management.md),
+  [UI](development/user-interface.md), [cards](development/dashboard-cards.md),
+  [sensors](development/sensors.md) and [automation](development/automations.md)
+  contracts.
+- [Testing](development/testing.md), [releasing](development/releasing.md),
+  optional [maintainer deployment](development/deployment.md) and
+  [audit methodology](development/auditing.md).
+- [Roadmap](development/roadmap.md) for active work, decisions and
+  qualification; [changelog](../CHANGELOG.md) for development history.
 
-| Document                                   | Owns                                                                                  |
-| ------------------------------------------ | ------------------------------------------------------------------------------------- |
-| [Development](guides/guide-development.md) | Environment, local checks/preview, testing and performance/hardware workflow          |
-| [Deployment](guides/guide-deployment.md)   | Installation, SSH targets, packaging, restart, validation and rollback                |
-| [Security](policies/policy-security.md)    | HA trust model, access/data/network boundaries, deployment expectations and reporting |
-
-Maintain the owning document when code changes. Keep implementation details in
-the design, remaining delivery gates in a plan, and commands/procedures in a
-guide. Historical release notes belong in [CHANGELOG.md](../CHANGELOG.md). The
-[audit index](../audit/README.md) separates dated findings from the current
-review procedure and maintained product documentation. Logging decisions come
-from the logging design; transport migration decisions come from the pyk plan.
-All other designs continue to govern their own aspects.
+Keep setup/recovery instructions in user guides, exact behavior and constraints
+in the owning reference, and current tasks in the roadmap. Historical audit
+reports are evidence of their reviewed revision, not current feature contracts.

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+source "$(dirname "$0")/src/bootstrap.sh"
+if [[ " $* " == *" --providers-only "* ]]; then
+  companion_bootstrap_python
+else
+  companion_venv_python
+fi
+exec "$COMPANION_INTERPRETER" -m scripts.src.test "$@"

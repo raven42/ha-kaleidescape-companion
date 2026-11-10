@@ -8,7 +8,8 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { build, createServer, loadEnv } from "vite";
-import config from "../vite.config.mjs";
+import productionConfig from "../vite.config.mjs";
+import config from "../vite.preview.config.mjs";
 
 function get(port, path, headers = {}, method = "GET") {
   return new Promise((resolve, reject) => {
@@ -45,6 +46,10 @@ test("custom environment values are excluded from browser configuration", async 
       "VITE_TOKEN=fictional-secret\nHA_TOKEN=fictional-secret\n",
     );
     assert.deepEqual(loadEnv("development", directory, config.envPrefix), {});
+    assert.deepEqual(
+      loadEnv("production", directory, productionConfig.envPrefix),
+      {},
+    );
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -55,15 +60,15 @@ test("the production graph rejects development entry points and fixtures", async
   try {
     await assert.rejects(
       build({
-        ...config,
+        ...productionConfig,
         configFile: false,
         logLevel: "silent",
         build: {
-          ...config.build,
+          ...productionConfig.build,
           write: false,
           outDir: output,
           lib: {
-            ...config.build.lib,
+            ...productionConfig.build.lib,
             entry: fileURLToPath(new URL("../dev/main.ts", import.meta.url)),
           },
         },

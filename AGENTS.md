@@ -1,42 +1,43 @@
 # Development instructions
 
-Read [security policy](docs/policies/policy-security.md) before changing
-authentication, APIs, storage, exports, networking, imports, or frontend
-rendering. Its trust boundaries and hardening rules apply to all future
-development. Update the policy and add regression tests when changing a
-boundary; document remaining limitations honestly.
+Follow [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[development guide](docs/development/README.md). Read the
+[architecture](docs/development/architecture.md),
+[security guide](docs/development/security.md) and owning feature document
+before changing authentication, APIs, storage, imports/exports, networking or
+rendering. Update the contract and relevant regression coverage when a boundary
+changes. The [roadmap](docs/development/roadmap.md) owns active work;
+[pyk compatibility](docs/development/pyk.md) governs the temporary runtime
+bundle.
 
-Preserve the built-in `kaleidescape` integration. This project's domain is
-`kaleidescape_companion`. Use the [documentation index](docs/README.md) for
-topic ownership and current implementation status. Follow
-[the roadmap](docs/plans/plan-roadmap.md) and
-[pyk migration plan](docs/plans/plan-pykaliedescape-migration.md) for planned
-work.
+On macOS or Linux with Bash, Python 3.14.2+ and Node.js 22.13+ on 22.x or 24+:
 
-Keep HA-discovered entry points at the integration root. Put runtime internals
-in its `core/`, `library/`, `playback/` and `ui/` packages; add feature modules
-when their behavior is implemented. The temporary device PoC uses pyk's public
-Device workflow and must preserve its compatibility contract; the migration plan
-governs upstream release and hardware qualification. Do not borrow the built-in
-integration's private runtime or replace HA's shared pyk pin incompatibly. The
-integration's `scrapers/` package owns provider parsers and client code; keep it
-independent of HA, integration internals and development tools. Public Store
-scraping belongs only in Companion, not in pyk. Root `dev/` and `frontend/dev/`
-contain development tools only. The production UI must not import development
-code or test fixtures. Keep SQL on the repository's single worker.
+```sh
+scripts/setup
+scripts/build
+scripts/test
+scripts/check
+scripts/package
+```
 
-Use isolated instances and fictional data for development/testing; deployment
-may target an operator-selected household instance. Keep household data and
-credentials out of source, fixtures, and bundles. Device-control tests and
-deployment require explicit user authorization; normal checks must not contact
-devices.
+Setup installs `.[dev,audit]` and frontend dependencies. VS Code tasks and CI
+call the same wrappers. Build intentionally updates generated assets; inspect
+their diff and run Check before packaging. Check must verify the accepted bundle
+without silently replacing it. Update these instructions when commands or
+prerequisites change. Keep Python/Node installation guidance generic.
 
-Run `bash dev/dev.sh check` for relevant code changes. Keep documentation
-generic about installing Python and Node; state required versions without
-platform-specific package-manager instructions.
+Preserve HA's built-in `kaleidescape` integration; this domain is
+`kaleidescape_companion`. Keep SQL on the single repository worker and providers
+independent of HA/storage/tooling. Runtime code must not import `scripts/`,
+`frontend/dev/` or fixtures. Preserve pyk's public Device workflow and HA's
+shared dependency compatibility.
 
-For UI testing that requires a real browser, ask the user to review the concrete
-UI and report results. Provide the URL or navigation steps and a short list of
-behaviors/layouts to check. Run automated component and API tests independently;
-do not launch or automate a real browser for UI review. Clearly distinguish
-automated test results from user browser review that is still pending.
+Use fictional data and isolated tests. Keep credentials and household data out
+of source, fixtures and packages. Normal checks must not contact devices.
+Device-control tests and deployment require explicit user authorization.
+
+For real-browser UI review, ask the user to inspect the concrete UI and provide
+the URL/navigation and a short behavior/layout checklist. Run automated
+component/API tests independently; do not launch or automate a real browser.
+Distinguish automated results from pending operator review. Use the
+[audit procedure](docs/development/auditing.md) for private dated evidence.

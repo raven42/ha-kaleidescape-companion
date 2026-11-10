@@ -3,7 +3,7 @@
 Run the complete local check from the repository root:
 
 ```sh
-bash dev/dev.sh check
+scripts/check
 ```
 
 It checks workspace/runtime consistency, independent metadata providers,
@@ -16,8 +16,8 @@ household devices or external metadata providers.
 ## Focused checks
 
 ```sh
-PYTHONPATH=custom_components/kaleidescape_companion .venv/bin/python -m unittest discover -s tests/scrapers
-.venv/bin/python dev/run_python_tests.py
+PYTHONPATH=custom_components/kaleidescape_companion scripts/test --python-only/scrapers
+scripts/test --python-only
 npm --prefix frontend test
 npm --prefix frontend run build
 ```
@@ -35,7 +35,7 @@ npm --prefix frontend run build
   version fingerprints and comment histories with fictional inputs.
 - `test_read_cache` checks distinct-credit work, household/admin search parity,
   cache bounds/invalidation and cleanup after interrupted queries. The offline
-  [enriched Library benchmark](../docs/guides/guide-development.md#library-performance)
+  [enriched Library benchmark](../docs/development/README.md#library-performance)
   measures fictional paging and search separately from browser rendering.
 - Observation, tracking, history, journal linkage and calendar suites cover
   timing, durable evidence, corrections and external-write receipts.
@@ -57,9 +57,9 @@ boundary. Use existing shared fixtures instead of copying a real database.
 For browser testing, ask the operator to review the concrete UI and provide
 navigation steps. For live commands, choose a suitable player and playback
 window explicitly; deployment and device tests are not part of the check task.
-See the [development guide](../docs/guides/guide-development.md),
-[security policy](../docs/policies/policy-security.md), and
-[controls guide](../docs/design/design-playback-controls.md).
+See the [development guide](../docs/development/README.md),
+[security policy](../docs/development/security.md), and
+[controls guide](../docs/development/playback-controls.md).
 
 `test_calendar_maintenance` uses fictional HA calendar entities for Full Sync,
 including UID-preserving edits, replacement before deletion, age/recurrence

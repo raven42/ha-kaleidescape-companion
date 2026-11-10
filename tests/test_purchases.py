@@ -20,7 +20,7 @@ from custom_components.kaleidescape_companion.core.models import JournalError
 from custom_components.kaleidescape_companion.library.config import collection_names
 from custom_components.kaleidescape_companion.library.store import title_id
 from custom_components.kaleidescape_companion.ui.preferences import validate
-from dev.purchase_history import (
+from scripts.src.purchase_history import (
     DATE_BINDING,
     parse_history,
     parse_purchases,
@@ -68,7 +68,7 @@ def purchased_invoice(*, href="/movie-store/movie/fictional-voyage", bundled=Fal
 def offline_helper():
     spec = importlib.util.spec_from_file_location(
         "offline_purchases",
-        Path(__file__).resolve().parents[1] / "dev/import_purchase_dates.py",
+        Path(__file__).resolve().parents[1] / "scripts/src/import_purchase_dates.py",
     )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -403,12 +403,12 @@ class PurchaseStorageTest(unittest.IsolatedAsyncioTestCase):
     assert_error = library.LibraryStorageTest.assert_error
 
     async def preview(self, *args):
-        from dev.purchase_history import preview
+        from scripts.src.purchase_history import preview
 
         return await self.repository._call(preview, self.repository._db(), *args)
 
     async def apply(self, *args):
-        from dev.purchase_history import apply
+        from scripts.src.purchase_history import apply
 
         return await self.repository._call(self.repository._library_write, apply, *args)
 

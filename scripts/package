@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(cd "$(dirname "$0")" && pwd)/src/bootstrap.sh"
+companion_venv_python
+exec "$COMPANION_INTERPRETER" -m scripts.src.package "$@"

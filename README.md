@@ -1,99 +1,75 @@
 # Kaleidescape Companion
 
-A Home Assistant integration for a shared household watch journal, Now Playing,
-and an optional local movie Library. It observes playback through HA's built-in
-**Kaleidescape** integration and adds optional selected-player controls. Active
-HA users browse household data and use enabled controls; administrators manage
-configuration, records and discovery.
+A Home Assistant integration for a household watch Journal, Now Playing and an
+optional local movie Library. It observes playback through HA's built-in
+**Kaleidescape** integration and offers optional metadata, purchases, calendars
+and selected-player controls.
 
-Recording, Library sync, collection changes, player controls, experimental title
-launch, calendar publishing and external metadata are separately opted in. The
-built-in integration is preserved. Companion's domain is
-`kaleidescape_companion`.
+**Alpha preparation is in progress.** The current version is `0.1.0-dev.0`;
+supported HA versions, project licensing, distribution and hardware/restore
+qualification remain open. HA 2026.11.0 is the development baseline, not a
+promised supported minimum. See the [roadmap](docs/development/roadmap.md).
 
-## Documentation
+## Install and try it
 
-The [documentation index](docs/README.md) identifies one authoritative document
-per aspect, organized into designs, plans, guides and policies.
+You need administrator access to Home Assistant and a compatible complete build
+of this integration. Automatic recording also needs HA's built-in Kaleidescape
+integration with a media player, play-status sensor and media-location sensor.
+Keep that integration installed. Library and controls are separate opt-in
+features; controls are not required for recording.
 
-- [Delivery roadmap](docs/plans/plan-roadmap.md): implemented features and
-  remaining release work.
-- [Pykaleidescape migration plan](docs/plans/plan-pykaliedescape-migration.md):
-  temporary PoC status, compatibility, release gates and hardware validation.
-- [Architecture](docs/design/design-architecture.md) and
-  [security policy](docs/policies/policy-security.md).
-- [Development](docs/guides/guide-development.md) and
-  [installation/deployment](docs/guides/guide-deployment.md).
-- [Logging and diagnostics](docs/design/design-logging.md).
-- [Automations and receipt imports](docs/design/design-automations.md):
-  blueprint installation, versions/history, scheduled jobs and email
-  troubleshooting.
-- [Engineering audits](audit/README.md): dated evidence and the current review
-  procedure.
+1. Back up the target HA configuration and Companion data before an upgrade.
+2. Copy the complete built `custom_components/kaleidescape_companion/` directory
+   into HA's configuration directory. Include the compiled frontend, templates
+   and bundled dependency files; HA needs neither Node nor Vite.
+3. Restart HA, then choose **Settings → Devices & services → Add integration →
+   Kaleidescape Companion**.
+4. Open **Kaleidescape Companion** in the sidebar. Review Settings before
+   enabling features. To record playback, select the three existing entities and
+   enable tracking; a qualified completed viewing appears in Journal.
 
-## Current capabilities
+Follow [getting started](docs/getting-started.md) for prerequisites, first use,
+upgrade and recovery. A tagged public alpha and HACS publication are not yet
+available as a supported installation path.
 
-The Journal supports one-player observation, manual viewings, corrections,
-recovery, private exports and a monthly calendar. Library provides cached movie
-browsing, grouped editions, artwork and explicit collection changes. Optional
-public Store/TMDB enrichment supports reviewed metadata and images.
+## Use Companion
 
-The shared panel includes **Now Playing | Library | Journal | Database |
-Settings**, with personal desktop/tablet/mobile preferences. HA dashboards have
-six cards, including a Journal calendar, and the integration exposes 17 sensors.
-Administrator database tools support bounded inspection/edits and reviewed merge
-imports. HA calendar publishing and dedicated-calendar Full Sync are optional.
+- [Configuration and permissions](docs/guides/configuration.md): feature
+  opt-ins, household/admin access and personal display profiles.
+- [Journal and Library](docs/guides/journal-and-library.md): recording, first
+  sync, manual viewings and corrections.
+- [Troubleshooting and recovery](docs/guides/troubleshooting.md): diagnostics,
+  failed operations and useful support reports.
+- [All documentation](docs/README.md): setup and feature references, including
+  dashboard cards, metadata, purchases, automations and calendars.
 
-Receipt imports retain purchases in their own table, including purchases that
-arrive before a Library scan. Administrators reconcile saved unmatched purchases
-against Library entries without a JSON file or pausing recording. Schema 25
-moved existing invoice histories into that table rather than keeping duplicate
-copies; the current schema is 28, including purchase-repair evidence and
-collection jobs.
+HA users can browse enabled household features. Administrators configure
+features and manage private records; Basic/Advanced presentation does not grant
+permissions. Recording, collection changes, player controls, experimental title
+launch, calendar publishing and external metadata are separately enabled.
 
-Three HA buttons, three configuration switches and four optional automation
-blueprints expose synchronization, recording/calendar settings and receipt
-imports. **Settings → Automations** compares installed blueprints with the
-versions bundled with Companion and provides their change logs. Installation and
-updates are reviewed and explicitly confirmed there; creating or enabling an
-automation remains a separate Home Assistant step.
+## Contribute
 
-Controls include discovery, remote/power actions, explicit pause/resume and
-experimental selected-title launch with durable uncertainty recovery. This
-temporary PoC uses patched pyk `Device` methods for controls and `LocalLibrary`
-for local server browsing. Public Store scraping remains in Companion. The
-migration plan preserves pyk's workflow and tracks upstream release work.
-
-## Installation and development
-
-Install the complete built `custom_components/kaleidescape_companion/` directory
-under the target HA configuration, restart HA and add **Kaleidescape Companion**
-through **Settings → Devices & services**. Production includes compiled frontend
-assets and needs neither Node nor Vite. Companion bundles the reviewed patched
-pyk source under a private namespace; HA's built-in integration continues to use
-the released dependency. See the deployment guide for packaging, optional SSH
-deployment and configuration checks. HA OS hardware validation is pending.
-
-Development requires Python 3.14.2+ with SQLite 3.35+, Node.js 22.13+ (22.x) or
-24+, and npm. HA 2026.11.0 with pyk 1.2.0 is the current development baseline,
-not a promised supported minimum. Offline tests load the bundled patched pyk
-source. In the prepared developer workspace:
+Use macOS or Linux with Bash, Python 3.14.2+ (SQLite 3.35+), Node.js 22.13+ on
+22.x or 24+, and npm:
 
 ```sh
-bash dev/dev.sh setup
-bash dev/dev.sh check
+scripts/setup
+scripts/build
+scripts/check
+scripts/package
 ```
 
-The [development guide](docs/guides/guide-development.md) describes current
-workspace prerequisites and local HA/Vite preview. Tests use fictional data;
-normal checks do not control devices or deploy. Hardware validation and
-deployment are explicit operator actions. Custom integrations execute with HA's
-privileges; the security policy explains the actual boundaries.
+[CONTRIBUTING.md](CONTRIBUTING.md) explains the workflow and links to the
+engineering contracts. One checkout contains the sources, tests and pinned pyk
+reconstruction inputs. The bundled pyk proof of concept remains until its
+upstream and HA compatibility gates pass.
 
-## Release status
+## Security
 
-This remains a development integration (`0.1.0-dev.0`). Supported HA versions,
-project licensing/distribution, current dependency review and
-operator/hardware/backup validation remain release work tracked in the roadmap.
-An operator may choose a household deployment after reviewing those limits. This
-documentation does not claim hardware qualification or an upstream pyk release.
+Custom integrations execute with HA's privileges. Read the
+[security guide](docs/development/security.md) for permissions, private data,
+logging limitations and reporting. Report suspected vulnerabilities to the
+repository owner through an established private channel; keep credentials,
+household logs and databases out of public issues. A dedicated private reporting
+channel remains a release prerequisite.
