@@ -53,14 +53,15 @@ The following stages are accepted work. **In progress** identifies current work;
 evidence named in that row. Preservation and filtering are separate from forward
 code and documentation changes. The alpha release gate has not been completed.
 
-| Stage                          | Status      | Completion evidence                                                                                                                                                                                              |
-| ------------------------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Preserve and inventory         | In progress | Local/remote inventory, history bundles, full local object pack and reports restore-tested; separate local backup verified. Independent backup assurance remains open before removing original history.          |
-| Rehearse history filtering     | Complete    | Disposable main rehearsal retained 132 of 137 commits, pruning only five report-only commits; verified retained blobs, modes, metadata, ancestry and three targeted message edits against the ledger.            |
-| Contributor docs and tooling   | Complete    | Maintained docs and user guides reorganized; terminal/editor/CI share direct scripts. Fresh isolated setup, full Check and deterministic packaging verified, including cancellation and asset mismatch handling. |
-| Supported upgrades and cleanup | Accepted    | Select supported database checkpoints and portable formats, then simplify current compatibility paths with fictional upgrade, rollback and restore coverage.                                                     |
-| Release qualification          | Accepted    | Complete the current build/test/package gate, installation and recovery guides, release policy and the external qualification matrix below.                                                                      |
-| Shared-history cutover         | Accepted    | Review concrete ref updates, branch/PR handling and rollback; execute when authorized, then verify a fresh remote clone.                                                                                         |
+| Stage                          | Status   | Completion evidence                                                                                                                                                                                                         |
+| ------------------------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Preserve and inventory         | Complete | Original history/object/report archives and the committed pre-rewrite bundle restore-tested; separate private local copies verified. Off-device backup assurance remains unverified.                                        |
+| Rehearse history filtering     | Complete | Disposable main rehearsal retained 132 of 137 commits, pruning only five report-only commits; verified retained blobs, modes, metadata, ancestry and three targeted message edits against the ledger.                       |
+| Contributor docs and tooling   | Complete | Maintained docs and user guides reorganized; terminal/editor/CI share direct scripts. Fresh isolated setup, full Check and deterministic packaging verified, including cancellation and asset mismatch handling.            |
+| Local history filtering        | Complete | Filter retained 135 of 140 input commits, pruning the same five report-only commits; every retained tree, mode, metadata header, parent and message verified. Current audit directory removed; procedure history preserved. |
+| Supported upgrades and cleanup | Accepted | Select supported database checkpoints and portable formats, then simplify current compatibility paths with fictional upgrade, rollback and restore coverage.                                                                |
+| Release qualification          | Accepted | Complete the current build/test/package gate, installation and recovery guides, release policy and the external qualification matrix below.                                                                                 |
+| Publish cleaned history        | Accepted | Current remote main predates the reports and remains an ancestor of cleaned local main. Recheck refs/PRs, publish by ordinary fast-forward when authorized, then verify a fresh remote clone.                               |
 
 Retain every commit that changes retained files, including small fixes,
 experiments and reversions. Mixed commits lose only selected archival content;
@@ -71,6 +72,13 @@ procedure now lives in `docs/development/auditing.md`. Do not purge `docs/` or
 checkouts need not build; the resulting current revision must pass the release
 gate. Keep original reports and commit IDs privately, together with restoration
 checks and rewrite mappings; do not publish archival refs or bundles.
+
+The local rewrite preserves the three contributor-preparation commits and all
+retained source history. Original history, reports and mappings remain in the
+private archive. The existing stash and remote-tracking refs are unchanged;
+reflogs and recovery objects have not been pruned. Both verified archive copies
+are on the same machine. No shared ref was updated, and the current eight
+Dependabot branches need no filtering because they predate the reports.
 
 Maintained documentation leads with installation, first use, feature setup,
 permissions and recovery. Consolidate active tasks here and lasting contracts in

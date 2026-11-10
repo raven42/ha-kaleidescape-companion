@@ -77,10 +77,16 @@ started or the database restored correctly.
 
 ## History cutover
 
-The report-filtering rehearsal is separate from release validation. Preserve the
-original bundle, audit files, commit ledger and mappings privately. Verify an
-independent backup before removing original history. Before changing shared
-refs, recheck live refs and PRs, review exact updates and rollback, and execute
-only within the authorized scope. Validate a fresh remote clone afterward and
-avoid merging the old ancestry back. Do not publish recovery refs or original
-archive bundles.
+The local report-history rewrite is complete; publication remains separate from
+release validation. Original bundles, audit files, commit ledgers and mappings
+remain private, with restore-tested local copies. Off-device backup assurance
+has not been verified. Keep that recovery history and do not prune it merely
+because the maintained branch has been filtered.
+
+Before changing shared refs, recheck live refs and PRs, review exact updates and
+rollback, and execute only within the authorized scope. At the local cutover,
+the hosted main and Dependabot branches predated the removed reports, so no
+remote history replacement was needed; the cleaned main can be published by
+ordinary fast-forward if that relationship remains true. Validate a fresh remote
+clone afterward and avoid merging old report-bearing ancestry back. Do not
+publish recovery refs or original archive bundles.
