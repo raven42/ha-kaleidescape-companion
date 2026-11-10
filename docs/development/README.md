@@ -112,11 +112,12 @@ frontend preview and local HA remain separate operations. The explicitly labeled
 maintainer composite runs Build, Check, Package, deploy and restart in sequence;
 see [deployment](deployment.md) before selecting it.
 
-See [testing](testing.md) for suite selection and validation limits. The tests
-use normal `python -m unittest` discovery and Python's normal isolated asyncio
-runner. Expected failure-injection warnings do not imply test failure; inspect
-the process exit and suite summary. Logging behavior is specified in
-[logging and diagnostics](logging.md).
+See [testing](testing.md) for suite selection and validation limits. The
+wrappers use normal `unittest` discovery and set Python's isolated-asyncio
+slow-callback diagnostic threshold to 250 ms; direct `python -m unittest`
+commands retain Python's default. Expected failure-injection warnings do not
+imply test failure; inspect the process exit and suite summary. Logging behavior
+is specified in [logging and diagnostics](logging.md).
 
 The frontend lockfile temporarily overrides transitive minimatch 10 with 11.0.4
 for

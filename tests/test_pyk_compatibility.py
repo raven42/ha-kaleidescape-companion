@@ -1,6 +1,7 @@
 """Exercise the patched pyk Device surface without connecting to a player."""
 
 import json
+import re
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -34,7 +35,10 @@ class PykCompatibilityTest(unittest.TestCase):
                 / "components/kaleidescape/manifest.json"
             ).read_text()
         )
-        self.assertEqual(manifest["requirements"], ha_manifest["requirements"])
+        self.assertEqual(len(ha_manifest["requirements"]), 1)
+        matched = re.fullmatch(r"pykaleidescape==(.+)", ha_manifest["requirements"][0])
+        self.assertIsNotNone(matched)
+        self.assertEqual(manifest["requirements"], [f"pykaleidescape>={matched[1]}"])
         self.assertTrue(callable(Device.prepare_movie_launch))
         self.assertTrue(callable(LocalLibrary.add_to_collection))
 
