@@ -39,7 +39,7 @@ export default defineConfig({
       fileName: () => "panel.js",
     },
     rollupOptions: {
-      output: { inlineDynamicImports: true },
+      output: { codeSplitting: false },
     },
   },
 });
