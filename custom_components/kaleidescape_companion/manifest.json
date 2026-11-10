@@ -1,18 +1,6 @@
 {
   "domain": "kaleidescape_companion",
   "name": "Kaleidescape Companion",
-  "codeowners": [
-    "@raven42"
-  ],
-  "documentation": "https://github.com/raven42/ha-kaleidescape-companion",
-  "issue_tracker": "https://github.com/raven42/ha-kaleidescape-companion/issues",
-  "config_flow": true,
-  "single_config_entry": true,
-  "dependencies": [
-    "frontend",
-    "http",
-    "websocket_api"
-  ],
   "after_dependencies": [
     "blueprint",
     "kaleidescape",
@@ -20,10 +8,22 @@
     "lovelace",
     "automation"
   ],
+  "codeowners": [
+    "@raven42"
+  ],
+  "config_flow": true,
+  "dependencies": [
+    "frontend",
+    "http",
+    "websocket_api"
+  ],
+  "documentation": "https://github.com/raven42/ha-kaleidescape-companion",
   "integration_type": "service",
   "iot_class": "local_push",
+  "issue_tracker": "https://github.com/raven42/ha-kaleidescape-companion/issues",
   "requirements": [
     "pykaleidescape>=1.2.0"
   ],
+  "single_config_entry": true,
   "version": "0.5.0-alpha"
 }
