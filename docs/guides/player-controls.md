@@ -46,6 +46,11 @@ directions, Select, Back, Kaleidescape menu, Movie covers, Power on and Standby.
 It does not automatically wake a player, retry a command or choose a replacement
 player when your selected player is unavailable.
 
+[![Default and selected-player dashboard remotes with power buttons, direction pads and transport controls](../../assets/screenshots/dashboard-remote.png)](../../assets/screenshots/dashboard-remote.png)
+
+Dashboard remote examples for the default and an explicitly selected player.
+Navigation and transport controls are disabled in this captured state.
+
 Library launch also needs an enabled, synced Library and **Allow Library title
 playback** enabled by an administrator. Open an available Library version and
 choose **Play**. Purchase-only placeholders cannot be launched. Check the target

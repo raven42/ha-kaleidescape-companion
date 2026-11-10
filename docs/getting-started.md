@@ -44,6 +44,14 @@ retains and reattaches its stored dataset. Built files contain five automation
 blueprints; installing or updating a blueprint does not create or enable an HA
 automation. See [automation setup](development/automations.md).
 
+[![Home Assistant Companion service device showing sensors, feature switches, job buttons and diagnostics](../assets/screenshots/ha-integration.png)](../assets/screenshots/ha-integration.png)
+
+After configuration, the Companion service device groups sensors, feature
+switches, job buttons and diagnostics. This example has recording, Library and
+calendar features enabled; your values depend on your settings and history. See
+[entities and automations](guides/entities-and-automations.md) for what each
+control does.
+
 ## First useful action: record a viewing
 
 In the integration's **Configure** flow, or Companion Settings, select

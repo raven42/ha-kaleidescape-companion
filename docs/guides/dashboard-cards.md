@@ -79,8 +79,9 @@ tab for conditions; see its
 [conditional card documentation](https://www.home-assistant.io/dashboards/conditional/).
 Visibility and `show_controls` affect presentation, not authorization or player
 selection. Companion still enforces its shared feature settings and command
-uncertainty barriers. See [Player controls](player-controls.md) before sending
-commands.
+uncertainty barriers. See the
+[remote examples and player-control guide](player-controls.md#use-the-remote-or-launch-a-title)
+before sending commands.
 
 ## Link search and covers
 
@@ -117,6 +118,11 @@ artwork uses a placeholder; cached artwork loads as it becomes visible. Open a
 cover for its details. Enabled Library launch still requires an explicit Play
 action.
 
+[![Four-column compact covers beside a three-column card with title and format overlays and a partial last row](../../assets/screenshots/dashboard-cover-layout.png)](../../assets/screenshots/dashboard-cover-layout.png)
+
+Compact covers alongside a layout with titles, format/rating badges and a
+partial final row. Use your own configured entry if you specify `entry_id`.
+
 ## Full Library and calendar layouts
 
 Use a wide Sections card or a panel view for the full Library. It does not
@@ -138,6 +144,12 @@ changes remain local to the card, separate from the panel's saved desktop,
 tablet and mobile preferences. A matching search card can supply search when the
 embedded search is off.
 
+[![Movie detail dialog over a full-width Library card, showing artwork, synopsis, credits, ratings and Power On](../../assets/screenshots/dashboard-full-library.png)](../../assets/screenshots/dashboard-full-library.png)
+
+Opening a cover in the full Library card shows movie details. This example
+offers **Power On** for the selected player; opening the dialog does not launch
+the movie.
+
 The calendar fits all seven weekday columns to its available width:
 
 ```yaml
@@ -152,6 +164,11 @@ posters retain their proportions. Month navigation and **Today** are local to
 the card and do not change the HA URL. Cross-day cut posters represent one
 viewing; see [Calendars](calendars.md) for counting rules.
 
+[![Journal calendar cards comparing fixed day-row sizing with fit-to-screen sizing](../../assets/screenshots/dashboard-journal.png)](../../assets/screenshots/dashboard-journal.png)
+
+Fixed day-row sizing and fit-to-screen calendar examples show the same Journal
+month at different heights.
+
 ## Generate examples and recover failures
 
 Administrators can use **Companion → Advanced → Settings → Maintenance →
@@ -159,6 +176,11 @@ Generate test dashboard**, enter a name and choose **Create test dashboard**.
 Save settings first. This adds a separate HA-managed dashboard with seven views
 of examples and checklists; it does not replace an existing dashboard. **Open
 test dashboard** opens it and **Download YAML** saves its configuration.
+
+[![Generated Companion dashboard Start here view with tabs for remote, Now Playing, cover layouts, search, Library and calendar](../../assets/screenshots/dashboard.png)](../../assets/screenshots/dashboard.png)
+
+The generated dashboard's **Start here** view introduces the examples and links
+them through the tabs above.
 
 Generation requires loaded HA dashboards, an enabled nonempty Library, enabled
 controls with a saved default player, an existing HA observation source and at

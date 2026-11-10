@@ -67,6 +67,12 @@ history are not changed by a provider match.
 5. With auto-save off, choose **Save** to commit the reviewed draft. With
    auto-save on, individual changes save immediately.
 
+[![Movie Metadata Manager with current artwork, title and year search, source refresh controls, Field Mapping and History tabs](../../assets/screenshots/metadata-manager.png)](../../assets/screenshots/metadata-manager.png)
+
+The manager places the current Library record above provider review controls.
+This example has auto-save enabled, so its source panel says changes save
+immediately.
+
 The original scan and each provider cache remain separate. **History** shows
 recent checks and saved provider values, up to eight entries per provider. It is
 not a full audit trail. A match link opens the approved public movie page; it

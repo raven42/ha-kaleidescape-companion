@@ -10,6 +10,10 @@ Each guide explains prerequisites and permissions, a small working example,
 expected results and recovery. Use fictional examples on an isolated instance;
 replace placeholder entity/entry IDs with those selected in your own HA setup.
 
+Screenshots show an example configuration; titles, counts, dates and enabled
+features will differ in your installation. Select any screenshot to open its
+full-resolution image.
+
 | Start here                                                     | Covers                                                                                            |
 | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | [Getting started](getting-started.md)                          | Installation, first recording, upgrades and rollback                                              |

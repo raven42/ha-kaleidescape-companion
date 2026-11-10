@@ -49,6 +49,11 @@ available metadata. Missing covers display placeholders. Browsing uses cached
 data while the server is offline; a failed scan preserves prior data and does
 not establish that it is current.
 
+[![Library cover grid in Basic view with search, filters, sorting and format badges](../../assets/screenshots/library.png)](../../assets/screenshots/library.png)
+
+The Library cover view combines cached artwork, format badges and household
+status. Open a cover to inspect its movie.
+
 If discovery fails, verify that HA can resolve the server hostname and reach its
 local browser interface. Only standard HTTP/HTTPS ports and private LAN
 destinations are accepted; URLs containing credentials, paths or queries are
@@ -60,6 +65,42 @@ Review the bundled Library sync blueprint under **Settings → Automations**, th
 create and enable the desired automation in HA. See
 [Library reference](../development/library.md) and
 [automation setup](../development/automations.md).
+
+## Find and inspect a movie
+
+Enter a title, actor or director in the Library search box and choose
+**Search**. Unquoted text allows partial matches and uses the shared
+fuzzy-search setting. Put the whole query in double quotes for a whole-word
+phrase, such as `"Matt Damon"` in the example below. Clearing the search
+restores the selected sort and shuffle.
+
+[![Library search for the quoted actor name Matt Damon, showing matching movie covers](../../assets/screenshots/library-search.png)](../../assets/screenshots/library-search.png)
+
+A quoted people search narrows the cached Library; the footer shows the match
+count separately from catalog totals.
+
+Choose **Filters** to narrow results by status, rating, genre, year or viewing
+format. Several selections within one category match any selected value;
+different categories must all match the same version. Choose **Apply filters**
+to use the draft, or close with **X** to discard it. The toolbar's **Clear
+Filter** clears search and filters while keeping your view, sort and page size.
+The missing-data options shown below are administrator tools in Advanced view.
+
+[![Library filters dialog with status, rating, genre, year and viewing-format choices](../../assets/screenshots/library-filters.png)](../../assets/screenshots/library-filters.png)
+
+Filter categories combine to narrow the result. Applying the draft returns to
+the first page.
+
+Open a cover to read its synopsis, credits, ratings and available versions.
+**Library details**, **Journal** and **Ratings and metadata sources** expand the
+relevant information. A filtered movie can still show versions that did not
+match the filter. Device controls appear only when enabled; use the
+[player-control guide](player-controls.md) before sending a command.
+
+[![Movie details showing artwork, format and status badges, synopsis, credits and expandable information](../../assets/screenshots/movie-details.png)](../../assets/screenshots/movie-details.png)
+
+The household movie dialog brings together Library facts and viewing history.
+The Power On button shown here belongs to the separately enabled controls.
 
 ## Add or correct a viewing
 
@@ -84,9 +125,20 @@ publication and uncertainty recovery.
 ## Collection changes and uncertainty
 
 Library sync does not enable device writes. **Allow collection changes** is a
-separate administrator setting and requires collection sync. Changes target an
-exact version and enter a durable queue. Refresh status after a lost response;
-do not repeatedly submit the same external mutation. An uncertain outcome needs
-readback/reconciliation before another write. The
-[collection contract](../development/library.md) explains supported moves,
-authorization checks and recovery limits.
+separate administrator setting and requires collection sync. In Advanced view,
+open a movie, select its exact version and choose **Collection**. For example,
+**Add to Watch Soon** queues that version for the device collection. Favorites
+and Watch Soon support add/remove; Watched and Unwatched are paired moves. In
+Progress is created by playback and can only be removed here.
+
+[![Manage collections dialog for a selected movie version, with Favorites, Watch Soon and viewing-status actions](../../assets/screenshots/collection-management.png)](../../assets/screenshots/collection-management.png)
+
+Check the selected version before choosing an action. Queued changes are
+confirmed after a Library refresh.
+
+Changes enter a durable queue. Refresh status after a lost response; do not
+repeatedly submit the same external mutation. An uncertain outcome needs
+readback/reconciliation before another write. The dialog's refresh icon reads
+the selected version's membership from the device; it does not clear an
+unconfirmed write. The [collection contract](../development/library.md) explains
+supported moves, authorization checks and recovery limits.

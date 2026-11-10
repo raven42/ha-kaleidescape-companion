@@ -32,6 +32,12 @@ draft. The save bar shows pending native settings; **Save settings** validates
 and applies them, then reloads the integration as needed. Read any field error
 before saving again. Saving is disabled when no native fields changed.
 
+[![Companion Settings in Advanced mode, with category navigation, setting search and General options](../../assets/screenshots/settings.png)](../../assets/screenshots/settings.png)
+
+The General category includes the shared landing page and search preferences.
+The example shows no unsaved changes, so the save bar is disabled. Use the
+category list or **Find a setting** to locate another feature.
+
 | Category    | Start here                                                                           |
 | ----------- | ------------------------------------------------------------------------------------ |
 | General     | Shared default landing page and fuzzy search                                         |

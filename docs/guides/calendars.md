@@ -35,6 +35,11 @@ bounded to 1000 viewings and two seconds; narrow filters if it reaches a limit.
 The [Journal calendar card](dashboard-cards.md) uses the same local records and
 does not read events from your published HA calendar.
 
+[![Journal month view with movie posters, stacked viewings and split posters across dates](../../assets/screenshots/calendar.png)](../../assets/screenshots/calendar.png)
+
+The local Journal calendar shows viewings by date. Stacked posters share a day;
+the complementary cut posters represent one viewing spanning dates.
+
 ## Publish new completions
 
 1. Set up an existing HA calendar that supports creating events. Choose a
