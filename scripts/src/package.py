@@ -40,6 +40,8 @@ REQUIRED = {
     "templates/maintenance_schedule.yaml",
     "const.py",
     "manifest.json",
+    "LICENSE",
+    "NOTICE",
     "strings.json",
     "translations/en.json",
     "ui/assets/panel.js",

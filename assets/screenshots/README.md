@@ -23,4 +23,7 @@ caption together when the interface changes.
 | `dashboard-remote.png`                                                                                       | [Player controls](../../docs/guides/player-controls.md)         |
 
 These are documentation assets. Runtime packaging selects files only from the
-integration directory and does not include this folder.
+integration directory and does not include this folder. Screenshots can contain
+third-party title artwork, marks and UI data; those elements are not licensed
+under the project's Apache-2.0 license. Do not reuse them outside documentation
+without permission from their respective owners.

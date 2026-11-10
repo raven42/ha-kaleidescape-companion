@@ -184,12 +184,12 @@ archive inspection do not close these external gates.
 ## Release readiness
 
 - Declare and test supported HA releases. Manifest repository URLs and ownership
-  are populated; `0.1.0-dev.0` identifies an unqualified development build
-  across the integration, project and frontend. Choose the project license
-  (explicitly deferred by the owner) and final release version/distribution
-  policy before publishing. HA 2026.11.0 is the development baseline, not a
-  promised minimum version. The bundled pyk MIT license covers that dependency
-  only.
+  are populated; `0.5.0-alpha` identifies the unqualified alpha candidate across
+  the integration, project and frontend. Original project work uses Apache-2.0;
+  the bundled pyk MIT license covers that dependency only. A matching
+  `v0.5.0-alpha` tag is the intended prerelease publication path, but the
+  external qualification gates below still apply. HA 2026.11.0 is the
+  development baseline, not a promised minimum version.
 - Make a clean checkout/build/install reproducible with the qualified pyk
   dependency strategy; verify setup, options reload, unload, restart and
   upgrade. Keep tracked generated assets and folder-based distribution
@@ -211,6 +211,24 @@ archive inspection do not close these external gates.
 A development deployment may use an operator-selected household HA instance. The
 [deployment guide](deployment.md) describes the actual tooling and rollback
 limits; isolated testing remains recommended when practical.
+
+## Planned work
+
+These are accepted follow-on items, not commitments for the current alpha. Each
+requires an owning design, privacy/security review and regression coverage
+before implementation.
+
+| Milestone or area | Planned outcome                                                                                                                                                                                                                                               |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tooling           | Migrate project environment and dependency management from the current venv/pip workflow to `uv`, retaining reproducible local and CI setup.                                                                                                                  |
+| Test suite        | Migrate test code from `unittest` to `pytest` while preserving the existing offline, fictional-data and no-device-contact guarantees.                                                                                                                         |
+| Beta              | Finalize the current development and qualification work, then recruit additional testers with defined test environments, feedback paths and privacy-safe evidence handling.                                                                                   |
+| Release v1        | Plan release deployment around merging qualified Companion changes into pykaleidescape and making the integration available through the Home Assistant Community Store (HACS), subject to upstream approval and HACS requirements.                            |
+| Stats view        | Add a database-backed statistics view for perspectives such as most-watched genres, actors and directors, plus recurring actors across the Library. Define aggregation scope, permissions and empty/partial-data behavior first.                              |
+| Relationship view | Add an interactive relationship graph linking similar movies by genre, cast and other qualified metadata; support an actor-focused graph showing frequent collaborator relationships. Establish performance limits and access-safe payloads before rendering. |
+| Find related      | Add an action to find movies related to the current movie, evaluating TMDB's related-movie API alongside local similarity signals and honoring the existing metadata opt-in and credential boundaries.                                                        |
+| CSV export        | Add scoped CSV exports for selected database tables, with explicit administrator authorization, bounded output and documentation of the privacy implications.                                                                                                 |
+| Artwork cache     | Investigate and measure artwork-cache optimizations for faster loading, preserving current cache bounds, authentication and privacy behavior.                                                                                                                 |
 
 ## Later product decisions
 
