@@ -12,13 +12,14 @@ import tarfile
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
+from scripts.src.package import ARTIFACT_NAME, load_artifact
 from scripts.src.package import REQUIRED as REQUIRED
-from scripts.src.package import load_artifact
 from scripts.src.package import runtime_package as runtime_package
 
 ROOT = Path(__file__).resolve().parents[2]
 DOMAIN = "kaleidescape_companion"
 DEFAULT_CONFIG = ROOT / ".ha-deploy.json"
+DEFAULT_ARTIFACT = ROOT / "dist" / ARTIFACT_NAME
 EXAMPLE_CONFIG = ROOT / "scripts/config/ha-deploy.example.json"
 # Only a locally validated prepared runtime archive is sent to this script.
 # All remote paths originate from the quoted positional config argument.
@@ -283,12 +284,17 @@ def main() -> None:
     )
     args = parser.parse_args()
     if args.action in {"plan", "deploy"} and args.artifact is None:
-        parser.error("plan/deploy requires --artifact PATH; run scripts/package first")
+        args.artifact = DEFAULT_ARTIFACT
     if args.action in {"init", "restart"} and args.artifact is not None:
         parser.error("--artifact is only used by plan/deploy")
     if args.action == "init":
         initialize_config(args.config)
         return
+    if args.action in {"plan", "deploy"} and not args.artifact.is_file():
+        parser.error(
+            f"Prepared artifact is missing: {args.artifact}. "
+            "Run scripts/package or pass --artifact PATH."
+        )
     config = load_config(args.config)
     target = (
         f"{config.ssh_user}@{config.ssh_host}" if config.ssh_user else config.ssh_host

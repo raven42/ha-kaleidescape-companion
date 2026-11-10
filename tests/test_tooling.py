@@ -1,5 +1,6 @@
 """Keep local tooling independent of caller cwd, devices and editor state."""
 
+import io
 import os
 import signal
 import subprocess
@@ -42,12 +43,19 @@ class ToolingTest(unittest.TestCase):
     def test_dependency_audit_runs_both_scans_after_failure(self):
         for first in (1, FileNotFoundError("fictional missing scanner")):
             with self.subTest(first=first):
-                with patch.object(sys, "argv", ["dependency-audit"]):
-                    with patch.object(tasks, "run", side_effect=[first, 0]) as run:
-                        self.assertEqual(dependency_audit.main(), 1)
+                with (
+                    patch.object(sys, "argv", ["dependency-audit"]),
+                    patch.object(sys, "stderr", new_callable=io.StringIO) as errors,
+                    patch.object(tasks, "run", side_effect=[first, 0]) as run,
+                ):
+                    self.assertEqual(dependency_audit.main(), 1)
                 self.assertEqual(run.call_count, 2)
                 self.assertIn("pip_audit", run.call_args_list[0].args[0])
                 self.assertEqual(run.call_args_list[1].args[0][:2], ["npm", "audit"])
+                if isinstance(first, OSError):
+                    self.assertIn("Dependency scan could not run", errors.getvalue())
+                else:
+                    self.assertEqual(errors.getvalue(), "")
 
     def test_setup_rejects_unsupported_python_before_installing(self):
         with patch.object(sys, "version_info", (3, 13, 9)):

@@ -87,18 +87,20 @@ shell commands.
 scripts/build
 scripts/check
 scripts/package
-scripts/deploy plan --artifact dist/kaleidescape-companion.tar.gz
-scripts/deploy --artifact dist/kaleidescape-companion.tar.gz
+scripts/deploy plan
+scripts/deploy
 scripts/restart
 ```
 
 Package verifies generated assets and creates
 `dist/kaleidescape-companion.tar.gz` together with `.sha256` and
 `.provenance.json` sidecars. Keep the three files together. Deployment validates
-and uploads the selected prepared artifact; it does not rebuild from the current
-working tree. The artifact's source/build provenance describes what was prepared
-and does not certify live HA compatibility. The complete Check gate remains a
-release prerequisite.
+and uploads that standard prepared artifact; it does not rebuild from the
+current working tree. Use `--artifact PATH` with `scripts/deploy plan` or
+`scripts/deploy` only when reviewing a different prepared archive. The
+artifact's source/build provenance describes what was prepared and does not
+certify live HA compatibility. The complete Check gate remains a release
+prerequisite.
 
 The plan command shows the configured target, path, artifact digest and restart
 behavior without opening SSH. Review it before an explicitly selected
@@ -107,6 +109,14 @@ separately runs the HA configuration check, then restarts Core or the selected
 container only if that check succeeds. Both terminal and optional maintainer VS
 Code tasks use the same CLI operations. No normal setup, build, check, test or
 package command deploys or restarts HA.
+
+VS Code also offers **Maintainer: Build, check, package, deploy and restart**.
+It runs Build, Check, Package, deployment and configuration-check/restart in
+that order, stopping at the first failed task. It uses the standard artifact
+created by Package. It intentionally does not include the deployment preview:
+run **Maintainer: Preview deployment** first when reviewing a target or archive.
+This composite task contacts the configured target and restarts HA; it is never
+a dependency of routine contributor tasks.
 
 Updating Python code requires a full HA Core restart after installation;
 reloading the entry alone does not replace already imported Python code or old
@@ -198,10 +208,11 @@ selected entities after the basic checks. See the
 [tracking guide](journal.md#automatic-tracking).
 
 Target configuration is local and editor-independent. `scripts/deploy init`,
-`scripts/deploy plan --artifact PATH`, `scripts/deploy --artifact PATH` and
-`scripts/restart` each accept `--config PATH`. Restart does not upload an
-artifact; deployment does not run restart. Keep the selected archive and
-sidecars immutable between review and deployment.
+`scripts/deploy plan`, `scripts/deploy` and `scripts/restart` each accept
+`--config PATH`. Plan and deploy use `dist/kaleidescape-companion.tar.gz` by
+default and accept `--artifact PATH` for a different prepared artifact. Restart
+does not upload an artifact; deployment does not run restart. Keep the selected
+archive and sidecars immutable between review and deployment.
 
 See
 [HA OS SSH access](https://www.home-assistant.io/common-tasks/os/#installing-and-using-the-ssh-app)

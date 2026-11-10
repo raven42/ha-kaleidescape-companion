@@ -491,6 +491,8 @@ assert not any(name == 'scripts' or name.startswith('scripts.') for name in sys.
         data = self.settings_data()
         data["ssh_user"] = "deploy-test"
         self.load_settings(data)
+        artifact_path = self.root / "prepared.tar.gz"
+        artifact_path.write_bytes(b"fictional prepared artifact")
         with (
             patch.object(
                 deploy.sys,
@@ -499,7 +501,7 @@ assert not any(name == 'scripts' or name.startswith('scripts.') for name in sys.
                     "deploy.py",
                     "plan",
                     "--artifact",
-                    "prepared.tar.gz",
+                    str(artifact_path),
                     "--config",
                     str(self.settings),
                 ],
@@ -543,7 +545,49 @@ assert not any(name == 'scripts' or name.startswith('scripts.') for name in sys.
             dependencies("Maintainer: Deploy prepared artifact"),
             {"Maintainer: Deploy prepared artifact"},
         )
+        composite = tasks["Maintainer: Build, check, package, deploy and restart"]
+        self.assertEqual(
+            composite["dependsOn"],
+            [
+                "Build",
+                "Check",
+                "Package",
+                "Maintainer: Deploy prepared artifact",
+                "Maintainer: Check configuration and restart",
+            ],
+        )
+        self.assertEqual(composite["dependsOrder"], "sequence")
         self.assertNotIn("Build, deploy and restart test HA", tasks)
+
+    def test_preview_uses_the_standard_package_when_artifact_is_omitted(self):
+        self.load_settings()
+        artifact_path = self.root / "prepared.tar.gz"
+        artifact_path.write_bytes(b"fictional prepared artifact")
+        with (
+            patch.object(
+                deploy.sys,
+                "argv",
+                ["deploy.py", "plan", "--config", str(self.settings)],
+            ),
+            patch.object(
+                deploy,
+                "load_artifact",
+                return_value=(
+                    b"archive",
+                    {
+                        "version": "0.1.0-dev.0",
+                        "artifact": {"sha256": "digest"},
+                        "source": {"commit": None, "dirty": False},
+                    },
+                ),
+            ) as artifact,
+            patch.object(deploy, "DEFAULT_ARTIFACT", artifact_path),
+            patch.object(deploy, "run_ssh") as run,
+            patch.object(deploy.sys, "stdout", new_callable=io.StringIO),
+        ):
+            deploy.main()
+        artifact.assert_called_once_with(artifact_path)
+        run.assert_not_called()
 
     def test_cli_reports_remote_failures_without_dumping_remote_script(self):
         command = ["ssh", "ha-test", deploy.REMOTE_DEPLOY]

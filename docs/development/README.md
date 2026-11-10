@@ -108,7 +108,9 @@ VS Code's Setup, Build, Lint, Format, Test, Check and Package tasks invoke these
 same commands. No editor task defines additional correctness prerequisites.
 Package does not run the full release gate; release publication requires Check
 and the qualification work in [releasing](releasing.md). Dependency scans,
-frontend preview, local HA, deployment and restart are separate operations.
+frontend preview and local HA remain separate operations. The explicitly labeled
+maintainer composite runs Build, Check, Package, deploy and restart in sequence;
+see [deployment](deployment.md) before selecting it.
 
 See [testing](testing.md) for suite selection and validation limits. The tests
 use normal `python -m unittest` discovery and Python's normal isolated asyncio

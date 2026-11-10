@@ -194,8 +194,9 @@ class PreparedArtifactTest(unittest.TestCase):
                 send.assert_not_called()
 
     def test_missing_artifact_cannot_connect(self):
+        missing = self.root / "missing-artifact.tar.gz"
         with (
-            patch("sys.argv", ["deploy"]),
+            patch("sys.argv", ["deploy", "--artifact", str(missing)]),
             patch.object(deploy, "load_config") as config,
             patch.object(deploy, "deploy") as send,
             patch("sys.stderr", new_callable=io.StringIO),

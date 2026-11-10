@@ -93,11 +93,7 @@
       "type": "process",
       "command": "${workspaceFolder}/scripts/deploy",
       "problemMatcher": [],
-      "args": [
-        "plan",
-        "--artifact",
-        "${workspaceFolder}/dist/kaleidescape-companion.tar.gz"
-      ],
+      "args": ["plan"],
       "presentation": {
         "panel": "dedicated",
         "reveal": "always"
@@ -111,10 +107,6 @@
       "type": "process",
       "command": "${workspaceFolder}/scripts/deploy",
       "problemMatcher": [],
-      "args": [
-        "--artifact",
-        "${workspaceFolder}/dist/kaleidescape-companion.tar.gz"
-      ],
       "presentation": {
         "panel": "dedicated",
         "reveal": "always"
@@ -132,6 +124,21 @@
         "panel": "dedicated",
         "reveal": "always"
       },
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "Maintainer: Build, check, package, deploy and restart",
+      "dependsOn": [
+        "Build",
+        "Check",
+        "Package",
+        "Maintainer: Deploy prepared artifact",
+        "Maintainer: Check configuration and restart"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
       "runOptions": {
         "instanceLimit": 1
       }
