@@ -104,11 +104,13 @@ fetch interface independent of HA.
 
 ## Dependency and release contract
 
-The current manifest pins `pykaleidescape==1.2.0`, matching development HA
-2026.11.0. Required HA dependencies are `frontend`, `http`, and `websocket_api`;
-`kaleidescape`, `calendar`, and `automation` are optional ordering dependencies
-via `after_dependencies`. A manual journal does not require a configured player
-or calendar. Automatic recording needs selected existing HA entities.
+The current manifest requires `pykaleidescape>=1.2.0`, matching the development
+HA 2026.11.0 baseline while allowing HA to provide a compatible newer version.
+Required HA dependencies are `frontend`, `http`, and `websocket_api`;
+`automation`, `blueprint`, `calendar`, `kaleidescape`, and `lovelace` are
+optional ordering dependencies via `after_dependencies`. A manual journal does
+not require a configured player or calendar. Automatic recording needs selected
+existing HA entities.
 
 The PoC owns lazy, persistent pyk `Device` objects and uses public methods and
 requests while preserving application preflight and durable outcomes. Pyk's

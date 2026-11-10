@@ -9,7 +9,7 @@ description = "Kaleidescape Companion: a Home Assistant journal, now-playing vie
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.14.2"
-dependencies = ["pykaleidescape==1.2.0"]
+dependencies = ["pykaleidescape>=1.2.0"]
 
 [project.urls]
 Homepage = "https://github.com/raven42/ha-kaleidescape-companion"

@@ -11,7 +11,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts.src import dependency_audit, ha, setup, tasks
+from scripts.src import dependency_audit, ha, setup, tasks, unittest_runner
 
 
 class ToolingTest(unittest.TestCase):
@@ -106,6 +106,18 @@ class ToolingTest(unittest.TestCase):
                 ):
                     ha.prepare_configuration()
             self.assertEqual(destination.read_text(), "do not change\n")
+
+    def test_unittest_runner_raises_slow_callback_diagnostic_threshold(self):
+        unittest_runner.configure_asyncio_diagnostics()
+        case = unittest.IsolatedAsyncioTestCase()
+        case._setupAsyncioRunner()
+        try:
+            self.assertEqual(
+                case._asyncioRunner.get_loop().slow_callback_duration,
+                unittest_runner.SLOW_CALLBACK_SECONDS,
+            )
+        finally:
+            case._tearDownAsyncioRunner()
 
     def test_runner_forwards_termination_and_stops_after_graceful_child_exit(self):
         with tempfile.TemporaryDirectory() as directory:

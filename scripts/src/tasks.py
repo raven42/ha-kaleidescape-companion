@@ -107,7 +107,7 @@ def provider_tests(arguments: Sequence[str] = ()) -> None:
         [
             sys.executable,
             "-m",
-            "unittest",
+            "scripts.src.unittest_runner",
             "discover",
             "-s",
             "tests/scrapers",
@@ -118,7 +118,17 @@ def provider_tests(arguments: Sequence[str] = ()) -> None:
 
 
 def integration_tests(arguments: Sequence[str] = ()) -> None:
-    run([sys.executable, "-m", "unittest", "discover", "-s", "tests", *arguments])
+    run(
+        [
+            sys.executable,
+            "-m",
+            "scripts.src.unittest_runner",
+            "discover",
+            "-s",
+            "tests",
+            *arguments,
+        ]
+    )
 
 
 def frontend_tests() -> None:
