@@ -19,6 +19,9 @@ jobs:
       - uses: home-assistant/actions/hassfest@master
 
   hacs:
+    # HACS validates only public repositories; retain the signal without
+    # preventing GitHub release assets for the private alpha repository.
+    continue-on-error: true
     runs-on: ubuntu-latest
     steps:
       - name: Validate repository readiness for HACS
@@ -28,7 +31,7 @@ jobs:
           comment: "false"
 
   publish:
-    needs: [checks, hassfest, hacs]
+    needs: [checks, hassfest]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
