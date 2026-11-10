@@ -10,6 +10,8 @@ supported HA versions, project licensing, distribution and hardware/restore
 qualification remain open. HA 2026.11.0 is the development baseline, not a
 promised supported minimum. See the [roadmap](docs/development/roadmap.md).
 
+[![Kaleidescape Companion Library with movie covers, search, filters, format badges and collection indicators](assets/screenshots/kaleidescape-companion.png)](assets/screenshots/kaleidescape-companion.png)
+
 ## Install and try it
 
 You need administrator access to Home Assistant and a compatible complete build
