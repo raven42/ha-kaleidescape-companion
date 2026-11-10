@@ -5,10 +5,11 @@ optional local movie Library. It observes playback through HA's built-in
 **Kaleidescape** integration and offers optional metadata, purchases, calendars
 and selected-player controls.
 
-**Alpha preparation is in progress.** The current version is `0.1.0-dev.0`;
-supported HA versions, project licensing, distribution and hardware/restore
-qualification remain open. HA 2026.11.0 is the development baseline, not a
-promised supported minimum. See the [roadmap](docs/development/roadmap.md).
+**Alpha preparation is in progress.** The current candidate is `0.5.0-alpha`. It
+is licensed under [Apache-2.0](LICENSE); supported HA versions, HACS
+distribution, and hardware/restore qualification remain open. HA 2026.11.0 is
+the development baseline, not a promised supported minimum. See the
+[roadmap](docs/development/roadmap.md).
 
 [![Kaleidescape Companion Library with movie covers, search, filters, format badges and collection indicators](assets/screenshots/kaleidescape-companion.png)](assets/screenshots/kaleidescape-companion.png)
 
@@ -75,3 +76,9 @@ logging limitations and reporting. Report suspected vulnerabilities to the
 repository owner through an established private channel; keep credentials,
 household logs and databases out of public issues. A dedicated private reporting
 channel remains a release prerequisite.
+
+## License
+
+Original Companion code and documentation are licensed under
+[Apache-2.0](LICENSE). See [NOTICE](NOTICE) for bundled third-party material and
+documentation-asset limitations.

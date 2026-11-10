@@ -1,0 +1,10 @@
+Kaleidescape Companion notices
+===============================
+
+Copyright 2026 Kaleidescape Companion contributors
+
+This integration is licensed under the Apache License, Version 2.0. A copy is
+provided in LICENSE.
+
+The integration includes a vendored copy of pykaleidescape. Its separate MIT
+license and copyright notice are retained at vendor/kaleidescape/LICENSE.

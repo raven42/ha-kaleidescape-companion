@@ -1,10 +1,11 @@
 # Preparing a release
 
 Companion is preparing for alpha and has no supported public release yet.
-`0.1.0-dev.0` is the current development version. The project license, supported
-HA matrix, security-reporting channel and final distribution policy remain
-explicit decisions in the [roadmap](roadmap.md#release-readiness). The bundled
-pyk MIT notice licenses that dependency only.
+`0.5.0-alpha` is the current alpha candidate. Original Companion code is
+Apache-2.0 licensed; [NOTICE](../../NOTICE) identifies retained third-party
+material, including the bundled pyk dependency under its own MIT license.
+Supported HA releases, a security-reporting channel and HACS qualification
+remain explicit release gates in the [roadmap](roadmap.md#release-readiness).
 
 ## Build and inspect the candidate
 
@@ -28,8 +29,7 @@ of the actual prepared artifact.
 
 The current distribution model keeps compiled `panel.js` and the complete
 integration folder in source. The maintainer tar archive is useful for testing
-and deployment; it is not automatically a HACS ZIP release. A future release
-asset format must match the selected installation method. Python wheels and
+and deployment; it is not automatically a HACS ZIP release. Python wheels and
 sdists do not replace an installable HA custom integration.
 
 ## Complete the release gate
@@ -67,8 +67,22 @@ Run the workflow on the intended candidate after it is available on GitHub and
 retain the successful run URL with release evidence. Local syntax validation of
 the workflow is not a hosted validator pass. Review the actual artifact and
 current qualification evidence before a separately authorized alpha prerelease.
-Publication automation remains deferred until version, licensing, reporting and
-distribution decisions are settled.
+
+## Publish a tagged release
+
+After every release gate is satisfied, push a tag exactly matching the candidate
+version, for example `v0.5.0-alpha`. The **Publish tagged release** workflow
+checks that match, runs framework checks, hassfest, HACS validation and the
+runtime package inspection. It then creates the GitHub Release and attaches:
+
+- `kaleidescape-companion.tar.gz` — the deployable Home Assistant integration;
+- its SHA-256 checksum; and
+- its provenance JSON.
+
+GitHub also supplies its standard source ZIP and tarball automatically for the
+same tag. Hyphenated versions such as `0.5.0-alpha` are marked prereleases. Do
+not create the GitHub Release separately: pushing the verified tag is the
+publication action. A failed workflow creates no release or release assets.
 
 Optional [SSH deployment](deployment.md) consumes the exact prepared artifact;
 deployment and restart remain separate maintainer operations. File rollback is
