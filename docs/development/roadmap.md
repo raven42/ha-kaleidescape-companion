@@ -105,6 +105,12 @@ ownership. The detailed system contracts remain separate from these setup and
 recovery tasks. Validate the guides against the declared live environments as
 part of external qualification; written instructions are not passing evidence.
 
+Manual release validation automation now shares the full checks and runs
+hassfest, HACS validation, packaging and artifact inspection before uploading
+the candidate. A hosted validation run remains pending. Publication automation
+awaits the version, license, reporting and distribution decisions; it must not
+be inferred from producing or uploading a validation artifact.
+
 Supported migration checkpoints remain an open decision. Choose them from
 supported upgrade needs and retained operator states, not Git history alone.
 Preserve monotonic schema versions, worker-owned SQL, consistent backups,

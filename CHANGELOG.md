@@ -14,7 +14,8 @@ behavior; the [documentation index](docs/README.md) owns current contracts.
   verify generated assets without overwriting them, and separate prepared
   runtime packaging from optional deployment and restart.
 - Preserve command cancellation through child processes, including optional SSH
-  operations.
+  operations, and add a manual release-validation workflow with upstream
+  integration/distribution validators before packaging.
 
 ## Unreleased — Store quality badges
 

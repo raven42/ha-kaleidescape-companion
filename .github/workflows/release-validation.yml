@@ -1,0 +1,54 @@
+name: Release candidate validation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    uses: ./.github/workflows/checks.yml
+
+  hassfest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: home-assistant/actions/hassfest@master
+
+  hacs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate repository readiness for HACS
+        uses: hacs/action@main
+        with:
+          category: integration
+          comment: "false"
+
+  package:
+    needs: [checks, hassfest, hacs]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: scripts/setup
+      - run: scripts/package
+      - name: Inspect the prepared artifact
+        run: scripts/package --inspect dist/kaleidescape-companion.tar.gz
+      - name: Preserve the candidate for review
+        uses: actions/upload-artifact@v7
+        with:
+          name: companion-candidate-${{ github.sha }}
+          path: |
+            dist/kaleidescape-companion.tar.gz
+            dist/kaleidescape-companion.tar.gz.sha256
+            dist/kaleidescape-companion.tar.gz.provenance.json
+          if-no-files-found: error
+          retention-days: 14

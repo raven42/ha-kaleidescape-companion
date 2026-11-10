@@ -45,6 +45,31 @@ Prepare accurate alpha limitations, upgrade/rollback instructions and release
 notes without inventing earlier releases. Producing an artifact does not publish
 it.
 
+## Validate on GitHub
+
+The manually started **Release candidate validation** workflow reuses the full
+framework checks (including the provider Python matrix), runs the upstream
+[hassfest action](https://contributors.home-assistant.io/blog/2020/04/16/hassfest/)
+and [HACS integration validator](https://hacs.xyz/docs/publish/action/), then
+packages and inspects the candidate. All jobs must pass before its runtime
+archive, checksum and provenance are uploaded as a short-lived workflow
+artifact. No repository write permission, tag creation, release publication,
+deployment or PR comment is part of this workflow.
+
+Hassfest validates integration metadata in the selected checkout. HACS checks
+hosted repository/distribution readiness using its event and release-selection
+rules; it is not a replacement for checking the packaged bytes from this commit.
+No HACS checks are ignored. Licensing and repository metadata that remain
+undecided can fail that gate and must be resolved before claiming distribution
+readiness. These validators do not qualify runtime behavior or hardware.
+
+Run the workflow on the intended candidate after it is available on GitHub and
+retain the successful run URL with release evidence. Local syntax validation of
+the workflow is not a hosted validator pass. Review the actual artifact and
+current qualification evidence before a separately authorized alpha prerelease.
+Publication automation remains deferred until version, licensing, reporting and
+distribution decisions are settled.
+
 Optional [SSH deployment](deployment.md) consumes the exact prepared artifact;
 deployment and restart remain separate maintainer operations. File rollback is
 not database rollback. A successful command does not prove the integration
