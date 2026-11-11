@@ -14,7 +14,7 @@ scripts/format --check
 scripts/check-pyk --reconstruct
 ```
 
-The provider suite is independent of HA and runs on the CI Python matrix. The
+The provider suite is independent of HA and runs on Python 3.14 in CI. The
 integration suite uses standard unittest discovery. The wrappers set isolated
 asyncio slow-callback diagnostics to 250 ms without disabling debug checks;
 direct `python -m unittest` commands retain Python's default. Frontend tests

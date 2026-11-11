@@ -184,12 +184,12 @@ archive inspection do not close these external gates.
 ## Release readiness
 
 - Declare and test supported HA releases. Manifest repository URLs and ownership
-  are populated; `0.5.0-alpha` identifies the unqualified alpha candidate across
-  the integration, project and frontend. Original project work uses Apache-2.0;
-  the bundled pyk MIT license covers that dependency only. A matching
-  `v0.5.0-alpha` tag is the intended prerelease publication path, but the
-  external qualification gates below still apply. HA 2026.11.0 is the
-  development baseline, not a promised minimum version.
+  are populated; `0.5.0-alpha.1` identifies the next unqualified alpha candidate
+  across the integration, project and frontend. Original project work uses
+  Apache-2.0; the bundled pyk MIT license covers that dependency only. Publish a
+  new matching tag after the applicable external qualification gates pass. HA
+  2026.11.0 is the development baseline and conservative Marketplace
+  installation floor; the floor alone does not establish compatibility.
 - Make a clean checkout/build/install reproducible with the qualified pyk
   dependency strategy; verify setup, options reload, unload, restart and
   upgrade. Keep tracked generated assets and folder-based distribution
