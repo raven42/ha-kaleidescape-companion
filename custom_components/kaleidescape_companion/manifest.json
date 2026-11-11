@@ -8,6 +8,9 @@
     "lovelace",
     "automation"
   ],
+  "categories": [
+    "media_entertainment"
+  ],
   "codeowners": [
     "@raven42"
   ],
@@ -25,5 +28,5 @@
     "pykaleidescape>=1.2.0"
   ],
   "single_config_entry": true,
-  "version": "0.5.0-alpha"
+  "version": "0.5.0-alpha.1"
 }

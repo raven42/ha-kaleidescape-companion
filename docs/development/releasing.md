@@ -1,11 +1,12 @@
 # Preparing a release
 
-Companion is preparing for alpha and has no supported public release yet.
-`0.5.0-alpha` is the current alpha candidate. Original Companion code is
+Companion is preparing for a public alpha custom-repository release.
+`0.5.0-alpha.1` is the current alpha candidate. Original Companion code is
 Apache-2.0 licensed; [NOTICE](../../NOTICE) identifies retained third-party
 material, including the bundled pyk dependency under its own MIT license.
-Supported HA releases, a security-reporting channel and HACS qualification
-remain explicit release gates in the [roadmap](roadmap.md#release-readiness).
+Hardware, restore and HACS qualification remain explicit release gates in the
+[roadmap](roadmap.md#release-readiness). Enable GitHub private vulnerability
+reporting before inviting public reports.
 
 ## Build and inspect the candidate
 
@@ -48,7 +49,7 @@ it.
 ## Validate on GitHub
 
 The manually started **Release candidate validation** workflow reuses the full
-framework checks (including the provider Python matrix), runs the upstream
+framework checks (including provider tests on Python 3.14), runs the upstream
 [hassfest action](https://contributors.home-assistant.io/blog/2020/04/16/hassfest/)
 and [HACS integration validator](https://hacs.xyz/docs/publish/action/), then
 packages and inspects the candidate. All jobs must pass before its runtime
@@ -59,9 +60,10 @@ deployment or PR comment is part of this workflow.
 Hassfest validates integration metadata in the selected checkout. HACS checks
 hosted repository/distribution readiness using its event and release-selection
 rules; it is not a replacement for checking the packaged bytes from this commit.
-No HACS checks are ignored. Licensing and repository metadata that remain
-undecided can fail that gate and must be resolved before claiming distribution
-readiness. These validators do not qualify runtime behavior or hardware.
+No HACS checks are ignored. HACS requires a public repository, so this gate
+cannot pass while the repository is private. **Integration validation** also
+runs HACS and Hassfest on pull requests and pushes to main. These validators do
+not qualify runtime behavior or hardware.
 
 Run the workflow on the intended candidate after it is available on GitHub and
 retain the successful run URL with release evidence. Local syntax validation of
@@ -71,7 +73,7 @@ current qualification evidence before a separately authorized alpha prerelease.
 ## Publish a tagged release
 
 After every release gate is satisfied, push a tag exactly matching the candidate
-version, for example `v0.5.0-alpha`. The **Publish tagged release** workflow
+version, for example `v0.5.0-alpha.1`. The **Publish tagged release** workflow
 checks that match, runs framework checks, hassfest, HACS validation and the
 runtime package inspection. It then creates the GitHub Release and attaches:
 
@@ -80,9 +82,20 @@ runtime package inspection. It then creates the GitHub Release and attaches:
 - its provenance JSON.
 
 GitHub also supplies its standard source ZIP and tarball automatically for the
-same tag. Hyphenated versions such as `0.5.0-alpha` are marked prereleases. Do
-not create the GitHub Release separately: pushing the verified tag is the
-publication action. A failed workflow creates no release or release assets.
+same tag. Hyphenated versions such as `0.5.0-alpha.1` are marked prereleases. Do
+not move an existing published tag: choose a new version, update all version
+fields, and push the corresponding new tag. Do not create the GitHub Release
+separately: pushing the verified tag is the publication action. A failed
+workflow creates no release or release assets. Marketplace users must enable
+prereleases to select an alpha.
+
+Before public distribution, verify the repository description, topics, issue
+tracker and private vulnerability reporting; review screenshots and all public
+GitHub surfaces. Run both hosted validators after the repository is public, then
+install the released version as a custom Marketplace repository on a test HA
+instance. Verify the complete downloaded folder, setup, restart, upgrade and
+rollback with a backup. Keep the HACS/Marketplace catalog submission separate
+until the project meets its external qualification gates.
 
 Optional [SSH deployment](deployment.md) consumes the exact prepared artifact;
 deployment and restart remain separate maintainer operations. File rollback is

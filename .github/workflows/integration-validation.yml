@@ -1,0 +1,26 @@
+name: Integration validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hassfest-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: home-assistant/actions/hassfest@master
+
+  hacs-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate integration for HACS and Marketplace
+        uses: hacs/action@main
+        with:
+          category: integration
+          comment: "false"

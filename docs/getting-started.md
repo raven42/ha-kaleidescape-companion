@@ -1,18 +1,19 @@
 # Install and record your first viewing
 
 Companion adds a shared Journal and optional Library to Home Assistant. This is
-an unqualified development build preparing for alpha. The development baseline
-is HA 2026.11.0 with pykaleidescape 1.2.0; an older or newer HA installation is
-not automatically compatible. Supported releases, licensing and a public alpha
-distribution are still [release work](development/roadmap.md#release-readiness).
+an alpha candidate with incomplete hardware and restore qualification. Home
+Assistant 2026.11.0 with pykaleidescape 1.2.0 is the development baseline and
+the Marketplace installation floor, not a guarantee of compatibility. Later
+versions require their own qualification; see the
+[release work](development/roadmap.md#release-readiness).
 
 ## Prerequisites
 
 - Administrator access to HA and its configuration directory, plus a usable
   backup before installing or upgrading.
-- A complete built Companion directory from the chosen reviewed revision.
-  Contributors can produce it with the
-  [development commands](development/README.md).
+- Home Assistant 2026.11.0 or later and the Marketplace, or a complete built
+  Companion directory from a reviewed revision. Contributors can produce the
+  latter with the [development commands](development/README.md).
 - For automatic recording, HA's built-in **Kaleidescape** integration and three
   existing entities: a media player, its exact play-status sensor and its
   media-location sensor. Keep that integration installed.
@@ -24,7 +25,19 @@ Companion includes its compiled panel, templates, branding and privately
 namespaced patched pyk source. Do not replace HA's shared dependency or install
 a global `/config/deps` overlay.
 
-## Install the complete integration
+## Install from a custom repository
+
+Once the repository is public, open the
+[Companion Marketplace link](https://my.home-assistant.io/redirect/hacs_repository/?owner=raven42&repository=ha-kaleidescape-companion&category=integration).
+Add it as a custom repository if prompted, enable prereleases, and install the
+desired alpha. Back up first and restart HA if requested. Then continue with the
+integration setup below. The existing built-in Kaleidescape integration must
+remain installed.
+
+To install manually, download or build the complete integration folder for the
+chosen version and follow these steps instead.
+
+## Install the complete integration manually
 
 1. Preserve a compatible backup of HA configuration and any existing Companion
    data. Use an isolated instance for initial qualification when practical.

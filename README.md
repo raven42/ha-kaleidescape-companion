@@ -10,35 +10,38 @@ not affiliated with, endorsed by, or supported by Kaleidescape. Kaleidescape and
 related marks are used only to identify intended compatibility and remain the
 property of their respective owners.
 
-**Alpha preparation is in progress.** The current candidate is `0.5.0-alpha`. It
-is licensed under [Apache-2.0](LICENSE); supported HA versions, HACS
-distribution, and hardware/restore qualification remain open. HA 2026.11.0 is
-the development baseline, not a promised supported minimum. See the
+**Alpha software:** the current candidate is `0.5.0-alpha.1`. It is licensed
+under [Apache-2.0](LICENSE). Home Assistant 2026.11.0 is the minimum offered by
+Marketplace for this alpha and the development baseline; hardware, restore and
+broader compatibility qualification remain open. See the
 [roadmap](docs/development/roadmap.md).
 
 [![Kaleidescape Companion Library with movie covers, search, filters, format badges and collection indicators](assets/screenshots/kaleidescape-companion.png)](assets/screenshots/kaleidescape-companion.png)
 
 ## Install and try it
 
-You need administrator access to Home Assistant and a compatible complete build
-of this integration. Automatic recording also needs HA's built-in Kaleidescape
-integration with a media player, play-status sensor and media-location sensor.
-Keep that integration installed. Library and controls are separate opt-in
-features; controls are not required for recording.
+You need administrator access to Home Assistant 2026.11.0 or later. Automatic
+recording also needs HA's built-in Kaleidescape integration with a media player,
+play-status sensor and media-location sensor. Keep that integration installed.
+Library and controls are separate opt-in features; controls are not required for
+recording.
+
+When the repository is public, add it as a custom integration in Marketplace:
+
+[Open Kaleidescape Companion in your Home Assistant Marketplace](https://my.home-assistant.io/redirect/hacs_repository/?owner=raven42&repository=ha-kaleidescape-companion&category=integration)
 
 1. Back up the target HA configuration and Companion data before an upgrade.
-2. Copy the complete built `custom_components/kaleidescape_companion/` directory
-   into HA's configuration directory. Include the compiled frontend, templates
-   and bundled dependency files; HA needs neither Node nor Vite.
-3. Restart HA, then choose **Settings → Devices & services → Add integration →
-   Kaleidescape Companion**.
+2. Open the link above, add the repository if prompted, enable prereleases and
+   install the desired alpha version. Restart HA when prompted.
+3. Choose **Settings → Devices & services → Add integration → Kaleidescape
+   Companion**.
 4. Open **Kaleidescape Companion** in the sidebar. Review Settings before
    enabling features. To record playback, select the three existing entities and
    enable tracking; a qualified completed viewing appears in Journal.
 
 Follow [getting started](docs/getting-started.md) for prerequisites, first use,
-upgrade and recovery. A tagged public alpha and HACS publication are not yet
-available as a supported installation path.
+upgrade and recovery, including manual installation. Custom-repository and
+hardware qualification must be completed before advertising a public alpha.
 
 ## Use Companion
 
