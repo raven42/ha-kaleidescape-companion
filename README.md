@@ -1,9 +1,10 @@
 # Kaleidescape Companion
 
-A Home Assistant integration for a household watch Journal, Now Playing and an
-optional local movie Library. It observes playback through HA's built-in
-**Kaleidescape** integration and offers optional metadata, purchases, calendars
-and selected-player controls.
+Bring your movie nights into Home Assistant. Kaleidescape Companion keeps a
+household watch Journal, shows what's playing, and lets you explore an optional
+local movie Library. Working alongside Home Assistant's built-in
+**Kaleidescape** integration, it also offers optional metadata, purchase
+tracking, calendars and selected-player controls.
 
 Kaleidescape Companion is an independent, unofficial community project. It is
 not affiliated with, endorsed by, or supported by Kaleidescape. Kaleidescape and
