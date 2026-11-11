@@ -10,5 +10,10 @@ The packaged integration includes a vendored copy of pykaleidescape.  Its
 separate MIT license and copyright notice are retained at
 custom_components/kaleidescape_companion/vendor/kaleidescape/LICENSE.
 
+Kaleidescape Companion is an independent, unofficial community project. It is
+not affiliated with, endorsed by, or supported by Kaleidescape. Kaleidescape and
+related marks are used only to identify intended compatibility and remain the
+property of their respective owners.
+
 Documentation screenshots may show third-party title artwork, marks, and other
 content.  Those elements are not licensed under Apache-2.0.

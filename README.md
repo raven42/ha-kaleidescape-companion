@@ -5,6 +5,11 @@ optional local movie Library. It observes playback through HA's built-in
 **Kaleidescape** integration and offers optional metadata, purchases, calendars
 and selected-player controls.
 
+Kaleidescape Companion is an independent, unofficial community project. It is
+not affiliated with, endorsed by, or supported by Kaleidescape. Kaleidescape and
+related marks are used only to identify intended compatibility and remain the
+property of their respective owners.
+
 **Alpha preparation is in progress.** The current candidate is `0.5.0-alpha`. It
 is licensed under [Apache-2.0](LICENSE); supported HA versions, HACS
 distribution, and hardware/restore qualification remain open. HA 2026.11.0 is
@@ -72,10 +77,9 @@ upstream and HA compatibility gates pass.
 
 Custom integrations execute with HA's privileges. Read the
 [security guide](docs/development/security.md) for permissions, private data,
-logging limitations and reporting. Report suspected vulnerabilities to the
-repository owner through an established private channel; keep credentials,
-household logs and databases out of public issues. A dedicated private reporting
-channel remains a release prerequisite.
+logging limitations and reporting. Follow the repository
+[security policy](SECURITY.md) for private vulnerability reporting; keep
+credentials, household logs and databases out of public issues.
 
 ## License
 
