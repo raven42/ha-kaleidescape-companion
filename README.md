@@ -1,5 +1,8 @@
 # Kaleidescape Companion
 
+[![Framework checks](https://github.com/raven42/ha-kaleidescape-companion/actions/workflows/checks.yml/badge.svg?branch=main&event=push)](https://github.com/raven42/ha-kaleidescape-companion/actions/workflows/checks.yml)
+[![Integration validation](https://github.com/raven42/ha-kaleidescape-companion/actions/workflows/integration-validation.yml/badge.svg?branch=main&event=push)](https://github.com/raven42/ha-kaleidescape-companion/actions/workflows/integration-validation.yml)
+
 Bring your movie nights into Home Assistant. Kaleidescape Companion keeps a
 household watch Journal, shows what's playing, and lets you explore an optional
 local movie Library. Working alongside Home Assistant's built-in
