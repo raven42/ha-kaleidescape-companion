@@ -4,8 +4,8 @@ Status: **temporary proof of concept**. Companion uses a privately namespaced
 copy of patched pykaleidescape for device discovery, playback controls, title
 launch, and local server browser reads/writes. This has offline test coverage,
 but no hardware or HA OS validation of the bundled source. Earlier HA OS logs
-exposed an identity-read bug now included in phase 03a; a successful hardware
-retest is pending. This is not a supported release migration.
+exposed an identity-read bug addressed in the bundled source; a successful
+hardware retest is pending. This is not a supported release migration.
 
 ## Scope and ownership
 
@@ -53,13 +53,15 @@ provider. No Store hooks should be added to pyk for this migration.
 
 HA OS discovery and status logs exposed a patched-pyk identity-read bug: the
 protocol discovery list uses 12-digit serials, while `GET_DEVICE_INFO` returns
-the same serial zero-padded to 16 digits. The new
-`phase-03a-fresh-device-reads.patch` normalizes both to the same routed
-identity, with an offline emulator regression test. The final
-`10a-cmp-dev-version` patch-series branch labels the complete development build
-`1.2.0.dev1+cmp` in both Python package metadata and pyk's runtime version. HA
-OS validation still requires deployment of the updated Companion package and a
-restart. Changing this source checkout does not update HA OS.
+the same serial zero-padded to 16 digits. For example, `00000000123A` and
+`000000000000123A` identify the same device. The bundled implementation
+normalizes both to the same 12-digit routed identity and rejects invalid or
+overlong significant values; an offline emulator regression test covers this.
+
+The bundled development build identifies itself as `1.2.0.dev1+cmp` in both
+Python package metadata and pyk's runtime version. HA OS validation still
+requires deployment of the updated Companion package and a restart. Changing
+this source checkout does not update HA OS.
 
 ## Compatibility and upstream path
 
