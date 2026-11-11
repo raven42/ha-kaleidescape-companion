@@ -1,15 +1,13 @@
 # Change
 
-Describe the problem and resulting behavior.
+<!-- Describe the problem and the resulting behavior. -->
 
-## Validation
+## Additional validation
 
-- [ ] `scripts/check`
-- [ ] Reviewed affected trust boundaries against
-      [the security policy](../docs/development/security.md).
-- [ ] Added relevant security regression tests, or explained why no boundary
-      changed.
-- [ ] Updated the security policy if permissions, data handling, networking, or
-      deployment changed.
+<!-- Required automated checks run in CI. Note any additional local, browser,
+     Home Assistant, device, or restore testing, and the results. -->
 
-Include material limitations and any release checks still required.
+## Risks and follow-up
+
+<!-- Note relevant security or data-handling impacts, documentation changes,
+     untested behavior, and any remaining qualification or release work. -->
