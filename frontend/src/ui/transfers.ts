@@ -192,7 +192,8 @@ export class KaleidescapeTransfers extends LitElement {
         const review = await this.client.reconcilePurchases(this.scope);
         if (generation !== this.generation) return;
         if ("empty" in review)
-          this.notice = "There are no unmatched purchases.";
+          this.notice =
+            "There are no unmatched purchase records. Titles without purchase records are not listed here; add their information in Library → Purchase details or import their receipts.";
         else {
           this.review = review;
           this.selected.clear();
@@ -743,6 +744,7 @@ export class KaleidescapeTransfers extends LitElement {
     if (this.purchaseReview)
       return html`
         <p>
+          Reconcile purchase records that are not linked to a Library title.
           Choose a Library match for each purchase, then apply the selected
           changes.
         </p>

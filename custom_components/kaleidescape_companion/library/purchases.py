@@ -123,6 +123,7 @@ def totals(db, source):
     return {
         **counts,
         "unique_transactions": len(orders),
+        "missing_information_titles": len(missing_information(db, source)),
         "revision": revision[0] if revision else 0,
         "currencies": [
             {

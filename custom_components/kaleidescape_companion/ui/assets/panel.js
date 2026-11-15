@@ -16897,15 +16897,20 @@ var oa = {
                 <dd>${this.purchaseAmount("savings")}</dd>
                 <dt>Unique transactions</dt>
                 <dd>${e.unique_transactions}</dd>
+                ${e.missing_information_titles === void 0 ? C : b`<dt>Library titles missing purchase information</dt>
+                        <dd>${e.missing_information_titles}</dd>`}
               </dl>
               <p class="muted">
-                ${V(e.purchase_count, "purchase record")}. Missing
-                prices are excluded. Savings use records with both prices in the
-                same currency.
+                ${V(e.purchase_count, "purchase entry", "purchase entries")}
+                included in these totals. Entries are linked purchase records or
+                manually priced Library versions. Titles without a purchase
+                entry are excluded. The Library missing-information filter also
+                checks purchase dates. Savings use entries with both prices in
+                the same currency.
               </p>
               ${e.missing_purchase_prices || e.missing_retail_prices ? b`<p class="muted">${V(e.missing_purchase_prices, "missing paid price")} · ${V(e.missing_retail_prices, "missing retail price")}.</p>` : C}
-              ${e.unpaired_prices ? b`<p class="muted">${V(e.unpaired_prices, "purchase record")} excluded from savings because prices are missing or use different currencies.</p>` : C}
-              ${e.missing_order_ids ? b`<p class="muted">${V(e.missing_order_ids, "purchase record")} without an order ID; not included in the transaction count.</p>` : C}
+              ${e.unpaired_prices ? b`<p class="muted">${V(e.unpaired_prices, "purchase entry", "purchase entries")} excluded from savings because prices are missing or use different currencies.</p>` : C}
+              ${e.missing_order_ids ? b`<p class="muted">${V(e.missing_order_ids, "purchase entry", "purchase entries")} without an order ID; not included in the transaction count.</p>` : C}
               ${e.duplicate_purchases ? b`<p class="muted">${V(e.duplicate_purchases, "duplicate purchase record")} counted only once.</p>` : C}` : C}
     </details>`;
 	}
@@ -18072,7 +18077,7 @@ var ha = class extends T {
 			try {
 				let e = await this.client.reconcilePurchases(this.scope);
 				if (n !== this.generation) return;
-				"empty" in e ? this.notice = "There are no unmatched purchases." : (this.review = e, this.selected.clear(), this.page = 0, this.query = "");
+				"empty" in e ? this.notice = "There are no unmatched purchase records. Titles without purchase records are not listed here; add their information in Library → Purchase details or import their receipts." : (this.review = e, this.selected.clear(), this.page = 0, this.query = "");
 			} catch (e) {
 				n === this.generation && this.fail(e);
 			} finally {
@@ -18377,6 +18382,7 @@ var ha = class extends T {
 	renderImport(e) {
 		return this.purchaseReview ? b`
         <p>
+          Reconcile purchase records that are not linked to a Library title.
           Choose a Library match for each purchase, then apply the selected
           changes.
         </p>

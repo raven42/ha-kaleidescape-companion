@@ -283,6 +283,7 @@ it("shows library and purchase summaries in About and loads totals on demand", a
   transport.purchaseTotals = {
     ...transport.purchaseTotals,
     purchase_count: 1,
+    missing_information_titles: 4,
     currencies: [
       {
         currency: "$",
@@ -307,6 +308,13 @@ it("shows library and purchase summaries in About and loads totals on demand", a
   details.open = true;
   details.dispatchEvent(new Event("toggle"));
   await vi.waitFor(() => expect(details.textContent).toContain("$12.34"));
+  expect(details.textContent).toContain(
+    "Library titles missing purchase information",
+  );
+  expect(details.textContent!.replace(/\s+/g, " ")).toContain(
+    "Titles without a purchase entry are excluded",
+  );
+  expect(details.textContent).toContain("purchase dates");
   details.open = false;
   details.dispatchEvent(new Event("toggle"));
   transport.purchaseTotals.currencies[0].library_cost = "$19.00";

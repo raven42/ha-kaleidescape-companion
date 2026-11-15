@@ -568,13 +568,18 @@ versions; repeat purchases with different identities remain separate. Allocated
 bundle prices are used as imported. Flat earliest-invoice summary columns are
 not added again.
 
-Amounts use exact integer-cent arithmetic and stay separated by their recorded
-currency prefix. Missing paid/retail prices are excluded, with coverage counts
-shown. Savings sum retail minus paid only for invoices with both prices in the
-same currency; they can be negative. Unique transactions count distinct known
-order IDs, not title/version rows. Purchases without an order ID are reported
-separately rather than assigned invented transactions. These recorded totals do
-not estimate missing prices or currency conversions.
+The summary separately shows the number of available Library titles missing a
+purchase date, paid price or retail price, using the same group-level rule as
+the missing-information filter. The paid/retail coverage counts refer only to
+the purchase entries included in the totals; titles with no purchase entry are
+not included in those counts. Amounts use exact integer-cent arithmetic and stay
+separated by their recorded currency prefix. Missing paid/retail prices are
+excluded, with coverage counts shown. Savings sum retail minus paid only for
+invoices with both prices in the same currency; they can be negative. Unique
+transactions count distinct known order IDs, not title/version rows. Purchases
+without an order ID are reported separately rather than assigned invented
+transactions. These recorded totals do not estimate missing prices or currency
+conversions.
 
 ## External metadata integration
 

@@ -76,7 +76,10 @@ it("opens the purchase reconciliation dialog from the database", async () => {
   expect(root().querySelector("h2")!.textContent).toContain(
     "Reconcile purchases",
   );
-  expect(text()).toContain("There are no unmatched purchases");
+  expect(text()).toContain("There are no unmatched purchase records");
+  expect(text()).toContain(
+    "Titles without purchase records are not listed here",
+  );
   expect(root().querySelector('input[type="file"]')).toBeNull();
 });
 
@@ -109,7 +112,7 @@ it("allows purchase-only reconciliation while automatic tracking is enabled", as
   button("Reconcile purchases").click();
   await flush();
   expect(text()).not.toContain("Disable automatic tracking");
-  expect(text()).toContain("There are no unmatched purchases");
+  expect(text()).toContain("There are no unmatched purchase records");
   expect(root().querySelector('input[type="file"]')).toBeNull();
 });
 

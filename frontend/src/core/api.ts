@@ -634,6 +634,7 @@ export interface LibraryPurchaseTotals {
   unique_transactions: number;
   missing_purchase_prices: number;
   missing_retail_prices: number;
+  missing_information_titles?: number;
   missing_order_ids: number;
   unpaired_prices: number;
   duplicate_purchases: number;

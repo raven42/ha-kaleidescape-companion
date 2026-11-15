@@ -284,6 +284,7 @@ export class FixtureTransport implements Transport {
     unique_transactions: 0,
     missing_purchase_prices: 0,
     missing_retail_prices: 0,
+    missing_information_titles: 0,
     missing_order_ids: 0,
     unpaired_prices: 0,
     duplicate_purchases: 0,
