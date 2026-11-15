@@ -17,6 +17,8 @@ import type { LibraryCriterion } from "../library/criteria";
 import { styles } from "./styles";
 import type { CalendarStatus } from "./journal-view";
 import { calendarStyles } from "./journal-calendar.styles";
+import { HoverGate, placePreview, previewContent } from "./movie-preview";
+export { previewPosition } from "./movie-preview";
 import { closeButton, dismissBackdrop } from "./dialog";
 import "../library/library";
 import { unifiedMovieDialog, watchMovieDialogMode } from "./movie-dialog-mode";
@@ -42,87 +44,6 @@ export function monthBounds(month: Date) {
     new Date(month.getFullYear(), month.getMonth(), 1).toISOString(),
     new Date(month.getFullYear(), month.getMonth() + 1, 1).toISOString(),
   ];
-}
-
-/** Place previews beside the cover when possible, without covering it. */
-export function previewPosition(
-  anchor: Pick<DOMRect, "left" | "right" | "top" | "bottom">,
-  box: Pick<DOMRect, "width" | "height">,
-  viewport: { left: number; top: number; width: number; height: number },
-) {
-  const margin = 12,
-    gap = 8;
-  const left = viewport.left + margin,
-    right = viewport.left + viewport.width - margin;
-  const top = viewport.top + margin,
-    bottom = viewport.top + viewport.height - margin;
-  const regions = [
-    {
-      side: "right",
-      left: Math.max(left, anchor.right + gap),
-      right,
-      top,
-      bottom,
-    },
-    {
-      side: "left",
-      left,
-      right: Math.min(right, anchor.left - gap),
-      top,
-      bottom,
-    },
-    {
-      side: "below",
-      left,
-      right,
-      top: Math.max(top, anchor.bottom + gap),
-      bottom,
-    },
-    {
-      side: "above",
-      left,
-      right,
-      top,
-      bottom: Math.min(bottom, anchor.top - gap),
-    },
-  ].filter(
-    (region) => region.right > region.left && region.bottom > region.top,
-  );
-  const chosen =
-    regions.find(
-      (region) =>
-        region.right - region.left >= box.width &&
-        region.bottom - region.top >= box.height,
-    ) ??
-    regions.sort(
-      (a, b) =>
-        (b.right - b.left) * (b.bottom - b.top) -
-        (a.right - a.left) * (a.bottom - a.top),
-    )[0];
-  if (!chosen) return null;
-  const width = Math.min(box.width, chosen.right - chosen.left);
-  const height = Math.min(box.height, chosen.bottom - chosen.top);
-  const clamp = (value: number, low: number, high: number) =>
-    Math.max(low, Math.min(value, high));
-  return {
-    left:
-      chosen.side === "right"
-        ? chosen.left
-        : chosen.side === "left"
-          ? chosen.right - width
-          : clamp(anchor.left, chosen.left, chosen.right - width),
-    top:
-      chosen.side === "below"
-        ? chosen.top
-        : chosen.side === "above"
-          ? chosen.bottom - height
-          : clamp(anchor.top, chosen.top, chosen.bottom - height),
-    maxWidth: chosen.right - chosen.left,
-    maxHeight: chosen.bottom - chosen.top,
-    side: chosen.side,
-    right: chosen.right,
-    bottom: chosen.bottom,
-  };
 }
 
 /** Endpoint markers use local dates, including viewings crossing month boundaries. */
@@ -204,8 +125,8 @@ export class JournalCalendar extends LitElement {
   private previewMovie?: CalendarMovie | null;
   private previewError = "";
   private previewAnchor?: HTMLElement;
-  private previewRequest = 0;
-  private previewTimer?: ReturnType<typeof setTimeout>;
+  private previewGate = new HoverGate<CalendarMovie | null>();
+  private pendingHoverAnchor?: HTMLElement;
   private previewCloseTimer?: ReturnType<typeof setTimeout>;
   private previewHovered = false;
   private previewFocused = false;
@@ -226,6 +147,10 @@ export class JournalCalendar extends LitElement {
   private previewKeydown = (event: KeyboardEvent) => {
     if (event.key === "Tab" && !this.previewBlocked)
       this.previewPointerAnchor = undefined;
+    if (event.key === "Escape" && this.pendingHoverAnchor) {
+      this.cancelPendingHover();
+      this.previewHovered = false;
+    }
     if (event.key === "Escape" && this.previewRow) {
       event.stopPropagation();
       this.closePreview();
@@ -367,6 +292,7 @@ export class JournalCalendar extends LitElement {
     this.activeTouches.clear();
     this.swipeStart = undefined;
     this.closePreview();
+    this.previewPointerAnchor = undefined;
     this.previewCache.clear();
     this.closeDetails();
     this.items = [];
@@ -703,10 +629,13 @@ export class JournalCalendar extends LitElement {
       </div>
     </dialog>`;
   }
+  private cancelPendingHover() {
+    this.previewGate.cancel();
+    this.pendingHoverAnchor = undefined;
+  }
   private closePreview() {
-    clearTimeout(this.previewTimer);
+    this.cancelPendingHover();
     clearTimeout(this.previewCloseTimer);
-    this.previewRequest++;
     this.previewRow = undefined;
     this.previewMovie = undefined;
     this.previewError = "";
@@ -726,7 +655,11 @@ export class JournalCalendar extends LitElement {
     )
       this.previewCloseTimer = setTimeout(() => this.closePreview(), 150);
   }
-  private async showPreview(row: CalendarViewing, anchor: HTMLElement) {
+  private showPreview(
+    row: CalendarViewing,
+    anchor: HTMLElement,
+    hover = false,
+  ) {
     if (
       !this.hoverPreview ||
       !this.client ||
@@ -738,90 +671,47 @@ export class JournalCalendar extends LitElement {
       return;
     clearTimeout(this.previewCloseTimer);
     if (this.previewRow?.id === row.id && this.previewAnchor === anchor) return;
-    clearTimeout(this.previewTimer);
-    const generation = this.generation,
-      request = ++this.previewRequest;
-    this.previewRow = row;
-    this.previewAnchor = anchor;
-    this.previewMovie = undefined;
-    this.previewError = "";
-    this.requestUpdate();
-    await this.updateComplete;
-    if (
-      generation !== this.generation ||
-      request !== this.previewRequest ||
-      !this.isConnected ||
-      !this.hoverPreview
-    )
-      return;
-    this.positionPreview();
-    if (this.previewCache.has(row.id)) {
-      this.previewMovie = this.previewCache.get(row.id);
+    this.pendingHoverAnchor = anchor;
+    const client = this.client,
+      scope = this.scope;
+    const show = (movie: CalendarMovie | null, error = "") => {
+      if (
+        !this.isConnected ||
+        !anchor.isConnected ||
+        !this.hoverPreview ||
+        this.pendingHoverAnchor !== anchor
+      )
+        return;
+      this.pendingHoverAnchor = undefined;
+      this.previewRow = row;
+      this.previewAnchor = anchor;
+      this.previewMovie = movie;
+      this.previewError = error;
+      if (!error) this.previewCache.set(row.id, movie);
       this.requestUpdate();
-      await this.updateComplete;
-      this.positionPreview();
-      return;
-    }
-    this.previewTimer = setTimeout(async () => {
-      try {
-        const result = await this.client!.calendarDetails(this.scope!, row.id);
-        if (
-          generation !== this.generation ||
-          request !== this.previewRequest ||
-          !this.isConnected
-        )
-          return;
-        this.previewMovie = result.movie;
-        this.previewCache.set(row.id, result.movie);
-      } catch (error) {
-        if (
-          generation !== this.generation ||
-          request !== this.previewRequest ||
-          !this.isConnected
-        )
-          return;
-        if (errorCode(error) === "unauthorized") {
-          this.fail(error);
-          return;
-        }
-        this.previewError = "Movie details are unavailable.";
-      }
-      this.requestUpdate();
-      await this.updateComplete;
-      this.positionPreview();
-    }, 180);
+      void this.updateComplete.then(() => this.positionPreview());
+    };
+    this.previewGate.start(
+      async () =>
+        this.previewCache.has(row.id)
+          ? this.previewCache.get(row.id)!
+          : (await client.calendarDetails(scope, row.id)).movie,
+      (movie) => show(movie),
+      (error) => {
+        if (errorCode(error) === "unauthorized") this.fail(error);
+        else show(null, "Movie details are unavailable.");
+      },
+      hover,
+    );
   }
   private positionPreview = () => {
     const popup = this.renderRoot.querySelector<HTMLElement>(".movie-preview");
-    if (!popup || !this.previewAnchor || !this.previewRow) return;
-    const viewport = window.visualViewport;
-    const leftEdge = viewport?.offsetLeft ?? 0,
-      topEdge = viewport?.offsetTop ?? 0;
-    const width = viewport?.width ?? window.innerWidth,
-      height = viewport?.height ?? window.innerHeight;
-    const anchor = this.previewAnchor.getBoundingClientRect();
-    popup.style.maxWidth = "";
-    popup.style.maxHeight = "";
-    const box = popup.getBoundingClientRect();
-    const position = previewPosition(anchor, box, {
-      left: leftEdge,
-      top: topEdge,
-      width,
-      height,
-    });
-    popup.style.visibility = position ? "" : "hidden";
-    if (!position) return;
-    popup.style.maxWidth = `${position.maxWidth}px`;
-    popup.style.maxHeight = `${position.maxHeight}px`;
-    const fitted = popup.getBoundingClientRect();
-    popup.style.left = `${position.side === "left" ? position.right - fitted.width : Math.min(position.left, position.right - fitted.width)}px`;
-    popup.style.top = `${position.side === "above" ? position.bottom - fitted.height : Math.min(position.top, position.bottom - fitted.height)}px`;
+    if (popup && this.previewAnchor && this.previewRow)
+      placePreview(popup, this.previewAnchor);
   };
   private renderPreview() {
     const row = this.previewRow;
     if (!row || !this.hoverPreview) return nothing;
-    const movie = this.previewMovie;
-    const runtime = movie?.duration_seconds ?? row.duration_seconds;
     return html`<div
       id="calendar-movie-preview"
       class="movie-preview"
@@ -835,26 +725,7 @@ export class JournalCalendar extends LitElement {
         this.closePreviewWhenIdle();
       }}
     >
-      <strong>${row.title}</strong>
-      ${this.previewMovie === undefined && !this.previewError ? html`<p>Loading movie details…</p>` : nothing}
-      ${this.previewError ? html`<p>${this.previewError}</p>` : nothing}
-      ${
-        this.previewMovie !== undefined
-          ? html`
-              <p>
-                <strong>Rating:</strong> ${movie?.rating || "—"} ·
-                <strong>Runtime:</strong>
-                ${runtime == null ? "—" : `${Math.round(runtime / 60)} min`}
-              </p>
-              <p><strong>Genre:</strong> ${movie?.genres?.join(", ") || "—"}</p>
-              <p>
-                <strong>Cast:</strong>
-                ${movie?.actors?.slice(0, 5).join(", ") || "—"}
-              </p>
-              <p><strong>Synopsis:</strong> ${movie?.synopsis || "—"}</p>
-            `
-          : nothing
-      }
+      ${previewContent(row.title, this.previewMovie ?? null, this.previewError, row.duration_seconds)}
     </div>`;
   }
   async openViewing(row: ViewingSummary, artwork: string | null = null) {
@@ -1275,12 +1146,26 @@ export class JournalCalendar extends LitElement {
                               )
                                 return;
                               const anchor = event.currentTarget as HTMLElement;
+                              if (
+                                this.previewAnchor &&
+                                this.previewAnchor !== anchor
+                              )
+                                this.closePreview();
+                              clearTimeout(this.previewCloseTimer);
                               if (this.previewAnchor !== anchor)
                                 this.previewFocused = false;
                               this.previewHovered = true;
-                              void this.showPreview(row, anchor);
+                              this.cancelPendingHover();
+                              this.showPreview(row, anchor, true);
                             }}
                             @pointerleave=${(event: PointerEvent) => {
+                              if (
+                                this.pendingHoverAnchor === event.currentTarget
+                              ) {
+                                this.previewHovered = false;
+                                if (!this.previewFocused)
+                                  this.cancelPendingHover();
+                              }
                               if (this.previewAnchor !== event.currentTarget)
                                 return;
                               this.previewHovered = false;
@@ -1292,6 +1177,7 @@ export class JournalCalendar extends LitElement {
                               this.closePreviewWhenIdle();
                             }}
                             @pointerdown=${(event: PointerEvent) => {
+                              this.cancelPendingHover();
                               this.previewPointerAnchor =
                                 event.currentTarget as HTMLElement;
                             }}
@@ -1303,6 +1189,7 @@ export class JournalCalendar extends LitElement {
                                   event.currentTarget
                               )
                                 return;
+                              this.cancelPendingHover();
                               this.previewFocused = true;
                               void this.showPreview(
                                 row,
@@ -1310,6 +1197,13 @@ export class JournalCalendar extends LitElement {
                               );
                             }}
                             @blur=${(event: FocusEvent) => {
+                              if (
+                                this.pendingHoverAnchor === event.currentTarget
+                              ) {
+                                this.previewFocused = false;
+                                if (!this.previewHovered)
+                                  this.cancelPendingHover();
+                              }
                               if (this.previewAnchor !== event.currentTarget)
                                 return;
                               this.previewFocused = false;

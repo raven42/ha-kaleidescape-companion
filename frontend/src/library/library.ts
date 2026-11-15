@@ -22,6 +22,12 @@ import { styles } from "../ui/styles";
 import { libraryStyles } from "./styles";
 import { closeButton, dismissBackdrop } from "../ui/dialog";
 import { actionIcon } from "../ui/action-icons";
+import {
+  HoverGate,
+  moviePreviewStyles,
+  placePreview,
+  previewContent,
+} from "../ui/movie-preview";
 import "../playback/controls";
 import { CoverQueue } from "./cover";
 import { responsivePreferences } from "../ui/profile-controller";
@@ -185,7 +191,7 @@ export class KaleidescapeLibrary extends LitElement {
     dialogOnly: { type: Boolean },
     advanced: { type: Boolean },
   };
-  static styles = [styles, libraryStyles];
+  static styles = [styles, libraryStyles, moviePreviewStyles];
   client?: JournalClient;
   scope?: JournalInfo;
   openTitleId?: string;
@@ -302,11 +308,127 @@ export class KaleidescapeLibrary extends LitElement {
   private pendingLimit?: number;
   private requestLimit = 50;
   private requestedOffset = 0;
+  private previewGate = new HoverGate<LibraryTitle | null>();
+  private previewCache = new Map<string, LibraryTitle | null>();
+  private previewItem?: LibrarySummary;
+  private previewMovie?: LibraryTitle | null;
+  private previewError = "";
+  private previewAnchor?: HTMLElement;
+  private pendingPreviewAnchor?: HTMLElement;
+  private previewPointerAnchor?: HTMLElement;
+  private previewHovered = false;
+  private previewFocused = false;
+  private popupHovered = false;
+  private previewCloseTimer?: ReturnType<typeof setTimeout>;
+  private positionPreview = () => {
+    const popup = this.renderRoot.querySelector<HTMLElement>(".movie-preview");
+    if (popup && this.previewAnchor && this.previewItem)
+      placePreview(popup, this.previewAnchor);
+  };
+  private previewKeydown = (event: KeyboardEvent) => {
+    if (event.key === "Tab") this.previewPointerAnchor = undefined;
+    if (
+      event.key === "Escape" &&
+      (this.previewItem || this.pendingPreviewAnchor)
+    ) {
+      if (this.previewItem) event.stopPropagation();
+      this.closePreview();
+    }
+  };
+  private closePreview() {
+    this.previewGate.cancel();
+    clearTimeout(this.previewCloseTimer);
+    this.pendingPreviewAnchor = this.previewAnchor = undefined;
+    this.previewItem = undefined;
+    this.previewMovie = undefined;
+    this.previewError = "";
+    this.previewHovered = this.previewFocused = this.popupHovered = false;
+    this.requestUpdate();
+  }
+  private closePreviewWhenIdle() {
+    clearTimeout(this.previewCloseTimer);
+    if (!this.previewHovered && !this.previewFocused && !this.popupHovered)
+      this.previewCloseTimer = setTimeout(() => this.closePreview(), 150);
+  }
+  private startPreview(
+    item: LibrarySummary,
+    anchor: HTMLElement,
+    hover: boolean,
+  ) {
+    if (
+      !this.client ||
+      !this.scope?.library_enabled ||
+      this.loading ||
+      this.selected ||
+      !this.isConnected
+    )
+      return;
+    clearTimeout(this.previewCloseTimer);
+    if (this.previewItem?.id === item.id && this.previewAnchor === anchor)
+      return;
+    this.pendingPreviewAnchor = anchor;
+    const client = this.client,
+      scope = this.scope;
+    const show = (movie: LibraryTitle | null, error = "") => {
+      if (
+        !this.isConnected ||
+        !anchor.isConnected ||
+        this.loading ||
+        this.selected ||
+        this.pendingPreviewAnchor !== anchor
+      )
+        return;
+      this.pendingPreviewAnchor = undefined;
+      this.previewItem = item;
+      this.previewAnchor = anchor;
+      this.previewMovie = movie;
+      this.previewError = error;
+      if (!error) {
+        if (this.previewCache.size >= 100 && !this.previewCache.has(item.id))
+          this.previewCache.delete(this.previewCache.keys().next().value!);
+        this.previewCache.set(item.id, movie);
+      }
+      this.requestUpdate();
+      void this.updateComplete.then(() => this.positionPreview());
+    };
+    this.previewGate.start(
+      async () =>
+        this.previewCache.has(item.id)
+          ? this.previewCache.get(item.id)!
+          : ((await client.libraryVersions(scope, item.id)).items[0] ?? null),
+      (movie) => show(movie),
+      (error) => {
+        if (["unauthorized", "library_disabled"].includes(errorCode(error)))
+          this.fail(error);
+        else show(null, "Movie details are unavailable.");
+      },
+      hover,
+    );
+  }
+  private renderPreview() {
+    if (!this.previewItem) return nothing;
+    return html`<div
+      id="library-movie-preview"
+      class="movie-preview"
+      role="tooltip"
+      @pointerenter=${() => {
+        this.popupHovered = true;
+        clearTimeout(this.previewCloseTimer);
+      }}
+      @pointerleave=${() => {
+        this.popupHovered = false;
+        this.closePreviewWhenIdle();
+      }}
+    >
+      ${previewContent(this.previewItem.title, this.previewMovie ?? null, this.previewError, this.previewItem.duration_seconds)}
+    </div>`;
+  }
   private draft: Filters = {};
   private facetChoices: Record<string, string[]> = {};
   private visibility = () => {
     clearTimeout(this.timer);
     if (document.hidden) {
+      this.closePreview();
       clearTimeout(this.layoutTimer);
       this.layoutTimer = undefined;
       this.pendingLimit = undefined;
@@ -357,6 +479,11 @@ export class KaleidescapeLibrary extends LitElement {
   };
   connectedCallback() {
     super.connectedCallback();
+    window.addEventListener("keydown", this.previewKeydown);
+    window.addEventListener("scroll", this.positionPreview, true);
+    window.addEventListener("resize", this.positionPreview);
+    window.visualViewport?.addEventListener("scroll", this.positionPreview);
+    window.visualViewport?.addEventListener("resize", this.positionPreview);
     document.addEventListener("visibilitychange", this.visibility);
     window.addEventListener("location-changed", this.locationChanged);
     window.addEventListener("popstate", this.locationChanged);
@@ -365,6 +492,11 @@ export class KaleidescapeLibrary extends LitElement {
   }
   disconnectedCallback() {
     super.disconnectedCallback();
+    window.removeEventListener("keydown", this.previewKeydown);
+    window.removeEventListener("scroll", this.positionPreview, true);
+    window.removeEventListener("resize", this.positionPreview);
+    window.visualViewport?.removeEventListener("scroll", this.positionPreview);
+    window.visualViewport?.removeEventListener("resize", this.positionPreview);
     document.removeEventListener("visibilitychange", this.visibility);
     window.removeEventListener("location-changed", this.locationChanged);
     window.removeEventListener("popstate", this.locationChanged);
@@ -559,6 +691,9 @@ export class KaleidescapeLibrary extends LitElement {
     this.preferences?.set({ widths: [...this.widths] });
   }
   private clear() {
+    this.closePreview();
+    this.previewPointerAnchor = undefined;
+    this.previewCache.clear();
     clearTimeout(this.collectionToastTimer);
     this.collectionToast = "";
     this.observedCollectionJobs.clear();
@@ -754,6 +889,7 @@ export class KaleidescapeLibrary extends LitElement {
   }
   private async load(offset = 0, preserveSelection = false) {
     if (this.detailsLocked) return;
+    this.closePreview();
     if (!this.client || !this.scope?.library_enabled) return;
     this.saveFilters();
     clearTimeout(this.layoutTimer);
@@ -801,6 +937,12 @@ export class KaleidescapeLibrary extends LitElement {
         void this.load(0, preserveSelection);
         return;
       }
+      if (
+        this.page &&
+        (this.page.revision !== page.revision ||
+          this.page.preferences_key !== page.preferences_key)
+      )
+        this.previewCache.clear();
       this.page = page;
       if (page.random_seed !== undefined && this.applied.sort === "random") {
         this.applied.random_seed = page.random_seed;
@@ -956,6 +1098,7 @@ export class KaleidescapeLibrary extends LitElement {
     }
   }
   private async openDialog(id: string) {
+    this.closePreview();
     this.requestUpdate();
     await this.updateComplete;
     if (this.isConnected)
@@ -992,6 +1135,7 @@ export class KaleidescapeLibrary extends LitElement {
     }
   }
   private select(row: LibrarySummary) {
+    this.closePreview();
     this.clearVersions();
     this.selected = row;
     void this.openDialog("title-dialog");
@@ -2553,8 +2697,65 @@ export class KaleidescapeLibrary extends LitElement {
                   (item) =>
                     html`<button
                       class=${`cover-tile${this.display.show_titles ? " has-title" : ""}${this.display.show_rating && item.rating ? " has-rating" : ""}`}
-                      title=${`${item.title}${item.year ? ` (${item.year})` : ""}${this.warningMessage(item) ? `; ${this.warningMessage(item)}` : ""}`}
                       aria-label=${`Details for ${item.title}${item.year ? ` (${item.year})` : ""}${this.warningMessage(item) ? `; ${this.warningMessage(item)}` : ""}`}
+                      aria-describedby=${this.previewItem?.id === item.id && this.previewAnchor ? "library-movie-preview" : nothing}
+                      @pointerenter=${(event: PointerEvent) => {
+                        if (event.pointerType === "touch") return;
+                        const anchor = event.currentTarget as HTMLElement;
+                        if (this.previewAnchor && this.previewAnchor !== anchor)
+                          this.closePreview();
+                        this.previewHovered = true;
+                        if (
+                          this.pendingPreviewAnchor === anchor &&
+                          this.previewFocused
+                        )
+                          return;
+                        if (this.previewAnchor !== anchor)
+                          this.previewFocused = false;
+                        this.startPreview(item, anchor, true);
+                      }}
+                      @pointerleave=${(event: PointerEvent) => {
+                        if (this.pendingPreviewAnchor === event.currentTarget) {
+                          this.previewHovered = false;
+                          if (!this.previewFocused) {
+                            this.previewGate.cancel();
+                            this.pendingPreviewAnchor = undefined;
+                          }
+                        }
+                        if (this.previewAnchor !== event.currentTarget) return;
+                        this.previewHovered = false;
+                        if (this.previewPointerAnchor === event.currentTarget)
+                          this.previewFocused = false;
+                        this.closePreviewWhenIdle();
+                      }}
+                      @pointerdown=${(event: PointerEvent) => {
+                        this.previewGate.cancel();
+                        this.pendingPreviewAnchor = undefined;
+                        this.previewPointerAnchor =
+                          event.currentTarget as HTMLElement;
+                      }}
+                      @focus=${(event: FocusEvent) => {
+                        if (this.previewPointerAnchor === event.currentTarget)
+                          return;
+                        this.previewFocused = true;
+                        this.startPreview(
+                          item,
+                          event.currentTarget as HTMLElement,
+                          false,
+                        );
+                      }}
+                      @blur=${(event: FocusEvent) => {
+                        if (this.pendingPreviewAnchor === event.currentTarget) {
+                          this.previewFocused = false;
+                          if (!this.previewHovered) {
+                            this.previewGate.cancel();
+                            this.pendingPreviewAnchor = undefined;
+                          }
+                        }
+                        if (this.previewAnchor !== event.currentTarget) return;
+                        this.previewFocused = false;
+                        this.closePreviewWhenIdle();
+                      }}
                       @click=${() => this.select(item)}
                     >
                       <div class="cover-image">${this.cover(item)}</div>
@@ -2795,8 +2996,8 @@ export class KaleidescapeLibrary extends LitElement {
           ${actionIcon("search")}
         </button>
       </form>
-      ${this.renderOptionsDialog()} ${this.renderFilterDialog()}
-      ${this.renderTitleDialog()}
+      ${this.renderPreview()} ${this.renderOptionsDialog()}
+      ${this.renderFilterDialog()} ${this.renderTitleDialog()}
     </section>`;
   }
 }

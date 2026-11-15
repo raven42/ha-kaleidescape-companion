@@ -1171,8 +1171,12 @@ it("keeps same-name remakes separate in both views and opens only the selected w
   await flush();
   const covers = root().querySelectorAll<HTMLButtonElement>(".cover-tile");
   expect(covers).toHaveLength(2);
-  expect(covers[0].getAttribute("title")).toBe("Voyage to Europa (1995)");
-  expect(covers[1].getAttribute("title")).toBe("Voyage to Europa (2025)");
+  expect(covers[0].getAttribute("aria-label")).toBe(
+    "Details for Voyage to Europa (1995)",
+  );
+  expect(covers[1].getAttribute("aria-label")).toBe(
+    "Details for Voyage to Europa (2025)",
+  );
   covers[1].click();
   await flush();
   expect(root().querySelectorAll(".version-tabs button")).toHaveLength(2);
@@ -1648,7 +1652,6 @@ it("shows a missing-data warning without a scraper conflict across grouped versi
   expect(cover.getAttribute("aria-label")).toContain(
     "Missing metadata or artwork",
   );
-  expect(cover.title).toContain("Missing metadata or artwork");
   modalClose(root()).click();
   button("Filters").click();
   await flush();
@@ -1759,6 +1762,58 @@ it("limits the Basic footer to global counts and shows a highlighted match count
     ),
   );
   expect(footer().textContent).toContain("Total 5");
+});
+
+it("fetches cover hover details at 400 ms, waits for data, and cancels on exit", async () => {
+  root()
+    .querySelector<HTMLInputElement>(
+      'input[name="library_view"][value="covers"]',
+    )!
+    .click();
+  await flush();
+  const cover = root().querySelector<HTMLButtonElement>(".cover-tile")!;
+  const client = element.client!;
+  const response = await client.libraryVersions(
+    element.scope!,
+    transport.libraryTitles[0].id,
+  );
+  let release!: (value: typeof response) => void;
+  const fetch = vi.spyOn(client, "libraryVersions").mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        release = resolve;
+      }),
+  );
+  vi.useFakeTimers();
+  try {
+    cover.dispatchEvent(new Event("pointerenter"));
+    await vi.advanceTimersByTimeAsync(399);
+    expect(fetch).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(fetch).toHaveBeenCalledOnce();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(root().querySelector(".movie-preview")).toBeNull();
+    cover.dispatchEvent(new Event("pointerleave"));
+    release(response);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(root().querySelector(".movie-preview")).toBeNull();
+    cover.dispatchEvent(new Event("pointerenter"));
+    await vi.advanceTimersByTimeAsync(400);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(root().querySelector(".movie-preview")).toBeNull();
+    release(response);
+    await vi.advanceTimersByTimeAsync(0);
+    await element.updateComplete;
+    const preview = root().querySelector(".movie-preview")!;
+    expect(preview.textContent).toContain(response.items[0].synopsis);
+    expect(preview.textContent).not.toContain("Loading");
+    cover.click();
+    await element.updateComplete;
+    expect(root().querySelector(".movie-preview")).toBeNull();
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 it("searches from the mobile footer and only shows clear for active filters", async () => {

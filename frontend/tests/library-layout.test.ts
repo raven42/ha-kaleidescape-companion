@@ -194,12 +194,12 @@ it("shows only actual remaining titles on the final cover page, with no duplicat
   );
   await flush();
   const first = [...root().querySelectorAll(".cover-tile")].map((item) =>
-    item.getAttribute("title"),
+    item.getAttribute("aria-label"),
   );
   button("Next").click();
   await flush();
   const final = [...root().querySelectorAll(".cover-tile")].map((item) =>
-    item.getAttribute("title"),
+    item.getAttribute("aria-label"),
   );
   expect(final).toHaveLength(3);
   expect(new Set([...first, ...final]).size).toBe(99);

@@ -27,7 +27,7 @@ Viewings appear on their browser-local start date, including partial viewings
 unless excluded by the Library movie filter. An active search temporarily
 displays list results, using the saved fuzzy-search preference, without changing
 the saved Calendar view. Clear it with the desktop input's clear button or the
-mobile search chip to return to the selected month. The status filter is
+mobile search field to return to the selected month. The status filter is
 available in list view and does not filter the calendar; its selection is
 retained when returning to the list. Deleted entries are excluded. Each viewing
 has a poster; same-day posters overlap diagonally with about 15% of each rear
@@ -48,10 +48,12 @@ The optional **Show movie preview on hover or focus** setting is off by default
 and saved per user and display profile. A preview shows rating, runtime, genres,
 up to five cast members and synopsis, with placeholders for unavailable data. It
 reads the same authenticated, source-scoped calendar details as the compact
-dialog only after a brief hover or focus; it never contacts the device or an
-external provider. Synopsis is public Library metadata and is bounded by the
-existing display snapshot limit. Escape dismisses the preview. On touch devices,
-open the poster normally for details.
+dialog. A hover starts the read after 400 ms and shows the preview after 500 ms
+once the data arrives; keyboard focus starts the read immediately. Leaving the
+cover cancels a pending preview. It never contacts the device or an external
+provider. Synopsis is public Library metadata and is bounded by the existing
+display snapshot limit. Escape dismisses the preview. On touch devices, open the
+poster normally for details.
 
 Cross-day completed viewings have two endpoint covers: the start-day cover has a
 diagonal lower-right cut, and the completion-day cover has a complementary

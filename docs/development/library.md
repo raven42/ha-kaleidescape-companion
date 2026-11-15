@@ -180,12 +180,17 @@ Added on. Fixed-layout columns keep their widths when sorting or filtering. Drag
 a column divider to resize, or focus it and use Left/Right (Home resets its
 width). Widths save in the database for the signed-in user. Long titles/formats
 truncate with full-text tooltips; collection labels wrap up to three lines.
-Narrow screens scroll horizontally. Heading buttons toggle ascending/descending
-sort; collection sorts by the first alphabetically sorted membership, and
-missing year/runtime sorts first in ascending order. Cover view exposes the same
-sort choices. Results are paged by **name**, with all matching versions grouped
-before pagination. **Entries per page** offers **25, 100, 1000, All**,
-initially 100. In Covers, numeric targets round down to a multiple of the
+Narrow screens scroll horizontally. In cover view, hovering scales a cover to
+105% and starts an authenticated, source-scoped Library detail read after 400
+ms. The preview appears after 500 ms once the data is ready, showing rating,
+runtime, genre, cast and synopsis. Leaving the cover cancels pending work;
+keyboard focus starts the read immediately. Cached previews are bounded and
+cleared on scope or content-revision changes. Heading buttons toggle
+ascending/descending sort; collection sorts by the first alphabetically sorted
+membership, and missing year/runtime sorts first in ascending order. Cover view
+exposes the same sort choices. Results are paged by **name**, with all matching
+versions grouped before pagination. **Entries per page** offers **25, 100, 1000,
+All**, initially 100. In Covers, numeric targets round down to a multiple of the
 measured column count, with at least one full row: 100 becomes 96 at eight
 columns or 98 at seven. Resizing adjusts the nearest page containing the old
 first title after a short debounce. The final catalog remainder stays visible

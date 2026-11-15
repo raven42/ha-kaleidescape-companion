@@ -1,4 +1,5 @@
 import { css } from "lit";
+import { moviePreviewStyles } from "./movie-preview";
 
 export const calendarStyles = css`
   :host {
@@ -137,25 +138,7 @@ export const calendarStyles = css`
     outline: 2px solid var(--accent);
     box-shadow: 0 2px 8px #000c;
   }
-  .movie-preview {
-    position: fixed;
-    z-index: 1200;
-    width: min(320px, calc(100vw - 24px));
-    max-height: min(360px, calc(100dvh - 24px));
-    overflow: auto;
-    padding: 12px 14px;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    background: var(--surface);
-    color: var(--primary-text-color, #20302c);
-    box-shadow: 0 6px 24px #0005;
-    font-size: 13px;
-    line-height: 1.4;
-    overflow-wrap: anywhere;
-  }
-  .movie-preview p {
-    margin: 6px 0 0;
-  }
+  ${moviePreviewStyles}
   @media (prefers-reduced-motion: reduce) {
     .poster {
       transition: none;

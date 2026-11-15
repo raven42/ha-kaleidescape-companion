@@ -463,6 +463,87 @@ it("shows an optional household-safe preview on hover and keyboard focus", async
   );
 });
 
+it("delays mouse previews by 500 ms and cancels them on pointer exit", async () => {
+  await mount();
+  calendar.hoverPreview = true;
+  await calendar.updateComplete;
+  const first = posters()[0];
+  vi.useFakeTimers();
+  try {
+    first.dispatchEvent(new Event("pointerenter"));
+    await vi.advanceTimersByTimeAsync(499);
+    expect(root().querySelector(".movie-preview")).toBeNull();
+    first.dispatchEvent(new Event("pointerleave"));
+    await vi.advanceTimersByTimeAsync(501);
+    expect(root().querySelector(".movie-preview")).toBeNull();
+    first.dispatchEvent(new Event("pointerenter"));
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await vi.advanceTimersByTimeAsync(500);
+    expect(root().querySelector(".movie-preview")).toBeNull();
+    first.dispatchEvent(new Event("pointerenter"));
+    await vi.advanceTimersByTimeAsync(499);
+    expect(root().querySelector(".movie-preview")).toBeNull();
+    await vi.advanceTimersByTimeAsync(1);
+    await calendar.updateComplete;
+    expect(root().querySelector(".movie-preview")).not.toBeNull();
+    first.dispatchEvent(new Event("pointerleave"));
+    const second = posters()[1];
+    second.dispatchEvent(new Event("pointerenter"));
+    await vi.advanceTimersByTimeAsync(500);
+    await calendar.updateComplete;
+    expect(second.getAttribute("aria-describedby")).toBe(
+      "calendar-movie-preview",
+    );
+    second.dispatchEvent(new Event("pointerleave"));
+    await vi.advanceTimersByTimeAsync(150);
+    await calendar.updateComplete;
+    expect(root().querySelector(".movie-preview")).toBeNull();
+    first.dispatchEvent(new Event("focus"));
+    await vi.advanceTimersByTimeAsync(0);
+    await calendar.updateComplete;
+    expect(root().querySelector(".movie-preview")).not.toBeNull();
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("fetches hover details at 400 ms and waits for slow data before showing", async () => {
+  await mount();
+  calendar.hoverPreview = true;
+  await calendar.updateComplete;
+  let release!: (
+    value: Awaited<ReturnType<JournalClient["calendarDetails"]>>,
+  ) => void;
+  const fetch = vi
+    .spyOn(calendar.client!, "calendarDetails")
+    .mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    );
+  const first = posters()[0];
+  vi.useFakeTimers();
+  try {
+    first.dispatchEvent(new Event("pointerenter"));
+    await vi.advanceTimersByTimeAsync(399);
+    expect(fetch).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(fetch).toHaveBeenCalledOnce();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(root().querySelector(".movie-preview")).toBeNull();
+    release({ viewing: record(), movie: null });
+    await vi.advanceTimersByTimeAsync(0);
+    await calendar.updateComplete;
+    expect(root().querySelector(".movie-preview")).not.toBeNull();
+    expect(root().querySelector(".movie-preview")!.textContent).not.toContain(
+      "Loading",
+    );
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
 it("discards a pending preview when the option is turned off", async () => {
   await mount();
   let release!: (

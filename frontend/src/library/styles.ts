@@ -206,6 +206,23 @@ export const libraryStyles = css`
     min-width: 0;
     overflow: hidden;
   }
+  @media (hover: hover) {
+    .cover-tile:hover,
+    .cover-tile:focus-visible {
+      z-index: 10;
+      transform: scale(1.05);
+      outline: 2px solid var(--accent);
+      box-shadow: 0 2px 8px #000c;
+    }
+  }
+  .cover-tile {
+    transition: transform 120ms ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cover-tile {
+      transition: none;
+    }
+  }
   .cover-tile > .cover-caption {
     position: absolute;
     bottom: 0;
