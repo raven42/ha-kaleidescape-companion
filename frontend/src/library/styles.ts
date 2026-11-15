@@ -128,6 +128,9 @@ export const libraryStyles = css`
     color: var(--primary-color, #03a9f4);
     font-weight: 700;
   }
+  .mobile-library-search {
+    display: none;
+  }
   .mobile-library-tools,
   .mobile-sort-setting,
   .paging-icon {
@@ -929,7 +932,7 @@ export const libraryStyles = css`
       grid-column: 1 / -1;
       order: 10;
       margin-top: 0;
-      border-top: 1px solid var(--line);
+      border-top: 0;
       padding-top: 8px;
     }
     .movie-journal {
@@ -1013,7 +1016,6 @@ export const libraryStyles = css`
   .facet-count {
     flex: 0 0 32px;
     width: 32px;
-    margin-inline-start: auto;
     text-align: center;
     border-radius: 999px;
     padding: 3px 7px;
@@ -1024,16 +1026,12 @@ export const libraryStyles = css`
   }
   .facet-clear {
     display: block;
-    margin: 8px 0 0 auto;
+    margin: 0 0 0 auto;
     min-height: 30px;
     padding: 2px 5px;
     border: 0;
     background: transparent;
     color: var(--accent);
-    font-size: 12px;
-  }
-  .filter-selection-summary {
-    color: var(--muted);
     font-size: 12px;
   }
   .facet-options {
@@ -1042,7 +1040,8 @@ export const libraryStyles = css`
     overflow: auto;
   }
   .facet-options .check {
-    margin: 8px 0;
+    margin: 2px 0;
+    min-height: 32px;
   }
 
   .library-results {
@@ -1076,6 +1075,9 @@ export const libraryStyles = css`
     border: 1px solid var(--line);
     border-radius: 8px;
     font-size: 11px;
+  }
+  .footer-mobile-summary {
+    display: none;
   }
   .footer-summary {
     flex: 1 1 360px;
@@ -1217,7 +1219,7 @@ export const libraryStyles = css`
     }
     .mobile-library-tools {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: center;
       gap: 6px;
     }
@@ -1243,6 +1245,41 @@ export const libraryStyles = css`
     .mobile-sort-setting {
       display: block;
     }
+    .library-footer.has-mobile-search {
+      bottom: calc(38px + max(4px, env(safe-area-inset-bottom, 0px)));
+      padding-bottom: 4px;
+    }
+    .mobile-library-search {
+      position: sticky;
+      bottom: 0;
+      z-index: 8;
+      display: flex;
+      gap: 4px;
+      padding: 4px 8px max(4px, env(safe-area-inset-bottom));
+      background: var(--surface);
+    }
+    .mobile-library-search[hidden] {
+      display: none;
+    }
+    .mobile-library-search input {
+      min-width: 0;
+      flex: 1;
+      height: 34px;
+      min-height: 34px;
+      padding: 4px 8px;
+    }
+    .mobile-library-search button {
+      width: 34px;
+      height: 34px;
+      min-height: 34px;
+      padding: 6px;
+      display: grid;
+      place-items: center;
+    }
+    .mobile-library-search svg {
+      width: 18px;
+      height: 18px;
+    }
     .library-footer {
       flex-wrap: nowrap;
       padding: 4px 8px max(4px, env(safe-area-inset-bottom));
@@ -1252,7 +1289,7 @@ export const libraryStyles = css`
       line-height: 16px;
     }
     .footer-summary {
-      flex: 1 1 auto;
+      flex: 0 1 auto;
       flex-wrap: nowrap;
       overflow: hidden;
       font-size: 10px;
@@ -1262,14 +1299,19 @@ export const libraryStyles = css`
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    .footer-summary .footer-desktop-summary,
     .footer-summary .footer-admin,
     .paging-label {
       display: none;
+    }
+    .footer-summary .footer-mobile-summary {
+      display: inline;
     }
     .library-footer .footer-cache-label {
       display: none;
     }
     .library-footer .footer-actions {
+      margin-inline-start: 0;
       flex: none;
       flex-wrap: nowrap;
       gap: 2px;
@@ -1305,8 +1347,19 @@ export const libraryStyles = css`
     .people-filters fieldset {
       padding: 10px;
     }
+    .movie-description hr {
+      display: none;
+    }
+    .movie-record-details,
+    .movie-purchases,
+    .purchase-details,
+    .extra-credits,
+    .metadata-scores {
+      margin-block: 0;
+      padding-top: 0;
+    }
     .facet-options {
-      max-height: min(180px, 30dvh);
+      max-height: min(220px, 35dvh);
     }
   }
   .has-rating .cover-formats {

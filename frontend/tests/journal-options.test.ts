@@ -66,31 +66,59 @@ it("persists Calendar view independently of the global search preference", async
   const root = await mount(transport);
   const changed = vi.fn();
   element.addEventListener("journal-options", changed);
+  expect(
+    root.querySelector<HTMLInputElement>('[name="journal_view"][value="list"]')!
+      .checked,
+  ).toBe(true);
+  expect(
+    root.querySelectorAll('[name="journal_view"][type="radio"]'),
+  ).toHaveLength(2);
   root
-    .querySelector<HTMLInputElement>('[name="journal_calendar_view"]')!
+    .querySelector<HTMLInputElement>('[name="journal_view"][value="calendar"]')!
     .click();
   await vi.waitFor(() =>
     expect(transport.journalPreferences.view).toBe("calendar"),
   );
+  expect(
+    root.querySelector<HTMLInputElement>('[name="journal_view"][value="list"]')!
+      .checked,
+  ).toBe(false);
   expect(changed.mock.calls.at(-1)![0].detail).toEqual({
     fuzzy_search: true,
     view: "calendar",
+    page_size: 25,
     calendar_size: 180,
     calendar_fit: false,
+    calendar_hover_preview: false,
+    calendar_show_month: true,
+    calendar_show_year: true,
+    calendar_show_total: true,
     movie_details: "full",
   });
   expect(transport.searchPreferences).toEqual({ fuzzy_search: true });
   element.remove();
   const reopened = await mount(transport);
   expect(
-    reopened.querySelector<HTMLInputElement>('[name="journal_calendar_view"]')!
-      .checked,
+    reopened.querySelector<HTMLInputElement>(
+      '[name="journal_view"][value="calendar"]',
+    )!.checked,
   ).toBe(true);
 });
 
 it("persists the Journal movie detail mode", async () => {
   const transport = new FixtureTransport();
   const root = await mount(transport);
+  expect(root.querySelector("dialog fieldset legend")!.textContent).toBe(
+    "View type",
+  );
+  expect(root.querySelector('[name="journal_movie_details"]')).toBeNull();
+  root
+    .querySelector<HTMLInputElement>('[name="journal_view"][value="calendar"]')!
+    .click();
+  await element.updateComplete;
+  await vi.waitFor(() =>
+    expect(transport.journalPreferences.view).toBe("calendar"),
+  );
   const select = root.querySelector<HTMLSelectElement>(
     '[name="journal_movie_details"]',
   )!;
@@ -106,6 +134,48 @@ it("persists the Journal movie detail mode", async () => {
     reopened.querySelector<HTMLSelectElement>('[name="journal_movie_details"]')!
       .value,
   ).toBe("compact");
+  reopened
+    .querySelector<HTMLInputElement>('[name="journal_view"][value="list"]')!
+    .click();
+  await element.updateComplete;
+  expect(reopened.querySelector('[name="journal_movie_details"]')).toBeNull();
+  reopened
+    .querySelector<HTMLInputElement>('[name="journal_view"][value="calendar"]')!
+    .click();
+  await element.updateComplete;
+  expect(
+    reopened.querySelector<HTMLSelectElement>('[name="journal_movie_details"]')!
+      .value,
+  ).toBe("compact");
+});
+
+it("saves and restores the chosen list page size", async () => {
+  const transport = new FixtureTransport();
+  const root = await mount(transport);
+  const select = root.querySelector<HTMLSelectElement>(
+    '[name="journal_page_size"]',
+  )!;
+  expect([...select.options].map((option) => option.value)).toEqual([
+    "10",
+    "25",
+    "100",
+    "500",
+    "all",
+  ]);
+  const changed = vi.fn();
+  element.addEventListener("journal-options", changed);
+  select.value = "all";
+  select.dispatchEvent(new Event("change"));
+  await vi.waitFor(() =>
+    expect(transport.journalPreferences.page_size).toBe("all"),
+  );
+  expect(changed.mock.calls.at(-1)![0].detail.page_size).toBe("all");
+  element.remove();
+  const reopened = await mount(transport);
+  expect(
+    reopened.querySelector<HTMLSelectElement>('[name="journal_page_size"]')!
+      .value,
+  ).toBe("all");
 });
 
 it("saves live calendar sizing and fit options independently for the current user", async () => {
@@ -150,4 +220,72 @@ it("keeps filtering and refresh actions out of view options", async () => {
   const root = await mount(new FixtureTransport());
   expect(root.querySelector("[name=filter_status]")).toBeNull();
   expect(root.textContent).not.toContain("Refresh Journal");
+});
+
+it("saves and restores the optional calendar movie preview", async () => {
+  const transport = new FixtureTransport();
+  transport.journalPreferences.view = "calendar";
+  const root = await mount(transport);
+  const toggle = root.querySelector<HTMLInputElement>(
+    '[name="calendar_hover_preview"]',
+  )!;
+  expect(toggle.checked).toBe(false);
+  const changed = vi.fn();
+  element.addEventListener("journal-options", changed);
+  toggle.click();
+  await vi.waitFor(() =>
+    expect(transport.journalPreferences.calendar_hover_preview).toBe(true),
+  );
+  expect(changed.mock.calls.at(-1)![0].detail.calendar_hover_preview).toBe(
+    true,
+  );
+  element.remove();
+  const reopened = await mount(transport);
+  expect(
+    reopened.querySelector<HTMLInputElement>('[name="calendar_hover_preview"]')!
+      .checked,
+  ).toBe(true);
+});
+
+it("saves each calendar total visibility and restores it on reopening", async () => {
+  const transport = new FixtureTransport();
+  transport.journalPreferences.view = "calendar";
+  const root = await mount(transport);
+  const changed = vi.fn();
+  element.addEventListener("journal-options", changed);
+  for (const key of [
+    "calendar_show_month",
+    "calendar_show_year",
+    "calendar_show_total",
+  ]) {
+    const checkbox = root.querySelector<HTMLInputElement>(`[name="${key}"]`)!;
+    expect(checkbox.checked).toBe(true);
+    checkbox.click();
+    await vi.waitFor(() =>
+      expect(transport.journalPreferences[key]).toBe(false),
+    );
+    expect(changed.mock.calls.at(-1)![0].detail[key]).toBe(false);
+  }
+  element.remove();
+  const reopened = await mount(transport);
+  for (const key of [
+    "calendar_show_month",
+    "calendar_show_year",
+    "calendar_show_total",
+  ])
+    expect(
+      reopened.querySelector<HTMLInputElement>(`[name="${key}"]`)!.checked,
+    ).toBe(false);
+});
+
+it("places view type before the mobile list filters", async () => {
+  const root = await mount(new FixtureTransport());
+  element.showListFilters = true;
+  await element.updateComplete;
+  const fieldset = root.querySelector(".view-options")!;
+  const filters = root.querySelector(".mobile-list-filters")!;
+  expect(
+    fieldset.compareDocumentPosition(filters) &
+      Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
 });

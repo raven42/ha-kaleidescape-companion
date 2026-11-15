@@ -1,5 +1,6 @@
 /** Local month browsing and compact viewing/movie details; no calendar provider writes. */
 import { LitElement, html, nothing } from "lit";
+import type { PropertyValues } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 import type {
   JournalClient,
@@ -43,6 +44,87 @@ export function monthBounds(month: Date) {
   ];
 }
 
+/** Place previews beside the cover when possible, without covering it. */
+export function previewPosition(
+  anchor: Pick<DOMRect, "left" | "right" | "top" | "bottom">,
+  box: Pick<DOMRect, "width" | "height">,
+  viewport: { left: number; top: number; width: number; height: number },
+) {
+  const margin = 12,
+    gap = 8;
+  const left = viewport.left + margin,
+    right = viewport.left + viewport.width - margin;
+  const top = viewport.top + margin,
+    bottom = viewport.top + viewport.height - margin;
+  const regions = [
+    {
+      side: "right",
+      left: Math.max(left, anchor.right + gap),
+      right,
+      top,
+      bottom,
+    },
+    {
+      side: "left",
+      left,
+      right: Math.min(right, anchor.left - gap),
+      top,
+      bottom,
+    },
+    {
+      side: "below",
+      left,
+      right,
+      top: Math.max(top, anchor.bottom + gap),
+      bottom,
+    },
+    {
+      side: "above",
+      left,
+      right,
+      top,
+      bottom: Math.min(bottom, anchor.top - gap),
+    },
+  ].filter(
+    (region) => region.right > region.left && region.bottom > region.top,
+  );
+  const chosen =
+    regions.find(
+      (region) =>
+        region.right - region.left >= box.width &&
+        region.bottom - region.top >= box.height,
+    ) ??
+    regions.sort(
+      (a, b) =>
+        (b.right - b.left) * (b.bottom - b.top) -
+        (a.right - a.left) * (a.bottom - a.top),
+    )[0];
+  if (!chosen) return null;
+  const width = Math.min(box.width, chosen.right - chosen.left);
+  const height = Math.min(box.height, chosen.bottom - chosen.top);
+  const clamp = (value: number, low: number, high: number) =>
+    Math.max(low, Math.min(value, high));
+  return {
+    left:
+      chosen.side === "right"
+        ? chosen.left
+        : chosen.side === "left"
+          ? chosen.right - width
+          : clamp(anchor.left, chosen.left, chosen.right - width),
+    top:
+      chosen.side === "below"
+        ? chosen.top
+        : chosen.side === "above"
+          ? chosen.bottom - height
+          : clamp(anchor.top, chosen.top, chosen.bottom - height),
+    maxWidth: chosen.right - chosen.left,
+    maxHeight: chosen.bottom - chosen.top,
+    side: chosen.side,
+    right: chosen.right,
+    bottom: chosen.bottom,
+  };
+}
+
 /** Endpoint markers use local dates, including viewings crossing month boundaries. */
 export function calendarDays(
   row: Pick<
@@ -74,6 +156,7 @@ export class JournalCalendar extends LitElement {
     libraryTitleId: { attribute: false },
     daySize: { type: Number },
     fitScreen: { type: Boolean },
+    hoverPreview: { type: Boolean },
     disabled: { type: Boolean },
     editable: { type: Boolean },
     rememberUrl: { type: Boolean },
@@ -88,6 +171,7 @@ export class JournalCalendar extends LitElement {
   libraryTitleId?: string;
   daySize = 180;
   fitScreen = false;
+  hoverPreview = false;
   disabled = false;
   // Only the administrator host connects the shared Journal editor.
   editable = false;
@@ -116,8 +200,44 @@ export class JournalCalendar extends LitElement {
   private detailRequest = 0;
   private detailLoading = false;
   private detailError = "";
+  private previewRow?: CalendarViewing;
+  private previewMovie?: CalendarMovie | null;
+  private previewError = "";
+  private previewAnchor?: HTMLElement;
+  private previewRequest = 0;
+  private previewTimer?: ReturnType<typeof setTimeout>;
+  private previewCloseTimer?: ReturnType<typeof setTimeout>;
+  private previewHovered = false;
+  private previewFocused = false;
+  private previewPopupHovered = false;
+  private previewBlocked = false;
+  private previewPointerAnchor?: HTMLElement;
+  private previewCache = new Map<string, CalendarMovie | null>();
+  private dayPicker?: { date: Date; rows: CalendarViewing[] };
+  private activeTouches = new Set<number>();
+  private swipeStart?: { id: number; x: number; y: number };
+  private swipeDragging = false;
+  private swipeAnimating = false;
+  private swipeMotion = 0;
+  private swipeAnimationTimer?: ReturnType<typeof setTimeout>;
+  private monthLoad?: Promise<void>;
+  private suppressSwipeClick = false;
+  private swipeClickTimer?: ReturnType<typeof setTimeout>;
+  private previewKeydown = (event: KeyboardEvent) => {
+    if (event.key === "Tab" && !this.previewBlocked)
+      this.previewPointerAnchor = undefined;
+    if (event.key === "Escape" && this.previewRow) {
+      event.stopPropagation();
+      this.closePreview();
+    }
+  };
   connectedCallback() {
     super.connectedCallback();
+    window.addEventListener("keydown", this.previewKeydown);
+    window.addEventListener("scroll", this.positionPreview, true);
+    window.addEventListener("resize", this.positionPreview);
+    window.visualViewport?.addEventListener("scroll", this.positionPreview);
+    window.visualViewport?.addEventListener("resize", this.positionPreview);
     this.unwatchMovieDialog = watchMovieDialogMode(() => {
       this.requestUpdate();
       if (this.detailsOnly || !this.selected) return;
@@ -194,8 +314,9 @@ export class JournalCalendar extends LitElement {
       }
     });
   };
-  protected willUpdate() {
+  protected willUpdate(changed: PropertyValues) {
     if (!this.isConnected) return;
+    if (changed.has("hoverPreview") && !this.hoverPreview) this.closePreview();
     const privacy = `${this.scope?.entry_id}:${this.scope?.dataset_id}:${this.scope?.library_enabled}:${this.scope?.permissions.edit}`;
     if (privacy !== this.privacy || this.client !== this.boundClient) {
       this.clear();
@@ -214,10 +335,15 @@ export class JournalCalendar extends LitElement {
     ]);
     if (signature === this.signature) return;
     this.signature = signature;
-    void this.load();
+    this.monthLoad = this.load();
   }
   disconnectedCallback() {
     super.disconnectedCallback();
+    window.removeEventListener("keydown", this.previewKeydown);
+    window.removeEventListener("scroll", this.positionPreview, true);
+    window.removeEventListener("resize", this.positionPreview);
+    window.visualViewport?.removeEventListener("scroll", this.positionPreview);
+    window.visualViewport?.removeEventListener("resize", this.positionPreview);
     this.unwatchMovieDialog?.();
     this.unwatchMovieDialog = undefined;
     window.removeEventListener("resize", this.scheduleLayout);
@@ -227,11 +353,21 @@ export class JournalCalendar extends LitElement {
     if (this.layoutFrame !== undefined) cancelAnimationFrame(this.layoutFrame);
     this.layoutFrame = undefined;
     this.clear();
+    this.activeTouches.clear();
+    this.swipeStart = undefined;
+    clearTimeout(this.swipeClickTimer);
+    this.suppressSwipeClick = false;
     this.signature = this.privacy = "";
     this.boundClient = undefined;
   }
   private clear() {
     this.generation++;
+    this.cancelSwipeAnimation();
+    this.closeDayPicker();
+    this.activeTouches.clear();
+    this.swipeStart = undefined;
+    this.closePreview();
+    this.previewCache.clear();
     this.closeDetails();
     this.items = [];
     this.error = "";
@@ -252,6 +388,9 @@ export class JournalCalendar extends LitElement {
   private async load() {
     if (!this.client || !this.scope) return;
     const generation = ++this.generation;
+    this.closeDayPicker();
+    this.closePreview();
+    this.previewCache.clear();
     this.closeDetails();
     this.items = [];
     this.totals = undefined;
@@ -292,6 +431,7 @@ export class JournalCalendar extends LitElement {
         month: "long",
         year: "numeric",
       }),
+      monthName: this.month.toLocaleDateString(undefined, { month: "long" }),
       count: this.totals?.viewing_count,
       watchedSeconds: this.totals?.watched_seconds,
       loading: this.loading,
@@ -309,7 +449,18 @@ export class JournalCalendar extends LitElement {
   refresh() {
     return this.load();
   }
-  private move(delta: number) {
+  private canMove(delta: number) {
+    const year = this.month.getFullYear(),
+      month = this.month.getMonth();
+    return !(
+      this.disabled ||
+      this.previewBlocked ||
+      (delta < 0 && year <= 100 && month === 0) ||
+      (delta > 0 && year >= 9998 && month === 11)
+    );
+  }
+  private move(delta: number, fromSwipe = false) {
+    if (!this.canMove(delta) || (this.swipeAnimating && !fromSwipe)) return;
     this.month = new Date(
       this.month.getFullYear(),
       this.month.getMonth() + delta,
@@ -318,7 +469,148 @@ export class JournalCalendar extends LitElement {
     this.rememberMonth();
     this.requestUpdate();
   }
+  private swipeGrid() {
+    return this.renderRoot.querySelector<HTMLElement>(".month-grid");
+  }
+  private cancelSwipeAnimation() {
+    this.swipeMotion++;
+    clearTimeout(this.swipeAnimationTimer);
+    this.swipeAnimating = this.swipeDragging = false;
+    const grid = this.swipeGrid();
+    if (grid) {
+      grid.style.transition = "";
+      grid.style.transform = "";
+    }
+  }
+  private resetSwipePosition() {
+    const grid = this.swipeGrid();
+    if (grid && this.swipeDragging) {
+      grid.style.transition = "transform 180ms ease-out";
+      grid.style.transform = "";
+    }
+    this.swipeDragging = false;
+  }
+  private swipeDown(event: PointerEvent) {
+    if (event.pointerType !== "touch") {
+      clearTimeout(this.swipeClickTimer);
+      this.suppressSwipeClick = false;
+      return;
+    }
+    this.activeTouches.add(event.pointerId);
+    if (
+      this.activeTouches.size !== 1 ||
+      this.disabled ||
+      this.previewBlocked ||
+      this.swipeAnimating
+    ) {
+      this.resetSwipePosition();
+      this.swipeStart = undefined;
+      return;
+    }
+    clearTimeout(this.swipeClickTimer);
+    this.suppressSwipeClick = false;
+    this.swipeStart = {
+      id: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+    };
+  }
+  private swipeMove(event: PointerEvent) {
+    const start = this.swipeStart;
+    if (
+      event.pointerType !== "touch" ||
+      !start ||
+      start.id !== event.pointerId ||
+      this.activeTouches.size !== 1 ||
+      this.swipeAnimating
+    )
+      return;
+    const x = event.clientX - start.x,
+      y = event.clientY - start.y;
+    if (
+      !this.swipeDragging &&
+      (Math.abs(x) < 12 || Math.abs(x) < Math.abs(y) * 1.5)
+    )
+      return;
+    if (!this.canMove(x < 0 ? 1 : -1)) return;
+    const grid = this.swipeGrid();
+    if (!grid) return;
+    this.swipeDragging = true;
+    grid.style.transition = "none";
+    grid.style.transform = `translateX(${x}px)`;
+  }
+  private async animateSwipe(delta: number) {
+    const grid = this.swipeGrid();
+    if (
+      !grid ||
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+    ) {
+      this.cancelSwipeAnimation();
+      this.move(delta);
+      return;
+    }
+    this.swipeDragging = false;
+    this.swipeAnimating = true;
+    const motion = ++this.swipeMotion;
+    const distance = Math.max(grid.getBoundingClientRect().width, 1);
+    grid.style.transition = "transform 180ms ease-out";
+    grid.style.transform = `translateX(${-delta * distance}px)`;
+    this.swipeAnimationTimer = setTimeout(async () => {
+      if (motion !== this.swipeMotion || !this.isConnected) return;
+      this.move(delta, true);
+      await this.updateComplete;
+      if (motion !== this.swipeMotion || !this.isConnected) return;
+      grid.style.transition = "none";
+      grid.style.transform = `translateX(${delta * distance}px)`;
+      await this.monthLoad;
+      if (motion !== this.swipeMotion || !this.isConnected) return;
+      // Commit the offscreen starting position before starting the transition.
+      grid.getBoundingClientRect();
+      requestAnimationFrame(() => {
+        if (motion !== this.swipeMotion || !this.isConnected) return;
+        grid.style.transition = "transform 180ms ease-out";
+        grid.style.transform = "";
+        this.swipeAnimationTimer = setTimeout(() => {
+          if (motion === this.swipeMotion) this.cancelSwipeAnimation();
+        }, 180);
+      });
+    }, 180);
+  }
+  private swipeEnd(event: PointerEvent, cancelled = false) {
+    if (event.pointerType !== "touch") return;
+    this.activeTouches.delete(event.pointerId);
+    const start = this.swipeStart;
+    if (!start || start.id !== event.pointerId) return;
+    this.swipeStart = undefined;
+    if (
+      cancelled ||
+      this.activeTouches.size ||
+      this.disabled ||
+      this.previewBlocked
+    ) {
+      this.resetSwipePosition();
+      return;
+    }
+    const x = event.clientX - start.x,
+      y = event.clientY - start.y;
+    const delta = x < 0 ? 1 : -1;
+    if (
+      Math.abs(x) < 60 ||
+      Math.abs(x) < Math.abs(y) * 1.5 ||
+      !this.canMove(delta)
+    ) {
+      this.resetSwipePosition();
+      return;
+    }
+    this.suppressSwipeClick = true;
+    clearTimeout(this.swipeClickTimer);
+    this.swipeClickTimer = setTimeout(() => {
+      this.suppressSwipeClick = false;
+    }, 450);
+    void this.animateSwipe(delta);
+  }
   private today() {
+    if (this.swipeAnimating) return;
     const now = new Date();
     this.month = new Date(now.getFullYear(), now.getMonth(), 1);
     this.rememberMonth();
@@ -334,6 +626,7 @@ export class JournalCalendar extends LitElement {
     history.replaceState(history.state, "", url);
   }
   private closeDetails() {
+    this.previewBlocked = false;
     this.libraryRequest++;
     this.linkedTitleId = undefined;
     this.detailRequest++;
@@ -342,10 +635,233 @@ export class JournalCalendar extends LitElement {
     this.selectedArtwork = null;
     this.detailLoading = false;
     this.detailError = "";
-    this.renderRoot.querySelector("dialog")?.close();
+    this.renderRoot
+      .querySelector<HTMLDialogElement>(".calendar-dialog")
+      ?.close();
+  }
+  private closeDayPicker() {
+    this.dayPicker = undefined;
+    this.renderRoot.querySelector<HTMLDialogElement>(".day-picker")?.close();
+    this.requestUpdate();
+  }
+  private mobileDayPicker() {
+    return (
+      window.matchMedia?.(
+        "(max-width: 700px), (hover: none) and (pointer: coarse)",
+      ).matches ?? window.innerWidth <= 700
+    );
+  }
+  private async openDayPicker(date: Date, rows: CalendarViewing[]) {
+    if (this.disabled || this.previewBlocked || rows.length < 2) return;
+    this.closePreview();
+    const picker = { date, rows };
+    this.dayPicker = picker;
+    this.requestUpdate();
+    await this.updateComplete;
+    if (this.isConnected && this.dayPicker === picker)
+      this.renderRoot
+        .querySelector<HTMLDialogElement>(".day-picker")
+        ?.showModal();
+  }
+  private renderDayPicker() {
+    const picker = this.dayPicker;
+    if (!picker) return nothing;
+    return html`<dialog
+      class="day-picker"
+      aria-label=${`Choose a viewing for ${picker.date.toLocaleDateString()}`}
+      @click=${() => this.closeDayPicker()}
+      @close=${() => {
+        if (this.dayPicker === picker) this.closeDayPicker();
+      }}
+    >
+      <div class="day-picker-grid">
+        ${picker.rows.map(
+          (row) =>
+            html`<button
+              type="button"
+              class="day-picker-movie"
+              aria-label=${`${row.title}, ${new Date(row.started_at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}`}
+              ?disabled=${this.disabled}
+              @click=${(event: MouseEvent) => {
+                event.stopPropagation();
+                this.closeDayPicker();
+                void this.openViewing(row, row.artwork_key);
+              }}
+            >
+              <span class="day-picker-art"
+                ><kaleidescape-library-cover
+                  .client=${this.client}
+                  .scope=${this.scope}
+                  .queue=${this.queue}
+                  .artworkKey=${row.artwork_key}
+                  .title=${row.title}
+                  @access-denied=${() => this.fail({ code: "unauthorized" })}
+                ></kaleidescape-library-cover
+              ></span>
+            </button>`,
+        )}
+      </div>
+    </dialog>`;
+  }
+  private closePreview() {
+    clearTimeout(this.previewTimer);
+    clearTimeout(this.previewCloseTimer);
+    this.previewRequest++;
+    this.previewRow = undefined;
+    this.previewMovie = undefined;
+    this.previewError = "";
+    this.previewAnchor = undefined;
+    this.previewHovered =
+      this.previewFocused =
+      this.previewPopupHovered =
+        false;
+    this.requestUpdate();
+  }
+  private closePreviewWhenIdle() {
+    clearTimeout(this.previewCloseTimer);
+    if (
+      !this.previewHovered &&
+      !this.previewFocused &&
+      !this.previewPopupHovered
+    )
+      this.previewCloseTimer = setTimeout(() => this.closePreview(), 150);
+  }
+  private async showPreview(row: CalendarViewing, anchor: HTMLElement) {
+    if (
+      !this.hoverPreview ||
+      !this.client ||
+      !this.scope ||
+      this.disabled ||
+      this.previewBlocked ||
+      this.dayPicker
+    )
+      return;
+    clearTimeout(this.previewCloseTimer);
+    if (this.previewRow?.id === row.id && this.previewAnchor === anchor) return;
+    clearTimeout(this.previewTimer);
+    const generation = this.generation,
+      request = ++this.previewRequest;
+    this.previewRow = row;
+    this.previewAnchor = anchor;
+    this.previewMovie = undefined;
+    this.previewError = "";
+    this.requestUpdate();
+    await this.updateComplete;
+    if (
+      generation !== this.generation ||
+      request !== this.previewRequest ||
+      !this.isConnected ||
+      !this.hoverPreview
+    )
+      return;
+    this.positionPreview();
+    if (this.previewCache.has(row.id)) {
+      this.previewMovie = this.previewCache.get(row.id);
+      this.requestUpdate();
+      await this.updateComplete;
+      this.positionPreview();
+      return;
+    }
+    this.previewTimer = setTimeout(async () => {
+      try {
+        const result = await this.client!.calendarDetails(this.scope!, row.id);
+        if (
+          generation !== this.generation ||
+          request !== this.previewRequest ||
+          !this.isConnected
+        )
+          return;
+        this.previewMovie = result.movie;
+        this.previewCache.set(row.id, result.movie);
+      } catch (error) {
+        if (
+          generation !== this.generation ||
+          request !== this.previewRequest ||
+          !this.isConnected
+        )
+          return;
+        if (errorCode(error) === "unauthorized") {
+          this.fail(error);
+          return;
+        }
+        this.previewError = "Movie details are unavailable.";
+      }
+      this.requestUpdate();
+      await this.updateComplete;
+      this.positionPreview();
+    }, 180);
+  }
+  private positionPreview = () => {
+    const popup = this.renderRoot.querySelector<HTMLElement>(".movie-preview");
+    if (!popup || !this.previewAnchor || !this.previewRow) return;
+    const viewport = window.visualViewport;
+    const leftEdge = viewport?.offsetLeft ?? 0,
+      topEdge = viewport?.offsetTop ?? 0;
+    const width = viewport?.width ?? window.innerWidth,
+      height = viewport?.height ?? window.innerHeight;
+    const anchor = this.previewAnchor.getBoundingClientRect();
+    popup.style.maxWidth = "";
+    popup.style.maxHeight = "";
+    const box = popup.getBoundingClientRect();
+    const position = previewPosition(anchor, box, {
+      left: leftEdge,
+      top: topEdge,
+      width,
+      height,
+    });
+    popup.style.visibility = position ? "" : "hidden";
+    if (!position) return;
+    popup.style.maxWidth = `${position.maxWidth}px`;
+    popup.style.maxHeight = `${position.maxHeight}px`;
+    const fitted = popup.getBoundingClientRect();
+    popup.style.left = `${position.side === "left" ? position.right - fitted.width : Math.min(position.left, position.right - fitted.width)}px`;
+    popup.style.top = `${position.side === "above" ? position.bottom - fitted.height : Math.min(position.top, position.bottom - fitted.height)}px`;
+  };
+  private renderPreview() {
+    const row = this.previewRow;
+    if (!row || !this.hoverPreview) return nothing;
+    const movie = this.previewMovie;
+    const runtime = movie?.duration_seconds ?? row.duration_seconds;
+    return html`<div
+      id="calendar-movie-preview"
+      class="movie-preview"
+      role="tooltip"
+      @pointerenter=${() => {
+        this.previewPopupHovered = true;
+        clearTimeout(this.previewCloseTimer);
+      }}
+      @pointerleave=${() => {
+        this.previewPopupHovered = false;
+        this.closePreviewWhenIdle();
+      }}
+    >
+      <strong>${row.title}</strong>
+      ${this.previewMovie === undefined && !this.previewError ? html`<p>Loading movie details…</p>` : nothing}
+      ${this.previewError ? html`<p>${this.previewError}</p>` : nothing}
+      ${
+        this.previewMovie !== undefined
+          ? html`
+              <p>
+                <strong>Rating:</strong> ${movie?.rating || "—"} ·
+                <strong>Runtime:</strong>
+                ${runtime == null ? "—" : `${Math.round(runtime / 60)} min`}
+              </p>
+              <p><strong>Genre:</strong> ${movie?.genres?.join(", ") || "—"}</p>
+              <p>
+                <strong>Cast:</strong>
+                ${movie?.actors?.slice(0, 5).join(", ") || "—"}
+              </p>
+              <p><strong>Synopsis:</strong> ${movie?.synopsis || "—"}</p>
+            `
+          : nothing
+      }
+    </div>`;
   }
   async openViewing(row: ViewingSummary, artwork: string | null = null) {
     if (!this.client || !this.scope) return;
+    this.previewBlocked = true;
+    this.closeDayPicker();
+    this.closePreview();
     const generation = this.generation,
       request = ++this.detailRequest;
     this.selected = row;
@@ -390,7 +906,9 @@ export class JournalCalendar extends LitElement {
         this.detailError = errorMessage(error);
       }
     }
-    this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.showModal();
+    this.renderRoot
+      .querySelector<HTMLDialogElement>(".calendar-dialog")
+      ?.showModal();
     try {
       const result = await this.client.calendarDetails(this.scope, row.id);
       if (generation === this.generation && request === this.detailRequest) {
@@ -611,10 +1129,14 @@ export class JournalCalendar extends LitElement {
               .openTitleId=${this.linkedTitleId}
               @title-dialog-closed=${() => {
                 if (this.linkedTitleId === undefined) return;
+                this.previewBlocked = false;
+                this.closePreview();
                 this.linkedTitleId = undefined;
                 this.requestUpdate();
               }}
               @title-dialog-error=${(event: CustomEvent<string>) => {
+                this.previewBlocked = false;
+                this.closePreview();
                 this.linkedTitleId = undefined;
                 this.detailError = event.detail;
                 this.requestUpdate();
@@ -647,9 +1169,44 @@ export class JournalCalendar extends LitElement {
         >
           ←
         </button>
+        <slot name="mobile-add"></slot>
         <h2 aria-live="polite">
-          ${this.month.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+          <span class="month-full"
+            >${this.month.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</span
+          >
+          <span class="month-compact"
+            >${Array.from(
+              this.month.toLocaleDateString(undefined, { month: "short" }),
+            )
+              .slice(0, 3)
+              .join("")}
+            ${year}</span
+          >
         </h2>
+        <button
+          type="button"
+          aria-label="Go to current month"
+          ?disabled=${this.disabled}
+          @click=${this.today}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="3" y="5" width="18" height="16" rx="2" />
+            <path
+              d="M7 3v4M17 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01M16 17h.01"
+            />
+          </svg>
+        </button>
+        <slot name="mobile-options"></slot>
         <button
           aria-label="Next month"
           ?disabled=${this.disabled || (year >= 9998 && month === 11)}
@@ -657,18 +1214,14 @@ export class JournalCalendar extends LitElement {
         >
           →
         </button>
-        <button
-          type="button"
-          aria-label="Go to current month"
-          ?disabled=${this.disabled}
-          @click=${this.today}
-        >
-          Today
-        </button>
       </div>
       <div class="calendar-scroll">
         <div
           class="month-grid"
+          @pointerdown=${this.swipeDown}
+          @pointermove=${this.swipeMove}
+          @pointerup=${(event: PointerEvent) => this.swipeEnd(event)}
+          @pointercancel=${(event: PointerEvent) => this.swipeEnd(event, true)}
           style=${`--calendar-day-size:${this.fitScreen ? this.fittedSize : this.daySize}px`}
           aria-label="Viewing calendar"
           aria-busy=${this.loading}
@@ -680,8 +1233,23 @@ export class JournalCalendar extends LitElement {
             return html`<section
               class=${`day${date.getMonth() !== month ? " other-month" : ""}${key === dayKey(new Date()) ? " today" : ""}`}
               aria-label=${date.toLocaleDateString()}
+              @click=${(event: MouseEvent) => {
+                if (this.suppressSwipeClick && event.detail !== 0) {
+                  event.preventDefault();
+                  return;
+                }
+                if (rows.length > 1 && this.mobileDayPicker())
+                  void this.openDayPicker(
+                    date,
+                    rows.map(({ row }) => row),
+                  );
+              }}
             >
-              <time datetime=${key}>${date.getDate()}</time>
+              <time
+                datetime=${key}
+                aria-current=${key === dayKey(new Date()) ? "date" : nothing}
+                >${date.getDate()}</time
+              >
               ${
                 rows.length
                   ? html`<div
@@ -696,9 +1264,76 @@ export class JournalCalendar extends LitElement {
                             class=${`poster poster-${phase}`}
                             style=${`--index:${index};--layer:${index + 1}`}
                             aria-label=${`${row.title} · ${phase === "start" ? "Started; completed on another day" : phase === "completion" ? "Completed; started on another day" : row.status === "completed" ? "Completed" : "Partial"}`}
-                            title=${row.title}
+                            title=${this.hoverPreview ? nothing : row.title}
+                            aria-describedby=${this.previewRow?.id === row.id && this.previewAnchor ? "calendar-movie-preview" : nothing}
                             ?disabled=${this.disabled}
-                            @click=${() => this.openViewing(row, row.artwork_key)}
+                            @pointerenter=${(event: PointerEvent) => {
+                              if (
+                                event.pointerType === "touch" ||
+                                this.previewBlocked ||
+                                !this.hoverPreview
+                              )
+                                return;
+                              const anchor = event.currentTarget as HTMLElement;
+                              if (this.previewAnchor !== anchor)
+                                this.previewFocused = false;
+                              this.previewHovered = true;
+                              void this.showPreview(row, anchor);
+                            }}
+                            @pointerleave=${(event: PointerEvent) => {
+                              if (this.previewAnchor !== event.currentTarget)
+                                return;
+                              this.previewHovered = false;
+                              if (
+                                this.previewPointerAnchor ===
+                                event.currentTarget
+                              )
+                                this.previewFocused = false;
+                              this.closePreviewWhenIdle();
+                            }}
+                            @pointerdown=${(event: PointerEvent) => {
+                              this.previewPointerAnchor =
+                                event.currentTarget as HTMLElement;
+                            }}
+                            @focus=${(event: FocusEvent) => {
+                              if (
+                                this.previewBlocked ||
+                                !this.hoverPreview ||
+                                this.previewPointerAnchor ===
+                                  event.currentTarget
+                              )
+                                return;
+                              this.previewFocused = true;
+                              void this.showPreview(
+                                row,
+                                event.currentTarget as HTMLElement,
+                              );
+                            }}
+                            @blur=${(event: FocusEvent) => {
+                              if (this.previewAnchor !== event.currentTarget)
+                                return;
+                              this.previewFocused = false;
+                              this.closePreviewWhenIdle();
+                            }}
+                            @click=${(event: MouseEvent) => {
+                              event.stopPropagation();
+                              if (
+                                this.suppressSwipeClick &&
+                                event.detail !== 0
+                              ) {
+                                event.preventDefault();
+                                return;
+                              }
+                              if (rows.length > 1 && this.mobileDayPicker()) {
+                                void this.openDayPicker(
+                                  date,
+                                  rows.map(({ row }) => row),
+                                );
+                                return;
+                              }
+                              this.closePreview();
+                              void this.openViewing(row, row.artwork_key);
+                            }}
                           >
                             <span class="poster-art"
                               ><kaleidescape-library-cover
@@ -720,7 +1355,7 @@ export class JournalCalendar extends LitElement {
           })}
         </div>
       </div>
-      ${this.renderDetails()}`;
+      ${this.renderPreview()} ${this.renderDetails()} ${this.renderDayPicker()}`;
   }
 }
 if (!customElements.get("kaleidescape-journal-calendar"))

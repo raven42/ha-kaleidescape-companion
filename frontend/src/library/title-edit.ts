@@ -74,14 +74,24 @@ export class TitleEdit extends LitElement {
       }
       .format-options {
         display: flex;
-        flex-wrap: wrap;
-        gap: 8px 14px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
         margin: 10px 0;
       }
       .format-options label {
         display: inline-flex;
+        flex-direction: row;
         align-items: center;
-        gap: 5px;
+        gap: 8px;
+      }
+      .format-options input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        min-height: 20px;
+        flex: 0 0 20px;
+        margin: 0;
+        padding: 0;
       }
       .format-options .format-badge {
         display: inline-flex;

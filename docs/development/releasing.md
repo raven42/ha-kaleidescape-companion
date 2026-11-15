@@ -49,7 +49,7 @@ it.
 ## Validate on GitHub
 
 The manually started **Release candidate validation** workflow reuses the full
-framework checks (including provider tests on Python 3.14), runs the upstream
+**CI** checks (including provider tests on Python 3.14), runs the upstream
 [hassfest action](https://contributors.home-assistant.io/blog/2020/04/16/hassfest/)
 and [HACS integration validator](https://hacs.xyz/docs/publish/action/), then
 packages and inspects the candidate. All jobs must pass before its runtime
@@ -61,9 +61,9 @@ Hassfest validates integration metadata in the selected checkout. HACS checks
 hosted repository/distribution readiness using its event and release-selection
 rules; it is not a replacement for checking the packaged bytes from this commit.
 No HACS checks are ignored. HACS requires a public repository, so this gate
-cannot pass while the repository is private. **Integration validation** also
-runs HACS and Hassfest on pull requests and pushes to main. These validators do
-not qualify runtime behavior or hardware.
+cannot pass while the repository is private. **HA** also runs HACS and Hassfest
+on pull requests and pushes to main. These validators do not qualify runtime
+behavior or hardware.
 
 Run the workflow on the intended candidate after it is available on GitHub and
 retain the successful run URL with release evidence. Local syntax validation of
@@ -74,8 +74,8 @@ current qualification evidence before a separately authorized alpha prerelease.
 
 After every release gate is satisfied, push a tag exactly matching the candidate
 version, for example `v0.5.0-alpha.1`. The **Publish tagged release** workflow
-checks that match, runs framework checks, hassfest, HACS validation and the
-runtime package inspection. It then creates the GitHub Release and attaches:
+checks that match, runs **CI** checks, hassfest, HACS validation and the runtime
+package inspection. It then creates the GitHub Release and attaches:
 
 - `kaleidescape-companion.tar.gz` — the deployable Home Assistant integration;
 - its SHA-256 checksum; and

@@ -1,6 +1,5 @@
 /** Source-scoped Journal artwork and navigation using the saved exact version link. */
 import { LitElement, css, html, nothing } from "lit";
-import type { PropertyValues } from "lit";
 import type {
   JournalClient,
   JournalInfo,
@@ -18,7 +17,6 @@ export class ViewingLibrary extends LitElement {
     viewingId: { type: String },
     disabled: { type: Boolean },
     advanced: { type: Boolean },
-    autoOpen: { type: Boolean },
   };
   static styles = [
     styles,
@@ -61,25 +59,15 @@ export class ViewingLibrary extends LitElement {
   private openTitleId?: string;
   disabled = false;
   advanced = false;
-  autoOpen = false;
-  private autoOpened = false;
   private queue = new CoverQueue();
   private link?: ViewingLibraryLink | null;
   private error = "";
   private generation = 0;
   private bound = "";
   private boundClient?: JournalClient;
-  protected willUpdate(changed: PropertyValues) {
+  protected willUpdate() {
     const key = `${this.scope?.entry_id}:${this.scope?.dataset_id}:${this.scope?.library_enabled}:${this.scope?.permissions.edit}:${this.viewingId}`;
-    if (key === this.bound && this.client === this.boundClient) {
-      if (changed.has("autoOpen")) {
-        if (!this.autoOpen) {
-          if (this.autoOpened) this.openTitleId = undefined;
-          this.autoOpened = false;
-        } else this.openAutomatically();
-      }
-      return;
-    }
+    if (key === this.bound && this.client === this.boundClient) return;
     this.clear();
     this.bound = key;
     this.boundClient = this.client;
@@ -97,7 +85,6 @@ export class ViewingLibrary extends LitElement {
     this.queue.cache.dispose();
     this.queue = new CoverQueue();
     this.openTitleId = undefined;
-    this.autoOpened = false;
     this.link = undefined;
     this.error = "";
   }
@@ -112,7 +99,6 @@ export class ViewingLibrary extends LitElement {
       if (generation === this.generation) {
         this.link = result.library;
         this.reportLink();
-        this.openAutomatically();
       }
     } catch (error) {
       if (generation !== this.generation) return;
@@ -136,12 +122,6 @@ export class ViewingLibrary extends LitElement {
         composed: true,
       }),
     );
-  }
-  private openAutomatically() {
-    if (this.autoOpen && !this.autoOpened && this.link && !this.disabled) {
-      this.autoOpened = true;
-      this.openLibrary();
-    }
   }
   openLibrary() {
     if (!this.link || this.disabled) return;

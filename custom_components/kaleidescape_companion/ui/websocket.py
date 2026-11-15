@@ -422,6 +422,8 @@ async def async_handle(
                             "watched_seconds",
                             "month_viewing_count",
                             "month_watched_seconds",
+                            "year_viewing_count",
+                            "year_watched_seconds",
                         )
                     }
                 entry = hass.config_entries.async_get_entry(entry_id)

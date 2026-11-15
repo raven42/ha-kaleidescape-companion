@@ -131,13 +131,18 @@ All operations use HA authentication and scoped entry/dataset identifiers.
 Household views contain safe viewing summaries and totals; notes, raw
 identities, sessions, audits and exports require administrator access. Now
 Playing reads permitted HA entities; recorder internals are administrator-only.
-Linked Journal entries open full movie details in place by default, with an
-expandable Journal history. Journal options let each user choose full movie
-details or the compact viewing dialog. An entry without an available Library
-link keeps its compact viewing details. Administrators in Advanced mode can edit
-an entry from the full dialog without switching pages.
+Selecting a Journal list entry displays its viewing details in the adjacent
+pane. If the entry is linked to an available Library movie, selecting its title
+in that pane opens full movie details with an expandable Journal history.
+Calendar posters open full movie details by default; Journal options can select
+the compact viewing dialog instead. An entry without an available Library link
+keeps its viewing details. Administrators in Advanced mode can edit an entry
+from the full dialog without switching pages.
 
-Lists are paginated with bounded results and revision/filter/sort-bound cursors.
+Lists use revision/filter/sort-bound cursors. Journal options provide 10, 25,
+100 or 500 entries per page, or All; the default is 25. Larger pages are
+assembled from bounded requests. All is limited to 10,000 entries and 32 MiB; an
+oversized result reports an error instead of presenting an incomplete list.
 Search supports case-folded literal matching and the saved fuzzy option. Sorts
 include completion date (partials first) and title. A stale content revision
 requires refresh; personal preference writes do not change that revision. An

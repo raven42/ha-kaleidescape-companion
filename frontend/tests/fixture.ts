@@ -270,9 +270,14 @@ export class FixtureTransport implements Transport {
   interfacePreferences: Record<string, unknown> = { advanced_view: true };
   journalPreferences: Record<string, unknown> = {
     view: "list",
+    page_size: 25,
     calendar_size: 180,
     movie_details: "full",
     calendar_fit: false,
+    calendar_hover_preview: false,
+    calendar_show_month: true,
+    calendar_show_year: true,
+    calendar_show_total: true,
   };
   purchaseTotals = {
     purchase_count: 0,
@@ -1373,6 +1378,7 @@ export class FixtureTransport implements Transport {
                 actors: title.actors,
                 directors: title.directors,
                 genres: title.genres,
+                synopsis: title.synopsis,
                 rating: title.rating,
                 year: title.year,
                 duration_seconds: title.duration_seconds,
@@ -1426,35 +1432,42 @@ export class FixtureTransport implements Transport {
           revision: this.revision,
         };
       }
-    } else if (operation === "journal/list" || operation === "library/viewings")
+    } else if (
+      operation === "journal/list" ||
+      operation === "library/viewings"
+    ) {
+      const rows = this.records.filter(
+        (row) =>
+          matches(
+            row.title,
+            String(message.query ?? ""),
+            message.fuzzy !== false,
+          ) &&
+          (!message.status || row.status === message.status) &&
+          (operation !== "library/viewings" ||
+            (() => {
+              const linked = this.libraryTitles.find(
+                (title) => title.id === this.viewingLinks.get(row.id),
+              );
+              const selected = this.libraryTitles.find(
+                (title) => title.id === message.title_id,
+              );
+              return (
+                !!linked &&
+                !!selected &&
+                this.groupKey(linked) === this.groupKey(selected)
+              );
+            })()),
+      );
+      const offset = Number(message.cursor ?? 0);
+      const limit = Number(message.limit ?? 25);
       result = {
-        items: this.records.filter(
-          (row) =>
-            matches(
-              row.title,
-              String(message.query ?? ""),
-              message.fuzzy !== false,
-            ) &&
-            (!message.status || row.status === message.status) &&
-            (operation !== "library/viewings" ||
-              (() => {
-                const linked = this.libraryTitles.find(
-                  (title) => title.id === this.viewingLinks.get(row.id),
-                );
-                const selected = this.libraryTitles.find(
-                  (title) => title.id === message.title_id,
-                );
-                return (
-                  !!linked &&
-                  !!selected &&
-                  this.groupKey(linked) === this.groupKey(selected)
-                );
-              })()),
-        ),
+        items: rows.slice(offset, offset + limit),
         revision: this.revision,
-        next_cursor: null,
+        next_cursor:
+          offset + limit < rows.length ? String(offset + limit) : null,
       };
-    else if (operation === "journal/get") {
+    } else if (operation === "journal/get") {
       result = this.records.find((row) => row.id === message.viewing_id);
       if (!result) throw new ApiError("not_found");
     } else if (operation === "journal/sessions")

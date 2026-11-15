@@ -13,6 +13,16 @@ export const calendarStyles = css`
     gap: 12px;
     padding: 16px 20px;
   }
+  .month-compact,
+  .month-bar slot {
+    display: none;
+  }
+  .month-bar > button[aria-label="Next month"] {
+    order: 2;
+  }
+  .month-bar > button[aria-label="Go to current month"] {
+    order: 3;
+  }
   .month-bar h2 {
     margin: 0;
     flex: 1;
@@ -22,10 +32,11 @@ export const calendarStyles = css`
     font-size: 20px;
   }
   .calendar-scroll {
-    overflow-x: auto;
+    overflow-x: hidden;
   }
   .month-grid {
     display: grid;
+    touch-action: pan-y pinch-zoom;
     grid-template-columns: repeat(7, minmax(0, 1fr));
     width: 100%;
     min-width: 0;
@@ -60,7 +71,14 @@ export const calendarStyles = css`
     font-size: 12px;
   }
   .day.today time {
-    color: var(--accent);
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--text-primary-color, #fff);
     font-weight: 700;
   }
   .cover-stack {
@@ -89,7 +107,9 @@ export const calendarStyles = css`
     border-radius: 4px;
     box-shadow: 0 1px 5px #0008;
     overflow: hidden;
-    transition: box-shadow 0.12s;
+    transition:
+      box-shadow 0.12s,
+      transform 0.12s;
   }
   .poster-art {
     display: block;
@@ -112,8 +132,34 @@ export const calendarStyles = css`
   .poster:hover,
   .poster:focus-visible {
     z-index: 1100;
+    transform: translate(calc(var(--index) * 15%), calc(var(--index) * 15%))
+      scale(1.05);
     outline: 2px solid var(--accent);
     box-shadow: 0 2px 8px #000c;
+  }
+  .movie-preview {
+    position: fixed;
+    z-index: 1200;
+    width: min(320px, calc(100vw - 24px));
+    max-height: min(360px, calc(100dvh - 24px));
+    overflow: auto;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--primary-text-color, #20302c);
+    box-shadow: 0 6px 24px #0005;
+    font-size: 13px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+  .movie-preview p {
+    margin: 6px 0 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .poster {
+      transition: none;
+    }
   }
   kaleidescape-library-cover {
     width: 100%;
@@ -133,6 +179,75 @@ export const calendarStyles = css`
   }
   .calendar-dialog {
     width: min(760px, calc(100% - 32px));
+  }
+  dialog.day-picker:modal {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .day-picker::backdrop {
+    background: transparent;
+  }
+  @keyframes day-picker-zoom {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.88);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+  .day-picker-grid {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 110px));
+    justify-content: center;
+    align-items: start;
+    gap: 12px;
+    width: min(520px, 100%);
+    max-height: calc(100% - 24px);
+    padding: 12px;
+    overflow: auto;
+    transform: translate(-50%, -50%);
+    animation: day-picker-zoom 180ms ease-out;
+  }
+  .day-picker-movie {
+    display: block;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+  .day-picker-art {
+    display: block;
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px #0008;
+  }
+  .day-picker-art kaleidescape-library-cover {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .day-picker-grid {
+      animation: none;
+    }
   }
   .calendar-dialog .card-head {
     align-items: start;
@@ -156,11 +271,13 @@ export const calendarStyles = css`
   }
   @container journal-calendar (max-width: 560px) {
     .month-bar {
+      flex-wrap: nowrap;
       gap: 6px;
       padding: 6px 8px;
     }
     .month-bar h2 {
       font-size: 16px;
+      white-space: nowrap;
     }
     .month-bar button {
       flex: none;
@@ -175,6 +292,48 @@ export const calendarStyles = css`
     }
   }
   @media (max-width: 700px) {
+    .month-bar slot {
+      display: contents;
+    }
+    .month-bar .month-full {
+      display: none;
+    }
+    .month-bar .month-compact {
+      display: inline;
+    }
+    .month-bar {
+      flex-wrap: nowrap;
+      gap: 3px;
+      padding: 6px;
+    }
+    .month-bar h2 {
+      order: 2;
+      white-space: nowrap;
+      font-size: 15px;
+      flex: 1 1 auto;
+    }
+    .month-bar > button {
+      flex: 0 0 36px;
+      width: 36px;
+      min-width: 0;
+      min-height: 36px;
+      padding: 6px;
+    }
+    .month-bar > button[aria-label="Previous month"] {
+      order: 0;
+    }
+    .month-bar ::slotted([slot="mobile-add"]) {
+      order: 1;
+    }
+    .month-bar > button[aria-label="Go to current month"] {
+      order: 3;
+    }
+    .month-bar ::slotted([slot="mobile-options"]) {
+      order: 4;
+    }
+    .month-bar > button[aria-label="Next month"] {
+      order: 5;
+    }
     .month-bar {
       position: sticky;
       top: var(
@@ -217,6 +376,7 @@ export const calendarStyles = css`
       margin: 0 12px 10px 0;
     }
     .month-bar {
+      flex-wrap: nowrap;
       gap: 6px;
       padding: 6px 8px;
     }

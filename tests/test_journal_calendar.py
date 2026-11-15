@@ -172,6 +172,7 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(detail["movie"]["duration_seconds"], 6600)
         self.assertEqual(detail["movie"]["actors"], ["Fictional Actor"])
         self.assertEqual(detail["movie"]["directors"], ["A. Director"])
+        self.assertEqual(detail["movie"]["synopsis"], "A fictional voyage.")
         for key in (
             "purchase_date",
             "added_on",
@@ -180,7 +181,6 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
             "notes",
             "source_handle",
             "source_group",
-            "synopsis",
         ):
             self.assertNotIn(key, json.dumps(detail))
         for source in (None, "other"):
@@ -308,8 +308,13 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
             (await self.repository.async_ui_preferences("a", area="journal"))["values"],
             {
                 "view": "calendar",
+                "page_size": 25,
                 "calendar_size": 180,
                 "calendar_fit": False,
+                "calendar_hover_preview": False,
+                "calendar_show_month": True,
+                "calendar_show_year": True,
+                "calendar_show_total": True,
                 "movie_details": "full",
             },
         )
@@ -321,7 +326,9 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
             {
                 "view": "calendar",
                 "calendar_size": 90,
+                "page_size": 500,
                 "calendar_fit": True,
+                "calendar_hover_preview": True,
                 "movie_details": "compact",
             },
             "journal",
@@ -335,8 +342,13 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
             (await self.repository.async_ui_preferences("a", area="journal"))["values"],
             {
                 "view": "calendar",
+                "page_size": 500,
                 "calendar_size": 90,
                 "calendar_fit": True,
+                "calendar_hover_preview": True,
+                "calendar_show_month": True,
+                "calendar_show_year": True,
+                "calendar_show_total": True,
                 "movie_details": "compact",
             },
         )
@@ -344,8 +356,13 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
             (await self.repository.async_ui_preferences("b", area="journal"))["values"],
             {
                 "view": "calendar",
+                "page_size": 25,
                 "calendar_size": 180,
                 "calendar_fit": False,
+                "calendar_hover_preview": False,
+                "calendar_show_month": True,
+                "calendar_show_year": True,
+                "calendar_show_total": True,
                 "movie_details": "full",
             },
         )
@@ -361,6 +378,13 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
             {"calendar_size": 321},
             {"calendar_size": 90.5},
             {"calendar_fit": "true"},
+            {"calendar_hover_preview": "true"},
+            {"page_size": 0},
+            {"page_size": True},
+            {"page_size": 1000},
+            {"calendar_show_month": 1},
+            {"calendar_show_year": "true"},
+            {"calendar_show_total": None},
         ):
             with self.assert_error("invalid_request"):
                 await self.repository.async_ui_preferences_update(

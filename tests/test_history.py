@@ -78,6 +78,8 @@ class HouseholdReadTest(unittest.IsolatedAsyncioTestCase):
                 "watched_seconds",
                 "month_viewing_count",
                 "month_watched_seconds",
+                "year_viewing_count",
+                "year_watched_seconds",
                 "api_version",
                 "library_enabled",
                 "ui_defaults",

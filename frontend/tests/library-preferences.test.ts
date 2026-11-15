@@ -328,7 +328,7 @@ it("All loads bounded revision-bound pages and keeps the entire final remainder"
   expect(button(root, "Next")).toBeUndefined();
   expect(transport.uiPreferences.page_size).toBe("all");
 });
-it("keeps applied facets in the URL across remount and discards drafts", async () => {
+it("keeps immediately applied facets in the URL across close and remount", async () => {
   const transport = new FixtureTransport();
   let root = await mount(transport);
   button(root, "Filters").click();
@@ -337,21 +337,12 @@ it("keeps applied facets in the URL across remount and discards drafts", async (
     .querySelector<HTMLInputElement>('input[name="status"][value="watched"]')!
     .click();
   await flush();
-  modalClose(root).click();
-  await flush();
-  expect(transport.uiPreferences.status).toEqual([]);
-  button(root, "Filters").click();
-  await flush();
-  root
-    .querySelector<HTMLInputElement>('input[name="status"][value="watched"]')!
-    .click();
-  await flush();
-  button(root, "Apply filters").click();
-  await flush();
-  expect(transport.uiPreferences.status).toEqual([]);
   expect(new URL(location.href).searchParams.getAll("library_status")).toEqual([
     "watched",
   ]);
+  modalClose(root).click();
+  await flush();
+  expect(transport.uiPreferences.status).toEqual([]);
   element!.remove();
   root = await mount(transport);
   const last = transport.calls

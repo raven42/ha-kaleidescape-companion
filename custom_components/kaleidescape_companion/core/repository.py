@@ -651,6 +651,15 @@ class JournalRepository:
         current = month_totals(
             db, timestamp(start.isoformat()), timestamp(end.isoformat())
         )
+        year = month_totals(
+            db,
+            timestamp(
+                now.replace(
+                    month=1, day=1, hour=0, minute=0, second=0, microsecond=0
+                ).isoformat()
+            ),
+            timestamp((now + timedelta(microseconds=1)).isoformat()),
+        )
         totals = db.execute(
             "SELECT count(*),coalesce(sum(watched_seconds),0) "
             "FROM viewings WHERE deleted_at IS NULL"
@@ -664,6 +673,8 @@ class JournalRepository:
             "watched_seconds": totals[1],
             "month_viewing_count": current["viewing_count"],
             "month_watched_seconds": current["watched_seconds"],
+            "year_viewing_count": year["viewing_count"],
+            "year_watched_seconds": year["watched_seconds"],
             "backup_in_progress": self._paused,
             "database_bytes": self.path.stat().st_size,
             "database_limit_bytes": MAX_DATABASE_BYTES,

@@ -303,6 +303,7 @@ export class KaleidescapeLibrary extends LitElement {
   private requestLimit = 50;
   private requestedOffset = 0;
   private draft: Filters = {};
+  private facetChoices: Record<string, string[]> = {};
   private visibility = () => {
     clearTimeout(this.timer);
     if (document.hidden) {
@@ -350,7 +351,7 @@ export class KaleidescapeLibrary extends LitElement {
     clearTimeout(this.searchTimer);
     this.applied = next;
     this.filters = structuredClone(this.applied);
-    this.draft = {};
+    this.draft = structuredClone(this.applied);
     if (this.selected) this.closeDialog("title-dialog");
     void this.load();
   };
@@ -562,7 +563,6 @@ export class KaleidescapeLibrary extends LitElement {
     this.collectionToast = "";
     this.observedCollectionJobs.clear();
     this.notifiedCollectionJobs.clear();
-    this.mobileQuery = "";
     this.purchaseTotals = undefined;
     this.purchaseLoading = false;
     this.purchaseReload = false;
@@ -608,6 +608,7 @@ export class KaleidescapeLibrary extends LitElement {
       show_library_cost: false,
     };
     this.draft = {};
+    this.facetChoices = {};
     this.page = this.info = this.selected = undefined;
     this.collectionLocked = this.checkingCollection = false;
     this.collectionRecoveryNotice = "";
@@ -961,8 +962,6 @@ export class KaleidescapeLibrary extends LitElement {
       this.renderRoot.querySelector<HTMLDialogElement>(`#${id}`)?.showModal();
   }
   private closeDialog(id: string) {
-    if (id === "library-search")
-      this.mobileQuery = String(this.filters.query ?? "");
     this.renderRoot.querySelector<HTMLDialogElement>(`#${id}`)?.close();
     if (id === "title-dialog") {
       this.selected = undefined;
@@ -1149,7 +1148,24 @@ export class KaleidescapeLibrary extends LitElement {
   }
   private openFilters() {
     this.draft = structuredClone(this.applied);
+    this.facetChoices = structuredClone(this.page?.facets ?? {});
     void this.openDialog("filter-dialog");
+  }
+  private applyFilterChanges() {
+    const next = { ...this.applied };
+    for (const key of [...FILTERS.map(([key]) => key), "status"])
+      next[key] = this.draft[key] ?? [];
+    next.missing_metadata_artwork = !!(
+      this.advanced &&
+      this.scope?.permissions.edit &&
+      this.draft.missing_metadata_artwork
+    );
+    next.missing_purchase_information = !!(
+      this.scope?.permissions.edit && this.draft.missing_purchase_information
+    );
+    next.recently_added = false;
+    this.applied = next;
+    void this.load();
   }
   private clearFilters() {
     clearTimeout(this.searchTimer);
@@ -1227,52 +1243,9 @@ export class KaleidescapeLibrary extends LitElement {
       ${label}
     </button>`;
   }
-  private mobileQuery = "";
-  private async openSearch() {
-    this.mobileQuery = String(this.filters.query ?? "");
-    await this.openDialog("library-search");
-    this.renderRoot
-      .querySelector<HTMLInputElement>('[name="library_mobile_query"]')
-      ?.focus();
-  }
   private refreshCached() {
     void this.load();
     void this.refreshStatus();
-  }
-  private renderSearchDialog() {
-    return html`<dialog
-      id="library-search"
-      class="library-options"
-      aria-labelledby="library-search-title"
-      @click=${dismissBackdrop}
-    >
-      <div class="card-head">
-        <h2 id="library-search-title">Search Library</h2>
-        ${closeButton(() => this.closeDialog("library-search"))}
-      </div>
-      <form
-        @submit=${(event: Event) => {
-          event.preventDefault();
-          this.filters.query = this.mobileQuery;
-          this.applySearch();
-          this.closeDialog("library-search");
-        }}
-      >
-        <label
-          >Title, actor or director<input
-            type="search"
-            name="library_mobile_query"
-            maxlength="500"
-            .value=${live(this.mobileQuery)}
-            @input=${(event: Event) => {
-              this.mobileQuery = (event.target as HTMLInputElement).value;
-            }}
-        /></label>
-        <div class="dialog-footer">
-          <button type="submit" class="primary">Search</button>
-        </div>
-      </form>
-    </dialog>`;
   }
   private applySearch() {
     clearTimeout(this.searchTimer);
@@ -1282,10 +1255,15 @@ export class KaleidescapeLibrary extends LitElement {
   private choices(key: string, facet: string) {
     const values =
       key === "status" ? [...MOVIE_FILTERS] : (this.page?.facets[facet] ?? []);
-    // Retain selected names even if a subsequent sync removes their suggestion.
+    // Keep the initial options visible while the filtered results are reloaded.
     const choices = [
-      ...new Set([...values, ...((this.draft[key] ?? []) as string[])]),
+      ...new Set([
+        ...(this.facetChoices[facet] ?? []),
+        ...values,
+        ...((this.draft[key] ?? []) as string[]),
+      ]),
     ];
+    this.facetChoices[facet] = choices;
     if (key === "rating") {
       const rank: Record<string, number> = {
         "NC-17": 8,
@@ -1585,15 +1563,6 @@ export class KaleidescapeLibrary extends LitElement {
     </dialog>`;
   }
   private renderFilterDialog() {
-    const selectedCount = [...FILTERS.map(([key]) => key), "status"].reduce(
-      (total, key) =>
-        total +
-        (Array.isArray(this.draft[key])
-          ? (this.draft[key] as string[]).length
-          : 0),
-      Number(!!this.draft.missing_metadata_artwork) +
-        Number(!!this.draft.missing_purchase_information),
-    );
     return html`<dialog
       id="filter-dialog"
       @click=${dismissBackdrop}
@@ -1619,7 +1588,7 @@ export class KaleidescapeLibrary extends LitElement {
                   this.draft.missing_metadata_artwork = (
                     event.target as HTMLInputElement
                   ).checked;
-                  this.requestUpdate();
+                  this.applyFilterChanges();
                 }}
               />Missing metadata/artwork</label
             >`
@@ -1636,7 +1605,7 @@ export class KaleidescapeLibrary extends LitElement {
                   this.draft.missing_purchase_information = (
                     event.target as HTMLInputElement
                   ).checked;
-                  this.requestUpdate();
+                  this.applyFilterChanges();
                 }}
               />Missing purchase information</label
             >`
@@ -1651,9 +1620,7 @@ export class KaleidescapeLibrary extends LitElement {
           const choices = this.choices(key, facet);
           if (
             key === "collection" &&
-            !(this.page?.facets[facet] ?? []).some(
-              (value) => !hiddenFilterCollection(value),
-            ) &&
+            !choices.some((value) => !hiddenFilterCollection(value)) &&
             !selected.some((value) => !hiddenFilterCollection(value))
           )
             return nothing;
@@ -1661,6 +1628,18 @@ export class KaleidescapeLibrary extends LitElement {
             <legend>
               <span class="facet-heading">
                 <span>${label}</span>
+                <button
+                  type="button"
+                  class="facet-clear"
+                  aria-label=${`Clear ${label} filters`}
+                  ?disabled=${!selected.length}
+                  @click=${() => {
+                    this.draft = { ...this.draft, [key]: [] };
+                    this.applyFilterChanges();
+                  }}
+                >
+                  Clear
+                </button>
                 <span
                   class="facet-count"
                   aria-label=${`${selected.length} selected`}
@@ -1690,7 +1669,7 @@ export class KaleidescapeLibrary extends LitElement {
                                   ? [...current, value]
                                   : current.filter((item) => item !== value),
                               };
-                              this.requestUpdate();
+                              this.applyFilterChanges();
                             }}
                           />${key === "status" ? renderCollectionBadge(statusFilterLabel(value, this.movieStatusLabels)) : key === "rating" ? renderRatingBadge(value) : key === "collection" ? renderCollectionBadge(value) : key === "format" && formatBadges({ formats: [value] }).length === 1 ? renderFormatBadges({ formats: [value] }) : value}</label
                         >`,
@@ -1698,18 +1677,6 @@ export class KaleidescapeLibrary extends LitElement {
                   : html`<p class="muted">No matching options</p>`
               }
             </div>
-            <button
-              type="button"
-              class="facet-clear"
-              aria-label=${`Clear ${label} filters`}
-              ?disabled=${!selected.length}
-              @click=${() => {
-                this.draft = { ...this.draft, [key]: [] };
-                this.requestUpdate();
-              }}
-            >
-              Clear
-            </button>
           </fieldset>`;
         })}
       </div>
@@ -1726,47 +1693,13 @@ export class KaleidescapeLibrary extends LitElement {
                   ...this.draft,
                   [key]: selected.filter((item) => item !== name),
                 };
-                this.requestUpdate();
+                this.applyFilterChanges();
               }}
             >
               ${name} ×
             </button>`,
         );
       })}
-      <div class="actions dialog-footer">
-        <button
-          @click=${() => {
-            this.draft = {};
-            this.requestUpdate();
-          }}
-        >
-          Clear filters</button
-        ><span class="filter-selection-summary" role="status"
-          >${selectedCount ? `${selectedCount} selected` : "No filters selected"}</span
-        ><span class="grow"></span>
-        <button
-          class="primary"
-          @click=${() => {
-            const next = { ...this.applied };
-            for (const key of [...FILTERS.map(([key]) => key), "status"])
-              next[key] = this.draft[key] ?? [];
-            next.missing_metadata_artwork = !!(
-              this.advanced &&
-              this.scope?.permissions.edit &&
-              this.draft.missing_metadata_artwork
-            );
-            next.missing_purchase_information =
-              !!this.draft.missing_purchase_information;
-            next.recently_added = false;
-            this.applied = next;
-            this.saveFilters();
-            this.closeDialog("filter-dialog");
-            void this.load();
-          }}
-        >
-          Apply filters
-        </button>
-      </div>
     </dialog>`;
   }
   private renderCollectionAction(row: LibraryTitle) {
@@ -2507,18 +2440,6 @@ export class KaleidescapeLibrary extends LitElement {
           >
             <button
               type="button"
-              aria-label="Search Library"
-              title="Search Library"
-              aria-haspopup="dialog"
-              aria-controls="library-search"
-              class=${this.applied.query ? "active-shortcut" : ""}
-              ?hidden=${this.dashboard?.search_position === "off"}
-              @click=${this.openSearch}
-            >
-              ${actionIcon("search")}
-            </button>
-            <button
-              type="button"
               aria-label="Library filters"
               title="Filters"
               aria-haspopup="dialog"
@@ -2533,7 +2454,7 @@ export class KaleidescapeLibrary extends LitElement {
               type="button"
               aria-label="Clear search and filters"
               title="Clear search and filters"
-              ?hidden=${this.dashboard?.show_filters === false}
+              ?hidden=${!String(this.applied.query ?? "").trim() && !activeFilters}
               ?disabled=${this.loading}
               @click=${this.clearFilters}
             >
@@ -2769,7 +2690,7 @@ export class KaleidescapeLibrary extends LitElement {
         ${!this.page?.items.length ? html`<p class="empty" role="status">${this.loading ? "Loading library…" : "No cached titles match. Adjust your filters or wait for a library sync."}</p>` : nothing}
       </section>
       <footer
-        class="library-footer"
+        class=${`library-footer${this.dashboard?.search_position === "off" ? "" : " has-mobile-search"}`}
         aria-label="Library status and navigation"
         ?hidden=${this.dashboard?.show_stats === false && !this.page?.offset && !this.page?.has_more}
       >
@@ -2778,7 +2699,7 @@ export class KaleidescapeLibrary extends LitElement {
           role="status"
           ?hidden=${this.dashboard?.show_stats === false}
         >
-          <span>
+          <span class="footer-desktop-summary">
             ${String(this.applied.query ?? "").trim() || activeFilters ? html`<strong class="match-count">Matches ${this.page?.total ?? 0}</strong> · ` : nothing}
             ${this.applied.query ? html`Relevance order · ` : nothing}
             ${`Total ${this.info?.group_count ?? 0}`} ·
@@ -2789,6 +2710,9 @@ export class KaleidescapeLibrary extends LitElement {
             ${movieStatusLabel("in_progress", this.movieStatusLabels)}
             ${this.info?.status_counts?.in_progress ?? 0}
           </span>
+          <span class="footer-mobile-summary"
+            >${String(this.applied.query ?? "").trim() || activeFilters ? `Matches ${this.page?.total ?? 0}` : `Total ${this.info?.group_count ?? 0}`}</span
+          >
           ${admin && this.info ? html`<span class="footer-admin">${counted(this.info.collection_count, "collection")}${this.info.artwork_enabled ? ` · Artwork ${((this.info.artwork_bytes ?? 0) / 1048576).toFixed(1)} MiB` : ""}${this.display.show_library_cost ? ` · Library cost ${this.purchaseAmount("library_cost")}` : ""} · Synced ${this.date(this.info.last_synced_at)}</span>` : nothing}
           ${admin && this.info?.metadata ? html`<span class="scraper-status footer-admin">${this.scraperSummary()}</span>` : nothing}
           ${admin && (this.info?.collection_jobs ?? []).some((job) => ["queued", "working", "syncing"].includes(job.status)) ? html`<span class="collection-queue-status">Collection changes: ${this.info?.collection_jobs?.filter((job) => job.status === "queued").length ?? 0} queued · ${this.info?.collection_jobs?.filter((job) => ["working", "syncing"].includes(job.status)).length ?? 0} in progress</span>` : nothing}
@@ -2842,8 +2766,37 @@ export class KaleidescapeLibrary extends LitElement {
           }
         </div>
       </footer>
+      <form
+        class="mobile-library-search"
+        role="search"
+        ?hidden=${this.dashboard?.search_position === "off"}
+        @submit=${(event: Event) => {
+          event.preventDefault();
+          this.applySearch();
+        }}
+      >
+        <input
+          type="search"
+          aria-label="Search Library"
+          placeholder="Search titles, actors or directors"
+          maxlength="500"
+          .value=${live(String(this.filters.query ?? ""))}
+          @input=${(event: Event) => {
+            this.filters.query = (event.target as HTMLInputElement).value;
+            clearTimeout(this.searchTimer);
+            this.searchTimer = setTimeout(() => this.applySearch(), 300);
+          }}
+        />
+        <button
+          type="submit"
+          aria-label="Search Library"
+          ?disabled=${this.loading}
+        >
+          ${actionIcon("search")}
+        </button>
+      </form>
       ${this.renderOptionsDialog()} ${this.renderFilterDialog()}
-      ${this.renderSearchDialog()} ${this.renderTitleDialog()}
+      ${this.renderTitleDialog()}
     </section>`;
   }
 }

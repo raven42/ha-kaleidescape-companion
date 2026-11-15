@@ -12,6 +12,7 @@ MOVIE_FIELDS = (
     "actors",
     "directors",
     "genres",
+    "synopsis",
     "duration_seconds",
     "year",
     "edition",

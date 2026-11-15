@@ -1,13 +1,19 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../src/playback/now-playing";
 import type { KaleidescapeNowPlaying } from "../src/playback/now-playing";
+import type { DeviceControls } from "../src/playback/controls";
 import type { NowPlayingPlayer } from "../src/core/api";
 import { FixtureTransport, info, playing } from "./fixture";
 
 let element: KaleidescapeNowPlaying;
 let transport: FixtureTransport;
 const content = () => element.shadowRoot!.textContent!.replace(/\s+/g, " ");
-const refresh = () => element.shadowRoot!.querySelector("button")!.click();
+const refresh = () =>
+  element
+    .shadowRoot!.querySelector<HTMLButtonElement>(
+      '[aria-label="Refresh playback and player state"]',
+    )!
+    .click();
 const flush = async () => {
   await Promise.resolve();
   await element.updateComplete;
@@ -49,7 +55,10 @@ it("shows source/session context as text without playback controls or invented p
   expect(
     element.shadowRoot!.querySelector("script,iframe,progress,input"),
   ).toBeNull();
-  expect(element.shadowRoot!.querySelectorAll("button")).toHaveLength(1);
+  expect(element.shadowRoot!.querySelectorAll("button")).toHaveLength(2);
+  expect(
+    element.shadowRoot!.querySelector('[aria-label="Open remote"]'),
+  ).not.toBeNull();
   expect(
     transport.calls.every(
       (call) =>
@@ -246,4 +255,26 @@ it("binds snapshots and artwork to the selected player", async () => {
   expect(
     transport.calls.find((call) => call.type.endsWith("/now_playing")),
   ).toMatchObject({ player_id: "opaque-player" });
+});
+
+it("refreshes playback and control state from the header action", async () => {
+  await mount(playing());
+  const controls = element.shadowRoot!.querySelector<DeviceControls>(
+    "kaleidescape-device-controls",
+  )!;
+  const controlRefresh = vi.spyOn(controls, "refresh").mockResolvedValue();
+  const before = transport.calls.filter((call) =>
+    call.type.endsWith("/now_playing"),
+  ).length;
+  refresh();
+  await flush();
+  expect(controlRefresh).toHaveBeenCalledOnce();
+  expect(
+    transport.calls.filter((call) => call.type.endsWith("/now_playing")).length,
+  ).toBe(before + 1);
+  expect(
+    element.shadowRoot!.querySelector(
+      ".player-actions [aria-label='Open remote']",
+    ),
+  ).not.toBeNull();
 });

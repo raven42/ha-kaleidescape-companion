@@ -446,6 +446,7 @@ export const styles = css`
   }
   dialog {
     --dialog-background: var(--surface);
+    --dialog-bottom-gap: max(10px, env(safe-area-inset-bottom, 0px));
     --dialog-gutter: clamp(12px, 2vw, 20px);
     width: min(560px, calc(100% - 24px));
     max-width: calc(100% - 16px);
@@ -673,12 +674,42 @@ export const styles = css`
       width: 44px;
       min-height: 44px;
     }
-    dialog {
+    dialog,
+    dialog.inset-dialog {
+      box-sizing: border-box;
       width: min(560px, calc(100% - 16px));
       max-height: calc(
-        var(--companion-viewport-height, 100dvh) -
-          16px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+        var(--companion-viewport-height, 100dvh) - max(
+            40px,
+            env(safe-area-inset-top, 0px) + 8px
+          ) - var(--dialog-bottom-gap)
       );
+    }
+    dialog.inset-dialog {
+      --dialog-top-gap: max(
+        40px,
+        calc(var(--companion-viewport-height, 100dvh) * 0.15),
+        env(safe-area-inset-top, 0px) + 8px
+      );
+      max-height: calc(
+        var(--companion-viewport-height, 100dvh) - var(--dialog-top-gap) - var(
+            --dialog-bottom-gap
+          )
+      );
+    }
+    dialog:modal {
+      inset-block-start: calc(
+        var(--companion-viewport-top, 0px) +
+          max(40px, env(safe-area-inset-top, 0px) + 8px)
+      );
+      inset-block-end: calc(
+        var(--companion-viewport-bottom, 0px) + var(--dialog-bottom-gap)
+      );
+    }
+    dialog > .card-head,
+    dialog > .movie-heading,
+    dialog .dialog-footer {
+      position: static;
     }
     dialog h2 {
       font-size: 17px;

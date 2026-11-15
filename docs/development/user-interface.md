@@ -197,14 +197,22 @@ Search/status state and displayed month must not be confused with persisted
 layout.
 
 An active Journal search temporarily shows list results without changing the
-saved view. The desktop search field has a clear button; mobile exposes the
-active query as a dismissible search chip. Clearing restores the preferred
-list/calendar view and the selected month while retaining other filters.
-Calendar's **Today** button returns to the current local month.
+saved view. The desktop and mobile search fields have clear buttons. Clearing
+restores the preferred list/calendar view and the selected month while retaining
+other filters. Calendar's **Today** button returns to the current local month.
+
+On mobile, the Journal list has a compact sticky toolbar and pagination footer.
+The calendar combines month navigation and actions in one row. Both views have a
+search field in the footer; list status and sorting are in Journal options.
+Selecting a viewing opens its details in a modal, while larger layouts retain
+the split view. Both administrator and household reader views use this layout.
+The Now Playing header offers the remote and a single refresh action for both
+playback and control state. Mobile dialog headings and actions scroll with their
+content so they cannot cover it when scrolling back to the top.
 
 Library badges, filters, pagination and browser image retention are specified
 once in the [Library design](library.md). Personal Options save accepted choices
-immediately; closing a draft filter does not apply it. Native settings and
+immediately; Library filter changes apply as they are made. Native settings and
 dashboard card configuration remain separate from personal profile choices.
 
 ## Dialogs, writes and response recovery

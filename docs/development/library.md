@@ -146,23 +146,23 @@ match **any** value within that category; different categories must **all**
 match on the **same version**. A matching group still opens all its versions,
 including those that did not match. An unchecked category is unrestricted.
 Category headings show the number selected and offer a per-category Clear
-action. The sticky footer shows the draft selection count; closing without
-applying discards changes. Rating choices put G/NR-G first, then unclassified
-values (including Unrated), then PG, PG-13, R and NC-17, with NR-prefixed
-equivalents beside the corresponding rating and alphabetical ties. They reuse
-the badges from title details. Viewing formats use individual format badges,
-including HDR10 separately from resolution. SD resolution and SDR dynamic range
-remain separate; SDR has a distinct badge. Actor/director filter inputs have
-been removed from the dialog; the main search handles people. Existing saved
+action. Selections and category clears apply immediately while the dialog
+remains open. Rating choices put G/NR-G first, then unclassified values
+(including Unrated), then PG, PG-13, R and NC-17, with NR-prefixed equivalents
+beside the corresponding rating and alphabetical ties. They reuse the badges
+from title details. Viewing formats use individual format badges, including
+HDR10 separately from resolution. SD resolution and SDR dynamic range remain
+separate; SDR has a distinct badge. Actor/director filter inputs have been
+removed from the dialog; the main search handles people. Existing saved
 actor/director selections can still be removed using their chips, and the API
 retains those facets for compatible clients. Sci-Fi and Science Fiction share
-the Science Fiction genre label. **Apply filters** applies the draft and returns
-to page one; Closing with X discards it. The toolbar **Clear Filter** clears
-search and all checkbox filters, including unsubmitted search text, and returns
-to page one. It preserves view, sort and page size. Each category offers up to
-500 known names (collections up to 200), with at most 100 selections per
-category. Writers, producers and studios are searchable when available, without
-separate facet controls.
+the Science Fiction genre label. Each change returns to page one; closing the
+dialog retains the selection. The toolbar **Clear Filter** clears search and all
+checkbox filters, including unsubmitted search text, and returns to page one. It
+preserves view, sort and page size. Each category offers up to 500 known names
+(collections up to 200), with at most 100 selections per category. Writers,
+producers and studios are searchable when available, without separate facet
+controls.
 
 Search and display projections run on the same worker for both household roles.
 One search evaluates each distinct credited name once, then resolves matches to

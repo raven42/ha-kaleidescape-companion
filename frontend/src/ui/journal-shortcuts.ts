@@ -1,20 +1,15 @@
-/** Mobile calendar controls; all reads/mutations stay with the existing host. */
-import { LitElement, css, html } from "lit";
-import type { PropertyValues } from "lit";
+/** Compact list commands; actions remain owned by the Journal host. */
+import { LitElement, css, html, nothing } from "lit";
 import { styles } from "./styles";
 import { actionIcon } from "./action-icons";
-import { closeButton, dismissBackdrop } from "./dialog";
 
 export class JournalShortcuts extends LitElement {
   static properties = {
-    value: {},
     disabled: { type: Boolean },
     allowAdd: { type: Boolean },
     filtered: { type: Boolean },
     filterLabel: {},
-    status: {},
-    context: { attribute: false },
-    scopeKey: {},
+    count: { type: Number },
   };
   static styles = [
     styles,
@@ -25,15 +20,21 @@ export class JournalShortcuts extends LitElement {
       .shortcuts {
         display: flex;
         align-items: center;
-        justify-content: space-between;
         gap: 6px;
         padding: 6px 8px;
       }
+      h2 {
+        flex: 1;
+        min-width: 0;
+        margin: 0;
+        font-size: 16px;
+        white-space: nowrap;
+      }
       .shortcuts button {
-        width: 44px;
-        height: 44px;
-        min-height: 44px;
-        padding: 10px;
+        width: 40px;
+        height: 40px;
+        min-height: 40px;
+        padding: 8px;
         display: grid;
         place-items: center;
         border-radius: 7px;
@@ -46,9 +47,6 @@ export class JournalShortcuts extends LitElement {
         color: var(--primary-color, #03a9f4);
         border-color: currentColor;
       }
-      dialog {
-        width: min(380px, calc(100% - 24px));
-      }
       @media (max-width: 700px) {
         :host {
           display: block;
@@ -56,131 +54,47 @@ export class JournalShortcuts extends LitElement {
       }
     `,
   ];
-  value = "";
   disabled = false;
   allowAdd = false;
   filtered = false;
   filterLabel = "";
-  status = "";
-  context?: object;
-  scopeKey = "";
-  private draft = "";
-  private generation = 0;
-  protected willUpdate(changed: PropertyValues) {
-    if (changed.has("context") || changed.has("scopeKey")) this.close();
-  }
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this.close();
-  }
-  private signal(name: string, detail?: string) {
+  count = 0;
+  private signal(name: string) {
     if (!this.disabled)
       this.dispatchEvent(
-        new CustomEvent(name, { detail, bubbles: true, composed: true }),
+        new CustomEvent(name, { bubbles: true, composed: true }),
       );
-  }
-  private close(event?: Event) {
-    event?.preventDefault();
-    this.generation++;
-    this.draft = "";
-    this.renderRoot.querySelector("dialog")?.close();
-  }
-  private async search() {
-    if (this.disabled) return;
-    const generation = ++this.generation;
-    this.draft = this.value;
-    this.requestUpdate();
-    await this.updateComplete;
-    if (!this.isConnected || generation !== this.generation) return;
-    this.renderRoot.querySelector("dialog")?.showModal();
-    this.renderRoot.querySelector<HTMLInputElement>("input")?.focus();
   }
   protected render() {
     return html`<div
-        class="shortcuts"
-        role="toolbar"
-        aria-label="Journal calendar shortcuts"
+      class="shortcuts"
+      role="toolbar"
+      aria-label="Journal shortcuts"
+    >
+      <h2>Viewings (${this.count})</h2>
+      ${this.allowAdd ? html`<button type="button" aria-label="Add viewing" title="Add viewing" ?disabled=${this.disabled} @click=${() => this.signal("journal-add")}>${actionIcon("add")}</button>` : nothing}
+      ${this.filterLabel ? html`<button type="button" aria-label="Show all viewings" title="Show all viewings" ?disabled=${this.disabled} @click=${() => this.signal("journal-clear-movie")}>All</button>` : nothing}
+      <button
+        type="button"
+        aria-label="Refresh Journal"
+        title="Refresh Journal"
+        ?disabled=${this.disabled}
+        @click=${() => this.signal("journal-refresh")}
       >
-        <button
-          type="button"
-          aria-label="Search Journal"
-          title="Search Journal"
-          aria-haspopup="dialog"
-          ?disabled=${this.disabled}
-          class=${this.value ? "active" : ""}
-          @click=${this.search}
-        >
-          ${actionIcon("search")}
-        </button>
-        ${this.allowAdd ? html`<button type="button" aria-label="Add viewing" title="Add viewing" ?disabled=${this.disabled} @click=${() => this.signal("journal-add")}>${actionIcon("add")}</button>` : ""}
-        ${this.filterLabel ? html`<button type="button" aria-label="Show all viewings" title="Show all viewings" ?disabled=${this.disabled} @click=${() => this.signal("journal-clear-movie")}>All</button>` : ""}
-        <button
-          type="button"
-          aria-label="Refresh Journal"
-          title="Refresh Journal"
-          ?disabled=${this.disabled}
-          @click=${() => this.signal("journal-refresh")}
-        >
-          ${actionIcon("refresh")}
-        </button>
-        <button
-          type="button"
-          aria-label="Journal options"
-          title="Options"
-          aria-haspopup="dialog"
-          ?disabled=${this.disabled}
-          class=${this.filtered ? "active" : ""}
-          @click=${() => this.signal("journal-open-options")}
-        >
-          ${actionIcon("options")}
-        </button>
-      </div>
-      <dialog
-        aria-labelledby="journal-search-title"
-        @click=${dismissBackdrop}
-        @cancel=${this.close}
+        ${actionIcon("refresh")}
+      </button>
+      <button
+        type="button"
+        aria-label="Journal options"
+        title="Options"
+        aria-haspopup="dialog"
+        ?disabled=${this.disabled}
+        class=${this.filtered ? "active" : ""}
+        @click=${() => this.signal("journal-open-options")}
       >
-        <div class="card-head">
-          <h2 id="journal-search-title">Search Journal</h2>
-          ${closeButton((event) => this.close(event))}
-        </div>
-        ${this.filterLabel ? html`<p class="muted">${this.filterLabel}</p>` : ""}
-        <form
-          @submit=${(event: Event) => {
-            event.preventDefault();
-            if (this.disabled) return;
-            this.signal("journal-search", this.draft);
-            this.close();
-          }}
-        >
-          <label
-            >Title<input
-              name="journal_mobile_search"
-              type="search"
-              maxlength="500"
-              .value=${this.draft}
-              @input=${(event: Event) => {
-                this.draft = (event.target as HTMLInputElement).value;
-              }}
-          /></label>
-          <label
-            >Status<select
-              name="filter_status"
-              .value=${this.status}
-              @change=${(event: Event) => this.signal("journal-status", (event.target as HTMLSelectElement).value)}
-            >
-              <option value="">All</option>
-              <option value="partial">Partial</option>
-              <option value="completed">Completed</option>
-            </select></label
-          >
-          <div class="dialog-footer">
-            <button class="primary" type="submit" ?disabled=${this.disabled}>
-              Search
-            </button>
-          </div>
-        </form>
-      </dialog>`;
+        ${actionIcon("options")}
+      </button>
+    </div>`;
   }
 }
 if (!customElements.get("kaleidescape-journal-shortcuts"))

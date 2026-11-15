@@ -59,6 +59,11 @@ export class LibraryJournal extends LitElement {
       details {
         margin-top: 12px;
       }
+      @media (max-width: 700px) {
+        details {
+          margin-top: 0;
+        }
+      }
       .viewing button {
         font-size: inherit;
       }

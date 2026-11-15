@@ -48,6 +48,8 @@ export interface JournalInfo extends Scope {
   watched_seconds?: number;
   month_viewing_count?: number;
   month_watched_seconds?: number;
+  year_viewing_count?: number;
+  year_watched_seconds?: number;
   database_bytes?: number;
   database_limit_bytes?: number;
   backup_in_progress?: boolean;
@@ -137,6 +139,7 @@ export interface JournalPage {
   revision: number;
   next_cursor: string | null;
 }
+export type JournalPageSize = 10 | 25 | 100 | 500 | "all";
 export interface CalendarViewing extends ViewingSummary {
   library_title_id: string | null;
   artwork_key: string | null;
@@ -148,6 +151,7 @@ export interface CalendarMovie {
   actors: string[] | null;
   directors: string[] | null;
   genres: string[] | null;
+  synopsis: string | null;
   rating: string | null;
   year: number | null;
   duration_seconds: number | null;
@@ -836,6 +840,8 @@ export function errorMessage(error: unknown): string {
       "The database page is too large. Choose fewer rows per page.",
     library_page_too_large:
       "This library page is too large. Reduce entries per page and try again.",
+    journal_page_too_large:
+      "This Journal result exceeds the All limit. Choose a smaller page size or narrow the search.",
     collection_disabled:
       "Enable collection changes and collection sync in Settings first.",
     collection_form:
@@ -1373,19 +1379,76 @@ export class JournalClient {
     descending = true,
     fuzzy = false,
     libraryTitleId?: string,
+    limit = 25,
   ): Promise<JournalPage> {
     return this.call({
       type: `${DOMAIN}/${libraryTitleId ? "library/viewings" : "journal/list"}`,
       ...(libraryTitleId ? { title_id: libraryTitleId } : {}),
       ...scopeFields(scope),
       query,
-      limit: 25,
+      limit,
       sort,
       descending,
       fuzzy,
       ...(status ? { status } : {}),
       ...(cursor ? { cursor } : {}),
     });
+  }
+  async listSized(
+    scope: Scope,
+    options: {
+      query: string;
+      status: string;
+      cursor?: string;
+      sort: string;
+      descending: boolean;
+      fuzzy: boolean;
+      libraryTitleId?: string;
+      pageSize: JournalPageSize;
+    },
+    current: () => boolean,
+  ): Promise<JournalPage> {
+    const items: ViewingSummary[] = [];
+    let cursor = options.cursor;
+    let revision: number | undefined;
+    let bytes = 0;
+    const seen = new Set<string>();
+    const target = options.pageSize === "all" ? 10000 : options.pageSize;
+    while (current()) {
+      if (cursor) {
+        if (seen.has(cursor)) throw new ApiError("refresh_required");
+        seen.add(cursor);
+      }
+      const page = await this.list(
+        scope,
+        options.query,
+        options.status,
+        cursor,
+        options.sort,
+        options.descending,
+        options.fuzzy,
+        options.libraryTitleId,
+        Math.min(100, target - items.length),
+      );
+      if (!current()) throw new ApiError("not_ready");
+      if (revision !== undefined && revision !== page.revision)
+        throw new ApiError("refresh_required");
+      revision = page.revision;
+      bytes += new TextEncoder().encode(JSON.stringify(page.items)).byteLength;
+      if (items.length + page.items.length > target || bytes > 32 * 1024 * 1024)
+        throw new ApiError("journal_page_too_large");
+      items.push(...page.items);
+      if (target <= 100) return { ...page, items };
+      if (!page.next_cursor) return { ...page, items };
+      if (!page.items.length) throw new ApiError("refresh_required");
+      if (items.length >= target) {
+        if (options.pageSize === "all")
+          throw new ApiError("journal_page_too_large");
+        return { ...page, items };
+      }
+      cursor = page.next_cursor;
+    }
+    throw new ApiError("not_ready");
   }
   get(scope: Scope, viewing_id: string): Promise<Viewing> {
     return this.call({

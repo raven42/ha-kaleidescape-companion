@@ -36,6 +36,8 @@ export class DeviceControls extends LitElement {
     versionId: {},
     playerId: {},
     inlineRemote: { type: Boolean },
+    hideRefresh: { type: Boolean },
+    hideRemote: { type: Boolean },
     value: {},
     configured: { type: Boolean },
     settingsDisabled: { type: Boolean },
@@ -52,9 +54,21 @@ export class DeviceControls extends LitElement {
         margin-top: 20px;
         padding: 20px;
       }
+      .control-card.embedded {
+        margin: 0;
+        padding: 0 12px 12px;
+        border: 0;
+        background: transparent;
+      }
+      .control-card.embedded > .card-head h2 {
+        display: none;
+      }
       .control-card > .card-head {
         padding: 0;
         flex-wrap: wrap;
+      }
+      .remote-icon {
+        display: none;
       }
       .movie-actions {
         display: flex;
@@ -120,9 +134,17 @@ export class DeviceControls extends LitElement {
         font-size: 12px;
       }
       @media (max-width: 600px) {
-        .control-card {
+        .control-card:not(.embedded) {
           margin-top: 12px;
           padding: 12px;
+        }
+        .remote-icon {
+          display: inline-block;
+          width: 22px;
+          height: 22px;
+        }
+        .remote-label {
+          display: none;
         }
         .movie-actions {
           gap: 8px;
@@ -140,6 +162,8 @@ export class DeviceControls extends LitElement {
   versionId = "";
   playerId = "";
   inlineRemote = false;
+  hideRefresh = false;
+  hideRemote = false;
   value = "";
   configured = true;
   settingsDisabled = false;
@@ -208,7 +232,31 @@ export class DeviceControls extends LitElement {
       if (key && this.client) void this.load(true, this.revalidatingVersion);
     }
   }
+  private remoteAvailable = false;
+  private canOpenRemote() {
+    return !!(
+      this.scope?.permissions.read &&
+      this.info?.enabled &&
+      this.selectedPlayer &&
+      !this.busy &&
+      !this.pending &&
+      !this.revalidatingVersion &&
+      !this.waking &&
+      !this.info.blocked_players.includes(this.selectedPlayer)
+    );
+  }
   protected updated() {
+    const available = this.canOpenRemote();
+    if (available !== this.remoteAvailable) {
+      this.remoteAvailable = available;
+      this.dispatchEvent(
+        new CustomEvent("remote-availability", {
+          detail: available,
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    }
     const locked = this.busy || !!this.pending;
     if (locked === this.locked) return;
     this.locked = locked;
@@ -374,7 +422,7 @@ export class DeviceControls extends LitElement {
     } else this.wakeTimer = setTimeout(() => void this.pollWake(), delay);
     this.requestUpdate();
   }
-  private async refresh() {
+  async refresh() {
     await this.action(async () => {
       await this.readStatus();
       await this.load();
@@ -435,8 +483,8 @@ export class DeviceControls extends LitElement {
     this.dialog = "players";
     this.requestUpdate();
   }
-  private async openRemote() {
-    if (this.busy || this.pending) return;
+  async openRemote() {
+    if (!this.canOpenRemote()) return;
     const generation = this.generation;
     this.dialog = "remote";
     this.acknowledge = "";
@@ -525,7 +573,7 @@ export class DeviceControls extends LitElement {
       !!this.pending ||
       blocked;
     return html`<section
-      class=${this.mode === "remote" ? "card control-card" : "device-controls"}
+      class=${this.mode === "remote" ? `card control-card${this.hideRemote ? " embedded" : ""}` : "device-controls"}
     >
       ${
         this.mode === "remote"
@@ -534,12 +582,27 @@ export class DeviceControls extends LitElement {
               <button
                 type="button"
                 ?disabled=${disabled}
-                ?hidden=${this.inlineRemote}
+                ?hidden=${this.inlineRemote || this.hideRemote}
                 @click=${this.openRemote}
+                aria-label="Open remote"
+                title="Open remote"
               >
-                Remote
+                <svg
+                  class="remote-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  aria-hidden="true"
+                >
+                  <rect x="6" y="2" width="12" height="20" rx="4" />
+                  <circle cx="12" cy="8" r="2" />
+                  <path d="M10 14h4M10 17h4" /></svg
+                ><span class="remote-label">Remote</span>
               </button>
               <button
+                class="refresh-player"
+                ?hidden=${this.hideRefresh}
                 ?disabled=${this.busy || !info?.enabled || !this.selectedPlayer}
                 @click=${this.refresh}
               >

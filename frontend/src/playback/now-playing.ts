@@ -6,6 +6,8 @@ import { errorCode, JournalClient } from "../core/api";
 import type { JournalInfo, NowPlayingPlayer } from "../core/api";
 import { styles } from "../ui/styles";
 import "./controls";
+import { DeviceControls } from "./controls";
+import { actionIcon } from "../ui/action-icons";
 
 const PLAYBACK: Record<string, string> = {
   playing: "Playing",
@@ -30,6 +32,7 @@ export class KaleidescapeNowPlaying extends LitElement {
     playerId: {},
     compact: { type: Boolean, reflect: true },
     showControls: { type: Boolean },
+    remoteAvailable: { state: true },
   };
   static styles = [
     styles,
@@ -61,6 +64,23 @@ export class KaleidescapeNowPlaying extends LitElement {
         max-height: min(56dvh, 560px);
         background: var(--secondary-background-color, #222);
       }
+      .player-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .refresh-button svg {
+        width: 22px;
+        height: 22px;
+      }
+      .refresh-button {
+        display: inline-grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        min-height: 44px;
+        padding: 9px;
+      }
       .cover img {
         width: 100%;
         height: 100%;
@@ -80,7 +100,7 @@ export class KaleidescapeNowPlaying extends LitElement {
           margin-top: 12px;
         }
         .playback-layout {
-          grid-template-columns: minmax(76px, 28%) minmax(0, 1fr);
+          grid-template-columns: minmax(100px, 40%) minmax(0, 1fr);
           gap: 12px;
           padding: 12px;
         }
@@ -114,6 +134,7 @@ export class KaleidescapeNowPlaying extends LitElement {
   playerId = "";
   compact = false;
   showControls = true;
+  private remoteAvailable = false;
   private boundClient?: JournalClient;
   private boundScope = "";
   private generation = 0;
@@ -257,96 +278,134 @@ export class KaleidescapeNowPlaying extends LitElement {
     const active =
       player?.available && !["stopped", "none"].includes(player.play_status);
     return html`<section class="card now-playing" aria-label="Now Playing">
-        <div class="card-head">
-          <h2>Now Playing</h2>
+      <div class="card-head">
+        <h2>Now Playing</h2>
+        <div class="player-actions">
+          ${
+            this.showControls
+              ? html`<button
+                  class="refresh-button"
+                  type="button"
+                  aria-label="Open remote"
+                  title="Open remote"
+                  ?disabled=${!this.remoteAvailable}
+                  @click=${() => void this.renderRoot.querySelector<DeviceControls>("kaleidescape-device-controls")?.openRemote()}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    aria-hidden="true"
+                  >
+                    <rect x="6" y="2" width="12" height="20" rx="4" />
+                    <circle cx="12" cy="8" r="2" />
+                    <path d="M10 14h4M10 17h4" />
+                  </svg>
+                </button>`
+              : nothing
+          }
           <button
+            class="refresh-button"
+            type="button"
+            aria-label="Refresh playback and player state"
+            title="Refresh playback and player state"
             ?disabled=${this.loading || !this.boundScope}
             @click=${() => {
               this.imageKey = "";
               void this.refresh();
+              void this.renderRoot
+                .querySelector<DeviceControls>("kaleidescape-device-controls")
+                ?.refresh();
             }}
           >
-            Refresh playback
+            ${actionIcon("refresh")}
           </button>
         </div>
-        ${
-          this.error
-            ? html`<p class="playback-message" role="alert">${this.error}</p>`
-            : !player
-              ? html`<p class="playback-message" role="status">
+      </div>
+      ${
+        this.error
+          ? html`<p class="playback-message" role="alert">${this.error}</p>`
+          : !player
+            ? html`<p class="playback-message" role="status">
+                ${
+                  this.loading
+                    ? "Loading playback…"
+                    : "Automatic tracking is off. Configure a player in the integration options to show Now Playing."
+                }
+              </p>`
+            : html`<div class="playback-layout">
+                <div class="cover">
                   ${
-                    this.loading
-                      ? "Loading playback…"
-                      : "Automatic tracking is off. Configure a player in the integration options to show Now Playing."
+                    this.image
+                      ? html`<img
+                          src=${this.image}
+                          alt="Current movie cover"
+                          @error=${() => {
+                            const key = this.imageKey;
+                            this.clearImage();
+                            this.imageKey = key;
+                            this.requestUpdate();
+                          }}
+                        />`
+                      : html`<span>No artwork available</span>`
                   }
-                </p>`
-              : html`<div class="playback-layout">
-                  <div class="cover">
-                    ${
-                      this.image
-                        ? html`<img
-                            src=${this.image}
-                            alt="Current movie cover"
-                            @error=${() => {
-                              const key = this.imageKey;
-                              this.clearImage();
-                              this.imageKey = key;
-                              this.requestUpdate();
-                            }}
-                          />`
-                        : html`<span>No artwork available</span>`
-                    }
-                  </div>
-                  <div class="playback-detail">
-                    <small>${player.name ?? "Configured player"}</small>
-                    <h3>
-                      ${!player.available ? "Player unavailable" : active ? (player.title ?? "Unknown title") : "No movie playing"}
-                    </h3>
-                    ${player.available ? html`<p>${PLAYBACK[player.play_status] ?? "Unknown playback state"} · ${LOCATION[player.location] ?? "Unknown location"}</p>` : nothing}
-                    ${active && player.duration_seconds != null ? html`<p>Runtime · ${(player.duration_seconds / 60).toFixed(2)} min</p>` : nothing}
-                    ${
-                      this.scope?.permissions.edit && active && player.session
-                        ? html`<p>
-                              This session ·
-                              ${(player.session.watched_seconds / 60).toFixed(2)}
-                              min counted
-                            </p>
-                            <small
-                              >Pauses and scans are excluded.
-                              ${player.session.credits_confirmed ? "Credits confirmed; journal completion also requires the configured watch threshold." : "Credits not yet confirmed."}
-                              ${player.session.gap_count ? html` ${counted(player.session.gap_count, "timing gap")}.` : nothing}</small
-                            >`
-                        : nothing
-                    }
-                    ${
-                      this.scope?.permissions.edit &&
-                      player.recording_paused !== undefined
-                        ? html`<p role="status">
-                            ${this.recordingStatus(player, Boolean(active))}
-                            ${player.buffered_observations ? html` ${counted(player.buffered_observations, "update")} buffered.` : nothing}
-                          </p>`
-                        : nothing
-                    }
-                    <small
-                      >Live snapshot refreshes about every 5 seconds while
-                      visible.</small
-                    >
-                  </div>
-                </div>`
-        }
-      </section>
+                </div>
+                <div class="playback-detail">
+                  <small>${player.name ?? "Configured player"}</small>
+                  <h3>
+                    ${!player.available ? "Player unavailable" : active ? (player.title ?? "Unknown title") : "No movie playing"}
+                  </h3>
+                  ${player.available ? html`<p>${PLAYBACK[player.play_status] ?? "Unknown playback state"} · ${LOCATION[player.location] ?? "Unknown location"}</p>` : nothing}
+                  ${active && player.duration_seconds != null ? html`<p>Runtime · ${(player.duration_seconds / 60).toFixed(2)} min</p>` : nothing}
+                  ${
+                    this.scope?.permissions.edit && active && player.session
+                      ? html`<p>
+                            This session ·
+                            ${(player.session.watched_seconds / 60).toFixed(2)}
+                            min counted
+                          </p>
+                          <small
+                            >Pauses and scans are excluded.
+                            ${player.session.credits_confirmed ? "Credits confirmed; journal completion also requires the configured watch threshold." : "Credits not yet confirmed."}
+                            ${player.session.gap_count ? html` ${counted(player.session.gap_count, "timing gap")}.` : nothing}</small
+                          >`
+                      : nothing
+                  }
+                  ${
+                    this.scope?.permissions.edit &&
+                    player.recording_paused !== undefined
+                      ? html`<p role="status">
+                          ${this.recordingStatus(player, Boolean(active))}
+                          ${player.buffered_observations ? html` ${counted(player.buffered_observations, "update")} buffered.` : nothing}
+                        </p>`
+                      : nothing
+                  }
+                  <small
+                    >Live snapshot refreshes about every 5 seconds while
+                    visible.</small
+                  >
+                </div>
+              </div>`
+      }
       ${
         this.showControls
           ? html` <kaleidescape-device-controls
               .client=${this.client}
               .scope=${this.scope}
               .playerId=${this.playerId}
+              .hideRefresh=${true}
+              .hideRemote=${true}
+              @remote-availability=${(event: CustomEvent<boolean>) => {
+                this.remoteAvailable = event.detail;
+              }}
               @player-changed=${(event: CustomEvent<string>) => {
                 this.playerId = event.detail;
               }}
             ></kaleidescape-device-controls>`
           : nothing
-      }`;
+      }
+    </section>`;
   }
 }
 if (!customElements.get("kaleidescape-now-playing"))

@@ -14,18 +14,27 @@ viewing information.
 
 ## Browse the local Journal calendar
 
-Any active signed-in HA user can open **Journal → Options → Calendar view**.
-With at least one recorded or manually entered viewing, navigate to its month
-and open its poster. Expect the viewing's local date and details; administrators
-use Advanced mode for editing. See [Journal setup](journal-and-library.md) if
-there are no viewings yet.
+Any active signed-in HA user can choose **Journal → Options → View type →
+Calendar**. With at least one recorded or manually entered viewing, navigate to
+its month and open its poster. Expect the viewing's local date and details;
+administrators use Advanced mode for editing. See
+[Journal setup](journal-and-library.md) if there are no viewings yet.
 
-Use previous/next month or **Today** to navigate. **Calendar size** changes day
-height from 60–320 pixels; **Fit month to screen** adjusts the layout to the
-available screen. These display choices do not publish anything. A search
-temporarily shows the list; clear the search input or mobile search chip to
-return to the calendar with other filters preserved. Turn off **Calendar view**
-to return to the list permanently.
+Use previous/next month, **Today**, or a horizontal swipe on the calendar to
+navigate. **Calendar size** changes day height from 60–320 pixels; **Fit month
+to screen** adjusts the layout to the available screen. These display choices do
+not publish anything. A search temporarily shows the list; clear the search
+input or mobile search chip to return to the calendar with other filters
+preserved. Select **List** under **View type** to return to the list
+permanently.
+
+On a phone or touch-first tablet, tap a day with multiple viewings to expand its
+covers, then select one to open its details. Tap outside the covers to return to
+the calendar. A day with one viewing opens directly.
+
+For quick details, enable **Show movie preview on hover or focus** in Journal
+Options. Hover over or focus a cover to see its rating, runtime, genres, top
+cast and synopsis when available. Press Escape to dismiss the preview.
 
 A completed viewing spanning two dates has complementary cut posters on its
 start and completion dates. These represent one viewing. Month totals count it

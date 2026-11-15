@@ -26,6 +26,20 @@ their diff and run Check before packaging. Check must verify the accepted bundle
 without silently replacing it. Update these instructions when commands or
 prerequisites change. Keep Python/Node installation guidance generic.
 
+Frontend security tests bind ephemeral listeners on `127.0.0.1` and use a
+fictional local backend. If the sandbox rejects a loopback bind with `EPERM` or
+`EACCES`, do not skip the tests or treat the failure as a product defect. Use
+the execution tool's scoped permission workflow to rerun the affected tests with
+loopback access:
+
+```sh
+cd frontend && node --test tests/security.test.mjs
+```
+
+If a full check stopped early, rerun it or complete its remaining checks as
+well. Report any permission denial and checks that could not run. This exception
+does not authorize contact with real devices or external providers.
+
 Preserve HA's built-in `kaleidescape` integration; this domain is
 `kaleidescape_companion`. Keep SQL on the single repository worker and providers
 independent of HA/storage/tooling. Runtime code must not import `scripts/`,

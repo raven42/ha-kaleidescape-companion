@@ -240,6 +240,17 @@ it("opens exact Library details in place for a household reader", async () => {
   )!;
   await vi.waitFor(() =>
     expect(
+      reader.shadowRoot!.querySelector(".entries-detail .journal-title button"),
+    ).not.toBeNull(),
+  );
+  expect(link.shadowRoot!.querySelector("kaleidescape-library")).toBeNull();
+  reader
+    .shadowRoot!.querySelector<HTMLButtonElement>(
+      ".entries-detail .journal-title button",
+    )!
+    .click();
+  await vi.waitFor(() =>
+    expect(
       link
         .shadowRoot!.querySelector("kaleidescape-library")
         ?.shadowRoot?.querySelector<HTMLDialogElement>("#title-dialog")?.open,
@@ -348,11 +359,50 @@ it("shows one compact basic footer without database health information", async (
   expect(root.querySelectorAll("footer")).toHaveLength(1);
   const text = root.querySelector("footer")!.textContent!;
   expect(text).toContain("Total Viewings");
-  expect(text).toContain("This Month");
-  expect(text.replace(/\s+/g, " ")).toContain("Watched Time: Total");
+  expect(text).not.toContain("This Month");
+  expect(text.replace(/\s+/g, " ")).toContain("Watched Time ");
   expect(text).not.toMatch(/Revision|Schema|Recording|Storage ready|database/);
   expect(
     root.querySelector(".journal-filters kaleidescape-journal-options"),
   ).not.toBeNull();
   expect(root.querySelector("[name=filter_status]")).not.toBeNull();
+});
+
+it("opens mobile entry details as a dialog and applies list options", async () => {
+  vi.stubGlobal("innerWidth", 390);
+  try {
+    reader.requestUpdate();
+    await reader.updateComplete;
+    const root = reader.shadowRoot!;
+    const detail = root.querySelector<HTMLDialogElement>(
+      "dialog.journal-detail-dialog",
+    )!;
+    expect(detail.open).toBe(false);
+    button("The Lantern Voyage").click();
+    await vi.waitFor(() => expect(detail.open).toBe(true));
+    await vi.waitFor(() => expect(detail.textContent).toContain("Watched"));
+    detail.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.click();
+    expect(detail.open).toBe(false);
+    const options = root.querySelector("kaleidescape-journal-options")!;
+    await vi.waitFor(() =>
+      expect(
+        options.shadowRoot!.querySelector('[name="mobile_journal_sort"]'),
+      ).not.toBeNull(),
+    );
+    const sort = options.shadowRoot!.querySelector<HTMLSelectElement>(
+      '[name="mobile_journal_sort"]',
+    )!;
+    sort.value = "title";
+    sort.dispatchEvent(new Event("change"));
+    await vi.waitFor(() =>
+      expect(
+        transport.calls.some(
+          (call) =>
+            call.type.endsWith("/journal/list") && call.sort === "title",
+        ),
+      ).toBe(true),
+    );
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });

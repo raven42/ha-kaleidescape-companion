@@ -6,7 +6,74 @@ import {
   MAX_ARTWORK_BYTES,
   errorMessage,
 } from "../src/core/api";
-import { FixtureTransport, info } from "./fixture";
+import { FixtureTransport, info, record } from "./fixture";
+
+it("assembles Journal pages from bounded requests and honors continuation", async () => {
+  const transport = new FixtureTransport();
+  transport.records = Array.from({ length: 625 }, (_, index) =>
+    record({ id: `viewing-${index}`, title: `Film ${index}` }),
+  );
+  const client = transport.client();
+  const options = {
+    query: "",
+    status: "",
+    sort: "completed_at",
+    descending: true,
+    fuzzy: false,
+    pageSize: 500 as const,
+  };
+  const first = await client.listSized(info, options, () => true);
+  expect(first.items).toHaveLength(500);
+  expect(first.next_cursor).toBe("500");
+  expect(transport.calls.map((call) => call.limit)).toEqual([
+    100, 100, 100, 100, 100,
+  ]);
+  const second = await client.listSized(
+    info,
+    { ...options, cursor: first.next_cursor! },
+    () => true,
+  );
+  expect(second.items).toHaveLength(125);
+  expect(second.next_cursor).toBeNull();
+  const all = await client.listSized(
+    info,
+    { ...options, pageSize: "all" },
+    () => true,
+  );
+  expect(all.items).toHaveLength(625);
+  expect(all.next_cursor).toBeNull();
+});
+
+it("rejects changed Journal snapshots and oversized All results", async () => {
+  const client = new FixtureTransport().client();
+  const options = {
+    query: "",
+    status: "",
+    sort: "completed_at",
+    descending: true,
+    fuzzy: false,
+    pageSize: "all" as const,
+  };
+  const row = record();
+  const list = vi.spyOn(client, "list");
+  list.mockResolvedValueOnce({
+    items: Array(100).fill(row),
+    revision: 1,
+    next_cursor: "next",
+  });
+  list.mockResolvedValueOnce({ items: [row], revision: 2, next_cursor: null });
+  await expect(
+    client.listSized(info, options, () => true),
+  ).rejects.toMatchObject({ code: "refresh_required" });
+  list.mockImplementation(async (_scope, _query, _status, cursor) => ({
+    items: Array(100).fill(row),
+    revision: 1,
+    next_cursor: String(Number(cursor ?? 0) + 1),
+  }));
+  await expect(
+    client.listSized(info, options, () => true),
+  ).rejects.toMatchObject({ code: "journal_page_too_large" });
+});
 
 it("explains an unavailable packaged blueprint", () => {
   expect(errorMessage(new ApiError("blueprint_unavailable"))).toContain(

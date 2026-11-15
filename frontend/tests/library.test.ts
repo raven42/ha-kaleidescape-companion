@@ -79,49 +79,93 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it("shows draft counts and clears individual categories without applying until requested", async () => {
+it("applies selections and category clears immediately while the dialog stays open", async () => {
   button("Filters").click();
   await flush();
-  check("status", "watched");
-  check("genre", "Science Fiction");
-  await flush();
   const dialog = root().querySelector<HTMLDialogElement>("#filter-dialog")!;
-  expect(
-    dialog.querySelectorAll('.facet-count[aria-label="1 selected"]'),
-  ).toHaveLength(2);
-  expect(
-    dialog.querySelector(".filter-selection-summary")?.textContent,
-  ).toContain("2 selected");
-  dialog
-    .querySelector<HTMLButtonElement>(
-      '[aria-label="Clear Movie status filters"]',
-    )!
-    .click();
-  await flush();
-  expect(
-    dialog.querySelector<HTMLInputElement>('[name="status"][value="watched"]')!
-      .checked,
-  ).toBe(false);
-  expect(
-    dialog.querySelector<HTMLInputElement>(
-      '[name="genre"][value="Science Fiction"]',
-    )!.checked,
-  ).toBe(true);
-  expect(
-    dialog.querySelector(".filter-selection-summary")?.textContent,
-  ).toContain("1 selected");
-  expect(
-    transport.calls.filter((call) => call.type.endsWith("library/list")).at(-1)
-      ?.filters,
-  ).not.toMatchObject({ genre: ["Science Fiction"] });
-  button("Apply filters").click();
+  expect(dialog.textContent).not.toContain("Apply filters");
+  expect(dialog.textContent).not.toContain("Clear filters");
+  check("status", "watched");
   await vi.waitFor(() =>
     expect(
       transport.calls
         .filter((call) => call.type.endsWith("library/list"))
         .at(-1)?.filters,
-    ).toMatchObject({ genre: ["Science Fiction"], status: [] }),
+    ).toMatchObject({ status: ["watched"] }),
   );
+  expect(dialog.open).toBe(true);
+  check("genre", "Science Fiction");
+  await vi.waitFor(() =>
+    expect(
+      transport.calls
+        .filter((call) => call.type.endsWith("library/list"))
+        .at(-1)?.filters,
+    ).toMatchObject({ status: ["watched"], genre: ["Science Fiction"] }),
+  );
+  expect(
+    dialog.querySelectorAll('.facet-count[aria-label="1 selected"]'),
+  ).toHaveLength(2);
+  dialog
+    .querySelector<HTMLButtonElement>(
+      '[aria-label="Clear Movie status filters"]',
+    )!
+    .click();
+  await vi.waitFor(() =>
+    expect(
+      transport.calls
+        .filter((call) => call.type.endsWith("library/list"))
+        .at(-1)?.filters,
+    ).toMatchObject({ status: [], genre: ["Science Fiction"] }),
+  );
+  expect(dialog.open).toBe(true);
+  modalClose(dialog).click();
+  expect(readLibraryFilters(undefined, true)).toMatchObject({
+    status: [],
+    genre: ["Science Fiction"],
+  });
+});
+
+it("ignores an older filter response after a later selection", async () => {
+  button("Filters").click();
+  await flush();
+  const client = element.client!;
+  const original = client.libraryList.bind(client);
+  let release!: () => void;
+  let first = true;
+  vi.spyOn(client, "libraryList").mockImplementation(async (...args) => {
+    const delay = first;
+    first = false;
+    const result = await original(...args);
+    if (delay)
+      await new Promise<void>((resolve) => {
+        release = resolve;
+      });
+    return result;
+  });
+  check("status", "watched");
+  await vi.waitFor(() => expect(release).toBeTypeOf("function"));
+  check("status", "in_progress");
+  await vi.waitFor(() =>
+    expect(
+      transport.calls
+        .filter((call) => call.type.endsWith("library/list"))
+        .at(-1)?.filters,
+    ).toMatchObject({ status: ["watched", "in_progress"] }),
+  );
+  await vi.waitFor(() =>
+    expect(
+      root().querySelector<HTMLDialogElement>("#filter-dialog")!.open,
+    ).toBe(true),
+  );
+  await flush();
+  const rows = root().querySelectorAll("tbody tr").length;
+  release();
+  await flush();
+  expect(root().querySelectorAll("tbody tr")).toHaveLength(rows);
+  expect(readLibraryFilters(undefined, true)!.status).toEqual([
+    "watched",
+    "in_progress",
+  ]);
 });
 
 it("keeps every format option available while selecting multiple values", async () => {
@@ -146,7 +190,7 @@ it("keeps every format option available while selecting multiple values", async 
   const count = field.querySelector<HTMLElement>(".facet-count")!;
   expect(clear.disabled).toBe(true);
   expect(count.textContent).toBe("0");
-  expect(field.querySelector(".facet-options")?.nextElementSibling).toBe(clear);
+  expect(field.querySelector(".facet-heading")?.contains(clear)).toBe(true);
   const before = options();
   expect(before).toEqual(
     expect.arrayContaining(["4K", "HDR10", "Dolby Atmos"]),
@@ -173,7 +217,7 @@ it("keeps every format option available while selecting multiple values", async 
       ...field.querySelectorAll<HTMLInputElement>('[name="format"]:checked'),
     ].map((item) => item.value),
   ).toEqual(["4K", "HDR10"]);
-  button("Apply filters").click();
+  modalClose(root()).click();
   await vi.waitFor(() =>
     expect(
       transport.calls
@@ -204,7 +248,7 @@ it("omits the facet search and truncation notice even for truncated facets", asy
   );
 });
 
-it("uses checkbox filters with multiple values, discards cancelled drafts, and removes writer/studio filters", async () => {
+it("keeps checkbox changes when closed and removes writer/studio filters", async () => {
   expect(text()).toContain("Voyage to Europa");
   expect(root().querySelector(".library-footer")!.textContent).not.toContain(
     "Played",
@@ -219,7 +263,7 @@ it("uses checkbox filters with multiple values, discards cancelled drafts, and r
   await flush();
   check("status", "watched");
   await flush();
-  button("Apply filters").click();
+  modalClose(root()).click();
   await flush();
   field("library_query", "Midnight");
   button("Search").click();
@@ -236,12 +280,19 @@ it("uses checkbox filters with multiple values, discards cancelled drafts, and r
   expect(root().querySelectorAll("tbody tr")).toHaveLength(1);
   button("Filters (2)").click();
   await flush();
-  button("Clear filters").click();
   modalClose(root()).click();
   button("Filters (2)").click();
   await flush();
   expect(root().querySelectorAll("#filter-dialog input:checked")).toHaveLength(
     2,
+  );
+  root()
+    .querySelector<HTMLButtonElement>(
+      '[aria-label="Clear Movie status filters"]',
+    )!
+    .click();
+  await vi.waitFor(() =>
+    expect(readLibraryFilters(undefined, true)!.status).toEqual([]),
   );
 });
 
@@ -252,7 +303,7 @@ it("clears applied and draft filters without changing sort, view or page size", 
   button("Filters").click();
   await flush();
   check("status", "in_progress");
-  button("Apply filters").click();
+  modalClose(root()).click();
   await flush();
   root()
     .querySelector<HTMLInputElement>(
@@ -856,7 +907,7 @@ it("applies the Recently added filter and puts it in the URL", async () => {
   root()
     .querySelector<HTMLInputElement>('[name="status"][value="recently_added"]')!
     .click();
-  button("Apply filters").click();
+  modalClose(root()).click();
   await flush();
   expect(
     transport.calls.filter((call) => call.type.endsWith("library/list")).at(-1)!
@@ -928,7 +979,7 @@ it("groups the six requested badges into one filter with any-match behavior", as
   ).toBe(false);
   filters.find((input) => input.value === "watched")!.click();
   filters.find((input) => input.value === "recently_added")!.click();
-  button("Apply filters").click();
+  modalClose(root()).click();
   await flush();
   expect(root().querySelectorAll("tbody tr")).toHaveLength(2);
   expect(new URL(location.href).searchParams.getAll("library_status")).toEqual([
@@ -1419,7 +1470,7 @@ it("offers URL-backed genre/year/format filters and hides the tablist for one ve
   check("genre", "Adventure");
   check("year", "2025");
   check("format", "HDR10");
-  button("Apply filters").click();
+  modalClose(root()).click();
   await flush();
   expect(readLibraryFilters(undefined, true)).toMatchObject({
     genre: ["Adventure"],
@@ -1548,7 +1599,7 @@ it("overlays scraper conflicts independently of badges and persists the missing-
   root()
     .querySelector<HTMLInputElement>('[name="missing_metadata_artwork"]')!
     .click();
-  button("Apply filters").click();
+  modalClose(root()).click();
   await flush();
   expect(readLibraryFilters(undefined, true)!.missing_metadata_artwork).toBe(
     true,
@@ -1604,7 +1655,7 @@ it("shows a missing-data warning without a scraper conflict across grouped versi
   root()
     .querySelector<HTMLInputElement>('[name="missing_metadata_artwork"]')!
     .click();
-  button("Apply filters").click();
+  modalClose(root()).click();
   await flush();
   expect(root().querySelectorAll(".cover-tile")).toHaveLength(1);
   expect(
@@ -1623,7 +1674,7 @@ it("filters missing purchase information without adding a warning", async () => 
   root()
     .querySelector<HTMLInputElement>('[name="missing_purchase_information"]')!
     .click();
-  button("Apply filters").click();
+  modalClose(root()).click();
   await flush();
   expect(
     readLibraryFilters(undefined, true)!.missing_purchase_information,
@@ -1710,51 +1761,34 @@ it("limits the Basic footer to global counts and shows a highlighted match count
   expect(footer().textContent).toContain("Total 5");
 });
 
-it("opens a mobile search popup, discards cancelled input, and applies through the existing search", async () => {
-  const shortcut = root().querySelector<HTMLButtonElement>(
-    '.mobile-library-tools [aria-label="Search Library"]',
+it("searches from the mobile footer and only shows clear for active filters", async () => {
+  const clear = root().querySelector<HTMLButtonElement>(
+    '[aria-label="Clear search and filters"]',
   )!;
-  shortcut.click();
-  await flush();
-  const dialog = root().querySelector<HTMLDialogElement>("#library-search")!;
-  expect(dialog.open).toBe(true);
-  const query = dialog.querySelector<HTMLInputElement>("input")!;
-  query.value = "Cancelled search";
-  query.dispatchEvent(new Event("input"));
-  modalClose(dialog).click();
-  await flush();
-  expect(dialog.open).toBe(false);
-  expect(
-    transport.calls.filter((c) => c.type.endsWith("library/list")).at(-1)
-      ?.filters,
-  ).not.toMatchObject({ query: "Cancelled search" });
-  shortcut.click();
-  await flush();
-  expect(query.value).toBe("");
+  expect(clear.hidden).toBe(true);
+  const summary = () =>
+    root().querySelector(".footer-mobile-summary")!.textContent!.trim();
+  expect(summary()).toMatch(/^Total \d+$/);
+  const form = root().querySelector<HTMLFormElement>(".mobile-library-search")!;
+  const query = form.querySelector<HTMLInputElement>("input")!;
   query.value = "Europa";
   query.dispatchEvent(new Event("input"));
-  dialog
-    .querySelector("form")!
-    .dispatchEvent(new Event("submit", { cancelable: true }));
+  form.dispatchEvent(new Event("submit", { cancelable: true }));
   await flush();
-  expect(dialog.open).toBe(false);
   expect(
     transport.calls.filter((c) => c.type.endsWith("library/list")).at(-1)
       ?.filters,
   ).toMatchObject({ query: "Europa" });
-  expect(root().querySelector(".footer-summary")!.textContent).toContain(
-    "Matches",
-  );
-  root()
-    .querySelector<HTMLButtonElement>(
-      '[aria-label="Clear search and filters"]',
-    )!
-    .click();
+  expect(clear.hidden).toBe(false);
+  expect(summary()).toMatch(/^Matches \d+$/);
+  clear.click();
   await flush();
   expect(
     transport.calls.filter((c) => c.type.endsWith("library/list")).at(-1)
       ?.filters,
   ).toMatchObject({ query: "" });
+  expect(clear.hidden).toBe(true);
+  expect(summary()).toMatch(/^Total \d+$/);
 });
 
 it("runs an administrator sync from the Library status bar", async () => {

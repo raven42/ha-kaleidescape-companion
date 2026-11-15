@@ -241,8 +241,13 @@ def validate_interface(patch, previous=None):
 
 JOURNAL_DEFAULTS = {
     "view": "calendar",
+    "page_size": 25,
     "calendar_size": 180,
     "calendar_fit": False,
+    "calendar_hover_preview": False,
+    "calendar_show_month": True,
+    "calendar_show_year": True,
+    "calendar_show_total": True,
     "movie_details": "full",
 }
 
@@ -253,6 +258,9 @@ def validate_journal(patch, previous=None):
     values = {**JOURNAL_DEFAULTS, **(previous or {}), **patch}
     if values["view"] not in ("list", "calendar"):
         raise invalid("Choose List or Calendar")
+    count = values["page_size"]
+    if not (type(count) is int and count in (10, 25, 100, 500)) and count != "all":
+        raise invalid("Choose 10, 25, 100, 500, or All")
     if values["movie_details"] not in ("full", "compact"):
         raise invalid("Choose Full or Compact movie details")
     size = values["calendar_size"]
@@ -260,6 +268,14 @@ def validate_journal(patch, previous=None):
         raise invalid("Choose a calendar size between 60 and 320 pixels")
     if type(values["calendar_fit"]) is not bool:
         raise invalid("Invalid calendar fit option")
+    for key in (
+        "calendar_hover_preview",
+        "calendar_show_month",
+        "calendar_show_year",
+        "calendar_show_total",
+    ):
+        if type(values[key]) is not bool:
+            raise invalid("Invalid calendar totals option")
     return values
 
 
