@@ -68,7 +68,9 @@ def record_additions(db, source, rows, seen):
     return batch, set(added)
 
 
-def completeness(db, source, selected_groups=None):
+def completeness(
+    db, source, selected_groups=None, *, all_providers=False, per_version_artwork=False
+):
     """Compute missing data and conflicts for all or selected source groups."""
     sources = source_preferences(db)
     cached_images = {
@@ -124,17 +126,18 @@ def completeness(db, source, selected_groups=None):
             row["source_group"],
             {
                 "images": [False, False],
+                "missing_images": [False, False],
                 "cached": set(),
                 "metadata_excluded": set(),
                 "artwork_excluded": set(),
             },
         )
-        group["images"][0] |= (
-            image(row["artwork_key"], enrichment, sources) in cached_images
-        )
-        group["images"][1] |= (
-            image(None, enrichment, sources, "backdrop") in cached_images
-        )
+        cover = image(row["artwork_key"], enrichment, sources) in cached_images
+        backdrop = image(None, enrichment, sources, "backdrop") in cached_images
+        group["images"][0] |= cover
+        group["images"][1] |= backdrop
+        group["missing_images"][0] |= not cover
+        group["missing_images"][1] |= not backdrop
         group["metadata_excluded"].update(
             provider
             for provider, value in enrichment["unavailable"].items()
@@ -153,7 +156,11 @@ def completeness(db, source, selected_groups=None):
                 stamps.append(stamp)
             if provider != "reviewed" and has_provider_data(enrichment, provider):
                 group["cached"].add(provider)
-    enabled = set(sources.get("_enabled", [])) & {"tmdb", "kaleidescape"}
+    enabled = (
+        {"tmdb", "kaleidescape"}
+        if all_providers
+        else set(sources.get("_enabled", [])) & {"tmdb", "kaleidescape"}
+    )
     missing_metadata = {
         name
         for name, group in groups.items()
@@ -162,8 +169,22 @@ def completeness(db, source, selected_groups=None):
     missing = {
         name
         for name, group in groups.items()
-        if (not group["images"][0] and "poster" not in group["artwork_excluded"])
-        or (not group["images"][1] and "backdrop" not in group["artwork_excluded"])
+        if (
+            (
+                group["missing_images"][0]
+                if per_version_artwork
+                else not group["images"][0]
+            )
+            and "poster" not in group["artwork_excluded"]
+        )
+        or (
+            (
+                group["missing_images"][1]
+                if per_version_artwork
+                else not group["images"][1]
+            )
+            and "backdrop" not in group["artwork_excluded"]
+        )
     }
 
     return missing_metadata, missing, conflicts, stamps, titles

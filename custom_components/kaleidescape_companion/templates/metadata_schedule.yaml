@@ -1,11 +1,12 @@
 # Version history:
+# v2: Allow choosing the days for scheduled refreshes.
 # v1: Introduce a scheduled metadata refresh automation.
 # End version history
 blueprint:
   name: Kaleidescape Companion - Schedule metadata refresh
   description: >-
     Refresh enabled metadata providers for all movies or only missing metadata or expected artwork.
-    Blueprint version: 1.
+    Blueprint version: 2.
   domain: automation
   input:
     time:
@@ -13,6 +14,29 @@ blueprint:
       default: "04:00:00"
       selector:
         time:
+    weekdays:
+      name: Days of the week
+      description: Refresh only on the selected days.
+      default: [sun, mon, tue, wed, thu, fri, sat]
+      selector:
+        select:
+          mode: list
+          multiple: true
+          options:
+            - label: Sunday
+              value: sun
+            - label: Monday
+              value: mon
+            - label: Tuesday
+              value: tue
+            - label: Wednesday
+              value: wed
+            - label: Thursday
+              value: thu
+            - label: Friday
+              value: fri
+            - label: Saturday
+              value: sat
     providers:
       name: Scraper names
       description: >-
@@ -37,6 +61,9 @@ blueprint:
 triggers:
   - trigger: time
     at: !input time
+conditions:
+  - condition: time
+    weekday: !input weekdays
 actions:
   - action: kaleidescape_companion.refresh_metadata
     data:

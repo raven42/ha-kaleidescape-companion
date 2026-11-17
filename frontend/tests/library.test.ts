@@ -79,6 +79,54 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+it("shows advanced System Filters, applies multiple selections and removes them in Basic mode", async () => {
+  button("Filters").click();
+  await flush();
+  expect(root().querySelectorAll('input[name="system_filter"]')).toHaveLength(
+    15,
+  );
+  const labels = [
+    ...root().querySelectorAll<HTMLInputElement>('input[name="system_filter"]'),
+  ].map((input) => input.closest("label")!.textContent!.trim());
+  expect(labels).toEqual([...labels].sort((a, b) => a.localeCompare(b)));
+  const sections = root().querySelectorAll(".facet-groups > fieldset");
+  expect(sections[5].classList.contains("system-filter-section")).toBe(true);
+  expect(sections[5].querySelector(".facet-options")).toBeTruthy();
+  expect(sections[5].textContent).toContain("Missing purchase");
+  expect(sections[5].textContent).toContain("Missing retail price");
+  check("system_filter", "missing_metadata");
+  check("system_filter", "missing_purchase_information");
+  await vi.waitFor(() =>
+    expect(
+      transport.calls
+        .filter((call) => call.type.endsWith("library/list"))
+        .at(-1)?.filters,
+    ).toMatchObject({
+      system_filters: ["missing_metadata", "missing_purchase_information"],
+    }),
+  );
+  expect(readLibraryFilters(undefined, true)!.system_filters).toEqual([
+    "missing_metadata",
+    "missing_purchase_information",
+  ]);
+  check("system_filter", "upgraded");
+  await vi.waitFor(() =>
+    expect(readLibraryFilters(undefined, true)!.system_filters).toContain(
+      "upgraded",
+    ),
+  );
+  check("system_filter", "badges_updated");
+  await vi.waitFor(() =>
+    expect(readLibraryFilters(undefined, true)!.system_filters).toContain(
+      "badges_updated",
+    ),
+  );
+  element.advanced = false;
+  await flush();
+  expect(root().querySelector('[name="system_filter"]')).toBeNull();
+  expect(readLibraryFilters(undefined, true)!.system_filters).toEqual([]);
+});
+
 it("applies selections and category clears immediately while the dialog stays open", async () => {
   button("Filters").click();
   await flush();
@@ -1599,21 +1647,21 @@ it("overlays scraper conflicts independently of badges and persists the missing-
   modalClose(root()).click();
   button("Filters").click();
   await flush();
-  expect(text()).toContain("Missing metadata/artwork");
+  expect(text()).toContain("Missing metadata");
   root()
-    .querySelector<HTMLInputElement>('[name="missing_metadata_artwork"]')!
+    .querySelector<HTMLInputElement>(
+      '[name="system_filter"][value="missing_metadata"]',
+    )!
     .click();
   modalClose(root()).click();
   await flush();
-  expect(readLibraryFilters(undefined, true)!.missing_metadata_artwork).toBe(
-    true,
-  );
+  expect(readLibraryFilters(undefined, true)!.system_filters).toEqual([
+    "missing_metadata",
+  ]);
   expect(root().querySelectorAll(".cover-tile")).toHaveLength(1);
   button("Clear Filter").click();
   await flush();
-  expect(readLibraryFilters(undefined, true)!.missing_metadata_artwork).toBe(
-    false,
-  );
+  expect(readLibraryFilters(undefined, true)!.system_filters).toEqual([]);
 });
 
 it("shows a missing-data warning without a scraper conflict across grouped versions", async () => {
@@ -1656,7 +1704,9 @@ it("shows a missing-data warning without a scraper conflict across grouped versi
   button("Filters").click();
   await flush();
   root()
-    .querySelector<HTMLInputElement>('[name="missing_metadata_artwork"]')!
+    .querySelector<HTMLInputElement>(
+      '[name="system_filter"][value="missing_metadata"]',
+    )!
     .click();
   modalClose(root()).click();
   await flush();
@@ -1675,20 +1725,20 @@ it("filters missing purchase information without adding a warning", async () => 
   button("Filters").click();
   await flush();
   root()
-    .querySelector<HTMLInputElement>('[name="missing_purchase_information"]')!
+    .querySelector<HTMLInputElement>(
+      '[name="system_filter"][value="missing_purchase_information"]',
+    )!
     .click();
   modalClose(root()).click();
   await flush();
-  expect(
-    readLibraryFilters(undefined, true)!.missing_purchase_information,
-  ).toBe(true);
+  expect(readLibraryFilters(undefined, true)!.system_filters).toEqual([
+    "missing_purchase_information",
+  ]);
   expect(root().querySelectorAll("tbody tr")).toHaveLength(1);
   expect(root().querySelector(".scraper-conflict-icon")).toBeNull();
   button("Clear Filter").click();
   await flush();
-  expect(
-    readLibraryFilters(undefined, true)!.missing_purchase_information,
-  ).toBe(false);
+  expect(readLibraryFilters(undefined, true)!.system_filters).toEqual([]);
 });
 
 it("hides conflict overlays and system-button options from standard users", async () => {

@@ -1115,7 +1115,7 @@ export class KaleidescapeSettings extends LitElement {
   }
   private renderMaintenance() {
     return html`<div class="settings-card">
-        ${this.heading("Database cleanup", "Review and remove old, finalized maintenance receipts.")}
+        ${this.heading("Database cleanup", "Review finalized receipts and repair missing artwork links.")}
         <kaleidescape-database-cleanup
           .client=${this.client}
           .scope=${this.scope}
@@ -1268,7 +1268,9 @@ export class KaleidescapeSettings extends LitElement {
                 the same currency.
               </p>
               ${totals.missing_purchase_prices || totals.missing_retail_prices ? html`<p class="muted">${counted(totals.missing_purchase_prices, "missing paid price")} · ${counted(totals.missing_retail_prices, "missing retail price")}.</p>` : nothing}
-              ${totals.unpaired_prices ? html`<p class="muted">${counted(totals.unpaired_prices, "purchase entry", "purchase entries")} excluded from savings because prices are missing or use different currencies.</p>` : nothing}
+              ${totals.missing_price_entries ? html`<p class="muted">${counted(totals.missing_price_entries, "purchase entry", "purchase entries")} excluded from savings because a paid or retail price is missing.</p>` : nothing}
+              ${totals.currency_mismatch_entries ? html`<p class="muted">${counted(totals.currency_mismatch_entries, "purchase entry", "purchase entries")} excluded from savings because the paid and retail prices use different currencies. The Currency mismatch filter shows available Library titles.</p>` : nothing}
+              ${totals.unpaired_prices && totals.missing_price_entries === undefined ? html`<p class="muted">${counted(totals.unpaired_prices, "purchase entry", "purchase entries")} excluded from savings because prices are missing or use different currencies.</p>` : nothing}
               ${totals.missing_order_ids ? html`<p class="muted">${counted(totals.missing_order_ids, "purchase entry", "purchase entries")} without an order ID; not included in the transaction count.</p>` : nothing}
               ${totals.duplicate_purchases ? html`<p class="muted">${counted(totals.duplicate_purchases, "duplicate purchase record")} counted only once.</p>` : nothing}`
           : nothing

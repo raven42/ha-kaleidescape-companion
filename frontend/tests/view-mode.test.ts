@@ -267,7 +267,9 @@ it("removes the maintenance filter when moving to Basic and does not silently re
   const library = reader.shadowRoot!.querySelector("kaleidescape-library")!;
   await vi.waitFor(() =>
     expect(
-      library.shadowRoot!.querySelector('[name="missing_metadata_artwork"]'),
+      library.shadowRoot!.querySelector(
+        '[name="system_filter"][value="missing_metadata"]',
+      ),
     ).toBeNull(),
   );
   await vi.waitFor(() =>
@@ -285,7 +287,9 @@ it("removes the maintenance filter when moving to Basic and does not silently re
     expect(
       root()
         .querySelector("kaleidescape-library")
-        ?.shadowRoot?.querySelector('[name="missing_metadata_artwork"]'),
+        ?.shadowRoot?.querySelector(
+          '[name="system_filter"][value="missing_metadata"]',
+        ),
     ).toBeTruthy(),
   );
   expect(

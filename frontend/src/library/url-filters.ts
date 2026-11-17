@@ -1,4 +1,5 @@
 /** Shareable, bounded Library filters for the authenticated Companion panel. */
+import { SYSTEM_FILTERS } from "./system-filters";
 export const LIBRARY_FACETS = [
   "collection",
   "actor",
@@ -29,6 +30,7 @@ export function emptyLibraryFilters(): LibraryUrlFilters {
     missing_metadata_artwork: false,
     missing_purchase_information: false,
     recently_added: false,
+    system_filters: [],
     ...Object.fromEntries(LIBRARY_FACETS.map((key) => [key, []])),
   };
 }
@@ -46,7 +48,13 @@ export function readLibraryFilters(
 ): LibraryUrlFilters | null {
   if (!isLibraryLocation(url)) return null;
   const params = url.searchParams;
-  const keys = ["filters", "query", ...LIBRARY_FACETS, ...FLAGS];
+  const keys = [
+    "filters",
+    "query",
+    "system_filters",
+    ...LIBRARY_FACETS,
+    ...FLAGS,
+  ];
   if (!keys.some((key) => params.has(`library_${key}`))) return null;
   const query = params.get("library_query") ?? "";
   const filters: LibraryUrlFilters = {
@@ -56,6 +64,15 @@ export function readLibraryFilters(
     missing_purchase_information:
       admin && params.get("library_missing_purchase_information") === "1",
     recently_added: false,
+    system_filters: admin
+      ? [
+          ...new Set(
+            params
+              .getAll("library_system_filters")
+              .filter((value) => SYSTEM_FILTERS.some(([key]) => key === value)),
+          ),
+        ]
+      : [],
   };
   for (const key of LIBRARY_FACETS) {
     const values = params.getAll(`library_${key}`);
@@ -81,7 +98,13 @@ export function writeLibraryFilters(filters: LibraryUrlFilters) {
   const url = new URL(location.href);
   if (!isLibraryLocation(url)) return;
   const params = url.searchParams;
-  for (const key of ["filters", "query", ...LIBRARY_FACETS, ...FLAGS])
+  for (const key of [
+    "filters",
+    "query",
+    "system_filters",
+    ...LIBRARY_FACETS,
+    ...FLAGS,
+  ])
     params.delete(`library_${key}`);
   params.set("library_filters", "1");
   if (typeof filters.query === "string" && filters.query)
@@ -91,6 +114,9 @@ export function writeLibraryFilters(filters: LibraryUrlFilters) {
     if (Array.isArray(values))
       for (const value of values) params.append(`library_${key}`, value);
   }
+  if (Array.isArray(filters.system_filters))
+    for (const value of filters.system_filters)
+      params.append("library_system_filters", value);
   for (const key of FLAGS)
     if (filters[key] === true) params.set(`library_${key}`, "1");
   history.replaceState(history.state, "", url);

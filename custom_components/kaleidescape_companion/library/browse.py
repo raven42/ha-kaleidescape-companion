@@ -389,13 +389,16 @@ def matching_people(db, source, query, fuzzy, cache):
     return json.dumps(list(ranks))
 
 
-def library_list(db, source, filters, excluded="", cache=None, weeks=2, today=None):
+def library_list(
+    db, source, filters, excluded="", cache=None, weeks=2, today=None, timezone="UTC"
+):
     """Query local SQLite with parameters and fixed sort expressions."""
     allowed = {
         "query",
         "scraper_conflict",
         "missing_metadata_artwork",
         "missing_purchase_information",
+        "system_filters",
         "recently_added",
         "fuzzy",
         "collection",
@@ -484,6 +487,20 @@ def library_list(db, source, filters, excluded="", cache=None, weeks=2, today=No
     missing_purchases = filters.get("missing_purchase_information", False)
     if type(missing_purchases) is not bool:
         raise invalid("Invalid missing purchase information filter")
+    from .system_filters import SYSTEM_FILTERS
+    from .system_filters import groups as system_filter_groups
+
+    system_filters = filters.get("system_filters", [])
+    if (
+        not isinstance(system_filters, list)
+        or len(system_filters) > len(SYSTEM_FILTERS)
+        or any(
+            not isinstance(value, str) or value not in SYSTEM_FILTERS
+            for value in system_filters
+        )
+        or len(system_filters) != len(set(system_filters))
+    ):
+        raise invalid("Invalid system filters")
     recently_added = filters.get("recently_added", False)
     if type(recently_added) is not bool:
         raise invalid("Invalid recently added filter")
@@ -623,6 +640,13 @@ def library_list(db, source, filters, excluded="", cache=None, weeks=2, today=No
 
         clauses.append("t.source_group IN (SELECT value FROM json_each(?))")
         values.append(json.dumps(sorted(missing_information(db, source))))
+    if system_filters:
+        clauses.append("t.source_group IN (SELECT value FROM json_each(?))")
+        values.append(
+            json.dumps(
+                sorted(system_filter_groups(db, source, system_filters, timezone))
+            )
+        )
     if people_parameter is not None:
         values[people_parameter] = matching_people(
             db, source, query.casefold(), fuzzy, cache

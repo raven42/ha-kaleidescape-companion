@@ -61,6 +61,7 @@ KNOWN_OLDER = {
     ),
     "metadata_schedule": frozenset(
         {
+            "fc6df261c7171aaa8d64105fd8468c50d06d92a9161376ff5632fb5555e8c858",
             "76caadfeef0dc7d53c6666e1ed97566845f1a052bcbaeb322f9f6b34c36c26f3",
             "3645c24b5cdf03ea5c6261e93eee3038c7177bf4c392b1b4d4f9783b9c4204f7",
         }
@@ -84,7 +85,7 @@ CURRENT = {
         "46dc751ba272241dcc67768b0fe4ba8ed994088696339e0d27ab5f203e91a43b"
     ),
     "metadata_schedule": (
-        "fc6df261c7171aaa8d64105fd8468c50d06d92a9161376ff5632fb5555e8c858"
+        "94cdea4c439e2179edc4af2b002d3542dad69a9901e7414213ce4880b8d5c69f"
     ),
     "calendar_schedule": (
         "89a676ecf055c1df749be97e673b1d79e06e5a9058f8359b0b3f57c12ac48bfd"
@@ -93,7 +94,11 @@ CURRENT = {
 MAX_TEMPLATE_BYTES = 128 * 1024
 NOTICE_ID = "kaleidescape_companion_blueprints_outdated"
 LATEST_VERSION = {
-    kind: 8 if kind == "purchase_email" else 2 if kind == "maintenance_schedule" else 1
+    kind: 8
+    if kind == "purchase_email"
+    else 2
+    if kind in {"maintenance_schedule", "metadata_schedule"}
+    else 1
     for kind in TEMPLATES
 }
 

@@ -280,7 +280,13 @@ class JournalRepository:
         return await self._call(self._search_read, totals, source)
 
     async def async_library_list(
-        self, source: str, filters: dict, excluded: str = "", weeks=2, today=None
+        self,
+        source: str,
+        filters: dict,
+        excluded: str = "",
+        weeks=2,
+        today=None,
+        timezone="UTC",
     ) -> dict:
         return await self._call(
             self._search_read,
@@ -291,6 +297,7 @@ class JournalRepository:
             self._read_cache,
             weeks,
             today,
+            timezone,
         )
 
     async def async_library_versions(

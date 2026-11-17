@@ -994,6 +994,16 @@ export const libraryStyles = css`
       margin-bottom: 10px;
     }
   }
+  .system-filter-option {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .system-filter-option .check {
+    flex: 1;
+    min-width: 0;
+    margin: 3px 0;
+  }
   .facet-groups {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));

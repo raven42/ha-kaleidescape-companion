@@ -251,8 +251,10 @@ def async_register_services(hass: HomeAssistant) -> None:
         except JournalError as error:
             raise HomeAssistantError(str(error)) from None
         _LOGGER.info(
-            "Database cleanup removed finalized operation histories: %s",
+            "Database cleanup removed finalized operation histories: %s; "
+            "linked artwork for %s editions",
             result["removed"],
+            result.get("artwork_links", 0),
         )
 
     hass.services.async_register(

@@ -125,6 +125,30 @@ class DatabaseStorageTest(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("expression", json.dumps(page["query_fields"]))
         self.assertEqual((await self.page("library"))["total"], len(library.ROWS))
 
+    async def test_sql_payloads_cannot_escape_database_search_values(self):
+        payload = "Fictional ' OR 1=1 --"
+        rows = [{**library.ROWS[0], "title": payload}, *library.ROWS[1:]]
+        await self.repository.async_library_catalog(library.ORIGIN, rows, {})
+
+        # A quoted SQL-looking title is legitimate data and matches only itself.
+        query = "title = 'Fictional '' OR 1=1 --'"
+        result = await self.page("library", query=query)
+        self.assertEqual([row["title"] for row in result["items"]], [payload])
+        for attack in (
+            "title = 'Fictional ' OR 1=1 --",
+            "title = 'x' UNION SELECT * FROM library",
+            "title = 'x'; DELETE FROM library",
+            "title = 'x' /* comment */ OR title LIKE '%'",
+        ):
+            with self.subTest(attack=attack):
+                with self.assert_error("query_syntax"):
+                    await self.page("library", query=attack)
+                with self.assert_error("query_syntax"):
+                    await self.repository.async_database_validate_query(
+                        "library", attack
+                    )
+        self.assertEqual((await self.page("library"))["total"], len(rows))
+
     async def test_every_advertised_field_validates_and_stored_aliases_remain_read_only(
         self,
     ):

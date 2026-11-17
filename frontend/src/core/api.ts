@@ -481,6 +481,17 @@ export interface MetadataStatus {
 export interface LibraryEdit {
   snapshot: string;
   values: Record<string, string | string[] | number | boolean | null>;
+  original_values?: Record<string, string | string[] | number | boolean | null>;
+  edited_fields?: string[];
+  restore_summary?: {
+    versions: {
+      id: string;
+      edition: string;
+      available: boolean;
+      removed_fields: string[];
+      pause_scraping: boolean;
+    }[];
+  };
   version_count: number;
   has_invoices: boolean;
   format_mode?: "auto" | "original" | "custom";
@@ -637,6 +648,8 @@ export interface LibraryPurchaseTotals {
   missing_information_titles?: number;
   missing_order_ids: number;
   unpaired_prices: number;
+  missing_price_entries?: number;
+  currency_mismatch_entries?: number;
   duplicate_purchases: number;
   currencies: {
     currency: string;
@@ -1750,6 +1763,7 @@ export class JournalClient {
   ): Promise<{
     as_of: string;
     counts: Record<string, number>;
+    artwork_links: number;
     policies: Record<string, number>;
     revision: number;
   }> {
@@ -1766,7 +1780,7 @@ export class JournalClient {
       policies: Record<string, number>;
       revision: number;
     },
-  ): Promise<{ removed: Record<string, number> }> {
+  ): Promise<{ removed: Record<string, number>; artwork_links: number }> {
     return this.call({
       type: `${DOMAIN}/database/cleanup/apply`,
       ...scopeFields(scope),

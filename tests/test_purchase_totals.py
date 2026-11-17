@@ -55,6 +55,8 @@ class PurchaseTotalsTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["missing_retail_prices"], 1)
         self.assertEqual(result["missing_order_ids"], 1)
         self.assertEqual(result["unpaired_prices"], 2)
+        self.assertEqual(result["missing_price_entries"], 2)
+        self.assertEqual(result["currency_mismatch_entries"], 0)
         self.assertEqual(
             result["currencies"],
             [
@@ -81,6 +83,42 @@ class PurchaseTotalsTest(unittest.IsolatedAsyncioTestCase):
             (await self.repository.async_purchase_totals(library.SOURCE))["currencies"],
             result["currencies"],
         )
+
+    async def test_missing_prices_and_currency_mismatches_are_reported_separately(self):
+        await self.seed_library()
+        await self.apply(
+            await self.preview(
+                payload(
+                    purchase(order_id="MISSING", retail_price=None),
+                )
+            )
+        )
+        totals = await self.repository.async_purchase_totals(library.SOURCE)
+        self.assertEqual(totals["unpaired_prices"], 1)
+        self.assertEqual(totals["missing_price_entries"], 1)
+        self.assertEqual(totals["currency_mismatch_entries"], 0)
+        page = await self.repository.async_library_list(
+            library.SOURCE, {"grouped": True, "system_filters": ["currency_mismatch"]}
+        )
+        self.assertEqual(page["total"], 0)
+
+        def set_mismatched_prices():
+            db = self.repository._db()
+            with db:
+                db.execute(
+                    "UPDATE purchase_records SET purchase_price=?,retail_price=?",
+                    ("£12.99", "$24.99"),
+                )
+
+        await self.repository._call(set_mismatched_prices)
+        totals = await self.repository.async_purchase_totals(library.SOURCE)
+        self.assertEqual(totals["unpaired_prices"], 1)
+        self.assertEqual(totals["missing_price_entries"], 0)
+        self.assertEqual(totals["currency_mismatch_entries"], 1)
+        page = await self.repository.async_library_list(
+            library.SOURCE, {"grouped": True, "system_filters": ["currency_mismatch"]}
+        )
+        self.assertEqual(page["total"], 1)
 
     async def test_zero_negative_savings_duplicate_versions_and_read_budget(self):
         await self.seed_library()

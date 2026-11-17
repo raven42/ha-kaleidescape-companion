@@ -24,6 +24,30 @@ const review: LibraryEdit = {
   format_badges: ["4K", "Dolby Atmos"],
   scanned_format_badges: ["4K"],
   automatic_format_badges: ["4K", "Dolby Atmos"],
+  edited_fields: ["title", "actors"],
+  restore_summary: {
+    versions: [
+      {
+        id: "a".repeat(64),
+        edition: "4K",
+        available: true,
+        removed_fields: [
+          "enrichment.reviewed.title",
+          "enrichment.manual_edit_fields",
+          "sort_title",
+        ],
+        pause_scraping: true,
+      },
+      {
+        id: "b".repeat(64),
+        edition: "HD",
+        available: false,
+        removed_fields: ["enrichment.tmdb.backdrop_key"],
+        pause_scraping: true,
+      },
+    ],
+  },
+  original_values: { title: "Fictional Movie", actors: ["Original Example"] },
   values: {
     title: "Fictional Film",
     sort_title: null,
@@ -62,6 +86,89 @@ async function editor(purchaseOnly = false) {
   );
   return { client, root: element.shadowRoot! };
 }
+it("marks saved and draft edits and reviews escaped word-level differences", async () => {
+  const { root } = await editor();
+  const title = root.querySelector<HTMLInputElement>('[name="title"]')!;
+  expect(title.closest("label")!.textContent).toContain("(edited)");
+  const year = root.querySelector<HTMLInputElement>('[name="year"]')!;
+  expect(year.closest("label")!.textContent).not.toContain("(edited)");
+  year.value = "2024";
+  year.dispatchEvent(new Event("input", { bubbles: true }));
+  await element.updateComplete;
+  expect(year.closest("label")!.textContent).toContain("(edited)");
+  const actors = root.querySelector<HTMLTextAreaElement>('[name="actors"]')!;
+  actors.value = "Lead Example\nSecond Example";
+  actors.dispatchEvent(new Event("input", { bubbles: true }));
+  button(root, "Review Edits").click();
+  await element.updateComplete;
+  const fields = [...root.querySelectorAll(".diff-field")];
+  const titleCells = fields[0].querySelectorAll(".diff-value");
+  expect(titleCells[0].textContent).toBe("Fictional Movie");
+  expect(titleCells[1].textContent).toBe("Fictional Film");
+  const cast = fields.find((field) =>
+    field.querySelector("h3")!.textContent!.includes("Cast"),
+  )!;
+  expect(cast.querySelectorAll(".diff-value")[1].textContent).toBe(
+    "Lead Example\nSecond Example",
+  );
+  expect(root.textContent).toContain("Original scanned");
+  expect(root.textContent).toContain("Original Example");
+  expect(
+    [...root.querySelectorAll(".diff-removed")]
+      .map((x) => x.textContent)
+      .join(""),
+  ).toContain("Movie");
+  expect(
+    [...root.querySelectorAll(".diff-added")]
+      .map((x) => x.textContent)
+      .join(""),
+  ).toContain("Film");
+  expect(root.querySelector(".diff-field h3")?.textContent).toContain(
+    "Display title",
+  );
+  button(root, "Back to editing").click();
+  await element.updateComplete;
+  expect(root.querySelector<HTMLInputElement>('[name="year"]')!.value).toBe(
+    "2024",
+  );
+});
+it("stages a single field restore, supports undo, and saves only that restore", async () => {
+  const { client, root } = await editor();
+  const save = vi
+    .spyOn(client, "saveLibraryEdit")
+    .mockResolvedValue({ title_id: "a".repeat(64), updated_count: 2 });
+  button(root, "Review Edits").click();
+  await element.updateComplete;
+  const restore = () =>
+    root.querySelector<HTMLButtonElement>(
+      '[aria-label="Restore Display title"]',
+    )!;
+  expect(restore().textContent!.trim()).toBe("restore");
+  expect(
+    restore().parentElement!.textContent!.replace(/\s+/g, " ").trim(),
+  ).toBe("Display title · restore");
+  restore().click();
+  await element.updateComplete;
+  expect(
+    root.querySelector('[aria-label="Undo restore Display title"]'),
+  ).toBeTruthy();
+  expect(root.textContent).toContain("Original Example");
+  root
+    .querySelector<HTMLButtonElement>(
+      '[aria-label="Undo restore Display title"]',
+    )!
+    .click();
+  await element.updateComplete;
+  expect(restore()).toBeTruthy();
+  restore().click();
+  await element.updateComplete;
+  button(root, "Save changes").click();
+  await vi.waitFor(() => expect(save).toHaveBeenCalledOnce());
+  expect(save.mock.calls[0][0].message.patch).toEqual({
+    restore_fields: ["title"],
+  });
+});
+
 it("allows a mode change from a settled editor while protecting unsaved changes", async () => {
   const { root } = await editor();
   expect(element.confirmNavigation()).toBe(true);
@@ -207,6 +314,10 @@ it("offers a confirmed source restore and never exposes the editor to readers", 
   button(root, "Restore original metadata…").click();
   await element.updateComplete;
   expect(root.textContent).toContain("Background scraping stays paused");
+  expect(root.textContent).toContain("HD (unavailable)");
+  expect(root.textContent).toContain("enrichment.tmdb.backdrop_key");
+  expect(root.textContent).toContain("enrichment.manual_edit_fields");
+  expect(root.textContent).toContain("revision counters");
   expect(root.querySelector('[name="title"]')).toBeNull();
   button(root, "Restore original metadata").click();
   await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(1));

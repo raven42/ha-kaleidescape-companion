@@ -66,6 +66,8 @@ def totals(db, source):
             "missing_retail_prices",
             "missing_order_ids",
             "unpaired_prices",
+            "missing_price_entries",
+            "currency_mismatch_entries",
             "duplicate_purchases",
         ),
         0,
@@ -117,6 +119,10 @@ def totals(db, source):
             bucket["savings"] = (bucket["savings"] or 0) + retail[1] - paid[1]
         else:
             counts["unpaired_prices"] += 1
+            if paid is None or retail is None:
+                counts["missing_price_entries"] += 1
+            else:
+                counts["currency_mismatch_entries"] += 1
     revision = db.execute(
         "SELECT revision FROM library_sources WHERE id=?", (source,)
     ).fetchone()

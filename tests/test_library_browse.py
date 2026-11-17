@@ -27,6 +27,69 @@ class GroupedLibraryTest(unittest.IsolatedAsyncioTestCase):
     page = library_tests.LibraryStorageTest.page
     assert_error = library_tests.LibraryStorageTest.assert_error
 
+    async def test_system_filters_are_grouped_validated_and_combine_with_facets(self):
+        await self.repository.async_library_catalog(ORIGIN, ROWS, {})
+        page = await self.repository.async_library_list(
+            SOURCE, {"grouped": True, "system_filters": ["missing_metadata"]}
+        )
+        self.assertEqual(page["total"], 2)
+        page = await self.repository.async_library_list(
+            SOURCE,
+            {
+                "grouped": True,
+                "system_filters": ["missing_metadata", "missing_artwork"],
+                "genre": ["Drama"],
+            },
+        )
+        self.assertEqual([item["title"] for item in page["items"]], [ROWS[1]["title"]])
+        for invalid in (["not_a_filter"], ["edited", "edited"], "edited"):
+            with self.assertRaises(JournalError):
+                await self.repository.async_library_list(
+                    SOURCE, {"system_filters": invalid}
+                )
+
+    async def test_sql_syntax_in_facets_and_sort_cannot_change_queries(self):
+        await self.repository.async_library_catalog(ORIGIN, ROWS, {})
+        payload = "' OR 1=1 --"
+        for grouped in (False, True):
+            for key in ("collection", "actor", "director", "rating", "genre", "format"):
+                with self.subTest(grouped=grouped, facet=key):
+                    page = await self.repository.async_library_list(
+                        SOURCE, {"grouped": grouped, key: [payload]}
+                    )
+                    self.assertEqual(page["total"], 0)
+            with self.assert_error("invalid_request"):
+                await self.repository.async_library_list(
+                    SOURCE, {"grouped": grouped, "sort": "name; DROP TABLE library"}
+                )
+        self.assertEqual(
+            (await self.repository.async_library_list(SOURCE, {"grouped": True}))[
+                "total"
+            ],
+            2,
+        )
+
+    async def test_upgraded_filter_finds_newer_higher_quality_versions(self):
+        await self.repository.async_library_catalog(ORIGIN, ROWS, {})
+
+        def detected():
+            db = self.repository._db()
+            db.execute(
+                "UPDATE library SET first_seen=? WHERE id=?",
+                ("2026-11-01T00:00:00+00:00", title_id(SOURCE, "fixture-a2")),
+            )
+            db.execute(
+                "UPDATE library SET first_seen=? WHERE id=?",
+                ("2026-11-04T00:00:00+00:00", title_id(SOURCE, "fixture-a")),
+            )
+            db.commit()
+
+        await self.repository._call(detected)
+        page = await self.repository.async_library_list(
+            SOURCE, {"grouped": True, "system_filters": ["upgraded"]}
+        )
+        self.assertEqual([item["title"] for item in page["items"]], [ROWS[0]["title"]])
+
     async def test_statuses_and_group_filters_follow_source_collections(self):
         rows = [
             {**ROWS[0], "source_group": group, "source_handle": handle, "title": group}
@@ -954,6 +1017,13 @@ class GroupedLibraryApiTest(unittest.IsolatedAsyncioTestCase):
             user=reader,
             **self.scope,
             filters={"missing_purchase_information": True},
+        )
+        self.assertEqual(denied["code"], "unauthorized")
+        denied = await self.call(
+            "library/list",
+            user=reader,
+            **self.scope,
+            filters={"system_filters": ["manual_viewing"]},
         )
         self.assertEqual(denied["code"], "unauthorized")
         self.assertNotIn("Favorites", str(result))

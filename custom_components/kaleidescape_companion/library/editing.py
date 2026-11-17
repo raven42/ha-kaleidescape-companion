@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 from ..core.database_mutations import replay
 from ..core.models import JournalError, identifier, invalid, text
 from ..enrichment.review_store import members, signature
+from ..enrichment.selection import FIELDS as SOURCE_FIELDS
 from .browse import library_versions
 from .formats import CANONICAL, facet_labels
 from .importing import purchase_date
@@ -28,12 +29,26 @@ def validate(patch):
     if (
         not isinstance(patch, dict)
         or not patch
-        or set(patch) - (set(FIELDS) | PURCHASE_FIELDS | {"format_override"})
+        or set(patch)
+        - (set(FIELDS) | PURCHASE_FIELDS | {"format_override", "restore_fields"})
     ):
         raise invalid("Choose supported display fields")
     result = {}
     for key, value in patch.items():
-        if key == "format_override":
+        if key == "restore_fields":
+            if (
+                not isinstance(value, list)
+                or not value
+                or len(value) > len(FIELDS)
+                or any(
+                    not isinstance(field, str) or field not in FIELDS for field in value
+                )
+                or len(set(value)) != len(value)
+                or set(value) & patch.keys()
+            ):
+                raise invalid("Choose distinct edited fields to restore")
+            result[key] = sorted(value)
+        elif key == "format_override":
             if (
                 not isinstance(value, dict)
                 or not isinstance(value.get("mode"), str)
@@ -90,6 +105,59 @@ def validate(patch):
     return result
 
 
+def reset_targets(db, source, group):
+    """Read exactly the editions touched by restore, including unavailable ones."""
+    return [
+        dict(row)
+        for row in db.execute(
+            "SELECT id,title,data,enrichment,sort_title,available FROM library "
+            "WHERE source_id=? AND source_group=? AND purchase_match_pending=0 "
+            "ORDER BY id",
+            (source, group),
+        )
+    ]
+
+
+def edit_snapshot(rows, targets):
+    """Bind review and restore to both current and retained editions."""
+    return hashlib.sha256(
+        json.dumps([signature(rows), targets], sort_keys=True).encode()
+    ).hexdigest()
+
+
+def _field_paths(value, prefix):
+    if isinstance(value, dict) and value:
+        for key, child in sorted(value.items()):
+            yield from _field_paths(child, f"{prefix}.{key}")
+    else:
+        yield prefix
+
+
+def restore_summary(targets):
+    versions = []
+    for row in targets:
+        enrichment = json.loads(row["enrichment"])
+        data = json.loads(row["data"])
+        removed = [
+            path
+            for key, value in sorted(enrichment.items())
+            if key != "source_only"
+            for path in _field_paths(value, f"enrichment.{key}")
+        ]
+        if row["sort_title"] is not None:
+            removed.append("sort_title")
+        versions.append(
+            {
+                "id": row["id"],
+                "edition": data.get("edition") or "Unknown format",
+                "available": bool(row["available"]),
+                "removed_fields": removed,
+                "pause_scraping": enrichment.get("source_only") is not True,
+            }
+        )
+    return {"versions": versions}
+
+
 def inspect(db, source, title):
     title = text(title, 64)
     rows = members(db, source, title)
@@ -100,14 +168,27 @@ def inspect(db, source, title):
         if row["id"] == title
     )
     selected = next(row for row in rows if row["id"] == title)
+    targets = reset_targets(db, source, selected["source_group"])
     enrichment = json.loads(selected["enrichment"])
     override = enrichment.get("format_override", {})
     mode = override.get("mode", "auto") if isinstance(override, dict) else "auto"
     automatic = {
         key: value for key, value in enrichment.items() if key != "format_override"
     }
+    original = json.loads(selected["data"])
     return {
-        "snapshot": signature(rows),
+        "snapshot": edit_snapshot(rows, targets),
+        "restore_summary": restore_summary(targets),
+        "original_values": {
+            key: original.get(key) for key in FIELDS if key != "sort_title"
+        }
+        | {"title": selected["title"], "sort_title": None},
+        "edited_fields": [
+            key
+            for key in FIELDS
+            if key in enrichment.get("manual_edit_fields", [])
+            or (key == "sort_title" and selected["sort_title"] is not None)
+        ],
         "values": {
             **{key: current.get(key) for key in FIELDS},
             **{
@@ -159,7 +240,8 @@ def apply(db, source, actor, request, title, snapshot, patch):
     if cached is not None:
         return cached
     rows = members(db, source, title)
-    if signature(rows) != snapshot:
+    targets = reset_targets(db, source, rows[0]["source_group"])
+    if edit_snapshot(rows, targets) != snapshot:
         raise JournalError(
             "refresh_required", "This movie changed; reopen the editor and review again"
         )
@@ -212,16 +294,25 @@ def apply(db, source, actor, request, title, snapshot, patch):
                     title,
                 ),
             )
-        for row in rows if set(patch) - PURCHASE_FIELDS - {"format_override"} else []:
+        for row in (
+            rows
+            if set(patch) - PURCHASE_FIELDS - {"format_override", "restore_fields"}
+            else []
+        ):
             enrichment = json.loads(row["enrichment"])
             reviewed = enrichment.setdefault("reviewed", {})
+            recorded = enrichment.get("manual_edit_fields", [])
+            recorded = recorded if isinstance(recorded, list) else []
+            enrichment["manual_edit_fields"] = sorted(
+                (set(recorded) | (set(patch) & set(FIELDS))) & set(FIELDS)
+            )
             reviewed.update(
                 {
                     key: value
                     for key, value in patch.items()
                     if key != "sort_title"
                     and key not in PURCHASE_FIELDS
-                    and key != "format_override"
+                    and key not in {"format_override", "restore_fields"}
                 }
             )
             reviewed["provider"] = "reviewed"
@@ -233,6 +324,43 @@ def apply(db, source, actor, request, title, snapshot, patch):
                 "UPDATE library SET enrichment=?,sort_title=? WHERE id=?",
                 (encoded, patch.get("sort_title", row["sort_title"]), row["id"]),
             )
+        if restored := patch.get("restore_fields"):
+            known = set()
+            for target in targets:
+                state = json.loads(target["enrichment"])
+                known.update(state.get("manual_edit_fields", []))
+                if target["sort_title"] is not None:
+                    known.add("sort_title")
+            if set(restored) - known:
+                raise invalid("Only recorded edited fields can be restored")
+            for target in targets:
+                current = db.execute(
+                    "SELECT enrichment,sort_title FROM library WHERE id=?",
+                    (target["id"],),
+                ).fetchone()
+                state = json.loads(current["enrichment"])
+                reviewed = state.get("reviewed", {})
+                recorded = state.get("manual_edit_fields", [])
+                for field in restored:
+                    reviewed.pop(field, None)
+                    if field in SOURCE_FIELDS:
+                        state.setdefault("field_sources", {})[field] = "original"
+                remaining = [field for field in recorded if field not in restored]
+                if remaining:
+                    state["manual_edit_fields"] = remaining
+                else:
+                    state.pop("manual_edit_fields", None)
+                encoded = json.dumps(state)
+                if len(encoded.encode()) > 512 * 1024:
+                    raise invalid("Reviewed metadata is too large")
+                db.execute(
+                    "UPDATE library SET enrichment=?,sort_title=? WHERE id=?",
+                    (
+                        encoded,
+                        None if "sort_title" in restored else current["sort_title"],
+                        target["id"],
+                    ),
+                )
         if "format_override" in patch:
             enrichment = json.loads(
                 db.execute(
@@ -269,7 +397,8 @@ def reset(db, source, actor, request, title, snapshot):
     if cached is not None:
         return cached
     rows = members(db, source, title)
-    if signature(rows) != snapshot:
+    targets = reset_targets(db, source, rows[0]["source_group"])
+    if edit_snapshot(rows, targets) != snapshot:
         raise JournalError(
             "refresh_required", "This movie changed; reopen the editor and review again"
         )
@@ -278,9 +407,10 @@ def reset(db, source, actor, request, title, snapshot):
         # Include temporarily unavailable editions so returning versions cannot
         # revive old overrides after the next catalog scan.
         updated = db.execute(
-            "UPDATE library SET enrichment=?,sort_title=NULL "
-            "WHERE source_id=? AND source_group=? AND purchase_match_pending=0",
-            ('{"source_only":true}', source, rows[0]["source_group"]),
+            "UPDATE library SET enrichment='{\"source_only\":true}', "
+            "sort_title=NULL WHERE source_id=? AND source_group=? "
+            "AND purchase_match_pending=0",
+            (source, rows[0]["source_group"]),
         )
         result["updated_count"] = updated.rowcount
         changed(db, source)

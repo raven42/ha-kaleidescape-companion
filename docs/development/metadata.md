@@ -120,9 +120,12 @@ Selecting one downloads its full provider record. An empty result suggests
 retrying without the year. Saving an empty result records a last-checked time
 without inventing metadata. Rows distinguish **Not yet scanned**, **No data
 available - Last Checked {date}**, and **Downloaded - Updated {date}** and show
-the saved field count. The original Library scan remains unchanged. Provider
-identities are stored in `enrichment.matches` so later automatic refreshes can
-revisit the chosen movie; a manual Refresh still searches anew.
+the saved field count. The original Library scan remains unchanged by both
+automatic provider refreshes and explicitly applied results. Provider facts and
+approved display overrides are stored separately from the scanned title, source
+identity, and metadata. Provider identities are stored in `enrichment.matches`
+so later automatic refreshes can revisit the chosen movie; a manual Refresh
+still searches anew.
 
 Each matched source offers a **View match** link to its public movie page. The
 link opens in a new tab without sending the Home Assistant page as a referrer.

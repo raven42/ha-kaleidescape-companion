@@ -287,6 +287,8 @@ export class FixtureTransport implements Transport {
     missing_information_titles: 0,
     missing_order_ids: 0,
     unpaired_prices: 0,
+    missing_price_entries: 0,
+    currency_mismatch_entries: 0,
     duplicate_purchases: 0,
     currencies: [] as {
       currency: string;
@@ -915,6 +917,18 @@ export class FixtureTransport implements Transport {
       };
       let rows = this.libraryTitles.filter(
         (row) =>
+          (!(filters.system_filters as string[] | undefined)?.length ||
+            (filters.system_filters as string[]).some((filter) =>
+              filter === "missing_metadata" || filter === "missing_artwork"
+                ? this.libraryTitles.some(
+                    (candidate) =>
+                      this.groupKey(candidate) === this.groupKey(row) &&
+                      this.missingMetadataArtwork.has(candidate.id),
+                  )
+                : filter === "missing_purchase_information"
+                  ? this.missingPurchaseInformation.has(row.id)
+                  : filter === "metadata_conflict" && !!row.scraper_conflict,
+            )) &&
           (!filters.scraper_conflict || !!row.scraper_conflict) &&
           (!filters.recently_added || row.is_recently_added) &&
           (!filters.missing_metadata_artwork ||
@@ -1169,6 +1183,7 @@ export class FixtureTransport implements Transport {
       const policies = message.policies as Record<string, number>;
       result = {
         as_of: "2026-11-08T00:00:00+00:00",
+        artwork_links: 0,
         counts: Object.fromEntries(
           Object.entries(policies).map(([key, days]) => [
             key,
@@ -1182,6 +1197,7 @@ export class FixtureTransport implements Transport {
       if (message.revision !== this.revision) throw new ApiError("conflict");
       const policies = message.policies as Record<string, number>;
       result = {
+        artwork_links: 0,
         removed: Object.fromEntries(
           Object.entries(policies).map(([key, days]) => [
             key,

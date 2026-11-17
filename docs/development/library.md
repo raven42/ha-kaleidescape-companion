@@ -205,11 +205,12 @@ Shareable panel URLs use `companion_page=library` and `library_query` for
 search. Repeated `library_collection`, `library_actor`, `library_director`,
 `library_rating`, `library_genre`, `library_year`, `library_format` and
 `library_status` parameters select facet values; boolean filters use
-`library_missing_metadata_artwork=1` or
-`library_missing_purchase_information=1`. The purchase filter remains
-administrator-only. The URL contains the selected search and facet values;
-sharing it shares those values too. A `library_filters=1` marker represents an
-explicitly unfiltered view. Parameter values are bounded before use and backend
+`library_missing_metadata_artwork=1` or `library_missing_purchase_information=1`
+for older links. Repeated `library_system_filters` values select the advanced
+System Filters. System filters and the legacy purchase filter require an
+administrator. The URL contains the selected search and facet values; sharing it
+shares those values too. A `library_filters=1` marker represents an explicitly
+unfiltered view. Parameter values are bounded before use and backend
 authorization and filter validation still apply.
 
 The summary shows the union of visible collections/formats/content
@@ -320,7 +321,8 @@ opt-out are checked again after awaited work.
 
 List `filters` accepts `query`, `fuzzy`, `collection`, `actor`, `director`,
 `rating`, `genre`, `year`, `format`, `status`, `missing_metadata_artwork`,
-`missing_purchase_information` (administrator-only), `sort`, `descending`,
+`missing_purchase_information` (administrator-only), `system_filters` (an
+administrator-only array of known maintenance categories), `sort`, `descending`,
 `random_seed`, `offset`, optional `revision`, `grouped`, and `limit`. `limit`
 must be an integer from 1 to 1000 (default 50); list responses echo it.
 `grouped=true` is used by the UI; omitted/false preserves the original
@@ -504,18 +506,26 @@ search, manual title pickers, import review and plain Database search.
 Structured Database predicates keep their documented SQL style operators and
 single-quoted values.
 
-In Advanced view, **Missing metadata/artwork** selects movies missing an
-expected provider's metadata or an expected cover or backdrop. It uses the same
-grouped availability rules as the missing-metadata and missing-artwork sensors.
-List rows and cover tiles show the warning icon to administrators for those same
-movies, even when there is no scraper match conflict. A conflict also shows the
-warning; its accessible label identifies both causes when they occur together.
-The warning is independent of the optional status/format badges. The filter
-lives in the Library URL. Administrators also have **Missing purchase
-information**, using the same group-level date/paid/retail completeness rules as
-its sensor. It adds no warning badge and omits movies explicitly marked
-**Purchase information unavailable**. A role change clears this private filter
-from reader requests. See
+In Advanced view, administrators can select **System Filters** in the filter
+dialog. Choices within that section are combined with OR; the section combines
+with other filter categories using AND. Missing metadata checks both metadata
+providers, while missing artwork checks cover and backdrop on every available
+edition. Each respects its corresponding unavailable setting. The artwork sensor
+retains its group-level completeness rule. Purchase information checks purchase
+date, paid price and order ID; retail price and currency mismatch have separate
+choices. Purchase-unavailable groups are excluded from missing-price checks.
+Other choices identify main-field edits, scraper-added format badges,
+non-default metadata source selections, unavailable sources or artwork,
+conflicts, edited Journal entries, and manually added viewings linked to a
+Library edition. Split viewings have different local start and completion dates
+and exceed their known runtime by at least six hours. Unknown runtimes and
+completion times are excluded. The Home Assistant time zone determines calendar
+dates. Filters operate on grouped editions.
+
+Existing missing-data warning icons and sensors retain their original enabled
+provider and date/paid/retail completeness definitions. Older maintenance links
+remain supported and can be cleared in the filter dialog. A role or mode change
+clears private System Filters from requests and the URL. See
 [manual resolution](metadata.md#review-a-single-title).
 
 The filter panes use consistent inner heading padding, and their sticky action
@@ -569,17 +579,21 @@ bundle prices are used as imported. Flat earliest-invoice summary columns are
 not added again.
 
 The summary separately shows the number of available Library titles missing a
-purchase date, paid price or retail price, using the same group-level rule as
-the missing-information filter. The paid/retail coverage counts refer only to
-the purchase entries included in the totals; titles with no purchase entry are
-not included in those counts. Amounts use exact integer-cent arithmetic and stay
-separated by their recorded currency prefix. Missing paid/retail prices are
-excluded, with coverage counts shown. Savings sum retail minus paid only for
-invoices with both prices in the same currency; they can be negative. Unique
-transactions count distinct known order IDs, not title/version rows. Purchases
-without an order ID are reported separately rather than assigned invented
-transactions. These recorded totals do not estimate missing prices or currency
-conversions.
+purchase date, paid price or retail price, using the legacy group-level
+completeness rule. The System Filters use separate missing purchase information
+(date, paid price, or order ID) and missing retail price choices. The
+paid/retail coverage counts refer only to the purchase entries included in the
+totals; titles with no purchase entry are not included in those counts. Amounts
+use exact integer-cent arithmetic and stay separated by their recorded currency
+prefix. Missing paid/retail prices are excluded, with coverage counts shown.
+Savings sum retail minus paid only for invoices with both prices in the same
+currency; they can be negative. Entries excluded from savings are reported
+separately for missing prices and mismatched currencies. The currency mismatch
+System Filter matches available title groups, while the totals also include
+purchases linked to unavailable editions. Unique transactions count distinct
+known order IDs, not title/version rows. Purchases without an order ID are
+reported separately rather than assigned invented transactions. These recorded
+totals do not estimate missing prices or currency conversions.
 
 ## External metadata integration
 
@@ -643,6 +657,39 @@ unavailable flag are saved atomically and included in reversible receipt
 corrections. All group edits check the snapshot and preserve exact-request
 retries.
 
+The administrator editor marks recorded manual field edits and unsaved field
+changes with **(edited)**. **Review Edits** compares the selected edition's
+original scanned fields against the current editor values, including unsaved
+changes, with word-level additions and removals highlighted. Each field's
+**Restore** link stages a return to its scanned value and clears its recorded
+edit when saved; Undo restore cancels the staged change. For fields with
+metadata source choices, restoration selects the original Library source for
+that field across the group, including temporarily unavailable editions. Other
+fields and source choices are preserved. Manual edits are tracked per field
+until the field or original metadata is restored; the Edited system filter
+matches any edition in the group with that history. Earlier reviewed fields do
+not reliably distinguish manual edits from scraper results, so older ambiguous
+fields are not assumed to be manual edits. An existing sort title is known to be
+manual and remains detectable. The administrator-only edit inspection response
+includes `original_values` and `edited_fields`.
+
+When a scan discovers a new edition, it links unambiguous cached cover and
+backdrop artwork from other editions in the same source group if the new edition
+does not have an image. Database cleanup also reviews and repairs these links
+for existing editions. Existing selections, explicit unavailable flags, removed
+backdrops, and groups with conflicting candidate images are left unchanged. Only
+managed artwork already present in the cache is linked.
+
+The Upgraded system filter matches a group when an available higher-quality
+edition was first detected more than 48 hours after an available lower-quality
+edition. It uses the scanned video-quality order (SD, HD, HD Cinematic, 4K, 4K
+Cinematic, 8K); editions without a known quality or detection time are excluded.
+Scraper and manual badge changes do not change this order.
+
+The Badges updated filter matches editions whose current automatic format badges
+contain a canonical badge absent from their scan. Manual badge choices and
+editions set to use only server formats do not count.
+
 Source identity, runtime, formats, file/cache paths, memberships, watched state
 and viewing records cannot be edited in the movie metadata editor. Raw scan
 identity remains unchanged; display overrides survive future scans. Edits check
@@ -657,13 +704,17 @@ protected enrichment JSON and private SQLite backups.
 
 **Edit details → Restore original metadata…** is administrator-only and requires
 an explicit confirmation. It removes provider caches and reviewed
-display/artwork overrides, clears sort titles, and restores scanned metadata
-across all versions, including temporarily unavailable editions. It preserves
-source records, purchase history, collections and viewings. It does not delete
-cached image files shared by other entries; normal cache eviction handles unused
-bytes. Background enrichment is paused for this group, including responses
-already in flight. Explicitly scraping and applying new reviewed data reenables
-background enrichment.
+display/artwork overrides and recorded field-edit history, clears sort titles,
+and restores scanned metadata across all versions, including temporarily
+unavailable editions. Before confirmation, the dialog lists each affected
+edition and every removed enrichment field and sort title, plus the scraping
+state and database revision/request changes. The review snapshot includes
+unavailable editions so changes to them invalidate a stale confirmation. It
+preserves source records, purchase history, collections and viewings. It does
+not delete cached image files shared by other entries; normal cache eviction
+handles unused bytes. Background enrichment is paused for this group, including
+responses already in flight. Explicitly scraping and applying new reviewed data
+reenables background enrichment.
 
 ## Compact footer
 

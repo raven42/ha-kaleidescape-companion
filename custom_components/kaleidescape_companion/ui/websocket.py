@@ -904,7 +904,10 @@ async def async_handle(
                         )
                     else:
                         filters = dict(msg["filters"])
-                        if filters.get("missing_purchase_information") and not admin:
+                        if (
+                            filters.get("missing_purchase_information")
+                            or filters.get("system_filters")
+                        ) and not admin:
                             raise JournalError(
                                 "unauthorized", "Administrator access is required"
                             )
@@ -931,6 +934,7 @@ async def async_handle(
                                 "library_recent_purchase_weeks", 2
                             ),
                             dt_util.now().date().isoformat(),
+                            hass.config.time_zone,
                         )
                         if filters.get("sort") == "random":
                             result["random_seed"] = seed

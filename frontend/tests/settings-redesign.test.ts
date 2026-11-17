@@ -283,6 +283,9 @@ it("shows library and purchase summaries in About and loads totals on demand", a
   transport.purchaseTotals = {
     ...transport.purchaseTotals,
     purchase_count: 1,
+    unpaired_prices: 1,
+    missing_price_entries: 1,
+    currency_mismatch_entries: 0,
     missing_information_titles: 4,
     currencies: [
       {
@@ -315,10 +318,21 @@ it("shows library and purchase summaries in About and loads totals on demand", a
     "Titles without a purchase entry are excluded",
   );
   expect(details.textContent).toContain("purchase dates");
+  expect(details.textContent).toContain(
+    "excluded from savings because a paid or retail price is missing",
+  );
+  expect(details.textContent).not.toContain(
+    "excluded from savings because the paid and retail prices use different currencies",
+  );
   details.open = false;
   details.dispatchEvent(new Event("toggle"));
   transport.purchaseTotals.currencies[0].library_cost = "$19.00";
+  transport.purchaseTotals.missing_price_entries = 0;
+  transport.purchaseTotals.currency_mismatch_entries = 1;
   details.open = true;
   details.dispatchEvent(new Event("toggle"));
   await vi.waitFor(() => expect(details.textContent).toContain("$19.00"));
+  expect(details.textContent?.replace(/\s+/g, " ")).toContain(
+    "excluded from savings because the paid and retail prices use different currencies",
+  );
 });

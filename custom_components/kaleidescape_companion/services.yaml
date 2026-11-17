@@ -48,7 +48,7 @@ calendar_full_sync:
 
 database_cleanup:
   name: Clean up database
-  description: Remove selected finalized operation histories while preserving unresolved work and retry barriers.
+  description: Remove selected finalized operation histories and link missing artwork between matching Library editions.
   fields:
     calendar:
       name: Calendar reconciliation retention

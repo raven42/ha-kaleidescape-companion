@@ -77,6 +77,10 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_cache_extends_both_versions_without_overwriting_raw_or_remakes(self):
         await self.seed()
+        before = {
+            row["id"]: (row["title"], row["source_group"], row["data"])
+            for row in (await self.repo.async_inspect("library"))["items"]
+        }
         await self.repo.async_enrichment(
             "save", self.source, self.id, "tmdb", self.data
         )
@@ -87,6 +91,13 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(item["producers"], ["Example Producer"])
             self.assertNotIn("matched_group", item["enrichment"]["tmdb"])
         raw = await self.repo.async_inspect("library")
+        self.assertEqual(
+            {
+                row["id"]: (row["title"], row["source_group"], row["data"])
+                for row in raw["items"]
+            },
+            before,
+        )
         original = next(row for row in raw["items"] if row["id"] == self.id)
         self.assertEqual(json.loads(original["data"])["actors"], ["Original Actor"])
         remake = next(row for row in raw["items"] if row["source_handle"] == "remake")

@@ -22,6 +22,8 @@ import { styles } from "../ui/styles";
 import { libraryStyles } from "./styles";
 import { closeButton, dismissBackdrop } from "../ui/dialog";
 import { actionIcon } from "../ui/action-icons";
+import { settingHint } from "../ui/settings-hint";
+import { SYSTEM_FILTERS } from "./system-filters";
 import {
   HoverGate,
   moviePreviewStyles,
@@ -446,9 +448,11 @@ export class KaleidescapeLibrary extends LitElement {
   private clearHiddenMaintenanceFilter(filters: Filters) {
     if (
       !(this.advanced && this.scope?.permissions.edit) &&
-      new URL(location.href).searchParams.has(
+      [
         "library_missing_metadata_artwork",
-      )
+        "library_missing_purchase_information",
+        "library_system_filters",
+      ].some((key) => new URL(location.href).searchParams.has(key))
     )
       writeLibraryFilters(filters);
   }
@@ -562,11 +566,28 @@ export class KaleidescapeLibrary extends LitElement {
     if (
       changed.has("advanced") &&
       !this.advanced &&
-      this.applied.missing_metadata_artwork
+      (this.applied.missing_metadata_artwork ||
+        this.applied.missing_purchase_information ||
+        (this.applied.system_filters as string[] | undefined)?.length)
     ) {
-      this.applied = { ...this.applied, missing_metadata_artwork: false };
-      this.filters = { ...this.filters, missing_metadata_artwork: false };
-      this.draft = { ...this.draft, missing_metadata_artwork: false };
+      this.applied = {
+        ...this.applied,
+        missing_metadata_artwork: false,
+        missing_purchase_information: false,
+        system_filters: [],
+      };
+      this.filters = {
+        ...this.filters,
+        missing_metadata_artwork: false,
+        missing_purchase_information: false,
+        system_filters: [],
+      };
+      this.draft = {
+        ...this.draft,
+        missing_metadata_artwork: false,
+        missing_purchase_information: false,
+        system_filters: [],
+      };
       if (!this.dashboard) this.clearHiddenMaintenanceFilter(this.applied);
       void this.load();
     }
@@ -1299,6 +1320,10 @@ export class KaleidescapeLibrary extends LitElement {
     const next = { ...this.applied };
     for (const key of [...FILTERS.map(([key]) => key), "status"])
       next[key] = this.draft[key] ?? [];
+    next.system_filters =
+      this.advanced && this.scope?.permissions.edit
+        ? (this.draft.system_filters ?? [])
+        : [];
     next.missing_metadata_artwork = !!(
       this.advanced &&
       this.scope?.permissions.edit &&
@@ -1706,7 +1731,105 @@ export class KaleidescapeLibrary extends LitElement {
       </div>
     </dialog>`;
   }
+  private renderSystemFilterSection() {
+    return this.advanced && this.scope?.permissions.edit
+      ? html`<fieldset class="system-filter-section">
+          <legend>
+            <span class="facet-heading"
+              ><span>System Filters</span
+              ><button
+                type="button"
+                class="facet-clear"
+                aria-label="Clear System Filters"
+                ?disabled=${!(this.draft.system_filters as string[] | undefined)?.length && !this.draft.missing_metadata_artwork && !this.draft.missing_purchase_information}
+                @click=${() => {
+                  this.draft = {
+                    ...this.draft,
+                    system_filters: [],
+                    missing_metadata_artwork: false,
+                    missing_purchase_information: false,
+                  };
+                  this.applyFilterChanges();
+                }}
+              >
+                Clear</button
+              ><span class="facet-count"
+                >${(this.draft.system_filters as string[] | undefined)?.length ?? 0}</span
+              ></span
+            >
+          </legend>
+          <div class="facet-options">
+            ${(
+              [
+                [
+                  "missing_metadata_artwork",
+                  "Missing metadata or artwork (legacy)",
+                ],
+                [
+                  "missing_purchase_information",
+                  "Missing purchase information (legacy)",
+                ],
+              ] as const
+            ).map(([key, label]) =>
+              this.draft[key]
+                ? html`<div class="system-filter-option">
+                    <label class="check">
+                      <input
+                        type="checkbox"
+                        checked
+                        @change=${() => {
+                          this.draft = { ...this.draft, [key]: false };
+                          this.applyFilterChanges();
+                        }}
+                      />${label}</label
+                    >${settingHint(label, "This filter came from an older link. Clear it to use the System Filters above.")}
+                  </div>`
+                : nothing,
+            )}
+            ${SYSTEM_FILTERS.map(
+              ([key, label, hint]) =>
+                html`<div class="system-filter-option">
+                  <label class="check"
+                    ><input
+                      type="checkbox"
+                      name="system_filter"
+                      .value=${key}
+                      .checked=${((this.draft.system_filters ?? []) as string[]).includes(key)}
+                      @change=${(event: Event) => {
+                        const values = (this.draft.system_filters ??
+                          []) as string[];
+                        this.draft = {
+                          ...this.draft,
+                          system_filters: (event.target as HTMLInputElement)
+                            .checked
+                            ? [...values, key]
+                            : values.filter((value) => value !== key),
+                        };
+                        this.applyFilterChanges();
+                      }}
+                    />${label}</label
+                  >${settingHint(label, hint)}
+                </div>`,
+            )}
+          </div>
+        </fieldset>`
+      : nothing;
+  }
   private renderFilterDialog() {
+    const groups = [
+      ["status", "Movie status", "status"],
+      ...FILTERS.filter(([key]) => key !== "actor" && key !== "director"),
+    ].filter(
+      ([key, , facet]) =>
+        key !== "collection" ||
+        this.choices(key, facet).some(
+          (value) => !hiddenFilterCollection(value),
+        ) ||
+        ((this.draft[key] ?? []) as string[]).some(
+          (value) => !hiddenFilterCollection(value),
+        ),
+    );
+    groups.splice(5, 0, ["system", "System Filters", "system"]);
     return html`<dialog
       id="filter-dialog"
       @click=${dismissBackdrop}
@@ -1721,53 +1844,11 @@ export class KaleidescapeLibrary extends LitElement {
         Select any options within a category. Movies must match every category
         you choose.
       </p>
-      ${
-        this.advanced && this.scope?.permissions.edit
-          ? html`<label class="check"
-              ><input
-                name="missing_metadata_artwork"
-                type="checkbox"
-                .checked=${!!this.draft.missing_metadata_artwork}
-                @change=${(event: Event) => {
-                  this.draft.missing_metadata_artwork = (
-                    event.target as HTMLInputElement
-                  ).checked;
-                  this.applyFilterChanges();
-                }}
-              />Missing metadata/artwork</label
-            >`
-          : nothing
-      }
-      ${
-        this.scope?.permissions.edit
-          ? html`<label class="check"
-              ><input
-                name="missing_purchase_information"
-                type="checkbox"
-                .checked=${!!this.draft.missing_purchase_information}
-                @change=${(event: Event) => {
-                  this.draft.missing_purchase_information = (
-                    event.target as HTMLInputElement
-                  ).checked;
-                  this.applyFilterChanges();
-                }}
-              />Missing purchase information</label
-            >`
-          : nothing
-      }
       <div class="facet-groups">
-        ${[
-          ["status", "Movie status", "status"],
-          ...FILTERS.filter(([key]) => key !== "actor" && key !== "director"),
-        ].map(([key, label, facet]) => {
+        ${groups.map(([key, label, facet]) => {
+          if (key === "system") return this.renderSystemFilterSection();
           const selected = (this.draft[key] ?? []) as string[];
           const choices = this.choices(key, facet);
-          if (
-            key === "collection" &&
-            !choices.some((value) => !hiddenFilterCollection(value)) &&
-            !selected.some((value) => !hiddenFilterCollection(value))
-          )
-            return nothing;
           return html`<fieldset>
             <legend>
               <span class="facet-heading">
@@ -2391,7 +2472,8 @@ export class KaleidescapeLibrary extends LitElement {
     const activeFilters = [...FILTERS.map(([key]) => key), "status"].reduce(
       (count, key) =>
         count + ((this.applied[key] as string[] | undefined)?.length ?? 0),
-      Number(!!this.applied.missing_metadata_artwork) +
+      ((this.applied.system_filters as string[] | undefined)?.length ?? 0) +
+        Number(!!this.applied.missing_metadata_artwork) +
         Number(!!this.applied.missing_purchase_information) +
         Number(!!this.applied.recently_added),
     );

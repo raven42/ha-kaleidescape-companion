@@ -95,6 +95,12 @@ per-category **Clear** links apply immediately. The toolbar's **Clear Filter**
 clears search and filters while keeping your view, sort and page size. The
 missing-data options shown below are administrator tools in Advanced view.
 
+Administrators in Advanced mode can also use **System Filters** to find missing
+metadata, artwork or purchase details; unavailable items; edits; conflicts; and
+titles with manually added, edited or split Journal viewings. Hover over or
+focus each help icon for its matching rule. Selections take effect immediately,
+and choices within the section match any selected option.
+
 [![Library filters dialog with status, rating, genre, year and viewing-format choices](../../assets/screenshots/library-filters.png)](../../assets/screenshots/library-filters.png)
 
 Filter categories combine to narrow the result. Each change returns to the first
