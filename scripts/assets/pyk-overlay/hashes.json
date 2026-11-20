@@ -1,14 +1,12 @@
 {
   "kaleidescape/LICENSE": "21ca61f75c823e717f7b87d0344750f7d56dc4ebbabe393c83777c27f455bdcb",
-  "kaleidescape/__init__.py": "77e2a089cd03b2b89d7b21b59b1ff5ae6fcab304a74a4118414d7d951885ba18",
-  "kaleidescape/_version.py": "f58dd167be07af5804e42f99200eda352ccf4f462ed971f77c5446e0161e1c2c",
-  "kaleidescape/connection.py": "25a7a7bd5e3f28c722f7b68d4faafdf44479e926e2d6a6c1ef486143b9bb4783",
-  "kaleidescape/const.py": "974b5b24b462e409760896b6892fa2c0e77aff14d8da3116b3b8155bf42ea947",
-  "kaleidescape/device.py": "cc93b51bf239dabdc29adb683c0e2e9891cc0f19eb668ef59c8dad11c30a407c",
-  "kaleidescape/dispatcher.py": "0fb33b66cab0ce39cdddeeae264818c1fc78f31100a583a945926ee1c8580dba",
-  "kaleidescape/error.py": "69800279a4a5cc4c8d435e202c82c988aebf9895b7bb36fd288c7932a20c1f24",
-  "kaleidescape/library_parser.py": "be3a5d69471dd519d9c6b06db34774f74ffe586d5c551a46fa833cfb5640ba8f",
-  "kaleidescape/local_browser.py": "c77c24c860dd56e1571e6fdeb80863a0bee2c4ce23454b498e63df4a51f47016",
-  "kaleidescape/message.py": "de1eed81282f5b51236f8688cde7934aff91f56ec40c1064713c45a29dd0a649",
+  "kaleidescape/__init__.py": "17a349f213238195e08ff8b4ce15342d45c0a8ce1fcbbb99c947d9ecd0b8b2a7",
+  "kaleidescape/_version.py": "d8fb3b1ab3951f08c071d6ada463c81da209b944ad3b1052e823991e65410254",
+  "kaleidescape/connection.py": "3948e38739cf0faa749b8d44ae888300c5563513108b082462d73ad7c5d315e1",
+  "kaleidescape/const.py": "c9c59084143a0188ea68b7350b7b75f891542b42b2e97724ec56731807758a02",
+  "kaleidescape/device.py": "91a2483d67809a8bfdffbdc849277c47eeb33ce2e0e0ba613ccef0477eb94745",
+  "kaleidescape/dispatcher.py": "7012aecc3d31695294c5229c026373e65f2d8d3f3ea0ca6837efa538a020abf9",
+  "kaleidescape/error.py": "e06013cd398691798880d8d389f2639ab5a6fa3f97628f1617f87474cb85dacb",
+  "kaleidescape/message.py": "6a6d6469a37b194383107708484f5b07e25b5a4cc98c157b7b077d94d030e25e",
   "kaleidescape/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 }

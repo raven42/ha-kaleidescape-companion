@@ -20,9 +20,8 @@ from dataclasses import dataclass
 from typing import Protocol
 from urllib.parse import parse_qs, urlencode, urlsplit
 
-from .error import KaleidescapeError
-from .library_parser import (
-    LibraryFormatError,
+from .errors import BrowserOutcomeUnknownError, BrowserResponseError, LibraryFormatError
+from .parser import (
     Tree,
     artwork_path,
     catalog,
@@ -45,14 +44,6 @@ REMOVAL_ACTIONS = {
     "played": ("Played", "remove_from_played", "Remove-Played"),
     "paused": ("Paused", "remove_from_paused", "Remove-Paused"),
 }
-
-
-class BrowserResponseError(KaleidescapeError):
-    """A browser response was too large, malformed, or outside the allowed routes."""
-
-
-class BrowserOutcomeUnknownError(KaleidescapeError):
-    """A collection POST may have reached the browser, but its result is unknown."""
 
 
 @dataclass(frozen=True)
@@ -224,7 +215,7 @@ def removal_form(page: str, handle: str, collection: str) -> tuple[str, str]:
     return path, action
 
 
-def _removal_path(path: str) -> bool:
+def is_removal_path(path: str) -> bool:
     """Allow only canonical fixed collection views, with no extra parameters."""
     parts = urlsplit(path)
     try:
@@ -445,7 +436,7 @@ class _DirectBrowserTransport:
     async def post(self, path: str, fields: dict[str, str]) -> BrowserResponse:
         """Send one bounded multipart request; never retry a POST."""
         self._check_path(path)
-        if path != "/movies" and not _removal_path(path):
+        if path != "/movies" and not is_removal_path(path):
             raise ValueError("Invalid local browser POST path")
         boundary = secrets.token_hex(16)
         chunks: list[bytes] = []

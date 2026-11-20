@@ -6,5 +6,8 @@ Copyright 2026 Kaleidescape Companion contributors
 This integration is licensed under the Apache License, Version 2.0. A copy is
 provided in LICENSE.
 
+The standalone kaleidescape-browser library is authored by Kaleidescape
+Companion contributors and is licensed under Apache-2.0.
+
 The integration includes a vendored copy of pykaleidescape. Its separate MIT
 license and copyright notice are retained at vendor/kaleidescape/LICENSE.

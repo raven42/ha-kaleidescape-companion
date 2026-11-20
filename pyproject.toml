@@ -26,6 +26,7 @@ license-files = ["LICENSE", "NOTICE"]
 
 [tool.setuptools.packages.find]
 include = ["custom_components", "custom_components.kaleidescape_companion*"]
+exclude = ["custom_components.kaleidescape_companion.kaleidescape_browser.*"]
 
 [tool.setuptools.package-data]
 "custom_components.kaleidescape_companion" = [
@@ -35,6 +36,7 @@ include = ["custom_components", "custom_components.kaleidescape_companion*"]
     "templates/maintenance_schedule.yaml",
 ]
 "custom_components.kaleidescape_companion.vendor.kaleidescape" = ["LICENSE", "py.typed"]
+"custom_components.kaleidescape_companion.kaleidescape_browser" = ["LICENSE"]
 
 [tool.ruff]
 target-version = "py314"

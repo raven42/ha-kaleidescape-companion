@@ -17,16 +17,13 @@ from custom_components.kaleidescape_companion.core.models import JournalError
 from custom_components.kaleidescape_companion.core.repository import JournalRepository
 from custom_components.kaleidescape_companion.library.store import source_id, title_id
 from custom_components.kaleidescape_companion.playback import controls as module
-from custom_components.kaleidescape_companion.playback.control_config import validate
-from custom_components.kaleidescape_companion.vendor.kaleidescape import const
-from custom_components.kaleidescape_companion.vendor.kaleidescape import message as pyk
-from custom_components.kaleidescape_companion.vendor.kaleidescape.error import (
+from custom_components.kaleidescape_companion.playback._pyk import (
     MessageError,
     RequestNotSentError,
     RequestOutcomeUnknownError,
 )
+from custom_components.kaleidescape_companion.playback.control_config import validate
 
-pyk_const = const
 SERIAL = "1A2B"
 SEED = "10.0.0.10"
 PLAYER = "10.0.0.25"
@@ -44,6 +41,7 @@ CONFIG = {
 class Peer:
     def __init__(self):
         self.connections = []
+        self.identity_reads = []
         self.commands = []
         self.mode = 2
         self.title = "Previous film"
@@ -67,16 +65,16 @@ class Peer:
         class Device:
             def __init__(self):
                 self.is_connected = False
-                self.connection = SimpleNamespace(generation=1)
 
             async def connect(self):
                 peer.connections.append(ip)
                 self.is_connected = True
 
-            async def async_close(self):
+            async def disconnect(self):
                 self.is_connected = False
 
             async def read_identity(self, serial=None):
+                peer.identity_reads.append((ip, serial))
                 chosen = serial or (
                     peer.alternative_serial if ip == "10.0.0.26" else SERIAL
                 )
@@ -86,8 +84,15 @@ class Peer:
                 return SimpleNamespace(
                     serial_number=chosen.zfill(12),
                     model=model,
+                    friendly_name="" if chosen == "2C3D" else "Example Cinema",
                     movie_zones=0 if chosen == "2C3D" else 1,
-                    generation=1,
+                    ip_address=(
+                        "10.0.0.26"
+                        if chosen == peer.alternative_serial
+                        else SEED
+                        if chosen == "2C3D"
+                        else "010.000.000.025"
+                    ),
                 )
 
             async def discover_devices(self):
@@ -96,34 +101,23 @@ class Peer:
                     await self.read_identity("2C3D"),
                 ]
 
-            async def read_control_state(self):
+            async def read_playback_state(self):
                 peer.read_started.set()
                 if peer.read_hold:
                     await peer.read_hold.wait()
                 if peer.hook:
                     peer.hook()
-                return SimpleNamespace(
-                    identity=await self.read_identity(),
-                    power="standby" if peer.standby else "on",
-                    readiness={"0": "ready", "1": "becoming_ready", "2": "idle"}[
-                        peer.readiness
-                    ],
-                    playing_title=peer.title,
-                )
-
-            async def get_content_details(self, handle):
-                return SimpleNamespace(
-                    field_year="2025", field_title=peer.metadata_title
-                )
+                return await peer.state(self)
 
             async def prepare_movie_launch(self, handle, *, serial):
                 return SimpleNamespace(
                     handle=HANDLE,
                     title=peer.metadata_title,
+                    year="2025",
                     identity=await self.read_identity(serial),
                 )
 
-            async def send_movie_launch(self, prepared, *, allow_experimental):
+            async def send_movie_launch(self, prepared):
                 peer.title = prepared.title
                 await self._execute("PLAY_MOVIE", prepared.handle)
 
@@ -175,34 +169,25 @@ class Peer:
 
         return Device()
 
-    async def response(self, device, request, *, serial=None):
-        if request is pyk.GetDeviceInfo:
-            return SimpleNamespace(
-                field_ip="10.0.0.26"
-                if serial == self.alternative_serial
-                else (SEED if serial == "2C3D" else "010.000.000.025")
-            )
-        if request is pyk.GetFriendlyName:
-            return SimpleNamespace(field="Example Cinema")
-        if request is pyk.GetDevicePowerState:
-            return SimpleNamespace(
-                field_zone=[pyk_const.DEVICE_ZONE_STATE_DISABLED]
-                if self.zone_power == ("0",)
-                else []
-            )
-        if request is pyk.GetPlayStatus:
-            return SimpleNamespace(
-                field_play_status={
-                    0: "none",
-                    1: "paused",
-                    2: "playing",
-                    4: "forward",
-                    6: "reverse",
-                }[self.mode],
-                field_title_length=7200,
-                field_title_location=100,
-            )
-        raise AssertionError(request)
+    async def state(self, device):
+        return SimpleNamespace(
+            identity=await device.read_identity(),
+            power="standby" if self.standby else "on",
+            readiness={"0": "ready", "1": "becoming_ready", "2": "idle"}[
+                self.readiness
+            ],
+            playing_title=self.title,
+            zone_available=self.zone_power != ("0",),
+            play_status={
+                0: "none",
+                1: "paused",
+                2: "playing",
+                4: "forward",
+                6: "reverse",
+            }[self.mode],
+            duration_seconds=7200,
+            position_seconds=100,
+        )
 
 
 class ControlsTest(unittest.IsolatedAsyncioTestCase):
@@ -218,13 +203,7 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
             self.hass, self.entry.runtime_data.repository, config
         )
         self.peer = Peer()
-        for name, replacement in (
-            ("Device", self.peer.client),
-            ("one_response", self.peer.response),
-        ):
-            client_patch = patch.object(module, name, replacement)
-            client_patch.start()
-            self.addCleanup(client_patch.stop)
+        self.enterContext(patch.object(module, "LivePlayer", self.peer.client))
 
     async def prepare(self, operation="pause", **kwargs):
         result = await self.call(
@@ -247,7 +226,7 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
     ):
         info = await self.call("control/info", **self.scope)
         self.assertFalse(info["result"]["enabled"])
-        with patch.object(module, "Device") as client:
+        with patch.object(module, "LivePlayer") as client:
             response = await self.call("control/discover", **self.scope)
             self.assertEqual(response["code"], "control_disabled")
             for operation in ("control/discover", "control/acknowledge"):
@@ -377,7 +356,9 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
         self,
     ):
         await self.configure()
-        result = await self.call("control/discover", **self.scope)
+        with patch.object(module, "LivePlayer", wraps=self.peer.client) as make_player:
+            result = await self.call("control/discover", **self.scope)
+        self.assertIs(make_player.call_args.kwargs["reconnect"], False)
         self.assertTrue(result["success"], result)
         self.assertEqual(
             [row["is_player"] for row in result["result"]["devices"]], [True, False]
@@ -392,18 +373,16 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
     async def test_status_failure_logs_safe_pyk_stage_and_recovers(self):
         await self.configure()
 
-        async def fail_power(device, request, *, serial=None):
-            if request is pyk.GetDevicePowerState:
-                raise OSError("10.0.0.25 token=fictional-secret")
-            return await self.peer.response(device, request, serial=serial)
+        async def fail_power(device):
+            raise OSError("10.0.0.25 token=fictional-secret")
 
         logger = "custom_components.kaleidescape_companion.playback.controls"
-        with patch.object(module, "one_response", fail_power):
+        with patch.object(self.peer, "state", fail_power):
             with self.assertLogs(logger, level="DEBUG") as first:
                 response = await self.call("control/status", **self.scope)
             self.assertEqual(response["code"], "control_unreachable")
             self.assertIn(
-                "Pyk read device power state failed: OSError", "\n".join(first.output)
+                "Pyk read control state failed: OSError", "\n".join(first.output)
             )
             self.assertEqual(sum("WARNING" in line for line in first.output), 1)
             with self.assertLogs(logger, level="DEBUG") as repeated:
@@ -429,7 +408,7 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
 
         device.connect = fail_connect
         with (
-            patch.object(module, "Device", return_value=device),
+            patch.object(module, "LivePlayer", return_value=device),
             self.assertLogs(
                 "custom_components.kaleidescape_companion.playback.controls",
                 level="DEBUG",
@@ -460,6 +439,7 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
     async def test_fresh_identity_and_state_guard_prevent_changed_target_writes(self):
         await self.configure()
         token = await self.prepare()
+        self.assertEqual(self.peer.identity_reads, [(SEED, SERIAL), (PLAYER, None)])
         self.peer.wrong_serial = True
         result = await self.execute(token)
         self.assertEqual(result["code"], "control_identity")
@@ -517,14 +497,14 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
     async def test_failed_read_after_acknowledgment_does_not_mark_command_unsent(self):
         await self.configure()
         token = await self.prepare("stop")
-        original = self.peer.response
+        original = self.peer.state
 
-        async def read(device, request, *, serial=None):
-            if self.peer.commands and request is pyk.GetPlayStatus:
+        async def read(device):
+            if self.peer.commands:
                 raise RequestNotSentError("Fictional read failed")
-            return await original(device, request, serial=serial)
+            return await original(device)
 
-        with patch.object(module, "one_response", read):
+        with patch.object(self.peer, "state", read):
             response = await self.execute(token)
         self.assertEqual(response["result"]["outcome"], "acknowledged")
         self.assertTrue(response["result"]["acknowledged"])
@@ -716,7 +696,7 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
             client.connect = connect
             return client
 
-        with patch.object(module, "Device", delayed_client):
+        with patch.object(module, "LivePlayer", delayed_client):
             read = asyncio.create_task(controls.async_discover(lambda: None))
             await entered.wait()
             await controls.async_pause()

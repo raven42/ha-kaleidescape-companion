@@ -14,6 +14,9 @@ from _schema_fixtures import remove_collection_queue_schema
 
 from custom_components.kaleidescape_companion.core.models import JournalError
 from custom_components.kaleidescape_companion.core.repository import JournalRepository
+from custom_components.kaleidescape_companion.kaleidescape_browser import (
+    BrowserOutcomeUnknownError,
+)
 from custom_components.kaleidescape_companion.library.collections import (
     member_hash,
     parameters,
@@ -21,9 +24,6 @@ from custom_components.kaleidescape_companion.library.collections import (
 from custom_components.kaleidescape_companion.library.config import DEFAULTS
 from custom_components.kaleidescape_companion.library.store import title_id
 from custom_components.kaleidescape_companion.library.sync import LibrarySync
-from custom_components.kaleidescape_companion.vendor.kaleidescape.local_browser import (
-    BrowserOutcomeUnknownError,
-)
 
 
 class CollectionQueueTest(unittest.IsolatedAsyncioTestCase):

@@ -77,6 +77,8 @@ class DeployTest(unittest.TestCase):
             "private.log",
             "frontend/dev.ts",
             "templates/private.yaml",
+            "kaleidescape_browser/tests/test_browser.py",
+            "kaleidescape_browser/build/lib/kaleidescape_browser/client.py",
             "__pycache__/x.pyc",
         ):
             path = self.source / name
@@ -94,7 +96,7 @@ class DeployTest(unittest.TestCase):
                 all(member.isfile() and member.mode == 0o644 for member in archive)
             )
             self.assertIn(
-                f"{deploy.DOMAIN}/vendor/kaleidescape/library_parser.py",
+                f"{deploy.DOMAIN}/kaleidescape_browser/parser.py",
                 archive.getnames(),
             )
             self.assertIn(
@@ -187,6 +189,10 @@ class DeployTest(unittest.TestCase):
                 license_file.read(),
                 (root / "scripts/assets/pyk-overlay/LICENSE").read_bytes(),
             )
+            browser_license = archive.extractfile(
+                f"{deploy.DOMAIN}/kaleidescape_browser/LICENSE"
+            )
+            self.assertEqual(browser_license.read(), (root / "LICENSE").read_bytes())
             archive.extractall(components, filter="data")
             for member in archive:
                 if member.name.endswith(".py"):
@@ -215,8 +221,17 @@ assert sys.modules['kaleidescape'] is builtin_pyk
 assert builtin_pyk is not companion_pyk
 assert builtin_pyk.__version__ == '1.2.0'
 assert importlib.util.find_spec('kaleidescape.library_parser') is None
-assert companion_pyk.__version__ == '1.2.0.dev1+cmp'
-assert callable(companion_pyk.Device.prepare_movie_launch)
+from custom_components.kaleidescape_companion.playback.live_player import LivePlayer
+from custom_components.kaleidescape_companion.kaleidescape_browser import LocalLibrary
+assert companion_pyk.__version__ == '1.2.0'
+assert 'prepare_movie_launch' not in companion_pyk.Device.__dict__
+assert LivePlayer.__base__ is companion_pyk.Device
+sys.path.insert(0, str(root / 'custom_components/kaleidescape_companion/playback'))
+from live_player import LivePlayer as StandalonePlayer
+assert StandalonePlayer.__base__ is builtin_pyk.Device
+assert callable(LivePlayer.send_movie_launch)
+assert callable(StandalonePlayer.discover_devices)
+assert callable(LocalLibrary.movies)
 assert pathlib.Path(companion_pyk.__file__).resolve().is_relative_to(root)
 from custom_components.kaleidescape_companion.ui.automation_templates import (
     TEMPLATES, read_template,

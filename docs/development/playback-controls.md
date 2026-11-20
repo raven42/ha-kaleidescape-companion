@@ -1,11 +1,10 @@
 # Player discovery and controls
 
-Status: temporary patched-pyk proof of concept; offline tests pass, hardware
-qualification remains. Companion uses persistent pyk `Device` connections,
-public methods and routed Request classes for control transport. The
-[pyk compatibility](pyk.md) owns upstream compatibility and release gates. This
-document owns Companion's user permissions, player selection, title identity and
-command recovery behavior.
+Companion uses `LivePlayer(Device)` directly for seed discovery, fresh player
+state and experimental serial-addressed `PLAY_MOVIE`. Pyk supplies the ordinary
+playback, navigation and power controls. Offline tests exercise these paths.
+Hardware qualification remains pending under the
+[pyk compatibility plan](pyk.md).
 
 The built-in HA integration remains the playback observation source. Companion
 registers no replacement media player and never forwards arbitrary HA services.
@@ -143,11 +142,12 @@ does not protect a device from another host that can reach its TCP port.
 Control status returns `power_state` (`on`/`standby`), `readiness`
 (`ready`/`starting`/`idle`) and `ready`, alongside playback state. It uses the
 [official protocol](https://www.kaleidescape.com/wp-content/uploads/Kaleidescape-System-Control-Protocol-Reference-Manual.pdf)
-`GET_DEVICE_POWER_STATE` and `GET_SYSTEM_READINESS_STATE`. Older Premiere
-players that reject the latter command use confirmed on-state plus a successful
-playback read. Device/zone identity is still verified before an explicit wake.
-Launch and transport preflight reject unready players; power operations and
-read-only status remain available. A readiness change invalidates a preflight.
+`GET_DEVICE_POWER_STATE` and `GET_SYSTEM_READINESS_STATE`. The current pyk
+connection initialization requires both queries. Compatibility with Premiere
+firmware that rejects the readiness query needs hardware qualification. Device
+and zone identity are verified before an explicit wake. Launch and transport
+preflight reject unready players; power operations and read-only status remain
+available. A readiness change invalidates a preflight.
 
 The Library action reads state on opening, offers **Check player** while state
 is unknown/starting and **Power On** when standby/idle, then polls read-only
@@ -166,17 +166,16 @@ automated tests do not certify device/firmware behavior.
 
 ## Migration and validation
 
-The PoC creates lazy, persistent pyk Devices, preserving normal initialization,
-state events and automatic reconnect. Connection initialization is distinct from
-playback or power mutation; cached player discovery still opens no connection.
-Fresh verification remains required before a write, and automatic reconnect must
-never replay a user command. These capabilities require the patched pyk checkout
-until an accepted compatible release is available. An incomplete pyk connection
-is discarded even if its TCP socket opened before initialization failed; a later
-explicit read can establish a fresh client.
+Companion opens a `LivePlayer` on demand and reuses its connection for
+subsequent operations. Pyk initializes the connection and processes device
+events. After a disconnect, the next explicit operation opens the connection and
+verifies the player again. Cached player discovery works offline. The temporary
+pyk bundle supplies request routing, outcome errors and documented commands. A
+failed initialization discards the connection.
 
-**Settings → About** displays the version declared by the loaded pyk module. For
-a failed status read, Companion logs one warning by default and identifies the
+**Settings → About** displays the version declared by the loaded pyk module,
+currently `1.2.0`. The vendor manifest identifies the individual patches. For a
+failed status read, Companion logs one warning by default and identifies the
 failed pyk stage at debug level, without device identifiers or raw exception
 text. A later successful read logs recovery. The version string alone cannot
 prove that a patched module with the same version number is installed.

@@ -47,28 +47,27 @@ class PykOverlayTest(unittest.TestCase):
             self.assertNotEqual(check(), 0)
 
     def test_offline_reconstruction_and_stale_patch_rejection(self):
-        self.assertEqual(check_pyk.reconstruct(), 12)
+        self.assertEqual(
+            check_pyk.reconstruct(),
+            len(json.loads((check_pyk.OVERLAY / "hashes.json").read_text())),
+        )
         with tempfile.TemporaryDirectory() as directory:
             overlay = Path(directory) / "overlay"
             shutil.copytree(check_pyk.OVERLAY, overlay)
-            patch = overlay / "companion.patch"
+            patch_files = json.loads((overlay / "base.json").read_text())["patches"]
+            patch = overlay / patch_files[0]["file"]
             original = patch.read_text()
-            # Still applies, but no longer reproduces the reviewed runtime bytes.
-            patch.write_text(original.replace("pre_submit()", "pre_submit_changed()"))
+            patch.write_text(
+                original.replace("Event callback failed", "Changed callback")
+            )
             with self.assertRaisesRegex(ValueError, "differs"):
                 check_pyk.reconstruct(overlay)
-            # Reproduce the original missing-API provenance defect.
-            chunks = original.split("diff --git ")
-            patch.write_text(
-                "".join(
-                    "diff --git " + chunk
-                    for chunk in chunks[1:]
-                    if not chunk.startswith("a/kaleidescape/library_parser.py ")
-                )
-            )
-            with self.assertRaises(FileNotFoundError):
-                check_pyk.reconstruct(overlay)
             patch.write_text(original)
+            # All three PRs are needed to produce the vendored runtime.
+            last = overlay / patch_files[-1]["file"]
+            last.rename(last.with_suffix(".missing"))
+            with self.assertRaises(subprocess.CalledProcessError):
+                check_pyk.reconstruct(overlay)
             (overlay / "base.tar.gz").write_bytes(b"invalid base")
             with self.assertRaisesRegex(ValueError, "base fixture checksum"):
                 check_pyk.reconstruct(overlay)

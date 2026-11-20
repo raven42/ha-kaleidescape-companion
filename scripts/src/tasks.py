@@ -117,6 +117,47 @@ def provider_tests(arguments: Sequence[str] = ()) -> None:
     )
 
 
+def browser_tests(arguments: Sequence[str] = ()) -> None:
+    """Run the server browser against fictional transports using only the stdlib."""
+    environment = os.environ.copy()
+    environment["PYTHONPATH"] = str(ROOT / "custom_components/kaleidescape_companion")
+    run(
+        [
+            sys.executable,
+            "-S",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "custom_components/kaleidescape_companion/kaleidescape_browser/tests",
+            *arguments,
+        ],
+        env=environment,
+    )
+
+
+def live_player_tests(arguments: Sequence[str] = ()) -> None:
+    """Exercise the standalone module with pyk as its only dependency."""
+    component = ROOT / "custom_components/kaleidescape_companion"
+    environment = os.environ.copy()
+    environment["PYTHONPATH"] = os.pathsep.join(
+        str(component / path) for path in ("playback", "vendor")
+    )
+    run(
+        [
+            sys.executable,
+            "-S",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/live_player",
+            *arguments,
+        ],
+        env=environment,
+    )
+
+
 def integration_tests(arguments: Sequence[str] = ()) -> None:
     run(
         [
@@ -146,6 +187,8 @@ def shell_check() -> None:
 def check() -> None:
     verify_pyk(reconstruct=True)
     provider_tests()
+    browser_tests()
+    live_player_tests()
     integration_tests()
     project_check()
     lint()

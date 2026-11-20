@@ -1,0 +1,132 @@
+diff --git a/kaleidescape/const.py b/kaleidescape/const.py
+index 8e29f0b..137e266 100644
+--- a/kaleidescape/const.py
++++ b/kaleidescape/const.py
+@@ -293,3 +293,14 @@ VOLUME_CAPABILITIES_MUTE_CONTROL = 2
+ VOLUME_CAPABILITIES_VOLUME_FEEDBACK = 4
+ VOLUME_CAPABILITIES_MUTE_FEEDBACK = 8
+ VOLUME_CAPABILITIES_SET_VOLUME = 16
++
++# Additional documented commands
++PLAY_OR_PAUSE = "PLAY_OR_PAUSE"
++PAUSE_ON = "PAUSE_ON"
++PAUSE_OFF = "PAUSE_OFF"
++PAGE_UP = "PAGE_UP"
++PAGE_DOWN = "PAGE_DOWN"
++DETAILS = "DETAILS"
++GO_SEARCH = "GO_SEARCH"
++KALEIDESCAPE_MENU_ON = "KALEIDESCAPE_MENU_ON"
++KALEIDESCAPE_MENU_OFF = "KALEIDESCAPE_MENU_OFF"
+diff --git a/kaleidescape/device.py b/kaleidescape/device.py
+index 941e672..603ffd8 100644
+--- a/kaleidescape/device.py
++++ b/kaleidescape/device.py
+@@ -310,6 +310,46 @@ class Device:
+         """Send menu toggle command."""
+         await self._send(messages.MenuToggle)
+ 
++    async def play_or_pause(self) -> None:
++        """Send PLAY_OR_PAUSE command."""
++        await self._send(messages.PlayOrPause)
++
++    async def pause_on(self) -> None:
++        """Send PAUSE_ON command."""
++        await self._send(messages.PauseOn)
++
++    async def pause_off(self) -> None:
++        """Send PAUSE_OFF command."""
++        await self._send(messages.PauseOff)
++
++    async def page_up(self) -> None:
++        """Send PAGE_UP command."""
++        await self._send(messages.PageUp)
++
++    async def page_down(self) -> None:
++        """Send PAGE_DOWN command."""
++        await self._send(messages.PageDown)
++
++    async def details(self) -> None:
++        """Send DETAILS command."""
++        await self._send(messages.Details)
++
++    async def go_search(self) -> None:
++        """Send GO_SEARCH command."""
++        await self._send(messages.GoSearch)
++
++    async def menu_on(self) -> None:
++        """Send KALEIDESCAPE_MENU_ON command."""
++        await self._send(messages.MenuOn)
++
++    async def menu_off(self) -> None:
++        """Send KALEIDESCAPE_MENU_OFF command."""
++        await self._send(messages.MenuOff)
++
++    async def back(self) -> None:
++        """Send BACK (the CANCEL command is its protocol alias)."""
++        await self.cancel()
++
+     async def set_volume_capabilities(self, value: int) -> None:
+         """Send volume capabilities event."""
+         if not isinstance(value, int) or isinstance(value, bool):
+diff --git a/kaleidescape/message.py b/kaleidescape/message.py
+index 1a37dea..1c58492 100644
+--- a/kaleidescape/message.py
++++ b/kaleidescape/message.py
+@@ -1506,3 +1506,57 @@ class MenuToggle(Request):
+     """Class for KALEIDESCAPE_MENU_TOGGLE messages."""
+ 
+     name = const.KALEIDESCAPE_MENU_TOGGLE
++
++
++class PlayOrPause(Request):
++    """Class for PLAY_OR_PAUSE messages."""
++
++    name = const.PLAY_OR_PAUSE
++
++
++class PauseOn(Request):
++    """Class for PAUSE_ON messages."""
++
++    name = const.PAUSE_ON
++
++
++class PauseOff(Request):
++    """Class for PAUSE_OFF messages."""
++
++    name = const.PAUSE_OFF
++
++
++class PageUp(Request):
++    """Class for PAGE_UP messages."""
++
++    name = const.PAGE_UP
++
++
++class PageDown(Request):
++    """Class for PAGE_DOWN messages."""
++
++    name = const.PAGE_DOWN
++
++
++class Details(Request):
++    """Class for DETAILS messages."""
++
++    name = const.DETAILS
++
++
++class GoSearch(Request):
++    """Class for GO_SEARCH messages."""
++
++    name = const.GO_SEARCH
++
++
++class MenuOn(Request):
++    """Class for KALEIDESCAPE_MENU_ON messages."""
++
++    name = const.KALEIDESCAPE_MENU_ON
++
++
++class MenuOff(Request):
++    """Class for KALEIDESCAPE_MENU_OFF messages."""
++
++    name = const.KALEIDESCAPE_MENU_OFF

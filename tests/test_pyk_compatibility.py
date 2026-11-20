@@ -8,17 +8,17 @@ from types import SimpleNamespace
 
 import homeassistant
 
+from custom_components.kaleidescape_companion.kaleidescape_browser import (
+    LocalLibrary,
+)
 from custom_components.kaleidescape_companion.playback.control_config import COMMANDS
 from custom_components.kaleidescape_companion.playback.controls import (
     PlaybackControls,
     PlaybackState,
 )
 from custom_components.kaleidescape_companion.playback.identity import normalize_serial
+from custom_components.kaleidescape_companion.playback.live_player import LivePlayer
 from custom_components.kaleidescape_companion.vendor.kaleidescape import Device
-from custom_components.kaleidescape_companion.vendor.kaleidescape import message as pyk
-from custom_components.kaleidescape_companion.vendor.kaleidescape.local_browser import (
-    LocalLibrary,
-)
 
 
 class PykCompatibilityTest(unittest.TestCase):
@@ -39,12 +39,14 @@ class PykCompatibilityTest(unittest.TestCase):
         matched = re.fullmatch(r"pykaleidescape==(.+)", ha_manifest["requirements"][0])
         self.assertIsNotNone(matched)
         self.assertEqual(manifest["requirements"], [f"pykaleidescape>={matched[1]}"])
-        self.assertTrue(callable(Device.prepare_movie_launch))
+        self.assertIs(LivePlayer.__base__, Device)
+        self.assertTrue(callable(LivePlayer.prepare_movie_launch))
+        self.assertFalse(hasattr(Device, "prepare_movie_launch"))
         self.assertTrue(callable(LocalLibrary.add_to_collection))
 
     def test_pyk_commands_use_explicit_device_methods(self):
         for method in COMMANDS.values():
-            self.assertTrue(callable(getattr(Device, method)))
+            self.assertIs(getattr(LivePlayer, method), getattr(Device, method))
         self.assertEqual(COMMANDS["pause"], "pause_on")
         self.assertEqual(COMMANDS["resume"], "pause_off")
         self.assertEqual(COMMANDS["back"], "back")
@@ -59,49 +61,26 @@ class PykCompatibilityTest(unittest.TestCase):
 
 
 class PykStateTest(unittest.IsolatedAsyncioTestCase):
-    async def test_state_reads_use_pyk_names_on_guarded_client(self):
+    async def test_state_reads_use_live_player_snapshot(self):
         controls = object.__new__(PlaybackControls)
-        responses = {
-            pyk.GetDevicePowerState: SimpleNamespace(field_zone=[]),
-            pyk.GetPlayStatus: SimpleNamespace(
-                field_play_status="playing",
-                field_title_length=7200,
-                field_title_location=100,
-            ),
-        }
 
         class Client:
-            def __init__(self):
-                self.queries = []
-
-            connection = SimpleNamespace(generation=1)
-
-            async def read_control_state(self):
+            async def read_playback_state(self):
                 return SimpleNamespace(
-                    identity=SimpleNamespace(generation=1),
+                    identity=SimpleNamespace(
+                        serial_number="000000001A2B", movie_zones=1
+                    ),
                     power="on",
                     readiness="ready",
+                    zone_available=True,
                     playing_title="Fictional",
+                    play_status="playing",
+                    duration_seconds=7200,
+                    position_seconds=100,
                 )
 
-        client = Client()
-
-        async def response(device, request, *, serial=None):
-            client.queries.append(request)
-            return responses[request]
-
-        from unittest.mock import patch
-
-        with patch(
-            "custom_components.kaleidescape_companion.playback.controls.one_response",
-            response,
-        ):
-            power, state = await controls._state(client, "status")
+        power, state = await controls._state(Client(), "1A2B", "status")
         self.assertEqual(
             power, {"power_state": "on", "readiness": "ready", "ready": True}
         )
         self.assertEqual(state, PlaybackState("Fictional", 2, 7200, 100))
-        self.assertEqual(
-            client.queries,
-            [pyk.GetDevicePowerState, pyk.GetPlayStatus],
-        )

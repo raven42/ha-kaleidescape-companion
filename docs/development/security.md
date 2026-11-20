@@ -325,11 +325,11 @@ failed observation after acknowledgement does not turn the command into an
 unsent failure. Reconnect must not replay user writes. Protocol ACKs do not
 prove physical outcome or exact movie edition.
 
-The PoC's persistent pyk workflow includes ordinary initialization, local
-events, version identification and automatic reconnect. These are compatible
-with an opt-in connection and must not be prohibited by a blanket “no connection
-writes” policy. Optional upstream logging/syslog changes require owner
-agreement; Companion does not impose its household policy on all pyk callers.
+An opted-in player connection performs pyk's ordinary initialization and version
+identification and receives local events. After a disconnect, Companion opens a
+connection on the next explicit operation and verifies the selected player
+before sending a command. Changes to pyk's upstream logging or syslog behavior
+require the maintainer's agreement.
 
 ## Logging, diagnostics and dependency review
 

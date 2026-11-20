@@ -7,12 +7,7 @@ from dataclasses import dataclass, field
 from html.parser import HTMLParser
 from urllib.parse import parse_qs, urlsplit
 
-from .error import KaleidescapeError
-
-
-class LibraryFormatError(KaleidescapeError):
-    """A local browser page was incomplete or had an unsupported layout."""
-
+from .errors import LibraryFormatError
 
 MAX_TITLES = 10_000
 MAX_COLLECTIONS = 200

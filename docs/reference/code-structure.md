@@ -22,6 +22,8 @@ stays separate.
 | `backup.py`, `diagnostics.py`                                                                                    | Backup coordination and bounded diagnostic projection                                                      |
 | [`core/`](../../custom_components/kaleidescape_companion/core/)                                                  | Worker-owned SQLite repository, migrations, imports, settings, permissions and private data operations     |
 | [`playback/`](../../custom_components/kaleidescape_companion/playback/)                                          | HA state observation, tracking/completion, manual viewing admission, recording and device-control outcomes |
+| [`playback/live_player.py`](../../custom_components/kaleidescape_companion/playback/live_player.py)              | Standalone LivePlayer discovery, fresh playback state and movie launch                                     |
+| [`kaleidescape_browser/`](../../custom_components/kaleidescape_companion/kaleidescape_browser/)                  | Standalone local server browser library with its own HTTP transport, parser, package and tests             |
 | [`library/`](../../custom_components/kaleidescape_companion/library/)                                            | Local server transport/sync, identities, catalog/artwork, purchases, matching and collection queue         |
 | [`calendar/`](../../custom_components/kaleidescape_companion/calendar/)                                          | Publication/export, dedicated-calendar reconciliation and uncertainty recovery                             |
 | [`enrichment/`](../../custom_components/kaleidescape_companion/enrichment/)                                      | HA-owned metadata jobs, review drafts, source choices, cache and image handling                            |
@@ -60,17 +62,20 @@ server nor Node is a dependency of installed HA runtime files.
 
 ## Tests, tools and maintained guidance
 
-| Location                                   | Responsibility                                                                                     |
-| ------------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| [`tests/`](../../tests/)                   | Fictional integration/storage/lifecycle/API tests, fixtures and isolated package/deployment tests  |
-| `tests/scrapers/`                          | Provider suite that runs independently of HA on its own Python matrix                              |
-| [`frontend/tests/`](../../frontend/tests/) | Component, API, security and loopback proxy coverage; simulated DOM is not a real-browser review   |
-| [`scripts/`](../../scripts/)               | Thin executable terminal commands shared by editor tasks and CI                                    |
-| `scripts/src/`                             | Full tooling implementations, including checks, packaging, deployment and offline operator helpers |
-| `scripts/config/`                          | Local HA configuration seed and fictional deployment example                                       |
-| `scripts/assets/pyk-overlay/`              | Pinned upstream base, patch, hashes and license for offline pyk reconstruction                     |
-| [`docs/development/`](../development/)     | Current contracts, testing/release instructions and the active roadmap                             |
-| `artifacts/audits/<run-id>/`               | Ignored temporary audit output; dated evidence is archived privately                               |
+| Location                                         | Responsibility                                                                                     |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| [`tests/`](../../tests/)                         | Fictional integration/storage/lifecycle/API tests, fixtures and isolated package/deployment tests  |
+| `tests/scrapers/`                                | Standalone provider suite on Python 3.14                                                           |
+| `kaleidescape_browser/tests/` in the integration | Standard-library tests for the independently installable server browser                            |
+| `tests/live_player/`                             | Standalone pyk player tests with in-memory protocol replies                                        |
+| `tests/test_pyk_adapter.py`                      | Fictional TCP player exercising Companion's control client and launch requests                     |
+| [`frontend/tests/`](../../frontend/tests/)       | Component, API, security and loopback proxy coverage; simulated DOM is not a real-browser review   |
+| [`scripts/`](../../scripts/)                     | Thin executable terminal commands shared by editor tasks and CI                                    |
+| `scripts/src/`                                   | Full tooling implementations, including checks, packaging, deployment and offline operator helpers |
+| `scripts/config/`                                | Local HA configuration seed and fictional deployment example                                       |
+| `scripts/assets/pyk-overlay/`                    | Pinned upstream base, patch, hashes and license for offline pyk reconstruction                     |
+| [`docs/development/`](../development/)           | Current contracts, testing/release instructions and the active roadmap                             |
+| `artifacts/audits/<run-id>/`                     | Ignored temporary audit output; dated evidence is archived privately                               |
 
 A minimal orientation check from the repository root is:
 

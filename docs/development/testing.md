@@ -8,23 +8,29 @@ loopback sockets but do not contact household devices or live providers.
 ```sh
 scripts/check
 scripts/test --providers-only
+scripts/test --browser-only
+scripts/test --live-player-only
 scripts/test --python-only
 scripts/test --frontend-only
 scripts/format --check
 scripts/check-pyk --reconstruct
 ```
 
-The provider suite is independent of HA and runs on Python 3.14 in CI. The
-integration suite uses standard unittest discovery. The wrappers set isolated
-asyncio slow-callback diagnostics to 250 ms without disabling debug checks;
-direct `python -m unittest` commands retain Python's default. Frontend tests
-combine Node security/proxy checks with simulated-DOM components. The
+The provider, live player and server browser suites run independently of HA on
+Python 3.14 in CI. The player suite imports pyk and the standalone module. The
+browser tests also run directly from the standalone project using the
+[package instructions](../../custom_components/kaleidescape_companion/kaleidescape_browser/README.md).
+The integration suite uses standard unittest discovery. The wrappers set
+isolated asyncio slow-callback diagnostics to 250 ms without disabling debug
+checks; direct `python -m unittest` commands retain Python's default. Frontend
+tests combine Node security/proxy checks with simulated-DOM components. The
 [test suite map](../../tests/README.md) identifies feature coverage.
 
 For focused work in the prepared environment:
 
 ```sh
 .venv/bin/python -m unittest discover -s tests -p 'test_repository.py'
+.venv/bin/python -m unittest discover -s tests -p 'test_pyk_adapter.py'
 PYTHONPATH=custom_components/kaleidescape_companion .venv/bin/python -m unittest discover -s tests/scrapers
 npm --prefix frontend test
 .venv/bin/python -m ruff check .

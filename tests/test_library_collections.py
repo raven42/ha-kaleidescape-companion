@@ -12,6 +12,15 @@ import test_library as library
 from _expected_logs import expected_log
 
 from custom_components.kaleidescape_companion.core.models import JournalError
+from custom_components.kaleidescape_companion.kaleidescape_browser import (
+    BrowserOutcomeUnknownError,
+)
+from custom_components.kaleidescape_companion.kaleidescape_browser import (
+    parser as library_parser,
+)
+from custom_components.kaleidescape_companion.kaleidescape_browser.client import (
+    form_targets,
+)
 from custom_components.kaleidescape_companion.library.collections import (
     member_hash,
     parameters,
@@ -19,11 +28,6 @@ from custom_components.kaleidescape_companion.library.collections import (
 from custom_components.kaleidescape_companion.library.config import DEFAULTS
 from custom_components.kaleidescape_companion.library.store import title_id
 from custom_components.kaleidescape_companion.library.sync import LibrarySync
-from custom_components.kaleidescape_companion.vendor.kaleidescape import library_parser
-from custom_components.kaleidescape_companion.vendor.kaleidescape.local_browser import (
-    BrowserOutcomeUnknownError,
-    form_targets,
-)
 
 LibraryFormatError = library_parser.LibraryFormatError
 

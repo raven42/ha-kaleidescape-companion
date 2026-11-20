@@ -20,6 +20,8 @@ jobs:
           python-version: "3.14"
       - run: python -m pip install 'ruff>=0.14,<1'
       - run: scripts/test --providers-only
+      - run: scripts/test --browser-only
+      - run: scripts/test --live-player-only
       - run: ruff check custom_components/kaleidescape_companion/scrapers tests/scrapers
       - run: ruff format --check custom_components/kaleidescape_companion/scrapers tests/scrapers
 

@@ -4,5 +4,22 @@
   "paths": [
     "kaleidescape",
     "LICENSE"
+  ],
+  "patches": [
+    {
+      "file": "0001-connection-robustness.patch",
+      "branch": "pr/connection-robustness",
+      "commit": "2885f66deac8de5b0773bc9f3783da4d3fefc084"
+    },
+    {
+      "file": "0002-request-routing.patch",
+      "branch": "pr/request-routing",
+      "commit": "766657ea0b3b0b461a1b69299769a06ad6fd84fd"
+    },
+    {
+      "file": "0003-documented-commands.patch",
+      "branch": "pr/documented-commands",
+      "commit": "a201cdc983cfeb53e0cb985691933841224a9f00"
+    }
   ]
 }

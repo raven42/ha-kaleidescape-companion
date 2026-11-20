@@ -7,11 +7,11 @@ integration's **Configure** action. Once enabled, all active HA users can browse
 the shared cached library and artwork. Settings and **Sync now** remain
 administrator-only.
 
-The temporary PoC uses pyk's `LocalLibrary` to parse local browser pages and the
-collection forms. Companion supplies its guarded HA HTTP transport and retains
-caching, scheduling, identity, authorization and durable collection outcomes.
-This requires the privately bundled patched pyk source described in the
-[pyk compatibility](pyk.md).
+Companion's standalone `kaleidescape_browser.LocalLibrary` parses local server
+pages and collection forms. The integration supplies its guarded HA HTTP
+transport and owns caching, scheduling, identity, authorization and durable
+collection outcomes. See the
+[browser package guide](../../custom_components/kaleidescape_companion/kaleidescape_browser/README.md).
 
 ## Connection and sync settings
 
@@ -795,10 +795,9 @@ silently ignored aiohttp's default multipart field headers despite returning a
 redirect. Its add action uses `Add-To-Collection` and the form's offered opaque
 value. The five observed removal actions are `Remove-Often`, `Remove-Soon`,
 `Remove-New`, `Remove-Played` and `Remove-Paused`. Each requires the checkbox
-for the exact selected version and a fixed collection-view route. The bundled
-pyk patch checks the form, action, route, complete listing and checkbox before
-sending; it never executes page JavaScript or retries a POST. An HTTP response
-is not membership proof.
+for the exact selected version and a fixed collection-view route. The browser
+library checks the form, action, route, complete listing and checkbox before
+submitting once. Companion confirms membership by reading the collection again.
 
 Before each write, Companion verifies the cached source/version against a fresh
 catalog and reads the full affected collection. Watched/Unwatched moves read

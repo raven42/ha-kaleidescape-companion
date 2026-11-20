@@ -19,8 +19,8 @@ from ..core.models import JournalError
 from ..core.runtime import get_library, get_runtime, loaded_runtimes
 from ..core.security import is_active_admin, is_active_user
 from ..library.config import origin
+from ..playback._pyk import kaleidescape
 from ..playback.now_playing import snapshot as now_playing_snapshot
-from ..vendor import kaleidescape
 from .automation_templates import TEMPLATES
 from .controls import control_request
 from .preferences import public_defaults
