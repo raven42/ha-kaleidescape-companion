@@ -64,11 +64,11 @@ checks in an isolated environment; it defaults to `.venv` in this checkout.
 
 The complete check validates workspace/runtime consistency, standalone provider
 contracts, standalone server browser and live-player tests, Python integration
-tests, project structure and documentation links, Ruff lint/format, shell
-syntax, Markdown lint/format, frontend lint/format, component/proxy tests,
-TypeScript and the production bundle. Tests use fictional data and temporary
-storage. Some emulator/proxy tests bind loopback sockets; checks do not contact
-household devices or external providers.
+tests, project structure and documentation links, Ruff and Flake8 lint, Ruff
+format, shell syntax, Markdown lint/format, frontend lint/format,
+component/proxy tests, TypeScript and the production bundle. Tests use fictional
+data and temporary storage. Some emulator/proxy tests bind loopback sockets;
+checks do not contact household devices or external providers.
 
 Focused checks, using the prepared virtual environment:
 
@@ -78,6 +78,7 @@ scripts/test --browser-only
 scripts/test --live-player-only
 PYTHONPATH=custom_components/kaleidescape_companion .venv/bin/python -m unittest discover -s tests/scrapers
 .venv/bin/python scripts/src/check_project.py
+.venv/bin/python -m flake8 .
 .venv/bin/ruff check .
 .venv/bin/ruff format --check .
 npm --prefix frontend test
@@ -111,7 +112,9 @@ Package does not run the full release gate; release publication requires Check
 and the qualification work in [releasing](releasing.md). Dependency scans,
 frontend preview and local HA remain separate operations. The explicitly labeled
 maintainer composite runs Build, Check, Package, deploy and restart in sequence;
-see [deployment](deployment.md) before selecting it.
+see [deployment](deployment.md) before selecting it. The **Maintainer: Deploy
+frontend** task builds and uploads the panel bundle separately for frontend-only
+changes.
 
 See [testing](testing.md) for suite selection and validation limits. The
 wrappers use normal `unittest` discovery and set Python's isolated-asyncio

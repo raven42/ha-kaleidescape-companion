@@ -663,6 +663,8 @@ class PlaybackControls:
                         "play": 2,
                         "launch": 2,
                     }.get(review["operation"])
+                    if review["operation"] == "play_pause":
+                        desired = {1: 2, 2: 1}.get(before.mode)
                     if desired is not None and after.mode == desired:
                         if not movie or (
                             after.title == movie.title

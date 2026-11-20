@@ -450,7 +450,10 @@ export class DeviceControls extends LitElement {
     const generation = this.generation;
     const result = await this.client!.controlExecute(this.pending);
     if (generation !== this.generation) return;
-    this.notice = OUTCOMES[result.outcome];
+    this.notice =
+      this.mode === "remote" && result.outcome === "state_observed"
+        ? ""
+        : OUTCOMES[result.outcome];
     this.pending = undefined;
     const operation = this.lastOperation;
     if (["state_observed", "acknowledged"].includes(result.outcome)) {
@@ -689,7 +692,7 @@ export class DeviceControls extends LitElement {
                   ${this.waking ? html`<span role="status">◌ Starting player…</span>` : nothing}
                 `
       }
-      ${this.mode === "remote" && this.inlineRemote && info?.enabled ? remoteControls(player?.name || "Kaleidescape player", !!disabled, !!this.status?.ready, (operation) => void this.prepare(operation)) : nothing}
+      ${this.mode === "remote" && this.inlineRemote && info?.enabled ? remoteControls(!!disabled, !!this.status?.ready, (operation) => void this.prepare(operation)) : nothing}
       ${this.dialog !== "remote" || this.acknowledge ? this.feedback() : nothing}
       ${blocked && !(info?.can_manage && this.scope.permissions.edit) ? html`<p class="warning">This player needs administrator review of an uncertain command before more commands can be sent.</p>` : nothing}
       ${info?.can_manage && this.scope.permissions.edit ? info.pending.map((item) => html`<p class="warning">Unconfirmed ${item.operation} for ${info.players.find((row) => row.id === item.player_id)?.name || "a previously selected player"}. <button type="button" ?disabled=${this.busy} @click=${() => this.reviewPending(item.request_id)}>I inspected the player…</button></p>`) : nothing}
@@ -701,7 +704,7 @@ export class DeviceControls extends LitElement {
       >
         <div class="card-head">
           <h2>
-            ${this.acknowledge ? "Review unconfirmed command" : this.dialog === "remote" ? "Theater Remote" : "Choose Player"}
+            ${this.acknowledge ? "Review unconfirmed command" : this.dialog === "remote" ? `${player?.name || "Kaleidescape player"} Remote` : "Choose Player"}
           </h2>
           ${closeButton((event) => this.close(event))}
         </div>
@@ -713,7 +716,6 @@ export class DeviceControls extends LitElement {
               </p>`
             : this.dialog === "remote"
               ? html`${remoteControls(
-                  player?.name || "Kaleidescape player",
                   !!disabled,
                   !!this.status?.ready,
                   (operation) => void this.prepare(operation),

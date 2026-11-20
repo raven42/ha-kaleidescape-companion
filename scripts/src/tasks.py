@@ -84,6 +84,7 @@ def project_check() -> None:
 
 
 def lint() -> None:
+    run([sys.executable, "-m", "flake8", "."])
     run([sys.executable, "-m", "ruff", "check", "."])
     npm("lint")
     npm("lint:markdown")

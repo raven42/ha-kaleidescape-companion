@@ -11,7 +11,7 @@ let data: ControlInfo;
 let handler: (message: ApiMessage) => Promise<unknown>;
 const review: ControlReview = {
   token: "a".repeat(64),
-  operation: "pause",
+  operation: "play_pause",
   player_id: "1A2B",
   title: "A Fictional Film",
   year: "2025",
@@ -37,7 +37,7 @@ const flush = async () => {
 };
 const mount = async (label: string) => {
   document.body.append(element);
-  if (label === "Pause") {
+  if (label === "Play/Pause") {
     await vi.waitFor(() => expect(button("Remote")?.disabled).toBe(false));
     button("Remote").click();
   }
@@ -101,8 +101,8 @@ it("lets household users control playback without administrator endpoints", asyn
   };
   data.can_manage = false;
   delete data.devices;
-  await mount("Pause");
-  button("Pause").click();
+  await mount("Play/Pause");
+  button("Play/Pause").click();
   await vi.waitFor(() =>
     expect(calls.some((call) => call.type.endsWith("/control/execute"))).toBe(
       true,
@@ -116,12 +116,12 @@ it("lets household users control playback without administrator endpoints", asyn
   ).toBeNull();
 });
 it("reads readiness without waking or sending a command on load", async () => {
-  await mount("Pause");
+  await mount("Play/Pause");
   expect(calls.map((call) => call.type)).toEqual([
     "kaleidescape_companion/control/info",
     "kaleidescape_companion/control/status",
   ]);
-  button("Pause").click();
+  button("Play/Pause").click();
   await vi.waitFor(() =>
     expect(
       calls.filter((call) => call.type.endsWith("/control/execute")),
@@ -129,8 +129,8 @@ it("reads readiness without waking or sending a command on load", async () => {
   );
   expect(
     calls.find((call) => call.type.endsWith("/control/prepare"))!.operation,
-  ).toBe("pause");
-  expect(element.shadowRoot!.textContent).toContain(
+  ).toBe("play_pause");
+  expect(element.shadowRoot!.textContent).not.toContain(
     "requested playback state was observed",
   );
 });
@@ -291,8 +291,8 @@ it("preserves the request ID when checking a lost command response", async () =>
     }
     return original(message);
   };
-  await mount("Pause");
-  button("Pause").click();
+  await mount("Play/Pause");
+  button("Play/Pause").click();
   await vi.waitFor(() => expect(button("Check command result")).toBeTruthy());
   button("Check command result").click();
   await vi.waitFor(() =>
@@ -325,8 +325,8 @@ it("drops late preparation when access changes, without executing it", async () 
           resolve = done;
         })
       : original(message);
-  await mount("Pause");
-  button("Pause").click();
+  await mount("Play/Pause");
+  button("Play/Pause").click();
   await vi.waitFor(() => expect(resolve).toBeDefined());
   element.scope = {
     ...info,
@@ -349,7 +349,7 @@ it("blocks uncertain writes only for their player and refreshes receipts", async
       created_at: "2026-10-30T12:00:00+00:00",
     },
   ];
-  await mount("Pause");
+  await mount("Play/Pause");
   const original = handler;
   handler = async (message) => {
     if (message.type.endsWith("/control/status"))
@@ -364,14 +364,14 @@ it("blocks uncertain writes only for their player and refreshes receipts", async
   data.pending[0].player_id = data.default_player;
   data.blocked_players = [data.default_player];
   button("Refresh player state").click();
-  await vi.waitFor(() => expect(button("Pause").disabled).toBe(true));
+  await vi.waitFor(() => expect(button("Play/Pause").disabled).toBe(true));
   data.pending = [];
   data.blocked_players = [];
   await vi.waitFor(() =>
     expect(button("Refresh player state").disabled).toBe(false),
   );
   button("Refresh player state").click();
-  await vi.waitFor(() => expect(button("Pause").disabled).toBe(false));
+  await vi.waitFor(() => expect(button("Play/Pause").disabled).toBe(false));
 });
 
 it("hides administrator receipt review in Basic mode even for an admin response", async () => {
@@ -504,29 +504,73 @@ it("keeps uncertain result recovery inside the portrait remote", async () => {
       throw new ApiError("connection_lost");
     return original(message);
   };
-  await mount("Pause");
+  await mount("Play/Pause");
   const dialog = element.shadowRoot!.querySelector("dialog")!;
   expect(dialog.classList.contains("remote-dialog")).toBe(true);
   expect(
     dialog.querySelector('[aria-label="Directional controls"]'),
   ).not.toBeNull();
-  button("Pause").click();
+  button("Play/Pause").click();
   await vi.waitFor(() =>
     expect(dialog.textContent).toContain("Check command result"),
   );
   expect(
     dialog.querySelector("button.primary")?.getAttribute("aria-label"),
-  ).toBe("Play selection");
+  ).toBe("Play/Pause");
+});
+
+it("arranges the remote controls and sends the requested commands", async () => {
+  await mount("Play/Pause");
+  const root = element.shadowRoot!;
+  const labels = (selector: string) =>
+    [...root.querySelectorAll<HTMLButtonElement>(selector)].map((item) =>
+      item.getAttribute("aria-label"),
+    );
+  expect(labels(".remote-nav button")).toEqual([
+    "Covers",
+    "Movies",
+    "Collections",
+    "Search",
+    "Settings",
+  ]);
+  expect(labels(".remote-side:first-child button")).toEqual(["Menu", "Back"]);
+  expect(labels(".remote-side:last-child button")).toEqual([
+    "Page up",
+    "Page down",
+  ]);
+  expect(labels(".remote-transport button")).toEqual([
+    "Previous chapter",
+    "Scan reverse",
+    "Play/Pause",
+    "Scan forward",
+    "Next chapter",
+  ]);
+  expect(labels(".remote-bottom button")).toEqual([
+    "Replay",
+    "Stop",
+    "Intermission",
+  ]);
+  expect(root.querySelector('[aria-label="Resume Playback"]')).toBeNull();
+  expect(root.querySelectorAll(".remote-bottom svg")).toHaveLength(3);
+  button("Stop").click();
+  await vi.waitFor(() =>
+    expect(
+      calls.some(
+        (call) =>
+          call.type.endsWith("/control/prepare") && call.operation === "stop",
+      ),
+    ).toBe(true),
+  );
 });
 
 it("uses the shared header X for Remote without a redundant heading or footer", async () => {
-  await mount("Pause");
+  await mount("Play/Pause");
   const dialog =
     element.shadowRoot!.querySelector<HTMLDialogElement>("dialog")!;
   expect(dialog.open).toBe(true);
   expect(
     [...dialog.querySelectorAll("h2")].map((node) => node.textContent?.trim()),
-  ).toEqual(["Theater Remote"]);
+  ).toEqual(["Example cinema Remote"]);
   expect(dialog.querySelector(".dialog-footer")).toBeNull();
   const close = dialog.querySelector<HTMLButtonElement>(
     '.card-head [aria-label="Close"]',

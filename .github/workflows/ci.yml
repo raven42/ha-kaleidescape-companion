@@ -39,6 +39,7 @@ jobs:
       - run: scripts/check-pyk --reconstruct
       - run: .venv/bin/python -m scripts.src.unittest_runner discover -s tests
       - run: scripts/check-project
+      - run: .venv/bin/python -m flake8 .
       - run: .venv/bin/python -m ruff check .
       - run: .venv/bin/python -m ruff format --check .
       - run: |

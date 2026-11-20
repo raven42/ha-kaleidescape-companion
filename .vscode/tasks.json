@@ -89,6 +89,22 @@
       "problemMatcher": []
     },
     {
+      "label": "Maintainer: Deploy frontend",
+      "type": "process",
+      "command": "${workspaceFolder}/scripts/deploy",
+      "args": ["frontend"],
+      "dependsOn": ["Build"],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    },
+    {
       "label": "Maintainer: Preview deployment",
       "type": "process",
       "command": "${workspaceFolder}/scripts/deploy",

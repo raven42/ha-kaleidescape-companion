@@ -142,16 +142,29 @@ class Peer:
                     raise MessageError(20, command)
                 if command == "LEAVE_STANDBY":
                     peer.standby = False
-                peer.mode = {"STOP": 0, "PAUSE_ON": 1, "PAUSE_OFF": 2}.get(command, 2)
+                if command == "PLAY_OR_PAUSE":
+                    peer.mode = 2 if peer.mode == 1 else 1
+                else:
+                    peer.mode = {"STOP": 0, "PAUSE_ON": 1, "PAUSE_OFF": 2}.get(
+                        command, 2
+                    )
 
             def __getattr__(self, name):
                 commands = {
                     "play": "PLAY",
                     "pause_on": "PAUSE_ON",
                     "pause_off": "PAUSE_OFF",
+                    "play_or_pause": "PLAY_OR_PAUSE",
                     "stop": "STOP",
                     "next": "NEXT",
                     "previous": "PREVIOUS",
+                    "replay": "REPLAY",
+                    "scan_forward": "SCAN_FORWARD",
+                    "scan_reverse": "SCAN_REVERSE",
+                    "page_up": "PAGE_UP",
+                    "page_down": "PAGE_DOWN",
+                    "intermission_toggle": "INTERMISSION_TOGGLE",
+                    "status_and_settings": "STATUS_AND_SETTINGS",
                     "up": "UP",
                     "down": "DOWN",
                     "left": "LEFT",
@@ -160,6 +173,9 @@ class Peer:
                     "back": "BACK",
                     "menu_toggle": "MENU_TOGGLE",
                     "go_movie_covers": "GO_MOVIE_COVERS",
+                    "go_movie_list": "GO_MOVIE_LIST",
+                    "go_movie_collections": "GO_MOVIE_COLLECTIONS",
+                    "go_search": "GO_SEARCH",
                     "leave_standby": "LEAVE_STANDBY",
                     "enter_standby": "ENTER_STANDBY",
                 }
@@ -260,6 +276,34 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(result["success"], result)
         self.assertEqual(result["result"]["outcome"], "state_observed")
         self.assertEqual([name for name, *_ in self.peer.commands], ["STOP"])
+
+    async def test_additional_remote_commands_reach_the_selected_player(self):
+        await self.configure()
+        for operation, command in [
+            ("movie_list", "GO_MOVIE_LIST"),
+            ("movie_collections", "GO_MOVIE_COLLECTIONS"),
+            ("search", "GO_SEARCH"),
+            ("replay", "REPLAY"),
+            ("scan_forward", "SCAN_FORWARD"),
+            ("scan_reverse", "SCAN_REVERSE"),
+            ("page_up", "PAGE_UP"),
+            ("page_down", "PAGE_DOWN"),
+            ("intermission", "INTERMISSION_TOGGLE"),
+            ("status_and_settings", "STATUS_AND_SETTINGS"),
+        ]:
+            with self.subTest(operation=operation):
+                token = await self.prepare(operation)
+                result = await self.execute(token)
+                self.assertTrue(result["success"], result)
+                self.assertEqual(self.peer.commands[-1][0], command)
+
+    async def test_play_pause_toggle_reports_observed_state(self):
+        await self.configure()
+        for expected in (1, 2):
+            result = await self.execute(await self.prepare("play_pause"))
+            self.assertEqual(result["result"]["outcome"], "state_observed")
+            self.assertEqual(self.peer.mode, expected)
+            self.assertEqual(self.peer.commands[-1][0], "PLAY_OR_PAUSE")
 
     @expected_log(
         "custom_components.kaleidescape_companion.playback.controls",

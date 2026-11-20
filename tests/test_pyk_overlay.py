@@ -11,7 +11,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.src import check_pyk, deploy
+from scripts.src import check_pyk, deploy, package
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -74,7 +74,7 @@ class PykOverlayTest(unittest.TestCase):
 
     def test_supported_deployment_archive_contains_exact_manifest_and_license(self):
         expected = json.loads((check_pyk.OVERLAY / "hashes.json").read_text())
-        with tarfile.open(fileobj=io.BytesIO(deploy.runtime_package())) as archive:
+        with tarfile.open(fileobj=io.BytesIO(package.runtime_package())) as archive:
             names = set(archive.getnames())
             for name, digest in expected.items():
                 content = archive.extractfile(f"{deploy.DOMAIN}/vendor/{name}").read()

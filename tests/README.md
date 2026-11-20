@@ -8,10 +8,11 @@ scripts/check
 
 It checks workspace/runtime consistency, the standalone server browser,
 independent metadata providers, integration tests, project structure, Python
-lint/formatting, shell syntax, Markdown lint/formatting, frontend lint/types,
-component/proxy tests and the production bundle. Tests use fictional data and
-temporary storage. Loopback emulator/proxy tests need local socket permission;
-normal checks contact no household devices or external metadata providers.
+lint/formatting with Ruff and Flake8, shell syntax, Markdown lint/formatting,
+frontend lint/types, component/proxy tests and the production bundle. Tests use
+fictional data and temporary storage. Loopback emulator/proxy tests need local
+socket permission; normal checks contact no household devices or external
+metadata providers.
 
 ## Focused checks
 

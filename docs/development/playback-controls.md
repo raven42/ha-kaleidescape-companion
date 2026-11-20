@@ -28,8 +28,8 @@ Controls are disabled by default. Administrators configure them in Companion's
 Once enabled, **all active signed-in HA users** can use **Now Playing → Player
 controls** and Library **Play**. A command click runs identity/state preflight
 and sends once, without a confirmation prompt. This can interrupt content, power
-down a player and trigger theater automations. Pause/resume use explicit state
-commands. There is no automatic wake or retry.
+down a player and trigger theater automations. The remote's Play/Pause button
+sends the player's toggle command. There is no automatic wake or retry.
 
 In Library, the combined movie dialog has a title/metadata/badge header,
 **Play** and **Choose Player**, followed by poster, synopsis and clickable
@@ -49,15 +49,16 @@ Companion Settings page. Household responses expose friendly names/opaque IDs,
 not addresses, serials or another user's command receipts. Anonymous/inactive
 users cannot control devices. Multiple-player recording remains separate work.
 
-Available commands are Play selection, Pause, Resume, Stop, Previous/Next
-chapter, directional navigation, Select, Back, Kaleidescape menu, Movie covers,
-Power on and Standby. Controls verify direct serial identity and a movie zone
-before every operation. Older hardware, Co-Star and individual command support
-need operator validation; a rejected command is reported without fallback. There
-is no automatic wake, command retry, HA service forwarding or generic
-raw-command endpoint. Enabled views read readiness on load and poll briefly
-after an explicit wake. Existing HA entities/actions are preserved; no
-replacement media player or new control service is registered.
+Available commands include Play selection, Pause, Resume, Stop, Previous/Next
+chapter, Replay, forward/reverse scan, directional and page navigation, Select,
+Back, Kaleidescape menu, Movie covers, Movie list, Collections, Search,
+Intermission, Status and settings, Power on and Standby. Controls verify direct
+serial identity and a movie zone before every operation. Older hardware, Co-Star
+and individual command support need operator validation; a rejected command is
+reported without fallback. There is no automatic wake, command retry, HA service
+forwarding or generic raw-command endpoint. Enabled views read readiness on load
+and poll briefly after an explicit wake. Existing HA entities/actions are
+preserved; no replacement media player or new control service is registered.
 
 ## Library identity and launch limits
 

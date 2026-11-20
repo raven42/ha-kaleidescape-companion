@@ -122,6 +122,17 @@ Updating Python code requires a full HA Core restart after installation;
 reloading the entry alone does not replace already imported Python code or old
 static-path registrations.
 
+For frontend-only changes, VS Code's **Maintainer: Deploy frontend** task builds
+the panel and uploads the resulting `panel.js` to an existing integration using
+the same deployment configuration. It uses the administrator token in
+`.ha-dev/ha.token` to reload the Companion integration through Home Assistant on
+the configured SSH hostname and port 8123. Reload the browser page to load the
+new bundle. The integration reload updates the content-hashed module URL used by
+the sidebar and dashboard cards. Use the full deployment when frontend changes
+also depend on Python, services, translations or other runtime files. The
+equivalent terminal commands are `scripts/build` followed by
+`scripts/deploy frontend`.
+
 The archive contains the integration's runtime Python, supported JSON files,
 `services.yaml`, five YAML automation blueprints under `templates/`, compiled
 `ui/assets/panel.js` and local PNG branding. It excludes development sources

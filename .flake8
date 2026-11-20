@@ -1,0 +1,14 @@
+[flake8]
+max-line-length = 88
+# Ruff checks line length; E203 conflicts with its formatter's slice spacing.
+extend-ignore = E203, E501
+extend-exclude =
+    .venv,
+    .ha-dev,
+    .pyk-source,
+    .package-test,
+    node_modules,
+    artifacts,
+    build,
+    dist,
+    custom_components/kaleidescape_companion/vendor/kaleidescape

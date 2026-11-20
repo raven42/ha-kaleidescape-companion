@@ -33,6 +33,7 @@ For focused work in the prepared environment:
 .venv/bin/python -m unittest discover -s tests -p 'test_pyk_adapter.py'
 PYTHONPATH=custom_components/kaleidescape_companion .venv/bin/python -m unittest discover -s tests/scrapers
 npm --prefix frontend test
+.venv/bin/python -m flake8 .
 .venv/bin/python -m ruff check .
 .venv/bin/python -m ruff format --check .
 npm --prefix frontend run build:check

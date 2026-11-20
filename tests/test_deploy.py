@@ -27,7 +27,7 @@ class DeployTest(unittest.TestCase):
         self.addCleanup(self.directory.cleanup)
         self.root = Path(self.directory.name).resolve()
         self.source = self.root / "custom_components" / deploy.DOMAIN
-        for name in deploy.REQUIRED:
+        for name in package.REQUIRED:
             path = self.source / name
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text("fictional runtime")
@@ -58,17 +58,97 @@ class DeployTest(unittest.TestCase):
         # fragment against this test's temporary configuration directory.
         with patch.object(deploy, "run_ssh") as ssh:
             deploy.deploy(
-                config, data if data is not None else deploy.runtime_package(self.root)
+                config, data if data is not None else package.runtime_package(self.root)
             )
             command = ssh.call_args.args[0][-1]
         return subprocess.run(
             ["sh", "-c", command],
-            input=data if data is not None else deploy.runtime_package(self.root),
+            input=data if data is not None else package.runtime_package(self.root),
             cwd=self.root,
             env=environment,
             capture_output=True,
             timeout=10,
         )
+
+    def test_frontend_deployment_replaces_only_panel_and_respects_lock(self):
+        self.assertEqual(self.remote().returncode, 0)
+        target = self.config / "custom_components" / deploy.DOMAIN
+        panel = target / "ui/assets/panel.js"
+        manifest = (target / "manifest.json").read_bytes()
+        config = self.load_settings()
+        with patch.object(deploy, "run_ssh") as ssh:
+            deploy.deploy_frontend(config, b"updated frontend")
+            command = ssh.call_args.args[0][-1]
+        result = subprocess.run(
+            ["sh", "-c", command], input=b"updated frontend", capture_output=True
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(panel.read_bytes(), b"updated frontend")
+        self.assertEqual((target / "manifest.json").read_bytes(), manifest)
+        lock = self.config / ".kaleidescape-companion-deploy/lock"
+        lock.mkdir()
+        result = subprocess.run(
+            ["sh", "-c", command], input=b"another frontend", capture_output=True
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(panel.read_bytes(), b"updated frontend")
+
+    def test_frontend_deployment_requires_existing_integration(self):
+        config = self.load_settings()
+        with patch.object(deploy, "run_ssh") as ssh:
+            deploy.deploy_frontend(config, b"frontend")
+            command = ssh.call_args.args[0][-1]
+        result = subprocess.run(
+            ["sh", "-c", command], input=b"frontend", capture_output=True
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse((self.config / "custom_components").exists())
+
+    def test_frontend_reload_targets_only_companion_entry(self):
+        token = self.root / "token"
+        token.write_text("fictional-token")
+        config = self.load_settings()
+        responses = [
+            io.BytesIO(b'[{"domain":"kaleidescape_companion","entry_id":"ABC123"}]'),
+            io.BytesIO(b'{"require_restart":false}'),
+            io.BytesIO(
+                b'[{"domain":"kaleidescape_companion","entry_id":"ABC123",'
+                b'"state":"loaded"}]'
+            ),
+        ]
+        with (
+            patch("scripts.src.deploy.urllib.request.build_opener") as build,
+            patch("builtins.print"),
+        ):
+            build.return_value.open.side_effect = responses
+            deploy.reload_companion(config, token)
+        calls = build.return_value.open.call_args_list
+        self.assertEqual(len(calls), 3)
+        self.assertEqual(calls[0].args[0].get_method(), "GET")
+        self.assertTrue(
+            calls[0].args[0].full_url.endswith("?domain=kaleidescape_companion")
+        )
+        self.assertEqual(calls[1].args[0].get_method(), "POST")
+        self.assertTrue(calls[1].args[0].full_url.endswith("/entry/ABC123/reload"))
+        self.assertEqual(
+            calls[1].args[0].get_header("Authorization"), "Bearer fictional-token"
+        )
+
+    def test_frontend_reload_rejects_missing_or_ambiguous_entries(self):
+        token = self.root / "token"
+        token.write_text("fictional-token")
+        config = self.load_settings()
+        for response in (
+            b"[]",
+            b'[{"domain":"kaleidescape_companion","entry_id":"1"},'
+            b'{"domain":"kaleidescape_companion","entry_id":"2"}]',
+        ):
+            with self.subTest(response=response):
+                with patch("scripts.src.deploy.urllib.request.build_opener") as build:
+                    build.return_value.open.return_value = io.BytesIO(response)
+                    with self.assertRaisesRegex(ValueError, "exactly one"):
+                        deploy.reload_companion(config, token)
+                    self.assertEqual(build.return_value.open.call_count, 1)
 
     def test_package_is_deterministic_and_excludes_private_and_development_files(self):
         for name in (
@@ -84,13 +164,13 @@ class DeployTest(unittest.TestCase):
             path = self.source / name
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text("private fixture; must never ship")
-        first = deploy.runtime_package(self.root)
+        first = package.runtime_package(self.root)
         os.utime(self.source / "const.py", (1, 1))
-        self.assertEqual(first, deploy.runtime_package(self.root))
+        self.assertEqual(first, package.runtime_package(self.root))
         with tarfile.open(fileobj=io.BytesIO(first), mode="r:gz") as archive:
             self.assertEqual(
                 {member.name for member in archive},
-                {f"{deploy.DOMAIN}/{name}" for name in deploy.REQUIRED},
+                {f"{deploy.DOMAIN}/{name}" for name in package.REQUIRED},
             )
             self.assertTrue(
                 all(member.isfile() and member.mode == 0o644 for member in archive)
@@ -129,7 +209,7 @@ class DeployTest(unittest.TestCase):
         data = project["tool"]["setuptools"]["package-data"][
             "custom_components.kaleidescape_companion"
         ]
-        self.assertTrue(expected <= deploy.REQUIRED, expected - deploy.REQUIRED)
+        self.assertTrue(expected <= package.REQUIRED, expected - package.REQUIRED)
         self.assertTrue(expected <= set(data), expected - set(data))
 
     def test_only_the_integration_brand_icons_enter_the_runtime_archive(self):
@@ -143,7 +223,7 @@ class DeployTest(unittest.TestCase):
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(b"fictional public image")
         with tarfile.open(
-            fileobj=io.BytesIO(deploy.runtime_package(self.root)), mode="r:gz"
+            fileobj=io.BytesIO(package.runtime_package(self.root)), mode="r:gz"
         ) as archive:
             names = set(archive.getnames())
         self.assertIn(f"{deploy.DOMAIN}/brand/icon.png", names)
@@ -153,7 +233,7 @@ class DeployTest(unittest.TestCase):
 
     def test_real_archive_imports_all_runtime_packages_without_checkout_fallback(self):
         """Exercise deployed imports from an archive, not the editable installation."""
-        payload = deploy.runtime_package(Path(__file__).resolve().parents[1])
+        payload = package.runtime_package(Path(__file__).resolve().parents[1])
         destination = self.root / "isolated"
         destination.mkdir()
         components = destination / "custom_components"
@@ -265,22 +345,22 @@ assert not any(name == 'scripts' or name.startswith('scripts.') for name in sys.
         source.unlink()
         source.symlink_to(self.settings)
         with self.assertRaisesRegex(ValueError, "symlinks"):
-            deploy.runtime_package(self.root)
+            package.runtime_package(self.root)
         source.unlink()
         source.write_text("source")
         os.link(source, self.source / "linked.py")
         with self.assertRaisesRegex(ValueError, "unlinked"):
-            deploy.runtime_package(self.root)
+            package.runtime_package(self.root)
         (self.source / "linked.py").unlink()
         with patch.object(package, "MAX_PACKAGE_BYTES", 1):
             with self.assertRaisesRegex(ValueError, "32 MiB"):
-                deploy.runtime_package(self.root)
+                package.runtime_package(self.root)
         (self.source / "manifest.json").write_text('{"domain":"kaleidescape"}')
         with self.assertRaisesRegex(ValueError, "domain"):
-            deploy.runtime_package(self.root)
+            package.runtime_package(self.root)
         (self.source / "ui/assets/panel.js").unlink()
         with self.assertRaisesRegex(ValueError, "build the frontend"):
-            deploy.runtime_package(self.root)
+            package.runtime_package(self.root)
 
     def test_settings_refuse_option_shell_command_and_path_injection(self):
         for field, value in (
