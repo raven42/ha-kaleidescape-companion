@@ -1380,11 +1380,9 @@ it("marks an open completed viewing at its completion date", async () => {
       ended_at: null,
       completed_at: completion,
       status: "completed",
+      watched_seconds: 120,
     }),
-  ).toEqual([
-    { day: "2026-10-31", phase: "start" },
-    { day: "2026-11-01", phase: "completion" },
-  ]);
+  ).toEqual([{ day: "2026-11-01", phase: "completion" }]);
 });
 
 it("does not open Library after the viewing dialog closes during link lookup", async () => {

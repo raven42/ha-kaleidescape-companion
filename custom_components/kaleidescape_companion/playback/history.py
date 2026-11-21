@@ -3,6 +3,7 @@
 import sqlite3
 
 from ..core.sensor_data import MAX_SENSOR_MOVIES, sensor_titles
+from ..core.viewing_visibility import visible_viewing
 
 
 def history_summary(db: sqlite3.Connection, upper: str, cutoffs: list[str]) -> dict:
@@ -40,7 +41,10 @@ def history_summary(db: sqlite3.Connection, upper: str, cutoffs: list[str]) -> d
         titles = sensor_titles(rows)
         result[f"movies_{days}_days"] = titles
         result[f"movies_{days}_days_truncated"] = counts[index] > len(titles)
-    partial = "status = 'partial' AND deleted_at IS NULL AND started_at <= ?"
+    partial = (
+        "status = 'partial' AND deleted_at IS NULL AND started_at <= ? "
+        f"AND {visible_viewing()}"
+    )
     count = db.execute(
         f"SELECT count(*) FROM viewings WHERE {partial}", (upper,)
     ).fetchone()[0]

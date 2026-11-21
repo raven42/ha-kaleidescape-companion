@@ -6,21 +6,35 @@ import unicodedata
 from difflib import SequenceMatcher
 from functools import lru_cache
 
+_LATIN_EQUIVALENTS = str.maketrans(
+    {
+        "æ": "ae",
+        "œ": "oe",
+        "ø": "o",
+        "ł": "l",
+        "đ": "d",
+        "ð": "d",
+        "þ": "th",
+        "ħ": "h",
+        "ı": "i",
+    }
+)
+
+
+def fold_search(value):
+    """Fold case and common Latin variants while preserving other scripts."""
+    folded = value.casefold().translate(_LATIN_EQUIVALENTS)
+    if folded.isascii():
+        return folded
+    return "".join(
+        char
+        for char in unicodedata.normalize("NFKD", folded)
+        if not unicodedata.combining(char)
+    )
+
 
 def normalized(value):
-    folded = value.casefold()
-    if folded.isascii():
-        return " ".join(re.findall(r"\w+", folded))
-    return " ".join(
-        re.findall(
-            r"\w+",
-            "".join(
-                char
-                for char in unicodedata.normalize("NFKD", folded)
-                if not unicodedata.combining(char)
-            ),
-        )
-    )
+    return " ".join(re.findall(r"\w+", fold_search(value)))
 
 
 def close_word(left, right):
@@ -101,13 +115,13 @@ class Matcher:
 
     def __init__(self, query, fuzzy=False, *, cached=False):
         raw = str(query or "")
-        self.query = raw.casefold()
+        self.query = fold_search(raw)
         self.rank_query = normalized(phrase(raw) if quoted(raw) else raw)
         self.needle = normalized(self.query) if fuzzy else ""
         self.pattern = None
         self.empty_phrase = False
         if quoted(raw):
-            needle = phrase(raw).casefold()
+            needle = fold_search(phrase(raw))
             self.empty_phrase = not needle
             self.pattern = re.compile(
                 r"(?<!\w)"
@@ -120,7 +134,7 @@ class Matcher:
         return self._test(str(value or ""))
 
     def _test(self, value):
-        folded = value.casefold()
+        folded = fold_search(value)
         if self.pattern is not None:
             return not self.empty_phrase and bool(self.pattern.search(folded))
         if self.query in folded:

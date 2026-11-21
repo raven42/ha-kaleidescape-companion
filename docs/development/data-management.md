@@ -138,8 +138,11 @@ alter journal/catalog revisions or invalidate a reviewed content import.
 
 ## Search conditions and completion
 
-Plain text searches literal substrings across the selected table's fields. For
-predicates, use a field/operator condition, optionally beginning with WHERE:
+Plain text searches literal substrings across the selected table's fields,
+ignoring case and common Latin accents and variants. `CONTAINS` and `LIKE`
+predicates use the same folding; equality and ordering comparisons retain their
+existing semantics. For predicates, use a field/operator condition, optionally
+beginning with WHERE:
 
 ```sql
 purchased_on IS NULL

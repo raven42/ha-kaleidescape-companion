@@ -98,6 +98,9 @@ async def async_setup_entry(
     _LOGGER.debug("Opening journal storage and preparing integration")
     try:
         await repository.async_open()
+        await repository.async_partial_minimum(
+            (entry.options or entry.data).get("partial_minimum_minutes", 10)
+        )
         await repository.async_seed_ui_preferences(dict(entry.options or entry.data))
         await repository.async_metadata_sources(dict(entry.options or entry.data))
         ui_keys = {

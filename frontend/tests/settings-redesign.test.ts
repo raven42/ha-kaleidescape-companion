@@ -102,6 +102,30 @@ it("categorizes every current option exactly once and has one automation invento
   expect(root().querySelector("#settings-journal")!.textContent).toContain(
     "Resume window",
   );
+  const resume = root().querySelector<HTMLInputElement>(
+    '[name="resume_minutes"]',
+  )!;
+  expect([resume.value, resume.min, resume.max, resume.step]).toEqual([
+    "60",
+    "1",
+    "60",
+    "1",
+  ]);
+  expect(resume.parentElement!.textContent).toContain("minutes");
+  const partial = root().querySelector<HTMLInputElement>(
+    '[name="partial_minimum_minutes"]',
+  )!;
+  expect([partial.value, partial.min, partial.step]).toEqual(["10", "1", "1"]);
+  for (const key of [
+    "minimum_runtime_minutes",
+    "minimum_seconds",
+    "partial_minimum_minutes",
+    "resume_minutes",
+  ]) {
+    expect(root().getElementById(`${key}-hint`)?.textContent).toMatch(
+      /example/i,
+    );
+  }
   expect(root().querySelector("#settings-library")!.textContent).toContain(
     "Collection visibility",
   );

@@ -23,19 +23,19 @@ slider size. Extremely small screens may still require scrolling to keep dates
 and covers usable. These choices save separately for each HA user and display
 profile.
 
-Viewings appear on their browser-local start date, including partial viewings
-unless excluded by the Library movie filter. An active search temporarily
-displays list results, using the saved fuzzy-search preference, without changing
-the saved Calendar view. Clear it with the desktop input's clear button or the
-mobile search field to return to the selected month. The status filter is
-available in list view and does not filter the calendar; its selection is
-retained when returning to the list. Deleted entries are excluded. Each viewing
-has a poster; same-day posters overlap diagonally with about 15% of each rear
-cover exposed. Hover or keyboard focus brings that poster forward and animates
-it to 105% of its normal size. Poster stacks keep portrait proportions within
-the available day width and height, with 5 px insets. All seven weekday columns
-fit the container, including narrow dashboard cards. The date sits above the
-artwork as a small readable overlay instead of reserving a separate row.
+Qualifying playback appears on its browser-local date, including incomplete
+viewings unless excluded by the Library movie filter. An active search
+temporarily displays list results, using the saved fuzzy-search preference,
+without changing the saved Calendar view. Clear it with the desktop input's
+clear button or the mobile search field to return to the selected month. The
+status filter is available in list view and does not filter the calendar; its
+selection is retained when returning to the list. Deleted entries are excluded.
+Each viewing has a poster; same-day posters overlap diagonally with about 15% of
+each rear cover exposed. Hover or keyboard focus brings that poster forward and
+animates it to 105% of its normal size. Poster stacks keep portrait proportions
+within the available day width and height, with 5 px insets. All seven weekday
+columns fit the container, including narrow dashboard cards. The date sits above
+the artwork as a small readable overlay instead of reserving a separate row.
 
 On mobile and other touch-first screens, selecting a day with two or more
 viewings opens an animated, covers-only grid over the calendar. Select a cover
@@ -55,13 +55,18 @@ provider. Synopsis is public Library metadata and is bounded by the existing
 display snapshot limit. Escape dismisses the preview. On touch devices, open the
 poster normally for details.
 
-Cross-day completed viewings have two endpoint covers: the start-day cover has a
-diagonal lower-right cut, and the completion-day cover has a complementary
-upper-left cut. Both open the same viewing details/editor. Intermediate days are
-not filled. Same-day viewings and partial entries retain whole covers. Month
-reads include either endpoint, so a prior-month start still appears on its
-completion date. Local dates and half-open month bounds include timezone and DST
-changes.
+A day qualifies for a partial poster when a recorded session on that day meets
+the configured minimum partial viewing time (ten minutes by default). A
+completion day is shown even if the remaining segment is shorter. The first day
+has a diagonal lower-right cut while incomplete, continuation days have both the
+upper-left and lower-right corners cut, and the completion day has the
+complementary upper-left cut. A completed single-day viewing keeps its whole
+cover. Every poster opens the same viewing details/editor. Manual or older
+entries without sessions use their recorded total on the start day. Session
+watch time is attributed to its local start day: existing checkpoints do not
+contain enough evidence to divide a session accurately across midnight. Month
+reads include session start dates and completion dates across month boundaries;
+local dates and half-open month bounds include timezone and DST changes.
 
 The single sticky Journal footer shows the selected month's, current year's
 to-date, and all-time viewing counts. Journal options can show or hide each

@@ -179,10 +179,11 @@ remounted; there is no live cross-tab preference subscription.
 
 ## Search, calendar state and display
 
-Fuzzy search defaults on; off uses case-insensitive partial matching. A whole
-search enclosed in double quotes requests exact whole-word matching. People
-links quote names to avoid near-name matches. Selected facets and the Database
-condition language stay exact. Matching for imports/provider identity has its
+Fuzzy search defaults on; off uses partial matching. Searches ignore case and
+common Latin accents and variants in either mode, including quoted phrases. A
+whole search enclosed in double quotes requests whole-word matching. People
+links quote names to avoid near-name matches. Selected facets and Database
+equality comparisons stay exact. Matching for imports/provider identity has its
 own [title-matching contract](title-matching.md); fuzzy display search cannot
 authorize a movie launch or silently merge identities.
 

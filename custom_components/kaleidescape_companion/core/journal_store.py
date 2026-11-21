@@ -14,6 +14,7 @@ from typing import Any
 from uuid import uuid4
 
 from .models import JournalError, identifier, invalid, text, validate_times
+from .viewing_visibility import visible_viewing
 
 PUBLIC_FIELDS = frozenset(
     {
@@ -121,6 +122,7 @@ def list_viewings(
     ) + f"{key} {direction},id {direction}"
     predicates = [
         "deleted_at IS NULL",
+        visible_viewing(),
         "companion_matches(title, ?, ?)",
     ]
     values: list[Any] = [query, fuzzy]

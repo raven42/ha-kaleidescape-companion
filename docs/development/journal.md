@@ -90,11 +90,23 @@ confirms it. Completion requires the configured minimum main-content time
 (default 300 seconds, range 1–3600) at the credits edge; playback position alone
 does not prove completion.
 
-A stop has a two-second grace period. An incomplete viewing can resume for the
-same exact player/content identity within the configured window (default 24
-hours, range 0–168 hours). A completed viewing followed by another session is a
-rewatch. Titles do not merge unrelated works. Runtime/metadata changes cannot
-silently reassign identities.
+A stop has a two-second grace period. The minimum partial viewing time defaults
+to ten minutes and can be set from 1 to 1,440 minutes. Observed attempts shorter
+than that stay in diagnostic session records but do not appear as partial
+Journal viewings or contribute to viewing totals. Manual entries and confirmed
+completions remain visible. A later session can join an incomplete viewing only
+after it reaches the configured minimum, or when it confirms completion of an
+established viewing. The prior viewing must contain a qualifying session on the
+same exact player and content identity, ending within the configured resume
+window (default 60 minutes, range 1–60 minutes). Previously saved hour-based
+settings are converted to minutes, with larger values capped at 60 and a
+disabled window changed to one minute. The window starts at the last qualifying
+session's stop, not at its start; a short attempt cannot extend it. Ambiguous
+matches stay separate. The new session is retained separately until it
+qualifies, and manually edited or published records are not automatically
+merged. Existing historical links are not rewritten. A completed viewing
+followed by another session is a rewatch. Titles do not merge unrelated works.
+Runtime/metadata changes cannot silently reassign identities.
 
 Checkpoints occur every 30 seconds. Restart recovery retains evidence without
 counting unobserved downtime. The observation buffer holds 256 events; overflow
@@ -129,15 +141,17 @@ events from the repaired metadata.
 
 All operations use HA authentication and scoped entry/dataset identifiers.
 Household views contain safe viewing summaries and totals; notes, raw
-identities, sessions, audits and exports require administrator access. Now
-Playing reads permitted HA entities; recorder internals are administrator-only.
-Selecting a Journal list entry displays its viewing details in the adjacent
-pane. If the entry is linked to an available Library movie, selecting its title
-in that pane opens full movie details with an expandable Journal history.
-Calendar posters open full movie details by default; Journal options can select
-the compact viewing dialog instead. An entry without an available Library link
-keeps its viewing details. Administrators in Advanced mode can edit an entry
-from the full dialog without switching pages.
+identities, detailed session records, audits and exports require administrator
+access. Calendar responses include each session’s start time and watched
+duration for household readers to place qualifying posters. Now Playing reads
+permitted HA entities; recorder internals are administrator-only. Selecting a
+Journal list entry displays its viewing details in the adjacent pane. If the
+entry is linked to an available Library movie, selecting its title in that pane
+opens full movie details with an expandable Journal history. Calendar posters
+open full movie details by default; Journal options can select the compact
+viewing dialog instead. An entry without an available Library link keeps its
+viewing details. Administrators in Advanced mode can edit an entry from the full
+dialog without switching pages.
 
 Lists use revision/filter/sort-bound cursors. Journal options provide 10, 25,
 100 or 500 entries per page, or All; the default is 25. Larger pages are

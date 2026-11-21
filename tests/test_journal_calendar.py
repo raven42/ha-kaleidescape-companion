@@ -86,6 +86,40 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(november["summary"]["viewing_count"], 1)
         self.assertEqual(november["summary"]["watched_seconds"], row["watched_seconds"])
 
+    async def test_partial_sessions_appear_in_resumption_month(self):
+        from custom_components.kaleidescape_companion.playback.tracker import Session
+
+        for start, end, seconds in (
+            ("2026-10-31T23:00:00+00:00", "2026-10-31T23:20:00+00:00", 1200),
+            ("2026-11-01T00:10:00+00:00", "2026-11-01T00:21:00+00:00", 660),
+        ):
+            session = Session(
+                id=str(uuid4()),
+                player_id="fictional-player",
+                raw_content_id="film",
+                title="Fictional Film",
+                duration_seconds=7200,
+                started_at=start,
+                last_observed_at=end,
+                boot_id="fictional",
+                watched_seconds=seconds,
+                closed_at=end,
+                end_reason="stopped",
+                revision=1,
+            )
+            await self.repository.async_save_session(session.snapshot(), 300, 24)
+        month = await self.repository.async_calendar_month(
+            "2026-11-01T00:00:00Z", "2026-12-01T00:00:00Z"
+        )
+        self.assertEqual(len(month["items"]), 1)
+        self.assertEqual(month["items"][0]["status"], "partial")
+        self.assertEqual(
+            [s["watched_seconds"] for s in month["items"][0]["sessions"]], [1200, 660]
+        )
+        self.assertEqual(
+            set(month["items"][0]["sessions"][0]), {"started_at", "watched_seconds"}
+        )
+
     async def test_half_open_local_range_handles_midnight_precision_and_deleted_rows(
         self,
     ):
@@ -115,7 +149,14 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(
             set(result["items"][0]),
-            PUBLIC_FIELDS | {"library_title_id", "artwork_key", "completed_at"},
+            PUBLIC_FIELDS
+            | {
+                "library_title_id",
+                "artwork_key",
+                "completed_at",
+                "sessions",
+                "partial_minimum_seconds",
+            },
         )
         self.assertEqual(
             result["revision"], (await self.repository.async_info())["revision"]
@@ -408,7 +449,14 @@ class JournalCalendarApiTest(unittest.IsolatedAsyncioTestCase):
             )
             self.assertEqual(
                 set(result["result"]["items"][0]),
-                PUBLIC_FIELDS | {"library_title_id", "artwork_key", "completed_at"},
+                PUBLIC_FIELDS
+                | {
+                    "library_title_id",
+                    "artwork_key",
+                    "completed_at",
+                    "sessions",
+                    "partial_minimum_seconds",
+                },
             )
             result = await self.call(
                 "journal/calendar/get",

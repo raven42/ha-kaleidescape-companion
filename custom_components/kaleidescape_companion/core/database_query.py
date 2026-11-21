@@ -4,7 +4,7 @@ import math
 import re
 
 from .models import JournalError
-from .search import quoted
+from .search import fold_search
 
 TOKEN = re.compile(
     r"\s*(?:(?P<string>'(?:[^']|'')*')|(?P<number>-?\d+(?:\.\d+)?)|(?P<word>[A-Za-z_][A-Za-z_0-9.]*)|(?P<op><=|>=|!=|<>|[=<>])|(?P<paren>[()]))"
@@ -44,22 +44,11 @@ def compile_query(query, fields):
         )
     )
     if not structured:
-        if quoted(query):
-            names = [name for name in fields if "." not in name]
-            return "(" + " OR ".join(
-                f"companion_matches(CAST({fields[name]['expression']} AS TEXT),?,0)"
-                for name in names
-            ) + ")", (query,) * len(names)
-        value = (
-            "%"
-            + query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-            + "%"
-        )
+        names = [name for name in fields if "." not in name]
         return "(" + " OR ".join(
-            f"CAST({fields[name]['expression']} AS TEXT) LIKE ? ESCAPE '\\'"
-            for name in fields
-            if "." not in name
-        ) + ")", (value,) * sum("." not in key for key in fields)
+            f"companion_matches(CAST({fields[name]['expression']} AS TEXT),?,0)"
+            for name in names
+        ) + ")", (query,) * len(names)
     if query.upper().startswith("WHERE "):
         query = query[6:]
     tokens = []
@@ -176,16 +165,17 @@ class Parser:
         if op == "CONTAINS":
             if not isinstance(parsed, str):
                 error("CONTAINS needs quoted text", value[2])
-            self.values.append(parsed.casefold())
+            self.values.append(fold_search(parsed))
             if field["type"] == "array":
                 return (
                     f"EXISTS (SELECT 1 FROM json_each({expr}) item "
-                    "WHERE instr(companion_casefold(item.value),?)>0)"
+                    "WHERE instr(companion_search_fold(item.value),?)>0)"
                 )
-            return f"({expr} IS NOT NULL AND instr(companion_casefold({expr}),?)>0)"
+            return f"({expr} IS NOT NULL AND instr(companion_search_fold({expr}),?)>0)"
         if op == "LIKE":
             if not isinstance(parsed, str):
                 error("LIKE needs a quoted pattern", value[2])
-            parsed = parsed.replace("*", "%")
+            parsed = fold_search(parsed.replace("*", "%"))
+            expr = f"companion_search_fold({expr})"
         self.values.append(parsed)
         return f"{expr} {'NOT LIKE' if negate else op} ?"

@@ -9,6 +9,55 @@ from .metadata import missing_changes
 from .tracker import RULE_VERSION
 
 
+# A checkpoint is retained immediately, but a brief attempt is not sufficient
+# evidence that a later playback resumed the same viewing.
+def _resume_candidate(
+    db, snapshot, resume_hours, minimum_partial_seconds, exclude=None
+):
+    if resume_hours <= 0:
+        return None
+    cutoff = (
+        datetime.fromisoformat(snapshot["started_at"])
+        - timedelta(hours=min(resume_hours, 1))
+    ).isoformat(timespec="microseconds")
+    candidates = db.execute(
+        """SELECT v.id FROM viewings v JOIN sessions s ON s.viewing_id=v.id
+        WHERE v.deleted_at IS NULL AND v.status='partial' AND v.origin='observed'
+        AND v.id != ? AND s.player_id=? AND s.raw_content_id=?
+        AND s.watched_seconds>=? AND s.closed_at IS NOT NULL
+        AND julianday(s.closed_at)>=julianday(?)
+        AND julianday(s.closed_at)<=julianday(?)
+        GROUP BY v.id ORDER BY max(s.closed_at) DESC LIMIT 2""",
+        (
+            exclude or "",
+            snapshot["player_id"],
+            snapshot["raw_content_id"],
+            minimum_partial_seconds,
+            cutoff,
+            snapshot["started_at"],
+        ),
+    ).fetchall()
+    return candidates[0]["id"] if len(candidates) == 1 else None
+
+
+def _can_move_provisional(db, viewing_id):
+    """Never automatically merge a viewing that has been edited or published."""
+    return (
+        db.execute(
+            """SELECT 1 FROM viewings v WHERE v.id=? AND v.deleted_at IS NULL
+        AND v.origin='observed' AND v.status='partial' AND v.notes=''
+        AND v.manual_fields='[]'
+        AND (SELECT count(*) FROM sessions WHERE viewing_id=v.id)=1
+        AND NOT EXISTS (SELECT 1 FROM manual_audit WHERE viewing_id=v.id)
+        AND NOT EXISTS (SELECT 1 FROM calendar_publications WHERE viewing_id=v.id)
+        AND NOT EXISTS (SELECT 1 FROM calendar_managed_events WHERE viewing_id=v.id)
+        AND NOT EXISTS (SELECT 1 FROM calendar_sync_items WHERE viewing_id=v.id)""",
+            (viewing_id,),
+        ).fetchone()
+        is not None
+    )
+
+
 def save_session(
     db: sqlite3.Connection,
     snapshot: dict,
@@ -16,6 +65,7 @@ def save_session(
     resume_hours: float,
     calendar: dict | None = None,
     library_source: str | None = None,
+    minimum_partial_seconds: float = 600,
 ) -> str:
     """Commit a checkpoint and its derived viewing atomically and idempotently."""
     previous = db.execute(
@@ -25,33 +75,48 @@ def save_session(
         return previous["viewing_id"]
     created = False
     with db:
+        qualified = snapshot["watched_seconds"] >= minimum_partial_seconds
         if previous:
             viewing_id = previous["viewing_id"]
+            # A resumed segment becomes eligible after ten minutes, or when it
+            # reaches confirmed credits after an established partial viewing.
+            if (qualified or snapshot["credits_confirmed"]) and _can_move_provisional(
+                db, viewing_id
+            ):
+                candidate = _resume_candidate(
+                    db, snapshot, resume_hours, minimum_partial_seconds, viewing_id
+                )
+                if candidate and not qualified:
+                    prior = db.execute(
+                        "SELECT watched_seconds FROM viewings WHERE id=?", (candidate,)
+                    ).fetchone()[0]
+                    if prior + snapshot["credits_watched_seconds"] < minimum_seconds:
+                        candidate = None
+                if candidate:
+                    db.execute(
+                        "UPDATE sessions SET viewing_id=? WHERE id=?",
+                        (candidate, snapshot["id"]),
+                    )
+                    db.execute(
+                        "UPDATE viewings SET deleted_at=?,revision=revision+1 "
+                        "WHERE id=?",
+                        (snapshot["last_observed_at"], viewing_id),
+                    )
+                    viewing_id = candidate
         else:
-            candidates = []
-            if resume_hours > 0:
-                cutoff = (
-                    datetime.fromisoformat(snapshot["started_at"])
-                    - timedelta(hours=resume_hours)
-                ).isoformat(timespec="microseconds")
-                candidates = db.execute(
-                    """SELECT v.id FROM viewings v
-                    JOIN sessions s ON s.viewing_id = v.id
-                    WHERE v.deleted_at IS NULL AND v.status = 'partial'
-                    AND v.origin = 'observed'
-                    AND s.player_id = ? AND s.raw_content_id = ?
-                    AND s.closed_at IS NOT NULL AND s.closed_at >= ?
-                    AND s.closed_at <= ? GROUP BY v.id
-                    ORDER BY max(s.closed_at) DESC LIMIT 2""",
-                    (
-                        snapshot["player_id"],
-                        snapshot["raw_content_id"],
-                        cutoff,
-                        snapshot["started_at"],
-                    ),
-                ).fetchall()
-            if len(candidates) == 1:
-                viewing_id = candidates[0]["id"]
+            candidate = (
+                _resume_candidate(db, snapshot, resume_hours, minimum_partial_seconds)
+                if (qualified or snapshot["credits_confirmed"])
+                else None
+            )
+            if candidate and not qualified:
+                prior = db.execute(
+                    "SELECT watched_seconds FROM viewings WHERE id=?", (candidate,)
+                ).fetchone()[0]
+                if prior + snapshot["credits_watched_seconds"] < minimum_seconds:
+                    candidate = None
+            if candidate:
+                viewing_id = candidate
             else:
                 viewing_id = str(uuid4())
                 created = True

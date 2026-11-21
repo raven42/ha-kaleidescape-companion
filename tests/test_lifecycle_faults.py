@@ -113,6 +113,7 @@ class LifecycleFaultTest(unittest.IsolatedAsyncioTestCase):
             with self.subTest(refused=refused):
                 repo = NS(
                     async_open=AsyncMock(),
+                    async_partial_minimum=AsyncMock(),
                     async_seed_ui_preferences=AsyncMock(),
                     async_metadata_sources=AsyncMock(),
                     async_info=AsyncMock(return_value={"dataset_id": "fixture"}),

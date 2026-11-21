@@ -388,7 +388,7 @@ it("marks start/completion endpoints across months while same-day and partial vi
     { day: "2026-11-01", phase: "completion" },
   ]);
   expect(calendarDays({ ...row, status: "partial" })).toEqual([
-    { day: "2026-10-31", phase: "single" },
+    { day: "2026-10-31", phase: "start" },
   ]);
   expect(
     calendarDays(
@@ -398,6 +398,51 @@ it("marks start/completion endpoints across months while same-day and partial vi
       }),
     ),
   ).toEqual([{ day: "2026-10-31", phase: "single" }]);
+});
+
+it("shows qualifying start and continuation days until completion", () => {
+  const local = (day: number, hour = 12) =>
+    new Date(2026, 9, day, hour).toISOString();
+  const row = {
+    ...record({
+      started_at: local(1),
+      status: "partial",
+      watched_seconds: 1500,
+    }),
+    sessions: [
+      { started_at: local(1), watched_seconds: 600 },
+      { started_at: local(2), watched_seconds: 600 },
+      { started_at: local(2, 13), watched_seconds: 30 },
+      { started_at: local(3), watched_seconds: 299 },
+    ],
+  };
+  expect(calendarDays(row)).toEqual([
+    { day: "2026-10-01", phase: "start" },
+    { day: "2026-10-02", phase: "continuation" },
+  ]);
+  expect(
+    calendarDays({ ...row, status: "completed", ended_at: local(3, 14) }),
+  ).toEqual([
+    { day: "2026-10-01", phase: "start" },
+    { day: "2026-10-02", phase: "continuation" },
+    { day: "2026-10-03", phase: "completion" },
+  ]);
+  expect(
+    calendarDays({
+      ...row,
+      sessions: [{ started_at: local(1), watched_seconds: 599 }],
+    }),
+  ).toEqual([]);
+});
+
+it("uses the configured partial viewing minimum for calendar covers", () => {
+  const row = record({ status: "partial", watched_seconds: 180 });
+  expect(calendarDays({ ...row, partial_minimum_seconds: 120 })).toHaveLength(
+    1,
+  );
+  expect(calendarDays({ ...row, partial_minimum_seconds: 240 })).toHaveLength(
+    0,
+  );
 });
 
 it("switches display profiles after resizing without moving a pending write to another profile", async () => {

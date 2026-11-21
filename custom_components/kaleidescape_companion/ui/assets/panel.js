@@ -8568,10 +8568,14 @@ var Xn, Zn, Qn, $n, er, tr = t((() => {
   .poster-start .poster-art {
     clip-path: polygon(0 0, 100% 0, 100% 67%, 0 100%);
   }
+  .poster-continuation .poster-art {
+    clip-path: polygon(0 33%, 100% 0, 100% 67%, 0 100%);
+  }
   .poster-completion .poster-art {
     clip-path: polygon(0 33%, 100% 0, 100% 100%, 0 100%);
   }
   .poster-start,
+  .poster-continuation,
   .poster-completion {
     background: transparent;
     box-shadow: none;
@@ -8860,17 +8864,18 @@ function br(e) {
 	return [new Date(e.getFullYear(), e.getMonth(), 1).toISOString(), new Date(e.getFullYear(), e.getMonth() + 1, 1).toISOString()];
 }
 function xr(e) {
-	let t = Z(new Date(e.started_at)), n = e.ended_at ?? e.completed_at, r = n ? Z(new Date(n)) : t;
-	return e.status === "completed" && r !== t && n && new Date(n) > new Date(e.started_at) ? [{
-		day: t,
-		phase: "start"
-	}, {
-		day: r,
-		phase: "completion"
-	}] : [{
-		day: t,
-		phase: "single"
-	}];
+	let t = Z(new Date(e.started_at)), n = e.ended_at ?? e.completed_at, r = e.status === "completed" && n && new Date(n) > new Date(e.started_at) ? Z(new Date(n)) : t, i = e.partial_minimum_seconds ?? 600, a = /* @__PURE__ */ new Map();
+	for (let t of e.sessions ?? []) {
+		if (t.watched_seconds < i) continue;
+		let e = Z(new Date(t.started_at));
+		a.set(e, (a.get(e) ?? 0) + t.watched_seconds);
+	}
+	e.sessions?.length || a.set(t, e.watched_seconds);
+	let o = [...a].filter(([, e]) => e >= i).map(([e]) => e);
+	return e.status === "completed" && !o.includes(r) && o.push(r), o.sort().map((n) => ({
+		day: n,
+		phase: e.status === "completed" && n === r ? n === t ? "single" : "completion" : n === t ? "start" : "continuation"
+	}));
 }
 var Sr, Cr = t((() => {
 	w(), lr(), F(), zt(), tr(), ln(), E(), dr(), yn(), R(), ci(), _r(), Sr = class extends C {
@@ -9412,7 +9417,7 @@ var Sr, Cr = t((() => {
                       ${sr(r, ({ row: e }) => e.id, ({ row: t, phase: n }, i) => v`<button
                             class=${`poster poster-${n}`}
                             style=${`--index:${i};--layer:${i + 1}`}
-                            aria-label=${`${t.title} · ${n === "start" ? "Started; completed on another day" : n === "completion" ? "Completed; started on another day" : t.status === "completed" ? "Completed" : "Partial"}`}
+                            aria-label=${`${t.title} · ${n === "start" ? "Started; incomplete on this day" : n === "continuation" ? "Continued; incomplete on this day" : n === "completion" ? "Completed; started on another day" : "Completed"}`}
                             title=${this.hoverPreview ? x : t.title}
                             aria-describedby=${this.previewRow?.id === t.id && this.previewAnchor ? "calendar-movie-preview" : x}
                             ?disabled=${this.disabled}
@@ -14592,8 +14597,65 @@ var Hi = class extends C {
 	}
 };
 customElements.get("kaleidescape-reader") || customElements.define("kaleidescape-reader", Hi);
+// src/core/search.ts
+var Ui = {
+	æ: "ae",
+	œ: "oe",
+	ø: "o",
+	ł: "l",
+	đ: "d",
+	ð: "d",
+	þ: "th",
+	ħ: "h",
+	ı: "i",
+	ß: "ss",
+	ς: "σ"
+};
+function Wi(e) {
+	return e.toLowerCase().replace(/[æœøłđðþħıßς]/gu, (e) => Ui[e]).normalize("NFKD").replace(/\p{M}/gu, "");
+}
+function Gi(e) {
+	return Wi(e).match(/[\p{L}\p{N}_]+/gu)?.join(" ") ?? "";
+}
+function Ki(e, t) {
+	let n = Math.min(2, Math.max(1, Math.ceil(e.length / 4)));
+	if (e.length < 3 || Math.max(e.length, t.length) > 100 || Math.abs(e.length - t.length) > n) return !1;
+	let r = Array.from({ length: t.length + 1 }, (e, t) => t), i = r;
+	for (let a = 1; a <= e.length; a++) {
+		let o = Array(t.length + 1).fill(n + 1);
+		o[0] = a;
+		for (let s = Math.max(1, a - n); s <= Math.min(t.length, a + n); s++) {
+			let n = Math.min(r[s] + 1, o[s - 1] + 1, r[s - 1] + Number(e[a - 1] !== t[s - 1]));
+			a > 1 && s > 1 && e[a - 1] === t[s - 2] && e[a - 2] === t[s - 1] && (n = Math.min(n, i[s - 2] + 1)), o[s] = n;
+		}
+		if (Math.min(...o) > n) return !1;
+		i = r, r = o;
+	}
+	return r[t.length] <= n;
+}
+function qi(e, t, n = !1) {
+	let r = t.trim();
+	if (r.length >= 2 && r.startsWith("\"") && r.endsWith("\"")) {
+		let t;
+		try {
+			t = JSON.parse(r).trim();
+		} catch {
+			t = r.slice(1, -1).trim();
+		}
+		if (!t) return !1;
+		let n = Wi(t).split(/\s+/).map((e) => e.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+		return RegExp("(?<![\\p{L}\\p{N}_])" + n.join("\\s+") + "(?![\\p{L}\\p{N}_])", "u").test(Wi(e));
+	}
+	if (Wi(e).includes(Wi(t))) return !0;
+	if (!n) return !1;
+	let i = Gi(t), a = Gi(e);
+	if (!i) return !1;
+	if (a.includes(i)) return !0;
+	let o = i.split(" "), s = a.split(" ");
+	return o.length <= 12 && o.every((e) => s.some((t) => t.includes(e) || Ki(e, t)));
+}
 // src/enrichment/sources.ts
-var Ui = [
+var Ji = [
 	[
 		"actors",
 		"Cast",
@@ -14664,12 +14726,12 @@ var Ui = [
 		"Landscape image",
 		["tmdb"]
 	]
-], Wi = {
+], Yi = {
 	auto: "Automatic",
 	original: "Original library data",
 	kaleidescape: "Kaleidescape store",
 	tmdb: "TMDB"
-}, Gi = [
+}, Xi = [
 	[
 		"general",
 		"General",
@@ -14724,7 +14786,7 @@ var Ui = [
 		"About Kaleidescape Companion",
 		"Installed versions, documentation and support information."
 	]
-], Ki = [
+], Zi = [
 	{
 		key: "media_player",
 		label: "Media player",
@@ -14752,7 +14814,7 @@ var Ui = [
 	{
 		key: "minimum_runtime_minutes",
 		label: "Minimum movie runtime",
-		hint: "Ignore shorter titles. Set to 0 to include every runtime; unknown runtimes wait for metadata.",
+		hint: "Controls which titles are eligible for automatic recording based on their full runtime, not how long you watch. For example, with a 10-minute minimum, a 3-minute trailer is ignored, but a 2-hour movie is eligible even if you watch it for only 3 minutes. Set to 0 to include titles of any length. Titles with an unknown runtime wait for metadata.",
 		section: "journal",
 		type: "number",
 		min: 0,
@@ -14762,7 +14824,7 @@ var Ui = [
 	{
 		key: "minimum_seconds",
 		label: "Playback before credits completion",
-		hint: "Main-content watch time required before confirmed credits can complete a viewing.",
+		hint: "Requires a minimum amount of main-content playback before reaching confirmed credits can mark a viewing complete. For example, with a 300-second minimum, watching for 2 minutes and then skipping to the credits does not mark the movie complete; watching for 6 minutes before reaching the credits can. Paused and scanned time do not count.",
 		section: "journal",
 		type: "number",
 		min: 1,
@@ -14770,16 +14832,26 @@ var Ui = [
 		unit: "seconds"
 	},
 	{
-		key: "resume_hours",
-		label: "Resume window",
-		hint: "Combine partial viewings resumed within this window. Set to 0 to keep them separate.",
+		key: "partial_minimum_minutes",
+		label: "Minimum partial viewing time",
+		hint: "Controls when an incomplete playback session appears as a partial viewing. For example, with a 10-minute minimum, watching 3 minutes and stopping leaves a diagnostic session but no Journal viewing; watching 12 minutes and stopping creates a partial viewing. This minimum also determines whether a session qualifies for joining to another session. A shorter final session can still complete an established viewing.",
 		section: "journal",
 		type: "number",
-		min: 0,
-		max: 168,
-		unit: "hours"
+		min: 1,
+		max: 1440,
+		unit: "minutes"
+	},
+	{
+		key: "resume_minutes",
+		label: "Resume window",
+		hint: "Controls how long after a qualifying session stops another session of the same movie on the same player can join it. For example, with a 30-minute window, stopping at 8:00 and restarting at 8:20 can create one viewing; restarting at 8:40 creates a separate viewing. The restarted session must also meet the partial-viewing minimum, unless it completes an established viewing.",
+		section: "journal",
+		type: "number",
+		min: 1,
+		max: 60,
+		unit: "minutes"
 	}
-], qi = [
+], Qi = [
 	{
 		key: "library_host",
 		label: "Kaleidescape Server Address",
@@ -14808,7 +14880,7 @@ var Ui = [
 		max: 4096,
 		unit: "MiB"
 	}
-], Ji = [
+], $i = [
 	[
 		"tracking_enabled",
 		"Automatically record playback",
@@ -14863,19 +14935,19 @@ var Ui = [
 		"Publish new movie completions to your selected calendar.",
 		"calendar"
 	]
-], Yi = /* @__PURE__ */ new Set([
+], ea = /* @__PURE__ */ new Set([
 	"fuzzy_search",
-	...Ji.map(([e]) => e),
+	...$i.map(([e]) => e),
 	"calendar_full_sync",
 	"calendar_full_sync_dedicated",
 	"metadata_store_enabled",
 	"metadata_tmdb_enabled",
 	"metadata_auto_save",
 	"metadata_clear_tmdb_key"
-]), Xi = [
-	...Ki,
-	...qi,
-	...Ji.map(([e, t, n, r]) => ({
+]), ta = [
+	...Zi,
+	...Qi,
+	...$i.map(([e, t, n, r]) => ({
 		key: e,
 		label: t,
 		hint: n,
@@ -15014,23 +15086,23 @@ var Ui = [
 		section: n,
 		hint: r
 	})),
-	...Ui.map(([e, t]) => ({
+	...Ji.map(([e, t]) => ({
 		key: `metadata_source_${e}`,
 		label: `${t} source`,
 		section: "metadata",
 		hint: "Preferred metadata source and fallback"
 	}))
 ];
-function Zi(e, t) {
+function na(e, t) {
 	let n = (e) => Array.isArray(e) ? JSON.stringify(e) : String(e ?? "");
 	return [.../* @__PURE__ */ new Set([...Object.keys(e), ...Object.keys(t)])].filter((r) => n(e[r]) !== n(t[r]));
 }
-function Qi(e) {
-	let t = e.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
-	return t.length ? Xi.filter((e) => t.every((t) => `${e.label} ${e.hint} ${e.section} ${e.key}`.toLocaleLowerCase().includes(t))) : [];
+function ra(e) {
+	let t = Wi(e.trim()).split(/\s+/).filter(Boolean);
+	return t.length ? ta.filter((e) => t.every((t) => Wi(`${e.label} ${e.hint} ${e.section} ${e.key}`).includes(t))) : [];
 }
 w(), dn();
-function $i(e, t) {
+function ia(e, t) {
 	return v`<div class="switch-row">
       ${G("calendar_full_sync", "Enable Full Sync", "Reconcile a dedicated calendar against completed Journal entries. Unmatched events require repeated successful scans and at least 10 minutes of grace before deletion. Schedule runs in Automations or use Run Full Sync now; enabling this does not create a schedule.")}<input
         type="checkbox"
@@ -15083,7 +15155,7 @@ function $i(e, t) {
           ` : x}`;
 }
 B(), w(), F(), E(), R();
-var ea = class extends C {
+var aa = class extends C {
 	constructor(...e) {
 		super(...e), this.disabled = !1, this.working = !1, this.error = "", this.reviewToken = "", this.generation = 0, this.bound = "";
 	}
@@ -15390,8 +15462,8 @@ var ea = class extends C {
     </section>`;
 	}
 };
-customElements.get("kaleidescape-calendar-export") || customElements.define("kaleidescape-calendar-export", ea), w(), F(), R(), E(), Sn();
-var ta = [
+customElements.get("kaleidescape-calendar-export") || customElements.define("kaleidescape-calendar-export", aa), w(), F(), R(), E(), Sn();
+var oa = [
 	[
 		"purchase_email",
 		"Purchase receipt email",
@@ -15422,18 +15494,18 @@ var ta = [
 		"Maintain a dedicated calendar from completed viewings.",
 		"Save a dedicated calendar and enable Full Sync first. Unmatched events can be deleted; the schedule includes a later safeguard check."
 	]
-], na = {
+], sa = {
 	current: "Up to date",
 	outdated: "Update available",
 	modified: "Modified or unrecognized",
 	missing: "Not installed",
 	unavailable: "Unable to check"
 };
-function ra(e) {
+function ca(e) {
 	let t = e.split(/\r?\n/), n = t.indexOf("# Version history:"), r = t.indexOf("# End version history", n + 1);
 	return n < 0 || r < 0 ? [] : t.slice(n + 1, r).filter((e) => /^# v\d+: /.test(e)).map((e) => e.slice(2));
 }
-var ia = class extends C {
+var la = class extends C {
 	constructor(...e) {
 		super(...e), this.versionsOnly = !1, this.disabled = !1, this.busy = !1, this.message = "", this.error = "", this.checking = !1, this.generation = 0, this.reviewRequest = 0;
 	}
@@ -15615,7 +15687,7 @@ var ia = class extends C {
 			this.review = {
 				...this.review,
 				loading: !1,
-				entries: ra(t.yaml),
+				entries: ca(t.yaml),
 				template: t
 			};
 		} catch (e) {
@@ -15661,7 +15733,7 @@ var ia = class extends C {
         </h2>
         ${I((e) => this.closeReview(e), this.busy)}
       </div>
-      <p>${ta.find(([t]) => t === e?.kind)?.[3]}</p>
+      <p>${oa.find(([t]) => t === e?.kind)?.[3]}</p>
       <div class="review-versions">
         <span
           >Installed:
@@ -15766,7 +15838,7 @@ var ia = class extends C {
                     </tr>
                   </thead>
                   <tbody>
-                    ${ta.map(([e, t, n]) => {
+                    ${oa.map(([e, t, n]) => {
 			let r = this.statuses?.[e], i = r?.status ?? "unavailable";
 			return v`<tr data-blueprint=${e}>
                         <td>
@@ -15780,7 +15852,7 @@ var ia = class extends C {
                         </td>
                         <td>
                           <span class=${`status ${i}`}
-                            >${na[i]}</span
+                            >${sa[i]}</span
                           >
                         </td>
                         <td>
@@ -15823,14 +15895,14 @@ var ia = class extends C {
     </section>` : x;
 	}
 };
-customElements.get("kaleidescape-automation-blueprints") || customElements.define("kaleidescape-automation-blueprints", ia), w(), F(), E(), R();
-var aa = [
+customElements.get("kaleidescape-automation-blueprints") || customElements.define("kaleidescape-automation-blueprints", la), w(), F(), E(), R();
+var ua = [
 	["rules", "Runtime rules and feature enablement"],
 	["browsing", "Personal browsing preferences · may include searches/names"],
 	["shared", "Shared hidden collection names"],
 	["connections", "Network addresses, player and HA entity choices · private"],
 	["templates", "Custom calendar text templates · private"]
-], oa = class extends C {
+], da = class extends C {
 	constructor(...e) {
 		super(...e), this.disabled = !1, this.generation = 0, this.selected = /* @__PURE__ */ new Set(["rules", "browsing"]), this.request = "", this.busy = !1, this.pending = !1, this.error = "", this.notice = "";
 	}
@@ -15923,7 +15995,7 @@ var aa = [
           Connection choices, searches, names and templates can contain private
           information; protect the downloaded file.
         </p>
-        ${aa.map(([t, n]) => v`<label class="check"
+        ${ua.map(([t, n]) => v`<label class="check"
               ><input
                 type="checkbox"
                 .checked=${this.selected.has(t)}
@@ -15990,11 +16062,11 @@ ${JSON.stringify(t, null, 2)}</pre>
 	}
 };
 // src/core/test-dashboard.ts
-customElements.get("kaleidescape-settings-transfer") || customElements.define("kaleidescape-settings-transfer", oa), F();
-function sa(e) {
-	return Array.isArray(e) ? `[${e.map(sa).join(",")}]` : e && typeof e == "object" ? `{${Object.entries(e).sort(([e], [t]) => e.localeCompare(t)).map(([e, t]) => `${JSON.stringify(e)}:${sa(t)}`).join(",")}}` : JSON.stringify(e);
+customElements.get("kaleidescape-settings-transfer") || customElements.define("kaleidescape-settings-transfer", da), F();
+function fa(e) {
+	return Array.isArray(e) ? `[${e.map(fa).join(",")}]` : e && typeof e == "object" ? `{${Object.entries(e).sort(([e], [t]) => e.localeCompare(t)).map(([e, t]) => `${JSON.stringify(e)}:${fa(t)}`).join(",")}}` : JSON.stringify(e);
 }
-var Q = class extends Error {}, ca = class {
+var Q = class extends Error {}, pa = class {
 	constructor(e, t) {
 		if (this.client = e, this.plan = t, this.attempted = !1, this.created = !1, !/^companion-test-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(t.url_path) || new TextEncoder().encode(t.yaml).length > 262144) throw new Q("Invalid generated dashboard artifact");
 	}
@@ -16017,17 +16089,17 @@ var Q = class extends Error {}, ca = class {
 			if (t(), k(e) !== "config_not_found") throw e;
 		}
 		if (i) {
-			if (sa(i) === sa(this.plan.config)) return;
+			if (fa(i) === fa(this.plan.config)) return;
 			throw new Q("This dashboard already contains different content. It was not overwritten. Inspect it in HA dashboard settings.");
 		}
 		if (!this.created && !r) throw new Q("Could not verify the new dashboard");
 		await this.client.saveHATestDashboard(this.plan), t();
 		let a = await this.client.haTestDashboardConfig(this.plan.url_path);
-		if (t(), sa(a) !== sa(this.plan.config)) throw new Q("The saved dashboard could not be verified. Inspect it before continuing.");
+		if (t(), fa(a) !== fa(this.plan.config)) throw new Q("The saved dashboard could not be verified. Inspect it before continuing.");
 	}
 };
 w(), F(), E(), R();
-var la = class extends C {
+var ma = class extends C {
 	constructor(...e) {
 		super(...e), this.disabled = !1, this.name = "Kaleidescape test guide", this.request = "", this.generation = 0, this.busy = !1, this.pending = !1, this.complete = !1, this.error = "", this.bound = "";
 	}
@@ -16073,7 +16145,7 @@ var la = class extends C {
 			if (this.request ||= it(), !this.plan) {
 				let e = await this.client.testDashboard(this.scope, this.request, this.name.trim());
 				if (!n()) return;
-				this.installer = new ca(this.client, e), this.plan = e;
+				this.installer = new pa(this.client, e), this.plan = e;
 			}
 			if (this.pending = !0, await this.installer.install(n), !n() || (await this.client.verifyTestDashboard(this.scope, this.request), !n())) return;
 			this.complete = !0, this.pending = !1;
@@ -16173,8 +16245,8 @@ var la = class extends C {
       </dialog>` : x;
 	}
 };
-customElements.get("kaleidescape-test-dashboard") || customElements.define("kaleidescape-test-dashboard", la), w(), F(), B(), R(), E();
-var ua = class extends C {
+customElements.get("kaleidescape-test-dashboard") || customElements.define("kaleidescape-test-dashboard", ma), w(), F(), B(), R(), E();
+var ha = class extends C {
 	constructor(...e) {
 		super(...e), this.disabled = !1, this.working = !1, this.error = "", this.generation = 0, this.bound = "";
 	}
@@ -16319,8 +16391,8 @@ var ua = class extends C {
     </section>`;
 	}
 };
-customElements.get("kaleidescape-metadata-repair") || customElements.define("kaleidescape-metadata-repair", ua), w(), F(), E(), R(), dn();
-var da = [
+customElements.get("kaleidescape-metadata-repair") || customElements.define("kaleidescape-metadata-repair", ha), w(), F(), E(), R(), dn();
+var ga = [
 	[
 		"calendar",
 		"Calendar reconciliation history",
@@ -16336,7 +16408,7 @@ var da = [
 		"Playback control history",
 		"Finished or reviewed playback control receipts; pending and uncertain commands are kept."
 	]
-], fa = class extends C {
+], _a = class extends C {
 	constructor(...e) {
 		super(...e), this.disabled = !1, this.busy = !1, this.policies = {
 			calendar: 180,
@@ -16415,7 +16487,7 @@ var da = [
 		}
 	}
 	updated() {
-		for (let [e] of da) {
+		for (let [e] of ga) {
 			let t = this.renderRoot.querySelector(`#${e}`);
 			t && (t.value = String(this.policies[e]));
 		}
@@ -16445,7 +16517,7 @@ var da = [
         ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
         ${this.review ? v` <p>Review the proposed cleanup:</p>
                 <ul>
-                  ${da.filter(([e]) => this.review.policies[e]).map(([e, t]) => v`<li>${t}: ${this.review.counts[e]} older than ${this.review.policies[e]} days</li>`)}
+                  ${ga.filter(([e]) => this.review.policies[e]).map(([e, t]) => v`<li>${t}: ${this.review.counts[e]} older than ${this.review.policies[e]} days</li>`)}
                 </ul>
                 <p>
                   Artwork links to repair: ${this.review.artwork_links ?? 0}
@@ -16502,7 +16574,7 @@ var da = [
                     ></span>
                   </button>
                 </div>
-                ${da.map(([e, t, n]) => v`<div class="cleanup-field">
+                ${ga.map(([e, t, n]) => v`<div class="cleanup-field">
                       <span class="cleanup-label"
                         ><label for=${e}>${t}</label
                         >${W(t, n)}</span
@@ -16547,8 +16619,8 @@ var da = [
       </dialog>`;
 	}
 };
-customElements.get("kaleidescape-database-cleanup") || customElements.define("kaleidescape-database-cleanup", fa), w(), F(), B(), E(), Sn(), dn(), Nt();
-var pa = class extends C {
+customElements.get("kaleidescape-database-cleanup") || customElements.define("kaleidescape-database-cleanup", _a), w(), F(), B(), E(), Sn(), dn(), Nt();
+var va = class extends C {
 	constructor(...e) {
 		super(...e), this.draft = {}, this.disabled = !1, this.actionsDisabled = !1, this.credentialConfigured = !1, this.generation = 0, this.bound = "", this.error = "", this.loading = !1;
 	}
@@ -16696,7 +16768,7 @@ var pa = class extends C {
             type="button"
             ?disabled=${this.disabled || !this.draft.metadata_tmdb_enabled}
             @click=${() => {
-			let e = Object.fromEntries(Ui.map(([e, , t]) => ["metadata_source_" + e, e === "artwork" || e === "critic_score" || e === "audience_score" || e === "distributor" ? "kaleidescape" : t.some((e) => e === "tmdb") ? "tmdb" : "auto"]));
+			let e = Object.fromEntries(Ji.map(([e, , t]) => ["metadata_source_" + e, e === "artwork" || e === "critic_score" || e === "audience_score" || e === "distributor" ? "kaleidescape" : t.some((e) => e === "tmdb") ? "tmdb" : "auto"]));
 			this.dispatchEvent(new CustomEvent("metadata-settings", {
 				detail: e,
 				bubbles: !0,
@@ -16707,7 +16779,7 @@ var pa = class extends C {
             Prefer TMDB · keep Kaleidescape covers and RT scores
           </button>
           <div class="grid settings-grid spaced">
-            ${Ui.map(([e, t, n]) => {
+            ${Ji.map(([e, t, n]) => {
 			let r = "metadata_source_" + e, i = String(this.draft[r] ?? "auto"), a = e === "artwork" ? "Choose the preferred portrait cover. Kaleidescape uses the edition artwork cached from your system; TMDB downloads covers on metadata refresh when Cover artwork sync is enabled. Per-movie choices take priority." : e === "backdrop" ? "Choose the source for landscape images. TMDB is the available provider; enable TMDB and Cover artwork sync for new downloads. Existing cached images remain usable." : `Choose the preferred source for ${t.toLowerCase()}. Automatic uses available cached sources; a preferred provider falls back when its value is missing. Original library data uses only the scanned field. This does not enable providers or override reviewed per-movie choices.`;
 			return v`<div class="setting-field">
                 ${G(r, t, a)}<select
@@ -16722,7 +16794,7 @@ var pa = class extends C {
 				"auto",
 				"original",
 				...n
-			].map((t) => v`<option value=${t} ?selected=${t === i}>${e === "artwork" && t === "kaleidescape" ? "Kaleidescape library cover" : Wi[t]}</option>`)}
+			].map((t) => v`<option value=${t} ?selected=${t === i}>${e === "artwork" && t === "kaleidescape" ? "Kaleidescape library cover" : Yi[t]}</option>`)}
                 </select>
               </div>`;
 		})}
@@ -16818,8 +16890,8 @@ var pa = class extends C {
     </section>` : x;
 	}
 };
-customElements.get("kaleidescape-enrichment-settings") || customElements.define("kaleidescape-enrichment-settings", pa), w(), F(), E(), Sn(), dn(), tr(), B(), Rn(), Nn();
-var ma = {
+customElements.get("kaleidescape-enrichment-settings") || customElements.define("kaleidescape-enrichment-settings", va), w(), F(), E(), Sn(), dn(), tr(), B(), Rn(), Nn();
+var ya = {
 	invalid_calendar_full_sync: "Use an age window of 1–12 whole months.",
 	calendar_dedicated_required: "Acknowledge that Full Sync uses a separate calendar and deletes unmatched events.",
 	calendar_full_sync_unsupported: "Full Sync requires a calendar with event creation and deletion support.",
@@ -16834,7 +16906,7 @@ var ma = {
 	invalid_control_options: "Use a private LAN control hostname/IP and a valid player serial number.",
 	invalid_library_host: "Enter a hostname or private LAN HTTP(S) origin without a path, credentials, or query.",
 	invalid_library_options: "Choose a purchase window of 0–520 weeks and an artwork cache limit of 32–4096 MiB."
-}, ha = class extends C {
+}, ba = class extends C {
 	constructor(...e) {
 		super(...e), this.tab = "general", this.search = "", this.automationBusy = !1, this.generation = 0, this.draft = {}, this.initial = {}, this.collectionChoices = [], this.hiddenCollections = [], this.savedHiddenCollections = [], this.savingCollections = !1, this.purchaseLoading = !1, this.purchaseError = "", this.sharedReady = !1, this.sharedError = "", this.customCollection = "", this.loading = !1, this.saving = !1, this.uncertain = !1, this.dashboardBusy = !1, this.error = "", this.bound = "";
 	}
@@ -17115,7 +17187,7 @@ var ma = {
 				r.flow_id && e.settings(t, "cancel", { flow_id: r.flow_id }).catch(() => {});
 				return;
 			}
-			this.flow = r, this.draft = Object.fromEntries((r.fields ?? []).map((e) => [e.name, Yi.has(e.name) ? !!e.default : String(e.default ?? "")])), this.initial = { ...this.draft }, this.sharedPreferences = new q(e, t, !0, (e) => {
+			this.flow = r, this.draft = Object.fromEntries((r.fields ?? []).map((e) => [e.name, ea.has(e.name) ? !!e.default : String(e.default ?? "")])), this.initial = { ...this.draft }, this.sharedPreferences = new q(e, t, !0, (e) => {
 				n === this.generation && (e && k(e) === "unauthorized" ? this.fail(e) : (this.sharedError = e ? A(e) : "", this.requestUpdate()));
 			});
 			let i = await this.sharedPreferences.load();
@@ -17132,7 +17204,7 @@ var ma = {
 	}
 	confirmNavigation() {
 		let e = this.renderRoot.querySelector("kaleidescape-calendar-export"), t = this.renderRoot.querySelector("kaleidescape-test-dashboard"), n = this.renderRoot.querySelector("kaleidescape-metadata-repair");
-		return this.saving || this.savingCollections || this.automationBusy || t && !t.confirmNavigation() || e && !e.confirmNavigation() || n && !n.confirmNavigation() ? !1 : this.uncertain ? window.confirm("The settings save may already have committed. Leave this view and inspect saved values before making another change?") : !Zi(this.draft, this.initial).length && !this.collectionsDirty || window.confirm("Discard your unsaved settings changes?");
+		return this.saving || this.savingCollections || this.automationBusy || t && !t.confirmNavigation() || e && !e.confirmNavigation() || n && !n.confirmNavigation() ? !1 : this.uncertain ? window.confirm("The settings save may already have committed. Leave this view and inspect saved values before making another change?") : !na(this.draft, this.initial).length && !this.collectionsDirty || window.confirm("Discard your unsaved settings changes?");
 	}
 	busy() {
 		this.dispatchEvent(new CustomEvent("settings-busy", {
@@ -17150,8 +17222,8 @@ var ma = {
 		if (!await this.validateForm(e.target) || this.saving || t !== this.generation || !this.scope?.permissions.edit) return;
 		this.saving = !0, this.busy(), this.error = "", this.requestUpdate();
 		let n = { ...this.draft };
-		for (let { key: e, type: t } of Ki) t === "number" ? n[e] = Number(n[e]) : n[e] || delete n[e];
-		for (let { key: e, type: t } of qi) t === "number" && (n[e] = Number(n[e]));
+		for (let { key: e, type: t } of Zi) t === "number" ? n[e] = Number(n[e]) : n[e] || delete n[e];
+		for (let { key: e, type: t } of Qi) t === "number" && (n[e] = Number(n[e]));
 		n.library_host = String(n.library_host ?? ""), n.metadata_requests_per_second !== void 0 && (n.metadata_requests_per_second = Number(n.metadata_requests_per_second)), n.calendar_full_sync_months !== void 0 && (n.calendar_full_sync_months = Number(n.calendar_full_sync_months)), n.calendar_entity || delete n.calendar_entity;
 		try {
 			let e = await this.client.settings(this.scope, "submit", {
@@ -17170,7 +17242,7 @@ var ma = {
 					"duplicate_entities",
 					"invalid_rules"
 				].includes(t) ? "journal" : void 0;
-				n && this.selectTab(n), this.error = Object.values(e.errors ?? {}).map((e) => ma[e] ?? "Check the settings and try again.").join(" ");
+				n && this.selectTab(n), this.error = Object.values(e.errors ?? {}).map((e) => ya[e] ?? "Check the settings and try again.").join(" ");
 			} else this.error = "The settings flow ended. Reload settings to continue.";
 		} catch (e) {
 			t === this.generation && (this.fail(e), this.uncertain = ![
@@ -17183,10 +17255,10 @@ var ma = {
 		}
 	}
 	selectTab(e) {
-		Gi.some(([t]) => t === e) && (this.tab = e, this.requestUpdate());
+		Xi.some(([t]) => t === e) && (this.tab = e, this.requestUpdate());
 	}
 	tabKey(e, t) {
-		let n = Gi.map(([e]) => e), r = n.indexOf(t), i = e.key === "ArrowRight" || e.key === "ArrowDown" ? n[(r + 1) % n.length] : e.key === "ArrowLeft" || e.key === "ArrowUp" ? n[(r + n.length - 1) % n.length] : e.key === "Home" ? n[0] : e.key === "End" ? n.at(-1) : void 0;
+		let n = Xi.map(([e]) => e), r = n.indexOf(t), i = e.key === "ArrowRight" || e.key === "ArrowDown" ? n[(r + 1) % n.length] : e.key === "ArrowLeft" || e.key === "ArrowUp" ? n[(r + n.length - 1) % n.length] : e.key === "Home" ? n[0] : e.key === "End" ? n.at(-1) : void 0;
 		i && (e.preventDefault(), this.selectTab(i), this.renderRoot.querySelector(`#settings-tab-${i}`)?.focus());
 	}
 	submitForm() {
@@ -17203,7 +17275,7 @@ var ma = {
 		return e.reportValidity();
 	}
 	get dirtyKeys() {
-		return Zi(this.draft, this.initial);
+		return na(this.draft, this.initial);
 	}
 	get blocked() {
 		return this.saving || this.uncertain;
@@ -17227,7 +17299,7 @@ var ma = {
     </div>`;
 	}
 	toggle(e) {
-		let t = Ji.find(([t]) => t === e);
+		let t = $i.find(([t]) => t === e);
 		return v`<div class="switch-row">
       ${G(e, t[1], t[2])}<input
         type="checkbox"
@@ -17358,7 +17430,7 @@ var ma = {
 		return v`<div class="settings-card">
         ${this.heading("Automatic recording", "Observe one player and keep the Journal up to date.")}${this.toggle("tracking_enabled")}
         <div class="settings-grid spaced">
-          ${Ki.filter((e) => e.type === "text").map((e) => this.field(e, this.flow?.entity_choices?.[e.key === "media_player" ? "media_player" : "sensor"] ?? []))}
+          ${Zi.filter((e) => e.type === "text").map((e) => this.field(e, this.flow?.entity_choices?.[e.key === "media_player" ? "media_player" : "sensor"] ?? []))}
         </div>
         <details class="setting-help">
           <summary>How do I choose the right entities?</summary>
@@ -17376,7 +17448,7 @@ var ma = {
       <div class="settings-card">
         ${this.heading("Viewing rules", "Fine-tune when a movie is recorded, completed or resumed.")}
         <div class="settings-grid">
-          ${Ki.filter((e) => e.type === "number").map((e) => this.field(e))}
+          ${Zi.filter((e) => e.type === "number").map((e) => this.field(e))}
         </div>
       </div>`;
 	}
@@ -17384,7 +17456,7 @@ var ma = {
 		return v`<div class="settings-card">
         ${this.heading("Local Library connection", "Read the movie catalog from your Kaleidescape system.")}${this.toggle("library_enabled")}
         ${this.draft.library_enabled ? v`<div class="settings-grid spaced">
-                  ${this.field(qi[0])}
+                  ${this.field(Qi[0])}
                 </div>
                 <p class="settings-note">
                   A scan runs after setup. For recurring scans, configure the
@@ -17408,7 +17480,7 @@ var ma = {
               <div class="settings-card">
                 ${this.heading("Artwork & purchase display", "Control local storage and the Recently Added purchase badge.")}
                 <div class="settings-grid">
-                  ${qi.slice(1).map((e) => this.field(e))}
+                  ${Qi.slice(1).map((e) => this.field(e))}
                 </div>
                 ${this.draft.library_sync_artwork ? v`<p class="settings-note">Artwork uses additional disk space: up to ${String(this.draft.library_artwork_cache_mb)} MiB plus one incoming image (up to 5 MiB). The journal database retains its 256 MiB limit. HA backups can include these cached files.</p>` : x}
               </div>
@@ -17574,7 +17646,7 @@ var ma = {
                 ${this.templateHelp("calendar_description")}
               </div>
               <div class="settings-card">
-                ${this.heading("Dedicated calendar maintenance", "Optional Full Sync reconciles a separate calendar against completed Journal entries.")}${$i(this.draft, (e) => {
+                ${this.heading("Dedicated calendar maintenance", "Optional Full Sync reconciles a separate calendar against completed Journal entries.")}${ia(this.draft, (e) => {
 			this.draft = {
 				...this.draft,
 				...e
@@ -17801,7 +17873,7 @@ var ma = {
 		}
 	}
 	render() {
-		let e = this.dirtyKeys, t = this.flow?.type === "form" && !!this.scope?.permissions.edit, n = Qi(this.search);
+		let e = this.dirtyKeys, t = this.flow?.type === "form" && !!this.scope?.permissions.edit, n = ra(this.search);
 		return v`<section class="settings-page" aria-labelledby="settings-title">
       <div class="settings-top">
         <div>
@@ -17852,14 +17924,14 @@ var ma = {
                   aria-orientation="vertical"
                   aria-label="Settings categories"
                 >
-                  ${Gi.map(([t, n]) => v`<button
+                  ${Xi.map(([t, n]) => v`<button
                         type="button"
                         role="tab"
                         id=${`settings-tab-${t}`}
                         aria-controls=${`settings-${t}`}
                         aria-selected=${this.tab === t}
                         tabindex=${this.tab === t ? 0 : -1}
-                        class=${e.some((e) => Xi.find((t) => t.key === e)?.section === t) ? "has-changes" : ""}
+                        class=${e.some((e) => ta.find((t) => t.key === e)?.section === t) ? "has-changes" : ""}
                         @click=${() => {
 			this.search = "", this.selectTab(t);
 		}}
@@ -17875,7 +17947,7 @@ var ma = {
 			this.search = "", this.selectTab(e.target.value);
 		}}
                   >
-                    ${Gi.map(([e, t]) => v`<option value=${e} ?selected=${this.tab === e}>${t}</option>`)}
+                    ${Xi.map(([e, t]) => v`<option value=${e} ?selected=${this.tab === e}>${t}</option>`)}
                   </select></label
                 >
                 <p class="settings-legend">
@@ -17903,7 +17975,7 @@ var ma = {
                                           ><strong>${e.label}</strong
                                           ><small>${e.hint}</small></span
                                         ><span class="scope-tag"
-                                          >${Gi.find(([t]) => t === e.section)?.[1]}</span
+                                          >${Xi.find(([t]) => t === e.section)?.[1]}</span
                                         >
                                       </button>
                                     </li>`)}
@@ -17929,7 +18001,7 @@ var ma = {
                   ?hidden=${!!this.search.trim()}
                 >
                   <fieldset class="settings-fieldset" ?disabled=${this.blocked}>
-                    ${Gi.map(([e, , t, n]) => v`<section
+                    ${Xi.map(([e, , t, n]) => v`<section
                           role="tabpanel"
                           id=${`settings-${e}`}
                           aria-labelledby=${`settings-tab-${e}`}
@@ -18030,8 +18102,8 @@ var ma = {
 	}
 };
 // src/ui/database.styles.ts
-customElements.get("kaleidescape-settings") || customElements.define("kaleidescape-settings", ha), w();
-var ga = l`
+customElements.get("kaleidescape-settings") || customElements.define("kaleidescape-settings", ba), w();
+var xa = l`
   .database {
     overflow: visible;
     margin-top: 24px;
@@ -18237,7 +18309,7 @@ var ga = l`
       box-shadow: -8px 0 8px var(--surface);
     }
   }
-`, _a = {
+`, Sa = {
 	viewings: "Journal viewing records, including watched time, status, and notes.",
 	sessions: "Individual playback sessions linked to Journal viewings, used to track pauses and resumes.",
 	library: "Cached movie versions and metadata synchronized from the Kaleidescape server.",
@@ -18265,7 +18337,7 @@ var ga = l`
 	purchase_identity_barriers: "Reserved purchase identities that guard against replay and duplicate imports."
 };
 w(), F();
-var va = class extends C {
+var Ca = class extends C {
 	constructor(...e) {
 		super(...e), this.table = "viewings", this.value = "", this.fields = [], this.operators = [], this.disabled = !1, this.open = !1, this.active = 0, this.cursor = 0, this.message = "", this.invalid = !1, this.generation = 0;
 	}
@@ -18529,50 +18601,8 @@ var va = class extends C {
       </details>`;
 	}
 };
-customElements.get("kaleidescape-database-search") || customElements.define("kaleidescape-database-search", va);
-// src/core/search.ts
-function ya(e) {
-	return e.toLocaleLowerCase().normalize("NFKD").replace(/\p{M}/gu, "").match(/[\p{L}\p{N}_]+/gu)?.join(" ") ?? "";
-}
-function ba(e, t) {
-	let n = Math.min(2, Math.max(1, Math.ceil(e.length / 4)));
-	if (e.length < 3 || Math.max(e.length, t.length) > 100 || Math.abs(e.length - t.length) > n) return !1;
-	let r = Array.from({ length: t.length + 1 }, (e, t) => t), i = r;
-	for (let a = 1; a <= e.length; a++) {
-		let o = Array(t.length + 1).fill(n + 1);
-		o[0] = a;
-		for (let s = Math.max(1, a - n); s <= Math.min(t.length, a + n); s++) {
-			let n = Math.min(r[s] + 1, o[s - 1] + 1, r[s - 1] + Number(e[a - 1] !== t[s - 1]));
-			a > 1 && s > 1 && e[a - 1] === t[s - 2] && e[a - 2] === t[s - 1] && (n = Math.min(n, i[s - 2] + 1)), o[s] = n;
-		}
-		if (Math.min(...o) > n) return !1;
-		i = r, r = o;
-	}
-	return r[t.length] <= n;
-}
-function xa(e, t, n = !1) {
-	let r = t.trim();
-	if (r.length >= 2 && r.startsWith("\"") && r.endsWith("\"")) {
-		let t;
-		try {
-			t = JSON.parse(r).trim();
-		} catch {
-			t = r.slice(1, -1).trim();
-		}
-		if (!t) return !1;
-		let n = t.toLocaleLowerCase().split(/\s+/).map((e) => e.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-		return RegExp("(?<![\\p{L}\\p{N}_])" + n.join("\\s+") + "(?![\\p{L}\\p{N}_])", "u").test(e.toLocaleLowerCase());
-	}
-	if (e.toLocaleLowerCase().includes(t.toLocaleLowerCase())) return !0;
-	if (!n) return !1;
-	let i = ya(t), a = ya(e);
-	if (!i) return !1;
-	if (a.includes(i)) return !0;
-	let o = i.split(" "), s = a.split(" ");
-	return o.length <= 12 && o.every((e) => s.some((t) => t.includes(e) || ba(e, t)));
-}
-w(), F(), B(), E();
-var Sa = class extends C {
+customElements.get("kaleidescape-database-search") || customElements.define("kaleidescape-database-search", Ca), w(), F(), B(), E();
+var wa = class extends C {
 	constructor(...e) {
 		super(...e), this.disabled = !1, this.bound = "", this.request = 0, this.query = "", this.items = [], this.active = -1, this.loading = !1, this.more = !1, this.error = "";
 	}
@@ -18757,8 +18787,8 @@ var Sa = class extends C {
       </div>`;
 	}
 };
-customElements.get("kaleidescape-import-matcher") || customElements.define("kaleidescape-import-matcher", Sa), B(), w(), F(), E(), R(), zt();
-var Ca = class extends C {
+customElements.get("kaleidescape-import-matcher") || customElements.define("kaleidescape-import-matcher", wa), B(), w(), F(), E(), R(), zt();
+var Ta = class extends C {
 	constructor(...e) {
 		super(...e), this.disabled = !1, this.bound = "", this.generation = 0, this.selected = /* @__PURE__ */ new Set(), this.query = "", this.changesOnly = !1, this.page = 0, this.pageSize = 100, this.working = !1, this.error = "", this.notice = "", this.dialog = null, this.purchaseReview = !1, this.covers = new V();
 	}
@@ -18992,7 +19022,7 @@ var Ca = class extends C {
 	}
 	renderReview(e) {
 		if (!this.review) return x;
-		let t = this.review, n = this.query.trim().toLocaleLowerCase(), r = t.rows.filter((e) => (!this.changesOnly || e.needs_match || !e.needs_match && ["new", "merge"].includes(e.action)) && xa(`${e.title} ${e.detail ?? ""} ${e.table} ${Object.keys(e.changes).join(" ")}`, n)).sort((e, t) => Number(!!t.needs_match) - Number(!!e.needs_match)), i = Math.max(0, Math.ceil(r.length / this.pageSize) - 1), a = Math.min(this.page, i), o = r.slice(a * this.pageSize, (a + 1) * this.pageSize);
+		let t = this.review, n = this.query.trim().toLocaleLowerCase(), r = t.rows.filter((e) => (!this.changesOnly || e.needs_match || !e.needs_match && ["new", "merge"].includes(e.action)) && qi(`${e.title} ${e.detail ?? ""} ${e.table} ${Object.keys(e.changes).join(" ")}`, n)).sort((e, t) => Number(!!t.needs_match) - Number(!!e.needs_match)), i = Math.max(0, Math.ceil(r.length / this.pageSize) - 1), a = Math.min(this.page, i), o = r.slice(a * this.pageSize, (a + 1) * this.pageSize);
 		return v`${this.matching ? v`<kaleidescape-import-matcher
               .client=${this.client}
               .scope=${this.scope}
@@ -19292,8 +19322,8 @@ var Ca = class extends C {
       </dialog>`;
 	}
 };
-customElements.get("kaleidescape-transfers") || customElements.define("kaleidescape-transfers", Ca), w(), F(), E(), R();
-var wa = [
+customElements.get("kaleidescape-transfers") || customElements.define("kaleidescape-transfers", Ta), w(), F(), E(), R();
+var Ea = [
 	["title", "Receipt title"],
 	["purchased_on", "Purchase date"],
 	["purchase_price", "Purchase price"],
@@ -19301,14 +19331,14 @@ var wa = [
 	["order_id", "Transaction ID"],
 	["href", "Store link"]
 ];
-function Ta(e, t = "") {
-	return typeof e == "object" && e ? Object.fromEntries(Object.entries(e).flatMap(([e, n]) => Object.entries(Ta(n, t ? `${t}.${e}` : e)))) : t ? { [t]: e } : {};
+function Da(e, t = "") {
+	return typeof e == "object" && e ? Object.fromEntries(Object.entries(e).flatMap(([e, n]) => Object.entries(Da(n, t ? `${t}.${e}` : e)))) : t ? { [t]: e } : {};
 }
-function Ea(e) {
+function Oa(e) {
 	return e === void 0 ? "—" : e === null ? "null" : typeof e == "string" ? e : JSON.stringify(e);
 }
-function Da(e, t, n) {
-	let r = Ta(t), i = Ta(n), a = [.../* @__PURE__ */ new Set([...Object.keys(r), ...Object.keys(i)])];
+function ka(e, t, n) {
+	let r = Da(t), i = Da(n), a = [.../* @__PURE__ */ new Set([...Object.keys(r), ...Object.keys(i)])];
 	return v`<h4>${e}</h4>
     <div class="diff" role="table" aria-label=${e}>
       <div class="diff-row" role="row">
@@ -19317,7 +19347,7 @@ function Da(e, t, n) {
         <strong role="columnheader">After</strong>
       </div>
       ${a.length ? a.map((e) => {
-		let t = JSON.stringify(r[e]) !== JSON.stringify(i[e]), n = wa.find(([t]) => t === e)?.[1] ?? e;
+		let t = JSON.stringify(r[e]) !== JSON.stringify(i[e]), n = Ea.find(([t]) => t === e)?.[1] ?? e;
 		return v`<div
                 class=${t ? "diff-row changed" : "diff-row"}
                 role="row"
@@ -19326,16 +19356,16 @@ function Da(e, t, n) {
                   >${n}${t ? " (changed)" : ""}</span
                 >
                 <span class="before" role="cell"
-                  >${Ea(r[e])}</span
+                  >${Oa(r[e])}</span
                 >
                 <span class="after" role="cell"
-                  >${Ea(i[e])}</span
+                  >${Oa(i[e])}</span
                 >
               </div>`;
 	}) : v`<p>No values to compare.</p>`}
     </div>`;
 }
-var Oa = class extends C {
+var Aa = class extends C {
 	constructor(...e) {
 		super(...e), this.row = {}, this.token = "", this.reverse = !1, this.editOnly = !1, this.action = "correct", this.draft = {}, this.query = "", this.results = [], this.owner = null, this.ownerLabel = "", this.confirmed = !1, this.busy = !1, this.error = "", this.fieldErrors = {}, this.generation = 0;
 	}
@@ -19395,7 +19425,7 @@ var Oa = class extends C {
     `];
 	}
 	connectedCallback() {
-		super.connectedCallback(), this.draft = Object.fromEntries(wa.map(([e]) => [e, String(this.row[e] ?? "")])), this.owner = typeof this.row.library_id == "string" ? this.row.library_id : null, this.ownerLabel = this.owner ? "Current Library entry" : "Unlinked";
+		super.connectedCallback(), this.draft = Object.fromEntries(Ea.map(([e]) => [e, String(this.row[e] ?? "")])), this.owner = typeof this.row.library_id == "string" ? this.row.library_id : null, this.ownerLabel = this.owner ? "Current Library entry" : "Unlinked";
 	}
 	firstUpdated() {
 		this.renderRoot.querySelector("dialog")?.showModal();
@@ -19440,7 +19470,7 @@ var Oa = class extends C {
 	}
 	changes() {
 		let e = {};
-		for (let [t] of wa) {
+		for (let [t] of Ea) {
 			let n = this.draft[t] || null;
 			n !== (this.row[t] ?? null) && (e[t] = n);
 		}
@@ -19527,9 +19557,9 @@ var Oa = class extends C {
         </p>
         ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
         ${this.review ? v`
-                ${Da("Purchase", this.review.before, this.review.after)}
-                ${Da("Library association", this.review.before_library, this.review.after_library)}
-                ${Da("Library totals", this.review.totals_change.map((e) => ({
+                ${ka("Purchase", this.review.before, this.review.after)}
+                ${ka("Library association", this.review.before_library, this.review.after_library)}
+                ${ka("Library totals", this.review.totals_change.map((e) => ({
 			source_id: e.source_id,
 			totals: e.before
 		})), this.review.totals_change.map((e) => ({
@@ -19580,7 +19610,7 @@ var Oa = class extends C {
                               >`}
                         ${this.action === "correct" ? v`
                                 <div class="fields">
-                                  ${wa.map(([e, t]) => v`
+                                  ${Ea.map(([e, t]) => v`
                                       <label
                                         >${t}<input
                                           name=${e}
@@ -19653,8 +19683,8 @@ var Oa = class extends C {
     `;
 	}
 };
-customElements.get("kaleidescape-purchase-repair") || customElements.define("kaleidescape-purchase-repair", Oa), Ln(), B(), w(), lr(), F(), E(), dn(), Rn(), R(), zt();
-var ka = {
+customElements.get("kaleidescape-purchase-repair") || customElements.define("kaleidescape-purchase-repair", Aa), Ln(), B(), w(), lr(), F(), E(), dn(), Rn(), R(), zt();
+var ja = {
 	viewings: "Viewings",
 	sessions: "Sessions",
 	library: "Library",
@@ -19685,26 +19715,26 @@ var ka = {
 	"sessions",
 	"library",
 	"purchase_records"
-], Aa = 100, ja = 44, Ma = [
+], Ma = 100, Na = 44, Pa = [
 	["Library", (e) => e.startsWith("library_")],
 	["Purchases", (e) => e.startsWith("purchase_")],
 	["Calendar", (e) => e.startsWith("calendar_")],
 	["Activity and audits", (e) => e.endsWith("_audit") || e === "requests" || e === "playback_controls"],
 	["System", () => !0]
 ];
-function Na(e) {
-	return Ma.find(([, t]) => t(e))[0];
+function Fa(e) {
+	return Pa.find(([, t]) => t(e))[0];
 }
-var Pa = class extends C {
+var Ia = class extends C {
 	constructor() {
 		super(), this.bound = "", this.generation = 0, this.mutationEpoch = 0, this.request = 0, this.table = "viewings", this.filters = {
 			limit: 25,
 			query: "",
 			descending: !1
-		}, this.fitPage = !0, this.allMode = !1, this.allBatchSize = Aa, this.moreLoading = !1, this.moreError = "", this.detailLoading = !1, this.detailRequest = 0, this.referenceRequest = 0, this.referenceLoading = !1, this.referenceError = "", this.referencedBy = [], this.rowScrollTop = 0, this.listHeight = 440, this.showSystem = !1, this.sorts = {}, this.fuzzySearch = !0, this.ready = !1, this.preferenceError = "", this.loading = !1, this.saving = !1, this.transferBusy = !1, this.repairing = !1, this.repairPending = !1, this.error = "", this.notice = "", this.search = "", this.selected = /* @__PURE__ */ new Set(), this.operation = null, this.draft = {}, this.nulls = /* @__PURE__ */ new Set(), this.original = "", this.createDraft = Ni(), this.confirmed = !1, this.deleteWord = "", this.covers = new V(), this.scheduleFit = () => {
+		}, this.fitPage = !0, this.allMode = !1, this.allBatchSize = Ma, this.moreLoading = !1, this.moreError = "", this.detailLoading = !1, this.detailRequest = 0, this.referenceRequest = 0, this.referenceLoading = !1, this.referenceError = "", this.referencedBy = [], this.rowScrollTop = 0, this.listHeight = 440, this.showSystem = !1, this.sorts = {}, this.fuzzySearch = !0, this.ready = !1, this.preferenceError = "", this.loading = !1, this.saving = !1, this.transferBusy = !1, this.repairing = !1, this.repairPending = !1, this.error = "", this.notice = "", this.search = "", this.selected = /* @__PURE__ */ new Set(), this.operation = null, this.draft = {}, this.nulls = /* @__PURE__ */ new Set(), this.original = "", this.createDraft = Ni(), this.confirmed = !1, this.deleteWord = "", this.covers = new V(), this.scheduleFit = () => {
 			clearTimeout(this.fitTimer), this.fitPage && this.ready && this.page && !this.blocked && !this.operation && (this.fitTimer = setTimeout(() => this.resizePage(), 120));
 		}, bi(this, () => this.scheduleFit()), Pn(this, () => {
-			if (!this.ready || this.preferences?.unsettled || this.moreLoading || this.detailLoading || this.allMode && (this.detail || this.selected.size > 0 || (this.page?.items.length ?? 0) > Aa) || this.blocked || this.operation || this.renderRoot.querySelector("dialog[open]")) return !1;
+			if (!this.ready || this.preferences?.unsettled || this.moreLoading || this.detailLoading || this.allMode && (this.detail || this.selected.size > 0 || (this.page?.items.length ?? 0) > Ma) || this.blocked || this.operation || this.renderRoot.querySelector("dialog[open]")) return !1;
 			let e = this.detail && this.page ? {
 				row: this.detail,
 				index: this.page.offset + this.page.items.indexOf(this.detail),
@@ -19725,7 +19755,7 @@ var Pa = class extends C {
 		this.styles = [
 			T,
 			Ii,
-			ga
+			xa
 		];
 	}
 	willUpdate(e) {
@@ -19743,7 +19773,7 @@ var Pa = class extends C {
 		super.disconnectedCallback(), window.removeEventListener("resize", this.scheduleFit), window.visualViewport?.removeEventListener("resize", this.scheduleFit), this.fitObserver?.disconnect(), this.fitObserver = void 0, this.fitList = void 0, clearTimeout(this.fitTimer), this.clear(), this.boundClient = void 0, this.bound = "";
 	}
 	clear() {
-		this.covers.cache.dispose(), this.covers = new V(), this.generation++, this.request++, this.preferences?.dispose(), this.preferences = void 0, this.fuzzySearch = !0, this.ready = !1, this.page = void 0, this.table = "viewings", this.fitPage = !0, this.allMode = this.moreLoading = this.detailLoading = !1, this.allBatchSize = Aa, this.moreError = "", this.detailRequest++, this.referenceRequest++, this.referenceLoading = !1, this.referenceError = "", this.referencedBy = [], this.rowScrollTop = 0, this.filters = {
+		this.covers.cache.dispose(), this.covers = new V(), this.generation++, this.request++, this.preferences?.dispose(), this.preferences = void 0, this.fuzzySearch = !0, this.ready = !1, this.page = void 0, this.table = "viewings", this.fitPage = !0, this.allMode = this.moreLoading = this.detailLoading = !1, this.allBatchSize = Ma, this.moreError = "", this.detailRequest++, this.referenceRequest++, this.referenceLoading = !1, this.referenceError = "", this.referencedBy = [], this.rowScrollTop = 0, this.filters = {
 			limit: 25,
 			query: "",
 			descending: !1
@@ -19759,7 +19789,7 @@ var Pa = class extends C {
 		try {
 			let n = await this.preferences.load();
 			if (t !== this.generation) return;
-			if (this.fuzzySearch = this.scope?.ui_defaults?.fuzzy_search !== !1, this.fitPage = n.limit === "fit" || n.limit === void 0, this.allMode = n.limit === "all", this.filters.limit = this.allMode ? Aa : this.fitPage ? 25 : n.limit, this.showSystem = n.show_system, this.sorts = n.sorts ?? {}, this.table = String(n.table ?? "viewings"), !this.showSystem && !$.includes(this.table) && (this.table = "viewings"), this.filters = {
+			if (this.fuzzySearch = this.scope?.ui_defaults?.fuzzy_search !== !1, this.fitPage = n.limit === "fit" || n.limit === void 0, this.allMode = n.limit === "all", this.filters.limit = this.allMode ? Ma : this.fitPage ? 25 : n.limit, this.showSystem = n.show_system, this.sorts = n.sorts ?? {}, this.table = String(n.table ?? "viewings"), !this.showSystem && !$.includes(this.table) && (this.table = "viewings"), this.filters = {
 				...this.filters,
 				...this.sorts[this.table]
 			}, e && (this.table = e.table, this.showSystem ||= !$.includes(this.table), this.filters = {
@@ -19774,7 +19804,7 @@ var Pa = class extends C {
 				if (n && t === this.generation) {
 					await this.showDetail(n), await this.updateComplete;
 					let t = this.renderRoot.querySelector(".entry-list");
-					t && (t.scrollTop = e.index * ja, this.rowScrollTop = t.scrollTop, this.requestUpdate());
+					t && (t.scrollTop = e.index * Na, this.rowScrollTop = t.scrollTop, this.requestUpdate());
 				}
 			}
 		} catch (e) {
@@ -19830,7 +19860,7 @@ var Pa = class extends C {
 	async load(e = 0, t, n) {
 		if (!this.client || !this.scope || !this.ready || this.pending) return;
 		let r = this.generation, i = ++this.request;
-		this.loading = !0, this.moreLoading = this.detailLoading = !1, this.moreError = "", this.allBatchSize = Aa, this.detailRequest++, this.referenceRequest++, this.referenceLoading = !1, this.referenceError = "", this.referencedBy = [], this.rowScrollTop = 0, this.page?.table !== this.table && (this.page = void 0), this.error = "", n || (this.detail = void 0), this.selected.clear(), this.requestUpdate();
+		this.loading = !0, this.moreLoading = this.detailLoading = !1, this.moreError = "", this.allBatchSize = Ma, this.detailRequest++, this.referenceRequest++, this.referenceLoading = !1, this.referenceError = "", this.referencedBy = [], this.rowScrollTop = 0, this.page?.table !== this.table && (this.page = void 0), this.error = "", n || (this.detail = void 0), this.selected.clear(), this.requestUpdate();
 		try {
 			let a = this.allMode ? await this.inspectAllChunk(e, t, r, i) : await this.client.inspect(this.scope, this.table, e, t, this.filters);
 			if (r !== this.generation || i !== this.request) return;
@@ -19876,7 +19906,7 @@ var Pa = class extends C {
 		await this.load(), r === this.generation && i === this.table && (this.page?.items[0] ? this.showDetail(this.page.items[0]) : this.notice = "The referenced entry no longer exists.", this.requestUpdate());
 	}
 	referenceText(e, t) {
-		return `${ka[e] ?? e} - ${t.map((e) => String(e)).join(", ")}`;
+		return `${ja[e] ?? e} - ${t.map((e) => String(e)).join(", ")}`;
 	}
 	async loadReferencedBy(e) {
 		if (!this.client || !this.scope || !this.page) return;
@@ -19957,7 +19987,7 @@ var Pa = class extends C {
 	scrollRows(e) {
 		let t = e.currentTarget;
 		if (this.rowScrollTop = t.scrollTop, this.listHeight = t.clientHeight || 440, this.allMode && t.scrollHeight - t.scrollTop - t.clientHeight < 300 && this.loadMore(), this.allMode) {
-			let e = this.renderRoot.activeElement?.closest("li[data-row-index]"), n = e ? Number(e.dataset.rowIndex) : -1, r = Math.max(0, Math.floor(this.rowScrollTop / ja) - 8), i = r + Math.ceil(this.listHeight / ja) + 16;
+			let e = this.renderRoot.activeElement?.closest("li[data-row-index]"), n = e ? Number(e.dataset.rowIndex) : -1, r = Math.max(0, Math.floor(this.rowScrollTop / Na) - 8), i = r + Math.ceil(this.listHeight / Na) + 16;
 			n >= 0 && (n < r || n >= i) && t.focus({ preventScroll: !0 }), this.requestUpdate();
 		}
 	}
@@ -20142,7 +20172,7 @@ var Pa = class extends C {
             .value=${this.allMode ? "all" : this.fitPage ? "fit" : String(this.filters.limit)}
             @change=${(e) => {
 			let t = e.target.value, n = this.allMode;
-			this.fitPage = t === "fit", this.allMode = t === "all", this.preferences?.set({ limit: this.fitPage ? "fit" : this.allMode ? "all" : Number(t) }), this.fitPage && n ? (this.filters.limit = 25, this.load()) : this.fitPage ? (this.scheduleFit(), this.requestUpdate()) : this.allMode ? (this.filters.limit = Aa, this.load()) : this.browse({ limit: Number(t) });
+			this.fitPage = t === "fit", this.allMode = t === "all", this.preferences?.set({ limit: this.fitPage ? "fit" : this.allMode ? "all" : Number(t) }), this.fitPage && n ? (this.filters.limit = 25, this.load()) : this.fitPage ? (this.scheduleFit(), this.requestUpdate()) : this.allMode ? (this.filters.limit = Ma, this.load()) : this.browse({ limit: Number(t) });
 		}}
           >
             <option value="fit">Fit to screen</option>
@@ -20179,7 +20209,7 @@ var Pa = class extends C {
 	render() {
 		if (!this.ready) return v`<p>${this.error || "Loading database preferences…"}</p>
         ${this.error ? v`<button @click=${() => this.initialize()}>Retry loading database</button>` : x}`;
-		let e = Object.keys(this.page?.tables ?? ka), t = $.filter((t) => e.includes(t)), n = e.filter((e) => !$.includes(e)), r = (this.page?.schema ?? []).some((e) => e.editable), i = this.page?.items ?? [], a = this.allMode ? Math.max(0, Math.floor(this.rowScrollTop / ja) - 8) : 0, o = this.allMode ? Math.min(i.length, a + Math.ceil(this.listHeight / ja) + 16) : i.length;
+		let e = Object.keys(this.page?.tables ?? ja), t = $.filter((t) => e.includes(t)), n = e.filter((e) => !$.includes(e)), r = (this.page?.schema ?? []).some((e) => e.editable), i = this.page?.items ?? [], a = this.allMode ? Math.max(0, Math.floor(this.rowScrollTop / Na) - 8) : 0, o = this.allMode ? Math.min(i.length, a + Math.ceil(this.listHeight / Na) + 16) : i.length;
 		return v`<section class="card database" aria-label="Database management">
       <div class="entries-header">
         <div class="database-toolbar">
@@ -20241,7 +20271,7 @@ var Pa = class extends C {
 			r >= 0 && !this.blocked && (e.preventDefault(), this.changeTable(t[r]), this.updateComplete.then(() => this.renderRoot.querySelector(`#table-${this.table}`)?.focus()));
 		}}
           >
-            ${t.map((e) => v`<button role="tab" id=${`table-${e}`} aria-selected=${this.table === e} tabindex=${this.table === e || !$.includes(this.table) && e === t[0] ? 0 : -1} ?disabled=${this.blocked} @click=${() => this.changeTable(e)}>${ka[e] ?? e}${this.page ? ` (${this.page.tables[e]})` : ""}</button>`)}
+            ${t.map((e) => v`<button role="tab" id=${`table-${e}`} aria-selected=${this.table === e} tabindex=${this.table === e || !$.includes(this.table) && e === t[0] ? 0 : -1} ?disabled=${this.blocked} @click=${() => this.changeTable(e)}>${ja[e] ?? e}${this.page ? ` (${this.page.tables[e]})` : ""}</button>`)}
           </div>
           ${this.showSystem ? v`<label class="system-table-picker"
                   >System tables<select
@@ -20254,10 +20284,10 @@ var Pa = class extends C {
 		}}
                   >
                     <option value="">Choose a table</option>
-                    ${Ma.map(([e]) => {
-			let t = n.filter((t) => Na(t) === e);
+                    ${Pa.map(([e]) => {
+			let t = n.filter((t) => Fa(t) === e);
 			return t.length ? v`<optgroup label=${e}>
-                            ${t.map((e) => v`<option value=${e}>${ka[e] ?? e.replaceAll("_", " ")}${this.page ? ` (${this.page.tables[e]})` : ""}</option>`)}
+                            ${t.map((e) => v`<option value=${e}>${ja[e] ?? e.replaceAll("_", " ")}${this.page ? ` (${this.page.tables[e]})` : ""}</option>`)}
                           </optgroup>` : x;
 		})}
                   </select></label
@@ -20310,8 +20340,8 @@ var Pa = class extends C {
         >
           <div class="card-head">
             <span class="database-table-heading"
-              ><h2>${ka[this.table] ?? this.table}</h2>
-              ${W(ka[this.table] ?? this.table, _a[this.table] ?? "Database table records.")}</span
+              ><h2>${ja[this.table] ?? this.table}</h2>
+              ${W(ja[this.table] ?? this.table, Sa[this.table] ?? "Database table records.")}</span
             >
           </div>
           ${this.loading ? v`<p role="status">Loading database…</p>` : x}
@@ -20321,7 +20351,7 @@ var Pa = class extends C {
             aria-label="Database rows"
             @scroll=${this.scrollRows}
           >
-            ${this.allMode && a ? v`<li class="entry-spacer" role="presentation" aria-hidden="true" style=${`height:${a * ja}px`}></li>` : x}
+            ${this.allMode && a ? v`<li class="entry-spacer" role="presentation" aria-hidden="true" style=${`height:${a * Na}px`}></li>` : x}
             ${sr(i.slice(a, o), (e, t) => `${this.request}:${a + t}`, (e, t) => {
 			let n = a + t;
 			return v`<li
@@ -20348,7 +20378,7 @@ var Pa = class extends C {
                   </button>
                 </li>`;
 		})}
-            ${this.allMode && o < i.length ? v`<li class="entry-spacer" role="presentation" aria-hidden="true" style=${`height:${(i.length - o) * ja}px`}></li>` : x}
+            ${this.allMode && o < i.length ? v`<li class="entry-spacer" role="presentation" aria-hidden="true" style=${`height:${(i.length - o) * Na}px`}></li>` : x}
           </ul>
           ${this.allMode && this.moreLoading ? v`<p role="status">Loading more rows…</p>` : x}
           ${this.allMode && this.moreError ? v`<p class="error" role="alert">${this.moreError} Refresh database to restart.</p>` : x}
@@ -20430,7 +20460,7 @@ var Pa = class extends C {
                                                 @click=${() => this.follow(e)}
                                               >
                                                 View all
-                                                ${ka[e.table] ?? e.table}
+                                                ${ja[e.table] ?? e.table}
                                               </button>
                                             </li>` : x}`)}
                                 </ul>` : v`<small>None</small>`}
@@ -20465,7 +20495,7 @@ var Pa = class extends C {
       </div>
       <footer class="entries-footer">
         <span
-          >${ka[this.table] ?? this.table} · ${this.page?.total ?? 0} total
+          >${ja[this.table] ?? this.table} · ${this.page?.total ?? 0} total
           · Revision ${this.page?.dataset_revision ?? 0}</span
         >
         ${this.page ? v`<div class="pagination database-pagination">
@@ -20624,8 +20654,8 @@ var Pa = class extends C {
 	}
 };
 // src/ui/view-mode.ts
-customElements.get("kaleidescape-database") || customElements.define("kaleidescape-database", Pa), w();
-function Fa(e, t, n) {
+customElements.get("kaleidescape-database") || customElements.define("kaleidescape-database", Ia), w();
+function La(e, t, n) {
 	return v`<button
     type="button"
     class="view-mode-switch"
@@ -20643,7 +20673,7 @@ function Fa(e, t, n) {
   </button>`;
 }
 Cr(), B(), w(), O(), F(), E(), R(), Zr(), ci(), An(), Rn(), Ln();
-var Ia = class extends C {
+var Ra = class extends C {
 	constructor() {
 		super(), this.narrow = !1, this.api = null, this.generation = 0, this.mutationEpoch = 0, this.listRequest = 0, this.detailRequest = 0, this.info = null, this.rows = [], this.selected = null, this.editMovieId = null, this.editTitleTouched = !1, this.draft = null, this.initial = null, this.manual = null, this.manualInitial = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.calendarHoverPreview = !1, this.pageSize = 25, this.calendarTotals = { ...ut }, this.journalReady = !1, this.sessions = null, this.sessionError = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.nextCursor = null, this.history = [], this.page = 1, this.loading = !1, this.detailLoading = !1, this.saving = !1, this.pending = null, this.confirmDelete = !1, this.error = "", this.lastError = "", this.notice = "", this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.settingsBusy = !1, this.maintenanceBusy = !1, this.advancedView = !0, this.modeReady = !1, this.modeScope = "", this.modeError = "", this.controlLocked = !1, this.locationChanged = () => {
 			this.navigationReady && this.advancedView && this.info?.permissions.edit && this.info.library_enabled && this.activePage !== "library" && Gr() && Kr(void 0, !0) && this.switchPage("library");
@@ -20668,7 +20698,7 @@ var Ia = class extends C {
 	}
 	modeControl(e = !1) {
 		return v`<div class="mode-control" slot="view-mode">
-      ${Fa(this.advancedView, e, () => void this.changeMode())}
+      ${La(this.advancedView, e, () => void this.changeMode())}
       ${this.modeError ? v`<small role="alert">Mode preference did not save. <button @click=${() => this.modePreferences?.retry()}>Retry</button></small>` : x}
     </div>`;
 	}
@@ -21509,5 +21539,5 @@ var Ia = class extends C {
     </main>`;
 	}
 };
-customElements.get("kaleidescape-panel") || customElements.define("kaleidescape-panel", Ia);
-export { Ia as KaleidescapePanel };
+customElements.get("kaleidescape-panel") || customElements.define("kaleidescape-panel", Ra);
+export { Ra as KaleidescapePanel };

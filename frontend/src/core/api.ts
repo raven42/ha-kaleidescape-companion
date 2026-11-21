@@ -141,6 +141,8 @@ export interface JournalPage {
 }
 export type JournalPageSize = 10 | 25 | 100 | 500 | "all";
 export interface CalendarViewing extends ViewingSummary {
+  partial_minimum_seconds?: number;
+  sessions?: { started_at: string; watched_seconds: number }[];
   library_title_id: string | null;
   artwork_key: string | null;
   completed_at?: string | null;

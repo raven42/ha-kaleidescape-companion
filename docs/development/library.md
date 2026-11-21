@@ -128,37 +128,38 @@ merges works.
 
 Search titles, cast, directors, writers, producers or studios using partial
 text. Input debounces for 300 ms; Search/Enter applies immediately. Literal mode
-uses Unicode case folding; the shared fuzzy-search setting additionally
-tolerates bounded word/typo differences, including credits from another
-available version in the same exact source group. While search text is active,
-results are ordered by relevance instead of the selected sort. A weighted score
-combines match quality (whole phrase, word prefix, substring or typo), the field
-matched, and cast billing order. Titles receive the strongest field boost,
-followed by cast, directors, writers and producers, then studios. A strong typo
-match can outrank an incidental substring, and a leading cast match can outrank
-a lower-billed match. The best title or credit across available versions
-represents the movie, with alphabetical ties. This heuristic does not change
-which records match. All cast members remain searchable, including those beyond
-the profile's visible-cast setting. Clearing the search restores the selected
-sort and existing shuffle. Open **Filters** to select collection, rating, genre,
-year, viewing-format and watched-status checkboxes. Multiple checked values
-match **any** value within that category; different categories must **all**
-match on the **same version**. A matching group still opens all its versions,
-including those that did not match. An unchecked category is unrestricted.
-Category headings show the number selected and offer a per-category Clear
-action. Selections and category clears apply immediately while the dialog
-remains open. Rating choices put G/NR-G first, then unclassified values
-(including Unrated), then PG, PG-13, R and NC-17, with NR-prefixed equivalents
-beside the corresponding rating and alphabetical ties. They reuse the badges
-from title details. Viewing formats use individual format badges, including
-HDR10 separately from resolution. SD resolution and SDR dynamic range remain
-separate; SDR has a distinct badge. Actor/director filter inputs have been
-removed from the dialog; the main search handles people. Existing saved
-actor/director selections can still be removed using their chips, and the API
-retains those facets for compatible clients. Sci-Fi and Science Fiction share
-the Science Fiction genre label. Each change returns to page one; closing the
-dialog retains the selection. The toolbar **Clear Filter** clears search and all
-checkbox filters, including unsubmitted search text, and returns to page one. It
+ignores case and common Latin accents and variants (for example, `ñ` matches `n`
+and `æ` matches `ae`); the shared fuzzy-search setting additionally tolerates
+bounded word/typo differences, including credits from another available version
+in the same exact source group. While search text is active, results are ordered
+by relevance instead of the selected sort. A weighted score combines match
+quality (whole phrase, word prefix, substring or typo), the field matched, and
+cast billing order. Titles receive the strongest field boost, followed by cast,
+directors, writers and producers, then studios. A strong typo match can outrank
+an incidental substring, and a leading cast match can outrank a lower-billed
+match. The best title or credit across available versions represents the movie,
+with alphabetical ties. This heuristic does not change which records match. All
+cast members remain searchable, including those beyond the profile's
+visible-cast setting. Clearing the search restores the selected sort and
+existing shuffle. Open **Filters** to select collection, rating, genre, year,
+viewing-format and watched-status checkboxes. Multiple checked values match
+**any** value within that category; different categories must **all** match on
+the **same version**. A matching group still opens all its versions, including
+those that did not match. An unchecked category is unrestricted. Category
+headings show the number selected and offer a per-category Clear action.
+Selections and category clears apply immediately while the dialog remains open.
+Rating choices put G/NR-G first, then unclassified values (including Unrated),
+then PG, PG-13, R and NC-17, with NR-prefixed equivalents beside the
+corresponding rating and alphabetical ties. They reuse the badges from title
+details. Viewing formats use individual format badges, including HDR10
+separately from resolution. SD resolution and SDR dynamic range remain separate;
+SDR has a distinct badge. Actor/director filter inputs have been removed from
+the dialog; the main search handles people. Existing saved actor/director
+selections can still be removed using their chips, and the API retains those
+facets for compatible clients. Sci-Fi and Science Fiction share the Science
+Fiction genre label. Each change returns to page one; closing the dialog retains
+the selection. The toolbar **Clear Filter** clears search and all checkbox
+filters, including unsubmitted search text, and returns to page one. It
 preserves view, sort and page size. Each category offers up to 500 known names
 (collections up to 200), with at most 100 selections per category. Writers,
 producers and studios are searchable when available, without separate facet
@@ -487,24 +488,25 @@ reload.
 configuration and applies to all users and display profiles. It starts enabled
 and applies to the main title/cast/director search and compatible actor/director
 suggestion API calls. Turning it off requires the entered text to occur
-continuously, ignoring case; literal partial matches still work, and
-punctuation/wildcard characters remain ordinary text. Turning it on also
-tolerates small word misspellings/transpositions, word-order differences and
-diacritics. Selected facet values remain exact in either mode. Mode changes
-invalidate pending suggestions and refresh results from page one, including
-All/Covers views. Journal and manual-viewing pickers use the same shared mode.
-Previously saved personal choices are not applied to the shared setting. Direct
-list/suggestion API calls retain a literal default when `fuzzy` is omitted.
+continuously, ignoring case and common Latin accents and variants; literal
+partial matches still work, and punctuation/wildcard characters remain ordinary
+text. Turning it on also tolerates small word misspellings/transpositions, and
+word-order differences. Selected facet values remain exact in either mode. Mode
+changes invalidate pending suggestions and refresh results from page one,
+including All/Covers views. Journal and manual-viewing pickers use the same
+shared mode. Previously saved personal choices are not applied to the shared
+setting. Direct list/suggestion API calls retain a literal default when `fuzzy`
+is omitted.
 
-Enclosing the entire search in double quotes requires a case-insensitive,
-whole-word phrase, regardless of the fuzzy toggle. `"Tom Holland"` matches that
-name within cast/director fields but excludes `Tom Hollander`; unquoted text
-retains partial/fuzzy behavior. Punctuation stays literal and whitespace between
-words may vary. People links in movie/calendar details insert double quotes and
-replace existing Library search/filters. The same phrase rule applies to Journal
-search, manual title pickers, import review and plain Database search.
-Structured Database predicates keep their documented SQL style operators and
-single-quoted values.
+Enclosing the entire search in double quotes requires a case- and
+accent-insensitive, whole-word phrase, regardless of the fuzzy toggle.
+`"Tom Holland"` matches that name within cast/director fields but excludes
+`Tom Hollander`; unquoted text retains partial/fuzzy behavior. Punctuation stays
+literal and whitespace between words may vary. People links in movie/calendar
+details insert double quotes and replace existing Library search/filters. The
+same phrase rule applies to Journal search, manual title pickers, import review
+and plain Database search. Structured Database predicates keep their documented
+SQL style operators and single-quoted values.
 
 In Advanced view, administrators can select **System Filters** in the filter
 dialog. Choices within that section are combined with OR; the section combines

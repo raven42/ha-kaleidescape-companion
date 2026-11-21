@@ -13,7 +13,7 @@ from homeassistant.helpers.event import async_track_state_change_event
 from ..const import DEFAULT_MINIMUM_RUNTIME_MINUTES
 from ..core.models import JournalError, seconds, text
 from ..core.repository import JournalRepository
-from ..core.settings import entity_ids
+from ..core.settings import entity_ids, resume_minutes
 from ..core.tasks import async_wait
 from .now_playing import picture_key
 from .tracker import Observation, PlaybackTracker
@@ -177,7 +177,7 @@ class PlaybackObserver:
                         await self.repository.async_save_session(
                             snapshot,
                             self.config.get("minimum_seconds", 300),
-                            self.config.get("resume_hours", 24),
+                            resume_minutes(self.config) / 60,
                         )
                     except JournalError as error:
                         if self.last_error != error.code:

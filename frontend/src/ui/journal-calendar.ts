@@ -46,25 +46,50 @@ export function monthBounds(month: Date) {
   ];
 }
 
-/** Endpoint markers use local dates, including viewings crossing month boundaries. */
+/** Assign recorded session totals to their local start day; never infer gaps. */
 export function calendarDays(
   row: Pick<
     CalendarViewing,
-    "started_at" | "ended_at" | "completed_at" | "status"
+    | "started_at"
+    | "ended_at"
+    | "completed_at"
+    | "status"
+    | "watched_seconds"
+    | "sessions"
+    | "partial_minimum_seconds"
   >,
 ) {
   const start = dayKey(new Date(row.started_at));
   const endpoint = row.ended_at ?? row.completed_at;
-  const end = endpoint ? dayKey(new Date(endpoint)) : start;
-  return row.status === "completed" &&
-    end !== start &&
+  const end =
+    row.status === "completed" &&
     endpoint &&
     new Date(endpoint) > new Date(row.started_at)
-    ? [
-        { day: start, phase: "start" },
-        { day: end, phase: "completion" },
-      ]
-    : [{ day: start, phase: "single" }];
+      ? dayKey(new Date(endpoint))
+      : start;
+  const minimum = row.partial_minimum_seconds ?? 600;
+  const totals = new Map<string, number>();
+  for (const session of row.sessions ?? []) {
+    if (session.watched_seconds < minimum) continue;
+    const day = dayKey(new Date(session.started_at));
+    totals.set(day, (totals.get(day) ?? 0) + session.watched_seconds);
+  }
+  if (!row.sessions?.length) totals.set(start, row.watched_seconds);
+  const days = [...totals]
+    .filter(([, seconds]) => seconds >= minimum)
+    .map(([day]) => day);
+  if (row.status === "completed" && !days.includes(end)) days.push(end);
+  return days.sort().map((day) => ({
+    day,
+    phase:
+      row.status === "completed" && day === end
+        ? day === start
+          ? "single"
+          : "completion"
+        : day === start
+          ? "start"
+          : "continuation",
+  }));
 }
 
 export class JournalCalendar extends LitElement {
@@ -1134,7 +1159,7 @@ export class JournalCalendar extends LitElement {
                           html`<button
                             class=${`poster poster-${phase}`}
                             style=${`--index:${index};--layer:${index + 1}`}
-                            aria-label=${`${row.title} · ${phase === "start" ? "Started; completed on another day" : phase === "completion" ? "Completed; started on another day" : row.status === "completed" ? "Completed" : "Partial"}`}
+                            aria-label=${`${row.title} · ${phase === "start" ? "Started; incomplete on this day" : phase === "continuation" ? "Continued; incomplete on this day" : phase === "completion" ? "Completed; started on another day" : "Completed"}`}
                             title=${this.hoverPreview ? nothing : row.title}
                             aria-describedby=${this.previewRow?.id === row.id && this.previewAnchor ? "calendar-movie-preview" : nothing}
                             ?disabled=${this.disabled}

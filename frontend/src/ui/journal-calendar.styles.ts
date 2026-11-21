@@ -122,10 +122,14 @@ export const calendarStyles = css`
   .poster-start .poster-art {
     clip-path: polygon(0 0, 100% 0, 100% 67%, 0 100%);
   }
+  .poster-continuation .poster-art {
+    clip-path: polygon(0 33%, 100% 0, 100% 67%, 0 100%);
+  }
   .poster-completion .poster-art {
     clip-path: polygon(0 33%, 100% 0, 100% 100%, 0 100%);
   }
   .poster-start,
+  .poster-continuation,
   .poster-completion {
     background: transparent;
     box-shadow: none;

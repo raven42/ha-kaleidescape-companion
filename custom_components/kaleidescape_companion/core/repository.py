@@ -71,6 +71,7 @@ class JournalRepository:
         self._artwork_directory = path.parent / "artwork"
         self._calendar: dict | None = None
         self._recording_library_source: str | None = None
+        self._partial_minimum_seconds = 600
         self._metadata_sources = {}
         self._read_cache = ReadCache()
 
@@ -148,9 +149,20 @@ class JournalRepository:
         connection = sqlite3.connect(self.path, timeout=5)
         connection.row_factory = sqlite3.Row
         connection.create_function(
+            "companion_partial_minimum", 0, lambda: self._partial_minimum_seconds
+        )
+        connection.create_function(
             "companion_casefold",
             1,
             lambda value: str(value or "").casefold(),
+            deterministic=True,
+        )
+        from .search import fold_search
+
+        connection.create_function(
+            "companion_search_fold",
+            1,
+            lambda value: fold_search(str(value or "")) if value is not None else None,
             deterministic=True,
         )
         connection.create_function(
@@ -667,9 +679,11 @@ class JournalRepository:
             ),
             timestamp((now + timedelta(microseconds=1)).isoformat()),
         )
+        from .viewing_visibility import visible_viewing
+
         totals = db.execute(
             "SELECT count(*),coalesce(sum(watched_seconds),0) "
-            "FROM viewings WHERE deleted_at IS NULL"
+            f"FROM viewings WHERE deleted_at IS NULL AND {visible_viewing()}"
         ).fetchone()
         return {
             "dataset_id": metadata["dataset_id"],
@@ -1520,6 +1534,19 @@ class JournalRepository:
             self._save_session, snapshot, minimum_seconds, resume_hours
         )
 
+    async def async_partial_minimum(self, minutes: float) -> None:
+        """Apply the household partial-viewing threshold on the repository worker."""
+        if (
+            type(minutes) not in (int, float)
+            or not 1 <= minutes <= 1440
+            or minutes != int(minutes)
+        ):
+            raise ValueError("Invalid partial viewing minimum")
+        await self._call(self._set_partial_minimum, int(minutes) * 60)
+
+    def _set_partial_minimum(self, seconds):
+        self._partial_minimum_seconds = seconds
+
     async def async_recording_library(self, source: str | None) -> None:
         """Select the native configured Library independently of calendar opt-in."""
         await self._call(self._set_recording_library, source)
@@ -1566,6 +1593,7 @@ class JournalRepository:
             resume_hours,
             self._calendar,
             self._recording_library_source,
+            self._partial_minimum_seconds,
         )
 
         return viewing

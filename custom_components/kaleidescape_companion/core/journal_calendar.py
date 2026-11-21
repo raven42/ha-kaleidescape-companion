@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from ..playback.metadata import snapshot
 from .journal_store import PUBLIC_FIELDS, get_viewing, library_group, public_viewing
 from .models import JournalError, identifier, invalid, status, text, timestamp
+from .viewing_visibility import visible_viewing
 
 MOVIE_FIELDS = (
     "title",
@@ -34,7 +35,8 @@ def month_totals(db, start, end):
     )
     row = db.execute(
         "SELECT count(*),coalesce(sum(watched_seconds),0) FROM viewings "
-        f"WHERE deleted_at IS NULL AND julianday({date})>=julianday(?) "
+        f"WHERE deleted_at IS NULL AND {visible_viewing()} "
+        f"AND julianday({date})>=julianday(?) "
         f"AND julianday({date})<julianday(?)",
         (start, end),
     ).fetchone()
@@ -65,14 +67,17 @@ def month(
         raise invalid("Invalid fuzzy search option")
     predicates = [
         "v.deleted_at IS NULL",
+        visible_viewing("v"),
         "((v.started_at>=? AND v.started_at<?) OR (v.status='completed' "
         "AND julianday(coalesce(v.ended_at,v.completed_at,v.started_at))>"
         "julianday(v.started_at) "
         "AND julianday(coalesce(v.ended_at,v.completed_at,v.started_at))>=julianday(?) "
         "AND julianday(coalesce(v.ended_at,v.completed_at,v.started_at))"
-        "<julianday(?)))",
+        "<julianday(?)) OR EXISTS (SELECT 1 FROM sessions s "
+        "WHERE s.viewing_id=v.id AND julianday(s.started_at)>=julianday(?) "
+        "AND julianday(s.started_at)<julianday(?)))",
     ]
-    values = [source, start, end, start, end]
+    values = [source, start, end, start, end, start, end]
     if query:
         predicates.append("companion_matches(v.title,?,?)")
         values.extend((query, fuzzy))
@@ -103,7 +108,27 @@ def month(
             "calendar_limit",
             "More than 1000 viewings in this month; narrow the search or status filter",
         )
+    sessions = {row["id"]: [] for row in rows}
+    if sessions:
+        placeholders = ",".join("?" for _ in sessions)
+        evidence = db.execute(
+            "SELECT viewing_id,started_at,watched_seconds FROM sessions "
+            f"WHERE viewing_id IN ({placeholders}) ORDER BY started_at,id LIMIT 10001",
+            tuple(sessions),
+        ).fetchall()
+        if len(evidence) > 10000:
+            raise JournalError(
+                "calendar_limit", "Too many playback sessions to display"
+            )
+        for session in evidence:
+            sessions[session["viewing_id"]].append(
+                {
+                    "started_at": session["started_at"],
+                    "watched_seconds": session["watched_seconds"],
+                }
+            )
     totals = month_totals(db, start, end)
+    partial_minimum = db.execute("SELECT companion_partial_minimum()").fetchone()[0]
     return {
         "summary": totals,
         "items": [
@@ -112,6 +137,8 @@ def month(
                 "completed_at": row["completed_at"],
                 "library_title_id": row["library_title_id"],
                 "artwork_key": row["artwork_key"],
+                "sessions": sessions[row["id"]],
+                "partial_minimum_seconds": partial_minimum,
             }
             for row in rows
         ],

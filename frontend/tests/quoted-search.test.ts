@@ -21,3 +21,14 @@ it.each([false, true])(
     ).toBe(true);
   },
 );
+
+it.each([false, true])(
+  "folds accents in literal and quoted searches (%s)",
+  (fuzzy) => {
+    expect(matches("Amélie", "amelie", fuzzy)).toBe(true);
+    expect(matches("Señor Østergård", '"senor ostergard"', fuzzy)).toBe(true);
+    expect(matches("Æther and Łódź", "aether and lodz", fuzzy)).toBe(true);
+    expect(matches("Amélie Again", '"amelie"', fuzzy)).toBe(true);
+    expect(matches("Amélies", '"amelie"', fuzzy)).toBe(false);
+  },
+);

@@ -96,6 +96,7 @@ class LoggingTest(unittest.IsolatedAsyncioTestCase):
     async def test_initialization_keeps_exception_type_without_private_chain(self):
         repository = SimpleNamespace(
             async_open=AsyncMock(),
+            async_partial_minimum=AsyncMock(),
             async_seed_ui_preferences=AsyncMock(),
             async_metadata_sources=AsyncMock(),
             async_info=AsyncMock(return_value={"dataset_id": SECRET}),
