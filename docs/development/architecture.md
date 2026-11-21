@@ -89,10 +89,10 @@ version ID, stale edit or unsafe destination. See the
 SQLite and filesystem work run off the event loop on the repository worker or an
 executor. Sensor getters read coordinator caches; they perform no I/O. Two
 30-second coordinators refresh local summaries for the [17 sensors](sensors.md).
-Library and provider networking is asynchronous. Pyk's current local-browser
-HTML parsing runs synchronously in its async methods; quantify event-loop impact
-on large libraries before release. Preserve HA responsiveness when adding
-features, consistent with HA's
+Library and provider networking is asynchronous. The standalone server browser
+parses HTML synchronously in its async methods. Measure event-loop impact on
+large libraries before release. Preserve HA responsiveness when adding features,
+consistent with HA's
 [blocking-operation guidance](https://contributors.home-assistant.io/core/internals/blocking-operations/).
 
 Use HA HTTP session/connector helpers. The existing network adapters create
@@ -112,14 +112,15 @@ optional ordering dependencies via `after_dependencies`. A manual journal does
 not require a configured player or calendar. Automatic recording needs selected
 existing HA entities.
 
-The PoC owns lazy, persistent pyk `Device` objects and uses public methods and
-requests while preserving application preflight and durable outcomes. Pyk's
-`LocalLibrary` parses local browser pages through Companion's HA HTTP transport.
-Public Store scraping belongs entirely to Companion. The installed 1.2.0 package
-lacks these new interfaces, so this PoC bundles the reviewed patched source in
-Companion's private namespace as described in the
-[deployment guide](deployment.md). The [pyk compatibility](pyk.md) owns release
-gates.
+The standalone `LivePlayer(Device)` in `playback/live_player.py` discovers
+devices, reads live identity and playback state, and sends experimental movie
+launches. `playback/controls.py` owns the player instances and records command
+outcomes. The pyk dependency is temporarily bundled with the three proposed
+upstream changes. The standalone `kaleidescape_browser.LocalLibrary` parses
+local server pages through Companion's guarded HA HTTP transport. Public Store
+scraping belongs to the separate provider package. See
+[pyk compatibility](pyk.md) for the plan to replace the private copy with a
+released dependency.
 
 Before release, establish supported HA versions, upstream pyk compatibility, the
 project license and installation validation, and verify final release metadata.

@@ -28,6 +28,13 @@ from custom_components.kaleidescape_companion.backup import (
 )
 from custom_components.kaleidescape_companion.core.models import JournalError
 from custom_components.kaleidescape_companion.core.repository import JournalRepository
+from custom_components.kaleidescape_companion.kaleidescape_browser import (
+    BrowserResponse,
+    LocalLibrary,
+)
+from custom_components.kaleidescape_companion.kaleidescape_browser import (
+    parser as library_parser,
+)
 from custom_components.kaleidescape_companion.library.config import (
     DEFAULTS,
     origin,
@@ -36,11 +43,6 @@ from custom_components.kaleidescape_companion.library.config import (
 from custom_components.kaleidescape_companion.library.store import source_id, title_id
 from custom_components.kaleidescape_companion.library.sync import LibrarySync
 from custom_components.kaleidescape_companion.ui.http import LibraryArtworkView
-from custom_components.kaleidescape_companion.vendor.kaleidescape import library_parser
-from custom_components.kaleidescape_companion.vendor.kaleidescape.local_browser import (
-    BrowserResponse,
-    LocalLibrary,
-)
 
 LibraryFormatError = library_parser.LibraryFormatError
 artwork_path = library_parser.artwork_path
@@ -548,7 +550,7 @@ class LibraryStorageTest(unittest.IsolatedAsyncioTestCase):
         self.repository = JournalRepository(self.path)
         self.addAsyncCleanup(self.repository.async_close)
         await self.repository.async_open()
-        self.assertEqual((await self.repository.async_info())["schema_version"], 28)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 29)
         self.assertEqual(
             await self.repository.async_get(created["viewing"]["id"]),
             created["viewing"],

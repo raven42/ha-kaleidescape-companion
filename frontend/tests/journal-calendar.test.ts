@@ -4,17 +4,65 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../src/ui/journal-calendar";
 import "../src/ui/panel";
 import type { JournalCalendar } from "../src/ui/journal-calendar";
-import { calendarMonth, dayKey, monthBounds } from "../src/ui/journal-calendar";
+import {
+  calendarMonth,
+  dayKey,
+  monthBounds,
+  previewPosition,
+} from "../src/ui/journal-calendar";
 import type { JournalOptions } from "../src/ui/journal-options";
 import type { KaleidescapeLibrary } from "../src/library/library";
 import type { KaleidescapePanel } from "../src/ui/panel";
 import type { KaleidescapeReader } from "../src/ui/reader";
 import { ApiError } from "../src/core/api";
+import type { JournalClient } from "../src/core/api";
 import { calendarStyles } from "../src/ui/journal-calendar.styles";
 import { FixtureTransport, info, record } from "./fixture";
 
 let calendar: JournalCalendar;
 let parent: KaleidescapePanel | KaleidescapeReader | undefined;
+
+it("positions previews outside the cover at each viewport edge", () => {
+  const box = { width: 320, height: 180 };
+  const viewport = { left: 0, top: 0, width: 800, height: 600 };
+  const right = previewPosition(
+    { left: 100, right: 180, top: 100, bottom: 220 },
+    box,
+    viewport,
+  )!;
+  expect(right.side).toBe("right");
+  expect(right.left).toBeGreaterThanOrEqual(188);
+  const left = previewPosition(
+    { left: 700, right: 780, top: 450, bottom: 570 },
+    box,
+    viewport,
+  )!;
+  expect(left.side).toBe("left");
+  expect(left.left + box.width).toBeLessThanOrEqual(692);
+  expect(left.top + box.height).toBeLessThanOrEqual(588);
+  const narrow = { ...viewport, width: 400 };
+  const below = previewPosition(
+    { left: 150, right: 250, top: 20, bottom: 140 },
+    box,
+    narrow,
+  )!;
+  expect(below.side).toBe("below");
+  expect(below.top).toBeGreaterThanOrEqual(148);
+  const above = previewPosition(
+    { left: 150, right: 250, top: 460, bottom: 580 },
+    box,
+    narrow,
+  )!;
+  expect(above.side).toBe("above");
+  expect(above.top + box.height).toBeLessThanOrEqual(452);
+  const constrained = previewPosition(
+    { left: 140, right: 260, top: 70, bottom: 180 },
+    box,
+    { ...narrow, height: 250 },
+  )!;
+  expect(constrained.side).toMatch(/left|right/);
+  expect(constrained.maxWidth).toBeLessThan(box.width);
+});
 beforeEach(() => {
   setUnifiedMovieDialog(false);
   history.replaceState(null, "", "/");
@@ -97,6 +145,507 @@ it("browses complete local months, applies filters, and stacks same-day viewings
     fuzzy: false,
   });
 });
+
+it("expands a multi-viewing day into selectable covers on touch-first screens", async () => {
+  vi.spyOn(window, "matchMedia").mockReturnValue({
+    matches: true,
+  } as MediaQueryList);
+  await mount();
+  const first = posters()[0];
+  first.click();
+  await vi.waitFor(() =>
+    expect(root().querySelector<HTMLDialogElement>(".day-picker")?.open).toBe(
+      true,
+    ),
+  );
+  const picker = root().querySelector<HTMLDialogElement>(".day-picker")!;
+  const choices = [
+    ...picker.querySelectorAll<HTMLButtonElement>(".day-picker-movie"),
+  ];
+  expect(choices).toHaveLength(3);
+  expect(choices.map((choice) => choice.getAttribute("aria-label"))).toEqual([
+    expect.stringContaining("The Lantern Voyage"),
+    expect.stringContaining("A Map of Quiet Places"),
+    expect.stringContaining("Midnight at the Observatory"),
+  ]);
+  expect(picker.textContent!.trim()).toBe("");
+  expect(picker.querySelector("h2, p, small")).toBeNull();
+  expect(
+    picker.querySelectorAll(".day-picker-art kaleidescape-library-cover"),
+  ).toHaveLength(3);
+  expect(
+    root().querySelector<HTMLDialogElement>(".calendar-dialog")!.open,
+  ).toBe(false);
+  choices[1].click();
+  await vi.waitFor(() =>
+    expect(
+      root().querySelector<HTMLDialogElement>(".calendar-dialog")?.open,
+    ).toBe(true),
+  );
+  expect(root().querySelector(".calendar-dialog h2")!.textContent).toContain(
+    "A Map of Quiet Places",
+  );
+  expect(root().querySelector(".day-picker")).toBeNull();
+});
+
+it("opens the touch day grid from the empty part of a day and can dismiss it", async () => {
+  vi.spyOn(window, "matchMedia").mockReturnValue({
+    matches: true,
+  } as MediaQueryList);
+  await mount();
+  const day = posters()[0].closest<HTMLElement>(".day")!;
+  day.click();
+  await vi.waitFor(() =>
+    expect(root().querySelector<HTMLDialogElement>(".day-picker")?.open).toBe(
+      true,
+    ),
+  );
+  root().querySelector<HTMLElement>(".day-picker-grid")!.click();
+  await vi.waitFor(() =>
+    expect(root().querySelector(".day-picker")).toBeNull(),
+  );
+  expect(
+    root().querySelector<HTMLDialogElement>(".calendar-dialog")!.open,
+  ).toBe(false);
+});
+
+it("closes the cover overlay before opening the full movie dialog", async () => {
+  vi.spyOn(window, "matchMedia").mockReturnValue({
+    matches: true,
+  } as MediaQueryList);
+  setUnifiedMovieDialog(true);
+  const transport = new FixtureTransport();
+  transport.viewingLinks.set(
+    transport.records[0].id,
+    transport.libraryTitles[0].id,
+  );
+  await mount(transport);
+  posters()[0].click();
+  await vi.waitFor(() =>
+    expect(root().querySelector<HTMLDialogElement>(".day-picker")?.open).toBe(
+      true,
+    ),
+  );
+  root().querySelector<HTMLButtonElement>(".day-picker-movie")!.click();
+  await vi.waitFor(() =>
+    expect(
+      root()
+        .querySelector("kaleidescape-library")
+        ?.shadowRoot?.querySelector<HTMLDialogElement>("#title-dialog")?.open,
+    ).toBe(true),
+  );
+  expect(root().querySelector(".day-picker")).toBeNull();
+});
+
+it("opens a single viewing directly on touch-first screens", async () => {
+  vi.spyOn(window, "matchMedia").mockReturnValue({
+    matches: true,
+  } as MediaQueryList);
+  const transport = new FixtureTransport();
+  transport.records = [transport.records[0]];
+  await mount(transport);
+  posters()[0].click();
+  await vi.waitFor(() =>
+    expect(
+      root().querySelector<HTMLDialogElement>(".calendar-dialog")?.open,
+    ).toBe(true),
+  );
+  expect(root().querySelector(".day-picker")).toBeNull();
+});
+
+it("marks the current date for assistive technology as the visible month changes", async () => {
+  await mount();
+  const current = root().querySelector<HTMLTimeElement>(
+    'time[aria-current="date"]',
+  );
+  expect(current?.getAttribute("datetime")).toBe("2026-10-30");
+  expect(current?.closest(".day")?.classList.contains("today")).toBe(true);
+  button("Next month").click();
+  await vi.waitFor(() => expect(root().textContent).toContain("November 2026"));
+  expect(root().querySelector('time[aria-current="date"]')).toBeNull();
+  button("Go to current month").click();
+  await vi.waitFor(() =>
+    expect(
+      root()
+        .querySelector('time[aria-current="date"]')
+        ?.getAttribute("datetime"),
+    ).toBe("2026-10-30"),
+  );
+});
+
+it("changes months on horizontal touch swipes without opening the swiped cover", async () => {
+  await mount();
+  const cover = posters()[0];
+  const grid = root().querySelector<HTMLElement>(".month-grid")!;
+  vi.spyOn(grid, "getBoundingClientRect").mockReturnValue(
+    new DOMRect(0, 0, 700, 600),
+  );
+  const touch = (type: string, x: number, y: number, id = 1) =>
+    new PointerEvent(type, {
+      bubbles: true,
+      pointerType: "touch",
+      pointerId: id,
+      clientX: x,
+      clientY: y,
+    });
+  cover.dispatchEvent(touch("pointerdown", 200, 120));
+  cover.dispatchEvent(touch("pointermove", 150, 122));
+  expect(grid.style.transform).toBe("translateX(-50px)");
+  cover.dispatchEvent(touch("pointerup", 100, 125));
+  expect(grid.style.transform).toBe("translateX(-700px)");
+  const click = new MouseEvent("click", {
+    bubbles: true,
+    cancelable: true,
+    detail: 1,
+  });
+  cover.dispatchEvent(click);
+  expect(click.defaultPrevented).toBe(true);
+  await vi.waitFor(() => expect(root().textContent).toContain("November 2026"));
+  expect(
+    root().querySelector<HTMLDialogElement>(".calendar-dialog")!.open,
+  ).toBe(false);
+  await vi.waitFor(() => expect(grid.style.transition).toBe(""));
+  grid.dispatchEvent(touch("pointerdown", 100, 120));
+  grid.dispatchEvent(touch("pointerup", 200, 125));
+  await vi.waitFor(() => expect(root().textContent).toContain("October 2026"));
+  await vi.waitFor(() => expect(grid.style.transition).toBe(""));
+  const tapped = posters()[0];
+  tapped.dispatchEvent(touch("pointerdown", 100, 120));
+  tapped.dispatchEvent(touch("pointerup", 105, 122));
+  tapped.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
+  await vi.waitFor(() =>
+    expect(
+      root().querySelector<HTMLDialogElement>(".calendar-dialog")!.open,
+    ).toBe(true),
+  );
+});
+
+it("honors reduced motion when changing months by swipe", async () => {
+  vi.spyOn(window, "matchMedia").mockReturnValue({
+    matches: true,
+  } as MediaQueryList);
+  await mount();
+  const grid = root().querySelector<HTMLElement>(".month-grid")!;
+  const event = (type: string, x: number) =>
+    new PointerEvent(type, {
+      bubbles: true,
+      pointerType: "touch",
+      pointerId: 1,
+      clientX: x,
+      clientY: 100,
+    });
+  grid.dispatchEvent(event("pointerdown", 200));
+  grid.dispatchEvent(event("pointerup", 100));
+  await calendar.updateComplete;
+  expect(root().textContent).toContain("November 2026");
+  expect(grid.style.transform).toBe("");
+  expect(grid.style.transition).toBe("");
+});
+
+it("ignores vertical, short, cancelled, multi-touch and mouse gestures", async () => {
+  await mount();
+  const grid = root().querySelector(".month-grid")!;
+  const pointer = (
+    type: string,
+    x: number,
+    y: number,
+    id = 1,
+    pointerType = "touch",
+  ) =>
+    new PointerEvent(type, {
+      bubbles: true,
+      pointerType,
+      pointerId: id,
+      clientX: x,
+      clientY: y,
+    });
+  const gesture = (
+    endX: number,
+    endY: number,
+    end = "pointerup",
+    kind = "touch",
+  ) => {
+    grid.dispatchEvent(pointer("pointerdown", 200, 100, 1, kind));
+    grid.dispatchEvent(pointer(end, endX, endY, 1, kind));
+  };
+  gesture(180, 102);
+  gesture(100, 240);
+  gesture(100, 100, "pointercancel");
+  gesture(100, 100, "pointerup", "mouse");
+  grid.dispatchEvent(pointer("pointerdown", 200, 100, 1));
+  grid.dispatchEvent(pointer("pointerdown", 210, 100, 2));
+  grid.dispatchEvent(pointer("pointerup", 100, 100, 1));
+  grid.dispatchEvent(pointer("pointerup", 110, 100, 2));
+  await calendar.updateComplete;
+  expect(root().textContent).toContain("October 2026");
+});
+
+it("does not swipe past the supported month range or while disabled", async () => {
+  history.replaceState(null, "", "/?companion_month=9998-12");
+  await mount();
+  const grid = root().querySelector(".month-grid")!;
+  const gesture = (start: number, end: number) => {
+    grid.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        pointerType: "touch",
+        pointerId: 1,
+        clientX: start,
+        clientY: 100,
+      }),
+    );
+    grid.dispatchEvent(
+      new PointerEvent("pointerup", {
+        bubbles: true,
+        pointerType: "touch",
+        pointerId: 1,
+        clientX: end,
+        clientY: 100,
+      }),
+    );
+  };
+  gesture(200, 100);
+  await calendar.updateComplete;
+  expect(new URL(location.href).searchParams.get("companion_month")).toBe(
+    "9998-12",
+  );
+  calendar.disabled = true;
+  await calendar.updateComplete;
+  gesture(100, 200);
+  await calendar.updateComplete;
+  expect(new URL(location.href).searchParams.get("companion_month")).toBe(
+    "9998-12",
+  );
+});
+
+it("shows an optional household-safe preview on hover and keyboard focus", async () => {
+  const transport = new FixtureTransport();
+  const movie = transport.libraryTitles[0];
+  movie.actors = ["One", "Two", "Three", "Four", "Five", "Six"];
+  movie.genres = ["Fictional genre"];
+  movie.synopsis = "<img src=x> A fictional synopsis.";
+  transport.viewingLinks.set(transport.records[0].id, movie.id);
+  await mount(transport);
+  const first = posters()[0];
+  first.dispatchEvent(new Event("pointerenter"));
+  await new Promise((resolve) => setTimeout(resolve, 220));
+  expect(root().querySelector(".movie-preview")).toBeNull();
+  expect(
+    transport.calls.some((call) => call.type.endsWith("journal/calendar/get")),
+  ).toBe(false);
+  calendar.hoverPreview = true;
+  await calendar.updateComplete;
+  first.dispatchEvent(new Event("pointerenter"));
+  await vi.waitFor(() =>
+    expect(root().querySelector(".movie-preview")?.textContent).toContain(
+      "A fictional synopsis.",
+    ),
+  );
+  const preview = root().querySelector(".movie-preview")!;
+  expect(preview.textContent).toContain("Fictional genre");
+  expect(preview.textContent).toContain("One, Two, Three, Four, Five");
+  expect(preview.textContent).not.toContain("Six");
+  expect(preview.querySelector("img")).toBeNull();
+  expect(first.getAttribute("aria-describedby")).toBe("calendar-movie-preview");
+  first.dispatchEvent(new Event("pointerleave"));
+  await vi.waitFor(() =>
+    expect(root().querySelector(".movie-preview")).toBeNull(),
+  );
+  first.dispatchEvent(new Event("focus"));
+  await vi.waitFor(() =>
+    expect(root().querySelector(".movie-preview")?.textContent).toContain(
+      "A fictional synopsis.",
+    ),
+  );
+  window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+  await vi.waitFor(() =>
+    expect(root().querySelector(".movie-preview")).toBeNull(),
+  );
+});
+
+it("delays mouse previews by 500 ms and cancels them on pointer exit", async () => {
+  await mount();
+  calendar.hoverPreview = true;
+  await calendar.updateComplete;
+  const first = posters()[0];
+  vi.useFakeTimers();
+  try {
+    first.dispatchEvent(new Event("pointerenter"));
+    await vi.advanceTimersByTimeAsync(499);
+    expect(root().querySelector(".movie-preview")).toBeNull();
+    first.dispatchEvent(new Event("pointerleave"));
+    await vi.advanceTimersByTimeAsync(501);
+    expect(root().querySelector(".movie-preview")).toBeNull();
+    first.dispatchEvent(new Event("pointerenter"));
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await vi.advanceTimersByTimeAsync(500);
+    expect(root().querySelector(".movie-preview")).toBeNull();
+    first.dispatchEvent(new Event("pointerenter"));
+    await vi.advanceTimersByTimeAsync(499);
+    expect(root().querySelector(".movie-preview")).toBeNull();
+    await vi.advanceTimersByTimeAsync(1);
+    await calendar.updateComplete;
+    expect(root().querySelector(".movie-preview")).not.toBeNull();
+    first.dispatchEvent(new Event("pointerleave"));
+    const second = posters()[1];
+    second.dispatchEvent(new Event("pointerenter"));
+    await vi.advanceTimersByTimeAsync(500);
+    await calendar.updateComplete;
+    expect(second.getAttribute("aria-describedby")).toBe(
+      "calendar-movie-preview",
+    );
+    second.dispatchEvent(new Event("pointerleave"));
+    await vi.advanceTimersByTimeAsync(150);
+    await calendar.updateComplete;
+    expect(root().querySelector(".movie-preview")).toBeNull();
+    first.dispatchEvent(new Event("focus"));
+    await vi.advanceTimersByTimeAsync(0);
+    await calendar.updateComplete;
+    expect(root().querySelector(".movie-preview")).not.toBeNull();
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("fetches hover details at 400 ms and waits for slow data before showing", async () => {
+  await mount();
+  calendar.hoverPreview = true;
+  await calendar.updateComplete;
+  let release!: (
+    value: Awaited<ReturnType<JournalClient["calendarDetails"]>>,
+  ) => void;
+  const fetch = vi
+    .spyOn(calendar.client!, "calendarDetails")
+    .mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    );
+  const first = posters()[0];
+  vi.useFakeTimers();
+  try {
+    first.dispatchEvent(new Event("pointerenter"));
+    await vi.advanceTimersByTimeAsync(399);
+    expect(fetch).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(fetch).toHaveBeenCalledOnce();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(root().querySelector(".movie-preview")).toBeNull();
+    release({ viewing: record(), movie: null });
+    await vi.advanceTimersByTimeAsync(0);
+    await calendar.updateComplete;
+    expect(root().querySelector(".movie-preview")).not.toBeNull();
+    expect(root().querySelector(".movie-preview")!.textContent).not.toContain(
+      "Loading",
+    );
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("discards a pending preview when the option is turned off", async () => {
+  await mount();
+  let release!: (
+    value: Awaited<ReturnType<JournalClient["calendarDetails"]>>,
+  ) => void;
+  const delayed = vi
+    .spyOn(calendar.client!, "calendarDetails")
+    .mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    );
+  calendar.hoverPreview = true;
+  await calendar.updateComplete;
+  posters()[0].dispatchEvent(new Event("focus"));
+  await vi.waitFor(() => expect(delayed).toHaveBeenCalledOnce());
+  calendar.hoverPreview = false;
+  await calendar.updateComplete;
+  release({ viewing: record(), movie: null });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(root().querySelector(".movie-preview")).toBeNull();
+});
+
+it.each(["full", "compact"])(
+  "dismisses the preview around the %s movie dialog and restores normal hover",
+  async (mode) => {
+    setUnifiedMovieDialog(mode === "full");
+    const transport = new FixtureTransport();
+    transport.viewingLinks.set(
+      transport.records[0].id,
+      transport.libraryTitles[0].id,
+    );
+    await mount(transport);
+    calendar.hoverPreview = true;
+    await calendar.updateComplete;
+    const first = posters()[0];
+    first.dispatchEvent(new Event("pointerenter"));
+    await vi.waitFor(() =>
+      expect(root().querySelector(".movie-preview")).not.toBeNull(),
+    );
+    first.dispatchEvent(new Event("pointerdown"));
+    first.dispatchEvent(new Event("focus"));
+    first.click();
+    if (mode === "full") {
+      await vi.waitFor(() =>
+        expect(
+          root()
+            .querySelector("kaleidescape-library")
+            ?.shadowRoot?.querySelector<HTMLDialogElement>("#title-dialog")
+            ?.open,
+        ).toBe(true),
+      );
+    } else {
+      await vi.waitFor(() =>
+        expect(
+          root().querySelector<HTMLDialogElement>(".calendar-dialog")?.open,
+        ).toBe(true),
+      );
+    }
+    expect(root().querySelector(".movie-preview")).toBeNull();
+    first.dispatchEvent(new Event("focus"));
+    first.dispatchEvent(new Event("pointerenter"));
+    await calendar.updateComplete;
+    expect(root().querySelector(".movie-preview")).toBeNull();
+    if (mode === "full")
+      modalClose(
+        root().querySelector("kaleidescape-library")!.shadowRoot!,
+      ).click();
+    else modalClose(root()).click();
+    await vi.waitFor(() =>
+      expect(
+        root().querySelector<HTMLDialogElement>(".calendar-dialog")?.open,
+      ).toBe(false),
+    );
+    if (mode === "full")
+      await vi.waitFor(() =>
+        expect(root().querySelector("kaleidescape-library")).toBeNull(),
+      );
+    first.dispatchEvent(new Event("focus"));
+    first.dispatchEvent(new Event("pointerleave"));
+    await calendar.updateComplete;
+    expect(root().querySelector(".movie-preview")).toBeNull();
+    first.dispatchEvent(new Event("pointerenter"));
+    await vi.waitFor(() =>
+      expect(root().querySelector(".movie-preview")).not.toBeNull(),
+    );
+    first.dispatchEvent(new Event("pointerleave"));
+    await vi.waitFor(() =>
+      expect(root().querySelector(".movie-preview")).toBeNull(),
+    );
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab" }));
+    first.dispatchEvent(new Event("focus"));
+    await vi.waitFor(() =>
+      expect(root().querySelector(".movie-preview")).not.toBeNull(),
+    );
+    first.dispatchEvent(new Event("blur"));
+    await vi.waitFor(() =>
+      expect(root().querySelector(".movie-preview")).toBeNull(),
+    );
+  },
+);
 
 it("opens compact combined movie and viewing details for the chosen poster without purchase or detection data", async () => {
   const transport = new FixtureTransport();
@@ -229,6 +778,92 @@ it("clears content and reports denied access", async () => {
 });
 
 it.each(["kaleidescape-panel", "kaleidescape-reader"])(
+  "applies the saved hover preview option in %s",
+  async (tag) => {
+    const transport = new FixtureTransport();
+    transport.journalPreferences.view = "calendar";
+    parent = document.createElement(tag) as
+      KaleidescapePanel | KaleidescapeReader;
+    parent.client = transport.client();
+    document.body.append(parent);
+    await vi.waitFor(() =>
+      expect(
+        parent!.shadowRoot!.querySelector("kaleidescape-journal-calendar"),
+      ).not.toBeNull(),
+    );
+    const month = parent.shadowRoot!.querySelector<JournalCalendar>(
+      "kaleidescape-journal-calendar",
+    )!;
+    const options = parent.shadowRoot!.querySelector<JournalOptions>(
+      "kaleidescape-journal-options",
+    )!;
+    await vi.waitFor(() =>
+      expect(
+        options.shadowRoot!.querySelector('[name="calendar_hover_preview"]'),
+      ).not.toBeNull(),
+    );
+    expect(month.hoverPreview).toBe(false);
+    options
+      .shadowRoot!.querySelector<HTMLInputElement>(
+        '[name="calendar_hover_preview"]',
+      )!
+      .click();
+    await vi.waitFor(() => expect(month.hoverPreview).toBe(true));
+  },
+);
+
+it.each(["kaleidescape-panel", "kaleidescape-reader"])(
+  "changes %s list page size and resets pagination",
+  async (tag) => {
+    const transport = new FixtureTransport();
+    transport.journalPreferences.view = "list";
+    transport.records = Array.from({ length: 35 }, (_, i) =>
+      record({ id: `entry-${i}`, title: `Fictional Film ${i}` }),
+    );
+    parent = document.createElement(tag) as
+      KaleidescapePanel | KaleidescapeReader;
+    parent.client = transport.client();
+    document.body.append(parent);
+    const root = parent.shadowRoot!;
+    await vi.waitFor(() =>
+      expect(root.querySelectorAll(".entry-list li")).toHaveLength(25),
+    );
+    const options = root.querySelector("kaleidescape-journal-options")!;
+    const select = options.shadowRoot!.querySelector<HTMLSelectElement>(
+      '[name="journal_page_size"]',
+    )!;
+    select.value = "10";
+    select.dispatchEvent(new Event("change"));
+    await vi.waitFor(() =>
+      expect(root.querySelectorAll(".entry-list li")).toHaveLength(10),
+    );
+    const next = [
+      ...root.querySelectorAll<HTMLButtonElement>("footer button"),
+    ].find((button) => button.textContent?.trim() === "Next")!;
+    await vi.waitFor(() => expect(next.disabled).toBe(false));
+    next.click();
+    await vi.waitFor(() =>
+      expect(root.querySelector("footer")!.textContent).toContain("Page 2"),
+    );
+    select.value = "500";
+    select.dispatchEvent(new Event("change"));
+    await vi.waitFor(() =>
+      expect(root.querySelectorAll(".entry-list li")).toHaveLength(35),
+    );
+    expect(root.querySelector("footer")!.textContent).toContain("Page 1");
+    expect(transport.journalPreferences.page_size).toBe(500);
+    select.value = "all";
+    select.dispatchEvent(new Event("change"));
+    await vi.waitFor(() =>
+      expect(root.querySelector("footer")!.textContent).toContain(
+        "All entries",
+      ),
+    );
+    expect(root.querySelectorAll(".entry-list li")).toHaveLength(35);
+  },
+);
+
+it.each(["kaleidescape-panel", "kaleidescape-reader"])(
   "restores Calendar view and switches back to the list through %s Options",
   async (tag) => {
     const transport = new FixtureTransport();
@@ -243,6 +878,7 @@ it.each(["kaleidescape-panel", "kaleidescape-reader"])(
       ).not.toBeNull(),
     );
     expect(parent.shadowRoot!.querySelector(".entries-layout")).toBeNull();
+    expect(parent.shadowRoot!.querySelector("[name=filter_status]")).toBeNull();
     expect(
       parent.shadowRoot!.querySelector<HTMLElement>(
         ".journal-status .pagination",
@@ -253,7 +889,7 @@ it.each(["kaleidescape-panel", "kaleidescape-reader"])(
     ) as JournalOptions;
     options
       .shadowRoot!.querySelector<HTMLInputElement>(
-        '[name="journal_calendar_view"]',
+        '[name="journal_view"][value="list"]',
       )!
       .click();
     await vi.waitFor(() =>
@@ -262,6 +898,9 @@ it.each(["kaleidescape-panel", "kaleidescape-reader"])(
       ).not.toBeNull(),
     );
     expect(transport.journalPreferences.view).toBe("list");
+    expect(
+      parent.shadowRoot!.querySelector("[name=filter_status]"),
+    ).not.toBeNull();
   },
 );
 
@@ -282,6 +921,7 @@ it.each(["kaleidescape-panel", "kaleidescape-reader"])(
     const root = parent.shadowRoot!;
     expect(root.querySelector(".journal-search-chip")).toBeNull();
     expect(root.querySelector(".journal-clear-search")).toBeNull();
+    expect(root.querySelector("[name=filter_status]")).toBeNull();
     const month = root.querySelector("kaleidescape-journal-calendar")!;
     await vi.waitFor(() =>
       expect(
@@ -298,16 +938,6 @@ it.each(["kaleidescape-panel", "kaleidescape-reader"])(
     await vi.waitFor(() =>
       expect(month.shadowRoot!.textContent).toContain("November 2026"),
     );
-    const status = root.querySelector<HTMLSelectElement>(
-      "[name=filter_status]",
-    )!;
-    status.value = "partial";
-    status.dispatchEvent(new Event("change"));
-    await vi.waitFor(() =>
-      expect(
-        root.querySelector<HTMLInputElement>('input[name="search"]')!.disabled,
-      ).toBe(false),
-    );
     const input = root.querySelector<HTMLInputElement>('input[name="search"]')!;
     input.value = "Lantern";
     input.dispatchEvent(new Event("input", { bubbles: true }));
@@ -317,10 +947,22 @@ it.each(["kaleidescape-panel", "kaleidescape-reader"])(
     await vi.waitFor(() =>
       expect(root.querySelector(".entries-layout")).not.toBeNull(),
     );
+    const status = root.querySelector<HTMLSelectElement>(
+      "[name=filter_status]",
+    )!;
+    status.value = "partial";
+    status.dispatchEvent(new Event("change"));
     await vi.waitFor(() =>
       expect(
-        root.querySelector<HTMLButtonElement>(".journal-clear-search")!
-          .disabled,
+        transport.calls
+          .filter((call) => call.type.endsWith("journal/list"))
+          .at(-1),
+      ).toMatchObject({ status: "partial" }),
+    );
+    await parent!.updateComplete;
+    await vi.waitFor(() =>
+      expect(
+        root.querySelector<HTMLButtonElement>(".journal-search-chip")!.disabled,
       ).toBe(false),
     );
     expect(root.querySelector("kaleidescape-journal-calendar")).toBeNull();
@@ -340,6 +982,11 @@ it.each(["kaleidescape-panel", "kaleidescape-reader"])(
     ).toContain("November 2026");
     expect(root.querySelector(".journal-search-chip")).toBeNull();
     expect(root.querySelector(".journal-clear-search")).toBeNull();
+    expect(root.querySelector("[name=filter_status]")).toBeNull();
+    expect(
+      root.querySelector<JournalCalendar>("kaleidescape-journal-calendar")!
+        .status,
+    ).toBe("");
     expect(transport.journalPreferences.view).toBe("calendar");
     expect(
       transport.calls
@@ -397,39 +1044,53 @@ it.each(["kaleidescape-panel", "kaleidescape-reader"])(
     document.body.append(parent);
     await vi.waitFor(() =>
       expect(
-        parent!.shadowRoot!.querySelector("kaleidescape-journal-shortcuts"),
+        parent!.shadowRoot!.querySelector("kaleidescape-journal-calendar"),
       ).not.toBeNull(),
     );
     const root = parent.shadowRoot!;
-    const shortcuts = root.querySelector("kaleidescape-journal-shortcuts")!;
-    shortcuts
-      .shadowRoot!.querySelector<HTMLButtonElement>(
-        '[aria-label="Search Journal"]',
-      )!
-      .click();
-    await vi.waitFor(() =>
-      expect(shortcuts.shadowRoot!.querySelector("dialog")!.open).toBe(true),
+    const month = root.querySelector("kaleidescape-journal-calendar")!;
+    expect(month.querySelector('[slot="mobile-options"]')).not.toBeNull();
+    expect(month.querySelector('[slot="mobile-add"]') !== null).toBe(
+      tag === "kaleidescape-panel",
     );
-    const input = shortcuts.shadowRoot!.querySelector<HTMLInputElement>(
-      '[name="journal_mobile_search"]',
+    expect(root.querySelector("kaleidescape-journal-shortcuts")).toBeNull();
+    expect(
+      month.shadowRoot!.querySelector('[aria-label="Previous month"]'),
+    ).not.toBeNull();
+    expect(
+      month.shadowRoot!.querySelector('[aria-label="Next month"]'),
+    ).not.toBeNull();
+    expect(month.shadowRoot!.querySelector(".month-compact")).not.toBeNull();
+    const input = root.querySelector<HTMLInputElement>(
+      ".journal-mobile-search input",
     )!;
+    expect(input.closest("footer")).not.toBeNull();
     input.value = "Quiet";
     input.dispatchEvent(new Event("input", { bubbles: true }));
     input
       .closest("form")!
       .dispatchEvent(new Event("submit", { cancelable: true }));
     await vi.waitFor(() =>
-      expect(root.querySelector(".journal-search-chip")?.textContent).toContain(
-        "Quiet",
-      ),
+      expect(root.querySelector(".entries-layout")).not.toBeNull(),
     );
-    expect(root.querySelector(".entries-layout")).not.toBeNull();
     await vi.waitFor(() =>
       expect(
-        root.querySelector<HTMLButtonElement>(".journal-search-chip")!.disabled,
+        root.querySelector<HTMLInputElement>(".journal-mobile-search input")!
+          .value,
+      ).toBe("Quiet"),
+    );
+    await vi.waitFor(() =>
+      expect(
+        root.querySelector<HTMLButtonElement>(
+          '.journal-mobile-search [aria-label="Clear Journal search"]',
+        )?.disabled,
       ).toBe(false),
     );
-    root.querySelector<HTMLButtonElement>(".journal-search-chip")!.click();
+    root
+      .querySelector<HTMLButtonElement>(
+        '.journal-mobile-search [aria-label="Clear Journal search"]',
+      )!
+      .click();
     await vi.waitFor(() =>
       expect(
         root.querySelector("kaleidescape-journal-calendar"),
@@ -665,20 +1326,23 @@ it.each(["kaleidescape-panel", "kaleidescape-reader"])(
     const footer = () => parent!.shadowRoot!.querySelector("footer")!;
     await vi.waitFor(() =>
       expect(footer().textContent?.replace(/\s+/g, " ")).toContain(
-        "October 2026 3",
+        "October: 3",
       ),
     );
-    expect(footer().textContent?.replace(/\s+/g, " ")).toContain(
-      "Selected Month 3h 48m",
-    );
+    const options = parent!.shadowRoot!.querySelector(
+      "kaleidescape-journal-options",
+    )!;
+    options
+      .shadowRoot!.querySelector<HTMLInputElement>(
+        '[name="calendar_show_year"]',
+      )!
+      .click();
+    await vi.waitFor(() => expect(footer().textContent).not.toContain("Year:"));
     button("Next month").click();
     await vi.waitFor(() =>
       expect(footer().textContent?.replace(/\s+/g, " ")).toContain(
-        "November 2026 0",
+        "November: 0",
       ),
-    );
-    expect(footer().textContent?.replace(/\s+/g, " ")).toContain(
-      "Selected Month 0h 0m",
     );
     expect(footer().textContent).toContain("No viewings match this month");
     expect(
@@ -716,11 +1380,9 @@ it("marks an open completed viewing at its completion date", async () => {
       ended_at: null,
       completed_at: completion,
       status: "completed",
+      watched_seconds: 120,
     }),
-  ).toEqual([
-    { day: "2026-10-31", phase: "start" },
-    { day: "2026-11-01", phase: "completion" },
-  ]);
+  ).toEqual([{ day: "2026-11-01", phase: "completion" }]);
 });
 
 it("does not open Library after the viewing dialog closes during link lookup", async () => {

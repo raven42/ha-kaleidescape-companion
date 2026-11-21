@@ -216,6 +216,53 @@ class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
     ):
         default = await self.repository.async_ui_preferences("a", area="interface")
         self.assertTrue(default["values"]["advanced_view"])
+        self.assertFalse(default["values"]["live_search_input"])
+        remote_keys = (
+            "remote_covers",
+            "remote_movies",
+            "remote_collections",
+            "remote_search",
+            "remote_settings",
+            "remote_screensaver",
+            "remote_transport",
+            "remote_intermission",
+            "remote_collection_shortcuts",
+        )
+        self.assertTrue(all(default["values"][key] for key in remote_keys))
+        await self.repository.async_ui_preferences_update(
+            "a", False, str(uuid4()), 0, {"remote_covers": False}, "interface"
+        )
+        self.assertFalse(
+            (await self.repository.async_ui_preferences("a", area="interface"))[
+                "values"
+            ]["remote_covers"]
+        )
+        self.assertTrue(
+            (await self.repository.async_ui_preferences("b", area="interface"))[
+                "values"
+            ]["remote_covers"]
+        )
+        with self.assert_error("invalid_request"):
+            await self.repository.async_ui_preferences_update(
+                "a", False, str(uuid4()), 0, {"remote_covers": "no"}, "interface"
+            )
+        await self.repository.async_ui_preferences_update(
+            "a", False, str(uuid4()), 0, {"live_search_input": True}, "interface"
+        )
+        self.assertTrue(
+            (await self.repository.async_ui_preferences("a", area="interface"))[
+                "values"
+            ]["live_search_input"]
+        )
+        self.assertFalse(
+            (await self.repository.async_ui_preferences("b", area="interface"))[
+                "values"
+            ]["live_search_input"]
+        )
+        with self.assert_error("invalid_request"):
+            await self.repository.async_ui_preferences_update(
+                "a", False, str(uuid4()), 0, {"live_search_input": "yes"}, "interface"
+            )
         await self.repository.async_ui_preferences_update(
             "a", False, str(uuid4()), 0, {"advanced_view": False}, "interface"
         )

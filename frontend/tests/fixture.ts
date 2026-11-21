@@ -205,7 +205,8 @@ export class FixtureTransport implements Transport {
     media_location: "sensor.example_location",
     minimum_runtime_minutes: 10,
     minimum_seconds: 300,
-    resume_hours: 24,
+    partial_minimum_minutes: 10,
+    resume_minutes: 60,
     library_enabled: false,
     library_host: "",
     default_landing_page: "journal",
@@ -270,17 +271,25 @@ export class FixtureTransport implements Transport {
   interfacePreferences: Record<string, unknown> = { advanced_view: true };
   journalPreferences: Record<string, unknown> = {
     view: "list",
+    page_size: 25,
     calendar_size: 180,
     movie_details: "full",
     calendar_fit: false,
+    calendar_hover_preview: false,
+    calendar_show_month: true,
+    calendar_show_year: true,
+    calendar_show_total: true,
   };
   purchaseTotals = {
     purchase_count: 0,
     unique_transactions: 0,
     missing_purchase_prices: 0,
     missing_retail_prices: 0,
+    missing_information_titles: 0,
     missing_order_ids: 0,
     unpaired_prices: 0,
+    missing_price_entries: 0,
+    currency_mismatch_entries: 0,
     duplicate_purchases: 0,
     currencies: [] as {
       currency: string;
@@ -316,7 +325,9 @@ export class FixtureTransport implements Transport {
     if (this.failure) throw new ApiError(this.failure);
     const operation = message.type.split("/").slice(1).join("/");
     let result: unknown;
-    if (operation === "purchases/reconcile") {
+    if (operation === "purchases/auto_match") {
+      result = { matched_count: 0 };
+    } else if (operation === "purchases/reconcile") {
       result = { empty: true };
     } else if (operation === "automations/status") {
       result = this.blueprintStatuses;
@@ -909,6 +920,18 @@ export class FixtureTransport implements Transport {
       };
       let rows = this.libraryTitles.filter(
         (row) =>
+          (!(filters.system_filters as string[] | undefined)?.length ||
+            (filters.system_filters as string[]).some((filter) =>
+              filter === "missing_metadata" || filter === "missing_artwork"
+                ? this.libraryTitles.some(
+                    (candidate) =>
+                      this.groupKey(candidate) === this.groupKey(row) &&
+                      this.missingMetadataArtwork.has(candidate.id),
+                  )
+                : filter === "missing_purchase_information"
+                  ? this.missingPurchaseInformation.has(row.id)
+                  : filter === "metadata_conflict" && !!row.scraper_conflict,
+            )) &&
           (!filters.scraper_conflict || !!row.scraper_conflict) &&
           (!filters.recently_added || row.is_recently_added) &&
           (!filters.missing_metadata_artwork ||
@@ -1137,6 +1160,22 @@ export class FixtureTransport implements Transport {
       if (data.expected_revision !== this.revision)
         throw new ApiError("conflict");
       const records = [...this.records, ...this.deletedRecords];
+      if (data.table === "sessions") {
+        const rows = this.databaseFixtureTables.sessions ?? [];
+        const selected = data.rows.map((item) =>
+          rows.find((row) => row.id === item.key.id),
+        );
+        if (selected.some((row) => !row)) throw new ApiError("not_found");
+        if (data.operation !== "edit") throw new ApiError("invalid_request");
+        Object.assign(selected[0]!, data.patch);
+        result = {
+          updated_count: 1,
+          deleted_count: 0,
+          revision: ++this.revision,
+        };
+        this.databaseResults.set(request, result);
+        return result as T;
+      }
       if (data.table !== "viewings") throw new ApiError("invalid_request");
       const selected = data.rows.map((item) =>
         records.find((row) => row.id === item.key.id),
@@ -1163,6 +1202,7 @@ export class FixtureTransport implements Transport {
       const policies = message.policies as Record<string, number>;
       result = {
         as_of: "2026-11-08T00:00:00+00:00",
+        artwork_links: 0,
         counts: Object.fromEntries(
           Object.entries(policies).map(([key, days]) => [
             key,
@@ -1176,6 +1216,7 @@ export class FixtureTransport implements Transport {
       if (message.revision !== this.revision) throw new ApiError("conflict");
       const policies = message.policies as Record<string, number>;
       result = {
+        artwork_links: 0,
         removed: Object.fromEntries(
           Object.entries(policies).map(([key, days]) => [
             key,
@@ -1271,23 +1312,37 @@ export class FixtureTransport implements Transport {
               "status",
               "notes",
             ]
-          : String(message.table) === "settings"
-            ? ["value"]
-            : [];
+          : String(message.table) === "sessions"
+            ? [
+                "title",
+                "duration_seconds",
+                "watched_seconds",
+                "start_position_seconds",
+              ]
+            : String(message.table) === "settings"
+              ? ["value"]
+              : [];
       result = {
         dataset_revision: this.revision,
         references: this.databaseReferences[String(message.table)] ?? [],
         main_tables: ["viewings", "sessions", "library", "purchase_records"],
         schema: columns.map((name) => ({
           name,
-          type: ["duration_seconds", "watched_seconds", "revision"].includes(
-            name,
-          )
+          type: [
+            "duration_seconds",
+            "watched_seconds",
+            "start_position_seconds",
+            "revision",
+          ].includes(name)
             ? "number"
             : name === "value"
               ? "json"
               : "text",
-          nullable: ["ended_at", "duration_seconds"].includes(name),
+          nullable: [
+            "ended_at",
+            "duration_seconds",
+            "start_position_seconds",
+          ].includes(name),
           editable: editable.includes(name),
           primary: name === "id" || name === "owner" || name === "key",
         })),
@@ -1373,6 +1428,7 @@ export class FixtureTransport implements Transport {
                 actors: title.actors,
                 directors: title.directors,
                 genres: title.genres,
+                synopsis: title.synopsis,
                 rating: title.rating,
                 year: title.year,
                 duration_seconds: title.duration_seconds,
@@ -1426,35 +1482,42 @@ export class FixtureTransport implements Transport {
           revision: this.revision,
         };
       }
-    } else if (operation === "journal/list" || operation === "library/viewings")
+    } else if (
+      operation === "journal/list" ||
+      operation === "library/viewings"
+    ) {
+      const rows = this.records.filter(
+        (row) =>
+          matches(
+            row.title,
+            String(message.query ?? ""),
+            message.fuzzy !== false,
+          ) &&
+          (!message.status || row.status === message.status) &&
+          (operation !== "library/viewings" ||
+            (() => {
+              const linked = this.libraryTitles.find(
+                (title) => title.id === this.viewingLinks.get(row.id),
+              );
+              const selected = this.libraryTitles.find(
+                (title) => title.id === message.title_id,
+              );
+              return (
+                !!linked &&
+                !!selected &&
+                this.groupKey(linked) === this.groupKey(selected)
+              );
+            })()),
+      );
+      const offset = Number(message.cursor ?? 0);
+      const limit = Number(message.limit ?? 25);
       result = {
-        items: this.records.filter(
-          (row) =>
-            matches(
-              row.title,
-              String(message.query ?? ""),
-              message.fuzzy !== false,
-            ) &&
-            (!message.status || row.status === message.status) &&
-            (operation !== "library/viewings" ||
-              (() => {
-                const linked = this.libraryTitles.find(
-                  (title) => title.id === this.viewingLinks.get(row.id),
-                );
-                const selected = this.libraryTitles.find(
-                  (title) => title.id === message.title_id,
-                );
-                return (
-                  !!linked &&
-                  !!selected &&
-                  this.groupKey(linked) === this.groupKey(selected)
-                );
-              })()),
-        ),
+        items: rows.slice(offset, offset + limit),
         revision: this.revision,
-        next_cursor: null,
+        next_cursor:
+          offset + limit < rows.length ? String(offset + limit) : null,
       };
-    else if (operation === "journal/get") {
+    } else if (operation === "journal/get") {
       result = this.records.find((row) => row.id === message.viewing_id);
       if (!result) throw new ApiError("not_found");
     } else if (operation === "journal/sessions")

@@ -18,7 +18,7 @@ from custom_components.kaleidescape_companion.core.security import (  # noqa: E4
     private_file,
 )
 from scripts.src.purchase_history import MAX_BYTES, apply, parse_purchases  # noqa: E402
-from scripts.src.purchase_history import preview as preview_history
+from scripts.src.purchase_history import preview as preview_history  # noqa: E402
 
 
 def read_history(history):

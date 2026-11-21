@@ -392,9 +392,12 @@ def validated_patch(db, table, row, patch, now):
             )
         elif key == "title":
             result[key] = text(value, 500)
-        elif key in {"duration_seconds", "watched_seconds"}:
+        elif key in {"duration_seconds", "watched_seconds", "start_position_seconds"}:
             result[key] = (
-                None if value is None and key == "duration_seconds" else seconds(value)
+                None
+                if value is None
+                and key in {"duration_seconds", "start_position_seconds"}
+                else seconds(value)
             )
     if table == "sessions":
         result["revision"] = row["revision"] + 1

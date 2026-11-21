@@ -57,6 +57,9 @@ REQUIRED = {
     "enrichment/config.py",
     "enrichment/store.py",
     "enrichment/sync.py",
+    "playback/__init__.py",
+    "playback/_pyk.py",
+    "playback/live_player.py",
     "playback/now_playing.py",
     "calendar/entity.py",
     "calendar/maintenance.py",
@@ -69,12 +72,29 @@ REQUIRED = {
     "vendor/kaleidescape/device.py",
     "vendor/kaleidescape/dispatcher.py",
     "vendor/kaleidescape/error.py",
-    "vendor/kaleidescape/library_parser.py",
-    "vendor/kaleidescape/local_browser.py",
+    "kaleidescape_browser/__init__.py",
+    "kaleidescape_browser/client.py",
+    "kaleidescape_browser/parser.py",
+    "kaleidescape_browser/errors.py",
+    "kaleidescape_browser/LICENSE",
     "vendor/kaleidescape/message.py",
     "vendor/kaleidescape/py.typed",
     "vendor/kaleidescape/LICENSE",
 }
+
+
+def _runtime_file(relative: PurePosixPath) -> bool:
+    """Include browser runtime modules explicitly so its tests and builds stay local."""
+    name = relative.as_posix()
+    return (
+        name in REQUIRED
+        or (relative.suffix == ".py" and relative.parts[0] != "kaleidescape_browser")
+        or (
+            relative.parent == PurePosixPath("translations")
+            and relative.suffix == ".json"
+        )
+        or name in {"brand/icon.png", "brand/icon@2x.png"}
+    )
 
 
 def runtime_package(root: Path = ROOT) -> bytes:
@@ -89,13 +109,7 @@ def runtime_package(root: Path = ROOT) -> bytes:
             raise ValueError("Refusing symlinks in integration source")
         relative = path.relative_to(integration)
         name = relative.as_posix()
-        allowed = (
-            path.suffix == ".py"
-            or name in REQUIRED
-            or (relative.parent.as_posix() == "translations" and path.suffix == ".json")
-            or name in {"brand/icon.png", "brand/icon@2x.png"}
-        )
-        if not allowed or any(
+        if not _runtime_file(relative) or any(
             part.startswith(".") or part == "__pycache__" for part in relative.parts
         ):
             continue
@@ -181,17 +195,9 @@ def inspect_package(data: bytes) -> dict[str, bytes]:
                 )
             ):
                 raise ValueError("Runtime package contains an unsafe member")
-            name = PurePosixPath(*relative.parts[1:]).as_posix()
-            allowed = (
-                relative.suffix == ".py"
-                or name in REQUIRED
-                or (
-                    relative.parent.as_posix() == f"{DOMAIN}/translations"
-                    and relative.suffix == ".json"
-                )
-                or name in {"brand/icon.png", "brand/icon@2x.png"}
-            )
-            if not allowed or name in files:
+            path = relative.relative_to(DOMAIN)
+            name = path.as_posix()
+            if not _runtime_file(path) or name in files:
                 raise ValueError(
                     "Runtime package contains an unexpected or duplicate member"
                 )

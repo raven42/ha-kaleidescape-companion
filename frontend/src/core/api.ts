@@ -48,6 +48,8 @@ export interface JournalInfo extends Scope {
   watched_seconds?: number;
   month_viewing_count?: number;
   month_watched_seconds?: number;
+  year_viewing_count?: number;
+  year_watched_seconds?: number;
   database_bytes?: number;
   database_limit_bytes?: number;
   backup_in_progress?: boolean;
@@ -137,7 +139,14 @@ export interface JournalPage {
   revision: number;
   next_cursor: string | null;
 }
+export type JournalPageSize = 10 | 25 | 100 | 500 | "all";
 export interface CalendarViewing extends ViewingSummary {
+  partial_minimum_seconds?: number;
+  sessions?: {
+    started_at: string;
+    watched_seconds: number;
+    start_position_seconds?: number | null;
+  }[];
   library_title_id: string | null;
   artwork_key: string | null;
   completed_at?: string | null;
@@ -148,6 +157,7 @@ export interface CalendarMovie {
   actors: string[] | null;
   directors: string[] | null;
   genres: string[] | null;
+  synopsis: string | null;
   rating: string | null;
   year: number | null;
   duration_seconds: number | null;
@@ -199,6 +209,12 @@ export interface ControlStatus {
   readiness: "ready" | "starting" | "idle";
   ready: boolean;
   state: ControlReview["before"];
+}
+export interface ControlInputStatus {
+  active: boolean;
+  playback_mode?: number;
+  prompt?: string;
+  entry?: string;
 }
 export interface ControlReview {
   token: string;
@@ -477,6 +493,17 @@ export interface MetadataStatus {
 export interface LibraryEdit {
   snapshot: string;
   values: Record<string, string | string[] | number | boolean | null>;
+  original_values?: Record<string, string | string[] | number | boolean | null>;
+  edited_fields?: string[];
+  restore_summary?: {
+    versions: {
+      id: string;
+      edition: string;
+      available: boolean;
+      removed_fields: string[];
+      pause_scraping: boolean;
+    }[];
+  };
   version_count: number;
   has_invoices: boolean;
   format_mode?: "auto" | "original" | "custom";
@@ -630,8 +657,11 @@ export interface LibraryPurchaseTotals {
   unique_transactions: number;
   missing_purchase_prices: number;
   missing_retail_prices: number;
+  missing_information_titles?: number;
   missing_order_ids: number;
   unpaired_prices: number;
+  missing_price_entries?: number;
+  currency_mismatch_entries?: number;
   duplicate_purchases: number;
   currencies: {
     currency: string;
@@ -836,6 +866,8 @@ export function errorMessage(error: unknown): string {
       "The database page is too large. Choose fewer rows per page.",
     library_page_too_large:
       "This library page is too large. Reduce entries per page and try again.",
+    journal_page_too_large:
+      "This Journal result exceeds the All limit. Choose a smaller page size or narrow the search.",
     collection_disabled:
       "Enable collection changes and collection sync in Settings first.",
     collection_form:
@@ -992,11 +1024,22 @@ export class JournalClient {
       ...(player_id ? { player_id } : {}),
     });
   }
+  controlInputStatus(
+    scope: Scope,
+    player_id?: string,
+  ): Promise<ControlInputStatus> {
+    return this.call({
+      type: `${DOMAIN}/control/input_status`,
+      ...scopeFields(scope),
+      ...(player_id ? { player_id } : {}),
+    });
+  }
   controlPrepare(
     scope: Scope,
     operation: string,
     title_id?: string,
     player_id?: string,
+    input_text?: string,
   ): Promise<ControlReview> {
     return this.call({
       type: `${DOMAIN}/control/prepare`,
@@ -1004,6 +1047,7 @@ export class JournalClient {
       operation,
       ...(title_id ? { title_id } : {}),
       ...(player_id ? { player_id } : {}),
+      ...(input_text !== undefined ? { input_text } : {}),
     });
   }
   prepareControl(scope: Scope, token: string): PreparedMutation {
@@ -1025,10 +1069,15 @@ export class JournalClient {
       confirmation: "REVIEWED",
     });
   }
-  metadataStatus(scope: Scope, sync = false): Promise<MetadataStatus> {
+  metadataStatus(
+    scope: Scope,
+    sync = false,
+    missingTitlesOnly = false,
+  ): Promise<MetadataStatus> {
     return this.call({
       type: `${DOMAIN}/metadata/${sync ? "sync" : "status"}`,
       ...scopeFields(scope),
+      ...(sync && missingTitlesOnly ? { missing_titles_only: true } : {}),
     });
   }
   titleScrapeOptions(scope: Scope, title_id: string): Promise<ScrapeOptions> {
@@ -1373,19 +1422,76 @@ export class JournalClient {
     descending = true,
     fuzzy = false,
     libraryTitleId?: string,
+    limit = 25,
   ): Promise<JournalPage> {
     return this.call({
       type: `${DOMAIN}/${libraryTitleId ? "library/viewings" : "journal/list"}`,
       ...(libraryTitleId ? { title_id: libraryTitleId } : {}),
       ...scopeFields(scope),
       query,
-      limit: 25,
+      limit,
       sort,
       descending,
       fuzzy,
       ...(status ? { status } : {}),
       ...(cursor ? { cursor } : {}),
     });
+  }
+  async listSized(
+    scope: Scope,
+    options: {
+      query: string;
+      status: string;
+      cursor?: string;
+      sort: string;
+      descending: boolean;
+      fuzzy: boolean;
+      libraryTitleId?: string;
+      pageSize: JournalPageSize;
+    },
+    current: () => boolean,
+  ): Promise<JournalPage> {
+    const items: ViewingSummary[] = [];
+    let cursor = options.cursor;
+    let revision: number | undefined;
+    let bytes = 0;
+    const seen = new Set<string>();
+    const target = options.pageSize === "all" ? 10000 : options.pageSize;
+    while (current()) {
+      if (cursor) {
+        if (seen.has(cursor)) throw new ApiError("refresh_required");
+        seen.add(cursor);
+      }
+      const page = await this.list(
+        scope,
+        options.query,
+        options.status,
+        cursor,
+        options.sort,
+        options.descending,
+        options.fuzzy,
+        options.libraryTitleId,
+        Math.min(100, target - items.length),
+      );
+      if (!current()) throw new ApiError("not_ready");
+      if (revision !== undefined && revision !== page.revision)
+        throw new ApiError("refresh_required");
+      revision = page.revision;
+      bytes += new TextEncoder().encode(JSON.stringify(page.items)).byteLength;
+      if (items.length + page.items.length > target || bytes > 32 * 1024 * 1024)
+        throw new ApiError("journal_page_too_large");
+      items.push(...page.items);
+      if (target <= 100) return { ...page, items };
+      if (!page.next_cursor) return { ...page, items };
+      if (!page.items.length) throw new ApiError("refresh_required");
+      if (items.length >= target) {
+        if (options.pageSize === "all")
+          throw new ApiError("journal_page_too_large");
+        return { ...page, items };
+      }
+      cursor = page.next_cursor;
+    }
+    throw new ApiError("not_ready");
   }
   get(scope: Scope, viewing_id: string): Promise<Viewing> {
     return this.call({
@@ -1686,6 +1792,7 @@ export class JournalClient {
   ): Promise<{
     as_of: string;
     counts: Record<string, number>;
+    artwork_links: number;
     policies: Record<string, number>;
     revision: number;
   }> {
@@ -1702,7 +1809,7 @@ export class JournalClient {
       policies: Record<string, number>;
       revision: number;
     },
-  ): Promise<{ removed: Record<string, number> }> {
+  ): Promise<{ removed: Record<string, number>; artwork_links: number }> {
     return this.call({
       type: `${DOMAIN}/database/cleanup/apply`,
       ...scopeFields(scope),
@@ -1811,6 +1918,12 @@ export class JournalClient {
       "application/json",
     );
     return JSON.parse(await blob.text()) as ImportReview;
+  }
+  autoMatchPurchases(scope: Scope): Promise<{ matched_count: number }> {
+    return this.call({
+      type: `${DOMAIN}/purchases/auto_match`,
+      ...scopeFields(scope),
+    });
   }
   reconcilePurchases(scope: Scope): Promise<ImportReview | { empty: true }> {
     return this.call({

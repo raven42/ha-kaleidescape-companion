@@ -22,6 +22,14 @@ import { styles } from "../ui/styles";
 import { libraryStyles } from "./styles";
 import { closeButton, dismissBackdrop } from "../ui/dialog";
 import { actionIcon } from "../ui/action-icons";
+import { settingHint } from "../ui/settings-hint";
+import { SYSTEM_FILTERS } from "./system-filters";
+import {
+  HoverGate,
+  moviePreviewStyles,
+  placePreview,
+  previewContent,
+} from "../ui/movie-preview";
 import "../playback/controls";
 import { CoverQueue } from "./cover";
 import { responsivePreferences } from "../ui/profile-controller";
@@ -185,7 +193,7 @@ export class KaleidescapeLibrary extends LitElement {
     dialogOnly: { type: Boolean },
     advanced: { type: Boolean },
   };
-  static styles = [styles, libraryStyles];
+  static styles = [styles, libraryStyles, moviePreviewStyles];
   client?: JournalClient;
   scope?: JournalInfo;
   openTitleId?: string;
@@ -302,10 +310,127 @@ export class KaleidescapeLibrary extends LitElement {
   private pendingLimit?: number;
   private requestLimit = 50;
   private requestedOffset = 0;
+  private previewGate = new HoverGate<LibraryTitle | null>();
+  private previewCache = new Map<string, LibraryTitle | null>();
+  private previewItem?: LibrarySummary;
+  private previewMovie?: LibraryTitle | null;
+  private previewError = "";
+  private previewAnchor?: HTMLElement;
+  private pendingPreviewAnchor?: HTMLElement;
+  private previewPointerAnchor?: HTMLElement;
+  private previewHovered = false;
+  private previewFocused = false;
+  private popupHovered = false;
+  private previewCloseTimer?: ReturnType<typeof setTimeout>;
+  private positionPreview = () => {
+    const popup = this.renderRoot.querySelector<HTMLElement>(".movie-preview");
+    if (popup && this.previewAnchor && this.previewItem)
+      placePreview(popup, this.previewAnchor);
+  };
+  private previewKeydown = (event: KeyboardEvent) => {
+    if (event.key === "Tab") this.previewPointerAnchor = undefined;
+    if (
+      event.key === "Escape" &&
+      (this.previewItem || this.pendingPreviewAnchor)
+    ) {
+      if (this.previewItem) event.stopPropagation();
+      this.closePreview();
+    }
+  };
+  private closePreview() {
+    this.previewGate.cancel();
+    clearTimeout(this.previewCloseTimer);
+    this.pendingPreviewAnchor = this.previewAnchor = undefined;
+    this.previewItem = undefined;
+    this.previewMovie = undefined;
+    this.previewError = "";
+    this.previewHovered = this.previewFocused = this.popupHovered = false;
+    this.requestUpdate();
+  }
+  private closePreviewWhenIdle() {
+    clearTimeout(this.previewCloseTimer);
+    if (!this.previewHovered && !this.previewFocused && !this.popupHovered)
+      this.previewCloseTimer = setTimeout(() => this.closePreview(), 150);
+  }
+  private startPreview(
+    item: LibrarySummary,
+    anchor: HTMLElement,
+    hover: boolean,
+  ) {
+    if (
+      !this.client ||
+      !this.scope?.library_enabled ||
+      this.loading ||
+      this.selected ||
+      !this.isConnected
+    )
+      return;
+    clearTimeout(this.previewCloseTimer);
+    if (this.previewItem?.id === item.id && this.previewAnchor === anchor)
+      return;
+    this.pendingPreviewAnchor = anchor;
+    const client = this.client,
+      scope = this.scope;
+    const show = (movie: LibraryTitle | null, error = "") => {
+      if (
+        !this.isConnected ||
+        !anchor.isConnected ||
+        this.loading ||
+        this.selected ||
+        this.pendingPreviewAnchor !== anchor
+      )
+        return;
+      this.pendingPreviewAnchor = undefined;
+      this.previewItem = item;
+      this.previewAnchor = anchor;
+      this.previewMovie = movie;
+      this.previewError = error;
+      if (!error) {
+        if (this.previewCache.size >= 100 && !this.previewCache.has(item.id))
+          this.previewCache.delete(this.previewCache.keys().next().value!);
+        this.previewCache.set(item.id, movie);
+      }
+      this.requestUpdate();
+      void this.updateComplete.then(() => this.positionPreview());
+    };
+    this.previewGate.start(
+      async () =>
+        this.previewCache.has(item.id)
+          ? this.previewCache.get(item.id)!
+          : ((await client.libraryVersions(scope, item.id)).items[0] ?? null),
+      (movie) => show(movie),
+      (error) => {
+        if (["unauthorized", "library_disabled"].includes(errorCode(error)))
+          this.fail(error);
+        else show(null, "Movie details are unavailable.");
+      },
+      hover,
+    );
+  }
+  private renderPreview() {
+    if (!this.previewItem) return nothing;
+    return html`<div
+      id="library-movie-preview"
+      class="movie-preview"
+      role="tooltip"
+      @pointerenter=${() => {
+        this.popupHovered = true;
+        clearTimeout(this.previewCloseTimer);
+      }}
+      @pointerleave=${() => {
+        this.popupHovered = false;
+        this.closePreviewWhenIdle();
+      }}
+    >
+      ${previewContent(this.previewItem.title, this.previewMovie ?? null, this.previewError, this.previewItem.duration_seconds)}
+    </div>`;
+  }
   private draft: Filters = {};
+  private facetChoices: Record<string, string[]> = {};
   private visibility = () => {
     clearTimeout(this.timer);
     if (document.hidden) {
+      this.closePreview();
       clearTimeout(this.layoutTimer);
       this.layoutTimer = undefined;
       this.pendingLimit = undefined;
@@ -323,9 +448,11 @@ export class KaleidescapeLibrary extends LitElement {
   private clearHiddenMaintenanceFilter(filters: Filters) {
     if (
       !(this.advanced && this.scope?.permissions.edit) &&
-      new URL(location.href).searchParams.has(
+      [
         "library_missing_metadata_artwork",
-      )
+        "library_missing_purchase_information",
+        "library_system_filters",
+      ].some((key) => new URL(location.href).searchParams.has(key))
     )
       writeLibraryFilters(filters);
   }
@@ -350,12 +477,17 @@ export class KaleidescapeLibrary extends LitElement {
     clearTimeout(this.searchTimer);
     this.applied = next;
     this.filters = structuredClone(this.applied);
-    this.draft = {};
+    this.draft = structuredClone(this.applied);
     if (this.selected) this.closeDialog("title-dialog");
     void this.load();
   };
   connectedCallback() {
     super.connectedCallback();
+    window.addEventListener("keydown", this.previewKeydown);
+    window.addEventListener("scroll", this.positionPreview, true);
+    window.addEventListener("resize", this.positionPreview);
+    window.visualViewport?.addEventListener("scroll", this.positionPreview);
+    window.visualViewport?.addEventListener("resize", this.positionPreview);
     document.addEventListener("visibilitychange", this.visibility);
     window.addEventListener("location-changed", this.locationChanged);
     window.addEventListener("popstate", this.locationChanged);
@@ -364,6 +496,11 @@ export class KaleidescapeLibrary extends LitElement {
   }
   disconnectedCallback() {
     super.disconnectedCallback();
+    window.removeEventListener("keydown", this.previewKeydown);
+    window.removeEventListener("scroll", this.positionPreview, true);
+    window.removeEventListener("resize", this.positionPreview);
+    window.visualViewport?.removeEventListener("scroll", this.positionPreview);
+    window.visualViewport?.removeEventListener("resize", this.positionPreview);
     document.removeEventListener("visibilitychange", this.visibility);
     window.removeEventListener("location-changed", this.locationChanged);
     window.removeEventListener("popstate", this.locationChanged);
@@ -429,11 +566,28 @@ export class KaleidescapeLibrary extends LitElement {
     if (
       changed.has("advanced") &&
       !this.advanced &&
-      this.applied.missing_metadata_artwork
+      (this.applied.missing_metadata_artwork ||
+        this.applied.missing_purchase_information ||
+        (this.applied.system_filters as string[] | undefined)?.length)
     ) {
-      this.applied = { ...this.applied, missing_metadata_artwork: false };
-      this.filters = { ...this.filters, missing_metadata_artwork: false };
-      this.draft = { ...this.draft, missing_metadata_artwork: false };
+      this.applied = {
+        ...this.applied,
+        missing_metadata_artwork: false,
+        missing_purchase_information: false,
+        system_filters: [],
+      };
+      this.filters = {
+        ...this.filters,
+        missing_metadata_artwork: false,
+        missing_purchase_information: false,
+        system_filters: [],
+      };
+      this.draft = {
+        ...this.draft,
+        missing_metadata_artwork: false,
+        missing_purchase_information: false,
+        system_filters: [],
+      };
       if (!this.dashboard) this.clearHiddenMaintenanceFilter(this.applied);
       void this.load();
     }
@@ -558,11 +712,13 @@ export class KaleidescapeLibrary extends LitElement {
     this.preferences?.set({ widths: [...this.widths] });
   }
   private clear() {
+    this.closePreview();
+    this.previewPointerAnchor = undefined;
+    this.previewCache.clear();
     clearTimeout(this.collectionToastTimer);
     this.collectionToast = "";
     this.observedCollectionJobs.clear();
     this.notifiedCollectionJobs.clear();
-    this.mobileQuery = "";
     this.purchaseTotals = undefined;
     this.purchaseLoading = false;
     this.purchaseReload = false;
@@ -608,6 +764,7 @@ export class KaleidescapeLibrary extends LitElement {
       show_library_cost: false,
     };
     this.draft = {};
+    this.facetChoices = {};
     this.page = this.info = this.selected = undefined;
     this.collectionLocked = this.checkingCollection = false;
     this.collectionRecoveryNotice = "";
@@ -753,6 +910,7 @@ export class KaleidescapeLibrary extends LitElement {
   }
   private async load(offset = 0, preserveSelection = false) {
     if (this.detailsLocked) return;
+    this.closePreview();
     if (!this.client || !this.scope?.library_enabled) return;
     this.saveFilters();
     clearTimeout(this.layoutTimer);
@@ -800,6 +958,12 @@ export class KaleidescapeLibrary extends LitElement {
         void this.load(0, preserveSelection);
         return;
       }
+      if (
+        this.page &&
+        (this.page.revision !== page.revision ||
+          this.page.preferences_key !== page.preferences_key)
+      )
+        this.previewCache.clear();
       this.page = page;
       if (page.random_seed !== undefined && this.applied.sort === "random") {
         this.applied.random_seed = page.random_seed;
@@ -955,14 +1119,13 @@ export class KaleidescapeLibrary extends LitElement {
     }
   }
   private async openDialog(id: string) {
+    this.closePreview();
     this.requestUpdate();
     await this.updateComplete;
     if (this.isConnected)
       this.renderRoot.querySelector<HTMLDialogElement>(`#${id}`)?.showModal();
   }
   private closeDialog(id: string) {
-    if (id === "library-search")
-      this.mobileQuery = String(this.filters.query ?? "");
     this.renderRoot.querySelector<HTMLDialogElement>(`#${id}`)?.close();
     if (id === "title-dialog") {
       this.selected = undefined;
@@ -993,6 +1156,7 @@ export class KaleidescapeLibrary extends LitElement {
     }
   }
   private select(row: LibrarySummary) {
+    this.closePreview();
     this.clearVersions();
     this.selected = row;
     void this.openDialog("title-dialog");
@@ -1149,7 +1313,28 @@ export class KaleidescapeLibrary extends LitElement {
   }
   private openFilters() {
     this.draft = structuredClone(this.applied);
+    this.facetChoices = structuredClone(this.page?.facets ?? {});
     void this.openDialog("filter-dialog");
+  }
+  private applyFilterChanges() {
+    const next = { ...this.applied };
+    for (const key of [...FILTERS.map(([key]) => key), "status"])
+      next[key] = this.draft[key] ?? [];
+    next.system_filters =
+      this.advanced && this.scope?.permissions.edit
+        ? (this.draft.system_filters ?? [])
+        : [];
+    next.missing_metadata_artwork = !!(
+      this.advanced &&
+      this.scope?.permissions.edit &&
+      this.draft.missing_metadata_artwork
+    );
+    next.missing_purchase_information = !!(
+      this.scope?.permissions.edit && this.draft.missing_purchase_information
+    );
+    next.recently_added = false;
+    this.applied = next;
+    void this.load();
   }
   private clearFilters() {
     clearTimeout(this.searchTimer);
@@ -1227,52 +1412,9 @@ export class KaleidescapeLibrary extends LitElement {
       ${label}
     </button>`;
   }
-  private mobileQuery = "";
-  private async openSearch() {
-    this.mobileQuery = String(this.filters.query ?? "");
-    await this.openDialog("library-search");
-    this.renderRoot
-      .querySelector<HTMLInputElement>('[name="library_mobile_query"]')
-      ?.focus();
-  }
   private refreshCached() {
     void this.load();
     void this.refreshStatus();
-  }
-  private renderSearchDialog() {
-    return html`<dialog
-      id="library-search"
-      class="library-options"
-      aria-labelledby="library-search-title"
-      @click=${dismissBackdrop}
-    >
-      <div class="card-head">
-        <h2 id="library-search-title">Search Library</h2>
-        ${closeButton(() => this.closeDialog("library-search"))}
-      </div>
-      <form
-        @submit=${(event: Event) => {
-          event.preventDefault();
-          this.filters.query = this.mobileQuery;
-          this.applySearch();
-          this.closeDialog("library-search");
-        }}
-      >
-        <label
-          >Title, actor or director<input
-            type="search"
-            name="library_mobile_query"
-            maxlength="500"
-            .value=${live(this.mobileQuery)}
-            @input=${(event: Event) => {
-              this.mobileQuery = (event.target as HTMLInputElement).value;
-            }}
-        /></label>
-        <div class="dialog-footer">
-          <button type="submit" class="primary">Search</button>
-        </div>
-      </form>
-    </dialog>`;
   }
   private applySearch() {
     clearTimeout(this.searchTimer);
@@ -1282,10 +1424,15 @@ export class KaleidescapeLibrary extends LitElement {
   private choices(key: string, facet: string) {
     const values =
       key === "status" ? [...MOVIE_FILTERS] : (this.page?.facets[facet] ?? []);
-    // Retain selected names even if a subsequent sync removes their suggestion.
+    // Keep the initial options visible while the filtered results are reloaded.
     const choices = [
-      ...new Set([...values, ...((this.draft[key] ?? []) as string[])]),
+      ...new Set([
+        ...(this.facetChoices[facet] ?? []),
+        ...values,
+        ...((this.draft[key] ?? []) as string[]),
+      ]),
     ];
+    this.facetChoices[facet] = choices;
     if (key === "rating") {
       const rank: Record<string, number> = {
         "NC-17": 8,
@@ -1584,16 +1731,105 @@ export class KaleidescapeLibrary extends LitElement {
       </div>
     </dialog>`;
   }
+  private renderSystemFilterSection() {
+    return this.advanced && this.scope?.permissions.edit
+      ? html`<fieldset class="system-filter-section">
+          <legend>
+            <span class="facet-heading"
+              ><span>System Filters</span
+              ><button
+                type="button"
+                class="facet-clear"
+                aria-label="Clear System Filters"
+                ?disabled=${!(this.draft.system_filters as string[] | undefined)?.length && !this.draft.missing_metadata_artwork && !this.draft.missing_purchase_information}
+                @click=${() => {
+                  this.draft = {
+                    ...this.draft,
+                    system_filters: [],
+                    missing_metadata_artwork: false,
+                    missing_purchase_information: false,
+                  };
+                  this.applyFilterChanges();
+                }}
+              >
+                Clear</button
+              ><span class="facet-count"
+                >${(this.draft.system_filters as string[] | undefined)?.length ?? 0}</span
+              ></span
+            >
+          </legend>
+          <div class="facet-options">
+            ${(
+              [
+                [
+                  "missing_metadata_artwork",
+                  "Missing metadata or artwork (legacy)",
+                ],
+                [
+                  "missing_purchase_information",
+                  "Missing purchase information (legacy)",
+                ],
+              ] as const
+            ).map(([key, label]) =>
+              this.draft[key]
+                ? html`<div class="system-filter-option">
+                    <label class="check">
+                      <input
+                        type="checkbox"
+                        checked
+                        @change=${() => {
+                          this.draft = { ...this.draft, [key]: false };
+                          this.applyFilterChanges();
+                        }}
+                      />${label}</label
+                    >${settingHint(label, "This filter came from an older link. Clear it to use the System Filters above.")}
+                  </div>`
+                : nothing,
+            )}
+            ${SYSTEM_FILTERS.map(
+              ([key, label, hint]) =>
+                html`<div class="system-filter-option">
+                  <label class="check"
+                    ><input
+                      type="checkbox"
+                      name="system_filter"
+                      .value=${key}
+                      .checked=${((this.draft.system_filters ?? []) as string[]).includes(key)}
+                      @change=${(event: Event) => {
+                        const values = (this.draft.system_filters ??
+                          []) as string[];
+                        this.draft = {
+                          ...this.draft,
+                          system_filters: (event.target as HTMLInputElement)
+                            .checked
+                            ? [...values, key]
+                            : values.filter((value) => value !== key),
+                        };
+                        this.applyFilterChanges();
+                      }}
+                    />${label}</label
+                  >${settingHint(label, hint)}
+                </div>`,
+            )}
+          </div>
+        </fieldset>`
+      : nothing;
+  }
   private renderFilterDialog() {
-    const selectedCount = [...FILTERS.map(([key]) => key), "status"].reduce(
-      (total, key) =>
-        total +
-        (Array.isArray(this.draft[key])
-          ? (this.draft[key] as string[]).length
-          : 0),
-      Number(!!this.draft.missing_metadata_artwork) +
-        Number(!!this.draft.missing_purchase_information),
+    const groups = [
+      ["status", "Movie status", "status"],
+      ...FILTERS.filter(([key]) => key !== "actor" && key !== "director"),
+    ].filter(
+      ([key, , facet]) =>
+        key !== "collection" ||
+        this.choices(key, facet).some(
+          (value) => !hiddenFilterCollection(value),
+        ) ||
+        ((this.draft[key] ?? []) as string[]).some(
+          (value) => !hiddenFilterCollection(value),
+        ),
     );
+    groups.splice(5, 0, ["system", "System Filters", "system"]);
     return html`<dialog
       id="filter-dialog"
       @click=${dismissBackdrop}
@@ -1608,59 +1844,27 @@ export class KaleidescapeLibrary extends LitElement {
         Select any options within a category. Movies must match every category
         you choose.
       </p>
-      ${
-        this.advanced && this.scope?.permissions.edit
-          ? html`<label class="check"
-              ><input
-                name="missing_metadata_artwork"
-                type="checkbox"
-                .checked=${!!this.draft.missing_metadata_artwork}
-                @change=${(event: Event) => {
-                  this.draft.missing_metadata_artwork = (
-                    event.target as HTMLInputElement
-                  ).checked;
-                  this.requestUpdate();
-                }}
-              />Missing metadata/artwork</label
-            >`
-          : nothing
-      }
-      ${
-        this.scope?.permissions.edit
-          ? html`<label class="check"
-              ><input
-                name="missing_purchase_information"
-                type="checkbox"
-                .checked=${!!this.draft.missing_purchase_information}
-                @change=${(event: Event) => {
-                  this.draft.missing_purchase_information = (
-                    event.target as HTMLInputElement
-                  ).checked;
-                  this.requestUpdate();
-                }}
-              />Missing purchase information</label
-            >`
-          : nothing
-      }
       <div class="facet-groups">
-        ${[
-          ["status", "Movie status", "status"],
-          ...FILTERS.filter(([key]) => key !== "actor" && key !== "director"),
-        ].map(([key, label, facet]) => {
+        ${groups.map(([key, label, facet]) => {
+          if (key === "system") return this.renderSystemFilterSection();
           const selected = (this.draft[key] ?? []) as string[];
           const choices = this.choices(key, facet);
-          if (
-            key === "collection" &&
-            !(this.page?.facets[facet] ?? []).some(
-              (value) => !hiddenFilterCollection(value),
-            ) &&
-            !selected.some((value) => !hiddenFilterCollection(value))
-          )
-            return nothing;
           return html`<fieldset>
             <legend>
               <span class="facet-heading">
                 <span>${label}</span>
+                <button
+                  type="button"
+                  class="facet-clear"
+                  aria-label=${`Clear ${label} filters`}
+                  ?disabled=${!selected.length}
+                  @click=${() => {
+                    this.draft = { ...this.draft, [key]: [] };
+                    this.applyFilterChanges();
+                  }}
+                >
+                  Clear
+                </button>
                 <span
                   class="facet-count"
                   aria-label=${`${selected.length} selected`}
@@ -1690,7 +1894,7 @@ export class KaleidescapeLibrary extends LitElement {
                                   ? [...current, value]
                                   : current.filter((item) => item !== value),
                               };
-                              this.requestUpdate();
+                              this.applyFilterChanges();
                             }}
                           />${key === "status" ? renderCollectionBadge(statusFilterLabel(value, this.movieStatusLabels)) : key === "rating" ? renderRatingBadge(value) : key === "collection" ? renderCollectionBadge(value) : key === "format" && formatBadges({ formats: [value] }).length === 1 ? renderFormatBadges({ formats: [value] }) : value}</label
                         >`,
@@ -1698,18 +1902,6 @@ export class KaleidescapeLibrary extends LitElement {
                   : html`<p class="muted">No matching options</p>`
               }
             </div>
-            <button
-              type="button"
-              class="facet-clear"
-              aria-label=${`Clear ${label} filters`}
-              ?disabled=${!selected.length}
-              @click=${() => {
-                this.draft = { ...this.draft, [key]: [] };
-                this.requestUpdate();
-              }}
-            >
-              Clear
-            </button>
           </fieldset>`;
         })}
       </div>
@@ -1726,47 +1918,13 @@ export class KaleidescapeLibrary extends LitElement {
                   ...this.draft,
                   [key]: selected.filter((item) => item !== name),
                 };
-                this.requestUpdate();
+                this.applyFilterChanges();
               }}
             >
               ${name} ×
             </button>`,
         );
       })}
-      <div class="actions dialog-footer">
-        <button
-          @click=${() => {
-            this.draft = {};
-            this.requestUpdate();
-          }}
-        >
-          Clear filters</button
-        ><span class="filter-selection-summary" role="status"
-          >${selectedCount ? `${selectedCount} selected` : "No filters selected"}</span
-        ><span class="grow"></span>
-        <button
-          class="primary"
-          @click=${() => {
-            const next = { ...this.applied };
-            for (const key of [...FILTERS.map(([key]) => key), "status"])
-              next[key] = this.draft[key] ?? [];
-            next.missing_metadata_artwork = !!(
-              this.advanced &&
-              this.scope?.permissions.edit &&
-              this.draft.missing_metadata_artwork
-            );
-            next.missing_purchase_information =
-              !!this.draft.missing_purchase_information;
-            next.recently_added = false;
-            this.applied = next;
-            this.saveFilters();
-            this.closeDialog("filter-dialog");
-            void this.load();
-          }}
-        >
-          Apply filters
-        </button>
-      </div>
     </dialog>`;
   }
   private renderCollectionAction(row: LibraryTitle) {
@@ -2314,7 +2472,8 @@ export class KaleidescapeLibrary extends LitElement {
     const activeFilters = [...FILTERS.map(([key]) => key), "status"].reduce(
       (count, key) =>
         count + ((this.applied[key] as string[] | undefined)?.length ?? 0),
-      Number(!!this.applied.missing_metadata_artwork) +
+      ((this.applied.system_filters as string[] | undefined)?.length ?? 0) +
+        Number(!!this.applied.missing_metadata_artwork) +
         Number(!!this.applied.missing_purchase_information) +
         Number(!!this.applied.recently_added),
     );
@@ -2507,18 +2666,6 @@ export class KaleidescapeLibrary extends LitElement {
           >
             <button
               type="button"
-              aria-label="Search Library"
-              title="Search Library"
-              aria-haspopup="dialog"
-              aria-controls="library-search"
-              class=${this.applied.query ? "active-shortcut" : ""}
-              ?hidden=${this.dashboard?.search_position === "off"}
-              @click=${this.openSearch}
-            >
-              ${actionIcon("search")}
-            </button>
-            <button
-              type="button"
               aria-label="Library filters"
               title="Filters"
               aria-haspopup="dialog"
@@ -2533,7 +2680,7 @@ export class KaleidescapeLibrary extends LitElement {
               type="button"
               aria-label="Clear search and filters"
               title="Clear search and filters"
-              ?hidden=${this.dashboard?.show_filters === false}
+              ?hidden=${!String(this.applied.query ?? "").trim() && !activeFilters}
               ?disabled=${this.loading}
               @click=${this.clearFilters}
             >
@@ -2632,8 +2779,65 @@ export class KaleidescapeLibrary extends LitElement {
                   (item) =>
                     html`<button
                       class=${`cover-tile${this.display.show_titles ? " has-title" : ""}${this.display.show_rating && item.rating ? " has-rating" : ""}`}
-                      title=${`${item.title}${item.year ? ` (${item.year})` : ""}${this.warningMessage(item) ? `; ${this.warningMessage(item)}` : ""}`}
                       aria-label=${`Details for ${item.title}${item.year ? ` (${item.year})` : ""}${this.warningMessage(item) ? `; ${this.warningMessage(item)}` : ""}`}
+                      aria-describedby=${this.previewItem?.id === item.id && this.previewAnchor ? "library-movie-preview" : nothing}
+                      @pointerenter=${(event: PointerEvent) => {
+                        if (event.pointerType === "touch") return;
+                        const anchor = event.currentTarget as HTMLElement;
+                        if (this.previewAnchor && this.previewAnchor !== anchor)
+                          this.closePreview();
+                        this.previewHovered = true;
+                        if (
+                          this.pendingPreviewAnchor === anchor &&
+                          this.previewFocused
+                        )
+                          return;
+                        if (this.previewAnchor !== anchor)
+                          this.previewFocused = false;
+                        this.startPreview(item, anchor, true);
+                      }}
+                      @pointerleave=${(event: PointerEvent) => {
+                        if (this.pendingPreviewAnchor === event.currentTarget) {
+                          this.previewHovered = false;
+                          if (!this.previewFocused) {
+                            this.previewGate.cancel();
+                            this.pendingPreviewAnchor = undefined;
+                          }
+                        }
+                        if (this.previewAnchor !== event.currentTarget) return;
+                        this.previewHovered = false;
+                        if (this.previewPointerAnchor === event.currentTarget)
+                          this.previewFocused = false;
+                        this.closePreviewWhenIdle();
+                      }}
+                      @pointerdown=${(event: PointerEvent) => {
+                        this.previewGate.cancel();
+                        this.pendingPreviewAnchor = undefined;
+                        this.previewPointerAnchor =
+                          event.currentTarget as HTMLElement;
+                      }}
+                      @focus=${(event: FocusEvent) => {
+                        if (this.previewPointerAnchor === event.currentTarget)
+                          return;
+                        this.previewFocused = true;
+                        this.startPreview(
+                          item,
+                          event.currentTarget as HTMLElement,
+                          false,
+                        );
+                      }}
+                      @blur=${(event: FocusEvent) => {
+                        if (this.pendingPreviewAnchor === event.currentTarget) {
+                          this.previewFocused = false;
+                          if (!this.previewHovered) {
+                            this.previewGate.cancel();
+                            this.pendingPreviewAnchor = undefined;
+                          }
+                        }
+                        if (this.previewAnchor !== event.currentTarget) return;
+                        this.previewFocused = false;
+                        this.closePreviewWhenIdle();
+                      }}
                       @click=${() => this.select(item)}
                     >
                       <div class="cover-image">${this.cover(item)}</div>
@@ -2769,7 +2973,7 @@ export class KaleidescapeLibrary extends LitElement {
         ${!this.page?.items.length ? html`<p class="empty" role="status">${this.loading ? "Loading library…" : "No cached titles match. Adjust your filters or wait for a library sync."}</p>` : nothing}
       </section>
       <footer
-        class="library-footer"
+        class=${`library-footer${this.dashboard?.search_position === "off" ? "" : " has-mobile-search"}`}
         aria-label="Library status and navigation"
         ?hidden=${this.dashboard?.show_stats === false && !this.page?.offset && !this.page?.has_more}
       >
@@ -2778,7 +2982,7 @@ export class KaleidescapeLibrary extends LitElement {
           role="status"
           ?hidden=${this.dashboard?.show_stats === false}
         >
-          <span>
+          <span class="footer-desktop-summary">
             ${String(this.applied.query ?? "").trim() || activeFilters ? html`<strong class="match-count">Matches ${this.page?.total ?? 0}</strong> · ` : nothing}
             ${this.applied.query ? html`Relevance order · ` : nothing}
             ${`Total ${this.info?.group_count ?? 0}`} ·
@@ -2789,6 +2993,9 @@ export class KaleidescapeLibrary extends LitElement {
             ${movieStatusLabel("in_progress", this.movieStatusLabels)}
             ${this.info?.status_counts?.in_progress ?? 0}
           </span>
+          <span class="footer-mobile-summary"
+            >${String(this.applied.query ?? "").trim() || activeFilters ? `Matches ${this.page?.total ?? 0}` : `Total ${this.info?.group_count ?? 0}`}</span
+          >
           ${admin && this.info ? html`<span class="footer-admin">${counted(this.info.collection_count, "collection")}${this.info.artwork_enabled ? ` · Artwork ${((this.info.artwork_bytes ?? 0) / 1048576).toFixed(1)} MiB` : ""}${this.display.show_library_cost ? ` · Library cost ${this.purchaseAmount("library_cost")}` : ""} · Synced ${this.date(this.info.last_synced_at)}</span>` : nothing}
           ${admin && this.info?.metadata ? html`<span class="scraper-status footer-admin">${this.scraperSummary()}</span>` : nothing}
           ${admin && (this.info?.collection_jobs ?? []).some((job) => ["queued", "working", "syncing"].includes(job.status)) ? html`<span class="collection-queue-status">Collection changes: ${this.info?.collection_jobs?.filter((job) => job.status === "queued").length ?? 0} queued · ${this.info?.collection_jobs?.filter((job) => ["working", "syncing"].includes(job.status)).length ?? 0} in progress</span>` : nothing}
@@ -2842,8 +3049,37 @@ export class KaleidescapeLibrary extends LitElement {
           }
         </div>
       </footer>
-      ${this.renderOptionsDialog()} ${this.renderFilterDialog()}
-      ${this.renderSearchDialog()} ${this.renderTitleDialog()}
+      <form
+        class="mobile-library-search"
+        role="search"
+        ?hidden=${this.dashboard?.search_position === "off"}
+        @submit=${(event: Event) => {
+          event.preventDefault();
+          this.applySearch();
+        }}
+      >
+        <input
+          type="search"
+          aria-label="Search Library"
+          placeholder="Search titles, actors or directors"
+          maxlength="500"
+          .value=${live(String(this.filters.query ?? ""))}
+          @input=${(event: Event) => {
+            this.filters.query = (event.target as HTMLInputElement).value;
+            clearTimeout(this.searchTimer);
+            this.searchTimer = setTimeout(() => this.applySearch(), 300);
+          }}
+        />
+        <button
+          type="submit"
+          aria-label="Search Library"
+          ?disabled=${this.loading}
+        >
+          ${actionIcon("search")}
+        </button>
+      </form>
+      ${this.renderPreview()} ${this.renderOptionsDialog()}
+      ${this.renderFilterDialog()} ${this.renderTitleDialog()}
     </section>`;
   }
 }

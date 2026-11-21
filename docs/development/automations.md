@@ -30,7 +30,7 @@ workflow.
 | ---------------------------- | --------------- | -------------------------------------------------------------------------------------------- |
 | `purchase_email_parser.yaml` | 8               | Selected IMAP entry and optional sender filter; validates and imports receipt events         |
 | `library_schedule.yaml`      | 1               | Daily local time, default 03:00; requests Library sync                                       |
-| `metadata_schedule.yaml`     | 1               | Daily local time, default 04:00; selected enabled providers and Only missing, default true   |
+| `metadata_schedule.yaml`     | 2               | Selected days, default all; local time 04:00; selected enabled providers and Only missing    |
 | `calendar_schedule.yaml`     | 1               | Daily local time, default 03:00; requests Full Sync, waits 11 minutes, requests another pass |
 | `maintenance_schedule.yaml`  | 2               | Daily local time; select database cleanup, Library sync and missing metadata refresh         |
 
@@ -210,13 +210,17 @@ Maintenance. Recommended cleanup keeps 180 days of finalized calendar and
 collection change history, and 90 days of finalized playback control history.
 Advanced mode sets each retention period independently or keeps all records of a
 type. Pending and uncertain operations, request replay barriers, purchases,
-Library entries and Journal history are retained. SQLite can reuse freed pages;
-cleanup does not compact the database file. The optional Schedule maintenance
-blueprint runs the same cleanup and can separately request Library sync and
-missing metadata refresh. Its retention inputs are always applied, defaulting to
-180 days for calendar and collection histories and 90 days for playback. After
-updating an existing blueprint, review its saved retention values: values that
-the previous Recommended mode ignored will now be applied. The
-`database_cleanup` action accepts active administrators and HA automations
-without a user context. Scheduled cleanup runs only if an automation is
-explicitly created and enabled.
+Library entries and Journal history are retained. Cleanup also reviews and links
+cached cover and backdrop artwork missing from other editions of the same source
+group. It leaves explicit unavailable flags, removed backdrops, existing artwork
+and ambiguous conflicting images untouched. The review shows the number of
+editions to repair; the scheduled action applies the same repair. SQLite can
+reuse freed pages; cleanup does not compact the database file. The optional
+Schedule maintenance blueprint runs the same cleanup and can separately request
+Library sync and missing metadata refresh. Its retention inputs are always
+applied, defaulting to 180 days for calendar and collection histories and 90
+days for playback. After updating an existing blueprint, review its saved
+retention values: values that the previous Recommended mode ignored will now be
+applied. The `database_cleanup` action accepts active administrators and HA
+automations without a user context. Scheduled cleanup runs only if an automation
+is explicitly created and enabled.

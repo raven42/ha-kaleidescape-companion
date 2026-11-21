@@ -227,22 +227,39 @@ def validate_database(patch, previous=None):
 
 
 SEARCH_DEFAULTS = {"fuzzy_search": True}
-INTERFACE_DEFAULTS = {"advanced_view": True}
+INTERFACE_DEFAULTS = {
+    "advanced_view": True,
+    "live_search_input": False,
+    "remote_covers": True,
+    "remote_movies": True,
+    "remote_collections": True,
+    "remote_search": True,
+    "remote_settings": True,
+    "remote_screensaver": True,
+    "remote_transport": True,
+    "remote_intermission": True,
+    "remote_collection_shortcuts": True,
+}
 
 
 def validate_interface(patch, previous=None):
     if not isinstance(patch, dict) or set(patch) - INTERFACE_DEFAULTS.keys():
         raise invalid("Unknown interface preferences")
     values = {**INTERFACE_DEFAULTS, **(previous or {}), **patch}
-    if type(values["advanced_view"]) is not bool:
-        raise invalid("Invalid interface mode")
+    if any(type(values[key]) is not bool for key in INTERFACE_DEFAULTS):
+        raise invalid("Invalid interface preference")
     return values
 
 
 JOURNAL_DEFAULTS = {
     "view": "calendar",
+    "page_size": 25,
     "calendar_size": 180,
     "calendar_fit": False,
+    "calendar_hover_preview": False,
+    "calendar_show_month": True,
+    "calendar_show_year": True,
+    "calendar_show_total": True,
     "movie_details": "full",
 }
 
@@ -253,6 +270,9 @@ def validate_journal(patch, previous=None):
     values = {**JOURNAL_DEFAULTS, **(previous or {}), **patch}
     if values["view"] not in ("list", "calendar"):
         raise invalid("Choose List or Calendar")
+    count = values["page_size"]
+    if not (type(count) is int and count in (10, 25, 100, 500)) and count != "all":
+        raise invalid("Choose 10, 25, 100, 500, or All")
     if values["movie_details"] not in ("full", "compact"):
         raise invalid("Choose Full or Compact movie details")
     size = values["calendar_size"]
@@ -260,6 +280,14 @@ def validate_journal(patch, previous=None):
         raise invalid("Choose a calendar size between 60 and 320 pixels")
     if type(values["calendar_fit"]) is not bool:
         raise invalid("Invalid calendar fit option")
+    for key in (
+        "calendar_hover_preview",
+        "calendar_show_month",
+        "calendar_show_year",
+        "calendar_show_total",
+    ):
+        if type(values[key]) is not bool:
+            raise invalid("Invalid calendar totals option")
     return values
 
 

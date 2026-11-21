@@ -1,110 +1,115 @@
 # Pyk ownership and compatibility
 
-Status: **temporary proof of concept**. Companion uses a privately namespaced
-copy of patched pykaleidescape for device discovery, playback controls, title
-launch, and local server browser reads/writes. This has offline test coverage,
-but no hardware or HA OS validation of the bundled source. Earlier HA OS logs
-exposed an identity-read bug addressed in the bundled source; a successful
-hardware retest is pending. This is not a supported release migration.
+Companion currently bundles pykaleidescape from upstream `main` at
+`50df2869349667d1e68d429b9b619e32ede9879b` with three changes reviewed in
+[upstream issue #26](https://github.com/SteveEasley/pykaleidescape/issues/26).
+It also includes the proposed user-input and navigation support described below.
+The module reports upstream version `1.2.0`. The patch list and hashes identify
+the exact source included in the integration.
 
 ## Scope and ownership
 
-Pyk remains a **local-network Kaleidescape device library**. The patched public
-`Device` workflow owns device connections, discovery, fresh state reads,
-explicit controls, and experimental movie launch. Its `LocalLibrary` owns local
-server browser page/form interpretation, while Companion supplies the HA-owned
-HTTP transport with private-address pinning, route checks and response limits.
-Companion owns configuration, authorization, durable command and collection
-receipts, observation, storage, UI, and recovery. A failed command or collection
-POST must never be replayed merely because pyk reconnects.
+| Location in the integration                  | Responsibility                                                                                                                                                                 |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `vendor/kaleidescape/`                       | Pyk's connection, events, request/response types and documented Device commands, under the upstream MIT license.                                                               |
+| `playback/live_player.py`                    | Standalone `LivePlayer(Device)` for discovery, fresh player observations and experimental movie launch.                                                                        |
+| `kaleidescape_browser/`                      | Companion's standalone Apache-2.0 Python library for the server's movie catalog, details, artwork and collection forms. It has its own package, transport interface and tests. |
+| `playback/controls.py` and `library/sync.py` | Home Assistant integration, authorization, selected player and title checks, network policy, durable receipts and readback.                                                    |
 
-Public Kaleidescape Store scraping stays **entirely in Companion** under
-`scrapers/providers/store.py` and `store_search.py`. Those clients cover public
-movie metadata, anonymous search, and approved artwork routes. Companion's
-provider transport applies robots rules, rate/body limits, public DNS/TLS
-checks, and no-account/no-cookie scope. Store functionality is neither a pyk
-requirement nor part of the device migration. TMDB is likewise a Companion
-provider. No Store hooks should be added to pyk for this migration.
+To use `LivePlayer` outside Home Assistant, copy `live_player.py` into a Python
+project that has `pykaleidescape` installed. From this checkout you can also put
+`custom_components/kaleidescape_companion/playback` on `PYTHONPATH`. The class
+accepts pyk's connection options and inherits its documented controls. An async
+caller can read a player by address.
 
-## Current PoC implementation
+```python
+from live_player import LivePlayer
 
-- `playback/controls.py` creates persistent, lazy pyk `Device` instances for
-  verified private IPs and uses public `Device` methods and Request classes.
-  Companion still validates seed/player identity and requires fresh state before
-  sending a user command. Pause/unload closes owned clients after cancelling or
-  draining in-flight reads; hardware qualification remains necessary.
-- `library/sync.py` uses pyk `LocalLibrary` for catalog, collections, details,
-  artwork, add forms and validated built-in removal/status-move forms. Companion
-  retains its bounded HA HTTP session and SQLite reconciliation. Collection
-  changes keep durable receipts and an explicit readback; an uncertain outcome
-  is never automatically resent.
-- Companion bundles the reviewed patched pyk source under its own namespace. The
-  complete runtime diff reconstructs from a pinned offline upstream fixture,
-  including collection APIs and the pre-submit callback; the normal check
-  verifies all manifested bytes and the MIT license. See the
-  [development guide](README.md) for independent base checks. Store scrapers
-  remain in Companion and are included in the runtime package.
-- The manifest requires `pykaleidescape>=1.2.0` to match the HA 2026.11.0
-  baseline while allowing HA to provide a compatible newer release. The 1.2.0
-  release does **not** contain the capabilities used by this PoC. Tests load the
-  bundled patched pyk source. HA no longer adds `/config/deps` to its import
-  path, so the former overlay cannot provide that code. The bundled package is
-  not an upstream release; HA OS validation remains pending.
 
-HA OS discovery and status logs exposed a patched-pyk identity-read bug: the
-protocol discovery list uses 12-digit serials, while `GET_DEVICE_INFO` returns
-the same serial zero-padded to 16 digits. For example, `00000000123A` and
-`000000000000123A` identify the same device. The bundled implementation
-normalizes both to the same 12-digit routed identity and rejects invalid or
-overlong significant values; an offline emulator regression test covers this.
+async def playback_at(host):
+    player = LivePlayer(host, reconnect=False)
+    try:
+        await player.connect()
+        return await player.read_playback_state()
+    finally:
+        await player.disconnect()
+```
 
-The bundled development build identifies itself as `1.2.0.dev1+cmp` in both
-Python package metadata and pyk's runtime version. HA OS validation still
-requires deployment of the updated Companion package and a restart. Changing
-this source checkout does not update HA OS.
+`read_identity()` reports the full normalized serial, model, address and movie
+zone count. `read_playback_state()` returns an immutable snapshot with that
+identity, power, readiness, zone availability, title, play status and times in
+seconds. Both query the device each time. A disconnect invalidates an
+observation in progress. Movie queries run only when the first movie zone is
+available and the player is on and ready. Direct reads work with released pyk
+1.2.0. Routed reads, discovery and movie launch use the reviewed build's
+`device_id` support.
+
+`discover_devices()` returns one identity per distinct advertised serial, with a
+friendly name when the player supplies one. `prepare_movie_launch(handle)` reads
+the connected player's movie capability and looks up the requested handle. Pass
+`serial=...` to address another player through the seed. A bare handle takes
+only the namespace from the highlighted selection. The result includes the title
+and optional year for the caller to review. `send_movie_launch(prepared)`
+consumes that result and sends one serial-addressed `PLAY_MOVIE`. A disconnect
+or a new preparation requires a fresh lookup.
+
+Pyk manages sockets, sequence numbers, timeouts and event-driven state.
+`LivePlayer` requires a command acknowledgement and closes the connection after
+an uncertain write so a late reply cannot confirm a later command. Companion
+reuses one player per address and reconnects on the next explicit operation. It
+checks the catalog match and records the intent before each launch. See the
+[control contract](playback-controls.md).
+
+Library sync injects its guarded HA HTTP transport into the server browser's
+`LocalLibrary`. Standalone callers can use `KaleidescapeServerBrowser` with its
+standard-library HTTP transport. Collection writes recheck the server form and
+the caller's authority before submission. Companion records the intent and
+confirms membership by readback. The public Store and TMDB clients remain
+separate providers under `scrapers/`. See the [Library contract](library.md) and
+the
+[browser package guide](../../custom_components/kaleidescape_companion/kaleidescape_browser/README.md).
 
 ## Compatibility and upstream path
 
-The upstream patch series adds focused fixes and features, unit tests, optional
-player/server hardware tests, and examples. The archived runtime base and full
-patch in `scripts/assets/pyk-overlay/` make this project buildable and testable
-without an adjacent pyk checkout. An upstream checkout is optional for
-independent provenance comparison and upstream development. Pyk's existing
-`Device` constructor, async methods, dispatcher, state objects, reconnect
-behavior, Request subclass extension points, and ordinary return values remain
-the hard compatibility contract. New public interfaces are additive. The patched
-checkout reports version `1.2.0.dev1+cmp`, but the HA shared dependency pin is
-1.2.0. Replacing the bundled copy with a released package requires upstream
-acceptance and verification with the built-in HA integration.
+The first three proposed pyk changes have independent branches based directly on
+the upstream commit above. The user-input branch builds on request routing for
+protocol field escaping.
 
-The [roadmap](roadmap.md#next-delivery-gates) owns the accepted upstream,
-compatibility and hardware milestones. A released replacement must preserve HA's
-built-in integration as well as Companion's interfaces. Keep the runtime bundle
-and its MIT notice until that separately qualified change. Upstream logging
-privacy enhancements remain optional and require the pyk owner's approval;
-preserve Companion's native logging safeguards regardless.
+| Branch                     | Scope                                                                                    |
+| -------------------------- | ---------------------------------------------------------------------------------------- |
+| `pr/connection-robustness` | Connection cleanup, request outcome errors, callback isolation and response handling.    |
+| `pr/request-routing`       | Outgoing field escaping, optional device ID and reply matching by sequence number.       |
+| `pr/documented-commands`   | Documented playback and navigation methods including the existing CANCEL alias for Back. |
+| `pr/user-input`            | User input events and keyboard, screensaver and navigation commands; depends on routing. |
 
-Modern capabilities may expand after hardware evidence. Legacy music, disc/vault
-and alternate framing are deferred without applicable hardware and a concrete
-use case. A historical command inventory is not a claim of implemented support.
+The [development guide](README.md) describes reconstructing the vendor directory
+from the pinned offline source and four runtime diffs. HA installs the manifest
+dependency `pykaleidescape>=1.2.0` for compatibility with the built-in
+integration. Companion selects its private copy in `playback/_pyk.py`. When the
+four patches are merged and released, verify the released dependency with both
+integrations, update the manifest minimum and that import, and remove the vendor
+directory and its reconstruction assets. `LivePlayer` and the server browser
+continue to ship with Companion.
 
 ## Test strategy and concrete hardware runs
 
-Normal checks use fictional fixtures and do not contact devices or the public
-Store. Run `scripts/check` with the bundled pyk source. The optional tests in
-pyk's `tests/hardware_tests/` can be run by an operator at the relevant patch
-phase with a player **or** a server; neither is required for default CI. Record
-model/firmware, topology, patch commit, and sanitized results. Start with
-read-only discovery/library queries, then selected player controls and launch.
-Stop on identity or capability mismatch. Test reconnect, interrupted replies,
-outcome uncertainty, and coexistence with HA's built-in integration before
-claiming hardware support. Available owner hardware: Strato K, Terra Compact 30
-TB, and Terra Prime 120 TB; firmware is unrecorded. No successful hardware run
-is claimed here.
+`scripts/test --live-player-only` runs the standalone player's tests with pyk as
+its only dependency. `scripts/test --browser-only` runs the independent browser
+suite. Both run during `scripts/check`. The following command exercises the
+packaged `LivePlayer` against a fictional TCP player.
 
-For the Companion PoC, verify on an explicitly selected HA instance: setup,
-Library catalog/details/artwork/collections, public Store metadata/search and
-cover enrichment, discovery, read-only state, selected-player commands, title
-launch, uncertain receipt reconciliation, options reload, and unload. Public
-Store validation is separate Internet-provider qualification and stays in
-Companion. A successful offline suite does not prove device or Store behavior.
+```sh
+.venv/bin/python -m unittest discover -s tests -p 'test_pyk_adapter.py'
+```
+
+Optional checks live in `tests/hardware/`. They require explicit operator
+selection of a host and, for a device, its expected serial. Player commands and
+experimental launch also require their own opt-ins. Record the model, firmware,
+topology, patch commit and sanitized results. Start with read-only discovery,
+state and library queries, then selected-player controls and launch. Check
+interrupted replies, reconnect, receipt recovery and coexistence with HA's
+built-in integration before release.
+
+HA OS logs previously exposed the serial padding difference. The adapter's
+emulator tests cover it. Hardware and HA OS retesting remain pending on the
+Strato K, Terra Server Compact 30 TB and Terra Server Prime 120 TB.

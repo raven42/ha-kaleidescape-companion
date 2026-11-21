@@ -69,28 +69,19 @@ class Dispatcher:
         while isinstance(check_target, functools.partial):
             check_target = check_target.func
         if inspect.iscoroutinefunction(check_target):
-            task = self._loop.create_task(self._run_async_target(target, *args))
+            task = self._loop.create_task(self._run_target(target, *args))
             self._tasks.add(task)
             task.add_done_callback(self._tasks.discard)
             return task
-        target(*args)
+        try:
+            target(*args)
+        except Exception:  # pylint: disable=broad-except
+            _LOGGER.exception("Signal listener failed")
         return None
 
-    async def _run_async_target(self, target: Callable, *args) -> None:
-        """Keep one failing listener from leaking an unhandled task error."""
+    async def _run_target(self, target: Callable, *args: Any) -> None:
+        """Log async listener failures without leaking task exceptions."""
         try:
             await target(*args)
-        except asyncio.CancelledError:  # pylint: disable=try-except-raise
-            raise
-        except Exception as error:  # noqa: BLE001  # pylint: disable=broad-except
-            _LOGGER.warning("Signal listener failed: %s", type(error).__name__)
-
-    async def async_close(self) -> None:
-        """Explicitly cancel pending callbacks and disconnect all listeners."""
-        self.disconnect_all()
-        tasks = list(self._tasks)
-        for task in tasks:
-            task.cancel()
-        if tasks:
-            await asyncio.gather(*tasks, return_exceptions=True)
-        self._tasks.clear()
+        except Exception:  # pylint: disable=broad-except
+            _LOGGER.exception("Signal listener failed")

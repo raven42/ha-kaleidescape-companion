@@ -2,6 +2,7 @@
 
 import tempfile
 import unittest
+from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
@@ -163,6 +164,52 @@ class BlueprintTest(unittest.IsolatedAsyncioTestCase):
                     selector = blueprint.inputs["providers"]["selector"]["select"]
                     self.assertTrue(selector["multiple"])
                     self.assertTrue(selector["custom_value"])
+
+    async def test_metadata_schedule_weekdays_and_existing_automation_defaults(self):
+        loader.async_setup(self.hass)
+        await trigger.async_setup(self.hass)
+        await condition.async_setup(self.hass)
+        blueprint = Blueprint(
+            load_yaml(str(TEMPLATE_DIR / TEMPLATES["metadata_schedule"])),
+            expected_domain="automation",
+            schema=AUTOMATION_BLUEPRINT_SCHEMA,
+        )
+        selector = blueprint.inputs["weekdays"]["selector"]["select"]
+        self.assertTrue(selector["multiple"])
+        self.assertEqual(selector["mode"], "list")
+        weekdays = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"]
+        self.assertEqual([option["value"] for option in selector["options"]], weekdays)
+        cases = [
+            ({}, weekdays),
+            ({"providers": ["tmdb"], "only_missing": False}, weekdays),
+            ({"weekdays": ["mon", "fri"]}, ["mon", "fri"]),
+            ({"weekdays": []}, []),
+        ]
+        for selected, expected in cases:
+            with self.subTest(selected=selected):
+                inputs = BlueprintInputs(
+                    blueprint,
+                    {"use_blueprint": {"path": "metadata.yaml", "input": selected}},
+                )
+                inputs.validate()
+                value = inputs.async_substitute()
+                with patch("homeassistant.loader._LOGGER.warning"):
+                    validated = await async_validate_config_item(
+                        self.hass, "test", value
+                    )
+                self.assertEqual(validated.validation_status, "ok")
+                self.assertEqual(value["conditions"][0]["weekday"], expected)
+                for index, weekday in enumerate(weekdays):
+                    with patch(
+                        "homeassistant.util.dt.now",
+                        return_value=datetime(
+                            2026, 11, 8 + index, 4, tzinfo=ZoneInfo("America/Chicago")
+                        ),
+                    ):
+                        self.assertEqual(
+                            condition.time(self.hass, weekday=expected),
+                            weekday in expected,
+                        )
 
     async def test_maintenance_schedule_applies_default_and_selected_retention(self):
         loader.async_setup(self.hass)

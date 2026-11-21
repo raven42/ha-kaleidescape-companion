@@ -155,7 +155,23 @@ class LibraryEditingTest(unittest.IsolatedAsyncioTestCase):
             inspect["snapshot"],
             patch,
         )
+        self.assertEqual(inspect["edited_fields"], [])
+        self.assertEqual(inspect["original_values"]["title"], "Fictional Film")
         result = await self.repo.async_library_edit(*args)
+        edited = await self.repo.async_library_edit(self.source, self.id)
+        self.assertEqual(set(edited["edited_fields"]), set(patch))
+        self.assertEqual(edited["original_values"]["actors"], ["Original Actor"])
+        self.assertEqual(edited["original_values"]["year"], 2025)
+        self.assertIsNone(edited["original_values"]["sort_title"])
+        self.assertEqual(edited["values"]["title"], patch["title"])
+        self.assertEqual(
+            (
+                await self.repo.async_library_list(
+                    self.source, {"grouped": True, "system_filters": ["edited"]}
+                )
+            )["total"],
+            1,
+        )
         self.assertEqual(result["updated_count"], 2)
         self.assertEqual(await self.repo.async_library_edit(*args), result)
         with self.assertRaises(JournalError):
@@ -201,6 +217,94 @@ class LibraryEditingTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(target["year"], 2025)
         exported = await self.repo._call(lambda: list(portable_titles(self.repo._db())))
         self.assertEqual(exported[0]["sort_title"], "A Voyage")
+
+    async def test_restore_one_field_preserves_other_edits_and_all_versions(self):
+        await self.seed()
+        await self.repo.async_enrichment(
+            "save", self.source, self.id, "tmdb", self.data
+        )
+        await self.repo.async_metadata_sources({"metadata_source_actors": "tmdb"})
+        review = await self.repo.async_library_edit(self.source, self.id)
+        await self.repo.async_library_edit(
+            self.source,
+            self.id,
+            self.admin.id,
+            str(uuid4()),
+            review["snapshot"],
+            {
+                "actors": ["Manually Chosen"],
+                "title": "Edited Fictional Film",
+                "sort_title": "Fictional Sort",
+            },
+        )
+
+        def hide_other():
+            db = self.repo._db()
+            with db:
+                db.execute(
+                    "UPDATE library SET available=0 WHERE id=?",
+                    (title_id(self.source, "other"),),
+                )
+
+        await self.repo._call(hide_other)
+        review = await self.repo.async_library_edit(self.source, self.id)
+        request = str(uuid4())
+        args = (
+            self.source,
+            self.id,
+            self.admin.id,
+            request,
+            review["snapshot"],
+            {"restore_fields": ["actors"]},
+        )
+        result = await self.repo.async_library_edit(*args)
+        self.assertEqual(await self.repo.async_library_edit(*args), result)
+        edit = await self.repo.async_library_edit(self.source, self.id)
+        self.assertEqual(edit["edited_fields"], ["title", "sort_title"])
+        self.assertEqual(edit["values"]["actors"], ["Original Actor"])
+        self.assertEqual(edit["values"]["sort_title"], "Fictional Sort")
+        self.assertEqual(edit["values"]["title"], "Edited Fictional Film")
+        for row in (await self.repo.async_inspect("library"))["items"]:
+            if row["source_group"] != "movie":
+                continue
+            data = json.loads(row["enrichment"])
+            self.assertNotIn("actors", data.get("reviewed", {}))
+            self.assertEqual(data["field_sources"]["actors"], "original")
+            self.assertEqual(data["manual_edit_fields"], ["sort_title", "title"])
+        page = await self.repo.async_library_list(
+            self.source, {"grouped": True, "system_filters": ["edited"]}
+        )
+        self.assertEqual(page["total"], 1)
+        review = await self.repo.async_library_edit(self.source, self.id)
+        await self.repo.async_library_edit(
+            self.source,
+            self.id,
+            self.admin.id,
+            str(uuid4()),
+            review["snapshot"],
+            {"restore_fields": ["sort_title"]},
+        )
+        review = await self.repo.async_library_edit(self.source, self.id)
+        self.assertIsNone(review["values"]["sort_title"])
+        self.assertEqual(review["edited_fields"], ["title"])
+        with self.assertRaises(JournalError):
+            await self.repo.async_library_edit(
+                self.source,
+                self.id,
+                self.admin.id,
+                str(uuid4()),
+                review["snapshot"],
+                {"restore_fields": ["actors"]},
+            )
+        with self.assertRaises(JournalError):
+            await self.repo.async_library_edit(
+                self.source,
+                self.id,
+                self.admin.id,
+                str(uuid4()),
+                review["snapshot"],
+                {"restore_fields": ["title"], "title": "Other"},
+            )
 
     async def test_purchase_edits_preserve_provider_metadata_and_export(self):
         await self.seed()
@@ -363,6 +467,32 @@ class LibraryEditingTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(stats["cached_groups"], 1)
         self.assertEqual(stats["by_provider"], {"tmdb": 1, "kaleidescape": 0})
         review = await self.repo.async_library_edit(self.source, self.id)
+        await self.repo.async_library_edit(
+            self.source,
+            self.id,
+            self.admin.id,
+            str(uuid4()),
+            review["snapshot"],
+            {"title": "Edited Fictional Film"},
+        )
+
+        def hide_other_version():
+            db = self.repo._db()
+            with db:
+                db.execute(
+                    "UPDATE library SET available=0, "
+                    "enrichment=json_set(enrichment,'$.reviewed.backdrop_key',?) "
+                    "WHERE id=?",
+                    ("a" * 64, title_id(self.source, "other")),
+                )
+
+        await self.repo._call(hide_other_version)
+        review = await self.repo.async_library_edit(self.source, self.id)
+        versions = review["restore_summary"]["versions"]
+        self.assertEqual(len(versions), 2)
+        hidden = next(item for item in versions if not item["available"])
+        self.assertIn("enrichment.reviewed.backdrop_key", hidden["removed_fields"])
+        self.assertIn("enrichment.manual_edit_fields", hidden["removed_fields"])
         invalid = await self.call(
             "library/edit/reset",
             **self.scope,
@@ -379,6 +509,23 @@ class LibraryEditingTest(unittest.IsolatedAsyncioTestCase):
         row = (await self.repo.async_library_versions(self.source, self.id))["items"][0]
         self.assertEqual(row["title"], "Fictional Film")
         self.assertEqual(row["enrichment"], {})
+        self.assertEqual(
+            (await self.repo.async_library_edit(self.source, self.id))["edited_fields"],
+            [],
+        )
+        self.assertEqual(
+            (
+                await self.repo.async_library_list(
+                    self.source, {"grouped": True, "system_filters": ["edited"]}
+                )
+            )["total"],
+            0,
+        )
+        raw = (await self.repo.async_inspect("library"))["items"]
+        hidden = next(
+            item for item in raw if item["id"] == title_id(self.source, "other")
+        )
+        self.assertEqual(json.loads(hidden["enrichment"]), {"source_only": True})
         self.assertNotIn("Expanded Actor", row["actors"])
         self.assertEqual(
             (await self.repo.async_enrichment("statistics", self.source))[
@@ -415,6 +562,37 @@ class LibraryEditingTest(unittest.IsolatedAsyncioTestCase):
             confirmation="RESTORE SOURCE",
         )
         self.assertEqual(denied["code"], "unauthorized")
+
+    async def test_restore_review_detects_changes_to_an_unavailable_edition(self):
+        await self.seed()
+
+        def mark_unavailable():
+            db = self.repo._db()
+            with db:
+                db.execute(
+                    "UPDATE library SET available=0 WHERE id=?",
+                    (title_id(self.source, "other"),),
+                )
+
+        await self.repo._call(mark_unavailable)
+        review = await self.repo.async_library_edit(self.source, self.id)
+        self.assertEqual(len(review["restore_summary"]["versions"]), 2)
+
+        def change_retained():
+            db = self.repo._db()
+            with db:
+                db.execute(
+                    "UPDATE library SET enrichment=json_set(enrichment, "
+                    "'$.reviewed.synopsis', 'Newer data') WHERE id=?",
+                    (title_id(self.source, "other"),),
+                )
+
+        await self.repo._call(change_retained)
+        with self.assertRaises(JournalError) as error:
+            await self.repo.async_library_reset(
+                self.source, self.id, self.admin.id, str(uuid4()), review["snapshot"]
+            )
+        self.assertEqual(error.exception.code, "refresh_required")
 
     async def test_admin_footer_statistics_are_withheld_from_regular_users(self):
         await self.seed()

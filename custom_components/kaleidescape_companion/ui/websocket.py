@@ -19,8 +19,8 @@ from ..core.models import JournalError
 from ..core.runtime import get_library, get_runtime, loaded_runtimes
 from ..core.security import is_active_admin, is_active_user
 from ..library.config import origin
+from ..playback._pyk import kaleidescape
 from ..playback.now_playing import snapshot as now_playing_snapshot
-from ..vendor import kaleidescape
 from .automation_templates import TEMPLATES
 from .controls import control_request
 from .preferences import public_defaults
@@ -55,6 +55,7 @@ USER_OPERATIONS = frozenset(
         "now_playing",
         "control/info",
         "control/status",
+        "control/input_status",
         "control/prepare",
         "control/execute",
     }
@@ -100,11 +101,13 @@ def async_register_commands(hass: HomeAssistant) -> None:
         "control/info": scoped,
         "control/discover": scoped,
         "control/status": {**scoped, p.Optional("player_id"): str},
+        "control/input_status": {**scoped, p.Optional("player_id"): str},
         "control/prepare": {
             **scoped,
             p.Required("operation"): str,
             p.Optional("title_id"): str,
             p.Optional("player_id"): str,
+            p.Optional("input_text"): str,
         },
         "control/execute": {
             **mutations,
@@ -113,7 +116,10 @@ def async_register_commands(hass: HomeAssistant) -> None:
         "control/acknowledge": {**mutations, p.Required("confirmation"): str},
         "library/info": scoped,
         "metadata/status": scoped,
-        "metadata/sync": scoped,
+        "metadata/sync": {
+            **scoped,
+            p.Optional("missing_titles_only", default=False): bool,
+        },
         "metadata/title/options": {**scoped, p.Required("title_id"): str},
         "metadata/title/preview": {
             **scoped,
@@ -210,6 +216,7 @@ def async_register_commands(hass: HomeAssistant) -> None:
         "library/viewing": {**scoped, p.Required("viewing_id"): str},
         "library/purchases/summary": scoped,
         "purchases/reconcile": scoped,
+        "purchases/auto_match": scoped,
         "library/viewings": {
             **scoped,
             p.Required("title_id"): str,
@@ -422,6 +429,8 @@ async def async_handle(
                             "watched_seconds",
                             "month_viewing_count",
                             "month_watched_seconds",
+                            "year_viewing_count",
+                            "year_watched_seconds",
                         )
                     }
                 entry = hass.config_entries.async_get_entry(entry_id)
@@ -503,7 +512,11 @@ async def async_handle(
                             "Enable a metadata provider and save Settings first",
                         )
                     if operation == "metadata/sync":
-                        runtime.enrichment.request_sync(user, force=True)
+                        runtime.enrichment.request_sync(
+                            user,
+                            force=True,
+                            missing_titles_only=msg.get("missing_titles_only", False),
+                        )
                     result = {
                         **runtime.enrichment.status(),
                         **await repository.async_enrichment(
@@ -633,6 +646,7 @@ async def async_handle(
                     "control/info"
                     | "control/discover"
                     | "control/status"
+                    | "control/input_status"
                     | "control/prepare"
                     | "control/execute"
                     | "control/acknowledge"
@@ -902,7 +916,10 @@ async def async_handle(
                         )
                     else:
                         filters = dict(msg["filters"])
-                        if filters.get("missing_purchase_information") and not admin:
+                        if (
+                            filters.get("missing_purchase_information")
+                            or filters.get("system_filters")
+                        ) and not admin:
                             raise JournalError(
                                 "unauthorized", "Administrator access is required"
                             )
@@ -929,6 +946,7 @@ async def async_handle(
                                 "library_recent_purchase_weeks", 2
                             ),
                             dt_util.now().date().isoformat(),
+                            hass.config.time_zone,
                         )
                         if filters.get("sort") == "random":
                             result["random_seed"] = seed
@@ -1108,6 +1126,9 @@ async def async_handle(
                     )
                 case "purchases/reconcile":
                     result = await repository.async_purchase_reconciliation(user.id)
+                case "purchases/auto_match":
+                    library = get_library(hass, msg["entry_id"], runtime)
+                    result = await repository.async_purchase_auto_match(library.source)
                 case "purchases/repair/preview":
                     result = await repository.async_purchase_repair_preview(
                         msg["action"], msg["key"], msg["token"], msg["changes"], user.id
@@ -1282,7 +1303,9 @@ async def async_handle(
     except Unauthorized:
         connection.send_error(msg["id"], "unauthorized", "Unauthorized")
     except p.Invalid as error:
-        message = humanize_error(async_redact_data(msg, REDACT_KEYS), error)
+        message = humanize_error(
+            async_redact_data(msg, REDACT_KEYS | {"input_text"}), error
+        )
         connection.send_error(msg["id"], "invalid_format", message or "Unknown error")
     except TimeoutError:
         _LOGGER.error("Companion request timed out")

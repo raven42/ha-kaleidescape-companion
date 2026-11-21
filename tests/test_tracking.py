@@ -91,6 +91,14 @@ class TrackerTest(unittest.TestCase):
         self.assertFalse(tracker.session.credits_seen)
         self.assertGreaterEqual(tracker.session.gap_count, 2)
 
+    def test_session_captures_initial_playback_position(self):
+        tracker = PlaybackTracker("player")
+        tracker.apply(observation(0, position=1800))
+        snapshots = tracker.apply(observation(0.5, position=1801))
+        self.assertEqual(snapshots[0]["start_position_seconds"], 1801)
+        later = tracker.apply(observation(40, position=1840))[-1]
+        self.assertEqual(later["start_position_seconds"], 1801)
+
     def test_short_stop_grace_and_stable_new_session(self):
         tracker = PlaybackTracker("player")
         tracker.apply(observation(0))
@@ -156,7 +164,16 @@ class AutomaticRepositoryTest(unittest.IsolatedAsyncioTestCase):
             )
 
     async def records(self):
-        return (await self.repository.async_list())["items"]
+        # Inspect recorder persistence, including short diagnostic attempts.
+        return await self.repository._call(
+            lambda: [
+                dict(row)
+                for row in self.repository._db().execute(
+                    "SELECT * FROM viewings WHERE deleted_at IS NULL "
+                    "ORDER BY started_at DESC"
+                )
+            ]
+        )
 
     async def test_completion_and_rewatch_after_a_real_stop(self):
         await self.apply(0)
@@ -176,20 +193,184 @@ class AutomaticRepositoryTest(unittest.IsolatedAsyncioTestCase):
     async def test_incomplete_resume_merges_exact_identity_only(self):
         await self.apply(0)
         await self.apply(0.5)
-        await self.apply(10, location="none")
-        await self.apply(12, location="none")
-        await self.apply(20)
-        await self.apply(20.5)
-        await self.apply(50, location="credits")
+        await self.apply(610, location="none")
+        await self.apply(612, location="none")
+        await self.apply(620)
+        await self.apply(620.5)
+        await self.apply(650, location="credits")
         records = await self.records()
         self.assertEqual(len(records), 1)
         self.assertEqual(records[0]["status"], "completed")
-        self.assertAlmostEqual(records[0]["watched_seconds"], 39)
+        self.assertAlmostEqual(records[0]["watched_seconds"], 639)
         sessions = await self.repository.async_sessions(records[0]["id"])
         self.assertEqual(len(sessions["items"]), 2)
-        await self.apply(60, content_id="other-edition")
-        await self.apply(60.5, content_id="other-edition")
+        await self.apply(660, content_id="other-edition")
+        await self.apply(660.5, content_id="other-edition")
         self.assertEqual(len(await self.records()), 2)
+
+    async def test_resume_waits_for_qualification_and_anchors_at_stop(self):
+        from custom_components.kaleidescape_companion.playback.tracker import Session
+
+        base = datetime(2026, 10, 25, tzinfo=UTC)
+
+        def stamp(seconds):
+            return (base + timedelta(seconds=seconds)).isoformat(
+                timespec="microseconds"
+            )
+
+        def session(start, end, watched):
+            return Session(
+                id=str(uuid4()),
+                player_id="player-one",
+                raw_content_id="raw-A",
+                title="Example A",
+                duration_seconds=20000,
+                started_at=stamp(start),
+                last_observed_at=stamp(end),
+                boot_id="boot",
+                watched_seconds=watched,
+                closed_at=stamp(end),
+                end_reason="stopped",
+                revision=1,
+            ).snapshot()
+
+        first = session(0, 7200, 3600)
+        first_id = await self.repository.async_save_session(first, 30, 24)
+        short = session(8000, 8021, 21)
+        short_id = await self.repository.async_save_session(short, 30, 24)
+        self.assertNotEqual(first_id, short_id)
+        self.assertEqual(len((await self.repository.async_list())["items"]), 1)
+        # 2.5 hours from start, but only 30 minutes from the actual stop.
+        continued = session(9000, 9001, 1)
+        provisional = await self.repository.async_save_session(continued, 30, 24)
+        self.assertNotEqual(provisional, first_id)
+        continued.update(
+            watched_seconds=601,
+            revision=2,
+            closed_at=stamp(9601),
+            last_observed_at=stamp(9601),
+        )
+        merged = await self.repository.async_save_session(continued, 30, 24)
+        self.assertEqual(merged, first_id)
+        self.assertEqual(
+            len((await self.repository.async_sessions(first_id))["items"]), 2
+        )
+        self.assertEqual(
+            (await self.repository.async_get(first_id))["watched_seconds"], 4201
+        )
+
+    async def test_short_attempt_does_not_extend_resume_window(self):
+        from custom_components.kaleidescape_companion.playback.tracker import Session
+
+        base = datetime(2026, 10, 25, tzinfo=UTC)
+
+        def snapshot(start, seconds):
+            opened = base + timedelta(seconds=start)
+            closed = opened + timedelta(seconds=seconds)
+            return Session(
+                id=str(uuid4()),
+                player_id="player-one",
+                raw_content_id="raw-A",
+                title="Example A",
+                duration_seconds=7200,
+                started_at=opened.isoformat(),
+                last_observed_at=closed.isoformat(),
+                boot_id="boot",
+                watched_seconds=seconds,
+                closed_at=closed.isoformat(),
+                end_reason="stopped",
+                revision=1,
+            ).snapshot()
+
+        first = await self.repository.async_save_session(snapshot(0, 600), 30, 24)
+        await self.repository.async_save_session(snapshot(4000, 21), 30, 24)
+        later = await self.repository.async_save_session(snapshot(4500, 600), 30, 24)
+        self.assertNotEqual(first, later)
+        self.assertEqual(len((await self.repository.async_list())["items"]), 2)
+        self.assertEqual((await self.repository.async_info())["viewing_count"], 2)
+
+    async def test_partial_minimum_controls_visibility_and_resume(self):
+        from custom_components.kaleidescape_companion.playback.tracker import Session
+
+        base = datetime(2026, 10, 25, tzinfo=UTC)
+
+        def snapshot(start):
+            opened = base + timedelta(seconds=start)
+            ended = opened + timedelta(seconds=180)
+            return Session(
+                id=str(uuid4()),
+                player_id="player-one",
+                raw_content_id="raw-A",
+                title="Example A",
+                duration_seconds=7200,
+                started_at=opened.isoformat(),
+                last_observed_at=ended.isoformat(),
+                boot_id="boot",
+                watched_seconds=180,
+                closed_at=ended.isoformat(),
+                end_reason="stopped",
+                revision=1,
+            ).snapshot()
+
+        first = await self.repository.async_save_session(snapshot(0), 30, 1)
+        self.assertEqual((await self.repository.async_list())["items"], [])
+        await self.repository.async_partial_minimum(2)
+        self.assertEqual(len((await self.repository.async_list())["items"]), 1)
+        self.assertEqual((await self.repository.async_info())["viewing_count"], 1)
+        resumed = await self.repository.async_save_session(snapshot(600), 30, 1)
+        self.assertEqual(first, resumed)
+        self.assertEqual(len((await self.repository.async_sessions(first))["items"]), 2)
+        await self.repository.async_partial_minimum(4)
+        self.assertEqual((await self.repository.async_list())["items"], [])
+
+    async def test_legacy_group_of_short_attempts_is_not_a_viewing(self):
+        from custom_components.kaleidescape_companion.playback.tracker import Session
+
+        base = datetime(2026, 10, 25, tzinfo=UTC)
+        ids = []
+        for hour in (0, 1, 2):
+            start = base + timedelta(hours=hour)
+            end = start + timedelta(seconds=250)
+            snap = Session(
+                id=str(uuid4()),
+                player_id="player-one",
+                raw_content_id="raw-A",
+                title="Example A",
+                duration_seconds=7200,
+                started_at=start.isoformat(),
+                last_observed_at=end.isoformat(),
+                boot_id="boot",
+                watched_seconds=250,
+                closed_at=end.isoformat(),
+                end_reason="stopped",
+                revision=1,
+            ).snapshot()
+            ids.append(
+                (await self.repository.async_save_session(snap, 30, 24), snap["id"])
+            )
+
+        def legacy_group():
+            db = self.repository._db()
+            for viewing_id, session_id in ids[1:]:
+                db.execute(
+                    "UPDATE sessions SET viewing_id=? WHERE id=?",
+                    (ids[0][0], session_id),
+                )
+                db.execute(
+                    "UPDATE viewings SET deleted_at=? WHERE id=?",
+                    (base.isoformat(), viewing_id),
+                )
+            db.execute(
+                "UPDATE viewings SET watched_seconds=750 WHERE id=?", (ids[0][0],)
+            )
+            db.commit()
+
+        await self.repository._call(legacy_group)
+        self.assertEqual((await self.repository.async_list())["items"], [])
+        self.assertEqual((await self.repository.async_info())["viewing_count"], 0)
+        self.assertEqual(
+            len((await self.repository.async_sessions(ids[0][0]))["items"]), 3
+        )
 
     async def test_threshold_is_evaluated_at_credits_not_later_main_content(self):
         await self.apply(0)
@@ -293,6 +474,36 @@ class AutomaticRepositoryTest(unittest.IsolatedAsyncioTestCase):
 
 
 class UpgradeTest(unittest.TestCase):
+    def test_schema_28_session_position_stays_unknown_after_upgrade(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "journal.sqlite3"
+            with closing(sqlite3.connect(path)) as db:
+                with patch.object(migrations, "SCHEMA_VERSION", 28):
+                    migrations.migrate(db, path)
+                with db:
+                    db.execute(
+                        "INSERT INTO viewings (id,title,title_search,started_at,"
+                        "watched_seconds,status,notes,origin,created_at,updated_at,"
+                        "revision) VALUES "
+                        "('v','Film','film',?,600,'partial','','observed',?,?,1)",
+                        (observation(0).at,) * 3,
+                    )
+                    db.execute(
+                        "INSERT INTO sessions (id,viewing_id,player_id,raw_content_id,"
+                        "title,started_at,last_observed_at,boot_id,watched_seconds,"
+                        "credits_seen,credits_confirmed,credits_watched_seconds,"
+                        "revision,gap_count) VALUES "
+                        "('s','v','player','raw','Film',?,?,'boot',600,0,0,0,1,0)",
+                        (observation(0).at,) * 2,
+                    )
+                migrations.migrate(db, path)
+                row = db.execute(
+                    "SELECT watched_seconds,start_position_seconds "
+                    "FROM sessions WHERE id='s'"
+                ).fetchone()
+                self.assertEqual(row, (600, None))
+                self.assertTrue(list(path.parent.glob("*.v28.*.bak")))
+
     def test_v1_manual_data_and_retry_results_are_preserved(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "journal.sqlite3"

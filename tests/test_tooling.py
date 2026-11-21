@@ -1,6 +1,7 @@
 """Keep local tooling independent of caller cwd, devices and editor state."""
 
 import io
+import json
 import os
 import signal
 import subprocess
@@ -8,13 +9,159 @@ import sys
 import tempfile
 import time
 import unittest
+from contextlib import ExitStack
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, call, patch
 
-from scripts.src import dependency_audit, ha, setup, tasks, unittest_runner
+from scripts.src import build, dependency_audit, ha, setup, tasks, unittest_runner
 
 
 class ToolingTest(unittest.TestCase):
+    def test_check_runs_quality_gate_before_all_test_suites(self):
+        order = Mock()
+        names = (
+            "lint",
+            "format_sources",
+            "shell_check",
+            "verify_pyk",
+            "provider_tests",
+            "browser_tests",
+            "live_player_tests",
+            "integration_tests",
+            "project_check",
+            "frontend_tests",
+            "verify_assets",
+        )
+        with ExitStack() as stack:
+            for name in names:
+                stack.enter_context(patch.object(tasks, name, getattr(order, name)))
+            tasks.check()
+        self.assertEqual(
+            order.mock_calls,
+            [
+                call.lint(),
+                call.format_sources(check=True),
+                call.shell_check(),
+                call.verify_pyk(reconstruct=True),
+                call.provider_tests(),
+                call.browser_tests(),
+                call.live_player_tests(),
+                call.integration_tests(),
+                call.project_check(),
+                call.frontend_tests(),
+                call.verify_assets(),
+            ],
+        )
+
+    def test_lint_failure_stops_build_and_check_before_slow_work(self):
+        for command in (tasks.check, build.main):
+            with (
+                self.subTest(command=command.__name__),
+                patch.object(sys, "argv", ["build"]),
+                patch.object(
+                    tasks, "lint", side_effect=subprocess.CalledProcessError(1, "lint")
+                ),
+                patch.object(tasks, "format_sources") as formatting,
+                patch.object(tasks, "verify_pyk") as pyk,
+                patch.object(tasks, "npm") as npm,
+            ):
+                with self.assertRaises(subprocess.CalledProcessError):
+                    command()
+                formatting.assert_not_called()
+                pyk.assert_not_called()
+                npm.assert_not_called()
+
+    def test_format_failure_stops_build_and_check_before_slow_work(self):
+        for command in (tasks.check, build.main):
+            with (
+                self.subTest(command=command.__name__),
+                patch.object(sys, "argv", ["build"]),
+                patch.object(tasks, "lint"),
+                patch.object(
+                    tasks,
+                    "format_sources",
+                    side_effect=subprocess.CalledProcessError(1, "format"),
+                ),
+                patch.object(tasks, "shell_check") as shell,
+                patch.object(tasks, "verify_pyk") as pyk,
+                patch.object(tasks, "npm") as npm,
+            ):
+                with self.assertRaises(subprocess.CalledProcessError):
+                    command()
+                shell.assert_not_called()
+                pyk.assert_not_called()
+                npm.assert_not_called()
+
+    def test_ci_requires_quality_gate_before_test_jobs(self):
+        import yaml
+
+        workflow = yaml.safe_load((tasks.ROOT / ".github/workflows/ci.yml").read_text())
+        jobs = workflow["jobs"]
+        commands = [step.get("run") for step in jobs["lint"]["steps"]]
+        self.assertIn("scripts/lint", commands)
+        self.assertIn("scripts/format --check", commands)
+        for name in ("providers", "python", "frontend"):
+            self.assertEqual(jobs[name]["needs"], "lint")
+
+    def test_combined_build_and_check_runs_quality_once_before_build_and_tests(self):
+        order = Mock()
+        with (
+            patch.object(sys, "argv", ["build", "--check"]),
+            patch.object(tasks, "quality_checks", order.quality),
+            patch.object(tasks, "npm", order.npm),
+            patch.object(tasks, "check_after_quality", order.check),
+        ):
+            build.main()
+        self.assertEqual(
+            order.mock_calls, [call.quality(), call.npm("build"), call.check()]
+        )
+
+    def test_combined_build_stops_if_build_fails(self):
+        with (
+            patch.object(sys, "argv", ["build", "--check"]),
+            patch.object(tasks, "quality_checks"),
+            patch.object(
+                tasks, "npm", side_effect=subprocess.CalledProcessError(1, "build")
+            ),
+            patch.object(tasks, "check_after_quality") as check,
+        ):
+            with self.assertRaises(subprocess.CalledProcessError):
+                build.main()
+            check.assert_not_called()
+
+    def test_vscode_combined_task_uses_single_quality_gate(self):
+        data = json.loads((tasks.ROOT / ".vscode/tasks.json").read_text())
+        by_name = {item["label"]: item for item in data["tasks"]}
+        combined = by_name["Maintainer: Build, check, package, deploy and restart"]
+        self.assertEqual(combined["dependsOn"][:2], ["Build and check", "Package"])
+        self.assertEqual(combined["dependsOrder"], "sequence")
+        self.assertEqual(
+            by_name["Build and check"]["dependsOn"], ["Build", "Post-build checks"]
+        )
+        self.assertEqual(by_name["Build and check"]["dependsOrder"], "sequence")
+        parallel = by_name["Post-build checks"]
+        self.assertEqual(parallel["dependsOrder"], "parallel")
+        self.assertEqual(
+            set(parallel["dependsOn"]),
+            {
+                "Post-build: Python tests",
+                "Post-build: Frontend tests",
+                "Post-build: Reconstruct pyk",
+                "Post-build: Project checks",
+                "Post-build: Verify assets",
+            },
+        )
+        self.assertEqual(by_name["Post-build: Python tests"]["args"], ["--python-only"])
+        self.assertEqual(
+            by_name["Post-build: Frontend tests"]["args"], ["--frontend-only"]
+        )
+        self.assertEqual(
+            by_name["Post-build: Reconstruct pyk"]["args"], ["--reconstruct"]
+        )
+        self.assertEqual(
+            by_name["Post-build: Verify assets"]["args"][-1], "build:check"
+        )
+
     def test_wrappers_resolve_checkout_from_an_unrelated_directory(self):
         with tempfile.TemporaryDirectory() as directory:
             result = subprocess.run(

@@ -48,7 +48,7 @@ calendar_full_sync:
 
 database_cleanup:
   name: Clean up database
-  description: Remove selected finalized operation histories while preserving unresolved work and retry barriers.
+  description: Remove selected finalized operation histories and link missing artwork between matching Library editions.
   fields:
     calendar:
       name: Calendar reconciliation retention
@@ -77,3 +77,527 @@ database_cleanup:
           min: 0
           max: 3650
           mode: box
+
+play_movie:
+  name: Play movie
+  description: >-
+    Play an exact title from the synced Library on a discovered player. If the
+    title has multiple versions, provide the exact Library version ID instead.
+    Requires experimental Library playback to be enabled.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+    title:
+      name: Movie title
+      description: Exact Library title. Provide this or a version ID.
+      selector:
+        text:
+    version_id:
+      name: Library version ID
+      description: Exact Library version ID. Provide this or a movie title.
+      selector:
+        text:
+
+keyboard_character:
+  name: Send keyboard character
+  description: Send one printable ASCII character to a player's on-screen keyboard.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+    value:
+      name: Character
+      required: true
+      selector:
+        text:
+
+set_player_input:
+  name: Set player input
+  description: Replace the current on-screen input entry on a Strato or Alto player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+    value:
+      name: Input text
+      required: true
+      selector:
+        text:
+
+open_movie_collection:
+  name: Open movie collection
+  description: Open the player collection with this exact name; this can interrupt playback.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+    value:
+      name: Collection name
+      required: true
+      selector:
+        text:
+
+player_power_on:
+  name: Player Power on
+  description: Send the Power on command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_power_off:
+  name: Player Standby
+  description: Send the Standby command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_play:
+  name: Player Play
+  description: Send the Play command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_pause:
+  name: Player Pause
+  description: Send the Pause command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_resume:
+  name: Player Resume
+  description: Send the Resume command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_pause_toggle:
+  name: Player Toggle pause
+  description: Send the Toggle pause command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_play_pause:
+  name: Player Play or pause
+  description: Send the Play or pause command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_stop:
+  name: Player Stop
+  description: Send the Stop command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_next:
+  name: Player Next chapter
+  description: Send the Next chapter command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_previous:
+  name: Player Previous chapter
+  description: Send the Previous chapter command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_replay:
+  name: Player Replay
+  description: Send the Replay command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_scan_forward:
+  name: Player Scan forward
+  description: Send the Scan forward command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_scan_reverse:
+  name: Player Scan reverse
+  description: Send the Scan reverse command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_up:
+  name: Player Up
+  description: Send the Up command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_down:
+  name: Player Down
+  description: Send the Down command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_left:
+  name: Player Left
+  description: Send the Left command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_right:
+  name: Player Right
+  description: Send the Right command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_select:
+  name: Player Select
+  description: Send the Select command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_back:
+  name: Player Back
+  description: Send the Back command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_cancel:
+  name: Player Cancel
+  description: Send the Cancel command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_backspace:
+  name: Player Backspace
+  description: Send the Backspace command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_page_up:
+  name: Player Page up
+  description: Send the Page up command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_page_down:
+  name: Player Page down
+  description: Send the Page down command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_menu:
+  name: Player Toggle menu
+  description: Send the Toggle menu command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_menu_on:
+  name: Player Open menu
+  description: Send the Open menu command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_menu_off:
+  name: Player Close menu
+  description: Send the Close menu command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_details:
+  name: Player Details
+  description: Send the Details command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_status_and_settings:
+  name: Player Status and settings
+  description: Send the Status and settings command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_go_movies:
+  name: Player Go to movies
+  description: Send the Go to movies command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_movies:
+  name: Player Movie covers
+  description: Send the Movie covers command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_movie_list:
+  name: Player Movie list
+  description: Send the Movie list command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_movie_collections:
+  name: Player Movie collections
+  description: Send the Movie collections command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_movie_store:
+  name: Player Movie Store
+  description: Send the Movie Store command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_search:
+  name: Player Search
+  description: Send the Search command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_screensaver:
+  name: Player Start screensaver
+  description: Send the Start screensaver command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_screensaver_off:
+  name: Player Stop screensaver
+  description: Send the Stop screensaver command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_intermission:
+  name: Player Toggle intermission
+  description: Send the Toggle intermission command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_collection_paused:
+  name: Player Paused collection
+  description: Send the Paused collection command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_collection_watch_soon:
+  name: Player Watch Soon collection
+  description: Send the Watch Soon collection command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_collection_new:
+  name: Player New collection
+  description: Send the New collection command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+
+player_collection_favorites:
+  name: Player Favorites collection
+  description: Send the Favorites collection command to a discovered movie player.
+  fields:
+    device_id:
+      name: Player
+      required: true
+      selector:
+        device:
+          integration: kaleidescape_companion
+

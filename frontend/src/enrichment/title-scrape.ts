@@ -487,6 +487,24 @@ export class TitleScrape extends LitElement {
         vertical-align: middle;
         margin: 6px 5px 2px 0;
       }
+      @media (max-width: 700px) {
+        dialog.inset-dialog:modal,
+        dialog.choice-dialog:modal {
+          transform: none;
+          inset-block-start: calc(
+            var(--companion-viewport-top, 0px) +
+              max(40px, env(safe-area-inset-top, 0px) + 8px)
+          );
+          inset-block-end: auto;
+          margin-block: 0;
+          max-height: calc(
+            var(--companion-viewport-height, 100dvh) - max(
+                40px,
+                env(safe-area-inset-top, 0px) + 8px
+              ) - var(--dialog-bottom-gap)
+          );
+        }
+      }
       @media (max-width: 750px) {
         dialog.inset-dialog {
           width: min(980px, calc(100% - 24px));
@@ -506,7 +524,40 @@ export class TitleScrape extends LitElement {
       }
       @media (max-width: 540px) {
         .current-layout {
-          grid-template-columns: 1fr;
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        }
+        .current-identity {
+          display: contents;
+        }
+        .current-identity > div:nth-child(2) {
+          grid-column: 1 / -1;
+          grid-row: 1;
+        }
+        .current-meta {
+          display: block;
+        }
+        .current-meta dt:not(:first-child) {
+          border-top: 1px solid var(--line);
+          width: 70%;
+          padding-top: 6px;
+          margin-top: 6px;
+        }
+        .current-meta dd {
+          margin-top: 3px;
+        }
+        .current-poster {
+          grid-column: 1;
+          grid-row: 2;
+        }
+        .current-backdrop {
+          grid-column: 2;
+          grid-row: 2;
+        }
+        .artwork-flags {
+          grid-row: 3;
+        }
+        .artwork-status {
+          grid-row: 4;
         }
         .current-backdrop {
           padding: 0;
@@ -516,7 +567,7 @@ export class TitleScrape extends LitElement {
           display: none;
         }
         .artwork-flags {
-          grid-column: 1;
+          grid-column: 1 / -1;
           grid-template-columns: 1fr 1fr;
           gap: 8px;
         }

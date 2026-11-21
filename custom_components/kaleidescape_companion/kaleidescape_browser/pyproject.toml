@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kaleidescape-browser"
+version = "0.1.0"
+description = "Async client for a Kaleidescape server's local movie browser"
+readme = "README.md"
+requires-python = ">=3.14.2"
+license = "Apache-2.0"
+authors = [{ name = "Kaleidescape Companion contributors" }]
+license-files = ["LICENSE"]
+dependencies = []
+
+[tool.setuptools]
+packages = ["kaleidescape_browser"]
+package-dir = {kaleidescape_browser = "."}
+include-package-data = false
+
+[tool.ruff]
+line-length = 88
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]

@@ -6,18 +6,22 @@ Run the complete local check from the repository root:
 scripts/check
 ```
 
-It checks workspace/runtime consistency, independent metadata providers,
-integration tests, project structure, Python lint/formatting, shell syntax,
-Markdown lint/formatting, frontend lint/types, component/proxy tests and the
-production bundle. Tests use fictional data and temporary storage. Loopback
-emulator/proxy tests need local socket permission; normal checks contact no
-household devices or external metadata providers.
+It checks workspace/runtime consistency, the standalone server browser,
+independent metadata providers, integration tests, project structure, Python
+lint/formatting with Ruff and Flake8, shell syntax, Markdown lint/formatting,
+frontend lint/types, component/proxy tests and the production bundle. Tests use
+fictional data and temporary storage. Loopback emulator/proxy tests need local
+socket permission; normal checks contact no household devices or external
+metadata providers.
 
 ## Focused checks
 
 ```sh
-PYTHONPATH=custom_components/kaleidescape_companion scripts/test --python-only/scrapers
+scripts/test --providers-only
+scripts/test --browser-only
+scripts/test --live-player-only
 scripts/test --python-only
+.venv/bin/python -m unittest discover -s tests -p 'test_pyk_adapter.py'
 npm --prefix frontend test
 npm --prefix frontend run build
 ```
@@ -39,6 +43,13 @@ npm --prefix frontend run build
   measures fictional paging and search separately from browser rendering.
 - Observation, tracking, history, journal linkage and calendar suites cover
   timing, durable evidence, corrections and external-write receipts.
+- `tests/live_player/` exercises standalone discovery, fresh reads, inherited
+  controls and movie launch with protocol replies supplied in memory.
+- `test_pyk_adapter` exercises the real pyk connection against a fictional
+  loopback player, including identity, session changes and one-shot movie
+  launch. The
+  [server browser project](../custom_components/kaleidescape_companion/kaleidescape_browser/README.md)
+  carries its own standard-library tests for parsing and HTTP form handling.
 - `test_controls` uses fictional protocol peers; `test_now_playing` checks
   source permissions and household artwork projections.
 - `test_enrichment` and `tests/scrapers` cover provider parsing, credentials,

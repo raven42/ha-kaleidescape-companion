@@ -5,7 +5,7 @@ import logging
 
 from ..calendar.config import target
 from ..core.models import invalid
-from ..core.settings import entity_ids
+from ..core.settings import entity_ids, resume_minutes
 from ..enrichment.selection import DEFAULTS as SOURCE_DEFAULTS
 
 _LOGGER = logging.getLogger(__name__)
@@ -16,6 +16,8 @@ CATEGORIES = {
         "tracking_enabled",
         "minimum_runtime_minutes",
         "minimum_seconds",
+        "partial_minimum_minutes",
+        "resume_minutes",
         "resume_hours",
         "library_enabled",
         "library_interval_hours",
@@ -76,6 +78,8 @@ async def transfer(hass, entry, repo, actor, operation, selected, data, request)
         raise invalid("Invalid settings transfer operation")
     config = dict(entry.options or entry.data)
     if operation == "export":
+        config["resume_minutes"] = resume_minutes(config)
+        config.pop("resume_hours", None)
         config.update(entity_ids(hass, config))
         config["calendar_entity"] = target(hass, config) or ""
         categories = {
@@ -129,6 +133,14 @@ async def transfer(hass, entry, repo, actor, operation, selected, data, request)
         for name in ("rules", "connections", "templates")
         for key, value in categories.get(name, {}).items()
     }
+    if "resume_hours" in patch and "resume_minutes" not in patch:
+        try:
+            patch["resume_minutes"] = resume_minutes(
+                {"resume_hours": patch["resume_hours"]}
+            )
+        except ValueError:
+            raise invalid("Invalid resume window") from None
+    patch.pop("resume_hours", None)
     if patch.get("calendar_full_sync"):
         # Dedicated-calendar acknowledgement must be made anew in the native form.
         patch["calendar_full_sync_dedicated"] = False

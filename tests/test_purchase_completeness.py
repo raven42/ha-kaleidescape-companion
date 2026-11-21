@@ -49,6 +49,15 @@ class PurchaseCompletenessTest(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(sensor.native_value, len(titles))
             self.assertEqual(set(sensor.extra_state_attributes["movies"]), set(titles))
 
+    async def test_purchase_totals_distinguish_missing_titles_from_entry_prices(self):
+        await self.seed()
+        totals = await self.repository.async_purchase_totals(library.SOURCE)
+        self.assertEqual(totals["purchase_count"], 1)
+        self.assertEqual(totals["missing_purchase_prices"], 0)
+        self.assertEqual(totals["missing_retail_prices"], 0)
+        self.assertEqual(totals["missing_information_titles"], 1)
+        await self.assert_missing([library.ROWS[1]["title"]])
+
     async def test_owner_disappears_returns_and_group_disappears(self):
         await self.seed()
         other_origin = "http://other-fictional.local"

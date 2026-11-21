@@ -1,10 +1,28 @@
 /** Same bounded word edits as the worker; literal matching never expands patterns. */
+const latinEquivalents: Record<string, string> = {
+  æ: "ae",
+  œ: "oe",
+  ø: "o",
+  ł: "l",
+  đ: "d",
+  ð: "d",
+  þ: "th",
+  ħ: "h",
+  ı: "i",
+  ß: "ss",
+  ς: "σ",
+};
+
+export function foldSearch(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[æœøłđðþħıßς]/gu, (char) => latinEquivalents[char])
+    .normalize("NFKD")
+    .replace(/\p{M}/gu, "");
+}
 function normalized(value: string) {
   return (
-    value
-      .toLocaleLowerCase()
-      .normalize("NFKD")
-      .replace(/\p{M}/gu, "")
+    foldSearch(value)
       .match(/[\p{L}\p{N}_]+/gu)
       ?.join(" ") ?? ""
   );
@@ -57,17 +75,15 @@ export function matches(value: string, query: string, fuzzy = false) {
       phrase = trimmed.slice(1, -1).trim();
     }
     if (!phrase) return false;
-    const words = phrase
-      .toLocaleLowerCase()
+    const words = foldSearch(phrase)
       .split(/\s+/)
       .map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
     return new RegExp(
       "(?<![\\p{L}\\p{N}_])" + words.join("\\s+") + "(?![\\p{L}\\p{N}_])",
       "u",
-    ).test(value.toLocaleLowerCase());
+    ).test(foldSearch(value));
   }
-  if (value.toLocaleLowerCase().includes(query.toLocaleLowerCase()))
-    return true;
+  if (foldSearch(value).includes(foldSearch(query))) return true;
   if (!fuzzy) return false;
   const needle = normalized(query),
     name = normalized(value);

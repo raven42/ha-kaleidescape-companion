@@ -124,3 +124,21 @@ def library_version(db, source, title_id):
     if row is None:
         raise JournalError("not_found", "Library version is unavailable")
     return dict(row)
+
+
+def library_title(db, source, title):
+    """Resolve an exact title only when it has one available Library version."""
+    if not isinstance(title, str) or not title.strip() or len(title) > 500:
+        raise invalid("Provide a movie title")
+    rows = db.execute(
+        "SELECT id FROM library WHERE source_id=? AND title_search=? "
+        "AND available=1 AND purchase_match_pending=0 LIMIT 2",
+        (source, title.casefold()),
+    ).fetchall()
+    if not rows:
+        raise JournalError("not_found", "No available Library movie matches that title")
+    if len(rows) > 1:
+        raise JournalError(
+            "conflict", "Multiple versions match; supply a Library version ID"
+        )
+    return rows[0]["id"]

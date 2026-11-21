@@ -2,13 +2,17 @@
 
 ## Journal month view
 
-Open **Journal → Options → Calendar view** to switch between the entry list and
-a monthly calendar. This choice saves immediately for your HA user. Previous and
+Open **Journal → Options → View type** to switch between the entry list and a
+monthly calendar. This choice saves immediately for your HA user. Previous and
 next arrows move one month; **Today** returns to the current local month. The
-selected `companion_month=YYYY-MM` stays in the URL across reloads and
-reopening. Invalid/missing months start at the current month. This view reads
-the local Journal and needs no HA calendar entity or publishing opt-in.
-Administrator and household readers share the same calendar.
+calendar grid also accepts horizontal touch swipes: left for the next month and
+right for the previous month. The grid and covers follow the gesture, then the
+new month slides into view; reduced-motion settings skip the transitions.
+Vertical scrolling and cover taps remain available. The selected
+`companion_month=YYYY-MM` stays in the URL across reloads and reopening.
+Invalid/missing months start at the current month. This view reads the local
+Journal and needs no HA calendar entity or publishing opt-in. Administrator and
+household readers share the same calendar.
 
 With Calendar view enabled, Options also offers **Calendar size** (60–320 px day
 rows, initially 180 px) and **Fit month to screen**. Dragging the slider updates
@@ -19,35 +23,69 @@ slider size. Extremely small screens may still require scrolling to keep dates
 and covers usable. These choices save separately for each HA user and display
 profile.
 
-Viewings appear on their browser-local start date, including partial viewings
-unless excluded by the Journal status or Library movie filter. An active search
+Qualifying playback appears on its browser-local date, including incomplete
+viewings unless excluded by the Library movie filter. An active search
 temporarily displays list results, using the saved fuzzy-search preference,
 without changing the saved Calendar view. Clear it with the desktop input's
-clear button or the mobile search chip to return to the selected month; other
-filters remain active. Deleted entries are excluded. Each viewing has a poster;
-same-day posters overlap diagonally with about 15% of each rear cover exposed.
-Hover or keyboard focus brings that poster forward. Poster stacks keep portrait
-proportions within the available day width and height, with 5 px insets. All
-seven weekday columns fit the container, including narrow dashboard cards. The
-date sits above the artwork as a small readable overlay instead of reserving a
-separate row.
+clear button or the mobile search field to return to the selected month. The
+status filter is available in list view and does not filter the calendar; its
+selection is retained when returning to the list. Deleted entries are excluded.
+Each viewing has a poster; same-day posters overlap diagonally with about 15% of
+each rear cover exposed. Hover or keyboard focus brings that poster forward and
+animates it to 105% of its normal size. Poster stacks keep portrait proportions
+within the available day width and height, with 5 px insets. All seven weekday
+columns fit the container, including narrow dashboard cards. The date sits above
+the artwork as a small readable overlay instead of reserving a separate row.
 
-Cross-day completed viewings have two endpoint covers: the start-day cover has a
-diagonal lower-right cut, and the completion-day cover has a complementary
-upper-left cut. Both open the same viewing details/editor. Intermediate days are
-not filled. Same-day viewings and partial entries retain whole covers. Month
-reads include either endpoint, so a prior-month start still appears on its
-completion date. Local dates and half-open month bounds include timezone and DST
+On mobile and other touch-first screens, selecting a day with two or more
+viewings opens an animated, covers-only grid over the calendar. Select a cover
+to open its movie details, or tap anywhere outside the covers to dismiss it.
+Accessible cover names include start times to distinguish repeated viewings. A
+day with one viewing opens its details directly. Reduced-motion settings disable
+the grid animation.
+
+The optional **Show movie preview on hover or focus** setting is off by default
+and saved per user and display profile. A preview shows rating, runtime, genres,
+up to five cast members and synopsis, with placeholders for unavailable data. It
+reads the same authenticated, source-scoped calendar details as the compact
+dialog. A hover starts the read after 400 ms and shows the preview after 500 ms
+once the data arrives; keyboard focus starts the read immediately. Leaving the
+cover cancels a pending preview. It never contacts the device or an external
+provider. Synopsis is public Library metadata and is bounded by the existing
+display snapshot limit. Escape dismisses the preview. On touch devices, open the
+poster normally for details.
+
+A day qualifies for a partial poster when a recorded session on that day meets
+the configured minimum partial viewing time (ten minutes by default). A
+completion day is shown even if the remaining segment is shorter. The first day
+has a diagonal lower-right cut while incomplete, continuation days have both the
+upper-left and lower-right corners cut, and the completion day has the
+complementary upper-left cut. A separately recorded session that starts more
+than one minute into the movie also uses the continuation cut, even when its
+prior viewing is outside the resume window. If the player does not report a
+starting position, or the session predates position tracking, the first day uses
+the start cut. A completed single-day viewing that began at the beginning keeps
+its whole cover. Every poster opens the same viewing details/editor. Manual or
+older entries without sessions use their recorded total on the start day.
+Session watch time is attributed to its local start day: existing checkpoints do
+not contain enough evidence to divide a session accurately across midnight.
+Month reads include session start dates and completion dates across month
+boundaries; local dates and half-open month bounds include timezone and DST
 changes.
 
-The single sticky Journal footer shows all-time totals and the selected month's
-viewing count and watched time. Month totals ignore search/status filters and
-count each viewing once by completion date (partial: start date), assigning its
-whole watched time to that month rather than splitting it across days. A viewing
-spanning two months can have posters in both while contributing totals only
-once. Loading, no-matches and error/retry messages also live in that footer; the
-calendar has no separate status labels above or below the grid. On phones, the
-compact footer shows only the selected month's count and watched time.
+The single sticky Journal footer shows the selected month's, current year's
+to-date, and all-time viewing counts. Journal options can show or hide each
+total separately for each user and display profile. With three totals they align
+left, center and right; with two they align left and right; one aligns left.
+Totals remain available on narrow screens. Month totals ignore search/status
+filters and count each viewing once by completion date (partial: start date),
+assigning its whole watched time to that month rather than splitting it across
+days. A viewing spanning two months can have posters in both while contributing
+totals only once. Year-to-date uses the Home Assistant timezone, counts through
+the current instant, and follows the same completion/start attribution. Total
+counts exclude deleted entries. Loading, no-matches and error/retry messages
+also live in that footer; the calendar has no separate status labels above or
+below the grid.
 
 Click a linked poster to open the same full movie details used by the Library,
 including its expandable Journal history. Journal options can select the compact
@@ -89,8 +127,7 @@ source. Missing metadata or artwork uses a placeholder. Images use the existing
 visibility-loaded authenticated cache, retained while this calendar is mounted
 and cleared on account/scope changes or departure. No device or calendar
 provider is contacted. A month read is limited to 1000 viewings and a two-second
-SQLite budget; narrow the status or Library movie filter if that limit is
-exceeded.
+SQLite budget; narrow the Library movie filter if that limit is exceeded.
 
 Operator browser review: check a month with multiple same-day viewings, hover
 and keyboard focus on rear posters, previous/next/Today navigation, search clear

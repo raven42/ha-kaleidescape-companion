@@ -84,6 +84,7 @@ def project_check() -> None:
 
 
 def lint() -> None:
+    run([sys.executable, "-m", "flake8", "."])
     run([sys.executable, "-m", "ruff", "check", "."])
     npm("lint")
     npm("lint:markdown")
@@ -117,6 +118,47 @@ def provider_tests(arguments: Sequence[str] = ()) -> None:
     )
 
 
+def browser_tests(arguments: Sequence[str] = ()) -> None:
+    """Run the server browser against fictional transports using only the stdlib."""
+    environment = os.environ.copy()
+    environment["PYTHONPATH"] = str(ROOT / "custom_components/kaleidescape_companion")
+    run(
+        [
+            sys.executable,
+            "-S",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "custom_components/kaleidescape_companion/kaleidescape_browser/tests",
+            *arguments,
+        ],
+        env=environment,
+    )
+
+
+def live_player_tests(arguments: Sequence[str] = ()) -> None:
+    """Exercise the standalone module with pyk as its only dependency."""
+    component = ROOT / "custom_components/kaleidescape_companion"
+    environment = os.environ.copy()
+    environment["PYTHONPATH"] = os.pathsep.join(
+        str(component / path) for path in ("playback", "vendor")
+    )
+    run(
+        [
+            sys.executable,
+            "-S",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/live_player",
+            *arguments,
+        ],
+        env=environment,
+    )
+
+
 def integration_tests(arguments: Sequence[str] = ()) -> None:
     run(
         [
@@ -143,13 +185,25 @@ def shell_check() -> None:
             run(["bash", "-n", path])
 
 
-def check() -> None:
-    verify_pyk(reconstruct=True)
-    provider_tests()
-    integration_tests()
-    project_check()
+def quality_checks() -> None:
+    """Fail on lint, formatting, or shell syntax before slower work."""
     lint()
     format_sources(check=True)
     shell_check()
+
+
+def check_after_quality() -> None:
+    """Finish the check after this process has passed the quality gate."""
+    verify_pyk(reconstruct=True)
+    provider_tests()
+    browser_tests()
+    live_player_tests()
+    integration_tests()
+    project_check()
     frontend_tests()
     verify_assets()
+
+
+def check() -> None:
+    quality_checks()
+    check_after_quality()

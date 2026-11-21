@@ -77,6 +77,10 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_cache_extends_both_versions_without_overwriting_raw_or_remakes(self):
         await self.seed()
+        before = {
+            row["id"]: (row["title"], row["source_group"], row["data"])
+            for row in (await self.repo.async_inspect("library"))["items"]
+        }
         await self.repo.async_enrichment(
             "save", self.source, self.id, "tmdb", self.data
         )
@@ -87,6 +91,13 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(item["producers"], ["Example Producer"])
             self.assertNotIn("matched_group", item["enrichment"]["tmdb"])
         raw = await self.repo.async_inspect("library")
+        self.assertEqual(
+            {
+                row["id"]: (row["title"], row["source_group"], row["data"])
+                for row in raw["items"]
+            },
+            before,
+        )
         original = next(row for row in raw["items"] if row["id"] == self.id)
         self.assertEqual(json.loads(original["data"])["actors"], ["Original Actor"])
         remake = next(row for row in raw["items"] if row["source_handle"] == "remake")
@@ -365,6 +376,29 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
         )
         return MetadataSync(self.hass, self.entry.runtime_data.repository, entry)
 
+    async def test_targeted_metadata_action_is_admin_only_and_passes_scope(self):
+        await self.seed()
+        manager = SimpleNamespace(
+            request_sync=Mock(),
+            status=Mock(return_value={}),
+            async_stop=AsyncMock(),
+            source=self.source,
+        )
+        self.entry.runtime_data.enrichment = manager
+        user = SimpleNamespace(id="reader", is_active=True, is_admin=False)
+        denied = await self.call(
+            "metadata/sync", user=user, missing_titles_only=True, **self.scope
+        )
+        self.assertEqual(denied["code"], "unauthorized")
+        manager.request_sync.assert_not_called()
+        result = await self.call(
+            "metadata/sync", missing_titles_only=True, **self.scope
+        )
+        self.assertTrue(result["success"])
+        manager.request_sync.assert_called_once_with(
+            self.admin, force=True, missing_titles_only=True
+        )
+
     async def test_backdrop_https_gates_credentials_routes_and_bodies(
         self,
     ):
@@ -440,6 +474,57 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
         response.content.iter_chunked = invalid
         with self.assertRaisesRegex(ProviderError, "content_type"):
             await sync._get(url, {})
+
+    async def test_missing_titles_candidates_use_library_completeness(self):
+        await self.seed()
+        with patch(
+            "custom_components.kaleidescape_companion.library.summary.completeness",
+            return_value=({"movie"}, {"remake"}, set(), [], {}),
+        ):
+            rows = await self.repo.async_enrichment("candidates", self.source, True)
+        self.assertEqual({row["source_group"] for row in rows}, {"movie", "remake"})
+        with patch(
+            "custom_components.kaleidescape_companion.library.summary.completeness",
+            return_value=(set(), {"remake"}, set(), [], {}),
+        ):
+            rows = await self.repo.async_enrichment("candidates", self.source, True)
+        self.assertEqual([row["source_group"] for row in rows], ["remake"])
+
+    async def test_missing_titles_filter_respects_actual_artwork_exclusions(self):
+        await self.seed()
+        await self.repo.async_metadata_sources(
+            {"metadata_store_enabled": False, "metadata_tmdb_enabled": False}
+        )
+
+        def exclude_complete_group():
+            db = self.repo._db()
+            db.execute(
+                "UPDATE library SET enrichment=json_set(enrichment, "
+                "'$.unavailable_artwork.poster',json('true'), "
+                "'$.unavailable_artwork.backdrop',json('true')) "
+                "WHERE source_group='movie'"
+            )
+            db.commit()
+
+        await self.repo._call(exclude_complete_group)
+        rows = await self.repo.async_enrichment("candidates", self.source, True)
+        self.assertEqual([row["source_group"] for row in rows], ["remake"])
+
+    async def test_targeted_refresh_requests_missing_title_candidates(self):
+        await self.seed()
+        sync = self.sync(metadata_store_enabled=True)
+        sync.repository = SimpleNamespace(
+            async_enrichment=AsyncMock(side_effect=[[], None])
+        )
+        with patch(
+            "custom_components.kaleidescape_companion.enrichment.sync.async_create_clientsession",
+            return_value=SimpleNamespace(detach=Mock()),
+        ):
+            await sync._run(True, missing_titles_only=True)
+        sync.repository.async_enrichment.assert_any_await(
+            "candidates", sync.source, True
+        )
+        self.assertEqual(sync.total, 0)
 
     async def test_scheduled_refresh_respects_provider_and_missing_data(self):
         await self.seed()

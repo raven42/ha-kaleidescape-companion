@@ -86,6 +86,45 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(november["summary"]["viewing_count"], 1)
         self.assertEqual(november["summary"]["watched_seconds"], row["watched_seconds"])
 
+    async def test_partial_sessions_appear_in_resumption_month(self):
+        from custom_components.kaleidescape_companion.playback.tracker import Session
+
+        for start, end, seconds in (
+            ("2026-10-31T23:00:00+00:00", "2026-10-31T23:20:00+00:00", 1200),
+            ("2026-11-01T00:10:00+00:00", "2026-11-01T00:21:00+00:00", 660),
+        ):
+            session = Session(
+                id=str(uuid4()),
+                player_id="fictional-player",
+                raw_content_id="film",
+                title="Fictional Film",
+                duration_seconds=7200,
+                started_at=start,
+                last_observed_at=end,
+                boot_id="fictional",
+                watched_seconds=seconds,
+                closed_at=end,
+                end_reason="stopped",
+                revision=1,
+                start_position_seconds=1800,
+            )
+            await self.repository.async_save_session(session.snapshot(), 300, 24)
+        month = await self.repository.async_calendar_month(
+            "2026-11-01T00:00:00Z", "2026-12-01T00:00:00Z"
+        )
+        self.assertEqual(len(month["items"]), 1)
+        self.assertEqual(month["items"][0]["status"], "partial")
+        self.assertEqual(
+            [s["watched_seconds"] for s in month["items"][0]["sessions"]], [1200, 660]
+        )
+        self.assertEqual(
+            month["items"][0]["sessions"][0]["start_position_seconds"], 1800
+        )
+        self.assertEqual(
+            set(month["items"][0]["sessions"][0]),
+            {"started_at", "watched_seconds", "start_position_seconds"},
+        )
+
     async def test_half_open_local_range_handles_midnight_precision_and_deleted_rows(
         self,
     ):
@@ -115,7 +154,14 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(
             set(result["items"][0]),
-            PUBLIC_FIELDS | {"library_title_id", "artwork_key", "completed_at"},
+            PUBLIC_FIELDS
+            | {
+                "library_title_id",
+                "artwork_key",
+                "completed_at",
+                "sessions",
+                "partial_minimum_seconds",
+            },
         )
         self.assertEqual(
             result["revision"], (await self.repository.async_info())["revision"]
@@ -172,6 +218,7 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(detail["movie"]["duration_seconds"], 6600)
         self.assertEqual(detail["movie"]["actors"], ["Fictional Actor"])
         self.assertEqual(detail["movie"]["directors"], ["A. Director"])
+        self.assertEqual(detail["movie"]["synopsis"], "A fictional voyage.")
         for key in (
             "purchase_date",
             "added_on",
@@ -180,7 +227,6 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
             "notes",
             "source_handle",
             "source_group",
-            "synopsis",
         ):
             self.assertNotIn(key, json.dumps(detail))
         for source in (None, "other"):
@@ -308,8 +354,13 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
             (await self.repository.async_ui_preferences("a", area="journal"))["values"],
             {
                 "view": "calendar",
+                "page_size": 25,
                 "calendar_size": 180,
                 "calendar_fit": False,
+                "calendar_hover_preview": False,
+                "calendar_show_month": True,
+                "calendar_show_year": True,
+                "calendar_show_total": True,
                 "movie_details": "full",
             },
         )
@@ -321,7 +372,9 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
             {
                 "view": "calendar",
                 "calendar_size": 90,
+                "page_size": 500,
                 "calendar_fit": True,
+                "calendar_hover_preview": True,
                 "movie_details": "compact",
             },
             "journal",
@@ -335,8 +388,13 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
             (await self.repository.async_ui_preferences("a", area="journal"))["values"],
             {
                 "view": "calendar",
+                "page_size": 500,
                 "calendar_size": 90,
                 "calendar_fit": True,
+                "calendar_hover_preview": True,
+                "calendar_show_month": True,
+                "calendar_show_year": True,
+                "calendar_show_total": True,
                 "movie_details": "compact",
             },
         )
@@ -344,8 +402,13 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
             (await self.repository.async_ui_preferences("b", area="journal"))["values"],
             {
                 "view": "calendar",
+                "page_size": 25,
                 "calendar_size": 180,
                 "calendar_fit": False,
+                "calendar_hover_preview": False,
+                "calendar_show_month": True,
+                "calendar_show_year": True,
+                "calendar_show_total": True,
                 "movie_details": "full",
             },
         )
@@ -361,6 +424,13 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
             {"calendar_size": 321},
             {"calendar_size": 90.5},
             {"calendar_fit": "true"},
+            {"calendar_hover_preview": "true"},
+            {"page_size": 0},
+            {"page_size": True},
+            {"page_size": 1000},
+            {"calendar_show_month": 1},
+            {"calendar_show_year": "true"},
+            {"calendar_show_total": None},
         ):
             with self.assert_error("invalid_request"):
                 await self.repository.async_ui_preferences_update(
@@ -384,7 +454,14 @@ class JournalCalendarApiTest(unittest.IsolatedAsyncioTestCase):
             )
             self.assertEqual(
                 set(result["result"]["items"][0]),
-                PUBLIC_FIELDS | {"library_title_id", "artwork_key", "completed_at"},
+                PUBLIC_FIELDS
+                | {
+                    "library_title_id",
+                    "artwork_key",
+                    "completed_at",
+                    "sessions",
+                    "partial_minimum_seconds",
+                },
             )
             result = await self.call(
                 "journal/calendar/get",

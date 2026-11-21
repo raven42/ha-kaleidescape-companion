@@ -657,6 +657,13 @@ it("requires confirmation to abandon an uncertain retry and inspect existing rec
   expect(button("＋ Add viewing").disabled).toBe(false);
 });
 
+it("shows only all-time viewing totals in the list footer", () => {
+  const footer = panel.shadowRoot!.querySelector("footer")!.textContent!;
+  expect(footer).toContain("Total Viewings");
+  expect(footer.replace(/\s+/g, " ")).toContain("Watched Time ");
+  expect(footer).not.toContain("This Month");
+});
+
 it("opens the exact Library details over the selected Journal entry", async () => {
   transport.options.library_enabled = true;
   const title = transport.libraryTitles[0];
@@ -665,6 +672,17 @@ it("opens the exact Library details over the selected Journal entry", async () =
   await settle();
   await selectViewing("The Lantern Voyage", false);
   const link = panel.shadowRoot!.querySelector("kaleidescape-viewing-library")!;
+  await vi.waitFor(() =>
+    expect(
+      panel.shadowRoot!.querySelector(".entries-detail .journal-title button"),
+    ).not.toBeNull(),
+  );
+  expect(link.shadowRoot!.querySelector("kaleidescape-library")).toBeNull();
+  panel
+    .shadowRoot!.querySelector<HTMLButtonElement>(
+      ".entries-detail .journal-title button",
+    )!
+    .click();
   await vi.waitFor(() =>
     expect(
       link
@@ -839,4 +857,63 @@ it("edits a Journal entry over Library without switching pages", async () => {
       .shadowRoot!.querySelector("#page-library")!
       .getAttribute("aria-selected"),
   ).toBe("true");
+});
+
+it("opens mobile journal entries in a dismissible dialog and applies list options", async () => {
+  vi.stubGlobal("innerWidth", 390);
+  try {
+    panel.requestUpdate();
+    await panel.updateComplete;
+    const root = panel.shadowRoot!;
+    const detail = root.querySelector<HTMLDialogElement>(
+      "dialog.journal-detail-dialog",
+    )!;
+    expect(detail.open).toBe(false);
+    button("The Lantern Voyage").click();
+    await vi.waitFor(() => expect(detail.open).toBe(true));
+    await vi.waitFor(() => expect(detail.textContent).toContain("Watched"));
+    expect(
+      detail.querySelector(
+        '.journal-detail-actions [aria-label="Edit viewing"] svg',
+      ),
+    ).not.toBeNull();
+    expect(
+      detail.querySelector(
+        '.journal-detail-actions [aria-label="Delete entry"] svg',
+      ),
+    ).not.toBeNull();
+    expect(
+      detail.querySelector(".card-head .journal-detail-actions"),
+    ).toBeNull();
+    const artworkRow = detail.querySelector(".journal-detail-artwork-row")!;
+    expect(artworkRow.firstElementChild?.localName).toBe(
+      "kaleidescape-viewing-library",
+    );
+    expect(
+      artworkRow.lastElementChild?.classList.contains("journal-detail-actions"),
+    ).toBe(true);
+    detail.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.click();
+    expect(detail.open).toBe(false);
+    const options = root.querySelector("kaleidescape-journal-options")!;
+    await vi.waitFor(() =>
+      expect(
+        options.shadowRoot!.querySelector('[name="mobile_filter_status"]'),
+      ).not.toBeNull(),
+    );
+    const status = options.shadowRoot!.querySelector<HTMLSelectElement>(
+      '[name="mobile_filter_status"]',
+    )!;
+    status.value = "partial";
+    status.dispatchEvent(new Event("change"));
+    await vi.waitFor(() =>
+      expect(
+        transport.calls.some(
+          (call) =>
+            call.type.endsWith("/journal/list") && call.status === "partial",
+        ),
+      ).toBe(true),
+    );
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });

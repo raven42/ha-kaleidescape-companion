@@ -1,4 +1,5 @@
 /** Settings navigation and search share one inventory of the editable options. */
+import { foldSearch } from "../core/search";
 import { SOURCE_FIELDS } from "../enrichment/sources";
 
 export const SETTINGS_SECTIONS = [
@@ -101,7 +102,7 @@ export const JOURNAL_FIELDS: SettingField[] = [
   {
     key: "minimum_runtime_minutes",
     label: "Minimum movie runtime",
-    hint: "Ignore shorter titles. Set to 0 to include every runtime; unknown runtimes wait for metadata.",
+    hint: "Controls which titles are eligible for automatic recording based on their full runtime, not how long you watch. For example, with a 10-minute minimum, a 3-minute trailer is ignored, but a 2-hour movie is eligible even if you watch it for only 3 minutes. Set to 0 to include titles of any length. Titles with an unknown runtime wait for metadata.",
     section: "journal",
     type: "number",
     min: 0,
@@ -111,7 +112,7 @@ export const JOURNAL_FIELDS: SettingField[] = [
   {
     key: "minimum_seconds",
     label: "Playback before credits completion",
-    hint: "Main-content watch time required before confirmed credits can complete a viewing.",
+    hint: "Requires a minimum amount of main-content playback before reaching confirmed credits can mark a viewing complete. For example, with a 300-second minimum, watching for 2 minutes and then skipping to the credits does not mark the movie complete; watching for 6 minutes before reaching the credits can. Paused and scanned time do not count.",
     section: "journal",
     type: "number",
     min: 1,
@@ -119,14 +120,24 @@ export const JOURNAL_FIELDS: SettingField[] = [
     unit: "seconds",
   },
   {
-    key: "resume_hours",
-    label: "Resume window",
-    hint: "Combine partial viewings resumed within this window. Set to 0 to keep them separate.",
+    key: "partial_minimum_minutes",
+    label: "Minimum partial viewing time",
+    hint: "Controls when an incomplete playback session appears as a partial viewing. For example, with a 10-minute minimum, watching 3 minutes and stopping leaves a diagnostic session but no Journal viewing; watching 12 minutes and stopping creates a partial viewing. This minimum also determines whether a session qualifies for joining to another session. A shorter final session can still complete an established viewing.",
     section: "journal",
     type: "number",
-    min: 0,
-    max: 168,
-    unit: "hours",
+    min: 1,
+    max: 1440,
+    unit: "minutes",
+  },
+  {
+    key: "resume_minutes",
+    label: "Resume window",
+    hint: "Controls how long after a qualifying session stops another session of the same movie on the same player can join it. For example, with a 30-minute window, stopping at 8:00 and restarting at 8:20 can create one viewing; restarting at 8:40 creates a separate viewing. The restarted session must also meet the partial-viewing minimum, unless it completes an established viewing.",
+    section: "journal",
+    type: "number",
+    min: 1,
+    max: 60,
+    unit: "minutes",
   },
 ];
 export const LIBRARY_FIELDS: SettingField[] = [
@@ -373,13 +384,13 @@ export function changedSettings(
   );
 }
 export function searchSettings(query: string): SettingField[] {
-  const words = query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+  const words = foldSearch(query.trim()).split(/\s+/).filter(Boolean);
   return words.length
     ? SETTINGS_INDEX.filter((field) =>
         words.every((word) =>
-          `${field.label} ${field.hint} ${field.section} ${field.key}`
-            .toLocaleLowerCase()
-            .includes(word),
+          foldSearch(
+            `${field.label} ${field.hint} ${field.section} ${field.key}`,
+          ).includes(word),
         ),
       )
     : [];

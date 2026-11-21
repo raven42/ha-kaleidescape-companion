@@ -149,18 +149,6 @@ class EmailTest(unittest.IsolatedAsyncioTestCase):
             len((await self.repository.async_inspect("purchase_records"))["items"]), 1
         )
         target = await self.seed_library()
-        plan = await self.repository.async_purchase_reconciliation("admin")
-        key = plan["rows"][0]["key"]
-        matched = await self.repository.async_import_match(
-            plan["plan_id"], plan["revision"], key, target, "admin"
-        )
-        await self.repository.async_import_apply(
-            str(__import__("uuid").uuid4()),
-            matched["plan_id"],
-            matched["revision"],
-            [key],
-            actor_id="admin",
-        )
         rows = (await self.repository.async_inspect("purchase_records"))["items"]
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["library_id"], target)
@@ -168,6 +156,125 @@ class EmailTest(unittest.IsolatedAsyncioTestCase):
             await self.repository.async_purchase_reconciliation("admin"),
             {"empty": True},
         )
+
+    async def test_scan_matches_a_unique_accent_variant(self):
+        from custom_components.kaleidescape_companion.library.store import title_id
+
+        await self.repository.async_purchase_email(invoice(movie("Amelie")))
+        row = {
+            **library.ROWS[0],
+            "source_handle": "fictional-accent",
+            "source_group": "fictional-accent-group",
+            "title": "Amélie",
+        }
+        await self.repository.async_library_catalog(library.ORIGIN, [row], {})
+        purchase = (await self.repository.async_inspect("purchase_records"))["items"][0]
+        self.assertEqual(
+            purchase["library_id"], title_id(library.SOURCE, "fictional-accent")
+        )
+
+    async def test_scan_leaves_same_title_remakes_unmatched_without_year(self):
+        from custom_components.kaleidescape_companion.library.store import title_id
+
+        await self.repository.async_purchase_email(invoice(movie("Fictional Remake")))
+        rows = [
+            {
+                **library.ROWS[0],
+                "source_handle": f"remake-{year}",
+                "source_group": f"group-{year}",
+                "title": "Fictional Remake",
+                "year": year,
+            }
+            for year in (1990, 2020)
+        ]
+        await self.repository.async_library_catalog(library.ORIGIN, rows, {})
+        self.assertIsNone(
+            (await self.repository.async_inspect("purchase_records"))["items"][0][
+                "library_id"
+            ]
+        )
+        self.assertEqual(
+            await self.repository.async_purchase_auto_match(library.SOURCE),
+            {"matched_count": 0},
+        )
+        self.assertNotEqual(
+            title_id(library.SOURCE, rows[0]["source_handle"]),
+            title_id(library.SOURCE, rows[1]["source_handle"]),
+        )
+
+    async def test_scan_uses_explicit_title_year_to_choose_a_remake(self):
+        from custom_components.kaleidescape_companion.library.store import title_id
+
+        await self.repository.async_purchase_email(
+            invoice(movie("Fictional Remake (2020)"))
+        )
+        rows = [
+            {
+                **library.ROWS[0],
+                "source_handle": f"remake-{year}",
+                "source_group": f"group-{year}",
+                "title": "Fictional Remake",
+                "year": year,
+            }
+            for year in (1990, 2020)
+        ]
+        await self.repository.async_library_catalog(library.ORIGIN, rows, {})
+        record = (await self.repository.async_inspect("purchase_records"))["items"][0]
+        self.assertEqual(record["library_id"], title_id(library.SOURCE, "remake-2020"))
+        self.assertEqual(
+            (record["purchase_price"], record["retail_price"]), ("$9.99", "$19.99")
+        )
+
+    async def test_automatic_match_uses_a_confirmed_identical_store_link(self):
+        first = movie(library.ROWS[0]["title"], href="/movie-store/movie/details/123")
+        first_invoice = invoice(first)
+        await self.seed_library()
+        await self.repository.async_purchase_email(first_invoice)
+        later_invoice = invoice(
+            movie(
+                "A Different Receipt Name",
+                href="https://store.kaleidescape.com/movie-store/movie/details/123",
+            )
+        )
+        later_invoice.update(order_id="ORDER-2", purchased_on="2021-01-02")
+        await self.repository.async_purchase_email(later_invoice)
+        before = (await self.repository.async_inspect("purchase_records"))["items"]
+        self.assertEqual(sum(row["library_id"] is None for row in before), 1)
+        self.assertEqual(
+            await self.repository.async_purchase_auto_match(library.SOURCE),
+            {"matched_count": 1},
+        )
+        after = (await self.repository.async_inspect("purchase_records"))["items"]
+        self.assertEqual(len({row["library_id"] for row in after}), 1)
+        self.assertEqual({row["order_id"] for row in after}, {"ORDER-1", "ORDER-2"})
+        self.assertEqual(
+            await self.repository.async_purchase_auto_match(library.SOURCE),
+            {"matched_count": 0},
+        )
+
+    async def test_automatic_match_keeps_conflicting_manual_prices_unlinked(self):
+        await self.repository.async_purchase_email(
+            invoice(movie(library.ROWS[0]["title"]))
+        )
+        target = await self.seed_library()
+
+        # Restore the unlinked state to exercise the manual match against existing data.
+        def conflict():
+            db = self.repository._db()
+            db.execute("UPDATE purchase_records SET library_id=NULL,issue='unmatched'")
+            db.execute(
+                "UPDATE library SET purchase_price='$25.00' WHERE id=?", (target,)
+            )
+            db.commit()
+
+        await self.repository._call(conflict)
+        self.assertEqual(
+            await self.repository.async_purchase_auto_match(library.SOURCE),
+            {"matched_count": 0},
+        )
+        row = (await self.repository.async_inspect("purchase_records"))["items"][0]
+        self.assertIsNone(row["library_id"])
+        self.assertEqual(row["purchase_price"], "$9.99")
 
     async def test_receipt_with_html_link_can_be_replayed_without_duplicate(self):
         email = invoice(movie("Unscanned title"))

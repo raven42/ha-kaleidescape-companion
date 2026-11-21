@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from . import const
 from .const import LOCAL_CPDID
-from .error import KaleidescapeError, MessageError, MessageParseError
+from .error import MessageError, MessageParseError, RequestOutcomeUnknownError
 
 if TYPE_CHECKING:
     from .connection import Connection
@@ -20,7 +20,7 @@ MESSAGE_TYPE_EVENT = "event"
 
 CPDID_FORMAT = re.compile(r"^\d\d$")
 DEVICEID_FORMAT = re.compile(r"^(?P<id>\d\d|#[0-9A-F]+|\?\?)(?:\.(?P<zone>\d\d))?/")
-SEQ_FORMAT = re.compile(r"^(?:[0-9]|!|\?)/")
+SEQ_FORMAT = re.compile(r"^(?:\d|!)/")
 STATUS_FORMAT = re.compile(r"^\d\d\d:")
 NAME_FORMAT = re.compile(r"^(?:([^:]+):/?|/)")
 
@@ -30,10 +30,8 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def _encode_field(value: str) -> str:
-    """Encode a printable-protocol field without changing its boundaries."""
-    if not isinstance(value, str):
-        raise TypeError("Protocol fields must be strings")
-    escaped = {
+    """Escape delimiters and control characters in a request field."""
+    escapes = {
         "\\": r"\\",
         "/": r"\/",
         ":": r"\:",
@@ -41,34 +39,13 @@ def _encode_field(value: str) -> str:
         "\r": r"\r",
         "\t": r"\t",
     }
-    parts: list[str] = []
-    for char in value:
-        if char in escaped:
-            parts.append(escaped[char])
-        elif 32 <= ord(char) <= 126:
-            parts.append(char)
-        elif 127 <= ord(char) <= 255:
-            parts.append(f"\\d{ord(char):03}")
-        else:
-            raise ValueError("Protocol field contains an unsupported character")
-    return "".join(parts)
-
-
-def _request_device_id(value: str) -> str:
-    """Accept a local CPDID or a complete protocol serial selector."""
-    if not isinstance(value, str) or not re.fullmatch(
-        r"(?:\d{2}|#[0-9A-Fa-f]{1,12})", value
-    ):
-        raise ValueError("Invalid protocol device identifier")
-    return value.upper()
-
-
-def _known_state(mapping: dict[int, str], fields: list[str], index: int = 0) -> str:
-    """Translate known states without leaking a raw wire value on failure."""
-    try:
-        return mapping[int(fields[index])]
-    except (IndexError, ValueError, KeyError):
-        raise KaleidescapeError("Unknown protocol state") from None
+    return "".join(
+        escapes.get(
+            char,
+            f"\\d{ord(char):03}" if ord(char) < 32 or 127 <= ord(char) <= 255 else char,
+        )
+        for char in value
+    )
 
 
 def register(cls):
@@ -114,8 +91,7 @@ class MessageParser:
     def _parse_seq(self, pos: int) -> int:
         if not re.match(SEQ_FORMAT, self.message[pos:]):
             raise MessageParseError(const.ERROR_INVALID_SEQ_NUMBER, self.message)
-        marker = self.message[pos]
-        self.seq = int(marker) if marker.isdigit() else (-1 if marker == "!" else -2)
+        self.seq = int(self.message[pos]) if self.message[pos] != "!" else -1
         return pos + 2
 
     def _parse_status(self, pos: int) -> int:
@@ -169,8 +145,6 @@ class MessageParser:
                 elif char == "\r":
                     # Same bug as above
                     field += "\r"
-                else:
-                    raise MessageParseError(const.ERROR_INVALID_PARAMETER, self.message)
                 escaped = False
             elif char == "\\":
                 escaped = True
@@ -186,9 +160,6 @@ class MessageParser:
 
         if field:
             # Last field not terminated with colon
-            raise MessageParseError(const.ERROR_INVALID_PARAMETER, self.message)
-
-        if escaped:
             raise MessageParseError(const.ERROR_INVALID_PARAMETER, self.message)
 
         return pos + 1
@@ -292,7 +263,6 @@ class Request(Message):
     """Class representing a command request sent to hardware device."""
 
     log_invalid_request: bool = True
-    expected_response_name: str | None = None
 
     def __init__(
         self,
@@ -301,25 +271,14 @@ class Request(Message):
         *,
         device_id: str = LOCAL_CPDID,
     ):
-        """Initializes request."""
-        if type(zone) is not int or not 0 <= zone <= 99:  # pylint: disable=unidiomatic-typecheck
-            raise ValueError("Protocol zone must be between 0 and 99")
-        super().__init__(_request_device_id(device_id), zone, fields=fields)
-
-        # Built-in requests have a wire contract. Leave third-party subclasses
-        # without metadata usable exactly as before.
-        if type(self).__module__ == __name__ and self.expected_response_name is None:
-            self.expected_response_name = (
-                self.name[4:] if self.name.startswith("GET_") else ""
-            )
+        """Initialize a request, optionally targeting another component."""
+        super().__init__(device_id, zone, fields=fields)
 
         self.seq = -1
         self._type = MESSAGE_TYPE_REQUEST
         self._responses: list[Response] = []
         self._event = asyncio.Event()
-        self._failure: KaleidescapeError | None = None
-        self._in_flight = False
-        self._deadline: float | None = None
+        self._failure: RequestOutcomeUnknownError | None = None
 
     @property
     def fields(self) -> list[str]:
@@ -328,14 +287,9 @@ class Request(Message):
 
     async def send(self, connection: Connection) -> list[Response]:
         """Sends request to hardware device, returning one or more responses."""
-        if self._in_flight:
-            raise KaleidescapeError("Request instance is already in flight")
-        self._in_flight = True
-        self.seq = -1
         self._event.clear()
         self._responses.clear()
         self._failure = None
-        self._deadline = None
 
         try:
             return await self._exchange(connection)
@@ -343,7 +297,6 @@ class Request(Message):
             # Failures must release the seq too: the device allows only 10 in flight,
             # and a leaked one stays taken until the connection drops.
             connection.clear(self)
-            self._in_flight = False
 
     async def _exchange(self, connection: Connection) -> list[Response]:
         response = await connection.send(self)
@@ -358,50 +311,24 @@ class Request(Message):
             _LOGGER.log(lvl, "Request %s failed with '%s'", repr(self), response.error)
             raise MessageError(response.status, str(self))
 
-        if (
-            self.expected_response_name is not None
-            and response.name != self.expected_response_name
-        ):
-            await connection.retire()
-            raise KaleidescapeError("Unexpected response type")
-
         _LOGGER.debug("Request %s received %s", repr(self), repr(response))
 
         if response.multiline:
-            try:
-                count = response.count
-            except (IndexError, ValueError) as error:
-                await connection.retire()
-                raise KaleidescapeError("Invalid response count") from error
-            if not 0 <= count <= 1000:
-                await connection.retire()
-                raise KaleidescapeError("Invalid response count")
 
             async def collector():
-                while (len(self._responses) - 1) < count:
-                    if self._failure is not None:
-                        raise self._failure
+                while (len(self._responses) - 1) < response.count:
                     self._event.clear()
                     await self._event.wait()
+                    if self._failure:
+                        raise self._failure
 
             try:
-                if self._deadline is None:
-                    await asyncio.wait_for(collector(), connection.timeout)
-                else:
-                    async with asyncio.timeout_at(self._deadline):
-                        await collector()
+                await asyncio.wait_for(collector(), connection.timeout)
             except TimeoutError as error:
-                await connection.retire()
-                raise KaleidescapeError(
-                    "Timed out waiting for response rows"
-                ) from error
+                err = f"Command {self!r} timed out waiting for responses"
+                _LOGGER.warning(err)
+                raise RequestOutcomeUnknownError(err) from error
 
-            if isinstance(self, GetContentDetails):
-                try:
-                    _validate_content_details(self, self._responses)
-                except KaleidescapeError:
-                    await connection.retire()
-                    raise
             return self._responses
 
         return [response]
@@ -409,12 +336,12 @@ class Request(Message):
     async def wait(self) -> Response:
         """Wait until the event is set."""
         await self._event.wait()
-        if self._failure is not None:
+        if self._failure:
             raise self._failure
         return self._responses[0]
 
-    def fail(self, error: KaleidescapeError) -> None:
-        """Wake a pending request when its connection is retired."""
+    def fail(self, error: RequestOutcomeUnknownError) -> None:
+        """Wake the waiter when the connection is lost."""
         self._failure = error
         self._event.set()
 
@@ -425,9 +352,11 @@ class Request(Message):
 
     def __str__(self) -> str:
         seq = "!" if self.seq < 0 else str(self.seq)
-        fields = ":".join(_encode_field(value) for value in self._fields)
-        if fields:
-            fields += ":"
+        fields = (
+            ":".join(_encode_field(field) for field in self._fields) + ":"
+            if self._fields
+            else ""
+        )
         target = self._device_id + (f".{self._zone:02}" if self._zone else "")
         self._message = f"{target}/{seq}/{self.name}:{fields}"
         return self._message
@@ -451,7 +380,7 @@ class Response(Message):
             parsed.device_id, parsed.zone, parsed.seq, parsed.status, parsed.fields
         )
         self._message = parsed.message
-        self._type = MESSAGE_TYPE_EVENT if parsed.seq == -1 else MESSAGE_TYPE_RESPONSE
+        self._type = MESSAGE_TYPE_EVENT if parsed.seq < 0 else MESSAGE_TYPE_RESPONSE
 
     @classmethod
     def factory(cls, message: str) -> Response:
@@ -575,11 +504,6 @@ class AvailableDevicesBySerialNumber(Response):
         """Returns list of serial numbers."""
         return [f"{i[-12:]:0>12}" for i in self._fields]
 
-    @property
-    def raw_serial_numbers(self) -> list[str]:
-        """Return complete serials for callers that must detect collisions."""
-        return list(self._fields)
-
 
 class GetSystemVersion(Request):
     """Class for GET_SYSTEM_VERSION messages."""
@@ -620,12 +544,6 @@ class DeviceInfo(Response):
     def field_serial_number(self) -> str:
         """Returns serial number."""
         return f"{self._fields[1][-12:]:0>12}"
-
-    @property
-    def field_serial_number_full(self) -> str:
-        """Canonical complete serial without truncation."""
-        value = self._fields[1].removeprefix("#").upper()
-        return value.zfill(12) if len(value) <= 12 else value
 
     @property
     def field_cpdid(self) -> str:
@@ -737,15 +655,12 @@ class DevicePowerState(Response):
     @property
     def field_power(self) -> str:
         """Returns power state."""
-        return _known_state(self.index["power"], self._fields)
+        return self.index["power"][int(self._fields[0])]
 
     @property
     def field_zone(self) -> list[str]:
         """Returns zone state."""
-        return [
-            _known_state(self.index["zone"], self._fields, i)
-            for i in range(1, len(self._fields))
-        ]
+        return [self.index["zone"][int(v)] for v in self._fields[1:]]
 
 
 class GetSystemReadinessState(Request):
@@ -768,7 +683,7 @@ class SystemReadinessState(Response):
     @property
     def field(self) -> str:
         """Returns readiness state."""
-        return _known_state(self.index, self._fields)
+        return self.index[int(self._fields[0])]
 
 
 class GetPlayStatus(Request):
@@ -793,7 +708,7 @@ class PlayStatus(Response):
     @property
     def field_play_status(self) -> str:
         """Return play status."""
-        return _known_state(self.index, self._fields)
+        return self.index[int(self._fields[0])]
 
     @property
     def field_play_speed(self) -> int:
@@ -865,6 +780,76 @@ class FriendlyName(Response):
     def field(self) -> str:
         """Returns friendly name."""
         return self._fields[0]
+
+
+class GetUserInput(Request):
+    """Request the current user input prompt and entry."""
+
+    name = "GET_USER_INPUT"
+
+
+@register
+class UserInput(Response):
+    """User input state returned by GET_USER_INPUT or sent as an event."""
+
+    name = "USER_INPUT"
+
+    @property
+    def field_type(self) -> int:
+        """Return 0 for no prompt, 1 for alphanumeric, or 2 for numeric."""
+        return int(self._fields[0])
+
+    @property
+    def field_prompt(self) -> str:
+        """Return the prompt text."""
+        return self._fields[1]
+
+    @property
+    def field_entry(self) -> str:
+        """Return the current entry."""
+        return self._fields[2]
+
+
+class KeyboardLiteral(Request):
+    """Send a literal character to the onscreen keyboard."""
+
+    name = "KEYBOARD_LITERAL"
+
+
+class SetUserInputEntry(Request):
+    """Set the current user input entry on Strato or Alto."""
+
+    name = "SET_USER_INPUT_ENTRY"
+
+
+class GoMovieCollection(Request):
+    """Display a named movie collection."""
+
+    name = "GO_MOVIE_COLLECTION"
+
+
+class GoMovieStore(Request):
+    """Display the movie store."""
+
+    name = "GO_MOVIE_STORE"
+
+
+class GoScreenSaver(Request):
+    """Display the screen saver without interrupting playback."""
+
+    name = "GO_SCREEN_SAVER"
+
+
+class StopScreenSaver(Request):
+    """Dismiss the screen saver."""
+
+    name = "STOP_SCREEN_SAVER"
+
+
+class Backspace(Request):
+    """Delete the last character from the current input."""
+
+    name = "BACKSPACE"
 
 
 class GetUiState(Request):
@@ -946,7 +931,6 @@ class GetPlayingTitleName(Request):
     """Class for GET_PLAYING_TITLE_NAME messages."""
 
     name = f"GET_{const.PLAYING_TITLE_NAME}"
-    expected_response_name = const.TITLE_NAME
 
 
 @register
@@ -983,35 +967,6 @@ class GetContentDetails(Request):
     """Class for GET_CONTENT_DETAILS messages."""
 
     name = f"GET_{const.CONTENT_DETAILS}"
-    expected_response_name = const.CONTENT_DETAILS_OVERVIEW
-
-
-def _validate_content_details(request: GetContentDetails, rows: list[Response]) -> None:
-    """Reject partial, duplicate or unrelated detail rows before exposing them."""
-    overview = rows[0]
-    if not isinstance(overview, ContentDetailsOverview) or len(overview.fields) < 3:
-        raise KaleidescapeError("Invalid content overview")
-    if request.fields and overview.field_handle != request.fields[0]:
-        raise KaleidescapeError("Content handle mismatch")
-    if not overview.field_table:
-        raise KaleidescapeError("Missing content table")
-    if len(rows) != overview.count + 1:
-        raise KaleidescapeError("Incomplete content details")
-    indices: set[int] = set()
-    keys: set[str] = set()
-    for row in rows[1:]:
-        if not isinstance(row, ContentDetails) or len(row.fields) != 3:
-            raise KaleidescapeError("Invalid content detail row")
-        try:
-            index = int(row.fields[0])
-        except ValueError as error:
-            raise KaleidescapeError("Invalid content detail index") from error
-        if index < 1 or index > overview.count or index in indices:
-            raise KaleidescapeError("Invalid content detail index")
-        if not row.fields[1] or row.fields[1] in keys:
-            raise KaleidescapeError("Duplicate or empty content detail key")
-        indices.add(index)
-        keys.add(row.fields[1])
 
 
 @register
@@ -1503,34 +1458,10 @@ class Play(Request):
     name = const.PLAY
 
 
-class PlayOrPause(Request):
-    """Class for PLAY_OR_PAUSE messages."""
-
-    name = const.PLAY_OR_PAUSE
-
-
-class PlayMovieExperimental(Request):
-    """Undocumented PLAY_MOVIE wire command; use only after explicit preparation."""
-
-    name = "PLAY_MOVIE"
-
-
 class Pause(Request):
     """Class for PAUSE messages."""
 
     name = const.PAUSE
-
-
-class PauseOn(Request):
-    """Class for explicit PAUSE_ON messages."""
-
-    name = const.PAUSE_ON
-
-
-class PauseOff(Request):
-    """Class for explicit PAUSE_OFF messages."""
-
-    name = const.PAUSE_OFF
 
 
 class Stop(Request):
@@ -1599,34 +1530,10 @@ class Right(Request):
     name = const.RIGHT
 
 
-class PageUp(Request):
-    """Class for PAGE_UP messages."""
-
-    name = const.PAGE_UP
-
-
-class PageDown(Request):
-    """Class for PAGE_DOWN messages."""
-
-    name = const.PAGE_DOWN
-
-
 class Cancel(Request):
     """Class for CANCEL messages."""
 
     name = const.CANCEL
-
-
-class Back(Request):
-    """Class for BACK messages, distinct from CANCEL."""
-
-    name = const.BACK
-
-
-class Details(Request):
-    """Class for DETAILS messages."""
-
-    name = const.DETAILS
 
 
 class StatusAndSettings(Request):
@@ -1665,6 +1572,48 @@ class GoMovieCovers(Request):
     name = const.GO_MOVIE_COVERS
 
 
+class MenuToggle(Request):
+    """Class for KALEIDESCAPE_MENU_TOGGLE messages."""
+
+    name = const.KALEIDESCAPE_MENU_TOGGLE
+
+
+class PlayOrPause(Request):
+    """Class for PLAY_OR_PAUSE messages."""
+
+    name = const.PLAY_OR_PAUSE
+
+
+class PauseOn(Request):
+    """Class for PAUSE_ON messages."""
+
+    name = const.PAUSE_ON
+
+
+class PauseOff(Request):
+    """Class for PAUSE_OFF messages."""
+
+    name = const.PAUSE_OFF
+
+
+class PageUp(Request):
+    """Class for PAGE_UP messages."""
+
+    name = const.PAGE_UP
+
+
+class PageDown(Request):
+    """Class for PAGE_DOWN messages."""
+
+    name = const.PAGE_DOWN
+
+
+class Details(Request):
+    """Class for DETAILS messages."""
+
+    name = const.DETAILS
+
+
 class GoSearch(Request):
     """Class for GO_SEARCH messages."""
 
@@ -1681,9 +1630,3 @@ class MenuOff(Request):
     """Class for KALEIDESCAPE_MENU_OFF messages."""
 
     name = const.KALEIDESCAPE_MENU_OFF
-
-
-class MenuToggle(Request):
-    """Class for KALEIDESCAPE_MENU_TOGGLE messages."""
-
-    name = const.KALEIDESCAPE_MENU_TOGGLE

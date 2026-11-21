@@ -12,18 +12,18 @@ owner's approval, not a condition that overrides functional migration.
 
 ## Implemented
 
-| Aspect          | Delivered scope                                                                                                                                 | Authoritative document                                                       |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Journal         | Single-player HA observation, session/restart recovery, manual entries, corrections, deletion and exports                                       | [Journal](journal.md)                                                        |
-| Data management | Worker-owned SQLite, schema-28 collection queue and purchase repair history, reviewed merge imports and database-backed purchase reconciliation | [Data management](data-management.md)                                        |
-| Library         | Opt-in local catalog/details/collections/artwork, grouped versions, cached browsing, filters and queued collection changes                      | [Library](library.md)                                                        |
-| Metadata        | Optional public Store/TMDB providers, reviewed matches/fields/images, cache and source preferences                                              | [Metadata](metadata.md)                                                      |
-| Controls        | Opt-in discovery, selected-player remote, explicit power/pause/resume and experimental movie launch, durable uncertainty recovery               | [Controls](playback-controls.md)                                             |
-| UI              | Household and administrator surfaces, personal responsive profiles, settings transfer and management                                            | [UI](user-interface.md)                                                      |
-| HA surfaces     | 17 sensors, six dashboard cards and an explicit test-dashboard generator                                                                        | [Sensors](sensors.md), [cards](dashboard-cards.md)                           |
-| Calendar        | Local Journal month view, optional publishing/history export and dedicated-calendar Full Sync                                                   | [Calendar](calendar.md)                                                      |
-| Operations      | Native module logging, bounded diagnostics, backup coordination, local checks, runtime packaging and explicit SSH deployment                    | [Logging](logging.md), [development](README.md), [deployment](deployment.md) |
-| Automations     | Three HA buttons/switches each, five versioned blueprints, change-log review, explicit updates, receipt parsing and scheduled jobs              | [Automations](automations.md)                                                |
+| Aspect          | Delivered scope                                                                                                                                                    | Authoritative document                                                       |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| Journal         | Single-player HA observation, session/restart recovery, manual entries, corrections, deletion and exports                                                          | [Journal](journal.md)                                                        |
+| Data management | Worker-owned SQLite, schema-29 playback position, collection queue and purchase repair history, reviewed merge imports and database-backed purchase reconciliation | [Data management](data-management.md)                                        |
+| Library         | Opt-in local catalog/details/collections/artwork, grouped versions, cached browsing, filters and queued collection changes                                         | [Library](library.md)                                                        |
+| Metadata        | Optional public Store/TMDB providers, reviewed matches/fields/images, cache and source preferences                                                                 | [Metadata](metadata.md)                                                      |
+| Controls        | Opt-in discovery, selected-player remote, explicit power/pause/resume and experimental movie launch, durable uncertainty recovery                                  | [Controls](playback-controls.md)                                             |
+| UI              | Household and administrator surfaces, personal responsive profiles, settings transfer and management                                                               | [UI](user-interface.md)                                                      |
+| HA surfaces     | 17 sensors, six dashboard cards and an explicit test-dashboard generator                                                                                           | [Sensors](sensors.md), [cards](dashboard-cards.md)                           |
+| Calendar        | Local Journal month view, optional publishing/history export and dedicated-calendar Full Sync                                                                      | [Calendar](calendar.md)                                                      |
+| Operations      | Native module logging, bounded diagnostics, backup coordination, local checks, runtime packaging and explicit SSH deployment                                       | [Logging](logging.md), [development](README.md), [deployment](deployment.md) |
+| Automations     | Three HA buttons/switches each, five versioned blueprints, change-log review, explicit updates, receipt parsing and scheduled jobs                                 | [Automations](automations.md)                                                |
 
 Implemented means present in code with offline tests; it does not mean every
 model, firmware, browser size or HA release is qualified. The dashboard calendar
@@ -134,9 +134,9 @@ gates permit a separately qualified dependency change.
 The pyk compatibility and external qualification work remains open. Existing
 offline fixes and reproducible source do not establish a supported release.
 
-1. Review and upstream the local pyk patches while preserving its existing
-   `Device` workflow. Verify the released package with HA's built-in integration
-   before changing the shared dependency pin or removing the bundled PoC copy.
+1. Submit three independent pyk changes for connection and callback robustness,
+   request routing and field escaping, and documented controls. Verify their
+   release with HA's built-in integration.
 2. Qualify the migrated controls and local Library browser on the owned Strato
    K, Terra Server Compact 30 TB and Terra Server Prime 120 TB. Record firmware
    and topology. Test reads before selected player writes, then recovery and
@@ -144,10 +144,10 @@ offline fixes and reproducible source do not establish a supported release.
 3. Validate Companion's public Store scraper independently for anonymous search,
    metadata, covers, robots and request limits. Keep all public Store work out
    of pyk.
-4. After upstream and compatibility qualification, replace the temporary bundled
-   copy with a reproducible released pyk dependency and complete clean HA
-   install/reload/restart validation. Keep the bundle until that change is
-   qualified; the alpha cleanup does not itself authorize its removal.
+4. After upstream and compatibility qualification, switch `LivePlayer` to
+   released pyk, retire the temporary bundle and validate a clean HA install,
+   reload and restart. Proposing `LivePlayer` itself for pyk would require a
+   separate maintainer review. The server browser stays independent of pyk.
 5. Extend modern, hardware-testable video/capability features in small
    increments. Premiere music, vault/disc-specific workflows and alternative
    framing remain deferred without applicable hardware and a concrete use case.
@@ -184,7 +184,7 @@ archive inspection do not close these external gates.
 ## Release readiness
 
 - Declare and test supported HA releases. Manifest repository URLs and ownership
-  are populated; `0.5.0-alpha.1` identifies the next unqualified alpha candidate
+  are populated; `0.6.0-alpha` identifies the next unqualified alpha candidate
   across the integration, project and frontend. Original project work uses
   Apache-2.0; the bundled pyk MIT license covers that dependency only. Publish a
   new matching tag after the applicable external qualification gates pass. HA
@@ -223,7 +223,7 @@ before implementation.
 | Tooling           | Migrate project environment and dependency management from the current venv/pip workflow to `uv`, retaining reproducible local and CI setup.                                                                                                                  |
 | Test suite        | Migrate test code from `unittest` to `pytest` while preserving the existing offline, fictional-data and no-device-contact guarantees.                                                                                                                         |
 | Beta              | Finalize the current development and qualification work, then recruit additional testers with defined test environments, feedback paths and privacy-safe evidence handling.                                                                                   |
-| Release v1        | Plan release deployment around merging qualified Companion changes into pykaleidescape and making the integration available through the Home Assistant Community Store (HACS), subject to upstream approval and HACS requirements.                            |
+| Release v1        | Qualify the three proposed pyk changes in an upstream release and prepare the integration for the Home Assistant Community Store (HACS), subject to upstream approval and HACS requirements.                                                                  |
 | Stats view        | Add a database-backed statistics view for perspectives such as most-watched genres, actors and directors, plus recurring actors across the Library. Define aggregation scope, permissions and empty/partial-data behavior first.                              |
 | Relationship view | Add an interactive relationship graph linking similar movies by genre, cast and other qualified metadata; support an actor-focused graph showing frequent collaborator relationships. Establish performance limits and access-safe payloads before rendering. |
 | Find related      | Add an action to find movies related to the current movie, evaluating TMDB's related-movie API alongside local similarity signals and honoring the existing metadata opt-in and credential boundaries.                                                        |

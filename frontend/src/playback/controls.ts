@@ -14,15 +14,16 @@ import { styles } from "../ui/styles";
 import { settingLabel } from "../ui/settings-hint";
 import { settingLabelStyles } from "../ui/settings-styles";
 import { actionIcon } from "../ui/action-icons";
-import { remoteControls, remoteStyles } from "./remote";
+import {
+  DEFAULT_REMOTE_VISIBILITY,
+  remoteControls,
+  remoteStyles,
+} from "./remote";
+import type { RemoteVisibility } from "./remote";
 import { closeButton, dismissBackdrop } from "../ui/dialog";
+import companionIcon from "../ui/assets/companion-icon.png?inline";
 
-const OUTCOMES: Record<ControlResult["outcome"], string> = {
-  state_observed: "The requested playback state was observed.",
-  acknowledged:
-    "The player accepted the command; its final state is not confirmed.",
-  unconfirmed:
-    "The command may have executed. An administrator must inspect the player before more commands can be sent. Nothing will be replayed automatically.",
+const FAILURE_OUTCOMES: Partial<Record<ControlResult["outcome"], string>> = {
   rejected: "The player rejected the command. Nothing was retried.",
   not_sent:
     "Settings or access changed before sending. The command was not sent.",
@@ -36,6 +37,10 @@ export class DeviceControls extends LitElement {
     versionId: {},
     playerId: {},
     inlineRemote: { type: Boolean },
+    hideRefresh: { type: Boolean },
+    hideRemote: { type: Boolean },
+    liveTyping: { type: Boolean },
+    remoteVisibility: { attribute: false },
     value: {},
     configured: { type: Boolean },
     settingsDisabled: { type: Boolean },
@@ -52,9 +57,21 @@ export class DeviceControls extends LitElement {
         margin-top: 20px;
         padding: 20px;
       }
+      .control-card.embedded {
+        margin: 0;
+        padding: 0 12px 12px;
+        border: 0;
+        background: transparent;
+      }
+      .control-card.embedded > .card-head h2 {
+        display: none;
+      }
       .control-card > .card-head {
         padding: 0;
         flex-wrap: wrap;
+      }
+      .remote-icon {
+        display: none;
       }
       .movie-actions {
         display: flex;
@@ -120,9 +137,17 @@ export class DeviceControls extends LitElement {
         font-size: 12px;
       }
       @media (max-width: 600px) {
-        .control-card {
+        .control-card:not(.embedded) {
           margin-top: 12px;
           padding: 12px;
+        }
+        .remote-icon {
+          display: inline-block;
+          width: 22px;
+          height: 22px;
+        }
+        .remote-label {
+          display: none;
         }
         .movie-actions {
           gap: 8px;
@@ -140,6 +165,10 @@ export class DeviceControls extends LitElement {
   versionId = "";
   playerId = "";
   inlineRemote = false;
+  hideRefresh = false;
+  hideRemote = false;
+  liveTyping = false;
+  remoteVisibility: RemoteVisibility = { ...DEFAULT_REMOTE_VISIBILITY };
   value = "";
   configured = true;
   settingsDisabled = false;
@@ -153,6 +182,7 @@ export class DeviceControls extends LitElement {
   private wakeDeadline = 0;
   private started = "";
   private lastOperation = "";
+  private lastOutcome?: ControlResult["outcome"];
   private pending?: PreparedMutation;
   private selectedPlayer = "";
   private dialog = "players";
@@ -164,6 +194,8 @@ export class DeviceControls extends LitElement {
   private locked = false;
 
   protected willUpdate(changed: PropertyValues) {
+    if (changed.has("liveTyping") && !this.liveTyping)
+      clearTimeout(this.searchTimer);
     if (
       !["scope", "client", "versionId", "playerId"].some((name) =>
         changed.has(name),
@@ -197,6 +229,7 @@ export class DeviceControls extends LitElement {
       if (!versionOnly) this.info = this.status = undefined;
       this.pending = undefined;
       this.stopWaking();
+      this.stopInputPolling();
       this.busy = false;
       this.acknowledge =
         this.error =
@@ -208,7 +241,190 @@ export class DeviceControls extends LitElement {
       if (key && this.client) void this.load(true, this.revalidatingVersion);
     }
   }
+  private inputTimer?: ReturnType<typeof setTimeout>;
+  private inputRead?: Promise<unknown>;
+  private searchInput?: { prompt: string; entry: string };
+  private searchDraft = "";
+  private searchDirty = false;
+  private searchTimer?: ReturnType<typeof setTimeout>;
+  private sendingSearch = false;
+  private searchTask?: Promise<void>;
+  private finishingSearch = false;
+  private stopInputPolling() {
+    clearTimeout(this.inputTimer);
+    clearTimeout(this.searchTimer);
+    this.inputTimer = undefined;
+    this.searchInput = undefined;
+    this.searchDraft = "";
+    this.searchDirty = false;
+  }
+  private async pollInput() {
+    if (
+      this.dialog !== "remote" ||
+      !this.isConnected ||
+      !this.client ||
+      !this.scope ||
+      !this.selectedPlayer
+    )
+      return;
+    const generation = this.generation,
+      player = this.selectedPlayer;
+    if (!this.busy && !this.pending) {
+      try {
+        const read = this.client.controlInputStatus(this.scope, player);
+        this.inputRead = read;
+        const input = await read;
+        if (
+          generation !== this.generation ||
+          player !== this.selectedPlayer ||
+          this.dialog !== "remote"
+        )
+          return;
+        if (this.status && typeof input.playback_mode === "number") {
+          this.status = {
+            ...this.status,
+            state: { ...this.status.state, mode: input.playback_mode },
+          };
+        }
+        const focusSearch = input.active && !this.searchInput;
+        if (input.active) {
+          if (!this.searchDirty) this.searchDraft = input.entry || "";
+          this.searchInput = {
+            prompt: input.prompt || "Search",
+            entry: input.entry || "",
+          };
+        } else {
+          this.searchInput = undefined;
+          this.searchDraft = "";
+          this.searchDirty = false;
+          clearTimeout(this.searchTimer);
+        }
+        this.requestUpdate();
+        if (focusSearch) {
+          await this.updateComplete;
+          if (
+            generation === this.generation &&
+            this.dialog === "remote" &&
+            this.searchInput
+          )
+            this.renderRoot
+              .querySelector<HTMLInputElement>("#player-search")
+              ?.focus({ preventScroll: true });
+        }
+      } catch (error) {
+        if (errorCode(error) === "unauthorized") {
+          this.stopInputPolling();
+          this.fail(error);
+        }
+        /* The remote remains usable if prompt readback is unavailable. */
+      } finally {
+        this.inputRead = undefined;
+      }
+    }
+    if (
+      generation === this.generation &&
+      this.dialog === "remote" &&
+      this.isConnected
+    )
+      this.inputTimer = setTimeout(() => void this.pollInput(), 2000);
+  }
+  private scheduleSearch() {
+    clearTimeout(this.searchTimer);
+    if (
+      this.liveTyping &&
+      this.searchDirty &&
+      this.dialog === "remote" &&
+      !this.info?.blocked_players.includes(this.selectedPlayer)
+    )
+      this.searchTimer = setTimeout(() => void this.sendSearch(), 350);
+  }
+  private sendSearch(): Promise<void> {
+    if (this.searchTask) return this.searchTask;
+    const task = this.sendSearchUpdate();
+    this.searchTask = task;
+    void task.finally(() => {
+      if (this.searchTask === task) this.searchTask = undefined;
+    });
+    return task;
+  }
+  private async sendSearchUpdate() {
+    clearTimeout(this.searchTimer);
+    if (!this.searchDirty || this.sendingSearch || !this.searchInput) return;
+    if (this.pending) return;
+    if (this.busy) {
+      this.scheduleSearch();
+      return;
+    }
+    const generation = this.generation,
+      value = this.searchDraft;
+    this.sendingSearch = true;
+    try {
+      await this.prepare("search_text", value);
+      if (generation !== this.generation) return;
+      if (
+        this.lastOutcome === "acknowledged" ||
+        this.lastOutcome === "state_observed"
+      ) {
+        this.searchDirty = this.searchDraft !== value;
+        if (this.searchDirty) this.scheduleSearch();
+      } else clearTimeout(this.searchTimer);
+    } finally {
+      this.sendingSearch = false;
+      this.requestUpdate();
+    }
+  }
+  private async finishSearch() {
+    if (
+      this.finishingSearch ||
+      !this.searchInput ||
+      (this.pending && !this.searchTask)
+    )
+      return;
+    const generation = this.generation;
+    this.finishingSearch = true;
+    clearTimeout(this.searchTimer);
+    try {
+      if (this.searchTask) await this.searchTask;
+      if (generation !== this.generation || !this.searchInput) return;
+      if (this.searchDirty) await this.sendSearch();
+      if (
+        generation !== this.generation ||
+        !this.searchInput ||
+        this.searchDirty ||
+        this.pending ||
+        this.busy
+      )
+        return;
+      await this.prepare("select");
+    } finally {
+      this.finishingSearch = false;
+    }
+  }
+  private remoteAvailable = false;
+  private canOpenRemote() {
+    return !!(
+      this.scope?.permissions.read &&
+      this.info?.enabled &&
+      this.selectedPlayer &&
+      !this.busy &&
+      !this.pending &&
+      !this.revalidatingVersion &&
+      !this.waking &&
+      !this.info.blocked_players.includes(this.selectedPlayer)
+    );
+  }
   protected updated() {
+    const available = this.canOpenRemote();
+    if (available !== this.remoteAvailable) {
+      this.remoteAvailable = available;
+      this.dispatchEvent(
+        new CustomEvent("remote-availability", {
+          detail: available,
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    }
     const locked = this.busy || !!this.pending;
     if (locked === this.locked) return;
     this.locked = locked;
@@ -224,6 +440,7 @@ export class DeviceControls extends LitElement {
     super.disconnectedCallback();
     this.generation++;
     this.stopWaking();
+    this.stopInputPolling();
     this.revalidatingVersion = false;
     this.pending = this.info = undefined;
   }
@@ -247,7 +464,7 @@ export class DeviceControls extends LitElement {
       control_launch_disabled:
         "Experimental Library playback is disabled in integration settings.",
       control_uncertain:
-        "An administrator must inspect and acknowledge the previous uncertain command.",
+        "Player controls are paused. Ask an administrator to review the player.",
       control_limit:
         "Control receipt storage is full. Administrator maintenance is required.",
     };
@@ -300,6 +517,8 @@ export class DeviceControls extends LitElement {
     this.error = "";
     this.requestUpdate();
     try {
+      if (this.inputRead) await this.inputRead.catch(() => undefined);
+      if (generation !== this.generation) return;
       await work();
     } catch (error) {
       if (generation === this.generation) this.fail(error);
@@ -374,14 +593,15 @@ export class DeviceControls extends LitElement {
     } else this.wakeTimer = setTimeout(() => void this.pollWake(), delay);
     this.requestUpdate();
   }
-  private async refresh() {
+  async refresh() {
     await this.action(async () => {
       await this.readStatus();
       await this.load();
     });
   }
-  private async prepare(operation: string) {
+  private async prepare(operation: string, inputText?: string) {
     if (this.pending) return;
+    this.lastOutcome = undefined;
     await this.action(async () => {
       const generation = this.generation;
       const review = await this.client!.controlPrepare(
@@ -389,6 +609,7 @@ export class DeviceControls extends LitElement {
         operation,
         operation === "launch" ? this.versionId || undefined : undefined,
         this.selectedPlayer || undefined,
+        inputText,
       );
       if (generation !== this.generation) return;
       // Preflight is automatic; the explicit command click is the user's intent.
@@ -396,13 +617,26 @@ export class DeviceControls extends LitElement {
       this.pending = this.client!.prepareControl(this.scope!, review.token);
       await this.send();
     });
+    if (
+      operation === "search" &&
+      this.dialog === "remote" &&
+      (this.lastOutcome === "acknowledged" ||
+        this.lastOutcome === "state_observed")
+    ) {
+      this.renderRoot
+        .querySelector<HTMLInputElement>("#player-search")
+        ?.focus({ preventScroll: true });
+      clearTimeout(this.inputTimer);
+      void this.pollInput();
+    }
   }
   private async send() {
     if (!this.pending) return;
     const generation = this.generation;
     const result = await this.client!.controlExecute(this.pending);
     if (generation !== this.generation) return;
-    this.notice = OUTCOMES[result.outcome];
+    this.lastOutcome = result.outcome;
+    this.notice = FAILURE_OUTCOMES[result.outcome] ?? "";
     this.pending = undefined;
     const operation = this.lastOperation;
     if (["state_observed", "acknowledged"].includes(result.outcome)) {
@@ -426,6 +660,7 @@ export class DeviceControls extends LitElement {
     event?.preventDefault();
     // Keep durable server receipts authoritative; closing never replays a command.
     this.stopWaking();
+    this.stopInputPolling();
     this.generation++;
     this.busy = false;
     this.pending = undefined;
@@ -435,8 +670,8 @@ export class DeviceControls extends LitElement {
     this.dialog = "players";
     this.requestUpdate();
   }
-  private async openRemote() {
-    if (this.busy || this.pending) return;
+  async openRemote() {
+    if (!this.canOpenRemote()) return;
     const generation = this.generation;
     this.dialog = "remote";
     this.acknowledge = "";
@@ -444,6 +679,7 @@ export class DeviceControls extends LitElement {
     await this.updateComplete;
     if (generation === this.generation && this.isConnected)
       this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.showModal();
+    void this.pollInput();
   }
   private async choosePlayer() {
     if (this.busy || this.pending) return;
@@ -485,16 +721,12 @@ export class DeviceControls extends LitElement {
       ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
       ${
         this.pending
-          ? html`<p class="warning">
-                The result is not confirmed. Check the same request; it will not
-                replay an accepted command.
-              </p>
-              <button
-                ?disabled=${this.busy}
-                @click=${() => this.action(() => this.send())}
-              >
-                Check command result
-              </button>`
+          ? html`<button
+              ?disabled=${this.busy}
+              @click=${() => this.action(() => this.send())}
+            >
+              Check command result
+            </button>`
           : nothing
       }
       ${this.notice ? html`<p role="status">${this.notice}</p>` : nothing}
@@ -525,7 +757,7 @@ export class DeviceControls extends LitElement {
       !!this.pending ||
       blocked;
     return html`<section
-      class=${this.mode === "remote" ? "card control-card" : "device-controls"}
+      class=${this.mode === "remote" ? `card control-card${this.hideRemote ? " embedded" : ""}` : "device-controls"}
     >
       ${
         this.mode === "remote"
@@ -534,12 +766,27 @@ export class DeviceControls extends LitElement {
               <button
                 type="button"
                 ?disabled=${disabled}
-                ?hidden=${this.inlineRemote}
+                ?hidden=${this.inlineRemote || this.hideRemote}
                 @click=${this.openRemote}
+                aria-label="Open remote"
+                title="Open remote"
               >
-                Remote
+                <svg
+                  class="remote-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  aria-hidden="true"
+                >
+                  <rect x="6" y="2" width="12" height="20" rx="4" />
+                  <circle cx="12" cy="8" r="2" />
+                  <path d="M10 14h4M10 17h4" /></svg
+                ><span class="remote-label">Remote</span>
               </button>
               <button
+                class="refresh-player"
+                ?hidden=${this.hideRefresh}
                 ?disabled=${this.busy || !info?.enabled || !this.selectedPlayer}
                 @click=${this.refresh}
               >
@@ -626,10 +873,10 @@ export class DeviceControls extends LitElement {
                   ${this.waking ? html`<span role="status">◌ Starting player…</span>` : nothing}
                 `
       }
-      ${this.mode === "remote" && this.inlineRemote && info?.enabled ? remoteControls(player?.name || "Kaleidescape player", !!disabled, !!this.status?.ready, (operation) => void this.prepare(operation)) : nothing}
+      ${this.mode === "remote" && this.inlineRemote && info?.enabled ? remoteControls(!!disabled, !!this.status?.ready, this.status?.state.mode !== 0, this.remoteVisibility, (operation) => void this.prepare(operation)) : nothing}
       ${this.dialog !== "remote" || this.acknowledge ? this.feedback() : nothing}
-      ${blocked && !(info?.can_manage && this.scope.permissions.edit) ? html`<p class="warning">This player needs administrator review of an uncertain command before more commands can be sent.</p>` : nothing}
-      ${info?.can_manage && this.scope.permissions.edit ? info.pending.map((item) => html`<p class="warning">Unconfirmed ${item.operation} for ${info.players.find((row) => row.id === item.player_id)?.name || "a previously selected player"}. <button type="button" ?disabled=${this.busy} @click=${() => this.reviewPending(item.request_id)}>I inspected the player…</button></p>`) : nothing}
+      ${blocked && !(info?.can_manage && this.scope.permissions.edit) ? html`<p class="warning">Player controls are paused. Ask an administrator to review the player.</p>` : nothing}
+      ${info?.can_manage && this.scope.permissions.edit ? info.pending.map((item) => html`<p class="warning">Player controls are paused for ${info.players.find((row) => row.id === item.player_id)?.name || "a previously selected player"}. <button type="button" ?disabled=${this.busy} @click=${() => this.reviewPending(item.request_id)}>I inspected the player…</button></p>`) : nothing}
       <dialog
         ?data-admin-dialog=${!!this.acknowledge}
         class=${this.dialog === "remote" && !this.acknowledge ? "database-dialog remote-dialog" : "database-dialog"}
@@ -638,7 +885,8 @@ export class DeviceControls extends LitElement {
       >
         <div class="card-head">
           <h2>
-            ${this.acknowledge ? "Review unconfirmed command" : this.dialog === "remote" ? "Theater Remote" : "Choose Player"}
+            ${this.dialog === "remote" && !this.acknowledge ? html`<img class="remote-header-icon" src=${companionIcon} alt="" />` : nothing}
+            ${this.acknowledge ? "Restore player controls" : this.dialog === "remote" ? `${player?.name || "Kaleidescape player"} Remote` : "Choose Player"}
           </h2>
           ${closeButton((event) => this.close(event))}
         </div>
@@ -649,10 +897,67 @@ export class DeviceControls extends LitElement {
                 commands and does not resend the earlier command.
               </p>`
             : this.dialog === "remote"
-              ? html`${remoteControls(
-                  player?.name || "Kaleidescape player",
+              ? html`${
+                  this.searchInput
+                    ? html`<section
+                        class="remote-search"
+                        aria-label="Player search keyboard"
+                      >
+                        <label for="player-search"
+                          >${this.searchInput.prompt}</label
+                        >
+                        <div>
+                          <input
+                            id="player-search"
+                            type="text"
+                            maxlength="120"
+                            autocomplete="off"
+                            enterkeyhint="done"
+                            @keydown=${(event: KeyboardEvent) => {
+                              if (event.key === "Enter" && !event.isComposing) {
+                                event.preventDefault();
+                                void this.finishSearch();
+                              }
+                            }}
+                            .value=${this.searchDraft}
+                            @input=${(event: Event) => {
+                              this.searchDraft = (
+                                event.target as HTMLInputElement
+                              ).value;
+                              this.searchDirty = true;
+                              this.scheduleSearch();
+                              this.requestUpdate();
+                            }}
+                          />
+                          ${
+                            !this.liveTyping
+                              ? html`<button
+                                  type="button"
+                                  ?disabled=${!!disabled || !this.searchDirty}
+                                  @click=${() => void this.sendSearch()}
+                                >
+                                  Send
+                                </button>`
+                              : nothing
+                          }
+                          <button
+                            type="button"
+                            ?disabled=${!!disabled || this.searchDirty}
+                            @click=${() => void this.finishSearch()}
+                          >
+                            Done
+                          </button>
+                        </div>
+                        <p class="muted">
+                          ${this.liveTyping ? "Text is sent as you type." : "Send text before selecting Done."}
+                        </p>
+                      </section>`
+                    : nothing
+                }${remoteControls(
                   !!disabled,
                   !!this.status?.ready,
+                  this.status?.state.mode !== 0,
+                  this.remoteVisibility,
                   (operation) => void this.prepare(operation),
                 )}${this.feedback()}`
               : html`

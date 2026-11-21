@@ -75,7 +75,35 @@ class RepositoryTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["viewing_count"], 2)
         self.assertEqual(result["month_viewing_count"], 1)
         self.assertEqual(result["month_watched_seconds"], 3600)
+        self.assertEqual(result["year_viewing_count"], 2)
+        self.assertEqual(result["year_watched_seconds"], 7200)
         self.assertEqual(result["watched_seconds"], 7200)
+
+    async def test_year_totals_respect_local_year_future_and_deletions(self):
+        for started in (
+            "2026-01-01T05:59:00Z",
+            "2026-01-01T06:00:00Z",
+            "2026-11-06T00:00:00Z",
+        ):
+            await self.repository.async_create(
+                request_id(),
+                viewing(started_at=started, status="partial", watched_seconds=600),
+            )
+        deleted = await self.repository.async_create(
+            request_id(),
+            viewing(started_at="2026-02-01T12:00:00Z", watched_seconds=600),
+        )
+        await self.repository.async_delete(request_id(), deleted["viewing"]["id"], 1)
+        with patch(
+            "custom_components.kaleidescape_companion.core.repository.datetime"
+        ) as clock:
+            clock.now.return_value = datetime(
+                2026, 11, 5, 12, tzinfo=ZoneInfo("America/Chicago")
+            )
+            result = await self.repository.async_info(timezone="America/Chicago")
+        self.assertEqual(result["year_viewing_count"], 1)
+        self.assertEqual(result["year_watched_seconds"], 600)
+        self.assertEqual(result["viewing_count"], 3)
 
     async def test_persistence_and_retry_survive_restart(self):
         request = request_id()

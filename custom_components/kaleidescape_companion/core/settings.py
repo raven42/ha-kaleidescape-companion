@@ -1,5 +1,6 @@
 """One-player tracking configuration and stable entity references."""
 
+import math
 from typing import Any
 from uuid import uuid4
 
@@ -28,6 +29,16 @@ ROLES = {
     "play_status": "sensor",
     "media_location": "sensor",
 }
+
+
+def resume_minutes(config: dict) -> int:
+    """Read current settings or convert the legacy hour-based option."""
+    value = config.get("resume_minutes", config.get("resume_hours", 1))
+    if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
+        raise ValueError("invalid_rules")
+    if "resume_minutes" not in config:
+        value *= 60
+    return max(1, min(60, round(value)))
 
 
 def entity_ids(hass: HomeAssistant, config: dict) -> dict[str, str | None]:
@@ -73,16 +84,25 @@ def form(hass: HomeAssistant, config: dict) -> p.Schema:
         )
     )
     properties[
+        p.Required(
+            "partial_minimum_minutes", default=config.get("partial_minimum_minutes", 10)
+        )
+    ] = selector.NumberSelector(
+        selector.NumberSelectorConfig(
+            min=1, max=1440, step=1, mode=selector.NumberSelectorMode.BOX
+        )
+    )
+    properties[
         p.Required("minimum_seconds", default=config.get("minimum_seconds", 300))
     ] = selector.NumberSelector(
         selector.NumberSelectorConfig(
             min=1, max=3600, step=1, mode=selector.NumberSelectorMode.BOX
         )
     )
-    properties[p.Required("resume_hours", default=config.get("resume_hours", 24))] = (
+    properties[p.Required("resume_minutes", default=resume_minutes(config))] = (
         selector.NumberSelector(
             selector.NumberSelectorConfig(
-                min=0, max=168, step=1, mode=selector.NumberSelectorMode.BOX
+                min=1, max=60, step=1, mode=selector.NumberSelectorMode.BOX
             )
         )
     )
@@ -246,12 +266,31 @@ def validate(hass: HomeAssistant, user_input: dict[str, Any], previous: dict) ->
     for key, default, minimum, maximum in (
         ("minimum_runtime_minutes", DEFAULT_MINIMUM_RUNTIME_MINUTES, 0, 1440),
         ("minimum_seconds", 300, 1, 3600),
-        ("resume_hours", 24, 0, 168),
+        ("partial_minimum_minutes", 10, 1, 1440),
     ):
         value = user_input.get(key, previous.get(key, default))
         if type(value) not in (int, float) or not minimum <= value <= maximum:
             raise ValueError("invalid_rules")
+        if key == "partial_minimum_minutes" and value != int(value):
+            raise ValueError("invalid_rules")
         config[key] = float(value)
+    if "resume_minutes" in user_input:
+        value = user_input["resume_minutes"]
+        if (
+            type(value) not in (int, float)
+            or not 1 <= value <= 60
+            or value != int(value)
+        ):
+            raise ValueError("invalid_rules")
+        config["resume_minutes"] = int(value)
+    else:
+        legacy = (
+            {"resume_hours": user_input["resume_hours"]}
+            if "resume_hours" in user_input
+            else previous
+        )
+        config["resume_minutes"] = resume_minutes(legacy)
+    config.pop("resume_hours", None)
     if type(config["tracking_enabled"]) is not bool:
         raise ValueError("invalid_rules")
     if not config["tracking_enabled"]:

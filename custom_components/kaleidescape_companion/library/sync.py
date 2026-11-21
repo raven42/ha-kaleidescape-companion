@@ -21,15 +21,15 @@ from ..core.logging import safe_exception
 from ..core.models import JournalError
 from ..core.security import async_finish_cleanup
 from ..core.tasks import async_wait
-from ..vendor.kaleidescape.error import KaleidescapeError
-from ..vendor.kaleidescape.library_parser import LibraryFormatError, artwork_path
-from ..vendor.kaleidescape.local_browser import (
+from ..kaleidescape_browser import (
+    BrowserError,
     BrowserOutcomeUnknownError,
     BrowserResponse,
     BrowserResponseError,
     LocalLibrary,
-    _removal_path,
+    is_removal_path,
 )
+from ..kaleidescape_browser.parser import LibraryFormatError, artwork_path
 from .collection_queue import fingerprint as queue_fingerprint
 from .collection_queue import normalized
 from .collections import member_hash, parameters
@@ -133,7 +133,7 @@ class LibrarySync:
         async def wait_for(task):
             try:
                 await async_wait(task, report_abandoned=False)
-            except JournalError, KaleidescapeError, ClientError, OSError, TimeoutError:
+            except JournalError, BrowserError, ClientError, OSError, TimeoutError:
                 pass
 
         for task in tuple(self.collection_accepts):
@@ -147,7 +147,7 @@ class LibrarySync:
                     await self.collection_task
                 except (
                     JournalError,
-                    KaleidescapeError,
+                    BrowserError,
                     ClientError,
                     OSError,
                     TimeoutError,
@@ -192,7 +192,7 @@ class LibrarySync:
                 return JournalError(
                     "library_timeout", "Collection operation exceeded its time limit"
                 )
-            except ClientError, KaleidescapeError, OSError, UnicodeError:
+            except ClientError, BrowserError, OSError, UnicodeError:
                 return JournalError(
                     "library_unreachable", "Collection operation could not be confirmed"
                 )
@@ -313,7 +313,7 @@ class LibrarySync:
         return response
 
     async def _post_collection_add(self, handle, collection, authorize):
-        """Use pyk's add-only form with no automatic retry."""
+        """Submit the server browser's validated add form once."""
         await self.browser.add_to_collection(handle, collection, pre_submit=authorize)
 
     async def async_enqueue_collection(
@@ -741,7 +741,7 @@ class LibrarySync:
             )
 
     async def post(self, path: str, fields: dict[str, str]) -> BrowserResponse:
-        """Companion-owned, pinned multipart transport for pyk's local browser."""
+        """Submit a multipart form through Companion's pinned HA transport."""
         operation = self._post_response(path, fields)
         if asyncio.current_task() is self.collection_task:
             return await self._collection_transport("post", operation)
@@ -750,7 +750,7 @@ class LibrarySync:
     async def _post_response(
         self, path: str, fields: dict[str, str]
     ) -> BrowserResponse:
-        if path != "/movies" and not _removal_path(path):
+        if path != "/movies" and not is_removal_path(path):
             raise JournalError("library_destination", "Library route was rejected")
         form = MultipartWriter("form-data")
         for name, value in fields.items():
@@ -1000,7 +1000,7 @@ class LibrarySync:
         return min(ips, key=lambda ip: ":" in ip)
 
     async def get(self, path: str) -> BrowserResponse:
-        """Pin validated DNS results and return bounded bytes to pyk."""
+        """Pin validated DNS results and return bounded bytes to the browser client."""
         operation = self._get_response(path)
         if asyncio.current_task() is self.collection_task:
             kind = (
@@ -1066,7 +1066,7 @@ class LibrarySync:
             )
 
     async def _get(self, path: str, *, image=False):
-        """Compatibility probe for transport tests; runtime parsing lives in pyk."""
+        """Probe the transport with the same parser used by the browser client."""
         response = await self.get(path)
         if response.status != 200 or response.content_encoding.lower() != "identity":
             raise JournalError(
@@ -1172,7 +1172,7 @@ class LibrarySync:
         except ClientError, OSError, TimeoutError, UnicodeError:
             self.error = "library_unreachable"
             failed = True
-        except KaleidescapeError:
+        except BrowserError:
             self.error = "library_format"
             failed = True
         except Exception as error:
@@ -1276,7 +1276,7 @@ class LibrarySync:
                 # Preserve previous collections; refresh the valid catalog.
                 memberships = None
                 self.error = error.code
-            except KaleidescapeError:
+            except BrowserError:
                 memberships = None
                 self.error = "library_format"
         await self.repository.async_library_catalog(self.origin, rows, memberships)
@@ -1327,7 +1327,7 @@ class LibrarySync:
                 if error.code in {"backup_in_progress", "busy", "not_ready"}:
                     raise
                 self.error = error.code
-            except KaleidescapeError:
+            except BrowserError:
                 self.error = "library_format"
             except ClientError, OSError, TimeoutError, UnicodeError:
                 self.error = "library_unreachable"

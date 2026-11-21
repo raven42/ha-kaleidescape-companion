@@ -3,7 +3,7 @@
 from time import monotonic
 
 from ..core.models import invalid
-from ..core.search import matches, normalized, quoted, score
+from ..core.search import Matcher, normalized
 from .browse import (
     FAVORITE_SQL,
     PURCHASE_SQL,
@@ -34,6 +34,7 @@ def search(db, source, query, excluded, fuzzy=True, weeks=2, today=None):
         (source,),
     ).fetchall()
     ranked = []
+    matcher = Matcher(raw, fuzzy)
     deadline = monotonic() + 1
     truncated = len(rows) > 10000
     for row in rows[:10000]:
@@ -42,9 +43,7 @@ def search(db, source, query, excluded, fuzzy=True, weeks=2, today=None):
             break
         ranked.append(
             (
-                score(query, normalized(row["title"]))
-                if fuzzy and not quoted(raw) and (query or not raw.strip())
-                else int(bool(raw.strip()) and matches(row["title"], raw)),
+                matcher.relevance(row["title"]) if raw.strip() else 0,
                 row["title"].casefold(),
                 row["id"],
             )

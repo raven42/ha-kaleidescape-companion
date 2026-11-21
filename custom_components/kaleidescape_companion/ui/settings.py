@@ -23,7 +23,8 @@ OPTION_FIELDS = frozenset(
         "media_location",
         "minimum_runtime_minutes",
         "minimum_seconds",
-        "resume_hours",
+        "partial_minimum_minutes",
+        "resume_minutes",
     }
     | LIBRARY_DEFAULTS.keys()
     | CONTROL_DEFAULTS.keys()

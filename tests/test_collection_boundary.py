@@ -10,11 +10,13 @@ import test_library as library
 import test_library_collections as collections
 from _expected_logs import expected_log
 
-from custom_components.kaleidescape_companion.library.store import title_id
-from custom_components.kaleidescape_companion.vendor.kaleidescape.local_browser import (
-    REMOVAL_ACTIONS,
+from custom_components.kaleidescape_companion.kaleidescape_browser import (
     BrowserResponse,
 )
+from custom_components.kaleidescape_companion.kaleidescape_browser.client import (
+    REMOVAL_ACTIONS,
+)
+from custom_components.kaleidescape_companion.library.store import title_id
 
 
 class CollectionBoundaryTest(unittest.IsolatedAsyncioTestCase):

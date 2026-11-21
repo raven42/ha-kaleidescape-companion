@@ -192,7 +192,8 @@ export class KaleidescapeTransfers extends LitElement {
         const review = await this.client.reconcilePurchases(this.scope);
         if (generation !== this.generation) return;
         if ("empty" in review)
-          this.notice = "There are no unmatched purchases.";
+          this.notice =
+            "There are no unmatched purchase records. Titles without purchase records are not listed here; add their information in Library → Purchase details or import their receipts.";
         else {
           this.review = review;
           this.selected.clear();
@@ -207,6 +208,49 @@ export class KaleidescapeTransfers extends LitElement {
           this.busy();
           this.requestUpdate();
         }
+      }
+    }
+  }
+  private async autoMatchPurchases() {
+    if (
+      !this.client ||
+      !this.scope ||
+      this.working ||
+      this.pending ||
+      this.disabled ||
+      this.matching
+    )
+      return;
+    const generation = this.generation;
+    this.working = true;
+    this.error = this.notice = "";
+    this.busy();
+    this.requestUpdate();
+    try {
+      const result = await this.client.autoMatchPurchases(this.scope);
+      if (generation !== this.generation) return;
+      this.review = undefined;
+      this.selected.clear();
+      if (result.matched_count) {
+        this.dispatchEvent(
+          new CustomEvent("database-changed", {
+            bubbles: true,
+            composed: true,
+          }),
+        );
+      }
+      const review = await this.client.reconcilePurchases(this.scope);
+      if (generation !== this.generation) return;
+      this.review = "empty" in review ? undefined : review;
+      this.notice = `Automatically matched ${counted(result.matched_count, "purchase")}. Ambiguous or conflicting purchases remain for review.`;
+      this.page = 0;
+    } catch (error) {
+      if (generation === this.generation) this.fail(error);
+    } finally {
+      if (generation === this.generation) {
+        this.working = false;
+        this.busy();
+        this.requestUpdate();
       }
     }
   }
@@ -743,9 +787,18 @@ export class KaleidescapeTransfers extends LitElement {
     if (this.purchaseReview)
       return html`
         <p>
-          Choose a Library match for each purchase, then apply the selected
-          changes.
+          Reconcile purchase records that are not linked to a Library title.
+          Automatically match unambiguous purchases or choose a Library match
+          for each purchase and apply the selected changes.
         </p>
+        <div class="actions">
+          <button
+            ?disabled=${blocked || !!this.matching || !this.scope?.library_enabled}
+            @click=${this.autoMatchPurchases}
+          >
+            Auto-match purchases
+          </button>
+        </div>
         ${this.notice ? html`<p role="status">${this.notice}</p>` : nothing}
         ${this.renderReview(blocked)}
       `;

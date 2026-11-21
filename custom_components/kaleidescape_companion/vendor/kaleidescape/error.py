@@ -31,11 +31,11 @@ class KaleidescapeError(Exception):
 
 
 class RequestNotSentError(KaleidescapeError):
-    """A command was rejected before any bytes could be handed to the transport."""
+    """The request was not sent to the device."""
 
 
 class RequestOutcomeUnknownError(KaleidescapeError):
-    """A command may have reached the device, but its outcome is unconfirmed."""
+    """The request may have been executed without a complete reply."""
 
 
 class SystemNotFoundError(Exception):

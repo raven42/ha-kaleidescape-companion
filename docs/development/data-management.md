@@ -67,7 +67,7 @@ prevents links from being generated for a stale selection.
 | Table                                                                          | Supported editing/deletion                                                                                                                   |
 | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `viewings`                                                                     | Correct title/times/runtime/watched time/status/notes; permanently delete closed entries and their session references                        |
-| `sessions`                                                                     | Correct title/runtime/watched time or delete closed sessions; viewing summaries are not automatically recalculated                           |
+| `sessions`                                                                     | Correct title/runtime/watched time/starting position or delete closed sessions; viewing summaries are not automatically recalculated         |
 | `library`                                                                      | Correct title, known descriptive metadata JSON, purchase/detection dates, paid/retail summary prices and availability; deletion is protected |
 | `purchase_records`                                                             | Inspect/search/sort; edit approved receipt fields through the reviewed purchase correction workflow                                          |
 | `library_collections`                                                          | Correct detection dates/availability; delete only an empty local collection                                                                  |
@@ -138,8 +138,11 @@ alter journal/catalog revisions or invalidate a reviewed content import.
 
 ## Search conditions and completion
 
-Plain text searches literal substrings across the selected table's fields. For
-predicates, use a field/operator condition, optionally beginning with WHERE:
+Plain text searches literal substrings across the selected table's fields,
+ignoring case and common Latin accents and variants. `CONTAINS` and `LIKE`
+predicates use the same folding; equality and ordering comparisons retain their
+existing semantics. For predicates, use a field/operator condition, optionally
+beginning with WHERE:
 
 ```sql
 purchased_on IS NULL
@@ -213,6 +216,10 @@ view. Related-row buttons follow approved foreign keys (including composite
 collection keys) and known local references, switch table, apply an exact
 condition and select the matching row. Missing targets are reported, not
 recreated.
+
+For a closed session, `start_position_seconds` can be corrected to a nonnegative
+number of seconds or cleared to NULL when unknown. The Journal calendar uses it
+to distinguish a movie started near the beginning from one resumed mid-movie.
 
 Typing into an editable NULL field clears its NULL selection. Checking NULL
 explicitly clears the stored value on save. IDs and other integrity protections
@@ -372,8 +379,11 @@ identified title can still be matched incorrectly. Check the results and use
 manual import when that risk is unacceptable.
 
 The response status is `imported`, `unchanged`, or `needs_review`, with counts.
-Unambiguous matches and unmatched purchases are saved together; unmatched rows
-remain unlinked until an administrator reviews them. Replaying unchanged
+Unambiguous matches and unmatched purchases are saved together. Each complete
+Library scan retries unlinked purchases against the current source. A unique
+matching Store link or exact title can link a purchase automatically; a known
+release year must agree. Ambiguous matches, conflicting evidence and protected
+purchase repairs remain unlinked for administrator review. Replaying unchanged
 normalized receipt records does not duplicate an invoice; changed title, date,
 order or link evidence can produce a different identity. Similar receipts are
 held for review without being saved when their order, title, date or link
@@ -452,16 +462,19 @@ choosing a match proves two invoices are duplicates.
 Open **Database → Reconcile purchases** to review unlinked database records and
 choose a scanned Library entry. No receipt JSON is required, and automatic
 tracking may remain on. Match choices and selected entries show a cached Library
-cover when available, using the authenticated artwork endpoint. A new Library
-scan makes entries available for manual matching. JSON exports contain linked
-invoices in the compatible Library export and unlinked purchases separately;
-SQLite backups retain the purchase table, repair evidence and replay barriers.
-JSON exports and SQLite merge imports do not transfer repair evidence or replay
-barriers; they are not full restores. Use an offline SQLite backup restore to
-preserve those protections, and do not treat a JSON merge as a recovery of
-repair history. Manual import/reconciliation still requires a Library match for
-every selected purchase. The automation can save unmatched purchases without
-one.
+cover when available, using the authenticated artwork endpoint. **Auto-match
+purchases** immediately links unique, nonconflicting matches using the same
+rules as Library scans, then refreshes the remaining review. It can run while
+automatic recording is enabled. It retains invoice fields and leaves ambiguous
+or conflicting matches unlinked. A new Library scan can also link eligible
+purchases automatically. JSON exports contain linked invoices in the compatible
+Library export and unlinked purchases separately; SQLite backups retain the
+purchase table, repair evidence and replay barriers. JSON exports and SQLite
+merge imports do not transfer repair evidence or replay barriers; they are not
+full restores. Use an offline SQLite backup restore to preserve those
+protections, and do not treat a JSON merge as a recovery of repair history.
+Manual import/reconciliation still requires a Library match for every selected
+purchase. The automation can save unmatched purchases without one.
 
 The optional offline helper's `purchases.json` can also be reviewed using
 **Database → Merge Import**.

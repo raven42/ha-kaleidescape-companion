@@ -233,6 +233,72 @@ class SearchTest(unittest.IsolatedAsyncioTestCase):
         self.assertLess(titles.index("Director Movie"), titles.index("Writer Movie"))
         self.assertLess(titles.index("Director Movie"), titles.index("Producer Movie"))
 
+    async def test_accent_insensitive_search_across_views(self):
+        rows = [
+            {
+                **library.ROWS[0],
+                "source_handle": str(i),
+                "source_group": str(i),
+                "title": title,
+                "actors": ["Señor Østergård"],
+            }
+            for i, title in enumerate(("Amélie", "Amelie Again", "Other"))
+        ]
+        await self.repository.async_library_catalog(library.ORIGIN, rows, {})
+        await self.repository.async_create(
+            str(uuid4()), repository.viewing(title="Amélie")
+        )
+        for fuzzy in (False, True):
+            page = await self.repository.async_library_list(
+                library.SOURCE, {"query": "amelie", "fuzzy": fuzzy, "grouped": True}
+            )
+            self.assertEqual(page["items"][0]["title"], "Amélie")
+            self.assertEqual(page["total"], 2)
+            self.assertEqual(
+                len(
+                    (await self.repository.async_list(query='"amelie"', fuzzy=fuzzy))[
+                        "items"
+                    ]
+                ),
+                1,
+            )
+            self.assertEqual(
+                len(
+                    (
+                        await self.repository.async_library_search(
+                            library.SOURCE, "amelie", [], fuzzy
+                        )
+                    )["items"]
+                ),
+                2,
+            )
+            self.assertEqual(
+                (
+                    await self.repository.async_library_search(
+                        library.SOURCE, "amelie", [], fuzzy
+                    )
+                )["items"][0]["title"],
+                "Amélie",
+            )
+            self.assertEqual(
+                (
+                    await self.repository.async_library_list(
+                        library.SOURCE, {"query": "senor ostergard", "fuzzy": fuzzy}
+                    )
+                )["total"],
+                3,
+            )
+        for query in (
+            "amelie",
+            '"amelie"',
+            "title CONTAINS 'amelie'",
+            "title LIKE 'amelie%'",
+        ):
+            self.assertEqual(
+                (await self.repository.async_inspect("library", query=query))["total"],
+                2,
+            )
+
     async def test_quoted_phrases_across_all_worker_searches(
         self,
     ):

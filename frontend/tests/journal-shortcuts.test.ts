@@ -13,9 +13,7 @@ beforeEach(async () => {
   element = document.createElement(
     "kaleidescape-journal-shortcuts",
   ) as JournalShortcuts;
-  element.context = {};
-  element.scopeKey = "fictional:dataset";
-  element.value = "Original";
+  element.count = 43;
   document.body.append(element);
   await element.updateComplete;
 });
@@ -28,28 +26,13 @@ it("shows household shortcuts without an Add or unconditional Clear action", () 
   button("Journal options").click();
   expect(options).toHaveBeenCalledOnce();
 });
-it("submits popup search only on apply and clears it on context changes", async () => {
-  const search = vi.fn();
-  element.addEventListener("journal-search", search);
-  button("Search Journal").click();
-  await element.updateComplete;
-  const input = root().querySelector<HTMLInputElement>("input")!;
-  expect(input.value).toBe("Original");
-  input.value = "Fictional";
-  input.dispatchEvent(new Event("input"));
-  expect(search).not.toHaveBeenCalled();
-  root()
-    .querySelector("form")!
-    .dispatchEvent(new Event("submit", { cancelable: true }));
-  expect((search.mock.calls[0][0] as CustomEvent).detail).toBe("Fictional");
-  expect(root().querySelector("dialog")!.open).toBe(false);
-  button("Search Journal").click();
-  await element.updateComplete;
-  element.context = {};
-  element.value = "";
-  await element.updateComplete;
-  expect(root().querySelector("dialog")!.open).toBe(false);
-  expect(input.value).toBe("");
+it("shows the viewing count and delegates refresh", () => {
+  expect(root().querySelector("h2")?.textContent).toBe("Viewings (43)");
+  expect(button("Search Journal")).toBeNull();
+  const refresh = vi.fn();
+  element.addEventListener("journal-refresh", refresh);
+  button("Refresh Journal").click();
+  expect(refresh).toHaveBeenCalledOnce();
 });
 it("delegates Add viewing only when offered and disables all actions while blocked", async () => {
   element.allowAdd = true;
@@ -78,20 +61,45 @@ it("offers a separate way to leave a movie-filtered calendar", async () => {
   expect(clear).toHaveBeenCalledOnce();
   expect(button("Clear Journal search and filters")).toBeNull();
 });
-it("keeps mobile calendar totals to the selected month's count and watched time, including loading and singular forms", () => {
+it("shows the selected month, yearly and all-time totals, respecting every visibility choice", () => {
   const target = document.createElement("div");
-  render(
-    html`${journalTotals(info, { month: "Fictional month", count: 1, watchedSeconds: 5400, loading: false, error: "", empty: false }, true)}`,
-    target,
-  );
-  expect(target.querySelector(".calendar-totals-compact")!.textContent).toBe(
-    "1 viewing · 1h 30m watched",
-  );
-  expect(
-    target.querySelector(".calendar-totals-compact")!.textContent,
-  ).not.toContain("Total");
+  const calendar = {
+    month: "November 2026",
+    monthName: "November",
+    count: 1,
+    watchedSeconds: 5400,
+    loading: false,
+    error: "",
+    empty: false,
+  };
+  const totals = {
+    ...info,
+    viewing_count: 8,
+    watched_seconds: 36000,
+    year_viewing_count: 3,
+    year_watched_seconds: 10800,
+  };
+  for (let bits = 0; bits < 8; bits++) {
+    const options = {
+      calendar_show_month: !!(bits & 1),
+      calendar_show_year: !!(bits & 2),
+      calendar_show_total: !!(bits & 4),
+    };
+    render(html`${journalTotals(totals, calendar, true, options)}`, target);
+    const spans = [...target.querySelectorAll(".calendar-totals > span")].map(
+      (span) => span.textContent!.replace(/\s+/g, " ").trim(),
+    );
+    expect(spans).toEqual([
+      ...(options.calendar_show_month ? ["November: 1"] : []),
+      ...(options.calendar_show_year ? ["Year: 3"] : []),
+      ...(options.calendar_show_total ? ["Total: 8"] : []),
+    ]);
+    expect(
+      target.querySelector(".calendar-totals")?.getAttribute("style") ?? "",
+    ).toContain(spans.length ? `repeat(${spans.length},` : "");
+  }
   render(html`${journalTotals(info, undefined, true)}`, target);
-  expect(
-    target.querySelector(".calendar-totals-compact")!.textContent,
-  ).toContain("— viewings");
+  expect(target.textContent!.replace(/\s+/g, " ")).toContain(
+    "Selected Month: —",
+  );
 });

@@ -6,6 +6,12 @@ import { errorCode, JournalClient } from "../core/api";
 import type { JournalInfo, NowPlayingPlayer } from "../core/api";
 import { styles } from "../ui/styles";
 import "./controls";
+import { DeviceControls } from "./controls";
+import { actionIcon } from "../ui/action-icons";
+import { PreferenceStore } from "../ui/preference-store";
+import { closeButton, dismissBackdrop } from "../ui/dialog";
+import { DEFAULT_REMOTE_VISIBILITY, REMOTE_VISIBILITY_OPTIONS } from "./remote";
+import type { RemoteVisibility } from "./remote";
 
 const PLAYBACK: Record<string, string> = {
   playing: "Playing",
@@ -30,6 +36,7 @@ export class KaleidescapeNowPlaying extends LitElement {
     playerId: {},
     compact: { type: Boolean, reflect: true },
     showControls: { type: Boolean },
+    remoteAvailable: { state: true },
   };
   static styles = [
     styles,
@@ -61,6 +68,46 @@ export class KaleidescapeNowPlaying extends LitElement {
         max-height: min(56dvh, 560px);
         background: var(--secondary-background-color, #222);
       }
+      .player-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .now-options-icon {
+        display: none;
+      }
+      @media (max-width: 700px) {
+        .now-options-button {
+          display: inline-grid;
+          place-items: center;
+          width: 44px;
+          height: 44px;
+          min-height: 44px;
+          padding: 9px;
+        }
+        .now-options-label {
+          display: none;
+        }
+        .now-options-icon {
+          display: inline-flex;
+        }
+        .now-options-icon svg {
+          width: 22px;
+          height: 22px;
+        }
+      }
+      .refresh-button svg {
+        width: 22px;
+        height: 22px;
+      }
+      .refresh-button {
+        display: inline-grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        min-height: 44px;
+        padding: 9px;
+      }
       .cover img {
         width: 100%;
         height: 100%;
@@ -80,7 +127,7 @@ export class KaleidescapeNowPlaying extends LitElement {
           margin-top: 12px;
         }
         .playback-layout {
-          grid-template-columns: minmax(76px, 28%) minmax(0, 1fr);
+          grid-template-columns: minmax(100px, 40%) minmax(0, 1fr);
           gap: 12px;
           padding: 12px;
         }
@@ -114,6 +161,48 @@ export class KaleidescapeNowPlaying extends LitElement {
   playerId = "";
   compact = false;
   showControls = true;
+  private liveTyping = false;
+  private remoteVisibility: RemoteVisibility = { ...DEFAULT_REMOTE_VISIBILITY };
+  private preferences?: PreferenceStore;
+  private preferenceError = "";
+  private async loadPreferences() {
+    this.preferences?.dispose();
+    this.preferences = undefined;
+    this.liveTyping = false;
+    this.remoteVisibility = { ...DEFAULT_REMOTE_VISIBILITY };
+    if (!this.client || !this.scope?.permissions.read) return;
+    const store = new PreferenceStore(
+      this.client,
+      this.scope,
+      false,
+      (error) => {
+        if (store !== this.preferences) return;
+        this.preferenceError = error
+          ? "Could not save Now Playing options."
+          : "";
+        this.requestUpdate();
+      },
+      "interface",
+    );
+    this.preferences = store;
+    try {
+      const values = await store.load();
+      if (store === this.preferences) {
+        this.liveTyping = values.live_search_input === true;
+        this.remoteVisibility = Object.fromEntries(
+          REMOTE_VISIBILITY_OPTIONS.map(([key]) => [
+            key,
+            values[key] !== false,
+          ]),
+        ) as RemoteVisibility;
+      }
+    } catch {
+      if (store === this.preferences)
+        this.preferenceError = "Could not load Now Playing options.";
+    }
+    this.requestUpdate();
+  }
+  private remoteAvailable = false;
   private boundClient?: JournalClient;
   private boundScope = "";
   private generation = 0;
@@ -138,6 +227,8 @@ export class KaleidescapeNowPlaying extends LitElement {
   disconnectedCallback() {
     super.disconnectedCallback();
     document.removeEventListener("visibilitychange", this.visibility);
+    this.preferences?.dispose();
+    this.preferences = undefined;
     this.reset();
   }
   protected willUpdate(changed: PropertyValues) {
@@ -150,6 +241,7 @@ export class KaleidescapeNowPlaying extends LitElement {
       this.reset();
       this.boundClient = this.client;
       this.boundScope = key;
+      void this.loadPreferences();
       void this.refresh();
     } else if (changed.has("client") && !this.timer && !this.loading) {
       void this.refresh();
@@ -257,96 +349,213 @@ export class KaleidescapeNowPlaying extends LitElement {
     const active =
       player?.available && !["stopped", "none"].includes(player.play_status);
     return html`<section class="card now-playing" aria-label="Now Playing">
-        <div class="card-head">
-          <h2>Now Playing</h2>
+      <div class="card-head">
+        <h2>Now Playing</h2>
+        <div class="player-actions">
+          ${
+            this.showControls
+              ? html`<button
+                  class="refresh-button"
+                  type="button"
+                  aria-label="Open remote"
+                  title="Open remote"
+                  ?disabled=${!this.remoteAvailable}
+                  @click=${() => void this.renderRoot.querySelector<DeviceControls>("kaleidescape-device-controls")?.openRemote()}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    aria-hidden="true"
+                  >
+                    <rect x="6" y="2" width="12" height="20" rx="4" />
+                    <circle cx="12" cy="8" r="2" />
+                    <path d="M10 14h4M10 17h4" />
+                  </svg>
+                </button>`
+              : nothing
+          }
           <button
+            class="refresh-button"
+            type="button"
+            aria-label="Refresh playback and player state"
+            title="Refresh playback and player state"
             ?disabled=${this.loading || !this.boundScope}
             @click=${() => {
               this.imageKey = "";
               void this.refresh();
+              void this.renderRoot
+                .querySelector<DeviceControls>("kaleidescape-device-controls")
+                ?.refresh();
             }}
           >
-            Refresh playback
+            ${actionIcon("refresh")}
           </button>
+          ${
+            this.showControls
+              ? html`<button
+                  type="button"
+                  class="now-options-button"
+                  aria-label="Now Playing options"
+                  title="Options"
+                  aria-haspopup="dialog"
+                  aria-controls="now-playing-options"
+                  @click=${() => this.renderRoot.querySelector<HTMLDialogElement>("#now-playing-options")?.showModal()}
+                >
+                  <span class="now-options-label">Options</span>
+                  <span class="now-options-icon" aria-hidden="true"
+                    >${actionIcon("options")}</span
+                  >
+                </button>`
+              : nothing
+          }
         </div>
-        ${
-          this.error
-            ? html`<p class="playback-message" role="alert">${this.error}</p>`
-            : !player
-              ? html`<p class="playback-message" role="status">
+      </div>
+      ${
+        this.error
+          ? html`<p class="playback-message" role="alert">${this.error}</p>`
+          : !player
+            ? html`<p class="playback-message" role="status">
+                ${
+                  this.loading
+                    ? "Loading playback…"
+                    : "Automatic tracking is off. Configure a player in the integration options to show Now Playing."
+                }
+              </p>`
+            : html`<div class="playback-layout">
+                <div class="cover">
                   ${
-                    this.loading
-                      ? "Loading playback…"
-                      : "Automatic tracking is off. Configure a player in the integration options to show Now Playing."
+                    this.image
+                      ? html`<img
+                          src=${this.image}
+                          alt="Current movie cover"
+                          @error=${() => {
+                            const key = this.imageKey;
+                            this.clearImage();
+                            this.imageKey = key;
+                            this.requestUpdate();
+                          }}
+                        />`
+                      : html`<span>No artwork available</span>`
                   }
-                </p>`
-              : html`<div class="playback-layout">
-                  <div class="cover">
-                    ${
-                      this.image
-                        ? html`<img
-                            src=${this.image}
-                            alt="Current movie cover"
-                            @error=${() => {
-                              const key = this.imageKey;
-                              this.clearImage();
-                              this.imageKey = key;
-                              this.requestUpdate();
-                            }}
-                          />`
-                        : html`<span>No artwork available</span>`
-                    }
-                  </div>
-                  <div class="playback-detail">
-                    <small>${player.name ?? "Configured player"}</small>
-                    <h3>
-                      ${!player.available ? "Player unavailable" : active ? (player.title ?? "Unknown title") : "No movie playing"}
-                    </h3>
-                    ${player.available ? html`<p>${PLAYBACK[player.play_status] ?? "Unknown playback state"} · ${LOCATION[player.location] ?? "Unknown location"}</p>` : nothing}
-                    ${active && player.duration_seconds != null ? html`<p>Runtime · ${(player.duration_seconds / 60).toFixed(2)} min</p>` : nothing}
-                    ${
-                      this.scope?.permissions.edit && active && player.session
-                        ? html`<p>
-                              This session ·
-                              ${(player.session.watched_seconds / 60).toFixed(2)}
-                              min counted
-                            </p>
-                            <small
-                              >Pauses and scans are excluded.
-                              ${player.session.credits_confirmed ? "Credits confirmed; journal completion also requires the configured watch threshold." : "Credits not yet confirmed."}
-                              ${player.session.gap_count ? html` ${counted(player.session.gap_count, "timing gap")}.` : nothing}</small
-                            >`
-                        : nothing
-                    }
-                    ${
-                      this.scope?.permissions.edit &&
-                      player.recording_paused !== undefined
-                        ? html`<p role="status">
-                            ${this.recordingStatus(player, Boolean(active))}
-                            ${player.buffered_observations ? html` ${counted(player.buffered_observations, "update")} buffered.` : nothing}
-                          </p>`
-                        : nothing
-                    }
-                    <small
-                      >Live snapshot refreshes about every 5 seconds while
-                      visible.</small
-                    >
-                  </div>
-                </div>`
-        }
-      </section>
+                </div>
+                <div class="playback-detail">
+                  <small>${player.name ?? "Configured player"}</small>
+                  <h3>
+                    ${!player.available ? "Player unavailable" : active ? (player.title ?? "Unknown title") : "No movie playing"}
+                  </h3>
+                  ${player.available ? html`<p>${PLAYBACK[player.play_status] ?? "Unknown playback state"} · ${LOCATION[player.location] ?? "Unknown location"}</p>` : nothing}
+                  ${active && player.duration_seconds != null ? html`<p>Runtime · ${(player.duration_seconds / 60).toFixed(2)} min</p>` : nothing}
+                  ${
+                    this.scope?.permissions.edit && active && player.session
+                      ? html`<p>
+                            This session ·
+                            ${(player.session.watched_seconds / 60).toFixed(2)}
+                            min counted
+                          </p>
+                          <small
+                            >Pauses and scans are excluded.
+                            ${player.session.credits_confirmed ? "Credits confirmed; journal completion also requires the configured watch threshold." : "Credits not yet confirmed."}
+                            ${player.session.gap_count ? html` ${counted(player.session.gap_count, "timing gap")}.` : nothing}</small
+                          >`
+                      : nothing
+                  }
+                  ${
+                    this.scope?.permissions.edit &&
+                    player.recording_paused !== undefined
+                      ? html`<p role="status">
+                          ${this.recordingStatus(player, Boolean(active))}
+                          ${player.buffered_observations ? html` ${counted(player.buffered_observations, "update")} buffered.` : nothing}
+                        </p>`
+                      : nothing
+                  }
+                  <small
+                    >Live snapshot refreshes about every 5 seconds while
+                    visible.</small
+                  >
+                </div>
+              </div>`
+      }
       ${
         this.showControls
           ? html` <kaleidescape-device-controls
               .client=${this.client}
               .scope=${this.scope}
               .playerId=${this.playerId}
+              .hideRefresh=${true}
+              .hideRemote=${true}
+              .liveTyping=${this.liveTyping}
+              .remoteVisibility=${this.remoteVisibility}
+              @remote-availability=${(event: CustomEvent<boolean>) => {
+                this.remoteAvailable = event.detail;
+              }}
               @player-changed=${(event: CustomEvent<string>) => {
                 this.playerId = event.detail;
               }}
             ></kaleidescape-device-controls>`
           : nothing
-      }`;
+      }
+      ${
+        this.showControls
+          ? html`<dialog
+              id="now-playing-options"
+              class="database-dialog"
+              aria-labelledby="now-playing-options-title"
+              @click=${dismissBackdrop}
+            >
+              <div class="card-head">
+                <h2 id="now-playing-options-title">Now Playing options</h2>
+                ${closeButton(() => this.renderRoot.querySelector<HTMLDialogElement>("#now-playing-options")?.close())}
+              </div>
+              <p class="muted">
+                Changes save automatically for your HA user’s
+                ${this.preferences?.profile || "current"} layout.
+              </p>
+              <label class="check"
+                ><input
+                  type="checkbox"
+                  .checked=${this.liveTyping}
+                  @change=${(event: Event) => {
+                    this.liveTyping = (
+                      event.target as HTMLInputElement
+                    ).checked;
+                    void this.preferences?.set({
+                      live_search_input: this.liveTyping,
+                    });
+                    this.requestUpdate();
+                  }}
+                />
+                Send search text while typing</label
+              >
+              <fieldset>
+                <legend>Remote controls</legend>
+                ${REMOTE_VISIBILITY_OPTIONS.map(
+                  ([key, label]) =>
+                    html`<label class="check">
+                      <input
+                        type="checkbox"
+                        name=${key}
+                        .checked=${this.remoteVisibility[key]}
+                        @change=${(event: Event) => {
+                          const enabled = (event.target as HTMLInputElement)
+                            .checked;
+                          this.remoteVisibility = {
+                            ...this.remoteVisibility,
+                            [key]: enabled,
+                          };
+                          void this.preferences?.set({ [key]: enabled });
+                          this.requestUpdate();
+                        }}
+                      />${label}
+                    </label>`,
+                )}
+              </fieldset>
+              ${this.preferenceError ? html`<p role="alert">${this.preferenceError} <button @click=${() => this.preferences?.retry()}>Retry</button></p>` : nothing}
+            </dialog>`
+          : nothing
+      }
+    </section>`;
   }
 }
 if (!customElements.get("kaleidescape-now-playing"))

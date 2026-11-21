@@ -27,7 +27,7 @@ from custom_components.kaleidescape_companion.core.models import JournalError, i
 from custom_components.kaleidescape_companion.library.purchases import (  # noqa: E402
     index as purchase_index,
 )
-from custom_components.kaleidescape_companion.library.purchases import (
+from custom_components.kaleidescape_companion.library.purchases import (  # noqa: E402
     title_query,
 )
 from custom_components.kaleidescape_companion.library.title_matching import (  # noqa: E402

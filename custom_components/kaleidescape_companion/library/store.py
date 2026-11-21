@@ -45,6 +45,7 @@ def save_catalog(db, origin, rows, collections=None, *, detected_at=None):
         )
         batch, recent_groups = record_additions(db, source, rows, seen)
         db.execute("UPDATE library SET available=0 WHERE source_id=?", (source,))
+        new_ids = []
         for item in rows:
             handle = item["source_handle"]
             fingerprint = hashlib.sha256(
@@ -55,6 +56,8 @@ def save_catalog(db, origin, rows, collections=None, *, detected_at=None):
                 "WHERE source_id=? AND source_handle=?",
                 (source, handle),
             ).fetchone()
+            if existing is None:
+                new_ids.append(title_id(source, handle))
             data = (
                 json.loads(existing[0])
                 if existing
@@ -142,6 +145,12 @@ def save_catalog(db, origin, rows, collections=None, *, detected_at=None):
                 "UPDATE library_sources SET collections_synced_at=? WHERE id=?",
                 (seen, source),
             )
+        from .artwork_links import reconcile
+
+        reconcile(db, source=source, target_ids=new_ids, apply=True, bump_sources=False)
+        from .purchase_reconciliation import auto_match
+
+        auto_match(db, source)
         changed(db, source)
 
 

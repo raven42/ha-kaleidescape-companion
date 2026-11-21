@@ -277,9 +277,7 @@ it("routes compact calendar Options and Add viewing to the shared dialogs", asyn
   await mount();
   modalClose(calendarRoot().querySelector("dialog")!).click();
   await panel.updateComplete;
-  const shortcuts = root().querySelector(
-    "kaleidescape-journal-shortcuts",
-  )!.shadowRoot!;
+  const shortcuts = root().querySelector("kaleidescape-journal-calendar")!;
   shortcuts
     .querySelector<HTMLButtonElement>('[aria-label="Journal options"]')!
     .click();

@@ -102,8 +102,60 @@ it("categorizes every current option exactly once and has one automation invento
   expect(root().querySelector("#settings-journal")!.textContent).toContain(
     "Resume window",
   );
+  const resume = root().querySelector<HTMLInputElement>(
+    '[name="resume_minutes"]',
+  )!;
+  expect([resume.value, resume.min, resume.max, resume.step]).toEqual([
+    "60",
+    "1",
+    "60",
+    "1",
+  ]);
+  expect(resume.parentElement!.textContent).toContain("minutes");
+  const partial = root().querySelector<HTMLInputElement>(
+    '[name="partial_minimum_minutes"]',
+  )!;
+  expect([partial.value, partial.min, partial.step]).toEqual(["10", "1", "1"]);
+  for (const key of [
+    "minimum_runtime_minutes",
+    "minimum_seconds",
+    "partial_minimum_minutes",
+    "resume_minutes",
+  ]) {
+    expect(root().getElementById(`${key}-hint`)?.textContent).toMatch(
+      /example/i,
+    );
+  }
   expect(root().querySelector("#settings-library")!.textContent).toContain(
     "Collection visibility",
+  );
+});
+
+it("requests a targeted refresh for missing metadata or artwork", async () => {
+  await mount({ library_enabled: true });
+  await select("metadata");
+  const child = root().querySelector("kaleidescape-enrichment-settings")!;
+  const status = vi.spyOn(element.client!, "metadataStatus").mockResolvedValue({
+    enabled: true,
+    active: 0,
+    queued: 0,
+    failed: 0,
+    running: false,
+    processed: 0,
+    updated: 0,
+    skipped: 0,
+    total: 0,
+    error: null,
+    last_finished: null,
+  });
+  const button = [...child.shadowRoot!.querySelectorAll("button")].find(
+    (item) =>
+      item.textContent?.trim() === "Refresh missing metadata or artwork",
+  )!;
+  expect(button.disabled).toBe(false);
+  button.click();
+  await vi.waitFor(() =>
+    expect(status).toHaveBeenCalledWith(element.scope, true, true),
   );
 });
 
@@ -283,6 +335,10 @@ it("shows library and purchase summaries in About and loads totals on demand", a
   transport.purchaseTotals = {
     ...transport.purchaseTotals,
     purchase_count: 1,
+    unpaired_prices: 1,
+    missing_price_entries: 1,
+    currency_mismatch_entries: 0,
+    missing_information_titles: 4,
     currencies: [
       {
         currency: "$",
@@ -307,10 +363,28 @@ it("shows library and purchase summaries in About and loads totals on demand", a
   details.open = true;
   details.dispatchEvent(new Event("toggle"));
   await vi.waitFor(() => expect(details.textContent).toContain("$12.34"));
+  expect(details.textContent).toContain(
+    "Library titles missing purchase information",
+  );
+  expect(details.textContent!.replace(/\s+/g, " ")).toContain(
+    "Titles without a purchase entry are excluded",
+  );
+  expect(details.textContent).toContain("purchase dates");
+  expect(details.textContent).toContain(
+    "excluded from savings because a paid or retail price is missing",
+  );
+  expect(details.textContent).not.toContain(
+    "excluded from savings because the paid and retail prices use different currencies",
+  );
   details.open = false;
   details.dispatchEvent(new Event("toggle"));
   transport.purchaseTotals.currencies[0].library_cost = "$19.00";
+  transport.purchaseTotals.missing_price_entries = 0;
+  transport.purchaseTotals.currency_mismatch_entries = 1;
   details.open = true;
   details.dispatchEvent(new Event("toggle"));
   await vi.waitFor(() => expect(details.textContent).toContain("$19.00"));
+  expect(details.textContent?.replace(/\s+/g, " ")).toContain(
+    "excluded from savings because the paid and retail prices use different currencies",
+  );
 });

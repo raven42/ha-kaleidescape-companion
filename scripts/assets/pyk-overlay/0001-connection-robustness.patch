@@ -1,0 +1,272 @@
+diff --git a/kaleidescape/__init__.py b/kaleidescape/__init__.py
+index 5c52474..7fe8dd1 100644
+--- a/kaleidescape/__init__.py
++++ b/kaleidescape/__init__.py
+@@ -5,6 +5,14 @@ from . import const
+ from ._version import __version__
+ from .device import Device
+ from .dispatcher import Dispatcher
+-from .error import KaleidescapeError
++from .error import KaleidescapeError, RequestNotSentError, RequestOutcomeUnknownError
+ 
+-__all__ = ["Device", "Dispatcher", "KaleidescapeError", "__version__", "const"]
++__all__ = [
++    "Device",
++    "Dispatcher",
++    "KaleidescapeError",
++    "RequestNotSentError",
++    "RequestOutcomeUnknownError",
++    "__version__",
++    "const",
++]
+diff --git a/kaleidescape/connection.py b/kaleidescape/connection.py
+index 8d18dd7..79b4fd2 100644
+--- a/kaleidescape/connection.py
++++ b/kaleidescape/connection.py
+@@ -10,7 +10,12 @@ from collections.abc import Callable, Coroutine
+ from typing import TYPE_CHECKING, cast
+ 
+ from . import const
+-from .error import KaleidescapeError, MessageParseError, format_error
++from .error import (
++    MessageParseError,
++    RequestNotSentError,
++    RequestOutcomeUnknownError,
++    format_error,
++)
+ from .message import Response
+ 
+ if TYPE_CHECKING:
+@@ -53,6 +58,7 @@ class Connection:
+         self._reconnect_enabled: bool = False
+         self._pending_requests: dict[int, Request] = {}
+         self._next_seq: int = 0
++        self._event_tasks: set[asyncio.Task] = set()
+ 
+     @property
+     def dispatcher(self) -> Dispatcher:
+@@ -137,7 +143,9 @@ class Connection:
+                 if response.is_event:
+                     # Events are unsolicited notifications about a change in state.
+                     if self._on_event:
+-                        asyncio.create_task(self._on_event(response))
++                        task = asyncio.create_task(self._deliver_event(response))
++                        self._event_tasks.add(task)
++                        task.add_done_callback(self._event_tasks.discard)
+                 elif response.device_id == const.LOCAL_CPDID:
+                     if response.seq not in self._pending_requests:
+                         # Usually a late reply to a request that already timed out.
+@@ -157,6 +165,15 @@ class Connection:
+                 asyncio.create_task(self._handle_connection_error(err))
+                 return
+ 
++    async def _deliver_event(self, response: Response) -> None:
++        """Run an event callback and report failures."""
++        assert self._on_event is not None
++        try:
++            await self._on_event(response)
++        except Exception:  # pylint: disable=broad-except
++            # Application callbacks can raise arbitrary exceptions.
++            _LOGGER.exception("Event callback failed")
++
+     async def _handle_connection_error(self, err: Exception):
+         """Handle connection failures and schedule reconnect."""
+         if self._reconnect_task:
+@@ -221,6 +238,8 @@ class Connection:
+ 
+     async def _disconnect(self):
+         """Disconnect from server."""
++        for request in self._pending_requests.values():
++            request.fail(RequestOutcomeUnknownError("Connection closed before reply"))
+         if self._response_handler_task:
+             self._response_handler_task.cancel()
+             with contextlib.suppress(BaseException):
+@@ -239,7 +258,7 @@ class Connection:
+         if self._state != const.STATE_CONNECTED:
+             err = "Not connected to device"
+             _LOGGER.error(err)
+-            raise KaleidescapeError(err)
++            raise RequestNotSentError(err)
+ 
+         wait = 0.01
+         assert self._timeout is not None
+@@ -260,9 +279,12 @@ class Connection:
+                 await asyncio.sleep(wait)
+                 retries = retries - 1
+                 if retries <= 0:
+-                    raise ConnectionError from e
++                    raise RequestNotSentError("No request sequence available") from e
+                 continue
+ 
++        if self._state != const.STATE_CONNECTED or self._writer is None:
++            raise RequestNotSentError("Not connected to device")
++
+         self._pending_requests[request.seq] = request
+ 
+         try:
+@@ -275,7 +297,7 @@ class Connection:
+         except (TimeoutError, OSError, ConnectionError) as err:
+             msg = f"Request '{request}' failed with '{format_error(err)}'"
+             _LOGGER.warning(msg)
+-            raise KaleidescapeError(msg) from err
++            raise RequestOutcomeUnknownError(msg) from err
+ 
+         return response
+ 
+diff --git a/kaleidescape/device.py b/kaleidescape/device.py
+index 116115c..941e672 100644
+--- a/kaleidescape/device.py
++++ b/kaleidescape/device.py
+@@ -139,7 +139,7 @@ class Device:
+             await self.connect()
+             return
+ 
+-        if self.power.state != const.DEVICE_POWER_STATE_ON:
++        if self.power.state != const.DEVICE_POWER_STATE_ON or self.is_server_only:
+             return
+ 
+         results = await asyncio.gather(
+diff --git a/kaleidescape/dispatcher.py b/kaleidescape/dispatcher.py
+index 1f39649..50f6475 100644
+--- a/kaleidescape/dispatcher.py
++++ b/kaleidescape/dispatcher.py
+@@ -33,6 +33,7 @@ class Dispatcher:
+         self._signals: list[Signal] = []
+         self._loop = asyncio.get_event_loop()
+         self._disconnects = []
++        self._tasks: set[asyncio.Task] = set()
+ 
+     def connect(self, target: Callable) -> Signal:
+         """Return a new signal that runs the target function."""
+@@ -68,6 +69,19 @@ class Dispatcher:
+         while isinstance(check_target, functools.partial):
+             check_target = check_target.func
+         if inspect.iscoroutinefunction(check_target):
+-            return self._loop.create_task(target(*args))
+-        target(*args)
++            task = self._loop.create_task(self._run_target(target, *args))
++            self._tasks.add(task)
++            task.add_done_callback(self._tasks.discard)
++            return task
++        try:
++            target(*args)
++        except Exception:  # pylint: disable=broad-except
++            _LOGGER.exception("Signal listener failed")
+         return None
++
++    async def _run_target(self, target: Callable, *args: Any) -> None:
++        """Log async listener failures without leaking task exceptions."""
++        try:
++            await target(*args)
++        except Exception:  # pylint: disable=broad-except
++            _LOGGER.exception("Signal listener failed")
+diff --git a/kaleidescape/error.py b/kaleidescape/error.py
+index 3c9bad1..ffa342a 100644
+--- a/kaleidescape/error.py
++++ b/kaleidescape/error.py
+@@ -30,6 +30,14 @@ class KaleidescapeError(Exception):
+     """Kaleidescape errors."""
+ 
+ 
++class RequestNotSentError(KaleidescapeError):
++    """The request was not sent to the device."""
++
++
++class RequestOutcomeUnknownError(KaleidescapeError):
++    """The request may have been executed without a complete reply."""
++
++
+ class SystemNotFoundError(Exception):
+     """Error finding system."""
+ 
+diff --git a/kaleidescape/message.py b/kaleidescape/message.py
+index e6683e9..0fa9275 100644
+--- a/kaleidescape/message.py
++++ b/kaleidescape/message.py
+@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, ClassVar
+ 
+ from . import const
+ from .const import LOCAL_CPDID
+-from .error import KaleidescapeError, MessageError, MessageParseError
++from .error import MessageError, MessageParseError, RequestOutcomeUnknownError
+ 
+ if TYPE_CHECKING:
+     from .connection import Connection
+@@ -96,7 +96,17 @@ class MessageParser:
+             char = self.message[pos]
+             if escaped:
+                 if char == "d":
+-                    field += chr(int(self.message[pos + 1 : pos + 4]))
++                    digits = self.message[pos + 1 : pos + 4]
++                    if (
++                        len(digits) != 3
++                        or not digits.isascii()
++                        or not digits.isdigit()
++                        or int(digits) > 255
++                    ):
++                        raise MessageParseError(
++                            const.ERROR_INVALID_PARAMETER, self.message
++                        )
++                    field += chr(int(digits))
+                     pos = pos + 3
+                 elif char == "r":
+                     field += "\r"
+@@ -243,6 +253,7 @@ class Request(Message):
+         self._type = MESSAGE_TYPE_REQUEST
+         self._responses: list[Response] = []
+         self._event = asyncio.Event()
++        self._failure: RequestOutcomeUnknownError | None = None
+ 
+     @property
+     def fields(self) -> list[str]:
+@@ -253,6 +264,7 @@ class Request(Message):
+         """Sends request to hardware device, returning one or more responses."""
+         self._event.clear()
+         self._responses.clear()
++        self._failure = None
+ 
+         try:
+             return await self._exchange(connection)
+@@ -277,23 +289,20 @@ class Request(Message):
+         _LOGGER.debug("Request %s received %s", repr(self), repr(response))
+ 
+         if response.multiline:
+-            if not response.count:
+-                _LOGGER.error(
+-                    "Command %s response had no count '%s'", repr(self), repr(response)
+-                )
+-                raise KaleidescapeError("Response count expected")
+ 
+             async def collector():
+                 while (len(self._responses) - 1) < response.count:
+                     self._event.clear()
+                     await self._event.wait()
++                    if self._failure:
++                        raise self._failure
+ 
+             try:
+                 await asyncio.wait_for(collector(), connection.timeout)
+             except TimeoutError as error:
+                 err = f"Command {self!r} timed out waiting for responses"
+                 _LOGGER.warning(err)
+-                raise KaleidescapeError(err) from error
++                raise RequestOutcomeUnknownError(err) from error
+ 
+             return self._responses
+ 
+@@ -302,8 +311,15 @@ class Request(Message):
+     async def wait(self) -> Response:
+         """Wait until the event is set."""
+         await self._event.wait()
++        if self._failure:
++            raise self._failure
+         return self._responses[0]
+ 
++    def fail(self, error: RequestOutcomeUnknownError) -> None:
++        """Wake the waiter when the connection is lost."""
++        self._failure = error
++        self._event.set()
++
+     def set(self, response: Response) -> None:
+         """Complete request."""
+         self._responses.append(response)

@@ -33,17 +33,16 @@ scripts/package
 
 The Python tests and local HA launcher use the reviewed source at
 `custom_components/kaleidescape_companion/vendor/kaleidescape`. They verify its
-package files against `scripts/assets/pyk-overlay/hashes.json` before use. The
-complete runtime patch in `scripts/assets/pyk-overlay/companion.patch` applies
-to upstream base `50df2869349667d1e68d429b9b619e32ede9879b`. It includes the
-reviewed local Device changes, collection removal/per-version reads, and the
-operation-local pre-submit callback. `base.tar.gz` is an offline `git archive`
-of that commit's `kaleidescape` and `LICENSE` paths; `base.json` records its
-SHA-256 and origin. The patch copies the upstream MIT license into the private
-runtime package. Reconstruction must match every entry in `hashes.json`,
-including that license, and may not introduce undocumented Python modules. Only
-runtime differences are included; upstream test configuration is outside this
-bundle.
+package files against `scripts/assets/pyk-overlay/hashes.json` before use.
+`base.tar.gz` contains upstream commit
+`50df2869349667d1e68d429b9b619e32ede9879b`'s `kaleidescape` and `LICENSE` paths.
+`base.json` records the archive checksum and the branch, commit and runtime diff
+for each of the four proposed pyk PRs. Reconstruction copies the upstream MIT
+license into the private package, applies the diffs in order and verifies every
+file against its recorded hash. The standalone `LivePlayer(Device)` in
+`playback/live_player.py` provides discovery, live playback reads and
+experimental movie launch. The Apache-2.0 server browser and its independent
+tests live in `kaleidescape_browser/`.
 
 The normal `check` reconstructs from the pinned fixture without network access
 or an adjacent checkout. To independently compare the fixture with an upstream
@@ -54,9 +53,8 @@ checkout's tracked commit, run:
 ```
 
 Working-tree changes in that checkout are ignored. When updating the bundle,
-regenerate the complete runtime diff against the same recorded base (or
-explicitly review a new base), update the manifest, and run both reconstruction
-and the full check. Missing files and stale/incomplete patches fail
+refresh the affected runtime diffs and hashes against the recorded base, then
+run reconstruction and the full check. Missing files and stale patches fail
 verification. `setup` installs HA's released pinned dependency separately. This
 bundled source remains a PoC, with built-in Device compatibility and
 upstream-release qualification still required.
@@ -65,8 +63,9 @@ Set `COMPANION_VENV` to an absolute virtual-environment path to run setup or
 checks in an isolated environment; it defaults to `.venv` in this checkout.
 
 The complete check validates workspace/runtime consistency, standalone provider
-contracts, Python integration tests, project structure and documentation links,
-Ruff lint/format, shell syntax, Markdown lint/format, frontend lint/format,
+contracts, standalone server browser and live-player tests, Python integration
+tests, project structure and documentation links, Ruff and Flake8 lint, Ruff
+format, shell syntax, Markdown lint/format, frontend lint/format,
 component/proxy tests, TypeScript and the production bundle. Tests use fictional
 data and temporary storage. Some emulator/proxy tests bind loopback sockets;
 checks do not contact household devices or external providers.
@@ -75,8 +74,11 @@ Focused checks, using the prepared virtual environment:
 
 ```sh
 scripts/test --python-only
+scripts/test --browser-only
+scripts/test --live-player-only
 PYTHONPATH=custom_components/kaleidescape_companion .venv/bin/python -m unittest discover -s tests/scrapers
 .venv/bin/python scripts/src/check_project.py
+.venv/bin/python -m flake8 .
 .venv/bin/ruff check .
 .venv/bin/ruff format --check .
 npm --prefix frontend test
@@ -93,16 +95,16 @@ with the accepted panel and fails on a mismatch without overwriting it. Run
 Build deliberately when frontend sources change, inspect the generated diff, and
 rerun Check before packaging.
 
-| Command                  | Purpose                                                    |
-| ------------------------ | ---------------------------------------------------------- |
-| `scripts/setup`          | Prepare Python and frontend dependencies                   |
-| `scripts/build`          | Type-check, compile and update packaged frontend assets    |
-| `scripts/lint`           | Check Python, frontend and Markdown lint                   |
-| `scripts/format`         | Apply Python, frontend and Markdown formatters             |
-| `scripts/format --check` | Verify formatting without applying it                      |
-| `scripts/test`           | Run provider, integration and frontend tests               |
-| `scripts/check`          | Run the complete local validation gate                     |
-| `scripts/package`        | Verify assets and produce the installable runtime artifact |
+| Command                  | Purpose                                                            |
+| ------------------------ | ------------------------------------------------------------------ |
+| `scripts/setup`          | Prepare Python and frontend dependencies                           |
+| `scripts/build`          | Type-check, compile and update packaged frontend assets            |
+| `scripts/lint`           | Check Python, frontend and Markdown lint                           |
+| `scripts/format`         | Apply Python, frontend and Markdown formatters                     |
+| `scripts/format --check` | Verify formatting without applying it                              |
+| `scripts/test`           | Run provider, browser, live player, integration and frontend tests |
+| `scripts/check`          | Run the complete local validation gate                             |
+| `scripts/package`        | Verify assets and produce the installable runtime artifact         |
 
 VS Code's Setup, Build, Lint, Format, Test, Check and Package tasks invoke these
 same commands. No editor task defines additional correctness prerequisites.
@@ -110,7 +112,9 @@ Package does not run the full release gate; release publication requires Check
 and the qualification work in [releasing](releasing.md). Dependency scans,
 frontend preview and local HA remain separate operations. The explicitly labeled
 maintainer composite runs Build, Check, Package, deploy and restart in sequence;
-see [deployment](deployment.md) before selecting it.
+see [deployment](deployment.md) before selecting it. The **Maintainer: Deploy
+frontend** task builds and uploads the panel bundle separately for frontend-only
+changes.
 
 See [testing](testing.md) for suite selection and validation limits. The
 wrappers use normal `unittest` discovery and set Python's isolated-asyncio

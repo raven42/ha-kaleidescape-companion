@@ -25,6 +25,10 @@ class DatabaseCleanupTest(unittest.TestCase):
             CREATE TABLE collection_jobs (request_id TEXT, status TEXT);
             CREATE TABLE playback_controls
                 (request_id TEXT, status TEXT, updated_at TEXT);
+            CREATE TABLE library (id TEXT, source_id TEXT, source_group TEXT,
+                artwork_key TEXT, enrichment TEXT, purchase_match_pending INTEGER);
+            CREATE TABLE library_artwork (cache_key TEXT);
+            CREATE TABLE library_sources (id TEXT, revision INTEGER);
             CREATE TABLE requests (request_id TEXT);
             INSERT INTO requests VALUES ('barrier');
         """)

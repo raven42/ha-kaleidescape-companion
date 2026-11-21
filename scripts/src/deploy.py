@@ -9,18 +9,52 @@ import signal
 import subprocess
 import sys
 import tarfile
+import urllib.error
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
 from scripts.src.package import ARTIFACT_NAME, load_artifact
-from scripts.src.package import REQUIRED as REQUIRED
-from scripts.src.package import runtime_package as runtime_package
 
 ROOT = Path(__file__).resolve().parents[2]
 DOMAIN = "kaleidescape_companion"
 DEFAULT_CONFIG = ROOT / ".ha-deploy.json"
 DEFAULT_ARTIFACT = ROOT / "dist" / ARTIFACT_NAME
 EXAMPLE_CONFIG = ROOT / "scripts/config/ha-deploy.example.json"
+FRONTEND_ASSET = ROOT / "custom_components" / DOMAIN / "ui/assets/panel.js"
+HA_TOKEN = ROOT / ".ha-dev/ha.token"
+REMOTE_FRONTEND = r"""set -eu
+umask 077
+fail() { echo "$1" >&2; exit 1; }
+config=$(CDPATH= cd -P "$1" && pwd -P) ||
+    fail "HA configuration directory does not exist"
+[ "$config" != / ] && [ -f "$config/configuration.yaml" ] ||
+    fail "Invalid HA configuration directory"
+components="$config/custom_components"
+target="$components/kaleidescape_companion"
+state="$config/.kaleidescape-companion-deploy"
+for path in "$components" "$target" "$target/ui" "$target/ui/assets" "$state"; do
+    [ ! -L "$path" ] || fail "Refusing linked deployment path"
+done
+[ -f "$target/manifest.json" ] && [ -f "$target/ui/assets/panel.js" ] &&
+    [ ! -L "$target/ui/assets/panel.js" ] ||
+    fail "Install the complete integration before updating the frontend"
+[ -d "$state" ] || mkdir -m 700 "$state"
+mkdir "$state/lock" 2>/dev/null || fail "Deployment lock exists"
+temp=
+cleanup() {
+    [ -z "$temp" ] || rm -f "$temp"
+    rmdir "$state/lock"
+}
+trap cleanup EXIT
+temp=$(mktemp "$target/ui/assets/.panel.XXXXXXXX")
+cat > "$temp"
+[ -s "$temp" ] || fail "Frontend bundle is empty"
+chmod 644 "$temp"
+mv -f "$temp" "$target/ui/assets/panel.js"
+temp=
+echo "Frontend installed."
+"""
 # Only a locally validated prepared runtime archive is sent to this script.
 # All remote paths originate from the quoted positional config argument.
 REMOTE_DEPLOY = r"""set -eu
@@ -222,6 +256,74 @@ def deploy(config: DeployConfig, data: bytes) -> None:
     run_ssh(ssh_command(config, command), input=data, timeout=300)
 
 
+def deploy_frontend(config: DeployConfig, data: bytes) -> None:
+    """Replace the installed panel bundle using the configured SSH target."""
+    if not data:
+        raise ValueError("Frontend bundle is empty")
+    command = shlex.join(["sh", "-c", REMOTE_FRONTEND, "sh", config.config_path])
+    run_ssh(ssh_command(config, command), input=data, timeout=300)
+
+
+def reload_companion(config: DeployConfig, token_path: Path = HA_TOKEN) -> None:
+    """Reload the unique Companion config entry via Home Assistant's API."""
+    token = token_path.read_text().strip()
+    if not token or any(character.isspace() for character in token):
+        raise ValueError("Home Assistant API token is missing or invalid")
+    # The deployment host also serves Home Assistant on its standard port.
+    origin = f"http://{config.ssh_host}:8123"
+    opener = urllib.request.build_opener(
+        urllib.request.ProxyHandler({}),
+        _NoRedirect(),
+    )
+
+    def request(path: str, method: str = "GET") -> object:
+        api_request = urllib.request.Request(
+            origin + path,
+            headers={"Authorization": f"Bearer {token}"},
+            method=method,
+            data=b"" if method == "POST" else None,
+        )
+        try:
+            with opener.open(api_request, timeout=30) as response:
+                return json.load(response)
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as error:
+            raise ValueError("Home Assistant API request failed") from error
+
+    entries = request("/api/config/config_entries/entry?domain=kaleidescape_companion")
+    if not isinstance(entries, list):
+        raise ValueError("Home Assistant returned an invalid integration list")
+    matches = [
+        entry
+        for entry in entries
+        if isinstance(entry, dict) and entry.get("domain") == DOMAIN
+    ]
+    if len(matches) != 1:
+        raise ValueError("Expected exactly one Kaleidescape Companion integration")
+    entry_id = matches[0].get("entry_id")
+    if not isinstance(entry_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]+", entry_id):
+        raise ValueError("Home Assistant returned an invalid integration entry ID")
+    result = request(f"/api/config/config_entries/entry/{entry_id}/reload", "POST")
+    if not isinstance(result, dict) or result.get("require_restart") is not False:
+        raise ValueError("Home Assistant could not reload Companion successfully")
+    entries = request("/api/config/config_entries/entry?domain=kaleidescape_companion")
+    if not isinstance(entries, list) or not any(
+        isinstance(entry, dict)
+        and entry.get("entry_id") == entry_id
+        and entry.get("domain") == DOMAIN
+        and entry.get("state") == "loaded"
+        for entry in entries
+    ):
+        raise ValueError("Companion integration did not return to the loaded state")
+    print("Companion integration reloaded. Reload the browser page.")
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Keep API credentials on the configured Home Assistant host."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
 def restart(config: DeployConfig) -> None:
     run_ssh(
         ssh_command(config, config.restart_command()),
@@ -276,7 +378,7 @@ def main() -> None:
         "action",
         nargs="?",
         default="deploy",
-        choices=["init", "plan", "deploy", "restart"],
+        choices=["init", "plan", "deploy", "frontend", "restart"],
     )
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     parser.add_argument(
@@ -285,7 +387,7 @@ def main() -> None:
     args = parser.parse_args()
     if args.action in {"plan", "deploy"} and args.artifact is None:
         args.artifact = DEFAULT_ARTIFACT
-    if args.action in {"init", "restart"} and args.artifact is not None:
+    if args.action in {"init", "restart", "frontend"} and args.artifact is not None:
         parser.error("--artifact is only used by plan/deploy")
     if args.action == "init":
         initialize_config(args.config)
@@ -300,6 +402,16 @@ def main() -> None:
         f"{config.ssh_user}@{config.ssh_host}" if config.ssh_user else config.ssh_host
     )
     print(f"SSH target: {target}\nHA config: {config.config_path}", flush=True)
+    if args.action == "frontend":
+        deploy_frontend(config, FRONTEND_ASSET.read_bytes())
+        try:
+            reload_companion(config)
+        except (OSError, ValueError) as error:
+            raise ValueError(
+                "Frontend uploaded but Companion reload failed. "
+                "Reload the integration in Home Assistant."
+            ) from error
+        return
     print(f"Restart command (separate task): {config.restart_command()}", flush=True)
     if args.action == "restart":
         restart(config)

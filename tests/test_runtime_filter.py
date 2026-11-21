@@ -127,18 +127,18 @@ class RuntimeFilterStorageTest(unittest.IsolatedAsyncioTestCase):
     async def test_filtering_an_intervening_trailer_preserves_partial_resume(self):
         tracker = PlaybackTracker("player")
         for time, duration in (
-            (0, 600),
-            (0.5, 600),
-            (10, 120),
-            (30, 120),
-            (60, 600),
-            (60.5, 600),
+            (0, 7200),
+            (0.5, 7200),
+            (610, 120),
+            (630, 120),
+            (660, 7200),
+            (660.5, 7200),
         ):
             await self.process(tracker, time, duration=duration)
-        await self.process(tracker, 70, duration=600, location="credits")
+        await self.process(tracker, 670, duration=7200, location="credits")
         records = (await self.repository.async_list())["items"]
         self.assertEqual(len(records), 1)
-        self.assertAlmostEqual(records[0]["watched_seconds"], 19)
+        self.assertAlmostEqual(records[0]["watched_seconds"], 619)
         sessions = (await self.repository.async_sessions(records[0]["id"]))["items"]
         self.assertEqual(len(sessions), 2)
         self.assertEqual(sessions[-1]["end_reason"], "below_minimum_runtime")
@@ -154,7 +154,15 @@ class RuntimeFilterStorageTest(unittest.IsolatedAsyncioTestCase):
         tracker.restore(recovered)
         await self.process(tracker, 100, duration=120)
         await self.process(tracker, 130, duration=120, location="credits")
-        records = (await self.repository.async_list())["items"]
+        self.assertEqual((await self.repository.async_list())["items"], [])
+        records = await self.repository._call(
+            lambda: [
+                dict(row)
+                for row in self.repository._db().execute(
+                    "SELECT * FROM viewings WHERE deleted_at IS NULL"
+                )
+            ]
+        )
         self.assertEqual(len(records), 1)
         self.assertIsNone(records[0]["deleted_at"])
         self.assertEqual(records[0]["status"], "partial")

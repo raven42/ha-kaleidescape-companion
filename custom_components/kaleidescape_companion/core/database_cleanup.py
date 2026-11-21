@@ -52,7 +52,10 @@ def counts(db, policies, stamp):
 def preview(db, policies):
     selected = policies_checked(policies)
     stamp = datetime.now(UTC)
+    from ..library.artwork_links import reconcile
+
     return {
+        "artwork_links": reconcile(db),
         "as_of": stamp.isoformat(),
         "counts": counts(db, selected, stamp),
         "policies": selected,
@@ -82,6 +85,9 @@ def clean(db, policies, as_of=None, revision=None):
         current = db.execute("SELECT revision FROM schema_metadata").fetchone()[0]
         if revision is not None and (type(revision) is not int or revision != current):
             raise JournalError("conflict", "Database changed; review cleanup again")
+        from ..library.artwork_links import reconcile
+
+        artwork_links = reconcile(db, apply=True)
         removed = {}
         for key, (table, predicate) in CATEGORIES.items():
             days = selected[key]
@@ -94,6 +100,6 @@ def clean(db, policies, as_of=None, revision=None):
                 "AND julianday(updated_at) <= julianday(?)",
                 (cutoff,),
             ).rowcount
-        if any(removed.values()):
+        if artwork_links or any(removed.values()):
             db.execute("UPDATE schema_metadata SET revision=revision+1")
-    return {"removed": removed}
+    return {"removed": removed, "artwork_links": artwork_links}

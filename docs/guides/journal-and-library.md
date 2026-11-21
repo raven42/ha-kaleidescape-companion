@@ -25,6 +25,15 @@ the current month. A partial viewing may resume for the same player/content
 within the configured window; a completed viewing followed by playback is a
 rewatch. Same titles alone do not merge records.
 
+In list view, select an entry to see its viewing details. If the entry has a
+Library link, select the movie title in the details pane to open movie details.
+Choose the number of entries per page in **Journal → Options**; All shows all
+matching entries up to the 10,000-entry and 32 MiB safety limits.
+
+The calendar footer can show viewing counts for the selected month, the current
+year to date, and all time. Use **Journal → Options** to show or hide each total
+for your current display profile.
+
 If no viewing appears, confirm the three source entities, tracking state and
 usable runtime before retrying playback. Interrupted observations preserve
 recovery evidence rather than inventing time. Disabling tracking stops new
@@ -81,15 +90,21 @@ count separately from catalog totals.
 
 Choose **Filters** to narrow results by status, rating, genre, year or viewing
 format. Several selections within one category match any selected value;
-different categories must all match the same version. Choose **Apply filters**
-to use the draft, or close with **X** to discard it. The toolbar's **Clear
-Filter** clears search and filters while keeping your view, sort and page size.
-The missing-data options shown below are administrator tools in Advanced view.
+different categories must all match the same version. Selections and the
+per-category **Clear** links apply immediately. The toolbar's **Clear Filter**
+clears search and filters while keeping your view, sort and page size. The
+missing-data options shown below are administrator tools in Advanced view.
+
+Administrators in Advanced mode can also use **System Filters** to find missing
+metadata, artwork or purchase details; unavailable items; edits; conflicts; and
+titles with manually added, edited or split Journal viewings. Hover over or
+focus each help icon for its matching rule. Selections take effect immediately,
+and choices within the section match any selected option.
 
 [![Library filters dialog with status, rating, genre, year and viewing-format choices](../../assets/screenshots/library-filters.png)](../../assets/screenshots/library-filters.png)
 
-Filter categories combine to narrow the result. Applying the draft returns to
-the first page.
+Filter categories combine to narrow the result. Each change returns to the first
+page.
 
 Open a cover to read its synopsis, credits, ratings and available versions.
 **Library details**, **Journal** and **Ratings and metadata sources** expand the

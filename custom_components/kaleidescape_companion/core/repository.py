@@ -71,6 +71,7 @@ class JournalRepository:
         self._artwork_directory = path.parent / "artwork"
         self._calendar: dict | None = None
         self._recording_library_source: str | None = None
+        self._partial_minimum_seconds = 600
         self._metadata_sources = {}
         self._read_cache = ReadCache()
 
@@ -148,9 +149,20 @@ class JournalRepository:
         connection = sqlite3.connect(self.path, timeout=5)
         connection.row_factory = sqlite3.Row
         connection.create_function(
+            "companion_partial_minimum", 0, lambda: self._partial_minimum_seconds
+        )
+        connection.create_function(
             "companion_casefold",
             1,
             lambda value: str(value or "").casefold(),
+            deterministic=True,
+        )
+        from .search import fold_search
+
+        connection.create_function(
+            "companion_search_fold",
+            1,
+            lambda value: fold_search(str(value or "")) if value is not None else None,
             deterministic=True,
         )
         connection.create_function(
@@ -280,7 +292,13 @@ class JournalRepository:
         return await self._call(self._search_read, totals, source)
 
     async def async_library_list(
-        self, source: str, filters: dict, excluded: str = "", weeks=2, today=None
+        self,
+        source: str,
+        filters: dict,
+        excluded: str = "",
+        weeks=2,
+        today=None,
+        timezone="UTC",
     ) -> dict:
         return await self._call(
             self._search_read,
@@ -291,6 +309,7 @@ class JournalRepository:
             self._read_cache,
             weeks,
             today,
+            timezone,
         )
 
     async def async_library_versions(
@@ -651,9 +670,20 @@ class JournalRepository:
         current = month_totals(
             db, timestamp(start.isoformat()), timestamp(end.isoformat())
         )
+        year = month_totals(
+            db,
+            timestamp(
+                now.replace(
+                    month=1, day=1, hour=0, minute=0, second=0, microsecond=0
+                ).isoformat()
+            ),
+            timestamp((now + timedelta(microseconds=1)).isoformat()),
+        )
+        from .viewing_visibility import visible_viewing
+
         totals = db.execute(
             "SELECT count(*),coalesce(sum(watched_seconds),0) "
-            "FROM viewings WHERE deleted_at IS NULL"
+            f"FROM viewings WHERE deleted_at IS NULL AND {visible_viewing()}"
         ).fetchone()
         return {
             "dataset_id": metadata["dataset_id"],
@@ -664,6 +694,8 @@ class JournalRepository:
             "watched_seconds": totals[1],
             "month_viewing_count": current["viewing_count"],
             "month_watched_seconds": current["watched_seconds"],
+            "year_viewing_count": year["viewing_count"],
+            "year_watched_seconds": year["watched_seconds"],
             "backup_in_progress": self._paused,
             "database_bytes": self.path.stat().st_size,
             "database_limit_bytes": MAX_DATABASE_BYTES,
@@ -1090,6 +1122,19 @@ class JournalRepository:
         )
         return self._import_plan["public"]
 
+    async def async_purchase_auto_match(self, source):
+        """Match currently unresolved purchases against the selected Library."""
+        return await self._call(self._library_write, self._purchase_auto_match, source)
+
+    def _purchase_auto_match(self, db, source):
+        from ..library.purchase_reconciliation import auto_match
+
+        with db:
+            count = auto_match(db, source)
+            if count:
+                library_store.changed(db, source)
+        return {"matched_count": count}
+
     async def async_purchase_reconciliation(self, actor_id):
         """Create an administrator review of durable unmatched purchases."""
         return await self._call(self._purchase_reconciliation, self._actor(actor_id))
@@ -1502,6 +1547,19 @@ class JournalRepository:
             self._save_session, snapshot, minimum_seconds, resume_hours
         )
 
+    async def async_partial_minimum(self, minutes: float) -> None:
+        """Apply the household partial-viewing threshold on the repository worker."""
+        if (
+            type(minutes) not in (int, float)
+            or not 1 <= minutes <= 1440
+            or minutes != int(minutes)
+        ):
+            raise ValueError("Invalid partial viewing minimum")
+        await self._call(self._set_partial_minimum, int(minutes) * 60)
+
+    def _set_partial_minimum(self, seconds):
+        self._partial_minimum_seconds = seconds
+
     async def async_recording_library(self, source: str | None) -> None:
         """Select the native configured Library independently of calendar opt-in."""
         await self._call(self._set_recording_library, source)
@@ -1548,6 +1606,7 @@ class JournalRepository:
             resume_hours,
             self._calendar,
             self._recording_library_source,
+            self._partial_minimum_seconds,
         )
 
         return viewing

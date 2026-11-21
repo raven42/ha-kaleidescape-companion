@@ -30,6 +30,8 @@ async def control_request(hass, user, runtime, operation, msg):
         result = await controls.async_discover(authorize)
     elif operation == "control/status":
         result = await controls.async_status(authorize, msg.get("player_id"))
+    elif operation == "control/input_status":
+        result = await controls.async_input_status(authorize, msg.get("player_id"))
     elif operation == "control/prepare":
         result = await controls.async_prepare(
             user.id,
@@ -37,6 +39,7 @@ async def control_request(hass, user, runtime, operation, msg):
             msg.get("title_id"),
             authorize,
             msg.get("player_id"),
+            msg.get("input_text"),
         )
     elif operation == "control/execute":
         result = await controls.async_execute(

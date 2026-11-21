@@ -45,7 +45,7 @@ class BlueprintStatusTest(unittest.IsolatedAsyncioTestCase):
                 8
                 if kind == "purchase_email"
                 else 2
-                if kind == "maintenance_schedule"
+                if kind in {"maintenance_schedule", "metadata_schedule"}
                 else 1
             )
             self.assertIn(f"Blueprint version: {version}.", content)
@@ -61,6 +61,11 @@ class BlueprintStatusTest(unittest.IsolatedAsyncioTestCase):
                 self.assertIn(
                     templates.fingerprint(self.old(kind)), templates.KNOWN_OLDER[kind]
                 )
+        previous_metadata = (FIXTURES / "metadata_schedule_v1.yaml").read_text()
+        self.assertIn(
+            templates.fingerprint(previous_metadata),
+            templates.KNOWN_OLDER["metadata_schedule"],
+        )
         previous_receipts = (FIXTURES / "purchase_email_parser_v2.yaml").read_text()
         self.assertIn(
             templates.fingerprint(previous_receipts),
@@ -93,6 +98,17 @@ class BlueprintStatusTest(unittest.IsolatedAsyncioTestCase):
             templates.fingerprint(previous_receipts),
             templates.KNOWN_OLDER["purchase_email"],
         )
+
+    async def test_previous_metadata_blueprint_is_recognized_for_update(self):
+        self.write(
+            "metadata_schedule", (FIXTURES / "metadata_schedule_v1.yaml").read_text()
+        )
+        state = (await templates.async_status(self.hass, notify=False))[
+            "metadata_schedule"
+        ]
+        self.assertEqual(state["status"], "outdated")
+        self.assertEqual(state["installed_version"], 1)
+        self.assertEqual(state["latest_version"], 2)
 
     async def test_install_missing_preserves_existing_and_warns_outdated(self):
         old = self.old("library_schedule")

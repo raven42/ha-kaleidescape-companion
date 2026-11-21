@@ -3,7 +3,7 @@
 import asyncio
 import unittest
 from types import MappingProxyType, SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
 import test_backend as backend
@@ -17,16 +17,13 @@ from custom_components.kaleidescape_companion.core.models import JournalError
 from custom_components.kaleidescape_companion.core.repository import JournalRepository
 from custom_components.kaleidescape_companion.library.store import source_id, title_id
 from custom_components.kaleidescape_companion.playback import controls as module
-from custom_components.kaleidescape_companion.playback.control_config import validate
-from custom_components.kaleidescape_companion.vendor.kaleidescape import const
-from custom_components.kaleidescape_companion.vendor.kaleidescape import message as pyk
-from custom_components.kaleidescape_companion.vendor.kaleidescape.error import (
+from custom_components.kaleidescape_companion.playback._pyk import (
     MessageError,
     RequestNotSentError,
     RequestOutcomeUnknownError,
 )
+from custom_components.kaleidescape_companion.playback.control_config import validate
 
-pyk_const = const
 SERIAL = "1A2B"
 SEED = "10.0.0.10"
 PLAYER = "10.0.0.25"
@@ -44,6 +41,7 @@ CONFIG = {
 class Peer:
     def __init__(self):
         self.connections = []
+        self.identity_reads = []
         self.commands = []
         self.mode = 2
         self.title = "Previous film"
@@ -60,6 +58,10 @@ class Peer:
         self.read_hold = None
         self.read_started = asyncio.Event()
         self.alternative_serial = None
+        self.screensaver = False
+        self.input_type = 1
+        self.input_prompt = "Search"
+        self.input_entry = ""
 
     def client(self, ip, **_kwargs):
         peer = self
@@ -67,16 +69,16 @@ class Peer:
         class Device:
             def __init__(self):
                 self.is_connected = False
-                self.connection = SimpleNamespace(generation=1)
 
             async def connect(self):
                 peer.connections.append(ip)
                 self.is_connected = True
 
-            async def async_close(self):
+            async def disconnect(self):
                 self.is_connected = False
 
             async def read_identity(self, serial=None):
+                peer.identity_reads.append((ip, serial))
                 chosen = serial or (
                     peer.alternative_serial if ip == "10.0.0.26" else SERIAL
                 )
@@ -86,8 +88,15 @@ class Peer:
                 return SimpleNamespace(
                     serial_number=chosen.zfill(12),
                     model=model,
+                    friendly_name="" if chosen == "2C3D" else "Example Cinema",
                     movie_zones=0 if chosen == "2C3D" else 1,
-                    generation=1,
+                    ip_address=(
+                        "10.0.0.26"
+                        if chosen == peer.alternative_serial
+                        else SEED
+                        if chosen == "2C3D"
+                        else "010.000.000.025"
+                    ),
                 )
 
             async def discover_devices(self):
@@ -96,34 +105,39 @@ class Peer:
                     await self.read_identity("2C3D"),
                 ]
 
-            async def read_control_state(self):
+            async def read_playback_state(self):
                 peer.read_started.set()
                 if peer.read_hold:
                     await peer.read_hold.wait()
                 if peer.hook:
                     peer.hook()
+                return await peer.state(self)
+
+            async def _get_ui_state(self):
                 return SimpleNamespace(
-                    identity=await self.read_identity(),
-                    power="standby" if peer.standby else "on",
-                    readiness={"0": "ready", "1": "becoming_ready", "2": "idle"}[
-                        peer.readiness
-                    ],
-                    playing_title=peer.title,
+                    field_screensaver="active" if peer.screensaver else "inactive"
                 )
 
-            async def get_content_details(self, handle):
+            async def get_user_input(self):
                 return SimpleNamespace(
-                    field_year="2025", field_title=peer.metadata_title
+                    field_type=peer.input_type,
+                    field_prompt=peer.input_prompt,
+                    field_entry=peer.input_entry,
                 )
+
+            async def set_user_input_entry(self, value):
+                await self._execute("SET_USER_INPUT_ENTRY", value)
+                peer.input_entry = value
 
             async def prepare_movie_launch(self, handle, *, serial):
                 return SimpleNamespace(
                     handle=HANDLE,
                     title=peer.metadata_title,
+                    year="2025",
                     identity=await self.read_identity(serial),
                 )
 
-            async def send_movie_launch(self, prepared, *, allow_experimental):
+            async def send_movie_launch(self, prepared):
                 peer.title = prepared.title
                 await self._execute("PLAY_MOVIE", prepared.handle)
 
@@ -148,16 +162,36 @@ class Peer:
                     raise MessageError(20, command)
                 if command == "LEAVE_STANDBY":
                     peer.standby = False
-                peer.mode = {"STOP": 0, "PAUSE_ON": 1, "PAUSE_OFF": 2}.get(command, 2)
+                if command == "PLAY_OR_PAUSE":
+                    peer.mode = 2 if peer.mode == 1 else 1
+                elif command != "GO_MOVIE_COLLECTION":
+                    peer.mode = {"STOP": 0, "PAUSE_ON": 1, "PAUSE_OFF": 2}.get(
+                        command, 2
+                    )
 
             def __getattr__(self, name):
                 commands = {
                     "play": "PLAY",
                     "pause_on": "PAUSE_ON",
+                    "pause": "PAUSE",
+                    "cancel": "CANCEL",
+                    "backspace": "BACKSPACE",
+                    "details": "DETAILS",
+                    "menu_on": "MENU_ON",
+                    "menu_off": "MENU_OFF",
+                    "go_movies": "GO_MOVIES",
                     "pause_off": "PAUSE_OFF",
+                    "play_or_pause": "PLAY_OR_PAUSE",
                     "stop": "STOP",
                     "next": "NEXT",
                     "previous": "PREVIOUS",
+                    "replay": "REPLAY",
+                    "scan_forward": "SCAN_FORWARD",
+                    "scan_reverse": "SCAN_REVERSE",
+                    "page_up": "PAGE_UP",
+                    "page_down": "PAGE_DOWN",
+                    "intermission_toggle": "INTERMISSION_TOGGLE",
+                    "status_and_settings": "STATUS_AND_SETTINGS",
                     "up": "UP",
                     "down": "DOWN",
                     "left": "LEFT",
@@ -166,43 +200,46 @@ class Peer:
                     "back": "BACK",
                     "menu_toggle": "MENU_TOGGLE",
                     "go_movie_covers": "GO_MOVIE_COVERS",
+                    "go_movie_list": "GO_MOVIE_LIST",
+                    "go_movie_collections": "GO_MOVIE_COLLECTIONS",
+                    "go_search": "GO_SEARCH",
+                    "go_movie_collection": "GO_MOVIE_COLLECTION",
+                    "go_movie_store": "GO_MOVIE_STORE",
+                    "stop_screen_saver": "STOP_SCREEN_SAVER",
+                    "keyboard_literal": "KEYBOARD_LITERAL",
+                    "send_event": "SEND_EVENT",
+                    "set_volume_capabilities": "VOLUME_CAPABILITIES",
+                    "set_volume_level": "VOLUME_LEVEL",
+                    "set_volume_muted": "VOLUME_MUTED",
+                    "go_screen_saver": "GO_SCREEN_SAVER",
                     "leave_standby": "LEAVE_STANDBY",
                     "enter_standby": "ENTER_STANDBY",
                 }
                 if name not in commands:
                     raise AttributeError(name)
-                return lambda: self._execute(commands[name])
+                return lambda *args: self._execute(commands[name], *args)
 
         return Device()
 
-    async def response(self, device, request, *, serial=None):
-        if request is pyk.GetDeviceInfo:
-            return SimpleNamespace(
-                field_ip="10.0.0.26"
-                if serial == self.alternative_serial
-                else (SEED if serial == "2C3D" else "010.000.000.025")
-            )
-        if request is pyk.GetFriendlyName:
-            return SimpleNamespace(field="Example Cinema")
-        if request is pyk.GetDevicePowerState:
-            return SimpleNamespace(
-                field_zone=[pyk_const.DEVICE_ZONE_STATE_DISABLED]
-                if self.zone_power == ("0",)
-                else []
-            )
-        if request is pyk.GetPlayStatus:
-            return SimpleNamespace(
-                field_play_status={
-                    0: "none",
-                    1: "paused",
-                    2: "playing",
-                    4: "forward",
-                    6: "reverse",
-                }[self.mode],
-                field_title_length=7200,
-                field_title_location=100,
-            )
-        raise AssertionError(request)
+    async def state(self, device):
+        return SimpleNamespace(
+            identity=await device.read_identity(),
+            power="standby" if self.standby else "on",
+            readiness={"0": "ready", "1": "becoming_ready", "2": "idle"}[
+                self.readiness
+            ],
+            playing_title=self.title,
+            zone_available=self.zone_power != ("0",),
+            play_status={
+                0: "none",
+                1: "paused",
+                2: "playing",
+                4: "forward",
+                6: "reverse",
+            }[self.mode],
+            duration_seconds=7200,
+            position_seconds=100,
+        )
 
 
 class ControlsTest(unittest.IsolatedAsyncioTestCase):
@@ -218,13 +255,7 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
             self.hass, self.entry.runtime_data.repository, config
         )
         self.peer = Peer()
-        for name, replacement in (
-            ("Device", self.peer.client),
-            ("one_response", self.peer.response),
-        ):
-            client_patch = patch.object(module, name, replacement)
-            client_patch.start()
-            self.addCleanup(client_patch.stop)
+        self.enterContext(patch.object(module, "LivePlayer", self.peer.client))
 
     async def prepare(self, operation="pause", **kwargs):
         result = await self.call(
@@ -242,12 +273,387 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
             **kwargs,
         )
 
+    async def test_search_input_uses_selected_player_and_durable_control(self):
+        await self.configure()
+        response = await self.call("control/input_status", **self.scope)
+        self.assertEqual(
+            response["result"],
+            {"active": True, "prompt": "Search", "entry": "", "playback_mode": 2},
+        )
+        token = await self.prepare("search_text", input_text="Alien: One")
+        response = await self.execute(token)
+        self.assertTrue(response["success"], response)
+        self.assertEqual(
+            self.peer.commands[-1][:2], ("SET_USER_INPUT_ENTRY", ("Alien: One",))
+        )
+        response = await self.call("control/input_status", **self.scope)
+        self.assertEqual(response["result"]["entry"], "Alien: One")
+
+    async def test_screensaver_hides_search_and_blocks_pending_text(self):
+        await self.configure()
+        token = await self.prepare("search_text", input_text="film")
+        self.peer.screensaver = True
+        status = await self.call("control/input_status", **self.scope)
+        self.assertEqual(status["result"], {"active": False, "playback_mode": 2})
+        result = await self.execute(token)
+        self.assertFalse(result["success"])
+        self.assertFalse(self.peer.commands)
+        response = await self.call(
+            "control/prepare", **self.scope, operation="search_text", input_text="film"
+        )
+        self.assertFalse(response["success"])
+        self.peer.screensaver = False
+        status = await self.call("control/input_status", **self.scope)
+        self.assertTrue(status["result"]["active"])
+
+    async def test_search_input_rejects_other_prompts_and_invalid_text(self):
+        await self.configure()
+        for text in ("a\nb", "é", "x" * 121):
+            result = await self.call(
+                "control/prepare",
+                **self.scope,
+                operation="search_text",
+                input_text=text,
+            )
+            self.assertFalse(result["success"])
+        token = await self.prepare("search_text", input_text="film")
+        self.peer.input_entry = "Changed externally"
+        result = await self.execute(token)
+        self.assertFalse(result["success"])
+        self.assertFalse(self.peer.commands)
+        self.peer.input_entry = ""
+        token = await self.prepare("search_text", input_text="film")
+        self.peer.input_prompt = "Password"
+        result = await self.execute(token)
+        self.assertFalse(result["success"])
+        self.assertFalse(self.peer.commands)
+        result = await self.call("control/input_status", **self.scope)
+        self.assertEqual(result["result"], {"active": False, "playback_mode": 2})
+
+    async def test_only_obsolete_player_buttons_are_removed(self):
+        from homeassistant.helpers import entity_registry as er
+
+        from custom_components.kaleidescape_companion.playback.player_devices import (
+            remove_obsolete_control_entities,
+        )
+
+        dataset = self.entry.runtime_data.dataset_id
+        registry = SimpleNamespace(async_remove=Mock())
+        entries = [
+            SimpleNamespace(
+                platform="kaleidescape_companion",
+                entity_id="button.old_player",
+                unique_id=f"{dataset}_1A2B_screensaver_off",
+            ),
+            SimpleNamespace(
+                platform="kaleidescape_companion",
+                entity_id="button.sync",
+                unique_id=f"{dataset}_library_sync",
+            ),
+            SimpleNamespace(
+                platform="another",
+                entity_id="button.other",
+                unique_id=f"{dataset}_1A2B_screensaver_off",
+            ),
+            SimpleNamespace(
+                platform="kaleidescape_companion",
+                entity_id="sensor.other",
+                unique_id=f"{dataset}_1A2B_screensaver_off",
+            ),
+        ]
+        with (
+            patch.dict(self.hass.data, {er.DATA_REGISTRY: registry}),
+            patch.object(er, "async_entries_for_config_entry", return_value=entries),
+        ):
+            remove_obsolete_control_entities(self.hass, self.entry)
+        registry.async_remove.assert_called_once_with("button.old_player")
+
+    async def test_ha_actions_follow_discovered_players_without_player_entities(self):
+        from homeassistant.helpers import device_registry as dr
+        from homeassistant.helpers.dispatcher import async_dispatcher_send
+
+        from custom_components.kaleidescape_companion.button import async_setup_entry
+        from custom_components.kaleidescape_companion.playback.ha_controls import (
+            FIXED_ACTIONS,
+            player_identifier,
+        )
+
+        await self.configure()
+        dr.async_setup(self.hass)
+        await dr.async_load(self.hass, load_empty=True)
+        added = []
+        await async_setup_entry(
+            self.hass, self.entry, lambda entities: added.extend(entities)
+        )
+        self.assertEqual(len(added), 3)
+        await self.call("control/discover", **self.scope)
+        await self.hass.async_block_till_done()
+        registry = dr.async_get(self.hass)
+        device_id = dr.async_get_device_id_by_identifier(
+            self.hass,
+            (
+                "kaleidescape_companion",
+                player_identifier(self.entry.runtime_data.dataset_id, SERIAL),
+            ),
+            config_entry_id=self.entry.entry_id,
+        )
+        self.assertEqual(len(added), 3)
+        for operation in FIXED_ACTIONS:
+            with self.subTest(operation=operation):
+                self.peer.mode = 0
+                before = len(self.peer.commands)
+                await self.hass.services.async_call(
+                    "kaleidescape_companion",
+                    f"player_{operation}",
+                    {"device_id": device_id},
+                    blocking=True,
+                )
+                self.assertEqual(len(self.peer.commands), before + 1)
+                self.assertEqual(self.peer.commands[-1][2]["target_serial"], SERIAL)
+        self.assertTrue(
+            self.hass.services.has_service(
+                "kaleidescape_companion", "player_screensaver_off"
+            )
+        )
+        self.peer.alternative_serial = "2C3E"
+        self.entry.runtime_data.controls.devices.append(
+            {
+                "serial": "2C3E",
+                "name": "Second cinema",
+                "model": "Fictional",
+                "ipaddress": "10.0.0.26",
+                "is_player": True,
+            }
+        )
+        async_dispatcher_send(self.hass, "kaleidescape_companion_control_players")
+        await self.hass.async_block_till_done()
+        second_id = dr.async_get_device_id_by_identifier(
+            self.hass,
+            (
+                "kaleidescape_companion",
+                player_identifier(self.entry.runtime_data.dataset_id, "2C3E"),
+            ),
+            config_entry_id=self.entry.entry_id,
+        )
+        self.assertNotEqual(device_id, second_id)
+        self.assertIsNotNone(registry.async_get(second_id))
+        await self.hass.services.async_call(
+            "kaleidescape_companion",
+            "player_screensaver_off",
+            {"device_id": second_id},
+            blocking=True,
+        )
+        self.assertEqual(self.peer.commands[-1][2]["target_serial"], "2C3E")
+        self.assertEqual(len(added), 3)
+
+    async def test_ha_service_player_selection_rejects_unknown_devices(self):
+        from homeassistant.exceptions import HomeAssistantError
+
+        from custom_components.kaleidescape_companion.playback import ha_controls
+
+        await self.configure()
+        await self.call("control/discover", **self.scope)
+        runtime = self.entry.runtime_data
+        registry = SimpleNamespace(
+            async_get=Mock(
+                return_value=SimpleNamespace(
+                    identifiers={
+                        (
+                            "kaleidescape_companion",
+                            ha_controls.player_identifier(runtime.dataset_id, SERIAL),
+                        )
+                    }
+                )
+            )
+        )
+        with patch.object(ha_controls.dr, "async_get", return_value=registry):
+            self.assertEqual(
+                ha_controls.resolve_player(self.hass, runtime, "fictional"), SERIAL
+            )
+            registry.async_get.return_value = SimpleNamespace(
+                identifiers={("other", "wrong")}
+            )
+            with self.assertRaises(HomeAssistantError):
+                ha_controls.resolve_player(self.hass, runtime, "fictional")
+
+    async def test_ha_action_targets_a_real_device_registry_entry(self):
+        from homeassistant.helpers import device_registry as dr
+
+        from custom_components.kaleidescape_companion.playback.ha_controls import (
+            player_identifier,
+        )
+
+        await self.configure()
+        await self.call("control/discover", **self.scope)
+        dr.async_setup(self.hass)
+        await dr.async_load(self.hass, load_empty=True)
+        registry = dr.async_get(self.hass)
+        device = registry.async_get_or_create(
+            config_entry_id=self.entry.entry_id,
+            identifiers={
+                (
+                    "kaleidescape_companion",
+                    player_identifier(self.entry.runtime_data.dataset_id, SERIAL),
+                )
+            },
+            name="Fictional cinema",
+        )
+        await self.hass.services.async_call(
+            "kaleidescape_companion",
+            "keyboard_character",
+            {"device_id": device.id, "value": "A"},
+            blocking=True,
+        )
+        self.assertEqual(self.peer.commands[-1][:2], ("KEYBOARD_LITERAL", ("A",)))
+
+    async def test_ha_parameter_actions_and_play_movie_use_guarded_path(self):
+        from homeassistant.exceptions import HomeAssistantError
+
+        from custom_components.kaleidescape_companion.playback import ha_services
+
+        await self.configure()
+        await self.call("control/discover", **self.scope)
+        with patch.object(ha_services, "resolve_player", return_value=SERIAL):
+            result = await self.hass.services.async_call(
+                "kaleidescape_companion",
+                "open_movie_collection",
+                {"device_id": "fictional", "value": "A: Collection"},
+                blocking=True,
+                return_response=True,
+            )
+            self.assertEqual(result["outcome"], "acknowledged")
+            self.assertEqual(
+                self.peer.commands[-1][:2], ("GO_MOVIE_COLLECTION", ("A: Collection",))
+            )
+            await self.hass.services.async_call(
+                "kaleidescape_companion",
+                "keyboard_character",
+                {"device_id": "fictional", "value": ":"},
+                blocking=True,
+            )
+            self.assertEqual(self.peer.commands[-1][:2], ("KEYBOARD_LITERAL", (":",)))
+            await self.hass.services.async_call(
+                "kaleidescape_companion",
+                "set_player_input",
+                {"device_id": "fictional", "value": "A:B"},
+                blocking=True,
+            )
+            self.assertEqual(self.peer.commands[-1][0], "SET_USER_INPUT_ENTRY")
+            for removed in (
+                "send_player_event",
+                "report_volume_capabilities",
+                "report_volume_level",
+                "report_volume_muted",
+            ):
+                self.assertFalse(
+                    self.hass.services.has_service("kaleidescape_companion", removed)
+                )
+            before = len(self.peer.commands)
+            with self.assertRaises(HomeAssistantError):
+                await self.hass.services.async_call(
+                    "kaleidescape_companion",
+                    "keyboard_character",
+                    {"device_id": "fictional", "value": "too long"},
+                    blocking=True,
+                )
+            self.assertEqual(len(self.peer.commands), before)
+            await self.entry.runtime_data.repository.async_library_catalog(
+                "http://" + SEED,
+                [
+                    {
+                        "source_handle": "0-S_aabbccdd",
+                        "source_group": "1",
+                        "title": "A Fictional Film",
+                        "year": 2025,
+                    }
+                ],
+            )
+            await self.hass.services.async_call(
+                "kaleidescape_companion",
+                "play_movie",
+                {"device_id": "fictional", "title": "A Fictional Film"},
+                blocking=True,
+            )
+            self.assertEqual(self.peer.commands[-1][:2], ("PLAY_MOVIE", (HANDLE,)))
+
+    async def test_ha_control_rechecks_user_before_sending(self):
+        from homeassistant.core import Context
+        from homeassistant.exceptions import HomeAssistantError
+
+        from custom_components.kaleidescape_companion.playback.ha_controls import (
+            run_control,
+        )
+
+        await self.configure()
+        await self.call("control/discover", **self.scope)
+        user = SimpleNamespace(id="reader", is_active=True)
+
+        def revoke():
+            user.is_active = False
+
+        self.peer.hook = revoke
+        with patch.object(
+            self.hass,
+            "auth",
+            SimpleNamespace(async_get_user=AsyncMock(return_value=user)),
+            create=True,
+        ):
+            with self.assertRaises(HomeAssistantError):
+                await run_control(
+                    self.hass,
+                    self.entry,
+                    SERIAL,
+                    "screensaver_off",
+                    Context(user_id="reader"),
+                )
+        self.assertFalse(self.peer.commands)
+
+    async def test_ha_play_movie_requires_an_unambiguous_library_version(self):
+        from homeassistant.exceptions import HomeAssistantError
+
+        from custom_components.kaleidescape_companion.playback import ha_services
+
+        await self.configure()
+        await self.call("control/discover", **self.scope)
+        await self.entry.runtime_data.repository.async_library_catalog(
+            "http://" + SEED,
+            [
+                {
+                    "source_handle": "0-S_aabbccdd",
+                    "source_group": "1",
+                    "title": "A Fictional Film",
+                },
+                {
+                    "source_handle": "0-S_bbccddee",
+                    "source_group": "1",
+                    "title": "A Fictional Film",
+                },
+            ],
+        )
+        with patch.object(ha_services, "resolve_player", return_value=SERIAL):
+            with self.assertRaises(HomeAssistantError):
+                await self.hass.services.async_call(
+                    "kaleidescape_companion",
+                    "play_movie",
+                    {"device_id": "fictional", "title": "A Fictional Film"},
+                    blocking=True,
+                )
+            self.assertFalse(self.peer.commands)
+            exact = title_id(source_id("http://" + SEED), "0-S_aabbccdd")
+            await self.hass.services.async_call(
+                "kaleidescape_companion",
+                "play_movie",
+                {"device_id": "fictional", "version_id": exact},
+                blocking=True,
+            )
+            self.assertEqual(self.peer.commands[-1][0], "PLAY_MOVIE")
+
     async def test_disabled_controls_are_inert_and_discovery_is_administrator_only(
         self,
     ):
         info = await self.call("control/info", **self.scope)
         self.assertFalse(info["result"]["enabled"])
-        with patch.object(module, "Device") as client:
+        with patch.object(module, "LivePlayer") as client:
             response = await self.call("control/discover", **self.scope)
             self.assertEqual(response["code"], "control_disabled")
             for operation in ("control/discover", "control/acknowledge"):
@@ -281,6 +687,64 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(result["success"], result)
         self.assertEqual(result["result"]["outcome"], "state_observed")
         self.assertEqual([name for name, *_ in self.peer.commands], ["STOP"])
+
+    async def test_additional_remote_commands_reach_the_selected_player(self):
+        await self.configure()
+        for operation, command in [
+            ("movie_list", "GO_MOVIE_LIST"),
+            ("movie_collections", "GO_MOVIE_COLLECTIONS"),
+            ("search", "GO_SEARCH"),
+            ("screensaver", "GO_SCREEN_SAVER"),
+            ("replay", "REPLAY"),
+            ("scan_forward", "SCAN_FORWARD"),
+            ("scan_reverse", "SCAN_REVERSE"),
+            ("page_up", "PAGE_UP"),
+            ("page_down", "PAGE_DOWN"),
+            ("intermission", "INTERMISSION_TOGGLE"),
+            ("status_and_settings", "STATUS_AND_SETTINGS"),
+        ]:
+            with self.subTest(operation=operation):
+                token = await self.prepare(operation)
+                result = await self.execute(token)
+                self.assertTrue(result["success"], result)
+                self.assertEqual(self.peer.commands[-1][0], command)
+
+    async def test_collection_shortcuts_send_fixed_names(self):
+        await self.configure()
+        self.peer.mode = 0
+        for operation, name in (
+            ("collection_paused", "Paused"),
+            ("collection_watch_soon", "Watch Soon"),
+            ("collection_new", "New"),
+            ("collection_favorites", "Favorites"),
+        ):
+            with self.subTest(operation=operation):
+                result = await self.execute(await self.prepare(operation))
+                self.assertTrue(result["success"], result)
+                self.assertEqual(
+                    self.peer.commands[-1][:2], ("GO_MOVIE_COLLECTION", (name,))
+                )
+
+    async def test_collection_shortcut_does_not_interrupt_active_playback(self):
+        await self.configure()
+        self.peer.mode = 0
+        token = await self.prepare("collection_favorites")
+        self.peer.mode = 2
+        result = await self.execute(token)
+        self.assertFalse(result["success"])
+        self.assertFalse(self.peer.commands)
+        result = await self.call(
+            "control/prepare", **self.scope, operation="collection_favorites"
+        )
+        self.assertFalse(result["success"])
+
+    async def test_play_pause_toggle_reports_observed_state(self):
+        await self.configure()
+        for expected in (1, 2):
+            result = await self.execute(await self.prepare("play_pause"))
+            self.assertEqual(result["result"]["outcome"], "state_observed")
+            self.assertEqual(self.peer.mode, expected)
+            self.assertEqual(self.peer.commands[-1][0], "PLAY_OR_PAUSE")
 
     @expected_log(
         "custom_components.kaleidescape_companion.playback.controls",
@@ -377,7 +841,9 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
         self,
     ):
         await self.configure()
-        result = await self.call("control/discover", **self.scope)
+        with patch.object(module, "LivePlayer", wraps=self.peer.client) as make_player:
+            result = await self.call("control/discover", **self.scope)
+        self.assertIs(make_player.call_args.kwargs["reconnect"], False)
         self.assertTrue(result["success"], result)
         self.assertEqual(
             [row["is_player"] for row in result["result"]["devices"]], [True, False]
@@ -392,18 +858,16 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
     async def test_status_failure_logs_safe_pyk_stage_and_recovers(self):
         await self.configure()
 
-        async def fail_power(device, request, *, serial=None):
-            if request is pyk.GetDevicePowerState:
-                raise OSError("10.0.0.25 token=fictional-secret")
-            return await self.peer.response(device, request, serial=serial)
+        async def fail_power(device):
+            raise OSError("10.0.0.25 token=fictional-secret")
 
         logger = "custom_components.kaleidescape_companion.playback.controls"
-        with patch.object(module, "one_response", fail_power):
+        with patch.object(self.peer, "state", fail_power):
             with self.assertLogs(logger, level="DEBUG") as first:
                 response = await self.call("control/status", **self.scope)
             self.assertEqual(response["code"], "control_unreachable")
             self.assertIn(
-                "Pyk read device power state failed: OSError", "\n".join(first.output)
+                "Pyk read control state failed: OSError", "\n".join(first.output)
             )
             self.assertEqual(sum("WARNING" in line for line in first.output), 1)
             with self.assertLogs(logger, level="DEBUG") as repeated:
@@ -429,7 +893,7 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
 
         device.connect = fail_connect
         with (
-            patch.object(module, "Device", return_value=device),
+            patch.object(module, "LivePlayer", return_value=device),
             self.assertLogs(
                 "custom_components.kaleidescape_companion.playback.controls",
                 level="DEBUG",
@@ -460,6 +924,7 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
     async def test_fresh_identity_and_state_guard_prevent_changed_target_writes(self):
         await self.configure()
         token = await self.prepare()
+        self.assertEqual(self.peer.identity_reads, [(SEED, SERIAL), (PLAYER, None)])
         self.peer.wrong_serial = True
         result = await self.execute(token)
         self.assertEqual(result["code"], "control_identity")
@@ -502,6 +967,16 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
         self.peer.drop = False
         self.assertTrue((await self.execute(next_token))["success"])
 
+    async def test_uncertain_outcome_is_logged_as_warning(self):
+        await self.configure()
+        token = await self.prepare()
+        self.peer.drop = True
+        with self.assertLogs(module._LOGGER, level="WARNING") as captured:
+            result = await self.execute(token)
+        self.assertEqual(result["result"]["outcome"], "unconfirmed")
+        self.assertEqual([record.levelname for record in captured.records], ["WARNING"])
+        self.assertIn("outcome is uncertain", captured.records[0].getMessage())
+
     @expected_log(
         "custom_components.kaleidescape_companion.playback.controls",
         "Device control was rejected",
@@ -517,14 +992,14 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
     async def test_failed_read_after_acknowledgment_does_not_mark_command_unsent(self):
         await self.configure()
         token = await self.prepare("stop")
-        original = self.peer.response
+        original = self.peer.state
 
-        async def read(device, request, *, serial=None):
-            if self.peer.commands and request is pyk.GetPlayStatus:
+        async def read(device):
+            if self.peer.commands:
                 raise RequestNotSentError("Fictional read failed")
-            return await original(device, request, serial=serial)
+            return await original(device)
 
-        with patch.object(module, "one_response", read):
+        with patch.object(self.peer, "state", read):
             response = await self.execute(token)
         self.assertEqual(response["result"]["outcome"], "acknowledged")
         self.assertTrue(response["result"]["acknowledged"])
@@ -716,7 +1191,7 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
             client.connect = connect
             return client
 
-        with patch.object(module, "Device", delayed_client):
+        with patch.object(module, "LivePlayer", delayed_client):
             read = asyncio.create_task(controls.async_discover(lambda: None))
             await entered.wait()
             await controls.async_pause()

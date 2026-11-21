@@ -24,6 +24,26 @@ function lastFilters(transport: FixtureTransport) {
     .at(-1)?.filters;
 }
 
+it("forwards SQL-like URL search and facet values as literal filters", async () => {
+  const url = new URL(
+    "/kaleidescape-companion?companion_page=library",
+    location.origin,
+  );
+  const query = "' OR 1=1 --";
+  const facet = "x'); DROP TABLE library; --";
+  url.searchParams.set("library_query", query);
+  url.searchParams.set("library_genre", facet);
+  history.replaceState(null, "", url);
+  const transport = new FixtureTransport();
+  transport.options.library_enabled = true;
+  parent = document.createElement("kaleidescape-panel") as KaleidescapePanel;
+  parent.client = transport.client();
+  document.body.append(parent);
+  await vi.waitFor(() =>
+    expect(lastFilters(transport)).toMatchObject({ query, genre: [facet] }),
+  );
+});
+
 it.each([
   ["kaleidescape-panel", true],
   ["kaleidescape-panel", false],
@@ -53,7 +73,7 @@ it.each([
     expect(library()).toBeTruthy();
     expect(
       library()!.shadowRoot!.querySelector(
-        '[name="missing_metadata_artwork"]',
+        '[name="system_filter"][value="missing_metadata"]',
       ) !== null,
     ).toBe(advanced);
     expect(

@@ -871,12 +871,35 @@ class TitleReviewTest(unittest.IsolatedAsyncioTestCase):
         review = await self.setup_review()
         versions = await self.repo.async_library_versions(self.source, self.id)
         self.assertNotIn("Lead Example", versions["items"][0]["actors"])
+        scanned = {
+            row["id"]: (row["title"], row["source_group"], row["data"])
+            for row in (await self.repo.async_inspect("library"))["items"]
+        }
         self.assertEqual((await self.repo.async_inspect("library_artwork"))["total"], 0)
         self.assertNotIn("path", json.dumps(review))
         data = {"plan_id": review["plan_id"], "fields": ["actors"], "images": {}}
         request = str(uuid4())
         result = await self.manager.apply(self.admin, request, data)
         self.assertEqual(result["updated_count"], 2)
+        self.assertEqual(
+            (
+                await self.repo.async_library_list(
+                    self.source, {"grouped": True, "system_filters": ["edited"]}
+                )
+            )["total"],
+            0,
+        )
+        self.assertEqual(
+            (await self.repo.async_library_edit(self.source, self.id))["edited_fields"],
+            [],
+        )
+        self.assertEqual(
+            {
+                row["id"]: (row["title"], row["source_group"], row["data"])
+                for row in (await self.repo.async_inspect("library"))["items"]
+            },
+            scanned,
+        )
         versions = await self.repo.async_library_versions(self.source, self.id)
         for row in versions["items"]:
             self.assertEqual(row["actors"], self.data["actors"])

@@ -11,6 +11,7 @@ from .const import DOMAIN
 from .core.models import JournalError
 from .core.runtime import loaded_runtimes
 from .core.sync_actions import calendar_full_sync, library_sync
+from .playback.ha_services import register_player_services
 
 SERVICE = "import_purchase_email"
 METADATA_SERVICE = "refresh_metadata"
@@ -104,6 +105,7 @@ def _purchase_review_message(result):
 
 def async_register_services(hass: HomeAssistant) -> None:
     """Register Companion actions for the loaded household entry."""
+    register_player_services(hass)
 
     async def import_email(call: ServiceCall):
         if call.context.user_id:
@@ -251,8 +253,10 @@ def async_register_services(hass: HomeAssistant) -> None:
         except JournalError as error:
             raise HomeAssistantError(str(error)) from None
         _LOGGER.info(
-            "Database cleanup removed finalized operation histories: %s",
+            "Database cleanup removed finalized operation histories: %s; "
+            "linked artwork for %s editions",
             result["removed"],
+            result.get("artwork_links", 0),
         )
 
     hass.services.async_register(

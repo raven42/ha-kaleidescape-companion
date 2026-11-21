@@ -1,7 +1,7 @@
 # Preparing a release
 
 Companion is preparing for a public alpha custom-repository release.
-`0.5.0-alpha.1` is the current alpha candidate. Original Companion code is
+`0.6.0-alpha` is the current alpha candidate. Original Companion code is
 Apache-2.0 licensed; [NOTICE](../../NOTICE) identifies retained third-party
 material, including the bundled pyk dependency under its own MIT license.
 Hardware, restore and HACS qualification remain explicit release gates in the
@@ -49,7 +49,7 @@ it.
 ## Validate on GitHub
 
 The manually started **Release candidate validation** workflow reuses the full
-framework checks (including provider tests on Python 3.14), runs the upstream
+**CI** checks (including provider tests on Python 3.14), runs the upstream
 [hassfest action](https://contributors.home-assistant.io/blog/2020/04/16/hassfest/)
 and [HACS integration validator](https://hacs.xyz/docs/publish/action/), then
 packages and inspects the candidate. All jobs must pass before its runtime
@@ -61,9 +61,9 @@ Hassfest validates integration metadata in the selected checkout. HACS checks
 hosted repository/distribution readiness using its event and release-selection
 rules; it is not a replacement for checking the packaged bytes from this commit.
 No HACS checks are ignored. HACS requires a public repository, so this gate
-cannot pass while the repository is private. **Integration validation** also
-runs HACS and Hassfest on pull requests and pushes to main. These validators do
-not qualify runtime behavior or hardware.
+cannot pass while the repository is private. **HA** also runs HACS and Hassfest
+on pull requests and pushes to main. These validators do not qualify runtime
+behavior or hardware.
 
 Run the workflow on the intended candidate after it is available on GitHub and
 retain the successful run URL with release evidence. Local syntax validation of
@@ -73,16 +73,16 @@ current qualification evidence before a separately authorized alpha prerelease.
 ## Publish a tagged release
 
 After every release gate is satisfied, push a tag exactly matching the candidate
-version, for example `v0.5.0-alpha.1`. The **Publish tagged release** workflow
-checks that match, runs framework checks, hassfest, HACS validation and the
-runtime package inspection. It then creates the GitHub Release and attaches:
+version, for example `v0.6.0-alpha`. The **Publish tagged release** workflow
+checks that match, runs **CI** checks, hassfest, HACS validation and the runtime
+package inspection. It then creates the GitHub Release and attaches:
 
 - `kaleidescape-companion.tar.gz` — the deployable Home Assistant integration;
 - its SHA-256 checksum; and
 - its provenance JSON.
 
 GitHub also supplies its standard source ZIP and tarball automatically for the
-same tag. Hyphenated versions such as `0.5.0-alpha.1` are marked prereleases. Do
+same tag. Hyphenated versions such as `0.6.0-alpha` are marked prereleases. Do
 not move an existing published tag: choose a new version, update all version
 fields, and push the corresponding new tag. Do not create the GitHub Release
 separately: pushing the verified tag is the publication action. A failed

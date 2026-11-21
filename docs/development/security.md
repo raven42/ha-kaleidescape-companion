@@ -63,30 +63,33 @@ Household summaries exclude private notes, raw source/player identities,
 purchase prices/orders/store references and recorder diagnostics. Purchase dates
 and shared viewing/movie facts are visible where the feature permits them. The
 Library's group viewing summaries include completion times for household
-readers, matching the shared calendar's viewing facts. Now Playing also respects
-source entity read permission. Administrators and HA backups can access the full
-stored dataset; tombstones are not secure erasure. The Watch Soon indicator,
-like Favorite, exposes source collection membership for available movie groups
-even when that collection name is hidden from lists. The consolidated Movie
-status filter can also select those memberships and the reader-visible Recently
-Added classification. Movie status also exposes membership in New, Played or
-Paused even when those collection names are hidden; the personal label
-preference changes only naming. Separate personal audio and video badge toggles
-change presentation only and do not restrict Library data access. The Recently
-Added badge also reveals whether a movie has a linked purchase within the
-administrator-configured window; all Library readers see the badge. Library list
-and version responses include a per-movie missing-metadata/artwork flag, which
-exposes the same classification available through the reader-accessible API
-filter. The Basic interface hides and clears the maintenance filter, while the
-Advanced interface offers it to administrators; this is presentation rather than
-a new authorization boundary. The corresponding warning overlay remains
-administrator-only. Movie purchase history and Journal editing controls are
-shown only to administrators in Advanced mode, including in dialogs opened from
-Journal. Backend authorization remains the enforcement boundary. After a
-completed Library sync, the Home Assistant persistent notification for missing
-metadata or artwork exposes affected movie titles and their missing categories
-to users who can read HA notifications. It contains no private purchase details,
-and titles are rendered as text.
+readers, matching the shared calendar's viewing facts. Calendar responses also
+include session start times, watched durations and starting playback positions
+when known, so household readers can see partial viewing days. Now Playing also
+respects source entity read permission. Administrators and HA backups can access
+the full stored dataset; tombstones are not secure erasure. The Watch Soon
+indicator, like Favorite, exposes source collection membership for available
+movie groups even when that collection name is hidden from lists. The
+consolidated Movie status filter can also select those memberships and the
+reader-visible Recently Added classification. Movie status also exposes
+membership in New, Played or Paused even when those collection names are hidden;
+the personal label preference changes only naming. Separate personal audio and
+video badge toggles change presentation only and do not restrict Library data
+access. The Recently Added badge also reveals whether a movie has a linked
+purchase within the administrator-configured window; all Library readers see the
+badge. Library list and version responses include a per-movie
+missing-metadata/artwork flag, which exposes the same classification available
+through the reader-accessible API filter. The Basic interface hides and clears
+the maintenance filter, while the Advanced interface offers it to
+administrators; this is presentation rather than a new authorization boundary.
+The corresponding warning overlay remains administrator-only. Movie purchase
+history and Journal editing controls are shown only to administrators in
+Advanced mode, including in dialogs opened from Journal. Backend authorization
+remains the enforcement boundary. After a completed Library sync, the Home
+Assistant persistent notification for missing metadata or artwork exposes
+affected movie titles and their missing categories to users who can read HA
+notifications. It contains no private purchase details, and titles are rendered
+as text.
 
 Library searches and selected filters are stored in the panel URL, not saved as
 new user preferences. Their text can be exposed through browser history, shared
@@ -115,25 +118,28 @@ does not repair existing duplicates. The administrator-only import review shows
 up to five possible existing invoices and their Library associations; it does
 not select a possible duplicate for import automatically, even after a Library
 match is chosen. Unique proposed matches are applied without human review and
-are not proof of identity. An administrator can reconcile saved unmatched
-purchases while recording remains active; choices are actor- and revision-bound
-and require an available scanned Library entry. Match results include only
-cached artwork keys; cover images use the existing authenticated Library artwork
-endpoint. HA automation traces and action responses may contain private invoice
-data and need appropriate access controls. Public store refresh may fill a
-missing retail price, but never a purchase price. The missing purchase
-information sensor exposes its count and bounded movie names to HA entity
-readers. Its Library filter and purchase editing are limited to administrators.
-The administrator's Advanced movie details include bounded group-wide purchase
-history and row tokens. Reader version responses contain neither those records
-nor their tokens. A purchase linked to one group member is not proof of a
-particular format. The group editor validates the administrator, group snapshot,
-receipt ownership and actor-bound request ID. Receipt corrections use the
-revision-bound repair workflow and atomically include matching manual group
-values and unavailable flags in reversible evidence. Group-only changes use the
-same snapshot and retry safeguards. Store links accept only recognized official
-Store hosts and paths, use HTTPS and `noopener noreferrer`, and are never
-fetched automatically.
+are not proof of identity. Completed Library scans and the administrator's
+Auto-match purchases action can link unambiguous unlinked purchases using exact
+Store-link or title/year evidence without changing invoice fields; identity
+repair barriers and explicit unlink repairs remain protected. An administrator
+can reconcile saved unmatched purchases while recording remains active; choices
+are actor- and revision-bound and require an available scanned Library entry.
+Match results include only cached artwork keys; cover images use the existing
+authenticated Library artwork endpoint. HA automation traces and action
+responses may contain private invoice data and need appropriate access controls.
+Public store refresh may fill a missing retail price, but never a purchase
+price. The missing purchase information sensor exposes its count and bounded
+movie names to HA entity readers. Its Library filter and purchase editing are
+limited to administrators. The administrator's Advanced movie details include
+bounded group-wide purchase history and row tokens. Reader version responses
+contain neither those records nor their tokens. A purchase linked to one group
+member is not proof of a particular format. The group editor validates the
+administrator, group snapshot, receipt ownership and actor-bound request ID.
+Receipt corrections use the revision-bound repair workflow and atomically
+include matching manual group values and unavailable flags in reversible
+evidence. Group-only changes use the same snapshot and retry safeguards. Store
+links accept only recognized official Store hosts and paths, use HTTPS and
+`noopener noreferrer`, and are never fetched automatically.
 
 When HA automations are available, Companion installs missing packaged
 blueprints through HA's blueprint manager. It does not create or enable an
@@ -325,11 +331,11 @@ failed observation after acknowledgement does not turn the command into an
 unsent failure. Reconnect must not replay user writes. Protocol ACKs do not
 prove physical outcome or exact movie edition.
 
-The PoC's persistent pyk workflow includes ordinary initialization, local
-events, version identification and automatic reconnect. These are compatible
-with an opt-in connection and must not be prohibited by a blanket “no connection
-writes” policy. Optional upstream logging/syslog changes require owner
-agreement; Companion does not impose its household policy on all pyk callers.
+An opted-in player connection performs pyk's ordinary initialization and version
+identification and receives local events. After a disconnect, Companion opens a
+connection on the next explicit operation and verifies the selected player
+before sending a command. Changes to pyk's upstream logging or syslog behavior
+require the maintainer's agreement.
 
 ## Logging, diagnostics and dependency review
 

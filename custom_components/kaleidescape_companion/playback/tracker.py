@@ -20,6 +20,7 @@ class Observation:
     content_id: str | None = None
     title: str | None = None
     duration: float | None = None
+    position: float | None = None
     play_status: str = "unknown"
     location: str = "unknown"
     available: bool = False
@@ -47,6 +48,7 @@ class Session:
     end_reason: str | None = None
     revision: int = 0
     gap_count: int = 0
+    start_position_seconds: float | None = None
 
     def snapshot(self) -> dict:
         """Detach a queued checkpoint from future in-memory changes."""
@@ -255,6 +257,7 @@ class PlaybackTracker:
                     started_at=observation.at,
                     last_observed_at=observation.at,
                     boot_id=self.boot_id,
+                    start_position_seconds=observation.position,
                 )
                 self._counting = True
                 self._established = True

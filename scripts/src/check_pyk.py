@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import io
 import json
+import shutil
 import subprocess
 import tarfile
 import tempfile
@@ -67,18 +68,15 @@ def reconstruct(overlay=OVERLAY, base_checkout=None):
         temporary = Path(directory)
         with tarfile.open(fileobj=io.BytesIO(fixture)) as archive:
             archive.extractall(temporary, filter="data")
-        subprocess.run(
-            ["git", "apply", "--check", str((overlay / "companion.patch").resolve())],
-            cwd=temporary,
-            capture_output=True,
-            check=True,
-        )
-        subprocess.run(
-            ["git", "apply", str((overlay / "companion.patch").resolve())],
-            cwd=temporary,
-            capture_output=True,
-            check=True,
-        )
+        # The shipped package carries its license next to the Python modules.
+        shutil.copyfile(temporary / "LICENSE", temporary / "kaleidescape/LICENSE")
+        for patch in metadata["patches"]:
+            subprocess.run(
+                ["git", "apply", str((overlay / patch["file"]).resolve())],
+                cwd=temporary,
+                capture_output=True,
+                check=True,
+            )
         verify(temporary, expected)
     return len(expected)
 

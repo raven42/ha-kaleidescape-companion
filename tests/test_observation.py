@@ -51,7 +51,7 @@ class ObserverTest(unittest.IsolatedAsyncioTestCase):
             "play_status": "sensor.example_status",
             "media_location": "sensor.example_location",
             "minimum_seconds": 5,
-            "resume_hours": 24,
+            "resume_minutes": 60,
         }
         self.config = validate(self.hass, self.input, {})
         self.repository = JournalRepository(
@@ -78,18 +78,38 @@ class ObserverTest(unittest.IsolatedAsyncioTestCase):
         self.observer._enqueue(self.observer._capture())
         await self.observer.async_flush()
 
+    async def stored_viewings(self):
+        return await self.repository._call(
+            lambda: [
+                dict(row)
+                for row in self.repository._db().execute(
+                    "SELECT * FROM viewings WHERE deleted_at IS NULL"
+                )
+            ]
+        )
+
     async def change(self, time, entity, state, attributes=None):
         self.time = time
         self.hass.states.async_set(entity, state, attributes)
         await self.hass.async_block_till_done()
         await self.observer.async_flush()
 
+    async def test_recorder_captures_player_position_at_start(self):
+        attributes = {
+            **self.hass.states.get("media_player.example").attributes,
+            "media_position": 1800,
+        }
+        await self.change(0.1, "media_player.example", "playing", attributes)
+        await self.tick(0.6)
+        session = await self.repository.async_open_session(self.config["player_id"])
+        self.assertEqual(session["start_position_seconds"], 1800)
+
     async def test_entity_events_record_stream_content_and_preserve_pause_edges(self):
         await self.tick(0.5)
         await self.change(10, "sensor.example_status", "paused")
         await self.change(20, "sensor.example_status", "playing")
         await self.change(30, "sensor.example_location", "credits")
-        record = (await self.repository.async_list())["items"][0]
+        record = (await self.stored_viewings())[0]
         self.assertEqual(record["status"], "completed")
         self.assertAlmostEqual(record["watched_seconds"], 19.5)
         self.assertEqual(record["raw_content_id"], "raw-version")
@@ -109,7 +129,7 @@ class ObserverTest(unittest.IsolatedAsyncioTestCase):
         self.assertGreater(self.observer.live_state()["buffered_observations"], 0)
         await self.repository.async_resume()
         await self.observer.async_resume()
-        record = (await self.repository.async_list())["items"][0]
+        record = (await self.stored_viewings())[0]
         self.assertAlmostEqual(record["watched_seconds"], 19.5)
         self.assertEqual(record["status"], "completed")
 
@@ -130,7 +150,7 @@ class ObserverTest(unittest.IsolatedAsyncioTestCase):
             await self.change(30, "sensor.example_location", "credits")
         await self.repository.async_resume()
         await self.observer.async_resume()
-        record = (await self.repository.async_list())["items"][0]
+        record = (await self.stored_viewings())[0]
         self.assertEqual(record["watched_seconds"], 0)
         self.assertEqual(record["status"], "partial")
         self.assertGreater(self.observer.overflow_count, 0)
@@ -151,7 +171,7 @@ class ObserverTest(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(self.observer.last_error, "storage_error")
         await self.tick(1)
         self.assertIsNone(self.observer.last_error)
-        self.assertEqual(len((await self.repository.async_list())["items"]), 1)
+        self.assertEqual(len(await self.stored_viewings()), 1)
 
     async def test_unavailable_player_does_not_create_a_record(self):
         await self.change(1, "media_player.example", "unavailable")
@@ -166,7 +186,7 @@ class ObserverTest(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(
             await self.repository.async_open_session(self.config["player_id"])
         )
-        record = (await self.repository.async_list())["items"][0]
+        record = (await self.stored_viewings())[0]
         session = (await self.repository.async_sessions(record["id"]))["items"][0]
         self.assertEqual(session["end_reason"], "tracking_disabled")
         self.assertAlmostEqual(record["watched_seconds"], 9.5)
@@ -182,7 +202,7 @@ class ObserverTest(unittest.IsolatedAsyncioTestCase):
 
         with patch.object(self.observer, "async_flush", delayed_flush):
             await self.observer.async_stop()
-        record = (await self.repository.async_list())["items"][0]
+        record = (await self.stored_viewings())[0]
         self.assertAlmostEqual(record["watched_seconds"], 9.5)
 
     async def test_settings_reject_bad_mappings_and_preserve_player_identity(self):
@@ -195,6 +215,33 @@ class ObserverTest(unittest.IsolatedAsyncioTestCase):
         ):
             with self.assertRaisesRegex(ValueError, message):
                 validate(self.hass, {**self.input, **changes}, {})
+
+    async def test_partial_minimum_is_bounded_whole_minutes(self):
+        for value in (1, 10, 1440):
+            result = validate(
+                self.hass, {**self.input, "partial_minimum_minutes": value}, {}
+            )
+            self.assertEqual(result["partial_minimum_minutes"], value)
+        for value in (0, 1441, 1.5, True):
+            with self.assertRaisesRegex(ValueError, "invalid_rules"):
+                validate(
+                    self.hass, {**self.input, "partial_minimum_minutes": value}, {}
+                )
+
+    async def test_resume_window_uses_minutes_and_converts_legacy_hours(self):
+        for value in (1, 17, 30, 60):
+            result = validate(self.hass, {**self.input, "resume_minutes": value}, {})
+            self.assertEqual(result["resume_minutes"], value)
+        for value in (0, 61, 1.5, True):
+            with self.assertRaisesRegex(ValueError, "invalid_rules"):
+                validate(self.hass, {**self.input, "resume_minutes": value}, {})
+        without_minutes = {
+            key: value for key, value in self.input.items() if key != "resume_minutes"
+        }
+        for hours, minutes in ((0, 1), (0.5, 30), (1, 60), (24, 60)):
+            result = validate(self.hass, without_minutes, {"resume_hours": hours})
+            self.assertEqual(result["resume_minutes"], minutes)
+            self.assertNotIn("resume_hours", result)
 
     async def test_runtime_option_defaults_bounds_and_preserved_values(self):
         self.assertEqual(self.config["minimum_runtime_minutes"], 10)
@@ -275,7 +322,7 @@ class ObserverTest(unittest.IsolatedAsyncioTestCase):
             31, "media_player.example", "playing", {**attributes, "media_duration": 600}
         )
         await self.tick(31.5)
-        self.assertEqual(len((await self.repository.async_list())["items"]), 1)
+        self.assertEqual(len(await self.stored_viewings()), 1)
 
     async def test_registered_entity_reference_survives_rename(self):
         registry = er.async_get(self.hass)

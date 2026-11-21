@@ -114,10 +114,15 @@ export class LibraryCollectionAdd extends LitElement {
       }
       @media (max-width: 480px) {
         .collection-row {
-          flex-wrap: wrap;
+          display: grid;
+          grid-template-columns: 42px minmax(0, 1fr);
+          gap: 8px 12px;
         }
         .collection-row button {
-          margin-left: 56px;
+          grid-column: 2;
+          justify-self: start;
+          margin: 0;
+          white-space: normal;
         }
       }
       @media (max-width: 600px) {

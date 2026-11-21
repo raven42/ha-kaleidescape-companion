@@ -9,7 +9,7 @@ from uuid import uuid4
 
 from ..security import private_file
 
-SCHEMA_VERSION = 28
+SCHEMA_VERSION = 29
 _LOGGER = logging.getLogger(__name__)
 
 MIGRATIONS = {
@@ -457,6 +457,12 @@ MIGRATIONS[28] = (
     )""",
     "CREATE INDEX collection_jobs_source_status "
     "ON collection_jobs(source_id,status,created_at)",
+)
+
+
+MIGRATIONS[29] = (
+    "ALTER TABLE sessions ADD COLUMN start_position_seconds REAL "
+    "CHECK(start_position_seconds IS NULL OR start_position_seconds >= 0)",
 )
 
 

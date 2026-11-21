@@ -26,6 +26,7 @@ const CATEGORIES = [
 type CleanupReview = {
   as_of: string;
   counts: Record<string, number>;
+  artwork_links: number;
   policies: Record<string, number>;
   revision: number;
 };
@@ -115,7 +116,7 @@ export class DatabaseCleanup extends LitElement {
     try {
       const result = await this.client.cleanupDatabase(this.scope, this.review);
       const total = Object.values(result.removed).reduce((a, b) => a + b, 0);
-      this.notice = `Database cleanup complete: ${total} records removed.`;
+      this.notice = `Database cleanup complete: ${total} records removed; artwork linked for ${result.artwork_links ?? 0} editions.`;
       this.review = undefined;
       this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.close();
       this.dispatchEvent(
@@ -149,7 +150,7 @@ export class DatabaseCleanup extends LitElement {
           @click=${this.open}
         >
           Database cleanup</button
-        >${settingHint("Database cleanup", "Choose which finalized operation histories to remove and how long to retain each. Pending work, retry barriers, purchases, Library and Journal records are protected.")}
+        >${settingHint("Database cleanup", "Review finalized operation histories and link missing artwork between matching Library editions. Pending work and retry barriers are protected.")}
       </div>
       ${this.notice ? html`<small role="status">${this.notice}</small>` : nothing}
       <dialog
@@ -167,7 +168,8 @@ export class DatabaseCleanup extends LitElement {
           !this.review
             ? html`<p>
                   Choose which finalized histories to clean and how long to keep
-                  them. Other records remain untouched.
+                  them. Missing artwork links between matching Library editions
+                  are also reviewed.
                 </p>
                 <div class="cleanup-mode">
                   <button
@@ -231,16 +233,20 @@ export class DatabaseCleanup extends LitElement {
                   ><button
                     type="button"
                     class="primary"
-                    ?disabled=${this.busy || !Object.values(this.policies).some(Boolean)}
+                    ?disabled=${this.busy}
                     @click=${this.preview}
                   >
                     ${this.busy ? "Checking…" : "Review cleanup"}
                   </button>
                 </div>`
-            : html` <p>Review the records eligible for removal:</p>
+            : html` <p>Review the proposed cleanup:</p>
                 <ul>
                   ${CATEGORIES.filter(([key]) => this.review!.policies[key]).map(([key, label]) => html`<li>${label}: ${this.review!.counts[key]} older than ${this.review!.policies[key]} days</li>`)}
                 </ul>
+                <p>
+                  Artwork links to repair: ${this.review.artwork_links ?? 0}
+                  editions
+                </p>
                 <p>
                   Pending work and retry barriers are kept. Cleanup makes space
                   reusable inside SQLite but does not compact the file.
@@ -258,10 +264,10 @@ export class DatabaseCleanup extends LitElement {
                   ><button
                     type="button"
                     class="primary"
-                    ?disabled=${this.busy || !total}
+                    ?disabled=${this.busy || (!total && !(this.review.artwork_links ?? 0))}
                     @click=${this.apply}
                   >
-                    ${this.busy ? "Cleaning…" : "Remove eligible records"}
+                    ${this.busy ? "Cleaning…" : "Apply cleanup"}
                   </button>
                 </div>`
         }
