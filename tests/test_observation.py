@@ -94,6 +94,16 @@ class ObserverTest(unittest.IsolatedAsyncioTestCase):
         await self.hass.async_block_till_done()
         await self.observer.async_flush()
 
+    async def test_recorder_captures_player_position_at_start(self):
+        attributes = {
+            **self.hass.states.get("media_player.example").attributes,
+            "media_position": 1800,
+        }
+        await self.change(0.1, "media_player.example", "playing", attributes)
+        await self.tick(0.6)
+        session = await self.repository.async_open_session(self.config["player_id"])
+        self.assertEqual(session["start_position_seconds"], 1800)
+
     async def test_entity_events_record_stream_content_and_preserve_pause_edges(self):
         await self.tick(0.5)
         await self.change(10, "sensor.example_status", "paused")

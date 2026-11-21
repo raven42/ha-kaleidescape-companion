@@ -219,6 +219,26 @@ class BackendTest(unittest.IsolatedAsyncioTestCase):
                 )
                 self.assertEqual(result["code"], "unauthorized")
 
+    async def test_purchase_auto_match_requires_admin_and_scopes_the_library(self):
+        user = SimpleNamespace(id="viewer", is_active=True, is_admin=False)
+        repository = self.entry.runtime_data.repository
+        with patch.object(
+            repository, "async_purchase_auto_match", new_callable=AsyncMock
+        ) as match:
+            result = await self.call("purchases/auto_match", user=user, **self.scope)
+            self.assertEqual(result["code"], "unauthorized")
+            match.assert_not_awaited()
+        await self.create()
+        with patch.object(
+            repository,
+            "async_purchase_auto_match",
+            new_callable=AsyncMock,
+            return_value={"matched_count": 2},
+        ) as match:
+            result = await self.call("purchases/auto_match", **self.scope)
+            self.assertEqual(result["result"], {"matched_count": 2})
+            match.assert_awaited_once_with(self.entry.runtime_data.library.source)
+
     async def test_purchase_repair_requires_and_rechecks_admin(self):
         user = SimpleNamespace(id="viewer", is_active=True, is_admin=False)
         arguments = {

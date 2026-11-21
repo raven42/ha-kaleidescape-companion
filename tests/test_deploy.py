@@ -644,8 +644,7 @@ assert not any(name == 'scripts' or name.startswith('scripts.') for name in sys.
         self.assertEqual(
             composite["dependsOn"],
             [
-                "Build",
-                "Check",
+                "Build and check",
                 "Package",
                 "Maintainer: Deploy prepared artifact",
                 "Maintainer: Check configuration and restart",

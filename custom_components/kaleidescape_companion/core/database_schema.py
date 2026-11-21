@@ -43,7 +43,12 @@ EDITABLE = {
         "status",
         "notes",
     },
-    "sessions": {"title", "duration_seconds", "watched_seconds"},
+    "sessions": {
+        "title",
+        "duration_seconds",
+        "watched_seconds",
+        "start_position_seconds",
+    },
     "library": {
         "title",
         "sort_title",

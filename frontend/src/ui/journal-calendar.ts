@@ -69,9 +69,12 @@ export function calendarDays(
       : start;
   const minimum = row.partial_minimum_seconds ?? 600;
   const totals = new Map<string, number>();
+  const startedMidMovie = new Map<string, boolean>();
   for (const session of row.sessions ?? []) {
     if (session.watched_seconds < minimum) continue;
     const day = dayKey(new Date(session.started_at));
+    if (!totals.has(day))
+      startedMidMovie.set(day, (session.start_position_seconds ?? 0) > 60);
     totals.set(day, (totals.get(day) ?? 0) + session.watched_seconds);
   }
   if (!row.sessions?.length) totals.set(start, row.watched_seconds);
@@ -83,10 +86,10 @@ export function calendarDays(
     day,
     phase:
       row.status === "completed" && day === end
-        ? day === start
+        ? day === start && !startedMidMovie.get(day)
           ? "single"
           : "completion"
-        : day === start
+        : day === start && !startedMidMovie.get(day)
           ? "start"
           : "continuation",
   }));

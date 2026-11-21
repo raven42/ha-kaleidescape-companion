@@ -1,6 +1,6 @@
 # Journal storage and playback recording
 
-Status: implemented. API version is `1`; SQLite schema is `28` and JSON export
+Status: implemented. API version is `1`; SQLite schema is `29` and JSON export
 format is `5`. This document owns persistent journal behavior and observation.
 [Data management](data-management.md) owns administrative editing/imports;
 [calendar](calendar.md) owns event delivery; [controls](playback-controls.md)
@@ -142,16 +142,16 @@ events from the repaired metadata.
 All operations use HA authentication and scoped entry/dataset identifiers.
 Household views contain safe viewing summaries and totals; notes, raw
 identities, detailed session records, audits and exports require administrator
-access. Calendar responses include each session’s start time and watched
-duration for household readers to place qualifying posters. Now Playing reads
-permitted HA entities; recorder internals are administrator-only. Selecting a
-Journal list entry displays its viewing details in the adjacent pane. If the
-entry is linked to an available Library movie, selecting its title in that pane
-opens full movie details with an expandable Journal history. Calendar posters
-open full movie details by default; Journal options can select the compact
-viewing dialog instead. An entry without an available Library link keeps its
-viewing details. Administrators in Advanced mode can edit an entry from the full
-dialog without switching pages.
+access. Calendar responses include each session’s start time, starting playback
+position when known, and watched duration for household readers to place
+qualifying posters. Now Playing reads permitted HA entities; recorder internals
+are administrator-only. Selecting a Journal list entry displays its viewing
+details in the adjacent pane. If the entry is linked to an available Library
+movie, selecting its title in that pane opens full movie details with an
+expandable Journal history. Calendar posters open full movie details by default;
+Journal options can select the compact viewing dialog instead. An entry without
+an available Library link keeps its viewing details. Administrators in Advanced
+mode can edit an entry from the full dialog without switching pages.
 
 Lists use revision/filter/sort-bound cursors. Journal options provide 10, 25,
 100 or 500 entries per page, or All; the default is 25. Larger pages are

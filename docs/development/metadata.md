@@ -25,7 +25,10 @@ provider interfaces.
 3. **Refresh metadata** in Settings or the HA button requests a fresh pass.
    Library scans do not start metadata refreshes. **Check metadata status**
    shows progress, updates, skipped matches and an owned error code. Repeated
-   button clicks coalesce into one pass.
+   button clicks coalesce into one pass. **Refresh missing metadata or artwork**
+   refreshes only movie groups currently flagged by the Library's missing
+   metadata/artwork classification. It uses the enabled providers and saved
+   artwork settings, and fails busy if another refresh is active.
 4. To schedule refreshes, install the optional metadata blueprint under
    **Settings → Automations**, then create an HA automation and choose its time,
    select the scrapers (`kaleidescape`, `tmdb`, or none for all enabled

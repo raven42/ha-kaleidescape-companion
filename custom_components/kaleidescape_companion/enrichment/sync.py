@@ -99,16 +99,23 @@ class MetadataSync:
             raise JournalError("not_ready", "Metadata settings or access changed")
 
     def request_sync(
-        self, actor=None, *, force=False, providers=None, only_missing=False
+        self,
+        actor=None,
+        *,
+        force=False,
+        providers=None,
+        only_missing=False,
+        missing_titles_only=False,
     ):
         self._ready()
         if self.task and not self.task.done():
-            if providers is not None or only_missing:
+            if providers is not None or only_missing or missing_titles_only:
                 raise JournalError("busy", "Metadata refresh is already running")
             return
         self.actor = actor
         self.task = self.hass.async_create_background_task(
-            self._run(force, providers, only_missing), "Companion metadata enrichment"
+            self._run(force, providers, only_missing, missing_titles_only),
+            "Companion metadata enrichment",
         )
 
     def status(self):
@@ -365,7 +372,9 @@ class MetadataSync:
             raise ProviderError("invalid_store_link") from error
         return match
 
-    async def _run(self, force, providers=None, only_missing=False):
+    async def _run(
+        self, force, providers=None, only_missing=False, missing_titles_only=False
+    ):
         operation_id = uuid4().hex[:16]
         _LOGGER.info("Metadata refresh started (operation_id=%s)", operation_id)
         _LOGGER.info(
@@ -387,7 +396,11 @@ class MetadataSync:
         failure, cancelled = None, False
         try:
             self.session = self.create_session()
-            rows = await self.repository.async_enrichment("candidates", self.source)
+            rows = (
+                await self.repository.async_enrichment("candidates", self.source, True)
+                if missing_titles_only
+                else await self.repository.async_enrichment("candidates", self.source)
+            )
             self.total = len(rows)
             async with asyncio.timeout(3600):
                 for row in rows:

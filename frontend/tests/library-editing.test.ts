@@ -435,6 +435,38 @@ it("shows qualifying start and continuation days until completion", () => {
   ).toEqual([]);
 });
 
+it("marks a separate resumed viewing as a continuation until it completes", () => {
+  const started = new Date(2026, 9, 24, 20).toISOString();
+  const row = {
+    ...record({ started_at: started, status: "partial", watched_seconds: 900 }),
+    sessions: [
+      {
+        started_at: started,
+        watched_seconds: 900,
+        start_position_seconds: 1800,
+      },
+    ],
+  };
+  expect(calendarDays(row)).toEqual([
+    { day: "2026-10-24", phase: "continuation" },
+  ]);
+  expect(
+    calendarDays({ ...row, status: "completed", ended_at: started }),
+  ).toEqual([{ day: "2026-10-24", phase: "completion" }]);
+  expect(
+    calendarDays({
+      ...row,
+      sessions: [{ ...row.sessions[0], start_position_seconds: 15 }],
+    }),
+  ).toEqual([{ day: "2026-10-24", phase: "start" }]);
+  expect(
+    calendarDays({
+      ...row,
+      sessions: [{ ...row.sessions[0], start_position_seconds: null }],
+    }),
+  ).toEqual([{ day: "2026-10-24", phase: "start" }]);
+});
+
 it("uses the configured partial viewing minimum for calendar covers", () => {
   const row = record({ status: "partial", watched_seconds: 180 });
   expect(calendarDays({ ...row, partial_minimum_seconds: 120 })).toHaveLength(

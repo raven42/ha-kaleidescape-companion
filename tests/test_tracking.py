@@ -91,6 +91,14 @@ class TrackerTest(unittest.TestCase):
         self.assertFalse(tracker.session.credits_seen)
         self.assertGreaterEqual(tracker.session.gap_count, 2)
 
+    def test_session_captures_initial_playback_position(self):
+        tracker = PlaybackTracker("player")
+        tracker.apply(observation(0, position=1800))
+        snapshots = tracker.apply(observation(0.5, position=1801))
+        self.assertEqual(snapshots[0]["start_position_seconds"], 1801)
+        later = tracker.apply(observation(40, position=1840))[-1]
+        self.assertEqual(later["start_position_seconds"], 1801)
+
     def test_short_stop_grace_and_stable_new_session(self):
         tracker = PlaybackTracker("player")
         tracker.apply(observation(0))
@@ -466,6 +474,36 @@ class AutomaticRepositoryTest(unittest.IsolatedAsyncioTestCase):
 
 
 class UpgradeTest(unittest.TestCase):
+    def test_schema_28_session_position_stays_unknown_after_upgrade(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "journal.sqlite3"
+            with closing(sqlite3.connect(path)) as db:
+                with patch.object(migrations, "SCHEMA_VERSION", 28):
+                    migrations.migrate(db, path)
+                with db:
+                    db.execute(
+                        "INSERT INTO viewings (id,title,title_search,started_at,"
+                        "watched_seconds,status,notes,origin,created_at,updated_at,"
+                        "revision) VALUES "
+                        "('v','Film','film',?,600,'partial','','observed',?,?,1)",
+                        (observation(0).at,) * 3,
+                    )
+                    db.execute(
+                        "INSERT INTO sessions (id,viewing_id,player_id,raw_content_id,"
+                        "title,started_at,last_observed_at,boot_id,watched_seconds,"
+                        "credits_seen,credits_confirmed,credits_watched_seconds,"
+                        "revision,gap_count) VALUES "
+                        "('s','v','player','raw','Film',?,?,'boot',600,0,0,0,1,0)",
+                        (observation(0).at,) * 2,
+                    )
+                migrations.migrate(db, path)
+                row = db.execute(
+                    "SELECT watched_seconds,start_position_seconds "
+                    "FROM sessions WHERE id='s'"
+                ).fetchone()
+                self.assertEqual(row, (600, None))
+                self.assertTrue(list(path.parent.glob("*.v28.*.bak")))
+
     def test_v1_manual_data_and_retry_results_are_preserved(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "journal.sqlite3"

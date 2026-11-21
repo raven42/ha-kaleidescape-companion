@@ -168,7 +168,7 @@ def normalize_genres(data):
     return data
 
 
-def candidates(db, source):
+def candidates(db, source, missing_titles_only=False):
     """Choose scanned movie groups, excluding purchase-only placeholders."""
     rows = db.execute(
         """SELECT id,source_group,title,json_extract(data,'$.year') year,
@@ -205,11 +205,19 @@ def candidates(db, source):
         (source,),
     )
     groups = {}
+    missing_groups = None
+    if missing_titles_only:
+        from ..library.summary import completeness
+
+        missing_metadata, missing_artwork, *_ = completeness(db, source)
+        missing_groups = missing_metadata | missing_artwork
     for count, row in enumerate(rows):
         if count == 10000:
             raise JournalError(
                 "metadata_limit", "Metadata sync supports 10,000 versions"
             )
+        if missing_groups is not None and row["source_group"] not in missing_groups:
+            continue
         entry = groups.setdefault(
             row["source_group"],
             {

@@ -148,6 +148,9 @@ def save_catalog(db, origin, rows, collections=None, *, detected_at=None):
         from .artwork_links import reconcile
 
         reconcile(db, source=source, target_ids=new_ids, apply=True, bump_sources=False)
+        from .purchase_reconciliation import auto_match
+
+        auto_match(db, source)
         changed(db, source)
 
 

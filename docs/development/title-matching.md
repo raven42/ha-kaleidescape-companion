@@ -43,11 +43,16 @@ review and atomic writes. The purchase adapter in `library/purchases.py`
 converts its passive store link into title/year evidence and retains invoice
 identity and the optional durable `purchase_records.library_id` association.
 Receipt automation applies unique nonconflicting proposals without a human
-selection and saves unmatched records for later administrator reconciliation.
-Manual purchase reviews require the user to select eligible matches. These
-policies belong to the adapters, not to `TitleMatcher`. Future adapters can
-supply other metadata through the same contract. Viewing imports retain exact
-UUIDs; Library metadata imports retain exact source/version IDs. A title
+selection and saves unmatched records for later reconciliation. Each complete
+Library scan and the Reconcile Purchases auto-match button retry unlinked
+records using a separate conservative matcher: exact known Store links or exact
+case- and accent-insensitive titles within the current source, with release year
+when available. These operations do not use the broader title-alias suggestions
+and leave ambiguity, conflicting purchase values and protected repairs for
+review. Manual purchase reviews require the user to select eligible matches.
+These policies belong to the adapters, not to `TitleMatcher`. Future adapters
+can supply other metadata through the same contract. Viewing imports retain
+exact UUIDs; Library metadata imports retain exact source/version IDs. A title
 suggestion does not replace these integrity rules.
 
 ## Read-only comparison tool

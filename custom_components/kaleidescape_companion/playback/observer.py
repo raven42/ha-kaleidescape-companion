@@ -129,6 +129,10 @@ class PlaybackObserver:
             duration = seconds(attributes.get("media_duration"))
         except JournalError:
             duration = None
+        try:
+            position = seconds(attributes.get("media_position"))
+        except JournalError:
+            position = None
         play_status = status.state if status else "unknown"
         if player and player.state in ("off", "standby", "idle"):
             play_status = "stopped"
@@ -139,6 +143,7 @@ class PlaybackObserver:
             content_id=attribute("media_content_id", 255),
             title=attribute("media_title", 500),
             duration=duration,
+            position=position,
             play_status=play_status,
             location=location.state if location else "unknown",
             available=available,

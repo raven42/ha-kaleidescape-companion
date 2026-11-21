@@ -325,7 +325,9 @@ export class FixtureTransport implements Transport {
     if (this.failure) throw new ApiError(this.failure);
     const operation = message.type.split("/").slice(1).join("/");
     let result: unknown;
-    if (operation === "purchases/reconcile") {
+    if (operation === "purchases/auto_match") {
+      result = { matched_count: 0 };
+    } else if (operation === "purchases/reconcile") {
       result = { empty: true };
     } else if (operation === "automations/status") {
       result = this.blueprintStatuses;
@@ -1158,6 +1160,22 @@ export class FixtureTransport implements Transport {
       if (data.expected_revision !== this.revision)
         throw new ApiError("conflict");
       const records = [...this.records, ...this.deletedRecords];
+      if (data.table === "sessions") {
+        const rows = this.databaseFixtureTables.sessions ?? [];
+        const selected = data.rows.map((item) =>
+          rows.find((row) => row.id === item.key.id),
+        );
+        if (selected.some((row) => !row)) throw new ApiError("not_found");
+        if (data.operation !== "edit") throw new ApiError("invalid_request");
+        Object.assign(selected[0]!, data.patch);
+        result = {
+          updated_count: 1,
+          deleted_count: 0,
+          revision: ++this.revision,
+        };
+        this.databaseResults.set(request, result);
+        return result as T;
+      }
       if (data.table !== "viewings") throw new ApiError("invalid_request");
       const selected = data.rows.map((item) =>
         records.find((row) => row.id === item.key.id),
@@ -1294,23 +1312,37 @@ export class FixtureTransport implements Transport {
               "status",
               "notes",
             ]
-          : String(message.table) === "settings"
-            ? ["value"]
-            : [];
+          : String(message.table) === "sessions"
+            ? [
+                "title",
+                "duration_seconds",
+                "watched_seconds",
+                "start_position_seconds",
+              ]
+            : String(message.table) === "settings"
+              ? ["value"]
+              : [];
       result = {
         dataset_revision: this.revision,
         references: this.databaseReferences[String(message.table)] ?? [],
         main_tables: ["viewings", "sessions", "library", "purchase_records"],
         schema: columns.map((name) => ({
           name,
-          type: ["duration_seconds", "watched_seconds", "revision"].includes(
-            name,
-          )
+          type: [
+            "duration_seconds",
+            "watched_seconds",
+            "start_position_seconds",
+            "revision",
+          ].includes(name)
             ? "number"
             : name === "value"
               ? "json"
               : "text",
-          nullable: ["ended_at", "duration_seconds"].includes(name),
+          nullable: [
+            "ended_at",
+            "duration_seconds",
+            "start_position_seconds",
+          ].includes(name),
           editable: editable.includes(name),
           primary: name === "id" || name === "owner" || name === "key",
         })),

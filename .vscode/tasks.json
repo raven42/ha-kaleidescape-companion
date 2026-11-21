@@ -21,6 +21,58 @@
       }
     },
     {
+      "label": "Build and check",
+      "dependsOn": ["Build", "Post-build checks"],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "Post-build checks",
+      "dependsOn": [
+        "Post-build: Python tests",
+        "Post-build: Frontend tests",
+        "Post-build: Reconstruct pyk",
+        "Post-build: Project checks",
+        "Post-build: Verify assets"
+      ],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    },
+    {
+      "label": "Post-build: Python tests",
+      "type": "process",
+      "command": "${workspaceFolder}/scripts/test",
+      "args": ["--python-only"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Post-build: Frontend tests",
+      "type": "process",
+      "command": "${workspaceFolder}/scripts/test",
+      "args": ["--frontend-only"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Post-build: Reconstruct pyk",
+      "type": "process",
+      "command": "${workspaceFolder}/scripts/check-pyk",
+      "args": ["--reconstruct"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Post-build: Project checks",
+      "type": "process",
+      "command": "${workspaceFolder}/scripts/check-project",
+      "problemMatcher": []
+    },
+    {
+      "label": "Post-build: Verify assets",
+      "type": "process",
+      "command": "npm",
+      "args": ["--prefix", "${workspaceFolder}/frontend", "run", "build:check"],
+      "problemMatcher": ["$tsc"]
+    },
+    {
       "label": "Lint",
       "type": "process",
       "command": "${workspaceFolder}/scripts/lint",
@@ -147,8 +199,7 @@
     {
       "label": "Maintainer: Build, check, package, deploy and restart",
       "dependsOn": [
-        "Build",
-        "Check",
+        "Build and check",
         "Package",
         "Maintainer: Deploy prepared artifact",
         "Maintainer: Check configuration and restart"

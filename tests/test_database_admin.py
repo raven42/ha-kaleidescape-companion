@@ -583,6 +583,52 @@ class DatabaseStorageTest(unittest.IsolatedAsyncioTestCase):
         with self.assert_error("invalid_request"):
             await self.repository.async_library_suggest(library.SOURCE, "sql", "")
 
+    async def test_closed_session_start_position_can_be_corrected_and_cleared(self):
+        from custom_components.kaleidescape_companion.playback.tracker import Session
+
+        start = "2026-10-23T15:00:00+00:00"
+        session = Session(
+            id=str(uuid4()),
+            player_id="fixture-player",
+            raw_content_id="fictional",
+            title="Fictional Film",
+            duration_seconds=7200,
+            started_at=start,
+            last_observed_at="2026-10-23T15:20:00+00:00",
+            boot_id="fixture",
+            watched_seconds=1200,
+            closed_at="2026-10-23T15:20:00+00:00",
+            end_reason="stopped",
+            revision=1,
+        )
+        await self.repository.async_save_session(session.snapshot(), 300, 1)
+        page = await self.page("sessions")
+        field = next(
+            item for item in page["schema"] if item["name"] == "start_position_seconds"
+        )
+        self.assertTrue(field["editable"])
+        self.assertTrue(field["nullable"])
+        self.assertEqual(field["type"], "number")
+        for value in (-1, True, "invalid", float("inf")):
+            with self.subTest(value=value), self.assert_error("invalid_request"):
+                await self.mutate(page, patch_data={"start_position_seconds": value})
+        await self.mutate(page, patch_data={"start_position_seconds": 1800.5})
+        current = await self.page("sessions")
+        self.assertEqual(current["items"][0]["start_position_seconds"], 1800.5)
+        self.assertEqual(current["items"][0]["revision"], 2)
+        with self.assert_error("conflict"):
+            await self.mutate(page, patch_data={"start_position_seconds": 42})
+        calendar = await self.repository.async_calendar_month(
+            "2026-10-01T00:00:00Z", "2026-11-01T00:00:00Z"
+        )
+        self.assertEqual(
+            calendar["items"][0]["sessions"][0]["start_position_seconds"], 1800.5
+        )
+        await self.mutate(current, patch_data={"start_position_seconds": None})
+        self.assertIsNone(
+            (await self.page("sessions"))["items"][0]["start_position_seconds"]
+        )
+
     async def test_open_playback_protection_and_artwork_cleanup(self):
         created = await self.repository.async_create(str(uuid4()), viewing())
         row = created["viewing"]
@@ -621,6 +667,10 @@ class DatabaseStorageTest(unittest.IsolatedAsyncioTestCase):
         with self.assert_error("busy"):
             await self.mutate(
                 await self.page("sessions"), patch_data={"watched_seconds": 5}
+            )
+        with self.assert_error("busy"):
+            await self.mutate(
+                await self.page("sessions"), patch_data={"start_position_seconds": 42}
             )
         await self.seed()
         image = b"\x89PNG\r\n\x1a\n" + b"q" * 12

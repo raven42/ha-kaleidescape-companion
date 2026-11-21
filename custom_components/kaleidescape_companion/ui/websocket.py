@@ -116,7 +116,10 @@ def async_register_commands(hass: HomeAssistant) -> None:
         "control/acknowledge": {**mutations, p.Required("confirmation"): str},
         "library/info": scoped,
         "metadata/status": scoped,
-        "metadata/sync": scoped,
+        "metadata/sync": {
+            **scoped,
+            p.Optional("missing_titles_only", default=False): bool,
+        },
         "metadata/title/options": {**scoped, p.Required("title_id"): str},
         "metadata/title/preview": {
             **scoped,
@@ -213,6 +216,7 @@ def async_register_commands(hass: HomeAssistant) -> None:
         "library/viewing": {**scoped, p.Required("viewing_id"): str},
         "library/purchases/summary": scoped,
         "purchases/reconcile": scoped,
+        "purchases/auto_match": scoped,
         "library/viewings": {
             **scoped,
             p.Required("title_id"): str,
@@ -508,7 +512,11 @@ async def async_handle(
                             "Enable a metadata provider and save Settings first",
                         )
                     if operation == "metadata/sync":
-                        runtime.enrichment.request_sync(user, force=True)
+                        runtime.enrichment.request_sync(
+                            user,
+                            force=True,
+                            missing_titles_only=msg.get("missing_titles_only", False),
+                        )
                     result = {
                         **runtime.enrichment.status(),
                         **await repository.async_enrichment(
@@ -1118,6 +1126,9 @@ async def async_handle(
                     )
                 case "purchases/reconcile":
                     result = await repository.async_purchase_reconciliation(user.id)
+                case "purchases/auto_match":
+                    library = get_library(hass, msg["entry_id"], runtime)
+                    result = await repository.async_purchase_auto_match(library.source)
                 case "purchases/repair/preview":
                     result = await repository.async_purchase_repair_preview(
                         msg["action"], msg["key"], msg["token"], msg["changes"], user.id

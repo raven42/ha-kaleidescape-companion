@@ -142,7 +142,11 @@ export interface JournalPage {
 export type JournalPageSize = 10 | 25 | 100 | 500 | "all";
 export interface CalendarViewing extends ViewingSummary {
   partial_minimum_seconds?: number;
-  sessions?: { started_at: string; watched_seconds: number }[];
+  sessions?: {
+    started_at: string;
+    watched_seconds: number;
+    start_position_seconds?: number | null;
+  }[];
   library_title_id: string | null;
   artwork_key: string | null;
   completed_at?: string | null;
@@ -1065,10 +1069,15 @@ export class JournalClient {
       confirmation: "REVIEWED",
     });
   }
-  metadataStatus(scope: Scope, sync = false): Promise<MetadataStatus> {
+  metadataStatus(
+    scope: Scope,
+    sync = false,
+    missingTitlesOnly = false,
+  ): Promise<MetadataStatus> {
     return this.call({
       type: `${DOMAIN}/metadata/${sync ? "sync" : "status"}`,
       ...scopeFields(scope),
+      ...(sync && missingTitlesOnly ? { missing_titles_only: true } : {}),
     });
   }
   titleScrapeOptions(scope: Scope, title_id: string): Promise<ScrapeOptions> {
@@ -1909,6 +1918,12 @@ export class JournalClient {
       "application/json",
     );
     return JSON.parse(await blob.text()) as ImportReview;
+  }
+  autoMatchPurchases(scope: Scope): Promise<{ matched_count: number }> {
+    return this.call({
+      type: `${DOMAIN}/purchases/auto_match`,
+      ...scopeFields(scope),
+    });
   }
   reconcilePurchases(scope: Scope): Promise<ImportReview | { empty: true }> {
     return this.call({

@@ -112,7 +112,8 @@ def month(
     if sessions:
         placeholders = ",".join("?" for _ in sessions)
         evidence = db.execute(
-            "SELECT viewing_id,started_at,watched_seconds FROM sessions "
+            "SELECT viewing_id,started_at,watched_seconds,start_position_seconds "
+            "FROM sessions "
             f"WHERE viewing_id IN ({placeholders}) ORDER BY started_at,id LIMIT 10001",
             tuple(sessions),
         ).fetchall()
@@ -125,6 +126,7 @@ def month(
                 {
                     "started_at": session["started_at"],
                     "watched_seconds": session["watched_seconds"],
+                    "start_position_seconds": session["start_position_seconds"],
                 }
             )
     totals = month_totals(db, start, end)

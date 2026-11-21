@@ -105,6 +105,39 @@ it("loads unmatched purchases from the database for review", async () => {
   expect(text()).toContain("Match title");
 });
 
+it("auto-matches purchases and refreshes the remaining review", async () => {
+  element.scope = { ...info, library_enabled: true };
+  modalClose(root()).click();
+  await flush();
+  const plan = review(1);
+  plan.rows[0] = {
+    ...plan.rows[0],
+    key: "purchases:fixture",
+    needs_match: true,
+    can_match: true,
+  };
+  const load = vi
+    .spyOn(element.client!, "reconcilePurchases")
+    .mockResolvedValueOnce(plan)
+    .mockResolvedValueOnce({ empty: true });
+  const match = vi
+    .spyOn(element.client!, "autoMatchPurchases")
+    .mockResolvedValue({ matched_count: 1 });
+  const changed = vi.fn();
+  element.addEventListener("database-changed", changed);
+  button("Reconcile purchases").click();
+  await vi.waitFor(() => expect(load).toHaveBeenCalledTimes(1));
+  await flush();
+  button("Auto-match purchases").click();
+  await vi.waitFor(() =>
+    expect(text()).toContain("Automatically matched 1 purchase"),
+  );
+  expect(match).toHaveBeenCalledWith(element.scope);
+  expect(load).toHaveBeenCalledTimes(2);
+  expect(changed).toHaveBeenCalledTimes(1);
+  expect(root().querySelector("dialog")!.open).toBe(true);
+});
+
 it("allows purchase-only reconciliation while automatic tracking is enabled", async () => {
   modalClose(root()).click();
   element.scope = { ...info, tracking_enabled: true };

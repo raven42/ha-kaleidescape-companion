@@ -446,6 +446,57 @@ it("lets typing replace NULL values with a footer save and header close", async 
   expect(transport.records[0].duration_seconds).toBe(7200);
 });
 
+it("edits and clears a closed session's starting position", async () => {
+  transport.databaseFixtureTables.sessions = [
+    {
+      id: "fictional-session",
+      title: "Fictional session",
+      duration_seconds: 7200,
+      watched_seconds: 900,
+      start_position_seconds: null,
+      closed_at: "2026-10-24T21:00:00Z",
+    },
+  ];
+  await mount();
+  root().querySelector<HTMLButtonElement>("#table-sessions")!.click();
+  await vi.waitFor(() =>
+    expect(root().textContent).toContain("Fictional session"),
+  );
+  root().querySelector<HTMLButtonElement>(".entry-name")!.click();
+  await flush();
+  button("Edit entry").click();
+  await flush();
+  const field = root().querySelector<HTMLInputElement>(
+    '[name="start_position_seconds"]',
+  )!;
+  const nullToggle = root().querySelector<HTMLInputElement>(
+    '[aria-label="Set start_position_seconds to NULL"]',
+  )!;
+  expect(field.type).toBe("number");
+  expect(nullToggle.checked).toBe(true);
+  input("start_position_seconds", "1800.5");
+  await flush();
+  expect(nullToggle.checked).toBe(false);
+  await confirm();
+  expect(
+    transport.databaseFixtureTables.sessions[0].start_position_seconds,
+  ).toBe(1800.5);
+  root().querySelector<HTMLButtonElement>(".entry-name")!.click();
+  await flush();
+  button("Edit entry").click();
+  await flush();
+  root()
+    .querySelector<HTMLInputElement>(
+      '[aria-label="Set start_position_seconds to NULL"]',
+    )!
+    .click();
+  await flush();
+  await confirm();
+  expect(
+    transport.databaseFixtureTables.sessions[0].start_position_seconds,
+  ).toBeNull();
+});
+
 it("shows compact outgoing and incoming entry links and follows the chosen referencing row", async () => {
   transport.records[0] = {
     ...transport.records[0],

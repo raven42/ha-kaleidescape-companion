@@ -1122,6 +1122,19 @@ class JournalRepository:
         )
         return self._import_plan["public"]
 
+    async def async_purchase_auto_match(self, source):
+        """Match currently unresolved purchases against the selected Library."""
+        return await self._call(self._library_write, self._purchase_auto_match, source)
+
+    def _purchase_auto_match(self, db, source):
+        from ..library.purchase_reconciliation import auto_match
+
+        with db:
+            count = auto_match(db, source)
+            if count:
+                library_store.changed(db, source)
+        return {"matched_count": count}
+
     async def async_purchase_reconciliation(self, actor_id):
         """Create an administrator review of durable unmatched purchases."""
         return await self._call(self._purchase_reconciliation, self._actor(actor_id))

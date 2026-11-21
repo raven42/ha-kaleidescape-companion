@@ -7,6 +7,7 @@ loopback sockets but do not contact household devices or live providers.
 
 ```sh
 scripts/check
+scripts/build --check
 scripts/test --providers-only
 scripts/test --browser-only
 scripts/test --live-player-only
@@ -39,12 +40,19 @@ npm --prefix frontend test
 npm --prefix frontend run build:check
 ```
 
-Check includes lint/format validation, all suites, TypeScript, project metadata
-and links, shell syntax, bundled pyk hashes and offline reconstruction, and
-generated-asset comparison. Build intentionally updates the packaged frontend;
-Check instead builds into temporary output and fails if the accepted bundle
-differs. Inspect changes after Build and rerun Check before packaging. Package
-also verifies required generated assets; it does not substitute for all tests.
+Build and Check first run Python, frontend and Markdown linters, formatting
+checks and shell syntax checks; either stops immediately on failure. Check then
+runs all suites, TypeScript, project metadata and links, bundled pyk hashes and
+offline reconstruction, and generated-asset comparison. CI runs the same
+lint/format gate before its test jobs. `scripts/build --check` runs the gate
+once, builds the frontend, then completes the full check. The VS Code **Build
+and check** task runs Build first, then runs Python tests, frontend tests, pyk
+reconstruction, project checks and asset verification in parallel. The combined
+maintainer task waits for all of those checks before packaging or deployment.
+Build intentionally updates the packaged frontend; Check instead builds into
+temporary output and fails if the accepted bundle differs. Inspect changes after
+Build and rerun Check before packaging. Package also verifies required generated
+assets; it does not substitute for all tests.
 
 Network advisory scans are an explicit separate command:
 

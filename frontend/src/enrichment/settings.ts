@@ -61,7 +61,7 @@ export class EnrichmentSettings extends LitElement {
       }),
     );
   }
-  private async refresh(sync = false) {
+  private async refresh(sync = false, missingTitlesOnly = false) {
     if (
       this.loading ||
       !this.scope?.permissions.edit ||
@@ -75,7 +75,11 @@ export class EnrichmentSettings extends LitElement {
     this.requestUpdate();
     const generation = this.generation;
     try {
-      const status = await this.client.metadataStatus(this.scope, sync);
+      const status = await this.client.metadataStatus(
+        this.scope,
+        sync,
+        missingTitlesOnly,
+      );
       if (generation !== this.generation) return;
       this.status = status;
       this.error = "";
@@ -298,6 +302,12 @@ export class EnrichmentSettings extends LitElement {
             @click=${() => this.refresh(true)}
           >
             Refresh metadata</button
+          ><button
+            type="button"
+            ?disabled=${this.disabled || this.actionsDisabled || !this.scope.library_enabled || this.loading || this.status?.running}
+            @click=${() => this.refresh(true, true)}
+          >
+            Refresh missing metadata or artwork</button
           ><button
             type="button"
             ?disabled=${this.loading}

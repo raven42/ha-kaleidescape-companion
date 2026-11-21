@@ -185,15 +185,25 @@ def shell_check() -> None:
             run(["bash", "-n", path])
 
 
-def check() -> None:
+def quality_checks() -> None:
+    """Fail on lint, formatting, or shell syntax before slower work."""
+    lint()
+    format_sources(check=True)
+    shell_check()
+
+
+def check_after_quality() -> None:
+    """Finish the check after this process has passed the quality gate."""
     verify_pyk(reconstruct=True)
     provider_tests()
     browser_tests()
     live_player_tests()
     integration_tests()
     project_check()
-    lint()
-    format_sources(check=True)
-    shell_check()
     frontend_tests()
     verify_assets()
+
+
+def check() -> None:
+    quality_checks()
+    check_after_quality()

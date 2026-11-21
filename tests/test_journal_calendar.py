@@ -106,6 +106,7 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
                 closed_at=end,
                 end_reason="stopped",
                 revision=1,
+                start_position_seconds=1800,
             )
             await self.repository.async_save_session(session.snapshot(), 300, 24)
         month = await self.repository.async_calendar_month(
@@ -117,7 +118,11 @@ class JournalCalendarTest(unittest.IsolatedAsyncioTestCase):
             [s["watched_seconds"] for s in month["items"][0]["sessions"]], [1200, 660]
         )
         self.assertEqual(
-            set(month["items"][0]["sessions"][0]), {"started_at", "watched_seconds"}
+            month["items"][0]["sessions"][0]["start_position_seconds"], 1800
+        )
+        self.assertEqual(
+            set(month["items"][0]["sessions"][0]),
+            {"started_at", "watched_seconds", "start_position_seconds"},
         )
 
     async def test_half_open_local_range_handles_midnight_precision_and_deleted_rows(

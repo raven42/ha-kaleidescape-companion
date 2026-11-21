@@ -131,6 +131,34 @@ it("categorizes every current option exactly once and has one automation invento
   );
 });
 
+it("requests a targeted refresh for missing metadata or artwork", async () => {
+  await mount({ library_enabled: true });
+  await select("metadata");
+  const child = root().querySelector("kaleidescape-enrichment-settings")!;
+  const status = vi.spyOn(element.client!, "metadataStatus").mockResolvedValue({
+    enabled: true,
+    active: 0,
+    queued: 0,
+    failed: 0,
+    running: false,
+    processed: 0,
+    updated: 0,
+    skipped: 0,
+    total: 0,
+    error: null,
+    last_finished: null,
+  });
+  const button = [...child.shadowRoot!.querySelectorAll("button")].find(
+    (item) =>
+      item.textContent?.trim() === "Refresh missing metadata or artwork",
+  )!;
+  expect(button.disabled).toBe(false);
+  button.click();
+  await vi.waitFor(() =>
+    expect(status).toHaveBeenCalledWith(element.scope, true, true),
+  );
+});
+
 it("stages TMDB removal with a button, supports Undo and only applies on Save", async () => {
   const transport = await mount({}, true);
   await select("metadata");

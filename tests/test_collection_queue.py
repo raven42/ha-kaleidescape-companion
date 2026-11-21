@@ -53,7 +53,7 @@ class CollectionQueueTest(unittest.IsolatedAsyncioTestCase):
         self.repository = JournalRepository(self.path)
         self.addAsyncCleanup(self.repository.async_close)
         await self.repository.async_open()
-        self.assertEqual((await self.repository.async_info())["schema_version"], 28)
+        self.assertEqual((await self.repository.async_info())["schema_version"], 29)
         intent = await self.repository.async_collection_intent(library.SOURCE, request)
         self.assertEqual(intent["status"], "uncertain")
         self.assertEqual(intent["operation"], "add")

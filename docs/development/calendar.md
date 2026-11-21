@@ -60,13 +60,18 @@ the configured minimum partial viewing time (ten minutes by default). A
 completion day is shown even if the remaining segment is shorter. The first day
 has a diagonal lower-right cut while incomplete, continuation days have both the
 upper-left and lower-right corners cut, and the completion day has the
-complementary upper-left cut. A completed single-day viewing keeps its whole
-cover. Every poster opens the same viewing details/editor. Manual or older
-entries without sessions use their recorded total on the start day. Session
-watch time is attributed to its local start day: existing checkpoints do not
-contain enough evidence to divide a session accurately across midnight. Month
-reads include session start dates and completion dates across month boundaries;
-local dates and half-open month bounds include timezone and DST changes.
+complementary upper-left cut. A separately recorded session that starts more
+than one minute into the movie also uses the continuation cut, even when its
+prior viewing is outside the resume window. If the player does not report a
+starting position, or the session predates position tracking, the first day uses
+the start cut. A completed single-day viewing that began at the beginning keeps
+its whole cover. Every poster opens the same viewing details/editor. Manual or
+older entries without sessions use their recorded total on the start day.
+Session watch time is attributed to its local start day: existing checkpoints do
+not contain enough evidence to divide a session accurately across midnight.
+Month reads include session start dates and completion dates across month
+boundaries; local dates and half-open month bounds include timezone and DST
+changes.
 
 The single sticky Journal footer shows the selected month's, current year's
 to-date, and all-time viewing counts. Journal options can show or hide each

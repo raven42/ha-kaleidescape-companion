@@ -3,6 +3,9 @@
 
 def remove_collection_queue_schema(db):
     """Remove schema-28 additions before marking a synthetic database older."""
+    session_columns = {row[1] for row in db.execute("PRAGMA table_info(sessions)")}
+    if "start_position_seconds" in session_columns:
+        db.execute("ALTER TABLE sessions DROP COLUMN start_position_seconds")
     db.execute("DROP TABLE IF EXISTS collection_jobs")
     columns = {
         row[1] for row in db.execute("PRAGMA table_info(library_collection_intents)")

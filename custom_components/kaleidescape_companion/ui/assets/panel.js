@@ -1754,10 +1754,11 @@ var M, N, ot, P, st, ct, lt, F = t((() => {
 				confirmation: "REVIEWED"
 			});
 		}
-		metadataStatus(e, t = !1) {
+		metadataStatus(e, t = !1, n = !1) {
 			return this.call({
 				type: `${N}/metadata/${t ? "sync" : "status"}`,
-				...P(e)
+				...P(e),
+				...t && n ? { missing_titles_only: !0 } : {}
 			});
 		}
 		titleScrapeOptions(e, t) {
@@ -2281,6 +2282,12 @@ var M, N, ot, P, st, ct, lt, F = t((() => {
 			}
 			let o = await at(a, 8388608, "application/json");
 			return JSON.parse(await o.text());
+		}
+		autoMatchPurchases(e) {
+			return this.call({
+				type: `${N}/purchases/auto_match`,
+				...P(e)
+			});
 		}
 		reconcilePurchases(e) {
 			return this.call({
@@ -8864,17 +8871,17 @@ function br(e) {
 	return [new Date(e.getFullYear(), e.getMonth(), 1).toISOString(), new Date(e.getFullYear(), e.getMonth() + 1, 1).toISOString()];
 }
 function xr(e) {
-	let t = Z(new Date(e.started_at)), n = e.ended_at ?? e.completed_at, r = e.status === "completed" && n && new Date(n) > new Date(e.started_at) ? Z(new Date(n)) : t, i = e.partial_minimum_seconds ?? 600, a = /* @__PURE__ */ new Map();
+	let t = Z(new Date(e.started_at)), n = e.ended_at ?? e.completed_at, r = e.status === "completed" && n && new Date(n) > new Date(e.started_at) ? Z(new Date(n)) : t, i = e.partial_minimum_seconds ?? 600, a = /* @__PURE__ */ new Map(), o = /* @__PURE__ */ new Map();
 	for (let t of e.sessions ?? []) {
 		if (t.watched_seconds < i) continue;
 		let e = Z(new Date(t.started_at));
-		a.set(e, (a.get(e) ?? 0) + t.watched_seconds);
+		a.has(e) || o.set(e, (t.start_position_seconds ?? 0) > 60), a.set(e, (a.get(e) ?? 0) + t.watched_seconds);
 	}
 	e.sessions?.length || a.set(t, e.watched_seconds);
-	let o = [...a].filter(([, e]) => e >= i).map(([e]) => e);
-	return e.status === "completed" && !o.includes(r) && o.push(r), o.sort().map((n) => ({
+	let s = [...a].filter(([, e]) => e >= i).map(([e]) => e);
+	return e.status === "completed" && !s.includes(r) && s.push(r), s.sort().map((n) => ({
 		day: n,
-		phase: e.status === "completed" && n === r ? n === t ? "single" : "completion" : n === t ? "start" : "continuation"
+		phase: e.status === "completed" && n === r ? n === t && !o.get(n) ? "single" : "completion" : n === t && !o.get(n) ? "start" : "continuation"
 	}));
 }
 var Sr, Cr = t((() => {
@@ -16654,18 +16661,18 @@ var va = class extends C {
 			composed: !0
 		}));
 	}
-	async refresh(e = !1) {
+	async refresh(e = !1, t = !1) {
 		if (this.loading || !this.scope?.permissions.edit || !this.client || e && (this.disabled || this.actionsDisabled || !this.scope.library_enabled)) return;
 		this.loading = !0, clearTimeout(this.timer), this.requestUpdate();
-		let t = this.generation;
+		let n = this.generation;
 		try {
-			let n = await this.client.metadataStatus(this.scope, e);
-			if (t !== this.generation) return;
-			this.status = n, this.error = "", n.running && (this.timer = setTimeout(() => void this.refresh(), 2e3));
+			let r = await this.client.metadataStatus(this.scope, e, t);
+			if (n !== this.generation) return;
+			this.status = r, this.error = "", r.running && (this.timer = setTimeout(() => void this.refresh(), 2e3));
 		} catch (e) {
-			t === this.generation && (this.error = A(e));
+			n === this.generation && (this.error = A(e));
 		} finally {
-			t === this.generation && (this.loading = !1, this.requestUpdate());
+			n === this.generation && (this.loading = !1, this.requestUpdate());
 		}
 	}
 	toggle(e, t, n) {
@@ -16858,6 +16865,12 @@ var va = class extends C {
             @click=${() => this.refresh(!0)}
           >
             Refresh metadata</button
+          ><button
+            type="button"
+            ?disabled=${this.disabled || this.actionsDisabled || !this.scope.library_enabled || this.loading || this.status?.running}
+            @click=${() => this.refresh(!0, !0)}
+          >
+            Refresh missing metadata or artwork</button
           ><button
             type="button"
             ?disabled=${this.loading}
@@ -18915,6 +18928,26 @@ var Ta = class extends C {
 			}
 		}
 	}
+	async autoMatchPurchases() {
+		if (!this.client || !this.scope || this.working || this.pending || this.disabled || this.matching) return;
+		let e = this.generation;
+		this.working = !0, this.error = this.notice = "", this.busy(), this.requestUpdate();
+		try {
+			let t = await this.client.autoMatchPurchases(this.scope);
+			if (e !== this.generation) return;
+			this.review = void 0, this.selected.clear(), t.matched_count && this.dispatchEvent(new CustomEvent("database-changed", {
+				bubbles: !0,
+				composed: !0
+			}));
+			let n = await this.client.reconcilePurchases(this.scope);
+			if (e !== this.generation) return;
+			this.review = "empty" in n ? void 0 : n, this.notice = `Automatically matched ${z(t.matched_count, "purchase")}. Ambiguous or conflicting purchases remain for review.`, this.page = 0;
+		} catch (t) {
+			e === this.generation && this.fail(t);
+		} finally {
+			e === this.generation && (this.working = !1, this.busy(), this.requestUpdate());
+		}
+	}
 	hideDialog() {
 		this.matching = void 0, this.renderRoot.querySelector("dialog")?.close(), this.dialog = null;
 	}
@@ -19213,9 +19246,17 @@ var Ta = class extends C {
 		return this.purchaseReview ? v`
         <p>
           Reconcile purchase records that are not linked to a Library title.
-          Choose a Library match for each purchase, then apply the selected
-          changes.
+          Automatically match unambiguous purchases or choose a Library match
+          for each purchase and apply the selected changes.
         </p>
+        <div class="actions">
+          <button
+            ?disabled=${e || !!this.matching || !this.scope?.library_enabled}
+            @click=${this.autoMatchPurchases}
+          >
+            Auto-match purchases
+          </button>
+        </div>
         ${this.notice ? v`<p role="status">${this.notice}</p>` : x}
         ${this.renderReview(e)}
       ` : v`<p>
