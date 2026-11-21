@@ -311,7 +311,9 @@ class LocalLibrary:
             pre_submit()
         try:
             response = await self._transport.post("/movies", fields)
-        except (KeyboardInterrupt, SystemExit):
+        except KeyboardInterrupt:
+            raise
+        except SystemExit:
             raise
         except BaseException as error:
             raise BrowserOutcomeUnknownError(
@@ -358,7 +360,9 @@ class LocalLibrary:
             response = await self._transport.post(
                 path, {"submit_type": action, "check-" + handle: "on"}
             )
-        except (KeyboardInterrupt, SystemExit):
+        except KeyboardInterrupt:
+            raise
+        except SystemExit:
             raise
         except BaseException as error:
             raise BrowserOutcomeUnknownError(

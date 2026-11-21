@@ -3,5 +3,5 @@
 DOMAIN = "kaleidescape_companion"
 NAME = "Kaleidescape Companion"
 PANEL_PATH = "kaleidescape-companion"
-VERSION = "0.5.0-alpha.1"
+VERSION = "0.6.0-alpha"
 DEFAULT_MINIMUM_RUNTIME_MINUTES = 10

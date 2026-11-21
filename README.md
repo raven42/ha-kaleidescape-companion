@@ -14,8 +14,8 @@ not affiliated with, endorsed by, or supported by Kaleidescape. Kaleidescape and
 related marks are used only to identify intended compatibility and remain the
 property of their respective owners.
 
-**Alpha software:** the current candidate is `0.5.0-alpha.1`. It is licensed
-under [Apache-2.0](LICENSE). Home Assistant 2026.11.0 is the minimum offered by
+**Alpha software:** the current candidate is `0.6.0-alpha`. It is licensed under
+[Apache-2.0](LICENSE). Home Assistant 2026.11.0 is the minimum offered by
 Marketplace for this alpha and the development baseline; hardware, restore and
 broader compatibility qualification remain open. See the
 [roadmap](docs/development/roadmap.md).
