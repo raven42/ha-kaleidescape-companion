@@ -69,6 +69,7 @@ beforeEach(() => {
         ready: true,
         state: review.before,
       };
+    if (operation === "control/input_status") return { active: false };
     if (operation === "control/prepare")
       return { ...review, operation: message.operation };
     if (operation === "control/execute")
@@ -120,6 +121,7 @@ it("reads readiness without waking or sending a command on load", async () => {
   expect(calls.map((call) => call.type)).toEqual([
     "kaleidescape_companion/control/info",
     "kaleidescape_companion/control/status",
+    "kaleidescape_companion/control/input_status",
   ]);
   button("Play/Pause").click();
   await vi.waitFor(() =>
@@ -391,7 +393,7 @@ it("hides administrator receipt review in Basic mode even for an admin response"
   document.body.append(element);
   await vi.waitFor(() =>
     expect(element.shadowRoot!.textContent).toContain(
-      "needs administrator review",
+      "Player controls are paused",
     ),
   );
   expect(element.shadowRoot!.textContent).not.toContain(
@@ -526,9 +528,14 @@ it("arranges the remote controls and sends the requested commands", async () => 
     [...root.querySelectorAll<HTMLButtonElement>(selector)].map((item) =>
       item.getAttribute("aria-label"),
     );
+  expect(labels(".remote-power button")).toEqual([
+    "Power on",
+    "Screensaver",
+    "Standby",
+  ]);
   expect(labels(".remote-nav button")).toEqual([
     "Covers",
-    "Movies",
+    "List",
     "Collections",
     "Search",
     "Settings",
@@ -568,6 +575,11 @@ it("uses the shared header X for Remote without a redundant heading or footer", 
   const dialog =
     element.shadowRoot!.querySelector<HTMLDialogElement>("dialog")!;
   expect(dialog.open).toBe(true);
+  const icon = dialog.querySelector<HTMLImageElement>(
+    "h2 .remote-header-icon",
+  )!;
+  expect(icon.getAttribute("alt")).toBe("");
+  expect(icon.getAttribute("src")).toBeTruthy();
   expect(
     [...dialog.querySelectorAll("h2")].map((node) => node.textContent?.trim()),
   ).toEqual(["Example cinema Remote"]);
@@ -606,4 +618,492 @@ it("restores the saved default after asynchronous discovery populates the select
     expect(calls.some((c) => c.type.endsWith("/control/discover"))).toBe(true),
   );
   expect(select.value).toBe("1A2B");
+});
+
+it("shows the player search prompt and sends entered text through control receipts", async () => {
+  const original = handler;
+  handler = async (message) =>
+    message.type.endsWith("/control/input_status")
+      ? { active: true, prompt: "Search for title", entry: "Existing" }
+      : original(message);
+  await mount("Play/Pause");
+  await vi.waitFor(() =>
+    expect(
+      element.shadowRoot!.querySelector<HTMLInputElement>("#player-search")
+        ?.value,
+    ).toBe("Existing"),
+  );
+  const input =
+    element.shadowRoot!.querySelector<HTMLInputElement>("#player-search")!;
+  await vi.waitFor(() => expect(element.shadowRoot!.activeElement).toBe(input));
+  const done = button("Done");
+  done.focus();
+  await (element as unknown as { pollInput(): Promise<void> }).pollInput();
+  expect(element.shadowRoot!.activeElement).toBe(done);
+  input.value = "A: Movie";
+  input.dispatchEvent(new Event("input"));
+  await flush();
+  button("Send").click();
+  await vi.waitFor(() =>
+    expect(
+      calls.some(
+        (call) =>
+          call.type.endsWith("/control/prepare") &&
+          call.operation === "search_text" &&
+          call.input_text === "A: Movie",
+      ),
+    ).toBe(true),
+  );
+  await vi.waitFor(() =>
+    expect(calls.some((call) => call.type.endsWith("/control/execute"))).toBe(
+      true,
+    ),
+  );
+});
+
+it("sends coalesced search edits while typing when enabled", async () => {
+  const original = handler;
+  handler = async (message) =>
+    message.type.endsWith("/control/input_status")
+      ? { active: true, prompt: "Search", entry: "" }
+      : original(message);
+  element.liveTyping = true;
+  await mount("Play/Pause");
+  await vi.waitFor(() =>
+    expect(element.shadowRoot!.querySelector("#player-search")).not.toBeNull(),
+  );
+  const input =
+    element.shadowRoot!.querySelector<HTMLInputElement>("#player-search")!;
+  input.value = "A";
+  input.dispatchEvent(new Event("input"));
+  input.value = "Alien";
+  input.dispatchEvent(new Event("input"));
+  await vi.waitFor(() =>
+    expect(
+      calls.some(
+        (call) =>
+          call.type.endsWith("/control/prepare") &&
+          call.operation === "search_text" &&
+          call.input_text === "Alien",
+      ),
+    ).toBe(true),
+  );
+  expect(
+    calls.filter(
+      (call) =>
+        call.type.endsWith("/control/prepare") &&
+        call.operation === "search_text",
+    ),
+  ).toHaveLength(1);
+});
+
+it("sends later edits after the previous search update completes", async () => {
+  const original = handler;
+  let release!: (result: unknown) => void;
+  let first = true;
+  handler = async (message) => {
+    if (message.type.endsWith("/control/input_status"))
+      return { active: true, prompt: "Search", entry: "" };
+    if (message.type.endsWith("/control/execute") && first) {
+      first = false;
+      return new Promise((resolve) => {
+        release = resolve;
+      });
+    }
+    return original(message);
+  };
+  element.liveTyping = true;
+  await mount("Play/Pause");
+  await vi.waitFor(() =>
+    expect(element.shadowRoot!.querySelector("#player-search")).not.toBeNull(),
+  );
+  const input =
+    element.shadowRoot!.querySelector<HTMLInputElement>("#player-search")!;
+  input.value = "A";
+  input.dispatchEvent(new Event("input"));
+  await vi.waitFor(() => expect(release).toBeDefined());
+  input.value = "Alien";
+  input.dispatchEvent(new Event("input"));
+  release({
+    outcome: "acknowledged",
+    acknowledged: true,
+    exact_version_confirmed: false,
+  });
+  await vi.waitFor(() =>
+    expect(
+      calls
+        .filter(
+          (call) =>
+            call.type.endsWith("/control/prepare") &&
+            call.operation === "search_text",
+        )
+        .map((call) => call.input_text),
+    ).toEqual(["A", "Alien"]),
+  );
+});
+
+it("sends pending search text before completing on Enter", async () => {
+  const original = handler;
+  handler = async (message) =>
+    message.type.endsWith("/control/input_status")
+      ? { active: true, prompt: "Search", entry: "" }
+      : original(message);
+  await mount("Play/Pause");
+  await vi.waitFor(() =>
+    expect(element.shadowRoot!.querySelector("#player-search")).not.toBeNull(),
+  );
+  const input =
+    element.shadowRoot!.querySelector<HTMLInputElement>("#player-search")!;
+  input.value = "Alien";
+  input.dispatchEvent(new Event("input"));
+  input.dispatchEvent(
+    new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+  );
+  await vi.waitFor(() =>
+    expect(
+      calls
+        .filter((call) => call.type.endsWith("/control/prepare"))
+        .map((call) => call.operation),
+    ).toEqual(["search_text", "select"]),
+  );
+});
+
+it("does not complete search when the text update is rejected", async () => {
+  const original = handler;
+  handler = async (message) => {
+    if (message.type.endsWith("/control/input_status"))
+      return { active: true, prompt: "Search", entry: "" };
+    if (message.type.endsWith("/control/execute"))
+      return {
+        outcome: "rejected",
+        acknowledged: false,
+        exact_version_confirmed: false,
+      };
+    return original(message);
+  };
+  await mount("Play/Pause");
+  await vi.waitFor(() =>
+    expect(element.shadowRoot!.querySelector("#player-search")).not.toBeNull(),
+  );
+  const input =
+    element.shadowRoot!.querySelector<HTMLInputElement>("#player-search")!;
+  input.value = "Alien";
+  input.dispatchEvent(new Event("input"));
+  input.dispatchEvent(
+    new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+  );
+  await vi.waitFor(() =>
+    expect(calls.some((call) => call.type.endsWith("/control/execute"))).toBe(
+      true,
+    ),
+  );
+  await flush();
+  expect(
+    calls.some(
+      (call) =>
+        call.type.endsWith("/control/prepare") && call.operation === "select",
+    ),
+  ).toBe(false);
+});
+
+it("waits for an in-flight live update before completing on Enter", async () => {
+  const original = handler;
+  let release!: (value: unknown) => void;
+  let first = true;
+  handler = async (message) => {
+    if (message.type.endsWith("/control/input_status"))
+      return { active: true, prompt: "Search", entry: "" };
+    if (message.type.endsWith("/control/execute") && first) {
+      first = false;
+      return new Promise((resolve) => {
+        release = resolve;
+      });
+    }
+    return original(message);
+  };
+  element.liveTyping = true;
+  await mount("Play/Pause");
+  await vi.waitFor(() =>
+    expect(element.shadowRoot!.querySelector("#player-search")).not.toBeNull(),
+  );
+  const input =
+    element.shadowRoot!.querySelector<HTMLInputElement>("#player-search")!;
+  input.value = "Alien";
+  input.dispatchEvent(new Event("input"));
+  await vi.waitFor(() => expect(release).toBeDefined());
+  input.dispatchEvent(
+    new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+  );
+  release({
+    outcome: "acknowledged",
+    acknowledged: true,
+    exact_version_confirmed: false,
+  });
+  await vi.waitFor(() =>
+    expect(
+      calls
+        .filter((call) => call.type.endsWith("/control/prepare"))
+        .map((call) => call.operation),
+    ).toEqual(["search_text", "select"]),
+  );
+});
+
+it("hides Send in live mode and closes search when the player leaves input", async () => {
+  const original = handler;
+  let active = true;
+  handler = async (message) =>
+    message.type.endsWith("/control/input_status")
+      ? { active, prompt: "Search", entry: "" }
+      : original(message);
+  element.liveTyping = true;
+  await mount("Play/Pause");
+  await vi.waitFor(() =>
+    expect(element.shadowRoot!.querySelector("#player-search")).not.toBeNull(),
+  );
+  expect(button("Send")).toBeUndefined();
+  expect(button("Done")).toBeDefined();
+  active = false;
+  await vi.waitFor(
+    () =>
+      expect(element.shadowRoot!.querySelector("#player-search")).toBeNull(),
+    { timeout: 4000 },
+  );
+});
+
+it("focuses an existing search field when Search is selected again", async () => {
+  const original = handler;
+  handler = async (message) =>
+    message.type.endsWith("/control/input_status")
+      ? { active: true, prompt: "Search", entry: "" }
+      : original(message);
+  await mount("Play/Pause");
+  await vi.waitFor(() =>
+    expect(element.shadowRoot!.querySelector("#player-search")).not.toBeNull(),
+  );
+  const input =
+    element.shadowRoot!.querySelector<HTMLInputElement>("#player-search")!;
+  button("Search").focus();
+  button("Search").click();
+  await vi.waitFor(() => expect(element.shadowRoot!.activeElement).toBe(input));
+});
+
+it("sends the screensaver command from the remote", async () => {
+  await mount("Play/Pause");
+  button("Screensaver").click();
+  await vi.waitFor(() =>
+    expect(
+      calls.some(
+        (call) =>
+          call.type.endsWith("/control/prepare") &&
+          call.operation === "screensaver",
+      ),
+    ).toBe(true),
+  );
+  await vi.waitFor(() =>
+    expect(calls.some((call) => call.type.endsWith("/control/execute"))).toBe(
+      true,
+    ),
+  );
+});
+
+it("shows collection shortcuts when playback stops and restores transport when it resumes", async () => {
+  const original = handler;
+  let mode = 2;
+  handler = async (message) => {
+    if (message.type.endsWith("/control/input_status"))
+      return { active: false, playback_mode: mode };
+    if (message.type.endsWith("/control/status")) {
+      const status = (await original(message)) as Record<string, unknown>;
+      return { ...status, state: { ...review.before, mode } };
+    }
+    return original(message);
+  };
+  await mount("Play/Pause");
+  expect(element.shadowRoot!.querySelector(".remote-transport")).not.toBeNull();
+  mode = 0;
+  await (element as unknown as { pollInput(): Promise<void> }).pollInput();
+  await flush();
+  const root = element.shadowRoot!;
+  expect(root.querySelector(".remote-transport")).toBeNull();
+  expect(
+    [...root.querySelectorAll(".remote-collections button")].map((item) =>
+      item.getAttribute("aria-label"),
+    ),
+  ).toEqual(["Paused", "Watch Soon", "New", "Favorites"]);
+  button("Watch Soon").click();
+  await vi.waitFor(() =>
+    expect(
+      calls.some(
+        (call) =>
+          call.type.endsWith("/control/prepare") &&
+          call.operation === "collection_watch_soon",
+      ),
+    ).toBe(true),
+  );
+  await vi.waitFor(() =>
+    expect(calls.some((call) => call.type.endsWith("/control/execute"))).toBe(
+      true,
+    ),
+  );
+  mode = 1;
+  await vi.waitFor(() => expect(button("Watch Soon")?.disabled).toBe(false));
+  await (element as unknown as { pollInput(): Promise<void> }).pollInput();
+  await flush();
+  expect(root.querySelector(".remote-collections")).toBeNull();
+  expect(root.querySelector(".remote-transport")).not.toBeNull();
+});
+
+it("hides optional remote controls while preserving basic navigation", async () => {
+  await mount("Play/Pause");
+  const root = element.shadowRoot!;
+  element.remoteVisibility = {
+    remote_covers: false,
+    remote_movies: false,
+    remote_collections: false,
+    remote_search: false,
+    remote_settings: false,
+    remote_screensaver: false,
+    remote_transport: false,
+    remote_intermission: true,
+    remote_collection_shortcuts: false,
+  };
+  await flush();
+  expect(root.querySelector(".remote-nav")).toBeNull();
+  expect(button("Screensaver")).toBeUndefined();
+  expect(root.querySelector(".remote-transport")).toBeNull();
+  expect(button("Replay")).toBeUndefined();
+  expect(button("Stop")).toBeUndefined();
+  expect(button("Intermission")).toBeDefined();
+  for (const label of [
+    "Power on",
+    "Standby",
+    "Menu",
+    "Back",
+    "Page up",
+    "Page down",
+    "Up",
+    "Down",
+    "Left",
+    "Right",
+    "Select",
+  ])
+    expect(button(label)).toBeDefined();
+  element.remoteVisibility = {
+    ...element.remoteVisibility,
+    remote_covers: true,
+    remote_search: true,
+    remote_intermission: false,
+  };
+  await flush();
+  expect(root.querySelector(".remote-nav")?.getAttribute("style")).toContain(
+    "--remote-nav-count: 2",
+  );
+  expect(root.querySelector(".remote-nav")?.hasAttribute("data-few")).toBe(
+    true,
+  );
+  expect(button("Covers")).toBeDefined();
+  expect(button("Search")).toBeDefined();
+  expect(root.querySelector(".remote-bottom")).toBeNull();
+});
+
+it("hides collection shortcuts when that preference is disabled", async () => {
+  const original = handler;
+  handler = async (message) =>
+    message.type.endsWith("/control/input_status")
+      ? { active: false, playback_mode: 0 }
+      : original(message);
+  await mount("Remote");
+  button("Remote").click();
+  await vi.waitFor(() =>
+    expect(
+      element.shadowRoot!.querySelector(".remote-collections"),
+    ).not.toBeNull(),
+  );
+  await (element as unknown as { pollInput(): Promise<void> }).pollInput();
+  await flush();
+  expect(
+    element.shadowRoot!.querySelector(".remote-collections"),
+  ).not.toBeNull();
+  element.remoteVisibility = {
+    ...element.remoteVisibility,
+    remote_collection_shortcuts: false,
+  };
+  await flush();
+  expect(element.shadowRoot!.querySelector(".remote-collections")).toBeNull();
+  expect(button("Select")).toBeDefined();
+});
+
+it("shows only unsuccessful remote command outcomes", async () => {
+  const original = handler;
+  let outcome = "acknowledged";
+  handler = async (message) =>
+    message.type.endsWith("/control/execute")
+      ? {
+          request_id: message.request_id,
+          outcome,
+          acknowledged: outcome === "acknowledged",
+          exact_version_confirmed: false,
+        }
+      : original(message);
+  await mount("Play/Pause");
+  const dialog =
+    element.shadowRoot!.querySelector<HTMLDialogElement>("dialog")!;
+  button("List").click();
+  await vi.waitFor(() =>
+    expect(calls.some((call) => call.type.endsWith("/control/execute"))).toBe(
+      true,
+    ),
+  );
+  await vi.waitFor(() => expect(button("List").disabled).toBe(false));
+  expect(dialog.textContent).not.toContain("The player accepted the command");
+  outcome = "unconfirmed";
+  button("List").click();
+  await vi.waitFor(() =>
+    expect(
+      calls.filter((call) => call.type.endsWith("/control/execute")),
+    ).toHaveLength(2),
+  );
+  await vi.waitFor(() => expect(button("List").disabled).toBe(false));
+  expect(dialog.textContent).not.toContain("not confirmed");
+  expect(dialog.textContent).not.toContain("may have executed");
+  outcome = "rejected";
+  button("List").click();
+  await vi.waitFor(() =>
+    expect(dialog.textContent).toContain("The player rejected the command"),
+  );
+});
+
+it("keeps recovery available without showing an unconfirmed outcome notice", async () => {
+  const original = handler;
+  handler = async (message) => {
+    if (message.type.endsWith("/control/execute")) {
+      data.blocked_players = [data.default_player];
+      data.pending = [
+        {
+          request_id: "fictional-receipt",
+          player_id: data.default_player,
+          operation: "stop",
+          created_at: "2026-10-30T12:00:00+00:00",
+        },
+      ];
+      return {
+        request_id: message.request_id,
+        outcome: "unconfirmed",
+        acknowledged: false,
+        exact_version_confirmed: false,
+      };
+    }
+    return original(message);
+  };
+  await mount("Play/Pause");
+  button("Stop").click();
+  await vi.waitFor(() =>
+    expect(element.shadowRoot!.textContent).toContain(
+      "Player controls are paused",
+    ),
+  );
+  const text = element.shadowRoot!.textContent!.toLowerCase();
+  expect(text).not.toContain("unconfirmed");
+  expect(text).not.toContain("not confirmed");
+  expect(button("I inspected the player…")).toBeDefined();
 });

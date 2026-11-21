@@ -55,6 +55,7 @@ USER_OPERATIONS = frozenset(
         "now_playing",
         "control/info",
         "control/status",
+        "control/input_status",
         "control/prepare",
         "control/execute",
     }
@@ -100,11 +101,13 @@ def async_register_commands(hass: HomeAssistant) -> None:
         "control/info": scoped,
         "control/discover": scoped,
         "control/status": {**scoped, p.Optional("player_id"): str},
+        "control/input_status": {**scoped, p.Optional("player_id"): str},
         "control/prepare": {
             **scoped,
             p.Required("operation"): str,
             p.Optional("title_id"): str,
             p.Optional("player_id"): str,
+            p.Optional("input_text"): str,
         },
         "control/execute": {
             **mutations,
@@ -635,6 +638,7 @@ async def async_handle(
                     "control/info"
                     | "control/discover"
                     | "control/status"
+                    | "control/input_status"
                     | "control/prepare"
                     | "control/execute"
                     | "control/acknowledge"
@@ -1288,7 +1292,9 @@ async def async_handle(
     except Unauthorized:
         connection.send_error(msg["id"], "unauthorized", "Unauthorized")
     except p.Invalid as error:
-        message = humanize_error(async_redact_data(msg, REDACT_KEYS), error)
+        message = humanize_error(
+            async_redact_data(msg, REDACT_KEYS | {"input_text"}), error
+        )
         connection.send_error(msg["id"], "invalid_format", message or "Unknown error")
     except TimeoutError:
         _LOGGER.error("Companion request timed out")

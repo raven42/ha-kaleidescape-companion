@@ -11,6 +11,7 @@ from .const import DOMAIN
 from .core.models import JournalError
 from .core.runtime import loaded_runtimes
 from .core.sync_actions import calendar_full_sync, library_sync
+from .playback.ha_services import register_player_services
 
 SERVICE = "import_purchase_email"
 METADATA_SERVICE = "refresh_metadata"
@@ -104,6 +105,7 @@ def _purchase_review_message(result):
 
 def async_register_services(hass: HomeAssistant) -> None:
     """Register Companion actions for the loaded household entry."""
+    register_player_services(hass)
 
     async def import_email(call: ServiceCall):
         if call.context.user_id:

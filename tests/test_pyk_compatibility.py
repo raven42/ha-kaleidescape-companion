@@ -18,7 +18,7 @@ from custom_components.kaleidescape_companion.playback.controls import (
 )
 from custom_components.kaleidescape_companion.playback.identity import normalize_serial
 from custom_components.kaleidescape_companion.playback.live_player import LivePlayer
-from custom_components.kaleidescape_companion.vendor.kaleidescape import Device
+from custom_components.kaleidescape_companion.vendor.kaleidescape import Device, message
 
 
 class PykCompatibilityTest(unittest.TestCase):
@@ -51,6 +51,18 @@ class PykCompatibilityTest(unittest.TestCase):
         self.assertEqual(COMMANDS["resume"], "pause_off")
         self.assertEqual(COMMANDS["back"], "back")
         self.assertTrue(callable(LocalLibrary.movies))
+
+    def test_vendored_user_input_protocol(self):
+        response = message.Response.factory("01/!/000:USER_INPUT:01:Search:Alien:/00")
+        self.assertIsInstance(response, message.UserInput)
+        self.assertEqual(
+            (response.field_type, response.field_prompt, response.field_entry),
+            (1, "Search", "Alien"),
+        )
+        request = message.SetUserInputEntry(fields=["A:/B"])
+        self.assertEqual(message.MessageParser(str(request), True).fields, ["A:/B"])
+        self.assertTrue(callable(LivePlayer.keyboard_literal))
+        self.assertTrue(callable(LivePlayer.get_user_input))
 
     def test_serial_normalization_retains_existing_validation(self):
         self.assertEqual(normalize_serial("00001a2b"), "1A2B")

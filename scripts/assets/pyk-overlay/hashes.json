@@ -4,9 +4,9 @@
   "kaleidescape/_version.py": "d8fb3b1ab3951f08c071d6ada463c81da209b944ad3b1052e823991e65410254",
   "kaleidescape/connection.py": "3948e38739cf0faa749b8d44ae888300c5563513108b082462d73ad7c5d315e1",
   "kaleidescape/const.py": "c9c59084143a0188ea68b7350b7b75f891542b42b2e97724ec56731807758a02",
-  "kaleidescape/device.py": "91a2483d67809a8bfdffbdc849277c47eeb33ce2e0e0ba613ccef0477eb94745",
+  "kaleidescape/device.py": "1bfc296ff3cd08bc7227c5ac56d9bc236f0d5f9d1fd93f5963881a50e3218a00",
   "kaleidescape/dispatcher.py": "7012aecc3d31695294c5229c026373e65f2d8d3f3ea0ca6837efa538a020abf9",
   "kaleidescape/error.py": "e06013cd398691798880d8d389f2639ab5a6fa3f97628f1617f87474cb85dacb",
-  "kaleidescape/message.py": "6a6d6469a37b194383107708484f5b07e25b5a4cc98c157b7b077d94d030e25e",
+  "kaleidescape/message.py": "c13977f882eae95f1a0687e90206e2830e61cc151e6c0bb0d4303abf15769cbf",
   "kaleidescape/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 }

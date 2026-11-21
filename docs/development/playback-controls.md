@@ -52,13 +52,96 @@ users cannot control devices. Multiple-player recording remains separate work.
 Available commands include Play selection, Pause, Resume, Stop, Previous/Next
 chapter, Replay, forward/reverse scan, directional and page navigation, Select,
 Back, Kaleidescape menu, Movie covers, Movie list, Collections, Search,
-Intermission, Status and settings, Power on and Standby. Controls verify direct
-serial identity and a movie zone before every operation. Older hardware, Co-Star
-and individual command support need operator validation; a rejected command is
+Intermission, Status and settings, Screensaver, Power on and Standby. While no
+movie is playing, the remote replaces its transport controls with shortcuts to
+Paused, Watch Soon, New and Favorites. Paused movies retain transport controls.
+The shortcut is refused if playback becomes active before it is sent. The player
+may fall back to the general collections view if a name is missing or the model
+does not support selecting a specific collection. Controls verify direct serial
+identity and a movie zone before every operation. Older hardware, Co-Star and
+individual command support need operator validation; a rejected command is
 reported without fallback. There is no automatic wake, command retry, HA service
 forwarding or generic raw-command endpoint. Enabled views read readiness on load
 and poll briefly after an explicit wake. Existing HA entities/actions are
 preserved; no replacement media player or new control service is registered.
+
+## Home Assistant player actions
+
+Each discovered movie player is registered as a Companion device without
+creating player-control button entities. Each fixed pyk and Companion control is
+available as a separate `kaleidescape_companion.player_*` action; select the
+player device in the action editor. For example, `player_screensaver_off`
+dismisses a player’s screensaver. You can use these actions in automations or
+attach them to your own button helpers. Existing Companion synchronization
+buttons remain available.
+
+Players are registered when discovered or restored from the discovery cache.
+Actions reject players that are no longer in the current discovery results. They
+use the same enabled-controls setting, verified identity, command receipts and
+uncertainty recovery as the remote. HA system contexts and active user contexts
+can run these actions; controls are rechecked before sending.
+
+Actions requiring a value also use the player device selector:
+
+- `kaleidescape_companion.play_movie`: supply exactly one of `title` (an exact,
+  unique synced Library title) or `version_id` (an exact Library version ID).
+  Library sync and experimental title playback must be enabled. Ambiguous titles
+  are rejected rather than selecting an edition automatically.
+- `keyboard_character`, `set_player_input`, and `open_movie_collection` accept a
+  `value` appropriate to the command. Opening a named collection can interrupt
+  playback, as documented by Kaleidescape.
+
+For example, select the player device in the HA action editor or use its HA
+`device_id` in YAML:
+
+```yaml
+action: kaleidescape_companion.play_movie
+data:
+  device_id: YOUR_PLAYER_DEVICE_ID
+  title: A Fictional Film
+```
+
+The actions accept only the specified commands and arguments; they are not a raw
+protocol proxy. HA automation traces can retain supplied text values. An
+optional HA action response returns the recorded outcome. Actions may be
+unavailable on particular player models or firmware and need hardware
+validation.
+
+## Remote control visibility
+
+**Now Playing → Options** lets each user choose which remote controls to show
+for the current display profile. Covers, List, Collections, Search, Settings,
+Screensaver, Transport Controls, Intermission and Collection Shortcuts are all
+shown by default. Transport Controls includes Replay and Stop; Intermission is
+independent. Power and directional/navigation controls remain available. The
+remaining view buttons expand to use the space when others are hidden.
+
+## Player search input
+
+While the Remote dialog is open, Companion reads the selected player's current
+playback state, UI state and user-input prompt every two seconds. While the
+screensaver is active, the search field closes and text updates are refused.
+When it reports an alphanumeric search, the remote shows a text field; focusing
+it opens the device's native keyboard. Enter up to 120 printable ASCII
+characters and press **Send**, then **Done** to finish. Pressing Enter sends any
+unsent text and finishes the search. Other prompts, including passwords, do not
+appear in the remote. The entry is checked again before sending so an input
+change on another controller invalidates the pending command.
+
+Search text follows the same authorization, player identity checks and durable
+receipt rules as other controls. It is retained temporarily in memory for the
+preflight and is not stored in receipts. The private pyk wire-log filter omits
+user-input messages, including their prompt contents. HA transport logging and
+other connected controllers remain outside that filter. The complete-entry
+command is documented for Strato and Alto; physical player validation remains
+necessary. Search prompt matching currently uses the English word “search”.
+
+The **Now Playing → Options** menu has a personal, display-specific **Send
+search text while typing** setting. It is off by default. When enabled, edits
+are coalesced briefly and sent in order; edits made during a send wait for its
+result. Each sent update follows the same receipt and uncertainty rules, and an
+unconfirmed send is never automatically retried. **Send** is shown when live
+typing is disabled.
 
 ## Library identity and launch limits
 
@@ -110,15 +193,18 @@ again. Receipts are limited to 10,000; reaching that bound refuses new writes.
 They are private system records and cannot be edited, deleted or imported
 through Database tools.
 
-A possible send without acknowledgement is **unconfirmed**, never retried.
-Further writes to that serial are blocked. If the UI loses its response, use
-**Check command result**, which retains the same request ID/token. Do not create
-a new intent to retry an uncertain command. After checking the physical player,
-choose **I inspected the player…** and confirm the acknowledgement to permit new
-commands. This records the reviewing administrator; it never resends anything. A
-receipt left in sending state by a crash becomes uncertain on reopen. If receipt
-storage fails after a possible send, reload to recover the barrier and inspect
-the player before acknowledging it.
+Acknowledged and observed outcomes are logged at info level without a remote
+notice. An unconfirmed outcome is logged at warning level without a command
+outcome notice. A possible send without acknowledgement is never retried.
+Further writes to that serial are blocked, and the UI shows that player controls
+are paused so an administrator can restore them. If the UI loses its response,
+use **Check command result**, which retains the same request ID/token. Do not
+create a new intent to retry an uncertain command. After checking the physical
+player, choose **I inspected the player…** and confirm the acknowledgement to
+permit new commands. This records the reviewing administrator; it never resends
+anything. A receipt left in sending state by a crash becomes uncertain on
+reopen. If receipt storage fails after a possible send, reload to recover the
+barrier and inspect the player before acknowledging it.
 
 Backup, unload and shutdown block new intents, invalidate preflight tokens,
 drain an accepted control, close sessions, then pause/close storage. Nothing is

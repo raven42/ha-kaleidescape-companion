@@ -204,6 +204,12 @@ export interface ControlStatus {
   ready: boolean;
   state: ControlReview["before"];
 }
+export interface ControlInputStatus {
+  active: boolean;
+  playback_mode?: number;
+  prompt?: string;
+  entry?: string;
+}
 export interface ControlReview {
   token: string;
   operation: string;
@@ -1012,11 +1018,22 @@ export class JournalClient {
       ...(player_id ? { player_id } : {}),
     });
   }
+  controlInputStatus(
+    scope: Scope,
+    player_id?: string,
+  ): Promise<ControlInputStatus> {
+    return this.call({
+      type: `${DOMAIN}/control/input_status`,
+      ...scopeFields(scope),
+      ...(player_id ? { player_id } : {}),
+    });
+  }
   controlPrepare(
     scope: Scope,
     operation: string,
     title_id?: string,
     player_id?: string,
+    input_text?: string,
   ): Promise<ControlReview> {
     return this.call({
       type: `${DOMAIN}/control/prepare`,
@@ -1024,6 +1041,7 @@ export class JournalClient {
       operation,
       ...(title_id ? { title_id } : {}),
       ...(player_id ? { player_id } : {}),
+      ...(input_text !== undefined ? { input_text } : {}),
     });
   }
   prepareControl(scope: Scope, token: string): PreparedMutation {

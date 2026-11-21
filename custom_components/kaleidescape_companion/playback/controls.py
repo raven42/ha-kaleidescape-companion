@@ -13,6 +13,7 @@ from contextlib import asynccontextmanager
 from dataclasses import asdict, dataclass
 
 from homeassistant.helpers.aiohttp_client import DATA_RESOLVER
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.storage import Store
 
 from ..const import DOMAIN
@@ -24,7 +25,14 @@ from ..library.config import lan_address, origin
 from ..library.store import source_id
 from ._pyk import KaleidescapeError, MessageError, RequestNotSentError
 from ._pyk import const as pyk_const
-from .control_config import COMMANDS, fingerprint, host
+from .control_config import (
+    COLLECTIONS,
+    COMMANDS,
+    PARAMETER_COMMANDS,
+    fingerprint,
+    host,
+    validate_parameter,
+)
 from .identity import normalize_serial
 from .live_player import LivePlayer
 
@@ -460,6 +468,7 @@ class PlaybackControls:
                 {"seed": self._seed_key(), "devices": self.devices}
             )
             self._ready(authorize)
+            async_dispatcher_send(self.hass, f"{DOMAIN}_control_players")
             _LOGGER.info(
                 "Device discovery completed: %s devices found", len(self.devices)
             )
@@ -476,6 +485,37 @@ class PlaybackControls:
                     "player_id": self.player_id(serial),
                     **power,
                     "state": asdict(state),
+                }
+
+        return await self._read("status", status, authorize)
+
+    async def _search_prompt(self, client):
+        """Read search input only while the player's screensaver is inactive."""
+        ui = await pyk_call("read UI state", client._get_ui_state)
+        if ui.field_screensaver == pyk_const.UI_STATE_SAVER_ACTIVE:
+            return None
+        prompt = await pyk_call("read user input", client.get_user_input)
+        if prompt.field_type != 1 or "search" not in prompt.field_prompt.casefold():
+            return None
+        return prompt
+
+    async def async_input_status(self, authorize, player_id=None):
+        """Read the selected player's current search prompt, if any."""
+
+        async def status():
+            async with self._player(
+                authorize, "status", serial=self._selected_serial(player_id)
+            ) as (client, _serial, _ip, power, state):
+                if not power["ready"]:
+                    return {"active": False, "playback_mode": state.mode}
+                response = await self._search_prompt(client)
+                if response is None:
+                    return {"active": False, "playback_mode": state.mode}
+                return {
+                    "active": True,
+                    "playback_mode": state.mode,
+                    "prompt": response.field_prompt,
+                    "entry": response.field_entry,
                 }
 
         return await self._read("status", status, authorize)
@@ -516,17 +556,61 @@ class PlaybackControls:
         return prepared, digest(row), prepared.year
 
     async def async_prepare(
-        self, actor, operation, title_id, authorize, player_id=None
+        self,
+        actor,
+        operation,
+        title_id,
+        authorize,
+        player_id=None,
+        input_text=None,
+        *,
+        parameter=None,
     ):
-        if operation not in COMMANDS and operation != "launch":
+        if (
+            operation not in COMMANDS
+            and operation not in PARAMETER_COMMANDS
+            and operation not in {"launch", "search_text"}
+        ):
             raise invalid("Unsupported device control")
         if (operation == "launch") != bool(title_id):
             raise invalid("Only title playback takes a Library version")
+
+        if operation in PARAMETER_COMMANDS:
+            try:
+                parameter = validate_parameter(operation, parameter)
+            except ValueError as error:
+                raise invalid(str(error)) from None
+        elif parameter is not None:
+            raise invalid("This command does not accept a parameter")
+
+        if operation == "search_text":
+            if (
+                not isinstance(input_text, str)
+                or len(input_text) > 120
+                or any(not 32 <= ord(char) <= 126 for char in input_text)
+            ):
+                raise invalid(
+                    "Search text must contain at most 120 printable ASCII characters"
+                )
+        elif input_text is not None:
+            raise invalid("Only search text accepts input")
 
         async def prepare():
             async with self._player(
                 authorize, operation, serial=self._selected_serial(player_id)
             ) as (client, serial, ip, power, before):
+                if operation in COLLECTIONS and before.mode != 0:
+                    raise JournalError(
+                        "refresh_required",
+                        "Collection shortcuts are unavailable during playback",
+                    )
+                if operation == "search_text":
+                    prompt = await self._search_prompt(client)
+                    if prompt is None:
+                        raise JournalError(
+                            "refresh_required",
+                            "The player is no longer requesting search text",
+                        )
                 movie, library_key, year = (
                     await self._movie(client, serial, title_id, authorize)
                     if title_id
@@ -547,6 +631,11 @@ class PlaybackControls:
                     "ip": ip,
                     "state": digest([state_key(before), power]),
                     "title_id": title_id,
+                    "input_text": input_text,
+                    "parameter": parameter,
+                    "input_before": (
+                        prompt.field_entry if operation == "search_text" else None
+                    ),
                     "library_key": library_key,
                     "expires": time.monotonic() + 60,
                 }
@@ -611,6 +700,21 @@ class PlaybackControls:
                         raise JournalError(
                             "refresh_required", "Player changed since review"
                         )
+                    if review["operation"] in COLLECTIONS and before.mode != 0:
+                        raise JournalError(
+                            "refresh_required",
+                            "Collection shortcuts are unavailable during playback",
+                        )
+                    if review["operation"] == "search_text":
+                        prompt = await self._search_prompt(client)
+                        if (
+                            prompt is None
+                            or prompt.field_entry != review["input_before"]
+                        ):
+                            raise JournalError(
+                                "refresh_required",
+                                "The player is no longer requesting search text",
+                            )
                     movie = None
                     if review["title_id"]:
                         movie, key, _year = await self._movie(
@@ -639,6 +743,25 @@ class PlaybackControls:
                         await pyk_call(
                             "send movie launch",
                             lambda: client.send_movie_launch(movie),
+                        )
+                    elif review["operation"] in PARAMETER_COMMANDS:
+                        await pyk_call(
+                            "send parameterized control",
+                            lambda: getattr(
+                                client, PARAMETER_COMMANDS[review["operation"]]
+                            )(review["parameter"]),
+                        )
+                    elif review["operation"] in COLLECTIONS:
+                        await pyk_call(
+                            "open movie collection",
+                            lambda: client.go_movie_collection(
+                                COLLECTIONS[review["operation"]]
+                            ),
+                        )
+                    elif review["operation"] == "search_text":
+                        await pyk_call(
+                            "send search text",
+                            lambda: client.set_user_input_entry(review["input_text"]),
                         )
                     else:
                         await pyk_call(
@@ -707,7 +830,9 @@ class PlaybackControls:
                 ) from None
         except asyncio.CancelledError:
             if sent:
-                _LOGGER.error("Device control outcome is uncertain after cancellation")
+                _LOGGER.warning(
+                    "Device control outcome is uncertain after cancellation"
+                )
             else:
                 _LOGGER.debug("Device control cancelled before sending")
             raise
@@ -726,7 +851,7 @@ class PlaybackControls:
                 )
                 raise
             if state == "uncertain":
-                _LOGGER.error(
+                _LOGGER.warning(
                     "Device control outcome is uncertain; automatic replay is "
                     "blocked pending review"
                 )

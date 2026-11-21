@@ -227,15 +227,27 @@ def validate_database(patch, previous=None):
 
 
 SEARCH_DEFAULTS = {"fuzzy_search": True}
-INTERFACE_DEFAULTS = {"advanced_view": True}
+INTERFACE_DEFAULTS = {
+    "advanced_view": True,
+    "live_search_input": False,
+    "remote_covers": True,
+    "remote_movies": True,
+    "remote_collections": True,
+    "remote_search": True,
+    "remote_settings": True,
+    "remote_screensaver": True,
+    "remote_transport": True,
+    "remote_intermission": True,
+    "remote_collection_shortcuts": True,
+}
 
 
 def validate_interface(patch, previous=None):
     if not isinstance(patch, dict) or set(patch) - INTERFACE_DEFAULTS.keys():
         raise invalid("Unknown interface preferences")
     values = {**INTERFACE_DEFAULTS, **(previous or {}), **patch}
-    if type(values["advanced_view"]) is not bool:
-        raise invalid("Invalid interface mode")
+    if any(type(values[key]) is not bool for key in INTERFACE_DEFAULTS):
+        raise invalid("Invalid interface preference")
     return values
 
 

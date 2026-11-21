@@ -8,6 +8,10 @@ import { styles } from "../ui/styles";
 import "./controls";
 import { DeviceControls } from "./controls";
 import { actionIcon } from "../ui/action-icons";
+import { PreferenceStore } from "../ui/preference-store";
+import { closeButton, dismissBackdrop } from "../ui/dialog";
+import { DEFAULT_REMOTE_VISIBILITY, REMOTE_VISIBILITY_OPTIONS } from "./remote";
+import type { RemoteVisibility } from "./remote";
 
 const PLAYBACK: Record<string, string> = {
   playing: "Playing",
@@ -68,6 +72,29 @@ export class KaleidescapeNowPlaying extends LitElement {
         display: flex;
         align-items: center;
         gap: 8px;
+      }
+      .now-options-icon {
+        display: none;
+      }
+      @media (max-width: 700px) {
+        .now-options-button {
+          display: inline-grid;
+          place-items: center;
+          width: 44px;
+          height: 44px;
+          min-height: 44px;
+          padding: 9px;
+        }
+        .now-options-label {
+          display: none;
+        }
+        .now-options-icon {
+          display: inline-flex;
+        }
+        .now-options-icon svg {
+          width: 22px;
+          height: 22px;
+        }
       }
       .refresh-button svg {
         width: 22px;
@@ -134,6 +161,47 @@ export class KaleidescapeNowPlaying extends LitElement {
   playerId = "";
   compact = false;
   showControls = true;
+  private liveTyping = false;
+  private remoteVisibility: RemoteVisibility = { ...DEFAULT_REMOTE_VISIBILITY };
+  private preferences?: PreferenceStore;
+  private preferenceError = "";
+  private async loadPreferences() {
+    this.preferences?.dispose();
+    this.preferences = undefined;
+    this.liveTyping = false;
+    this.remoteVisibility = { ...DEFAULT_REMOTE_VISIBILITY };
+    if (!this.client || !this.scope?.permissions.read) return;
+    const store = new PreferenceStore(
+      this.client,
+      this.scope,
+      false,
+      (error) => {
+        if (store !== this.preferences) return;
+        this.preferenceError = error
+          ? "Could not save Now Playing options."
+          : "";
+        this.requestUpdate();
+      },
+      "interface",
+    );
+    this.preferences = store;
+    try {
+      const values = await store.load();
+      if (store === this.preferences) {
+        this.liveTyping = values.live_search_input === true;
+        this.remoteVisibility = Object.fromEntries(
+          REMOTE_VISIBILITY_OPTIONS.map(([key]) => [
+            key,
+            values[key] !== false,
+          ]),
+        ) as RemoteVisibility;
+      }
+    } catch {
+      if (store === this.preferences)
+        this.preferenceError = "Could not load Now Playing options.";
+    }
+    this.requestUpdate();
+  }
   private remoteAvailable = false;
   private boundClient?: JournalClient;
   private boundScope = "";
@@ -159,6 +227,8 @@ export class KaleidescapeNowPlaying extends LitElement {
   disconnectedCallback() {
     super.disconnectedCallback();
     document.removeEventListener("visibilitychange", this.visibility);
+    this.preferences?.dispose();
+    this.preferences = undefined;
     this.reset();
   }
   protected willUpdate(changed: PropertyValues) {
@@ -171,6 +241,7 @@ export class KaleidescapeNowPlaying extends LitElement {
       this.reset();
       this.boundClient = this.client;
       this.boundScope = key;
+      void this.loadPreferences();
       void this.refresh();
     } else if (changed.has("client") && !this.timer && !this.loading) {
       void this.refresh();
@@ -321,6 +392,24 @@ export class KaleidescapeNowPlaying extends LitElement {
           >
             ${actionIcon("refresh")}
           </button>
+          ${
+            this.showControls
+              ? html`<button
+                  type="button"
+                  class="now-options-button"
+                  aria-label="Now Playing options"
+                  title="Options"
+                  aria-haspopup="dialog"
+                  aria-controls="now-playing-options"
+                  @click=${() => this.renderRoot.querySelector<HTMLDialogElement>("#now-playing-options")?.showModal()}
+                >
+                  <span class="now-options-label">Options</span>
+                  <span class="now-options-icon" aria-hidden="true"
+                    >${actionIcon("options")}</span
+                  >
+                </button>`
+              : nothing
+          }
         </div>
       </div>
       ${
@@ -396,6 +485,8 @@ export class KaleidescapeNowPlaying extends LitElement {
               .playerId=${this.playerId}
               .hideRefresh=${true}
               .hideRemote=${true}
+              .liveTyping=${this.liveTyping}
+              .remoteVisibility=${this.remoteVisibility}
               @remote-availability=${(event: CustomEvent<boolean>) => {
                 this.remoteAvailable = event.detail;
               }}
@@ -403,6 +494,65 @@ export class KaleidescapeNowPlaying extends LitElement {
                 this.playerId = event.detail;
               }}
             ></kaleidescape-device-controls>`
+          : nothing
+      }
+      ${
+        this.showControls
+          ? html`<dialog
+              id="now-playing-options"
+              class="database-dialog"
+              aria-labelledby="now-playing-options-title"
+              @click=${dismissBackdrop}
+            >
+              <div class="card-head">
+                <h2 id="now-playing-options-title">Now Playing options</h2>
+                ${closeButton(() => this.renderRoot.querySelector<HTMLDialogElement>("#now-playing-options")?.close())}
+              </div>
+              <p class="muted">
+                Changes save automatically for your HA user’s
+                ${this.preferences?.profile || "current"} layout.
+              </p>
+              <label class="check"
+                ><input
+                  type="checkbox"
+                  .checked=${this.liveTyping}
+                  @change=${(event: Event) => {
+                    this.liveTyping = (
+                      event.target as HTMLInputElement
+                    ).checked;
+                    void this.preferences?.set({
+                      live_search_input: this.liveTyping,
+                    });
+                    this.requestUpdate();
+                  }}
+                />
+                Send search text while typing</label
+              >
+              <fieldset>
+                <legend>Remote controls</legend>
+                ${REMOTE_VISIBILITY_OPTIONS.map(
+                  ([key, label]) =>
+                    html`<label class="check">
+                      <input
+                        type="checkbox"
+                        name=${key}
+                        .checked=${this.remoteVisibility[key]}
+                        @change=${(event: Event) => {
+                          const enabled = (event.target as HTMLInputElement)
+                            .checked;
+                          this.remoteVisibility = {
+                            ...this.remoteVisibility,
+                            [key]: enabled,
+                          };
+                          void this.preferences?.set({ [key]: enabled });
+                          this.requestUpdate();
+                        }}
+                      />${label}
+                    </label>`,
+                )}
+              </fieldset>
+              ${this.preferenceError ? html`<p role="alert">${this.preferenceError} <button @click=${() => this.preferences?.retry()}>Retry</button></p>` : nothing}
+            </dialog>`
           : nothing
       }
     </section>`;

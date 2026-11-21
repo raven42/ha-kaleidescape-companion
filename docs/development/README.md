@@ -37,7 +37,7 @@ package files against `scripts/assets/pyk-overlay/hashes.json` before use.
 `base.tar.gz` contains upstream commit
 `50df2869349667d1e68d429b9b619e32ede9879b`'s `kaleidescape` and `LICENSE` paths.
 `base.json` records the archive checksum and the branch, commit and runtime diff
-for each of the three proposed pyk PRs. Reconstruction copies the upstream MIT
+for each of the four proposed pyk PRs. Reconstruction copies the upstream MIT
 license into the private package, applies the diffs in order and verifies every
 file against its recorded hash. The standalone `LivePlayer(Device)` in
 `playback/live_player.py` provides discovery, live playback reads and

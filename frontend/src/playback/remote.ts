@@ -1,8 +1,30 @@
 /** Controls shared by the remote dialog and dashboard card. */
-import { css, html, svg } from "lit";
+import { css, html, nothing, svg } from "lit";
 import { actionIcon } from "../ui/action-icons";
 
+export const REMOTE_VISIBILITY_OPTIONS = [
+  ["remote_covers", "Covers"],
+  ["remote_movies", "List"],
+  ["remote_collections", "Collections"],
+  ["remote_search", "Search"],
+  ["remote_settings", "Settings"],
+  ["remote_screensaver", "Screensaver"],
+  ["remote_transport", "Transport Controls"],
+  ["remote_intermission", "Intermission"],
+  ["remote_collection_shortcuts", "Collection Shortcuts"],
+] as const;
+export type RemoteVisibilityKey = (typeof REMOTE_VISIBILITY_OPTIONS)[number][0];
+export type RemoteVisibility = Record<RemoteVisibilityKey, boolean>;
+export const DEFAULT_REMOTE_VISIBILITY = Object.fromEntries(
+  REMOTE_VISIBILITY_OPTIONS.map(([key]) => [key, true]),
+) as RemoteVisibility;
+
 const icons = {
+  pausedCollection: svg`<circle cx="12" cy="12" r="9"/><path d="M9 8v8m6-8v8"/>`,
+  watchSoon: svg`<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>`,
+  newCollection: svg`<path d="m12 2 2.2 5.2L20 9l-4.5 3.8.3 5.8L12 15.4 7.2 18.6l.3-5.8L3 9l5.8-1.8z"/>`,
+  favorites: svg`<path d="M12 20S3 15 3 9a4.5 4.5 0 0 1 9-1 4.5 4.5 0 0 1 9 1c0 6-9 11-9 11z"/>`,
+  screensaver: svg`<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3m0-13v5M9.5 10.5h5"/>`,
   standby: svg`<path d="M20 15A8 8 0 0 1 9 4a8 8 0 1 0 11 11Z"/>`,
   covers: svg`<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>`,
   movies: svg`<rect x="3" y="4" width="18" height="16" rx="1"/><path d="M7 4v16M17 4v16M3 9h4m10 0h4M3 15h4m10 0h4"/>`,
@@ -35,12 +57,49 @@ export const remoteStyles = css`
     padding: var(--dialog-gutter);
     border-radius: 24px;
   }
+  .remote-dialog > .card-head {
+    align-items: center;
+  }
+  .remote-dialog > .card-head h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+  .remote-header-icon {
+    width: 32px;
+    height: 32px;
+    flex: none;
+    object-fit: contain;
+  }
   .remote-dialog:modal {
     inset-block-start: calc(
       var(--companion-viewport-top, 0px) + max(12px, env(safe-area-inset-top))
     );
     inset-block-end: auto;
     margin-block: 0;
+  }
+  .remote-search {
+    margin-bottom: 12px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+  }
+  .remote-search label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .remote-search div {
+    display: flex;
+    gap: 8px;
+  }
+  .remote-search input {
+    min-width: 0;
+    flex: 1;
+  }
+  .remote-search p {
+    margin: 8px 0 0;
   }
   .remote-power {
     display: flex;
@@ -59,6 +118,7 @@ export const remoteStyles = css`
     padding: 8px 14px;
   }
   .remote-nav,
+  .remote-collections,
   .remote-transport,
   .remote-bottom {
     display: grid;
@@ -69,7 +129,15 @@ export const remoteStyles = css`
     background: var(--secondary-background-color, var(--surface));
   }
   .remote-nav {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(var(--remote-nav-count), minmax(0, 1fr));
+  }
+  .remote-nav[data-few] button {
+    min-height: 72px;
+    font-size: 13px;
+  }
+  .remote-nav[data-few] button svg {
+    width: 26px;
+    height: 26px;
   }
   .remote-nav button,
   .remote-side button {
@@ -223,6 +291,25 @@ export const remoteStyles = css`
     font-size: 14px;
     font-weight: 700;
   }
+  .remote-collections {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .remote-collections button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-width: 0;
+    min-height: 64px;
+    padding: 6px 2px;
+    font-size: 12px;
+    border: 0;
+    background: transparent;
+  }
+  .remote-collections button:hover:not(:disabled) {
+    background: var(--surface);
+  }
   .remote-transport {
     grid-template-columns: repeat(5, minmax(0, 1fr));
     align-items: center;
@@ -243,7 +330,7 @@ export const remoteStyles = css`
     height: clamp(46px, 11vw, 60px);
   }
   .remote-bottom {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(var(--remote-bottom-count), minmax(0, 1fr));
   }
   .remote-bottom button {
     border: 0;
@@ -258,6 +345,7 @@ export const remoteStyles = css`
   .remote-nav svg,
   .remote-main svg,
   .remote-transport svg,
+  .remote-collections svg,
   .remote-bottom svg {
     width: 22px;
     height: 22px;
@@ -285,6 +373,8 @@ export const remoteStyles = css`
 export function remoteControls(
   disabled: boolean,
   ready: boolean,
+  playing: boolean,
+  visibility: RemoteVisibility,
   send: (operation: string) => void,
 ) {
   const button = (
@@ -311,18 +401,37 @@ export function remoteControls(
       }
     </button>`;
 
+  const navigationCount = [
+    visibility.remote_covers,
+    visibility.remote_movies,
+    visibility.remote_collections,
+    visibility.remote_search,
+    visibility.remote_settings,
+  ].filter(Boolean).length;
+  const bottomCount =
+    (visibility.remote_transport ? 2 : 0) +
+    (visibility.remote_intermission ? 1 : 0);
   return html`
     <div class="remote-power">
       ${button("power_on", "Power on", actionIcon("power"))}
+      ${visibility.remote_screensaver ? button("screensaver", "Screensaver", icon("screensaver"), "", false) : nothing}
       ${button("power_off", "Standby", icon("standby"))}
     </div>
-    <div class="remote-nav">
-      ${button("movies", "Covers", icon("covers"))}
-      ${button("movie_list", "Movies", icon("movies"))}
-      ${button("movie_collections", "Collections", icon("collections"))}
-      ${button("search", "Search", actionIcon("search"))}
-      ${button("status_and_settings", "Settings", icon("settings"))}
-    </div>
+    ${
+      navigationCount
+        ? html`<div
+            class="remote-nav"
+            style=${`--remote-nav-count: ${navigationCount}`}
+            ?data-few=${navigationCount <= 3}
+          >
+            ${visibility.remote_covers ? button("movies", "Covers", icon("covers")) : nothing}
+            ${visibility.remote_movies ? button("movie_list", "List", icon("movies")) : nothing}
+            ${visibility.remote_collections ? button("movie_collections", "Collections", icon("collections")) : nothing}
+            ${visibility.remote_search ? button("search", "Search", actionIcon("search")) : nothing}
+            ${visibility.remote_settings ? button("status_and_settings", "Settings", icon("settings")) : nothing}
+          </div>`
+        : nothing
+    }
     <div class="remote-main">
       <div class="remote-side">
         ${button("menu", "Menu", icon("menu"), "", true, "M 12 1 H 88 Q 99 1 99 8 V 35 L 93 55 L 81 75 L 67 99 H 12 Q 1 99 1 92 V 8 Q 1 1 12 1 Z")}
@@ -340,17 +449,45 @@ export function remoteControls(
         ${button("page_down", "Page down", icon("down"), "", true, "M 33 1 H 88 Q 99 1 99 8 V 92 Q 99 99 88 99 H 12 Q 1 99 1 92 V 65 L 7 45 L 19 25 Z")}
       </div>
     </div>
-    <div class="remote-transport">
-      ${button("previous", "Previous chapter", icon("previous"), "", false)}
-      ${button("scan_reverse", "Scan reverse", icon("reverse"), "", false)}
-      ${button("play_pause", "Play/Pause", icon("toggle"), "primary", false)}
-      ${button("scan_forward", "Scan forward", icon("forward"), "", false)}
-      ${button("next", "Next chapter", icon("next"), "", false)}
-    </div>
-    <div class="remote-bottom">
-      ${button("replay", "Replay", icon("replay"))}
-      ${button("stop", "Stop", icon("stop"))}
-      ${button("intermission", "Intermission", icon("intermission"))}
-    </div>
+    ${
+      playing
+        ? html`
+            ${
+              visibility.remote_transport
+                ? html`<div class="remote-transport">
+                    ${button("previous", "Previous chapter", icon("previous"), "", false)}
+                    ${button("scan_reverse", "Scan reverse", icon("reverse"), "", false)}
+                    ${button("play_pause", "Play/Pause", icon("toggle"), "primary", false)}
+                    ${button("scan_forward", "Scan forward", icon("forward"), "", false)}
+                    ${button("next", "Next chapter", icon("next"), "", false)}
+                  </div>`
+                : nothing
+            }
+            ${
+              bottomCount
+                ? html`<div
+                    class="remote-bottom"
+                    style=${`--remote-bottom-count: ${bottomCount}`}
+                  >
+                    ${visibility.remote_transport ? button("replay", "Replay", icon("replay")) : nothing}
+                    ${visibility.remote_transport ? button("stop", "Stop", icon("stop")) : nothing}
+                    ${visibility.remote_intermission ? button("intermission", "Intermission", icon("intermission")) : nothing}
+                  </div>`
+                : nothing
+            }
+          `
+        : visibility.remote_collection_shortcuts
+          ? html`<div
+              class="remote-collections"
+              role="group"
+              aria-label="Collection shortcuts"
+            >
+              ${button("collection_paused", "Paused", icon("pausedCollection"))}
+              ${button("collection_watch_soon", "Watch Soon", icon("watchSoon"))}
+              ${button("collection_new", "New", icon("newCollection"))}
+              ${button("collection_favorites", "Favorites", icon("favorites"))}
+            </div>`
+          : nothing
+    }
   `;
 }

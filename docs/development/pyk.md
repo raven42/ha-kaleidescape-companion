@@ -1,8 +1,9 @@
 # Pyk ownership and compatibility
 
 Companion currently bundles pykaleidescape from upstream `main` at
-`50df2869349667d1e68d429b9b619e32ede9879b` with the three changes reviewed in
+`50df2869349667d1e68d429b9b619e32ede9879b` with three changes reviewed in
 [upstream issue #26](https://github.com/SteveEasley/pykaleidescape/issues/26).
+It also includes the proposed user-input and navigation support described below.
 The module reports upstream version `1.2.0`. The patch list and hashes identify
 the exact source included in the integration.
 
@@ -70,20 +71,22 @@ the
 
 ## Compatibility and upstream path
 
-Each proposed pyk change has an independent branch based directly on the
-upstream commit above.
+The first three proposed pyk changes have independent branches based directly on
+the upstream commit above. The user-input branch builds on request routing for
+protocol field escaping.
 
 | Branch                     | Scope                                                                                    |
 | -------------------------- | ---------------------------------------------------------------------------------------- |
 | `pr/connection-robustness` | Connection cleanup, request outcome errors, callback isolation and response handling.    |
 | `pr/request-routing`       | Outgoing field escaping, optional device ID and reply matching by sequence number.       |
 | `pr/documented-commands`   | Documented playback and navigation methods including the existing CANCEL alias for Back. |
+| `pr/user-input`            | User input events and keyboard, screensaver and navigation commands; depends on routing. |
 
 The [development guide](README.md) describes reconstructing the vendor directory
-from the pinned offline source and three runtime diffs. HA installs the manifest
+from the pinned offline source and four runtime diffs. HA installs the manifest
 dependency `pykaleidescape>=1.2.0` for compatibility with the built-in
 integration. Companion selects its private copy in `playback/_pyk.py`. When the
-three patches are merged and released, verify the released dependency with both
+four patches are merged and released, verify the released dependency with both
 integrations, update the manifest minimum and that import, and remove the vendor
 directory and its reconstruction assets. `LivePlayer` and the server browser
 continue to ship with Companion.

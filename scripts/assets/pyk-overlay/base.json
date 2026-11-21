@@ -20,6 +20,11 @@
       "file": "0003-documented-commands.patch",
       "branch": "pr/documented-commands",
       "commit": "a201cdc983cfeb53e0cb985691933841224a9f00"
+    },
+    {
+      "file": "0004-user-input.patch",
+      "branch": "pr/user-input",
+      "commit": "96f5663e88557bfc603018ea42c38aff046448af"
     }
   ]
 }

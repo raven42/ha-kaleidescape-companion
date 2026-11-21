@@ -23,7 +23,9 @@ from .library.config import origin
 from .library.store import source_id
 from .library.sync import LibrarySync
 from .playback.controls import PlaybackControls
+from .playback.ha_services import PLAYER_SERVICES
 from .playback.observer import PlaybackObserver
+from .playback.player_devices import register_player_devices
 from .services import (
     CALENDAR_SERVICE,
     CLEANUP_SERVICE,
@@ -192,6 +194,7 @@ async def async_setup_entry(
         else:
             # HA may load automation after this integration, or not load it at all.
             async_when_setup(hass, "automation", setup_blueprints)
+        register_player_devices(hass, entry)
         entry.async_on_unload(stop_listener)
     except BaseException as error:
 
@@ -265,6 +268,8 @@ async def async_unload_entry(
     hass.services.async_remove(DOMAIN, LIBRARY_SERVICE)
     hass.services.async_remove(DOMAIN, CALENDAR_SERVICE)
     hass.services.async_remove(DOMAIN, CLEANUP_SERVICE)
+    for service in PLAYER_SERVICES:
+        hass.services.async_remove(DOMAIN, service)
     await _async_close_runtime(runtime, reason)
     if not runtime.preserve_panel_on_reload or entry.disabled_by is not None:
         async_remove_panel(hass)

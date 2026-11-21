@@ -54,6 +54,9 @@ class Player:
             "SEND_TO_SYSLOG": [""],
             "PLAY_MOVIE": [""],
             "PAUSE_ON": [""],
+            "GO_SCREEN_SAVER": [""],
+            "GO_MOVIE_COLLECTION": [""],
+            "GO_MOVIE_STORE": [""],
         }
         self.received_write = asyncio.Event()
 
@@ -95,6 +98,33 @@ class AdapterTests(unittest.IsolatedAsyncioTestCase):
         )
         self.addAsyncCleanup(self.device.disconnect)
         await self.device.connect()
+
+    async def test_user_input_protocol_logs_do_not_include_search_text(self):
+        self.peer.replies["GET_USER_INPUT"] = ["USER_INPUT:01:Search:fictional-secret:"]
+        self.peer.replies["SET_USER_INPUT_ENTRY"] = [""]
+        with self.assertLogs(
+            f"{kaleidescape.__name__}.connection", level="DEBUG"
+        ) as logs:
+            response = await self.device.get_user_input()
+            await self.device.set_user_input_entry("fictional-secret")
+            await self.device._get_device_info()
+        self.assertEqual(response.field_entry, "fictional-secret")
+        self.assertNotIn("fictional-secret", " ".join(logs.output))
+        self.assertEqual(
+            self.peer.named("SET_USER_INPUT_ENTRY")[-1].fields, ["fictional-secret"]
+        )
+
+    async def test_named_collection_and_store_commands(self):
+        await self.device.go_movie_collection("Watch Soon")
+        await self.device.go_movie_store()
+        self.assertEqual(
+            self.peer.named("GO_MOVIE_COLLECTION")[-1].fields, ["Watch Soon"]
+        )
+        self.assertEqual(len(self.peer.named("GO_MOVIE_STORE")), 1)
+
+    async def test_screensaver_sends_one_documented_command(self):
+        await self.device.go_screen_saver()
+        self.assertEqual(len(self.peer.named("GO_SCREEN_SAVER")), 1)
 
     async def test_discovery_and_fresh_state_share_one_routed_connection(self):
         (identity,) = await self.device.discover_devices()

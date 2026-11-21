@@ -53,9 +53,11 @@ it("shows source/session context as text without playback controls or invented p
   expect(content()).toContain("Credits");
   expect(content()).toContain("10.00 min counted");
   expect(
-    element.shadowRoot!.querySelector("script,iframe,progress,input"),
+    element.shadowRoot!.querySelector("script,iframe,progress"),
   ).toBeNull();
-  expect(element.shadowRoot!.querySelectorAll("button")).toHaveLength(2);
+  expect(
+    element.shadowRoot!.querySelectorAll(".player-actions button"),
+  ).toHaveLength(3);
   expect(
     element.shadowRoot!.querySelector('[aria-label="Open remote"]'),
   ).not.toBeNull();
@@ -63,7 +65,8 @@ it("shows source/session context as text without playback controls or invented p
     transport.calls.every(
       (call) =>
         call.type.endsWith("/now_playing") ||
-        call.type.endsWith("/control/info"),
+        call.type.endsWith("/control/info") ||
+        call.type.endsWith("/ui/preferences/get"),
     ),
   ).toBe(true);
 });
@@ -277,4 +280,91 @@ it("refreshes playback and control state from the header action", async () => {
       ".player-actions [aria-label='Open remote']",
     ),
   ).not.toBeNull();
+});
+
+it("saves the live search option and passes it to the remote", async () => {
+  await mount(playing());
+  const root = element.shadowRoot!;
+  expect(
+    root.querySelector('[aria-label="Now Playing options"]'),
+  ).not.toBeNull();
+  const options = root.querySelector<HTMLButtonElement>(
+    '[aria-label="Now Playing options"]',
+  )!;
+  expect(options.textContent?.trim()).toBe("Options");
+  expect(options.querySelector(".now-options-icon svg")).not.toBeNull();
+  expect(
+    options.querySelector(".now-options-icon")?.getAttribute("aria-hidden"),
+  ).toBe("true");
+  expect(root.querySelector(".player-actions")?.lastElementChild).toBe(options);
+  options.click();
+  const dialog = root.querySelector<HTMLDialogElement>("#now-playing-options")!;
+  expect(dialog.open).toBe(true);
+  expect(dialog.querySelector("h2")?.textContent?.trim()).toBe(
+    "Now Playing options",
+  );
+  const toggle = dialog.querySelector<HTMLInputElement>(
+    'input[type="checkbox"]',
+  )!;
+  expect(toggle.checked).toBe(false);
+  toggle.checked = true;
+  toggle.dispatchEvent(new Event("change"));
+  await flush();
+  expect(
+    root.querySelector<DeviceControls>("kaleidescape-device-controls")!
+      .liveTyping,
+  ).toBe(true);
+  expect(
+    transport.calls.some(
+      (call) =>
+        call.type.endsWith("/ui/preferences/update") &&
+        (call.patch as Record<string, unknown>).live_search_input === true,
+    ),
+  ).toBe(true);
+  dialog.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.click();
+  expect(dialog.open).toBe(false);
+});
+
+it("saves each remote visibility option and applies it to the remote", async () => {
+  await mount(playing());
+  const root = element.shadowRoot!;
+  root
+    .querySelector<HTMLButtonElement>('[aria-label="Now Playing options"]')!
+    .click();
+  expect(
+    root
+      .querySelector('input[name="remote_movies"]')
+      ?.parentElement?.textContent?.trim(),
+  ).toBe("List");
+  const keys = [
+    "remote_covers",
+    "remote_movies",
+    "remote_collections",
+    "remote_search",
+    "remote_settings",
+    "remote_screensaver",
+    "remote_transport",
+    "remote_intermission",
+    "remote_collection_shortcuts",
+  ];
+  for (const key of keys) {
+    const toggle = root.querySelector<HTMLInputElement>(
+      `input[name="${key}"]`,
+    )!;
+    expect(toggle.checked).toBe(true);
+    toggle.checked = false;
+    toggle.dispatchEvent(new Event("change"));
+    await flush();
+    expect(
+      root.querySelector<DeviceControls>("kaleidescape-device-controls")!
+        .remoteVisibility[key as keyof DeviceControls["remoteVisibility"]],
+    ).toBe(false);
+    expect(
+      transport.calls.some(
+        (call) =>
+          call.type.endsWith("/ui/preferences/update") &&
+          (call.patch as Record<string, unknown>)[key] === false,
+      ),
+    ).toBe(true);
+  }
 });

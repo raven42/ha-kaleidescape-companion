@@ -13,9 +13,17 @@ DEFAULTS = {
     "control_player": "",
     "control_allow_launch": False,
 }
+COLLECTIONS = {
+    "collection_paused": "Paused",
+    "collection_watch_soon": "Watch Soon",
+    "collection_new": "New",
+    "collection_favorites": "Favorites",
+}
 COMMANDS = {
+    **dict.fromkeys(COLLECTIONS, "go_movie_collection"),
     "play": "play",
     "pause": "pause_on",
+    "pause_toggle": "pause",
     "resume": "pause_off",
     "play_pause": "play_or_pause",
     "stop": "stop",
@@ -33,15 +41,52 @@ COMMANDS = {
     "left": "left",
     "right": "right",
     "select": "select",
+    "cancel": "cancel",
+    "backspace": "backspace",
+    "details": "details",
     "back": "back",
     "menu": "menu_toggle",
+    "menu_on": "menu_on",
+    "menu_off": "menu_off",
+    "go_movies": "go_movies",
+    "movie_store": "go_movie_store",
     "movies": "go_movie_covers",
     "movie_list": "go_movie_list",
     "movie_collections": "go_movie_collections",
     "search": "go_search",
+    "screensaver": "go_screen_saver",
+    "screensaver_off": "stop_screen_saver",
     "power_on": "leave_standby",
     "power_off": "enter_standby",
 }
+
+
+PARAMETER_COMMANDS = {
+    "keyboard_character": "keyboard_literal",
+    "set_input": "set_user_input_entry",
+    "named_collection": "go_movie_collection",
+}
+
+
+def validate_parameter(operation, value):
+    """Validate arguments to the fixed, parameterized pyk actions."""
+    if (
+        operation not in PARAMETER_COMMANDS
+        or not isinstance(value, str)
+        or len(value) > 256
+    ):
+        raise ValueError("Invalid text")
+    try:
+        value.encode("latin-1")
+    except UnicodeEncodeError as error:
+        raise ValueError("Text is not supported by the player") from error
+    if operation == "keyboard_character" and (
+        len(value) != 1 or not 32 <= ord(value) <= 126
+    ):
+        raise ValueError("Character must be printable ASCII")
+    if operation == "named_collection" and not value.strip():
+        raise ValueError("Text must not be empty")
+    return value
 
 
 def validate(values, previous):
