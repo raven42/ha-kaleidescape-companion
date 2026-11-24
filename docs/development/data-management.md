@@ -378,6 +378,24 @@ a unique proposal without human review, so a uniquely named but incorrectly
 identified title can still be matched incorrectly. Check the results and use
 manual import when that risk is unacceptable.
 
+**Known bug — receipt matching can link a remake to the wrong movie.** Initial
+receipt import does not extract a release year from a parenthesized receipt
+title. It can use a year in a recognizable Store URL slug, but a numeric
+`/movie-store/movie/details/<id>` URL does not supply a year to the matcher and
+is not looked up. When the receipt has no usable release-year evidence and only
+one same-title movie is in the scanned Library, automatic import can link that
+movie even if the receipt is for a different release. A purchase date is not a
+release year. Later Library scans do not reconsider an already linked purchase.
+
+To work around this, review same-title receipts and their Library associations.
+For a wrong link, open **Database → Purchases**, select the receipt, and choose
+**Edit entry**. Search for and select the correct scanned Library movie, then
+review and apply the change. If the correct movie is not yet scanned, unlink the
+purchase and later select it through **Database → Reconcile purchases**.
+Alternatively, use manual purchase import and explicitly select the correct
+Library movie after it has been scanned. Waiting for a scan alone does not
+correct an existing link; verify the association after import.
+
 The response status is `imported`, `unchanged`, or `needs_review`, with counts.
 Unambiguous matches and unmatched purchases are saved together. Each complete
 Library scan retries unlinked purchases against the current source. A unique
@@ -444,13 +462,15 @@ the Library entry until an invoice is linked.
 
 To correct an existing invoice, open **Database → Purchases**, select the
 invoice, and choose **Edit entry**. Correct the receipt title, date, prices,
-transaction ID or Store link. The Library association is read-only in this
-dialog. Review the field-by-field before/after records, Library associations and
-recalculated source totals in the repair dialog, then confirm. Invalid fields
-show an explanation before review. Changes use the selected row token, dataset
-revision, administrator and a durable request ID. An identity collision is
-rejected. Previous identities remain replay barriers, and similar enriched
-replays are held for review.
+transaction ID, Store link or Library association. Enter at least three
+characters to search scanned Library movies, then select a match from the
+dropdown, or unlink the purchase for later reconciliation. Review the
+field-by-field before/after records, Library associations and recalculated
+source totals in the repair dialog, then confirm. Invalid fields show an
+explanation before review. Changes use the selected row token, dataset revision,
+administrator and a durable request ID. An identity collision is rejected.
+Previous identities remain replay barriers, and similar enriched replays are
+held for review.
 
 **Options → Show system tables → Purchase repair history** displays append-only
 private evidence. Select an event and choose **Review reversal** to preview and
